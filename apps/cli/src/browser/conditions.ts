@@ -10,6 +10,8 @@ export interface BrowserConditions {
   clock?: number;
   /** `--block <text>`: each request whose address holds it fails, as one the network could not make. */
   block?: readonly string[];
+  /** `--hold <text>`: each request whose address holds it is never answered — the page read while it waits for it. */
+  hold?: readonly string[];
   /** `--autoplay refused`: media playing with sound refused until a press, as a browser's autoplay rule does. */
   autoplay?: 'refused';
   /** `--storage refused`: `localStorage` and `sessionStorage` throw when read, as with the site's data blocked. */
@@ -56,6 +58,15 @@ const heldClocks = new WeakSet<BrowserPage>();
 
 export const clockHeld = (page: BrowserPage): boolean => heldClocks.has(page);
 
+/** The requests each page keeps unanswered (`--hold`): what reading it never waits for. */
+const heldRequests = new WeakMap<BrowserPage, readonly string[]>();
+
+/** Whether a request is one `--hold` keeps unanswered on this page: `openPage`'s `held`, or it waits 15 s for it. */
+export const heldOn =
+  (page: BrowserPage) =>
+  (request: { url(): string }): boolean =>
+    (heldRequests.get(page) ?? []).some(part => request.url().includes(part));
+
 /** The conditions set on a page before it is asked for — in each of its documents, and on every request it makes. */
 export const applyConditions = async (page: BrowserPage, conditions: BrowserConditions): Promise<void> => {
   if (conditions.clock !== undefined) {
@@ -78,6 +89,16 @@ export const applyConditions = async (page: BrowserPage, conditions: BrowserCond
       route => route.abort()
     );
   }
+
+  const held = conditions.hold ?? [];
+  if (held.length > 0) {
+    heldRequests.set(page, held);
+    // Neither answered nor failed: a scout held a third-party script to see whether the page's load waited for it.
+    await page.route(
+      url => held.some(part => url.href.includes(part)),
+      () => Promise.resolve()
+    );
+  }
 };
 
 /** The conditions said back, as a report's heading says what the page was read under. */
@@ -85,6 +106,7 @@ export const conditionsText = (conditions: BrowserConditions): string | undefine
   const said = [
     ...(conditions.clock === undefined ? [] : [`clock held at ${new Date(conditions.clock).toISOString()}`]),
     ...(conditions.block?.length ? [`blocked: ${conditions.block.join(', ')}`] : []),
+    ...(conditions.hold?.length ? [`held unanswered: ${conditions.hold.join(', ')}`] : []),
     ...(conditions.autoplay ? ['autoplay with sound refused until a press'] : []),
     ...(conditions.storage ? ['storage refused'] : [])
   ];

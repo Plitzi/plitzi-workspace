@@ -12,6 +12,8 @@ export type AgentInspector = {
   state: (key?: string) => unknown;
   setState: (key: string, value: unknown) => void;
   sources: (name?: string) => unknown;
+  /** Writes a source where its provider keeps it — false when no store holds one by that name. */
+  setSource: (path: string, value: unknown) => boolean;
   element: (id: string) => ElementReport | undefined;
   flows: (limit?: number) => FlowRun[];
   /** Why each server element failed on the page server since the page loaded, by id — answered later or not. */
@@ -37,6 +39,9 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   state(key?)          runtime.state, or one key of it
   setState(key, value) writes runtime.state.<key>, as a setState step would
   sources(name?)       every source's current value by name (apiContainer_site, list_products…), or one
+  setSource(path, value)
+                       writes a source, or a path in it (apiContainer_site.items), where its provider keeps it — what
+                       the page shows filled; until the provider answers again
   element(id)          an element by its id, in a page or a component: type, attributes, what it reads, its own state,
                        the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
@@ -83,6 +88,20 @@ export const createAgentInspector = ({
     const all = { ...scoped, ...sources };
 
     return plain(name === undefined ? all : all[name]);
+  },
+  setSource: (path, value) => {
+    const [name = ''] = path.split('.');
+    // The store whose own layer seeds it — the provider's — never a scope below that only extends it (a list's row).
+    const holder = [root, ...stores()].find(store => {
+      const own = recordAt(store.getOwnState(), 'runtime', 'sources')[name];
+
+      return own !== undefined && !extendsInherited(own, recordAt(store.getState(), 'runtime', 'sources')[name]);
+    });
+    // A plain string: a template literal type is read through the store's own types, which know no source by name.
+    const at: string = `runtime.sources.${path}`;
+    holder?.setState(at, value);
+
+    return holder !== undefined;
   },
   element: id => elementReport(root.getState(), id, document),
   flows: (limit = 20) => runs().slice(-limit),

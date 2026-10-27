@@ -314,7 +314,8 @@ view. `--timezone <IANA>` opens it as a visitor in that zone: its clock and `Int
 realtime channels: it hears them — a topic the server refuses is still reported — and says nothing on them, so nobody on
 the page sees it arrive, join their members or send; `--presence` makes it take part as a visitor does. The browser can
 refuse what a visitor's might: `--clock <instant>` holds the page's clock from its first script, `--block <text>` fails
-each request whose address holds it (a player, a font), `--autoplay refused` refuses media with sound until a press,
+each request whose address holds it (a player, a font), `--hold <text>` never answers it (a loading state; whether a
+script holds the page's load — `page play` ends saying when the page loaded, or that its load had not come), `--autoplay refused` refuses media with sound until a press,
 `--storage refused` throws on `localStorage` and `sessionStorage`. `--url` reads the project where it is served, when
 not by `npm start` here. `--click` in `page shot` takes an element's name, a tag no element is named by
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
@@ -402,7 +403,8 @@ printed beside UTC reads as one there — `--timezone` reads it as a visitor els
 
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
-on a development page), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
+on a development page), `source <path> <json>` (a provider's answer, or a path in it, where the provider keeps it — a list
+seen filled, until the provider answers again), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
 and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment; `wait` takes a unit too (`wait 3s`). The
 server's data is put in its state by `action <id> [json]` — one of the space's actions run as the page's visitor, through
 its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
@@ -652,7 +654,7 @@ plitzi task next t-home --token <yours> --json      # its files locked, its copy
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
 plitzi task check t-home --before          # its acceptance on the run before it and on its copy: which line proves the change, which proves nothing
-plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to "slice(0, 7)"   # its acceptance on a mutant of the copy: which line catches the change
+plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to "slice(0, 7)" --line 1   # its acceptance (line 1) on a mutant of the copy: which line catches the change
 plitzi task run "npx playwright test visual/room.spec.ts"   # a command of your own: a suite in its turn on the machine, its output in a file, what failed said
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work

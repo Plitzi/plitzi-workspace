@@ -19,6 +19,7 @@ import {
   looksInPage,
   momentChanges,
   notShownInPage,
+  noPageAt,
   pageFor,
   renderedRowsInPage,
   serverErrors,
@@ -338,6 +339,13 @@ describe('the page an address is answered by', () => {
   it('is the page of the path alone: a query or a hash names none', () => {
     expect(pageFor(handles, '/?__pt=weather')).toBe('home');
     expect(pageFor(handles, '/p/hello?ref=mail#comments')).toBe('post');
+  });
+
+  // A scout measured /explore, the page being /rooms, and read "not drawn here" of every element.
+  it('says a path no page answers, its not-found page read in its place', () => {
+    expect(noPageAt(handles, '/explore')).toBe(true);
+    expect(noPageAt(handles, '/p/hello')).toBe(false);
+    expect(noPageAt(handles, '/')).toBe(false);
   });
 
   it('is a page answering a subtree by its own `*`, never the "not found" page', () => {

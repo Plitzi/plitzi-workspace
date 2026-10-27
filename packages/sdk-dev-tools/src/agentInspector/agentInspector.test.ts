@@ -127,6 +127,30 @@ describe('window.__plitzi', () => {
     expect(inspector.sources()).toHaveProperty('state');
   });
 
+  // A designer approved a list it had only seen empty: nothing put a provider's answer on the page to see it filled.
+  it('writes a source, or a path in it, where its provider keeps it — and says when no store holds one', () => {
+    const page = createStore<Record<string, unknown>>(() => ({ runtime: { sources: {} } }));
+    const chart = createStore<Record<string, unknown>>(
+      () => ({ runtime: { sources: { apiContainer_chart: { clapped: [], isLoading: false } } } }),
+      { parent: page }
+    );
+    const writer = createAgentInspector({
+      root: page,
+      writeState,
+      stores: () => [chart],
+      runs: () => runs,
+      setWatching,
+      document
+    });
+
+    expect(writer.setSource('apiContainer_chart.clapped', [{ title: 'Night Drive', claps: 12 }])).toBe(true);
+    expect(writer.sources('apiContainer_chart')).toEqual({
+      clapped: [{ title: 'Night Drive', claps: 12 }],
+      isLoading: false
+    });
+    expect(writer.setSource('apiContainer_none.items', [])).toBe(false);
+  });
+
   it('reads a list’s rows from its provider and its own source, whatever store registered first', () => {
     const picks = [{ title: 'A' }, { title: 'B' }];
     const page = createStore<Record<string, unknown>>(() => ({

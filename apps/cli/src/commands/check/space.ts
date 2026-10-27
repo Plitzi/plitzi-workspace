@@ -103,6 +103,15 @@ export const meantPage = (handles: SpaceHandles, pathname: string): string => {
  */
 export const isNotFoundPage = (page: { slug: string }): boolean => page.slug === '*';
 
+/**
+ * Whether no page of the space answers `pathname` — a guest nor a signed-in visitor — its not-found page read in its
+ * place: a scout measured /explore, the page being /rooms, and read "not drawn here" of every element.
+ */
+export const noPageAt = (
+  authored: { schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'> },
+  pathname: string
+): boolean => [false, true].every(signedIn => pageAt(authored.schema, pathname, { signedIn }).action === 'notFound');
+
 /** Where `verify` looks at a page for an address nothing answers: an address under its folder no page has. */
 export const NOT_FOUND_PROBE = 'plitzi-check-not-found';
 

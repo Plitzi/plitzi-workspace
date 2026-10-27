@@ -39,11 +39,12 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another — what
   holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
-  played into: `state <key> <json>`, `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
+  played into: `state <key> <json>`, `source <provider.path> <json>` for a provider's answer (a list seen filled),
+  `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
   countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor), and `as <account>
   <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` in it. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
-- **Ask what the task is, not more** — every round, the first too: send it back for what its title and acceptance
+- **Ask what the task is, not more** — every round, the first too: send it back for what its title, acceptance and brief
   cover that is broken or measures off. Another element, a page-wide value (the body's font), a refinement the task
   never asked: `plitzi run notice "…"`, never a round: asks beyond a task turn minutes of work into an hour of rounds.
 - **A round another designer said before:** check that what it asked is done, and ask anew only what is broken.

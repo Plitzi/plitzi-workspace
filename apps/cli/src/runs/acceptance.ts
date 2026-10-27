@@ -9,6 +9,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { inTurns } from './inTurns';
+import { keepNamedFiles } from './keptFiles';
 import { stopKept } from './lingering';
 import { guardServer, listenersUnder, stopListener, stopTree, TREE } from './processes';
 import { withLock } from './store';
@@ -24,6 +25,9 @@ import type { Acceptance, AcceptanceResult } from './model';
  * `plitzi` in a check is this CLI, the one the run is worked with; `$PLITZI_URL`, the copy served by its own start
  * script on a free port, for as long as the checks take.
  */
+
+/** Where a check's output names its files once it ran, under the cache it is given (`keepNamedFiles`). */
+export const KEPT_DIR = 'kept';
 
 const isChecked = (each: Acceptance): each is { said: string; check: string } => typeof each !== 'string';
 
@@ -409,27 +413,30 @@ export const checkAcceptance = async (
     ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
     : {};
   const scripts = await suiteScripts(root);
-  const runOnce = async (each: { check: string }) => {
+  // What each run's output names, kept in the cache by the line and the try: the next run of a suite empties its folder.
+  const runOnce = async (each: { check: string }, at: number, again: boolean) => {
     const started = Date.now();
     const result = await runScript(work, withServedValues(each.check, values), root, { env: values, bin: [bin] });
+    const kept = path.join(cache, KEPT_DIR, `line-${String(at + 1)}${again ? '-again' : ''}`);
+    await fs.rm(kept, { recursive: true, force: true });
 
-    return { ...result, ms: Date.now() - started };
+    return { ...result, output: await keepNamedFiles(result.output, work, kept), ms: Date.now() - started };
   };
-  const run = (each: { check: string }) =>
+  const run = (each: { check: string }, at: number, again = false) =>
     runsSuite(each.check, scripts)
-      ? withLock(SUITE_LOCK, () => runOnce(each), {
+      ? withLock(SUITE_LOCK, () => runOnce(each, at, again), {
           ttlMs: 30 * 60_000,
           waitMs: 30 * 60_000,
           doing: "another agent's Playwright suite on this machine"
         })
-      : runOnce(each);
+      : runOnce(each, at, again);
   try {
     // Two at a time: a run's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
     // of its 18 s check, each line a browser of its own the other did not wait on.
     const results: AcceptanceResult[] = await inTurns(
       checked.map((each, index) => async () => {
         onLine?.(index, checked.length, each.said, false);
-        const { code, output, ms } = await run(each);
+        const { code, output, ms } = await run(each, index);
         const passed = code === 0 && !ranNoTest(output);
 
         return {
@@ -453,7 +460,7 @@ export const checkAcceptance = async (
       }
 
       onLine?.(at, checked.length, result.said, true);
-      const { code, output } = await run(checked[at]);
+      const { code, output } = await run(checked[at], at, true);
       results[at] =
         code === 0 && !ranNoTest(output)
           ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }

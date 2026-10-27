@@ -1,7 +1,7 @@
 import { clip, textWidth, wrap } from './monitorCanvas';
 import { EVENT_TONE, groupKey, openedRows, opens, whatOf } from './monitorFeed';
 import { flowStages } from './monitorFlow';
-import { AGENT_LOOK, hhmm, LIVE_VERB, since, toneOf, urgencyOf } from './monitorModel';
+import { AGENT_LOOK, hhmm, LIVE_VERB, liveVerb, since, toneOf, urgencyOf } from './monitorModel';
 import { drawPreviewLine, shortModel } from './monitorSide';
 
 import type { MonitorUi, Paint, PreviewShown, Tone } from './monitorModel';
@@ -229,7 +229,7 @@ const drawLive = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect: R
       bold: true
     });
     // An agent at no task — the lead between reviews — works at what it says it does.
-    const verb = agent.task === undefined && agent.status === 'working' ? 'Working' : (LIVE_VERB[agent.status] ?? '');
+    const verb = liveVerb(agent);
     let col = shimmer(p, row, rect.left + 6 + nameWidth, `${verb}…`, ui.frame + index * 4, tone);
     if (agent.task) {
       col = canvas.put(row, col + 1, agent.task, { fg: theme.link });

@@ -1,3 +1,7 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { comparePictures } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
@@ -205,6 +209,8 @@ export const stepText = (step: ShotStep): string => {
       return `store ${step.key}`;
     case 'state':
       return `state ${step.key}`;
+    case 'source':
+      return `source ${step.key}`;
     case 'clock':
       return `clock ${new Date(step.time).toISOString()}`;
     case 'tick':
@@ -231,6 +237,19 @@ const ACTION_PATH = '/_action';
 
 /** How much of an action's answer a step says: enough to read a count or an id, never a payload whole. */
 const ANSWER_CHARS = 200;
+
+/**
+ * An action's answer too long to say, kept whole in a file of its own, out of the project: a tester needed a value past
+ * the cut — the seq of what played — and asked the server with curl for it.
+ */
+const keptAnswer = async (action: string, output: string): Promise<string> => {
+  const dir = path.join(os.tmpdir(), 'plitzi-answers');
+  await fs.mkdir(dir, { recursive: true });
+  const file = path.join(dir, `${action.replace(/[^\w-]+/g, '-')}-${String(Date.now())}.json`);
+  await fs.writeFile(file, output);
+
+  return file;
+};
 
 /**
  * The space's action run from the page, as its visitor — its cookies, its origin: what it answered, or why it refused.
@@ -265,7 +284,7 @@ const runAction = async (
         output === undefined
           ? 'completed, with no output'
           : output.length > ANSWER_CHARS
-            ? `${output.slice(0, ANSWER_CHARS)}…`
+            ? `${output.slice(0, ANSWER_CHARS)}… (whole in ${await keptAnswer(action, output)})`
             : output
     };
   }
@@ -479,25 +498,40 @@ export const actStep = async (
         problem: `Step ${String(index + 1)}: the page's localStorage refused the value — its storage is blocked`
       };
     }
-  } else if (step.kind === 'state') {
+  } else if (step.kind === 'state' || step.kind === 'source') {
     const written = await page.evaluate(
-      ({ key, value }: { key: string; value: unknown }) => {
+      ({
+        method,
+        key,
+        value
+      }: {
+        method: string;
+        key: string;
+        value: unknown;
+      }): 'no-inspector' | 'unheld' | 'written' => {
         const inspector: unknown = Reflect.get(window, '__plitzi');
-        const setState: unknown =
-          typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, 'setState') : undefined;
-        if (typeof setState !== 'function') {
-          return false;
+        const write: unknown =
+          typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, method) : undefined;
+        if (typeof write !== 'function') {
+          return 'no-inspector';
         }
 
-        Reflect.apply(setState, inspector, [key, value]);
-
-        return true;
+        // setSource says whether a store holds the source; setState writes whatever key it is given.
+        return Reflect.apply(write, inspector, [key, value]) === false ? 'unheld' : 'written';
       },
-      { key: step.key, value: step.value }
+      { method: step.kind === 'state' ? 'setState' : 'setSource', key: step.key, value: step.value }
     );
-    if (!written) {
+    if (written === 'no-inspector') {
       return {
-        problem: `Step ${String(index + 1)}: the page has no window.__plitzi to write its state with — the SDK's dev tools put it there on a development page (npm run start:dev, debug mode)`
+        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (npm run start:dev, debug mode)`
+      };
+    }
+
+    if (written === 'unheld') {
+      const [name] = step.key.split('.');
+
+      return {
+        problem: `Step ${String(index + 1)}: no provider on the page holds a source named ${name} — page check --state lists those it has`
       };
     }
   } else if (step.kind === 'clock' || step.kind === 'tick') {

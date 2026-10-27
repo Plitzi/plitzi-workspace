@@ -43,8 +43,10 @@ const budgetOf = (path: string): number | undefined => {
     return 4500;
   }
 
+  // A reference's rules are read whole and acted on: one cut to fit (an example, the case that goes wrong) is an
+  // agent's mistake later — the room is for clarity, never for more subjects in one file.
   if (path.includes('/reference/')) {
-    return 3000;
+    return 3500;
   }
 
   return path.includes('/recipes/') ? 1500 : undefined;

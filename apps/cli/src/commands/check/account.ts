@@ -2,7 +2,7 @@ import chalk from 'chalk';
 
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { PROJECT_QUIET_MS } from '../../browser';
+import { projectSettling } from '../../browser';
 import { runProjectOf } from '../../runs/paths';
 import { projectSettings } from '../projectSettings';
 
@@ -133,7 +133,7 @@ export const signInWhereSent = async (
     return { problem: `${pathname} sends a guest to ${from}, and ${refused}` };
   }
 
-  await openPage(page, `${origin}${pathname}`, { quietMs: PROJECT_QUIET_MS });
+  await openPage(page, `${origin}${pathname}`, projectSettling(page));
 
   return { as: account.username, from };
 };

@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises';
+
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
 import { actingSteps, actStep, endsActing, givenValueIn, interactionSteps, stepText } from './steps';
 import { parseSteps } from '../shotSteps';
 
+import type { ActingStep } from './steps';
 import type { Visitors } from './visitors';
 import type { BrowserPage } from '../../browser';
 
@@ -59,6 +62,17 @@ describe('a step another account plays, and an action', () => {
     // The fake answers what these steps call of a page, and nothing else a page has.
     return { page: page as unknown as BrowserPage, asked };
   };
+
+  // A tester needed a value past the cut of an action's answer, and asked the server with curl for it.
+  it('keeps an answer too long to say whole in a file, and says where', async () => {
+    const rooms = Array.from({ length: 20 }, (_, index) => ({ slug: `room-${String(index)}`, now: { seq: index } }));
+    const { page } = pageAnswering(200, { runId: 'r1', status: 'completed', output: rooms });
+    const done = await actStep(page, { kind: 'action', action: 'rooms-list', input: {} }, 0);
+    const file = done !== undefined && 'answer' in done ? /\(whole in (.+)\)$/.exec(done.answer)?.[1] : undefined;
+
+    expect(file).toBeDefined();
+    expect(JSON.parse(await readFile(file ?? '', 'utf-8'))).toEqual(rooms);
+  });
 
   it('runs the action as the page’s visitor, and says what a refusal said', async () => {
     const { page, asked } = pageAnswering(200, { runId: 'r1', status: 'completed', output: { hidden: true } });
@@ -181,5 +195,32 @@ describe('a wait-for step played', () => {
     await actStep(page, { kind: 'wait-for', target: '[data-state="stalled"]' }, 1);
 
     expect(waited.map(each => each.timeout)).toEqual([40_000, 10_000]);
+  });
+});
+
+// A designer approved a list it had only seen empty: nothing put a provider's answer on the page to see it filled.
+describe('a source step played', () => {
+  const pageRunning = { evaluate: <R, A>(fn: (input: A) => R, input: A) => Promise.resolve(fn(input)) };
+  // Only evaluate is reached by a source step.
+  const page = pageRunning as unknown as BrowserPage;
+  const step: ActingStep = { kind: 'source', key: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] };
+
+  it('writes the provider’s answer through the dev tools, and says a source no provider holds, or no dev tools', async () => {
+    const setSource = vi.fn((path: string) => path.startsWith('apiContainer_chart.'));
+    Reflect.set(window, '__plitzi', { setSource });
+    try {
+      expect(await actStep(page, step, 0)).toBeUndefined();
+      expect(setSource).toHaveBeenCalledWith('apiContainer_chart.clapped', [{ title: 'Night Drive' }]);
+
+      expect(await actStep(page, { kind: 'source', key: 'apiContainer_none.items', value: [] }, 1)).toEqual({
+        problem: expect.stringContaining('no provider on the page holds a source named apiContainer_none') as unknown
+      });
+    } finally {
+      Reflect.deleteProperty(window, '__plitzi');
+    }
+
+    expect(await actStep(page, step, 0)).toEqual({
+      problem: expect.stringContaining('no window.__plitzi.setSource') as unknown
+    });
   });
 });

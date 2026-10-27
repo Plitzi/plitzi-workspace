@@ -72,8 +72,10 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`. A server
   provider's bound `input` (`bindTemplate('input', 'state.c', '{{ { country: source } }}', { returns: 'value' })`)
   asks again on every change; `reloadApi('p', { … })` asks once.
-- An action is handed the page's route and query params as input (`r/:room` → `input.room`). A written `input` is
-  sent as is: a `{{ }}` in it is refused (`template-in-value`) — bind it.
+- An action is handed the page's route and query params as input (`r/:room` → `input.room`), with the element's
+  `input` laid over them: a key the `input` leaves out still comes from the address — on `/orders?status=open`, an
+  `input` of `{{ { } }}` still sends `status: 'open'`, and a test that empties the `input` proves nothing of it. A
+  written `input` is sent as is: a `{{ }}` in it is refused (`template-in-value`) — bind it.
 - `isLoading` is true while it is asked again, in either runtime. A newer ask drops the older one; `cancelApi('p')` is a
   STOP: what is shown stays.
 - **`when` makes it wait** (a rule group over sources: `auth.isAuthenticated`, `roomData.found`): it asks nothing

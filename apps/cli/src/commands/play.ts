@@ -10,6 +10,7 @@ import { readState } from './playState';
 import { shotFile } from './shot/output';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
 import { keptSession } from '../browser/keptBrowser';
+import { loadTiming, loadTimingText } from '../browser/loadTiming';
 import { originHere } from '../runs/copyServer';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actStep, playingSteps, stepText } from './shot/steps';
@@ -21,6 +22,7 @@ import { visitorsOn } from './shot/visitors';
 import type { BrowserPage, Scheme } from '../browser';
 import type { Pair } from './measure';
 import type { ElementState } from './playState';
+import type { LoadTiming } from '../browser/loadTiming';
 import type { VisitorOptions } from './register/options';
 import type { ActingStep, PlayStep } from './shot/steps';
 import type { Visitors } from './shot/visitors';
@@ -558,7 +560,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
   const { visitor, browser } = ready;
 
   const reads = readTargets(options.read).map(pairOf);
-  const results: { width: number; played: PlayedStep[]; unlike: string[] }[] = [];
+  const results: { width: number; played: PlayedStep[]; unlike: string[]; loaded: LoadTiming }[] = [];
   try {
     for (const width of options.width ?? [1440]) {
       const ours = await openVisit(browser, where.origin, route, {
@@ -644,6 +646,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         await visitors.close();
         await held?.close();
       });
+      // Read once the steps end: a `wait` before it says whether a held request kept the load from coming.
+      const loaded = await loadTiming(ours.page);
       await ours.page.close();
       await theirs?.page.close();
       if ('problem' in outcome) {
@@ -652,7 +656,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         return;
       }
 
-      results.push({ width, played: outcome.played, unlike: unlikeIn(outcome.played, same) });
+      results.push({ width, played: outcome.played, unlike: unlikeIn(outcome.played, same), loaded });
     }
   } finally {
     await browser.close();
@@ -678,7 +682,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       : [
           ...results.flatMap(each => [
             ...(results.length > 1 ? [chalk.bold.underline(`At ${String(each.width)} px`)] : []),
-            ...playedText(each.played)
+            ...playedText(each.played),
+            chalk.dim(`The page: ${loadTimingText(each.loaded)}`)
           ]),
           ...verdictOf(same, unlike, missing, String(target)),
           ...(shared ? [chalk.yellow(shared)] : [])

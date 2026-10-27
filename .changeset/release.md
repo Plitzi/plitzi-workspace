@@ -155,6 +155,25 @@ authoring and the elements learnt from the runs.
   the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
   what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
   did not find; the agents' skill keeps a long output in a file.
+- **What encore-16 asked of the runs.** The board's advice — a task held behind another, an agent with nothing to take
+  — waits for the lead's next wake, never wakes it, and an idle agent is said again only when another goes idle. The
+  monitor says what a tester and a scout are at — their review's or research card's step, "Finding out" — and every
+  role is asked to say it. `task check --mutate` says a mutant that does not run apart from one a test catches, and
+  names the test that failed; `--line <n>` runs only those acceptance lines, with `--before` too. `task show` says the
+  files a card names that its work did not write. A module's tests card takes the test file that imports it already.
+  `page play`'s action step keeps an answer too long to say whole in a file. `page measure` says a path no page
+  answers, and an identical line once with its count. `plitzi explain <id>` explains the project's own actions. A
+  review may send back what the brief asked, not only its acceptance; the reviewer puts the copy's state back. A
+  review waiting while its only tester reviews another says so, and that one more tester is the person's to allow.
+  `--mutate` refused for a text written twice names each line; written with other spaces, it says how the file writes
+  it. The files a failing acceptance line names — Playwright's error context, its pictures — are kept in the task's
+  cache and named there: the next run emptied the folder, and a mutant's went with it. `--hold <text>` leaves each
+  request whose address holds it unanswered, for every page command and `task look` (a loading state, a script that
+  holds the load) — `openPage` takes them as `held`, never waited for; `page play` ends saying when the page's document was in and when it loaded, or that its load had
+  not come. A step `source <provider.path> <json>` puts a provider's answer on the page — a list seen filled — through
+  the dev tools' new `window.__plitzi.setSource`. `task look`'s element moved outside the task's parts names what
+  inside it differs too, the innermost: what grew, not only what holds it. The authoring skill says a provider's
+  `input` is laid over the address's params: a key it leaves out still comes from the address.
 - **A component's slot left empty draws nothing.** A slot the instance puts nothing in, holding nothing of its own, is
   hidden on the page — no empty box, no gap of its parent's; the builder keeps it to drop into. A project's server
   started beside another of its folder says who holds the file and how to stop it, as a report, not a stack ending on

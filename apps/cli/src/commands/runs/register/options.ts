@@ -107,5 +107,11 @@ export const MUTATE_OPTIONS = [
     NONE
   ],
   ['--from <text>', 'With --mutate: the code to change, quoted as the file writes it — found once', each, NONE],
-  ['--to <text>', 'With --mutate: what it says instead', each, NONE]
+  ['--to <text>', 'With --mutate: what it says instead', each, NONE],
+  [
+    '--line <n>',
+    'With --before or --mutate: the acceptance line run, by its place (1 the first) — again for each: a unit test proved without the task’s Playwright lines',
+    each,
+    NONE
+  ]
 ] as const;

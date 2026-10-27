@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { projectFiles } from './files';
 import { DEVELOPER, TESTER } from './team';
 import { workedBy } from './worked';
 
@@ -51,6 +52,11 @@ export interface TestSetup {
    * its file its tests card's.
    */
   existing?: ReadonlySet<string>;
+  /**
+   * The test files that import each module already, by project path: a module's tests are those — a tests card was
+   * handed `seedHistory.test.ts` to make, where `history.test.ts` tested the module already.
+   */
+  importingTests?: ReadonlyMap<string, readonly string[]>;
 }
 
 export const testSetupOf = async (root: string): Promise<TestSetup> => {
@@ -82,7 +88,11 @@ const NOT_TESTED = /\.(?:test|spec)\.[cm]?ts$|\.d\.[cm]?ts$|^src\/(?:main\.ts$|c
  */
 export const testFilesFor = (
   files: readonly string[],
-  { playwright = true, unitOf = file => file }: Partial<Pick<TestSetup, 'playwright' | 'unitOf'>> = {}
+  {
+    playwright = true,
+    unitOf = file => file,
+    importingTests
+  }: Partial<Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests'>> = {}
 ): string[] => {
   const tests = files.flatMap(file => {
     if (file.startsWith(PAGES)) {
@@ -99,17 +109,46 @@ export const testFilesFor = (
       return page ? [`visual/${page}.spec.ts`] : [];
     }
 
-    return MODULE.test(file) && !NOT_TESTED.test(file) ? [file.replace(/\.([cm]?ts)$/, '.test.$1')] : [];
+    if (!MODULE.test(file) || NOT_TESTED.test(file)) {
+      return [];
+    }
+
+    const importing = importingTests?.get(file) ?? [];
+
+    return importing.length > 0 ? [...importing] : [file.replace(/\.([cm]?ts)$/, '.test.$1')];
   });
 
   return [...new Set(tests)];
+};
+
+/** A test file of the project's source, by its project path. */
+const TEST_FILE = /^src\/.+\.test\.[cm]?ts$/;
+
+/** What a test imports by a relative path, as written: `from './history.ts'`, `from '../functions/claps.js'`. */
+const RELATIVE_IMPORT = /\bfrom\s+['"](\.{1,2}\/[^'"]+)['"]/g;
+
+/** The test files of the project that import each module, by the module's project path. */
+export const testsImporting = async (root: string): Promise<Map<string, string[]>> => {
+  const found = new Map<string, string[]>();
+  for (const test of (await projectFiles(root)).filter(file => TEST_FILE.test(file))) {
+    const text = await fs.readFile(path.join(root, test), 'utf-8').catch(() => '');
+    for (const [, written] of text.matchAll(RELATIVE_IMPORT)) {
+      const joined = path.posix.normalize(path.posix.join(path.posix.dirname(test), written)).replace(/\.js$/, '.ts');
+      const module = /\.[cm]?tsx?$/.test(joined) ? joined : `${joined}.ts`;
+      if (module !== test) {
+        found.set(module, [...new Set([...(found.get(module) ?? []), test])]);
+      }
+    }
+  }
+
+  return found;
 };
 
 /** Of the test files the tasks' files are named for, those the project has already. */
 export const existingTests = async (
   root: string,
   tasks: readonly Pick<PlannedTask, 'files'>[],
-  setup: Pick<TestSetup, 'playwright' | 'unitOf'>
+  setup: Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests'>
 ): Promise<Set<string>> => {
   const named = [...new Set(tasks.flatMap(task => testFilesFor(task.files, setup)))];
   const found = await Promise.all(

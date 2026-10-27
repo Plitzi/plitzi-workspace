@@ -27,8 +27,9 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   measured — never from another page or memory. A fix for light is looked at in light, one for the phone at 390
   (`task look --scheme light --width 390`).
 - **A state the cold copy lacks** (an empty room someone made) is set up by the measure's own steps — `page measure
-  /rooms room-card --steps "as dax: action room-create {…}"` (`--as` reads it as another) — and `plitzi server reset`
-  in the copy puts it back after; never a script of yours.
+  /rooms room-card --steps "as dax: action room-create {…}"` (`--as` reads it as another) — never a script of yours.
+  **What you change, you put back** before your verdict — `plitzi server reset` in the copy: the next step's reviewer
+  reads the same copy (a designer closed a room, and the tester's claps were refused).
 - **The verdict:** `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. A round
   sent back starts its review again from its first step. Past three rounds (any step's)
   it is the lead's: approve as it is, answer, or ask the person. **What you cannot decide** — what was asked reads two

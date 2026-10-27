@@ -46,6 +46,7 @@ export const API_OPTION = [
 export interface ConditionOptions {
   clock?: number;
   block?: string[];
+  hold?: string[];
   autoplay?: BrowserConditions['autoplay'];
   storage?: BrowserConditions['storage'];
 }
@@ -79,6 +80,12 @@ export const withConditionOptions = (command: Command): Command =>
     )
     .addOption(
       new Option(
+        '--hold <text>',
+        'Each request whose address holds this is never answered — the page read while it waits: a loading state, a script that holds its load; once per text'
+      ).argParser((value: string, previous: string[] | undefined) => [...(previous ?? []), value])
+    )
+    .addOption(
+      new Option(
         '--autoplay <rule>',
         'Media playing with sound refused until a press, as a browser’s autoplay rule does'
       ).choices(AUTOPLAY_CONDITIONS)
@@ -94,6 +101,7 @@ export const withConditionOptions = (command: Command): Command =>
 export const conditionsOf = (options: ConditionOptions): BrowserConditions => ({
   ...(options.clock === undefined ? {} : { clock: options.clock }),
   ...(options.block?.length ? { block: options.block } : {}),
+  ...(options.hold?.length ? { hold: options.hold } : {}),
   ...(options.autoplay ? { autoplay: options.autoplay } : {}),
   ...(options.storage ? { storage: options.storage } : {})
 });
@@ -107,6 +115,7 @@ export const visitorArgs = (options: Omit<VisitorOptions, 'as' | 'guest' | 'url'
   ...(options.presence ? ['--presence'] : []),
   ...(options.clock === undefined ? [] : ['--clock', new Date(options.clock).toISOString()]),
   ...(options.block ?? []).flatMap(text => ['--block', text]),
+  ...(options.hold ?? []).flatMap(text => ['--hold', text]),
   ...(options.autoplay ? ['--autoplay', options.autoplay] : []),
   ...(options.storage ? ['--storage', options.storage] : [])
 ];

@@ -65,6 +65,17 @@ describe('openPage', () => {
     expect(Date.now() - startedAt).toBeLessThan(1000);
   });
 
+  // A scout held a third-party script unanswered to see whether it held the page's load: every reading waited 15 s.
+  it('settles without waiting on a request held unanswered on purpose', async () => {
+    const script = request('https://www.youtube.com/iframe_api', '*/*', 'script');
+    const { page } = fakePage(emit => emit('request', script));
+    const startedAt = Date.now();
+
+    await openPage(page, '/', { quietMs: 50, timeout: 2000, held: asked => asked.url().includes('iframe_api') });
+
+    expect(Date.now() - startedAt).toBeLessThan(1000);
+  });
+
   it('waits for the requests that do end', async () => {
     const data = request('/_rsc?location=%2F');
     let ended = 0;

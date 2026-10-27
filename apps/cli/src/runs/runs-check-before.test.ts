@@ -1,7 +1,10 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { changesNoPage } from './pagesOf';
-import { caughtBy, checkBefore, checkMutant, completeTask, provedBy, reviewTask } from './tasks';
+import { caughtBy, checkBefore, checkMutant, completeTask, failedTests, provedBy, reviewTask } from './tasks';
 import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
@@ -163,6 +166,62 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     expect((await checkMutant(bench.agent('test-1'), runId, 't-about', both)).lines.map(caughtBy)).toEqual(['catches']);
   });
 
+  // A tester's mutant named no defined name, and read "fails on the mutant: it holds it"; another could not tell which
+  // test failed; and proving a unit test cost a Playwright run per mutant.
+  it('says a mutant that does not run, names the test that failed, and runs only the lines asked', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [
+      {
+        said: 'The title is Spanish',
+        check:
+          'grep -q Acerca src/space/pages/about.ts || { echo "✖ the title is Spanish"; echo "AssertionError: expected Acerca"; exit 1; }'
+      },
+      {
+        said: 'It runs',
+        check: 'grep -q Acerca src/space/pages/about.ts || { echo "ReferenceError: WEEKX is not defined"; exit 1; }'
+      }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about');
+    const mutation = { file: 'src/space/pages/about.ts', from: "'Acerca'", to: "'About'" };
+
+    const checked = await checkMutant(bench.agent('test-1'), runId, 't-about', [mutation]);
+    expect(checked.lines.map(caughtBy)).toEqual(['catches', 'broken']);
+    expect(failedTests(checked.lines[0]?.mutant.output ?? [])).toEqual(['✖ the title is Spanish']);
+
+    const second = await checkMutant(bench.agent('test-1'), runId, 't-about', [mutation], [2]);
+    expect(second.lines.map(line => line.said)).toEqual(['It runs']);
+    expect((await refusal(checkMutant(bench.agent('test-1'), runId, 't-about', [mutation], [3]))).message).toContain(
+      "t-about's acceptance has 2 lines: plitzi task check t-about --line 3 names none"
+    );
+  });
+
+  // A tester read the error context a failure on the mutant named, and it was gone with the mutant's folder.
+  it('keeps the files a failing line names, and names them where they are kept', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [
+      {
+        said: 'The title is Spanish',
+        check:
+          'grep -q Acerca src/space/pages/about.ts || { mkdir -p tmp/visual/about; grep title src/space/pages/about.ts > tmp/visual/about/error-context.md; echo "Error Context: tmp/visual/about/error-context.md"; exit 1; }'
+      }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about');
+
+    const checked = await checkMutant(bench.agent('test-1'), runId, 't-about', [
+      { file: 'src/space/pages/about.ts', from: "'Acerca'", to: "'About'" }
+    ]);
+    const named = (checked.lines[0]?.mutant.output ?? []).join('\n').match(/Error Context: (\S+)/)?.[1] ?? '';
+
+    expect(path.isAbsolute(named)).toBe(true);
+    expect(await fs.readFile(named, 'utf-8')).toContain("title: 'About'");
+  });
+
   it('is refused for a change that names no one place, and a file the copy has not', async () => {
     const plan = benchPlan();
     plan.tasks[3].acceptance = [{ said: 'About is there', check: 'test -f src/space/pages/about.ts' }];
@@ -172,7 +231,11 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     const mutant = (file: string, from: string) => checkMutant(about.ctx, runId, 't-about', [{ file, from, to: 'y' }]);
 
     expect((await refusal(mutant('src/space/pages/about.ts', "'x'"))).message).toContain(
-      'has "\'x\'" 2 times: quote more of the line'
+      "2 times — line 1: export const a = 'x'; · line 2: export const b = 'x'; — quote more of the one you mean"
+    );
+    // Written with the file's own spaces: what it writes, said to quote.
+    expect((await refusal(mutant('src/space/pages/about.ts', "a='x'"))).message).toContain(
+      'it writes it "a = \'x\'": quote that'
     );
     expect((await refusal(mutant('../outside.ts', 'x'))).message).toContain('is no file of t-about');
     expect((await refusal(mutant('src/space/pages/none.ts', 'x'))).message).toContain('is no file of t-about');

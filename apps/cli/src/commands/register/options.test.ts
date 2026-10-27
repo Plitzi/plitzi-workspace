@@ -25,6 +25,8 @@ describe('the visitor flags', () => {
       'player.js',
       '--block',
       'fonts.gstatic',
+      '--hold',
+      'iframe_api',
       '--autoplay',
       'refused',
       '--storage',
@@ -38,9 +40,9 @@ describe('the visitor flags', () => {
 
   it('make the view a page is visited with — nothing of what was not asked', () => {
     expect(visitViewOf(parsed([]))).toEqual({});
-    expect(visitViewOf(parsed(['--timezone', 'Europe/Madrid', '--block', 'cdn']))).toEqual({
+    expect(visitViewOf(parsed(['--timezone', 'Europe/Madrid', '--block', 'cdn', '--hold', 'iframe_api']))).toEqual({
       timezone: 'Europe/Madrid',
-      conditions: { block: ['cdn'] }
+      conditions: { block: ['cdn'], hold: ['iframe_api'] }
     });
   });
 });

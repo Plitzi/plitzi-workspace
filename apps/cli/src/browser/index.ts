@@ -10,7 +10,7 @@ import { projectMark } from '@plitzi/sdk-shared/project';
 import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
-import { applyConditions } from './conditions';
+import { applyConditions, heldOn } from './conditions';
 import { keepStatic, staticCacheDir } from './staticCache';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
@@ -218,6 +218,14 @@ const propertyOf = (value: unknown, key: string): unknown =>
  * and 150 — 5.9 s at 500, 3.9 s at 250. Its other sites' files come from the kept ones (`staticCache.ts`) at once.
  */
 export const PROJECT_QUIET_MS = 250;
+
+/** How a page of the project is opened and settled: its quiet, and the requests `--hold` keeps unanswered left unwaited. */
+export const projectSettling = (
+  page: BrowserPage
+): { quietMs: number; held: (request: { url(): string }) => boolean } => ({
+  quietMs: PROJECT_QUIET_MS,
+  held: heldOn(page)
+});
 
 /** The project each browser was launched for: where the pages it opens keep what other sites send them. */
 const launchedFor = new WeakMap<Browser, string>();

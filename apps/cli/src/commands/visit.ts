@@ -1,9 +1,9 @@
 import { audienceAt, openPage } from '@plitzi/sdk-authoring';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
-import { launchBrowser, openProjectPage, PROJECT_QUIET_MS } from '../browser';
+import { launchBrowser, openProjectPage, projectSettling } from '../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
-import { pageFor } from './check/space';
+import { noPageAt, pageFor } from './check/space';
 import { conditionsOf } from './register/options';
 import { fail, unanswered } from './terminal';
 import { authoredSpace } from '../runs/expectations';
@@ -161,6 +161,16 @@ export interface Visitor {
   membersAt?: (route: string) => boolean;
 }
 
+/** What a page command says of a path no page of the space answers: its not-found page was what it read. */
+export const noPageNote = async (root: string, route: string): Promise<string | undefined> => {
+  const authored = await authoredSpace(root);
+  if (authored === undefined || !noPageAt(authored, route.split(/[?#]/)[0])) {
+    return undefined;
+  }
+
+  return `· ${route} is no page of the space — what was read is its not-found page: plitzi space overview names its pages`;
+};
+
 /** Whether the authored space reads `route` as its members' page: what a visitor of a page command signs in for. */
 export const readsAsMember = (authored: { schema: Schema; handles: SpaceHandles }, route: string): boolean => {
   const id = pageFor(authored, route);
@@ -276,7 +286,7 @@ export const openVisit = async (
       };
     }
   }, PASSED_KEY);
-  const answered = (await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS })) !== null;
+  const answered = (await openPage(page, `${origin}${route}`, projectSettling(page))) !== null;
   if (!answered) {
     return { page, answered };
   }

@@ -1,7 +1,7 @@
 import { loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
-import { openOtherPage, paintedScheme, PROJECT_QUIET_MS } from '../../browser';
+import { openOtherPage, paintedScheme, projectSettling } from '../../browser';
 import { saySignedIn, sentElsewhere, signInWhereSent } from '../check';
 import { prepareVisit } from '../visit';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
@@ -387,7 +387,7 @@ export const pictureOf = async (
   const open = (): Promise<unknown> =>
     view.fromLoad
       ? page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null)
-      : openPage(page, url, origin ? { quietMs: PROJECT_QUIET_MS } : {});
+      : openPage(page, url, origin ? projectSettling(page) : {});
   // Another site may be slow to wake (a cold CDN): asked again once before it is said not to answer.
   const answered = (await open()) ?? (origin ? null : await open());
   if (!answered) {

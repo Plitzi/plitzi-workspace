@@ -21,6 +21,8 @@ export interface OpenPageOptions {
   quietMs?: number;
   /** The longest it waits for that quiet, after the page loaded — then it goes on anyway. 15 s. */
   timeout?: number;
+  /** A request left unanswered on purpose — held to read the page while it waits: never waited for. */
+  held?: (request: SettlingRequest) => boolean;
 }
 
 /**
@@ -55,12 +57,12 @@ const forLater = (request: SettlingRequest): boolean => {
 export const openPage = async (
   page: SettlingPage,
   url: string,
-  { quietMs = 500, timeout = 15_000 }: OpenPageOptions = {}
+  { quietMs = 500, timeout = 15_000, held }: OpenPageOptions = {}
 ): Promise<unknown> => {
   const open = new Set<SettlingRequest>();
   let lastChange = Date.now();
   const started = (request: SettlingRequest) => {
-    if (!staysOpen(request) && !forLater(request)) {
+    if (!staysOpen(request) && !forLater(request) && held?.(request) !== true) {
       open.add(request);
       lastChange = Date.now();
     }

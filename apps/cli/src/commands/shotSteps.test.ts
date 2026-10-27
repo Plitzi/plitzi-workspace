@@ -89,7 +89,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, action, as, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, source, clock, tick, action, as, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -110,7 +110,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, clock, tick, action, as, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, source, clock, tick, action, as, shot, frames, separated by ";"'
     });
   });
 
@@ -140,6 +140,15 @@ describe('the steps that set what a page remembers and what time it is', () => {
       { kind: 'tick', ms: 300_000 },
       { kind: 'tick', ms: 1500 }
     ]);
+  });
+
+  // A designer approved a list it had only seen empty: nothing put a provider's answer on the page.
+  it('reads a provider’s answer written where it keeps it, and refuses one with no value', () => {
+    expect(parseSteps(`source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`, 500)).toEqual([
+      { kind: 'source', key: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] }
+    ]);
+    const problem = parseSteps('source apiContainer_chart.clapped', 500);
+    expect('problem' in problem ? problem.problem : '').toContain("source needs a source's path");
   });
 
   it('refuses each written wrong, saying how it is written', () => {

@@ -653,6 +653,29 @@ describe('what the lead is told, as manager', () => {
     expect((await nextTask(bench.agent('test-1'), runId, 'tester')).review?.task.id).toBe('t-menu');
   });
 
+  // A run's one tester reviewed card after card, read as free, and a review waited 33 minutes with nothing said.
+  it('says a review queued behind a tester at another review — and that one more is the person’s to allow', async () => {
+    await bench.writeTeam(team({ name: 'test', roles: ['tester'], count: 1 }));
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    for (const [agent, id, file] of [
+      ['agent-1', 't-menu', 'src/space/pages/menu.ts'],
+      ['agent-2', 't-home', 'src/space/pages/home/index.ts']
+    ] as const) {
+      const taken = await take(agent, id);
+      await writeInCopy(taken.work, file, 'export const page = {};\n');
+      await completeTask(taken.ctx, runId, id);
+    }
+    await takeNext(bench.agent('test-1'), runId, 'tester');
+    bench.advance(10 * 60_000);
+
+    const loaded = await loadRun(lead(), runId);
+    const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+    const started = startedAgents((await readTeam(bench.root)) ?? team());
+    const waits = bottlenecks(views, started, bench.now()).find(each => each.kind === 'review-waits');
+    expect(waits?.text).toMatch(/every reviewer of it busy \(test-1 at t-(menu|home)\)/);
+    expect(waits?.text).toContain("one more is the person's to allow");
+  });
+
   // The CLI's sanity run: its on-demand scout read "on demand" and nothing of the research card waiting for it.
   it('names in run plan each agent’s work — its cards, the steps it reviews, a scout’s research — on demand too', async () => {
     const members = team(TESTERS, { ...SCOUT, min: 0 });

@@ -8,6 +8,7 @@ import { SERVED_STATUSES } from '../preview';
 import { RunRefusal } from '../refusal';
 import { loadRun } from '../run';
 import { viewTask } from '../taskStore';
+import { linesOf } from './checkBefore';
 import { findTask } from './common';
 
 import type { AcceptanceResult } from '../model';
@@ -35,6 +36,21 @@ export interface LineMutated {
   mutant: AcceptanceResult;
 }
 
+/**
+ * Where the file writes `wanted` with other spaces — `"skipped": true` for `"skipped":true`: its own text, to quote. A
+ * tester's mutant of a data file was refused, the file laid out one row a line with spaces its generator never wrote.
+ */
+const asWritten = (text: string, wanted: string): string | undefined => {
+  const chars = wanted.replace(/\s+/g, '').match(/./gsu) ?? [];
+  if (chars.length === 0) {
+    return undefined;
+  }
+
+  const pattern = new RegExp(chars.map(char => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*'));
+
+  return pattern.exec(text)?.[0];
+};
+
 /** The mutation said back, checked: a file of the project's source, and the text to change found once in it. */
 const mutated = (text: string, mutation: Mutation): string => {
   if (mutation.from === '') {
@@ -46,12 +62,25 @@ const mutated = (text: string, mutation: Mutation): string => {
   }
 
   const times = text.split(mutation.from).length - 1;
-  if (times !== 1) {
+  if (times > 1) {
+    // Each place said, its line whole: a tester quoted more of the line twice before one named a single place.
+    const lines = text.split('\n');
+    const places = lines.flatMap((line, index) =>
+      line.includes(mutation.from) ? [`line ${String(index + 1)}: ${line.trim()}`] : []
+    );
     throw new RunRefusal(
       'invalid',
-      times === 0
+      `${mutation.file} has "${mutation.from}" ${String(times)} times — ${places.join(' · ')} — quote more of the one you mean`
+    );
+  }
+
+  if (times === 0) {
+    const written = asWritten(text, mutation.from);
+    throw new RunRefusal(
+      'invalid',
+      written === undefined
         ? `${mutation.file} has no "${mutation.from}": quote it as the file writes it — spaces and quotes too`
-        : `${mutation.file} has "${mutation.from}" ${String(times)} times: quote more of the line, so it names one place`
+        : `${mutation.file} has no "${mutation.from}" — it writes it "${written}": quote that`
     );
   }
 
@@ -63,10 +92,12 @@ export const checkMutant = async (
   runId: string,
   taskId: string,
   /** One change or several — a behaviour the code holds in two places breaks only with both changed. */
-  mutations: readonly Mutation[]
+  mutations: readonly Mutation[],
+  /** The acceptance's lines to run, by their place (1 the first): all of them when left out. */
+  only: readonly number[] = []
 ): Promise<{ task: string; mutations: Mutation[]; lines: LineMutated[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-  const task = findTask(loaded, taskId);
+  const task = linesOf(findTask(loaded, taskId), only);
   const view = await viewTask(loaded.paths, task);
   if (!SERVED_STATUSES.includes(view.state.status)) {
     throw new RunRefusal(
@@ -85,7 +116,10 @@ export const checkMutant = async (
   }
 
   if (mutations.length === 0) {
-    throw new RunRefusal('invalid', 'A mutant is a change at least: plitzi task check <task> --mutate <file> --from "…" --to "…"');
+    throw new RunRefusal(
+      'invalid',
+      'A mutant is a change at least: plitzi task check <task> --mutate <file> --from "…" --to "…"'
+    );
   }
 
   // Each change on the text the ones before it left: two in one file are made one after the other.
@@ -149,12 +183,29 @@ export const checkMutant = async (
   }
 };
 
-/** What a line says of the mutant: it catches it, lets it pass, fails already on the copy, or could not answer. */
-export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'unanswered' =>
+/**
+ * A mutant that does not run — a name it does not define, a type it breaks, a syntax error: its failure is its own, and
+ * proves nothing a test holds (a tester's mutant naming no defined name read "fails on the mutant: it holds it").
+ */
+const BROKEN = /\b(?:ReferenceError|SyntaxError|TypeError: \S+ is not a function)\b|error TS\d+:/;
+
+/** The lines a failure names its tests by: node's `✖ name`, TAP's `not ok`, Playwright's and vitest's `✘`/`×`/`FAIL`. */
+const FAILED_TEST = /^\s*(?:✖|✘|×|not ok\b|FAIL\b|\d+\) )/;
+
+/** What of a failure says which test failed, before its last lines: a tester could not tell which test caught it. */
+export const failedTests = (output: readonly string[]): string[] => output.filter(line => FAILED_TEST.test(line));
+
+/**
+ * What a line says of the mutant: it catches it, lets it pass, fails already on the copy, breaks — the mutant does not
+ * run — or could not answer.
+ */
+export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'broken' | 'unanswered' =>
   line.copy.unanswered === true || line.mutant.unanswered === true
     ? 'unanswered'
     : !line.copy.ok
       ? 'fails'
       : line.mutant.ok
         ? 'misses'
-        : 'catches';
+        : (line.mutant.output ?? []).some(each => BROKEN.test(each))
+          ? 'broken'
+          : 'catches';

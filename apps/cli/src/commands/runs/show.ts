@@ -132,6 +132,13 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
               )
             ]
           : []),
+        ...(shown.unwritten
+          ? [
+              chalk.yellow(
+                `  ⚠ Its card names ${list(shown.unwritten)}, which its work did not write — what it wrote instead is above`
+              )
+            ]
+          : []),
         ...outsideLines(shown),
         ...shown.files.flatMap(each =>
           each.binary

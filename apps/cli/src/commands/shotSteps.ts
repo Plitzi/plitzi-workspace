@@ -19,6 +19,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *   goto <path>              another page of the site opened in the same tab: what holds across pages
  *   store <key> <value>      a value put in the page's localStorage, as an earlier visit left it — then `reload`
  *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
+ *   source <path> <json>     a provider's answer, or a path in it, written where it keeps it — a list seen filled:
+ *                            source apiContainer_chart.clapped '[{"title":"x"}]' (development pages; until it answers again)
  *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
  *   tick <duration>          the page's clock moved on, its timers run (needs `--clock`): 90s, 5m, 2h, 1500
  *   action <id> [json]       one of the space's actions run as the page's visitor, through its /_action — the
@@ -50,6 +52,7 @@ export type PageStep =
   | { kind: 'goto'; path: string }
   | { kind: 'store'; key: string; value: string }
   | { kind: 'state'; key: string; value: unknown }
+  | { kind: 'source'; key: string; value: unknown }
   | { kind: 'clock'; time: number }
   | { kind: 'tick'; ms: number }
   | { kind: 'action'; action: string; input: Record<string, unknown> };
@@ -75,6 +78,7 @@ const STEP_NAMES = [
   'goto',
   'store',
   'state',
+  'source',
   'clock',
   'tick',
   'action',
@@ -336,7 +340,8 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         steps.push({ kind: 'store', key, value: unquoted(value.join(' ')) });
         break;
       }
-      case 'state': {
+      case 'state':
+      case 'source': {
         const [key, ...value] = rest;
         // Wrapped in single quotes as a shell writes it — `state show '{"id":"x"}'` — the JSON is what is inside.
         const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
@@ -345,15 +350,23 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
           parsed = JSON.parse(written);
         } catch {
           return {
-            problem: `${at}: state needs a key and its value as JSON — got ${written === '' ? 'none' : written}: a text in double quotes (state dismissed "show-1"), true, 3, or an object (state show '{"title":"Late set"}')`
+            problem:
+              name === 'state'
+                ? `${at}: state needs a key and its value as JSON — got ${written === '' ? 'none' : written}: a text in double quotes (state dismissed "show-1"), true, 3, or an object (state show '{"title":"Late set"}')`
+                : `${at}: source needs a source's path and its value as JSON — got ${written === '' ? 'none' : written}: source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`
           };
         }
 
         if (!key) {
-          return { problem: `${at}: state needs a key and its value as JSON — state roomOpen true` };
+          return {
+            problem:
+              name === 'state'
+                ? `${at}: state needs a key and its value as JSON — state roomOpen true`
+                : `${at}: source needs a source's path and its value as JSON — source apiContainer_chart.isEmpty false`
+          };
         }
 
-        steps.push({ kind: 'state', key, value: parsed });
+        steps.push({ kind: name, key, value: parsed });
         break;
       }
       case 'action': {

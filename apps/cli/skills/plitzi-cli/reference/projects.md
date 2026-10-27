@@ -30,7 +30,7 @@ What a project gives you, so you use it rather than rebuild it:
 it shows, whether it takes a press — where a step took the page (`→ <path>`), what an action answered (`←`), a list's
 row by `<el>:2` or `<el>:last`. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check`, `measure` and `page outline` play `--steps` before they read.
 
-Every page command reads as one visitor: a page that sends a guest away as the project's account (`PLITZI_CHECK_USER`), said — `--as <user>` another, `--guest` a guest; `--timezone <IANA>` (its hours there), `--presence` (takes part in its channels), and a browser that refuses: `--clock <instant>`, `--block <text>`, `--autoplay refused`, `--storage refused`.
+Every page command reads as one visitor: a page that sends a guest away as the project's account (`PLITZI_CHECK_USER`), said — `--as <user>` another, `--guest` a guest; `--timezone <IANA>` (its hours there), `--presence` (takes part in its channels), and a browser that refuses: `--clock <instant>`, `--block <text>` (fails), `--hold <text>` (never answered: a loading state, a held load), `--autoplay refused`, `--storage refused`.
 
 **Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
 `shot` and `verify`, with the scheme it answers on (`https` once it serves a certificate; the local one is accepted on

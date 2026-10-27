@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { askStandings } from './askStandings';
+import { QUIET_ADVICE } from './bottlenecks';
 import { readJson, writeJson } from './files';
 import { FOLLOW_MS } from '../options';
 import { launchAsked } from './keeper';
@@ -32,6 +33,8 @@ export interface LeadItem {
   message?: string;
   /** A message only to know that the lead decides on all the same — a standing its agent answered: it wakes the lead. */
   wakes?: true;
+  /** Advice that waits for the lead's next wake (`QUIET_ADVICE`): said with what wakes it, or as the watch ends. */
+  quiet?: true;
 }
 
 export interface LeadNews {
@@ -105,9 +108,17 @@ export const leadItems = (view: RunView): LeadItem[] => [
             : `${item.kind}:${item.task ?? ''}:${item.text}`,
       text: item.text,
       ...(item.fyi && item.message ? { message: item.message } : {}),
-      ...(item.decide ? { wakes: true as const } : {})
+      ...(item.decide ? { wakes: true as const } : {}),
+      ...(QUIET_ADVICE.includes(item.kind) ? { quiet: true as const } : {})
     }))
 ];
+
+/**
+ * Whether an item wakes the lead: what needs it does — a standing answered too, which it decides on — and what is only to
+ * know (a note) or advice that waits (`QUIET_ADVICE`) comes with it, or as the watch ends.
+ */
+export const wakesLead = (item: LeadItem): boolean =>
+  item.wakes === true || (item.message === undefined && item.quiet !== true);
 
 const isKeys = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');
@@ -233,8 +244,7 @@ const waitWatched = async (
     // three times for notes, each turn reading its whole context again.
     const over = Date.now() - started >= timeoutMs;
     // A standing answered is the lead's to decide on: a run's came as a note and waited for the watch's end.
-    const wakes = (item: LeadItem): boolean => item.message === undefined || item.wakes === true;
-    if (fresh.some(wakes) || (over && fresh.length > 0)) {
+    if (fresh.some(wakesLead) || (over && fresh.length > 0)) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
       // stays no longer).
@@ -252,7 +262,7 @@ const waitWatched = async (
         }
       }
 
-      return { fresh, view, ...(fresh.some(wakes) ? {} : { timedOut: true as const }) };
+      return { fresh, view, ...(fresh.some(wakesLead) ? {} : { timedOut: true as const }) };
     }
 
     if (over) {

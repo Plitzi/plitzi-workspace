@@ -125,7 +125,7 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
     review.precision
       ? `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`
       : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review: plitzi task show ${review.task.id}`,
-    `  Send it back only for what its title and acceptance cover — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
+    `  Send it back only for what its title, acceptance and brief ask — what was found for it, a 'do X, not Y' — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
     ...review.accepted.map(
       result => `    ${result.ok ? chalk.green('✓') : chalk.red('✗')} ${result.said}  ${chalk.dim(`[${result.check}]`)}`

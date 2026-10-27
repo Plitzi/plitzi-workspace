@@ -41,7 +41,7 @@ export {
   signInWhereSent
 } from './account';
 export type { Account, SignedInWhereSent } from './account';
-export { isNotFoundPage, notShownInPage, pageFor, staticPaths } from './space';
+export { isNotFoundPage, noPageAt, notShownInPage, pageFor, staticPaths } from './space';
 export { contestedStylesInPage, contestedText, inertText } from './styles';
 export {
   listenForRefusedFieldsInPage,

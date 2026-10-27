@@ -64,7 +64,7 @@ export const doingOf = (task: TaskLine): string => {
 
   switch (task.status) {
     case 'in-review':
-      return `reviews ${task.id}${task.review ? ` — its ${task.review.role}'s step` : ''}`;
+      return `reviews ${task.id}${task.step ? ` — ${task.step}` : task.review ? ` — its ${task.review.role}'s step` : ''}`;
     case 'changes-requested':
       return `redoes ${task.id} (round ${String(task.round)})`;
     case 'waiting':
@@ -72,6 +72,6 @@ export const doingOf = (task: TaskLine): string => {
     case 'blocked':
       return `${task.id} blocked`;
     default:
-      return `writes ${task.id}${task.step ? ` — ${task.step}` : ''}`;
+      return `${task.spike !== undefined ? 'finds out' : 'writes'} ${task.id}${task.step ? ` — ${task.step}` : ''}`;
   }
 };

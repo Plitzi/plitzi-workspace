@@ -111,6 +111,7 @@ const isStep = (value: unknown): value is ActingStep => {
     case 'store':
       return typeof value.key === 'string' && typeof value.value === 'string';
     case 'state':
+    case 'source':
       return typeof value.key === 'string' && 'value' in value;
     case 'clock':
       return typeof value.time === 'number';

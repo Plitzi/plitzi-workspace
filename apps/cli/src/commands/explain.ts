@@ -15,6 +15,7 @@ import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
 import { apiDeclarations, apiIndex, apiText, memberDeclarations } from './apiDeclarations';
 import { findProject } from './existingProject';
+import { actionText, projectActions } from './projectActions';
 import { pluginText, projectPlugins } from './projectPlugins';
 import { serverTasks, serverTaskText } from './serverTasks';
 import { skillPassages, skillsMentions } from './skillsMentions';
@@ -332,6 +333,16 @@ export const explainCommand = async (
       return;
     }
 
+    // An action of the project's own, by its id: what runs it, with what input, its steps — a run's designer read the
+    // project's data and functions by hand to find who may run `host-close`.
+    const actions = project ? await projectActions(project.root) : { actions: [] };
+    const action = 'actions' in actions ? actions.actions.find(each => each.id === name) : undefined;
+    if (action) {
+      console.log(options.json ? JSON.stringify([action]) : actionText(action));
+
+      return;
+    }
+
     // A setting of the whole space (`settings.keepState`): said as one, with where the skills teach it — a run's
     // `explain keepState` was "no name", three times.
     if ((SCHEMA_SETTINGS as readonly string[]).includes(name)) {
@@ -369,6 +380,9 @@ export const explainCommand = async (
           ? JSON.stringify({ name, unknown: true, described })
           : [
               chalk.yellow(`"${name}" is no name Plitzi has — what the words describe:`),
+              ...('problem' in actions
+                ? [chalk.dim(`  (the project's actions could not be read: ${actions.problem})`)]
+                : []),
               ...described.map(hit => `${hit.name.padEnd(36)} ${chalk.dim(`${hit.kind} — ${hit.summary}`)}`),
               chalk.dim(
                 `Each said whole: plitzi explain <name>${/\s/.test(wordsOfName(name)) ? `; more: plitzi explain "${wordsOfName(name)}"` : ''}`
@@ -381,7 +395,8 @@ export const explainCommand = async (
 
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, nor an export of a @plitzi package installed here, and no passage of the skills says it. See what there is: --list ${kinds}, tasks.`,
+        `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, no action of the project, nor an export of a @plitzi package installed here, and no passage of the skills says it. See what there is: --list ${kinds}, tasks.`,
+        ...('problem' in actions ? [`The project's actions could not be read: ${actions.problem}`] : []),
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

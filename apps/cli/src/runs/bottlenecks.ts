@@ -37,6 +37,13 @@ const heldIn = (view: TaskView): string | undefined =>
 export const ADVICE_KINDS = ['review-waits', 'held-up', 'slow-review', 'spikes', 'idle-team'] as const;
 
 /**
+ * The advice that waits for the lead's next wake, never wakes it: what the team could take on more — a task held
+ * behind another, an agent with nothing to take. A run's lead was woken at each approval for one idle developer, and
+ * three times for dependencies that were real by what the tasks read, each a turn of its own.
+ */
+export const QUIET_ADVICE: readonly Attention['kind'][] = ['held-up', 'idle-team'];
+
+/**
  * What holds the run's work back that only the lead can free: reviews none of whose reviewers is free to take, and a
  * task that could start held behind others in review while agents of its role have nothing to take — each with the way
  * out.
@@ -61,6 +68,12 @@ export const bottlenecks = (
   const approvedIds = new Set(views.filter(view => view.state.status === 'done').map(view => view.task.id));
   const atOwn = (agent: string): string | undefined =>
     views.find(view => view.owner?.agent === agent && isWorked(view.state.status))?.task.id;
+  // Busy at a task of its own, or at another card's review: a run's one tester, reviewing card after card, read as free,
+  // and a review waited 33 minutes with nothing said.
+  const busyAt = (agent: string, except?: string): string | undefined =>
+    atOwn(agent) ??
+    views.find(view => view.task.id !== except && view.state.review?.by === agent && view.state.status === 'in-review')
+      ?.task.id;
   // A step nobody took past its queue's time, every one of its reviewers at a task of its own: the run waits on it — the
   // lead starts another of the role, or says it itself.
   const reviewTeam = reviewTeamOfAgents(team);
@@ -73,14 +86,22 @@ export const bottlenecks = (
 
     const reviewers = stepReviewers(view, views, role, reviewTeam).filter(agent => agent !== LEAD);
 
-    return reviewers.length > 0 && reviewers.every(agent => atOwn(agent) !== undefined)
+    return reviewers.length > 0 && reviewers.every(agent => busyAt(agent, view.task.id) !== undefined)
       ? [{ view, role, reviewers }]
       : [];
   });
   if (waiting.length > 0) {
+    const roles = [...new Set(waiting.map(each => each.role))];
+    // Another of the role the run may start — on demand, not running: the keeper starts it. None left: the team is at
+    // its most, which only the person moves.
+    const atMost = roles.every(role => team.every(each => !each.roles.includes(role) || started.includes(each)));
     found.push({
       kind: 'review-waits',
-      text: `${waiting.map(each => `${each.view.task.id} (its ${each.role}'s review)`).join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} past ${String(REVIEW_QUEUE_MS / 60_000)} min, every reviewer of ${waiting.length === 1 ? 'it' : 'them'} at a task of its own (${[...new Set(waiting.flatMap(each => each.reviewers))].map(agent => `${agent} at ${String(atOwn(agent))}`).join(', ')}): start another (team.json) — or decide ${waiting.length === 1 ? 'it' : 'them'} yourself: plitzi task look ${waiting[0]?.view.task.id ?? '<task>'}, then plitzi task review <task> --approve | --changes "…"`,
+      text: `${waiting.map(each => `${each.view.task.id} (its ${each.role}'s review)`).join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} past ${String(REVIEW_QUEUE_MS / 60_000)} min, every reviewer of ${waiting.length === 1 ? 'it' : 'them'} busy (${[...new Set(waiting.flatMap(each => each.reviewers))].map(agent => `${agent} at ${String(busyAt(agent))}`).join(', ')}): ${
+        atMost
+          ? `the team has no other ${roles.join(' or ')} — one more is the person's to allow: ask them (plitzi run team set <entry> --count <n>, in their terminal)`
+          : 'another is started as the team allows'
+      } — or decide ${waiting.length === 1 ? 'it' : 'them'} yourself: plitzi task look ${waiting[0]?.view.task.id ?? '<task>'}, then plitzi task review <task> --approve | --changes "…"`,
       who: 'lead'
     });
   }
@@ -243,8 +264,8 @@ export const idleTeam = (
   return [
     {
       kind: 'idle-team',
-      // Said again only when other agents go idle or a card is done, not when the advice's words change.
-      subject: `${names.join(',')}:${String(views.filter(view => view.state.status === 'done').length)}`,
+      // Said again only when other agents go idle, not when a card is done or the advice's words change.
+      subject: names.join(','),
       text: `${names.join(', ')} ${names.length === 1 ? 'has' : 'have'} nothing to take — keep the board ahead of the team: ${
         ways.length > 0
           ? ways.join('; or ')

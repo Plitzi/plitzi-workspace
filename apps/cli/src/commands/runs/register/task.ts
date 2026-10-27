@@ -283,6 +283,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...MUTATE_OPTIONS[0])
     .option(...MUTATE_OPTIONS[1])
     .option(...MUTATE_OPTIONS[2])
+    .option(...MUTATE_OPTIONS[3])
     .argument('[task]', 'With --before or --mutate: the task to check — a review’s — your own when left out')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)

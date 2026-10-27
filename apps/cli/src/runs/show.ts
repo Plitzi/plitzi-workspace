@@ -61,6 +61,11 @@ export interface TaskShown {
   from: 'submitted' | 'copy' | 'run' | 'none';
   /** In review, what its copy holds that did not go to review: shown as not part of it. */
   notReviewed?: string[];
+  /**
+   * The files its card names that its work did not write, once it went to review: a tests card named two test files
+   * and wrote a third, and a reviewer saw it only by setting the two lists side by side.
+   */
+  unwritten?: string[];
   files: ShownFile[];
   /** What `complete` found: passed, or a failure it went to review with and who fixes it. */
   checks: 'passed' | 'not-run' | { knownFailure: KnownFailure };
@@ -277,6 +282,11 @@ export const showTask = async (
   );
 
   const notReviewed = submitted ? await notReviewedIn(ctx, runId, taskId) : [];
+  const written = new Set(changed);
+  const unwritten =
+    view.state.status === 'in-review' || view.state.status === 'done'
+      ? task.files.filter(file => !written.has(file))
+      : [];
 
   return {
     task,
@@ -286,6 +296,7 @@ export const showTask = async (
     from,
     files,
     ...(notReviewed.length > 0 ? { notReviewed } : {}),
+    ...(unwritten.length > 0 ? { unwritten } : {}),
     checks: knownFailure ? { knownFailure } : changed.length > 0 ? 'passed' : 'not-run',
     ...(view.state.accepted ? { accepted: view.state.accepted } : {}),
     ...(view.state.warnings ? { warnings: view.state.warnings } : {}),

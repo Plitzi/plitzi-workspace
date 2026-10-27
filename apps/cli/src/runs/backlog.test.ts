@@ -9,6 +9,7 @@ describe('a task that names a backlog item', () => {
     const task = (id: string, title: string, closes?: string[]) => ({
       id,
       title,
+      files: ['visual/listen.spec.ts'],
       acceptance: [{ said: 'The spec passes traced', check: 'npx playwright test visual/listen.spec.ts' }],
       ...(closes ? { closes } : {})
     });
@@ -27,5 +28,18 @@ describe('a task that names a backlog item', () => {
       't-listen names b-36 and does not close it: add it to its "closes" — closed when the run is applied — or leave it out of its words',
       't-shows names b-37 and does not close it: add it to its "closes" — closed when the run is applied — or leave it out of its words'
     ]);
+  });
+
+  // A plan of research cards naming the items they look into was refused: their tasks are what close them.
+  it('lets research name the items it looks into', () => {
+    const research = {
+      id: 's-plate',
+      title: 'The plate without its workaround (b-38)',
+      files: [],
+      spike: 'which part of b-38 goes',
+      acceptance: ['Proposes one task that closes b-38']
+    };
+
+    expect(namedNotClosed([research], new Set(['b-38']))).toEqual([]);
   });
 });

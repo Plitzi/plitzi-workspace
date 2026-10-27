@@ -19,7 +19,7 @@ import { isNotFoundPage, markedIn, meantPage, noPageMessage, notShown, pageFor, 
 import { statusIssuesOf } from './status';
 import { elementStyles } from './styles';
 import { faintTexts, textGrounds } from './themes';
-import { PROJECT_QUIET_MS } from '../../browser';
+import { projectSettling } from '../../browser';
 import { playedOn } from '../shot/steps';
 import { prepareVisit } from '../visit';
 
@@ -622,7 +622,7 @@ export const checkAt = async (
   }
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
-  const answered = await openPage(page, `${origin}${pathname}`, { quietMs: PROJECT_QUIET_MS });
+  const answered = await openPage(page, `${origin}${pathname}`, projectSettling(page));
   if (!answered) {
     return uncheckedHere({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width });
   }

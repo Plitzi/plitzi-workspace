@@ -13,7 +13,7 @@ import { putIn, copiesOf, stateText } from './measureState';
 import { comparedText, keptText, matchesNote, readingText } from './measureText';
 import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { fail, unanswered, UNANSWERED_EXIT } from './terminal';
-import { openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf, zoneNote } from './visit';
+import { noPageNote, openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf, zoneNote } from './visit';
 import { keptMeasure } from '../browser/keptBrowser';
 import { originHere } from '../runs/copyServer';
 import { authoredHandles } from '../runs/expectations';
@@ -419,6 +419,17 @@ export const saidOnce = (readings: readonly Reading[]): Reading[] => {
   }));
 };
 
+/**
+ * Lines said once each, with how many times they came: a step that failed is the same failure for every element read
+ * after it — a run's designer read one failed action four times a width.
+ */
+export const onceEach = (lines: readonly string[]): string[] => {
+  const counts = new Map<string, number>();
+  lines.forEach(line => counts.set(line, (counts.get(line) ?? 0) + 1));
+
+  return [...counts].map(([line, count]) => (count > 1 ? `${line} (×${String(count)})` : line));
+};
+
 export const measure = async (route: string, elements: string[], options: MeasureOptions): Promise<void> => {
   const project = await projectHere('whose page to measure');
   if (!project) {
@@ -562,6 +573,7 @@ export const measure = async (route: string, elements: string[], options: Measur
     );
     const widths = options.width ?? [1440];
     const kept = target ? keptText(readings, now) : undefined;
+    const noPage = await noPageNote(project.root, route);
     console.log(
       options.json
         ? JSON.stringify({
@@ -598,22 +610,25 @@ export const measure = async (route: string, elements: string[], options: Measur
             chalk.dim(
               `Read at ${widths.map(width => `${String(width)}×${String(VIEW_HEIGHT)}`).join(', ')} — x from the viewport's left, y from the page's top`
             ),
-            ...[zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now))].flatMap(
-              note => (note === undefined ? [] : [chalk.dim(note)])
-            ),
+            ...[
+              zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now)),
+              noPage
+            ].flatMap(note => (note === undefined ? [] : [chalk.dim(note)])),
             ...widths.flatMap(width => [
               ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
-              ...shownReadings
-                .filter(reading => reading.width === width)
-                .map(reading =>
-                  readingText(
-                    reading,
-                    options.same,
-                    now,
-                    kept !== undefined,
-                    options.all === true || options.only !== undefined
+              ...onceEach(
+                shownReadings
+                  .filter(reading => reading.width === width)
+                  .map(reading =>
+                    readingText(
+                      reading,
+                      options.same,
+                      now,
+                      kept !== undefined,
+                      options.all === true || options.only !== undefined
+                    )
                   )
-                )
+              )
             ])
           ].join('\n')
     );

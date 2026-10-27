@@ -159,6 +159,14 @@ export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; ton
   'no-signal': { glyph: '●', label: 'no signal', tone: 'danger' }
 };
 
+/** The verb an agent at work is said by: a scout finds out, every other writes. */
+export const liveVerb = (agent: Pick<AgentLine, 'status' | 'roles' | 'task'>): string =>
+  agent.task === undefined && agent.status === 'working'
+    ? 'Working'
+    : agent.status === 'working' && agent.roles.includes('scout')
+      ? 'Finding out'
+      : (LIVE_VERB[agent.status] ?? '');
+
 /** An agent's state as the live line says it: the verb at its head, shimmering while it is so. */
 export const LIVE_VERB: Partial<Record<AgentStatus, string>> = {
   working: 'Writing',

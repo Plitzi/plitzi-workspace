@@ -39,6 +39,39 @@ describe('page same', () => {
     expect(firstDifference([at('02:52')], [at('02:53', '0,0,160x20')])?.wordsOnly).toBeUndefined();
   });
 
+  // A look named only `explore-body 763→780` — what held the change, not what grew in it — and its tester could not
+  // tell the two servers' data from the task.
+  it('names the innermost element inside the first that differs too: what grew in it', () => {
+    const el = (name: string, depth: number, box: string, words = '') => ({
+      tag: 'div',
+      name,
+      depth: String(depth),
+      box,
+      words
+    });
+    const page = (rows: number, words: string) => [
+      el('explore-body', 1, `0,0,1440x${String(763 + rows)}`),
+      el('heading', 2, '0,0,1440x40', 'Rooms'),
+      el('room-list', 2, `0,40,1440x${String(700 + rows)}`),
+      el('room-1', 3, '0,0,1440x100'),
+      el('room-2', 3, `0,100,1440x${String(100 + rows)}`),
+      el('room-2-note', 4, `0,60,1440x${String(20 + rows)}`, words),
+      el('room-3', 3, `0,${String(200 + rows)},1440x100`),
+      el('footer', 1, '0,800,1440x40')
+    ];
+    const grew = firstDifference(page(17, 'Starts in 2 min — and goes on'), page(0, 'Starts in 2 min'));
+
+    expect(grew?.element).toBe('explore-body');
+    expect(grew?.inside).toEqual({
+      element: 'room-2-note',
+      changed: [
+        { field: 'box', here: '0,60,1440x37', there: '0,60,1440x20' },
+        { field: 'words', here: 'Starts in 2 min — and goes on', there: 'Starts in 2 min' }
+      ]
+    });
+    expect(grew && differenceText(grew)).toContain('— inside it, room-2-note: box 0,60,1440x20 → 0,60,1440x37');
+  });
+
   it('reads each element’s name and words, and what its ::before draws', () => {
     document.body.innerHTML = '<section data-plitzi-el="fights"><span data-plitzi-el="vs">VS</span></section>';
     // jsdom lays nothing out: every element is given a box, as a browser would.

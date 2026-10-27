@@ -4,7 +4,7 @@ import { taskSeeStage } from './seeStage';
 import { act, either } from './shell';
 import { taskCheck } from './work';
 import { RunRefusal } from '../../runs/refusal';
-import { caughtBy, checkBefore, checkMutant, noTestBefore, provedBy } from '../../runs/tasks';
+import { caughtBy, checkBefore, checkMutant, failedTests, noTestBefore, provedBy } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { LineBeforeAfter, LineMutated, Mutation } from '../../runs/tasks';
@@ -19,7 +19,12 @@ export type CheckCommandOptions = RunCommandOptions & {
   mutate?: string[];
   from?: string[];
   to?: string[];
+  /** `--line <n>`: the acceptance lines --before or --mutate runs, by their place — each said again. */
+  line?: string[];
 };
+
+/** The places `--line` named, as numbers: one that is not is said as it is, and refused by the task's lines. */
+const linesAsked = (options: CheckCommandOptions): number[] => (options.line ?? []).map(Number);
 
 /** `plitzi task check`: your copy's checks, a research card's stage (`--tasks`), or a task beside the run before it. */
 export const taskCheckCommand = (named: string | undefined, options: CheckCommandOptions): Promise<void> => {
@@ -55,7 +60,7 @@ const taskCheckBefore = (named: string | undefined, options: CheckCommandOptions
 
       const { runId, taskId } = await either(ctx, options, named);
 
-      return checkBefore(ctx, runId, taskId);
+      return checkBefore(ctx, runId, taskId, linesAsked(options));
     },
     ({ task, lines, without }) => checkBeforeText(task, lines, without)
   );
@@ -75,7 +80,7 @@ export const checkBeforeText = (
       proved === 'proves'
         ? `${chalk.green('✓')} ${line.said} — fails before ${task}, passes with it: it proves the change`
         : proved === 'proves-nothing'
-          ? `${chalk.yellow('·')} ${line.said} — passes before ${task} too: it proves nothing of the change`
+          ? `${chalk.yellow('·')} ${line.said} — passes before ${task} too: it holds what was there already (a guard, as it may be meant), not the change`
           : proved === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails with ${task}${line.before.ok ? ', where it passed before it' : ', as before it'}`
             : noTestBefore(line)
@@ -130,7 +135,8 @@ const taskCheckMutant = (named: string | undefined, options: CheckCommandOptions
         ctx,
         runId,
         taskId,
-        files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' }))
+        files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' })),
+        linesAsked(options)
       );
     },
     ({ task, mutations, lines }) => checkMutantText(task, mutations, lines),
@@ -152,18 +158,26 @@ export const checkMutantText = (
           ? `${chalk.yellow('·')} ${line.said} — passes on the mutant too: what it breaks goes unseen by this line`
           : caught === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails on ${task}'s copy already: it says nothing of the mutant`
-            : `${chalk.yellow('?')} ${line.said} — could not be answered on the ${line.copy.unanswered === true ? 'copy' : 'mutant'}: the line's or the machine's`;
-    const output = caught === 'catches' ? line.mutant.output : caught === 'fails' ? line.copy.output : undefined;
+            : caught === 'broken'
+              ? `${chalk.yellow('?')} ${line.said} — the mutant does not run (an error of its own, not a test's): it proves nothing — change the code so it still runs`
+              : `${chalk.yellow('?')} ${line.said} — could not be answered on the ${line.copy.unanswered === true ? 'copy' : 'mutant'}: the line's or the machine's`;
+    const output =
+      caught === 'catches' || caught === 'broken'
+        ? line.mutant.output
+        : caught === 'fails'
+          ? line.copy.output
+          : undefined;
+    // Which test failed first, then its last lines: a tester could not tell the new test from an older one.
+    const shown =
+      output === undefined
+        ? []
+        : [...new Set([...failedTests(output).slice(0, LAST_LINES), ...output.slice(-LAST_LINES)])];
 
     return [
       `  ${head}`,
-      ...(output === undefined || output.length === 0
+      ...(shown.length === 0
         ? []
-        : [
-            chalk.dim(
-              `    ${caught === 'catches' ? 'on the mutant' : 'on the copy'}: ${output.slice(-LAST_LINES).join(' ⏎ ')}`
-            )
-          ])
+        : [chalk.dim(`    ${caught === 'fails' ? 'on the copy' : 'on the mutant'}: ${shown.join(' ⏎ ')}`)])
     ].join('\n');
   });
   const catching = lines.filter(line => caughtBy(line) === 'catches').length;

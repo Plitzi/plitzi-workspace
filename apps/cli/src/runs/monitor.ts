@@ -213,6 +213,9 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
   }
 };
 
+/** A task's line without the step its writer gave: what a reviewer is at is said by its own. */
+const withoutStep = ({ step: _written, ...line }: TaskLine): Omit<TaskLine, 'step'> => line;
+
 /** How long a lead neither watching the run nor running a command of it is still deciding, not away from it. */
 export const LEAD_AWAY_MS = 2 * 60_000;
 
@@ -247,6 +250,20 @@ const agentsOf = async (
 
   const stopped = stoppedAgents(log);
   const now = ctx.now().getTime();
+  // What an agent said it is at on a review or a research card (`task progress --step`), noted in the log — a card's
+  // own record keeps only a task's at work: a tester and a scout read as their card alone. Said anew each time it
+  // takes the card.
+  const steps = new Map<string, string>();
+  for (const entry of log) {
+    const key = `${String(entry.by)}|${String(entry.task)}`;
+    if (entry.action === 'take' || entry.action === 'review-taken') {
+      steps.delete(key);
+    } else if (entry.action === 'progress' && typeof entry.step === 'string' && entry.step !== '') {
+      steps.set(key, entry.step);
+    }
+  }
+
+  const stepOf = (agent: string, task: string): string | undefined => steps.get(`${agent}|${task}`);
   // What each agent ran last, in words: what it is at between the marks its task leaves — "writes t-home" alone said
   // nothing of it, and a person read the rest as noise.
   const lastRun = new Map(usage.map(line => [line.by, line] as const));
@@ -477,16 +494,26 @@ const agentsOf = async (
     // A tester at a review: at work on that card — never idle.
     const reviews = task ? undefined : reviewing.get(agent);
     if (reviews) {
+      const reviewStep = stepOf(agent, reviews);
+
       return {
         agent,
         kind: 'agent' as const,
         status: away?.status ?? ('reviewing' as const),
         ...about,
-        doing: `${away?.doing ?? `reviews ${reviews}`}${tail}`,
+        doing: `${away?.doing ?? `reviews ${reviews}${reviewStep === undefined ? lately(agent) : ` — ${reviewStep}`}`}${tail}`,
         task: reviews,
         ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
       };
     }
+
+    // In review, the step is its reviewer's: the one its writer gave last is of the work, not of the review.
+    const step =
+      task === undefined
+        ? undefined
+        : task.status === 'in-review'
+          ? stepOf(agent, task.id)
+          : (task.step ?? stepOf(agent, task.id));
 
     return task
       ? {
@@ -494,7 +521,7 @@ const agentsOf = async (
           kind: 'agent' as const,
           status: away?.status ?? statusOf(task),
           ...about,
-          doing: `${away?.doing ?? `${doingOf(task)}${task.step ? '' : lately(agent)}`}${tail}`,
+          doing: `${away?.doing ?? `${doingOf({ ...withoutStep(task), ...(step === undefined ? {} : { step }) })}${step === undefined ? lately(agent) : ''}`}${tail}`,
           task: task.id,
           ...(task.signalAt ? { signalAt: task.signalAt } : {}),
           ...(task.noSignal && away === undefined ? { noSignal: true } : {})

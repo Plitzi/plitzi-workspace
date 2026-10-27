@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { applyConditions, clockHeld, conditionsText } from './conditions';
+import { applyConditions, clockHeld, conditionsText, heldOn } from './conditions';
 import { actStep } from '../commands/shot/steps';
 
 import type { BrowserPage, PageRoute } from './index';
@@ -44,6 +44,20 @@ describe('the browser a page is read in', () => {
     expect(conditionsText({ clock: time, block: ['youtube.com/iframe_api'], storage: 'refused' })).toBe(
       'clock held at 2026-10-25T20:00:00.000Z · blocked: youtube.com/iframe_api · storage refused'
     );
+  });
+
+  // A scout held a third-party script back (page.route, never answered) to see whether a page's load waited for it.
+  it('holds the requests asked unanswered — neither aborted nor fulfilled — and settling waits for none of them', async () => {
+    const { page, routes } = pageAsked();
+    await applyConditions(page, { hold: ['iframe_api'] });
+    const route = { abort: vi.fn(), fulfill: vi.fn(), fallback: vi.fn() };
+
+    expect(routes[0]?.matcher(new URL('https://www.youtube.com/iframe_api'))).toBe(true);
+    await routes[0]?.handler(route as unknown as PageRoute);
+    expect([route.abort, route.fulfill, route.fallback].every(called => called.mock.calls.length === 0)).toBe(true);
+    expect(heldOn(page)({ url: () => 'https://www.youtube.com/iframe_api' })).toBe(true);
+    expect(heldOn(page)({ url: () => 'https://acme.test/app.js' })).toBe(false);
+    expect(conditionsText({ hold: ['iframe_api'] })).toBe('held unanswered: iframe_api');
   });
 
   it('refuses the storages when read, as a browser blocking the site’s data', async () => {

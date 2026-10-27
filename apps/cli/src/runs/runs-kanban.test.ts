@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem } from './backlog';
+import { leadItems, wakesLead } from './leadWatch';
 import { openRun } from './run';
 import { settleFinding } from './settle';
 import { scopePlan, SCOPE_SPIKE } from './spike';
@@ -52,6 +53,23 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toContain("stack the backlog's b-1 as cards");
     await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
     expect(await idle()).toBe('');
+  });
+
+  // A run's lead was woken at each approval for one idle developer, every card left in review: nothing to do but wait.
+  it('wakes the lead for nothing: said with what wakes it, or as its watch ends', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    const items = leadItems(await viewRun(lead(), 'es-launch'));
+    const idle = items.find(item => item.key.startsWith('idle-team:'));
+    const review = items.find(item => item.key.startsWith('review:t-menu'));
+    expect(idle && wakesLead(idle)).toBe(false);
+    expect(review && wakesLead(review)).toBe(true);
+    // The same idle agent is the same advice, whatever card is done since.
+    expect(idle?.key).toBe('idle-team::dev-1');
   });
 
   // A run's lead kept a run small on purpose, and was woken twice to stack the backlog with no way to say no.

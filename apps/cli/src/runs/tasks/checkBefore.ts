@@ -9,8 +9,9 @@ import { RunRefusal } from '../refusal';
 import { loadRun } from '../run';
 import { viewTask } from '../taskStore';
 import { findTask } from './common';
+import { acceptanceText } from '../model';
 
-import type { AcceptanceResult } from '../model';
+import type { Acceptance, AcceptanceResult } from '../model';
 import type { RunContext } from '../run';
 
 /**
@@ -20,6 +21,30 @@ import type { RunContext } from '../run';
  * reviewing a test's fix, copied the spec without the new line into its scratch with a playwright config of its own to
  * see it fail there.
  */
+
+/**
+ * A task with only the acceptance lines asked, by their place: proving a unit test held its mutant cost a Playwright
+ * run per mutant, the task's other lines run with it. A place it has not is refused, naming its lines.
+ */
+export const linesOf = <T extends { id: string; acceptance: readonly Acceptance[] }>(
+  task: T,
+  only: readonly number[]
+): T => {
+  if (only.length === 0) {
+    return task;
+  }
+
+  const missing = only.filter(place => !Number.isInteger(place) || place < 1 || place > task.acceptance.length);
+  if (missing.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `${task.id}'s acceptance has ${String(task.acceptance.length)} lines: plitzi task check ${task.id} --line ${missing.join(', ')} names none — ${task.acceptance.map((line, index) => `${String(index + 1)} ${acceptanceText(line)}`).join('; ')}`,
+      { task: task.id }
+    );
+  }
+
+  return { ...task, acceptance: task.acceptance.filter((_line, index) => only.includes(index + 1)) };
+};
 
 /** What one acceptance line says of the change: run on the run before it, then on the task's copy. */
 export interface LineBeforeAfter {
@@ -32,10 +57,12 @@ export interface LineBeforeAfter {
 export const checkBefore = async (
   ctx: RunContext,
   runId: string,
-  taskId: string
+  taskId: string,
+  /** The acceptance's lines to run, by their place (1 the first): all of them when left out. */
+  only: readonly number[] = []
 ): Promise<{ task: string; lines: LineBeforeAfter[]; without: string[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-  const task = findTask(loaded, taskId);
+  const task = linesOf(findTask(loaded, taskId), only);
   const view = await viewTask(loaded.paths, task);
   if (!SERVED_STATUSES.includes(view.state.status)) {
     throw new RunRefusal(

@@ -108,6 +108,18 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.tasks.find(task => task.id === 't-home')?.touches).toBeUndefined();
   });
 
+  // A tests card was handed `seedHistory.test.ts` to make, where `history.test.ts` tested the module already.
+  it('takes a module’s tests from the test file that imports it already, not a name guessed', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await bench.write('src/functions/history.test.ts', "import { seedHistory } from './seedHistory.ts';\n");
+    const plan = benchPlan();
+    plan.tasks[0].files.push('src/functions/seedHistory.ts');
+
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    expect(checked.tasks.find(task => task.id === 't-home-tests')?.files).toEqual(['src/functions/history.test.ts']);
+  });
+
   // T-shows-coming added an action, and the test that enumerates every action — its tests card's file — failed.
   it('gives a task the test file of the project its tests card takes, to fix what it breaks there first', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });

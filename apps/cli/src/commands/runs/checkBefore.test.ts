@@ -28,7 +28,7 @@ describe('a task’s acceptance beside the run before it, as a reviewer reads it
     );
     expect(text).toContain('✓ Traced, the test passes — fails before t-listen, passes with it: it proves the change');
     expect(text).toContain('before: Expected "Listen", received "Mute"');
-    expect(text).toContain('· The page loads — passes before t-listen too: it proves nothing of the change');
+    expect(text).toContain('· The page loads — passes before t-listen too: it holds what was there already (a guard, as it may be meant), not the change');
     expect(text).toContain('✗ The key reads Listen — fails with t-listen, where it passed before it');
     expect(text).toContain('with it: Timeout 5000ms');
   });

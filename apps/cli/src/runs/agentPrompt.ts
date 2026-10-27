@@ -56,6 +56,9 @@ const rules = (cli: string): string[] => [
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
   '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--blocked "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
+  // A person following the run read commands where an agent's row should say what it is at — a tester's and a scout's
+  // read their card alone.
+  '- As what you are at changes — at a task, a review or a research card — say it in your words: `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`. The person following the run reads it.',
   // A run's scout-1 heard "narrow it" 2.5 min late, inside a Playwright probe of its own, and missed two more.
   '- A command of your own — a spec, a probe, a test file — through `PLITZI task run "<command>"`: a Playwright suite waits its turn on the machine, what it prints goes to a file and you read what failed, and what the lead said meanwhile comes with it. A couple of minutes at most (one spec, a few repeats): the lead reaches you only between commands.',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
@@ -150,8 +153,6 @@ export const agentPrompt = ({
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,
-          // A person following the run read commands where an agent's row should say what it is at.
-          '- As what you are at changes in a task of yours, say it in your words — `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`: the person following the run reads it. A review says itself, by its look and its verdict.',
           // Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
           `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),
@@ -167,7 +168,7 @@ export const agentPrompt = ({
       : []),
     ...(designer
       ? [
-          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title and acceptance cover, with the values${reference === undefined ? '' : ' and one `PLITZI page measure … --same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
+          `- A review: one \`PLITZI task look <task>\` a round, then measure only what differs, and use each control it adds there and back (\`page play <path> ${playBeside}\`); send it back only for what its title, acceptance and brief ask, with the values${reference === undefined ? '' : ' and one `PLITZI page measure … --same` line that proves them'} — anything else is \`PLITZI run notice "…"\`. Say your verdict within 8 minutes.`
         ]
       : []),
     ...rules(cli)

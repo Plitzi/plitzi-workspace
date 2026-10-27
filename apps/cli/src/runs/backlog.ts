@@ -271,10 +271,16 @@ export const backlogText = (item: BacklogItem): string =>
  * next run's start.
  */
 export const namedNotClosed = (
-  tasks: readonly Pick<RunTask, 'id' | 'title' | 'acceptance' | 'closes'>[],
+  tasks: readonly Pick<RunTask, 'id' | 'title' | 'acceptance' | 'closes' | 'files' | 'spike'>[],
   open: ReadonlySet<string>
 ): string[] =>
+  // Research names the items it looks into, and the tasks it proposes close them: a plan of research cards naming the
+  // backlog was refused as leaving it open.
   tasks.flatMap(task => {
+    if (task.spike !== undefined && task.files.length === 0) {
+      return [];
+    }
+
     const words = [task.title, ...task.acceptance.map(acceptanceText)].join(' ');
     const named = [...new Set(words.match(ITEM_NAMED) ?? [])].filter(
       id => open.has(id) && !(task.closes ?? []).includes(id)

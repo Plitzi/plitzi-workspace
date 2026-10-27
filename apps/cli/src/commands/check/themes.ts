@@ -1,6 +1,6 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { openProjectPage, PROJECT_QUIET_MS } from '../../browser';
+import { openProjectPage, projectSettling } from '../../browser';
 import { standInPictures } from '../visit';
 
 import type { CheckIssue } from './types';
@@ -271,7 +271,7 @@ export const themeIssues = async (
     }
 
     try {
-      await openPage(page, `${origin}${route}`, { quietMs: PROJECT_QUIET_MS });
+      await openPage(page, `${origin}${route}`, projectSettling(page));
       await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
 
       return await page.evaluate(textGrounds, undefined);

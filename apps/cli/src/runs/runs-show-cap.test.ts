@@ -68,6 +68,21 @@ describe('a task shown', () => {
     ]);
   });
 
+  // A tests card named two test files and wrote a third: a reviewer saw it only by setting the two lists side by side.
+  it('says the files its card names that its work did not write', async () => {
+    const plan = benchPlan();
+    plan.tasks[0] = { ...plan.tasks[0], files: [...plan.tasks[0].files, 'src/space/pages/home/named.ts'] };
+    await openRun(lead(), await bench.writePlan(plan));
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', hundredLines('home'));
+    await completeTask(home.ctx, 'es-launch', 't-home');
+
+    expect((await showTask(lead(), 'es-launch', 't-home')).unwritten).toEqual([
+      'src/space/pages/home/hero.ts',
+      'src/space/pages/home/named.ts'
+    ]);
+  });
+
   // Design-2's `task show` of another task offered `task message`, which an agent's token is refused.
   it('offers an agent of the team its own next steps, the lead the lead’s', async () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));

@@ -51,15 +51,20 @@ export interface Difference {
   only?: 'here' | 'there';
   /** Nothing but its words differ: what the page says — a time, a count — not how it is drawn. */
   wordsOnly?: true;
+  /**
+   * The innermost element inside it that differs too: what grew, where the first is what holds it — a look named only
+   * `explore-body 763→780`, and its tester could not tell data from the task.
+   */
+  inside?: Difference;
 }
 
 /** A difference in words, before → now: what a person and an agent read of it. */
-export const differenceText = ({ element, changed, only }: Difference): string =>
+export const differenceText = ({ element, changed, only, inside }: Difference): string =>
   only === 'here'
     ? `${element} is drawn here, and not before`
     : only === 'there'
       ? `${element} was drawn before, and is not here`
-      : `${element}: ${changed.map(each => `${each.field} ${each.there || '—'} → ${each.here || '—'}`).join('; ')}`;
+      : `${element}: ${changed.map(each => `${each.field} ${each.there || '—'} → ${each.here || '—'}`).join('; ')}${inside ? ` — inside it, ${differenceText(inside)}` : ''}`;
 
 /** Every element drawn, a record each: its tag, its name, its words, its box, and what a reader sees of its style. */
 export const drawing = (except: readonly string[] = []): Record<string, string>[] => {
@@ -105,9 +110,16 @@ export const drawing = (except: readonly string[] = []): Record<string, string>[
           : [drawn.content, drawn.backgroundColor, drawn.backgroundImage.slice(0, 200), drawn.opacity].join(' ');
       };
 
+      let depth = 0;
+      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+        depth += 1;
+      }
+
       return {
         tag: node.tagName.toLowerCase(),
         name: node.getAttribute('data-plitzi-el') ?? '',
+        // How deep it is: what is inside an element that differs, read for what in it differs too (`Difference.inside`).
+        depth: String(depth),
         words,
         // What holds a part left out grows with it: its box is not read, its style still is.
         box: holdsPart(node) ? '' : placed(node, box),
@@ -170,14 +182,34 @@ export const firstDifference = (
     return { element: drawn ? nameOf(drawn) : 'an element', changed: [], only: mine ? 'here' : 'there' };
   }
 
-  const changed = [...new Set([...Object.keys(mine), ...Object.keys(theirs)])]
-    .filter(field => mine[field] !== theirs[field])
-    .map(field => ({ field, here: mine[field] ?? '', there: theirs[field] ?? '' }));
+  const changedAt = (index: number): Difference['changed'] => {
+    const [ours, others] = [here[index] ?? {}, there[index] ?? {}];
+
+    return [...new Set([...Object.keys(ours), ...Object.keys(others)])]
+      .filter(field => ours[field] !== others[field])
+      .map(field => ({ field, here: ours[field] ?? '', there: others[field] ?? '' }));
+  };
+  const changed = changedAt(index);
+  // Down the elements inside it, while each that differs is inside the one before: the last is what grew.
+  const depthAt = (index: number): number => Number(here[index]?.depth ?? 0);
+  let inner = index;
+  for (let next = index + 1; next < here.length && depthAt(next) > depthAt(index); next += 1) {
+    if (depthAt(next) <= depthAt(inner)) {
+      break;
+    }
+
+    if (!same(here[next], there[next])) {
+      inner = next;
+    }
+  }
+
+  const inside = inner === index ? undefined : { element: nameOf(here[inner]), changed: changedAt(inner) };
 
   return {
     element: nameOf(mine),
     changed,
-    ...(changed.every(each => each.field === 'words') ? { wordsOnly: true as const } : {})
+    ...(changed.every(each => each.field === 'words') ? { wordsOnly: true as const } : {}),
+    ...(inside ? { inside } : {})
   };
 };
 

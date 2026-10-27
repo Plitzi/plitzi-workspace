@@ -17,7 +17,7 @@ import { sizeNotices, suiteNotices } from './planNotices';
 import { isResearch, roleOf } from './spike';
 import { roleProblems, skillProblems, takersOf, teamSize, teamTakes, TESTER } from './team';
 import { teamNotices } from './teamNotices';
-import { existingTests, testSetupOf, withTestTasks } from './tests';
+import { existingTests, testSetupOf, testsImporting, withTestTasks } from './tests';
 import { byUrgency } from './urgency';
 
 import type { PlanEstimate } from './estimate';
@@ -192,7 +192,8 @@ export const checkPlan = async (
   const setup = teamTakes(team, TESTER)
     ? {
         ...(await testSetupOf(root)),
-        unitOf: (file: string) => ownership.ownerOf.get(file) ?? (ownership.shared.has(file) ? undefined : file)
+        unitOf: (file: string) => ownership.ownerOf.get(file) ?? (ownership.shared.has(file) ? undefined : file),
+        importingTests: await testsImporting(root)
       }
     : undefined;
   const { plan, added, untested } = withTestTasks(

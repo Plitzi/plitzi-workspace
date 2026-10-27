@@ -1,6 +1,6 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { PROJECT_QUIET_MS } from '../../browser';
+import { projectSettling } from '../../browser';
 import { checkAccount } from '../check';
 import { prepareVisit } from '../visit';
 
@@ -44,7 +44,7 @@ export const visitorsOn = (root: string, browser: Browser, origin: string, view:
         return { problem: `as ${username}: ${problem.replace(/^--as /, '')}` };
       }
 
-      if ((await openPage(page, `${origin}${at}`, { quietMs: PROJECT_QUIET_MS })) === null) {
+      if ((await openPage(page, `${origin}${at}`, projectSettling(page))) === null) {
         await page.close();
 
         return { problem: `as ${username}: nothing answered at ${origin}${at}` };
