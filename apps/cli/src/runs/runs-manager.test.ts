@@ -16,7 +16,7 @@ import { readTeam, startedAgents } from './team';
 import { viewRun } from './view';
 import { researchSteps } from '../tests/research';
 import { reviewerSteps, SCOUT, team, TESTERS } from '../tests/reviewerSteps';
-import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, proven, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { RunPlan } from './model';
@@ -415,7 +415,13 @@ describe('a scout’s result the lead approves without its tasks', () => {
       stage,
       JSON.stringify({
         tasks: [
-          { ...plan.tasks[0], id: 't-words', title: 'The words', files: ['src/space/pages/about.ts'], dependsOn: [] }
+          proven({
+            ...plan.tasks[0],
+            id: 't-words',
+            title: 'The words',
+            files: ['src/space/pages/about.ts'],
+            dependsOn: []
+          })
         ]
       })
     );

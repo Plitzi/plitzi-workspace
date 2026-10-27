@@ -5,9 +5,10 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { extendRun } from '../extend';
 import { isPrincipal, requireLead } from '../leads';
+import { uncheckedOf } from '../plan';
 import { RunRefusal } from '../refusal';
 import { reviewAtComplete } from '../reviews';
-import { assertStatus, loadRun, logRun } from '../run';
+import { assertStatus, loadRun, logRun, readPlanFile } from '../run';
 import { logSpent } from '../spent';
 import { isResearch } from '../spike';
 import { updateState, viewTask } from '../taskStore';
@@ -127,6 +128,21 @@ export const completeResearch = async (
     throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}: only a card at work completes`, {
       task: taskId
     });
+  }
+
+  // The tasks a scout proposes come with lines a command proves: encore-12's scope came without, the dry run said so,
+  // and the lead sent it back for them — a round of the run's costliest card.
+  if (tasks !== undefined) {
+    const unchecked = uncheckedOf(
+      (await readPlanFile(tasks, { runId: `${runId}-proposed`, goal: loaded.plan.goal })).tasks
+    );
+    if (unchecked.length > 0) {
+      throw new RunRefusal(
+        'invalid',
+        `${unchecked.map(each => each.id).join(', ')} ${unchecked.length === 1 ? 'has' : 'have'} no acceptance line a command proves: give each { said, check } — a page check, a measure, a spec — run once on the run's work (plitzi run extend <stage> --dry-run --lines says what each is), then complete again`,
+        { task: taskId }
+      );
+    }
   }
 
   // Seen by the scout before the lead stacks it: checked as the lead's dry run checks it, by the scout's name — a task's

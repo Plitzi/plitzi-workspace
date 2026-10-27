@@ -190,3 +190,34 @@ describe('each agent’s harness over the run', () => {
     ).toEqual({ 'design-1': { processed: 12_000_000, contextMax: 193_000, reread: 3_500 } });
   });
 });
+
+// encore-12: its scope's rework read 5.4 min waited, its scout at it again 10 s after the changes (a card handed back in
+// the same context takes nothing); its tests cards read 10–12 min to take, each waiting for the task it tests.
+describe('a card handed back, and one that waited for another', () => {
+  const handed: Record<string, unknown>[] = [
+    { at: T(0), by: 'lead', action: 'open', taskIds: ['s-scope'] },
+    { at: T(1), by: 'scout-1', action: 'take', task: 's-scope' },
+    { at: T(10), by: 'scout-1', action: 'complete', task: 's-scope' },
+    { at: T(11), by: 'lead', action: 'review', task: 's-scope', verdict: 'changes', round: 1, step: 'lead' },
+    { at: T(11.5), by: 'scout-1', action: 'brief', task: 's-scope' },
+    { at: T(16), by: 'scout-1', action: 'complete', task: 's-scope' },
+    { at: T(20), by: 'lead', action: 'extend', added: ['t-home', 't-home-tests'] },
+    { at: T(21), by: 'dev-1', action: 'take', task: 't-home' },
+    { at: T(30), by: 'test-1', action: 'handed-on', task: 't-home', ready: ['t-home-tests'] },
+    { at: T(31), by: 'dev-2', action: 'take', task: 't-home-tests' }
+  ];
+  const metrics = runMetrics({
+    log: handed,
+    usage: [],
+    answers: [],
+    harness: {},
+    taskIds: ['s-scope', 't-home-tests'],
+    openedAt: T(0),
+    now: T(40)
+  });
+
+  it('is at it again when its agent reads its brief, and taken from when it could be', () => {
+    expect(metrics.tasks.find(task => task.task === 's-scope')?.reworkWaits).toEqual([0.5]);
+    expect(metrics.tasks.find(task => task.task === 't-home-tests')?.toTake).toBe(1);
+  });
+});

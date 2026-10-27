@@ -43,6 +43,8 @@ export interface ShotOptions extends VisitorOptions {
   reducedMotion?: boolean;
   /** One element only: its name (`data-plitzi-el`) or a CSS selector. */
   clip?: string;
+  /** With `clip` drawn more than once — a component's instances: the one that shows the most of these elements. */
+  showing?: string[];
   /** The page scrolled until this element is in view — and, with `viewport`, the screen there. */
   scrollTo?: string;
   /** What fits the viewport, rather than the whole page. */
@@ -169,6 +171,8 @@ export interface View {
   reducedMotion: boolean;
   waitFor?: string;
   clip?: string;
+  /** With `clip` drawn more than once: the copy of it that shows the most of these elements. */
+  showing?: string[];
   scrollTo?: string;
   viewport?: boolean;
   /** Every declared motion held at its end: one picture — the whole page, a part clipped or scrolled to — not frames. */

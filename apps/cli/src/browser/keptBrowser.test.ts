@@ -5,9 +5,10 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { cliBuild, keptMeasure, readRecord, stopKeptBrowser } from './keptBrowser';
+import { cliBuild, keeperLaunch, keptMeasure, readRecord, stopKeptBrowser } from './keptBrowser';
 import { keeperRoutes } from '../commands/keeperRoutes';
 import { keeperServer } from '../commands/keeperServer';
+import { USAGE_OFF } from '../runs/usage';
 
 const record = (root: string): string => path.join(root, 'tmp', 'plitzi-cache', 'kept-browser.json');
 
@@ -86,5 +87,14 @@ describe('the kept browser', () => {
       delete process.env.PLITZI_KEEP_BROWSER;
       await door.drain(0);
     }
+  });
+});
+
+// encore-12's report counted the kept browser's 641 s alive as the agents' time in the CLI.
+describe('the kept browser’s process', () => {
+  it('is started out of the run’s usage, apart from the command that starts it', () => {
+    const { args, options } = keeperLaunch('/bin/plitzi', '/project');
+    expect(args).toEqual(['/bin/plitzi', 'page', 'keep-browser', '--root', '/project']);
+    expect(options).toMatchObject({ detached: true, env: { [USAGE_OFF]: '1' } });
   });
 });

@@ -67,7 +67,9 @@ export interface CheckIssue {
     | 'expected-text'
     | 'label-wraps'
     | 'fixed-ground'
-    | 'flush-edge';
+    | 'flush-edge'
+    | 'form-held-back'
+    | 'server-logged';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
@@ -180,6 +182,8 @@ export interface ClickReport {
   changes: string[];
   /** The flows the click ran that failed, as the dev tools tell them. */
   failed: string[];
+  /** The fields the browser held the form back on — each with what its bubble said: no flow of the submit ran. */
+  heldBack?: string[];
 }
 
 /** How an element's classes meet on it: the properties more than one sets, and the classes that change nothing. */

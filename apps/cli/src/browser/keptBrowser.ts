@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { copyOf } from '../runs/paths';
+import { USAGE_OFF } from '../runs/usage';
 
 import type { Scheme } from './index';
 import type { Measured } from '../commands/measureValues';
@@ -150,6 +151,18 @@ const takeLock = async (file: string, ageMs: number): Promise<boolean> => {
 };
 
 /**
+ * How the kept browser's process is started: apart from the command that starts it, and out of the run's usage — it
+ * lives for minutes, and encore-12's report counted its 641 s as the agents' time in the CLI.
+ */
+export const keeperLaunch = (
+  bin: string,
+  root: string
+): { args: string[]; options: { detached: true; stdio: 'ignore'; env: NodeJS.ProcessEnv } } => ({
+  args: [bin, 'page', 'keep-browser', '--root', root],
+  options: { detached: true, stdio: 'ignore', env: { ...process.env, [USAGE_OFF]: '1' } }
+});
+
+/**
  * Starts one, as a process of its own that outlives this command, and waits for its record — or, another command
  * starting one already (its lock written), waits for that one's: measures at once start one browser, not several.
  */
@@ -162,7 +175,8 @@ const startKept = async (root: string): Promise<KeptRecord | undefined> => {
   const lock = `${recordOf(root)}.starting`;
   const first = await takeLock(lock, START_MS);
   if (first) {
-    spawn(process.execPath, [bin, 'page', 'keep-browser', '--root', root], { detached: true, stdio: 'ignore' }).unref();
+    const { args, options } = keeperLaunch(bin, root);
+    spawn(process.execPath, args, options).unref();
   }
 
   try {

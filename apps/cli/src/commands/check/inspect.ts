@@ -81,6 +81,19 @@ const lateElements = (
 };
 
 /**
+ * A submit the browser stopped, as findings of the page: the form speaks in a bubble no style reaches, in the browser's
+ * language, before the space's own words — encore-12's lines could not hold "the browser holds nothing back" while a
+ * check passed. Each field as the page noted it, `<id> — <what the bubble said>`.
+ */
+export const heldBackIssues = (fields: readonly string[], width: number): CheckIssue[] =>
+  fields.map(field => ({
+    code: 'form-held-back',
+    message: `the browser held the form back: ${field} — its own bubble, before any flow of the submit ran: noValidate: true on the form, and the field says its requiredMessage`,
+    elementId: field.split(' — ')[0],
+    width
+  }));
+
+/**
  * Goes to `path` the way a visitor does: a click on a link of the page that goes there — `href` the path itself, or the
  * page's own address for it — and the space's client navigation. What it could not do, said; nothing when it went.
  */
@@ -376,6 +389,7 @@ const inspectHere = async (
       width
     }));
   const serverFailed = serverFailedIssues(devTools.serverFailures, devTools.sources, width);
+  const heldBackForm = heldBackIssues(clicked?.heldBack ?? [], width);
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   // Asked for a status (`--status 404`): the page sent with it is what was meant — its 404 page, on purpose — and one sent
   // with another is the finding. A run's designer saw its intended 404 page marked ✗, with no way to say it.
@@ -429,6 +443,7 @@ const inspectHere = async (
     ...(late?.issues ?? []),
     ...failedFlows,
     ...serverFailed,
+    ...heldBackForm,
     ...missed,
     ...wrapped,
     ...flush

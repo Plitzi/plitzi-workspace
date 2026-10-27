@@ -65,6 +65,9 @@ export const keptPort = async (cache: string): Promise<number | undefined> => (a
 /** Whether a group of processes is one to keep and stop later: not on Windows, where a child is not its own group. */
 export const canLinger = (): boolean => process.platform !== 'win32';
 
+/** Where a task's preview — a look's — writes what its server says. */
+export const previewServerLog = (cache: string): string => path.join(cache, 'preview-server.log');
+
 /** The copy's server kept, answering as this copy's: its address, its use marked now — or none. */
 export const keptServer = async (work: string, cache: string): Promise<string | undefined> => {
   const kept = await readKept(cache);

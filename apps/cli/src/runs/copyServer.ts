@@ -6,7 +6,16 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { ownServer, serveCopy, serverLogOf } from './acceptance';
-import { canLinger, keepServer, keptPort, keptServer, LINGER_MS, newestWrite, previewedServer } from './lingering';
+import {
+  canLinger,
+  keepServer,
+  keptPort,
+  keptServer,
+  LINGER_MS,
+  newestWrite,
+  previewedServer,
+  previewServerLog
+} from './lingering';
 import { copyOf, runPaths, taskPaths } from './paths';
 import { projectOrigin, readHealth } from '../browser';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
@@ -20,11 +29,21 @@ import type { PlitziProject } from '../commands/existingProject';
  * (64 of them across a run, and one `pkill` that stopped every copy's server). A server of the agent's own,
  * running, is used as it is.
  */
+/**
+ * Where a page of the project is served for a command, how it is stopped after it when the command started it, and —
+ * when the server is the CLI's — where it logs: what the pages a command opened made it say.
+ */
+export interface Served {
+  origin: string;
+  stop?: () => void;
+  log?: string;
+}
+
 export const originHere = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string
-): Promise<{ origin: string; stop?: () => void } | { problem: string }> => {
+): Promise<Served | { problem: string }> => {
   const found = await servedHere(root, project, url);
   if (!('problem' in found)) {
     sayStale(await readHealth(found.origin));
@@ -56,19 +75,19 @@ const servedHere = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string
-): Promise<{ origin: string; stop?: () => void } | { problem: string }> => {
+): Promise<Served | { problem: string }> => {
   const copy = url === undefined ? copyOf(root) : undefined;
   if (!copy) {
     return projectOrigin(root, project, url);
   }
 
+  const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // A line of the task's acceptance: the copy is served for every line, and a second server on it dies on its state.
   const checked = process.env.PLITZI_URL;
   if (checked !== undefined && checked !== '') {
-    return { origin: checked };
+    return { origin: checked, log: serverLogOf(cache) };
   }
 
-  const cache = taskPaths(runPaths(copy.root, copy.run), copy.task).cache;
   // In a copy, only its own server is it — named by the mark of the folder its /health answers with: a port guessed
   // may be another copy's, or another project's of the person's. The server the CLI kept writes the same record as
   // the agent's own would: it is the CLI's, served again once the copy changed — never reused as it was (four
@@ -98,7 +117,7 @@ const servedHere = async (
   if (previewed !== undefined) {
     process.stderr.write(chalk.dim(`· served by the look or preview serving the copy: ${previewed}\n`));
 
-    return { origin: previewed };
+    return { origin: previewed, log: previewServerLog(cache) };
   }
 
   const kept = await keptServer(root, cache);
@@ -109,7 +128,7 @@ const servedHere = async (
       )
     );
 
-    return { origin: kept };
+    return { origin: kept, log: serverLogOf(cache) };
   }
 
   const served = await serveCopy(root, copy.root, cache, { again: 'run it again' });
@@ -132,5 +151,7 @@ const servedHere = async (
     )
   );
 
-  return pid === undefined ? { origin: served.url, stop: served.stop } : { origin: served.url };
+  return pid === undefined
+    ? { origin: served.url, stop: served.stop, log: serverLogOf(cache) }
+    : { origin: served.url, log: serverLogOf(cache) };
 };

@@ -37,7 +37,7 @@ Every page command reads as one visitor: a page that sends a guest away as the p
 this machine only). `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name and which copy of the
 project serves it (`Instance`): `check` and `shot` refuse a port another copy holds. A save that did not author leaves the
 last space that did served: `/health` says why (`spaceStale`), and every page command says it.
-`visual` starts a server of its own on 8400 (5273 for a client project), plain HTTP, its record in `tmp/visual/`: never
+`visual` starts a server of its own on its folder's port from 8400 (5273 for a client project; a run's copy takes another), plain HTTP, its record in `tmp/visual/`: never
 the server you have open. `start:preview` is 8300.
 
 **On a phone.** `HOST=0.0.0.0` in `.env` opens it to the network, and `plitzi cert` serves it over HTTPS (mkcert;

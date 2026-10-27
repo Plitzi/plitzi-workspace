@@ -8,7 +8,7 @@ import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
 import { setTeamAgent } from './team';
 import { viewRun } from './view';
 import { researchSteps } from '../tests/research';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, makeBench, provenPlan, writeInCopy } from '../tests/runProject';
 
 import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
@@ -122,7 +122,7 @@ describe('an agent with nothing to take', () => {
     await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site into Spanish')));
     await takeNext(bench.agent('scout-1'), 'es-launch', 'scout', { timeoutMs: 30, everyMs: 10 });
     await addBacklogItem(lead(), { text: 'The footer wraps at 390', by: 'lead' });
-    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(benchPlan()) });
+    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(provenPlan(benchPlan())) });
 
     const idle = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
     expect(idle?.text ?? '').not.toContain('scout-1');
@@ -159,7 +159,7 @@ describe('a card sent back', () => {
     await openRun(lead(), await bench.writePlan(scopePlan('es-launch', 'Translate the site into Spanish')));
     await takeNext(bench.agent('scout-1'), 'es-launch', 'scout', { timeoutMs: 30, everyMs: 10 });
     await progress('es-launch', SCOPE_SPIKE, { fraction: 0.75, step: 'writing the stage' });
-    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(benchPlan()) });
+    await found('es-launch', SCOPE_SPIKE, 'Four pages', { tasks: await bench.writePlan(provenPlan(benchPlan())) });
     await sendBack('es-launch', SCOPE_SPIKE, 'Give each task a checked line');
 
     const card = (await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === SCOPE_SPIKE);

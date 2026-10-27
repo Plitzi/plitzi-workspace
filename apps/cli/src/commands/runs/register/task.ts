@@ -375,7 +375,10 @@ export const registerTaskGroup = (program: Command): Command => {
         'Look at a task in review in one go: its copy served, page check from it at 1440 and 390, a picture light and dark of each page — then stopped'
       )
       .argument('<task>', 'The task in review')
-      .argument('[paths...]', 'Its pages: those its files are drawn at when left out')
+      .argument(
+        '[paths...]',
+        'Its pages: those its files are drawn at when left out — a path with its own visitor and status in quotes: "/moderation --as juno --status 403"'
+      )
       .option(
         '--fresh',
         'Look anew, though it was looked at as asked and nothing changed since (it says that look again)'

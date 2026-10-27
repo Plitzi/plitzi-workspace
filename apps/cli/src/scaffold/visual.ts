@@ -12,19 +12,22 @@ import type { CreateAnswers, ProjectFiles } from './types';
  */
 
 /**
- * The port the suite's own server takes: none of the project's other scripts' — \`start\` (8080, Vite's 5173), the run's
- * preview (8300, a task's 8301), the inspector (9229) — so \`visual\` never reuses, nor lands on, a server a person
- * or a run is using.
+ * Where the ports the suite's own server takes start: none of the project's other scripts' — \`start\` (8080, Vite's
+ * 5173), the run's preview (8300, a task's 8301), the inspector (9229) — so \`visual\` never reuses, nor lands on, a
+ * server a person or a run is using. Each folder takes one of the \`TEST_PORTS\` after it: a run's copies, each with its
+ * suite, on one port reused one another's server — a copy's specs passed on another copy's code (encore-12).
  */
 const TEST_PORT: Record<CreateAnswers['mode'], number> = { server: 8400, client: 5273 };
+const TEST_PORTS = 500;
 
-const playwrightConfig = ({
-  mode,
-  packageManager
-}: CreateAnswers): string => `import { defineConfig } from '@playwright/test';
+const playwrightConfig = ({ mode, packageManager }: CreateAnswers): string => `import { createHash } from 'node:crypto';
 
-// \`PORT\` when set (a run's check sets it); otherwise the suite's own, which no other script of the project takes.
-const PORT = Number(process.env.PORT ?? ${String(TEST_PORT[mode])});
+import { defineConfig } from '@playwright/test';
+
+// \`PORT\` when set (a run's check sets it); otherwise this folder's own, which no other script of the project takes —
+// a copy of the project (a run's) takes another, so its specs never reuse a server on another copy's code.
+const OWN = ${String(TEST_PORT[mode])} + (createHash('sha256').update(import.meta.dirname).digest().readUInt16BE(0) % ${String(TEST_PORTS)});
+const PORT = Number(process.env.PORT ?? OWN);
 const ORIGIN = \`http://127.0.0.1:\${String(PORT)}\`;
 
 export default defineConfig({

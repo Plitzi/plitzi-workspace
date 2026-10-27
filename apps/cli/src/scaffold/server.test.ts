@@ -1,3 +1,8 @@
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { scaffold } from '.';
@@ -121,8 +126,28 @@ describe('the server a project starts', () => {
 });
 
 describe('the scripts that look at it', () => {
-  it('start on a port of their own — 8400, or PORT when a run’s check sets it', () => {
-    expect(visualFiles(answers())['playwright.config.ts']).toContain('process.env.PORT ?? 8400');
+  // encore-12: a run's copies each ran specs on 8400 with reuseExistingServer — a copy's specs on another's code.
+  it('start on a port of their own folder’s — from 8400, or PORT when a run’s check sets it', () => {
+    const config = visualFiles(answers())['playwright.config.ts'];
+    expect(config).toContain('process.env.PORT ?? OWN');
+    const own = /const OWN = (.+);/.exec(config)?.[1] ?? '';
+    // The expression the config computes, run as the config runs it — from its folder — in a project and in a copy.
+    const portOf = (dir: string): number => {
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, 'own.mjs'), `import { createHash } from 'node:crypto';\nconsole.log(${own});\n`);
+
+      return Number(execFileSync(process.execPath, [path.join(dir, 'own.mjs')], { encoding: 'utf-8' }).trim());
+    };
+    const root = mkdtempSync(path.join(os.tmpdir(), 'plitzi-suite-port-'));
+    try {
+      const here = portOf(path.join(root, 'encore'));
+      expect(here).toBeGreaterThanOrEqual(8400);
+      expect(here).toBeLessThan(8900);
+      expect(portOf(path.join(root, 'encore'))).toBe(here);
+      expect(portOf(path.join(root, 'encore/tmp/plitzi-runs/r1/tasks/t-home/cache/work'))).not.toBe(here);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('start a server of their own — never the one a person or a run uses, nor its record', () => {

@@ -215,12 +215,12 @@ export const clickEffects = async (
         flow =>
           `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
       ),
-      // The browser's own refusal — a required field left empty — draws a bubble no element of the page holds, and
-      // stops the submit before any flow runs: without this line it reads as a button that does nothing.
-      ...refused.map(field => `the browser held the form back: ${field}`),
       ...looks,
       ...momentChanges(before, after, { before: tools.state, after: toolsAfter.state })
     ],
-    failed: flows.filter(flow => flow.status === 'failed').map(failedFlowText)
+    failed: flows.filter(flow => flow.status === 'failed').map(failedFlowText),
+    // The browser's own refusal — a required field left empty — draws a bubble no element of the page holds, and stops
+    // the submit before any flow runs: a finding of the page (`form-held-back`), not a change.
+    ...(refused.length > 0 ? { heldBack: refused } : {})
   };
 };

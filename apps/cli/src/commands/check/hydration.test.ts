@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { drawnOtherwise, serverHtml } from './inspect';
+import { drawnOtherwise, heldBackIssues, serverHtml } from './inspect';
 
 // "Hydration failed" for the hero's time, found by reading the diff — React names no element in a build.
 describe('a hydration error, named', () => {
@@ -39,5 +39,20 @@ describe('the HTML the server sent', () => {
     expect(await serverHtml(page, 'http://localhost:4000/u/mika')).toContain('profile-reminders');
     expect(guest).not.toHaveBeenCalled();
     guest.mockRestore();
+  });
+});
+
+// encore-12: a submit the browser held back passed the check, and no line could hold that it did not.
+describe('a form the browser held back', () => {
+  it('is a finding of the page, on the field it stopped at, naming noValidate', () => {
+    expect(heldBackIssues(['sign-in-username — Please fill out this field.'], 390)).toEqual([
+      {
+        code: 'form-held-back',
+        message: expect.stringContaining('noValidate: true on the form') as unknown,
+        elementId: 'sign-in-username',
+        width: 390
+      }
+    ]);
+    expect(heldBackIssues([], 390)).toEqual([]);
   });
 });

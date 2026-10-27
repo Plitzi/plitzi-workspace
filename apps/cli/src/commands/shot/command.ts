@@ -265,6 +265,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(besideLocal ? { standIns: true } : {}),
       ...(options.waitFor ? { waitFor: options.waitFor } : {}),
       ...(clip ? { clip, ...(clicks.length > 0 || steps !== undefined ? { clipLater: true } : {}) } : {}),
+      ...(clip && options.showing && options.showing.length > 0 ? { showing: options.showing } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
       ...visitViewOf(options),

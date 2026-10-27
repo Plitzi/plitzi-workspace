@@ -17,7 +17,7 @@ import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
 import { researchSteps } from '../tests/research';
 import { SCOUT, team, TESTERS } from '../tests/reviewerSteps';
-import { benchPlan, makeBench, teamFor } from '../tests/runProject';
+import { benchPlan, makeBench, proven, teamFor } from '../tests/runProject';
 import { refusal, runSteps } from '../tests/runSteps';
 
 import type { RunPlan } from './model';
@@ -257,6 +257,32 @@ describe('research: a card like any, finding out in the run', () => {
     });
   });
 
+  // encore-12's scope proposed four tasks no command proved; the dry run said so, and the lead sent it back for them.
+  it('refuses a proposal whose tasks no command proves, naming them', async () => {
+    await bench.writeTeam(team(SCOUT, TESTERS));
+    const { runId } = (await openRun(lead(), await bench.writePlan(surveyed()))).checked;
+    await takeNext(bench.agent('scout-1'), runId, 'scout');
+    const [first] = benchPlan().tasks;
+    const stage = await bench.writePlan({
+      ...benchPlan(),
+      runId: 'survey',
+      tasks: [
+        {
+          ...first,
+          id: 't-grid',
+          files: ['src/lib/grid.ts'],
+          dependsOn: [],
+          acceptance: ['The grid holds every member']
+        }
+      ]
+    });
+
+    expect((await refusal(found(runId, 's-survey', 'A team grid', { tasks: stage }))).message).toContain(
+      't-grid has no acceptance line a command proves'
+    );
+    expect(await statusOf('s-survey')).toBe('in-progress');
+  });
+
   // encore-11: the lead could keep a proposal whole or drop every task — and a -tests card it did not want stayed.
   it('stacks what the lead keeps of a proposal: a -tests card left is its card with no tests; what waits for one left, refused', async () => {
     const plan = { ...surveyed() };
@@ -268,8 +294,8 @@ describe('research: a card like any, finding out in the run', () => {
       ...benchPlan(),
       runId: 'survey',
       tasks: [
-        { ...first, id: 't-grid', title: 'The team grid', files: ['src/lib/grid.ts'], dependsOn: [] },
-        { ...first, id: 't-bios', title: 'The bios', files: ['src/lib/bios.ts'], dependsOn: ['t-grid'] }
+        proven({ ...first, id: 't-grid', title: 'The team grid', files: ['src/lib/grid.ts'], dependsOn: [] }),
+        proven({ ...first, id: 't-bios', title: 'The bios', files: ['src/lib/bios.ts'], dependsOn: ['t-grid'] })
       ]
     });
     expect((await found(runId, 's-survey', 'A team grid, with bios', { tasks: stage })).proposed).toEqual([

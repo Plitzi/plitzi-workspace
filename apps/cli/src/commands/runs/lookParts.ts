@@ -538,3 +538,12 @@ export const keptLook = async (
 
   return Object.hasOwn(kept, key) ? kept[key] : undefined;
 };
+
+/**
+ * A picture's clip as `page shot` takes it: a part drawn more than once — a component's instances — pictured where the
+ * most of the task's elements show (`--showing`), never one of several parts at once.
+ */
+export const clipArgs = (clip: string | undefined, showing: readonly string[]): string[] =>
+  clip === undefined
+    ? []
+    : ['--clip', clip, ...(showing.length > 0 && !clip.includes(',') ? ['--showing', showing.join(',')] : [])];

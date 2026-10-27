@@ -308,6 +308,15 @@ export const registerPage = (pageGroup: Command): void => {
         'Only this element — its name or a CSS selector — scrolled to wherever it is; with --compare, the section of the report kept'
       )
       .option(
+        '--showing <elements>',
+        'With --clip drawn more than once (a component in several states): the copy of it that shows the most of these elements, comma-separated',
+        (value: string) =>
+          value
+            .split(',')
+            .map(each => each.trim())
+            .filter(Boolean)
+      )
+      .option(
         '--scroll-to <element>',
         'The page scrolled until this element is in view; the picture is the screen there'
       )

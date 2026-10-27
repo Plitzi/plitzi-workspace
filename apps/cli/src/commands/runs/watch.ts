@@ -80,7 +80,10 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
       news.gone
         ? 'The run is gone: it finished, or a person aborted it.'
         : news.timedOut
-          ? `Nothing new for the lead in ${durationText(options.timeout ?? FOLLOW_MS)} (${String(news.done)} of ${String(news.total)} done): watch again.`
+          ? [
+              `Nothing that needs the lead in ${durationText(options.timeout ?? FOLLOW_MS)} (${String(news.done)} of ${String(news.total)} done): watch again.`,
+              ...news.fresh.map(item => `  · ${item.text}`)
+            ].join('\n')
           : [
               chalk.bold(`For the lead (${String(news.done)} of ${String(news.total)} done):`),
               ...news.fresh.map(item => `  ⚠ ${item.text}`),

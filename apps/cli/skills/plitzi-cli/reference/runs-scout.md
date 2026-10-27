@@ -12,7 +12,8 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   you measured, with the command that measured it.
 - **It ends with the tasks it makes:** `plitzi task complete --found "what you found" --tasks <stage.json>`, in its
   copy — a stage as `run extend` takes it (its `tasks`), each task with what you found for it in `"findings"` (the
-  values, the files, the reference's sections), its acceptance checkable. It is checked whole and goes to the lead's
+  values, the files, the reference's sections), its acceptance with a line a command proves (`{ said, check }`, run once on the run's work: `run extend <stage>
+  --dry-run --lines`) — refused without. It is checked whole and goes to the lead's
   review, decided with the person: nothing is stacked until it approves. Sent back, `task next` hands it to you again
   with what the lead asked — complete it again with that. Findings alone, no tasks: `--found "…"`, reviewed too:
   **every research card is the lead's to approve**, and adding or taking out tasks the lead's alone.

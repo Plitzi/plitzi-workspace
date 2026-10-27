@@ -11,7 +11,7 @@ too.
   `--scheme` for others; `--status 404` for a not-found page), beside the run before it: what the task moved, and that
   nothing else did (`--no-before` leaves that out). `--click <id>` an open state, `--hover <id>` a hover, `--steps
   "state notice …"` what only a message or a flow shows, checked and pictured, `--element <id>` its attributes and styles. A page that sends a guest to sign in is read as the project's account
-  by itself (`--as` another); a page the task adds is pictured alone. A page it says you did not look at reads a file
+  by itself (`--as` another; a path its own: `"/moderation --as juno --status 403"`); a page the task adds is pictured alone. A page it says you did not look at reads a file
   the task changed: look at it. **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
   reads that nothing else moved — asked again with nothing changed, it says the same (`--fresh` looks anew). Then
   measure only what it, or the task's checks, show differs.

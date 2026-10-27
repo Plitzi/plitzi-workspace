@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 import { keepLook, keptLook, lookKey, pagesLooked } from './lookParts';
+import { pathGroups } from './lookPaths';
 import { lookText } from './lookText';
 import { lookAt } from './review';
 import { act, runOf } from './shell';
@@ -10,6 +11,7 @@ import { RunRefusal } from '../../runs/refusal';
 import { actingSteps } from '../shot/steps';
 
 import type { LookOptions } from './lookOptions';
+import type { PathGroup } from './lookPaths';
 
 /** `plitzi task look <task> [pages…]`: the look, or the one that still stands for what is asked (`--fresh` looks anew). */
 export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
@@ -47,11 +49,36 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         return { kind: 'again' as const, again: before };
       }
 
+      // A look a visitor: the paths each say theirs, the next told what the ones before covered.
       const state = await lookKey(ctx, runId, taskId, {});
-      const looked = await lookAt(ctx, runId, taskId, paths, options, await pagesLooked(cache, state, ctx.now()));
-      await keepLook(cache, key, lookText(looked), ctx.now(), { state, pages: looked.pages });
+      const covered = await pagesLooked(cache, state, ctx.now());
+      const groups = paths.length === 0 ? [{ paths: [], visitor: {} }] : pathGroups(paths);
+      const looks: { said: string | undefined; text: string }[] = [];
+      for (const group of groups) {
+        const { as, guest, status } = group.visitor;
+        const looked = await lookAt(
+          ctx,
+          runId,
+          taskId,
+          group.paths,
+          {
+            ...options,
+            ...(as === undefined ? {} : { as, guest: false }),
+            ...(guest === true ? { as: undefined, guest: true } : {}),
+            ...(status === undefined ? {} : { status })
+          },
+          covered
+        );
+        covered.push(...looked.pages);
+        looks.push({ said: groups.length > 1 ? visitorText(group) : undefined, text: lookText(looked) });
+      }
 
-      return { kind: 'looked' as const, looked };
+      const text = looks
+        .map(each => (each.said === undefined ? each.text : `${chalk.bold(each.said)}\n${each.text}`))
+        .join('\n\n');
+      await keepLook(cache, key, text, ctx.now(), { state, pages: [...new Set(covered)] });
+
+      return { kind: 'looked' as const, text };
     },
     answer =>
       answer.kind === 'again'
@@ -61,5 +88,9 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
             ),
             answer.again.text
           ].join('\n')
-        : lookText(answer.looked)
+        : answer.text
   );
+
+/** A group's paths as the look reads them: who, and what they are sent with. */
+const visitorText = (group: PathGroup): string =>
+  `${group.paths.join(', ')}${group.visitor.as === undefined ? '' : ` as ${group.visitor.as}`}${group.visitor.guest === true ? ' as a guest' : ''}${group.visitor.status === undefined ? '' : `, sent ${String(group.visitor.status)}`}:`;

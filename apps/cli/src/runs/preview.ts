@@ -17,7 +17,15 @@ import {
   writeAtomic,
   writeJson
 } from './files';
-import { canLinger, keepServer, keptServer, markPreviewed, touchKept, unmarkPreviewed } from './lingering';
+import {
+  canLinger,
+  keepServer,
+  keptServer,
+  markPreviewed,
+  previewServerLog,
+  touchKept,
+  unmarkPreviewed
+} from './lingering';
 import { monitorRun } from './monitor';
 import { agentScratch, RUN_COPY_MARK, taskPaths, under } from './paths';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
@@ -516,7 +524,7 @@ export const startTaskPreview = async (
 
       return SERVED_STATUSES.includes(now) ? undefined : `the preview stopped: ${taskId} is ${now} now`;
     },
-    { ...options, log: path.join(cache, 'preview-server.log') }
+    { ...options, log: previewServerLog(cache) }
   );
   // Said where a picture in the copy asks for its server: it uses this one, never starts a second.
   await markPreviewed(cache, port);

@@ -155,7 +155,12 @@ describe('originHere', () => {
     const home = await take('agent-1', 't-home');
     vi.stubEnv('PLITZI_URL', 'http://127.0.0.1:61234');
     try {
-      expect(await originHere(home.work, undefined)).toEqual({ origin: 'http://127.0.0.1:61234' });
+      const cache = taskPaths(runPaths(bench.root, 'es-launch'), 't-home').cache;
+      // …and its log read, where page check reads what its pages made the server say.
+      expect(await originHere(home.work, undefined)).toEqual({
+        origin: 'http://127.0.0.1:61234',
+        log: path.join(cache, 'acceptance-server.log')
+      });
     } finally {
       vi.unstubAllEnvs();
     }
@@ -254,7 +259,10 @@ describe('originHere', () => {
     await new Promise<void>(resolve => server.listen(port, '127.0.0.1', resolve));
     try {
       await markPreviewed(cache, port);
-      expect(await originHere(home.work, undefined)).toEqual({ origin: `http://127.0.0.1:${String(port)}` });
+      expect(await originHere(home.work, undefined)).toEqual({
+        origin: `http://127.0.0.1:${String(port)}`,
+        log: path.join(cache, 'preview-server.log')
+      });
       await expect(fs.access(path.join(cache, 'served.json'))).rejects.toThrow();
     } finally {
       server.close();

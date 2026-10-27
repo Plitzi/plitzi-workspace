@@ -7,6 +7,7 @@ import { PROJECT_STATE } from '@plitzi/sdk-shared/project';
 
 import {
   checkWithInteraction,
+  clipArgs,
   partsComparedOf,
   elsewhereOf,
   picturesOf,
@@ -176,6 +177,9 @@ export const lookAt = (
         // changed six sections, and the sede, info and faq went unseen.
         const many = parts !== undefined && !parts.ownsRoot && parts.tops.length > PARTS_PICTURED;
         const clips = parts && !parts.ownsRoot && !many ? parts.tops : [];
+        // A part drawn more than once — a component's instances — pictured where the most of the task's elements show:
+        // a run's look pictured a playing room card for a task that changed the idle one.
+        const showing = parts ? [...parts.ids].filter(id => !clips.includes(id)).slice(0, 40) : [];
         // A page with a parameter in its address (`/boxeadores/:slug`) is opened where the site's own links go.
         // Its files drawn at no page (a plugin's): the pages its acceptance checks, before the home page — a run's
         // look at the Reactions plugin's CSS pictured the home page, where no reaction is.
@@ -353,7 +357,7 @@ export const lookAt = (
                 width,
                 '--scheme',
                 scheme,
-                ...(clip ? ['--clip', clip] : []),
+                ...clipArgs(clip, showing),
                 ...(options.steps === undefined ? [] : ['--steps', options.steps]),
                 '--json',
                 '-o',
@@ -374,7 +378,7 @@ export const lookAt = (
                       width,
                       '--scheme',
                       scheme,
-                      ...(clip ? ['--clip', clip] : []),
+                      ...clipArgs(clip, showing),
                       '--steps',
                       `hover ${JSON.stringify(options.hover)}; wait 600; shot hovering ${options.hover}`,
                       '--json',
@@ -418,7 +422,7 @@ export const lookAt = (
                   ...signedInFor(route),
                   '--compare',
                   before?.url ?? '',
-                  ...(clip ? ['--clip', clip] : []),
+                  ...clipArgs(clip, showing),
                   '--width',
                   width,
                   '--scheme',
@@ -438,7 +442,7 @@ export const lookAt = (
                 preview.url,
                 ...visiting,
                 ...signedInFor(route),
-                ...(clip ? ['--clip', clip] : []),
+                ...clipArgs(clip, showing),
                 '--width',
                 width,
                 '--scheme',

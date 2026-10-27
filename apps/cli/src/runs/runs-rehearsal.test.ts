@@ -13,7 +13,7 @@ import { viewRun } from './view';
 import { flowStages } from '../commands/runs/monitorFlow';
 import { heldNow } from '../commands/runs/shell';
 import { scripted } from '../tests/reviewerSteps';
-import { benchPlan, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, makeBench, proven, writeInCopy } from '../tests/runProject';
 import { LEAD_SAID, runSteps } from '../tests/runSteps';
 
 import type { Bench } from '../tests/runProject';
@@ -104,8 +104,8 @@ describe('a run, rehearsed whole', () => {
       JSON.stringify({
         tasks: [
           // Each card says who reviews it: a designer's look, then the tester's QA.
-          { ...menu, dependsOn: [], review: ['designer', 'tester'] },
-          { ...home, dependsOn: [], review: ['designer', 'tester'] }
+          proven({ ...menu, dependsOn: [], review: ['designer', 'tester'] }),
+          proven({ ...home, dependsOn: [], review: ['designer', 'tester'] })
         ]
       })
     );

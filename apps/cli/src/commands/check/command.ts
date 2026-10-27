@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
+import { logMark, serverLoggedIssues } from './serverLog';
 import { themeIssues } from './themes';
 import { launchBrowser } from '../../browser';
 import { originHere } from '../../runs/copyServer';
@@ -11,11 +12,11 @@ import { inTurns } from '../../runs/inTurns';
 import { runPaths, runsDir, taskPaths } from '../../runs/paths';
 import { previewDir } from '../../runs/preview';
 import { projectHere } from '../existingProject';
+import { actingSteps } from '../shot/steps';
 import { fail, unanswered, UNANSWERED_EXIT } from '../terminal';
 import { keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { moduleSpace, projectSpace } from './space';
-import { actingSteps } from '../shot/steps';
 import { visitorAsked, visitViewOf } from '../visit';
 import { reportText } from './text';
 import { serverErrors } from './types';
@@ -275,12 +276,23 @@ export const checkRoutes = async (
       };
 
       // A few pages at once too, their reports in the order asked: one by one, t-body-type's four took 6.4 s.
-      return (
+      const mark = await logMark(where.log);
+      const reports = (
         await inTurns(
           routes.map(route => () => checkRoute(route)),
           ROUTES_AT_ONCE
         )
       ).flat();
+      // What the server logged as failed while they were opened, on the first report: pages read at once share it.
+      const first = reports.at(0);
+      const logged = first ? await serverLoggedIssues(where.log, mark, first.width) : [];
+      if (first && logged.length > 0) {
+        first.issues.push(...logged);
+        first.problems.push(...logged.map(issue => issue.message));
+        first.ok = false;
+      }
+
+      return reports;
     } finally {
       await browser.close();
     }

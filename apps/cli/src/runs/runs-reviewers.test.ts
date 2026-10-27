@@ -32,7 +32,7 @@ import { viewRun } from './view';
 import { startLines } from '../commands/runs/plan';
 import { researchSteps } from '../tests/research';
 import { reviewerSteps, SCOUT, scripted, team, TESTERS } from '../tests/reviewerSteps';
-import { benchPlan, designed, makeBench, writeInCopy } from '../tests/runProject';
+import { benchPlan, designed, makeBench, provenPlan, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
 import type { RunPlan } from './model';
@@ -321,7 +321,7 @@ describe('a spike, a scout’s', () => {
   const scopeTasks = async (): Promise<string> => {
     const plan = { ...benchPlan(), runId: 'es-scope', goal: 'The scope’s tasks' };
 
-    return bench.writePlan({ ...plan, tasks: plan.tasks.slice(0, 2) });
+    return bench.writePlan(provenPlan({ ...plan, tasks: plan.tasks.slice(0, 2) }));
   };
 
   it('finds out the scope and proposes its tasks, which the lead approves — or sends back — with the person', async () => {
@@ -485,7 +485,7 @@ describe('the run’s tasks, the lead’s alone', () => {
       tasks: benchPlan().tasks.slice(0, 1),
       primer: 'primer.md'
     };
-    const file = await bench.writePlan(plan);
+    const file = await bench.writePlan(provenPlan(plan));
     await writeInCopy(path.dirname(file), 'primer.md', 'Dates are UTC.\n');
     await found(runId, SCOPE_SPIKE, 'Home first', { tasks: file });
     // Where the scout wrote it is gone by the time the lead approves: the stage reads the copy kept beside it.

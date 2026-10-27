@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type { CheckResult, CheckRunner } from '../runs/checks';
-import type { RunPlan } from '../runs/model';
+import type { Acceptance, RunPlan } from '../runs/model';
 import type { RunContext } from '../runs/run';
 import type { Team } from '../runs/team';
 
@@ -160,6 +160,15 @@ export const makeBench = async (files: Record<string, string> = PROJECT_FILES): 
     cleanup: () => fs.rm(root, { recursive: true, force: true })
   };
 };
+
+/** A task as a scout proposes it: with a line a command proves, as research's stage must give each (`uncheckedOf`). */
+export const proven = <T extends { acceptance: Acceptance[] }>(task: T): T => ({
+  ...task,
+  acceptance: [...task.acceptance, { said: 'Its page is drawn', check: 'true' }]
+});
+
+/** A stage a scout proposes: every task `proven`. */
+export const provenPlan = (plan: RunPlan): RunPlan => ({ ...plan, tasks: plan.tasks.map(proven) });
 
 /** A plan over the bench's pages: one task a page, a fourth that depends on two. */
 export const benchPlan = (runId = 'es-launch'): RunPlan => ({

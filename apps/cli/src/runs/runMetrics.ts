@@ -265,9 +265,17 @@ export const runMetrics = (input: {
       }
     };
     const firstTake = entries.find(entry => entry.action === 'take');
-    const stacked = stackedAt.get(id);
-    if (firstTake && stacked) {
-      flow.toTake = minutes(stacked, at(firstTake));
+    // From when it could be taken: stacked, or handed on by what it waited for — encore-12's tests cards read 10–12 min
+    // "to take", every one of them waiting for the task it tests.
+    const handedOn = log.find(
+      entry =>
+        entry.action === 'handed-on' &&
+        texts(entry.ready).includes(id) &&
+        (firstTake === undefined || at(entry) <= at(firstTake))
+    );
+    const ready = handedOn ? at(handedOn) : stackedAt.get(id);
+    if (firstTake && ready) {
+      flow.toTake = minutes(ready, at(firstTake));
     }
 
     let workingSince: string | undefined;
@@ -276,7 +284,11 @@ export const runMetrics = (input: {
     let sentBackAt: string | undefined;
     for (const entry of entries) {
       const when = at(entry);
-      const byOwner = ['take', 'check', 'complete', 'resumes', 'look'].includes(text(entry.action));
+      // Its brief read again by whoever worked it is it at it again: a card handed back in the same context takes nothing
+      // — encore-12's scope read 5.4 min of rework wait, its scout at it 10 s after the changes.
+      const byOwner =
+        ['take', 'check', 'complete', 'resumes', 'look'].includes(text(entry.action)) ||
+        (entry.action === 'brief' && flow.agents.includes(text(entry.by)));
       if (sentBackAt !== undefined && byOwner && entry.action !== 'look') {
         flow.reworkWaits.push(minutes(sentBackAt, when));
         sentBackAt = undefined;

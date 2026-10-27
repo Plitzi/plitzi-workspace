@@ -116,6 +116,22 @@ authoring and the elements learnt from the runs.
   <advice>` settles a kind of advice though it is not given that moment (it comes and goes with the agents running), and
   a scout whose research waits for the lead is not "idle" to be fed the backlog. A card sent back starts its round with
   no progress of the last.
+- **The report measures what was waited for.** A card's time to take runs from when it could be taken — a tests card
+  from the approval it waited for, not the stage that stacked it; a card handed back is at it again when its agent reads
+  its brief; the kept browser's process is no agent's time in the CLI (a run read 641 s of it).
+- **What encore-12's agents asked for.** A research card's stage is refused while a task of it has no acceptance line a
+  command proves, naming them (the scope was sent back once for them). A note to the lead (`task tell`) wakes it no
+  more: it comes with what does, or as the watch ends ("Nothing that needs the lead … " and the notes under it). `page
+  check` fails on what the server logged as failed while its pages were opened (`server-logged`), when the server is
+  the CLI's — a task's copy, a look's — and on a submit the browser held back (`form-held-back`, naming `noValidate`),
+  which it only said. `task look` takes a path with its own visitor and status — `task look t-x "/moderation --as juno
+  --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
+  --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
+  pictures a component where the task's elements show (a playing room card stood for an idle one's change).
+- **A project's suite serves on its folder's own port** (from 8400, 5273 for a client project): a run's copies each ran
+  their specs on 8400 with `reuseExistingServer`, a copy's specs passing on another copy's code. `plitzi upgrade` writes
+  it into a `playwright.config.ts` nobody changed; one the project changed takes the same line by hand (`const OWN = …`,
+  from the scaffold's).
 - **Page tools, from encore-12:** `page check --ssr --as <user>` holds the HTML the server sent that visitor, not a
   guest's (six providers read "not in the HTML"); a `type` or `fill` step sets a date, time, colour or range field whole
   (keys set nothing in a date's segments); `page measure` names `data-plitzi-instance` when a selector wrote an instance

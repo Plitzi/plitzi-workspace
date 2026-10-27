@@ -82,6 +82,24 @@ export const awaited = (target: string): string => {
 };
 
 /**
+ * Of the elements `selector` finds, the place of the one that shows the most of `ids` — itself or what it holds, drawn
+ * — the first on a tie: a component's instances, in different states. Runs in the page.
+ */
+export const mostShowingInPage = ({ selector, ids }: { selector: string; ids: readonly string[] }): number => {
+  const wanted = new Set(ids);
+  const drawn = (element: Element): boolean => element.getClientRects().length > 0;
+  const counts = Array.from(document.querySelectorAll(selector)).map(
+    found =>
+      [found, ...Array.from(found.querySelectorAll('[data-plitzi-el]'))].filter(
+        each => wanted.has(each.getAttribute('data-plitzi-el') ?? '') && drawn(each)
+      ).length
+  );
+  const best = Math.max(0, ...counts);
+
+  return best === 0 ? 0 : counts.indexOf(best);
+};
+
+/**
  * A target found on the page: an element's name, a tag no element is named by (`textarea`), or a selector — CSS or
  * Playwright's own (`button:has-text("Orbit")`, `text=Saved`, `role=button[name="Publish"]`). With how many it finds
  * (none is one not on the page), or why it is no selector at all: Playwright throws on one it cannot read, and an
@@ -423,6 +441,16 @@ export const pictureOf = async (
     }
 
     shown[target] = read.selector;
+  }
+
+  // A component drawn in several states, its part named: the copy that shows what was asked for, not the first — a
+  // run's look pictured a playing room card for a task that changed the idle one.
+  const clipped = view.clip === undefined ? undefined : shown[view.clip];
+  if (clipped !== undefined && view.showing && view.showing.length > 0) {
+    const most = await page.evaluate(mostShowingInPage, { selector: clipped, ids: view.showing }).catch(() => 0);
+    if (most > 0) {
+      shown[view.clip ?? ''] = `${clipped} >> nth=${String(most)}`;
+    }
   }
 
   const how: Framing =

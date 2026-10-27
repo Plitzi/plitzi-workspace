@@ -21,7 +21,7 @@ import { testSetupOf, withTestTasks } from './tests';
 import { byUrgency, chainMinutes } from './urgency';
 
 import type { History } from './history';
-import type { Quality, RunPlan, RunTask, TaskState } from './model';
+import type { Acceptance, Quality, RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
 import type { Team } from './team';
 
@@ -194,6 +194,23 @@ export const estimate = (tasks: readonly RunTask[], agentsAsked: number): PlanEs
     ...(reasons.length > 0 ? { why: reasons.join(', ') } : {})
   };
 };
+
+/**
+ * The tasks whose acceptance no command proves — every line words: what they ask holds only at their review. A tester's
+ * card is its review, and research ends by what it found, which the lead approves: no command proves either.
+ */
+export const uncheckedOf = <
+  T extends { role?: string; spike?: string; files: readonly string[]; acceptance: readonly Acceptance[] }
+>(
+  tasks: readonly T[]
+): T[] =>
+  tasks.filter(
+    task =>
+      roleOf(task) !== TESTER &&
+      !isResearch(task) &&
+      task.acceptance.length > 0 &&
+      task.acceptance.every(each => typeof each === 'string')
+  );
 
 /** Each task's estimate scaled to how this project's runs went: a task of no less than a minute. */
 export const atPace = (tasks: readonly RunTask[], ratio: number): RunTask[] =>
@@ -662,15 +679,7 @@ export const checkPlan = async (
 
   // A task whose acceptance no command proves holds only at its review: a later task can undo it, and nothing says so —
   // v12's print fit one sheet when approved, and two at the finish.
-  const unchecked = tasks.filter(
-    task =>
-      task.kind === 'work' &&
-      roleOf(task) !== TESTER &&
-      // Research ends by what it found, which the lead approves: no command proves a finding.
-      !isResearch(task) &&
-      task.acceptance.length > 0 &&
-      task.acceptance.every(each => typeof each === 'string')
-  );
+  const unchecked = uncheckedOf(tasks.filter(task => task.kind === 'work'));
   if (unchecked.length > 0) {
     notices.push(
       `No line of ${unchecked.map(task => `"${task.id}"`).join(', ')}'s acceptance has a check: what it asks holds at its review, and nothing tells when a later task undoes it — give the lines a command can prove { said, check } (a page check, a spec): they run at complete, and again on the whole result at the finish`

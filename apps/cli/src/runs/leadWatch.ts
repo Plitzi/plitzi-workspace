@@ -32,7 +32,7 @@ export interface LeadNews {
   view?: RunView;
   /** The run finished or was aborted while it waited. */
   gone?: true;
-  /** Nothing new within the time it was given. */
+  /** Nothing that needs the lead within the time it was given — what is only to know, if any, in `fresh`. */
   timedOut?: true;
 }
 
@@ -164,7 +164,10 @@ export const waitForLead = async (
       return !launch && agent !== undefined && now - (needSince.get(agent) ?? now) < KEEPER_GRACE_MS;
     };
     const fresh = [...failedLaunches, ...leadItems(view)].filter(item => !seen.has(item.key) && !keeperHasIt(item));
-    if (fresh.length > 0) {
+    // What is only to know wakes nobody: it comes with what does, or as the watch ends — encore-12's lead was woken
+    // three times for notes, each turn reading its whole context again.
+    const over = Date.now() - started >= timeoutMs;
+    if (fresh.some(item => item.message === undefined) || (over && fresh.length > 0)) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
       // stays no longer).
@@ -182,10 +185,10 @@ export const waitForLead = async (
         }
       }
 
-      return { fresh, view };
+      return { fresh, view, ...(fresh.every(item => item.message !== undefined) ? { timedOut: true as const } : {}) };
     }
 
-    if (Date.now() - started >= timeoutMs) {
+    if (over) {
       return { fresh: [], view, timedOut: true };
     }
 
