@@ -236,7 +236,7 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     case 'launch': {
       const said = line(
         'run',
-        `started ${textOf(entry.agent)} in ${textOf(entry.harness)}${entry.resumed === true ? ', resuming its session' : ''}`
+        `started ${textOf(entry.agent)} in ${textOf(entry.harness)}${typeof entry.rework === 'string' ? `, in the session it worked ${entry.rework} in` : entry.resumed === true ? ', resuming its session' : ''}`
       );
 
       // Asked by the run, the keeper started it with the lead's token: a person read "lead started test-1" beside a lead

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { tokenFile } from './identity';
-import { claudeSessionFile, isRunning, resumable, startedWithin } from './launch';
+import { claudeSessionFile, isRunning, resumable, reworkSession, startedWithin } from './launch';
 import { agentEnv } from './launchAgent';
 import { runPaths } from '../core/paths';
 import { DEFAULTS } from '../core/taskStore';
@@ -74,6 +74,43 @@ describe('an agent started again after it died', () => {
     expect(await resumable(root, launch(), { ...ask, midTask: false })).toEqual({ not: 'not-mid-task' });
     expect(await resumable(root, launch({ session: 'gone' }), ask)).toEqual({ not: 'gone' });
     expect(await resumable(root, launch(), ask)).toEqual({ not: 'too-large', bytes: DEFAULTS.resumeMaxBytes + 1 });
+  });
+
+  // Carlos: a scout whose proposal came back started on an empty context and read the whole project again.
+  it('reworks a task sent back in the session it was worked in — while that context is small enough to read again', async () => {
+    const worked = 'b5c1f0de-0000-4000-8000-00000000000a';
+    const after = 'b5c1f0de-0000-4000-8000-00000000000b';
+    // A session of screenshots: megabytes of file, and a context the limit measures in tokens.
+    await keep(worked, DEFAULTS.resumeMaxBytes + 1);
+    await keep(after, 1024);
+    const log = [
+      { action: 'launch', agent: 'scout-1', harness: 'claude', session: worked },
+      { action: 'take', by: 'scout-1', task: 's-scope' },
+      { action: 'complete', by: 'scout-1', task: 's-scope' },
+      { action: 'stops', by: 'scout-1' },
+      // Started again for other work since: the session to rework in is still the one it was worked in.
+      { action: 'launch', agent: 'scout-1', harness: 'claude', session: after },
+      { action: 'complete', by: 'scout-1', task: 's-other' }
+    ];
+    const contexts = new Map([
+      [worked, 80_000],
+      [after, 20_000]
+    ]);
+    const ask = {
+      agent: 'scout-1',
+      task: 's-scope',
+      harness: 'claude' as const,
+      limit: 100_000,
+      contextOf: (session: string) => Promise.resolve(contexts.get(session))
+    };
+
+    expect(await reworkSession(root, log, ask)).toBe(worked);
+    expect(await reworkSession(root, log, { ...ask, limit: 50_000 })).toBeUndefined();
+    expect(await reworkSession(root, log, { ...ask, harness: 'codex' })).toBeUndefined();
+    expect(await reworkSession(root, log, { ...ask, task: 's-never' })).toBeUndefined();
+    expect(await reworkSession(root, log, { ...ask, agent: 'dev-1' })).toBeUndefined();
+    await fs.rm(claudeSessionFile(root, worked));
+    expect(await reworkSession(root, log, ask)).toBeUndefined();
   });
 });
 

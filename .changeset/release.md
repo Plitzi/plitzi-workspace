@@ -812,10 +812,15 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run monitor` follows an agent's stream:** `w` (or a click on an agent) shows, under the sidebar's spend, what it
   said, each tool it called and on what, and the first line of each answer — read off the session its harness keeps
   (Claude Code, Codex, OpenCode), as a headless agent prints only its last answer.
-- **`run monitor`'s stream takes the sidebar's height and scrolls:** down to the run, the tasks a third of what is
-  free at most; the wheel over it scrolls it back, where it stays as moments come; a click on a moment opens it whole
+- **`run monitor`'s stream takes the sidebar's height and scrolls:** newest first, as the activity reads (newest last,
+  a whole opened near the end ran past the bottom); down to the run, the tasks a third of what is free at most; the
+  wheel down over it goes to earlier moments, where it stays as moments come; a click on a moment opens it whole
   under its line; `e` widens the sidebar. The activity says a long line as far as its row reaches, where every line was
-  cut at 72 characters, mid-screen.
+  cut at 72 characters, mid-screen. A tool call opens with its answer, paired by the call's id (another call may answer
+  between them), and its answer alone too. The session is read further back while its end holds too few moments, up to
+  8 MB — a screenshot is a line of a megabyte, and a scout's stream read "nothing said or done yet" each time its last
+  line was one — and an image's base64 is left out before a line is read, said in the answer as
+  `[image · 287 KB, not shown]`.
 - **The lead with its `run watch` open is "watching", with its last act on the run:** it read "waiting", as an agent
   with nothing to do does, while it was at something else.
 - **`run open --dry-run` sees a stage of tasks alone on the open run:** a scout's stage, its name and goal the run's,
@@ -850,6 +855,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **A task sent back is reworked in the session it was worked in:** each `launch` in the run's log names its session,
+  and an agent started again for a task sent back to it resumes the session it last completed that task in — Claude
+  Code's, while it is on the machine and its context is at most `freshContextAt`, in tokens — told the task came back
+  and to take it with `task next`. A scout whose proposal came back was started on an empty context and read the
+  project again; `run agent --launch` and the activity say which task it reworks there.
 - **An acceptance rewritten is said with its cause:** the lead's only for a line written wrong once a task was worked
   to; Plitzi's for a line its check could not read (a false reading noticed, a line nothing answered); one amended for
   what another task broke joins that finding, and one amended before anyone took the task is none. Counted all as the

@@ -40,8 +40,13 @@ const claudeLines = [
     timestamp: '2026-10-28T00:45:44.000Z',
     message: {
       content: [
-        { type: 'tool_use', name: 'Bash', input: { command: 'npx plitzi task progress --step "reading"\necho done' } },
-        { type: 'tool_use', name: 'Read', input: { file_path: `${ROOT}/src/functions/charts.ts` } }
+        {
+          type: 'tool_use',
+          id: 'u1',
+          name: 'Bash',
+          input: { command: 'npx plitzi task progress --step "reading"\necho done' }
+        },
+        { type: 'tool_use', id: 'u2', name: 'Read', input: { file_path: `${ROOT}/src/functions/charts.ts` } }
       ]
     }
   }),
@@ -50,8 +55,13 @@ const claudeLines = [
     timestamp: '2026-10-28T00:45:45.000Z',
     message: {
       content: [
-        { type: 'tool_result', content: '\n  Where the task is: reading\n' },
-        { type: 'tool_result', content: [{ type: 'text', text: 'ENOENT: no such file' }], is_error: true }
+        { type: 'tool_result', tool_use_id: 'u1', content: '\n  Where the task is: reading\n' },
+        {
+          type: 'tool_result',
+          tool_use_id: 'u2',
+          content: [{ type: 'text', text: 'ENOENT: no such file' }],
+          is_error: true
+        }
       ]
     }
   }),
@@ -61,12 +71,15 @@ const claudeLines = [
 // Carlos, reading a headless agent: its own output is its last answer alone, the session the harness keeps is the rest.
 describe('an agent’s session, read as it goes', () => {
   it('reads Claude Code’s turns — what it said, each tool on what, the answer’s first line — never its request copies', () => {
-    expect(claudeMoments(claudeLines, ROOT).map(each => [each.kind, each.text, each.failed ?? false])).toEqual([
-      ['said', 'Checking b-48: the script.', false],
-      ['tool', 'Bash npx plitzi task progress --step "reading"', false],
-      ['tool', 'Read src/functions/charts.ts', false],
-      ['result', 'Where the task is: reading', false],
-      ['result', 'ENOENT: no such file', true]
+    expect(
+      claudeMoments(claudeLines, ROOT).map(each => [each.kind, each.text, each.failed ?? false, each.call])
+    ).toEqual([
+      ['said', 'Checking b-48: the script.', false, undefined],
+      // A call and its answer share its id: opened, the monitor shows both.
+      ['tool', 'Bash npx plitzi task progress --step "reading"', false, 'u1'],
+      ['tool', 'Read src/functions/charts.ts', false, 'u2'],
+      ['result', 'Where the task is: reading', false, 'u1'],
+      ['result', 'ENOENT: no such file', true, 'u2']
     ]);
   });
 
@@ -136,13 +149,16 @@ describe('an agent’s session, read as it goes', () => {
         timestamp: 't1',
         payload: { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'On it.' }] }
       }),
-      line({ timestamp: 't2', payload: { type: 'function_call', name: 'shell', arguments: '{"command":"ls src"}' } }),
-      line({ timestamp: 't3', payload: { type: 'function_call_output', output: 'functions\nspace' } })
+      line({
+        timestamp: 't2',
+        payload: { type: 'function_call', name: 'shell', arguments: '{"command":"ls src"}', call_id: 'k1' }
+      }),
+      line({ timestamp: 't3', payload: { type: 'function_call_output', output: 'functions\nspace', call_id: 'k1' } })
     ];
-    expect(codexMoments(codex, ROOT).map(each => [each.kind, each.text])).toEqual([
-      ['said', 'On it.'],
-      ['tool', 'shell ls src'],
-      ['result', 'functions']
+    expect(codexMoments(codex, ROOT).map(each => [each.kind, each.text, each.call])).toEqual([
+      ['said', 'On it.', undefined],
+      ['tool', 'shell ls src', 'k1'],
+      ['result', 'functions', 'k1']
     ]);
 
     const parts = [
@@ -151,15 +167,16 @@ describe('an agent’s session, read as it goes', () => {
         at: 't2',
         data: {
           type: 'tool',
+          id: 'p2',
           tool: 'bash',
           state: { input: { command: 'npm test' }, output: 'fail 1', status: 'error' }
         }
       }
     ];
-    expect(openCodeMoments(parts, ROOT).map(each => [each.kind, each.text, each.failed ?? false])).toEqual([
-      ['said', 'Reading the charts.', false],
-      ['tool', 'bash npm test', false],
-      ['result', 'fail 1', true]
+    expect(openCodeMoments(parts, ROOT).map(each => [each.kind, each.text, each.failed ?? false, each.call])).toEqual([
+      ['said', 'Reading the charts.', false, undefined],
+      ['tool', 'bash npm test', false, 'p2'],
+      ['result', 'fail 1', true, 'p2']
     ]);
   });
 
@@ -180,5 +197,37 @@ describe('an agent’s session, read as it goes', () => {
     expect(
       await recentMoments({ harness: 'claude', session: '0'.repeat(8), startedAt: '2026-10-28T00:45:00Z' }, ROOT, 2)
     ).toEqual({ problem: 'no Claude Code session of it on this machine yet' });
+  });
+
+  // Carlos: a scout's stream came, then read "nothing said or done yet" — its last line a screenshot of a megabyte.
+  it('reads further back when the session’s end is one line longer than a read — a screenshot answered', async () => {
+    const folder = path.join(home, 'claude', 'projects', '-work-project');
+    await fs.mkdir(folder, { recursive: true });
+    const shot = line({
+      type: 'user',
+      timestamp: '2026-10-28T00:45:46.000Z',
+      message: {
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'u3',
+            content: [{ type: 'image', source: { type: 'base64', data: 'A'.repeat(1024 * 1024) } }]
+          }
+        ]
+      }
+    });
+    await fs.writeFile(path.join(folder, `${SESSION}.jsonl`), `${[...claudeLines, shot].join('\n')}\n`);
+
+    const read = await recentMoments(
+      { harness: 'claude', session: SESSION, startedAt: '2026-10-28T00:45:00Z' },
+      ROOT,
+      3
+    );
+    // The picture is said in its place, never read into the stream.
+    expect('problem' in read ? read.problem : read.map(each => [each.kind, each.call, each.text])).toEqual([
+      ['result', 'u1', 'Where the task is: reading'],
+      ['result', 'u2', 'ENOENT: no such file'],
+      ['result', 'u3', '[image · 768 KB, not shown]']
+    ]);
   });
 });

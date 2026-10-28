@@ -4,10 +4,14 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { claudeSessionFile, isRunning, readLaunch } from './launch';
 import { launchAgent, launchHarness } from './launchAgent';
-import { openRun } from '../run';
+import { openRun, readRunLog } from '../run';
 import { setTeamAgent } from './team';
-import { benchPlan, makeBench } from '../../tests/runProject';
+import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
+import { runSteps } from '../../tests/runSteps';
+import { runPaths } from '../core/paths';
+import { completeTask, reviewTask } from '../tasks';
 
 import type { Bench } from '../../tests/runProject';
 
@@ -67,5 +71,72 @@ describe('the harness an agent starts in', () => {
     expect(launchHarness(undefined, { options: { launch: 'claude' } })).toBe('claude');
     expect(launchHarness(undefined, { options: {} })).toBeUndefined();
     expect(launchHarness(undefined, undefined)).toBeUndefined();
+  });
+});
+
+// Carlos: a scout whose proposal came back was started on an empty context, and read the whole project again.
+describe('an agent started again for a task sent back to it', () => {
+  const config = process.env.CLAUDE_CONFIG_DIR;
+
+  afterEach(() => {
+    if (config === undefined) {
+      delete process.env.CLAUDE_CONFIG_DIR;
+    } else {
+      process.env.CLAUDE_CONFIG_DIR = config;
+    }
+  });
+
+  it('reworks it in the session it worked it in: its harness told to resume that one', async () => {
+    const steps = runSteps(() => bench);
+    process.env.CLAUDE_CONFIG_DIR = path.join(bin, 'claude-home');
+    // A harness that says what it was started with, and is done.
+    const said = path.join(bin, 'args');
+    await fs.writeFile(path.join(bin, 'claude'), `#!/bin/sh\nprintf '%s\\n' "$*" >> '${said}'\n`, { mode: 0o755 });
+    await steps.open();
+    const paths = runPaths(bench.root, 'es-launch');
+    const gone = async () => {
+      for (let tries = 0; tries < 100; tries += 1) {
+        const launch = await readLaunch(paths, 'agent-1');
+        if (launch === undefined || !isRunning(launch)) {
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    };
+
+    await launchAgent(steps.lead(), 'es-launch', 'agent-1', 'claude');
+    const worked = (await readRunLog(paths)).findLast(entry => entry.action === 'launch')?.session;
+    expect(typeof worked).toBe('string');
+    // Its session as Claude Code keeps it: a context of 30k tokens, under the team's freshContextAt.
+    const file = claudeSessionFile(bench.root, String(worked));
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(
+      file,
+      `${JSON.stringify({
+        type: 'assistant',
+        timestamp: '2020-01-01T00:00:00.000Z',
+        message: {
+          id: 'm1',
+          usage: {
+            input_tokens: 10,
+            cache_read_input_tokens: 30_000,
+            cache_creation_input_tokens: 0,
+            output_tokens: 5
+          },
+          content: []
+        }
+      })}\n`
+    );
+    const home = await steps.take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await reviewTask(steps.lead(), 'es-launch', 't-home', 'changes', [{ note: 'shorter' }]);
+    await gone();
+
+    const again = await launchAgent(steps.lead(), 'es-launch', 'agent-1', 'claude');
+    expect(again).toMatchObject({ resumed: worked, rework: 't-home' });
+    await gone();
+    expect((await fs.readFile(said, 'utf-8')).trim().split('\n').at(-1)).toContain(`--resume ${String(worked)}`);
   });
 });

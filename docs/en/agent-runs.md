@@ -211,12 +211,15 @@ tokens, so the chart has a piece's minutes when the piece ends, not while it is 
 Under the sidebar's spend, **Stream** follows one agent as it goes: `w` (or a click on its row in Agents) picks it, `w`
 again the next, and past the last none. A headless agent's own output is its last answer alone, so the stream is read
 off the session its harness keeps on the machine (`harness/moments.ts`) — Claude Code's file of the session its launch
-named, Codex's rollout and OpenCode's session that started with its process — every two seconds: what the model said
+named, Codex's rollout and OpenCode's session that started with its process — every two seconds, newest first as the
+activity reads: what the model said
 (`›`), each tool and what it was asked (`▸`), and the first line of what it answered (`⎿`, `✗` when it failed), the
 project's paths as short as they read. It takes the height down to the run — the tasks a third of what is free at most —
 and the wheel over it scrolls it back (`streamBack`), where it stays as moments come after (`keptBack`); a moment
 whose line says less — a message's lines, a command, an answer — opens under it by a click (▸, ▾ open: its `whole`, the
-first 4000 characters); `e` widens the sidebar. An agent the run did not start — the lead, in the harness a person runs — has no
+first 4000 characters), a tool's call with its answer (the two share the call's id, `call`); `e` widens the sidebar.
+The session is read from its end, further back while it holds too few moments (up to 8 MB), and an image an answer
+carries is left out before its line is read and said in its place, with its weight. An agent the run did not start — the lead, in the harness a person runs — has no
 session the run keeps, and the stream says so; one just started has none yet.
 
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
@@ -546,7 +549,11 @@ harness's is never read, and its agents are not stopped for it) — passes `fres
 needs. The lead that plans never stops for it — the person talks to it — nor an agent outside the team: only the
 team's agents are started again by the run. The keeper starts the agent again — of the base, whatever
 waits; on demand, when work of its role does — and any task sent back to an agent not running asks for it by name,
-which it takes first. Every turn reads the whole context again: a run's developers, a session a task, read ~12k
+which it takes first, in the session it worked the task in (`reworkSession`, `agents/launch.ts`): each `launch` of the
+log names its session, and the one before the agent last completed that task is resumed — Claude Code alone, while
+that session is on the machine and its context, measured in tokens, is at most `freshContextAt` (a session of
+screenshots is megabytes of file and a few thousand tokens of context). A scout whose proposal came back read the
+project again on a fresh session for a change the lead said in a line. Every turn reads the whole context again: a run's developers, a session a task, read ~12k
 tokens' worth a turn and ended each at 58–113k; its designer and tester, never started again, grew to 400k and read
 26–30k a turn — more, the two, than the developers' 49 sessions; a start costs ~40k tokens written, about what a
 piece of work carrying 50k more context reads again in ~15 turns. `sessionPerTask` was this rule's `"task"`, for

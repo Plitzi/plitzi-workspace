@@ -241,7 +241,7 @@ export const drawSide = (
     }
   }
 
-  // The followed agent's stream: what its harness says and does, newest last, in the rows left above the run.
+  // The followed agent's stream: what its harness says and does, newest first, in the rows left above the run.
   const runTop = rect.top + rect.height - runRows;
   if (ui.agent !== undefined) {
     row += 1;
@@ -249,7 +249,7 @@ export const drawSide = (
     const rows = Math.max(0, runTop - 1 - (row + 2));
     const most = Math.max(0, streamHeight(followedStream, ui.streamOpened, rect.width) - rows);
     const back = Math.min(ui.streamBack, most);
-    title(p, row, rect, `Stream · ${ui.agent}`, back > 0 ? `${String(back)} newer below · wheel` : 'live · w next');
+    title(p, row, rect, `Stream · ${ui.agent}`, back > 0 ? `${String(back)} newer above · wheel` : 'live · w next');
     row += 2;
     p.areas.push({ area: { kind: 'stream', most }, top: row, left: rect.left, width: rect.width, height: rows });
     drawStream(p, followedStream, ui, { col: rect.left + 2, end, top: row, rows, back });
@@ -269,21 +269,59 @@ export const drawSide = (
   }
 };
 
-/** The rows of a stream, oldest first: each moment's line, and its whole under it when it is opened. */
+/**
+ * Which moments of a stream open, and which are open: a tool's call opens with what it asked and what it answered — a
+ * person opening the question read only the question, the answer on its own row still cut — its answer alone too.
+ */
+const openingOf = (
+  moments: readonly SessionMoment[],
+  opened: ReadonlySet<string>
+): { opens: (moment: SessionMoment) => boolean; open: (moment: SessionMoment) => boolean } => {
+  const answered = new Set(
+    moments.flatMap(moment =>
+      moment.kind === 'result' && moment.whole !== undefined && moment.call !== undefined ? [moment.call] : []
+    )
+  );
+  const callsOpen = new Set(
+    moments.flatMap(moment =>
+      moment.kind === 'tool' && moment.call !== undefined && opened.has(momentKey(moment)) ? [moment.call] : []
+    )
+  );
+  const opens = (moment: SessionMoment): boolean =>
+    moment.whole !== undefined || (moment.kind === 'tool' && moment.call !== undefined && answered.has(moment.call));
+
+  return {
+    opens,
+    open: moment =>
+      opens(moment) &&
+      (opened.has(momentKey(moment)) ||
+        (moment.kind === 'result' && moment.call !== undefined && callsOpen.has(moment.call)))
+  };
+};
+
+/**
+ * The rows of a stream, newest first — as the activity reads — each moment's line, and its whole under it when it is
+ * open: newest last, a whole opened near the end ran past the bottom, and scrolling to read it fought the moments coming.
+ */
 const streamRows = (
   moments: readonly SessionMoment[],
   opened: ReadonlySet<string>,
   room: number
-): { moment: SessionMoment; line?: string }[] =>
-  moments.flatMap(moment => [
-    { moment },
-    ...(moment.whole !== undefined && opened.has(momentKey(moment))
-      ? moment.whole.split('\n').flatMap(part => wrap(part, room).map(line => ({ moment, line })))
-      : [])
-  ]);
+): { moment: SessionMoment; line?: string }[] => {
+  const { open } = openingOf(moments, opened);
+
+  return [...moments]
+    .reverse()
+    .flatMap(moment => [
+      { moment },
+      ...(moment.whole !== undefined && open(moment)
+        ? moment.whole.split('\n').flatMap(part => wrap(part, room).map(line => ({ moment, line })))
+        : [])
+    ]);
+};
 
 /**
- * The rows of a stream that fit in `rows`, newest at the bottom — `back` of them hidden below when it is scrolled —
+ * The rows of a stream that fit in `rows`, newest at the top — `back` of them hidden above when it is scrolled —
  * each moment with more to say opened by a click (▸, ▾ open), or why there are none, or that it is being read.
  */
 const drawStream = (
@@ -313,8 +351,8 @@ const drawStream = (
 
   const hue = p.hues.get(stream.agent) ?? theme.primary;
   const all = streamRows(stream.moments, ui.streamOpened, Math.max(1, end - col - 6));
-  const last = all.length - back;
-  all.slice(Math.max(0, last - rows), last).forEach(({ moment, line }, offset) => {
+  const opening = openingOf(stream.moments, ui.streamOpened);
+  all.slice(back, back + rows).forEach(({ moment, line }, offset) => {
     const row = top + offset;
     if (line !== undefined) {
       canvas.put(row, col + 4, clip(line, Math.max(0, end - col - 4)), { fg: theme.muted });
@@ -322,8 +360,8 @@ const drawStream = (
       return;
     }
 
-    const opens = moment.whole !== undefined;
-    const open = opens && ui.streamOpened.has(momentKey(moment));
+    const opens = opening.opens(moment);
+    const open = opening.open(moment);
     if (opens) {
       p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key: momentKey(moment) } });
     }

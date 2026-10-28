@@ -22,6 +22,8 @@ export interface SessionMoment {
   whole?: string;
   /** A tool's answer that was an error. */
   failed?: true;
+  /** The call a tool and its answer share, as the harness names it: opening the call opens both. */
+  call?: string;
 }
 
 /** Where an agent's session is, as its launch kept it. */
@@ -33,8 +35,14 @@ export interface SessionAt {
   startedAt: string;
 }
 
-/** How much of a session's end is read: its last moments, whatever its length — a session of hours is megabytes. */
+/** How much of a session's end is read first: its last moments, whatever its length — a session of hours is megabytes. */
 const TAIL_BYTES = 256 * 1024;
+
+/**
+ * How far back a session is read for its moments, a read four times the last at a time: a screenshot an agent took is
+ * one line of a megabyte, and a scout's stream read "nothing said or done yet" each time its last line was one.
+ */
+const MOST_TAIL_BYTES = 8 * 1024 * 1024;
 
 const MOMENT_CHARS = 240;
 
@@ -62,8 +70,15 @@ const momentOf = (
   kind: SessionMoment['kind'],
   line: string,
   text: string,
-  failed?: boolean
-): SessionMoment => ({ at, kind, text: line, ...wholeOf(text, line), ...(failed === true ? { failed: true } : {}) });
+  { failed, call }: { failed?: boolean; call?: unknown } = {}
+): SessionMoment => ({
+  at,
+  kind,
+  text: line,
+  ...wholeOf(text, line),
+  ...(failed === true ? { failed: true } : {}),
+  ...(typeof call === 'string' && call !== '' ? { call } : {})
+});
 
 /** A text on one line, as a moment says it: its first lines joined, cut to what a row holds. */
 const oneLine = (text: string): string => {
@@ -117,39 +132,88 @@ const toolWhole = (tool: string, input: unknown, root: string): string => {
   return `${tool} ${shortPaths(said ?? JSON.stringify(input ?? ''), root)}`;
 };
 
-/** A tool's answer as text, however the harness keeps it: a string, or parts of text. */
+/** A line this long is looked through for what is heavy before it is read. */
+const HEAVY_LINE = 64 * 1024;
+
+/**
+ * A line's heavy values — an image's base64, as data or as a `data:` address — left out before it is parsed, their
+ * length kept beside them (`heavy`): a screenshot an agent took is a line of a megabyte, read again every two seconds.
+ */
+const lightened = (line: string): string =>
+  line.length < HEAVY_LINE
+    ? line
+    : line.replace(
+        /"(data|image_url)":"(?:data:[\w/+.-]+;base64,)?[A-Za-z0-9+/=]{4096,}"/g,
+        (value, key: string) => `"${key}":"","heavy":${String(value.length)}`
+      );
+
+/** What an answer's image says in its place: that it was one, and its weight. */
+const imageText = (part: Record<string, unknown>): string => {
+  const source = isRecord(part.source) ? part.source : part;
+  const chars =
+    typeof source.heavy === 'number' ? source.heavy : typeof source.data === 'string' ? source.data.length : 0;
+
+  return `[image · ${String(Math.max(1, Math.round((chars * 3) / 4 / 1024)))} KB, not shown]`;
+};
+
+/** A tool's answer as text, however the harness keeps it: a string, or parts of text — an image said in a line. */
 const answerText = (content: unknown): string => {
   if (typeof content === 'string') {
     return content;
   }
 
   if (Array.isArray(content)) {
-    return content.flatMap(part => (isRecord(part) && typeof part.text === 'string' ? [part.text] : [])).join('\n');
+    return content
+      .flatMap(part =>
+        !isRecord(part)
+          ? []
+          : typeof part.text === 'string'
+            ? [part.text]
+            : typeof part.type === 'string' && part.type.includes('image')
+              ? [imageText(part)]
+              : []
+      )
+      .join('\n');
   }
 
   return '';
 };
 
-/** The whole lines of a file's last `TAIL_BYTES`: the first, cut where the read starts, left out. */
-const tailLines = async (file: string): Promise<string[]> => {
+/** The whole lines of a file's last `bytes`: the first, cut where the read starts, left out — and whether it is all. */
+const tailLines = async (file: string, bytes: number): Promise<{ lines: string[]; all: boolean }> => {
   const handle = await fs.open(file, 'r');
   try {
     const { size } = await handle.stat();
-    const start = Math.max(0, size - TAIL_BYTES);
+    const start = Math.max(0, size - bytes);
     const buffer = Buffer.alloc(size - start);
     await handle.read(buffer, 0, buffer.length, start);
     const lines = buffer.toString('utf-8').split('\n');
 
-    return start > 0 ? lines.slice(1) : lines;
+    return { lines: start > 0 ? lines.slice(1) : lines, all: start === 0 };
   } finally {
     await handle.close();
+  }
+};
+
+/** A session file's last `limit` moments: read further back while they are fewer, up to `MOST_TAIL_BYTES`. */
+const tailMoments = async (
+  file: string,
+  read: (lines: readonly string[]) => SessionMoment[],
+  limit: number
+): Promise<SessionMoment[]> => {
+  for (let bytes = TAIL_BYTES; ; bytes = Math.min(bytes * 4, MOST_TAIL_BYTES)) {
+    const { lines, all } = await tailLines(file, bytes);
+    const moments = read(lines);
+    if (moments.length >= limit || all || bytes === MOST_TAIL_BYTES) {
+      return moments.slice(-limit);
+    }
   }
 };
 
 const entriesOf = (lines: readonly string[]): Record<string, unknown>[] =>
   lines.flatMap(line => {
     try {
-      const entry: unknown = JSON.parse(line);
+      const entry: unknown = JSON.parse(lightened(line));
 
       return isRecord(entry) ? [entry] : [];
     } catch {
@@ -181,14 +245,21 @@ export const claudeMoments = (lines: readonly string[], root: string): SessionMo
 
       if (block.type === 'tool_use' && typeof block.name === 'string') {
         return [
-          momentOf(at, 'tool', toolText(block.name, block.input, root), toolWhole(block.name, block.input, root))
+          momentOf(at, 'tool', toolText(block.name, block.input, root), toolWhole(block.name, block.input, root), {
+            call: block.id
+          })
         ];
       }
 
       if (block.type === 'tool_result') {
         const answer = shortPaths(answerText(block.content), root);
 
-        return [momentOf(at, 'result', firstLine(answer), answer, block.is_error === true)];
+        return [
+          momentOf(at, 'result', firstLine(answer), answer, {
+            failed: block.is_error === true,
+            call: block.tool_use_id
+          })
+        ];
       }
 
       return [];
@@ -217,7 +288,11 @@ export const codexMoments = (lines: readonly string[], root: string): SessionMom
         }
       }
 
-      return [momentOf(at, 'tool', toolText(payload.name, input, root), toolWhole(payload.name, input, root))];
+      return [
+        momentOf(at, 'tool', toolText(payload.name, input, root), toolWhole(payload.name, input, root), {
+          call: payload.call_id
+        })
+      ];
     }
 
     if (payload.type === 'function_call_output' || payload.type === 'custom_tool_call_output') {
@@ -225,7 +300,7 @@ export const codexMoments = (lines: readonly string[], root: string): SessionMom
 
       const answer = shortPaths(answerText(output), root);
 
-      return [momentOf(at, 'result', firstLine(answer), answer)];
+      return [momentOf(at, 'result', firstLine(answer), answer, { call: payload.call_id })];
     }
 
     return [];
@@ -248,17 +323,16 @@ export const openCodeMoments = (parts: readonly { at: string; data: unknown }[],
         typeof state.output === 'string' ? state.output : typeof state.error === 'string' ? state.error : '';
 
       return [
-        momentOf(at, 'tool', toolText(data.tool, state.input, root), toolWhole(data.tool, state.input, root)),
+        momentOf(at, 'tool', toolText(data.tool, state.input, root), toolWhole(data.tool, state.input, root), {
+          call: data.id
+        }),
         ...(answer === ''
           ? []
           : [
-              momentOf(
-                at,
-                'result',
-                firstLine(shortPaths(answer, root)),
-                shortPaths(answer, root),
-                state.status === 'error'
-              )
+              momentOf(at, 'result', firstLine(shortPaths(answer, root)), shortPaths(answer, root), {
+                failed: state.status === 'error',
+                call: data.id
+              })
             ])
       ];
     }
@@ -289,7 +363,7 @@ export const recentMoments = async (
 
     return file === undefined
       ? { problem: 'no Claude Code session of it on this machine yet' }
-      : claudeMoments(await tailLines(file), root).slice(-limit);
+      : tailMoments(file, lines => claudeMoments(lines, root), limit);
   }
 
   if (at.harness === 'codex') {
@@ -297,7 +371,7 @@ export const recentMoments = async (
 
     return file === undefined
       ? { problem: 'no Codex session of it on this machine yet' }
-      : codexMoments(await tailLines(file), root).slice(-limit);
+      : tailMoments(file, lines => codexMoments(lines, root), limit);
   }
 
   const parts = await withOpenCodeSession(startedAt, root, (database, session) =>

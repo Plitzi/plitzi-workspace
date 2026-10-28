@@ -6,11 +6,12 @@ import path from 'node:path';
 
 import { agentPrompt, harnessCommand, HARNESSES, isHarness } from './agentPrompt';
 import { issueToken, tokenFile, writeCli } from './identity';
-import { isRunning, readLaunch, resumable, writeLaunch } from './launch';
+import { isRunning, readLaunch, resumable, reworkSession, writeLaunch } from './launch';
 import { isPrincipal, scoutsOf, testersReview } from './leads';
-import { leadStart, readTeam, startedAgents } from './team';
+import { FRESH_CONTEXT_AT, leadStart, readTeam, startedAgents } from './team';
 import { agentScratch, runPaths } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
+import { harnessUsage } from '../harness';
 import { loadRun, logRun, readRunLog } from '../run';
 import { SESSION_ENV } from './session';
 import { withLock } from '../core/store';
@@ -124,8 +125,10 @@ export interface AgentLaunched {
   /** The team's model, where this harness does not run it: the agent on the harness's own default. */
   modelNotRun?: string;
   launched: { harness: Harness; pid: number; log: string };
-  /** The session it resumed (`resumeSession`), cut off mid-task. */
+  /** The session it resumed: cut off mid-task (`resumeSession`), or the one a task sent back to it was worked in. */
   resumed?: string;
+  /** The task sent back to it it reworks in the session it was worked in (`resumed`). */
+  rework?: string;
   /** Why it started fresh though the team asked it to resume. */
   fresh?: { not: NoResume; bytes?: number };
 }
@@ -250,19 +253,48 @@ const startHeld = async (
     return { agent, runId, running: { harness: last.harness, pid: last.pid, startedAt: last.startedAt } };
   }
 
-  const held = (await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)))).filter(
-    view => view.owner?.agent === agent && view.state.status === 'in-progress'
-  );
-  const lastWord = (await readRunLog(loaded.paths)).findLast(entry => entry.by === agent)?.action;
+  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+  const held = views.filter(view => view.owner?.agent === agent && view.state.status === 'in-progress');
+  const runLog = await readRunLog(loaded.paths);
+  const lastWord = runLog.findLast(entry => entry.by === agent)?.action;
   const resume = await resumable(ctx.root, last, {
     asked: started?.resumeSession === true,
     harness,
     midTask: held.length > 0 && lastWord !== 'stops'
   });
-  const session = 'session' in resume ? { id: resume.session, resume: true } : { id: randomUUID(), resume: false };
-  const said = session.resume
-    ? `You were cut off mid-task (${held.map(view => view.task.id).join(', ')}): the machine or your harness went down. Your copy is as you left it. Run ${cli} task next first — it hands your task back — and go on where you were.`
-    : prompt;
+  // A task sent back to it is worked again in the session it was worked in: what it read and knew of it, kept.
+  const sentBack = views.find(view => view.owner?.agent === agent && view.state.status === 'changes-requested');
+  const reworked =
+    'session' in resume || sentBack === undefined
+      ? undefined
+      : await reworkSession(ctx.root, runLog, {
+          agent,
+          task: sentBack.task.id,
+          harness,
+          limit: (await readTeam(ctx.root).catch(() => undefined))?.options?.freshContextAt ?? FRESH_CONTEXT_AT,
+          contextOf: async each =>
+            (
+              await harnessUsage({
+                sessions: [each],
+                processes: [],
+                root: ctx.root,
+                from: new Date(0).toISOString(),
+                to: ctx.now().toISOString()
+              })
+            )?.contextAtEnd
+        });
+  const session =
+    'session' in resume
+      ? { id: resume.session, resume: true }
+      : reworked !== undefined
+        ? { id: reworked, resume: true }
+        : { id: randomUUID(), resume: false };
+  const said =
+    'session' in resume
+      ? `You were cut off mid-task (${held.map(view => view.task.id).join(', ')}): the machine or your harness went down. Your copy is as you left it. Run ${cli} task next first — it hands your task back — and go on where you were.`
+      : reworked !== undefined && sentBack !== undefined
+        ? `${sentBack.task.id} came back from its review with changes. Run ${cli} task next first — it hands it back with what was asked — and rework it with what you know of it.`
+        : prompt;
   const {
     command,
     args,
@@ -299,7 +331,9 @@ const startHeld = async (
     action: 'launch',
     agent,
     harness,
+    ...(harness === 'claude' ? { session: session.id } : {}),
     ...(session.resume ? { resumed: true } : {}),
+    ...(reworked !== undefined && sentBack !== undefined ? { rework: sentBack.task.id } : {}),
     ...(asked ? { asked: true } : {})
   });
 
@@ -312,6 +346,7 @@ const startHeld = async (
     // The team's model, where this harness does not run it: said, the agent on the harness's own default.
     ...(model && !ran ? { modelNotRun: model } : {}),
     launched: { harness, pid: child.pid, log },
-    ...(session.resume ? { resumed: session.id } : 'not' in resume ? { fresh: resume } : {})
+    ...(session.resume ? { resumed: session.id } : 'not' in resume ? { fresh: resume } : {}),
+    ...(reworked !== undefined && sentBack !== undefined ? { rework: sentBack.task.id } : {})
   };
 };

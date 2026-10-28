@@ -86,7 +86,8 @@ describe("the sidebar's spend", () => {
 
 // Carlos: a headless agent's output is its last answer alone — what it says and does, followed in the sidebar.
 describe("the sidebar's stream of the agent followed", () => {
-  it('says what the agent said and did, newest last, under the spend — and why there is none to read', async () => {
+  // Carlos: newest last, a whole opened near the end ran past the bottom and the scroll fought the moments coming.
+  it('says what the agent said and did, newest first, under the spend — and why there is none to read', async () => {
     const data = await monitorRun(lead(), await open());
     const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
     const text = shown(
@@ -103,7 +104,7 @@ describe("the sidebar's stream of the agent followed", () => {
     );
 
     expect(text).toContain(`Stream · ${agent}`);
-    expect(text).toMatch(/› Checking the charts[\s\S]*▸ Bash npx plitzi task check[\s\S]*✗ fail 1/);
+    expect(text).toMatch(/✗ fail 1[\s\S]*▸ Bash npx plitzi task check[\s\S]*› Checking the charts/);
     expect(text.indexOf('Spend')).toBeLessThan(text.indexOf('Stream ·'));
     expect(shown(data, { agent }, { agent, problem: 'no Claude Code session of it on this machine yet' })).toContain(
       'no Claude Code session of it on this machine yet'
@@ -150,6 +151,53 @@ describe("the sidebar's stream of the agent followed", () => {
     expect(text).toMatch(/▾ Checking the charts\s*\n\s*Checking the charts\s*\n\s*then the rooms, read once/);
   });
 
+  // Carlos: opening a call's arrow showed what it asked, never what it answered — two arrows to open for one call.
+  it('opens a tool call with its answer — paired by the call, another answering between them — and its answer alone', async () => {
+    const data = await monitorRun(lead(), await open());
+    const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
+    const asked = { at: 't1', kind: 'tool' as const, text: 'Bash npx plitzi task check', call: 'c1' };
+    const moments = [
+      asked,
+      { at: 't1', kind: 'tool' as const, text: 'Read src/a.ts', call: 'c2' },
+      {
+        at: 't2',
+        kind: 'result' as const,
+        text: 'export const a',
+        whole: 'export const a\nexport const b',
+        call: 'c2'
+      },
+      { at: 't2', kind: 'result' as const, text: 'fail 1', whole: 'fail 1\n  ✗ the charts read once', call: 'c1' }
+    ];
+    const screen = (ui: Partial<MonitorUi>) =>
+      monitorScreen(
+        { ...data, spend: [] },
+        { ...initialUi('advanced'), agent, ...ui },
+        {
+          width: 180,
+          height: 60,
+          now: bench.now(),
+          theme: THEMES.dark,
+          preview: { state: { kind: 'none' }, output: [] },
+          stream: { agent, moments }
+        }
+      );
+
+    const closed = screen({});
+    // The call says nothing more than its line: it opens for its answer.
+    const hit = closed.hits.find(each => each.action.kind === 'moment' && each.action.key === momentKey(asked));
+    const opened =
+      hit &&
+      onMouse(
+        { ...initialUi('advanced'), agent },
+        { button: 0, row: hit.row, col: hit.from + 1 },
+        { ...closed, needs: [], palette: () => [], preview: 'none' }
+      );
+    const text = screen({ streamOpened: opened?.streamOpened }).canvas.text().join('\n');
+    expect(text).toMatch(/▾ Bash npx plitzi task check/);
+    expect(text).toMatch(/▾ fail 1\s*\n\s*fail 1\s*\n\s*✗ the charts read once/);
+    expect(text).not.toContain('export const b');
+  });
+
   // Carlos: the stream took the height left under many tasks, could not be scrolled, and the sidebar was narrow.
   it('takes the height down to the run, the tasks a third at most — scrolled back by the wheel — wider with e', async () => {
     const data = await monitorRun(lead(), await open());
@@ -169,11 +217,12 @@ describe("the sidebar's stream of the agent followed", () => {
 
     const live = said(shown(many, { agent }, { agent, moments }));
     expect(live.length).toBeGreaterThanOrEqual(20);
-    expect(live.at(-1)).toBe(59);
+    expect(live[0]).toBe(59);
+    expect(live.at(-1)).toBeLessThan(live[0]);
 
     const back = shown(many, { agent, streamBack: 10 }, { agent, moments });
-    expect(said(back).at(-1)).toBe(49);
-    expect(back).toContain('10 newer below · wheel');
+    expect(said(back)[0]).toBe(49);
+    expect(back).toContain('10 newer above · wheel');
 
     // Wider: the stream's column starts further left.
     const column = (text: string) =>

@@ -60,11 +60,17 @@ export const runAgent = (agent: string, options: AgentOptions): Promise<void> =>
                     )
                   ]
                 : []),
-              ...(answer.resumed
-                ? [`  It resumes its own session (${answer.resumed}): it went down mid-task, and goes on where it was.`]
-                : answer.fresh
-                  ? freshSaid(answer.fresh)
-                  : []),
+              ...(answer.resumed && answer.rework
+                ? [
+                    `  It reworks ${answer.rework} in the session it worked it in (${answer.resumed}): what it read and knew of it, kept.`
+                  ]
+                : answer.resumed
+                  ? [
+                      `  It resumes its own session (${answer.resumed}): it went down mid-task, and goes on where it was.`
+                    ]
+                  : answer.fresh
+                    ? freshSaid(answer.fresh)
+                    : []),
               `  Its output: ${answer.launched.log} — its prompt: ${answer.promptFile}`,
               `  Follow the run: plitzi run monitor ${answer.runId} (a person) · plitzi run watch ${answer.runId} (the lead)`
             ].join('\n')

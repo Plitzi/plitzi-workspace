@@ -393,9 +393,9 @@ export const onMouse = (
     return { ...ui, feedBack: Math.max(0, Math.min(most, ui.feedBack + (up ? -1 : 1))) };
   }
 
-  // The newest at the bottom: the wheel up goes back to earlier moments, down to the live end.
+  // The newest at the top, as the activity: the wheel down goes to earlier moments, up back to the live end.
   if (over?.area.kind === 'stream') {
-    return { ...ui, streamBack: Math.max(0, Math.min(over.area.most, ui.streamBack + (up ? 1 : -1))) };
+    return { ...ui, streamBack: Math.max(0, Math.min(over.area.most, ui.streamBack + (up ? -1 : 1))) };
   }
 
   if (over?.area.kind === 'tasks' && count > 0) {

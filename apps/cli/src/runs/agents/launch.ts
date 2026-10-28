@@ -135,3 +135,47 @@ export const resumable = async (
 
   return stat.size > DEFAULTS.resumeMaxBytes ? { not: 'too-large', bytes: stat.size } : { session: launch.session };
 };
+
+/**
+ * The session `agent` worked `task` in, to rework it in when it was sent back: the session of its last launch before it
+ * last completed it — a scout whose proposal came back was started on a fresh session and read the project again, 3½
+ * minutes, for a change the lead could say in a line. Claude Code's alone (it resumes by id), still on this machine, and
+ * only while its context is at most `limit` (`freshContextAt`): past it, every turn of the rework reads it all again.
+ * Measured in tokens, never bytes: a screenshot is a megabyte of a session and a few thousand tokens of its context.
+ */
+export const reworkSession = async (
+  root: string,
+  log: readonly Record<string, unknown>[],
+  {
+    agent,
+    task,
+    harness,
+    limit,
+    contextOf
+  }: {
+    agent: string;
+    task: string;
+    harness: Harness;
+    limit: number;
+    contextOf: (session: string) => Promise<number | undefined>;
+  }
+): Promise<string | undefined> => {
+  if (harness !== 'claude') {
+    return undefined;
+  }
+
+  const completed = log.findLastIndex(
+    entry => entry.action === 'complete' && entry.by === agent && entry.task === task
+  );
+  const launched = log
+    .slice(0, Math.max(0, completed))
+    .findLast(entry => entry.action === 'launch' && entry.agent === agent && entry.harness === 'claude');
+  const session = typeof launched?.session === 'string' ? launched.session : undefined;
+  if (session === undefined || !(await fs.stat(claudeSessionFile(root, session)).catch(() => undefined))) {
+    return undefined;
+  }
+
+  const context = await contextOf(session);
+
+  return context !== undefined && context <= limit ? session : undefined;
+};

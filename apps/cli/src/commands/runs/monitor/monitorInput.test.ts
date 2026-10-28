@@ -274,17 +274,18 @@ describe('the agent whose stream is followed', () => {
     expect(picked && onMouse(picked, { button: 0, row: 9, col: 3 }, shown)?.agent).toBeUndefined();
   });
 
-  // Carlos: the stream could not be scrolled, and the sidebar was too narrow to read it.
+  // Carlos: the stream could not be scrolled, and the sidebar was too narrow to read it — the newest at the top since,
+  // as the activity reads, so the wheel down goes to earlier moments.
   it('is scrolled back by the wheel over it — never past its first moment, nor past the live end — and e widens the sidebar', () => {
     const over = nothing({ areas: [{ area: { kind: 'stream', most: 2 }, top: 10, left: 0, width: 40, height: 5 }] });
     const followed = { ...initialUi('advanced'), agent: 'dev-1' };
     const up = (ui: MonitorUi) => onMouse(ui, { button: 64, row: 12, col: 3 }, over) ?? ui;
     const down = (ui: MonitorUi) => onMouse(ui, { button: 65, row: 12, col: 3 }, over) ?? ui;
 
-    expect(up(followed).streamBack).toBe(1);
-    expect(up(up(up(followed))).streamBack).toBe(2);
-    expect(down(up(followed)).streamBack).toBe(0);
-    expect(down(followed).streamBack).toBe(0);
+    expect(down(followed).streamBack).toBe(1);
+    expect(down(down(down(followed))).streamBack).toBe(2);
+    expect(up(down(followed)).streamBack).toBe(0);
+    expect(up(followed).streamBack).toBe(0);
     // Another agent followed starts at its live end.
     expect(followedNext({ ...followed, streamBack: 2 }, ['dev-1', 'scout-1']).streamBack).toBe(0);
 
