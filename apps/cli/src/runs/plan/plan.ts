@@ -28,6 +28,17 @@ import type { Acceptance, Quality, RunPlan, RunTask, TaskState } from '../core/m
 const assemblesFolderOf = (importer: string, file: string): boolean =>
   /^index\.[cm]?[jt]sx?$/.test(path.basename(importer)) && path.dirname(importer) === path.dirname(file);
 
+/** The files a task holds beyond those it names, each by the unit it named that owns them. */
+export const broughtBy = (
+  ownership: Pick<Ownership, 'units'>,
+  named: readonly string[],
+  held: readonly string[]
+): { unit: string; files: string[] }[] =>
+  ownership.units
+    .filter(unit => named.includes(unit.unit))
+    .map(unit => ({ unit: unit.unit, files: unit.owns.filter(file => held.includes(file) && !named.includes(file)) }))
+    .filter(each => each.files.length > 0);
+
 /**
  * A plan, held to the rules: the lead writes it, the CLI never interprets a goal. Refused, every
  * reason at once, when it repeats a file across tasks, has a cycle, names a task that is not in it, or a file outside
@@ -208,7 +219,7 @@ export const checkPlan = async (
 
   untested.forEach(({ task, why }) =>
     notices.push(
-      `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
+      `"${task}" gets no task of tests: ${why}. Name its test file among its own "files" ("files": [..., "src/x.test.ts"]: it writes its tests itself), or in a task of tests of yours ("testsOf": ["${task}"], "files": ["visual/x.spec.ts"]) — or say "tests": false — so that none is said, not missed`
     )
   );
   // A stage is stacked on a team already at work: its size was said at the open, a stage of one fix read "1 task for 7
@@ -399,6 +410,15 @@ export const checkPlan = async (
       if (!madeByRun && !(await exists(under(root, file))) && !created.includes(file)) {
         created.push(file);
       }
+    }
+
+    // What the units it names bring is said, each with the unit it is of: a run's stage of 8 files opened with 12, and
+    // its scout read four it never changes as added for no reason.
+    const brought = broughtBy(ownership, files, expanded);
+    if (brought.length > 0) {
+      notices.push(
+        `Task "${task.id}" holds ${brought.map(({ unit, files: owned }) => `${owned.join(', ')} (${unit}'s own: only it imports ${owned.length === 1 ? 'it' : 'them'})`).join('; ')} too — a unit's files come with it, so its change is the task's; name one in another task to give it there`
+      );
     }
 
     tasks.push({ ...task, files: expanded, kind: 'work' });

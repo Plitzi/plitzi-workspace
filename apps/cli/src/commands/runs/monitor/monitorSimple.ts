@@ -100,9 +100,8 @@ const drawWorking = (p: Paint, data: Monitored, ui: MonitorUi, top: number, rect
   return row;
 };
 
-/** The tasks a person may have to unblock: blocked, or failed. */
-const stuckTasks = (data: Monitored): TaskLine[] =>
-  data.view.tasks.filter(task => task.status === 'blocked' || task.status === 'failed');
+/** The tasks a person may have to unblock: blocked. */
+const stuckTasks = (data: Monitored): TaskLine[] => data.view.tasks.filter(task => task.status === 'blocked');
 
 /** How many tasks are at each stage, in a line — and the stuck ones by name, with why. */
 const drawTasks = (p: Paint, data: Monitored, top: number, rect: Rect): number => {

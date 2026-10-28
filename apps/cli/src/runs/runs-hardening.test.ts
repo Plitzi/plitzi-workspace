@@ -437,6 +437,10 @@ describe('what the lead reads', () => {
     const checked = await checkPlan(bench.root, plan, await readOwnership(bench.root), team);
 
     expect(checked.notices).toContainEqual(expect.stringContaining('"t-theme" gets no task of tests'));
+    // Said how: a scout wrote `"tests": ["visual/x.spec.ts"]`, refused, told only to "name a test file".
+    expect(checked.notices).toContainEqual(
+      expect.stringContaining('Name its test file among its own "files"') as unknown
+    );
   });
 });
 

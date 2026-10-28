@@ -64,7 +64,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    false`: none); more testers when reviews queue (`run team set test --count 2`). **Yours is what a tester escalates, past
    its review rounds** (blocked on you), or nobody else may take: `task review <task> --approve`, or `task unblock <task> --answer "…"`, which
    sends it back with your word. Take a task
-   back: `task reassign <task> --reason "…" --to <agent>`.
+   back: `task reassign <task> --reason "…" --to <agent>`; out of the run: `task leave <task> --why "…"`.
 
    **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`,
    `run show --restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.

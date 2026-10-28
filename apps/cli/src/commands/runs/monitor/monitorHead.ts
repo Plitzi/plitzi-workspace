@@ -20,7 +20,7 @@ const STRIP_ORDER: Record<TaskLine['status'], number> = {
   'in-progress': 3,
   waiting: 5,
   blocked: 5,
-  failed: 5,
+  left: 8,
   ready: 6,
   pending: 7
 };

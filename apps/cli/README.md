@@ -661,6 +661,7 @@ plitzi task prove t-home-tests --mutate src/functions/shows.ts --from "slice(0, 
 plitzi task run "npx playwright test visual/room.spec.ts"   # a command of your own: a suite in its turn on the machine, its output in a file, what failed said
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
+plitzi task leave t-player --why "the platform's"   # the lead takes it out of the run, and what waits on it: its holder cut, the finish writes the run without them
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's (no run open: the backlog's)
 plitzi run notice "…" --plitzi no-way       # of Plitzi, as what it was — wrong (untrue), no-way (went round it), in-the-way (refused what was meant): the run's feedback
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it

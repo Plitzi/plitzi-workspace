@@ -98,6 +98,27 @@ export const textsInPage = ({
   };
 };
 
+/**
+ * Run in the page: what an attribute holds on each copy of an element shown — its own, or the one inside it that has it
+ * (a link element's anchor) — as `textsInPage` reads their words.
+ */
+export const attributesInPage = ({ selector, attribute }: { selector: string; attribute: string }): Copies => {
+  const nodes = Array.from(document.querySelectorAll(selector));
+  const shown = nodes.filter(
+    node => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden'
+  );
+
+  return {
+    present: nodes.length,
+    shown: shown.map(node =>
+      node.hasAttribute(attribute)
+        ? (node.getAttribute(attribute) ?? '')
+        : (node.querySelector(`[${attribute}]`)?.getAttribute(attribute) ?? '')
+    ),
+    cut: []
+  };
+};
+
 /** The copies of an element, as `textsInPage` read them. */
 export const copiesOf = ({ present, drawn }: ReturnType<typeof textsInPage>): Copies => ({
   present,
@@ -299,12 +320,17 @@ export const missedExpectations = async (
     '[data-plitzi-el]'
   );
   for (const expected of expect) {
-    const copies = copiesOf(
-      await page.evaluate(textsInPage, { selector: selectorOf(authored, expected.element), within: true })
-    );
-    const message = expectationMissed(expected, copies, onPage);
+    const selector = selectorOf(authored, expected.element);
+    const { attribute } = expected;
+    const copies =
+      attribute === undefined
+        ? copiesOf(await page.evaluate(textsInPage, { selector, within: true }))
+        : await page.evaluate(attributesInPage, { selector, attribute });
+    // An attribute's expectation is said as written: `site-sign-in[href]`, never the element's words.
+    const named = attribute === undefined ? expected.element : `${expected.element}[${attribute}]`;
+    const message = expectationMissed({ ...expected, element: named }, copies, onPage);
     if (message === undefined) {
-      met.push(`${expected.absent ? '!' : ''}${expected.element}${expected.text === '' ? '' : `~${expected.text}`}`);
+      met.push(`${expected.absent ? '!' : ''}${named}${expected.text === '' ? '' : `~${expected.text}`}`);
     } else {
       missed.push({ code: 'expected-text', message, elementId: expected.element, width });
     }

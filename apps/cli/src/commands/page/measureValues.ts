@@ -62,6 +62,8 @@ export const MEASURED = [
   'right',
   'bottom',
   'left',
+  // Which of two layers is on top — a dialog under the site's sticky bar: a run's scout could neither read nor hold it.
+  'z-index',
   'max-width',
   'grid-area',
   // Where its box starts in the viewport: a column measured against another's (every agent and the lead

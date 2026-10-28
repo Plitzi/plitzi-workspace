@@ -7,7 +7,7 @@ import { useNavigation, getPaths, matchRoutePath, getRouteParams } from '@plitzi
 import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
-import type { RouteParams } from '@plitzi/sdk-shared';
+import type { NavigateHow, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type NavigationProviderProps = {
@@ -88,8 +88,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   const testedOrigin = urlTest?.hostname ? `https://${urlTest.hostname}` : origin;
 
   const handleNavigate = useCallback(
-    (url: string, isExternal: boolean = false) => {
-      if (isExternal && typeof window !== 'undefined') {
+    (url: string, { external = false }: NavigateHow = {}) => {
+      if (external && typeof window !== 'undefined') {
         window.location.href = url;
 
         return;

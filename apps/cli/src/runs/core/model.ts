@@ -31,7 +31,8 @@ export const TASK_STATUSES = [
   'changes-requested',
   'done',
   'blocked',
-  'failed'
+  // Taken out of the run by the lead (`task leave`): no one takes it, the finish writes the run without it.
+  'left'
 ] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -365,6 +366,8 @@ export interface TaskState {
    * taken by no other — until it takes it.
    */
   handTo?: { agent: string; by: string; at: string; reason?: string };
+  /** Why the lead took it out of the run (`task leave`), and when: what the report says of it. */
+  left?: { why: string; by: string; at: string };
   updatedAt: string;
 }
 
@@ -665,6 +668,10 @@ export const isTaskState = (value: unknown): value is TaskState =>
     value.handTo,
     (to: unknown) =>
       isRecord(to) && isString(to.agent) && isString(to.by) && isString(to.at) && optional(to.reason, isString)
+  ) &&
+  optional(
+    value.left,
+    (left: unknown) => isRecord(left) && isString(left.why) && isString(left.by) && isString(left.at)
   ) &&
   optional(value.changed, isStrings) &&
   optional(value.submitted, isDigests) &&

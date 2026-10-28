@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
 import { expectedIds, madeTwice, partIdsOf } from './expectations';
-import { extendRun } from './extend';
+import { extendRun, stackedGoal } from './extend';
 import { meantOnPage } from '../../commands/page/check';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { loadRun, openRun } from '../run';
@@ -147,5 +147,18 @@ describe('a check as any shell runs it', () => {
     expect(servesCopy('node --test src/space/lib/age.test.ts')).toBe(false);
     expect(servesCopy("grep -q 'Menú' src/space/pages/menu.ts # plitzi page check /menu")).toBe(false);
     expect(servesCopy('plitzi page measure / #hero --width 390')).toBe(true);
+  });
+});
+
+// A research card's stage read with the run's goal already stacked ("A · B") was added whole: the title said them
+// four times over after three amends.
+describe('a stage’s goal stacked on the run’s', () => {
+  it('adds each goal once, whatever the stage was filled in with', () => {
+    expect(stackedGoal('Use every control', 'Use every control · The controls the scope did not reach')).toBe(
+      'Use every control · The controls the scope did not reach'
+    );
+    expect(stackedGoal('A · B', 'A · B')).toBe('A · B');
+    expect(stackedGoal('A · B', 'C')).toBe('A · B · C');
+    expect(stackedGoal('A', '')).toBe('A');
   });
 });

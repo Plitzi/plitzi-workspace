@@ -33,6 +33,7 @@ export { taskCheck, taskComplete, taskFound, taskProgress, taskUnblock } from '.
 export { taskProve } from './review/prove';
 export { taskRun } from './task/taskRun';
 export type { ProveOptions } from './review/prove';
+export { taskLeave } from './review/leave';
 export { taskReassign, taskRevert } from './review/reassign';
 export { taskEscalate } from './review/escalate';
 export { taskReview } from './review/review';

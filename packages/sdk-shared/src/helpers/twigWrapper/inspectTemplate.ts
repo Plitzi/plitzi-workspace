@@ -9,6 +9,16 @@ import type { ASTNode, Expression } from './AST';
  * A filter written as JavaScript names it, and what the templates call it: a run's host picker wrote `concat`, read
  * as nothing at all.
  */
+/** A name as it is spelled whatever its case and underscores: `urlencode`, `urlEncode` and `url_encode` alike. */
+const bare = (name: string): string => name.replace(/_/g, '').toLowerCase();
+
+/**
+ * The filter a name means, written otherwise — `urlencode` for `url_encode`: a run's developer read "Unknown filter
+ * urlencode" as no such filter, and put a path with a query in `?next=` unencoded.
+ */
+const spelledOtherwise = (name: string): string | undefined =>
+  Object.keys(filters).find(filter => bare(filter) === bare(name));
+
 const JS_NAMES: Readonly<Partial<Record<string, string>>> = {
   concat: 'first|merge(second)',
   push: 'list|merge([item])',
@@ -144,7 +154,10 @@ class Inspector {
     for (const name of names) {
       if (name && !Object.hasOwn(filters, name)) {
         const twigs = JS_NAMES[name];
-        this.issues.push(`Unknown filter "${name}"${twigs ? ` — write \`${twigs}\`` : ''}`);
+        const spelled = twigs === undefined ? spelledOtherwise(name) : undefined;
+        this.issues.push(
+          `Unknown filter "${name}"${twigs ? ` — write \`${twigs}\`` : spelled ? ` — did you mean \`${spelled}\`?` : ''}`
+        );
       }
     }
   }

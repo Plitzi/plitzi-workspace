@@ -26,6 +26,9 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
     expect(commandHint("error: unknown option '--clip'", ['task', 'look', 'd-x', '/', '--clip', 'hero'])).toContain(
       'plitzi task look <task> --within <element>'
+    ); // Two agents reached for it to read a dialog's styles: page measure says them all.
+    expect(commandHint("error: unknown option '--css'", ['page', 'measure', '/r/x', 'dialog', '--css'])).toContain(
+      '--expect "<property>=<value>"'
     );
   });
 

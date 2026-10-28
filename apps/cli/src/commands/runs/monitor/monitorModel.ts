@@ -174,7 +174,7 @@ export const TASK_LOOK: Record<TaskLine['status'], { glyph: string; label: strin
   'in-review': { glyph: '◎', label: 'in review', tone: 'link' },
   waiting: { glyph: '…', label: 'waiting', tone: 'warning' },
   blocked: { glyph: '■', label: 'blocked', tone: 'danger' },
-  failed: { glyph: '✗', label: 'failed', tone: 'danger' },
+  left: { glyph: '−', label: 'left out', tone: 'subtle' },
   ready: { glyph: '○', label: 'ready', tone: 'muted' },
   pending: { glyph: '○', label: 'pending', tone: 'subtle' },
   done: { glyph: '✓', label: 'approved', tone: 'success' }

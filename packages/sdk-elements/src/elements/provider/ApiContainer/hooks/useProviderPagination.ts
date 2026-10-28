@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { NavigateHow } from '@plitzi/sdk-shared';
+
 export type ProviderPagination = 'none' | 'url' | 'append';
 
 export type UseProviderPaginationProps = {
@@ -12,7 +14,7 @@ export type UseProviderPaginationProps = {
   /** Page the resolved window belongs to, as reported by the server. */
   page: number;
   refresh?: (ids?: string[], params?: Record<string, string>) => Promise<void>;
-  navigate?: (url: string, isExternal?: boolean) => void;
+  navigate?: (url: string, how?: NavigateHow) => void;
 };
 
 const buildPageUrl = (pageParam: string, page: number) => {

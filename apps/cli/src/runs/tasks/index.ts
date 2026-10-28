@@ -37,6 +37,7 @@ export type { CompleteOptions, CompletedTask } from './complete';
 export { requestShared, requestsOf } from './requests';
 export { notReviewedIn, reviewTask } from './review';
 export type { ReviewedTask } from './review';
+export { leaveTask } from './leave';
 export { reassignTask, revertTask } from './reassign';
 export { taskContext } from './context';
 export type { TaskContext } from './context';

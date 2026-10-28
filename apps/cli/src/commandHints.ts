@@ -48,7 +48,12 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--element': 'one element pictured alone: plitzi page shot <path> --within <element>',
     '--clip': 'one element pictured alone: plitzi page shot <path> --within <element>'
   },
-  'page measure': { '--element': 'the elements are its arguments: plitzi page measure <path> <element…>' },
+  'page measure': {
+    '--element': 'the elements are its arguments: plitzi page measure <path> <element…>',
+    // Two agents of a run reached for it to read a dialog's styles: what it measures is every property, always.
+    '--css':
+      'page measure says every property it measures of each element, as it is; --expect "<property>=<value>" holds one'
+  },
   'page play': {
     '--element': '--read <element…> says what elements show after the steps',
     // Asked five runs running: a picture is a step of its own.

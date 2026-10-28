@@ -313,12 +313,20 @@ export const readExpectation = (value: string): Expectation | undefined => {
   const absent = said.startsWith('!');
   const rest = absent ? said.slice(1) : said;
   const at = rest.indexOf('~');
-  const element = (at === -1 ? rest : rest.slice(0, at)).trim();
+  const named = (at === -1 ? rest : rest.slice(0, at)).trim();
+  const ofAttribute = /^(.+)\[([a-z][\w-]*)\]$/i.exec(named);
+  const element = ofAttribute?.[1] ?? named;
   const text = at === -1 ? '' : rest.slice(at + 1);
 
   return element === '' || element.startsWith('/') || /[\s!]/.test(element) || (at !== -1 && text === '')
     ? undefined
-    : { element, text, ...(absent ? { absent: true as const } : {}), ...(scoped?.[1] ? { path: scoped[1] } : {}) };
+    : {
+        element,
+        text,
+        ...(ofAttribute?.[2] ? { attribute: ofAttribute[2] } : {}),
+        ...(absent ? { absent: true as const } : {}),
+        ...(scoped?.[1] ? { path: scoped[1] } : {})
+      };
 };
 
 /**

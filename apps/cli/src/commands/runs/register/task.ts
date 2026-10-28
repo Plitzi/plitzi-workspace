@@ -12,6 +12,7 @@ import {
   taskTell,
   taskDiscard,
   taskInbox,
+  taskLeave,
   taskLook,
   taskMessage,
   taskNext,
@@ -77,7 +78,7 @@ const TASK_HELP: readonly HelpGroup[] = [
   },
   {
     heading: "The lead's:",
-    commands: ['message', 'unblock', 'reassign', 'revert']
+    commands: ['message', 'unblock', 'reassign', 'leave', 'revert']
   }
 ];
 
@@ -532,6 +533,17 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((task: string, options: RunCommandOptions & { reason?: string; to?: string }) =>
       taskReassign(task, options)
     );
+
+  taskGroup
+    .command('leave')
+    .description(
+      'Take a task out of the open run — and those that wait on it: whoever holds one is cut, no one takes them, and the finish writes the run without them (the lead’s)'
+    )
+    .argument('<task>', 'The task')
+    .option('--why <why>', 'Why (required): what the report says of it — the platform’s, decided with the person…')
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((task: string, options: RunCommandOptions & { why?: string }) => taskLeave(task, options));
 
   taskGroup
     .command('revert')

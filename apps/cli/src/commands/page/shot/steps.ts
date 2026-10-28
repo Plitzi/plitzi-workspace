@@ -150,6 +150,16 @@ export const interactionSteps = (
  * run's scout typed `2026-10-29` and `10292026` into one and its onChange never ran). The element itself, or the one such
  * field inside it (a `formControl` wraps it); nothing, it is typed into.
  */
+/**
+ * The keys a `type` step presses: what the field held selected first, as a person does — typed after it, a price field
+ * kept its old amount too — then the text, or, with none (`fill rate ''`), the selection deleted: a run's tester read
+ * a number field emptied that still held its 5, the step said as typed.
+ */
+export const typedKeys = (text: string): ({ press: string } | { type: string })[] => [
+  { press: 'ControlOrMeta+A' },
+  text === '' ? { press: 'Backspace' } : { type: text }
+];
+
 export const givenValueIn = (selector: string): { selector: string; how: 'select' | 'value' } | undefined => {
   const node = document.querySelector(selector);
   if (node === null) {
@@ -468,10 +478,9 @@ export const actStep = async (
         };
       }
 
-      // In place of what it held, as a person selecting it first: typed after it, a price field kept its old amount too
-      //.
-      await page.keyboard.press('ControlOrMeta+A');
-      await page.keyboard.type(step.text);
+      for (const key of typedKeys(step.text)) {
+        await ('press' in key ? page.keyboard.press(key.press) : page.keyboard.type(key.type));
+      }
     }
   } else if (step.kind === 'press') {
     await page.keyboard.press(step.key);

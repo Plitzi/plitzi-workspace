@@ -23,6 +23,8 @@ authoring and the elements learnt from the runs.
 
 ## To do when you upgrade
 
+- **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
+  plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22
   is no longer supported. `plitzi doctor` says `node-too-old` and `node-unpatched`, and an older project's `engines`
   as `engines-behind`, which `doctor --fix` raises. `undici` is `^8.12.3`.
@@ -913,6 +915,20 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   a step opens, a list's row a press removed — where it said "its name, a tag or a selector": a tester dismissed a
   report and tried three more names. A play that fails at a later width says the widths before it shared its server. A row asked past the copies drawn
   (`room-crate-add:2`) says how many there are, and how to name a row by its list.
+- **`task leave <task> --why "…"`** takes a task out of the open run, and what waits on it: its holder cut, no one takes
+  it, the finish writes the run without it (no `--leave-pending` for it), the monitor and the report say it left and
+  why. A task found to be the platform's took a stop, an unblock and a reassign to leave out.
+- **A `type` or `fill` step with an empty text empties the field**: a number field kept its 5, said as typed.
+- **A stage's goal is stacked once**: a research card's stage, read with the run's goals already joined, made the title
+  say them four times over.
+- **With the team's launch, starting an agent the work waits for is the keeper's, said so**: the lead was told to start
+  a scout the keeper was starting.
+- **`page check --expect "<id>[href]~next="`** holds what an attribute holds — where a link goes; with `--then`, an
+  expectation naming no page holds on the last one. **`page measure`** reads `z-index`, and `--css` points to what it
+  says. **`run look`** says a development build's busy main thread once, not on 30 of 34 views.
+- **`run open --dry-run` says the files a page's unit brings to a task**, and how to name a test file for one.
+- **An unknown filter names the one meant** — `urlencode`, did you mean `url_encode` (`@plitzi/sdk-shared`); the
+  templates reference says a key set to `null` is defined.
 - **Whoever works says what of Plitzi was in the way as what it was**, the line `docs/en/improving-the-cli.md` draws:
   `run notice --plitzi <wrong|no-way|in-the-way>` live, `--plitzi-wrong`, `--plitzi-no-way`, `--plitzi-in-the-way` with a
   round or the lead's summary — each in its class in the report. `--friction` is what else was in the way (the
@@ -1311,6 +1327,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
+- **`navigate` can replace the address** (`replace: true`, a step param and `navigation.navigate(url, { replace })`):
+  Back skips it — a sheet opened by `?stats=1` and closed was reopened by Back. The store's `navigate` takes
+  `{ external, replace }` now, where it took `isExternal`: a plugin that passed `true` passes `{ external: true }`.
 - **A navigation inside the site leaves the scroll as a page load would**: another page opens at its top, back and
   forward return to where the visitor left each page (waited for while it fills in), and a change of the query alone
   moves nothing. A room closed with `navigate('/')` opened Home at its foot, and Explore reached from a scrolled room

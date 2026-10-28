@@ -507,6 +507,14 @@ const inspectHere = async (
 };
 
 /**
+ * The expectations one page of a check is held to: those that name it, and — on the page the visitor ends on — those
+ * that name none. A scout's `page check /rooms --then /r/night-drive --expect room-player~Listen` failed on /rooms,
+ * which has no player: what the steps lead to is where an unnamed expectation is meant.
+ */
+export const heldOn = (expect: readonly Expectation[], path: string, last: boolean): Expectation[] =>
+  expect.filter(each => (each.path === undefined ? last : each.path === path));
+
+/**
  * One page checked at one width: opened, followed by its own links (`--then`), inspected whole, and reported.
  */
 export const checkAt = async (
@@ -674,7 +682,7 @@ export const checkAt = async (
       asked,
       ssr,
       click,
-      expect,
+      expect: heldOn(expect, meant ?? pathname, then.length === 0),
       sentWith,
       consoleErrors: () => consoleErrors(),
       failedRequests,
@@ -686,7 +694,7 @@ export const checkAt = async (
   ];
   // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
   // somebody browses (a filter's choice, a session's state) is what the next page is checked with.
-  for (const next of then) {
+  for (const [index, next] of then.entries()) {
     const errorsBefore = said.length;
     const failedBefore = failedRequests.length;
     const went = await followLink(page, origin, next);
@@ -700,7 +708,7 @@ export const checkAt = async (
             asked,
             ssr: false,
             click: undefined,
-            expect,
+            expect: heldOn(expect, next, index === then.length - 1),
             sentWith: undefined,
             consoleErrors: () => consoleErrors(errorsBefore),
             failedRequests: failedRequests.slice(failedBefore),

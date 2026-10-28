@@ -498,6 +498,20 @@ describe('an expectation held to every copy of its element', () => {
     expect(expectationMissed({ element: 'show-plate-room', text: '' }, plates, [])).toBeUndefined();
   });
 
+  // A scout could not hold a guest's Sign in to its `?next=`: page check read words alone, page play never failed.
+  it('reads <id>[attribute]~<text> as what an attribute of it holds', () => {
+    expect(readExpectation('site-sign-in[href]~next=/rooms')).toEqual({
+      element: 'site-sign-in',
+      attribute: 'href',
+      text: 'next=/rooms'
+    });
+    const links = { present: 2, shown: ['/sign-in?next=%2Frooms'], cut: [] };
+    expect(expectationMissed({ element: 'site-sign-in[href]', text: 'next=%2Frooms' }, links, [])).toBeUndefined();
+    expect(expectationMissed({ element: 'site-sign-in[href]', text: 'next=/r/' }, links, [])).toBe(
+      '--expect site-sign-in[href]~next=/r/: site-sign-in[href] shows "/sign-in?next=%2Frooms"'
+    );
+  });
+
   it('reads !<id> as none shown, and !<id>~<text> as none showing it', () => {
     expect(readExpectation('/ !home-following')).toEqual({
       element: 'home-following',

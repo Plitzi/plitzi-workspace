@@ -5,6 +5,7 @@ import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/auth
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { navigationCallbacks } from './callbacks';
+import { navigateHow } from './navigateHow';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -36,24 +37,18 @@ const NavigationInteractions = ({ children, previewMode = false }: NavigationInt
   }, [pageDefinitions, pageIds]);
 
   const handleNavigate = useCallback(
-    (params: { url: string; urlType: 'internal' | 'external' | 'page' }) => {
+    (params: { url: string; urlType: 'internal' | 'external' | 'page'; replace?: boolean }) => {
       if (!previewMode) {
         return;
       }
 
-      const { url, urlType } = params;
-      if (urlType === 'page' || urlType === 'internal') {
-        navigate(url);
-      } else {
-        // external url
-        navigate(url, true);
-      }
+      navigate(params.url, navigateHow(params));
     },
     [navigate, previewMode]
   );
 
   const interactionCallbacks = useMemo(() => {
-    const { urlType, url } = toBuilderParams(navigationCallbacks.navigate.params);
+    const { urlType, url, replace } = toBuilderParams(navigationCallbacks.navigate.params);
 
     return toInteractionCallbacks(
       navigationCallbacks,
@@ -64,6 +59,7 @@ const NavigationInteractions = ({ children, previewMode = false }: NavigationInt
           // declaration says the control is a picker and the editor says what is in it.
           params: {
             urlType,
+            replace,
             url: {
               ...url,
               defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',

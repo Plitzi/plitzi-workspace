@@ -15,7 +15,7 @@ const ICON: Record<TaskStatus, string> = {
   'changes-requested': '↺',
   done: '✓',
   blocked: '■',
-  failed: '✗'
+  left: '−'
 };
 
 const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;

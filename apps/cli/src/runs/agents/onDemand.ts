@@ -94,6 +94,14 @@ export const agentsNeeded = (
   // How to start one: in the team's own harness, or the one the lead names.
   const launch = (agent: string): string =>
     `plitzi run agent ${agent} --launch${run.launches === true ? '' : ' --harness <yours>'}`;
+  /**
+   * What starting it asks of the lead: with the team's launch the keeper starts it — said as the keeper's, and the
+   * lead's command only if it does not come (a run's status told the lead to start scout-1 as the keeper started it).
+   */
+  const start = (agent: string, onDemand: boolean): string =>
+    run.launches === true
+      ? `the run's keeper starts ${agent}${onDemand ? ', on demand' : ''} — yours only if it does not come: ${launch(agent)}`
+      : `start ${agent}${onDemand ? ', on demand' : ''} — ${launch(agent)}`;
   const busy = new Set(views.flatMap(busyIn));
   const roles = [...new Set(started.flatMap(each => each.roles))];
   const reviewTeam = reviewTeamOfAgents(started);
@@ -216,7 +224,7 @@ export const agentsNeeded = (
         {
           kind: 'agents-needed' as const,
           agent: next.agent,
-          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: start ${next.agent}${next.onDemand ? ', on demand' : ''} — ${launch(next.agent)} (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ' — it stops by itself once nothing is left for it' : ''}`,
+          text: `${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} for a ${role}, and none running is free: ${start(next.agent, next.onDemand === true)} (its prompt alone: plitzi run agent ${next.agent}; by hand: ${commandAs(run.scratch, next.agent, run.identified, `task next${next.quality ? ` --quality ${next.quality}` : ''}`)})${next.onDemand ? ' — it stops by itself once nothing is left for it' : ''}`,
           who: 'lead' as const
         }
       ];

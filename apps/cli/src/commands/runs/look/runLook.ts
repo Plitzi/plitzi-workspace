@@ -57,7 +57,34 @@ const ownCli = (cwd: string, args: string[]): Promise<{ code: number; out: strin
  * The run's look's page checks as a lead reads them: whole while short — past that, each page's lists and hidden parts
  * left out and counted (a run's look answered 13k characters, every page's lists among its 36 checks).
  */
-const checkWithin = (check: string, most: number): string => {
+/** `page check`'s line of a page's main thread busy as it loaded, and the longest of its long tasks. */
+const BUSY_LINE = /its main thread busy in \d+ long tasks? as it loaded, the longest (\d+) ms/;
+
+/**
+ * A look's views with their busy line said once for all: a development build holds the main thread on nearly every
+ * page, and a run's look carried the line on 30 of 34 views, so it told one page from another by nothing.
+ */
+export const busySaidOnce = (check: string): string => {
+  const lines = check.split('\n');
+  const busy = lines.flatMap(line => {
+    const longest = BUSY_LINE.exec(line)?.[1];
+
+    return longest === undefined ? [] : [Number(longest)];
+  });
+  if (busy.length < 2) {
+    return check;
+  }
+
+  const views = lines.filter(line => /^[✓✗] /.test(line)).length;
+
+  return [
+    ...lines.filter(line => !BUSY_LINE.test(line)),
+    `  · its main thread busy as ${String(busy.length)} of ${String(views)} views loaded, the longest task ${String(Math.max(...busy))} ms — a development build runs longer: plitzi page check <page> says each`
+  ].join('\n');
+};
+
+const checkWithin = (whole: string, most: number): string => {
+  const check = busySaidOnce(whole);
   if (check.length <= most) {
     return check;
   }

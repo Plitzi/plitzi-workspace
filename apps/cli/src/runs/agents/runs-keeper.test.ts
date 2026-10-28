@@ -43,6 +43,21 @@ const launching = async () => {
 };
 
 describe("the run's keeper", () => {
+  // A run's status told the lead to start scout-1 for two waiting research cards as the keeper was starting it.
+  it('is who starts an agent the work waits for, said so — the lead’s command only if it does not come', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
+    await launching();
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+
+    const needed = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'agents-needed');
+    expect(needed.map(item => item.text)).toContainEqual(
+      expect.stringContaining(
+        "none running is free: the run's keeper starts dev-2, on demand — yours only if it does not come: plitzi run agent dev-2 --launch"
+      )
+    );
+  });
+
   it('starts a base agent whose session ended, while the run is open — and nothing once it stops or is gone', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await launching();

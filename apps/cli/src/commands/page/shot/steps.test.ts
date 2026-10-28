@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actingSteps, actStep, endsActing, givenValueIn, interactionSteps, stepText } from './steps';
+import { actingSteps, actStep, endsActing, givenValueIn, interactionSteps, stepText, typedKeys } from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -222,5 +222,13 @@ describe('a source step played', () => {
     expect(await actStep(page, step, 0)).toEqual({
       problem: expect.stringContaining('no window.__plitzi.setSource') as unknown
     });
+  });
+});
+
+// A tester's `fill room-rules-remove-at ''` left the number field at 5, said as typed: nothing was typed over it.
+describe('a field typed into', () => {
+  it('replaces what it held — and an empty text empties it', () => {
+    expect(typedKeys('8')).toEqual([{ press: 'ControlOrMeta+A' }, { type: '8' }]);
+    expect(typedKeys('')).toEqual([{ press: 'ControlOrMeta+A' }, { press: 'Backspace' }]);
   });
 });

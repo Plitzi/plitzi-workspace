@@ -108,6 +108,8 @@ describe('inspectTemplate', () => {
     ['{{ source|defualt }}', 'Unknown filter "defualt"'],
     // A filter as JavaScript names it: a run's host picker wrote `concat`.
     ["{{ [{ label: 'Pick' }]|concat(source) }}", 'Unknown filter "concat" — write `first|merge(second)`'],
+    // A filter spelled without its underscore: a run's developer read "Unknown filter urlencode" as none at all.
+    ["{{ '/rooms?x=1'|urlencode }}", 'Unknown filter "urlencode" — did you mean `url_encode`?'],
     ['{{ now() }}', 'Unknown function "now()"'],
     // A filter called like a function, and the functions other engines have that are spelled otherwise here.
     ['{{ abs(delta) }}', 'Unknown function "abs()" — write `value|abs`'],

@@ -128,11 +128,14 @@ const assertFinishable = async (loaded: LoadedRun, leavePending: boolean): Promi
   }
 
   const left = views.filter(view => view.state.status !== 'done').map(view => `${view.task.id} (${view.state.status})`);
-  if (left.length > 0 && !leavePending) {
+  // What the lead left out (`task leave`) is out already: only a task nobody decided on asks for `--leave-pending`.
+  const undecided = views.filter(view => view.state.status !== 'done' && view.state.status !== 'left');
+  if (undecided.length > 0 && !leavePending) {
+    const named = undecided.map(view => `${view.task.id} (${view.state.status})`);
     throw new RunRefusal(
       'invalid',
-      `Tasks are not done: ${left.join(', ')}. Finish them, or finish without them (plitzi run finish <run> --leave-pending)`,
-      { tasks: left }
+      `Tasks are not done: ${named.join(', ')}. Finish them, leave one out (plitzi task leave <task> --why "…"), or finish without them (plitzi run finish <run> --leave-pending)`,
+      { tasks: named }
     );
   }
 

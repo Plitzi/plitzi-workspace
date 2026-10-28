@@ -24,6 +24,13 @@ export const navigationCallbacks: Record<string, BuiltinGlobalCallback> = {
         description: 'Destination — a page id when urlType is "page", otherwise a URL/path.',
         when: params => Boolean(params.urlType),
         builderType: params => (params.urlType === 'page' ? 'select' : 'text')
+      },
+      replace: {
+        type: 'boolean',
+        description:
+          'Take the place of the address the visitor is on, so Back skips it — closing a sheet a query opened (`?stats=1`), a filter cleared.',
+        default: false,
+        label: 'Replace the address'
       }
     }
   }

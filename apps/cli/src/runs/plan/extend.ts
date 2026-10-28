@@ -210,6 +210,13 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
   return { loaded, next, checked, tasks, primer, allowed, isReady };
 };
 
+/** The run's goal with a stage's: each of its goals once, in the order they were stacked. */
+export const stackedGoal = (run: string, stage: string): string => {
+  const goals = run.split(' · ');
+
+  return [...goals, ...stage.split(' · ').filter(goal => goal.trim() !== '' && !goals.includes(goal))].join(' · ');
+};
+
 /**
  * A stage seen before it is stacked — every check stacking makes, nothing written, each line run once with `lines`.
  * Whoever writes one sees it — `run open <stage> --dry-run` with a run open: the lead, and a scout at its research card,
@@ -272,11 +279,9 @@ export const extendRun = async (ctx: RunContext, runId: string, file: string): P
   const plan: RunPlan = {
     ...loaded.plan,
     // A stage that says the run's goal again — a scope's, filled in from the run — adds nothing to it (`run
-    // status` said the goal twice after its scope's stage).
-    goal:
-      next.goal.trim() === '' || loaded.plan.goal.split(' · ').includes(next.goal)
-        ? loaded.plan.goal
-        : `${loaded.plan.goal} · ${next.goal}`,
+    // status` said the goal twice after its scope's stage), nor one filled in with the run's goals already stacked: a
+    // research card's stage read as "A · B" was added whole, and the title said them four times over.
+    goal: stackedGoal(loaded.plan.goal, next.goal),
     tasks: [...loaded.plan.tasks, ...next.tasks],
     notes: [...(loaded.plan.notes ?? []), ...(next.notes ?? [])],
     ...(loaded.plan.leftOut || next.leftOut

@@ -70,7 +70,7 @@ export const runPlanProblems = (value: unknown): string[] => {
     check(
       optional(each.tests, flag => flag === false),
       'tests',
-      'false, or left out'
+      'false, or left out — a test file is named among a task\'s "files" (it writes its tests itself), or a task of tests says "testsOf"'
     );
     check(
       optional(each.testsOf, isStrings),

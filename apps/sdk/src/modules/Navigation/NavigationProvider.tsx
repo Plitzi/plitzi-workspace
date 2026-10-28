@@ -20,7 +20,7 @@ import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
 
-import type { CommonState, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
+import type { CommonState, NavigateHow, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
@@ -153,8 +153,8 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
     drawn.current = undefined;
   }, [location.pathname, location.search]);
   const goTo = useCallback(
-    (target: string) =>
-      moveDrawn(() => void navigateRef.current?.(target), {
+    (target: string, replace: boolean) =>
+      moveDrawn(() => void navigateRef.current?.(target, { replace }), {
         asked: store.get('schema.settings.viewTransitions'),
         host: browserHost(),
         drawn
@@ -163,9 +163,13 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   );
 
   const handleNavigate = useCallback(
-    (url: string, isExternal: boolean = false) => {
-      if (isExternal && typeof window !== 'undefined') {
-        window.location.href = url;
+    (url: string, { external = false, replace = false }: NavigateHow = {}) => {
+      if (external && typeof window !== 'undefined') {
+        if (replace) {
+          window.location.replace(url);
+        } else {
+          window.location.href = url;
+        }
 
         return;
       }
@@ -191,7 +195,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
        */
       if (!store.get('rsc.enabled')) {
         store.set('navigation.pendingLocation', '');
-        goTo(target);
+        goTo(target, replace);
 
         return;
       }
@@ -204,7 +208,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       });
       const go = () => {
         if (latestNavigation.current === ticket) {
-          goTo(target);
+          goTo(target, replace);
         }
       };
       void Promise.race([prefetch, wait(PREFETCH_TIMEOUT_MS)]).then(go, go);

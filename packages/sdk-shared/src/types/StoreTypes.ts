@@ -35,6 +35,12 @@ export type RuntimeSourceValues = {
  * Top-level for the reason `rsc` is: the overrides are written at the root — by whoever mounts the SDK, by the builder
  * forcing one — and an element scope owning `runtime` would keep a write from any depth to itself.
  */
+/**
+ * How a navigation goes: `external` leaves the space for a whole address; `replace` takes the place of the address the
+ * visitor is on, so Back skips it — a sheet opened by `?stats=1` and closed, which Back reopened.
+ */
+export type NavigateHow = { external?: boolean; replace?: boolean };
+
 export type FlagsState = {
   overrides?: FlagOverrides;
   /** Each declared flag's answer and the layer that gave it — what the dev tools show. The values alone are the
@@ -117,7 +123,7 @@ export type CommonState = {
      */
     href: string;
     currentPageId: string;
-    navigate: (url: string, isExternal?: boolean) => void;
+    navigate: (url: string, how?: NavigateHow) => void;
     /**
      * Where a navigation is going while it waits for the destination's server data — `''` when none is. A link to a
      * page resolved on the server asks for that page's data before it goes, and the page on screen stays until then:

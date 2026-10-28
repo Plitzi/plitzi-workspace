@@ -38,6 +38,8 @@ same flags, decided on the server. Use the step builders — they fill in where 
   value, and one after a `delay` or a server action sees whatever changed meanwhile. To act on the value from BEFORE
   a write, put the step that reads it first.
 - **Keys are flat names.** A dotted key (`docsClosed.start`) is split into a path; use `docsClosedStart`.
+- **Back skips a replaced address.** `navigate({ urlType: 'internal', url, replace: true })` takes the place of the one
+  the visitor is on: a sheet a query opened (`?stats=1`), closed, is not reopened by Back.
 - **`setState` types**: `text`, `number` (decimals kept), `boolean` (the word or a real boolean), and `json` for an
   object or a list — `value: '{{ list_rows.item }}'` stores the row itself; JSON text is parsed, and text that is not
   JSON fails the step (the dev tools log it) instead of storing the text.

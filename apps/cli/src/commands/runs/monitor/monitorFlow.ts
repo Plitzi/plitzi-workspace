@@ -114,8 +114,7 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
         ...of('blocked'),
         ...of('waiting'),
         ...tasks.filter(task => task.asking),
-        ...tasks.filter(task => task.parkedFor),
-        ...of('failed')
+        ...tasks.filter(task => task.parkedFor)
       ],
       who: (task: TaskLine) =>
         task.asking
@@ -150,6 +149,20 @@ export const flowStages = (tasks: readonly TaskLine[]): FlowStage[] => {
       tone: 'success' as const,
       tasks: of('done').sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
       who: (task: TaskLine) => task.agent ?? ''
-    }
+    },
+    // Taken out by the lead (`task leave`): out of the work, said with why — never among what holds the run, and no
+    // column at all in a run that left nothing out.
+    ...(of('left').length > 0
+      ? [
+          {
+            key: 'left',
+            title: 'Left out',
+            glyph: '−',
+            tone: 'subtle' as const,
+            tasks: of('left'),
+            who: (task: TaskLine) => task.left?.why ?? ''
+          }
+        ]
+      : [])
   ];
 };

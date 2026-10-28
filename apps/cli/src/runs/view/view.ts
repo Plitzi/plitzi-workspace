@@ -27,7 +27,7 @@ import { LEAD, messagesOf, standingText, unreadFor } from '../talk/messages';
 import { allLocks, requestsOf } from '../tasks';
 import { leadStepWhy, reviewSteps, reviewTeamOfAgents, stepReviewers, stepRole } from '../tasks/reviews';
 
-import type { Needs, Priority, RunRecord, TaskStatus, Waiting } from '../core/model';
+import type { Needs, Priority, RunRecord, TaskState, TaskStatus, Waiting } from '../core/model';
 import type { TaskView } from '../core/taskStore';
 import type { RunContext } from '../run';
 
@@ -60,6 +60,8 @@ export interface TaskLine {
   files: string[];
   waitingFor?: Waiting;
   blockedBy?: { reason: string; needs: Needs };
+  /** Why the lead took it out of the run (`task leave`). */
+  left?: TaskState['left'];
   estimateMinutes: number;
   spentMinutes?: number;
   /** Only while it is worked: a task in review, blocked or waiting has no agent on it to be heard from. */
@@ -216,6 +218,7 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   updatedAt: view.state.updatedAt,
   ...(view.state.waitingFor ? { waitingFor: view.state.waitingFor } : {}),
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
+  ...(view.state.left ? { left: view.state.left } : {}),
   estimateMinutes: view.task.estimateMinutes,
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
   noSignal: owesSignal && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),

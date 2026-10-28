@@ -45,3 +45,10 @@ describe('what measure reads of words', () => {
     expect(MEASURED).toEqual(expect.arrayContaining(['white-space', 'overflow-wrap']));
   });
 });
+
+// A dialog drawn under the site's sticky bar: which of two layers is on top could not be read nor held by --expect.
+describe('what measure reads of layers', () => {
+  it('reads a box’s z-index beside its position', () => {
+    expect(MEASURED).toEqual(expect.arrayContaining(['position', 'z-index']));
+  });
+});

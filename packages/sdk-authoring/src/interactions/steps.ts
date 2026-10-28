@@ -168,8 +168,15 @@ export const clearState = (params: { key?: string } = {}): StepSpec => globalSte
  */
 export const hostAction = (params: { action: string; value?: unknown }): StepSpec => globalStep('hostAction', params);
 
-export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; url: string }): StepSpec =>
-  globalStep('navigate', params);
+/**
+ * Goes to a page, a path of the space or a whole address. `replace: true` takes the place of the address the visitor is
+ * on, so Back skips it: a sheet a query opened (`?stats=1`) and closed is not reopened by Back.
+ */
+export const navigate = (params: {
+  urlType: 'page' | 'internal' | 'external';
+  url: string;
+  replace?: boolean;
+}): StepSpec => globalStep('navigate', params);
 
 export const addNotification = (params: {
   content: string;

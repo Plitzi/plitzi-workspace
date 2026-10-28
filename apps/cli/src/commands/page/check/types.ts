@@ -255,7 +255,12 @@ export interface Expectation {
   text: string;
   /** The opposite, `!<id>`: no copy of it shown — none showing the text, with one. */
   absent?: true;
-  /** The one page of those checked it is about; every one when left out. */
+  /**
+   * `<id>[href]~next=`: what an attribute of it holds, not its words — where a link goes: a run's scout could hold a
+   * guest's Sign in to its `?next=` with no line of `page check` (`page play` printed it, and never failed).
+   */
+  attribute?: string;
+  /** The one page of those checked it is about; left out, the page the check ends on — the last `--then` (`heldOn`). */
   path?: string;
 }
 

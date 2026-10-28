@@ -64,6 +64,8 @@ outside the element that publishes it — each with the name it should have been
   `rows|sort((a, b) => b.score - a.score)`, `rows|filter(r => r.score >= min)`, `rows|map(r => r.name)`.
 - Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, `is same as(x)` (strict: `false` is
   not `'false'`, `0` or an unset value), `is divisible by(n)`, and their `is not` forms. `null` and `none` are literals.
+  A key set to `null` **is defined** (only one never set is not); `is null` holds for both, and `is empty` for those,
+  `''` and `[]`.
 - Functions: `range`, `min`, `max`, `cycle`. `abs` is a filter (`x|abs`); floor and ceil are `x|round(0, 'floor')` and
   `x|round(0, 'ceil')`; a clamp is `min(max(x, low), high)`.
 - Filters: `npx @plitzi/cli explain --list filters` lists every one, `explain <filter>` its signature and an example.

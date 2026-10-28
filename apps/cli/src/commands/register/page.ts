@@ -59,7 +59,7 @@ export const registerPage = (pageGroup: Command): void => {
       .addOption(
         new Option(
           '--expect <id~text>',
-          'The element shows this text (any case) — any copy of it, a list\'s rows — as the page was left, or the check fails: once per element; "!<id>" none shown; "<path> <id~text>" for one page'
+          'The element shows this text (any case) — any copy of it, a list\'s rows — as the page was left, or the check fails: once per element; "!<id>" none shown; "<path> <id~text>" for one page — with --then, one naming none holds on the last; "<id>[href]~next=" what an attribute holds'
         ).argParser(expectation)
       )
       .addOption(

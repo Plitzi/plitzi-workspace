@@ -17,7 +17,7 @@ const ORDER: Record<TaskLine['status'], number> = {
   'in-review': 3,
   waiting: 4,
   blocked: 5,
-  failed: 6,
+  left: 6,
   ready: 7,
   pending: 8,
   done: 9
@@ -90,8 +90,8 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
       return `waits ${task.waitingFor?.task ?? 'a file'}`;
     case 'blocked':
       return `needs ${task.blockedBy?.needs ?? 'someone'}`;
-    case 'failed':
-      return 'failed';
+    case 'left':
+      return `left out: ${task.left?.why ?? ''}`;
     case 'done':
       return story?.writers.join(', ') ?? '';
   }
