@@ -855,6 +855,19 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **`run start` names a run its ask's words had already named with a number after them** (`find-and-fix-what-2`): a
+  second run asked in the same first words was refused as the first's, with no plan to give it a name in.
+- **Each finding says what it weighs:** the command it is about and what the run made of it — its calls, the agents
+  calling it, those that failed — the runs it was met in, and a weight (times × runs × agents) the report orders by,
+  heaviest first: a finding met once on a command run twice read the same as one on the command every agent runs.
+- **`page check` reads no cut in words there for a screen reader alone** (the `sr-only` pattern): a lamp's "Not on air
+  yet" read "cut short" in every look of a run.
+- **A click or a fill takes the first copy a visitor sees:** a list's first row hid its key, the next four showed it,
+  and `--click` "could not be brought into view".
+- **`task show` shows the code first, then its tests, then prose:** a reviewer read the notes and the tests whole and
+  was told the one file holding the change was not shown.
+- **What is cut at the screen's edge counts a plugin's words** (`@plitzi/sdk-authoring` testing): an element whose
+  text is in markup of its own — a show's time 15px off a phone — read as nothing wrong.
 - **`run look` looks at every page the run changed:** the pages that import a changed file at any depth, and every page
   the tasks' acceptance checks, beside each file's own page; what no page reaches by its imports — a component placed
   by name, the tokens — is said. A run's look left out home, where three of its changes showed.

@@ -38,12 +38,29 @@ const fieldOwnersInPage = (node: Element, selector: string): string[] =>
  * element named, or the one field inside it (a `formControl` wraps its input). Which element's field was filled, when
  * it is another's; or what could not be filled, and why.
  */
+/** What `firstShown` asks of a locator: the browser's, or a test's. */
+interface Copies<E extends { count(): Promise<number> }> {
+  first(): E;
+  filter(options: { visible: boolean }): { first(): E };
+}
+
+/**
+ * The first copy of an element a visitor sees — else the first, for the answer to say it is not shown: a list's first
+ * row hid its Remind key (on air), the next four showed it, and a click on the first copy "could not be brought into
+ * view".
+ */
+export const firstShown = async <E extends { count(): Promise<number> }>(all: Copies<E>): Promise<E> => {
+  const shown = all.filter({ visible: true }).first();
+
+  return (await shown.count()) > 0 ? shown : all.first();
+};
+
 const fillField = async (
   page: BrowserPage,
   authored: Authored | undefined,
   { element, value }: FieldFill
 ): Promise<{ filled: string } | { problem: string }> => {
-  const node = page.locator(selectorOf(authored, element)).first();
+  const node = await firstShown(page.locator(selectorOf(authored, element)));
   if ((await node.count()) === 0) {
     return { problem: `no element ${element} is on this page to fill` };
   }
@@ -107,7 +124,7 @@ export const clickEffects = async (
 ): Promise<ClickReport> => {
   const label = id ?? 'the fields filled';
   const verb = hover ? 'hovered' : 'clicked';
-  const target = id === undefined ? undefined : page.locator(selectorOf(authored, id)).first();
+  const target = id === undefined ? undefined : await firstShown(page.locator(selectorOf(authored, id)));
   if (target && (await target.count()) === 0) {
     return { element: label, problem: `no element ${label} is on this page`, changes: [], failed: [] };
   }

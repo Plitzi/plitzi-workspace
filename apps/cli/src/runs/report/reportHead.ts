@@ -1,5 +1,5 @@
 import { teamTasks } from './bench';
-import { FINDING_OWNERS } from '../findings';
+import { FINDING_OWNERS, weighedText, weightOf } from '../findings';
 import { kindOf } from '../harness';
 import { tokensText } from './runMetrics';
 import { costShort } from './spent';
@@ -30,9 +30,9 @@ export const historyText = (finding: Pick<Finding, 'seenIn'>): string =>
 
 const ordinal = (n: number): string => `${String(n)}${n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
 
-/** What was met before first, the most often met first: what fixing has not stopped leads. */
-const metFirst = (findings: readonly Finding[]): Finding[] =>
-  [...findings].sort((a, b) => (b.seenIn?.length ?? 0) - (a.seenIn?.length ?? 0));
+/** The heaviest first (`weightOf`): met the most, in the most runs, on the command the most agents run. */
+const heaviestFirst = (findings: readonly Finding[]): Finding[] =>
+  [...findings].sort((a, b) => weightOf(b) - weightOf(a));
 
 /** Plitzi's parts, in the order its team reads them. */
 const AREA_TITLES: readonly (readonly [PlitziArea, string])[] = [
@@ -71,11 +71,12 @@ export const findingsText = (
           '',
           ...groups.flatMap(group => [
             ...(group.title === undefined ? [] : [`#### ${group.title} (${String(group.items.length)})`, '']),
-            ...metFirst(group.items).flatMap(finding => {
+            ...heaviestFirst(group.items).flatMap(finding => {
               number += 1;
 
               return [
                 `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.live ? ' · said live' : ''} · ${historyText(finding)}`,
+                `   - ${weighedText(finding)}`,
                 ...finding.evidence.map(line => `   - ${line}`),
                 ...(finding.fix ? [`   - → ${finding.fix}`] : [])
               ];

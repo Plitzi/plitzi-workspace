@@ -104,7 +104,7 @@ export const registerRunGroup = (program: Command): Command => {
       'A team of agents on the project, from one command: what it needs checked, the run opened on its scope, and every step after it said'
     )
     .argument('<ask>', 'What the team is to do: "Translate the site into Catalan"')
-    .option('--run <name>', 'The run’s name (the ask’s first words when left out)')
+    .option('--run <name>', 'The run’s name (the ask’s first words when left out, numbered when a run had them)')
     .option('--reference <site>', 'The site the run copies — https://www.example.com — kept for --compare')
     .option('--harness <harness>', 'Where its agents start: claude, codex or opencode — checked to be installed')
     .option(

@@ -65,4 +65,26 @@ describe('what each element drawn shows', () => {
       { id: 'room-coming-title', text: 'Later this week', cut: false }
     ]);
   });
+
+  // A lamp's "Not on air yet", there for a screen reader alone, read "cut short" in every look of a run.
+  it('reads no cut in words there for a screen reader alone — a box of a pixel that clips them', () => {
+    document.body.innerHTML = [
+      '<span data-plitzi-el="on-air-say" style="position: absolute; overflow-x: hidden; overflow-y: hidden">Not on air yet</span>',
+      '<span data-plitzi-el="plate-room" style="text-overflow: ellipsis; overflow: hidden">Rooftop Sessions</span>'
+    ].join('');
+    laidOut({ 'Not on air yet': 90, 'Rooftop Sessions': 175 });
+    // The lamp's words, a pixel's box; every other box is laidOut's.
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      return this.getAttribute('data-plitzi-el') === 'on-air-say'
+        ? new DOMRect(0, 0, 1, 1)
+        : new DOMRect(0, 0, 160, 20);
+    });
+
+    expect(textsInPage({ selector: '[data-plitzi-el]', within: false }).drawn.map(each => [each.id, each.cut])).toEqual(
+      [
+        ['on-air-say', false],
+        ['plate-room', true]
+      ]
+    );
+  });
 });

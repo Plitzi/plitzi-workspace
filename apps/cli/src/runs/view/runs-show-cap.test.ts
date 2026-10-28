@@ -52,6 +52,25 @@ describe('a task shown', () => {
     expect(whole.files.filter(each => each.withheld !== undefined).length).toBe(files.length - diffs.length);
   });
 
+  // A reviewer read a task's notes and tests whole and was told its one change — the tokens — was not shown.
+  it('shows the code first, then its tests, then prose — the change before what is said of it', async () => {
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/a.test.ts', hundredLines('a'));
+    await writeInCopy(home.work, 'src/space/pages/home/b.test.ts', hundredLines('b'));
+    await writeInCopy(home.work, 'src/space/pages/home/about.md', hundredLines('c'));
+    await writeInCopy(home.work, 'src/space/pages/home/z.ts', "export const ink = '#4e211c';\n");
+    await completeTask(home.ctx, 'es-launch', 't-home');
+
+    const shown = await showTask(lead(), 'es-launch', 't-home');
+    expect(shown.files.map(each => [each.file, each.diff !== undefined])).toEqual([
+      ['src/space/pages/home/z.ts', true],
+      ['src/space/pages/home/a.test.ts', true],
+      ['src/space/pages/home/b.test.ts', true],
+      ['src/space/pages/home/about.md', false]
+    ]);
+  });
+
   // A tester was told a 123-line file was "not shown" under --full: a large file before it had spent the answer.
   it('fits the most files whole under --full, the smallest first, each where it was listed', async () => {
     await openRun(lead(), await bench.writePlan(benchPlan()));

@@ -13,6 +13,7 @@ import type { TaskRoundReport } from '../report/taskReports';
 export { factFindings } from './facts';
 export { closeFindings, overrunFindings } from './overrun';
 export { pastFindingsOf, withHistory } from './history';
+export { weighedText, weightOf, withReach } from './weigh';
 export { keepScratch, scratchOf } from './scratch';
 export { FINDING_OWNERS } from './types';
 export type { Finding, FindingInput, FindingKind, FindingOwner, PlitziArea, SaidOfPlitzi } from './types';

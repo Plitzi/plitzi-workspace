@@ -5,7 +5,9 @@ import { launchBrowser } from '../../../browser';
 import { HARNESSES, isHarness } from '../../../runs/agents/agentPrompt';
 import { onPath } from '../../../runs/agents/launchAgent';
 import { readTeam, SCOUT, startedAgents } from '../../../runs/agents/team';
-import { ID } from '../../../runs/core/paths';
+import { exists } from '../../../runs/core/files';
+import { ID, runPaths } from '../../../runs/core/paths';
+import { runReportDir } from '../../../runs/report/reports';
 import { projectDlx } from '../../../scaffold/packageManager';
 import { projectHere } from '../../project/existingProject';
 import { fail } from '../../shared/terminal';
@@ -82,6 +84,24 @@ export const runNameOf = (ask: string): string | undefined => {
   return ID.test(name) ? name : undefined;
 };
 
+/**
+ * The ask's name made free: itself, else with a number after it (`find-and-fix-what-2`) — a second run asked in the same
+ * first words was refused as the first's ("give this plan a runId of its own") with no plan to give one in.
+ */
+export const freeRunName = async (
+  name: string,
+  taken: (id: string) => Promise<boolean>
+): Promise<string | undefined> => {
+  for (let count = 1; count < 100; count += 1) {
+    const candidate = count === 1 ? name : `${name}-${String(count)}`;
+    if (ID.test(candidate) && !(await taken(candidate))) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+};
+
 export const runStart = async (ask: string, options: StartOptions): Promise<void> => {
   const problems = await notReady(options.harness);
   if (problems === undefined) {
@@ -94,7 +114,16 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
     return;
   }
 
-  const run = options.run ?? runNameOf(ask);
+  const asked = runNameOf(ask);
+  const here = await projectHere('to start a run in');
+  const run =
+    options.run ??
+    (asked === undefined || here === undefined
+      ? asked
+      : await freeRunName(
+          asked,
+          async id => (await exists(runReportDir(here.root, id))) || (await exists(runPaths(here.root, id).dir))
+        ));
   if (run === undefined) {
     fail(`Name the run: the ask has no word a name is made of — plitzi run start "${ask}" --run <name>`);
 
@@ -107,8 +136,7 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
     return;
   }
 
-  const project = await projectHere('to start a run in');
-  const team = project ? await readTeam(project.root) : undefined;
+  const team = here ? await readTeam(here.root) : undefined;
   const base = team ? startedAgents(team).filter(each => each.onDemand !== true) : [];
   const harness = options.harness ?? '<claude|codex|opencode>';
   const scouts = team ? startedAgents(team).filter(each => each.roles.includes(SCOUT)) : [];

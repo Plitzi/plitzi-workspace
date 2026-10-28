@@ -1040,8 +1040,14 @@ and where the next run starts.
 
 **Each finding held against the runs before** (`findings/history.ts`): the project keeps every run's `report.json`, and
 a finding of the same kind and subject — or, said by whoever worked, said alike — met in one of them is marked with
-where (`seenIn`), listed first, and counted (`metBefore`, the bench's "Met before"). A repeat is what a fix did not
-stop; a new one, what the run explored: a run's 56 were 11 met before and 45 new.
+where (`seenIn`) and counted (`metBefore`, the bench's "Met before"). A repeat is what a fix did not stop; a new one,
+what the run explored: a run's 56 were 11 met before and 45 new.
+
+**Each finding weighed** (`findings/weigh.ts`): the command it is about — the first of the run's commands its title or
+evidence names — and what the run made of it (`reach`: its calls, the agents calling it, those that failed), the runs
+it was met in, and a weight, times × runs × agents, which the report and the feedback order each group by, heaviest
+first: `weight 48 · 4 runs · page check: 17 calls by 4 agents, 3 failed`. The figures are there to decide by; the
+weight only orders them.
 
 **The whole flow, rehearsed** (`runs-rehearsal.test.ts`): a run played start to finish with the default team as
 scripted agents — the scope found out and approved, two developers, the designer's look, a tester's send-back and

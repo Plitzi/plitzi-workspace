@@ -1,3 +1,4 @@
+import type { FindingReach } from './weigh';
 import type { RunTask } from '../core/model';
 import type { UsageLine } from '../core/usage';
 import type { TaskRoundReport } from '../report/taskReports';
@@ -89,6 +90,8 @@ export interface Finding {
    * a run's 49 problems read the same, new or met for the third time.
    */
   seenIn?: string[];
+  /** The command it is about, and what the run made of it — its calls, the agents calling it, those failed (`weigh.ts`). */
+  reach?: FindingReach;
 }
 
 /** Something said of Plitzi by whoever worked: a notice as it happened, or a friction said with a round or the report. */

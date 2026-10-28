@@ -29,7 +29,8 @@ import {
   pastFindingsOf,
   runFindings,
   scratchOf,
-  withHistory
+  withHistory,
+  withReach
 } from '../findings';
 import { harnessUsage } from '../harness';
 import { briefsOf } from '../plan/briefs';
@@ -333,27 +334,30 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   const experience = combineExperience(taskReports, leadExperience);
   const facts = { tasks, events, overwrites, joined, stops, proposals, minutes, estimate: record.estimate };
   // Held against the runs before: new, or met again.
-  const findings = withHistory(
-    orderFindings([
-      ...runFindings({
-        log: runLog,
-        usage,
-        tasks: loaded.tasks,
-        said: saidOfPlitzi(
-          notices.plitzi,
+  const findings = withReach(
+    withHistory(
+      orderFindings([
+        ...runFindings({
+          log: runLog,
+          usage,
+          tasks: loaded.tasks,
+          said: saidOfPlitzi(
+            notices.plitzi,
+            taskReports,
+            leadExperience ? { experience: leadExperience, at: now } : undefined
+          ),
+          scratch: await scratchOf(loaded.paths.scratch),
           taskReports,
-          leadExperience ? { experience: leadExperience, at: now } : undefined
-        ),
-        scratch: await scratchOf(loaded.paths.scratch),
-        taskReports,
-        repeated: metrics.cost.repeated
-      }),
-      ...(await auditRun(loaded)),
-      ...factFindings({ ...facts, metrics }),
-      ...overrunFindings(facts.tasks, runLog),
-      ...closeFindings(runLog, now)
-    ]),
-    pastFindingsOf(await readRunReports(ctx.root), record.runId, now)
+          repeated: metrics.cost.repeated
+        }),
+        ...(await auditRun(loaded)),
+        ...factFindings({ ...facts, metrics }),
+        ...overrunFindings(facts.tasks, runLog),
+        ...closeFindings(runLog, now)
+      ]),
+      pastFindingsOf(await readRunReports(ctx.root), record.runId, now)
+    ),
+    usage
   );
 
   return {

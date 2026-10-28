@@ -409,7 +409,10 @@ describe('probePage / text in the colour behind it', () => {
   });
 });
 
-/** A header whose last links fell off a phone read as a page with nothing wrong: an ancestor hid them, nothing scrolled. */
+/**
+ * A header whose last links fell off a phone read as a page with nothing wrong: an ancestor hid them, nothing scrolled —
+ * and a plugin's time, its words in markup of its own.
+ */
 describe('probePage / cut off at the screen’s edge', () => {
   it('names what an ancestor hides past the edge, and leaves what scrolls or moves on purpose', () => {
     Object.defineProperty(document.documentElement, 'clientWidth', { value: 390, configurable: true });
@@ -435,13 +438,20 @@ describe('probePage / cut off at the screen’s edge', () => {
       '<div style="overflow-x: hidden"><span style="transform: translateX(-20px)">',
       '<span data-plitzi-el="ticker" data-box="300,700">Breaking</span></span></div>',
       // A closed menu, mounted and hidden: what is not drawn is not cut.
-      '<header style="overflow-x: hidden"><a data-plitzi-el="menu-item" data-hidden="1" data-box="380,520">Sign out</a></header>'
+      '<header style="overflow-x: hidden"><a data-plitzi-el="menu-item" data-hidden="1" data-box="380,520">Sign out</a></header>',
+      // A plugin's element drawing its words in markup of its own — a show's time off a phone's edge.
+      '<main style="overflow-x: hidden"><span data-plitzi-el="show-time" data-box="120,405"><span><b>Tomorrow 11:43 UTC</b></span></span>',
+      // …and a container whose words are all its children elements': theirs to be cut, not its.
+      '<div data-plitzi-el="row" data-box="0,500"><span data-plitzi-el="chip" data-box="0,80">Chill</span></div></main>'
     ].join('');
 
     const found = probePage({ ...input([]), overflow: true }).cutOff;
 
     delete (HTMLElement.prototype as { checkVisibility?: unknown }).checkVisibility;
-    expect(found).toEqual([{ id: 'nav-create', pixels: 50 }]);
+    expect(found).toEqual([
+      { id: 'nav-create', pixels: 50 },
+      { id: 'show-time', pixels: 15 }
+    ]);
   });
 });
 

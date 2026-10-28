@@ -252,7 +252,15 @@ export const showTask = async (
   }
 
   const folded = new Set([...alike.values()].flat());
-  read.splice(0, read.length, ...read.filter(each => !folded.has(each.file)));
+  // What the change is, first: the code, then its tests, then prose — a run's reviewer read the notes and the tests
+  // whole and was told the one file holding the change, the tokens, was not shown.
+  const rank = (file: string): number =>
+    /\.mdx?$/i.test(file) ? 2 : /\.(test|spec)\.[cm]?[jt]sx?$/.test(file) ? 1 : 0;
+  read.splice(
+    0,
+    read.length,
+    ...read.filter(each => !folded.has(each.file)).sort((a, b) => rank(a.file) - rank(b.file))
+  );
 
   // Whole, every file — as long as the answer stays one an agent reads again cheaply: a run's `--full` answered 34k
   // characters, read again on every turn after. A file past it says its size and how to read it alone; one is always

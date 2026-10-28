@@ -43,8 +43,20 @@ export const textsInPage = ({
   drawn: DrawnText[];
 } => {
   const nodes = Array.from(document.querySelectorAll(selector));
+  // The `sr-only` pattern: clipped all over, or a box of a pixel that clips what overflows it — words a screen reader
+  // hears whole and no visitor sees, never cut (a run's ON AIR lamp's "Not on air yet" read "cut short" in every look).
+  const forScreenReaders = (element: Element): boolean => {
+    const own = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+
+    return (
+      /inset\(\s*50%/.test(own.clipPath) ||
+      /^rect\(0(px)?,?\s*0(px)?,?\s*0(px)?,?\s*0(px)?\)$/.test(own.clip) ||
+      (rect.width <= 1 && rect.height <= 1 && /hidden|clip/.test(`${own.overflowX} ${own.overflowY}`))
+    );
+  };
   const cuts = (each: Element): boolean => {
-    if (!(each instanceof HTMLElement) || each.getClientRects().length === 0) {
+    if (!(each instanceof HTMLElement) || each.getClientRects().length === 0 || forScreenReaders(each)) {
       return false;
     }
 

@@ -420,9 +420,22 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
       return false;
     };
-    const saysSomething = (node: Element): boolean =>
-      node.matches('a, button, input, select, textarea, label') ||
-      [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== '');
+    // Words of its own, at any depth no element of the space's inside it claims: a plugin's element draws its text in
+    // markup of its own — a show's time ran 15px off a phone, and read as nothing wrong.
+    const saysSomething = (node: Element): boolean => {
+      if (node.matches('a, button, input, select, textarea, label')) {
+        return true;
+      }
+
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+        if ((text.textContent ?? '').trim() !== '' && text.parentElement?.closest('[data-plitzi-el]') === node) {
+          return true;
+        }
+      }
+
+      return false;
+    };
     for (const node of document.querySelectorAll('[data-plitzi-el]')) {
       const box = node.getBoundingClientRect();
       if (box.width === 0 || box.height === 0 || !saysSomething(node)) {
