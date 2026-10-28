@@ -30,7 +30,7 @@ authoring and the elements learnt from the runs.
   lived in `plitzi/` and `.plitzi/`. `plitzi doctor` says `older-layout`, and `doctor --fix` moves them, with the
   scripts, the `tsconfig*.json` and the ignore files. `plitzi upgrade` asks for it first. A tsconfig has to name
   `.plitzi/**/*`: TypeScript skips a dot folder named bare.
-- **`PLITZI_TOKEN`** replaces `PLITZI_TASK_TOKEN`. `task block --needs person` and `run open --agents` are gone: only
+- **`PLITZI_TOKEN`** replaces `PLITZI_TASK_TOKEN`. A block that needs the person and `run open --agents` are gone: only
   the lead talks to the person, and the team's size is how many agents work at once.
 - **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400, `test`) and
   the team file's `about`. `test` is `node --test 'src/**/*.test.ts'`: `plitzi verify` and a run's checks now run the
@@ -59,14 +59,25 @@ authoring and the elements learnt from the runs.
   `run open --spike` is gone (a run opens on its scope by itself). `run state` → `run status --all`; `run bench` →
   `run report --bench`; `run note` → `task message all "…"` (every task, the ones taken later too); `run team check`
   → `plitzi doctor`; the `skills` group → `plitzi upgrade skills --write`. `task take <task>` → `task next <task>`.
-  A question a task needs answered is a block (`task block`), which the lead lifts with its answer (`task unblock
-  <task> --answer "…"`, kept in the report). A file's turn is one command:
+  A question a task needs answered is a block (`task tell "…" --blocked`), which the lead lifts with its answer (`task
+unblock <task> --answer "…"`, kept in the report). A file's turn is one command:
   `task wait <file>` → `task claim <file> --wait` (`--follow`, `--timeout` as before), `task release <file>` →
-  `task claim <file> --release`. `page same --than <origin>` → `--compare <origin>`, as every page command names the
-  other side. The run's work outside the run is one command: `run copy [dir]` → `run preview --copy [dir]`; a file's
+  `task claim <file> --release`. The run's work outside the run is one command: `run copy [dir]` → `run preview --copy [dir]`; a file's
   versions one: `run restore <run> <file> --from <backup>` → `run show <run> <file> --restore [backup]` (still a
   person's, confirmed by the run's name); a run's machine one: `run release <run>` → `run attach <run> --release`.
-  `run can-write`, a hook's question, is left out of the help. What an agent has in hand — its work, a step of a
+  `run can-write`, a hook's question, is left out of the help.
+  Saying something to the run is one command: `task ask "…"` → `task tell "…" --ask`, `task block --reason "…"` →
+  `task tell "…" --blocked`, `task note "…"` → `task tell "…" --handoff`, and a standing's `--blocked <text>` →
+  `--held-by <text>`; `run backlog add "…"` → `run notice "…"` (with no run open, it keeps the item in the backlog at
+  once). A change asked outside your files is one command: `task request <file> --summary "…"` → `task propose --file
+<file> --change "…" [--why "…"]`. What an acceptance proves is its own command: `task check [task] --before | --mutate`
+  → `task prove [task] --before | --mutate`; `task check` checks your copy alone. A plan is opened and stacked by one
+  command: `run extend <run> <plan>` → `run open <plan>` while the run is open (`--dry-run [--lines]` sees a stage first,
+  anyone's — a scout's: `task check --tasks <stage.json>` → `run open <stage.json> --dry-run --lines`). A run is ended
+  by one command: `run purge <run>` → `run abort <run>`, which ends any run, of another machine or CLI too. `page same`
+  is gone: a look reads the pages' drawing itself. Every page command and `task look` take the same `--fresh` (nothing
+  an earlier call kept read again): `page shot --live` → `--fresh`; and name a part alone the same way: `page shot
+--clip <element>` → `--within <element>`. What an agent has in hand — its work, a step of a
   review, a spike — is read one way by every command: a scout at its spike gives `task progress` (refused before), and a
   writer's command names what is held and what ends it. What moves between a project and its space is
   `space pull` and `space push`, a part named: `functions pull` → `space pull functions` (into any project connected to
@@ -76,12 +87,12 @@ authoring and the elements learnt from the runs.
   space, which `space push` is not. Each old name is refused naming the new one.
 - **Research is a card: a kanban.** A research card (a spike) is taken with `task next` as any card — a scout's, with
   its copy and token; the lead finds it out itself with no scout in the team — completed with what it found (`task
-  complete --found "…" [--tasks <stage.json>]`) and reviewed by the lead (`task review <card> --approve [--leave
-  <tasks>] | --changes "…"`): a left `<id>-tests` is its card with no tests. `task spike`, the `spike` status, its
+complete --found "…" [--tasks <stage.json>]`) and reviewed by the lead (`task review <card> --approve [--leave
+<tasks>] | --changes "…"`): a left `<id>-tests` is its card with no tests. `task spike`, the `spike` status, its
   own column and `--findings-only` are gone; `task spike` is refused naming the new commands. A run opened before keeps
   working: a card in its old status reads as ready, or in review with what it found.
 - **Every card is reviewed one way: a kanban.** A card's `review` names the roles that review it, in order (`"review":
-  ["designer", "tester"]`); one that names none is the tester's, the lead's with no tester, and a role nobody in the
+["designer", "tester"]`); one that names none is the tester's, the lead's with no tester, and a role nobody in the
   team takes stands as that default, said. Each step is taken by an agent of its role that worked neither the card nor
   what it tests (else a developer that did not, else the lead), is its for 8 minutes (15 on its first review), and its
   approval hands the card with its notes to the next step — the last approves it; changes start the next round from
@@ -99,7 +110,7 @@ authoring and the elements learnt from the runs.
   scout is handed back in the same context (it was told to stop), and the feed says what it found. Its brief names no
   files and points at the scout's half (`runs-scout.md`); `run open --dry-run` names each agent's work, an on-demand one's
   too — a scout's research cards, the review steps of a designer or a tester.
-- **`page same` says an element that differs by its words alone**, drawn the same — and `task look` says it is more
+- **A look says an element that differs by its words alone**, drawn the same — and says it is more
   likely what the two servers' data says (a time, a count) than the task: a look warned the page "moved" for a show's
   start a minute apart. `run report --summary` refused a summary written on the command line as "not there": it says
   the option names a file.
@@ -113,7 +124,7 @@ authoring and the elements learnt from the runs.
   approved) is refused saying so, where Node printed a stack.
 - **Research's stage is kept, and the lead's advice settled for good.** An approved research card's stage is kept in
   the run's `inputs/<card>/`, said at the approval — the plan its tasks are amended from; it was dropped. `run settle
-  <advice>` settles a kind of advice though it is not given that moment (it comes and goes with the agents running), and
+<advice>` settles a kind of advice though it is not given that moment (it comes and goes with the agents running), and
   a scout whose research waits for the lead is not "idle" to be fed the backlog. A card sent back starts its round with
   no progress of the last.
 - **The report measures what was waited for.** A card's time to take runs from when it could be taken — a tests card
@@ -122,18 +133,18 @@ authoring and the elements learnt from the runs.
 - **What encore-12's agents asked for.** A research card's stage is refused while a task of it has no acceptance line a
   command proves, naming them (the scope was sent back once for them). A note to the lead (`task tell`) wakes it no
   more: it comes with what does, or as the watch ends ("Nothing that needs the lead … " and the notes under it). `page
-  check` fails on what the server logged as failed while its pages were opened (`server-logged`), when the server is
+check` fails on what the server logged as failed while its pages were opened (`server-logged`), when the server is
   the CLI's — a task's copy, a look's — and on a submit the browser held back (`form-held-back`, naming `noValidate`),
   which it only said. `task look` takes a path with its own visitor and status — `task look t-x "/moderation --as juno
-  --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --clip <part>
-  --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
+--status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --within <part>
+--showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
 - **What encore-13's agents asked for.** `task look` serves a task's copy cold, as the run before is served — a copy
   warm with its agent's plays read "moved" where only its data had — pictures one part with `--within <element>` and a
   task of more than three parts whole, leaves what is pinned over a part (a sticky header) out of its picture, and says
   what differs between the sides field by field (`container-57: box 0,0,249x314 → 0,0,249x331`), not as a dump. Every
   page command reads a page the space authors for members as the project's account, as `task look` did. `page check
-  --expect` holds a text only where a copy shows it whole, and a check names the texts a box cuts short at that width;
+--expect` holds a text only where a copy shows it whole, and a check names the texts a box cuts short at that width;
   `--element` reads a component's part, on the first copy drawn. `page measure --each` measures every copy of an element
   (a component's instances, a list's rows), why one is not drawn said once; `--only` and `--same` take any CSS property
   by its name (`overflow-x`, `after:margin-left`), one the browser knows not refused before anything is read, a
@@ -158,7 +169,7 @@ authoring and the elements learnt from the runs.
 - **What encore-16 asked of the runs.** The board's advice — a task held behind another, an agent with nothing to take
   — waits for the lead's next wake, never wakes it, and an idle agent is said again only when another goes idle. The
   monitor says what a tester and a scout are at — their review's or research card's step, "Finding out" — and every
-  role is asked to say it. `task check --mutate` says a mutant that does not run apart from one a test catches, and
+  role is asked to say it. `task prove --mutate` says a mutant that does not run apart from one a test catches, and
   names the test that failed; `--line <n>` runs only those acceptance lines, with `--before` too. `task show` says the
   files a card names that its work did not write. A module's tests card takes the test file that imports it already.
   `page play`'s action step keeps an answer too long to say whole in a file. `page measure` says a path no page
@@ -178,7 +189,7 @@ authoring and the elements learnt from the runs.
   hidden on the page — no empty box, no gap of its parent's; the builder keeps it to drop into. A project's server
   started beside another of its folder says who holds the file and how to stop it, as a report, not a stack ending on
   `EEXIST`.
-- **What encore-15's agents asked for.** `task check --before` runs a task's own tests on the code before it, and a
+- **What encore-15's agents asked for.** `task prove --before` runs a task's own tests on the code before it, and a
   line that ran no test there proves nothing; any line that runs tests and ran none fails, and a plan's node test
   pattern without its isolation off is refused. `--mutate` takes several changes at once. A page command hands the
   agent what was said to it, whole. `task look` pictures what its steps bring beside the run before too, names its
@@ -186,31 +197,30 @@ authoring and the elements learnt from the runs.
   opens every address the tasks name for a route. `page check` says the account it read a page as; `page play`'s
   pictures in a task's copy go to the run's; `wait-for` takes how long it waits, up to 60 s. `task show --full` fits
   the most files whole. A run's commands in a folder under its scratch are the run's. `page shot --element` points at
-  `--clip`. The skills show a stage's shape and how a spec finds a component's instance, and say how to hide a slot
+  `--within`. The skills show a stage's shape and how a spec finds a component's instance, and say how to hide a slot
   left empty.
 - **What encore-15 showed of the runs.** The lead's row on the monitor says it watching the run, deciding, or away
   from it — at the person's, its watch ended and no command since — with what waits for it. A card past its limit is
   asked where it stands once, by the clock (it was asked every pass for half a minute), and `task message` no longer
   says an agent waiting inside an ask hears it late. A plan of research alone is estimated by its scouts, asks for no
   inventory, keeps the team's base for the tasks it brings, and its cards take up the backlog items they name. `run
-  amend` reads the stage a research card's approval keeps as it is, and amends what a task closes. A plugin's modules
+amend` reads the stage a research card's approval keeps as it is, and amends what a task closes. A plugin's modules
   that draw nothing ask for no designer; a task waiting on one whose file it touches is not told to drop the wait.
 - **What encore-14's activity asked of the runs.** A card past its limit is asked where it stands by the run itself
   (the lead's watch and the keeper), the lead woken with the answer — a standing answered wakes it, where it waited as a
   note — or, none in 3 minutes, to decide without it. `task message` says when the agent has run no command for minutes
   and hears it only after. `task run "<command>"` runs an agent's own command: a Playwright suite in its turn on the
-  machine, its output in a file and what failed said, the lead's messages with it. `task check <task> --mutate <file>
-  --from "…" --to "…"` runs a task's acceptance on a mutant of its copy and says which line catches the change. A test
+  machine, its output in a file and what failed said, the lead's messages with it. `task prove <task> --mutate <file>
+--from "…" --to "…"` runs a task's acceptance on a mutant of its copy and says which line catches the change. A test
   file of the project a tests card takes is its developer task's too (`touches`), to fix what it breaks there first.
   `task context` asked again unchanged in one context says so in a line (`--again` replaces `--primer`: the whole brief,
   the primer too), and an agent started afresh reads it all — the primer was withheld from one restarted for its round 2.
-- **`task check <task> --before` says what a task's acceptance proves:** each line run on the run before it — its
+- **`task prove <task> --before` says what a task's acceptance proves:** each line run on the run before it — its
   approved work without the task — and on its copy: a line that fails before and passes with it proves the change, one
   passing on both proves nothing. A task that changes no page (a test's fix, a script) has no look: `task look` and its
-  review's offer say so and name `task check --before`, where the look pictured the home page.
-- **A scout sees its stage from its own card: `task check --tasks <stage.json>`** — checked as the lead stacks it, each
-  line run once on the run's work. `run extend` is the lead's alone, its dry run too: encore-11's and encore-13's scouts
-  reached for it, the skill pointing there; one with a task's token is refused naming `task check --tasks`. The scout's
+  review's offer say so and name `task prove --before`, where the look pictured the home page.
+- **A scout sees its stage as the lead would stack it: `run open <stage.json> --dry-run --lines`** — each line run once
+  on the run's work, nothing stacked; stacking is the lead's alone. The scout's
   prompt, brief and take say it.
 - **What the run reads it reads as data, never off words.** An acceptance line nothing can answer is the lead's
   attention (`line-unanswered`), waking it until that task's acceptance is amended — it was a note the lead was no
@@ -249,9 +259,8 @@ authoring and the elements learnt from the runs.
   `page check --space` takes a module anywhere in the project — a variant kept in `tmp/` reads `src/` — never its root.
   `explain form` says what `noValidate` does to a field's `requiredMessage`.
 - **Every page command reads a page as one visitor, from the same flags.** `page check`, `measure`, `play`,
-  `outline`, `same`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
-  `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone`, `page same` no
-  `--as` — and open the page one way (`visit.ts`), so what one reads another reads the same. `--steps` is one
+  `outline`, `shot` and `task look` take `--as`, `--guest`, `--timezone`, `--presence`, `--clock`, `--block`,
+  `--autoplay` and `--storage` alike — `page check` took no `--clock`, `page outline` no `--timezone` — and open the page one way (`visit.ts`), so what one reads another reads the same. `--steps` is one
   vocabulary: `page check` and `page outline` play a visitor's steps before they read the page, as `page measure` did,
   and `task look --steps` checks what they leave too, where its check read the page at rest. A step another account
   plays (`as <account> …`) is refused by `page check` and `page outline`, which keep no other visitor's page, naming
@@ -278,7 +287,7 @@ authoring and the elements learnt from the runs.
   - **Scout** (new role, Opus): `task next` takes it the run's research cards — its scope, research of a stage — as
     any card. An agent's question is a block, the lead's to answer (`task unblock --answer`), never the scout's, and a
     scout with none left is told it can stop. Its `task complete --found "…" [--tasks <stage.json>]` sends what it found
-    to the lead's review — the stage checked as `run extend --dry-run`, its primer kept beside it — decided with the
+    to the lead's review — the stage checked as `run open --dry-run`, its primer kept beside it — decided with the
     person: `task review <card> --approve [--leave <tasks>] | --changes "…"`. **Every research card is the lead's
     to approve**, and adding or taking out tasks the lead's alone.
   - **The keeper** starts a scout for research nobody took and the scout a card was sent back to, and an
@@ -297,7 +306,7 @@ authoring and the elements learnt from the runs.
     before a task of its own (the keeper starts one for it); the lead's only when none may, as it would hold the run.
   - **A task that takes long wakes the lead to ask where it stands**, any task at work and a spike a scout finds out:
     past twice its estimate, and again at each estimate more, with its agent's last word. `task message <task|@agent>
-    --standing` asks; the agent answers whole with `task tell --standing --fraction --eta --done --left [--blocked]`
+--standing` asks; the agent answers whole with `task tell --standing --fraction --eta --done --left [--held-by]`
     (refused when a part is missing), its fraction kept as the task's progress, and the standing wakes the lead with
     what it may do — let it go on, change its course, unblock, narrow or split it, or take it back.
   - **Seen in encore-10:** `run start` names the run from the ask's first words when `--run` is left out (its help
@@ -317,7 +326,7 @@ authoring and the elements learnt from the runs.
     `task next` says its close in order (look, report, finish) and the lead never "stops".
     Whoever reviews a task is handed what the team told the lead of it (`task tell`, `✉`). A step taken is let go
     when its card leaves review — sent back, escalated, taken back — its reviewer told, never left busy. A review escalated and answered (`task unblock
-    --answer`) asks for its stopped agent again; a task taken back drops its block and what was asked. Before finishing it looks once at the whole result: **`plitzi run look`**
+--answer`) asks for its stopped agent again; a task taken back drops its block and what was asked. Before finishing it looks once at the whole result: **`plitzi run look`**
     checks and pictures every page the run changed (1440 and 390, light and dark); `run finish` asks for it after the
     last approval.
   - **Co-leads are gone:** `lead-2`…, `"lead": { "count" }` (refused, saying to add testers), `task next --role lead`
@@ -328,7 +337,7 @@ authoring and the elements learnt from the runs.
     `run team set a11y --roles accessibility --skill .claude/skills/a11y/SKILL.md` — is read first by its agents;
     `run open --dry-run` refuses one the project does not have.
   - **To redo:** a `team.json` with `"lead": { "count" }` drops it; add `{ "name": "test", "roles": ["tester"], "min": 0,
-    "model": "claude-opus-5-5" }` and `{ "name": "scout", "roles": ["scout"], "min": 0, "model": "claude-opus-5-5" }` to
+"model": "claude-opus-5-5" }` and `{ "name": "scout", "roles": ["scout"], "min": 0, "model": "claude-opus-5-5" }` to
     get the new roles.
 
 An agent works a project alone by default. A team is a mode the person asks for — "several agents", "in parallel",
@@ -356,7 +365,8 @@ start one. How it works: `docs/en/agent-runs.md`.
   and asks the person before it writes anything. A lead may apply it only when the person allows it, at their terminal
   (`run open --lead-finishes`, `run allow-finish`).
 - **A run grows and changes while open:**
-  - `run extend` stacks the next plan, with `--dry-run`, and `--lines` to try a stage's lines on the run's work first.
+  - `run open <stage>` on an open run stacks the next plan, with `--dry-run`, and `--lines` to try a stage's lines on
+    the run's work first.
   - `run amend` corrects titles, acceptance, notes, findings, roles, quality, `dependsOn`, the inventory and the
     reference, and removes a task nobody took. A done task's acceptance only is amended; the finish holds it to the
     amended line.
@@ -529,8 +539,8 @@ backlog`), offered to the next plan. What got in the agents' way in Plitzi goes 
 - **An agent whose process ended is not running**, whatever its last word in the log. An agent launched by
   `run agent --launch` that has ended reads stopped on the board, and `run watch` asks for it again when work waits:
   a review's step with nobody of its role running says which agent to start, at once.
-- **A stage's checks read the run's work,** not the project the finish has not written yet: `run extend` no longer says
-  every element the run made is missing.
+- **A stage's checks read the run's work,** not the project the finish has not written yet: a stage's dry run no longer
+  says every element the run made is missing.
 - **`--as` in the finish:** any folder of a run — a task's copy, the finish's checked copy — signs in with the project's
   `.env`.
 - **`task complete` runs again the lines of approved tasks on the pages it changes:** one it breaks refuses it, naming
@@ -585,9 +595,11 @@ report`, …).
   authoring warnings and suggestions, lint warnings in changed files, and a file past 400 lines.
   `--fresh` drops ESLint's kept answers too, so a type fixed in an imported file clears its importers.
 - **Talking:**
-  - `task ask` is a question that waits for an answer; `task tell` is for the lead to know.
+  - `task tell` says one kind at a time: news for the lead, a question (`--ask`), what stops a task (`--blocked`), a
+    note for whoever takes it next (`--handoff`), where it stands (`--standing`).
   - `task message` reaches a task, an agent or `all`; `task inbox` reads them.
-  - `task propose` and `task answer` are agreements between tasks; `task request` asks for a change in a shared file.
+  - `task propose` and `task answer` are agreements between tasks; `task propose --file <file>` asks for a change in a
+    shared file, which one integration task applies.
   - `task progress --step` says in words what the agent is at.
 - **Stopping a server:** `plitzi server list` and `plitzi server stop [--port <port>]` stop only what listens from the
   folder they run in and says, by its `/health`, that it serves that folder — with what it started. Anything else on the
@@ -775,7 +787,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run watch` is quieter:** an agent none of whose role's cards is left is not called idle, a card to split is only of
   the idle agents' roles, and an agent to start is the keeper's for 90 s before the lead hears of it.
 - **A command line refused says what it meant:** two flags a zsh variable held as one (`"--as mika"`), an option another
-  page command has (`page shot --element` is `--clip`), a command another group has (`run agents` is `run status`).
+  page command has (`page shot --element` is `--within`), a command another group has (`run agents` is `run status`).
 - **A failed step says nothing of a copy's missing `.env`.**
 - **`run upgrade` sets right a run whose Plitzi already changed:** a stop loads the run whatever is installed — a run's
   upgrade was refused `version-mismatch`, the very thing it re-pins.
@@ -899,7 +911,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   at 1440 with its lists empty); `--state` says what each key of a source holds, not its keys alone; a list written out
   as its children counts them as its rows; `label-wraps` leaves a link alone across its column (a title) to wrap, and
   a dash is no word.
-- **`page shot --clip`** of a part a few lines tall says its size and `--scale 4` to read it up close; `page measure`
+- **`page shot --within`** of a part a few lines tall says its size and `--scale 4` to read it up close; `page measure`
   says a pseudo-element's x and y to the hundredth, as a width.
 - **`page measure`** reads `text-decoration` and `text-underline-offset` (a hover that only underlines), `align-items`,
   and where a `::before`/`::after` is drawn — its `x` and `y`, off Chromium's own layout — and why it sits there
@@ -910,7 +922,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`task show --full`** shows as many diffs whole as one answer holds (12k characters); each file past it says its
   size and how to read it alone (`task show <task> <file> --diff`). A run's answered 34k, read again on every turn.
 - **A refused command line** says what an option left bare takes (`--as` with an empty shell variable), where
-  `task inbox` reads a task's messages, and `page shot --clip` for `task look --clip`.
+  `task inbox` reads a task's messages, and that a part pictured alone is `--within` — on `task look` as on `page shot`.
 - **`element-empty`:** `page check`, `inspectPage` and a project's visual tests report an element a visitor sees with
   nothing in it — no words, no picture: a binding to a field the data lacks — by id, with how many list rows drew it so.
 
@@ -925,7 +937,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   - Images a host held back (`throttled`) or that are still loading are said apart from the page's own failures; an
     empty layout shell is said as empty, not hidden.
 - **`page shot`:**
-  - `--width 1440,390`, `--steps` (click, hover, type, drag, scroll, press, wait, wait-for), `--fill`, `--clip`,
+  - `--width 1440,390`, `--steps` (click, hover, type, drag, scroll, press, wait, wait-for), `--fill`, `--within`,
     `--scroll-to` and `--frames`.
   - `--compare <url>` sets the page beside another site section by section: the texts that differ, paired whatever
     their case or marks, and each section's dress (gradients, glows, filters, ornaments, background pictures).
@@ -952,7 +964,6 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
     there: a sticky part read "moved 315px down" after a click on a switch below it.
 - **`page measure` says an element it measured is hidden, and why** — none of its matches drawn — alone and beside the
   other page.
-- **`page same`** says whether pages draw the same on two servers.
 - **`page check --click`, `--expect` and `--element` find a plugin's own parts** by their id, as `page play` does
   (`reactions-more` inside a plugin).
 - **`--as` that reaches no server says so,** rather than ending in a stack trace; `--read a,b` says the elements are
@@ -1010,7 +1021,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   (`overflow: hidden` on a pixel, `clip-path: inset(50%)`, `clip: rect(0 0 0 0)`).
 - **`plitzi space fix` says what is left** when nothing has one fix to write — each warning and suggestion where it was
   written, and how one written so on purpose is quieted — never "Nothing to fix" beside them.
-- **`page shot`:** `--scale <1–4>` pictures a small drawing up close; a `--clip`'s name is in the file's
+- **`page shot`:** `--scale <1–4>` pictures a small drawing up close; a part's (`--within`) name is in the file's
   (`home-site-header-1440-light.png`); a whole page past three screens is also written in parts a screen and a half tall;
   a clipped part is pictured without what is pinned over it (a sticky header); a sheet pinned over the page that holds
   more than the screen is pictured whole; a component's instance is clipped by its name; `--frames` on a part counts any

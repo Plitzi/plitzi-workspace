@@ -1,60 +1,45 @@
 import chalk from 'chalk';
 
-import { taskSeeStage } from './seeStage';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { caughtBy, checkBefore, checkMutant, failedTests, noTestBefore, provedBy } from '../../../runs/tasks';
 import { act, either } from '../shell';
-import { taskCheck } from '../task/work';
 
 import type { LineBeforeAfter, LineMutated, Mutation } from '../../../runs/tasks';
 import type { RunCommandOptions } from '../shell';
 
-export type CheckCommandOptions = RunCommandOptions & {
-  acceptance?: boolean;
-  fix?: boolean;
-  fresh?: boolean;
-  tasks?: string;
+export type ProveOptions = RunCommandOptions & {
   before?: boolean;
   /** `--mutate <file>`: the file a mutant changes, `--from` what it says and `--to` what it says instead — each said again for a change more. */
   mutate?: string[];
   from?: string[];
   to?: string[];
-  /** `--line <n>`: the acceptance lines --before or --mutate runs, by their place — each said again. */
+  /** `--line <n>`: the acceptance lines it runs, by their place — each said again. */
   line?: string[];
 };
 
 /** The places `--line` named, as numbers: one that is not is said as it is, and refused by the task's lines. */
-const linesAsked = (options: CheckCommandOptions): number[] => (options.line ?? []).map(Number);
+const linesAsked = (options: ProveOptions): number[] => (options.line ?? []).map(Number);
 
-/** `plitzi task check`: your copy's checks, a research card's stage (`--tasks`), or a task beside the run before it. */
-export const taskCheckCommand = (named: string | undefined, options: CheckCommandOptions): Promise<void> => {
-  if ((options.mutate ?? []).length > 0 || (options.from ?? []).length > 0 || (options.to ?? []).length > 0) {
-    return taskCheckMutant(named, options);
-  }
+/** Whether a mutant is asked: any of its three flags given, each refused below unless all three are whole. */
+const mutantAsked = (options: ProveOptions): boolean =>
+  [options.mutate, options.from, options.to].some(each => (each ?? []).length > 0);
 
-  if (options.before === true || named !== undefined) {
-    return taskCheckBefore(named, options);
-  }
+/**
+ * `plitzi task prove [task] --before | --mutate <file> --from "…" --to "…"`: what a task's acceptance proves — each line
+ * beside the run before the task, or on a mutant of its copy. A reviewer's; its own checks are `task check`.
+ */
+export const taskProve = (named: string | undefined, options: ProveOptions): Promise<void> =>
+  mutantAsked(options) ? taskProveMutant(named, options) : taskProveBefore(named, options);
 
-  return options.tasks === undefined ? taskCheck(options) : taskSeeStage({ ...options, tasks: options.tasks });
-};
-
-/** `plitzi task check [task] --before`: each acceptance line run before the task and with it — what it proves. */
-const taskCheckBefore = (named: string | undefined, options: CheckCommandOptions): Promise<void> =>
+/** `plitzi task prove [task] --before`: each acceptance line run before the task and with it — what it proves. */
+const taskProveBefore = (named: string | undefined, options: ProveOptions): Promise<void> =>
   act(
     options,
     async ctx => {
       if (options.before !== true) {
         throw new RunRefusal(
           'invalid',
-          `task check runs your own copy's checks and names no task — ${String(named)} is named to set it beside the run before it (plitzi task check ${String(named)} --before) or a mutant of it (plitzi task check ${String(named)} --mutate <file> --from "…" --to "…")`
-        );
-      }
-
-      if (options.fix === true || options.tasks !== undefined || options.acceptance === true) {
-        throw new RunRefusal(
-          'invalid',
-          '--before runs the acceptance alone, before the task and with it: leave out --fix, --tasks and --acceptance'
+          `task prove says what an acceptance proves, one way at a time: beside the run before the task (plitzi task prove ${named ?? '[task]'} --before), or on a mutant of its copy (plitzi task prove ${named ?? '[task]'} --mutate <file> --from "…" --to "…")`
         );
       }
 
@@ -84,7 +69,7 @@ export const checkBeforeText = (
           : proved === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails with ${task}${line.before.ok ? ', where it passed before it' : ', as before it'}`
             : noTestBefore(line)
-              ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task check ${task} --mutate <file> --from "…" --to "…"`
+              ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
               : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
     const printed = [
       ...(!line.before.ok && proved !== 'proves' ? [['before', line.before.output ?? []] as const] : []),
@@ -104,8 +89,8 @@ export const checkBeforeText = (
   ].join('\n');
 };
 
-/** `plitzi task check [task] --mutate <file> --from "…" --to "…"`: each acceptance line run on a mutant of the copy. */
-const taskCheckMutant = (named: string | undefined, options: CheckCommandOptions): Promise<void> =>
+/** `plitzi task prove [task] --mutate <file> --from "…" --to "…"`: each acceptance line run on a mutant of the copy. */
+const taskProveMutant = (named: string | undefined, options: ProveOptions): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -117,15 +102,10 @@ const taskCheckMutant = (named: string | undefined, options: CheckCommandOptions
         );
       }
 
-      if (
-        options.before === true ||
-        options.fix === true ||
-        options.tasks !== undefined ||
-        options.acceptance === true
-      ) {
+      if (options.before === true) {
         throw new RunRefusal(
           'invalid',
-          '--mutate runs the acceptance alone, on the copy and on its mutant: leave out --before, --fix, --tasks and --acceptance'
+          'task prove says what an acceptance proves one way at a time: --before, or --mutate — run them one after the other'
         );
       }
 

@@ -6,21 +6,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { abortRun, finishRun } from '../copies/merge';
+import { finishRun } from '../copies/merge';
 import { RUNS_DIR, runPaths } from '../core/paths';
 import { isRunRefusal } from '../core/refusal';
 import { brakeFailuresFor, DEFAULTS } from '../core/taskStore';
-import {
-  attachRun,
-  checkPlanFile,
-  loadRun,
-  pruneRuns,
-  purgeRun,
-  releaseRun,
-  resumeRun,
-  stopRun,
-  writingTasks
-} from '../run';
+import { attachRun, checkPlanFile, loadRun, pruneRuns, releaseRun, resumeRun, stopRun, writingTasks } from '../run';
+import { abortRun } from '../run/abort';
 import { messageTasks } from '../talk/talk';
 import { canWrite, checkTask, completeTask, nextTask, reportProgress, reviewTask, takeNext, takeTask } from '../tasks';
 import { viewRun } from '../view/view';
@@ -215,7 +206,7 @@ describe('what an agent leaves in the project', () => {
     await bench.write('tmp/lead2-preview.log', 'listening\n');
     await bench.write('tmp/shots/home.png', 'png');
     await bench.write('tmp/dev-server.json', '{}');
-    // The lead's stage, written in the seconds before `run extend` took it, was told to dev-1.
+    // The lead's stage, written in the seconds before stacking took it, was told to dev-1.
     await bench.write('tmp/es-sections.stage.json', '{}');
 
     const left = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'left-in-tmp');
@@ -387,10 +378,14 @@ describe('versions, machines and caches', () => {
     expect(lost && isRunRefusal(lost.reason) ? lost.reason.code : undefined).toBe('another-run');
   });
 
-  it('a purge is a person’s and takes the whole folder', async () => {
+  // `run purge` removed what `run abort` could not load — a run of another machine or CLI: one command ends any run.
+  it('an abort is a person’s and takes the whole folder — of a run held on another machine too', async () => {
     await open();
-    expect((await refusal(purgeRun(lead(), 'es-launch'))).code).toBe('person-only');
-    await purgeRun(bench.person(true), 'es-launch');
+    const record = runPaths(bench.root, 'es-launch').record;
+    const held = JSON.parse(await fs.readFile(record, 'utf-8')) as { activeOn: { machine: string } };
+    await fs.writeFile(record, JSON.stringify({ ...held, activeOn: { ...held.activeOn, machine: 'elsewhere' } }));
+    expect((await refusal(abortRun(lead(), 'es-launch'))).code).toBe('person-only');
+    await abortRun(bench.person(true), 'es-launch');
     expect(await fs.stat(runPaths(bench.root, 'es-launch').dir).catch(() => undefined)).toBeUndefined();
   });
 });

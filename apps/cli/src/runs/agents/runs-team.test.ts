@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { waitForLead } from './leadWatch';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { abortRun } from '../copies/merge';
 import { startTaskPreview } from '../copies/preview';
 import { resumeRun, stopRun } from '../run';
+import { abortRun } from '../run/abort';
 import { askLead, messageTasks, noteRun, readInbox, tellLead } from '../talk/talk';
 import {
   blockTask,

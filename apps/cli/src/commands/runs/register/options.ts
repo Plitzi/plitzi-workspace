@@ -43,7 +43,7 @@ let piped: Promise<string> | undefined;
 const readPiped = (): Promise<string> =>
   (piped ??= new Promise((resolve, reject) => {
     if (process.stdin.isTTY) {
-      reject(new Error('"-" reads the text from stdin, and nothing is piped in: echo "…" | plitzi task ask -'));
+      reject(new Error('"-" reads the text from stdin, and nothing is piped in: echo "…" | plitzi task tell - --ask'));
 
       return;
     }
@@ -98,7 +98,7 @@ export const sharedOptions = (groups: readonly Command[]): void => {
   }
 };
 
-/** `task check --mutate`: a change to the code — said again, with its own --from and --to, for each change more. */
+/** `task prove --mutate`: a change to the code — said again, with its own --from and --to, for each change more. */
 export const MUTATE_OPTIONS = [
   [
     '--mutate <file>',

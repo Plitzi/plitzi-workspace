@@ -4,7 +4,7 @@
  *   plitzi page shot /about --width 390 --scheme dark
  *   plitzi page shot / --compare https://example.com --width 1440     # beside another site: what differs, and how
  *   plitzi page shot / --frames 4 --every 500                         # what moves: a marquee, an autoplay
- *   plitzi page shot / --clip pricing-table                           # one element, scrolled to wherever it is
+ *   plitzi page shot / --within pricing-table                           # one element, scrolled to wherever it is
  *   plitzi page shot / --scroll-to faq --viewport --frames 6          # the screen at that section, as it animates
  *
  * The project's server has to be running (`npm start`). `--json` answers in one object, for a tool or an agent. The

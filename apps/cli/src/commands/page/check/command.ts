@@ -107,6 +107,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.url ? { url: options.url } : {}),
     ...(options.space ? { space: options.space } : {}),
     ...(options.themes ? { themes: true } : {}),
+    ...(options.fresh ? { fresh: true } : {}),
     ...(options.standIns ? { standIns: true } : {})
   });
   if ('problem' in reports) {
@@ -190,6 +191,8 @@ export const checkRoutes = async (
     space?: string;
     /** Each page read in light and in dark too: a ground that does not follow the theme under a text that does. */
     themes?: boolean;
+    /** The space authored anew, never read back from an earlier check (`--fresh`). */
+    fresh?: boolean;
   } & Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns'> &
     Visitor
 ): Promise<CheckReport[] | { problem: string }> => {
@@ -205,7 +208,12 @@ export const checkRoutes = async (
       options.space
         ? moduleSpace(options.space)
         : plitzi?.source === 'local'
-          ? projectSpace(options.url ? ((await servedFolder(project.root, options.url)) ?? project.root) : project.root)
+          ? projectSpace(
+              options.url ? ((await servedFolder(project.root, options.url)) ?? project.root) : project.root,
+              {
+                fresh: options.fresh === true
+              }
+            )
           : Promise.resolve(undefined),
       launchBrowser(project.root)
     ]);

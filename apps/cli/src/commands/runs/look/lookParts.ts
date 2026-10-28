@@ -22,7 +22,6 @@ import { runSelf } from '../shell';
 import type { LookOptions } from './lookOptions';
 import type { Preview } from '../../../runs/copies/preview';
 import type { RunContext } from '../../../runs/run';
-import type { Difference } from '../../page/same';
 
 /**
  * The pages of a look the space declares for signed-in visitors alone, and the account the project names to read them
@@ -231,7 +230,7 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
 };
 
 /**
- * Each part a `page shot --clip a,b` compared, read off its answer — a part's own picture, and its comparison or why it
+ * Each part a `page shot --within a,b` compared, read off its answer — a part's own picture, and its comparison or why it
  * could not be pictured. One of a single part is read as `comparedOf` reads it.
  */
 type PartRead = { compared: Omit<BeforeAfter, 'route' | 'width' | 'scheme'>; shot?: string };
@@ -291,47 +290,6 @@ export interface Checked {
  * takes it, so with several pages each is checked with it apart (`task look --hover` on a task of three
  * pages was refused whole). One browser at a time: each check opens its own.
  */
-const isDifference = (value: Record<string, unknown>): value is Record<string, unknown> & Difference =>
-  typeof value.element === 'string' &&
-  Array.isArray(value.changed) &&
-  value.changed.every(
-    each =>
-      isRecord(each) &&
-      typeof each.field === 'string' &&
-      typeof each.here === 'string' &&
-      typeof each.there === 'string'
-  ) &&
-  (value.only === undefined || value.only === 'here' || value.only === 'there') &&
-  (value.wordsOnly === undefined || value.wordsOnly === true);
-
-/** What `page same --json` read differing first, for one page: none when it drew the same, or could not be told. */
-export const elsewhereOf = (output: string): Difference | undefined => {
-  try {
-    const read: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
-    const page: unknown = isRecord(read) && Array.isArray(read.pages) ? (read.pages as unknown[])[0] : undefined;
-    const first = isRecord(page) && page.same === false && isRecord(page.first) ? page.first : undefined;
-
-    return first && isDifference(first) ? first : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-/** The pages `page same --json` read the same on both servers: what a look leaves unpictured. */
-export const samePaths = (output: string): string[] => {
-  const line = output.trim().split('\n').at(-1) ?? '';
-  try {
-    const read: unknown = JSON.parse(line);
-    const pages = isRecord(read) && Array.isArray(read.pages) ? (read.pages as unknown[]) : [];
-
-    return pages.flatMap(page =>
-      isRecord(page) && page.same === true && typeof page.path === 'string' ? [page.path] : []
-    );
-  } catch {
-    return [];
-  }
-};
-
 export const checkWithInteraction = async (
   routes: readonly string[],
   interaction: readonly string[],
@@ -548,4 +506,4 @@ export const keptLook = async (
 export const clipArgs = (clip: string | undefined, showing: readonly string[]): string[] =>
   clip === undefined
     ? []
-    : ['--clip', clip, ...(showing.length > 0 && !clip.includes(',') ? ['--showing', showing.join(',')] : [])];
+    : ['--within', clip, ...(showing.length > 0 && !clip.includes(',') ? ['--showing', showing.join(',')] : [])];

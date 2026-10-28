@@ -10,9 +10,11 @@ import {
   waitForFile
 } from '../../../runs/tasks';
 import { act, holder, runOf } from '../shell';
+import { proposalOf } from './talk';
 import { list } from '../text';
 
 import type { RunCommandOptions } from '../shell';
+import type { ProposeOptions } from './talk';
 
 /**
  * A task's files beyond its own: claimed by turns, released, waited for, put back, requested.
@@ -192,17 +194,16 @@ export const taskDiscard = (files: string[], options: RunCommandOptions): Promis
       `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.brought.length > 0 ? ` Also brought in, approved since your copy was made: ${discarded.brought.join(', ')}` : ''}`
   );
 
-export const taskRequest = (
-  file: string,
-  options: RunCommandOptions & { summary: string; usedIn?: string; blocking?: boolean }
-): Promise<void> =>
+/** `plitzi task propose --file <file> --change "…"`: a change asked of a shared file — one integration task applies them all. */
+export const taskProposeShared = (task: string | undefined, options: ProposeOptions): Promise<void> =>
   act(
     options,
     async ctx => {
+      proposalOf(task, options);
       const { runId, taskId } = await holder(ctx, options);
 
-      return requestShared(ctx, runId, taskId, file, {
-        summary: options.summary,
+      return requestShared(ctx, runId, taskId, options.file ?? '', {
+        summary: options.why ? `${options.change ?? ''} — ${options.why}` : (options.change ?? ''),
         usedIn: (options.usedIn ?? '')
           .split(',')
           .map(each => each.trim())
@@ -212,6 +213,6 @@ export const taskRequest = (
     },
     requested =>
       requested.integration
-        ? `Requested, blocking: ${requested.integration} makes it, and this task waits for it. Take another ready task meanwhile.`
-        : `Requested: change it in your copy as you need it; one integration task applies every request on ${requested.request.file} together.`
+        ? `Asked, blocking: ${requested.integration} makes it, and this task waits for it. Take another ready task meanwhile.`
+        : `Asked: change it in your copy as you need it; one integration task applies every change asked of ${requested.request.file} together.`
   );

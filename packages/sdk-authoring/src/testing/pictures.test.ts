@@ -94,7 +94,7 @@ describe('alignPictures', () => {
 });
 
 describe('pageRegions', () => {
-  // A section named by its anchor is still the space's element: `--clip home-fights` finds `section#combates`.
+  // A section named by its anchor is still the space's element: `--within home-fights` finds `section#combates`.
   it('names each section by its id, with the element of the space it is when that is another', () => {
     document.body.innerHTML =
       '<main data-plitzi-el="home"><section id="combates" data-plitzi-el="home-fights"></section><section data-plitzi-el="home-faq"></section></main><footer id="footer" data-plitzi-el="footer"></footer>';

@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { removeRun } from './claim';
 import { requirePerson, requirePrincipal } from './context';
 import {
   assertStatus,
@@ -24,7 +23,6 @@ import { RunRefusal } from '../core/refusal';
 import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../core/taskStore';
 import { LEAD, sendMessage } from '../talk/messages';
 
-import type { RemovedInputs } from './claim';
 import type { LoadedRun, RunContext } from './context';
 import type { BrakeEvent } from '../agents/brake';
 import type { RunRecord } from '../core/model';
@@ -272,14 +270,6 @@ export const releaseRun = async (ctx: RunContext, runId: string): Promise<void> 
     activeOn: { machine: '', since: ctx.now().toISOString() }
   }));
   await logRun(ctx, loaded.paths, { action: 'release' });
-};
-
-/** `plitzi run purge`: the run's folder, gone — its backups too, so a person's. */
-export const purgeRun = async (ctx: RunContext, runId: string): Promise<RemovedInputs> => {
-  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-  await requirePerson(ctx, runId, `purge run "${runId}" — its backups and its agents' work go with it`);
-
-  return removeRun(ctx, loaded.paths, runId);
 };
 
 /** The newest write anywhere in a run's folder, but its caches: when it was last active. */

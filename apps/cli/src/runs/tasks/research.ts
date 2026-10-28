@@ -19,7 +19,6 @@ import { assertStatus, loadRun, logRun, readPlanFile } from '../run';
 import type { ReviewedTask } from './review';
 import type { TaskStatus } from '../core/model';
 import type { TaskView } from '../core/taskStore';
-import type { Extended } from '../plan/extend';
 import type { Finding } from '../plan/spike';
 import type { LoadedRun, RunContext } from '../run';
 
@@ -99,7 +98,7 @@ export const dropProposal = async (ctx: RunContext, view: TaskView): Promise<voi
 
 /**
  * `plitzi task complete --found "…" [--tasks <stage.json>]`: what a research card found. Its scout's goes to review with
- * the lead — the stage checked whole as `run extend --dry-run` checks it, and kept beside the card — and the lead's own
+ * the lead — the stage checked whole as `run open --dry-run` checks it, and kept beside the card — and the lead's own
  * (one nobody holds, a team with no scout) is done at once: nobody reviews the lead's word.
  */
 export const completeResearch = async (
@@ -140,7 +139,7 @@ export const completeResearch = async (
     if (unchecked.length > 0) {
       throw new RunRefusal(
         'invalid',
-        `${unchecked.map(each => each.id).join(', ')} ${unchecked.length === 1 ? 'has' : 'have'} no acceptance line a command proves: give each { said, check } — a page check, a measure, a spec — run once on the run's work (plitzi run extend <stage> --dry-run --lines says what each is), then complete again`,
+        `${unchecked.map(each => each.id).join(', ')} ${unchecked.length === 1 ? 'has' : 'have'} no acceptance line a command proves: give each { said, check } — a page check, a measure, a spec — run once on the run's work (plitzi run open <stage> --dry-run --lines says what each is), then complete again`,
         { task: taskId }
       );
     }
@@ -219,27 +218,6 @@ const findOutAsLead = async (
   const ready = [...(done.ready ?? []), ...waited];
 
   return { ...done, ...(ready.length > 0 ? { ready } : {}) };
-};
-
-/**
- * `task check --tasks <stage.json>` at a research card: the stage it would propose seen as the lead would stack it —
- * every check, each line run once on the run's work — nothing proposed, nothing stacked. A scout's way to see its stage:
- * A run's and a run's reached for `run extend`, the lead's.
- */
-export const seeProposal = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<Extended> => {
-  const loaded = await loadRun(ctx, runId);
-  const task = findTask(loaded, taskId);
-  if (!isResearch(task)) {
-    throw new RunRefusal(
-      'invalid',
-      `Task "${taskId}" is no research card: plitzi task check --tasks sees the stage a research card proposes — plitzi task check alone checks this one`,
-      { task: taskId }
-    );
-  }
-
-  await holderOf(ctx, loaded, task);
-
-  return seeStage(ctx, runId, file, { lines: true });
 };
 
 /**

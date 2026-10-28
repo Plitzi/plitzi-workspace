@@ -13,32 +13,59 @@ describe('what a refused command line meant', () => {
 
   it('names what this page command calls an option another has', () => {
     expect(commandHint("error: unknown option '--element'", ['page', 'shot', '/', '--element', 'hero'])).toContain(
-      '--clip <element>'
+      'plitzi page shot <path> --within <element>'
+    );
+    expect(commandHint("error: unknown option '--clip'", ['page', 'shot', '/', '--clip', 'hero'])).toContain(
+      '--within <element>'
     );
     expect(commandHint("error: unknown option '--element'", ['page', 'check', '/'])).toBeUndefined();
     expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
-    expect(
-      commandHint("error: unknown option '--element'", ['page', 'shot', '/', '--element', 'room-stage'])
-    ).toContain('plitzi page shot <path> --clip <element>');
-    expect(commandHint("error: unknown option '--fresh'", ['page', 'outline', '/', '--fresh'])).toContain(
-      'reads the page anew on every call'
-    );
-    // A run's scout, refused five times: --fresh is task check's and task look's.
-    expect(commandHint("error: unknown option '--fresh'", ['page', 'check', '/', '--fresh'])).toContain(
-      'task check’s and task look’s'
+    expect(commandHint("error: unknown option '--clip'", ['task', 'look', 'd-x', '/', '--clip', 'hero'])).toContain(
+      'plitzi task look <task> --within <element>'
     );
   });
 
-  it('names the command that answers one another group has', () => {
+  it('names the command that answers one written by its plain name', () => {
     expect(commandHint("error: unknown command 'agents'", ['run', 'agents', 'shop-3'])).toContain('run status');
     expect(commandHint("error: unknown command 'list'", ['task', 'list'])).toContain('run status');
     expect(commandHint("error: unknown command 'pages'", ['space', 'pages'])).toContain('plitzi space overview');
-    // Folded into another: the old name says where it went.
     expect(commandHint("error: unknown command 'take'", ['task', 'take', 't-home'])).toContain(
       'plitzi task next <task>'
     );
-    expect(commandHint("error: unknown command 'rehearse'", ['run', 'rehearse', 'plan.json'])).toContain('--rehearse');
+    // Asking, blocking and handing off are what task tell says; a stage is stacked by run open.
+    expect(commandHint("error: unknown command 'ask'", ['task', 'ask', 'Which title?'])).toContain(
+      'plitzi task tell "…" --ask'
+    );
+    expect(commandHint("error: unknown command 'block'", ['task', 'block'])).toContain('--blocked');
+    expect(commandHint("error: unknown command 'request'", ['task', 'request', 'src/a.ts'])).toContain(
+      'task propose --file <file>'
+    );
+    expect(commandHint("error: unknown command 'extend'", ['run', 'extend', 'stage.json'])).toContain(
+      'plitzi run open <stage>'
+    );
+    expect(commandHint("error: unknown command 'purge'", ['run', 'purge', 'r'])).toContain('plitzi run abort <run>');
+    expect(commandHint("error: unknown command 'wait'", ['task', 'wait', 'src/a.ts'])).toContain(
+      'plitzi task claim <file> --wait'
+    );
+    expect(commandHint("error: unknown command 'push'", ['runtime', 'push'])).toContain('plitzi space push runtime');
+    expect(commandHint("error: unknown command 'pull'", ['functions', 'pull'])).toContain('space pull functions');
     expect(commandHint("error: unknown command 'nope'", ['run', 'nope'])).toBeUndefined();
+    expect(commandHint('', ['task', 'wait', 'x'])).toBeUndefined();
+  });
+
+  it('names what proves an acceptance, and a flag a command does by itself', () => {
+    expect(commandHint("error: unknown option '--before'", ['task', 'check', 't-x', '--before'])).toContain(
+      'plitzi task prove <task> --before'
+    );
+    expect(commandHint("error: unknown option '--tasks'", ['task', 'check', '--tasks', 's.json'])).toContain(
+      'plitzi run open <stage.json> --dry-run --lines'
+    );
+    expect(commandHint("error: unknown option '--take'", ['task', 'next', '--take'])).toContain('--peek');
+    expect(commandHint("error: unknown option '--shot'", ['page', 'play', '/r/x', '--shot'])).toContain('shot opened');
+    expect(commandHint("error: unknown option '--until'", ['run', 'watch', '--until', 'lead'])).toContain('lead');
+    expect(commandHint("error: unknown option '--search'", ['explain', '--search', 'carousel end'])).toContain(
+      'plitzi explain "carousel end"'
+    );
   });
 
   it('says a bare option takes its value, and where what a command takes none of is read', () => {
@@ -52,48 +79,6 @@ describe('what a refused command line meant', () => {
         'd-x'
       ])
     ).toContain('plitzi task show <task>');
-    expect(commandHint("error: unknown option '--clip'", ['task', 'look', 'd-x', '/', '--clip', 'hero'])).toContain(
-      'page shot <path> --clip'
-    );
-  });
-
-  it('says where a command folded into another went, and a flag a command now does by itself', () => {
-    expect(commandHint("error: unknown command 'heartbeat'", ['task', 'heartbeat'])).toContain('plitzi task progress');
-    expect(commandHint("error: unknown command 'allow-finish'", ['run', 'allow-finish'])).toContain(
-      'run finish --lead-finishes'
-    );
-    expect(commandHint("error: unknown option '--take'", ['task', 'next', '--take'])).toContain('--peek');
-    expect(commandHint("error: unknown option '--shot'", ['page', 'play', '/r/x', '--shot'])).toContain('shot opened');
-    expect(commandHint("error: unknown option '--until'", ['run', 'watch', '--until', 'lead'])).toContain('lead');
-    expect(commandHint("error: unknown option '--search'", ['explain', '--search', 'carousel end'])).toContain(
-      'plitzi explain "carousel end"'
-    );
-    // Missed before the unknown one is: `--than` given, `--compare` missing.
-    expect(
-      commandHint("error: required option '--compare <origin>' not specified", [
-        'page',
-        'same',
-        '/',
-        '--url',
-        'http://127.0.0.1:8080',
-        '--than',
-        'http://127.0.0.1:8081'
-      ])
-    ).toContain('--compare <origin>');
-    expect(commandHint("error: required option '--compare <origin>' not specified", ['page', 'same', '/'])).toBe(
-      undefined
-    );
-    expect(commandHint('', ['task', 'wait', 'x'])).toBeUndefined();
-    expect(commandHint("error: unknown command 'wait'", ['task', 'wait', 'src/a.ts'])).toContain(
-      'plitzi task claim <file> --wait'
-    );
-    expect(commandHint("error: unknown command 'copy'", ['run', 'copy'])).toContain('run preview --copy');
-    expect(commandHint("error: unknown command 'push'", ['runtime', 'push'])).toContain('plitzi space push runtime');
-    expect(commandHint("error: unknown command 'pull'", ['functions', 'pull'])).toContain('space pull functions');
-    expect(commandHint("error: unknown command 'restore'", ['run', 'restore', 'r', 'f'])).toContain('--restore');
-    expect(commandHint("error: unknown command 'release'", ['run', 'release', 'r'])).toContain(
-      'run attach <run> --release'
-    );
   });
 
   it('is said by every command, each copying the program’s output', () => {

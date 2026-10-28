@@ -27,17 +27,16 @@ import { findTask, notReviewedIn, reviewTask } from '../../../runs/tasks';
 import { reviewSteps, reviewTeamOf } from '../../../runs/tasks/reviews';
 import { checkAccount, sessionCookie } from '../../page/check/account';
 import { projectSpace } from '../../page/check/space';
+import { drawnSame } from '../../page/same';
 import { actingSteps } from '../../page/shot/steps';
-import { zoneNote } from '../../page/visit';
+import { visitViewOf, zoneNote } from '../../page/visit';
 import { visitorArgs } from '../../register/options';
 import {
   checkWithInteraction,
   clipArgs,
   partsComparedOf,
-  elsewhereOf,
   picturesOf,
   readablePictures,
-  samePaths,
   stoppedText,
   LOOK_AT_ONCE,
   newSinceBefore,
@@ -263,18 +262,15 @@ export const lookAt = (
         if (before && reached.length > 0) {
           const { paths: reachedOnly } = await examplePaths(preview.url, reached);
           if (reachedOnly.length > 0) {
-            const same = await runSelf(preview.dir, [
-              'page',
-              'same',
-              ...reachedOnly,
-              '--url',
-              preview.url,
-              '--compare',
-              before.url,
-              ...visiting,
-              '--json'
-            ]);
-            samePaths(same.output).forEach(page => unchanged.add(page));
+            const same = await drawnSame(
+              preview.dir,
+              reachedOnly,
+              { url: preview.url, compare: before.url },
+              visitViewOf(options)
+            );
+            if (!('problem' in same)) {
+              same.filter(page => page.same).forEach(page => unchanged.add(page.path));
+            }
           }
         }
 
@@ -459,23 +455,16 @@ export const lookAt = (
             }));
           })
         );
-        // Its parts compared alone: that nothing else of the page moved is read, not pictured (`page same`).
+        // Its parts compared alone: that nothing else of the page moved is read, not pictured (`drawnSame`).
         const rest = partsBeside
           ? pictured.map(route => async () => {
-              const read = await runSelf(preview.dir, [
-                'page',
-                'same',
-                route,
-                '--url',
-                preview.url,
-                '--compare',
-                before.url,
-                '--except',
-                clips.join(','),
-                ...visiting,
-                '--json'
-              ]);
-              const differs = elsewhereOf(read.output);
+              const read = await drawnSame(
+                preview.dir,
+                [route],
+                { url: preview.url, compare: before.url, except: clips },
+                visitViewOf(options)
+              );
+              const differs = 'problem' in read ? undefined : read[0]?.first;
 
               return differs ? { route, ...differs } : undefined;
             })

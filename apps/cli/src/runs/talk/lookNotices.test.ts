@@ -5,7 +5,7 @@ import { benchPlan } from '../../tests/runProject';
 
 const dressed = (clip: string, look: string) => ({
   said: `/ wears the original's ${look}`,
-  check: `plitzi page shot / --url $PLITZI_URL --compare https://example.com/ --clip ${clip} --dress "${look}"`
+  check: `plitzi page shot / --url $PLITZI_URL --compare https://example.com/ --within ${clip} --dress "${look}"`
 });
 
 // The sponsors section's glow was t-heading's, its banners t-sponsors' — one waited fifty minutes on the other.

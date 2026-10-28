@@ -21,9 +21,12 @@ import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
 export type Authored = { handles: SpaceHandles; schema: Schema; schemes: Scheme[] };
 
 /** The space the project declares, authored. Only for one written here. */
-export const projectSpace = async (root: string): Promise<Authored | { problem: string }> => {
+export const projectSpace = async (
+  root: string,
+  { fresh = false }: { fresh?: boolean } = {}
+): Promise<Authored | { problem: string }> => {
   const key = await authoredKey(root);
-  const kept = await keptAuthored(root, key);
+  const kept = fresh ? undefined : await keptAuthored(root, key);
   if (kept) {
     return kept;
   }

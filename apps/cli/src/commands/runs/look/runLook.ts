@@ -120,6 +120,6 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         `Pictures — 1440 and 390, light and dark: ${looked.shots}/`,
         looked.passed
           ? 'Then: plitzi run report --summary "…" and plitzi run finish'
-          : 'What failed is the run’s: send it to a task (plitzi run extend <stage.json>), or say why it stands, then finish'
+          : 'What failed is the run’s: send it to a task (plitzi run open <stage.json>), or say why it stands, then finish'
       ].join('\n')
   );

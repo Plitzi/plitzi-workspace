@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { checkBeforeText } from './checkBefore';
+import { checkBeforeText } from './prove';
 
 import type { LineBeforeAfter } from '../../../runs/tasks';
 

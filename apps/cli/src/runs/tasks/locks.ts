@@ -222,7 +222,7 @@ export const claimFile = async (
         ? `${clean} is held by "${holder.task}", your own other task: it is yours to change there — finish that one and its turn passes here (plitzi task claim ${clean} --wait)`
         : turn === 'wait'
           ? `${clean} is held by task "${holder.task}" by turns (turn: wait): wait for it (plitzi task claim ${clean} --wait) and go on with the rest of your task meanwhile`
-          : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say why (plitzi task request ${clean} --summary …) — your change goes in through one integration task that applies every request together`,
+          : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say what and why (plitzi task propose --file ${clean} --change "…" --why "…") — your change goes in through one integration task that applies every change asked together`,
       { file: clean, holder: holder.task, turn, ...(holder.until ? { until: holder.until } : {}) }
     );
   };

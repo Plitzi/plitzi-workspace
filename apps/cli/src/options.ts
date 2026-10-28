@@ -18,7 +18,7 @@ const isOption = (word: string): boolean => /^--?[a-z]/i.test(word);
 
 /**
  * A value that is another option: the one this option takes went missing — an empty shell variable, the words of a
- * loop out of order. A run's `page shot /design 390 dark pixels-brand-row --width --scheme --clip` was told only
+ * loop out of order. A run's `page shot /design 390 dark pixels-brand-row --width --scheme --within` was told only
  * that a width is a whole number, five times.
  */
 const refuseOption = (value: string): void => {

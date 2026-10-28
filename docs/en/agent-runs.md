@@ -81,8 +81,8 @@ nobody's task owns** — seen wrong outside the task in hand, there before the r
 (`notices.ts`), by an agent with its token, a reviewer by its name, or the lead: one line of the log (`notice`) —
 never a message to the lead, which would wake it for what is the next stage's — said by the finish and listed in the report under "Noticed, owned by no task" — and kept past the run in the project's backlog (`backlog.ts`, `.plitzi/backlog.json`, beside the team: the
 project's, in git), as the run finishes or is aborted, one already there kept once. `run open` (and its `--dry-run`) list what
-is open for the run being planned to take up; `run backlog` lists it, `run backlog add "…" [--on <where>]` keeps one
-with no run open (the person's, or an agent's between runs), and `run backlog done <id> --note "…"` closes one, saying
+is open for the run being planned to take up; `run backlog` lists it, `run notice "…" [--on <where>]` keeps one
+at once with no run open (the person's, or an agent's between runs), and `run backlog done <id> --note "…"` closes one, saying
 how. A plan's task that does items says so — `"closes": ["b-3"]`, refused at `run open --dry-run` when one is not open — and they
 are closed as its run is applied, each saying the task and the run that did it.
 
@@ -162,7 +162,7 @@ notices that are the person's own, the lead's counted in the status bar (`N for 
 (`monitorTheme.ts`: the brand's tokens, dark or light as the terminal's background answers, `t` or `--theme` to say it;
 each agent a hue of its own, the same everywhere on the panel), at the depth the terminal draws — every colour, the 256,
 the 16, or none under `NO_COLOR`, a selection then drawn inverse. On top, the run and the stage at work (`stage 3 ·
-motion`, its goal beside it — `run extend` logs each stage's) and its state; the views as tabs, each its key (`1`
+motion`, its goal beside it — each stage stacked logs its own) and its state; the views as tabs, each its key (`1`
 Overview, `2` Flow, `3` Tasks, `4` Agents, `5` Spend), how many tasks are approved and when the run is expected to end;
 a strip of every task as a block in the colour of where it stands — by stage, each as wide as its share, when there
 are more than the width holds. At the foot a status bar (the run, what it spent, the preview's port, the keys) and over
@@ -270,7 +270,7 @@ waits). A stage's lines may cover the run's pieces. A plan with no inventory is 
 site says it (`reference`, its address): once the run is open, `plitzi run reference` keeps it (`reference.ts`) — each
 page of the inventory, and its home, pictured and its words measured at 1440 and 390 in both schemes, in the run's
 `reference/` — and `page shot --compare` on that site, in the project or a task's copy, measures against what was kept
-and says when it was kept (`--live` asks the site as it is now). A page the site answers with an error is never kept
+and says when it was kept (`--fresh` asks the site as it is now). A page the site answers with an error is never kept
 as the page — a 429 or a 503 is asked again 10 s and 30 s later, the pages a moment apart (a run's original
 answered its fighters' list with "You are being rate limited"). Keeping it says, too, each page's section headings no
 piece of the inventory names (`unnamedSections`: an h1 or h2 drawn, not a card's title beside others like it, words
@@ -283,7 +283,8 @@ their review only; a check runs at `complete` and again at the finish). A task h
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task
 claim`, `--wait` for one, `--release` to let it go: a `turn` lock, handed to the next waiter by priority when the holder is approved, with the approved
 version put into its copy) or, when several tasks want one at once, changed in each copy as a **request** — whatever a
-task changed in a shared file it does not hold becomes one at `complete`, its version kept. **A request goes in when its
+task changed in a shared file it does not hold becomes one at `complete`, its version kept — or one asked by hand,
+with its why: `task propose --file <file> --change "…" --why "…"`. **A request goes in when its
 task is approved**, held by another task or not, when it merges line by line with the run's version
 (`buildRequestsMerge`: all of the task's together, checked once) — the holder's copy brings it at its next refresh. Its
 approved files read what it adds, and a run whose work reads what it lacks fails every task's checks (t-sponsors and t-predictions approved, their tokens waiting on the theme t-home held — every check failed on them, and
@@ -293,7 +294,7 @@ tasks' requests on it together (`settleRequests`); what does not go in is said i
 approved ones (`integrateWhenReady`) — a request of a task still at work joins it, or the next, once approved; `task
 context` hands it each request's diff against the run's version — each request's diff from the version its task started
 from to the one it asks for. A request on a file its task then held by turns and merged itself is fulfilled when that
-task is approved: no integration task is made for it. A blocking request makes its integration task at once and the
+task is approved: no integration task is made for it. A blocking request (`--blocking`) makes its integration task at once and the
 requester waits only for that one, so a task and its integration never wait for each other. The final merge is refused
 while a request is not integrated. A new page is a file a task names that does not exist yet; registering it in the
 entry is a request like any other.
@@ -330,11 +331,11 @@ their estimates, from the last ten runs, with five tasks at least) and say the e
 
 ## A run stacked on (`extend.ts`), and what awaits applying
 
-`run extend <run> <plan>` adds the next plan's tasks to an open run — a stage may be its `tasks` alone, its name and
+`run open <plan>` while a run is open adds the plan's tasks to it, as its next stage — a stage may be its `tasks` alone, its name and
 goal the run's, and its team's size is held to the run's open work with it: their copies start from what it approved, they may
 wait for its tasks (`dependsOn`), their files are backed up beside its own, and one `finish` writes the stages into the
 project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds. `run
-extend … --dry-run --lines` runs each of the stage's acceptance lines once on the run's approved work (`tryLines.ts`, on
+open <stage> --dry-run --lines` — anyone's, a scout's too — runs each of the stage's acceptance lines once on the run's approved work (`tryLines.ts`, on
 the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
 value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
 line is wrong), or one its command refuses — the lines to fix first. `run
@@ -361,11 +362,11 @@ that place of the section — "lacks box-shadow … — at ours: match-result"),
 `--scheme` (each width in each) and `--status` (a not-found page, `--status 404`) are `page shot`'s and `page check`'s.
 A path may say its own visitor and status — `"/moderation --as juno --status 403" "/withheld --as juno"` (`lookPaths.ts`):
 one look a visitor, each told what the others covered. A part drawn more than once — a component's instances — is
-pictured where the most of the task's elements show (`page shot --clip <part> --showing <elements>`, `clipArgs`): a look
+pictured where the most of the task's elements show (`page shot --within <part> --showing <elements>`, `clipArgs`): a look
 pictured a playing room card for a task that changed the idle one. A task that changes no page — each of its files
 outside `src/` and `public/` and reached by no page, its acceptance checking none (`changesNoPage`): a test's fix, a
-script — has no look: `task look` says so and names `task check <task> --before`, its review's offer the same, where a
-look pictured the home page the change could not touch. `task check <task> --before` (`checkBefore`) runs its
+script — has no look: `task look` says so and names `task prove <task> --before`, its review's offer the same, where a
+look pictured the home page the change could not touch. `task prove <task> --before` (`checkBefore`) runs its
 acceptance on the run before it — the approved work without it, made afresh in its cache — and on its copy, and says of
 each line whether it proves the change (fails before, passes with it), proves nothing (passes on both) or fails with
 it: a run's tester copied a spec without its new line into its scratch to see it fail. A task of tests is set
@@ -616,8 +617,9 @@ approved work, its acceptance, the CLI (`tasks/checked.ts`) — for 30 minutes: 
 key unchanged says the result again rather than running it (`--fresh` runs it); the copy is served for the acceptance
 while the project's checks run (`serveForAcceptance`), and let go however they end. A look at a task with parts of its
 own compares each part alone beside the run before it (`compareLocalPart`, no page aligned), and reads that nothing
-else moved with `page same --except <its parts>` (positions read from each element's parent, so a part that grew moves
-nothing). Its check, its parts' comparisons and that reading run at once, three at a time (`inTurns`); its check stands
+else moved — the page's drawing on both servers without its parts (`drawnSame`, `commands/page/same.ts`; positions read
+from each element's parent, so a part that grew moves nothing; what differs is named down to the innermost element that
+does). Its check, its parts' comparisons and that reading run at once, three at a time (`inTurns`); its check stands
 in for another site's pictures (`page check --stand-ins`: a look is of the task's change, not a third party's CDN,
 which throttled a look's pages and failed them now and then); the run before it is served once and kept while nothing
 is approved (`startBeforePreview`, `before-kept/`); and a look asked again, the task, the run and the ask unchanged,
@@ -633,7 +635,7 @@ fails it (`fixed-ground`, `commands/page/check/themes.ts`) — a run's judges' r
 at 1.5:1 in light, a scheme the reference did not have and no reviewer read.
 
 **A look pictures what can differ.** The pages a task's own files are drawn at are pictured; the ones only a shared
-file of it reaches (the theme, a component) are first read on both servers with `page same` — every element, box,
+file of it reaches (the theme, a component) are first read on both servers (`drawnSame`) — every element, box,
 style and pseudo-element — and only those that differ are pictured, the rest said as "drawn the same as the run before
 it" (nine pages pictured, 204 s, for two tokens added). A page named on the command is pictured
 whatever it reads.
@@ -665,7 +667,7 @@ shorthands `border`, `font`, `size`) fails unless those are as the other page's 
 again when it says it is busy — so an acceptance holds a value to the reference rather than to the lead's guess, and
 `run open --dry-run` says a task of a copy (`reference`) whose acceptance names values (a length, a colour) no check of it
 measures (`measuredValues.ts`): a run's VS sizes were written 2.35/2.75/3.35rem, the original's 3em, and a round
-went to finding it out. A stage stacked — `run extend`, or the scope's tasks — says its plan's notices too, which only a
+went to finding it out. A stage stacked — `run open <stage>`, or the scope's tasks — says its plan's notices too, which only a
 dry run said. What the designer reads is its own half of the run, `runs-designer.md` (`DESIGN_READING`), handed with its
 first review; the developers' `runs.md` points to it in a line.
 
@@ -685,7 +687,7 @@ estimates, milestones, the goal, and notes more (sent to every task) — into `p
 telling each task changed what it now asks. A task nobody took leaves the run when the plan no longer has it — under
 the take's lock, refused for one taken, or one another task waits for — and the inventory may change, checked again
 over what is left (`inventoryProblems`): the scope narrows, a lead's or a person's choice, never in silence; more work
-is a stage (`run extend`). The run's shape otherwise — their files, `touches` — is refused, as is anything of a task
+is a stage (`run open <stage>`). The run's shape otherwise — their files, `touches` — is refused, as is anything of a task
 already done but its acceptance, every reason at once: a done task is held at the finish by its acceptance, run again on
 the whole result, so a line of the lead's found wrong there is amended — it takes the place of the one its review
 accepted (`state.accepted`), marked `amended` until the finish runs it, and is said, not told: nobody is at the task.
@@ -754,7 +756,7 @@ cache/checks/<tree>.json  a pass of the project's checks on one whole result, by
 
 Inside the project, the plan and its primer are moved into the run's folder when it opens (`inputs/`, a stage's under
 `inputs/<stage>/`, `takeInputs`): the lead edits them there for `run amend`, and nothing of the run lies beside it in the
-project's `tmp/`. What the lead handed the run — the plan, the primer beside it, an amendment (`run amend`), a stage (`run extend`), the
+project's `tmp/`. What the lead handed the run — the plan, the primer beside it, an amendment (`run amend`), a stage (`run open <stage>`), the
 summary — is kept in `run.json` by path and fingerprint (`inputs`) and removed with the run while it is as the run read it,
 with the folder that held only them; one changed since is kept, and said.
 
@@ -780,7 +782,7 @@ only two rules are its own: who takes it, and who reviews it. A scout takes it (
 the strongest model — every task after it is made of what it finds), with its copy and token as any take; with no scout
 in the team the lead finds it out itself, untaken (`leadFindsOut` on its line). Its one review step is the lead's
 (`reviewSteps`): **every research card's result is the lead's to approve**, because what is found mostly becomes the work
-the lead manages, and adding or taking out tasks (`run extend`, `run amend`) is the lead's alone. A research card is a
+the lead manages, and adding or taking out tasks (`run open <stage>`, `run amend`) is the lead's alone. A research card is a
 task with `"spike": "what to find out"` and no files (`run open --dry-run` refuses one with files), whose acceptance is
 in words.
 
@@ -790,24 +792,24 @@ there. `plitzi run start "<the ask>" --run <name>` opens the run on it alone (`s
 `page shot --compare <original> --dress`, the original's computed styles, the project — and completes it with its
 result, the tasks: `plitzi task complete --found "what was found" --tasks <stage.json>` (`completeResearch`). A task of
 it with no acceptance line a command proves is refused, named (`uncheckedOf`). The stage
-is checked as `run extend --dry-run` checks it, kept beside the card (`proposed-stage.json`, `TaskState.proposed`), and
+is checked as `run open <stage> --dry-run` checks it, kept beside the card (`proposed-stage.json`, `TaskState.proposed`), and
 the card goes to review — the lead's step (`task next --role lead` hands it with what was found; `run watch` says it as a
 `spike-proposed`) — decided with the person: `task review s-scope --approve` stacks it (`approveResearch`),
 `--leave t-a,t-b` leaving some out (`all`: its findings alone; a left `<id>-tests` is its card with `"tests": false`, and
 a kept task waiting for a left one is refused, naming both), and `--changes "…"` sends it back to its scout as any card,
 what it proposed dropped. A primer the stage names is kept beside it, and an approved stage in the run's
 `inputs/<card>/` — the plan its tasks are amended from. The lead's own research is done at once
-(`task complete s-scope --found … --tasks …`, named — nobody reviews the lead's word). A stage is stacked as `run extend`
+(`task complete s-scope --found … --tasks …`, named — nobody reviews the lead's word). A stage is stacked as `run open`
 stacks one (refused, the card stays as it was), and each task carries what was found for it (`"findings"`, kept as the
 run's `TaskState.findings` from its first state, `startingState`): whoever builds it reads it in its brief.
 
-**Later research is the lead's to open**, when the work asks for one: a research card stacked with `run extend`, ended
+**Later research is the lead's to open**, when the work asks for one: a research card stacked with `run open <stage>`, ended
 the same way. It waits for what it depends on as any card; `run watch` says the ones that are the lead's (`spikes`, no
 scout in the team). Its findings go into the brief of every task that waits for it, made ready by it
 (`readyWhatWaited`). A run opened by an earlier CLI keeps working: a card in its old `spike` status reads as ready, or in
 review with what it found (`stateFromEarlierCli`).
 
-**An agent whose task needs something found out** blocks it on the lead — `task block --reason "what"`, from its copy
+**An agent whose task needs something found out** blocks it on the lead — `task tell "what" --blocked`, from its copy
 (a question to the lead is a block: one way to say it, `asksLead`) — its files and token its own; the agent takes other
 work meanwhile. It is the lead's to answer, as every block is — a scout finds out the run's research alone (Carlos):
 `run watch` wakes the lead for it, `task next --role lead` hands it (`findOutFor`), and `task unblock <task> --answer
@@ -836,7 +838,7 @@ the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIM
 minutes something is usually wrong) is asked where it stands by the run itself, again at each limit more
 (`longTask.ts`, `askStandings.ts`: the lead's `run watch` and the keeper ask in the lead's voice, `task message
 @<agent> --standing` — a run's lead, woken for two long research cards, asked neither). The agent answers whole —
-`task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--blocked "…"]` (`--about <task>`
+`task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--held-by "…"]` (`--about <task>`
 holding none), refused when a part is missing — as the answer to that asking, its fraction kept as the task's
 progress. The standing wakes the lead (`decide`: a note only to know that is still the lead's to decide on) with what
 it may do: let it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back
@@ -946,7 +948,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   version over the change at the finish — recorded as an override, said in `run status`, the finish and the report, and
   the other version kept — or `--changes` sends it back to take the project's version and redo. Approved, it lets its
   files go to whoever waits, makes ready what depended on it, and makes the integration tasks due.
-- **Waiting** on a file or an answer is a state; `--follow` (`task claim --wait`, `task propose --wait`, `task ask`) stays until it comes,
+- **Waiting** on a file or an answer is a state; `--follow` (`task claim --wait`, `task propose --wait`, `task tell --ask`) stays until it comes,
   giving the task's sign of life meanwhile.
 - **Signal:** its commands, progress and heartbeats, and the newest write among its files in its copy. Without one for
   15 minutes (or a quarter of its estimate) it is disconnected; its locks outlive that by 30 minutes, then another may
@@ -1215,7 +1217,7 @@ name, read another agent's token from its scratch folder (the run's files are th
 and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
 on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
 caught by fingerprint before anything is merged; **what keeps a person's actions a person's is the harness**: deny the
-agents `plitzi run finish --apply`, `run abort`, `run purge`, `run show --restore`, `run finish --lead-finishes`, `run stop --force` and
+agents `plitzi run finish --apply`, `run abort`, `run show --restore`, `run finish --lead-finishes`, `run stop --force` and
 `run attach --take-over` (in Claude Code, `permissions.deny` in the project's `.claude/settings.json`), and let them
 run the rest. A token is told apart: one a task was cut from is `reassigned`, one it was never taken with `invalid`
 (`revoked.json` keeps the fingerprints of those it lost).

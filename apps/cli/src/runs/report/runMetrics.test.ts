@@ -183,7 +183,7 @@ describe('a call made again', () => {
         ...[5, 6, 7].map(minute => line(minute, 'plitzi task next --role lead --take')),
         ...[8, 9, 10].map(minute => line(minute, 'plitzi run watch --until lead')),
         // A dry run, tried after each edit of what it checks: a run's scout and its stage.
-        ...[11, 11.1, 11.2].map(minute => line(minute, 'plitzi run extend stage.json --dry-run'))
+        ...[11, 11.1, 11.2].map(minute => line(minute, 'plitzi run open stage.json --dry-run'))
       ])
     ).toEqual([]);
   });

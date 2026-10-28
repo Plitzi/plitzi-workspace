@@ -116,7 +116,7 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
     // A designer's look is set beside the run before it, measured — its dress too; any other looks at it as it went.
     ...(review.noPage
       ? [
-          `  It changes no page — nothing to picture: its acceptance, before it and with it, says what it proves: plitzi task check ${review.task.id} --before`
+          `  It changes no page — nothing to picture: its acceptance, before it and with it, says what it proves: plitzi task prove ${review.task.id} --before`
         ]
       : lookCommand(review.task, review.pages, review.role === DESIGNER ? ' --before' : '').map(
           (command, index) =>
@@ -156,7 +156,7 @@ const spikeText = (spike: NonNullable<NextTask['spike']>): string =>
     // told to compare with an original it had none of.
     spike.reference === undefined
       ? '  Read the code and the pages, measure, run what tells — write nothing of the task’s'
-      : `  Compare with the original (page shot <path> --compare ${spike.reference} --clip <section> --dress), read its computed styles, measure — write nothing of the task’s`,
+      : `  Compare with the original (page shot <path> --compare ${spike.reference} --within <section> --dress), read its computed styles, measure — write nothing of the task’s`,
     spike.blocking
       ? `  ${spike.task.id} is blocked on it, at work: lift its block with what you found — plitzi task unblock ${spike.task.id} --answer "…" (kept as its finding)`
       : `  Then say it — the layers, their values, which file gets each — and its result, the tasks it makes, each with its "findings": plitzi task complete ${spike.task.id} --found "…" [--tasks <stage.json>]`
@@ -176,7 +176,7 @@ const foundText = (
     `  Found: ${found.text}`,
     ...(found.tasks.length > 0
       ? [
-          `  Read them as they would stack: plitzi run extend ${found.stage} --dry-run`,
+          `  Read them as they would stack: plitzi run open ${found.stage} --dry-run`,
           '  Decide them with the person — the scope, what waits, what is left out — then:'
         ]
       : []),
@@ -261,7 +261,7 @@ const takenText = (taken: TakenTask): string =>
           ...(taken.reference === undefined
             ? []
             : [
-                `  Compare with the original (page shot <path> --compare ${taken.reference} --clip <section> --dress), read its computed styles, measure`
+                `  Compare with the original (page shot <path> --compare ${taken.reference} --within <section> --dress), read its computed styles, measure`
               ])
         ]
       : [`  Its files: ${taken.files.join(', ')}`]),
@@ -269,7 +269,7 @@ const takenText = (taken: TakenTask): string =>
     `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
     ...binLine(taken.work),
     isResearch(taken.task)
-      ? '  See your stage first — each line run once: plitzi task check --tasks <stage.json>; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
+      ? '  See your stage first — each line run once: plitzi run open <stage.json> --dry-run --lines; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
       : '  Done: plitzi task check --fix (what lint and format fix by themselves, first), then plitzi task complete — in the copy',
     ...messageLines(taken.messages)
   ].join('\n');

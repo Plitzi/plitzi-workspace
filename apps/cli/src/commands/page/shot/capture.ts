@@ -163,7 +163,7 @@ export const targetOn = async (
       return { selector: target, found: false };
     }
 
-    // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--clip combates`) — or a component's
+    // A bare word: an element's name, a tag — or an id, as a section's anchor is (`--within combates`) — or a component's
     // instance, which has no node of its own: its root carries its name (`fights-heading`, a run's lead).
     for (const selector of [namedBy(target), target, ...idOf(target), `[data-plitzi-instance="${target}"]`]) {
       if (await found(selector)) {

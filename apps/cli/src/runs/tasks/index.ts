@@ -22,7 +22,7 @@ export type { NextTask } from './next';
 export { takeTask } from './take';
 export type { TakenTask } from './take';
 export { blockTask, noteTask, reportProgress, unblockTask } from './signals';
-export { completeResearch, seeProposal } from './research';
+export { completeResearch } from './research';
 export type { Researched } from './research';
 export type { Signal } from './signals';
 export { checkTask } from './check';

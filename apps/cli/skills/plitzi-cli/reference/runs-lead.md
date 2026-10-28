@@ -12,7 +12,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    list every page, section and piece a visitor would miss as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
 "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run extend <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run open <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
    what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
@@ -66,7 +66,7 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    sends it back with your word. Take a task
    back: `task reassign <task> --reason "…" --to <agent>`.
 
-   **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`, `run purge`,
+   **Keep a person's actions a person's in the harness**: deny the agents `run finish --apply`, `run abort`,
    `run show --restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over`.
 
    **Quality** (`"quality": "light" | "standard" | "high"`): the dry run sets it where you say none. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
@@ -96,8 +96,8 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    one agent. **The scope changes while it runs** — yours to see, or the person's to ask: edit
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
    never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
-   removed; more work is a stage, `plitzi
-run extend <run> next.json`; say each to the person. **You manage it** (§ The run's time): no agent idle while work
+   removed; more work is a stage stacked on it, `plitzi
+run open next.json` (with `--dry-run` first); say each to the person. **You manage it** (§ The run's time): no agent idle while work
    could move; chase a review that drags. Nothing waits for you? Wait.
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
@@ -106,9 +106,9 @@ run extend <run> next.json`; say each to the person. **You manage it** (§ The r
    (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
    then ask — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the whole once:** `plitzi run look` checks and pictures every page the run changed (1440
-   and 390, light and dark); `run finish` asks for it after the last approval. What is missing is a stage (`run extend`), or the next run's: `run notice "…"
---on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`), which `run open` (and its `--dry-run`) list (`run
-backlog add "…"` keeps one with no run open); a task of your plan that does one says so — `"closes": ["b-3"]` — and the
+   and 390, light and dark); `run finish` asks for it after the last approval. What is missing is a stage (`run open <stage>`), or the next run's: `run notice "…"
+--on <where>` keeps it in the project's backlog (`.plitzi/backlog.json`) — at once with no run open — which `run open` (and
+its `--dry-run`) list; a task of your plan that does one says so — `"closes": ["b-3"]` — and the
    applied run closes it; else `run backlog done <id> --note "…"`; `run report --plitzi` is what the run says of
    Plitzi so far. **Close it:** `plitzi run report` lists the problems
    by whose from the agents' round reports and the records (`--full`: each with its evidence and fix) — keep no list by hand; your summary adds what
@@ -122,7 +122,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 
 - **A piece of work takes 10 minutes** (the dry run says a task estimated past it: split it). Past it the run asks its
   agent where it stands; `run watch` wakes you with the answer (none in 3 min: decide without it) — near done, on;
-  else narrow it, split the rest into a task (`run extend`), or `task reassign`.
+  else narrow it, split the rest into a task (a stage: `run open <stage>`), or `task reassign`.
 - **A bug found inside a task is another task**, or `run notice`: never its scope growing round by round.
 - **Specs, a task's own**: a line runs the specs of what it changes, never a whole suite (the dry run says one); the
   finish runs it whole, once.
@@ -138,8 +138,8 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
 ## Where leads went wrong
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a guest
-  sent to sign in `--redirects-to /sign-in`, a `page shot … --clip` names an id the page has. One that cannot pass costs every try
-  of the task's: `run extend <run> <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
+  sent to sign in `--redirects-to /sign-in`, a `page shot … --within` names an id the page has. One that cannot pass costs every try
+  of the task's: `run open <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
   what the task changes, a part it builds, or a line that cannot pass.
 - **One look, one task**; its files are where its elements are built, and what reads what it changes (a fake's tests).
 - **A question first**: it holds an agent. `run watch` in the harness's background (never `&`), one at a time.
@@ -178,7 +178,7 @@ backlog add "…"` keeps one with no run open); a task of your plan that does on
   --steps "…" --read <el…> --width 390,1440` (a copy's: `"ours => theirs" --compare <reference> --same
   moved,shown,enabled`) — never a script of yours.
 - **The board is a kanban; keeping the team busy is yours**: a card ready beside each in review — stack the backlog
-  (`run extend`, tasks that `closes`), split a card by what changes apart. `run watch` says an agent with nothing to
+  (a stage, `run open <stage>`, of tasks that `closes`), split a card by what changes apart. `run watch` says an agent with nothing to
   take (`idle-team`).
 - **A lone designer's own task off the critical path** — every review waits on it: a refactor with nothing to see is a developer's.
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds

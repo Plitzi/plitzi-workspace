@@ -691,7 +691,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
   isString(value.updatedAt);
 
 /**
- * A task blocked on a question only the lead answers (`task block`, the lead's by default) — never a review escalated past
+ * A task blocked on a question only the lead answers (`task tell --blocked`, the lead's by default) — never a review escalated past
  * its rounds, which is a review: the lead lifts it with the answer, kept as the task's finding.
  */
 export const asksLead = (state: Pick<TaskState, 'blockedBy'>): boolean =>

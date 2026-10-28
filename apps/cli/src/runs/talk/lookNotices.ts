@@ -11,7 +11,7 @@ export const sharedLookNotices = (tasks: readonly PlannedTask[]): string[] => {
     for (const line of task.acceptance) {
       const check = typeof line === 'string' ? undefined : line.check;
       const shot = check === undefined ? undefined : /plitzi page shot\s+(\S+)[^;&|]*--dress/.exec(check);
-      const clip = check === undefined ? undefined : /--clip\s+(\S+)/.exec(check)?.[1];
+      const clip = check === undefined ? undefined : /--within\s+(\S+)/.exec(check)?.[1];
       if (!shot || clip === undefined) {
         continue;
       }

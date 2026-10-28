@@ -30,7 +30,7 @@ const glimpse = (text: string): string => (text.length > 400 ? `${text.slice(0, 
 
 /** What the lead decides on a long card, whatever its agent answered. */
 const DECIDE =
-  'let it go on; tell it what to change (plitzi task message); narrow it (plitzi run amend), split it (plitzi run extend), or take it back (plitzi task reassign)';
+  'let it go on; tell it what to change (plitzi task message); narrow it (plitzi run amend), split it (plitzi run open <stage>), or take it back (plitzi task reassign)';
 
 /**
  * What a long card asks of the lead now: its standing to be asked (`asks` — the run asks it itself), nothing while its

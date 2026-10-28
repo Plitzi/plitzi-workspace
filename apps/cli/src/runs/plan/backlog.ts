@@ -15,7 +15,7 @@ import type { LoadedRun, RunContext } from '../run';
  * The project's backlog: what a run noticed and left — `run notice` while it ran — kept past the run, in `.plitzi/`
  * beside the team, for the next run to take up. A run's log goes with the run, and a report is read by nobody planning
  * the next one: a run's lead had the next run's work in its head and its notes, and nowhere the next run reads.
- * `run open` (and its `--dry-run`) say what is open; `run backlog` lists it, `run backlog add "…"` keeps one with no run open
+ * `run open` (and its `--dry-run`) say what is open; `run backlog` lists it, `run notice "…"` keeps one with no run open
  * (the person's, or an agent's between runs), `run backlog done <id>` closes one — and a task of a plan that says it
  * does one (`closes`) closes it as its run is applied.
  */
@@ -122,7 +122,7 @@ const writeBacklog = (root: string, items: readonly BacklogItem[]): Promise<void
   writeAtomic(path.join(root, BACKLOG_FILE), formattedJson({ version: 1, items: [...items] } satisfies Backlog));
 
 /**
- * `plitzi run backlog add "…"`: an item kept with no run open — the person's, or an agent's between runs — for the next
+ * `plitzi run notice "…"` with no run open: an item kept — the person's, or an agent's between runs — for the next
  * plan to take up. The same words at the same place, open already, are that item: said, never kept twice.
  */
 export const addBacklogItem = async (
@@ -130,10 +130,7 @@ export const addBacklogItem = async (
   { text, on, by }: { text: string; on?: string; by: string }
 ): Promise<BacklogItem> => {
   if (text.trim() === '') {
-    throw new RunRefusal(
-      'invalid',
-      'A backlog item says something: plitzi run backlog add "what to do" [--on <where>]'
-    );
+    throw new RunRefusal('invalid', 'A backlog item says something: plitzi run notice "what to do" [--on <where>]');
   }
 
   const items = await readBacklog(ctx.root);

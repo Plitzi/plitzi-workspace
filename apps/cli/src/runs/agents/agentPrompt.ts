@@ -50,12 +50,12 @@ const skill = (root: string, file: string): string => path.join(root, SKILLS_ROO
 
 /** The rules every agent of a run holds to, whatever its role: said once, the skills saying why. */
 const rules = (cli: string): string[] => [
-  `- Never run \`${cli} run finish\`, \`run abort\`, \`run purge\`, \`run show --restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
+  `- Never run \`${cli} run finish\`, \`run abort\`, \`run show --restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
   // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
   '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
   // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
-  '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--blocked "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
+  '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--held-by "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
   // A person following the run read commands where an agent's row should say what it is at — a tester's and a scout's
   // read their card alone.
   '- As what you are at changes — at a task, a review or a research card — say it in your words: `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`. The person following the run reads it.',
@@ -99,7 +99,7 @@ export const agentPrompt = ({
         ? team.scout
           ? '- The run opens on its scope: a scout finds out what the ask takes and proposes the tasks. `task next --role lead` hands them to you — decide them with the person, then `task review s-scope --approve [--leave <tasks>] | --changes "…"`.'
           : `- The run opens on its scope, your spike (the team has no scout): find out what the ask takes (${reference === undefined ? '`task show`, `page check`, `page shot`' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside}\``}), then end it with the tasks, each with what you found: \`task complete s-scope --found "…" --tasks <stage.json>\` (a stage is its \`tasks\`).`
-        : '- The run opened on a plan made before it: its tasks are on the board (`run status`), no scope to find out first — stack what is missing (`run extend`).',
+        : '- The run opened on a plan made before it: its tasks are on the board (`run status`), no scope to find out first — stack what is missing on it (`run open <stage>`).',
       `- The team starts by itself when \`.plitzi/team.json\` says how (\`options.launch\`): the run's base as it opens, the rest when work waits — start none of them yourself. With no launch, \`${cli} run agent <name> --launch --harness <yours>\` starts each agent the plan's check (\`run open --dry-run\`) names. \`run watch\` wakes you for what is yours: a proposal, a question, a block, what a tester escalates.`,
       team.tester
         ? '- Each card is reviewed by the roles its `review` names, in order (none: the tester), the last step\'s approval the card\'s: read no review yourself. One it escalates, or past its review rounds, comes blocked on you — `task show` it, then `task review <task> --approve`, or `task unblock <task> --answer "…"` to send it back with your word. By default you review nothing else: one nobody else may take (each tester and developer worked it, or what it tests) would hold the run — `run watch` hands it you: `task show`, one `task look`, then `task review --approve | --changes "…"`.'
@@ -136,7 +136,7 @@ export const agentPrompt = ({
     `- The CLI is ${cli} (PLITZI below) — your own: it says who you are on every command, inside a task's copy too, so pass no --token nor --agent. Start with \`cd ${root} && PLITZI task next${started?.quality ? ` --quality ${started.quality}` : ''}\` — it takes your next task, waiting until one is ready, for your roles as the team says them.`,
     ...(scout
       ? [
-          `- \`PLITZI task next\` hands you the run's research cards — its scope, the research its stages bring — taken as any card; an agent's question is the lead's. Find out (${reference === undefined ? '`page check`, `page shot`, `page measure`, the code' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside} --dress\``}), write nothing of a task's; see the stage you propose first — \`PLITZI task check --tasks <stage.json>\` runs each line once (\`run extend\` is the lead's) — and end each with what you found — \`PLITZI task complete --found "…" [--tasks <stage.json>]\`, in its copy, with the tasks it makes — the lead reviews it (with the person, the tasks) before anything is stacked; one it sends back comes back to you. With none left, \`task next\` says you can stop.`
+          `- \`PLITZI task next\` hands you the run's research cards — its scope, the research its stages bring — taken as any card; an agent's question is the lead's. Find out (${reference === undefined ? '`page check`, `page shot`, `page measure`, the code' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside} --dress\``}), write nothing of a task's; see the stage you propose first — \`PLITZI run open <stage.json> --dry-run --lines\` runs each line once, stacking nothing (stacking is the lead's) — and end each with what you found — \`PLITZI task complete --found "…" [--tasks <stage.json>]\`, in its copy, with the tasks it makes — the lead reviews it (with the person, the tasks) before anything is stacked; one it sends back comes back to you. With none left, \`task next\` says you can stop.`
         ]
       : [
           "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
@@ -152,7 +152,7 @@ export const agentPrompt = ({
           '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next` again.',
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
-          `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or \`PLITZI task ask\` the lead before you complete.`,
+          `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or ask the lead (\`PLITZI task tell "…" --ask\`) before you complete.`,
           // Opiniones' arrow moved nothing at 1440, and its developer, its designer and the lead each passed it.
           `- A control you add or change — an arrow, a dot, a pager, a drawer — you use before you complete, there and back, at both widths${reference === undefined ? '' : ", beside the copied site's"}: \`PLITZI page play <path> ${playBeside} --width 390,1440\` — how far each step moved what, what it shows and takes a press; a picture is no proof of one.`
         ]),

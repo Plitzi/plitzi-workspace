@@ -12,10 +12,11 @@ import { REPORTS_DIR } from '../../scaffold/paths';
 import { qualityFilesFor } from '../../scaffold/quality';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { abortRun, finishRun } from '../copies/merge';
+import { finishRun } from '../copies/merge';
 import { addBacklogItem, BACKLOG_FILE, backlogOfPlan, closeBacklogItem, openBacklog } from '../plan/backlog';
 import { extendRun } from '../plan/extend';
 import { feedbackFile } from '../report/feedback';
+import { abortRun } from '../run/abort';
 
 import type { Bench } from '../../tests/runProject';
 import type { Options } from 'prettier';

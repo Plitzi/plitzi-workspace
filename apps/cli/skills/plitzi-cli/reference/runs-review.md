@@ -14,10 +14,10 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   `<file> --diff`: one file's whole diff); `plitzi task look t-home
 --before` serves its copy, checks and pictures its pages beside the run before (its options:
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. Your read of a task in
-  review takes your step, so no two testers decide one. A fix — a test's, a bug's — is proved by its acceptance failing
-  without it: `plitzi task check t-home --before` runs each line on the run before it and on its copy, and says which
+  review takes your step, so no two testers decide one. What an acceptance proves is `plitzi task prove`, one way at a time. A fix — a test's, a bug's — is proved by its
+  acceptance failing without it: `plitzi task prove t-home --before` runs each line on the run before it and on its copy, and says which
   proves the change and which passes on both (proves nothing). A task of tests holds what it tests when a change to
-  that code fails it: `plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to
+  that code fails it: `plitzi task prove t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to
   "slice(0, 7)"` runs its acceptance on its copy and on that mutant, and says which line catches it — a behaviour held
   in two places takes both changed (`--mutate … --from … --to …` again); never a copy of `src/` changed by hand. A task that changes no page has no look: that is its review.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,

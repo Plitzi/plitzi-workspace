@@ -539,7 +539,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         ...(message.standing ? { decide: true as const } : {}),
         // A glimpse here; whole in `run watch`, where showing it reads it — and it is gone from here.
         text: message.standing
-          ? `${message.from} stands at ${standingText(message.standing)}${message.replyTo ? ` (answering ${message.replyTo})` : ''} — decide: let it go on; tell it what to change (plitzi task message ${message.about === undefined ? message.from : `@${message.from}`} "…"); lift what holds it (plitzi task unblock); narrow it (plitzi run amend) or split it (plitzi run extend); or take it back (plitzi task reassign)`
+          ? `${message.from} stands at ${standingText(message.standing)}${message.replyTo ? ` (answering ${message.replyTo})` : ''} — decide: let it go on; tell it what to change (plitzi task message ${message.about === undefined ? message.from : `@${message.from}`} "…"); lift what holds it (plitzi task unblock); narrow it (plitzi run amend) or split it (plitzi run open <stage>); or take it back (plitzi task reassign)`
           : message.fyi
             ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
             : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,

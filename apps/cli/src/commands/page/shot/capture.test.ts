@@ -55,7 +55,7 @@ const having = (...present: string[]) => ({
 });
 
 // The report named `section#home-sponsors` (its element's name, not an id), and `--scroll-to` said it was
-// not on the page; `--clip combates`, an anchor's id, the same.
+// not on the page; `--within combates`, an anchor's id, the same.
 describe('finding what a picture is aimed at', () => {
   it('finds a section as a comparison names it: by its id, or by its element’s name', async () => {
     expect(await targetOn(having('section#home-sponsors'), 'section#home-sponsors')).toEqual({

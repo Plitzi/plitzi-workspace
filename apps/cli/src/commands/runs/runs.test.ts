@@ -213,7 +213,7 @@ describe('plitzi run and plitzi task, as processes', () => {
       messages: [{ from: 't-about', text: 'The "about" page keeps its "id": it is linked.' }]
     });
 
-    const asked = await plitzi(work, ['task', 'ask', 'Which title?', '--follow', '--timeout', '2s'], dev);
+    const asked = await plitzi(work, ['task', 'tell', 'Which title?', '--ask', '--follow', '--timeout', '2s'], dev);
     expect(asked.json).toMatchObject({ said: expect.stringContaining('no answer yet after 2 s') as unknown });
   }, 120_000);
 
@@ -298,6 +298,16 @@ describe('plitzi run and plitzi task, as processes', () => {
     const closed = await plitzi(bench.root, ['run', 'backlog', 'done', 'b-1', '--note', 'the CLI’s']);
     expect(closed.code).toBe(0);
     expect(closed.json).toMatchObject({ closed: { id: 'b-1', done: { by: 'unnamed', note: 'the CLI’s' } } });
+  }, 120_000);
+
+  // `run backlog add` and `run notice` both kept an item for later: one command keeps it, with a run open or none.
+  it('keeps what is noticed with no run open in the backlog at once — and refuses one of Plitzi, which is a report', async () => {
+    const kept = await plitzi(bench.root, ['run', 'notice', 'The map has no legend', '--on', '/book']);
+    expect(kept.code).toBe(0);
+    expect(kept.json).toMatchObject({ kept: { id: 'b-1', text: 'The map has no legend', on: '/book' } });
+
+    const ofPlitzi = await plitzi(bench.root, ['run', 'notice', 'The CLI crashed', '--plitzi']);
+    expect(ofPlitzi.code).toBe(REFUSAL_EXIT_CODES.invalid);
   }, 120_000);
 
   // A run's dev-1 expected several files and met "too many arguments".

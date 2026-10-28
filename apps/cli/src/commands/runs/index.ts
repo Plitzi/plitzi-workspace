@@ -5,7 +5,7 @@
  */
 
 export type { RunCommandOptions } from './shell';
-export { runAllowFinish, runAmend, runExtend, runOpen, runPlan, runRehearse, runSettle } from './run/plan';
+export { runAllowFinish, runAmend, runOpen, runPlan, runRehearse, runSettle } from './run/plan';
 export type { PlanOptions } from './run/plan';
 export { runTeam, runTeamSet, runTeamUnset } from './run/team';
 export { runMonitor } from './monitor/monitor';
@@ -19,7 +19,6 @@ export {
   runCanWrite,
   runContinue,
   runFinish,
-  runPurge,
   runRelease,
   runResolve,
   runRestore,
@@ -28,12 +27,12 @@ export {
 } from './run/lifecycle';
 export type { FinishOptions } from './run/lifecycle';
 export { taskNext, taskTake } from './task/next';
-export { claimCommand, taskClaim, taskClaims, taskDiscard, taskRequest } from './task/files';
+export { claimCommand, taskClaim, taskClaims, taskDiscard, taskProposeShared } from './task/files';
 export type { ClaimOptions } from './task/files';
-export { taskBlock, taskComplete, taskFound, taskNote, taskProgress, taskUnblock } from './task/work';
-export { taskCheckCommand } from './review/checkBefore';
+export { taskCheck, taskComplete, taskFound, taskProgress, taskUnblock } from './task/work';
+export { taskProve } from './review/prove';
 export { taskRun } from './task/taskRun';
-export type { CheckCommandOptions } from './review/checkBefore';
+export type { ProveOptions } from './review/prove';
 export { taskReassign, taskRevert } from './review/reassign';
 export { taskEscalate } from './review/escalate';
 export { taskReview } from './review/review';
@@ -42,13 +41,11 @@ export { taskShow } from './task/show';
 export type { LookOptions } from './look/lookOptions';
 export type { ReviewOptions } from './review/review';
 export { taskContextCommand } from './task/brief';
-export { spaceImpact, spaceOverview } from '../space/overview';
 export {
   runBacklog,
   runFeedback,
   runNotice,
   taskAnswer,
-  taskAsk,
   taskInbox,
   taskMessage,
   taskProposals,

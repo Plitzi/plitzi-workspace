@@ -38,7 +38,7 @@ import type { TriedLine } from './tryLines';
 import type { RunPlan, RunTask } from '../core/model';
 
 /**
- * `plitzi run extend`: the next plan stacked on an open run — begun where the run's work is, its tasks' copies made
+ * `plitzi run open` on an open run: the next plan stacked on an open run — begun where the run's work is, its tasks' copies made
  * with what the run approved, and written into the project with it, in one `finish`. A run done and waiting to be
  * applied is not the end of the work: the next stage goes on from it instead of waiting for a person, and the two are
  * one diff, one report, one apply. The new tasks may wait for the run's own (`dependsOn`); their files are backed up as
@@ -76,7 +76,7 @@ interface SeenStage {
   isReady: (task: RunTask) => boolean;
 }
 
-/** The stage at `file` checked against the run as `run extend` would stack it — refused, every reason at once. */
+/** The stage at `file` checked against the run as `run open` would stack it — refused, every reason at once. */
 const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<SeenStage> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'extend');
@@ -211,10 +211,10 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
 };
 
 /**
- * A stage seen before it is stacked — every check `run extend` makes, nothing written, each line run once with `lines`.
- * Whoever writes one sees it: the lead (`run extend --dry-run`, `run open --dry-run` with a run open) and a scout at
- * its research card (`task check --tasks`, and its `complete`), which never stacks one — a run's and a run's
- * scouts reached for `run extend`, the lead's, to see their own stage.
+ * A stage seen before it is stacked — every check stacking makes, nothing written, each line run once with `lines`.
+ * Whoever writes one sees it — `run open <stage> --dry-run` with a run open: the lead, and a scout at its research card,
+ * which never stacks one (its `complete --tasks` checks it the same). Scouts reached for the lead's stacking to see
+ * their own stage.
  */
 export const seeStage = async (
   ctx: RunContext,
@@ -235,25 +235,10 @@ export const seeStage = async (
   };
 };
 
-export const extendRun = async (
-  ctx: RunContext,
-  runId: string,
-  file: string,
-  { dryRun = false, lines = false }: { dryRun?: boolean; lines?: boolean } = {}
-): Promise<Extended> => {
-  // Seeing a stage from a card is the card's own check: the scout writing one reached for this, the lead's, twice.
-  if (dryRun && ctx.token !== undefined) {
-    throw new RunRefusal(
-      'lead-only',
-      'run extend is the lead’s: the stage your research card proposes is seen with plitzi task check --tasks <stage.json> — each line run once on the run’s work — and proposed with plitzi task complete --found "…" --tasks <stage.json>'
-    );
-  }
-
-  requireNoTask(ctx, 'extend a run');
+/** A stage stacked on the open run — the lead's: `run open <stage>` while it is open. Seen first by anyone: `seeStage`. */
+export const extendRun = async (ctx: RunContext, runId: string, file: string): Promise<Extended> => {
+  requireNoTask(ctx, 'stack a stage on the run');
   await requireLead(ctx, 'stack a stage on the run');
-  if (dryRun) {
-    return seeStage(ctx, runId, file, { lines });
-  }
 
   const { loaded, next, checked, tasks, primer, allowed, isReady } = await seenStage(ctx, runId, file);
 

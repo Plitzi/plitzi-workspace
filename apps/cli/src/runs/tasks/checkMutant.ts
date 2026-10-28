@@ -15,7 +15,7 @@ import type { AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
 
 /**
- * `plitzi task check <task> --mutate <file> --from "…" --to "…"`: its acceptance run on its copy, and on a throwaway
+ * `plitzi task prove <task> --mutate <file> --from "…" --to "…"`: its acceptance run on its copy, and on a throwaway
  * copy of it with one change made to the code — a mutant. A line that passes on the copy and fails on the mutant holds
  * that behaviour; one that passes on both lets it break unseen. A run's tester, reviewing tasks of tests, copied the
  * task's `src/` into its scratch, changed the code under test with sed and ran `node --test` there by hand — twice.
@@ -118,7 +118,7 @@ export const checkMutant = async (
   if (mutations.length === 0) {
     throw new RunRefusal(
       'invalid',
-      'A mutant is a change at least: plitzi task check <task> --mutate <file> --from "…" --to "…"'
+      'A mutant is a change at least: plitzi task prove <task> --mutate <file> --from "…" --to "…"'
     );
   }
 

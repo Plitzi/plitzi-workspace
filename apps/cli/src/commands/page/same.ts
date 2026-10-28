@@ -1,21 +1,17 @@
-import chalk from 'chalk';
-
-import { openVisit, visitorBrowser, visitViewOf } from './visit';
-import { projectHere } from '../project/existingProject';
-import { UNANSWERED_EXIT } from '../shared/terminal';
+import { openVisit, visitorAsked } from './visit';
+import { launchBrowser } from '../../browser';
 
 import type { Visitor, VisitView } from './visit';
 import type { Browser, Scheme } from '../../browser';
-import type { VisitorOptions } from '../register/options';
 
 /**
- * `plitzi page same`: whether pages draw the same on two servers of the project — the run before a task and the task's
- * copy — read, not pictured: every element on screen, its box and the styles a reader sees. A look at a task pictures
- * the pages a shared file of it reaches; a run's design-1 waited 204 s for nine, when the task had only added
- * two tokens no other page reads. What draws the same is not pictured; what differs, or cannot be told, is.
+ * Whether pages draw the same on two servers of the project — the run before a task and the task's copy — read, not
+ * pictured: every element on screen, its box and the styles a reader sees. A look at a task pictures the pages a shared
+ * file of it reaches; a run's designer waited 204 s for nine, when the task had only added two tokens no other page
+ * reads. What draws the same is not pictured; what differs, or cannot be told, is. `task look` reads it.
  */
 
-export interface SameOptions extends VisitorOptions {
+export interface SameAsk {
   /** The server the pages are read on: the task's copy. */
   url: string;
   /** …and the one they are held to: the run before it. */
@@ -23,8 +19,7 @@ export interface SameOptions extends VisitorOptions {
   width?: number;
   scheme?: Scheme;
   /** Elements left out — a task's own parts, which it changed: that nothing else moved is what is read. */
-  except?: string[];
-  json?: boolean;
+  except?: readonly string[];
 }
 
 /** One page, read on both: the same, or the first element that differs. */
@@ -217,7 +212,7 @@ export const firstDifference = (
 export const samePages = async (
   browser: Browser,
   paths: readonly string[],
-  options: Pick<SameOptions, 'url' | 'compare' | 'width' | 'scheme' | 'except'>,
+  options: SameAsk,
   visit: Pick<VisitView, 'timezone' | 'presence' | 'conditions'> & Visitor = {}
 ): Promise<Sameness[]> => {
   const view = {
@@ -247,42 +242,24 @@ export const samePages = async (
   return read;
 };
 
-export const pageSame = async (paths: string[], options: SameOptions): Promise<void> => {
-  const project = await projectHere('whose pages to read');
-  if (!project) {
-    return;
+/**
+ * The pages read on both servers in a browser of its own, as the project's account reads them — the visitor every page
+ * command reads as by itself: what a look holds a task's pages to, beside the run before it.
+ */
+export const drawnSame = async (
+  root: string,
+  paths: readonly string[],
+  ask: SameAsk,
+  visit: Pick<VisitView, 'timezone' | 'presence' | 'conditions'>
+): Promise<Sameness[] | { problem: string }> => {
+  const visitor = (await visitorAsked(root, {})) ?? {};
+  const browser = await launchBrowser(root);
+  if ('problem' in browser) {
+    return browser;
   }
-
-  const ready = await visitorBrowser(project.root, options);
-  if (!ready) {
-    return;
-  }
-
-  const { visitor, browser } = ready;
 
   try {
-    const read = await samePages(browser, paths.length > 0 ? paths : ['/'], options, {
-      ...visitViewOf(options),
-      ...visitor
-    });
-    console.log(
-      options.json
-        ? JSON.stringify({ pages: read })
-        : read
-            .map(each =>
-              each.same
-                ? chalk.green(`= ${each.path}: draws the same on both`)
-                : each.problem
-                  ? chalk.yellow(`? ${each.path}: not told — ${each.problem}`)
-                  : `≠ ${each.path}: ${each.first ? differenceText(each.first) : ''}${each.first?.wordsOnly ? '\n    its words alone differ — the same element drawn the same: what the page says (a time, a count) differs' : ''}`
-            )
-            .join('\n')
-    );
-    if (read.some(each => !each.same && !each.problem)) {
-      process.exitCode = 1;
-    } else if (read.some(each => !each.same)) {
-      process.exitCode = UNANSWERED_EXIT;
-    }
+    return await samePages(browser, paths, ask, { ...visit, ...visitor });
   } finally {
     await browser.close();
   }

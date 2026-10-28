@@ -11,19 +11,10 @@ import { crossed, longFileText } from '../../../runs/plan/longFiles';
 import { experienceFrom } from '../../../runs/report/experience';
 import { logRun } from '../../../runs/run';
 import { tellLead } from '../../../runs/talk/talk';
-import {
-  blockTask,
-  checkTask,
-  completeResearch,
-  completeTask,
-  noteTask,
-  reportProgress,
-  unblockTask
-} from '../../../runs/tasks';
-import { act, either, holder, inHand, runOf } from '../shell';
+import { checkTask, completeResearch, completeTask, reportProgress, unblockTask } from '../../../runs/tasks';
+import { act, holder, inHand, runOf } from '../shell';
 import { hhmm, list, messageLines, reusedServerText, secondRunText, slowLineText } from '../text';
 
-import type { BLOCK_NEEDS } from '../../../runs/core/model';
 import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { RunCommandOptions } from '../shell';
 
@@ -74,53 +65,11 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
           ].join('\n')
   );
 
-export const taskBlock = (
-  taskId: string | undefined,
-  options: RunCommandOptions & { reason: string; needs?: (typeof BLOCK_NEEDS)[number] }
-): Promise<void> =>
-  act(
-    options,
-    async ctx => {
-      const target = await either(ctx, options, taskId);
-      const needs = options.needs ?? 'lead';
-      const { released, granted } = await blockTask(ctx, target.runId, target.taskId, options.reason, needs);
-
-      return {
-        ...target,
-        blocked: { reason: options.reason, needs },
-        released,
-        granted,
-        next: `take another ready task; once unblocked, plitzi task next hands ${target.taskId} back to you first`
-      };
-    },
-    target =>
-      [
-        `${target.taskId} is blocked (${target.blocked.needs}): ${target.blocked.reason.replace(/[.\s]+$/, '')}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`,
-        ...(target.released.length > 0
-          ? [
-              `Let go, as your copy left them unchanged: ${target.released.join(', ')}${target.granted.length > 0 ? ` (handed on: ${target.granted.join(', ')})` : ''} — claim one again (plitzi task claim) when you need to change it.`
-            ]
-          : [])
-      ].join('\n')
-  );
-
 export const taskUnblock = (taskId: string, options: RunCommandOptions & { answer?: string }): Promise<void> =>
   act(
     options,
     async ctx => unblockTask(ctx, await runOf(ctx, options), taskId, options.answer),
     state => `${taskId} is ${state.status} again.`
-  );
-
-export const taskNote = (taskId: string | undefined, text: string, options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    async ctx => {
-      const target = await either(ctx, options, taskId);
-      await noteTask(ctx, target.runId, target.taskId, text);
-
-      return target;
-    },
-    () => 'Noted: whoever takes it next reads it in plitzi task context.'
   );
 
 export const taskCheck = (

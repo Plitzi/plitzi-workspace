@@ -105,7 +105,7 @@ const mergeMoved = async (
     });
     throw new RunRefusal(
       'conflict',
-      `The run changed ${by.join(', ')} since task "${view.task.id}"'s copy was made, on the same lines this task changed. If your change still fits beside it, take the run's version (plitzi task discard <file>), redo your change on it — what this task changed is in this answer — and complete again. If your acceptance contradicts what was approved, do not undo it: ask the lead (plitzi task ask "…")`,
+      `The run changed ${by.join(', ')} since task "${view.task.id}"'s copy was made, on the same lines this task changed. If your change still fits beside it, take the run's version (plitzi task discard <file>), redo your change on it — what this task changed is in this answer — and complete again. If your acceptance contradicts what was approved, do not undo it: ask the lead (plitzi task tell "…" --ask)`,
       {
         task: view.task.id,
         files: conflicts.map(each => each.file),

@@ -59,8 +59,6 @@ export interface MeasureOptions extends VisitorOptions {
    * acceptance proves a value by, measured, never typed from a guess (a run's VS sizes were the lead's guess).
    */
   same?: string[];
-  /** The other page read again, never from what was kept of it. */
-  fresh?: boolean;
   /**
    * An element hovered, or focused, on both pages before the rest is measured — `fight-card => .fight-card`: what a
    * state changes, held by `--same` as the rest is (a run's medal fade could only be read by hand).

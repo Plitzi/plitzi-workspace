@@ -8,7 +8,7 @@ import { finishRun } from './copies/merge';
 import { readOwnership } from './copies/ownership';
 import { runPaths } from './core/paths';
 import { amendRun } from './plan/amend';
-import { extendRun } from './plan/extend';
+import { extendRun, seeStage } from './plan/extend';
 import { checkPlan } from './plan/plan';
 import { allowLeadFinish, loadRun, readRunLog } from './run';
 import {
@@ -310,7 +310,7 @@ describe('the lead’s plan as the run goes', () => {
       ]
     };
 
-    const dry = await extendRun(lead(), 'es-launch', await bench.writePlan(stage), { dryRun: true });
+    const dry = await seeStage(lead(), 'es-launch', await bench.writePlan(stage));
     expect(dry.checked?.created).toEqual(['src/space/pages/contact.ts']);
   });
 
@@ -675,10 +675,7 @@ describe('amending a run with stages and done tasks', () => {
       { said: 'About stays Spanish', check: 'grep -q es src/space/pages/about.ts' },
       { said: 'The contact page exists', check: 'test -f src/space/pages/contact.ts' }
     ];
-    const dry = await extendRun(lead(), 'es-launch', await planFile(next, 'next.plan.json'), {
-      dryRun: true,
-      lines: true
-    });
+    const dry = await seeStage(lead(), 'es-launch', await planFile(next, 'next.plan.json'), { lines: true });
 
     expect(dry.tried).toEqual([
       { task: 't-contact', said: 'About stays Spanish', verdict: 'passes' },

@@ -445,7 +445,7 @@ const workEndOf = (log: readonly Record<string, unknown>[]): Date | undefined =>
 };
 
 /**
- * The run's goal grows by a stage's at each `run extend` (`extend.ts`): the title is the run's own, the stages a list
+ * The run's goal grows by a stage's at each `run open` (`extend.ts`): the title is the run's own, the stages a list
  * under it — a run's title was 16 goals in one line.
  */
 const goalText = (runId: string, goal: string): string[] => {
@@ -539,7 +539,7 @@ export const reportText = (
           '## Noticed, owned by no task',
           '',
           ...report.noticed.map(line => `- ${line}`),
-          '- — what the next stage or run starts from (plitzi run extend)',
+          '- — what the next stage or run starts from (plitzi run open <stage>)',
           ''
         ]
       : []),

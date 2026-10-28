@@ -48,7 +48,7 @@ describe('options', () => {
     expect(swallowedFlag(fine)).toBeUndefined();
   });
 
-  // `page shot / 390 dark site-header --width --scheme --clip` was told a width is a whole number, five times.
+  // `page shot / 390 dark site-header --width --scheme --within` was told a width is a whole number, five times.
   it('says a value that is the next option is missing, not invalid', () => {
     for (const parse of [widths, schemes, positiveInteger, timeZone]) {
       expect(() => parse('--scheme')).toThrow('--scheme is the next option, not a value');

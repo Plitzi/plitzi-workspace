@@ -9,11 +9,11 @@ import { checkPlan, findCycle, PlanRefusal } from './plan';
 import { runPlanProblems } from './planProblems';
 import { benchPlan, designed, makeBench, teamFor, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { abortRun } from '../copies/merge';
 import { readOwnership } from '../copies/ownership';
 import { RUNS_DIR, runPaths } from '../core/paths';
 import { isRunRefusal } from '../core/refusal';
 import { loadRun, openRun } from '../run';
+import { abortRun } from '../run/abort';
 import { EVERYONE, messagesOf } from '../talk/messages';
 import { completeTask, nextTask, takeTask } from '../tasks';
 

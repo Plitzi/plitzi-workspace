@@ -3,16 +3,27 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
+import { continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { writeAtomic } from '../core/files';
 import { BACKUPS_DIR, RUNS_DIR, runPaths } from '../core/paths';
 import { runReportDir } from '../report/reports';
 import { readRunLog } from '../run';
+import { abortRun } from '../run/abort';
 import { completeTask, revertTask, reviewTask, takeTask } from '../tasks';
 
 import type { Bench } from '../../tests/runProject';
+import type { LeftReport } from '../report/leaveReport';
+
+/** The report an abort left: a test fails where none could be. */
+const left = (report: LeftReport | { problem: string }): LeftReport => {
+  if ('problem' in report) {
+    throw new Error(report.problem);
+  }
+
+  return report;
+};
 
 /** The run into the project: the final merge, undone, and its report. */
 
@@ -303,7 +314,7 @@ describe('the run’s report', () => {
     await open(benchPlan(), { summary: false });
     const aborted = await abortRun(bench.person(true), 'es-launch');
 
-    expect(await fs.readFile(path.join(aborted.report.dir, 'report.md'), 'utf-8')).toContain(
+    expect(await fs.readFile(path.join(left(aborted.report).dir, 'report.md'), 'utf-8')).toContain(
       '_None was written: the problems above are what the run kept._'
     );
   });
@@ -318,7 +329,7 @@ describe('the run’s report', () => {
     const scratch = path.join(runPaths(bench.root, 'es-launch').scratch, 'agent-1');
     await fs.mkdir(scratch, { recursive: true });
     await fs.writeFile(path.join(scratch, 'probe.mjs'), `// ${bench.root}\n`);
-    const { report } = await abortRun(bench.person(true), 'es-launch');
+    const report = left((await abortRun(bench.person(true), 'es-launch')).report);
 
     const all = (await fs.readdir(report.dir, { recursive: true })).map(String);
     const files: string[] = [];

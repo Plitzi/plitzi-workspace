@@ -194,7 +194,7 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     const second = await checkMutant(bench.agent('test-1'), runId, 't-about', [mutation], [2]);
     expect(second.lines.map(line => line.said)).toEqual(['It runs']);
     expect((await refusal(checkMutant(bench.agent('test-1'), runId, 't-about', [mutation], [3]))).message).toContain(
-      "t-about's acceptance has 2 lines: plitzi task check t-about --line 3 names none"
+      "t-about's acceptance has 2 lines: plitzi task prove t-about --line 3 names none"
     );
   });
 

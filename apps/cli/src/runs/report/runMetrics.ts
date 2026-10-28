@@ -126,12 +126,13 @@ export const CLI_BUDGET_S: Record<string, number> = {
   'task context': 3,
   'task show': 3,
   'task tell': 2,
-  'task ask': 2,
   'task message': 2,
   'task inbox': 2,
   'task progress': 2,
   'task review': 10,
   'task check': 30,
+  // The acceptance run twice — before the task and with it, or on the copy and its mutant: 41 to 131 s in a run.
+  'task prove': 120,
   'task complete': 45,
   'task look': 60,
   'page measure': 8,
@@ -184,7 +185,7 @@ const REPEAT_WINDOW_MIN = 10;
  */
 /**
  * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (a run's
- * scout dry-ran its stage three times as it fixed it, said "ran run extend 3 times").
+ * scout dry-ran its stage three times as it fixed it, said "ran run open --dry-run 3 times").
  */
 const calledAgainByDesign = (line: CommandPath): boolean =>
   waitsByDesign(line) ||

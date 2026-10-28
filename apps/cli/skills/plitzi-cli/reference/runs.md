@@ -58,8 +58,8 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
   task's of the same name with other rules meets yours only at review (`class-conflict`).
 - **Any other file** — shared (the entry, the theme, a layout), a done task's, or in no task: change it in your copy. At
   `complete`, if nobody holds it, it is yours by turns and goes into the run with you; if the run changed it meanwhile,
-  the two changes are put together line by line. Shared and held by another, your change becomes a request (`plitzi task
-request <file> --summary "why"`), merged when you are approved; **another task's own file**: wait for it, your change
+  the two changes are put together line by line. Shared and held by another, ask for your change there (`plitzi task
+propose --file <file> --change "…" --why "…"`): one integration task applies every change asked of it; **another task's own file**: wait for it, your change
   kept (`plitzi task claim <file> --wait --follow`: it is yours once that task is approved), or propose the change to it. To hold it while
   you work: `plitzi task claim <file>`; answered `claimed` with `turn: "wait"` → `plitzi task claim <file> --wait` and go on
   meanwhile (`--follow` to stay until it is yours) — a task nobody took yet: the claim takes its file ahead of it. A
@@ -68,21 +68,23 @@ request <file> --summary "why"`), merged when you are approved; **another task's
 takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t-home-p1 --accept | --reject "why" | --counter "…"`.
   Answer what is proposed to you before you complete (`plitzi task propose` lists them); honour what you accepted; `--withdraw
   "why"` takes back your own.
-- **Stuck, or unsure?** `plitzi task ask "Spanish or Catalan?"` (`--follow` waits for the answer). **Something the lead
-  should know** — a finding, a choice you made, a risk — with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
+- **Say it with `plitzi task tell`, one kind at a time.** **Stuck, or unsure?** `plitzi task tell "Spanish or Catalan?"
+  --ask` (`--follow` waits for the answer). **Something the lead should know** — a finding, a choice you made, a risk —
+  with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
   says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
   long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing
-  --fraction 0.6 --eta 15 --done "…" --left "…" [--blocked "…"]`.
+  --fraction 0.6 --eta 15 --done "…" --left "…" [--held-by "…"]`.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
   it finds — your brief has what was found for your task.
 - **Your specs, never the suite**: a check of yours runs the specs of what you change (`npx playwright test
   visual/rooms.spec.ts`), never a whole suite — one holds the machine, and the CLI queues the next behind it; the finish
   runs it whole. A spec finds an element by `data-plitzi-el`; a component's instance has no node of its own — its name
   is on its root as `data-plitzi-instance`. **A bug you meet outside your task** is the lead's to make a task of (`task tell`), never yours to grow.
-- **Blocked** — something to find out first, a key, a decision: `plitzi task block --reason "…"` (the lead's: it
-  answers, or asks the person), its files yours, then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
+- **Blocked** — something to find out first, a key, a decision: `plitzi task tell "…" --blocked` (the lead's: it
+  answers, or asks the person), its files yours, then take another task. What whoever takes your task next must know:
+  `plitzi task tell "…" --handoff`. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes.
 - **Before done:** `npm run typecheck` (seconds), then `plitzi task check --fix` — eslint and prettier fix what they can first — runs what `complete` holds

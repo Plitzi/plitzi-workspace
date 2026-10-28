@@ -2,11 +2,12 @@ import chalk from 'chalk';
 
 import { ensureKeeper, keeperText } from '../../../runs/agents/keeper';
 import { ownServer } from '../../../runs/copies/acceptance';
-import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../../runs/copies/merge';
+import { continueRun, finishRun, resolveFile, restoreFile } from '../../../runs/copies/merge';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { FINDING_OWNERS } from '../../../runs/findings';
 import { BACKLOG_FILE } from '../../../runs/plan/backlog';
-import { attachRun, purgeRun, releaseRun, resumeRun, stopRun } from '../../../runs/run';
+import { attachRun, releaseRun, resumeRun, stopRun } from '../../../runs/run';
+import { abortRun } from '../../../runs/run/abort';
 import { canWrite } from '../../../runs/tasks';
 import { KV_FILE } from '../../../scaffold/paths';
 import { act, runOf, taskOf } from '../shell';
@@ -179,7 +180,7 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
         ...findingsLines(finished.findings),
         ...(finished.noticed.length > 0
           ? [
-              '  Noticed during the run, owned by no task — what a stage of its own takes (plitzi run extend):',
+              '  Noticed during the run, owned by no task — what a stage of its own takes (plitzi run open <stage>):',
               ...finished.noticed.map(each => `    - ${each}`)
             ]
           : []),
@@ -278,8 +279,10 @@ export const runAbort = (runId: string | undefined, options: RunCommandOptions):
     async ctx => abortRun(ctx, await runOf(ctx, options, runId)),
     aborted =>
       [
-        `Aborted and removed: nothing was written into the project. Discarded: ${list(aborted.discarded)}`,
-        ...reportLines(aborted.report),
+        `Aborted and removed, with its backups: nothing was written into the project. Discarded: ${list(aborted.discarded)}`,
+        ...('problem' in aborted.report
+          ? [`  No report was left: ${aborted.report.problem}`]
+          : reportLines(aborted.report)),
         ...inputLines(aborted.inputs)
       ].join('\n')
   );
@@ -321,11 +324,4 @@ export const runRelease = (runId: string, options: RunCommandOptions & { takeOve
       return releaseRun(ctx, await runOf(ctx, options, runId));
     },
     () => `Released: another machine can attach to "${runId}".`
-  );
-
-export const runPurge = (runId: string, options: RunCommandOptions): Promise<void> =>
-  act(
-    options,
-    ctx => purgeRun(ctx, runId),
-    inputs => [`Run "${runId}" removed, with its backups.`, ...inputLines(inputs)].join('\n')
   );

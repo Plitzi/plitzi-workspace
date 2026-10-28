@@ -42,7 +42,6 @@ export {
   attachRun,
   completionsOf,
   pruneRuns,
-  purgeRun,
   recordBrake,
   releaseRun,
   resumeRun,

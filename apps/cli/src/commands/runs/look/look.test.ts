@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkWithInteraction, comparedOf, samePaths, toDeclared, viewsAsked } from './lookParts';
+import { checkWithInteraction, comparedOf, toDeclared, viewsAsked } from './lookParts';
 
 // A page's new light read "0.1% differs" beside the run before it — a soft light is under the
 // pictures' tolerance; its dress is not.
@@ -97,22 +97,5 @@ describe('task look on a space of one scheme', () => {
       )
     ).toEqual([['390', 'light']]);
     expect(toDeclared([['390', 'dark']], [])).toEqual([['390', 'dark']]);
-  });
-});
-
-describe('the pages a look reads the same on both servers', () => {
-  it('are the ones page same said draw the same — none from an answer it cannot read', () => {
-    expect(
-      samePaths(
-        `· starting\n${JSON.stringify({
-          pages: [
-            { path: '/', same: true },
-            { path: '/combates', same: false },
-            { path: '/artistas', same: true }
-          ]
-        })}`
-      )
-    ).toEqual(['/', '/artistas']);
-    expect(samePaths('Refused (invalid): nothing answers')).toEqual([]);
   });
 });

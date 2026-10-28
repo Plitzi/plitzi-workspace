@@ -14,7 +14,6 @@ import {
   runPreview,
   runBench,
   runReport,
-  runPurge,
   runRelease,
   runResolve,
   runRestore,
@@ -28,7 +27,6 @@ import {
   runKeep,
   runAllowFinish,
   runAmend,
-  runExtend,
   runTeam,
   runTeamSet,
   runTeamUnset,
@@ -49,6 +47,7 @@ import {
   TOKEN_OPTION
 } from './options';
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } from '../../../options';
+import { groupHelp } from '../../register/helpGroups';
 import { runAgent } from '../run/agent';
 import { runStart } from '../run/start';
 
@@ -63,6 +62,7 @@ import type {
   WatchRunOptions
 } from '..';
 import type { ExperienceFlags } from '../../../runs/report/experience';
+import type { HelpGroup } from '../../register/helpGroups';
 import type { AgentOptions } from '../run/agent';
 import type { StartOptions } from '../run/start';
 import type { TeamSetOptions } from '../run/team';
@@ -72,49 +72,23 @@ import type { Command } from 'commander';
  * Each command of `plitzi run`, by who runs it: a person new to it reads the four or five that are theirs first, not
  * thirty-five in the order they were written.
  */
-const RUN_HELP: readonly { heading: string; commands: readonly string[] }[] = [
+const RUN_HELP: readonly HelpGroup[] = [
   {
-    heading: 'Start and follow a run — you, or the agent you ask:',
-    commands: ['start', 'agent', 'monitor', 'watch', 'keep', 'status', 'state', 'preview', 'team']
-  },
-  {
-    heading: 'Yours alone — what writes into the project, or throws work away:',
-    commands: ['finish', 'abort', 'restore', 'purge', 'resolve', 'upgrade']
+    heading: 'Start and follow a run — you, or any agent:',
+    commands: ['start', 'agent', 'team', 'status', 'monitor', 'watch', 'preview', 'look', 'report', 'notice', 'backlog']
   },
   {
     heading: "The lead's — the agent that plans, reviews and closes:",
-    commands: [
-      'open',
-      'plan',
-      'rehearse',
-      'extend',
-      'amend',
-      'reference',
-      'note',
-      'notice',
-      'backlog',
-      'report',
-      'bench',
-      'stop',
-      'resume',
-      'show',
-      'can-write',
-      'attach',
-      'release',
-      'prune'
-    ]
+    commands: ['open', 'amend', 'reference', 'settle', 'show', 'stop', 'resume']
+  },
+  {
+    heading: 'Yours alone — what writes into the project, or throws work away:',
+    commands: ['finish', 'resolve', 'abort', 'upgrade', 'attach']
   }
 ];
 
-/** Puts each command under its heading in `run --help`: one left out of the table goes under the last. */
-export const groupHelp = (group: Command, table: readonly { heading: string; commands: readonly string[] }[]): void => {
-  for (const command of group.commands) {
-    const heading = table.find(each => each.commands.includes(command.name()))?.heading ?? table.at(-1)?.heading;
-    if (heading) {
-      command.helpGroup(heading);
-    }
-  }
-};
+/** The run's own commands no one types — its keeper, a hook's question — under no heading, as they show in no help. */
+const RUN_INTERNAL: readonly string[] = ['keep', 'can-write'];
 
 /** `plitzi run …`: its commands, registered on the program. */
 export const registerRunGroup = (program: Command): Command => {
@@ -153,23 +127,6 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((name: string, options: AgentOptions) => runAgent(name, options));
-
-  runGroup
-    .command('extend')
-    .description(
-      'Stack the next plan on an open run: its tasks begin from the run’s work, and one finish writes both into the project'
-    )
-    .argument('<run-or-file>', 'The open run — or, alone, the next plan: the run is then the one open')
-    .argument('[file]', 'The next plan')
-    .option('--dry-run', 'Check the stage against the run as it is — its tasks, what is ready — and stack nothing')
-    .option(
-      '--lines',
-      'With --dry-run: run each acceptance line once on the run’s work, and say what it is — what the task changes, a part it builds, or a line that cannot pass (the other site has no such element, a command it refuses)'
-    )
-    .option(...JSON_OPTION)
-    .action((first: string, file: string | undefined, options: PlanOptions & { dryRun?: boolean; lines?: boolean }) =>
-      file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
-    );
 
   const team = runGroup
     .command('team')
@@ -225,7 +182,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('open')
     .description(
-      'Open a run from a plan the lead wrote: its folder, every file it touches backed up — a person confirms above the threshold. --dry-run holds it to the rules and opens nothing (on the ask alone: plitzi run start)'
+      'Open a run from a plan the lead wrote: its folder, every file it touches backed up — a person confirms above the threshold. While a run is open, the plan is its next stage, stacked on it (the lead’s): its tasks begin from the run’s work, and one finish writes both. --dry-run holds it to the rules and opens or stacks nothing — anyone’s, a scout’s stage too (on the ask alone: plitzi run start)'
     )
     .argument(
       '<file>',
@@ -234,6 +191,10 @@ export const registerRunGroup = (program: Command): Command => {
     .option(
       '--dry-run',
       'Hold the plan to the rules — disjoint files, no cycles — expand it and estimate it, and open nothing'
+    )
+    .option(
+      '--lines',
+      'With --dry-run, a stage of the open run: each acceptance line run once on the run’s work — what the task changes, a part it builds, or a line that cannot pass'
     )
     .option(
       '--rehearse',
@@ -250,18 +211,22 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: PlanOptions & { dryRun?: boolean; rehearse?: boolean; review?: number }) =>
-      options.rehearse === true
-        ? runRehearse(file, options)
-        : options.dryRun === true
-          ? runPlan(file, options)
-          : runOpen(file, options)
+    .action(
+      (
+        file: string,
+        options: PlanOptions & { dryRun?: boolean; rehearse?: boolean; review?: number; lines?: boolean }
+      ) =>
+        options.rehearse === true
+          ? runRehearse(file, options)
+          : options.dryRun === true
+            ? runPlan(file, options)
+            : runOpen(file, options)
     );
 
   runGroup
     .command('status')
     .description(
-      'A run at a glance: a line per task, then what needs attention — with none open (or --all), every run not yet written into the project, ready ones first, each with the command that applies it'
+      'A run at a glance — its tasks, each with where it stands and the agent at it, then what needs attention; with none open (or --all), the runs, every one not yet written into the project, ready ones first, each with the command that applies it'
     )
     .argument('[run]', 'The run — the only open one when left out')
     .option('--all', 'Every run not yet written into the project, not one')
@@ -296,7 +261,7 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('notice')
     .description(
-      'Something wrong you saw that no task owns — outside yours, there before the run: kept for the finish and the next stage, never fixed in your task'
+      'Something wrong you saw that no task owns — outside yours, there before the run: kept for the finish and the next stage, never fixed in your task; with no run open, kept in the project’s backlog'
     )
     .argument('<text>', 'What is wrong — or - to read it from stdin')
     .option('--on <where>', 'Where it is: a page, an element, a file')
@@ -313,11 +278,10 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('backlog')
     .description(
-      'What is left to do, kept in .plitzi/backlog.json for the next run — what runs noticed, or add "…" with none open; done <id> closes one, saying how'
+      'What is left to do, kept in .plitzi/backlog.json for the next run — what run notice kept; done <id> closes one, saying how'
     )
-    .argument('[action]', 'add, to keep an item; done, to close one')
-    .argument('[item]', 'With add: what to do, in words; with done: the item it closes, b-3')
-    .option('--on <where>', 'With add: where it is — a page, an element, a file')
+    .argument('[action]', 'done, to close an item')
+    .argument('[item]', 'With done: the item it closes, b-3')
     .option('--note <how>', 'With done: how it was done, or why it is no longer wanted')
     .option('--all', 'The closed items too')
     .option(...JSON_OPTION)
@@ -325,7 +289,7 @@ export const registerRunGroup = (program: Command): Command => {
       (
         action: string | undefined,
         id: string | undefined,
-        options: RunCommandOptions & { note?: string; all?: boolean; on?: string }
+        options: RunCommandOptions & { note?: string; all?: boolean }
       ) => runBacklog(action, id, options)
     );
 
@@ -589,14 +553,7 @@ export const registerRunGroup = (program: Command): Command => {
       options.release ? runRelease(run, options) : runAttach(run, options)
     );
 
-  runGroup
-    .command('purge')
-    .description('Remove a run’s folder, backups included — a person’s')
-    .argument('<run>', 'The run')
-    .option(...JSON_OPTION)
-    .action((run: string, options: RunCommandOptions) => runPurge(run, options));
-
-  groupHelp(runGroup, RUN_HELP);
+  groupHelp(runGroup, RUN_HELP, RUN_INTERNAL);
   runGroup.addHelpText(
     'after',
     `

@@ -285,6 +285,19 @@ export const projectCaller = async (ctx: RunContext, options: RunCommandOptions)
   return unproved.get(ctx)?.claim.kind === 'person' ? 'person' : UNNAMED;
 };
 
+/**
+ * The run a command of the project's is about — or none, when nothing names one and none is open: what `run notice`
+ * keeps in the run's log while one is, and in the project's backlog when none is.
+ */
+export const runIfOpen = async (ctx: RunContext, options: RunCommandOptions): Promise<string | undefined> =>
+  options.run !== undefined ||
+  ctx.token !== undefined ||
+  tokenRun(ctx) !== undefined ||
+  process.env.PLITZI_RUN !== undefined ||
+  (await activeRuns(ctx.root)).length > 0
+    ? runOf(ctx, options)
+    : undefined;
+
 /** The run a command is about: the token's, the one named, or the project's only active run. */
 export const runOf = async (
   ctx: RunContext,

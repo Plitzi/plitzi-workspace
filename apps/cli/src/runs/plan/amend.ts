@@ -54,12 +54,12 @@ const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned
  * their files — stays as the run opened it (what one touches beside them is told like any ask; a file of a task nobody
  * took is claimed ahead of it by turns), but for a task nobody took, which may
  * leave it (less to do; its pieces of the inventory then wait, or another task covers them) — a task more is a stage
- * (`run extend`). Who a task is for
+ * (`run open <stage>` on the open run). Who a task is for
  * — its role and quality — and what it waits for change until an agent takes it, and not after: it was taken as that. A task done is not
  * asked again — but for its acceptance, which the finish runs again on the whole result: a line of the lead's found wrong
  * is amended there too. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
  *
- * A run with stages stacked on it (`run extend`) is amended from any of its plans — the one it opened with, a stage's as it
+ * A run with stages stacked on it (`run open <stage>` on the open run) is amended from any of its plans — the one it opened with, a stage's as it
  * was stacked, or several joined — each speaking for the plans whose tasks it holds: a task leaves the run only when a plan
  * that holds its fellows leaves it out, and the run's goal stays the run's unless the plan it opened with is amended.
  */
@@ -117,7 +117,7 @@ const OPENED = 0;
 /**
  * Where each task of the run came from, read off its log — whatever each plan called itself: a run's stages said
  * the run's own id, and its amend read a stage's plan as the run's and refused to drop s-scope. A task stacked again
- * after it left (`run extend` once more) is its last stage's.
+ * after it left (`run open` once more) is its last stage's.
  */
 const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => {
   const origins = new Map<string, number>();
@@ -192,7 +192,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const added = next.tasks.filter(task => !before.has(task.id)).map(task => task.id);
   if (added.length > 0) {
     problems.push(
-      `${added.map(id => `"${id}"`).join(', ')} the run does not have: a task more is a stage stacked on it — plitzi run extend ${runId} <its plan>`
+      `${added.map(id => `"${id}"`).join(', ')} the run does not have: a task more is a stage stacked on it — plitzi run open <its plan>`
     );
   }
 

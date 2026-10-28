@@ -22,8 +22,8 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
 
   A line that runs one named test says so: `node --test --test-isolation=none --test-name-pattern="…"` — without it a
   pattern that matches nothing passes. **See it
-  first: `plitzi task check --tasks <stage.json>`** — checked as the lead stacks it, each line run once on the run's
-  work; `run extend` is the lead's, never yours. It is checked whole and goes to the lead's
+  first: `plitzi run open <stage.json> --dry-run --lines`** — checked as the lead stacks it, each line run once on the
+  run's work, nothing stacked; stacking is the lead's, never yours. It is checked whole and goes to the lead's
   review, decided with the person: nothing is stacked until it approves. Sent back, `task next` hands it to you again
   with what the lead asked — complete it again with that. Findings alone, no tasks: `--found "…"`, reviewed too:
   **every research card is the lead's to approve**, and adding or taking out tasks the lead's alone.

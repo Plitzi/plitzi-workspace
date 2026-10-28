@@ -7,8 +7,6 @@ import type { RunCommandOptions } from '../shell';
  * acceptance reads it signed in (a run's lead looked at a guest's conversation through page check, by hand).
  */
 export interface LookOptions extends RunCommandOptions, Omit<VisitorOptions, 'url'> {
-  /** Looked at anew, though it was looked at already as asked and nothing changed since. */
-  fresh?: boolean;
   /** Clicked once each page settles, as `page check --click`: an open state looked at, not only the page at rest. */
   click?: string;
   /**

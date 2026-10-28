@@ -30,8 +30,6 @@ export interface ShotOptions extends VisitorOptions {
   scheme?: Scheme;
   out?: string;
   compare?: string;
-  /** With `compare`: the site as it is now, even where the run kept it (`plitzi run reference`). */
-  live?: boolean;
   /**
    * With `compare`: fail where a section lacks a look the other page dresses it in — an acceptance's check; a text, only
    * the looks that name it (`radial-gradient across`, `shadow`, `::before`, `background image`, `filter`).
@@ -41,9 +39,9 @@ export interface ShotOptions extends VisitorOptions {
   every?: number;
   waitFor?: string;
   reducedMotion?: boolean;
-  /** One element only: its name (`data-plitzi-el`) or a CSS selector. */
-  clip?: string;
-  /** With `clip` drawn more than once — a component's instances: the one that shows the most of these elements. */
+  /** One element only (`--within`): its name (`data-plitzi-el`) or a CSS selector. */
+  within?: string;
+  /** With `within` drawn more than once — a component's instances: the one that shows the most of these elements. */
   showing?: string[];
   /** The page scrolled until this element is in view — and, with `viewport`, the screen there. */
   scrollTo?: string;
@@ -93,7 +91,7 @@ export interface CompareReport {
   /** The first section the other page has somewhere else, and how far down. */
   driftFrom?: { name: string; shift: number };
   regions: RegionChange[];
-  /** `--clip` with `--compare`: the one section the regions were kept to — the rest of the report is the whole page's. */
+  /** `--within` with `--compare`: the one section the regions were kept to — the rest of the report is the whole page's. */
   section?: string;
   /**
    * `--click` with `--compare`: the state both pages were pictured in, the clicks of each in words — what is on the
@@ -129,7 +127,7 @@ export interface ShotReport {
   scheme: Scheme;
   out: string;
   compare?: CompareReport;
-  /** `--clip a,b` beside the project's other server: each part's comparison, or why it could not be pictured. */
+  /** `--within a,b` beside the project's other server: each part's comparison, or why it could not be pictured. */
   parts?: PartCompared[];
   /** `slight`: a region of a whole page that changed by `MOVING_PERCENT` or less — a caret, or a small part moving. */
   frames?: { count: number; every: number; moving: RegionChange[]; slight: RegionChange[]; still: string[] };

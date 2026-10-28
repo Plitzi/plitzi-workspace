@@ -11,15 +11,15 @@ const DOING: Record<string, (target: string | undefined, flags: ReadonlySet<stri
   'page shot': (target, flags) =>
     `picturing ${target ?? 'a page'}${flags.has('--compare') ? ' beside the original' : ''}`,
   'page check': target => `checking ${target ?? 'a page'} in a browser`,
-  'page same': target => `comparing ${target ?? 'a page'} with the run before`,
   'task check': () => 'running its checks',
+  'task prove': (target, flags) =>
+    `proving ${target ?? 'its task'}'s acceptance ${flags.has('--before') ? 'beside the run before it' : 'on a mutant'}`,
   'task context': () => 'reading its brief',
   'task show': target => `reading ${target ?? 'a task'}'s changes`,
   'task look': target => `looking at ${target ?? 'a task'}`,
   'task complete': () => 'sending its work to review',
   'task review': target => `saying its verdict on ${target ?? 'a task'}`,
   'task next': () => 'asking for work',
-  'task request': () => 'asking for a shared file',
   'task claim': (target, flags) =>
     target === undefined
       ? 'reading who holds which file'
@@ -28,9 +28,23 @@ const DOING: Record<string, (target: string | undefined, flags: ReadonlySet<stri
         : flags.has('--release')
           ? 'letting a shared file go'
           : 'taking a shared file',
+  'task propose': (target, flags) =>
+    flags.has('--file')
+      ? 'asking for a change in a shared file'
+      : target === undefined
+        ? 'reading the proposals'
+        : `proposing a change to ${target}`,
   'task message': () => 'writing to the run',
-  'task tell': () => 'telling the lead',
-  'task ask': () => 'asking the lead'
+  'task tell': (_target, flags) =>
+    flags.has('--ask')
+      ? 'asking the lead'
+      : flags.has('--blocked')
+        ? 'saying what stops its task'
+        : flags.has('--handoff')
+          ? 'leaving a note for the next'
+          : flags.has('--standing')
+            ? 'saying where it stands'
+            : 'telling the lead'
 };
 
 /**

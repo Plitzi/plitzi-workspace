@@ -108,14 +108,21 @@ const COMMAND =
 const GROUPS = new Set(program.commands.filter(each => each.commands.length > 0).map(each => each.name()));
 
 /**
- * A command of a group written without `plitzi` before it — `task check --fix`, `run extend --dry-run` — read as one when
+ * A command of a group written without `plitzi` before it — `task check --fix`, `run open --dry-run` — read as one when
  * its group has that command: prose that only starts with the word (`a task next to it`) is not.
  */
 const BARE_COMMAND =
   /(?<![\w./@-])(?=([a-z][\w-]*) ([a-z][\w-]*)((?:[^`'"“”—;|),\n]|,(?=\S)|"[^"\n]*"|\|(?=\s*--))*))/g;
 
-/** The commands a text names, each as the words before its options and what follows them. */
-const commandsIn = (text: string): { at: number; length: number; words: string; rest: string; said: string }[] => {
+/**
+ * The commands a text names, each as the words before its options and what follows them. A group's two words at the
+ * start of code — a span of a skill (`code`), or after a backtick in a string — are a command whether the group has it or
+ * not: a prompt told agents never to run `run purge` after it was gone, read as prose.
+ */
+const commandsIn = (
+  text: string,
+  { code = false }: { code?: boolean } = {}
+): { at: number; length: number; words: string; rest: string; said: string }[] => {
   const prefixed = [...text.matchAll(COMMAND)]
     .filter(match => !NOT_COMMANDS.has(match[0].trim()))
     .map(match => ({ at: match.index, length: match[0].length, words: match[1], rest: match[2], said: match[0] }));
@@ -124,7 +131,9 @@ const commandsIn = (text: string): { at: number; length: number; words: string; 
     .filter(match => {
       const group = GROUPS.has(match[1]) ? subcommand(program, match[1]) : undefined;
 
-      return group !== undefined && subcommand(group, match[2]) !== undefined && !covered(match.index);
+      const startsCode = text[match.index - 1] === '`' || (code && match.index === 0);
+
+      return group !== undefined && (startsCode || subcommand(group, match[2]) !== undefined) && !covered(match.index);
     })
     .map(match => {
       // Its options end where a command written in full starts: `run watch says so: plitzi task next --role lead`.
@@ -144,9 +153,9 @@ const commandsIn = (text: string): { at: number; length: number; words: string; 
  */
 const NOT_COMMANDS = new Set(['plitzi link', 'PLITZI below']);
 
-const problemsIn = (texts: readonly string[], where: string): string[] =>
+const problemsIn = (texts: readonly string[], where: string, { code = false }: { code?: boolean } = {}): string[] =>
   texts.flatMap(text =>
-    commandsIn(text).flatMap(command =>
+    commandsIn(text, { code }).flatMap(command =>
       problemsOf(command.words, command.rest).map(
         problem => `${where}: ${problem} — “${command.said.trim().slice(0, 100)}”`
       )
@@ -258,7 +267,9 @@ const strayOptionsIn = (paragraph: string): string[] => {
     return first !== undefined && subcommand(program, first) && !/^\s*plitzi /.test(span) ? `plitzi ${span}` : span;
   });
   const taken = new Set(
-    [...commandsIn(paragraph), ...code.flatMap(commandsIn)].flatMap(each => longOptions(commandOf(each.words)))
+    [...commandsIn(paragraph), ...code.flatMap(span => commandsIn(span))].flatMap(each =>
+      longOptions(commandOf(each.words))
+    )
   );
   const unnamed = (text: string): string[] => {
     const spans = [
@@ -288,7 +299,7 @@ describe('the commands the CLI tells anyone to run', () => {
   it('are in its skills as it takes them', () => {
     const problems = SKILLS.flatMap(dir =>
       filesUnder(dir, /\.md$/).flatMap(file =>
-        problemsIn(codeOfMarkdown(fs.readFileSync(file, 'utf-8')), path.relative(SRC, file))
+        problemsIn(codeOfMarkdown(fs.readFileSync(file, 'utf-8')), path.relative(SRC, file), { code: true })
       )
     );
 
@@ -303,7 +314,7 @@ describe('the commands the CLI tells anyone to run', () => {
     expect(problems).toEqual([]);
   });
 
-  // A skill says an option beside its command, in prose (`plitzi task ask "…"` — `--follow` waits for the answer):
+  // A skill says an option beside its command, in prose (`plitzi task tell "…" --ask` — `--follow` waits for the answer):
   // within its budget, the option is held to the commands its section names — one of them takes it.
   it('take, in their skills, each option a section tells of', () => {
     const problems = SKILLS.slice(0, 1).flatMap(dir =>

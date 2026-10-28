@@ -269,7 +269,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
     ...(isResearch(task) && state.status !== 'done'
       ? [
           chalk.blue(
-            `◇ Research — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings" and a line a command proves — seen first with plitzi task check --tasks <stage.json> — plitzi task complete --found "…" --tasks <stage.json>`
+            `◇ Research — find out: ${task.spike ?? 'what it needs'}. Read, compare, measure; write nothing; then say what you found and its result, the tasks it makes, each with its "findings" and a line a command proves — seen first with plitzi run open <stage.json> --dry-run --lines — plitzi task complete --found "…" --tasks <stage.json>`
           )
         ]
       : []),

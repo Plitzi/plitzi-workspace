@@ -78,7 +78,7 @@ export const reportProgress = async (
   };
 };
 
-/** `plitzi task block`: something outside the plan stops it — said, never waited on silently. */
+/** `plitzi task tell --blocked`: something outside the plan stops it — said, never waited on silently. */
 export const blockTask = async (
   ctx: RunContext,
   runId: string,
@@ -181,7 +181,7 @@ export const unblockTask = async (
   );
 };
 
-/** `plitzi task note` and `plitzi task handoff`: what whoever comes next must know. */
+/** `plitzi task tell --handoff`: what whoever comes next must know. */
 export const noteTask = async (ctx: RunContext, runId: string, taskId: string, text: string): Promise<void> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const task = findTask(loaded, taskId);

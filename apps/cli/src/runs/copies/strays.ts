@@ -25,7 +25,7 @@ export const leftInTmp = async (root: string, record: Pick<RunRecord, 'openedAt'
     const file = `${PROJECT_TMP}/${entry.name}`;
     const handed = record.inputs.some(input => input.file === file || input.file.startsWith(`${file}/`));
     // A plan or a stage the lead is writing, to hand the run: its, before it is handed (a run's stage, told to
-    // dev-1 in the seconds before \`run extend\` took it).
+    // dev-1 in the seconds before stacking took it).
     const toHand = !entry.isDirectory() && /\.(plan|stage)\.json$/.test(entry.name);
     if (TOOL_TMP.includes(file) || handed || toHand) {
       continue;

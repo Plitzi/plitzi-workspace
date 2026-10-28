@@ -109,7 +109,7 @@ export const linesFailing = (log: readonly LogEntry[]): Finding[] => {
         ...each.said.map(line => `it said: ${line}`)
       ],
       times: each.at.length,
-      fix: 'run the line on the run’s work and the copy (run extend --dry-run --lines, task check --acceptance): a line that cannot pass is amended (run amend), one the work misses is said to the agent',
+      fix: 'run the line on the run’s work and the copy (run open <stage> --dry-run --lines, task check --acceptance): a line that cannot pass is amended (run amend), one the work misses is said to the agent',
       subject: `line:${each.task}:${each.line}`,
       task: each.task,
       live: true as const
@@ -195,7 +195,7 @@ export const linesAmended = (log: readonly LogEntry[]): Finding[] => {
           title: `${String(amended.length)} tasks’ acceptance rewritten after the run began`,
           evidence: evidenceOf(amended),
           times: amended.length,
-          fix: 'each line run once before the stage is stacked: run extend <run> <stage.json> --dry-run --lines',
+          fix: 'each line run once before the stage is stacked: run open <stage.json> --dry-run --lines',
           subject: 'lines-amended'
         }
       ];

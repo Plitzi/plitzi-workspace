@@ -74,7 +74,7 @@ const strings = (value: unknown): string[] =>
 
 /** A command whose failing is what it says of the work — a check that did not pass — not a failure of its own. */
 export const isVerdict = ({ name }: Pick<CommandPath, 'name'>): boolean =>
-  ['task check', 'task complete', 'page check', 'page play', 'page measure', 'page same', 'task look'].includes(name);
+  ['task check', 'task complete', 'page check', 'page play', 'page measure', 'task look'].includes(name);
 
 const reportsDir = (paths: Pick<TaskPaths, 'dir'>): string => path.join(paths.dir, 'reports');
 

@@ -53,7 +53,7 @@ export interface PageResponse {
   request(): { resourceType(): string };
 }
 
-/** One element of a page, as `shot --clip` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */
+/** One element of a page, as `shot --within` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */
 export interface PageElement {
   screenshot(): Promise<Uint8Array>;
   scrollIntoViewIfNeeded(options?: { timeout: number }): Promise<void>;

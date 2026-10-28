@@ -217,7 +217,7 @@ export const examplePaths = async (
 };
 
 /** The `plitzi page` commands an acceptance line runs on a page: where its checks look. */
-const PAGE_COMMANDS = new Set(['check', 'measure', 'shot', 'same']);
+const PAGE_COMMANDS = new Set(['check', 'measure', 'play', 'outline', 'shot']);
 
 /**
  * The pages a task's acceptance runs its checks on — `page check /combates /boxeadores`, `page measure /`: where its

@@ -35,7 +35,7 @@ export const assertNoOtherRun = async (ctx: RunContext, except?: string): Promis
   const record = await readRecord(runPaths(ctx.root, other)).catch(() => undefined);
   throw new RunRefusal(
     'another-run',
-    `Run "${other}" is going in this project${record ? ` (${record.status}, opened ${record.openedAt})` : ''}: one run at a time — stack the next plan on it (plitzi run extend ${other} <plan>: one finish for both), finish it (plitzi run finish ${other}), or a person aborts it (plitzi run abort ${other})`,
+    `Run "${other}" is going in this project${record ? ` (${record.status}, opened ${record.openedAt})` : ''}: one run at a time — stack the next plan on it (plitzi run open <plan>: one finish for both), finish it (plitzi run finish ${other}), or a person aborts it (plitzi run abort ${other})`,
     { run: other }
   );
 };

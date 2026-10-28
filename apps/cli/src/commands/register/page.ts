@@ -1,24 +1,13 @@
 import { Option } from 'commander';
 
 import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, withVisitorOptions } from './options';
-import {
-  expectation,
-  fill,
-  pagePath,
-  pagePathList,
-  positiveInteger,
-  scale,
-  statusCode,
-  width,
-  widths
-} from '../../options';
+import { expectation, fill, pagePath, pagePathList, positiveInteger, scale, statusCode, widths } from '../../options';
 import { check } from '../page/check';
 import { importPage } from '../page/importPage';
 import { measure, onlyProperties, sameProperties } from '../page/measure';
 import { keepBrowser } from '../page/measureKeeper';
 import { outline } from '../page/outline';
 import { play } from '../page/play';
-import { pageSame } from '../page/same';
 import { shotEach, SHOT_MOMENTS } from '../page/shot';
 
 import type { CheckOptions } from '../page/check';
@@ -26,7 +15,6 @@ import type { ImportOptions } from '../page/importPage';
 import type { MeasureOptions } from '../page/measure';
 import type { OutlineOptions } from '../page/outline';
 import type { PlayOptions } from '../page/play';
-import type { SameOptions } from '../page/same';
 import type { ShotEachOptions } from '../page/shot';
 import type { Command } from 'commander';
 
@@ -172,10 +160,6 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .addOption(widthsOption('The viewport widths, separated by commas: every element measured at each', [1440]))
     .addOption(schemeOption())
-    .option(
-      '--fresh',
-      'Read the other page again, not what an earlier call kept of it (kept 6 h: a reference does not change within a run)'
-    )
     .option('--json', 'One object, for a tool or an agent');
   withVisitorOptions(measureCommand).action((route: string, elements: string[], options: MeasureOptions) =>
     measure(route, elements, options)
@@ -242,30 +226,6 @@ export const registerPage = (pageGroup: Command): void => {
 
   withVisitorOptions(
     pageGroup
-      .command('same')
-      .argument('[paths...]', 'The pages: /about /writers. The home page when left out', pagePathList)
-      .description(
-        'Whether pages draw the same on two servers of the project — every element on screen, its box and its style read, not pictured: the run before a task and its copy'
-      )
-      .requiredOption('--url <origin>', 'The server read: the task’s copy')
-      .requiredOption('--compare <origin>', 'The server it is held to: the run before it')
-      .option(
-        '--except <elements>',
-        'Elements left out, comma-separated — a task’s own parts: that nothing else moved is what is read',
-        (value: string) =>
-          value
-            .split(',')
-            .map(each => each.trim())
-            .filter(Boolean)
-      )
-      .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1440, '1440'))
-      .addOption(schemeOption())
-      .option('--json', 'One object, for a tool or an agent'),
-    { url: false }
-  ).action((paths: string[], options: SameOptions) => pageSame(paths, options));
-
-  withVisitorOptions(
-    pageGroup
       .command('shot')
       .argument('[paths...]', 'The pages: /about /pricing. The home page when left out', pagePathList)
       .description(
@@ -279,7 +239,7 @@ export const registerPage = (pageGroup: Command): void => {
       .addOption(
         new Option(
           '--height <px>',
-          'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --clip)'
+          'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --within)'
         )
           .argParser(positiveInteger)
           .default(800)
@@ -296,10 +256,9 @@ export const registerPage = (pageGroup: Command): void => {
         '--compare <url>',
         'Another site: the same page there, side by side, and how much differs by section — as the open run kept it, when it did (plitzi run reference)'
       )
-      .option('--live', 'With --compare: the site as it is now, not as the run kept it')
       .option(
         '--dress [look]',
-        'With --compare: fail where a section (or the --clip one) lacks a look the other page dresses it in — a gradient across it, a shadow, an ornament, a filter, a background image; a text, only the looks naming it ("radial-gradient across", shadow, ::before)'
+        'With --compare: fail where a section (or the --within one) lacks a look the other page dresses it in — a gradient across it, a shadow, an ornament, a filter, a background image; a text, only the looks naming it ("radial-gradient across", shadow, ::before)'
       )
       .addOption(
         new Option(
@@ -318,12 +277,12 @@ export const registerPage = (pageGroup: Command): void => {
       )
       .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
       .option(
-        '--clip <element>',
+        '--within <element>',
         'Only this element — its name or a CSS selector — scrolled to wherever it is; with --compare, the section of the report kept'
       )
       .option(
         '--showing <elements>',
-        'With --clip drawn more than once (a component in several states): the copy of it that shows the most of these elements, comma-separated',
+        'With --within drawn more than once (a component in several states): the copy of it that shows the most of these elements, comma-separated',
         (value: string) =>
           value
             .split(',')

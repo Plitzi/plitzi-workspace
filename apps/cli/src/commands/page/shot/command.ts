@@ -45,7 +45,7 @@ import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
 const MISALIGNED_PERCENT = 90;
 
 /**
- * The element `--clip` names, as a region of the page — none when it is one of the page's sections already, a problem
+ * The element `--within` names, as a region of the page — none when it is one of the page's sections already, a problem
  * when the page has no such element.
  */
 const clipRegion = async (
@@ -84,7 +84,7 @@ const clipRegion = async (
         }
       }
     : {
-        problem: `--clip ${section}: the page has no element of that id drawn (an id, or an element's name), nor a section: ${regions.map(each => each.name).join(', ') || 'none'}`
+        problem: `--within ${section}: the page has no element of that id drawn (an id, or an element's name), nor a section: ${regions.map(each => each.name).join(', ') || 'none'}`
       };
 };
 
@@ -179,10 +179,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
   // Clicked beside another site: the screens of both once clicked, side by side — no sections, frames or clip of them.
-  if (options.compare && clicks.length > 0 && (options.clip || (options.frames ?? 0) > 1 || options.sheet)) {
+  if (options.compare && clicks.length > 0 && (options.within || (options.frames ?? 0) > 1 || options.sheet)) {
     await browser.close();
     fail(
-      '`--click` with `--compare` sets the screens of both side by side once clicked: leave out --clip, --frames and --sheet.'
+      '`--click` with `--compare` sets the screens of both side by side once clicked: leave out --within, --frames and --sheet.'
     );
 
     return;
@@ -207,10 +207,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  if (fromLoad && !options.clip && !options.scrollTo && !options.viewport) {
+  if (fromLoad && !options.within && !options.scrollTo && !options.viewport) {
     await browser.close();
     fail(
-      '`--from load` pictures the screen as the page arrives, never the whole page — unrolling it waits for it to settle: add --viewport or --clip.'
+      '`--from load` pictures the screen as the page arrives, never the whole page — unrolling it waits for it to settle: add --viewport or --within.'
     );
 
     return;
@@ -219,18 +219,18 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (options.compare && (options.scrollTo || options.viewport)) {
     await browser.close();
     fail(
-      '`--compare` sets the whole page beside the other site, section by section: leave out --scroll-to and --viewport (--clip <section> keeps one section of the report).'
+      '`--compare` sets the whole page beside the other site, section by section: leave out --scroll-to and --viewport (--within <section> keeps one section of the report).'
     );
 
     return;
   }
 
   // A clip names this page's element alone: the other site's is found by lining the pages up (a run's design-1 wrote
-  // `--clip "product-about => #about-product"`, and was told the page had no element of that id).
-  if (options.clip?.includes('=>')) {
+  // `--within "product-about => #about-product"`, and was told the page had no element of that id).
+  if (options.within?.includes('=>')) {
     await browser.close();
     fail(
-      `--clip names this page's element alone — ${options.clip.split('=>')[0]?.trim() ?? ''} — the other site's is found by lining the pages up. To set one element beside its counterpart by name, measure it: page measure <path> "${options.clip}" --compare <url>.`
+      `--within names this page's element alone — ${options.within.split('=>')[0]?.trim() ?? ''} — the other site's is found by lining the pages up. To set one element beside its counterpart by name, measure it: page measure <path> "${options.within}" --compare <url>.`
     );
 
     return;
@@ -241,16 +241,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const besideLocal =
     options.compare !== undefined && /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(options.compare);
   // Beside the project's own other server, a part is the same element on both: pictured alone each side — several,
-  // `--clip a,b`, each on the pages loaded once (`compareLocalParts`).
-  const localPart = besideLocal && options.clip !== undefined;
+  // `--within a,b`, each on the pages loaded once (`compareLocalParts`).
+  const localPart = besideLocal && options.within !== undefined;
   const parts = localPart
-    ? (options.clip ?? '')
+    ? (options.within ?? '')
         .split(',')
         .map(each => each.trim())
         .filter(Boolean)
     : [];
-  const section = options.compare && !localPart ? options.clip : undefined;
-  const clip = options.compare && !localPart ? undefined : localPart ? parts[0] : options.clip;
+  const section = options.compare && !localPart ? options.within : undefined;
+  const clip = options.compare && !localPart ? undefined : localPart ? parts[0] : options.within;
 
   try {
     const pathname = route ?? '/';
@@ -326,7 +326,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const tiles = how.kind === 'page' ? await tilesOf(taken.page, view, base) : [];
     // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
     const regions: PictureRegion[] = how.kind === 'page' ? await readPage(taken.page, pageRegions, undefined) : [];
-    // `--clip` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
+    // `--within` with `--compare` may name any element, not only a section: one inside a section is a region of its own,
     // compared where it is — a panel of a page, a card — where only the landmarks could be named (a run's pills).
     const clipped = section === undefined ? undefined : await clipRegion(taken.page, regions, section);
     if (clipped && 'problem' in clipped) {
@@ -354,7 +354,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     if (options.compare) {
       const target = otherPageAt(pathname, options.compare);
       // Against the page as the run kept it, where it did: the site may have changed since the run began.
-      const kept = options.live ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
+      const kept = options.fresh ? undefined : await keptPage(project.root, target, view.width, taken.scheme);
       const clickedBeside =
         clicks.length > 0
           ? await compareAfterClicks(browser, taken, target, view, clicks.map(pairOf), base)
@@ -401,7 +401,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         const kept = compared.regions.filter(each => matchesSection(each, section));
         if (kept.length === 0) {
           fail(
-            `--clip ${section} is none of the sections compared: ${compared.regions.map(each => (each.element ? `${each.name} (${each.element})` : each.name)).join(', ') || 'the page has no named section'} — name one of them, by its id or its element's`
+            `--within ${section} is none of the sections compared: ${compared.regions.map(each => (each.element ? `${each.name} (${each.element})` : each.name)).join(', ') || 'the page has no named section'} — name one of them, by its id or its element's`
           );
 
           return;
@@ -624,7 +624,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const outsideText = (outside: readonly string[] | undefined): string | undefined =>
       outside === undefined
         ? undefined
-        : `nothing changed in ${String(options.clip)}, and the page changed outside it — ${outside.join('; ')}: clip what it opened, or a part that holds both`;
+        : `nothing changed in ${String(options.within)}, and the page changed outside it — ${outside.join('; ')}: clip what it opened, or a part that holds both`;
     for (const { label, changed, outside } of report.steps ?? []) {
       console.log(
         changed > 0
@@ -636,7 +636,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     for (const { target, changed, opened, outside } of report.clicked ?? []) {
       console.log(
         opened
-          ? `clicked ${target}: it opened ${String(options.clip)}, pictured alone after it`
+          ? `clicked ${target}: it opened ${String(options.within)}, pictured alone after it`
           : changed > 0
             ? `clicked ${target}: ${String(changed)}% of the picture changed`
             : chalk.yellow(
@@ -667,7 +667,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
       if (report.frames.slight.length > 0) {
         console.log(
-          `  barely — ${String(MOVING_PERCENT)}% or less, a caret or anti-aliasing, or a small part that moves: ${regionsText(report.frames.slight)} (--clip <it> says whether it moves)`
+          `  barely — ${String(MOVING_PERCENT)}% or less, a caret or anti-aliasing, or a small part that moves: ${regionsText(report.frames.slight)} (--within <it> says whether it moves)`
         );
       }
     }

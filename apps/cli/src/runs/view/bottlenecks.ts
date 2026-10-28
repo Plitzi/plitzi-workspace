@@ -252,7 +252,7 @@ export const idleTeam = (
   const ways = [
     ...(backlog.length > 0
       ? [
-          `stack the backlog's ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} as cards (a stage of tasks that close them: plitzi run extend <stage.json>)`
+          `stack the backlog's ${backlog.slice(0, 5).join(', ')}${backlog.length > 5 ? ` +${String(backlog.length - 5)}` : ''} as cards (a stage of tasks that close them: plitzi run open <stage.json>)`
         ]
       : []),
     ...(worked.length > 0

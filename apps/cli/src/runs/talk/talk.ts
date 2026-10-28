@@ -14,7 +14,7 @@ import type { Message, Standing } from './messages';
 import type { RunContext } from '../run';
 
 /**
- * What `plitzi task ask`, `plitzi task message` and `plitzi task inbox` do: the lead and the agents talking while tasks
+ * What `plitzi task tell`, `plitzi task message` and `plitzi task inbox` do: the lead and the agents talking while tasks
  * are worked (`messages.ts`).
  */
 
@@ -27,7 +27,7 @@ export interface Asked {
 }
 
 /**
- * `plitzi task ask`: the holder of a task asks the lead — stuck, unsure, or with news it needs to hear. With `follow` it
+ * `plitzi task tell --ask`: the holder of a task asks the lead — stuck, unsure, or with news it needs to hear. With `follow` it
  * stays until the answer comes (its sign of life given meanwhile), up to `timeoutMs`.
  */
 export const askLead = async (
@@ -110,7 +110,7 @@ const checkedStanding = (standing: Standing): Standing => {
   if (problems.length > 0) {
     throw new RunRefusal(
       'invalid',
-      `A standing is said whole: ${problems.join('; ')} — plitzi task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--blocked "…"]`
+      `A standing is said whole: ${problems.join('; ')} — plitzi task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--held-by "…"]`
     );
   }
 
@@ -258,7 +258,7 @@ export const messageTasks = async (
 
   // Asked where it stands, it answers whole: how far, how long still, what is done and left, what holds it.
   const said = standing
-    ? `${text.trim() === '' ? '' : `${text.trim()} — `}Where do you stand? Answer now: plitzi task tell --standing --fraction <0-1> --eta <minutes left> --done "what is done" --left "what is left" [--blocked "what holds you"]`
+    ? `${text.trim() === '' ? '' : `${text.trim()} — `}Where do you stand? Answer now: plitzi task tell --standing --fraction <0-1> --eta <minutes left> --done "what is done" --left "what is left" [--held-by "what holds you"]`
     : text;
   const sent: Message[] = [];
   for (const target of targets) {

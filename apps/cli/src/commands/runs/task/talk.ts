@@ -16,13 +16,15 @@ import { proposalsOf } from '../../../runs/talk/agreements';
 import { noticeRun, noticeText } from '../../../runs/talk/notices';
 import { answerProposal, proposeChange } from '../../../runs/talk/proposals';
 import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout, unheardOf } from '../../../runs/talk/talk';
-import { followWait } from '../../../runs/tasks';
-import { act, holder, projectCaller, runOf, taskOf } from '../shell';
+import { blockTask, followWait, noteTask } from '../../../runs/tasks';
+import { act, either, holder, projectCaller, runIfOpen, runOf, taskOf } from '../shell';
 import { exchangeLines, messageLines } from '../text';
 
+import type { BLOCK_NEEDS } from '../../../runs/core/model';
 import type { BacklogItem } from '../../../runs/plan/backlog';
 import type { RunContext } from '../../../runs/run';
 import type { Message, Standing } from '../../../runs/talk/messages';
+import type { Notice } from '../../../runs/talk/notices';
 import type { RunCommandOptions } from '../shell';
 
 /**
@@ -36,12 +38,59 @@ export interface ProposeOptions extends RunCommandOptions {
   wait?: boolean;
   /** With `wait`: stay until the answer comes. */
   follow?: boolean;
+  /** A shared file the change is to, no task asked: one integration task applies every change asked of it. */
+  file?: string;
+  /** With `file`: where the caller uses it, comma-separated. */
+  usedIn?: string;
+  /** With `file`: it cannot wait — its integration task is made now, and the caller's task waits for it. */
+  blocking?: boolean;
 }
+
+/**
+ * Which change `task propose` asks: of a task (`<task>`), of a shared file (`--file`), or none — the proposals listed.
+ * An option of the other way is refused by name: a change to a shared file asks no task, and is not waited on.
+ */
+export const proposalOf = (task: string | undefined, options: ProposeOptions): 'task' | 'file' | 'list' => {
+  if (options.file === undefined) {
+    const misplaced = [
+      ...(options.usedIn === undefined ? [] : ['--used-in']),
+      ...(options.blocking === true ? ['--blocking'] : [])
+    ];
+    if (misplaced.length > 0) {
+      throw new RunRefusal(
+        'invalid',
+        `${misplaced.join(' and ')} go with --file <file>: a change asked of a shared file`
+      );
+    }
+
+    return task === undefined ? 'list' : 'task';
+  }
+
+  const misplaced = [
+    ...(task === undefined ? [] : [`a task (${task})`]),
+    ...(options.about === undefined ? [] : ['--about']),
+    ...(options.wait === true ? ['--wait'] : []),
+    ...(options.follow === true ? ['--follow'] : [])
+  ];
+  if (misplaced.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `A change to a shared file (--file) asks no task and is not waited on — leave out ${misplaced.join(', ')}; --blocking makes its integration task now and waits for it`
+    );
+  }
+
+  if (options.change === undefined) {
+    throw new RunRefusal('invalid', `Say the change to ${options.file}: --change "…" [--why "…"]`);
+  }
+
+  return 'file';
+};
 
 export const taskPropose = (toTask: string, options: ProposeOptions): Promise<void> =>
   act(
     options,
     async ctx => {
+      proposalOf(toTask, options);
       if (options.change === undefined) {
         throw new RunRefusal('invalid', `A proposal says the change it asks of ${toTask}: --change "…"`, {
           next: `plitzi task propose ${toTask} --change "the card takes a \`lang\` prop"`
@@ -115,10 +164,11 @@ export const taskAnswer = (proposal: string, options: AnswerOptions): Promise<vo
         : `${answered.answer.proposal}: ${answered.answer.verdict === 'accept' ? 'accepted — an agreement both tasks carry into review' : answered.answer.verdict === 'withdraw' ? 'withdrawn — the task asked no longer has it to answer' : 'rejected'}.`
   );
 
-export const taskProposals = (options: RunCommandOptions): Promise<void> =>
+export const taskProposals = (options: ProposeOptions): Promise<void> =>
   act(
     options,
     async ctx => {
+      proposalOf(undefined, options);
       const all = await proposalsOf(
         await loadRun(ctx, await runOf(ctx, options, undefined, { anyone: true }), { anyVersion: true })
       );
@@ -137,49 +187,100 @@ export const taskProposals = (options: RunCommandOptions): Promise<void> =>
             .join('\n')
   );
 
-export const taskAsk = (
-  text: string,
-  options: RunCommandOptions & { follow?: boolean; timeout?: number }
-): Promise<void> =>
-  act(
-    options,
-    async ctx => {
-      const { runId, taskId } = await holder(ctx, options);
-
-      return askLead(ctx, runId, taskId, text, {
-        follow: options.follow ?? false,
-        timeoutMs: options.timeout ?? FOLLOW_MS
-      });
-    },
-    asked =>
-      asked.reply
-        ? [`The lead answered (${asked.reply.id}): ${asked.reply.text}`, ...messageLines(asked.messages)].join('\n')
-        : options.follow
-          ? `Asked (${asked.question.id}); no answer yet after ${durationText(options.timeout ?? FOLLOW_MS)} — go on with what you can, it comes with your next heartbeat.`
-          : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
-  );
-
 export interface TellOptions extends RunCommandOptions {
   about?: string;
+  /** A question: the lead's answer comes with the next command — or, with `follow`, is waited for. */
+  ask?: boolean;
+  follow?: boolean;
+  timeout?: number;
+  /** Something outside the plan stops the task: who unblocks it, the lead by default. */
+  blocked?: boolean;
+  needs?: (typeof BLOCK_NEEDS)[number];
+  /** What whoever takes the task next must know. */
+  handoff?: boolean;
+  /** Where the task stands, as the lead asked. */
   standing?: boolean;
   fraction?: number;
   eta?: number;
   done?: string;
   left?: string;
-  blocked?: string;
+  heldBy?: string;
 }
 
+/** What `task tell` says: news for the lead — the default — a question, a block, a handoff or where the task stands. */
+type TellKind = 'news' | 'ask' | 'blocked' | 'handoff' | 'standing';
+
+const TELL_KINDS = ['ask', 'blocked', 'handoff', 'standing'] as const;
+
+/** The options each kind takes: one given with another kind is refused by name, never read as nothing. */
+const KIND_OPTIONS: Readonly<Record<TellKind, readonly (keyof TellOptions)[]>> = {
+  news: [],
+  ask: ['follow', 'timeout'],
+  blocked: ['needs'],
+  handoff: [],
+  standing: ['fraction', 'eta', 'done', 'left', 'heldBy']
+};
+
+/** Each option a kind takes, and the flag it is said by. */
+const KIND_FLAGS: readonly (readonly [keyof TellOptions, string])[] = [
+  ['follow', '--follow'],
+  ['timeout', '--timeout'],
+  ['needs', '--needs'],
+  ['fraction', '--fraction'],
+  ['eta', '--eta'],
+  ['done', '--done'],
+  ['left', '--left'],
+  ['heldBy', '--held-by']
+];
+
+const ALL_KINDS: readonly TellKind[] = ['news', ...TELL_KINDS];
+
+/** The one kind asked, and its text: two kinds at once, an option of another kind, or a kind with no text, refused. */
+export const tellKind = (text: string, options: TellOptions): TellKind => {
+  const kinds = TELL_KINDS.filter(kind => options[kind] === true);
+  if (kinds.length > 1) {
+    throw new RunRefusal(
+      'invalid',
+      `task tell says one thing at a time: --${kinds.join(' and --')} were given — tell them one after the other`
+    );
+  }
+
+  const kind: TellKind = kinds.at(0) ?? 'news';
+  const misplaced = KIND_FLAGS.filter(
+    ([option]) => options[option] !== undefined && !KIND_OPTIONS[kind].includes(option)
+  );
+  if (misplaced.length > 0) {
+    const owners = misplaced.map(([option, flag]) => {
+      const owner = ALL_KINDS.find(each => KIND_OPTIONS[each].includes(option));
+
+      return `${flag} goes with --${owner ?? kind}`;
+    });
+    throw new RunRefusal(
+      'invalid',
+      `task tell ${kind === 'news' ? '' : `--${kind} `}takes none of them: ${owners.join('; ')}`
+    );
+  }
+
+  if (kind !== 'standing' && text.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      kind === 'news'
+        ? 'Say what to tell the lead: plitzi task tell "…" — or where your task stands: plitzi task tell --standing …'
+        : `Say it: plitzi task tell "…" --${kind}`
+    );
+  }
+
+  return kind;
+};
+
 /** The standing said with `task tell --standing`: what is missing of it is the run's to refuse, named whole. */
-const standingOf = (options: TellOptions): Standing | undefined =>
-  options.standing === true
-    ? {
-        fraction: options.fraction ?? Number.NaN,
-        etaMinutes: options.eta ?? Number.NaN,
-        done: options.done ?? '',
-        left: options.left ?? '',
-        ...(options.blocked ? { blocked: options.blocked } : {})
-      }
-    : undefined;
+const standingOf = (options: TellOptions): Standing => ({
+  fraction: options.fraction ?? Number.NaN,
+  etaMinutes: options.eta ?? Number.NaN,
+  done: options.done ?? '',
+  left: options.left ?? '',
+  ...(options.heldBy ? { blocked: options.heldBy } : {})
+});
 
 /**
  * Whether `task tell --about` speaks of a task not the caller's own — a reviewer's finding, an agent's word on another's
@@ -188,47 +289,143 @@ const standingOf = (options: TellOptions): Standing | undefined =>
 export const tellsAbout = (ctx: Pick<RunContext, 'token'>, about: string | undefined): about is string =>
   about !== undefined && about !== (ctx.token === undefined ? undefined : taskOf(ctx));
 
+type Told =
+  | ({ kind: 'news' | 'standing' } & Awaited<ReturnType<typeof tellLead>>)
+  | ({ kind: 'ask' } & Awaited<ReturnType<typeof askLead>>)
+  | ({ kind: 'blocked'; taskId: string; reason: string; needs: (typeof BLOCK_NEEDS)[number] } & Awaited<
+      ReturnType<typeof blockTask>
+    >)
+  | { kind: 'handoff'; taskId: string };
+
+const toldText = (said: Told, options: TellOptions): string => {
+  switch (said.kind) {
+    case 'news':
+    case 'standing':
+      return said.standing
+        ? `Your standing is with the lead (${said.id}${said.replyTo ? `, answering ${said.replyTo}` : ''}): it decides on it — what it says comes with your next command. Go on meanwhile.`
+        : `Told the lead (${said.id}): no answer is waited for — task tell "…" --ask when you need one.`;
+    case 'ask':
+      return said.reply
+        ? [`The lead answered (${said.reply.id}): ${said.reply.text}`, ...messageLines(said.messages)].join('\n')
+        : options.follow
+          ? `Asked (${said.question.id}); no answer yet after ${durationText(options.timeout ?? FOLLOW_MS)} — go on with what you can, it comes with your next command.`
+          : `Asked (${said.question.id}): the answer comes with your next command — or stay for it with --follow.`;
+    case 'blocked':
+      return [
+        `${said.taskId} is blocked (${said.needs}): ${said.reason.replace(/[.\s]+$/, '')}. Take another ready task meanwhile; once it is unblocked, plitzi task next hands it back to you first.`,
+        ...(said.released.length > 0
+          ? [
+              `Let go, as your copy left them unchanged: ${said.released.join(', ')}${said.granted.length > 0 ? ` (handed on: ${said.granted.join(', ')})` : ''} — claim one again (plitzi task claim) when you need to change it.`
+            ]
+          : [])
+      ].join('\n');
+    case 'handoff':
+      return 'Noted: whoever takes it next reads it in plitzi task context.';
+  }
+};
+
+/**
+ * `plitzi task tell`: what an agent says to the run, one kind at a time — news for the lead, a question (`--ask`), what
+ * stops its task (`--blocked`), a note for whoever takes it next (`--handoff`) or where it stands (`--standing`).
+ */
 export const taskTell = (text: string, options: TellOptions): Promise<void> =>
   act(
     options,
-    async ctx => {
-      const runId = await runOf(ctx, options);
-      const standing = standingOf(options);
-      if (standing === undefined && text.trim() === '') {
-        throw new RunRefusal(
-          'invalid',
-          'Say what to tell the lead: plitzi task tell "…" — or where your task stands: plitzi task tell --standing …'
-        );
+    async (ctx): Promise<Told> => {
+      const kind = tellKind(text, options);
+      if (kind === 'ask') {
+        const { runId, taskId } = await holder(ctx, options);
+
+        return {
+          kind,
+          ...(await askLead(ctx, runId, taskId, text, {
+            follow: options.follow ?? false,
+            timeoutMs: options.timeout ?? FOLLOW_MS
+          }))
+        };
       }
 
-      return tellsAbout(ctx, options.about)
-        ? tellLeadAbout(ctx, runId, options.about, text, standing)
-        : tellLead(ctx, runId, taskOf(ctx, options.about), text, standing);
+      if (kind === 'blocked' || kind === 'handoff') {
+        const target = await either(ctx, options, options.about);
+        if (kind === 'handoff') {
+          await noteTask(ctx, target.runId, target.taskId, text);
+
+          return { kind, taskId: target.taskId };
+        }
+
+        const needs = options.needs ?? 'lead';
+
+        return {
+          kind,
+          reason: text,
+          needs,
+          taskId: target.taskId,
+          ...(await blockTask(ctx, target.runId, target.taskId, text, needs))
+        };
+      }
+
+      const runId = await runOf(ctx, options);
+      const standing = kind === 'standing' ? standingOf(options) : undefined;
+
+      return {
+        kind,
+        ...(tellsAbout(ctx, options.about)
+          ? await tellLeadAbout(ctx, runId, options.about, text, standing)
+          : await tellLead(ctx, runId, taskOf(ctx, options.about), text, standing))
+      };
     },
-    told =>
-      told.standing
-        ? `Your standing is with the lead (${told.id}${told.replyTo ? `, answering ${told.replyTo}` : ''}): it decides on it — what it says comes with your next command. Go on meanwhile.`
-        : `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
+    said => toldText(said, options)
   );
 
-/** `plitzi run notice`: something wrong that no task owns, kept for the finish and the next stage. */
+/**
+ * `plitzi run notice`: something wrong that no task owns — while a run is open, kept in its log for the finish and the
+ * next stage; with none, in the project's backlog at once. The one way an item is kept for later.
+ */
 export const runNotice = (
   text: string,
   options: RunCommandOptions & { on?: string; plitzi?: boolean }
 ): Promise<void> =>
   act(
     options,
-    async ctx =>
-      noticeRun(ctx, await runOf(ctx, options), text, {
-        ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
-        ...(options.on ? { on: options.on } : {}),
-        ...(options.plitzi === true ? { plitzi: true } : {})
-      }),
+    async (ctx): Promise<{ notice: Notice } | { kept: BacklogItem }> => {
+      const runId = await runIfOpen(ctx, options);
+      if (runId !== undefined) {
+        return {
+          notice: await noticeRun(ctx, runId, text, {
+            ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
+            ...(options.on ? { on: options.on } : {}),
+            ...(options.plitzi === true ? { plitzi: true } : {})
+          })
+        };
+      }
+
+      if (options.plitzi === true) {
+        throw new RunRefusal(
+          'invalid',
+          'With no run open, what is wrong in Plitzi is a report of its own: plitzi feedback writes it, with the versions in it'
+        );
+      }
+
+      return {
+        kept: await addBacklogItem(ctx, {
+          text,
+          by: await projectCaller(ctx, options),
+          ...(options.on ? { on: options.on } : {})
+        })
+      };
+    },
     // Said to whoever noticed it: an agent is told to go on with its task; the lead, that the next run takes it up.
-    notice =>
-      notice.about === 'plitzi'
+    said => {
+      if ('kept' in said) {
+        return `No run is open: kept ${said.kept.id} in ${BACKLOG_FILE} — ${said.kept.text}; a plan takes it up (a task's closes: ["${said.kept.id}"])`;
+      }
+
+      const { notice } = said;
+
+      return notice.about === 'plitzi'
         ? `Noticed of Plitzi (${noticeText(notice)}): kept for the run's feedback to Plitzi, written as it ends — not the project's backlog. ${notice.task === undefined ? '' : 'Go on with your task.'}`.trim()
-        : `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run extend), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`
+        : `Noticed (${noticeText(notice)}): kept in the run's log — the finish says it, the report lists it, and the project's backlog (${BACKLOG_FILE}) keeps it for the next run. ${notice.task === undefined ? 'A stage of this run takes it up now (plitzi run open <stage>), or the next run does.' : 'Go on with your task: it is not yours to fix in it.'}`;
+    }
   );
 
 /** `plitzi run report --plitzi`: the run's feedback to Plitzi, written now — the finish writes it again as the run ends. */
@@ -245,10 +442,11 @@ export const runFeedback = (runId: string | undefined, options: RunCommandOption
   );
 
 /** `plitzi run backlog`: what runs noticed and left, open first — `done <id>` closes one, saying how. */
+/** `plitzi run backlog`: what is left to do — listed, or one item closed (`done <id>`). Kept by `run notice`. */
 export const runBacklog = (
   action: string | undefined,
   id: string | undefined,
-  options: RunCommandOptions & { note?: string; all?: boolean; on?: string }
+  options: RunCommandOptions & { note?: string; all?: boolean }
 ): Promise<void> =>
   act(
     options,
@@ -264,37 +462,17 @@ export const runBacklog = (
         };
       }
 
-      if (action === 'add') {
-        if (id === undefined) {
-          throw new RunRefusal('invalid', 'Say the item: plitzi run backlog add "what to do" [--on <where>]');
-        }
-
-        return {
-          added: await addBacklogItem(ctx, {
-            text: id,
-            by: await projectCaller(ctx, options),
-            ...(options.on ? { on: options.on } : {})
-          }),
-          items: await openBacklog(ctx.root)
-        };
-      }
-
       if (action !== undefined) {
         throw new RunRefusal(
           'invalid',
-          `"${action}" is no backlog action: plitzi run backlog, plitzi run backlog add "…", or plitzi run backlog done <id>`
+          `"${action}" is no backlog action: plitzi run backlog lists it, plitzi run backlog done <id> closes an item — an item is kept by plitzi run notice "…"`
         );
       }
 
       return { items: options.all === true ? await readBacklog(ctx.root) : await openBacklog(ctx.root) };
     },
-    ({ added, closed, items }: { added?: BacklogItem; closed?: BacklogItem; items: BacklogItem[] }) =>
+    ({ closed, items }: { closed?: BacklogItem; items: BacklogItem[] }) =>
       [
-        ...(added
-          ? [
-              `Kept ${added.id} in ${BACKLOG_FILE}: ${added.text} — a plan takes it up (a task's closes: ["${added.id}"])`
-            ]
-          : []),
         ...(closed ? [`Closed ${closed.id}: ${closed.text}${closed.done?.note ? ` — ${closed.done.note}` : ''}`] : []),
         items.length === 0
           ? `Nothing open in the project's backlog (${BACKLOG_FILE}).`

@@ -3,9 +3,8 @@ import { Option } from 'commander';
 import {
   claimCommand,
   taskAnswer,
-  taskAsk,
-  taskBlock,
-  taskCheckCommand,
+  taskCheck,
+  taskProve,
   taskComplete,
   taskFound,
   taskContextCommand,
@@ -16,12 +15,11 @@ import {
   taskLook,
   taskMessage,
   taskNext,
-  taskNote,
   taskProgress,
   taskPropose,
   taskProposals,
   taskReassign,
-  taskRequest,
+  taskProposeShared,
   taskEscalate,
   taskReview,
   taskRevert,
@@ -40,14 +38,14 @@ import {
   RUN_OPTION,
   TOKEN_OPTION
 } from './options';
-import { groupHelp } from './run';
-import { count, duration, FOLLOW_MS, fraction } from '../../../options';
+import { count, duration, durationText, FOLLOW_MS, fraction } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/core/model';
+import { groupHelp } from '../../register/helpGroups';
 import { withVisitorOptions } from '../../register/options';
 
 import type {
   AnswerOptions,
-  CheckCommandOptions,
+  ProveOptions,
   ClaimOptions,
   LookOptions,
   ProposeOptions,
@@ -55,38 +53,27 @@ import type {
   RunCommandOptions
 } from '..';
 import type { ExperienceFlags } from '../../../runs/report/experience';
+import type { HelpGroup } from '../../register/helpGroups';
 import type { TellOptions } from '../task/talk';
 import type { Command } from 'commander';
 
 /** Each command of `plitzi task`, by who runs it: an agent at its task, or the lead reviewing them. */
-const TASK_HELP: readonly { heading: string; commands: readonly string[] }[] = [
+const TASK_HELP: readonly HelpGroup[] = [
   {
     heading: 'Every agent, at its task:',
-    commands: [
-      'next',
-      'take',
-      'context',
-      'check',
-      'run',
-      'complete',
-      'progress',
-      'ask',
-      'tell',
-      'inbox',
-      'claim',
-      'wait',
-      'release',
-      'request',
-      'discard',
-      'propose',
-      'answer',
-      'block',
-      'note'
-    ]
+    commands: ['next', 'context', 'progress', 'check', 'run', 'complete', 'tell', 'inbox']
+  },
+  {
+    heading: 'Files and changes outside your task:',
+    commands: ['claim', 'discard', 'propose', 'answer']
   },
   {
     heading: "Reviewing — a tester's, the lead's, and a designer's look:",
-    commands: ['look', 'show', 'review', 'reassign', 'revert', 'unblock', 'message']
+    commands: ['look', 'show', 'prove', 'review']
+  },
+  {
+    heading: "The lead's:",
+    commands: ['message', 'unblock', 'reassign', 'revert']
   }
 ];
 
@@ -172,26 +159,6 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((options: RunCommandOptions & { fraction?: number; step?: string }) => taskProgress(options));
 
   taskGroup
-    .command('block')
-    .description('Something outside the plan stops it — said, never waited on silently')
-    .argument('[task]', 'The task — the token’s when left out')
-    .requiredOption('--reason <reason>', 'What stops it: "an API key is missing"')
-    .addOption(
-      new Option('--needs <who>', 'Who unblocks it: the lead (who asks the person when it must), or another task')
-        .choices(BLOCK_NEEDS)
-        .default('lead')
-    )
-    .option(...TOKEN_OPTION)
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action(
-      (
-        task: string | undefined,
-        options: RunCommandOptions & { reason: string; needs?: (typeof BLOCK_NEEDS)[number] }
-      ) => taskBlock(task, options)
-    );
-
-  taskGroup
     .command('unblock')
     .description('Lift a block — the lead’s or a person’s')
     .argument('<task>', 'The task')
@@ -201,45 +168,31 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((task: string, options: RunCommandOptions & { answer?: string }) => taskUnblock(task, options));
 
   taskGroup
-    .command('note')
-    .alias('handoff')
-    .description('What whoever comes next must know: a note, a handoff')
-    .argument('<text>', 'The note')
-    .option('--task <task>', 'The task — the token’s when left out')
-    .option(...TOKEN_OPTION)
-    .option(...RUN_OPTION)
-    .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { task?: string }) => taskNote(options.task, text, options));
-
-  taskGroup
-    .command('request')
-    .description('Ask for a change in a shared file: change it in your copy too; one integration task applies them all')
-    .argument('<file>', 'The shared file')
-    .requiredOption('--summary <text>', 'The change and why: "a language tag on cards"')
-    .option('--used-in <files>', 'Where you use it, comma-separated')
-    .option('--blocking', 'It cannot wait: its integration task is made now, and this task waits for it')
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions & { summary: string; usedIn?: string; blocking?: boolean }) =>
-      taskRequest(file, options)
-    );
-
-  taskGroup
     .command('propose')
     .description(
-      'Ask another task to agree to a change — to make it, or to accept it in its work; --wait for the answer. With no task, the proposals between tasks and their answers — your task’s, with its token'
+      'Ask for a change outside your files: of another task, to make it or to accept it in its work (--wait for the answer); of a shared file (--file), which one integration task applies. With neither, the proposals between tasks and their answers — your task’s, with its token'
     )
-    .argument('[task]', 'The task asked')
+    .argument('[task]', 'The task asked — none with --file')
     .option('--change <change>', 'The change, specifically: "the card takes a `lang` prop"')
-    .option('--about <file>', 'The file it is about')
     .option('--why <why>', 'Why this task needs it')
-    .option('--wait', 'Wait for the answer; go on with what does not need it')
-    .option('--follow', 'Stay until the answer comes, giving the task’s sign of life meanwhile')
+    .option('--about <file>', 'With a task: the file it is about')
+    .option('--wait', 'With a task: wait for the answer; go on with what does not need it')
+    .option('--follow', 'With a task: stay until the answer comes, giving the task’s sign of life meanwhile')
+    .option(
+      '--file <file>',
+      'A shared file the change is to, no task asked: change it in your copy too — one integration task applies every change asked of it'
+    )
+    .option('--used-in <files>', 'With --file: where you use it, comma-separated')
+    .option('--blocking', 'With --file: it cannot wait — its integration task is made now, and this task waits for it')
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((task: string | undefined, options: ProposeOptions) =>
-      task === undefined ? taskProposals(options) : taskPropose(task, options)
+      options.file !== undefined
+        ? taskProposeShared(task, options)
+        : task === undefined
+          ? taskProposals(options)
+          : taskPropose(task, options)
     );
 
   taskGroup
@@ -272,22 +225,30 @@ export const registerTaskGroup = (program: Command): Command => {
       '--fresh',
       'Run it all, though it passed already and nothing changed since — lint too, its kept answers dropped'
     )
-    .option(
-      '--tasks <stage.json>',
-      'At a research card: the stage you would propose, seen as the lead would stack it — each line run once on the run’s work'
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions & { acceptance?: boolean; fix?: boolean; fresh?: boolean }) =>
+      taskCheck(options)
+    );
+
+  taskGroup
+    .command('prove')
+    .description(
+      'What a task’s acceptance proves — a reviewer’s: each line beside the run before the task (--before), or on a mutant of its copy (--mutate), one way at a time'
     )
+    .argument('[task]', 'The task — a review’s — your own when left out')
     .option(
       '--before',
-      'Its acceptance run on the run before it too — the approved work without it — line by line: a line that fails there and passes with it proves the change; one passing on both proves nothing (a test’s or a bug’s fix, reviewed)'
+      'Each line run on the run before it too — the approved work without it: a line that fails there and passes with it proves the change; one passing on both proves nothing (a test’s or a bug’s fix, reviewed)'
     )
     .option(...MUTATE_OPTIONS[0])
     .option(...MUTATE_OPTIONS[1])
     .option(...MUTATE_OPTIONS[2])
     .option(...MUTATE_OPTIONS[3])
-    .argument('[task]', 'With --before or --mutate: the task to check — a review’s — your own when left out')
     .option(...TOKEN_OPTION)
+    .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((named: string | undefined, options: CheckCommandOptions) => taskCheckCommand(named, options));
+    .action((named: string | undefined, options: ProveOptions) => taskProve(named, options));
 
   taskGroup
     .command('run')
@@ -315,7 +276,7 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(
       '--tasks <stage.json>',
-      'With --found: its result, the tasks it makes — a stage, as `run extend` takes, each task with its "findings"'
+      'With --found: its result, the tasks it makes — a stage, as `run open` stacks, each task with its "findings"'
     )
     .option(
       '--known-failure <why>',
@@ -354,35 +315,41 @@ export const registerTaskGroup = (program: Command): Command => {
   taskGroup
     .command('tell')
     .description(
-      'Tell the lead what it should know — a finding, a choice you made, a risk — when no answer is needed; --standing: where your task stands, when the lead asks'
+      'Tell the run what it should know, one kind at a time: news for the lead (a finding, a choice, a risk), a question (--ask), what stops your task (--blocked), a note for whoever takes it next (--handoff), or where it stands (--standing)'
     )
-    .argument('[text]', 'What to tell — with --standing, what you add to it')
+    .argument('[text]', 'What to say — with --standing, what you add to it')
     .option(
       '--about <task>',
-      'The task it is about — with no task in hand (a reviewer, a scout), said by your --agent name'
+      'The task it is about — with no task in hand (a reviewer, a scout), said by your --agent name; the task blocked or handed off'
     )
-    .option('--standing', 'Where your task stands, as the lead asked: --fraction, --eta, --done, --left and --blocked')
+    .option('--ask', 'A question for the lead: its answer comes with your next command')
+    .option('--follow', 'With --ask: stay until the lead answers, giving the task’s sign of life meanwhile')
+    .option(
+      '--timeout <duration>',
+      `With --ask --follow: give up after this long, said (90s, 8m, 1h — ${durationText(FOLLOW_MS)} when left out)`,
+      duration
+    )
+    .option(
+      '--blocked',
+      'Something outside the plan stops the task: it is let go until unblocked (plitzi task unblock)'
+    )
+    .addOption(
+      new Option(
+        '--needs <who>',
+        'With --blocked: who unblocks it — the lead (who asks the person when it must), or another task'
+      ).choices(BLOCK_NEEDS)
+    )
+    .option('--handoff', 'What whoever takes the task next must know: read in its plitzi task context')
+    .option('--standing', 'Where your task stands, as the lead asked: --fraction, --eta, --done, --left and --held-by')
     .option('--fraction <n>', 'With --standing: how much is done, between 0 and 1', fraction)
     .option('--eta <minutes>', 'With --standing: the minutes it still takes', count)
     .option('--done <text>', 'With --standing: what is done')
     .option('--left <text>', 'With --standing: what is left')
-    .option('--blocked <text>', 'With --standing: what holds you, if something does')
+    .option('--held-by <text>', 'With --standing: what holds you, if something does')
     .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((text: string | undefined, options: TellOptions) => taskTell(text ?? '', options));
-
-  taskGroup
-    .command('ask')
-    .description('Ask the lead — stuck or unsure: the answer comes with your next command, or --follow for it')
-    .argument('<text>', 'The question')
-    .option('--follow', 'Stay until the lead answers, giving the task’s sign of life meanwhile')
-    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, FOLLOW_MS)
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
-      taskAsk(text, options)
-    );
 
   taskGroup
     .command('message')
@@ -413,10 +380,6 @@ export const registerTaskGroup = (program: Command): Command => {
       .argument(
         '[paths...]',
         'Its pages: those its files are drawn at when left out — a path with its own visitor and status in quotes: "/moderation --as juno --status 403"'
-      )
-      .option(
-        '--fresh',
-        'Look anew, though it was looked at as asked and nothing changed since (it says that look again)'
       )
       .option('--click <id>', 'Click an element once each page settles: the state it opens, looked at too')
       .option(

@@ -87,7 +87,7 @@ export const compareText = (compare: CompareReport): string[] => {
     ...(compare.keptAt
       ? [
           chalk.dim(
-            `  as the run kept it at ${compare.keptAt.slice(0, 16).replace('T', ' ')} UTC (plitzi run reference) — --live measures the site as it is now`
+            `  as the run kept it at ${compare.keptAt.slice(0, 16).replace('T', ' ')} UTC (plitzi run reference) — --fresh measures the site as it is now`
           )
         ]
       : []),
@@ -170,7 +170,7 @@ export const compareText = (compare: CompareReport): string[] => {
 const CLIP_MARGIN = 40;
 
 /**
- * The comparison's pictures cut to one section: ours where it is, theirs where the alignment found it — what a `--clip`
+ * The comparison's pictures cut to one section: ours where it is, theirs where the alignment found it — what a `--within`
  * asks of a comparison. They were the whole page, 12,000 px tall, and every designer cropped them by hand.
  */
 export const cropToSection = async (
@@ -264,7 +264,7 @@ const fileOf = (part: string): string => part.replace(/[^a-z0-9]+/gi, '-').repla
 /**
  * The parts of this page beside the same parts of another server of the project — the run before a task — each
  * pictured alone, by the element both have: no page aligned, no words read. A look at a task compares the parts it
- * built; that nothing else moved is read, not pictured (`page same`). Each side is loaded once for all its parts:
+ * built; that nothing else moved is read, not pictured (`drawnSame`). Each side is loaded once for all its parts:
  * a part a process, a run's six sections of the home loaded it 24 times a look (20 s).
  */
 export const compareLocalParts = async (
@@ -411,7 +411,7 @@ export const compareWith = async (
   base: string,
   /** The page as the run kept it: measured against, rather than the site asked now. */
   kept?: { png: Uint8Array; page: KeptPage },
-  /** `false` with `--clip <section>`: the one section is cut, not the page's most changed ones (written unasked before). */
+  /** `false` with `--within <section>`: the one section is cut, not the page's most changed ones (written unasked before). */
   { cutSections = true }: { cutSections?: boolean } = {}
 ): Promise<CompareReport | { problem: string }> => {
   // Their page in the theme ours was painted in: two schemes are not a difference worth reporting. One served on this

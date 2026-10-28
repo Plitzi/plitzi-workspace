@@ -24,7 +24,7 @@ import type { LoadedRun, RunContext } from '../run';
  * a file, when it cannot wait.
  */
 
-/** `plitzi task request`: why a task wants a change in a shared file, and where it uses it; `--blocking` cannot wait. */
+/** `plitzi task propose --file`: why a task wants a change in a shared file, and where it uses it; `--blocking` cannot wait. */
 export const requestShared = async (
   ctx: RunContext,
   runId: string,

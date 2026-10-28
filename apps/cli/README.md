@@ -31,7 +31,7 @@ plitzi run finish --apply                      # yours: the team's work into the
   address). So `--json`, where a command has it, prints one object on one line and nothing more — or, for one that
   stays (`space watch`, `space activity --follow`), one object a line as each happens.
 - **It exits 1 when it did not do what it was asked**, with why in red; a check that found something wrong exits 1 too.
-  A page command (`page check`, `page measure`, `page same`) that could not read what it was asked — nothing served, a
+  A page command (`page check`, `page measure`, `page play`) that could not read what it was asked — nothing served, a
   browser that did not start, the element of the page it compares to not there — exits 2: no page was found wrong, and
   a run takes such an acceptance line as the lead's to amend, not the agent's work.
 - **A value that is not one is refused**, saying what the flag takes — a width out of range, a scheme that is not
@@ -160,14 +160,14 @@ when an install fails the CLI says which setting names it.
 
 ## The folders that are not the source
 
-| Folder            | What it is                                                                                                                                                                                                                                                                                                                                                                                                                             | In git |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| `public/`         | Served to anyone who asks, as it is — pictures, a favicon, and in client mode the data the browser fetches (`public/data/`). **It is on the internet**: never a secret, a key, a private document or data only some visitors may read                                                                                                                                                                                                  | yes    |
-| `src/data/`       | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read                                                                                                                                                                       | yes    |
-| `src/functions/`  | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot                                                                                                                                                                                                                                                                                                                                | yes    |
-| `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `page check`, `space fix` and `space push` know every element type each provides                                                                                                                                                             | yes    |
-| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing — but `tmp/plitzi-runs/`, the run of agents going (`plitzi run`): its backups and approved work, never rebuilt; removing it loses them, never the project                                                                                                     | no     |
-| `state/`          | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database)                                                                                                         | no     |
+| Folder            | What it is                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | In git |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `public/`         | Served to anyone who asks, as it is — pictures, a favicon, and in client mode the data the browser fetches (`public/data/`). **It is on the internet**: never a secret, a key, a private document or data only some visitors may read                                                                                                                                                                                                                                                                | yes    |
+| `src/data/`       | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read                                                                                                                                                                                                                                     | yes    |
+| `src/functions/`  | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot                                                                                                                                                                                                                                                                                                                                                                                              | yes    |
+| `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `page check`, `space fix` and `space push` know every element type each provides                                                                                                                                                                                                                           | yes    |
+| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing — but `tmp/plitzi-runs/`, the run of agents going (`plitzi run`): its backups and approved work, never rebuilt; removing it loses them, never the project                                                                                                                        | no     |
+| `state/`          | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database)                                                                                                                                                                       | no     |
 | `.plitzi/`        | The CLI's part of the project, in one folder: what authors the space and the compiler options (below), and what it records — the space it came from (`space.json`), the functions' working copy, the files `create` wrote (`scaffold.json`), the team of its runs (`team.json`) — what `space pull`, `space push` and `upgrade` stand on; and what runs and agents reported (`plitzi-reports/`, below). A project an older CLI laid out has a `plitzi/` beside it: `plitzi doctor --fix` moves it in | yes    |
 
 **`.plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `.plitzi/` holds `author.ts`, the types plugins import
@@ -230,11 +230,11 @@ plitzi page play /pricing --steps "click next; click next; click previous" --rea
 plitzi page shot /pricing --compare https://example.com --click "menu-toggle => .menu-button" --width 390   # both screens once clicked
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
-plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
+plitzi page shot / --within machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
 plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
 plitzi page shot / --steps "hover home-cta; wait 400; shot hovered"   # a hover, pictured
 plitzi page shot /settings --steps 'type [aria-label="Search the site"] lamps; drag volume-handle -80; shot'   # a field, a range's handle
-plitzi page shot /design --clip brand-mark --scale 3   # a small drawing up close, cell by cell
+plitzi page shot /design --within brand-mark --scale 3   # a small drawing up close, cell by cell
 plitzi page measure /r/demo chat-line --steps 'type chat-input "hi; there"; press Enter' --only box   # what only a visitor's steps make
 plitzi page outline /sign-in --find wordmark   # the elements a word names, the whole page searched
 plitzi page play / --steps "click genre-chip; goto /rooms" --read site-header   # where each step took the page, said
@@ -300,13 +300,13 @@ the element's report says the text it shows.
 default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
 full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
 waiting for the scroll shown as it ends, a sheet pinned over it whole — in `tmp/shots/` unless `--out` says where, named
-`<page>[-<clip>]-<width>-<scheme>.png`; one taller than three screens is also written in parts (`-part-1.png`, …), each
-readable at its size. A `--clip` is pictured without what is pinned over it (a sticky header). Any one picture (a part with
-`--clip`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
+`<page>[-<part>]-<width>-<scheme>.png`; one taller than three screens is also written in parts (`-part-1.png`, …), each
+readable at its size. A part pictured alone (`--within`) is pictured without what is pinned over it (a sticky header). Any one picture (a part
+with `--within`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
 `--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
 
-Every page command — `check`, `measure`, `play`, `outline`, `same`, `shot` — and `task look` reads a page as one
-visitor, from the same flags. A page is its path, one word from `/` — a visitor and options go outside it, and a path,
+Every page command — `check`, `measure`, `play`, `outline`, `shot` — and `task look` reads a page as one
+visitor, from the same flags, each meaning the same everywhere. A page is its path, one word from `/` — a visitor and options go outside it, and a path,
 width or scheme that came with other words in one value (`'/explore --as dax'`, `--width "390 dark"`) is refused saying
 where each goes. A page the space authors for members (its audience members or gated, or permissions of its own) or
 that sends a guest away is read as the project's account (`PLITZI_CHECK_USER`), said; `--as <user>` signs in as another first (the password in `PLITZI_CHECK_PASSWORD`), `--guest` keeps the guest's
@@ -316,7 +316,8 @@ the page sees it arrive, join their members or send; `--presence` makes it take 
 refuse what a visitor's might: `--clock <instant>` holds the page's clock from its first script, `--block <text>` fails
 each request whose address holds it (a player, a font), `--hold <text>` never answers it (a loading state; whether a
 script holds the page's load — `page play` ends saying when the page loaded, or that its load had not come), `--autoplay refused` refuses media with sound until a press,
-`--storage refused` throws on `localStorage` and `sessionStorage`. `--url` reads the project where it is served, when
+`--storage refused` throws on `localStorage` and `sessionStorage`. `--fresh` reads anew whatever an earlier call kept — the
+other site's page, the space authored, the run's reference, a task's last look. `--url` reads the project where it is served, when
 not by `npm start` here. `--click` in `page shot` takes an element's name, a tag no element is named by
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
 space outside its quotes and brackets (`[aria-label="Search the site"]` is one), or quoted whole — `type ".panel textarea" hola`;
@@ -331,15 +332,12 @@ an open drawer, a panel in it — with no sections or words read.
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
-With `--clip <section>` the report keeps that one section's difference (both pages are still compared whole), and the
+With `--within <section>` the report keeps that one section's difference (both pages are still compared whole), and the
 picture `-o` writes is that section — the section by its id (`pricing`), its element's (`home-pricing`) or as the
 report names it (`section#home-pricing`); a section that lined up with a part of the other page that is not it (90% or
 more differs, or farther than a screen) is said, never read as its figure. Beside a page of this machine — the run
 before a task — both sides are held to what the project changed: motion reduced, and another site's pictures stood in
 for by a colour their address gives them.
-
-`page same … --except <elements>` leaves those out — a task's own parts — and reads positions from each element's parent,
-so a part that grew does not move what follows it: what is read is that nothing else moved.
 
 `page check --stand-ins` answers every picture of another site with a colour of its own: a check of what the project
 changed, not of a third party's CDN (a look's check uses it).
@@ -413,11 +411,12 @@ dm-input hi`. Both reach the project's own server, never `--compare`'s site. The
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
 they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
 
-`page same [paths…] --url <origin> --compare <origin>` says whether pages draw the same on two servers of the project —
-every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not pictured —
-and, where not, the first element that differs; exit 1 then. A look at a task reads with it the pages only a shared
-file of the task reaches, against the run before it, and pictures only those that differ; a local address reads alike
-whatever port each server was on. Beside the project's other server, `page shot --compare <local> --clip a,b,c`
+A look at a task reads the pages only a shared file of the task reaches on both servers — the task's copy and the run
+before it — every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not
+pictured: it pictures only those that differ, and names the first element that differs and the innermost inside it that
+does too (what grew, not only what holds it); a local address reads alike whatever port each server was on, positions
+are read from each element's parent, and the task's own parts are left out — what is read is that nothing else moved.
+Beside the project's other server, `page shot --compare <local> --within a,b,c`
 compares several parts on pages loaded once a side — a look compares a task's parts so, one call a page and a view (six
 sections of a home: 15.3 s a part at a time, 4 s together).
 
@@ -558,21 +557,21 @@ a space reaches thousands of lines. Each finding has a stable `code`, a severity
 write instead, and `docs`: the reference of the project's skills that explains the practice. A project `create` writes
 has it as `npm run lint:space`.
 
-| Code                       | What it finds                                                                                                                                                                                               |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unused-file`              | a file of `src/space/` nothing `src/space/index.ts` imports reaches                                                                                                                                         |
-| `file-too-long`            | a file of more than 400 non-blank lines: split it by what changes together                                                                                                                                  |
-| `pages-in-one-file`        | two pages or more (past 40 lines) written in `index.ts`, which only assembles the space; three or more (past 150 lines) in any other file — one file per page, or per page family, under `src/space/pages/` |
-| `inline-records`           | ten or more records written inline that a page renders (`.map`ped, or a list's `items`): rows of data for `src/data/` (`public/data/` without a server), read by a provider into one `list`                 |
-| `repeated-css`             | the same CSS — three declarations or more, in any order or spelling — written three times: one class                                                                                                        |
-| `special-case-in-map`      | a `map` that singles out a row by its `id`, `key`, `slug`, `name`, `title` or `label`: the difference belongs in the row's data                                                                             |
-| `colour-not-token`         | a hex, `rgb()`/`hsl()`/`oklch()`… or a named colour where a colour is all a property takes — outside the declared tokens (`variables`, `light`/`dark`), anchors, masks, markup and URLs                     |
-| `positional-id`            | an id minted for an element nobody named — `container-45`, `heading-a7k2`                                                                                                                                   |
+| Code                       | What it finds                                                                                                                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unused-file`              | a file of `src/space/` nothing `src/space/index.ts` imports reaches                                                                                                                                               |
+| `file-too-long`            | a file of more than 400 non-blank lines: split it by what changes together                                                                                                                                        |
+| `pages-in-one-file`        | two pages or more (past 40 lines) written in `index.ts`, which only assembles the space; three or more (past 150 lines) in any other file — one file per page, or per page family, under `src/space/pages/`       |
+| `inline-records`           | ten or more records written inline that a page renders (`.map`ped, or a list's `items`): rows of data for `src/data/` (`public/data/` without a server), read by a provider into one `list`                       |
+| `repeated-css`             | the same CSS — three declarations or more, in any order or spelling — written three times: one class                                                                                                              |
+| `special-case-in-map`      | a `map` that singles out a row by its `id`, `key`, `slug`, `name`, `title` or `label`: the difference belongs in the row's data                                                                                   |
+| `colour-not-token`         | a hex, `rgb()`/`hsl()`/`oklch()`… or a named colour where a colour is all a property takes — outside the declared tokens (`variables`, `light`/`dark`), anchors, masks, markup and URLs                           |
+| `positional-id`            | an id minted for an element nobody named — `container-45`, `heading-a7k2`                                                                                                                                         |
 | `selector-instance`        | a test's (`*.spec.ts`, `*.test.ts`) selector naming a component's instance by `data-plitzi-el`, which finds nothing — an instance's name is on its root as `data-plitzi-instance`: `handles.element(id).selector` |
-| `disable-names-suggestion` | a `plitzi-lint-disable` comment naming a suggestion of authoring's, which a comment does not silence: `quiet: ['<code>']` on its element                                                                    |
-| `space-does-not-author`    | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why                                                                                                  |
-| `project-layout`           | error: the project is laid out where its server and `npm run author` refuse to start — one line, each error `doctor`'s to say; authoring's suggestions are read once they are fixed                         |
-| `source-unreadable`        | error: the source could not be read (no TypeScript installed, a rule that could not finish)                                                                                                                 |
+| `disable-names-suggestion` | a `plitzi-lint-disable` comment naming a suggestion of authoring's, which a comment does not silence: `quiet: ['<code>']` on its element                                                                          |
+| `space-does-not-author`    | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why                                                                                                        |
+| `project-layout`           | error: the project is laid out where its server and `npm run author` refuse to start — one line, each error `doctor`'s to say; authoring's suggestions are read once they are fixed                               |
+| `source-unreadable`        | error: the source could not be read (no TypeScript installed, a rule that could not finish)                                                                                                                       |
 
 Beside them, every suggestion authoring makes about the space it authors to (`authorSpace(…).suggestions`) — whatever
 its code, the day authoring adds it — as a warning at the line that wrote its element; `plitzi explain <code>` says what
@@ -653,12 +652,12 @@ plitzi task next --role designer --agent design-1   # one started by hand names 
 plitzi task next t-home --token <yours> --json      # its files locked, its copy (which says the task, to you alone)
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task check --token …                # what complete holds the copy to, run now: nothing changes (--fix: lint and format your files first)
-plitzi task check t-home --before          # its acceptance on the run before it and on its copy: which line proves the change, which proves nothing
-plitzi task check t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to "slice(0, 7)" --line 1   # its acceptance (line 1) on a mutant of the copy: which line catches the change
+plitzi task prove t-home --before          # its acceptance on the run before it and on its copy: which line proves the change, which proves nothing
+plitzi task prove t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to "slice(0, 7)" --line 1   # its acceptance (line 1) on a mutant of the copy: which line catches the change
 plitzi task run "npx playwright test visual/room.spec.ts"   # a command of your own: a suite in its turn on the machine, its output in a file, what failed said
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
-plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's
+plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's (no run open: the backlog's)
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch              # ends the moment something needs the lead: run it in the background
@@ -683,8 +682,8 @@ and one run at a time** in a project: a second is refused, naming the first.
 
 - **One agent per file**, the owners read off the imports: a page owns the modules only it imports; what several import
   (tokens, classes, a layout, a component) and every entry are shared — taken by turns (`task claim`, `--wait` for one) or,
-  when several tasks want one at once, changed in each copy as a **request** that one integration task, made by the CLI,
-  applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
+  when several tasks want one at once, changed in each copy and asked of the file (`task propose --file <file> --change "…"`), which one integration task, made by
+  the CLI, applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
   by turns arrives with what the run approved since the copy was made, and `task claim <file> --wait --follow` stays
   until it does.
 - **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; past four agents, leads
@@ -692,12 +691,13 @@ and one run at a time** in a project: a second is refused, naming the first.
   when the reviews queue up, and stopping once the queue is empty — take each review from one queue (`task next --role
 lead`) and do nothing else; tasks name the role that
   works them (`"role": "designer"`, a developer's when left out) and `task next --role` picks by it. The lead and the
-  agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
+  agents talk while they work: `task tell` (an agent's word — news, a question with `--ask`, what stops its task with
+  `--blocked`, a note for the next with `--handoff`, where it stands with `--standing`), `task message
 <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
 inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
   holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one.
 - **Every card on one board, reviewed alike:** a card's `review` names the roles that review it, in order (`["designer",
-  "tester"]`; none: the tester, the lead with no tester). Each step is taken by one agent of its role that worked neither
+"tester"]`; none: the tester, the lead with no tester). Each step is taken by one agent of its role that worked neither
   the card nor what it tests — 8 minutes its (15, its first review, which holds its reading), then another's — and its
   approval hands the card, with its notes, to the next step; the last approves it. Changes start the round again from the
   first step, offered first to who said each step before. A step nobody took in 5 minutes is the next step's reviewer's
@@ -733,10 +733,10 @@ project|run|<file>`, then `run resolve <run>`, no file, goes on).
 - **Approved work merges into the run's**, never into the project. The project receives one merge, `run finish --apply`,
   confirmed by a person typing the run's name in their terminal, once the lead closed the run with its report
   (`run report --summary <file>`): written file by file as one transaction, with a backup of everything it overwrites.
-- **What the person does, and does not:** the final merge, an abort, a restore, a purge, a forced stop and taking a run
+- **What the person does, and does not:** the final merge, an abort (which removes the run, its backups too), a restore, a forced stop and taking a run
   over are yours — and only yours because you keep them so. An agent with a shell can give itself a terminal and type a
-  run's name, so deny those commands to the agents in the harness (`run finish --apply`, `run abort`, `run purge`, `run
-restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
+  run's name, so deny those commands to the agents in the harness (`run finish --apply`, `run abort`, `run show
+--restore`, `run finish --lead-finishes`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
   `.claude/settings.json`). Type a run's name only for a command you ran yourself and read, never because an agent or
   the lead asks you to in a chat. Do not edit `tmp/plitzi-runs/` by hand (a broken record stops the run, said by name),
   nor delete a task's copy. To upgrade Plitzi while a run is open: `plitzi run upgrade` — it stops the run gently,
@@ -892,7 +892,7 @@ did you mean `index.ts`, `src/plugins/`? — and one that differs only in case s
 | `layout`    | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`, the `tmp/space.json` an older `src/main.ts` re-read the space from); every part where the server, `npm run author` and the CLI's checks read it (`PROJECT_LAYOUT_CODES`, above)                                                                                                             |
 | `packages`  | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts, every folder `start:dev` watches, and a server's scripts reading `.env` (`--env-file-if-exists`; a watched one by the preload, never Node's flag); one lockfile |
 | `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); one it no longer writes, left over (`src/env.ts`); the scaffold record                                                                                                                                                                                                                                                                                                                                               |
-| `config`    | `tsconfig.json` reads `src/` and `.plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key; a check password with no account beside it (`check-user-missing`)                                                                                                                                                                             |
+| `config`    | `tsconfig.json` reads `src/` and `.plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key; a check password with no account beside it (`check-user-missing`)                                                                                                          |
 | `sources`   | what Node runs as written — `src/main.ts`, `src/config/`, `src/actions/`, `src/space/`, `src/runtime/`, `.plitzi/author.ts`, the plugins' declarations, and all they import: every relative import a file that is there, with its extension; JSON imported `with { type: 'json' }`; no JSX; every package declared (a devDependency, in what production runs, is said); what the server loads by name exported (`space`, `actions`, the runtime's default)                                                                           |
 | `plugins`   | each folder of `src/plugins/` the server can build: its entry builds and exports its component, its packages declared; its `declaration.ts` loads and its `type` is the folder's (`StatCard` → `statCard`); its `Settings.tsx`, the panel the builder edits it with, written and passed as `pluginSettings` — even with nothing to set                                                                                                                                                                                               |
 | `data`      | every JSON file of `src/data/` and `public/data/` parses — what the server answers with and `space push` sends                                                                                                                                                                                                                                                                                                                                                                                                                       |

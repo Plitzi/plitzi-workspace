@@ -113,6 +113,7 @@ export const conditionsOf = (options: ConditionOptions): BrowserConditions => ({
 export const visitorArgs = (options: Omit<VisitorOptions, 'as' | 'guest' | 'url'>): string[] => [
   ...(options.timezone ? ['--timezone', options.timezone] : []),
   ...(options.presence ? ['--presence'] : []),
+  ...(options.fresh ? ['--fresh'] : []),
   ...(options.clock === undefined ? [] : ['--clock', new Date(options.clock).toISOString()]),
   ...(options.block ?? []).flatMap(text => ['--block', text]),
   ...(options.hold ?? []).flatMap(text => ['--hold', text]),
@@ -129,12 +130,14 @@ export interface VisitorOptions extends ConditionOptions {
   timezone?: string;
   presence?: boolean;
   url?: string;
+  /** Nothing an earlier call kept is read again: the other site's page, the space authored, the last look. */
+  fresh?: boolean;
 }
 
 /**
  * The visitor a page command reads its page as — the account, the time zone, the realtime presence, the browser's
  * conditions and where the project is served — one group, the same on every command that opens a page: `page check`
- * once took no --clock, `page outline` no --timezone, `page same` no --as.
+ * once took no --clock, `page outline` no --timezone.
  */
 export const withVisitorOptions = (command: Command, { url = true }: { url?: boolean } = {}): Command => {
   command
@@ -155,6 +158,10 @@ export const withVisitorOptions = (command: Command, { url = true }: { url?: boo
     .option(
       '--presence',
       'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
+    )
+    .option(
+      '--fresh',
+      'Nothing an earlier call kept is read again — the other site’s page, the space authored, the run’s reference, a task’s last look: all read anew'
     );
   if (url) {
     command.option('--url <origin>', URL_OPTION);

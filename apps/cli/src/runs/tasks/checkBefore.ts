@@ -15,7 +15,7 @@ import type { Acceptance, AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
 
 /**
- * `plitzi task check <task> --before`: its acceptance run on its copy and on the run before it — the run's approved
+ * `plitzi task prove <task> --before`: its acceptance run on its copy and on the run before it — the run's approved
  * work without it — line by line, as `task look --before` sets its pages beside the run before. A line proves the
  * change when it fails without it and passes with it; one that passes on both proves nothing of it. A run's tester,
  * reviewing a test's fix, copied the spec without the new line into its scratch with a playwright config of its own to
@@ -38,7 +38,7 @@ export const linesOf = <T extends { id: string; acceptance: readonly Acceptance[
   if (missing.length > 0) {
     throw new RunRefusal(
       'invalid',
-      `${task.id}'s acceptance has ${String(task.acceptance.length)} lines: plitzi task check ${task.id} --line ${missing.join(', ')} names none — ${task.acceptance.map((line, index) => `${String(index + 1)} ${acceptanceText(line)}`).join('; ')}`,
+      `${task.id}'s acceptance has ${String(task.acceptance.length)} lines: plitzi task prove ${task.id} --line ${missing.join(', ')} names none — ${task.acceptance.map((line, index) => `${String(index + 1)} ${acceptanceText(line)}`).join('; ')}`,
       { task: task.id }
     );
   }

@@ -70,7 +70,7 @@ export const overrunFindings = (tasks: readonly TaskReport[], log: readonly LogE
         ...(cut ? [] : ['never split, narrowed nor reassigned while it ran'])
       ],
       times: 1,
-      fix: `at each ${String(WORK_LIMIT_MINUTES)} minutes the lead asks where it stands (task message @<agent> --standing) and decides: on, narrowed, the rest a task of its own (run extend), or reassigned — a bug found inside it is another task`,
+      fix: `at each ${String(WORK_LIMIT_MINUTES)} minutes the lead asks where it stands (task message @<agent> --standing) and decides: on, narrowed, the rest a task of its own (run open <stage>), or reassigned — a bug found inside it is another task`,
       subject: `over-estimate:${task.id}`,
       task: task.id
     };

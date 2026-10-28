@@ -149,7 +149,7 @@ export interface Monitored {
   /** Every run of the project, this one among them: which is shown, and that there are others. */
   runs: { runId: string; status: string }[];
   /**
-   * The stage the run is at, when stages were stacked on it (`run extend`): its name, its goal — a stage stacked before
+   * The stage the run is at, when stages were stacked on it (`run open <stage>` on the open run): its name, its goal — a stage stacked before
    * the log kept it has none, and the run's whole goal is said — and how many stages the run has, its first included.
    */
   stage?: { name: string; goal?: string; of: number };

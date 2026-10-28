@@ -99,7 +99,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     },
     answer =>
       answer.kind === 'no-page'
-        ? `${taskId} changes no page: ${list(answer.files)} ${answer.files.length === 1 ? 'is' : 'are'} drawn by none, and its acceptance checks none — nothing to picture. What reviews it is its acceptance: plitzi task check ${taskId} --before runs each line before the task and with it, and says what it proves. To picture a page all the same, name it: plitzi task look ${taskId} /`
+        ? `${taskId} changes no page: ${list(answer.files)} ${answer.files.length === 1 ? 'is' : 'are'} drawn by none, and its acceptance checks none — nothing to picture. What reviews it is its acceptance: plitzi task prove ${taskId} --before runs each line before the task and with it, and says what it proves. To picture a page all the same, name it: plitzi task look ${taskId} /`
         : answer.kind === 'again'
           ? [
               chalk.dim(

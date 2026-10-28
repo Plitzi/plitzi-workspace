@@ -13,10 +13,10 @@ import { upgrade, UPGRADE_PARTS } from './commands/project/upgrade';
 import { verify } from './commands/project/verify';
 import { registerElement } from './commands/register/element';
 import { registerFunctions } from './commands/register/functions';
+import { groupHelp } from './commands/register/helpGroups';
 import { API_OPTION, DRY_RUN_OPTION } from './commands/register/options';
 import { registerPage } from './commands/register/page';
 import { registerRuns } from './commands/runs/register';
-import { groupHelp } from './commands/runs/register/run';
 import addRuntime from './commands/runtime/addRuntime';
 import {
   powerRuntime,
@@ -30,6 +30,7 @@ import packSourceCommand from './commands/source/packSource';
 import { activity } from './commands/space/activity';
 import { explainCommand } from './commands/space/explain';
 import { fix } from './commands/space/fix';
+import { spaceImpact, spaceOverview } from './commands/space/overview';
 import { pull, PULL_PARTS, pullParts } from './commands/space/pull';
 import { push, PUSH_PARTS } from './commands/space/push';
 import { watchPass, watchSpace } from './commands/space/watch';
@@ -51,6 +52,7 @@ import type { CreatePluginOptions } from './commands/project/createPlugin';
 import type { DataDescribeOptions } from './commands/project/data';
 import type { UpgradeOptions } from './commands/project/upgrade';
 import type { VerifyOptions } from './commands/project/verify';
+import type { RunCommandOptions } from './commands/runs';
 import type { AddRuntimeOptions } from './commands/runtime/addRuntime';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime/runtime';
 import type { ServerResetOptions, ServerStopOptions } from './commands/server/server';
@@ -469,6 +471,22 @@ export const buildProgram = (): Command => {
   spaceGroup.command('watch-pass', { hidden: true }).action(() => watchPass());
 
   spaceGroup
+    .command('overview')
+    .description(
+      'Who owns which file, read off the imports: each page, layout, component and plugin, and what they share'
+    )
+    .argument('[unit]', 'One unit whole — every file it owns and shares: src/space/pages/room.ts, src/plugins/Chat/')
+    .option('--json', 'One object, for a tool or an agent')
+    .action((unit: string | undefined, options: RunCommandOptions) => spaceOverview(unit, options));
+
+  spaceGroup
+    .command('impact')
+    .description('What depends on a file, all the way back: the files that import it and the units it touches')
+    .argument('<file>', 'The project file')
+    .option('--json', 'One object, for a tool or an agent')
+    .action((file: string, options: RunCommandOptions) => spaceImpact(file, options));
+
+  spaceGroup
     .command('activity')
     .description(
       'What happened on the space: the draft changed (a person in the builder, an agent, the autofix), a version went out, an action failed — your own pushes left out'
@@ -557,31 +575,27 @@ export const buildProgram = (): Command => {
 
   registerPage(pageGroup);
   registerElement(elementGroup);
-  registerRuns(program, spaceGroup);
+  registerRuns(program);
 
-  // What a person new to Plitzi reads first: the commands that make and change a project, those of Plitzi's cloud, and
-  // apart — never in the way of the rest — the multi-agent ones, which only a team of agents asked for uses.
+  // What a person new to Plitzi reads first, by what it is for — as the commands' folders are: the project and its
+  // space, keeping the project whole, its own code on the platform, the account, and apart — never in the way of the
+  // rest — the multi-agent ones, which only a team of agents asked for uses.
   groupHelp(program, [
     {
       heading: 'Make and change a project — what an agent uses by default:',
-      commands: [
-        'create',
-        'space',
-        'page',
-        'element',
-        'plugin',
-        'data',
-        'verify',
-        'doctor',
-        'explain',
-        'upgrade',
-        'skills',
-        'cert'
-      ]
+      commands: ['create', 'space', 'page', 'element', 'plugin', 'data', 'explain', 'verify']
     },
     {
-      heading: 'On Plitzi — an account, a space kept there, its server code:',
-      commands: ['login', 'logout', 'whoami', 'functions', 'runtime', 'source', 'feedback']
+      heading: 'Keep the project whole — its machinery, its servers, HTTPS on your network:',
+      commands: ['upgrade', 'doctor', 'server', 'cert']
+    },
+    {
+      heading: 'Its own code on Plitzi — functions, the runtime, the source kept beside them:',
+      commands: ['functions', 'runtime', 'source']
+    },
+    {
+      heading: 'Your account, and Plitzi:',
+      commands: ['login', 'logout', 'whoami', 'feedback']
     },
     {
       heading: 'Multi-agent — a team of agents on one project, only when one is asked for (plitzi run start "…"):',

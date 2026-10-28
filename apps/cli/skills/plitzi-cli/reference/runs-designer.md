@@ -23,8 +23,8 @@ too.
   after `=>`: `plitzi page outline <path> --compare <url> [--within <part>] [--click <el>]` lists the other page's
   elements by a selector it takes, each with its box — never its HTML fetched and searched. An element that draws on its box (a
   hairline, a fill): its box's height is a visible value. Ask for those
-  values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --clip <section> --dress` says what a section wears and
-  this one lacks, on which of our elements; `--clip` takes any element, to see one part beside the other's — never a
+  values with **one** line that proves them all — the same command with `--same font-size,border,before:opacity`. `page shot --compare <url> --within <section> --dress` says what a section wears and
+  this one lacks, on which of our elements; `--within` takes any element, to see one part beside the other's — never a
   picture cut by hand; a part a few px tall with `--scale 4`, or its hairline is too small to see.
 - **What to look for:** hierarchy and spacing, the theme's tokens rather than new values, every state (empty, long,
   error, hover, focus), light and dark — a reference with one scheme is no space with one: look at the other too, where
