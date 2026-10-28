@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import { listedTasks } from './monitorBoard';
 import { frameUpdate } from './monitorCanvas';
 import { onKey, onMouse, splitInput } from './monitorInput';
-import { initialUi, LIVE_VERB } from './monitorModel';
+import { initialUi, keptBack, LIVE_VERB } from './monitorModel';
 import { PREVIEW_LINES, previewControl } from './monitorPreview';
 import { monitorScreen, paletteFor, waitingScreen } from './monitorScreen';
 import { THEMES, themeOfBackground } from './monitorTheme';
@@ -44,7 +44,7 @@ const FLASH_MS = 2500;
 
 /** How often the followed agent's stream is read again, and how many of its last moments. */
 const STREAM_MS = 2000;
-const STREAM_MOMENTS = 60;
+const STREAM_MOMENTS = 200;
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
 const runToShow = async (ctx: RunContext, named: string | undefined): Promise<string | undefined> => {
@@ -211,6 +211,12 @@ export const runMonitor = async (
         ).catch((error: unknown) => ({ problem: error instanceof Error ? error.message : String(error) }))
       : { problem: 'not started by the run — its session is the harness it runs in, not one the run keeps' };
     if (ui.agent === agent) {
+      // Scrolled back, it stays on what it was reading as moments come after it.
+      if (!('problem' in read)) {
+        const previous = stream !== undefined && 'moments' in stream ? stream.moments : undefined;
+        ui = { ...ui, streamBack: keptBack(previous, read, ui.streamBack) };
+      }
+
       stream = { agent, ...('problem' in read ? { problem: read.problem } : { moments: read }) };
       drawSoon();
     }

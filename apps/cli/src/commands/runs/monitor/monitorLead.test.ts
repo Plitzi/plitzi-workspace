@@ -33,9 +33,12 @@ describe('the lead on the monitor', () => {
     // Its watch marks it watching while it waits, and lets go as it ends.
     const watching = runPaths(bench.root, runId).leadWatching;
     await fs.writeFile(watching, JSON.stringify({ pid: process.pid, at: bench.now().toISOString() }));
+    // Watching, not waiting: a lead at something else with its watch open read "waiting" — its last act said beside.
     expect(await leadRow(runId)).toMatchObject({
-      status: 'waiting',
-      doing: expect.stringContaining('watches the run since') as unknown
+      status: 'watching',
+      doing: expect.stringMatching(
+        /^watches the run since \d\d:\d\d UTC — woken the moment something needs it · its last act (just now|\d+ min ago)/
+      ) as unknown
     });
     await fs.rm(watching);
     await waitForLead(lead(), runId, { timeoutMs: 20, everyMs: 10, launch: false });

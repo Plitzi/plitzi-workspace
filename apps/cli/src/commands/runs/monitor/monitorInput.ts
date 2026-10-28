@@ -87,7 +87,7 @@ const copied = (ui: MonitorUi, text: string): Step => ({
 });
 
 /** The keys only the advanced panel answers: what they move — a task, the activity, the spend — it alone shows. */
-const ADVANCED_KEYS = new Set(['up', 'down', 'return', 'left', 'right', 'a', 's', 'y', 'w']);
+const ADVANCED_KEYS = new Set(['up', 'down', 'return', 'left', 'right', 'a', 's', 'y', 'w', 'e']);
 
 const flashed = (ui: MonitorUi, said: string): Step => still({ ...ui, flash: said });
 
@@ -96,7 +96,7 @@ export const followedNext = (ui: MonitorUi, agents: readonly string[]): MonitorU
   const next = agents.at(ui.agent === undefined ? 0 : agents.indexOf(ui.agent) + 1);
   const { agent: _followed, ...rest } = ui;
 
-  return next === undefined ? rest : { ...ui, agent: next };
+  return next === undefined ? { ...rest, streamBack: 0 } : { ...ui, agent: next, streamBack: 0 };
 };
 
 /** This panel serves the preview: quitting stops it, so `q` says so before it does. */
@@ -312,6 +312,8 @@ export const onKey = (
         : still(ui);
     case 'w':
       return still(followedNext(ui, data?.agents.map(agent => agent.agent) ?? []));
+    case 'e':
+      return flashed({ ...ui, sideWide: !ui.sideWide }, ui.sideWide ? 'sidebar as it was' : 'sidebar widened');
     case 'y': {
       const task = data ? listedTasks(data.view.tasks, ui.showApproved).at(ui.selected) : undefined;
 
@@ -349,7 +351,18 @@ export const onMouse = (
       // A click follows an agent's stream; a click on the one followed stops following it.
       const { agent: _followed, ...rest } = ui;
 
-      return hit.action.agent === ui.agent ? rest : { ...ui, agent: hit.action.agent };
+      return hit.action.agent === ui.agent
+        ? { ...rest, streamBack: 0 }
+        : { ...ui, agent: hit.action.agent, streamBack: 0 };
+    }
+
+    if (hit?.action.kind === 'moment') {
+      const opened = new Set(ui.streamOpened);
+      if (!opened.delete(hit.action.key)) {
+        opened.add(hit.action.key);
+      }
+
+      return { ...ui, streamOpened: opened };
     }
 
     if (hit?.action.kind === 'event') {
@@ -378,6 +391,11 @@ export const onMouse = (
 
     // The newest at the top: the wheel down goes to older events, up back to newer ones.
     return { ...ui, feedBack: Math.max(0, Math.min(most, ui.feedBack + (up ? -1 : 1))) };
+  }
+
+  // The newest at the bottom: the wheel up goes back to earlier moments, down to the live end.
+  if (over?.area.kind === 'stream') {
+    return { ...ui, streamBack: Math.max(0, Math.min(over.area.most, ui.streamBack + (up ? 1 : -1))) };
   }
 
   if (over?.area.kind === 'tasks' && count > 0) {

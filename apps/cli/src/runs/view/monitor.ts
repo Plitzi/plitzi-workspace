@@ -33,6 +33,8 @@ export type AgentStatus =
   | 'blocked'
   | 'asking'
   | 'waiting'
+  /** The lead, its `run watch` open: woken when the run needs it, whatever else it is at meanwhile. */
+  | 'watching'
   | 'idle'
   | 'stopped'
   | 'restarting'
@@ -67,6 +69,11 @@ export interface FeedLine {
   text: string;
   /** The whole of it, when `text` says less: what a person opens the line to read. */
   detail?: string;
+  /**
+   * Its `text` is its `detail` cut at `SHORT`, not words of its own: a row with room says the whole — the monitor's
+   * activity cut every long line at mid-screen, a wide terminal's other half empty.
+   */
+  cut?: true;
   kind:
     | 'take'
     | 'complete'
@@ -215,6 +222,13 @@ const lastDone = (entry: Record<string, unknown>): string | undefined => {
 
 /** A task's line without the step its writer gave: what a reviewer is at is said by its own. */
 const withoutStep = ({ step: _written, ...line }: TaskLine): Omit<TaskLine, 'step'> => line;
+
+/** How long ago the lead last did anything of the run, in a few words. */
+const lastActText = (ms: number): string => {
+  const minutes = Math.round(ms / 60_000);
+
+  return minutes < 1 ? 'just now' : `${String(minutes)} min ago`;
+};
 
 /** How long a lead neither watching the run nor running a command of it is still deciding, not away from it. */
 export const LEAD_AWAY_MS = 2 * 60_000;
@@ -416,7 +430,7 @@ const agentsOf = async (
 
     return {
       ...base,
-      status: at ? ('reviewing' as const) : watching ? ('waiting' as const) : ('idle' as const),
+      status: at ? ('reviewing' as const) : watching ? ('watching' as const) : ('idle' as const),
       doing: at
         ? `reviews ${at}`
         : // What waits on the lead is said on its row first, not "idle" over an agent kept waiting.
@@ -425,7 +439,9 @@ const agentsOf = async (
           : unanswered.length > 0
             ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
             : watching
-              ? `watches the run since ${clockOf(watching.at)} UTC — woken the moment something needs it${lastLine ? ` · last: ${lastLine}` : ''}`
+              ? // Watching is not waiting: a lead at something else with its watch open read "waiting" (Carlos, fixing
+                // Plitzi as the lead); its last act on the run says how long since it did anything of it.
+                `watches the run since ${clockOf(watching.at)} UTC — woken the moment something needs it · its last act ${lastActText(now - heard)}${lastLine ? `: ${lastLine}` : ''}`
               : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}${lately(LEAD)}`,
       ...(at ? { task: at } : {}),
       ...(typeof last?.at === 'string' ? { signalAt: last.at } : {})

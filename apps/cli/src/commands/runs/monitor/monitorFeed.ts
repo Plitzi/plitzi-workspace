@@ -18,9 +18,13 @@ export const EVENT_TONE: Record<FeedLine['kind'], Tone> = {
   other: 'subtle'
 };
 
-/** What an event says, its words quoted for a message — a question's asked. */
+/** What an event says, its words quoted for a message — a question's asked — and a line cut short whole: the row clips it. */
 export const whatOf = (line: FeedLine): string =>
-  line.quote === undefined ? line.text : `${line.kind === 'question' ? 'asks ' : ''}“${line.quote}”`;
+  line.quote !== undefined
+    ? `${line.kind === 'question' ? 'asks ' : ''}“${line.quote}”`
+    : line.cut && line.detail !== undefined
+      ? line.detail
+      : line.text;
 
 /** Whether a line opens under it: a group of repeats, or one whose text says less than its whole. */
 export const opens = (line: FeedLine): boolean => line.count !== undefined || line.detail !== undefined;

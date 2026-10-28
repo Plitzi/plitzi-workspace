@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { initialUi } from './monitorModel';
+import { onMouse } from './monitorInput';
+import { initialUi, momentKey } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
 import { monitorRun } from '../../../runs/view/monitor';
@@ -108,5 +109,80 @@ describe("the sidebar's stream of the agent followed", () => {
       'no Claude Code session of it on this machine yet'
     );
     expect(shown(data)).not.toContain('Stream ·');
+  });
+
+  // Carlos: a moment cut on its row could not be read — a click on it opens its whole under it.
+  it('opens a moment with more to say by a click on it, its whole under its line — and closes it again', async () => {
+    const data = await monitorRun(lead(), await open());
+    const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
+    const moment = {
+      at: 't1',
+      kind: 'said' as const,
+      text: 'Checking the charts',
+      whole: 'Checking the charts\nthen the rooms, read once'
+    };
+    const screen = (ui: Partial<MonitorUi>) =>
+      monitorScreen(
+        { ...data, spend: [] },
+        { ...initialUi('advanced'), agent, ...ui },
+        {
+          width: 180,
+          height: 60,
+          now: bench.now(),
+          theme: THEMES.dark,
+          preview: { state: { kind: 'none' }, output: [] },
+          stream: { agent, moments: [moment] }
+        }
+      );
+
+    const closed = screen({});
+    expect(closed.canvas.text().join('\n')).not.toContain('then the rooms, read once');
+    const hit = closed.hits.find(each => each.action.kind === 'moment');
+    const opened =
+      hit &&
+      onMouse(
+        { ...initialUi('advanced'), agent },
+        { button: 0, row: hit.row, col: hit.from + 1 },
+        { ...closed, needs: [], palette: () => [], preview: 'none' }
+      );
+    expect(opened?.streamOpened.has(momentKey(moment))).toBe(true);
+    const text = screen({ streamOpened: opened?.streamOpened }).canvas.text().join('\n');
+    expect(text).toMatch(/▾ Checking the charts\s*\n\s*Checking the charts\s*\n\s*then the rooms, read once/);
+  });
+
+  // Carlos: the stream took the height left under many tasks, could not be scrolled, and the sidebar was narrow.
+  it('takes the height down to the run, the tasks a third at most — scrolled back by the wheel — wider with e', async () => {
+    const data = await monitorRun(lead(), await open());
+    const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
+    const [task] = data.view.tasks;
+    const many = {
+      ...data,
+      spend: [],
+      view: { ...data.view, tasks: Array.from({ length: 30 }, (_, at) => ({ ...task, id: `t-${String(at)}` })) }
+    };
+    const moments = Array.from({ length: 60 }, (_, at) => ({
+      at: String(at),
+      kind: 'said' as const,
+      text: `moment ${String(at)}`
+    }));
+    const said = (text: string) => [...text.matchAll(/› moment (\d+)/g)].map(match => Number(match[1]));
+
+    const live = said(shown(many, { agent }, { agent, moments }));
+    expect(live.length).toBeGreaterThanOrEqual(20);
+    expect(live.at(-1)).toBe(59);
+
+    const back = shown(many, { agent, streamBack: 10 }, { agent, moments });
+    expect(said(back).at(-1)).toBe(49);
+    expect(back).toContain('10 newer below · wheel');
+
+    // Wider: the stream's column starts further left.
+    const column = (text: string) =>
+      text
+        .split('\n')
+        .find(line => line.includes('Stream ·'))
+        ?.indexOf('Stream ·') ?? 0;
+    expect(column(shown(many, { agent, sideWide: true }, { agent, moments }))).toBeLessThan(
+      column(shown(many, { agent }, { agent, moments }))
+    );
   });
 });

@@ -49,7 +49,7 @@ describe('the monitor, as a run read it', () => {
     );
     const row = (await monitorRun(lead(), runId)).agents.find(agent => agent.agent === 'lead');
     // Watching, its row says its last act: never the agent the keeper started with its token.
-    expect(row).toMatchObject({ status: 'waiting', doing: expect.not.stringContaining('started agent-1') as unknown });
+    expect(row).toMatchObject({ status: 'watching', doing: expect.not.stringContaining('started agent-1') as unknown });
   });
 
   // Its scope sat in a column of its own while its scout worked it, "At work" empty; then read "spike" while it waited.

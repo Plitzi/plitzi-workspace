@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { listedTasks } from './monitorBoard';
 import { followedNext, onKey, onMouse, QUIT_WARNING, splitInput } from './monitorInput';
-import { initialUi } from './monitorModel';
+import { initialUi, keptBack } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
 import { monitorRun } from '../../../runs/view/monitor';
@@ -272,6 +272,38 @@ describe('the agent whose stream is followed', () => {
     const picked = onMouse(initialUi('advanced'), { button: 0, row: 9, col: 3 }, shown);
     expect(picked?.agent).toBe('scout-1');
     expect(picked && onMouse(picked, { button: 0, row: 9, col: 3 }, shown)?.agent).toBeUndefined();
+  });
+
+  // Carlos: the stream could not be scrolled, and the sidebar was too narrow to read it.
+  it('is scrolled back by the wheel over it — never past its first moment, nor past the live end — and e widens the sidebar', () => {
+    const over = nothing({ areas: [{ area: { kind: 'stream', most: 2 }, top: 10, left: 0, width: 40, height: 5 }] });
+    const followed = { ...initialUi('advanced'), agent: 'dev-1' };
+    const up = (ui: MonitorUi) => onMouse(ui, { button: 64, row: 12, col: 3 }, over) ?? ui;
+    const down = (ui: MonitorUi) => onMouse(ui, { button: 65, row: 12, col: 3 }, over) ?? ui;
+
+    expect(up(followed).streamBack).toBe(1);
+    expect(up(up(up(followed))).streamBack).toBe(2);
+    expect(down(up(followed)).streamBack).toBe(0);
+    expect(down(followed).streamBack).toBe(0);
+    // Another agent followed starts at its live end.
+    expect(followedNext({ ...followed, streamBack: 2 }, ['dev-1', 'scout-1']).streamBack).toBe(0);
+
+    const wide = press(followed, 'e', nothing()).ui;
+    expect(wide.sideWide).toBe(true);
+    expect(press(wide, 'e', nothing()).ui.sideWide).toBe(false);
+  });
+});
+
+describe('a stream scrolled back as moments come', () => {
+  const moment = (text: string) => ({ at: text, kind: 'said' as const, text });
+
+  it('stays on what it was reading — back by as many as came after — and live, it stays live', () => {
+    const before = ['a', 'b', 'c'].map(moment);
+    const after = ['b', 'c', 'd', 'e'].map(moment);
+
+    expect(keptBack(before, after, 1)).toBe(3);
+    expect(keptBack(before, after, 0)).toBe(0);
+    expect(keptBack(before, ['x', 'y'].map(moment), 1)).toBe(1);
   });
 });
 

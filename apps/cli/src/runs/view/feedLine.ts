@@ -20,7 +20,7 @@ export const SHORT = 72;
 /** A line whose text is past `SHORT`: cut, the whole kept as its detail — one that says its own short words has both. */
 export const briefLine = (line: FeedLine): FeedLine =>
   line.detail === undefined && line.text.length > SHORT
-    ? { ...line, text: glimpse(line.text, SHORT - 1), detail: line.text }
+    ? { ...line, text: glimpse(line.text, SHORT - 1), detail: line.text, cut: true }
     : line;
 
 /** A check's failure in a few words: the steps that failed — the acceptance's lines counted — and the files of others. */

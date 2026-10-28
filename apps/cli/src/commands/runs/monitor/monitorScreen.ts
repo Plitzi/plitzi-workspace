@@ -33,7 +33,8 @@ export interface Screen {
   needs: Need[];
 }
 
-const sideWidth = (width: number): number => Math.min(60, Math.max(46, Math.floor(width * 0.32)));
+const sideWidth = (width: number, wide: boolean): number =>
+  wide ? Math.min(100, Math.max(64, Math.floor(width * 0.5))) : Math.min(60, Math.max(46, Math.floor(width * 0.32)));
 
 /** The palette's items as `query` finds them: what the screen lists, and what ⏎ runs. */
 export const paletteFor = (data: Monitored, ui: MonitorUi, theme: Theme, needs: readonly Need[]): PaletteItem[] => {
@@ -87,7 +88,7 @@ export const monitorScreen = (
     drawSimple(p, data, ui, preview, body);
   } else if (ui.view === 'overview') {
     const wide = width >= SIDEBAR_FROM;
-    const side = wide ? sideWidth(width) : 0;
+    const side = wide ? sideWidth(width, ui.sideWide) : 0;
     drawOverviewMain(p, data, ui, preview, { ...body, width: width - side - (wide ? 3 : 2) }, !wide);
     if (wide) {
       drawSide(p, data, ui, preview, { ...body, left: width - side - 1, width: side }, stream);

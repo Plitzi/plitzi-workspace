@@ -1,10 +1,11 @@
 import { listedTasks, timeOf, withText, withTone } from './monitorBoard';
-import { clip, textWidth } from './monitorCanvas';
-import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { clip, textWidth, wrap } from './monitorCanvas';
+import { AGENT_LOOK, momentKey, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { BARS, sparkline, spentInAll, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../../runs/report/spent';
 
 import type { MonitorUi, Paint, PreviewShown, StreamShown } from './monitorModel';
+import type { SessionMoment } from '../../../runs/harness/moments';
 import type { Spent } from '../../../runs/report/spent';
 import type { AgentLine, Monitored } from '../../../runs/view/monitor';
 import type { TaskLine } from '../../../runs/view/view';
@@ -97,7 +98,10 @@ export const drawSide = (
   const followed = ui.agent !== undefined;
   const fixed = runRows + agentRows + (followed ? STREAM_ROWS : 0);
   const withSpend = rect.height - fixed - spendRows >= 3 + 3 + (folded ? 1 : 0);
-  const taskRoom = Math.max(3, rect.height - fixed - (withSpend ? spendRows : 0) - 3 - (folded ? 1 : 0));
+  const free = rect.height - fixed - (withSpend ? spendRows : 0) - 3 - (folded ? 1 : 0);
+  // Following an agent, its stream takes the height down to the run: the tasks a third of what is free at most, scrolled
+  // with the one selected — a run's eight tasks left the stream its seven rows.
+  const taskRoom = Math.max(3, followed ? Math.min(free, Math.floor((free + STREAM_ROWS) / 3)) : free);
 
   // Tasks.
   let row = rect.top + 1;
@@ -241,16 +245,14 @@ export const drawSide = (
   const runTop = rect.top + rect.height - runRows;
   if (ui.agent !== undefined) {
     row += 1;
-    title(p, row, rect, `Stream · ${ui.agent}`, 'live · w next');
+    const followedStream = stream?.agent === ui.agent ? stream : undefined;
+    const rows = Math.max(0, runTop - 1 - (row + 2));
+    const most = Math.max(0, streamHeight(followedStream, ui.streamOpened, rect.width) - rows);
+    const back = Math.min(ui.streamBack, most);
+    title(p, row, rect, `Stream · ${ui.agent}`, back > 0 ? `${String(back)} newer below · wheel` : 'live · w next');
     row += 2;
-    drawStream(
-      p,
-      stream?.agent === ui.agent ? stream : undefined,
-      rect.left + 2,
-      end,
-      row,
-      Math.max(0, runTop - 1 - row)
-    );
+    p.areas.push({ area: { kind: 'stream', most }, top: row, left: rect.left, width: rect.width, height: rows });
+    drawStream(p, followedStream, ui, { col: rect.left + 2, end, top: row, rows, back });
     row = runTop - 1;
   }
 
@@ -267,14 +269,28 @@ export const drawSide = (
   }
 };
 
-/** The moments of a stream that fit in `rows`, newest at the bottom — or why there are none, or that it is being read. */
+/** The rows of a stream, oldest first: each moment's line, and its whole under it when it is opened. */
+const streamRows = (
+  moments: readonly SessionMoment[],
+  opened: ReadonlySet<string>,
+  room: number
+): { moment: SessionMoment; line?: string }[] =>
+  moments.flatMap(moment => [
+    { moment },
+    ...(moment.whole !== undefined && opened.has(momentKey(moment))
+      ? moment.whole.split('\n').flatMap(part => wrap(part, room).map(line => ({ moment, line })))
+      : [])
+  ]);
+
+/**
+ * The rows of a stream that fit in `rows`, newest at the bottom — `back` of them hidden below when it is scrolled —
+ * each moment with more to say opened by a click (▸, ▾ open), or why there are none, or that it is being read.
+ */
 const drawStream = (
   p: Paint,
   stream: StreamShown | undefined,
-  col: number,
-  end: number,
-  top: number,
-  rows: number
+  ui: Pick<MonitorUi, 'streamOpened'>,
+  { col, end, top, rows, back }: { col: number; end: number; top: number; rows: number; back: number }
 ): void => {
   const { canvas, theme } = p;
   if (rows === 0) {
@@ -296,10 +312,26 @@ const drawStream = (
   }
 
   const hue = p.hues.get(stream.agent) ?? theme.primary;
-  stream.moments.slice(-rows).forEach((moment, offset) => {
+  const all = streamRows(stream.moments, ui.streamOpened, Math.max(1, end - col - 6));
+  const last = all.length - back;
+  all.slice(Math.max(0, last - rows), last).forEach(({ moment, line }, offset) => {
     const row = top + offset;
+    if (line !== undefined) {
+      canvas.put(row, col + 4, clip(line, Math.max(0, end - col - 4)), { fg: theme.muted });
+
+      return;
+    }
+
+    const opens = moment.whole !== undefined;
+    const open = opens && ui.streamOpened.has(momentKey(moment));
+    if (opens) {
+      p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key: momentKey(moment) } });
+    }
+
     if (moment.kind === 'result') {
-      canvas.put(row, col + 2, moment.failed ? '✗ ' : '⎿ ', { fg: moment.failed ? theme.danger : theme.subtle });
+      canvas.put(row, col + 2, open ? '▾ ' : moment.failed ? '✗ ' : opens ? '▸ ' : '⎿ ', {
+        fg: moment.failed ? theme.danger : theme.subtle
+      });
       canvas.put(row, col + 4, clip(moment.text, Math.max(0, end - col - 4)), {
         fg: moment.failed ? theme.danger : theme.muted
       });
@@ -308,10 +340,14 @@ const drawStream = (
     }
 
     const said = moment.kind === 'said';
-    canvas.put(row, col, said ? '›' : '▸', { fg: said ? theme.text : hue, bold: true });
+    canvas.put(row, col, open ? '▾' : said ? '›' : '▸', { fg: said ? theme.text : hue, bold: true });
     canvas.put(row, col + 2, clip(moment.text, Math.max(0, end - col - 2)), { fg: said ? theme.text : hue });
   });
 };
+
+/** How many rows a stream has: its moments, and what each opened says under it. */
+export const streamHeight = (stream: StreamShown | undefined, opened: ReadonlySet<string>, width: number): number =>
+  stream !== undefined && 'moments' in stream ? streamRows(stream.moments, opened, Math.max(1, width - 10)).length : 0;
 
 /** The preview's line: its address a link a click opens, where it stands, and the key that serves or stops it. */
 export const drawPreviewLine = (p: Paint, row: number, col: number, end: number, preview: PreviewShown): void => {

@@ -176,7 +176,12 @@ export const drawHelp = (p: Paint, mode: MonitorMode): void => {
     ['esc', 'puts the notice off — back once it says something else', true],
     ['y', 'copies the task’s id', false],
     ['s', 'sorts the spend (view 5)', false],
-    ['w', 'follows an agent’s stream, below the spend — again the next, past the last none (or click one)', false],
+    [
+      'w',
+      'follows an agent’s stream, below the spend — again the next, past the last none (or click one); the wheel over it scrolls it back, a click on a moment opens it whole',
+      false
+    ],
+    ['e', 'widens the sidebar — again, back as it was', false],
     ['t', 'light or dark', true],
     ['ctrl+p', 'commands: every task, agent, view and fix', true],
     ['q', 'quits — twice while a preview runs from here: it stops too', true]

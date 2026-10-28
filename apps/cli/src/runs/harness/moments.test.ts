@@ -70,6 +70,33 @@ describe('an agent’s session, read as it goes', () => {
     ]);
   });
 
+  // Carlos could not read a moment the sidebar cut: its whole is kept, opened under it.
+  it('keeps a moment’s whole when its line says less — a message’s lines, a command, an answer — and only then', () => {
+    const lines = [
+      line({
+        type: 'assistant',
+        timestamp: 't',
+        message: {
+          content: [
+            { type: 'text', text: 'First line.\nSecond line.' },
+            { type: 'tool_use', name: 'Read', input: { file_path: `${ROOT}/src/a.ts` } }
+          ]
+        }
+      }),
+      line({
+        type: 'user',
+        timestamp: 't',
+        message: { content: [{ type: 'tool_result', content: `head\n${'x'.repeat(5000)}` }] }
+      })
+    ];
+    const [said, read, answer] = claudeMoments(lines, ROOT);
+
+    expect(said).toMatchObject({ text: 'First line. Second line.', whole: 'First line.\nSecond line.' });
+    expect(read.whole).toBeUndefined();
+    expect(answer.text).toBe('head');
+    expect(answer.whole).toMatch(/^head\nx+\n… 1005 characters more$/);
+  });
+
   // A row of the sidebar was a task copy's 90-character prefix alone.
   it('says the project’s paths as short as they read: a copy’s from the copy, a scratch’s as scratch/', () => {
     const copy = `${ROOT}/tmp/plitzi-runs/r-1/tasks/s-scope/cache/work`;

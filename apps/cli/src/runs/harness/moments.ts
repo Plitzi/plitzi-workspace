@@ -18,6 +18,8 @@ export interface SessionMoment {
   at: string;
   kind: 'said' | 'tool' | 'result';
   text: string;
+  /** The whole of it, when `text` says less — a message's lines, a command, an answer: what a person opens it to read. */
+  whole?: string;
   /** A tool's answer that was an error. */
   failed?: true;
 }
@@ -35,6 +37,33 @@ export interface SessionAt {
 const TAIL_BYTES = 256 * 1024;
 
 const MOMENT_CHARS = 240;
+
+/** The most of a moment's whole kept: a tool's answer runs to megabytes, and a person reads its start. */
+const WHOLE_CHARS = 4000;
+
+/** A moment's whole, when its one line says less — cut past `WHOLE_CHARS`, saying how much is left out. */
+const wholeOf = (text: string, line: string): { whole: string } | Record<string, never> => {
+  const trimmed = text.trim();
+  if (trimmed === line) {
+    return {};
+  }
+
+  return {
+    whole:
+      trimmed.length > WHOLE_CHARS
+        ? `${trimmed.slice(0, WHOLE_CHARS)}\n… ${String(trimmed.length - WHOLE_CHARS)} characters more`
+        : trimmed
+  };
+};
+
+/** A moment of `kind` said by `text`: its line, and its whole when the line says less. */
+const momentOf = (
+  at: string,
+  kind: SessionMoment['kind'],
+  line: string,
+  text: string,
+  failed?: boolean
+): SessionMoment => ({ at, kind, text: line, ...wholeOf(text, line), ...(failed === true ? { failed: true } : {}) });
 
 /** A text on one line, as a moment says it: its first lines joined, cut to what a row holds. */
 const oneLine = (text: string): string => {
@@ -75,6 +104,17 @@ const toolText = (tool: string, input: unknown, root: string): string => {
   }
 
   return oneLine(`${tool} ${firstLine(shortPaths(said, root)) || '.'}`);
+};
+
+/** What a tool was asked, whole: its command or its input as it was given. */
+const toolWhole = (tool: string, input: unknown, root: string): string => {
+  const said = isRecord(input)
+    ? [input.command, input.cmd, input.file_path, input.filePath, input.path, input.pattern, input.url].find(
+        (value): value is string => typeof value === 'string' && value !== ''
+      )
+    : undefined;
+
+  return `${tool} ${shortPaths(said ?? JSON.stringify(input ?? ''), root)}`;
 };
 
 /** A tool's answer as text, however the harness keeps it: a string, or parts of text. */
@@ -134,22 +174,21 @@ export const claudeMoments = (lines: readonly string[], root: string): SessionMo
       }
 
       if (block.type === 'text' && entry.type === 'assistant' && typeof block.text === 'string') {
-        return block.text.trim() === '' ? [] : [{ at, kind: 'said', text: oneLine(shortPaths(block.text, root)) }];
+        const said = shortPaths(block.text, root);
+
+        return block.text.trim() === '' ? [] : [momentOf(at, 'said', oneLine(said), said)];
       }
 
       if (block.type === 'tool_use' && typeof block.name === 'string') {
-        return [{ at, kind: 'tool', text: toolText(block.name, block.input, root) }];
+        return [
+          momentOf(at, 'tool', toolText(block.name, block.input, root), toolWhole(block.name, block.input, root))
+        ];
       }
 
       if (block.type === 'tool_result') {
-        return [
-          {
-            at,
-            kind: 'result',
-            text: firstLine(shortPaths(answerText(block.content), root)),
-            ...(block.is_error === true ? { failed: true as const } : {})
-          }
-        ];
+        const answer = shortPaths(answerText(block.content), root);
+
+        return [momentOf(at, 'result', firstLine(answer), answer, block.is_error === true)];
       }
 
       return [];
@@ -164,7 +203,7 @@ export const codexMoments = (lines: readonly string[], root: string): SessionMom
     if (payload.type === 'message' && payload.role === 'assistant') {
       const text = answerText(payload.content);
 
-      return text.trim() === '' ? [] : [{ at, kind: 'said', text: oneLine(text) }];
+      return text.trim() === '' ? [] : [momentOf(at, 'said', oneLine(text), text)];
     }
 
     if ((payload.type === 'function_call' || payload.type === 'custom_tool_call') && typeof payload.name === 'string') {
@@ -178,13 +217,15 @@ export const codexMoments = (lines: readonly string[], root: string): SessionMom
         }
       }
 
-      return [{ at, kind: 'tool', text: toolText(payload.name, input, root) }];
+      return [momentOf(at, 'tool', toolText(payload.name, input, root), toolWhole(payload.name, input, root))];
     }
 
     if (payload.type === 'function_call_output' || payload.type === 'custom_tool_call_output') {
       const output = isRecord(payload.output) ? payload.output.content : payload.output;
 
-      return [{ at, kind: 'result', text: firstLine(shortPaths(answerText(output), root)) }];
+      const answer = shortPaths(answerText(output), root);
+
+      return [momentOf(at, 'result', firstLine(answer), answer)];
     }
 
     return [];
@@ -198,7 +239,7 @@ export const openCodeMoments = (parts: readonly { at: string; data: unknown }[],
     }
 
     if (data.type === 'text' && typeof data.text === 'string' && data.text.trim() !== '') {
-      return [{ at, kind: 'said', text: oneLine(data.text) }];
+      return [momentOf(at, 'said', oneLine(data.text), data.text)];
     }
 
     if (data.type === 'tool' && typeof data.tool === 'string') {
@@ -207,16 +248,17 @@ export const openCodeMoments = (parts: readonly { at: string; data: unknown }[],
         typeof state.output === 'string' ? state.output : typeof state.error === 'string' ? state.error : '';
 
       return [
-        { at, kind: 'tool', text: toolText(data.tool, state.input, root) },
+        momentOf(at, 'tool', toolText(data.tool, state.input, root), toolWhole(data.tool, state.input, root)),
         ...(answer === ''
           ? []
           : [
-              {
+              momentOf(
                 at,
-                kind: 'result' as const,
-                text: firstLine(shortPaths(answer, root)),
-                ...(state.status === 'error' ? { failed: true as const } : {})
-              }
+                'result',
+                firstLine(shortPaths(answer, root)),
+                shortPaths(answer, root),
+                state.status === 'error'
+              )
             ])
       ];
     }

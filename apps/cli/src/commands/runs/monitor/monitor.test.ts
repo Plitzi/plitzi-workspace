@@ -15,6 +15,7 @@ import { extendRun } from '../../../runs/plan/extend';
 import { logRun, stopRun } from '../../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../../runs/talk/talk';
 import { completeTask, followNext, reportProgress, reviewTask } from '../../../runs/tasks';
+import { briefLine } from '../../../runs/view/feedLine';
 import { groupRepeats, monitorRun } from '../../../runs/view/monitor';
 import { benchPlan, makeBench, writeInCopy } from '../../../tests/runProject';
 import { runSteps } from '../../../tests/runSteps';
@@ -226,6 +227,23 @@ describe('plitzi run monitor', () => {
     const back = shown(data, { feedBack: 10 }, { height: 40 }).text;
     expect(back.find(line => line.includes('Activity'))).toContain('→ 10 newer');
     expect(back.filter(line => line.includes('“Note'))[0]).toContain('“Note 30”');
+  });
+
+  // Carlos: the activity's lines were cut at mid-screen, the terminal's other half empty.
+  it('says a long line as far as its row reaches, not cut at a glance’s length', async () => {
+    const data = await monitorRun(lead(), await open());
+    const whole = `${'a refused command says why at length '.repeat(4)}and the end`;
+    const line = briefLine({
+      at: data.feed[0]?.at ?? '2026-10-28T00:00:00.000Z',
+      by: 'dev-1',
+      kind: 'problem',
+      text: whole
+    });
+    expect(line.text.length).toBeLessThan(whole.length);
+
+    const text = shown({ ...data, feed: [line] }, {}, { width: 260 }).text.join('\n');
+    expect(text).toContain('and the end');
+    expect(shown({ ...data, feed: [line] }, {}, { width: 160 }).text.join('\n')).not.toContain('and the end');
   });
 
   it('says a task held on a question to the lead, on its row, in the flow and as what needs the lead — until it is answered', async () => {

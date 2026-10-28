@@ -60,6 +60,12 @@ export interface MonitorUi {
   flash?: string;
   /** The agent whose stream the sidebar follows (`w`, or a click on it): what its harness says and does, live. */
   agent?: string;
+  /** How many rows back from the newest its stream is scrolled (the wheel over it): 0 follows it live. */
+  streamBack: number;
+  /** The moments of the stream opened (a click on one): its whole said under its line (`momentKey`). */
+  streamOpened: ReadonlySet<string>;
+  /** The sidebar widened (`e`): a stream's and a task's lines read longer. */
+  sideWide: boolean;
 }
 
 export const initialUi = (mode: MonitorMode): MonitorUi => ({
@@ -73,15 +79,46 @@ export const initialUi = (mode: MonitorMode): MonitorUi => ({
   spendSort: 'spent',
   needsAt: 0,
   dismissed: new Set(),
-  frame: 0
+  frame: 0,
+  streamBack: 0,
+  streamOpened: new Set(),
+  sideWide: false
 });
+
+/** A moment as a person opens it: when, what kind, its line — the same through every read of the session. */
+export const momentKey = (moment: Pick<SessionMoment, 'at' | 'kind' | 'text'>): string =>
+  `${moment.at}|${moment.kind}|${moment.text}`;
+
+/**
+ * Where a stream scrolled back stays as moments come: back by as many rows as moments came after the newest it had — a person reading
+ * an agent's earlier moments saw them slide away every two seconds. Not found in the new ones, it stays as it was.
+ */
+export const keptBack = (
+  previous: readonly SessionMoment[] | undefined,
+  next: readonly SessionMoment[],
+  back: number
+): number => {
+  const newest = previous?.at(-1);
+  if (back === 0 || newest === undefined) {
+    return back;
+  }
+
+  const at = next.findLastIndex(
+    each => each.at === newest.at && each.text === newest.text && each.kind === newest.kind
+  );
+
+  // Each moment that came is a row: a new one is never opened yet. How far it can go back, the drawing says.
+  return at === -1 ? back : back + (next.length - 1 - at);
+};
 
 /** What a click on the screen does where it lands. */
 export type HitAction =
   | { kind: 'view'; view: MonitorView }
   | { kind: 'task'; index: number }
   | { kind: 'event'; key: string }
-  | { kind: 'agent'; agent: string };
+  | { kind: 'agent'; agent: string }
+  /** A moment of the followed stream: opened, or closed again. */
+  | { kind: 'moment'; key: string };
 
 export interface Hit {
   row: number;
@@ -91,7 +128,12 @@ export interface Hit {
 }
 
 /** What the wheel scrolls where it is over. */
-export type AreaKind = { kind: 'activity' } | { kind: 'tasks' } | { kind: 'stage'; key: string };
+export type AreaKind =
+  | { kind: 'activity' }
+  | { kind: 'tasks' }
+  | { kind: 'stage'; key: string }
+  /** The followed agent's stream, and how far back it can scroll: its moments past the rows it shows. */
+  | { kind: 'stream'; most: number };
 
 export interface Area {
   area: AreaKind;
@@ -160,6 +202,7 @@ export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; ton
   blocked: { glyph: '●', label: 'blocked', tone: 'warning' },
   asking: { glyph: '?', label: 'asks the lead', tone: 'warning' },
   waiting: { glyph: '◌', label: 'waiting', tone: 'info' },
+  watching: { glyph: '◉', label: 'watching', tone: 'info' },
   idle: { glyph: '○', label: 'idle', tone: 'subtle' },
   stopped: { glyph: '◼', label: 'stopped', tone: 'subtle' },
   restarting: { glyph: '↻', label: 'restarting', tone: 'info' },

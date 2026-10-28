@@ -212,7 +212,10 @@ again the next, and past the last none. A headless agent's own output is its las
 off the session its harness keeps on the machine (`harness/moments.ts`) — Claude Code's file of the session its launch
 named, Codex's rollout and OpenCode's session that started with its process — every two seconds: what the model said
 (`›`), each tool and what it was asked (`▸`), and the first line of what it answered (`⎿`, `✗` when it failed), the
-project's paths as short as they read. An agent the run did not start — the lead, in the harness a person runs — has no
+project's paths as short as they read. It takes the height down to the run — the tasks a third of what is free at most —
+and the wheel over it scrolls it back (`streamBack`), where it stays as moments come after (`keptBack`); a moment
+whose line says less — a message's lines, a command, an answer — opens under it by a click (▸, ▾ open: its `whole`, the
+first 4000 characters); `e` widens the sidebar. An agent the run did not start — the lead, in the harness a person runs — has no
 session the run keeps, and the stream says so; one just started has none yet.
 
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found

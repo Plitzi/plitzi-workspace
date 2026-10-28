@@ -812,6 +812,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run monitor` follows an agent's stream:** `w` (or a click on an agent) shows, under the sidebar's spend, what it
   said, each tool it called and on what, and the first line of each answer — read off the session its harness keeps
   (Claude Code, Codex, OpenCode), as a headless agent prints only its last answer.
+- **`run monitor`'s stream takes the sidebar's height and scrolls:** down to the run, the tasks a third of what is
+  free at most; the wheel over it scrolls it back, where it stays as moments come; a click on a moment opens it whole
+  under its line; `e` widens the sidebar. The activity says a long line as far as its row reaches, where every line was
+  cut at 72 characters, mid-screen.
+- **The lead with its `run watch` open is "watching", with its last act on the run:** it read "waiting", as an agent
+  with nothing to do does, while it was at something else.
 - **`run open --dry-run` sees a stage of tasks alone on the open run:** a scout's stage, its name and goal the run's,
   was refused as "not a plan" — read first as a whole plan.
 - **An agent with nothing to take is said to the lead only when the lead can act:** a stage to stack, a card to split, or
