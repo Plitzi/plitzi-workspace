@@ -4,8 +4,11 @@ import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring';
 import type { FormProps } from './Form';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
 
-/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
-export type FormAttributes = AuthorableAttributes<FormProps>;
+/**
+ * What this element can be authored with — its component's own props, minus what the runtime supplies: `submitted` is
+ * what a visitor did, never a starting value.
+ */
+export type FormAttributes = AuthorableAttributes<FormProps, 'submitted'>;
 
 const declaration = elementDeclaration<FormAttributes>()({
   type: 'form',
@@ -17,7 +20,8 @@ const declaration = elementDeclaration<FormAttributes>()({
   sourceType: 'apiContainer',
   publishes: {
     values: "Each field's value, by its name",
-    errors: "Each field's error, by its name — none while it is valid"
+    errors: "Each field's error, by its name — none while it is valid",
+    submitted: 'Whether a submit was tried — valid or not — since the form was shown or reset'
   },
   triggers: {
     onSubmit: {
@@ -26,6 +30,13 @@ const declaration = elementDeclaration<FormAttributes>()({
       type: 'trigger',
       params: {},
       preview: { values: {}, actionUrl: '', method: '' }
+    },
+    onInvalid: {
+      action: 'onInvalid',
+      title: 'On Form Refused',
+      type: 'trigger',
+      params: {},
+      preview: { errors: {}, values: {} }
     }
   },
   callbacks: {

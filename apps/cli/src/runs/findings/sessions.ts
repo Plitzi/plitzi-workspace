@@ -95,7 +95,9 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
 };
 
 /** What an agent may still run once told it can stop: what its prompt asks of a stopping agent. */
-const STOPPING = ['run notice', 'task next', 'task inbox'];
+// What an agent says on its way out is no work: a notice of Plitzi, its inbox read, and what it tells the lead beyond
+// the piece just ended — a reviewer told by its verdict to stop told the lead two things it found, and read "went on".
+const STOPPING = ['run notice', 'task next', 'task inbox', 'task tell'];
 
 /** Commands an agent ran in the same session after the run told it to stop (`stops`). */
 export const afterStop = (log: readonly LogEntry[], usage: readonly UsageLine[]): Finding[] => {

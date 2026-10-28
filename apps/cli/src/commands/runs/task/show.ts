@@ -38,17 +38,22 @@ const taskShowFile = (
 const NOTES_SHOWN = 10;
 const NOTE_CHARS = 300;
 
-export const notesLines = (notes: readonly { by: string; text: string }[], full: boolean): string[] => {
+/**
+ * A task's notes, the last ones — each cut where long, saying the command that gives it whole: said inside `task next`
+ * too, a bare "--full" was tried on `task context`, which has none.
+ */
+export const notesLines = (notes: readonly { by: string; text: string }[], full: boolean, task: string): string[] => {
+  const whole = `plitzi task show ${task} --full`;
   const shown = full ? notes : notes.slice(-NOTES_SHOWN);
   const earlier = notes.length - shown.length;
 
   return notes.length === 0
     ? []
     : [
-        `Notes${earlier > 0 ? chalk.dim(` (the last ${String(shown.length)} — ${String(earlier)} earlier: --full)`) : ''}`,
+        `Notes${earlier > 0 ? chalk.dim(` (the last ${String(shown.length)} — ${String(earlier)} earlier: ${whole})`) : ''}`,
         ...shown.map(
           note =>
-            `  ${note.by}: ${full || note.text.length <= NOTE_CHARS ? note.text : `${note.text.slice(0, NOTE_CHARS).trimEnd()}… (whole: --full)`}`
+            `  ${note.by}: ${full || note.text.length <= NOTE_CHARS ? note.text : `${note.text.slice(0, NOTE_CHARS).trimEnd()}… (whole: ${whole})`}`
         )
       ];
 };
@@ -83,7 +88,7 @@ export const shownText = (shown: TaskShown, full = false): string => {
           'Its brief — what was found for it',
           ...shown.findings.map(
             each =>
-              `  · ${full || each.text.length <= BRIEF_CHARS ? each.text : `${each.text.slice(0, BRIEF_CHARS)}… (whole: --full)`}`
+              `  · ${full || each.text.length <= BRIEF_CHARS ? each.text : `${each.text.slice(0, BRIEF_CHARS)}… (whole: plitzi task show ${shown.task.id} --full)`}`
           )
         ]
       : []),
@@ -103,7 +108,7 @@ export const shownText = (shown: TaskShown, full = false): string => {
       `  ↗ request on ${each.file}${each.task === shown.task.id ? '' : ` from ${each.task}`}: ${each.summary}`,
       ...(each.diff ? each.diff.split('\n').map(line => `      ${line}`) : [])
     ]),
-    ...notesLines(shown.notes, full),
+    ...notesLines(shown.notes, full, shown.task.id),
     ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
     `Changed (${FROM_TEXT[shown.from]}): ${changedText(shown.files)}`,
     ...(shown.notReviewed

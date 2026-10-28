@@ -59,7 +59,10 @@ Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{
 ## Reading what came before
 
 `named('quote', step)` is how a later step reads an earlier one: `{{ quote.output.total }}`. The trigger too:
-`named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to.
+`named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to. A
+refused submit — a rule a control declares broken — starts `onInvalid()` (`{{ <id>.errors.<name> }}`) instead, and the
+form's source says one was tried, valid or not, as `submitted`: a hint under a field steps aside once the field's own
+error speaks — `visible: { source: '<form id>', template: '{{ not source.submitted }}' }`.
 
 `whenSucceeded` / `whenFailed` read a server action's `status` (`runServerAction` only); any other step is asked what
 it publishes (`npx @plitzi/cli explain login` lists it) — after `named('signedIn', authLogin(…))`,

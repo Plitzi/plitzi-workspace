@@ -62,6 +62,13 @@ export const on = (trigger: ElementTriggerName | (string & {}), params: Record<s
  */
 export const onSubmit = (): StepSpec => on('onSubmit');
 
+/**
+ * A form refusing a submit — a rule a control declares is broken — with `errors` and `values` keyed by each control's
+ * `name`: what a flow answers a refused submit by (a toast, a hint stepping aside). Its source says the same as
+ * `submitted`, for a binding: `apiContainer_<form>.submitted`.
+ */
+export const onInvalid = (): StepSpec => on('onInvalid');
+
 export const onClick = (params: { propagateEvent?: boolean } = {}): StepSpec => on('onClick', params);
 
 /** The press, before it is a click — where a drag away from the element starts. A click still follows it. */

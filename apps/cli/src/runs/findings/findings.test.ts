@@ -67,11 +67,13 @@ describe('how tasks and sessions were held', () => {
     ).toEqual([]);
   });
 
-  it('says commands a session ran after it was told to stop — not a notice, nor a session started again', () => {
+  it('says commands a session ran after it was told to stop — not a notice nor a tell, nor a session started again', () => {
     const log: LogEntry[] = [{ at: T(10), by: 'dev-2', action: 'stops' }];
     const usage = [
       use(9, 'dev-2', 'plitzi task complete', { session: 'a' }),
       use(11, 'dev-2', 'plitzi run notice --plitzi x', { session: 'a' }),
+      // What it tells the lead on its way out, beyond the piece just ended, is no work either.
+      use(11, 'dev-2', 'plitzi task tell --about t-room two things beyond it', { session: 'a' }),
       use(12, 'dev-2', 'plitzi task complete t-skip', { session: 'a' }),
       use(13, 'dev-2', 'plitzi task next', { session: 'b' })
     ];

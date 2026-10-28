@@ -856,6 +856,17 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **A note or a brief cut short names the command that gives it whole** (`plitzi task show <task> --full`): said
+  inside `task next`'s review hand-off too, a bare "--full" was tried on `task context`, which has none.
+- **A form says a submit was tried, and starts a flow when it refuses one** (`@plitzi/sdk-elements`,
+  `@plitzi/sdk-authoring`): its source publishes `submitted` — valid or not, since it was shown or reset — and a refused
+  submit fires `onInvalid` with `errors` and `values` (`onInvalid()` in authoring). A sign-up's hint and the field's own
+  error showed together: nothing an author could write heard an invalid Enter.
+- **A mutant that never runs is broken, not caught:** `task prove --mutate` read a mutant whose server never answered
+  — a module that did not load (`ProjectModuleError`), a space refused, Playwright's `webServer` timing out — as "fails
+  on the mutant: it holds what the change breaks". It proves nothing now, said so.
+- **What an agent tells the lead on its way out is no work after its stop:** a reviewer told by its verdict to stop
+  sent a `task tell` and read "went on in the same session".
 - **Agents work with fewer steps:** the answer that ends a piece — `task complete`, `task review`, a research card
   handed on, an escalation — says whether the agent stops (its session ends there), where every agent called
   `task next` only to hear "you can stop"; asked again by that session it is told again, never handed new work in the

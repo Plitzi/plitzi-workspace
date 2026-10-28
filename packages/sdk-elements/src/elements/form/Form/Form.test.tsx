@@ -149,6 +149,7 @@ const Harness = ({
           noValidate={noValidate}
           values={isRecord(state.values) ? state.values : {}}
           errors={asErrors(state.errors)}
+          submitted={state.submitted === true}
         >
           {children}
           <button type="submit">Create</button>
@@ -323,12 +324,20 @@ describe('Form / the rules its controls declare', () => {
 /** What a binding inside the form reads: the source it publishes under its own name, `<type>_<id>`. */
 const SourceProbe = () => {
   const { useStore } = createStoreHook<{
-    runtime?: { sources?: { apiContainer_signup?: { values?: Record<string, unknown> } } };
+    runtime?: {
+      sources?: { apiContainer_signup?: { values?: Record<string, unknown>; submitted?: boolean } };
+    };
   }>();
   const [values] = useStore('runtime.sources.apiContainer_signup.values');
+  const [submitted] = useStore('runtime.sources.apiContainer_signup.submitted');
   const password = values?.password;
 
-  return <output data-testid="probe">{typeof password === 'string' ? password : ''}</output>;
+  return (
+    <>
+      <output data-testid="probe">{typeof password === 'string' ? password : ''}</output>
+      <output data-testid="submitted">{submitted === true ? 'yes' : 'no'}</output>
+    </>
+  );
 };
 
 describe('Form / the source it publishes', () => {
@@ -348,6 +357,37 @@ describe('Form / the source it publishes', () => {
     fireEvent.change(input('password'), { target: { value: 'correct horse' } });
 
     expect(screen.getByTestId('probe').textContent).toBe('correct horse');
+  });
+
+  /**
+   * A sign-up's "8 characters" hint and the field's own "At least 8 characters." showed together: nothing told an
+   * author a submit was tried, and an invalid Enter started no flow at all.
+   */
+  it('says a submit was tried — valid or not — and starts onInvalid with the errors when it is refused', () => {
+    interactionTrigger.mockClear();
+    render(
+      <Harness>
+        {passwordControls}
+        <SourceProbe />
+      </Harness>
+    );
+    expect(screen.getByTestId('submitted').textContent).toBe('no');
+
+    fireEvent.change(input('password'), { target: { value: 'short' } });
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(screen.getByTestId('submitted').textContent).toBe('yes');
+    const refused = interactionTrigger.mock.calls.filter(call => call[1] === 'onInvalid');
+    expect(refused).toHaveLength(1);
+    expect(refused[0][2]).toMatchObject({
+      errors: { password: 'Use at least 10 characters', passwordConfirm: 'This field is required' },
+      values: { password: 'short' }
+    });
+    expect(submits()).toEqual([]);
+
+    // Reset, it is untried again.
+    fireEvent.reset(screen.getByText('Create').closest('form') ?? document.body);
+    expect(screen.getByTestId('submitted').textContent).toBe('no');
   });
 });
 

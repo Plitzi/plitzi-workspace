@@ -198,6 +198,37 @@ describe('the step vocabulary', () => {
     expect(authored.warnings).toEqual([]);
   });
 
+  // A sign-up's hint and the field's own error showed together: nothing an author wrote heard a refused submit.
+  it('authors a flow on a form refusing a submit, and a binding to whether one was tried', () => {
+    const authored = authoring.authorSpace({
+      name: 'Refused',
+      permanentUrl: 'refused',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            authoring.form({
+              id: 'signup',
+              managedByInteractions: true,
+              flows: [[authoring.onInvalid(), authoring.addNotification({ content: 'Check the fields' })]],
+              children: [
+                authoring.formControl({ id: 'password', name: 'password', label: 'Password', subType: 'password' }),
+                authoring.text({
+                  id: 'password-hint',
+                  content: 'At least 8 characters',
+                  visible: { source: 'signup', template: '{{ not source.submitted }}' }
+                })
+              ]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(authored.warnings).toEqual([]);
+  });
+
   // The second half of the same trap: on the right element, a form still has to hand its submit to the flow.
   it('warns about a submit flow on a form the browser submits natively', () => {
     const authored = authoring.authorSpace({

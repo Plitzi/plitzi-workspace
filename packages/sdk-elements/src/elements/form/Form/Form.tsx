@@ -37,6 +37,12 @@ export type FormProps = {
   noValidate: boolean;
   errors: Record<string, string>;
   values: Record<string, unknown>;
+  /**
+   * Whether a submit was tried since the form was shown or reset — valid or not. What a hint under a field steps aside
+   * by once the field's own error speaks: a sign-up's "8 characters" line and its "At least 8 characters." showed
+   * together, and nothing an author could write noticed an invalid Enter.
+   */
+  submitted: boolean;
 };
 
 export type Field = { id: string; name: string };
@@ -65,7 +71,8 @@ const Form = ({
   managedByInteractions = false,
   noValidate = false,
   errors = emptyObject,
-  values = emptyObject
+  values = emptyObject,
+  submitted = false
 }: FormProps) => {
   const [fields, setFields] = useState<Record<string, SourceField>>({});
   /**
@@ -186,7 +193,7 @@ const Form = ({
             { path: `values.${field.name}`, name: `${field.name} Value` },
             { path: `errors.${field.name}`, name: `${field.name} Error Message` }
           ],
-          []
+          [{ path: 'submitted', name: 'Submitted' }]
         ),
     [fields]
   );
@@ -213,7 +220,7 @@ const Form = ({
             setFieldValue,
             setFieldError
           },
-          [sourceName]: { values, errors }
+          [sourceName]: { values, errors, submitted }
         }
       }
     }),
@@ -221,6 +228,7 @@ const Form = ({
       sourceName,
       errors,
       values,
+      submitted,
       registerField,
       unregisterField,
       registerValidator,
@@ -233,19 +241,22 @@ const Form = ({
 
   // Interactions Triggers
 
-  // The one trigger whose preview is not static: the builder offers `values.<name>` for the fields this form holds.
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
+  // The triggers whose preview is not static: the builder offers `values.<name>` and `errors.<name>` for the fields this
+  // form holds.
+  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(() => {
+    const named = Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {});
+
+    return {
       onSubmit: {
         ...declaration.triggers.onSubmit,
-        preview: {
-          ...declaration.triggers.onSubmit.preview,
-          values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {})
-        }
+        preview: { ...declaration.triggers.onSubmit.preview, values: named }
+      },
+      onInvalid: {
+        ...declaration.triggers.onInvalid,
+        preview: { ...declaration.triggers.onInvalid.preview, errors: named, values: named }
       }
-    }),
-    [fields]
-  );
+    };
+  }, [fields]);
 
   // Interactions Callbacks
 
@@ -257,7 +268,7 @@ const Form = ({
         return message ? { ...acum, [name]: message } : acum;
       }, {});
 
-      setElementState(state => ({ ...state, errors: invalid }));
+      setElementState(state => ({ ...state, errors: invalid, submitted: true }));
 
       /**
        * Refused for every form, not only the managed ones.
@@ -269,6 +280,11 @@ const Form = ({
       if (Object.keys(invalid).length > 0) {
         e.stopPropagation();
         e.preventDefault();
+        // Said, as a valid one is: a flow that answers a refused submit — a toast, a hint stepping aside — had nothing
+        // to start on, and an invalid Enter went unseen by anything an author could write.
+        if (previewMode) {
+          void interactionsManager.interactionTrigger(id, 'onInvalid', { errors: invalid, values });
+        }
 
         return;
       }
@@ -300,7 +316,7 @@ const Form = ({
         params.preventDefault();
       }
 
-      setElementState(state => ({ ...state, values: {}, errors: {} }));
+      setElementState(state => ({ ...state, values: {}, errors: {}, submitted: false }));
     },
     [setElementState, managedByInteractions]
   );

@@ -330,3 +330,24 @@ describe('a task that changes no page', () => {
     expect(await changesNoPage(bench.root, [], checked)).toBe(false);
   });
 });
+
+// Two mutants whose server never started — a module that did not load, a space refused — read "1 of 1 line catches it".
+describe('a mutant that never runs', () => {
+  it('is broken, not caught: its server never answered, its module did not load', () => {
+    const line = (output: string[]) => ({
+      said: 'The auth spec passes on the copy served',
+      check: 'npx playwright test visual/auth.spec.ts',
+      copy: { said: '', check: '', ok: true },
+      mutant: { said: '', check: '', ok: false, output }
+    });
+
+    expect(caughtBy(line(['Error: Timed out waiting 120000ms from config.webServer.']))).toBe('broken');
+    expect(caughtBy(line(['ProjectModuleError: src/space/shell/account.ts could not be imported']))).toBe('broken');
+    expect(caughtBy(line(["the copy's server stopped on an error before it answered on http://127.0.0.1:4100"]))).toBe(
+      'broken'
+    );
+    expect(caughtBy(line(['  ✘ 1 [rest] › visual/auth.spec.ts:90:3 › on /sign-in the key is latched (5.1s)']))).toBe(
+      'catches'
+    );
+  });
+});
