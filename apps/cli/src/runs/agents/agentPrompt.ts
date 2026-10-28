@@ -65,8 +65,8 @@ const rules = (cli: string): string[] => [
   // A run's scout-1 heard "narrow it" 2.5 min late, inside a Playwright probe of its own, and missed two more.
   '- A command of your own — a spec, a probe, a test file — through `PLITZI task run "<command>"`: a Playwright suite waits its turn on the machine, what it prints goes to a file and you read what failed, and what the lead said meanwhile comes with it. A couple of minutes at most (one spec, a few repeats): the lead reaches you only between commands.',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
-  '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi`.',
-  '- Plitzi itself in your way — a refusal you think wrong, a command that cannot do what you need, a doc that misled you: say it as it happens, `PLITZI run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it), and go on.',
+  '- Whether Plitzi has a way — a field, a step, a state, a command: `PLITZI explain "<words>"`, then `PLITZI explain <name>`; never the packages\' types nor a site\'s HTML fetched and searched. Nothing found that should be: `run notice --plitzi no-way "…"`.',
+  "- Plitzi itself in your way, said as it happens and placed as what it was — `PLITZI run notice --plitzi wrong \"…\"` (it said or did something untrue), `no-way` (nothing in it does what you need, you went round), `in-the-way` (it refused what you plainly meant, or answered too long) — and go on. What is your project's, the plan's or your own trying is not Plitzi's: never a notice of it.",
   '- When it says you can stop, answer with a short report: what you did, what is uncertain, and every friction with the CLI — the command and what it said. Between two tasks or reviews it may say so for a fresh context: the run starts you again with one, for what you hold and what comes.'
 ];
 
@@ -110,7 +110,7 @@ export const agentPrompt = ({
       '- Before you finish, look at the whole result once — `run look`, every page the run changed — then the report (`run report --summary`) and the dry finish (`run finish`): the person applies it.',
       // Told `run notice` of "the CLI" alone, the lead noted three of six problems — a skill naming a command the
       // CLI lacks, a platform gap an agent hit, a workaround a limit forced — and plain `run notice` is the project's backlog.
-      '- Everything of Plitzi in your way — the CLI, the platform, a skill or doc that misled you, a workaround a limit forced on you — note it as it happens, one each with what it cost: `run notice --plitzi "…"` (the run\'s feedback to Plitzi carries it). Fixed after the run, never during it.'
+      '- Everything of Plitzi in your way — the CLI, the platform, a skill or doc that misled you, a workaround a limit forced on you — note it as it happens, one each with what it cost and as what it was: `run notice --plitzi <wrong|no-way|in-the-way> "…"` (the run\'s feedback to Plitzi carries it). Fixed after the run, never during it.'
     ].join('\n');
   }
 
@@ -152,7 +152,7 @@ export const agentPrompt = ({
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440 [--hover <el> | --click <el>]` (a state with the bracket; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440 [--hover <el> | --click <el>]\` (a state with the bracket; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
           // 17 of 34 checks failed on typecheck or lint — what the project's own scripts say in seconds.
-          `- Change a batch, then run the project's own \`typecheck\` and \`lint\` scripts in your copy (\`${projectRun('typecheck')}\`, \`${projectRun('lint')}\` — cached, seconds) and fix what they say; then \`PLITZI task check\` once; then \`PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]\` — what it was like, for Plitzi — and \`PLITZI task next\` again.`,
+          `- Change a batch, then run the project's own \`typecheck\` and \`lint\` scripts in your copy (\`${projectRun('typecheck')}\`, \`${projectRun('lint')}\` — cached, seconds) and fix what they say; then \`PLITZI task check\` once; then \`PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--plitzi-wrong|--plitzi-no-way|--plitzi-in-the-way "what of Plitzi got in your way" …] [--friction "anything else in your way" …] [--helped "…"]\` — what it was like, for Plitzi — and \`PLITZI task next\` again.`,
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or ask the lead (\`PLITZI task tell "…" --ask\`) before you complete.`,

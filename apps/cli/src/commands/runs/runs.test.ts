@@ -313,7 +313,7 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(kept.code).toBe(0);
     expect(kept.json).toMatchObject({ kept: { id: 'b-1', text: 'The map has no legend', on: '/book' } });
 
-    const ofPlitzi = await plitzi(bench.root, ['run', 'notice', 'The CLI crashed', '--plitzi']);
+    const ofPlitzi = await plitzi(bench.root, ['run', 'notice', 'The CLI crashed', '--plitzi', 'wrong']);
     expect(ofPlitzi.code).toBe(REFUSAL_EXIT_CODES.invalid);
   }, 120_000);
 

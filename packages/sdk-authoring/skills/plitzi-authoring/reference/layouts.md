@@ -31,8 +31,9 @@ pages: [{ name: 'Quickstart', slug: 'quickstart', folder: 'docs', layout: { id: 
 ```
 
 - **The slot** is the element in the layout where the page's body goes. It must be inside the layout (checked).
-- **Not re-mounted on navigation.** Moving between pages of one layout keeps the shell — its scroll, its open menus,
-  its providers, its state — and swaps only the slot. That is also why a layout is cheaper than a copy.
+- **Not re-mounted on navigation.** Moving between pages of one layout keeps the shell — a scrolling part's scroll,
+  its open menus, its providers, its state — and swaps only the slot; the document opens another page at its top, and
+  back and forward where the visitor left it. That is also why a layout is cheaper than a copy.
 - **Layouts nest.** `layout: { id: 'app-shell', slot: 'main' }` on a LAYOUT puts a section shell (analytics tabs, docs
   sidebar) inside the application shell. The page resolves the chain from the outside in.
 - **A provider in a layout serves every page** — the plan in a sidebar, a star count in a top bar. A server provider

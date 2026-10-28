@@ -15,7 +15,7 @@ import type { Browser, BrowserPage } from '../../../browser';
  */
 
 /** A bare word: an element's name — letters, digits, `-` and `_`, as an id is written — or else a tag (`textarea`). */
-const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
+export const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
 
 /** A bare word as an id selector, where CSS reads it as one: never one that starts with a digit. */
 const idOf = (target: string): string[] => (/^[A-Za-z_]/.test(target) ? [`#${target}`] : []);
@@ -30,7 +30,7 @@ export const byNameOrId = (name: string): string => [namedBy(name), ...idOf(name
 /** A section as a comparison's report names it: its tag, and its id or its element's name. */
 const REGION = /^([a-z][a-z0-9]*)#([\w-]+)(?::(\d+))?$/;
 /** `room-card-name:last`, `room-card-name:2`: one row's element of a list, where a bare name is the first row's. */
-const ROW = /^([A-Za-z_][\w-]*):(last|\d+)$/;
+export const ROW = /^([A-Za-z_][\w-]*):(last|\d+)$/;
 
 /**
  * A reading of the page, once more when the page navigated under it: a project served with its watch reloads the page

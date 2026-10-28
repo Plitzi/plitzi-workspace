@@ -1,5 +1,7 @@
+import { PLITZI_HOW_MEANS } from '../../../runs/findings/plitziClass';
 import { EASE_SCALE } from '../../../runs/report/experience';
 
+import type { PlitziHow } from '../../../runs/findings/plitziClass';
 import type { Command } from 'commander';
 
 export const JSON_OPTION = ['--json', 'One object, for a tool or an agent'] as const;
@@ -27,10 +29,18 @@ export const EASE_OPTION = ['--ease <1-5>', `How Plitzi was to work with: ${EASE
 export const HARDEST_OPTION = ['--hardest <text>', 'What cost you the most — time, tries, tokens — and why'] as const;
 export const FRICTION_OPTION = [
   '--friction <text>',
-  'Something of Plitzi that got in your way — a command, a doc, an error, something missing; again for each',
+  'Something in your way that is no change of Plitzi’s — the project, its data, the plan; again for each',
   each,
   NONE
 ] as const;
+
+/** Each thing of Plitzi's in the way, by what it was (`docs/en/improving-the-cli.md`): said apart, again for each. */
+const plitziOption = (how: PlitziHow) =>
+  [`--plitzi-${how} <text>`, `Of Plitzi, in your way: ${PLITZI_HOW_MEANS[how]}; again for each`, each, NONE] as const;
+
+export const PLITZI_WRONG_OPTION = plitziOption('wrong');
+export const PLITZI_NO_WAY_OPTION = plitziOption('no-way');
+export const PLITZI_IN_THE_WAY_OPTION = plitziOption('in-the-way');
 export const HELPED_OPTION = [
   '--helped <text>',
   'Something of Plitzi that helped — what a change must not take away; again for each',

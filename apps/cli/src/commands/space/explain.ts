@@ -205,7 +205,7 @@ export const explainCommand = async (
     );
     if (hits.length === 0) {
       fail(
-        `Nothing Plitzi has is described by "${words}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi "…", in a run).`
+        `Nothing Plitzi has is described by "${words}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi no-way "…", in a run).`
       );
 
       return;

@@ -1,7 +1,9 @@
 import { RunRefusal } from '../core/refusal';
+import { isPlitziHow } from '../findings/plitziClass';
 import { groupAlike } from '../findings/words';
 
 import type { TaskRoundReport } from './taskReports';
+import type { PlitziHow } from '../findings/plitziClass';
 import type { SaidOfPlitzi } from '../findings/types';
 import type { Notice } from '../talk/notices';
 
@@ -17,8 +19,13 @@ export interface Experience {
   ease: number;
   /** What cost the most — time, tries, tokens — and why. */
   hardest: string;
-  /** Each thing of Plitzi that got in the way: a command, a doc, an error, something missing. */
+  /**
+   * Each thing that got in the way that is no change of Plitzi's — the project, the plan, the work itself: kept with
+   * what it was like, never one of Plitzi's findings (`docs/en/improving-the-cli.md`).
+   */
   frictions: string[];
+  /** Each thing of Plitzi's that got in the way, as whoever said it placed it: what the run's feedback carries. */
+  plitzi?: { how: PlitziHow; text: string }[];
   /** What helped: what a change must not take away. */
   helped: string[];
 }
@@ -31,6 +38,9 @@ export interface ExperienceFlags {
   ease?: string;
   hardest?: string;
   friction?: string[];
+  plitziWrong?: string[];
+  plitziNoWay?: string[];
+  plitziInTheWay?: string[];
   helped?: string[];
 }
 
@@ -48,14 +58,26 @@ export const experienceFrom = (flags: ExperienceFlags, command: string): Experie
   if (missing.length > 0) {
     throw new RunRefusal(
       'invalid',
-      `${command} says what it was like to work with Plitzi: ${missing.join('; ')}${flags.ease !== undefined && missing[0]?.startsWith('--ease') ? ` (not "${flags.ease}")` : ''}. Each thing that got in your way: ${command} --friction "…" (again for each); what helped: ${command} --helped "…"`
+      `${command} says what it was like to work with Plitzi: ${missing.join('; ')}${flags.ease !== undefined && missing[0]?.startsWith('--ease') ? ` (not "${flags.ease}")` : ''}. Each thing of Plitzi's in your way, by what it was: ${command} --plitzi-wrong "…" (it said or did something untrue), ${command} --plitzi-no-way "…" (no way through it, you went round), ${command} --plitzi-in-the-way "…" (it refused what you meant, or answered too long); anything else — the project, the plan: ${command} --friction "…"; what helped: ${command} --helped "…" (each again for each)`
     );
   }
 
   const clean = (said: readonly string[] | undefined): string[] =>
     (said ?? []).map(each => each.trim()).filter(each => each !== '');
 
-  return { ease, hardest, frictions: clean(flags.friction), helped: clean(flags.helped) };
+  const plitzi = [
+    ...clean(flags.plitziWrong).map(text => ({ how: 'wrong' as const, text })),
+    ...clean(flags.plitziNoWay).map(text => ({ how: 'no-way' as const, text })),
+    ...clean(flags.plitziInTheWay).map(text => ({ how: 'in-the-way' as const, text }))
+  ];
+
+  return {
+    ease,
+    hardest,
+    frictions: clean(flags.friction),
+    ...(plitzi.length > 0 ? { plitzi } : {}),
+    helped: clean(flags.helped)
+  };
 };
 
 const strings = (value: unknown): value is string[] =>
@@ -72,7 +94,21 @@ export const isExperience = (value: unknown): value is Experience =>
   'frictions' in value &&
   strings(value.frictions) &&
   'helped' in value &&
-  strings(value.helped);
+  strings(value.helped) &&
+  (!('plitzi' in value) || saidOfItsOwn(value.plitzi));
+
+/** What was said of Plitzi with a round, each with what it was. */
+const saidOfItsOwn = (value: unknown): boolean =>
+  Array.isArray(value) &&
+  value.every(
+    (each: unknown) =>
+      typeof each === 'object' &&
+      each !== null &&
+      'how' in each &&
+      isPlitziHow(each.how) &&
+      'text' in each &&
+      typeof each.text === 'string'
+  );
 
 /**
  * Everything said of Plitzi, together: the notices as they came, and what got in the way of each round and of the lead —
@@ -89,18 +125,28 @@ export const saidOfPlitzi = (
     text: notice.text,
     ...(notice.task === undefined ? {} : { task: notice.task }),
     ...(notice.on === undefined ? {} : { on: notice.on }),
+    ...(notice.how === undefined ? {} : { how: notice.how }),
     as: 'notice' as const
   })),
   ...rounds.flatMap(round =>
-    (round.experience?.frictions ?? []).map(text => ({
+    (round.experience?.plitzi ?? []).map(({ how, text }) => ({
       at: round.to,
       by: round.agent,
       text,
       task: round.task,
-      as: 'friction' as const
+      as: 'round' as const,
+      how
     }))
   ),
-  ...(lead ? lead.experience.frictions.map(text => ({ at: lead.at, by: 'lead', text, as: 'friction' as const })) : [])
+  ...(lead
+    ? (lead.experience.plitzi ?? []).map(({ how, text }) => ({
+        at: lead.at,
+        by: 'lead',
+        text,
+        as: 'round' as const,
+        how
+      }))
+    : [])
 ];
 
 /** Something said, with everyone who said it alike. */
@@ -118,6 +164,9 @@ export interface CombinedExperience {
   };
   /** What cost the most, what got in the way, what helped — each said alike by several grouped, the most said first. */
   hardest: SaidBy[];
+  /** What of Plitzi got in the way, each with what it was said to be (`wrong: …`): one of Plitzi's findings too. */
+  plitzi: SaidBy[];
+  /** What else got in the way — the project, the plan: kept here alone. */
   frictions: SaidBy[];
   helped: SaidBy[];
   /** The lead's own, said as it closed the run. */
@@ -182,6 +231,7 @@ export const combineExperience = (rounds: readonly TaskRoundReport[], lead?: Exp
         }))
     },
     hardest: combined(from(experience => [experience.hardest])),
+    plitzi: combined(from(experience => (experience.plitzi ?? []).map(({ how, text }) => `${how}: ${text}`))),
     frictions: combined(from(experience => experience.frictions)),
     helped: combined(from(experience => experience.helped)),
     ...(lead ? { lead } : {}),
@@ -236,7 +286,8 @@ export const experienceText = (experience: CombinedExperience): string[] => {
         ]
       : []),
     ...listed('What cost the most', experience.hardest),
-    ...listed('What got in the way', experience.frictions),
+    ...listed('What of Plitzi got in the way — each among its findings above', experience.plitzi),
+    ...listed('What else got in the way — the project, the plan: no change of Plitzi’s', experience.frictions),
     ...listed('What helped — to keep', experience.helped)
   ];
 };

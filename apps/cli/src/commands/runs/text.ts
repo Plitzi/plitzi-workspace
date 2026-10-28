@@ -118,7 +118,7 @@ export const secondRunText = (result: { firstFailed?: readonly string[] }): stri
 
 /** What an agent asked to stop is told before it does: a friction said now, or never — its last words are read by no one. */
 export const BEFORE_STOP =
-  '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not';
+  '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi <wrong|no-way|in-the-way> "…", one each, as what it was; the run’s feedback to Plitzi carries them, your last words do not';
 
 /**
  * How the answer that ended a piece of work ends: that the agent stops now, and why (`stopAfterPiece`) — else where its

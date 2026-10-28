@@ -21,7 +21,7 @@ import type { LoadedRun } from '../run';
  * what each task kept rather than from what the lead remembers: the time it took, its sessions, its checks and what
  * failed in them, what it was refused, every command it ran and why one failed, what it asked `explain` and did not
  * find, what it noticed of Plitzi, what its harness spent (`harnessUsage.ts`) — and, said by the agent, what it was like
- * to work with Plitzi (`experience.ts`: `task complete --ease --hardest --friction --helped`).
+ * to work with Plitzi (`experience.ts`: `task complete --ease --hardest --plitzi-<how> --friction --helped`).
  */
 
 export const TASK_REPORT_VERSION = 1;
@@ -59,7 +59,7 @@ export interface TaskRoundReport {
    */
   errors: { command: string; error?: string; output?: string[]; verdict?: true }[];
   explain: { asked: string[]; missed: string[] };
-  /** What it said of Plitzi while it worked (`run notice --plitzi`). */
+  /** What it said of Plitzi while it worked (`run notice --plitzi <how>`). */
   notices: string[];
   /** What it was like to work with Plitzi, in its own words: none from a CLI that did not ask. */
   experience?: Experience;

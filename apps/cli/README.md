@@ -662,6 +662,7 @@ plitzi task run "npx playwright test visual/room.spec.ts"   # a command of your 
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve --token <yours>    # your step of its review; its last step's approval puts it into the run's work
 plitzi run notice "…" --on /pets            # something wrong no task owns: kept, said by the finish — the next stage's (no run open: the backlog's)
+plitzi run notice "…" --plitzi no-way       # of Plitzi, as what it was — wrong (untrue), no-way (went round it), in-the-way (refused what was meant): the run's feedback
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch              # ends the moment something needs the lead: run it in the background

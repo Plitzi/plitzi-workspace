@@ -21,6 +21,7 @@ import { act, either, holder, projectCaller, runIfOpen, runOf, taskOf } from '..
 import { exchangeLines, messageLines } from '../text';
 
 import type { BLOCK_NEEDS } from '../../../runs/core/model';
+import type { PlitziHow } from '../../../runs/findings/plitziClass';
 import type { BacklogItem } from '../../../runs/plan/backlog';
 import type { RunContext } from '../../../runs/run';
 import type { Message, Standing } from '../../../runs/talk/messages';
@@ -383,7 +384,7 @@ export const taskTell = (text: string, options: TellOptions): Promise<void> =>
  */
 export const runNotice = (
   text: string,
-  options: RunCommandOptions & { on?: string; plitzi?: boolean }
+  options: RunCommandOptions & { on?: string; plitzi?: PlitziHow }
 ): Promise<void> =>
   act(
     options,
@@ -394,12 +395,12 @@ export const runNotice = (
           notice: await noticeRun(ctx, runId, text, {
             ...(ctx.token === undefined ? {} : { task: taskOf(ctx) }),
             ...(options.on ? { on: options.on } : {}),
-            ...(options.plitzi === true ? { plitzi: true } : {})
+            ...(options.plitzi === undefined ? {} : { plitzi: options.plitzi })
           })
         };
       }
 
-      if (options.plitzi === true) {
+      if (options.plitzi !== undefined) {
         throw new RunRefusal(
           'invalid',
           'With no run open, what is wrong in Plitzi is a report of its own: plitzi feedback writes it, with the versions in it'

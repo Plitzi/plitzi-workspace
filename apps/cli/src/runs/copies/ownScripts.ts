@@ -64,5 +64,5 @@ export const ownScriptLines = (
 export const ownScriptNotices = (tasks: RunPlan['tasks']): string[] =>
   ownScriptLines(tasks).map(
     ({ task, line, scripts }) =>
-      `Task "${task}": "${line}" runs a script of yours (${scripts.join(', ')}) — written with Plitzi (page play, page measure --same, page check --expect) any agent reads and reruns it; what Plitzi cannot check yet, say: plitzi run notice --plitzi "…", and the run's feedback counts it`
+      `Task "${task}": "${line}" runs a script of yours (${scripts.join(', ')}) — written with Plitzi (page play, page measure --same, page check --expect) any agent reads and reruns it; what Plitzi cannot check yet, say: plitzi run notice --plitzi no-way "…", and the run's feedback counts it`
   );

@@ -272,7 +272,7 @@ describe('what the agents looked for and did beside Plitzi', () => {
   });
 
   it('groups what agents said of Plitzi, live once two agents said it (--follow, three agents)', () => {
-    const said = (by: string, text: string, as: 'notice' | 'friction' = 'notice') => ({
+    const said = (by: string, text: string, as: 'notice' | 'round' = 'notice') => ({
       at: T(by.length),
       by,
       text,
@@ -287,7 +287,7 @@ describe('what the agents looked for and did beside Plitzi', () => {
       said(
         'dev-22',
         "The launch prompt says 'task complete --follow --take' and task complete refuses --follow",
-        'friction'
+        'round'
       ),
       said('dev-333', 'page measure reads no list-style nor ::marker')
     ]);
@@ -298,7 +298,7 @@ describe('what the agents looked for and did beside Plitzi', () => {
     ]);
     expect(found[0].evidence).toEqual([
       'dev-1',
-      "dev-22 (what got in its way): The launch prompt says 'task complete --follow --take' and task complete refuses --follow"
+      "dev-22 (said with its round): The launch prompt says 'task complete --follow --take' and task complete refuses --follow"
     ]);
   });
 });

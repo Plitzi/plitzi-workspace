@@ -382,6 +382,33 @@ describe('createRealtimeClient over a WebSocket', () => {
 });
 
 describe('trackPresence', () => {
+  // A room's player, mounted after an in-site navigation beside the room's channel element, never heard what was playing:
+  // the server replays what it keeps once per connection, to the listeners it had then.
+  it('hands what the server kept to a listener that came after it was replayed — the newest of each type, said again', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const first = trackPresence(client, 'room:1', { onChange: () => undefined });
+    stops.push(first.stop);
+    await wait();
+    server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['room:1'], refused: [] });
+    const kept = (type: string, data: unknown, at: number) =>
+      message({ topic: 'room:1', type, data, from: 'server', at, retained: true, replayed: true });
+    server.streams[0].push('message', kept('now', { trackId: 'old' }, 1));
+    server.streams[0].push('message', kept('now', { trackId: 'phoenix' }, 2));
+    server.streams[0].push('message', kept('rules', { locked: true }, 3));
+    server.streams[0].push('message', kept('rules', null, 4));
+    server.streams[0].push('message', message({ topic: 'room:1', type: 'clap', data: 1, from: 'bob' }));
+    await wait(10);
+
+    const heard: RealtimeMessage[] = [];
+    const late = trackPresence(client, 'room:1', { onChange: () => undefined, onMessage: each => heard.push(each) });
+    stops.push(late.stop);
+
+    expect(heard.map(({ type, data, replayed }) => [type, data, replayed])).toEqual([
+      ['now', { trackId: 'phoenix' }, true]
+    ]);
+  });
+
   it('forgets who is there once let go of the topic — without telling anyone left', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

@@ -1,9 +1,11 @@
 import { isPrincipal } from '../agents/leads';
 import { readTeam, startedAgents } from '../agents/team';
 import { RunRefusal } from '../core/refusal';
+import { isPlitziHow } from '../findings/plitziClass';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { findTask, holderOf } from '../tasks';
 
+import type { PlitziHow } from '../findings/plitziClass';
 import type { LoadedRun, RunContext } from '../run';
 
 /**
@@ -25,13 +27,15 @@ export interface Notice {
    * run's feedback to Plitzi carries it (`feedback.ts`).
    */
   about?: 'plitzi';
+  /** Of Plitzi's, what it was, as whoever noticed it placed it (`run notice --plitzi <how>`). */
+  how?: PlitziHow;
 }
 
 export const noticeRun = async (
   ctx: RunContext,
   runId: string,
   text: string,
-  { task, on, plitzi = false }: { task?: string; on?: string; plitzi?: boolean } = {}
+  { task, on, plitzi }: { task?: string; on?: string; plitzi?: PlitziHow } = {}
 ): Promise<Notice> => {
   // Any version: what is wrong is said while it is — a Plitzi changed under the run among it (refused 13).
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
@@ -58,14 +62,14 @@ export const noticeRun = async (
     text: text.trim(),
     ...(on ? { on } : {}),
     ...(task ? { task } : {}),
-    ...(plitzi ? { about: 'plitzi' as const } : {})
+    ...(plitzi ? { about: 'plitzi' as const, how: plitzi } : {})
   };
   await logRun(ctx, loaded.paths, {
     action: 'notice',
     text: notice.text,
     ...(on ? { on } : {}),
     ...(task ? { task } : {}),
-    ...(plitzi ? { about: 'plitzi' } : {})
+    ...(plitzi ? { about: 'plitzi', how: plitzi } : {})
   });
   // Never sent to the lead as a message: it is for the next stage, not for now, and each woke the lead that waits on the
   // run for what needs it (two designers' notices, two wake-ups with nothing to do). The activity shows it,
@@ -84,7 +88,8 @@ export const noticesOf = async (loaded: LoadedRun): Promise<Notice[]> =>
             text: entry.text,
             ...(typeof entry.on === 'string' ? { on: entry.on } : {}),
             ...(typeof entry.task === 'string' ? { task: entry.task } : {}),
-            ...(entry.about === 'plitzi' ? { about: 'plitzi' as const } : {})
+            ...(entry.about === 'plitzi' ? { about: 'plitzi' as const } : {}),
+            ...(isPlitziHow(entry.how) ? { how: entry.how } : {})
           }
         ]
       : []

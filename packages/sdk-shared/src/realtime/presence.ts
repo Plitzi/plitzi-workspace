@@ -38,6 +38,8 @@ export type PresenceListeners = {
 
 type SharedPresence = {
   members: () => RealtimeMember[];
+  /** What the server keeps on the topic, the newest of each type: replayed once, to whoever listened when it came. */
+  kept: () => RealtimeMessage[];
   set: (state: unknown) => void;
   listeners: Set<PresenceListeners>;
   teardown: () => void;
@@ -56,6 +58,7 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
   /** Who joined after this page and has not yet said who they are. */
   const joining = new Set<string>();
   const listeners = new Set<PresenceListeners>();
+  const kept = new Map<string, RealtimeMessage>();
   let own: unknown;
   let announced = false;
 
@@ -120,10 +123,20 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
       joining.add(message.from);
       announce();
     } else if (message.type === REVOKED_TYPE && message.from === 'server') {
-      // This page was let go of the topic: it no longer sees who is there. Nobody left — nobody is told they did.
+      // This page was let go of the topic: it no longer sees who is there, nor what is kept on it. Nobody left — nobody
+      // is told they did.
       others.clear();
+      kept.clear();
       joining.clear();
       changed();
+    }
+
+    if (message.retained === true && message.from === 'server' && (kept.get(message.type)?.at ?? 0) <= message.at) {
+      if (message.data === null) {
+        kept.delete(message.type);
+      } else {
+        kept.set(message.type, message);
+      }
     }
 
     listeners.forEach(listener => listener.onMessage?.(message));
@@ -145,6 +158,7 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
 
   return {
     members,
+    kept: () => [...kept.values()],
     set: state => {
       own = state;
       announced = true;
@@ -162,14 +176,14 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
 };
 
 /**
- * Who is on a topic, kept from what the members say — nothing is stored anywhere.
+ * Who is on a topic, kept from what the members say — nothing is stored anywhere — and what the server keeps on it.
  *
  * A member announces itself (`$presence`) when it sets its state, when somebody new arrives (`$join`) and every
  * twenty seconds; the server says `$leave` when its connection closes. A member heard from in none of those ways for
  * a minute is gone, which is what heals a leave that was lost.
  *
  * Every tracker of one topic on one client is a view of the same member: `set` from any of them is the page's state,
- * and a tracker started late begins with everyone already known.
+ * and a tracker started late begins with everyone already known, and with what the server kept.
  */
 export const trackPresence = (client: RealtimeClient, topic: string, listener: PresenceListeners): PresenceTracker => {
   const topics = registry.get(client) ?? new Map<string, SharedPresence>();
@@ -181,6 +195,13 @@ export const trackPresence = (client: RealtimeClient, topic: string, listener: P
   const known = shared.members();
   if (known.length) {
     listener.onChange(known);
+  }
+
+  // What the server kept is replayed once per connection, to the listeners it had: one that came later — a component
+  // mounted after a page's navigation, beside another on the topic — is handed it as the server hands a joiner, said
+  // again. A room's player reached inside the site never heard what was playing.
+  for (const message of shared.kept()) {
+    listener.onMessage?.({ ...message, replayed: true });
   }
 
   return {

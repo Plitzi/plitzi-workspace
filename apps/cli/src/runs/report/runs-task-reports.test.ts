@@ -41,7 +41,8 @@ describe('a round’s report, and the run’s', () => {
     const experience = {
       ease: 2,
       hardest: 'Finding how a page names its share image',
-      frictions: ['explain had no answer for a page’s share image'],
+      frictions: ['the brief named no share image for the page'],
+      plitzi: [{ how: 'no-way' as const, text: 'explain had no answer for a page’s share image' }],
       helped: ['task check said each failing line']
     };
     const completed = await completeTask(about.ctx, runId, 't-about', { experience });
@@ -74,28 +75,30 @@ describe('a round’s report, and the run’s', () => {
     expect(brief).toContain('plitzi run report --full');
     expect(brief.length).toBeLessThan(reportText(report, undefined).length);
 
-    // Combined with the lead's, said with its summary: the frictions are findings of Plitzi's too.
+    // Combined with the lead's, said with its summary: what of Plitzi was in the way is one of its findings, as it was
+    // placed; a friction of the project's is said with the rest, and never handed to Plitzi.
     const feedback = await feedbackOf(lead(), loaded);
     expect(feedback.experience).toMatchObject({
       ease: { median: 2, lowest: [{ agent: 'agent-1', task: 't-about', round: 1, ease: 2 }] },
-      frictions: [
+      plitzi: [
         {
-          text: 'explain had no answer for a page’s share image',
+          text: 'no-way: explain had no answer for a page’s share image',
           by: [{ agent: 'agent-1', task: 't-about', round: 1 }]
         }
       ],
+      frictions: [{ text: 'the brief named no share image for the page' }],
       helped: [{ text: 'task check said each failing line' }],
       lead: LEAD_SAID
     });
-    expect(feedback.findings.find(each => each.kind === 'said')?.title).toBe(
-      'explain had no answer for a page’s share image'
-    );
+    expect(feedback.findings.filter(each => each.kind === 'said').map(each => [each.title, each.how])).toEqual([
+      ['explain had no answer for a page’s share image', 'no-way']
+    ]);
     expect(JSON.stringify(feedback)).not.toContain(bench.root);
 
     const file = await writeFeedback(lead(), loaded);
     expect(file).toBe(feedbackFile(bench.root, runId));
     expect(await fs.readFile(file, 'utf-8')).toContain(
-      '- explain had no answer for a page’s share image — agent-1 at t-about'
+      '- no-way: explain had no answer for a page’s share image — agent-1 at t-about'
     );
   });
 });

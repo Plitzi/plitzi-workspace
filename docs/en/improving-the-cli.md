@@ -11,16 +11,21 @@ run; it is not yet a task.
 
 ## What `feedback.md` hands you
 
-Plitzi's findings come in four groups (`runs/findings/plitziClass.ts`), taken up in this order:
+The run follows this page on its side too: whoever works says what of Plitzi was in the way **as what it was** — live,
+`run notice --plitzi <wrong|no-way|in-the-way>`; with a round or the lead's summary, `--plitzi-wrong`,
+`--plitzi-no-way`, `--plitzi-in-the-way` — and anything else that was in the way (the project, the plan) as a
+`--friction`, which the report keeps with what it was like and never hands to Plitzi. So Plitzi's findings come in four
+groups (`runs/findings/plitziClass.ts`), taken up in this order:
 
 1. **Plitzi got it wrong** — a crash, a command error, a run's machinery out of step, or a word that was not true.
 2. **No way through Plitzi** — the agents went round it: a script beside the CLI, the same call again and again,
    `explain` that did not answer.
 3. **Plitzi in the way** — a command line refused though its meaning was plain, an answer too long to act on.
-4. **Said — to triage** — what an agent or the lead wrote in their own words (`--friction`, `--hardest`,
-   `run notice --plitzi`). The run cannot tell these apart: you do, with the questions below.
+4. **Placed by no one — to triage** — a measured kind no class names yet, or what was said before the run asked.
 
-The first three are measured, and each is still a symptom: read its evidence before deciding what it is.
+Each is still a symptom: read its evidence before deciding what it is. What an agent placed is its reading of what
+happened — the records can say otherwise (below) — and the report's "What else got in the way" is where a friction
+that was Plitzi's after all is found.
 
 ## The line
 

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 export const HASH_WAIT_MS = 3000;
 
 /** What tells that somebody has started moving on their own — past that, landing them somewhere would be a jolt. */
-const OWN_SCROLL_EVENTS = ['wheel', 'touchmove', 'keydown', 'pointerdown'] as const;
+export const OWN_SCROLL_EVENTS = ['wheel', 'touchmove', 'keydown', 'pointerdown'] as const;
 
 /** The id a fragment names: `#caf%C3%A9` is `café`, and one that does not decode is taken as written. */
 const idOf = (hash: string): string => {

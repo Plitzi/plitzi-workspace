@@ -57,7 +57,7 @@ export const findingsText = (
       owner === 'plitzi'
         ? PLITZI_CLASSES.map(([kind, title]) => ({
             title,
-            items: theirs.filter(finding => plitziClassOf(finding.kind) === kind)
+            items: theirs.filter(finding => plitziClassOf(finding) === kind)
           })).filter(group => group.items.length > 0)
         : [{ title: undefined, items: theirs }];
     let number = 0;

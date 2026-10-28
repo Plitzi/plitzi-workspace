@@ -1,3 +1,4 @@
+import type { PlitziHow } from './plitziClass';
 import type { FindingReach } from './weigh';
 import type { RunTask } from '../core/model';
 import type { UsageLine } from '../core/usage';
@@ -71,6 +72,8 @@ export interface Finding {
   kind: FindingKind;
   owner: FindingOwner;
   area?: PlitziArea;
+  /** What whoever said it placed it as — one of Plitzi's, said in a notice or with a round (`plitziClass.ts`). */
+  how?: PlitziHow;
   /** What went wrong, in a line. */
   title: string;
   /** The facts it was read from — tasks, agents, times, commands, counts — a line each. */
@@ -101,7 +104,10 @@ export interface SaidOfPlitzi {
   text: string;
   task?: string;
   on?: string;
-  as: 'notice' | 'friction';
+  /** Said live (`run notice --plitzi <how>`), or with a round or the lead's report (`--plitzi-wrong` …). */
+  as: 'notice' | 'round';
+  /** What it was, as whoever said it placed it: absent only in what was said before a run asked. */
+  how?: PlitziHow;
 }
 
 /** An entry of the run's log, as it was written. */

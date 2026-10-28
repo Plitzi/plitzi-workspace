@@ -103,16 +103,18 @@ export const saidFindings = (said: readonly SaidOfPlitzi[]): Finding[] =>
   groupAlike(said, notice => notice.text).map(group => {
     const agents = [...new Set(group.map(notice => notice.by))];
     const first = group[0];
+    const how = group.find(notice => notice.how !== undefined)?.how;
 
     return {
       kind: 'said' as const,
       owner: 'plitzi' as const,
+      ...(how === undefined ? {} : { how }),
       area: areaOfSaid(group.map(notice => notice.text).join(' ')),
       title: first.text.length > 220 ? `${first.text.slice(0, 220)}…` : first.text,
       evidence: evidenceOf(
         group.map(
           notice =>
-            `${notice.by}${notice.task ? ` at ${notice.task}` : ''}${notice.on ? `, on ${notice.on}` : ''}${notice.as === 'friction' ? ' (what got in its way)' : ''}${notice === first ? '' : `: ${notice.text.slice(0, 160)}`}`
+            `${notice.by}${notice.task ? ` at ${notice.task}` : ''}${notice.on ? `, on ${notice.on}` : ''}${notice.as === 'round' ? ' (said with its round)' : ''}${notice === first ? '' : `: ${notice.text.slice(0, 160)}`}`
         )
       ),
       times: group.length,

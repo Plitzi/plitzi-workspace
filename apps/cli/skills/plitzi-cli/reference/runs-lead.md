@@ -184,9 +184,8 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
 - **A line of yours found wrong is amended** (`plitzi run amend`), never left red — a done task's too: the finish holds
   it to the amended line. The plan you amend is any of the run's — the one it opened with, a stage's, or several joined:
   each changes only the tasks of the plans it holds.
-- **Every problem of Plitzi, noted as it happens** — the CLI, the platform, a skill or doc that misled, a workaround a
-  limit forced: `run notice --plitzi "…"`, one each with what it cost; never fixed mid-run. The run's `feedback.md` joins
-  them to the agents' reports.
+- **Every problem of Plitzi, noted as it happens** — the CLI, the platform, a doc that misled, a workaround a limit
+  forced: `run notice --plitzi <wrong|no-way|in-the-way> "…"`, one each with its cost; never fixed mid-run.
 - **A round trimmed is said**: what it leaves is a `run notice`, not one more round.
 
 ## When the run copies a site

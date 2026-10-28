@@ -40,6 +40,9 @@ import {
   AGENT_OPTION,
   EASE_OPTION,
   FRICTION_OPTION,
+  PLITZI_IN_THE_WAY_OPTION,
+  PLITZI_NO_WAY_OPTION,
+  PLITZI_WRONG_OPTION,
   HARDEST_OPTION,
   HELPED_OPTION,
   JSON_OPTION,
@@ -47,6 +50,7 @@ import {
   TOKEN_OPTION
 } from './options';
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } from '../../../options';
+import { PLITZI_HOW_MEANS, PLITZI_HOWS } from '../../../runs/findings/plitziClass';
 import { groupHelp } from '../../register/helpGroups';
 import { runAgent } from '../run/agent';
 import { runStart } from '../run/start';
@@ -61,6 +65,7 @@ import type {
   UpgradeRunOptions,
   WatchRunOptions
 } from '..';
+import type { PlitziHow } from '../../../runs/findings/plitziClass';
 import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { HelpGroup } from '../../register/helpGroups';
 import type { AgentOptions } from '../run/agent';
@@ -265,15 +270,19 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .argument('<text>', 'What is wrong — or - to read it from stdin')
     .option('--on <where>', 'Where it is: a page, an element, a file')
-    .option(
-      '--plitzi',
-      'Of Plitzi itself — the CLI, the platform, its docs — not of the project: for the run’s feedback to Plitzi, never the project’s backlog'
+    .addOption(
+      new Option(
+        '--plitzi <how>',
+        `Of Plitzi itself — the CLI, the platform, its docs — not of the project, for the run’s feedback to Plitzi and never the project’s backlog; what it was: ${PLITZI_HOWS.map(how => `${how} (${PLITZI_HOW_MEANS[how]})`).join('; ')}`
+      ).choices(PLITZI_HOWS)
     )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: boolean }) => runNotice(text, options));
+    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: PlitziHow }) =>
+      runNotice(text, options)
+    );
 
   runGroup
     .command('backlog')
@@ -467,6 +476,9 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...EASE_OPTION)
     .option(...HARDEST_OPTION)
     .option(...FRICTION_OPTION)
+    .option(...PLITZI_WRONG_OPTION)
+    .option(...PLITZI_NO_WAY_OPTION)
+    .option(...PLITZI_IN_THE_WAY_OPTION)
     .option(...HELPED_OPTION)
     .option('--full', 'The whole report — each finding with its evidence and fix, the flow, the cost, the bench')
     .option(

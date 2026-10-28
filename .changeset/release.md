@@ -893,7 +893,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A before that never runs proves nothing:** `task prove --before` read a copy whose server never answered — the
   task's new module imported by what stayed — as "fails before, passes with it". Said as broken now, with `--mutate`.
 - **`page play --read state.<key>`** reads a key of the page's state (a dotted path, `state.cart.items.0`) after each
-  step, "as before" when it did not change: a reviewer held a toggle's limit to three and read each crate's shadow.
+  step — in a comma list too, beside ids and rows (`card:last`), which a selector's comma never splits — "as before" when it did not change: a reviewer held a toggle's limit to three and read each crate's shadow.
 - **`page play` says an edge a step changed** — border, outline, shadow, now and before: a picked swatch differed by
   its ring alone, and a separate `page measure --click` proved it.
 - **`page measure --scheme light,dark`** measures both schemes in one call, and its `--steps` are played once per
@@ -911,7 +911,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   report of twenty-three read as twenty-three things to change.
 - **A step's element not on the page says why it may not be drawn**, as `page measure` does — a visitor's page, a part
   a step opens, a list's row a press removed — where it said "its name, a tag or a selector": a tester dismissed a
-  report and tried three more names. A play that fails at a later width says the widths before it shared its server.
+  report and tried three more names. A play that fails at a later width says the widths before it shared its server. A row asked past the copies drawn
+  (`room-crate-add:2`) says how many there are, and how to name a row by its list.
+- **Whoever works says what of Plitzi was in the way as what it was**, the line `docs/en/improving-the-cli.md` draws:
+  `run notice --plitzi <wrong|no-way|in-the-way>` live, `--plitzi-wrong`, `--plitzi-no-way`, `--plitzi-in-the-way` with a
+  round or the lead's summary — each in its class in the report. `--friction` is what else was in the way (the
+  project, the plan): said with the rest, never one of Plitzi's findings. `run notice --plitzi` takes its value now.
 - **`run report --full` past 24k characters is written to the run's `report-full.md`** and the answer names it: a
   lead read a 31k report three times, cut each time where its harness stops.
 - **A task runs the page specs the run gives it** (what its change may break) at its check: the project's own check runs
@@ -1306,6 +1311,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
+- **A navigation inside the site leaves the scroll as a page load would**: another page opens at its top, back and
+  forward return to where the visitor left each page (waited for while it fills in), and a change of the query alone
+  moves nothing. A room closed with `navigate('/')` opened Home at its foot, and Explore reached from a scrolled room
+  opened past its title.
+
 - **A hidden element with no tag draws nothing**: a `channel` or provider without a `subType` ignored its own `visible`, its
   children shown.
 - **Scroll steps wait for their box to have something to scroll**: `scrollTo(…, { y: 'end' })` on a page's load did
@@ -1485,6 +1495,13 @@ is no room at this address.` — one line, no stack — where the log said "ende
   `@plitzi/sdk-shared/schema` now, for the builder and authoring alike.
 - **The MCP's `patchSettings`** writes the site's identity, `robotsTxt` and `viewTransitions` too, and `keptState`.
 - **Settings › State** edits `keptState` beside the keys never kept, and says when both are written.
+
+## Realtime (`@plitzi/sdk-shared`, `@plitzi/sdk-elements`)
+
+- **What a `retain: true` channel keeps reaches a listener that comes late**: the server hands it once per connection,
+  so a second listener of a topic on the page — a plugin's `useChannel` mounted after an in-site navigation, beside the
+  page's `channel` element — never heard it. The page's shared subscription keeps the newest of each type and hands it
+  on, `replayed`: a room's player reached from Explore said "Nothing is playing" until a reload.
 
 ## Dev tools (`@plitzi/sdk-dev-tools`)
 

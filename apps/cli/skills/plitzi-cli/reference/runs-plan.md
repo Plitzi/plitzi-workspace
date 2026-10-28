@@ -15,7 +15,7 @@ an agent starts or a token is spent. The lead's half after it: [runs-lead.md](ru
   pages it lands on — and the demo data each state is seen with: a state the data never reaches is seen by nobody.
 - The platform's API each task uses and its limits: `plitzi explain <name>` (a member: `explain ctx.later`), the skills,
   the installed `.d.ts`. A limit found is a constraint the tasks are written around — and Plitzi's to fix: say it to the
-  person, and once the run is open `run notice --plitzi "…"`. A job that must survive a restart, when the scheduler
+  person, and once the run is open `run notice --plitzi <how> "…"`. A job that must survive a restart, when the scheduler
   keeps it in memory, is kept in kv with its time and caught up by a clock.
 
 ## 3. The person's decisions, before the tasks

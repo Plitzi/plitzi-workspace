@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
 import { useStoreById } from '@plitzi/nexus/react';
 import { AuthContext } from '@plitzi/sdk-auth';
@@ -16,6 +16,7 @@ import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import { currentUrl, returnTo, withRedirect } from './redirects';
+import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
 
@@ -59,6 +60,9 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
    */
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const routerLocation = renderMode !== 'widget' ? useLocation() : undefined;
+  // How it came there — a link, or back and forward — for the scroll it opens at. Guarded as the location is.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const navigationType = renderMode !== 'widget' ? useNavigationType() : undefined;
   const { queryParams, hostname, origin, location } = useNavigation({ server, routerLocation });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -104,6 +108,13 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   useScrollToHash({
     hash: routerLocation?.hash ?? '',
     navigationKey: routerLocation?.key,
+    enabled: previewMode && renderMode !== 'widget'
+  });
+  useScrollOnNavigation({
+    pathname: routerLocation?.pathname ?? '',
+    hash: routerLocation?.hash ?? '',
+    ...(routerLocation === undefined ? {} : { navigationKey: routerLocation.key }),
+    ...(navigationType === undefined ? {} : { action: navigationType }),
     enabled: previewMode && renderMode !== 'widget'
   });
 

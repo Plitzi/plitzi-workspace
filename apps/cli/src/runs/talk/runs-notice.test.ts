@@ -74,7 +74,7 @@ describe('the run’s feedback to Plitzi', () => {
   it('keeps what is noticed of Plitzi out of the backlog, and writes it with the run’s measures as it ends', async () => {
     const runId = await open();
     await noticeRun(lead(), runId, 'page measure reads no position, and every agent wrote a script for it', {
-      plitzi: true
+      plitzi: 'no-way'
     });
     await noticeRun(lead(), runId, 'The footer’s legal line wraps at 390');
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
@@ -97,7 +97,7 @@ describe('the run’s feedback to Plitzi', () => {
   // The feedback a run left ended in a blank line, and the project's format check refused the next run.
   it('leaves the backlog as the project’s Prettier writes it, and its reports where no check reads', async () => {
     const runId = await open();
-    await noticeRun(lead(), runId, 'page measure reads no position', { plitzi: true });
+    await noticeRun(lead(), runId, 'page measure reads no position', { plitzi: 'no-way' });
     await noticeRun(lead(), runId, 'The footer’s legal line wraps at 390', { on: '/ #footer' });
     await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
     const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });

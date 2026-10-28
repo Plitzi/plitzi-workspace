@@ -90,8 +90,10 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
 - **Before done:** `npm run typecheck` (seconds), then `plitzi task check --fix` — eslint and prettier fix what they can first — runs what `complete` holds
   the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
-- **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"]` — what
-  it was like to Plitzi, the note to the lead; its review is the one its card names. A control you add you use first, there and back (`page play`). **A task never ends
+- **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--plitzi-no-way "…"] [--friction "…"] [--note "…"]` — what
+  it was like to Plitzi (of Plitzi, as what it was: `--plitzi-wrong` it said something untrue, `--plitzi-no-way`
+  nothing in it did it, `--plitzi-in-the-way` it refused what you meant; `--friction` the project, the plan), the note
+  to the lead; its review is the one its card names. A control you add you use first, there and back (`page play`). **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (`task
   progress` says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,

@@ -540,9 +540,19 @@ export const verdictOf = (
         ? [chalk.green(`✓ --same ${same.join(',')}: every step as ${other}'s`)]
         : unlike.map(line => chalk.red(`✗ --same: ${line}`));
 
-/** `--read a,b,c` as `--width 390,1440` takes them: a list of element ids, each read — a selector's comma is kept. */
+/** One thing `--read` names that is never a selector: an element's id, a list's row of one (`card:2`), a state key. */
+const READ_NAME = /^(?:[\w-]+(?::(?:\d+|last))?|state\.[\w.-]+)$/;
+
+/**
+ * `--read a,b,c` as `--width 390,1440` takes them: a list of names, each read — a selector's comma is kept. A list
+ * holding a row (`card:last`) or a state key (`state.roomRemoveAt`) is a list too: a run's scout read three as one.
+ */
 export const readTargets = (read: readonly string[] = []): string[] =>
-  read.flatMap(each => (/^[\w-]+(,[\w-]+)+$/.test(each) ? each.split(',') : [each]));
+  read.flatMap(each => {
+    const parts = each.split(',');
+
+    return parts.length > 1 && parts.every(part => READ_NAME.test(part)) ? parts : [each];
+  });
 
 /** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
 export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): PlayStep[] | { problem: string } => {

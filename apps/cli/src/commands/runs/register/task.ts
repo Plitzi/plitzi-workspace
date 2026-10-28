@@ -31,6 +31,9 @@ import {
   AGENT_OPTION,
   EASE_OPTION,
   FRICTION_OPTION,
+  PLITZI_IN_THE_WAY_OPTION,
+  PLITZI_NO_WAY_OPTION,
+  PLITZI_WRONG_OPTION,
   HARDEST_OPTION,
   HELPED_OPTION,
   JSON_OPTION,
@@ -301,6 +304,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...EASE_OPTION)
     .option(...HARDEST_OPTION)
     .option(...FRICTION_OPTION)
+    .option(...PLITZI_WRONG_OPTION)
+    .option(...PLITZI_NO_WAY_OPTION)
+    .option(...PLITZI_IN_THE_WAY_OPTION)
     .option(...HELPED_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)

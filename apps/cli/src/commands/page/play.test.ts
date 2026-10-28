@@ -263,6 +263,12 @@ describe('what a step left', () => {
 describe('what page play is asked', () => {
   it('reads a comma list of element ids as each of them, and keeps a selector whole', () => {
     expect(readTargets(['crate-count,crate-list', 'room-key'])).toEqual(['crate-count', 'crate-list', 'room-key']);
+    // A row and a state key are names too: a scout's three were read as one, not on the page at every step.
+    expect(readTargets(['room-rules-remove-at-note,card-name:last,state.roomRemoveAt'])).toEqual([
+      'room-rules-remove-at-note',
+      'card-name:last',
+      'state.roomRemoveAt'
+    ]);
     expect(readTargets(['.card, .row'])).toEqual(['.card, .row']);
   });
 

@@ -104,8 +104,8 @@ It holds:
   `brief` entries `task context` writes: a primer or a task that made every brief heavier is seen there;
 - refusals by code, and checks by step.
 
-Notices of Plitzi (`run notice --plitzi "…"`) are among the findings, grouped when two agents said one thing. They never
-reach the project's backlog. Nothing of the project's code is in either file and no token; the project's folder and the
+Notices of Plitzi (`run notice --plitzi <wrong|no-way|in-the-way> "…"`) are among the findings, each in the class it was
+placed in, grouped when two agents said one thing. They never reach the project's backlog. Nothing of the project's code is in either file and no token; the project's folder and the
 person's home are said as `<project>` and `~`. A run's log goes with the run: a run's lead had the next run's
 work nowhere the next run reads, and a run's empty stats cell was seen in two runs and noted "predates this task"
 in a review each time.
@@ -1078,7 +1078,10 @@ it: it found a close measured as never ready before its finish, and an answered 
   `complete` refuses without the first two, before anything runs):
   - `--ease <1-5>`: 1, it fought Plitzi; 5, Plitzi got out of the way;
   - `--hardest "…"`: what cost the most — time, tries, tokens — and why;
-  - `--friction "…"`, again for each: what of Plitzi got in its way;
+  - `--plitzi-wrong "…"`, `--plitzi-no-way "…"`, `--plitzi-in-the-way "…"`, again for each: what of Plitzi got in its
+    way, placed as [improving the CLI](./improving-the-cli.md) takes it up — each one of Plitzi's findings, in its class;
+  - `--friction "…"`, again for each: what else got in its way — the project, its data, the plan — said with the rest
+    and never one of Plitzi's findings;
   - `--helped "…"`, again for each: what helped, which a change must not take away;
 - what its harness spent (`harness/`): the harness, its model, effort and version; turns, tokens read fresh, from the
   cache and written, its context at the end; the results that weighed most, by the tokens they were read again for in
@@ -1093,7 +1096,8 @@ The harness's spend is read from the sessions it keeps on the machine, summed fo
 Another harness's is said as not read. The lead's own sessions are read the same way, over the whole run.
 
 **The experience, combined** (`experience.ts`). The lead says its own with its summary (`run report --summary <file>
---ease --hardest [--friction] [--helped]`, kept in `lead-experience.json`), and the run puts them all together:
+--ease --hardest [--plitzi-wrong|--plitzi-no-way|--plitzi-in-the-way] [--friction] [--helped]`, kept in
+`lead-experience.json`), and the run puts them all together:
 - the ease: the run's median, each agent's, and the hardest rounds (2 or less) with what cost the most;
 - what cost the most, what got in the way and what helped, each grouped when several said it alike (a text joins the group
   whose first text it is alike, never the words a group gathered: `groupAlike`), the most said

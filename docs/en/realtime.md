@@ -122,6 +122,11 @@ How it holds (`apps/server/src/modules/realtime/retained.ts`):
   page keeps the newer of a type by its `at`.
 - **Marked**: every message on such a channel, live or handed on joining, carries `retained: true`. It reaches the
   page's `onMessage` like any other — a flow that keeps state from messages starts from what is kept.
+- **Handed to whoever listens late**: the server hands what it keeps once per connection, to the listeners the page had
+  then. Every listener of a topic on one page shares one subscription (`trackPresence`,
+  `packages/sdk-shared/src/realtime/presence.ts`), which keeps the newest of each type it heard and hands it, marked
+  `replayed`, to a listener that comes later — a plugin's `useChannel` mounted after an in-site navigation, beside the
+  page's `channel` element on the same topic.
 
 ### A job's own topic: `$job:<id>`
 

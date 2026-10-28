@@ -428,7 +428,7 @@ describe('agents on demand', () => {
     await completeTask(bench.agent('dev-1', { token: taken.token }), 'es-launch', 't-home');
     expect(await nextTask(bench.agent('dev-1'), 'es-launch', 'developer')).toMatchObject({ finished: true });
     await noticeRun(bench.agent('dev-1'), 'es-launch', 'The brief named a file the task did not hold', {
-      plitzi: true
+      plitzi: 'wrong'
     });
     bench.advance(30 * 60_000);
 

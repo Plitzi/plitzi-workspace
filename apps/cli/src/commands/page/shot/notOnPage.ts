@@ -1,4 +1,23 @@
-import { targetOn } from './capture';
+import { namedBy, ROW, targetOn } from './capture';
+
+/** How many copies are counted before "past that" would say the same. */
+const COPIES_LOOK = 20;
+
+/** How many elements a selector finds, counted copy by copy as a page's locator reads one. */
+const copiesOf = async (page: Parameters<typeof targetOn>[0], selector: string): Promise<number> => {
+  for (let index = 0; index < COPIES_LOOK; index += 1) {
+    if (
+      (await page
+        .locator(`${selector} >> nth=${String(index)}`)
+        .first()
+        .count()) === 0
+    ) {
+      return index;
+    }
+  }
+
+  return COPIES_LOOK;
+};
 
 /**
  * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
@@ -10,6 +29,14 @@ export const notOnPageText = async (
   /** How this command reaches a part a visitor's press makes: `--click, --steps`, or a step before it. */
   reach: string
 ): Promise<string> => {
+  // A row asked past the copies drawn: how many there are — a run's dev-1 read "not on the page" of `room-crate-add:2`
+  // as no `:N` at all, where the page drew one copy at that width.
+  const row = ROW.exec(target);
+  const copies = row ? await copiesOf(page, namedBy(row[1])) : 0;
+  if (row && copies > 0) {
+    return `${row[1]} is drawn ${String(copies)} time${copies === 1 ? '' : 's'} here — :${row[2]} counts every copy on the page, hidden ones too, and a part drawn once a width is two copies: a row by its list is \`[data-plitzi-el=<list>] > li:nth-of-type(${row[2] === 'last' ? 'last' : row[2]}) …\``;
+  }
+
   const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
   const ways = name === undefined ? [] : [name, `.${name}`].filter(way => way !== target);
   for (const way of ways) {
