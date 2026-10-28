@@ -148,7 +148,9 @@ describe("the sidebar's stream of the agent followed", () => {
       );
     expect(opened?.streamOpened.has(momentKey(moment))).toBe(true);
     const text = screen({ streamOpened: opened?.streamOpened }).canvas.text().join('\n');
-    expect(text).toMatch(/▾ Checking the charts\s*\n\s*Checking the charts\s*\n\s*then the rooms, read once/);
+    // Its whole in place of its line — never the line, then the whole again.
+    expect(text).toMatch(/▾ Checking the charts\s*\n\s*then the rooms, read once/);
+    expect(text.match(/Checking the charts/g)).toHaveLength(1);
   });
 
   // Carlos: opening a call's arrow showed what it asked, never what it answered — two arrows to open for one call.
@@ -201,8 +203,11 @@ describe("the sidebar's stream of the agent followed", () => {
         { ...closed, needs: [], palette: () => [], preview: 'none' }
       );
     const text = screen({ streamOpened: opened?.streamOpened }).canvas.text().join('\n');
-    expect(text).toMatch(/▾ Bash npx plitzi task check/);
-    expect(text).toMatch(/⎿ fail 1\s*\n\s*fail 1\s*\n\s*✗ the charts read once/);
+    // The call, its answer under it — newest block first, though another answered between them in time.
+    expect(text).toMatch(
+      /▾ Bash npx plitzi task check\s*\n\s*⎿ fail 1\s*\n\s*✗ the charts read once[\s\S]*▸ Read src\/a\.ts\s*\n\s*⎿ export const a/
+    );
+    expect(text.match(/fail 1/g)).toHaveLength(1);
     expect(text).not.toContain('export const b');
   });
 

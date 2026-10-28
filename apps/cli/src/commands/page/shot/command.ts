@@ -301,7 +301,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     // Taken in a task's copy, a picture is the run's, by task: where the lead reads what the agent points at, outside
     // the copy (rebuilt when the task is taken again) and gone with the run — never left in the project's tmp/.
     const copy = copyOf(project.root);
-    const file = shotFile(pathname, clip, view.width, taken.scheme);
+    const file = shotFile(pathname, clip, view.width, taken.scheme, options.as);
     const asked = options.out === undefined ? undefined : path.resolve(project.root, options.out);
     // A folder named is where the picture goes, by its own name: written over, a folder was Node's EISDIR (a run's
     // design-2).

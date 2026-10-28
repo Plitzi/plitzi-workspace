@@ -109,7 +109,7 @@ describe("a task's brief", () => {
     );
 
     expect(brief).toContain(
-      "The project’s lint forbids in them — known now, not at task check:\n    ✗ visual/*.spec.ts: no { test } import from '@playwright/test' — take test from ./offline"
+      "The project’s lint rules for them, as its config says them (task check holds them):\n    · visual/*.spec.ts: no { test } import from '@playwright/test' — take test from ./offline"
     );
   });
 

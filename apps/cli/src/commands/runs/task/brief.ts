@@ -265,8 +265,10 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
             : []),
           ...(context.restrictions.length > 0
             ? [
-                '  The project’s lint forbids in them — known now, not at task check:',
-                ...context.restrictions.map(each => `    ✗ ${each}`)
+                // The project's rules, said as rules — a ✗ before each read as a warning about the task's own code,
+                // to an agent already keeping the rule.
+                '  The project’s lint rules for them, as its config says them (task check holds them):',
+                ...context.restrictions.map(each => `    · ${each}`)
               ]
             : []),
           // What the work needs beyond them is not refused: it is said how it goes in.

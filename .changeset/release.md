@@ -816,8 +816,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   a whole opened near the end ran past the bottom); down to the run, the tasks a third of what is free at most; the
   wheel down over it goes to earlier moments, where it stays as moments come; a click on a moment opens it whole
   under its line; `e` widens the sidebar. The activity says a long line as far as its row reaches, where every line was
-  cut at 72 characters, mid-screen. A tool call and its answer wear one arrow, on the call, which opens both — paired by
-  the call's id (another call may answer between them); an answer whose call scrolled out opens by itself. The session is read further back while its end holds too few moments, up to
+  cut at 72 characters, mid-screen. A tool call is one block with its answer under it — paired by the call's id, another
+  call may answer between them — never its answer above it, and one arrow on the call opens both, each said whole in
+  place of its line rather than the line and then the whole again; an answer whose call scrolled out opens by itself. The session is read further back while its end holds too few moments, up to
   8 MB — a screenshot is a line of a megabyte, and a scout's stream read "nothing said or done yet" each time its last
   line was one — and an image's base64 is left out before a line is read, said in the answer as
   `[image · 287 KB, not shown]`.
@@ -855,6 +856,17 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **A task runs the page specs the run gives it** (what its change may break) at its check: the project's own check runs
+  no spec, and a run's task went to review "passed" while the spec of the page it changed failed two of ten.
+- **`page shot --as` names the account in the picture's file** (`messages-as-mika-390-dark.png`): one account's
+  picture wrote over another's.
+- **`--expect` written in mixed case is read as written:** a display name "Juno" over a username "juno" could not be
+  proved; all one case still reads any, as a stylesheet's capitals do.
+- **The brief says the project's lint rules as rules** (`·`, "task check holds them"): a ✗ before each read as a
+  warning to an agent already keeping them.
+- **An agent on demand leaves the base only what the base may take:** a task of tests is never left for the agent that
+  worked what it tests — a run's tests card waited for a dev-1 that could not write it, dev-2 told it was dev-1's,
+  until the run stood still.
 - **`run start` names a run its ask's words had already named with a number after them** (`find-and-fix-what-2`): a
   second run asked in the same first words was refused as the first's, with no plan to give it a name in.
 - **Each finding says what it weighs:** the command it is about and what the run made of it — its calls, the agents

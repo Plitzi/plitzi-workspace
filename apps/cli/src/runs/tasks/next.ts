@@ -273,9 +273,20 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
     };
   }
 
-  // On demand, the base of its roles goes first: what ready tasks its free agents take are not offered here.
+  // On demand, the base of its roles goes first: what ready tasks its free agents may take are not offered here — each
+  // one a task it may write, never the tests of what it worked (a run's tests card waited for a dev-1 that could not
+  // write them, while dev-2, on demand, was told it was dev-1's, until the run stood still).
   const base = ready.length > 0 ? await baseFirst(ctx, loaded, views, roles) : [];
-  if (ready.length > 0 && base.length >= ready.length) {
+  const forBase = new Set<string>();
+  for (const agent of base) {
+    const theirs = ready.find(task => !forBase.has(task.id) && writesTests(task, agent, views));
+    if (theirs) {
+      forBase.add(theirs.id);
+    }
+  }
+
+  const left = ready.filter(task => !forBase.has(task.id));
+  if (ready.length > 0 && left.length === 0) {
     return {
       why: `${ready.map(task => task.id).join(', ')} ready, for ${base.join(', ')}, free and of the team's base: you are on demand — you take what they cannot (plitzi task next waits for it)`,
       ready: ready.map(task => task.id),
@@ -284,7 +295,7 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   }
 
   if (ready.length > 0) {
-    return { task: ready[base.length], ready: ready.map(task => task.id), messages };
+    return { task: left[0], ready: ready.map(task => task.id), messages };
   }
 
   if (ready.length === 0 && waitingForFile.length > 0) {

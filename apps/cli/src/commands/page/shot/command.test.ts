@@ -12,6 +12,12 @@ describe('a picture’s file', () => {
       'r-night-drive-room-desk-tabs-390-dark.png'
     );
   });
+
+  // /messages shot as mika wrote over /messages shot as dax a command before.
+  it('names the account it was seen as', () => {
+    expect(shotFile('/messages', undefined, 390, 'dark', 'mika')).toBe('messages-as-mika-390-dark.png');
+    expect(shotFile('/messages', undefined, 390, 'dark', 'dax')).toBe('messages-as-dax-390-dark.png');
+  });
 });
 
 // A lead pictured three pages in one command and was refused: each picture's --out names what tells it apart.

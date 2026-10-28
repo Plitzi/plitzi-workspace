@@ -469,6 +469,12 @@ describe('an expectation held to every copy of its element', () => {
 
   it('is met by any row that shows the text, and missed with what the rows show', () => {
     expect(expectationMissed({ element: 'follow-list-name', text: 'juno' }, rows, [])).toBeUndefined();
+    // Written in mixed case, read as written: a display name "Juno" over a username "juno" could not be proved.
+    const why = { present: 1, shown: ['juno does not get messages.'], cut: [] };
+    expect(expectationMissed({ element: 'thread-why', text: 'Juno does not' }, why, [])).toBe(
+      '--expect thread-why~Juno does not: thread-why shows "juno does not get messages." — in another case: a text written in mixed case is read as written (all one case to read any)'
+    );
+    expect(expectationMissed({ element: 'thread-why', text: 'JUNO DOES NOT' }, why, [])).toBeUndefined();
     expect(expectationMissed({ element: 'follow-list-name', text: 'Vega' }, rows, [])).toBe(
       `--expect follow-list-name~Vega: none of follow-list-name's 2 copies shows it — "Nova", "Juno"`
     );

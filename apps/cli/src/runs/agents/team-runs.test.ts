@@ -167,6 +167,30 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.notices.filter(notice => notice.includes('touches src/functions/book.test.ts'))).toEqual([]);
   });
 
+  // A run's task went to review "passed" while the spec of the page it changed failed two of ten: no check ran it.
+  it('runs the page spec it gives a task at that task’s check — a module’s test the project’s own test runs', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await bench.write(
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { start: 'node src/main.ts' }, devDependencies: { '@playwright/test': '1.56.0' } })}\n`
+    );
+    await bench.write('visual/menu.spec.ts', "import { test } from '@playwright/test';\n");
+    await bench.write('src/functions/book.test.ts', "import test from 'node:test';\n");
+    const plan = benchPlan();
+    plan.tasks[0].files.push('src/functions/book.ts');
+
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    const menu = checked.tasks.find(task => task.id === 't-menu');
+    expect(menu?.touches).toEqual(['visual/menu.spec.ts']);
+    expect(menu?.acceptance.at(-1)).toEqual({
+      said: 'The specs of its pages the run gave it pass on the copy served: what it breaks there is its to fix',
+      check: 'npx playwright test visual/menu.spec.ts --reporter=line'
+    });
+    // A module's test is the project's own `test` to run: its acceptance is as it was.
+    expect(checked.tasks.find(task => task.id === 't-home')?.acceptance).toEqual(plan.tasks[0].acceptance);
+  });
+
   // A scout read two tasks "changing" a test file neither named: the run had given it to both.
   it('says a test two tasks at once may break as the run’s to give them, not as theirs', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });

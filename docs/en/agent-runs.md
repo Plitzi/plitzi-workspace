@@ -221,7 +221,7 @@ activity reads: what the model said
 project's paths as short as they read. It takes the height down to the run — the tasks a third of what is free at most —
 and the wheel over it scrolls it back (`streamBack`), where it stays as moments come after (`keptBack`); a moment
 whose line says less — a message's lines, a command, an answer — opens under it by a click (▸, ▾ open: its `whole`, the
-first 4000 characters), a tool's call with its answer, one arrow on the call for both (the two share the call's id, `call`); `e` widens the sidebar.
+first 4000 characters), a tool's call one block with its answer under it, one arrow on the call opening both, each whole in place of its line (the two share the call's id, `call`); `e` widens the sidebar.
 The session is read from its end, further back while it holds too few moments (up to 8 MB), and an image an answer
 carries is left out before its line is read and said in its place, with its weight. An agent the run did not start — the lead, in the harness a person runs — has no
 session the run keeps, and the stream says so; one just started has none yet.
@@ -407,7 +407,9 @@ places) — and says of each line whether it catches it (passes on
 the copy, fails on the mutant) or lets it pass: a run's tester changed the code under test with sed in a copy of
 `src/` to see whether a task of tests held it. A test file of the project a developer task's tests card takes is the
 developer task's too (`touches`, `existingTests`): it fixes what its change breaks there before that card starts —
-a run's t-shows-coming went to review failing a test that lists every action, its file its tests card's. `task
+a run's t-shows-coming went to review failing a test that lists every action, its file its tests card's. A page spec
+among them is also a line of its acceptance, run at its check against the copy served — the project's own check runs
+no spec, and a run's task went to review "passed" while its page's spec failed two of ten. `task
 show` says a task's brief (what was found for it) under its acceptance; a file a stage's task changed is diffed against
 the project's own, not read as added. `--within <element>` pictures one part alone; a task
 of more than three parts, or one that writes the page's root, is pictured whole (`lookClips`). A part's picture leaves out

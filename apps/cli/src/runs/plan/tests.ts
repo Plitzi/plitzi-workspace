@@ -331,8 +331,29 @@ export const withTestTasks = (
 
   const tasks = plan.tasks.map(task => {
     const breaks = touched.get(task.id);
+    if (breaks === undefined) {
+      return task;
+    }
 
-    return breaks === undefined ? task : { ...task, touches: [...new Set([...(task.touches ?? []), ...breaks])] };
+    // …and the page specs among them run at its check: the project's own check runs no spec, and a run's task went to
+    // review "passed" while the spec of the page it changed failed two of ten — found by its reviewer, by hand.
+    const specs = testChecks(
+      breaks.filter(file => file.endsWith('.spec.ts')),
+      setup
+    ).map(line =>
+      typeof line === 'string'
+        ? line
+        : {
+            ...line,
+            said: 'The specs of its pages the run gave it pass on the copy served: what it breaks there is its to fix'
+          }
+    );
+
+    return {
+      ...task,
+      touches: [...new Set([...(task.touches ?? []), ...breaks])],
+      acceptance: [...task.acceptance, ...specs]
+    };
   });
 
   return { plan: { ...plan, tasks: [...tasks, ...added] }, added: added.map(task => task.id), untested };

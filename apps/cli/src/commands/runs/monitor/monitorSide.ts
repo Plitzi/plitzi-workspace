@@ -269,68 +269,85 @@ export const drawSide = (
   }
 };
 
-/**
- * Which moments of a stream open, by which key, and which are open: a tool's call is one thing with its answer — one
- * arrow, on the call, opens what it asked and what it answered (a person read two arrows for one call, and opening the
- * question left the answer cut). An answer whose call is not in the stream any more opens by itself.
- */
-const openingOf = (
-  moments: readonly SessionMoment[],
-  opened: ReadonlySet<string>
-): {
-  opens: (moment: SessionMoment) => boolean;
-  open: (moment: SessionMoment) => boolean;
-  keyOf: (moment: SessionMoment) => string;
-  paired: (moment: SessionMoment) => boolean;
-} => {
-  const calls = new Map(
-    moments.flatMap(moment =>
-      moment.kind === 'tool' && moment.call !== undefined ? [[moment.call, momentKey(moment)] as const] : []
-    )
-  );
-  const answered = new Set(
-    moments.flatMap(moment =>
-      moment.kind === 'result' && moment.whole !== undefined && moment.call !== undefined ? [moment.call] : []
-    )
-  );
-  const callOf = (moment: SessionMoment): string | undefined =>
-    moment.kind === 'result' && moment.call !== undefined ? calls.get(moment.call) : undefined;
-  const keyOf = (moment: SessionMoment): string => callOf(moment) ?? momentKey(moment);
-  const opens = (moment: SessionMoment): boolean =>
-    moment.whole !== undefined || (moment.kind === 'tool' && moment.call !== undefined && answered.has(moment.call));
+/** One row of the stream: a moment's own line (with its glyph, and the key a click opens it by) or one more of it. */
+interface StreamRow {
+  moment: SessionMoment;
+  /** Where its words start, from the stream's column: a call and what it said at 2, its answer at 4. */
+  at: number;
+  text: string;
+  /** The moment's own line: `›` said, `▸` a call, `⎿` an answer, `✗` one that failed, `▾` open. */
+  glyph?: string;
+  /** What a click on it opens: the call's, for a call and its answer — one thing. */
+  key?: string;
+}
 
-  return {
-    opens,
-    open: moment => opens(moment) && opened.has(keyOf(moment)),
-    keyOf,
-    paired: moment => callOf(moment) !== undefined
-  };
+/**
+ * A stream's moments as the blocks a person reads, newest first: a tool's call with its answer under it — never the
+ * answer above its question, as moments in time order put it — and anything else alone.
+ */
+const blocksOf = (moments: readonly SessionMoment[]): SessionMoment[][] => {
+  const blocks: { moments: SessionMoment[]; last: number }[] = [];
+  const byCall = new Map<string, { moments: SessionMoment[]; last: number }>();
+  moments.forEach((moment, index) => {
+    const call = moment.call === undefined ? undefined : byCall.get(moment.call);
+    if (moment.kind === 'result' && call !== undefined) {
+      call.moments.push(moment);
+      call.last = index;
+
+      return;
+    }
+
+    const block = { moments: [moment], last: index };
+    blocks.push(block);
+    if (moment.kind === 'tool' && moment.call !== undefined) {
+      byCall.set(moment.call, block);
+    }
+  });
+
+  return blocks.sort((a, b) => b.last - a.last).map(block => block.moments);
 };
 
 /**
- * The rows of a stream, newest first — as the activity reads — each moment's line, and its whole under it when it is
- * open: newest last, a whole opened near the end ran past the bottom, and scrolling to read it fought the moments coming.
+ * The rows of a stream, newest first — as the activity reads — each call with its answer under it. One arrow opens a
+ * block: what it asked and what it answered said whole in place of their lines, never a line and then its whole again
+ * (a person read the answer's first line twice, and an answer opened above its question).
  */
-const streamRows = (
-  moments: readonly SessionMoment[],
-  opened: ReadonlySet<string>,
-  room: number
-): { moment: SessionMoment; line?: string }[] => {
-  const { open } = openingOf(moments, opened);
+const streamRows = (moments: readonly SessionMoment[], opened: ReadonlySet<string>, width: number): StreamRow[] =>
+  blocksOf(moments).flatMap(block => {
+    const key = momentKey(block[0]);
+    const opens = block.some(moment => moment.whole !== undefined);
+    const open = opens && opened.has(key);
 
-  return [...moments]
-    .reverse()
-    .flatMap(moment => [
-      { moment },
-      ...(moment.whole !== undefined && open(moment)
-        ? moment.whole.split('\n').flatMap(part => wrap(part, room).map(line => ({ moment, line })))
-        : [])
-    ]);
-};
+    return block.flatMap((moment, place): StreamRow[] => {
+      const answer = moment.kind === 'result';
+      const at = answer ? 4 : 2;
+      const lines =
+        open && moment.whole !== undefined
+          ? moment.whole.split('\n').flatMap(part => wrap(part, Math.max(1, width - at)))
+          : [moment.text];
+      const glyph =
+        moment.failed === true
+          ? '✗'
+          : place > 0 || (answer && !opens)
+            ? '⎿'
+            : open
+              ? '▾'
+              : moment.kind === 'said'
+                ? '›'
+                : '▸';
+
+      return lines.map((text, index) => ({
+        moment,
+        at,
+        text,
+        ...(index === 0 ? { glyph, ...(opens ? { key } : {}) } : {})
+      }));
+    });
+  });
 
 /**
  * The rows of a stream that fit in `rows`, newest at the top — `back` of them hidden above when it is scrolled —
- * each moment with more to say opened by a click (▸, ▾ open), or why there are none, or that it is being read.
+ * each block with more to say opened by a click (▸, ▾ open), or why there are none, or that it is being read.
  */
 const drawStream = (
   p: Paint,
@@ -358,44 +375,38 @@ const drawStream = (
   }
 
   const hue = p.hues.get(stream.agent) ?? theme.primary;
-  const all = streamRows(stream.moments, ui.streamOpened, Math.max(1, end - col - 6));
-  const opening = openingOf(stream.moments, ui.streamOpened);
-  all.slice(back, back + rows).forEach(({ moment, line }, offset) => {
-    const row = top + offset;
-    if (line !== undefined) {
-      canvas.put(row, col + 4, clip(line, Math.max(0, end - col - 4)), { fg: theme.muted });
+  streamRows(stream.moments, ui.streamOpened, end - col)
+    .slice(back, back + rows)
+    .forEach(({ moment, at, text, glyph, key }, offset) => {
+      const row = top + offset;
+      if (key !== undefined) {
+        p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key } });
+      }
 
-      return;
-    }
+      const fg =
+        moment.failed === true
+          ? theme.danger
+          : moment.kind === 'said'
+            ? theme.text
+            : moment.kind === 'tool'
+              ? hue
+              : theme.muted;
+      if (glyph !== undefined) {
+        canvas.put(row, col + at - 2, glyph, {
+          fg: moment.kind === 'result' && moment.failed !== true ? theme.subtle : fg,
+          bold: moment.kind !== 'result'
+        });
+      }
 
-    const opens = opening.opens(moment);
-    const open = opening.open(moment);
-    if (opens) {
-      p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key: opening.keyOf(moment) } });
-    }
-
-    if (moment.kind === 'result') {
-      // An answer of a call in the stream wears no arrow: its call's opens both.
-      const arrow = !opening.paired(moment) && opens;
-      canvas.put(row, col + 2, moment.failed ? '✗ ' : arrow && open ? '▾ ' : arrow ? '▸ ' : '⎿ ', {
-        fg: moment.failed ? theme.danger : theme.subtle
+      canvas.put(row, col + at, clip(text, Math.max(0, end - col - at)), {
+        fg: glyph === undefined ? theme.muted : fg
       });
-      canvas.put(row, col + 4, clip(moment.text, Math.max(0, end - col - 4)), {
-        fg: moment.failed ? theme.danger : theme.muted
-      });
-
-      return;
-    }
-
-    const said = moment.kind === 'said';
-    canvas.put(row, col, open ? '▾' : said ? '›' : '▸', { fg: said ? theme.text : hue, bold: true });
-    canvas.put(row, col + 2, clip(moment.text, Math.max(0, end - col - 2)), { fg: said ? theme.text : hue });
-  });
+    });
 };
 
-/** How many rows a stream has: its moments, and what each opened says under it. */
+/** How many rows a stream has: its blocks, and what each opened says. */
 export const streamHeight = (stream: StreamShown | undefined, opened: ReadonlySet<string>, width: number): number =>
-  stream !== undefined && 'moments' in stream ? streamRows(stream.moments, opened, Math.max(1, width - 10)).length : 0;
+  stream !== undefined && 'moments' in stream ? streamRows(stream.moments, opened, Math.max(1, width - 4)).length : 0;
 
 /** The preview's line: its address a link a click opens, where it stands, and the key that serves or stops it. */
 export const drawPreviewLine = (p: Paint, row: number, col: number, end: number, preview: PreviewShown): void => {

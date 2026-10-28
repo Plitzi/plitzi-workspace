@@ -42,11 +42,18 @@ export const tilesOf = async (
 const slug = (text: string): string => text.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
 
 /**
- * A picture's file: the page, the part clipped, the width and the theme it was painted in — the space's default when
- * none was asked for. A part is in the name: two clips of one page wrote one file, the second over the first.
+ * A picture's file: the page, the account it was seen as, the part clipped, the width and the theme it was painted in —
+ * the space's default when none was asked for. A part is in the name: two clips of one page wrote one file, the second
+ * over the first; and so is the account — /messages as mika wrote over /messages as dax a command before.
  */
-export const shotFile = (pathname: string, clip: string | undefined, width: number, scheme: string): string =>
-  `${pathname === '/' ? 'home' : slug(pathname)}${clip === undefined ? '' : `-${slug(clip)}`}-${String(width)}-${scheme}.png`;
+export const shotFile = (
+  pathname: string,
+  clip: string | undefined,
+  width: number,
+  scheme: string,
+  as?: string
+): string =>
+  `${pathname === '/' ? 'home' : slug(pathname)}${as === undefined ? '' : `-as-${slug(as)}`}${clip === undefined ? '' : `-${slug(clip)}`}-${String(width)}-${scheme}.png`;
 
 /**
  * The file `--out` names for one of several pictures: the name given, with what tells this one from the others — its

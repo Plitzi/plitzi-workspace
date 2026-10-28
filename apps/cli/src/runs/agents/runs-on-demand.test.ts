@@ -254,6 +254,40 @@ describe('agents on demand', () => {
     expect((await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).task?.id).toBe(ready[0]);
   });
 
+  // A run stood still: its tests card was left for dev-1, free and of the base — and the one who worked what it tests.
+  it('takes a task of tests the free base agent may not write: it worked what they test', async () => {
+    // dev-1 keeps its session after its task — started again, as the run's was — and stays the free base.
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1, session: 'keep' });
+    const plan = benchPlan();
+    const [home] = plan.tasks;
+    await openRun(
+      lead(),
+      await bench.writePlan({
+        ...plan,
+        tasks: [
+          home,
+          {
+            ...home,
+            id: 't-home-tests',
+            title: 'Tests of home',
+            files: ['src/space/pages/home/hero.test.ts'],
+            dependsOn: ['t-home'],
+            testsOf: ['t-home']
+          }
+        ]
+      })
+    );
+    const held = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    await writeInCopy(held.work, 'src/space/pages/home/index.ts', "export const home = { id: 'home', body: [] };\n");
+    await completeTask(bench.agent('dev-1', { token: held.token }), 'es-launch', 't-home');
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    // dev-1 free between tasks, of the base; dev-2 on demand asks.
+    await followNext(bench.agent('dev-1'), 'es-launch', 'developer', { timeoutMs: 0, everyMs: 10 });
+    await followNext(bench.agent('dev-2'), 'es-launch', 'developer', { timeoutMs: 0, everyMs: 10 });
+
+    expect((await nextTask(bench.agent('dev-2'), 'es-launch', 'developer')).task?.id).toBe('t-home-tests');
+  });
+
   // Design-2, on demand, stopped at 20:18 with four UI reviews on their way, and was started again for them.
   it('keeps a designer on demand while more UI reviews are coming than the other designers running', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });

@@ -117,7 +117,11 @@ export const expectationMissed = (
   onPage: readonly string[]
 ): string | undefined => {
   const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `~${text}`}`;
-  const matching = (each: string): boolean => each.toLowerCase().includes(text.toLowerCase());
+  // In any case — a legend a stylesheet capitalises reads "ON AIR" — unless written in mixed case, which is read as
+  // written: a line that must prove a capital (a display name "Juno" over a username "juno") could not be written.
+  const asWritten = /\p{Lu}/u.test(text) && /\p{Ll}/u.test(text);
+  const matching = (each: string): boolean =>
+    asWritten ? each.includes(text) : each.toLowerCase().includes(text.toLowerCase());
   const showing = copies.shown.filter(matching);
   if (absent) {
     return showing.length === 0
@@ -129,6 +133,11 @@ export const expectationMissed = (
   const whole = copies.shown.filter((each, index) => matching(each) && !copies.cut.includes(index));
   if (whole.length > 0 || (showing.length > 0 && text === '')) {
     return undefined;
+  }
+
+  const otherCase = asWritten ? copies.shown.find(each => each.toLowerCase().includes(text.toLowerCase())) : undefined;
+  if (showing.length === 0 && otherCase !== undefined) {
+    return `${said}: ${element} shows ${quoted(otherCase)} — in another case: a text written in mixed case is read as written (all one case to read any)`;
   }
 
   if (showing.length > 0) {
