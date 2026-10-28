@@ -847,6 +847,17 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A research card closes a backlog item it found no longer to do:** `task complete --found "…" --closes b-38`,
   closed with what it found as the run is applied, once the lead approves — a scout found b-38 did not come back and
   had no task to carry the close.
+- **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
+  and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
+  `test` from `./offline`.
+- **An acceptance rewritten is said with its cause:** the lead's only for a line written wrong once a task was worked
+  to; Plitzi's for a line its check could not read (a false reading noticed, a line nothing answered); one amended for
+  what another task broke joins that finding, and one amended before anyone took the task is none. Counted all as the
+  lead's under one fix, it came back run after run for six amendments that fix would have spared one of. The finish's
+  "does not hold on the run's whole result" is read as breaking an approved task again — its words, and a complete's,
+  are written and read in one place.
+- **An agent's own tests and checks run again until they pass are no finding:** a developer's spec red, then green, read
+  "ran task run 4 times"; one that failed every time still is.
 - **`task prove` says how many tests a failure names, each once:** a tester read two of three failed tests from a cut
   of Playwright's tail, never how many.
 - **`task show` says a change made the same in several files once,** naming the others, and the files whose diff

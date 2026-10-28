@@ -6,6 +6,7 @@ import { mergeLines } from './merge3';
 import { leftInTmp } from './strays';
 import { stopKeptBrowser } from '../../browser/keptBrowser';
 import { requireLead } from '../agents/leads';
+import { notHoldingText } from '../core/acceptedOn';
 import { fingerprint, readJson, readOptional, writeJson } from '../core/files';
 import { entryOf, isMergeManifest } from '../core/model';
 import { BACKUPS_DIR, under } from '../core/paths';
@@ -416,7 +417,7 @@ export const finishRun = async (
       'checks-failed',
       // Said as what is known — the line fails now — never a culprit it did not find: a run's finish blamed "another
       // task's work" for a check's own false reading.
-      `What ${[...new Set(broken.map(each => `"${each.task}"`))].join(', ')} ${broken.length === 1 ? 'was' : 'were'} accepted on does not hold on the run's whole result: ${broken.map(each => `${each.task}: ${each.said}`).join('; ')} — each line's output below says why: another task's change since its review, a line amended since and run only now, or the check reading the page otherwise. Nothing is written: a task of the run puts it right (plitzi run open <stage>), a line that is wrong is amended (plitzi run amend), or the lead reverts what broke it (plitzi task revert)`,
+      `${notHoldingText(broken)} — each line's output below says why: another task's change since its review, a line amended since and run only now, or the check reading the page otherwise. Nothing is written: a task of the run puts it right (plitzi run open <stage>), a line that is wrong is amended (plitzi run amend), or the lead reverts what broke it (plitzi task revert)`,
       {
         steps: broken.map(each => ({
           name: `acceptance — ${each.task}: ${each.said}`,

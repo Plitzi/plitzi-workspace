@@ -188,6 +188,9 @@ const calledAgainByDesign = (line: CommandPath): boolean =>
   (line.name === 'task next' && !line.options.includes('--peek')) ||
   line.options.includes('--dry-run');
 
+/** The commands an agent runs after each edit of what they check: its own tests, the project's checks. */
+const RUN_AFTER_EDITS: ReadonlySet<string> = new Set(['task run', 'task check']);
+
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();
   // In one session: a fresh session runs its first commands again, as it should.
@@ -199,7 +202,7 @@ const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   return [...groups.values()]
     .flatMap(lines => {
       // The longest run of it within the window: a loop on one call, not one run again an hour later.
-      let best = { times: 0, within: 0 };
+      let best = { times: 0, within: 0, start: 0 };
       for (let start = 0; start < lines.length; start += 1) {
         let end = start;
         while (end + 1 < lines.length && minutes(lines[start].at, lines[end + 1].at) <= REPEAT_WINDOW_MIN) {
@@ -207,12 +210,17 @@ const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
         }
 
         if (end - start + 1 > best.times) {
-          best = { times: end - start + 1, within: minutes(lines[start].at, lines[end].at) };
+          best = { times: end - start + 1, within: minutes(lines[start].at, lines[end].at), start };
         }
       }
 
-      return best.times >= REPEATED
-        ? [{ by: lines[0].by, name: lines[0].name, command: lines[0].command, ...best }]
+      // An agent's own tests and checks are run after each edit: a burst that passed at last settled what it asked —
+      // a run's dev-1, red then green, read "ran task run 4 times". One that failed every time did not.
+      const burst = lines.slice(best.start, best.start + best.times);
+      const settled = RUN_AFTER_EDITS.has(lines[0].name) && burst.some(line => line.code === 0);
+
+      return best.times >= REPEATED && !settled
+        ? [{ by: lines[0].by, name: lines[0].name, command: lines[0].command, times: best.times, within: best.within }]
         : [];
     })
     .sort((a, b) => b.times - a.times);

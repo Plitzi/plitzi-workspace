@@ -2,6 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { clock, evidenceOf, strings, text } from './types';
 import { projectRun } from '../../scaffold/packageManager';
+import { brokenNamedIn } from '../core/acceptedOn';
 
 import type { Finding, LogEntry } from './types';
 
@@ -149,14 +150,71 @@ export const stepsFailing = (log: readonly LogEntry[]): Finding[] => {
     }));
 };
 
-/** A task whose change broke what an approved task was accepted on: found at its complete, or at the finish. */
-export const brokeApproved = (log: readonly LogEntry[]): Finding[] => {
-  const broke = log.filter(
-    entry =>
-      entry.action === 'refused' &&
-      /accepted on/.test(text(entry.message)) &&
-      /no longer holds|breaks/.test(text(entry.message))
+/** Why a task's acceptance was rewritten once the run had begun, read off what came before it. */
+type AmendCause = 'unworked' | 'broke-approved' | 'check' | 'lead';
+
+interface Amended {
+  at: string;
+  task: string;
+  cause: AmendCause;
+  /** What showed the cause, for a line the lead did not write wrong. */
+  said?: string;
+}
+
+/** Each acceptance amended, with why: a line rewritten has as many causes as there are ways a run meets it. */
+const amendedLines = (log: readonly LogEntry[]): Amended[] =>
+  log.flatMap(entry =>
+    entry.action === 'amend' && Array.isArray(entry.tasks)
+      ? entry.tasks.flatMap((each: unknown): Amended[] => {
+          if (!isRecord(each) || typeof each.task !== 'string' || !strings(each.changed).includes('acceptance')) {
+            return [];
+          }
+
+          const at = text(entry.at);
+          const task = each.task;
+          const before = log.filter(other => text(other.at) < at);
+          const taken = before.findLast(other => other.action === 'take' && other.task === task);
+          // Rewritten before anyone worked to it — the approval of a proposal amending what it stacks — cost nobody a round.
+          if (taken === undefined) {
+            return [{ at, task, cause: 'unworked' }];
+          }
+
+          const broke = before.findLast(
+            other => other.action === 'refused' && brokenNamedIn(text(other.message))?.includes(task) === true
+          );
+          if (broke !== undefined) {
+            return [{ at, task, cause: 'broke-approved', said: text(broke.message) }];
+          }
+
+          const since = before.filter(other => text(other.at) >= text(taken.at));
+          const unanswered = since.findLast(other => other.action === 'check' && other.task === task)?.notOwn;
+          const unread = strings(unanswered).find(line => line.startsWith(ACCEPTANCE));
+          const noticed = since.findLast(
+            other => other.action === 'notice' && other.about === 'plitzi' && other.task === task
+          );
+          if (unread !== undefined || noticed !== undefined) {
+            return [
+              {
+                at,
+                task,
+                cause: 'check',
+                said: noticed === undefined ? `nothing could answer ${unread ?? ''}` : text(noticed.text)
+              }
+            ];
+          }
+
+          return [{ at, task, cause: 'lead' }];
+        })
+      : []
   );
+
+/**
+ * A task whose change broke what an approved task was accepted on: found at its complete, or at the finish — with the
+ * approved tasks' lines amended for it, which are this, not lines written wrong.
+ */
+export const brokeApproved = (log: readonly LogEntry[]): Finding[] => {
+  const broke = log.filter(entry => entry.action === 'refused' && brokenNamedIn(text(entry.message)) !== undefined);
+  const amended = amendedLines(log).filter(each => each.cause === 'broke-approved');
 
   return broke.length === 0
     ? []
@@ -165,9 +223,10 @@ export const brokeApproved = (log: readonly LogEntry[]): Finding[] => {
           kind: 'broke-approved',
           owner: 'lead',
           title: 'Changes broke what approved tasks were accepted on',
-          evidence: evidenceOf(
-            broke.map(entry => `${clock(entry.at)} ${text(entry.by)}: ${text(entry.message).slice(0, 220)}`)
-          ),
+          evidence: evidenceOf([
+            ...broke.map(entry => `${clock(entry.at)} ${text(entry.by)}: ${text(entry.message).slice(0, 220)}`),
+            ...amended.map(each => `${clock(each.at)} ${each.task}'s acceptance amended for it`)
+          ]),
           times: broke.length,
           fix: 'a task that changes another’s page on purpose says so in its brief, and the lead amends that task’s lines with it',
           subject: 'broke-approved'
@@ -175,29 +234,46 @@ export const brokeApproved = (log: readonly LogEntry[]): Finding[] => {
       ];
 };
 
-/** Acceptance lines rewritten after the run began: each one a line that was written before it was run. */
+/**
+ * Acceptance lines rewritten once a task was worked to: the lead's, a line written before it was run — or Plitzi's, a
+ * line its check could not read (a false reading noticed, a line nothing answered). One amended before anyone worked
+ * it, or for what another task broke (`brokeApproved`), is neither: counted all as the lead's, under one fix, the finding
+ * came back run after run for six amendments that fix would have spared one of.
+ */
 export const linesAmended = (log: readonly LogEntry[]): Finding[] => {
-  const amended = log.flatMap(entry =>
-    entry.action === 'amend' && Array.isArray(entry.tasks)
-      ? entry.tasks.flatMap((each: unknown) =>
-          typeof each === 'object' && each !== null && 'changed' in each && strings(each.changed).includes('acceptance')
-            ? [`${clock(entry.at)} ${'task' in each ? text(each.task) : ''}`]
-            : []
-        )
-      : []
-  );
+  const amended = amendedLines(log);
+  const lead = amended.filter(each => each.cause === 'lead');
+  const check = amended.filter(each => each.cause === 'check');
 
-  return amended.length === 0
-    ? []
-    : [
-        {
-          kind: 'lines-amended',
-          owner: 'lead',
-          title: `${String(amended.length)} tasks’ acceptance rewritten after the run began`,
-          evidence: evidenceOf(amended),
-          times: amended.length,
-          fix: 'each line run once before the stage is stacked: run open <stage.json> --dry-run --lines',
-          subject: 'lines-amended'
-        }
-      ];
+  return [
+    ...(lead.length === 0
+      ? []
+      : [
+          {
+            kind: 'lines-amended' as const,
+            owner: 'lead' as const,
+            title: `${String(lead.length)} tasks’ acceptance rewritten after work on them began`,
+            evidence: evidenceOf(lead.map(each => `${clock(each.at)} ${each.task}`)),
+            times: lead.length,
+            fix: 'each line run once before the stage is stacked: run open <stage.json> --dry-run --lines',
+            subject: 'lines-amended'
+          }
+        ]),
+    ...(check.length === 0
+      ? []
+      : [
+          {
+            kind: 'lines-amended' as const,
+            owner: 'plitzi' as const,
+            area: 'cli' as const,
+            title: `${String(check.length)} tasks’ acceptance rewritten around a check that could not read it`,
+            evidence: evidenceOf(
+              check.map(each => `${clock(each.at)} ${each.task}: ${(each.said ?? '').slice(0, 200)}`)
+            ),
+            times: check.length,
+            fix: 'the check reads the line as it is written: what kept it from reading it is the fix, not the line',
+            subject: 'lines-amended-check'
+          }
+        ])
+  ];
 };

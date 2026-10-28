@@ -16,6 +16,7 @@ import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance
 import { failsWithout, ownFailing } from '../copies/checks';
 import { mergeLines } from '../copies/merge3';
 import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
+import { breaksApprovedText } from '../core/acceptedOn';
 import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../core/files';
 import { entryOf } from '../core/model';
 import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../core/paths';
@@ -458,19 +459,15 @@ export const completeTask = async (
 
   const broke = others.filter(line => !line.ok && line.unanswered !== true);
   if (broke.length > 0 && !knownFailure) {
-    throw new RunRefusal(
-      'checks-failed',
-      `Task "${taskId}" breaks what approved tasks were accepted on: ${broke.map(line => `${line.task}: "${line.said}"`).join('; ')}`,
-      {
-        task: taskId,
-        steps: broke.map(line => ({
-          name: `${line.task}'s acceptance — ${line.said}`,
-          ok: false,
-          said: [line.check, ...(line.output ?? [])]
-        })),
-        next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), task complete --known-failure "why" --fixed-by lead: the lead amends that line'
-      }
-    );
+    throw new RunRefusal('checks-failed', breaksApprovedText(taskId, broke), {
+      task: taskId,
+      steps: broke.map(line => ({
+        name: `${line.task}'s acceptance — ${line.said}`,
+        ok: false,
+        said: [line.check, ...(line.output ?? [])]
+      })),
+      next: 'make it hold again — or, when your change means it (a page moved, its words rewritten), task complete --known-failure "why" --fixed-by lead: the lead amends that line'
+    });
   }
 
   // A backup an editor left is no work of the task's: never handed to review as an added file (a run's `-E`).

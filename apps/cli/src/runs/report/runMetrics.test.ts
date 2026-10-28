@@ -188,6 +188,16 @@ describe('a call made again', () => {
     ).toEqual([]);
   });
 
+  // A run's dev-1 ran its spec red, then green after its fix, and twice more after edits: "ran task run 4 times".
+  it('is no loop when an agent’s own tests or checks pass at last — only when they fail every time', () => {
+    const spec = 'plitzi task run npx playwright test visual/youtubeFake.spec.ts';
+    const ran = (minute: number, code: number): UsageLine => ({ ...line(minute, spec), code });
+    expect(measured([ran(1, 1), ran(1.3, 0), ran(2.6, 0), ran(3.1, 0)])).toEqual([]);
+    expect(measured([ran(1, 1), ran(1.3, 1), ran(2.6, 1)])).toEqual([
+      { by: 'test-1', name: 'task run', command: spec, times: 3, within: 1.6 }
+    ]);
+  });
+
   it('counts in one session, not across fresh ones', () => {
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', `s${String(minute)}`)))).toEqual([]);
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', 's1')))).toEqual([

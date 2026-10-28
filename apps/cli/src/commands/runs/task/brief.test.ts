@@ -96,6 +96,23 @@ describe("a task's brief", () => {
   });
 
   // A tester's brief said how format.ts was called before the run — its copy held the developer's change.
+  // A run's developer learnt at lint that the project's specs take `test` from `./offline`, its spec written.
+  it('says what the project’s lint forbids in the task’s files, before task check does', async () => {
+    const runId = await open();
+    const context = await taskContext(lead(), runId, 't-home');
+    expect(context.restrictions).toEqual([]);
+    const brief = stripVTControlCharacters(
+      briefOf({
+        ...context,
+        restrictions: ["visual/*.spec.ts: no { test } import from '@playwright/test' — take test from ./offline"]
+      })
+    );
+
+    expect(brief).toContain(
+      "The project’s lint forbids in them — known now, not at task check:\n    ✗ visual/*.spec.ts: no { test } import from '@playwright/test' — take test from ./offline"
+    );
+  });
+
   it('reads the rest of the project from the task’s copy while it holds one', async () => {
     const runId = await open(benchPlan());
     expect((await taskContext(lead(), runId, 't-home')).sourceRoot).toBe(bench.root);

@@ -1,4 +1,5 @@
 import { currentVersion, findTask } from './common';
+import { restrictionsOn } from './restrictions';
 import { unifiedDiff } from '../../fix/diff';
 import { PROJECT_NOTES } from '../../scaffold/paths';
 import { readOptional } from '../core/files';
@@ -71,6 +72,11 @@ export interface TaskContext {
    * tests into a tests card's file and learnt it at `task check`, the writing lost.
    */
   neighbours: { file: string; task: string; role: string }[];
+  /**
+   * What the project's lint forbids in its files, with its config's words (`restrictionsOn`): known before `task check`
+   * says it.
+   */
+  restrictions: string[];
 }
 
 /** A file's name with no extension nor `.test`/`.spec`: what a module and its tests share. */
@@ -201,6 +207,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
   }
 
   const projectNotes = (await readOptional(under(ctx.root, PROJECT_NOTES)))?.toString('utf-8');
+  const restrictions = isResearch(task) ? [] : await restrictionsOn(ctx.root, task.files);
   const primer = (await readOptional(loaded.paths.primer))?.toString('utf-8');
   const proposals = await proposalsOf(loaded);
 
@@ -236,6 +243,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
         : other.files
             .filter(file => !task.files.includes(file) && task.files.some(own => stemOf(own) === stemOf(file)))
             .map(file => ({ file, task: other.id, role: roleOf(other) }))
-    )
+    ),
+    restrictions
   };
 };

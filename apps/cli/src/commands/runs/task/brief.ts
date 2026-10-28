@@ -263,6 +263,12 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
                 `  Beside them, another task's — write nothing there: ${context.neighbours.map(each => `${each.file} (${each.task}, a ${each.role}'s)`).join(', ')}`
               ]
             : []),
+          ...(context.restrictions.length > 0
+            ? [
+                '  The project’s lint forbids in them — known now, not at task check:',
+                ...context.restrictions.map(each => `    ✗ ${each}`)
+              ]
+            : []),
           // What the work needs beyond them is not refused: it is said how it goes in.
           '  A file beyond these the work needs: change it in your copy — it goes in by turns at complete when nobody holds it (plitzi task claim <file> holds it while you work; one another task holds becomes a request)'
         ]),

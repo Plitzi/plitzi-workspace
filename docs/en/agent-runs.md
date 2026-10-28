@@ -334,7 +334,10 @@ agent read in this session of its harness is not printed again (`readInSession`,
 the primer, read on the task, is said in a line; the whole brief, asked again unchanged, too (a run's dev-1 read its
 13–18k four times) — `task context --again` prints it whole; an agent started afresh is a new session and reads it all; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
 space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
-has. What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
+has. What the project's lint forbids in its files — `no-restricted-imports`, `-syntax`, `-globals`, `-properties`, with
+their config's words — is said under them (`restrictionsOn`: ESLint's `--print-config` for one file a folder and suffix,
+nothing where the project has no ESLint): a run's developer learnt at lint that its specs take `test` from `./offline`.
+What its files import from the rest of the project — each name's signature and doc's first sentence — is read from
 the task's copy while it holds one (`sourceRoot`; a run's tester read a function as the project had it before the run),
 and a file of it near the line says a new file beside it is the task's. What a brief says of a task it depends on is its
 acceptance — six lines, the rest `task show <id>` — never how
@@ -1094,7 +1097,8 @@ They are read off the log, the usage, the plan, the agents' scratch, their notic
   one in two sessions at once, a session that went on after "You can stop".
 - **Checks:** a check answering two ways on one input (flaky; the lead's when it is a line, Plitzi's otherwise), an
   acceptance line failing three checks of a task, a project step failing four, a change breaking what an approved task
-  was accepted on, lines rewritten after the run began.
+  was accepted on (with the lines amended for it), acceptance rewritten once a task was worked to — the lead's for a line
+  written wrong, Plitzi's for one its check could not read; one rewritten before anyone took the task is none.
 - **Gaps:** questions `explain` had no answer for (said there alone, not again as a failed command), and topics one
   agent asked about in three ways or more; acceptance
   checked by the lead's own scripts (the project's tests are not); scripts the agents wrote in their scratch and

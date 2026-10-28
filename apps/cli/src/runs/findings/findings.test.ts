@@ -9,6 +9,7 @@ import { afterStop, twoSessions, twoTasks } from './sessions';
 import { groupAlike } from './words';
 import { saidFindings, workaroundFindings } from './workarounds';
 import { ranAs } from '../../tests/ranAs';
+import { breaksApprovedText, brokenNamedIn, notHoldingText } from '../core/acceptedOn';
 
 import type { LogEntry } from './types';
 import type { RunTask } from '../core/model';
@@ -141,29 +142,83 @@ describe('what the checks say of themselves', () => {
       owner: 'agent',
       title: 't-gallery: author failed 4 checks'
     });
+    // Read off the words the refusals are written with: the finish's, and a complete's.
+    const refused = (minute: number, message: string): LogEntry => ({
+      at: T(minute),
+      by: 'lead',
+      action: 'refused',
+      message
+    });
     expect(
       brokeApproved([
-        {
-          at: T(1),
-          by: 'lead',
-          action: 'refused',
-          message: 'What "t-queue" was accepted on no longer holds on the run'
-        }
+        refused(1, notHoldingText([{ task: 't-queue', said: 'the queue lists three' }])),
+        refused(2, breaksApprovedText('t-player', [{ task: 't-queue', said: 'the queue lists three' }]))
       ])[0].times
-    ).toBe(1);
+    ).toBe(2);
     expect(
-      linesAmended([
-        {
-          at: T(1),
-          by: 'lead',
-          action: 'amend',
-          tasks: [
-            { task: 't-a', changed: ['acceptance'] },
-            { task: 't-b', changed: ['findings'] }
-          ]
-        }
-      ])[0].evidence
-    ).toEqual(['10:01 UTC t-a']);
+      brokenNamedIn(
+        breaksApprovedText('t-player', [
+          { task: 't-queue', said: 'a: b' },
+          { task: 't-room', said: 'c' }
+        ])
+      )
+    ).toEqual(['t-queue', 't-room']);
+    expect(brokeApproved([refused(1, 'Task "t-a"\'s acceptance is not met')])).toEqual([]);
+  });
+
+  it('says why each acceptance was rewritten once the run had begun — the lead’s only for a line written wrong', () => {
+    const take = (minute: number, task: string): LogEntry => ({ at: T(minute), by: 'dev-1', action: 'take', task });
+    const amend = (minute: number, ...tasks: string[]): LogEntry => ({
+      at: T(minute),
+      by: 'lead',
+      action: 'amend',
+      tasks: tasks.map(task => ({ task, changed: ['acceptance'] }))
+    });
+    const log: LogEntry[] = [
+      // Amended as its proposal was approved, before anyone took it.
+      amend(1, 't-unworked'),
+      take(2, 't-wrong'),
+      take(2, 't-false'),
+      take(2, 't-unread'),
+      take(2, 't-broken'),
+      { at: T(3), by: 'dev-1', action: 'amend', tasks: [{ task: 't-wrong', changed: ['findings'] }] },
+      {
+        at: T(4),
+        by: 'dev-1',
+        action: 'notice',
+        about: 'plitzi',
+        task: 't-false',
+        text: 'page check reads the title cut short: its ::after is'
+      },
+      {
+        at: T(4),
+        by: 'dev-1',
+        action: 'check',
+        task: 't-unread',
+        failed: ['acceptance — the card is as tall'],
+        notOwn: ['acceptance — the card is as tall']
+      },
+      {
+        at: T(5),
+        by: 'lead',
+        action: 'refused',
+        message: notHoldingText([{ task: 't-broken', said: 'nothing names it' }])
+      },
+      amend(6, 't-wrong', 't-false', 't-unread', 't-broken')
+    ];
+
+    expect(linesAmended(log).map(each => [each.owner, each.title, each.evidence])).toEqual([
+      ['lead', '1 tasks’ acceptance rewritten after work on them began', ['10:06 UTC t-wrong']],
+      [
+        'plitzi',
+        '2 tasks’ acceptance rewritten around a check that could not read it',
+        [
+          '10:06 UTC t-false: page check reads the title cut short: its ::after is',
+          '10:06 UTC t-unread: nothing could answer acceptance — the card is as tall'
+        ]
+      ]
+    ]);
+    expect(brokeApproved(log)[0].evidence.at(-1)).toBe("10:06 UTC t-broken's acceptance amended for it");
   });
 });
 
