@@ -8,6 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { awaited, capture, targetOn } from './capture';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
+import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
 import { answered, settle } from '../measureState';
 import { parseSteps } from '../shotSteps';
@@ -523,7 +524,7 @@ export const actStep = async (
     );
     if (written === 'no-inspector') {
       return {
-        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (npm run start:dev, debug mode)`
+        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
       };
     }
 

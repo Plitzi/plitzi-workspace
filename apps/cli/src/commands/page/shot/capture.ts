@@ -5,6 +5,7 @@ import { openOtherPage, paintedScheme, projectSettling } from '../../../browser'
 import { saySignedIn, sentElsewhere, signInWhereSent } from '../check';
 import { prepareVisit } from '../visit';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
+import { projectRun } from '../../../scaffold/packageManager';
 
 import type { Framing, Taken, View } from './types';
 import type { Browser, BrowserPage } from '../../../browser';
@@ -393,7 +394,7 @@ export const pictureOf = async (
   if (!answered) {
     return {
       problem: origin
-        ? `Nothing answers at ${url}. Start the project first: npm start`
+        ? `Nothing answers at ${url}. Start the project first: ${projectRun('start')}`
         : `${url} did not answer — asked twice, 30 s each: a site warming up answers on the next try, run it again`
     };
   }

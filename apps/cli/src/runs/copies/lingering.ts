@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { projectMark } from '@plitzi/sdk-shared/project';
+
+import { healthOn, servesFolder, stoppedAnswering } from '../../browser/health';
 
 /**
  * A copy's server kept a while after the command that served it: an agent pictures its page again and again, and each
@@ -82,12 +83,7 @@ export const keptServer = async (work: string, cache: string): Promise<string | 
     return undefined;
   }
 
-  const health: unknown = await fetch(`http://127.0.0.1:${String(kept.port)}/health`, {
-    signal: AbortSignal.timeout(1_000)
-  })
-    .then(async (response): Promise<unknown> => response.json())
-    .catch(() => undefined);
-  const ours = isRecord(health) && (typeof health.Instance !== 'string' || health.Instance === projectMark(work));
+  const ours = servesFolder(await healthOn(kept.port), work);
   if (!ours) {
     // Stopped, not only forgotten: one slow to answer under a run's load still held the copy's state, and the next
     // server on the copy died on it (a run's look, twice, a minute each).
@@ -150,18 +146,7 @@ export const stopKept = async (cache: string): Promise<void> => {
   }
 
   await fs.rm(fileOf(cache), { force: true });
-  for (let tries = 0; tries < 20; tries += 1) {
-    const answers = await fetch(`http://127.0.0.1:${String(kept.port)}/health`, {
-      signal: AbortSignal.timeout(500)
-    })
-      .then(() => true)
-      .catch(() => false);
-    if (!answers) {
-      return;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
+  await stoppedAnswering(kept.port);
 };
 
 /** The kept server's use marked now, while a command borrows it: its watchdog stops it only once nobody does. */
@@ -194,13 +179,5 @@ export const previewedServer = async (work: string, cache: string): Promise<stri
     return undefined;
   }
 
-  const health: unknown = await fetch(`http://127.0.0.1:${String(value.port)}/health`, {
-    signal: AbortSignal.timeout(1_000)
-  })
-    .then(async (response): Promise<unknown> => response.json())
-    .catch(() => undefined);
-
-  return isRecord(health) && (typeof health.Instance !== 'string' || health.Instance === projectMark(work))
-    ? `http://127.0.0.1:${String(value.port)}`
-    : undefined;
+  return servesFolder(await healthOn(value.port), work) ? `http://127.0.0.1:${String(value.port)}` : undefined;
 };

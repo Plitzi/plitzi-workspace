@@ -1,6 +1,7 @@
 import module from 'node:module';
 
 import { removedFolder } from './removedFolder';
+import { managerAt, setProjectManager } from './scaffold/packageManager';
 
 /**
  * What `plitzi` runs: V8's compile cache turned on, then the CLI. A run's agents start the CLI hundreds of times — a
@@ -14,5 +15,8 @@ if (removed) {
   process.stderr.write(`${removed.text}\n`);
   process.exit(removed.code);
 }
+
+// Before the CLI is read: every command its messages name is said the way the project here installs (`managerAt`).
+setProjectManager(managerAt(process.cwd()) ?? 'npm');
 
 await import('./index');

@@ -40,6 +40,7 @@ import { lint } from './lint';
 import { count, positiveInteger, swallowedFlag } from './options';
 import { acceptTokenEverywhere } from './runs/core/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
+import { projectExec, projectRun } from './scaffold/packageManager';
 import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account/account';
@@ -203,7 +204,7 @@ export const buildProgram = (): Command => {
   const serverGroup = program
     .command('server')
     .description(
-      'This project’s own servers — what npm start left listening from this folder — listed, and stopped safely'
+      `This project’s own servers — what ${projectRun('start')} left listening from this folder — listed, and stopped safely`
     );
 
   serverGroup
@@ -415,7 +416,7 @@ export const buildProgram = (): Command => {
   program
     .command('doctor')
     .description(
-      'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`, and how it is written `plitzi space lint`'
+      `Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is \`${projectRun('author')}\`, and how it is written \`plitzi space lint\``
     )
     .option(
       '--fix',
@@ -452,7 +453,7 @@ export const buildProgram = (): Command => {
   spaceGroup
     .command('lint')
     .description(
-      'How the space in src/space/ is written, eslint’s way: each practice to change at its file and line, what to write instead, and what authoring suggests. Not whether it authors — `npm run author` — nor the project: `plitzi doctor`'
+      `How the space in src/space/ is written, eslint’s way: each practice to change at its file and line, what to write instead, and what authoring suggests. Not whether it authors — \`${projectRun('author')}\` — nor the project: \`plitzi doctor\``
     )
     .option('--strict', 'Warnings fail too (exit 1)')
     .addOption(new Option('--max-warnings <n>', 'More warnings than this fail (exit 1)').argParser(count))
@@ -607,8 +608,8 @@ export const buildProgram = (): Command => {
     `
   New to it? Make a project, then ask your agent for what you want — it works the project with the commands above:
     npx @plitzi/cli create my-site     a project that renders a space, its skills for your agent in .claude/skills/
-    npm start                          serve it
-    npx plitzi verify                  left passing: author, lints, types, tests, format, every page
+    ${projectRun('start').padEnd(35)}serve it
+    ${projectExec('plitzi verify').padEnd(35)}left passing: author, lints, types, tests, format, every page
 
   Alone, or a team of agents (multi-agent mode): your agent works alone by default. A team — several agents, in
   parallel, each task in a copy of the project — is for a job big enough to split, and only when you ask for one:

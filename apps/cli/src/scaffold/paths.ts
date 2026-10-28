@@ -51,6 +51,15 @@ export {
 export const MAIN_FILE = 'src/main.ts';
 
 /**
+ * The scripts that serve a project, as the scaffold writes them: `start` serves it, `start:dev` serves it and starts
+ * again as its files change. A copy's checks serve it once (`start` first); a preview follows the approved work as it
+ * grows (`start:dev` first).
+ */
+export const START_SCRIPT = 'start';
+export const DEV_SCRIPT = 'start:dev';
+export const SERVE_SCRIPTS = [START_SCRIPT, DEV_SCRIPT] as const;
+
+/**
  * The project's own notes for agents — how it is built, what must not be undone — which `CLAUDE.md` and `AGENTS.md`,
  * both the CLI's, point at. The project's: `plitzi upgrade` never touches it.
  */

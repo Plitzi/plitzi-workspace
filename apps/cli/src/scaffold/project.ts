@@ -24,7 +24,9 @@ import {
   TEST_OUTPUTS,
   TLS_CERT_FILE,
   TLS_KEY_FILE,
-  TSCONFIG_BASE
+  TSCONFIG_BASE,
+  DEV_SCRIPT,
+  START_SCRIPT
 } from './paths';
 import { STARTER_TEAM, TEAM_FILE } from '../runs/agents/team';
 
@@ -156,7 +158,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
   return {
     ...(mode === 'server'
       ? {
-          start: nodeWithEnv(MAIN_FILE),
+          [START_SCRIPT]: nodeWithEnv(MAIN_FILE),
           /**
            * Watched by PATH, not wholesale.
            *
@@ -166,7 +168,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            * (`updatePages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
            * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
-          'start:dev': watchedNodeWithEnv(`${watchPaths(answers)} ${MAIN_FILE}`),
+          [DEV_SCRIPT]: watchedNodeWithEnv(`${watchPaths(answers)} ${MAIN_FILE}`),
           /**
            * `start:dev` with Node's inspector on 127.0.0.1:9229 — a debugger (VS Code, chrome://inspect) attaches to the
            * server, and attaches again after each restart. Only the server: the author script a save runs is a process

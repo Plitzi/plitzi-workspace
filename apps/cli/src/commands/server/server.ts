@@ -4,11 +4,12 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PROJECT_STATE, PROJECT_TMP, projectMark } from '@plitzi/sdk-shared/project';
 
 import { readHealth } from '../../browser';
+import { markOf } from '../../browser/health';
 import { listenerOn, listenersUnder, stopListener } from '../../runs/copies/processes';
+import { foldersUnsaid, listeningPorts } from '../../runs/copies/processTable';
 import { copyOf } from '../../runs/core/paths';
 import { projectHere } from '../project/existingProject';
 import { fail } from '../shared/terminal';
@@ -35,7 +36,7 @@ const inside = (child: string, parent: string): boolean => child === parent || c
 /** What a server's `/health` says it serves, against this folder's mark. */
 const servesOf = async (port: number, root: string): Promise<ProjectServer['serves']> => {
   const health = await readHealth(`http://127.0.0.1:${String(port)}`);
-  const instance = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;
+  const instance = markOf(health);
   if (instance === undefined) {
     return 'unknown';
   }
@@ -48,6 +49,15 @@ const servesOf = async (port: number, root: string): Promise<ProjectServer['serv
  * serves.
  */
 export const projectServers = async (root: string): Promise<ProjectServer[]> => {
+  // Where the machine says no process's folder (Windows), a port is this project's by what its `/health` says alone.
+  if (foldersUnsaid() !== undefined) {
+    const answered = await Promise.all(
+      listeningPorts().map(async each => ({ ...each, cwd: root, serves: await servesOf(each.port, root) }))
+    );
+
+    return answered.filter(each => each.serves === 'this');
+  }
+
   // lsof says each folder with its links resolved — `/tmp` is `/private/tmp` on macOS.
   const real = realpathSync(root);
   const own = listenersUnder(real).filter(each => !inside(each.cwd, path.join(real, PROJECT_TMP)));
@@ -105,7 +115,7 @@ export const serverStop = async (options: ServerStopOptions): Promise<void> => {
       copy
         ? `Port ${String(options.port)} is served from ${copy.cwd} — a run's copy, its agent's: stopped from there (cd ${copy.cwd} && plitzi server stop --port ${String(options.port)}), never from the project. A preview of a task stops by itself once the task is done.`
         : there
-          ? `Port ${String(options.port)} is held by pid ${String(there.pid)}, started ${there.cwd ? `in ${there.cwd}` : 'in a folder lsof does not say'} — not this project (${project.root}), so it is left alone. plitzi server list says what is this project's.`
+          ? `Port ${String(options.port)} is held by pid ${String(there.pid)}, started ${there.cwd ? `in ${there.cwd}` : `in a folder unsaid (${foldersUnsaid() ?? 'the machine did not say it'})`} — not this project (${project.root}), so it is left alone. plitzi server list says what is this project's.`
           : `Nothing listens on port ${String(options.port)}: a server started there has already stopped — nothing to stop (${project.root}).`
     );
 

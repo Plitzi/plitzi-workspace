@@ -9,6 +9,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { authorizedRequest } from '../../account/session';
+import { projectRun } from '../../scaffold/packageManager';
 import { ACTIONS_ENTRY, DATA_DIR, PUBLIC_DIR } from '../../scaffold/paths';
 import { PUBLIC_ASSETS_DIR, dataReadsOf, onItsCdn, projectDataFiles, tokenOf } from '../project/projectFiles';
 import { loadProjectSpace } from '../project/projectSpace';
@@ -186,7 +187,7 @@ export const pushSpaceOf = async (
     documents = { schema, style };
   } catch (error) {
     fail(
-      `The space does not author, so nothing was pushed — npm run author says why:\n${String(error instanceof Error ? error.message : error)}`
+      `The space does not author, so nothing was pushed — ${projectRun('author')} says why:\n${String(error instanceof Error ? error.message : error)}`
     );
 
     return { outcome: 'failed' };

@@ -15,7 +15,7 @@ The team is `.plitzi/team.json`: each agent's name, roles, count, model. Tasks n
 while its agent is at a task (3 min on, with its review's asks); again until it says you can stop. Started at a level, say it (`--quality high`, as `run open --dry-run` gave your command): you are handed tasks of it or below.
 **Every card is reviewed alike**: by the roles its `review` names, in order (`["designer", "tester"]`), each step taken by one of that role and said by it — a card that names none, the tester's (the lead's with no tester). A designer's step: [runs-designer.md](runs-designer.md); the tester's — its QA, the approval: [runs-review.md](runs-review.md). With a tester, each developer task gets `<task>-tests`,
 a developer's that did not write it (the tester's when none may): tests of what its acceptance asked, both sides of each
-condition (a page's in `visual/<page>.spec.ts`, a module's beside it). A test the work fails is told to the lead (`task
+condition (a page's in the project's Playwright folder, `visual/<page>.spec.ts` by default, a module's beside it). A test the work fails is told to the lead (`task
 tell`), never bent. A review no tester may take is a developer's that worked neither it nor what it tests.
 
 The lead's half — plan, open, close, stack — is [runs-lead.md](runs-lead.md).

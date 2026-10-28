@@ -582,14 +582,16 @@ written by an agent that worked what it tests (`writesTests`: `task next` offers
 `task reassign --to` refuse it); with no developer that may — a team of one — it is the tester's (`spareTests`). The
 keeper starts a developer for one only among those that may write it (`agentsNeeded`), and `run open --dry-run --rehearse` plays it the
 same. Its files are where the project's tests are
-— a page's spec in `visual/<page>.spec.ts` when the project has Playwright, a module's test beside it (`<file>.test.ts`,
-`node --test`) — and its acceptance runs them against the copy served. A check that names `$PLITZI_URL` or `$PLITZI_PORT`, or runs
+— a page's spec in its Playwright config's `testDir` (`visual/<page>.spec.ts` when it names none) when the project has
+Playwright, a module's test beside it (`<file>.test.ts`, run by the project's own runner: `node --test`, vitest or jest,
+read off its dependencies) — and its acceptance runs them against the copy served, through the project's package manager
+(`npx`, `pnpm exec`, `yarn`: `execCommand`). A check that names `$PLITZI_URL` or `$PLITZI_PORT`, or runs
 `playwright test`, is run with the copy served: the two written into the check (any shell, `cmd.exe` included) and
 `PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
 Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a task of the plan already tests (`testsOf`), gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it. A
-module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`): a run's test-1 held a
+module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`, `vitest run <dir>`): a run's test-1 held a
 task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
 
 A task of tests is reviewed by the tester, as any developer task. A step nobody of its role may take — a tester's own, when it
@@ -974,8 +976,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   — an agent of the team of its role, else refused before anything is cut), or to the lead, who takes it then, a copy of
   its own. The log keeps who, from whom, to whom and why (`reassign`).
 - **A run gone stops what its agents left listening**: `finish` and `abort` stop every server whose folder is
-  in the run's (`stopListenersUnder`, read off `lsof`) and say so — a run's copies' servers listened on after
-  the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
+  in the run's (`stopListenersUnder`) and say so — a run's copies' servers listened on after the finish removed their
+  folders. The machine is read where it says it (`processTable.ts`): `lsof` and `ps`, Linux's `/proc` where they are
+  not (a container), Windows' `netstat`, which says ports and processes but no folder — there `server list` knows a
+  server of the project by what its `/health` says, and the finish says the copies' servers were not looked for. A kept server's watchdog stops it once its record is gone with the run.
 - **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server/server.ts`):
   what listens from the folder it is run in — its own `tmp/` left out, a run's copies each their own — and says by its
   `/health` that it serves that folder (`projectMark`), stopped with what it started; anything else on the port is said
@@ -1276,8 +1280,8 @@ detail (`--json`).
 - **Memory from reviews** — the space's memory is the project's `NOTES.md`, handed by `task context`; proposing entries
   from what reviews kept asking is not built.
 - **Windows** is held to by the code — renames retried on `EPERM`/`EBUSY`, `$PLITZI_URL`/`$PLITZI_PORT` written into a
-  check for any shell, a `plitzi.cmd` beside the shim, the copy's server stopped as a tree (`taskkill /T`) — and not run
-  on it yet.
+  check for any shell, a `plitzi.cmd` beside the shim, the copy's server stopped as a tree (`taskkill /T`), listening
+  ports read off `netstat` — and not run on it yet.
 - **Several agents on a space in the cloud**, at once — MCP tools for it, seeing them in the builder, a mode that makes
   an area read-only for people, the run kept on the server: left out because it loads the server with many small writes
   and is the most expensive part to build. A space on Plitzi is pulled, worked by a run as a project and pushed once (the

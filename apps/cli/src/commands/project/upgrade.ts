@@ -17,6 +17,7 @@ import { refreshTeamAbout, TEAM_FILE } from '../../runs/agents/team';
 import { activeRuns } from '../../runs/run';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../../scaffold';
 import { RETIRED_MACHINERY } from '../../scaffold/machinery';
+import { projectDlx } from '../../scaffold/packageManager';
 import { CLI_VERSION, packageJson } from '../../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../../scaffold/skills';
 import { fail, install, writeFiles } from '../shared/terminal';
@@ -610,7 +611,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   if (older.length > 0) {
     fail(
       `This project is laid out as an older CLI laid it out (${older.map(place => place.found).join(', ')}), and its files would be written for another project.\n` +
-        'Move it first — npx @plitzi/cli@latest doctor --fix moves it, every import following — then upgrade.'
+        `Move it first — ${projectDlx('@plitzi/cli@latest doctor --fix')} moves it, every import following — then upgrade.`
     );
 
     return;

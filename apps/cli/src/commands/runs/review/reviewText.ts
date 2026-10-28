@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 
+import { projectRun } from '../../../scaffold/packageManager';
 import { list } from '../text';
 
 import type { ReviewedTask } from '../../../runs/tasks';
@@ -29,7 +30,7 @@ export const approvedText = (taskId: string, reviewed: ReviewedTask): string =>
     ...(reviewed.previewProblem
       ? [
           chalk.yellow(
-            `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or npm run start:preview)`
+            `  ⚠ The run's preview did not take it in: ${reviewed.previewProblem} — restart it (p in plitzi run monitor, or ${projectRun('start:preview')})`
           )
         ]
       : []),

@@ -15,11 +15,19 @@ import type { CreateAnswers, ProjectFiles } from './types';
 export { SDK_VERSION } from './project';
 
 export {
+  LOCKFILES,
   PACKAGE_MANAGERS,
   detectManagerVersion,
   detectPackageManager,
+  execCommand,
   installCommand,
-  runCommand
+  managerAt,
+  projectAdd,
+  projectDlx,
+  projectExec,
+  projectRun,
+  runCommand,
+  setProjectManager
 } from './packageManager';
 
 export {

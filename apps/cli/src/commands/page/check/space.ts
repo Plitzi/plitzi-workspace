@@ -3,6 +3,7 @@ import { authorIsolated } from '@plitzi/sdk-authoring/node';
 
 import { authoredKey, keepAuthored, keptAuthored } from './authoredCache';
 import { SCHEMES } from '../../../browser';
+import { projectRun } from '../../../scaffold/packageManager';
 import { loadProjectSpace } from '../../project/projectSpace';
 
 import type { BrowserPage, Scheme } from '../../../browser';
@@ -46,7 +47,7 @@ export const projectSpace = async (
     return authored;
   } catch (error) {
     return {
-      problem: `The space does not author — npm run author says why: ${error instanceof Error ? refusedText(error.message) : String(error)}`
+      problem: `The space does not author — ${projectRun('author')} says why: ${error instanceof Error ? refusedText(error.message) : String(error)}`
     };
   }
 };

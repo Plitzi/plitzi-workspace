@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { keptToReference, keptToTask } from './apart';
@@ -12,10 +11,12 @@ import { reportText } from './text';
 import { themeIssues } from './themes';
 import { serverErrors } from './types';
 import { launchBrowser } from '../../../browser';
+import { HEALTH_PATH, markOf } from '../../../browser/health';
 import { originHere } from '../../../runs/copies/copyServer';
 import { previewDir } from '../../../runs/copies/preview';
 import { inTurns } from '../../../runs/core/inTurns';
 import { runPaths, runsDir, taskPaths } from '../../../runs/core/paths';
+import { projectExec, projectRun } from '../../../scaffold/packageManager';
 import { projectHere } from '../../project/existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../../shared/terminal';
 import { actingSteps } from '../shot/steps';
@@ -44,7 +45,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
   const flags = routes.filter(route => route.startsWith('-'));
   if (flags.length > 0) {
     fail(
-      `${flags.join(', ')} ${flags.length === 1 ? 'is' : 'are'} not a page's path: options after \`--\` are read as paths. Leave the \`--\` out (\`npx plitzi page check /x --width 1440,390\`); it belongs only after \`npm run check\`.`
+      `${flags.join(', ')} ${flags.length === 1 ? 'is' : 'are'} not a page's path: options after \`--\` are read as paths. Leave the \`--\` out (\`${projectExec('plitzi page check /x --width 1440,390')}\`); it belongs only after \`${projectRun('check')}\`.`
     );
 
     return;
@@ -138,10 +139,10 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
  * tour still in the project). None found: the project's.
  */
 const servedFolder = async (root: string, url: string): Promise<string | undefined> => {
-  const health: unknown = await fetch(new URL('/health', url), { signal: AbortSignal.timeout(2_000) })
+  const health: unknown = await fetch(new URL(HEALTH_PATH, url), { signal: AbortSignal.timeout(2_000) })
     .then(async (answer): Promise<unknown> => answer.json())
     .catch(() => undefined);
-  const mark = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;
+  const mark = markOf(health);
   if (mark === undefined || mark === projectMark(root)) {
     return undefined;
   }

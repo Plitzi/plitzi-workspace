@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { bottlenecks } from './bottlenecks';
+import { projectExec } from '../../scaffold/packageManager';
 import { identifiedAgents } from '../agents/identity';
 import { longTaskAttention } from '../agents/longTask';
 import { agentsNeeded } from '../agents/onDemand';
@@ -694,7 +695,7 @@ export const runsState = async (ctx: RunContext): Promise<ProjectRun[]> => {
       attention: view.attention.length,
       ready: view.done === view.total && (view.status === 'open' || view.status === 'stopped'),
       leadFinishes: loaded.record.leadFinishes !== undefined,
-      apply: `npx plitzi run finish ${runId} --apply`
+      apply: projectExec(`plitzi run finish ${runId} --apply`)
     });
   }
 

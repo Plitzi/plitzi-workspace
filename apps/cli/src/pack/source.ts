@@ -8,6 +8,7 @@ import { readSourceSnapshot, SOURCE_SNAPSHOT_FORMAT } from '@plitzi/sdk-shared/s
 
 import { nearestPackage, readPackageJson } from '../commands/project/existingProject';
 import { loadTypeScript } from '../projectTypeScript';
+import { projectAdd } from '../scaffold/packageManager';
 
 import type { SourceSnapshot, SourceSnapshotKind } from '@plitzi/sdk-shared/source';
 import type TypeScript from 'typescript';
@@ -229,7 +230,7 @@ export const packSource = async ({
   const ts = loadTypeScript(root);
   if (!ts) {
     throw new Error(
-      'Packing the source reads its imports with the project’s own TypeScript:\n  npm install -D typescript'
+      `Packing the source reads its imports with the project’s own TypeScript:\n  ${projectAdd('-D typescript')}`
     );
   }
 

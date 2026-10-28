@@ -11,6 +11,7 @@ import { isFunctionsDefinitionFile, readFunctionsSource } from '@plitzi/sdk-shar
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { authorizedRequest } from '../../account/session';
+import { projectAdd, projectRun } from '../../scaffold/packageManager';
 import { DATA_DIR, FUNCTIONS_DIR } from '../../scaffold/paths';
 import { connectToSpace } from '../account/account';
 import { projectHere } from '../project/existingProject';
@@ -432,8 +433,8 @@ const projectRunner = async (root: string): Promise<LocalRunner | undefined> => 
 
   fail(
     `plitzi functions dev runs them as the platform does — in isolates, within its limits — with this project’s own @plitzi/sdk-server (${missing.length > 0 ? `missing: ${missing.join(', ')}` : 'the one installed has no runner this CLI drives'}):\n` +
-      '  npm install --save-dev @plitzi/sdk-server isolated-vm core-js\n' +
-      'Without the isolates, the project’s own server (npm start) runs the same functions natively: call an action there with POST /_action { "actionId", "input" }.'
+      `  ${projectAdd('-D @plitzi/sdk-server isolated-vm core-js')}\n` +
+      `Without the isolates, the project’s own server (${projectRun('start')}) runs the same functions natively: call an action there with POST /_action { "actionId", "input" }.`
   );
 
   return undefined;

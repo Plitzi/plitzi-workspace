@@ -9,6 +9,7 @@ import { BACKLOG_FILE } from '../../../runs/plan/backlog';
 import { attachRun, releaseRun, resumeRun, stopRun } from '../../../runs/run';
 import { abortRun } from '../../../runs/run/abort';
 import { canWrite } from '../../../runs/tasks';
+import { projectRun } from '../../../scaffold/packageManager';
 import { KV_FILE } from '../../../scaffold/paths';
 import { act, runOf, taskOf } from '../shell';
 import { inputLines, list, secondRunText } from '../text';
@@ -224,7 +225,7 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                       ? []
                       : [
                           chalk.yellow(
-                            `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before npm start: plitzi server stop --port ${String(finished.running)}`
+                            `A server of the project is still running on :${String(finished.running)}: it serves the project as it was and holds its state (${KV_FILE}) — stop it before ${projectRun('start')}: plitzi server stop --port ${String(finished.running)}`
                           )
                         ]),
                     ...(finished.backlog

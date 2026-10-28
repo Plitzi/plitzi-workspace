@@ -42,6 +42,7 @@ import {
 import { LEAD } from '../../../runs/talk/messages';
 import { reviewRolesOf, reviewSteps, reviewTeamFrom } from '../../../runs/tasks/reviews';
 import { glimpse } from '../../../runs/view/feedLine';
+import { projectRun } from '../../../scaffold/packageManager';
 import { planSkills } from '../../project/upgrade';
 import { act, opener, runOf, tokenTask } from '../shell';
 import { list, pacedText } from '../text';
@@ -413,7 +414,7 @@ const openedText = (opened: Awaited<ReturnType<typeof openedRun>>): string =>
         ? `Next: ${opened.tasks.length === 1 ? 'the scope is' : `its ${String(opened.tasks.length)} research cards are`} ${opened.scouts.join(' or ')}'s — the keeper starts ${opened.tasks.length === 1 ? 'one' : 'them, a scout each up to the team’s most,'} to find out what the ask takes; what each proposes comes to the lead (plitzi run watch wakes it, plitzi task next --role lead hands it), to decide with the person: plitzi task review ${opened.tasks[0] ?? SCOPE_SPIKE} --approve [--leave <tasks>] | --changes "…". The team starts once there are tasks to take.`
         : `Next, yours: ${opened.tasks.length === 1 ? 'the scope' : `its ${String(opened.tasks.length)} research cards, one after another`} — find out what the ask takes (plitzi run reference --run ${opened.runId} --pages "…" keeps the site it copies), then end each with its tasks: plitzi task complete ${opened.tasks[0] ?? SCOPE_SPIKE} --found "what you found" --tasks <stage.json>. The team starts once there are tasks to take.`
       : `Start a task: plitzi task next --run ${opened.runId}`,
-    'Watch it in a browser as the tasks are approved: p in plitzi run monitor, or npm run start:preview (on 8300) — the project itself is untouched until the finish',
+    `Watch it in a browser as the tasks are approved: p in plitzi run monitor, or ${projectRun('start:preview')} (on 8300) — the project itself is untouched until the finish`,
     ...backlogLines(opened.backlog)
   ].join('\n');
 

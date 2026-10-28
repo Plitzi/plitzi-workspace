@@ -6,14 +6,16 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { projectMark } from '@plitzi/sdk-shared/project';
 
 import { keepNamedFiles } from './keptFiles';
 import { stopKept } from './lingering';
 import { guardServer, listenersUnder, stopListener, stopTree, TREE } from './processes';
+import { healthOn, servesFolder, stoppedAnswering } from '../../browser/health';
 import { runScript, scriptsOf, tail } from '../../commands/project/verify';
 import { UNANSWERED_EXIT } from '../../commands/shared/terminal';
+import { projectRun } from '../../scaffold/packageManager';
 import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../../scaffold/paths';
+import { SERVE_SCRIPTS } from '../../scaffold/paths';
 import { inTurns } from '../core/inTurns';
 import { withLock } from '../core/store';
 
@@ -148,30 +150,7 @@ export const ownServer = async (work: string): Promise<number | undefined> => {
 
   // The copy's own, by the mark of its folder its `/health` answers with: a record left behind by a server that died
   // names a port another copy's server may hold now, and that one is no server of this copy's.
-  const health: unknown = await fetch(`http://127.0.0.1:${String(port)}/health`, {
-    signal: AbortSignal.timeout(1_000)
-  })
-    .then(async (response): Promise<unknown> => response.json())
-    .catch(() => undefined);
-  if (!isRecord(health)) {
-    return undefined;
-  }
-
-  return typeof health.Instance !== 'string' || health.Instance === projectMark(work) ? port : undefined;
-};
-
-/** Waits, a few seconds at most, until nothing answers on `port`. */
-const stoppedAnswering = async (port: number): Promise<void> => {
-  for (let tries = 0; tries < 20; tries += 1) {
-    const answers = await fetch(`http://127.0.0.1:${String(port)}/health`, { signal: AbortSignal.timeout(500) })
-      .then(() => true)
-      .catch(() => false);
-    if (!answers) {
-      return;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
+  return servesFolder(await healthOn(port), work) ? port : undefined;
 };
 
 /**
@@ -214,7 +193,7 @@ export const serveCopy = async (
   }
 
   const scripts = await scriptsOf(work);
-  const name = ['start', 'start:dev'].find(each => Object.hasOwn(scripts, each));
+  const name = SERVE_SCRIPTS.find(each => Object.hasOwn(scripts, each));
   const script = name === undefined ? undefined : scripts[name];
   if (!script) {
     return { problem: 'the project has no start or start:dev script to serve the copy with' };
@@ -274,7 +253,7 @@ export const serveCopy = async (
       problem: [
         failedOnError
           ? `the copy's server stopped on an error before it answered on ${url} — the copy's own code, as it says: put it right and ${again}. What it said (${logFile}):`
-          : `the copy's server did not answer on ${url}${server.ended ? ', and ended' : ' within a minute'} — a server of your own still running in the copy (npm start) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
+          : `the copy's server did not answer on ${url}${server.ended ? ', and ended' : ' within a minute'} — a server of your own still running in the copy (${projectRun('start')}) is the usual cause: stop it and ${again}. What it said (${logFile}):`,
         ...said
       ].join('\n'),
       ofTheCopy: true

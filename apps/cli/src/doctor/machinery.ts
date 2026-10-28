@@ -1,6 +1,7 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
 import { machineryPlan } from '../commands/project/upgrade';
+import { projectDlx } from '../scaffold/packageManager';
 import { AUTHOR_FILE, MAIN_FILE, TSCONFIG_BASE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 
@@ -44,7 +45,7 @@ export const checkMachinery: Check = async ({ root, answers, origin, record }) =
       say.warning(
         'record-newer',
         `A newer CLI (${record?.cli ?? ''}) last wrote the project's files, and this one is ${CLI_VERSION}: it would take them back.`,
-        { fix: 'npx @plitzi/cli@latest doctor' }
+        { fix: projectDlx('@plitzi/cli@latest doctor') }
       )
     );
   }

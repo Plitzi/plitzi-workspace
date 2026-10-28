@@ -1,5 +1,6 @@
 import { namesServedCopy } from './acceptance';
 import { scriptsOf } from '../../commands/project/verify';
+import { SERVE_SCRIPTS } from '../../scaffold/paths';
 import { acceptanceText } from '../core/model';
 import { shellCommands } from '../core/shell';
 
@@ -82,7 +83,7 @@ export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][nu
       );
     } else if (namesServedCopy(check)) {
       const scripts = await scriptsOf(root).catch(() => ({}));
-      if (!['start', 'start:dev'].some(name => Object.hasOwn(scripts, name))) {
+      if (!SERVE_SCRIPTS.some(name => Object.hasOwn(scripts, name))) {
         problems.push(
           `Task "${task.id}": the check of "${said}" names the copy served ($PLITZI_URL, $PLITZI_PORT), and the project has no start script to serve it with`
         );

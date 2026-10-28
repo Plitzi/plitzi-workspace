@@ -3,6 +3,7 @@ import { InvalidArgumentError, Option } from 'commander';
 import { SCHEMES } from '../../browser';
 import { AUTOPLAY_CONDITIONS, STORAGE_CONDITIONS } from '../../browser/conditions';
 import { schemes, timeZone, widths } from '../../options';
+import { projectRun } from '../../scaffold/packageManager';
 import { instantMs } from '../page/shotSteps';
 
 import type { BrowserConditions } from '../../browser/conditions';
@@ -34,8 +35,7 @@ export const DRY_RUN_OPTION = [
 ] as const;
 
 /** Where `check` and `shot` find the project's pages when `npm start` here is not where they are. */
-export const URL_OPTION =
-  'Where the project is served, when not by npm start here — a second server of it, staging, a deploy: https://host:port';
+export const URL_OPTION = `Where the project is served, when not by ${projectRun('start')} here — a second server of it, staging, a deploy: https://host:port`;
 
 export const API_OPTION = [
   '--api <url>',

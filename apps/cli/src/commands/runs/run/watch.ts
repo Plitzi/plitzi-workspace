@@ -13,6 +13,7 @@ import { activeRuns, loadRun, pruneRuns } from '../../../runs/run';
 import { LEAD } from '../../../runs/talk/messages';
 import { runsState, viewRun } from '../../../runs/view/view';
 import { boardLines, runText } from '../../../runs/view/viewText';
+import { projectRun } from '../../../scaffold/packageManager';
 import { act, contextFor, runOf } from '../shell';
 
 import type { ExperienceFlags } from '../../../runs/report/experience';
@@ -215,7 +216,7 @@ export const runPreview = async (
     if (runId === undefined && options.run === undefined && (await activeRuns(ctx.root)).length === 0) {
       throw new RunRefusal(
         'not-found',
-        'No run is open in this project: there is nothing of the agents’ to preview. The project as it is: npm run start:dev — start:preview serves an open run’s approved work, as the agents’ tasks are approved'
+        `No run is open in this project: there is nothing of the agents’ to preview. The project as it is: ${projectRun('start:dev')} — start:preview serves an open run’s approved work, as the agents’ tasks are approved`
       );
     }
 
@@ -291,5 +292,5 @@ export const runCopy = (runId: string | undefined, options: PreviewOptions): Pro
       return copyRunWork(ctx, await runOf(ctx, options, runId), options.copy === true ? undefined : options.copy);
     },
     copied =>
-      `The run's approved work (${String(copied.files)} file(s) of it) is at ${copied.dir}, made afresh — its state its own, empty. Serve it there on a port of its own: cd ${copied.dir} && PORT=<port> npm start — or run its specs there.`
+      `The run's approved work (${String(copied.files)} file(s) of it) is at ${copied.dir}, made afresh — its state its own, empty. Serve it there on a port of its own: cd ${copied.dir} && PORT=<port> ${projectRun('start')} — or run its specs there.`
   );

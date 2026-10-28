@@ -21,6 +21,7 @@ import { readScaffoldRecord } from '../commands/project/scaffoldRecord';
 import { readOrigin } from '../commands/project/spaceOrigin';
 import { answersFor } from '../commands/project/upgrade';
 import { fail } from '../commands/shared/terminal';
+import { projectRun } from '../scaffold/packageManager';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, DoctorArea, DoctorContext, Finding, Repair, Severity } from './types';
@@ -60,7 +61,7 @@ export interface DoctorOptions {
  * without problems: the space is authoring's, how it is written lint's, a page the browser's.
  */
 export const NOT_CHECKED = [
-  { what: 'the space — what it authors to, refuses and warns of', by: 'npm run author' },
+  { what: 'the space — what it authors to, refuses and warns of', by: projectRun('author') },
   { what: 'how the space is written — its files, data, tokens, repeats', by: 'plitzi space lint' },
   { what: 'a page as it renders', by: 'plitzi page check' }
 ] as const;

@@ -52,6 +52,11 @@ export interface LineBeforeAfter {
   check: string;
   before: AcceptanceResult;
   after: AcceptanceResult;
+  /**
+   * It fails before only on the tests the task adds — on the run without them it passes: a guard of what was there
+   * ("the charts' tests pass as they were"), its proof the new test beside them in the same file.
+   */
+  byOwnTests?: true;
 }
 
 export const checkBefore = async (
@@ -128,8 +133,12 @@ export const checkBefore = async (
     });
     const placed = await checkAcceptance(task.acceptance, { work: beforeDir, root: ctx.root, cache: beforeCache });
     // A line that passes with its tests on the code before it is run once more, on the run bare: failing there, the
-    // change it sees is its tests'.
-    const again = ownTests.length > 0 ? placed.flatMap((line, index) => (line.ok ? [index] : [])) : [];
+    // change it sees is its tests'. One that fails with them and runs one of them, too: passing bare, what fails before
+    // it is only what the task adds.
+    const runsOwn = (index: number): boolean =>
+      ownTests.some(file => (placed[index]?.check ?? '').includes(path.basename(file)));
+    const again =
+      ownTests.length > 0 ? placed.flatMap((line, index) => (line.ok || runsOwn(index) ? [index] : [])) : [];
     const bare =
       again.length > 0
         ? await checkAcceptance(
@@ -137,10 +146,14 @@ export const checkBefore = async (
             { work: bareDir, root: ctx.root, cache: beforeCache }
           )
         : [];
+    const bareOf = (index: number): AcceptanceResult | undefined =>
+      again.includes(index) ? bare.at(again.indexOf(index)) : undefined;
     const before = placed.map((line, index) => {
-      const bareLine = bare.at(again.indexOf(index));
+      const bareLine = bareOf(index);
 
-      return bareLine !== undefined && !bareLine.ok && !ranNoTest((bareLine.output ?? []).join('\n')) ? bareLine : line;
+      return line.ok && bareLine !== undefined && !bareLine.ok && !ranNoTest((bareLine.output ?? []).join('\n'))
+        ? bareLine
+        : line;
     });
 
     return {
@@ -150,7 +163,8 @@ export const checkBefore = async (
         said: line.said,
         check: line.check,
         before: before[index] ?? { said: line.said, check: line.check, ok: false, output: ['not run'] },
-        after: line
+        after: line,
+        ...(placed.at(index)?.ok === false && bareOf(index)?.ok === true ? { byOwnTests: true as const } : {})
       }))
     };
   } finally {

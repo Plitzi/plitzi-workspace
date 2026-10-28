@@ -13,6 +13,7 @@ import { importedApis } from '../../../runs/plan/moduleApis';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { logRun, readRunLog } from '../../../runs/run';
 import { taskContext } from '../../../runs/tasks';
+import { projectRun } from '../../../scaffold/packageManager';
 import { describeData } from '../../project/data';
 import { act, either } from '../shell';
 import { nearLimit } from '../text';
@@ -282,7 +283,7 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
           'Acceptance — a line with a check is run at complete; run it yourself in your copy first',
           ...(task.acceptance.some(each => typeof each !== 'string' && namesServedCopy(each.check))
             ? [
-                '  (At complete, the copy is served and $PLITZI_URL / $PLITZI_PORT are written into the check — PORT is set, for a Playwright spec. To run one yourself: start the copy on a free port (PORT=<port> npm start), put http://127.0.0.1:<port> where the check says $PLITZI_URL, and stop that server before complete, which starts its own)'
+                `  (At complete, the copy is served and $PLITZI_URL / $PLITZI_PORT are written into the check — PORT is set, for a Playwright spec. To run one yourself: start the copy on a free port (PORT=<port> ${projectRun('start')}), put http://127.0.0.1:<port> where the check says $PLITZI_URL, and stop that server before complete, which starts its own)`
               ]
             : []),
           ...task.acceptance.map(

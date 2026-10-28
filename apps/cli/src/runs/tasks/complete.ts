@@ -11,6 +11,7 @@ import { othersHeld } from './othersHeld';
 import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from './reviews';
 import { isNotice } from '../../commands/project/verify';
 import { unifiedDiff } from '../../fix/diff';
+import { projectExec } from '../../scaffold/packageManager';
 import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance';
 import { failsWithout, ownFailing } from '../copies/checks';
 import { mergeLines } from '../copies/merge3';
@@ -156,7 +157,7 @@ const warningsOf = (checks: CheckResult, changed: readonly string[]): string[] =
     ...all.filter(ours).map(({ step, warning }) => `${step}: ${warning}`),
     ...(others > 0
       ? [
-          `${String(others)} more in files it did not change — another task's, or the project's: npx plitzi space lint lists them`
+          `${String(others)} more in files it did not change — another task's, or the project's: ${projectExec('plitzi space lint')} lists them`
         ]
       : [])
   ];
@@ -510,7 +511,7 @@ export const completeTask = async (
       {
         task: taskId,
         steps: [{ name: 'lint:space — the files it changed', ok: false, said: warned }],
-        next: 'fix each as npx plitzi space lint says — there before the task or not, a file it hands over has none; one written so on purpose says it with quiet — and complete again'
+        next: `fix each as ${projectExec('plitzi space lint')} says — there before the task or not, a file it hands over has none; one written so on purpose says it with quiet — and complete again`
       }
     );
   }

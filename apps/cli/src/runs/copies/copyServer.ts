@@ -17,6 +17,7 @@ import {
   previewServerLog
 } from './lingering';
 import { projectOrigin, readHealth } from '../../browser';
+import { projectRun } from '../../scaffold/packageManager';
 import { DEV_SERVER_FILE } from '../../scaffold/paths';
 import { copyOf, runPaths, taskPaths } from '../core/paths';
 
@@ -65,7 +66,7 @@ export const sayStale = (health: unknown): void => {
   if (first !== undefined) {
     process.stderr.write(
       chalk.yellow(
-        `· the last save to the space did not author: this is the space as it last authored, without that save — ${first} (npm run author says it whole)\n`
+        `· the last save to the space did not author: this is the space as it last authored, without that save — ${first} (${projectRun('author')} says it whole)\n`
       )
     );
   }

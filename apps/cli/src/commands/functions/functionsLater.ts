@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { LATER_ANSWER_FILE, LATER_ASK_FILE } from '@plitzi/sdk-shared/project';
 
+import { projectRun } from '../../scaffold/packageManager';
 import { projectHere } from '../project/existingProject';
 import { fail } from '../shared/terminal';
 
@@ -88,7 +89,7 @@ export const functionsLater = async (key: string | undefined, options: Functions
   if (answer === undefined) {
     await fs.rm(asked, { force: true });
     fail(
-      'The project’s server did not answer: it holds the runs set for later while it is served — npm start (a task’s copy: its own server, started by its checks or by you in it)'
+      `The project’s server did not answer: it holds the runs set for later while it is served — ${projectRun('start')} (a task’s copy: its own server, started by its checks or by you in it)`
     );
 
     return;

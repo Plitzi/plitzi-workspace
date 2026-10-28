@@ -14,6 +14,7 @@ import { projectHere, readPackageJson } from '../commands/project/existingProjec
 import { blockingLegacy } from '../commands/project/legacyLayout';
 import { fail } from '../commands/shared/terminal';
 import { loadTypeScript } from '../projectTypeScript';
+import { projectExec, projectRun } from '../scaffold/packageManager';
 import { DATA_DIR, SPACE_DIR, SPACE_ENTRY } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 
@@ -53,7 +54,7 @@ export interface LintOptions {
  * that authors, a page that renders or a project that installs.
  */
 export const NOT_CHECKED = [
-  { what: 'whether the space authors — what it refuses and warns of', by: 'npm run author' },
+  { what: 'whether the space authors — what it refuses and warns of', by: projectRun('author') },
   { what: 'a page as it renders', by: 'plitzi page check' },
   { what: 'the project around the space — packages, configs, imports, plugins, data files', by: 'plitzi doctor' }
 ] as const;
@@ -195,7 +196,7 @@ const fileText = (title: string, findings: readonly LintFinding[]): string[] => 
 const docsOf = (report: LintReport): string => {
   const docs = new Map<string, string[]>();
   for (const each of report.findings) {
-    const key = each.origin === 'authoring' ? 'npx plitzi explain <code>' : each.docs;
+    const key = each.origin === 'authoring' ? projectExec('plitzi explain <code>') : each.docs;
     const codes = docs.get(key) ?? [];
     if (!codes.includes(each.code)) {
       docs.set(key, [...codes, each.code]);
@@ -343,7 +344,7 @@ export const spaceFindings = async ({
       ? [
           finding(
             'project-layout',
-            `The project's layout has ${plural(layoutErrors.length, 'error')}, which stop its server and \`npm run author\` — \`plitzi doctor\` says each and what fixes it; what authoring suggests is read once they are fixed.`
+            `The project's layout has ${plural(layoutErrors.length, 'error')}, which stop its server and \`${projectRun('author')}\` — \`plitzi doctor\` says each and what fixes it; what authoring suggests is read once they are fixed.`
           )
         ]
       : await authoringFindings(root))

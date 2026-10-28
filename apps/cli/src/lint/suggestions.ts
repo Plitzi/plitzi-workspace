@@ -6,6 +6,7 @@ import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
 import { finding } from './catalog';
 import { specSelectorFindings } from './specSelectors';
 import { loadProjectSpace } from '../commands/project/projectSpace';
+import { projectExec, projectRun } from '../scaffold/packageManager';
 
 import type { LintFinding } from './types';
 import type { Suggestion } from '@plitzi/sdk-authoring';
@@ -60,7 +61,7 @@ const fromSuggestion = async (root: string, suggestion: Suggestion): Promise<Lin
     message:
       elsewhere.length > 0 ? `${suggestion.message} Also written at ${elsewhere.join(', ')}.` : suggestion.message,
     ...(place ? { file: place.file, line: place.line, column: 1 } : {}),
-    docs: `npx plitzi explain ${suggestion.code}`
+    docs: projectExec(`plitzi explain ${suggestion.code}`)
   };
 };
 
@@ -77,7 +78,7 @@ export const authoringFindings = async (root: string): Promise<LintFinding[]> =>
     return [
       finding(
         'space-does-not-author',
-        `The space could not be loaded, so what authoring suggests about it could not be read — \`npm run author\` says why: ${firstLines(error)}`
+        `The space could not be loaded, so what authoring suggests about it could not be read — \`${projectRun('author')}\` says why: ${firstLines(error)}`
       )
     ];
   }
@@ -93,7 +94,7 @@ export const authoringFindings = async (root: string): Promise<LintFinding[]> =>
     return [
       finding(
         'space-does-not-author',
-        `The space does not author, so what authoring suggests about it could not be read — \`npm run author\` says why: ${firstLines(error)}`
+        `The space does not author, so what authoring suggests about it could not be read — \`${projectRun('author')}\` says why: ${firstLines(error)}`
       )
     ];
   }

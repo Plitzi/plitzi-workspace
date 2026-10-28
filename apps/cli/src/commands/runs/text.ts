@@ -72,7 +72,12 @@ export const inputLines = (inputs: RemovedInputs | undefined): string[] => [
   ...(inputs && inputs.kept.length > 0 ? [`Kept — changed since the run read them: ${inputs.kept.join(', ')}`] : []),
   ...(inputs && inputs.servers.length > 0
     ? [`Stopped, left listening in its copies: ${inputs.servers.join(', ')}`]
-    : [])
+    : []),
+  ...(inputs?.serversUnsaid === undefined
+    ? []
+    : [
+        `What its agents left listening in their copies was not looked for: ${inputs.serversUnsaid} — one still running holds its port until it is stopped`
+      ])
 ];
 
 /** A time as the run says one: hours and minutes, in UTC. */

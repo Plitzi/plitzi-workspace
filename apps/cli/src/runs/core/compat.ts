@@ -5,6 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { RUNS_DIR } from './paths';
 import { RunRefusal } from './refusal';
+import { projectDlx } from '../../scaffold/packageManager';
 
 /**
  * A run's files are written by one CLI and may be read by another — an upgrade while it is open. Every change to what a
@@ -50,7 +51,7 @@ export const writtenByAnother = async (
 
   return new RunRefusal(
     'version-mismatch',
-    `${path.relative(root, file)} was written by @plitzi/cli ${was}, and this one (${cli}) does not read it: go on with the CLI that opened the run until it is finished — npx -y @plitzi/cli@${was} run status ${runId} — or a person aborts it (plitzi run abort ${runId}): the project is as it was`,
-    { file, run: runId, next: `npx -y @plitzi/cli@${was} run status ${runId}` }
+    `${path.relative(root, file)} was written by @plitzi/cli ${was}, and this one (${cli}) does not read it: go on with the CLI that opened the run until it is finished — ${projectDlx(`@plitzi/cli@${was} run status ${runId}`)} — or a person aborts it (plitzi run abort ${runId}): the project is as it was`,
+    { file, run: runId, next: projectDlx(`@plitzi/cli@${was} run status ${runId}`) }
   );
 };

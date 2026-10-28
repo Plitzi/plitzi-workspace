@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { declarationsRegistry, elementsRegistry } from '../../scaffold';
+import { LOCKFILES } from '../../scaffold/packageManager';
 import { MAIN_FILE, RUNTIME_BUNDLE, RUNTIME_ENTRY, SPACE_ENTRY } from '../../scaffold/paths';
 import { fail } from '../shared/terminal';
 
@@ -55,12 +56,6 @@ export interface PackageJson {
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 }
-
-const LOCKFILES: [string, PackageManager][] = [
-  ['yarn.lock', 'yarn'],
-  ['pnpm-lock.yaml', 'pnpm'],
-  ['package-lock.json', 'npm']
-];
 
 const exists = async (file: string): Promise<boolean> => {
   try {

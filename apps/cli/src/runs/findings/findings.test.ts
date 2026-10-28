@@ -182,6 +182,14 @@ describe('what the agents looked for and did beside Plitzi', () => {
     expect(found.map(each => each.kind)).toEqual(['explain-missed', 'explain-topic']);
     expect(found[0].evidence).toEqual(['dev-1: dialogContainer']);
     expect(found[1].title).toBe('Topics explain did not answer the first time: “dialog”');
+    // A scout read the two entries its search listed: the answer read whole, not two more tries.
+    expect(
+      explainFindings([
+        use(1, 'scout-1', 'plitzi explain self-hosted font file'),
+        use(2, 'scout-1', 'plitzi explain HostedFont'),
+        use(3, 'scout-1', 'plitzi explain RemoteFont')
+      ])
+    ).toEqual([]);
   });
 
   it('says the lead’s own scripts — not the project’s tests — and what agents wrote and installed in their scratch', () => {

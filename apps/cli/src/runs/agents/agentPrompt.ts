@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { isPrincipal } from './leads';
 import { DEVELOPER, SCOUT, TESTER } from './team';
+import { projectRun } from '../../scaffold/packageManager';
 import { SKILLS_ROOT } from '../../scaffold/skills';
 
 import type { Effort, StartedAgent } from './team';
@@ -149,7 +150,7 @@ export const agentPrompt = ({
             ? '- Measure, never guess — every element and width in one call: `PLITZI page measure <path> <elements…> --width 390,1440 [--hover <el> | --click <el>]` (a state with the bracket; `PLITZI page outline <path> --within <part>` names them). Trying values, measure; never `task check` for it.'
             : `- Measure, never guess — every element and width in one call: \`PLITZI page measure <path> "<ours> => <theirs>" …${beside} --width 390,1440 [--hover <el> | --click <el>]\` (a state with the bracket; \`PLITZI page outline <path>${beside} --within <part>\` names theirs). Trying values, measure; never \`task check\` for it.`,
           // 17 of 34 checks failed on typecheck or lint — what the project's own scripts say in seconds.
-          '- Change a batch, then run the project\'s own `typecheck` and `lint` scripts in your copy (`npm run typecheck`, `npm run lint` — cached, seconds) and fix what they say; then `PLITZI task check` once; then `PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]` — what it was like, for Plitzi — and `PLITZI task next` again.',
+          `- Change a batch, then run the project's own \`typecheck\` and \`lint\` scripts in your copy (\`${projectRun('typecheck')}\`, \`${projectRun('lint')}\` — cached, seconds) and fix what they say; then \`PLITZI task check\` once; then \`PLITZI task complete --ease <1-5> --hardest "what cost you the most, and why" [--friction "what of Plitzi got in your way" …] [--helped "…"]\` — what it was like, for Plitzi — and \`PLITZI task next\` again.`,
           // T-collection completed with "Known: the phone keeps our inline panel, where the original opens a
           // drawer" — sent back for exactly that.
           `- ${reference === undefined ? 'Something wrong you see' : 'A difference from the site you copy you see'}, inside your task's title, is work, not a note: do it, or ask the lead (\`PLITZI task tell "…" --ask\`) before you complete.`,

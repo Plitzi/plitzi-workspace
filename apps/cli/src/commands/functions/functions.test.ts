@@ -195,7 +195,7 @@ describe('plitzi functions dev', () => {
     await devFunction('hello.greet', {});
 
     expect(said.err).toContain('missing: @plitzi/sdk-server, isolated-vm, core-js');
-    expect(said.err).toContain('npm install --save-dev @plitzi/sdk-server isolated-vm core-js');
+    expect(said.err).toContain('npm install -D @plitzi/sdk-server isolated-vm core-js');
     expect(said.err).toContain('POST /_action');
     expect(process.exitCode).toBe(1);
   });

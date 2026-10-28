@@ -3,10 +3,14 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { lockfileManager } from '../../commands/project/existingProject';
+import { execCommand } from '../../scaffold/packageManager';
+import { SERVE_SCRIPTS } from '../../scaffold/paths';
 import { DEVELOPER, TESTER } from '../agents/team';
 import { workedBy } from '../agents/worked';
 import { projectFiles } from '../core/files';
 
+import type { PackageManager } from '../../scaffold/types';
 import type { Acceptance, PlannedTask, RunPlan, RunTask } from '../core/model';
 import type { TaskView } from '../core/taskStore';
 
@@ -15,8 +19,8 @@ import type { TaskView } from '../core/taskStore';
  * worked none of what it tests (`testsOf`), a tester's when no developer may — so what a developer wrote is held by tests
  * somebody else wrote from its acceptance, not from its code; the tester reviews them, its QA (Carlos: the tester's Opus
  * is for judgment, the tests are a developer's work). Its files are
- * where this project's tests are: a page's in `visual/<page>.spec.ts` (Playwright, against the copy served), a module's
- * beside it (`<file>.test.ts`, `node --test`). A task that says `tests: false`, writes nothing a test is written for, or
+ * where this project's tests are: a page's in its Playwright folder (`visual/<page>.spec.ts`, against the copy served),
+ * a module's beside it (`<file>.test.ts`, run by the project's runner — node's, vitest or jest). A task that says `tests: false`, writes nothing a test is written for, or
  * that a tester's task of the plan already waits for, gets none; two whose tests are one file share one task of them.
  */
 
@@ -37,10 +41,21 @@ export const testWriters = (
   developers: readonly string[]
 ): string[] => developers.filter(developer => writesTests(task, developer, views));
 
+/** What runs a module's tests: the project's runner, read off what it depends on — node's own when none. */
+export type UnitRunner = 'node' | 'vitest' | 'jest';
+
 /** What the project's tests run with: Playwright for its pages' — when it has it — against the copy its start serves. */
 export interface TestSetup {
   playwright: boolean;
   served: boolean;
+  /**
+   * Where its specs are: its Playwright config's `testDir`, `visual` when it names none — a project that kept them
+   * elsewhere was handed a spec in a folder its suite never reads.
+   */
+  specsDir?: string;
+  unitRunner?: UnitRunner;
+  /** What its commands are run through: a check written `npx …` in a pnpm project. */
+  manager?: PackageManager;
   /**
    * The page a file is drawn in, read off the imports: the unit that owns it (`src/space/pages/walks.ts` for the
    * `walkFilter.ts` only it imports) — none for a module several pages share. A file it does not know is its own.
@@ -70,11 +85,35 @@ export const testSetupOf = async (root: string): Promise<TestSetup> => {
     return isRecord(value) ? value : {};
   };
   const scripts = named('scripts');
+  const dependencies = { ...named('dependencies'), ...named('devDependencies') };
 
   return {
-    playwright: '@playwright/test' in { ...named('dependencies'), ...named('devDependencies') },
-    served: ['start', 'start:dev'].some(name => typeof scripts[name] === 'string')
+    playwright: '@playwright/test' in dependencies,
+    served: SERVE_SCRIPTS.some(name => typeof scripts[name] === 'string'),
+    specsDir: await specsDirOf(root),
+    unitRunner: 'vitest' in dependencies ? 'vitest' : 'jest' in dependencies ? 'jest' : 'node',
+    manager: (await lockfileManager([root])) ?? 'npm'
   };
+};
+
+const PLAYWRIGHT_CONFIGS = [
+  'playwright.config.ts',
+  'playwright.config.mjs',
+  'playwright.config.js',
+  'playwright.config.cjs'
+];
+
+/** The folder a project's Playwright config names its specs in (`testDir`), from the project: `visual` when none does. */
+export const specsDirOf = async (root: string): Promise<string> => {
+  for (const config of PLAYWRIGHT_CONFIGS) {
+    const text = await fs.readFile(path.join(root, config), 'utf-8').catch(() => undefined);
+    const named = text === undefined ? undefined : /\btestDir\s*:\s*['"`]([^'"`]+)['"`]/.exec(text)?.[1];
+    if (named !== undefined) {
+      return path.posix.normalize(named).replace(/^\.\/?|\/$/g, '') || '.';
+    }
+  }
+
+  return 'visual';
 };
 
 const PAGES = 'src/space/pages/';
@@ -91,8 +130,9 @@ export const testFilesFor = (
   {
     playwright = true,
     unitOf = file => file,
-    importingTests
-  }: Partial<Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests'>> = {}
+    importingTests,
+    specsDir = 'visual'
+  }: Partial<Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests' | 'specsDir'>> = {}
 ): string[] => {
   const tests = files.flatMap(file => {
     if (file.startsWith(PAGES)) {
@@ -106,7 +146,7 @@ export const testFilesFor = (
         .split('/')[0]
         ?.replace(/\.[cm]?tsx?$/, '');
 
-      return page ? [`visual/${page}.spec.ts`] : [];
+      return page ? [`${specsDir === '.' ? '' : `${specsDir}/`}${page}.spec.ts`] : [];
     }
 
     if (!MODULE.test(file) || NOT_TESTED.test(file)) {
@@ -148,7 +188,7 @@ export const testsImporting = async (root: string): Promise<Map<string, string[]
 export const existingTests = async (
   root: string,
   tasks: readonly Pick<PlannedTask, 'files'>[],
-  setup: Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests'>
+  setup: Pick<TestSetup, 'playwright' | 'unitOf' | 'importingTests' | 'specsDir'>
 ): Promise<Set<string>> => {
   const named = [...new Set(tasks.flatMap(task => testFilesFor(task.files, setup)))];
   const found = await Promise.all(
@@ -167,17 +207,22 @@ export const existingTests = async (
  * The commands that run them, against the copy served: what the task of them is accepted by — said as a line to check by
  * hand when the project has no start script to serve the copy with.
  */
-const testChecks = (files: readonly string[], served: boolean): Acceptance[] => {
-  const specs = files.filter(file => file.startsWith('visual/'));
-  const units = files.filter(file => !file.startsWith('visual/'));
+const testChecks = (
+  files: readonly string[],
+  { served, unitRunner = 'node', manager = 'npm' }: Pick<TestSetup, 'served' | 'unitRunner' | 'manager'>
+): Acceptance[] => {
+  const specs = files.filter(file => file.endsWith('.spec.ts'));
+  const units = files.filter(file => !file.endsWith('.spec.ts'));
   const said = 'Its pages’ tests pass against the copy served';
+  const playwright = execCommand(manager, `playwright test ${specs.join(' ')}`);
+  const dirs = [...new Set(units.map(file => path.posix.dirname(file)))];
 
   return [
     ...(specs.length > 0
       ? [
           served
-            ? { said, check: `npx playwright test ${specs.join(' ')} --reporter=line` }
-            : `${said} — npx playwright test ${specs.join(' ')}, with the copy started by hand: the project has no start script`
+            ? { said, check: `${playwright} --reporter=line` }
+            : `${said} — ${playwright}, with the copy started by hand: the project has no start script`
         ]
       : []),
     // Every test beside them, not only the files named: a run's test-1 held a task's acceptance in a third file of
@@ -186,7 +231,10 @@ const testChecks = (files: readonly string[], served: boolean): Acceptance[] => 
       ? [
           {
             said: 'Its modules’ tests pass, and every test beside them',
-            check: `node --test ${[...new Set(units.map(file => path.posix.dirname(file)))].map(dir => `'${dir}/**/*.test.ts'`).join(' ')}`
+            check:
+              unitRunner === 'node'
+                ? `node --test ${dirs.map(dir => `'${dir}/**/*.test.ts'`).join(' ')}`
+                : execCommand(manager, `${unitRunner === 'vitest' ? 'vitest run' : 'jest'} ${dirs.join(' ')}`)
           }
         ]
       : [])
@@ -276,7 +324,7 @@ export const withTestTasks = (
         `Every line of ${named}'s acceptance has a test, both sides of each condition — empty and full, each choice, signed in and out where it applies — written from what was asked, not from the code`,
         'A test that fails because the work does not do what was asked is not bent to pass: it is told to the lead (task tell), naming the line',
         'A case the project’s data never shows (an age the data has no dog of, an empty list) is held by a unit test of the module that decides it, and told to the lead: a page spec cannot see it',
-        ...testChecks(files, setup.served)
+        ...testChecks(files, setup)
       ]
     };
   });

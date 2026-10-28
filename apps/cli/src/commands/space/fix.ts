@@ -12,6 +12,7 @@ import { formatLikeBefore } from '../../fix/format';
 import { projectPlan, verdict } from '../../fix/plan';
 import { applyChanges, pruneImports, sourceEdit } from '../../fix/sourceEdits';
 import { loadTypeScript } from '../../projectTypeScript';
+import { projectRun } from '../../scaffold/packageManager';
 import { findProject } from '../project/existingProject';
 import { projectFormatter } from '../project/projectFormatter';
 import { loadProjectSpace } from '../project/projectSpace';
@@ -229,7 +230,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
   }
 
   if ('problem' in plan) {
-    fail(`Nothing to plan: ${plan.problem}. \`npm run author\` says what to change first.`);
+    fail(`Nothing to plan: ${plan.problem}. \`${projectRun('author')}\` says what to change first.`);
 
     return;
   }

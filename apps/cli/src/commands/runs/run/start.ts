@@ -6,6 +6,7 @@ import { HARNESSES, isHarness } from '../../../runs/agents/agentPrompt';
 import { onPath } from '../../../runs/agents/launchAgent';
 import { readTeam, SCOUT, startedAgents } from '../../../runs/agents/team';
 import { ID } from '../../../runs/core/paths';
+import { projectDlx } from '../../../scaffold/packageManager';
 import { projectHere } from '../../project/existingProject';
 import { fail } from '../../shared/terminal';
 
@@ -32,7 +33,7 @@ const notReady = async (harness: string | undefined): Promise<string[] | undefin
   const problems: string[] = [];
   if (project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     problems.push(
-      'A run works a project whose space is its code (src/space/): this is none — `npx @plitzi/cli create` makes one, and `create --from <space>` brings a space on Plitzi into one'
+      `A run works a project whose space is its code (src/space/): this is none — \`${projectDlx('@plitzi/cli create')}\` makes one, and \`create --from <space>\` brings a space on Plitzi into one`
     );
   }
 

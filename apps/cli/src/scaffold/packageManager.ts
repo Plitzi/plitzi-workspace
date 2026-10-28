@@ -1,4 +1,6 @@
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 
 import type { PackageManager, ProjectFiles } from './types';
 
@@ -26,6 +28,55 @@ export const detectPackageManager = (): PackageManager => {
 };
 
 export const installCommand = (manager: PackageManager): string => `${manager} install`;
+
+/** Each manager's lockfile, by which a project says the manager it is installed with — Yarn's first, as found. */
+export const LOCKFILES: readonly (readonly [string, PackageManager])[] = [
+  ['yarn.lock', 'yarn'],
+  ['pnpm-lock.yaml', 'pnpm'],
+  ['package-lock.json', 'npm']
+];
+
+/** The manager of the project `dir` is in: the first lockfile from it up — a workspace's, above a package of it. */
+export const managerAt = (dir: string): PackageManager | undefined => {
+  for (let at = path.resolve(dir); ; at = path.dirname(at)) {
+    const found = LOCKFILES.find(([file]) => existsSync(path.join(at, file)));
+    if (found !== undefined) {
+      return found[1];
+    }
+
+    if (path.dirname(at) === at) {
+      return undefined;
+    }
+  }
+};
+
+/**
+ * The manager this process's project is installed with, set once as the CLI starts in it (`bin.ts`): every command a
+ * message names is said its way — a pnpm project read `npm run author` and `npx plitzi …` throughout. npm until set.
+ */
+let projectManager: PackageManager = 'npm';
+
+export const setProjectManager = (manager: PackageManager): void => {
+  projectManager = manager;
+};
+
+/** A script of the project, as its manager runs it: `npm run author`, `pnpm author`. */
+export const projectRun = (script: string): string => runCommand(projectManager, script);
+
+/** A package installed in the project, run as its manager runs one: `npx plitzi …`, `pnpm exec plitzi …`. */
+export const projectExec = (line: string): string => execCommand(projectManager, line);
+
+/** A package added to the project: `npm install -D typescript`, `pnpm add -D typescript`. */
+export const projectAdd = (args: string): string =>
+  `${projectManager === 'npm' ? 'npm install' : `${projectManager} add`} ${args}`;
+
+/** A package run once without installing it: `npx -y @plitzi/cli@0.38`, `pnpm dlx …`, `yarn dlx …`. */
+export const projectDlx = (line: string): string =>
+  projectManager === 'npm' ? `npx -y ${line}` : `${projectManager} dlx ${line}`;
+
+/** A package's command, as each manager runs one installed in the project: `npx`, `yarn`, `pnpm exec`. */
+export const execCommand = (manager: PackageManager, line: string): string =>
+  manager === 'npm' ? `npx ${line}` : manager === 'pnpm' ? `pnpm exec ${line}` : `yarn ${line}`;
 
 /** `npm` needs `run` in front of a script that is not a lifecycle one; the other two take the name alone. */
 export const runCommand = (manager: PackageManager, script: string): string =>

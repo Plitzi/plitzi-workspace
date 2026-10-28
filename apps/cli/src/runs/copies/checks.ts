@@ -1,5 +1,6 @@
 import { runScript, scriptsOf, stepsOf, tail } from '../../commands/project/verify';
 import { functionsBuildProblems } from '../../doctor/functions';
+import { projectExec } from '../../scaffold/packageManager';
 
 /**
  * The project's checks over a copy of it — a task's, or the run's whole before the final merge: what `plitzi verify`
@@ -106,7 +107,7 @@ export const projectChecks: CheckRunner = async (dir, projectRoot, { final = fal
               code === 0 && suggestions.length > 0
                 ? [
                     ...suggestions,
-                    'A task completes with none: write them the short way (npx plitzi space fix shows how), or say why not (plitzi task complete --known-failure "why")'
+                    `A task completes with none: write them the short way (${projectExec('plitzi space fix')} shows how), or say why not (plitzi task complete --known-failure "why")`
                   ]
                 : tail(output)
           })

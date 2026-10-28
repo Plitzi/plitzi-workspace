@@ -1,4 +1,7 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+
+import { childrenTable, foldersOf, listeningPorts } from './processTable';
 
 import type { ChildProcess } from 'node:child_process';
 
@@ -14,23 +17,11 @@ import type { ChildProcess } from 'node:child_process';
 export const TREE = { detached: process.platform !== 'win32' } as const;
 
 /**
- * Every process under `pid`, read off the system's process table (`ps`): what a shell started, and what that started.
- * Nothing where there is no `ps` to ask.
+ * Every process under `pid`, read off the system's process table (`ps`, else `/proc`): what a shell started, and what
+ * that started. Nothing where the machine says neither.
  */
 export const descendantsOf = (pid: number): number[] => {
-  const table = spawnSync('ps', ['-A', '-o', 'pid=,ppid='], { encoding: 'utf-8' });
-  if (table.status !== 0) {
-    return [];
-  }
-
-  const children = new Map<number, number[]>();
-  for (const line of table.stdout.split('\n')) {
-    const [child, parent] = line.trim().split(/\s+/).map(Number);
-    if (Number.isInteger(child) && Number.isInteger(parent)) {
-      children.set(parent, [...(children.get(parent) ?? []), child]);
-    }
-  }
-
+  const children = childrenTable();
   const found: number[] = [];
   for (const queue = [pid]; queue.length > 0;) {
     for (const child of children.get(queue.shift() ?? 0) ?? []) {
@@ -71,71 +62,27 @@ export const stopTree = (child: ChildProcess, { group = false }: { group?: boole
   }
 };
 
-/** What `lsof -F` says of each process, by its field letter: `p` its pid, `n` a name (an address, a folder). */
-const lsofFields = (args: readonly string[]): { pid: number; names: string[] }[] => {
-  const read = spawnSync('lsof', [...args], { encoding: 'utf-8' });
-  const found: { pid: number; names: string[] }[] = [];
-  for (const line of (read.stdout as string | null)?.split('\n') ?? []) {
-    if (line.startsWith('p')) {
-      found.push({ pid: Number(line.slice(1)), names: [] });
-    } else if (line.startsWith('n')) {
-      found.at(-1)?.names.push(line.slice(1));
-    }
-  }
-
-  return found;
-};
-
-/**
- * The folder each process was started in, one `lsof` for them all: one a process took a machine with many servers
- * listening seconds — `server stop` with them (and its tests, past their time beside the rest of the suite).
- */
-const cwdsOf = (pids: readonly number[]): Map<number, string> =>
-  pids.length === 0
-    ? new Map<number, string>()
-    : new Map<number, string>(
-        lsofFields(['-a', '-d', 'cwd', '-p', [...new Set(pids)].join(','), '-Fn']).flatMap(({ pid, names }) => {
-          const cwd = names.at(0);
-
-          return cwd === undefined ? [] : [[pid, cwd] as const];
-        })
-      );
-
 /**
  * The servers listening from inside `dir` — what an agent started in a task's copy (`npm start`) and left running: a
- * run's copies removed under them (a run's finish), they listened on with no folder, no one's to stop. Read
- * off `lsof`: nothing where there is none (Windows).
+ * run's copies removed under them (a run's finish), they listened on with no folder, no one's to stop. None where the
+ * machine does not say a process's folder (`foldersUnsaid`).
  */
 export const listenersUnder = (dir: string): { pid: number; port: number; cwd: string }[] => {
-  if (process.platform === 'win32') {
-    return [];
-  }
+  const listening = listeningPorts();
+  const cwds = foldersOf(listening.map(each => each.pid));
 
-  const listening = lsofFields(['-nP', '-iTCP', '-sTCP:LISTEN', '-Fpn']);
-  const cwds = cwdsOf(listening.map(each => each.pid));
-
-  return listening.flatMap(({ pid, names }) => {
-    const port = Number(names.at(0)?.split(':').at(-1));
+  return listening.flatMap(({ pid, port }) => {
     const cwd = cwds.get(pid);
 
-    return Number.isInteger(port) && cwd !== undefined && (cwd === dir || cwd.startsWith(`${dir}/`))
-      ? [{ pid, port, cwd }]
-      : [];
+    return cwd !== undefined && (cwd === dir || cwd.startsWith(`${dir}${path.sep}`)) ? [{ pid, port, cwd }] : [];
   });
 };
 
-/** Whatever listens on `port`, and the folder it was started in — any folder's — or nothing when none does. */
+/** Whatever listens on `port`, and the folder it was started in when the machine says it — or nothing when none does. */
 export const listenerOn = (port: number): { pid: number; cwd: string | undefined } | undefined => {
-  if (process.platform === 'win32') {
-    return undefined;
-  }
+  const found = listeningPorts().find(each => each.port === port);
 
-  const found = lsofFields(['-nP', `-iTCP:${String(port)}`, '-sTCP:LISTEN', '-Fp']).at(0);
-  if (found === undefined) {
-    return undefined;
-  }
-
-  return { pid: found.pid, cwd: cwdsOf([found.pid]).get(found.pid) };
+  return found === undefined ? undefined : { pid: found.pid, cwd: foldersOf([found.pid]).get(found.pid) };
 };
 
 /** Stops one listening process and what it started — never by its name, which another process may carry. */

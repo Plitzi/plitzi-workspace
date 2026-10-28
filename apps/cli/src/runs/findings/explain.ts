@@ -35,9 +35,23 @@ export const explainFindings = (usage: readonly UsageLine[]): Finding[] => {
   // A topic one agent asked about in several ways is one it did not find: dev-1's dialogs (dialogContainer, openDialog,
   // modalContainer, "dialog sheet modal"). Three agents each looking `formControl` up once is explain being used.
   const byWord = new Map<string, { questions: Set<number>; ways: Map<string, Set<string>> }>();
+  // An entry read by its name after a search that listed it is the answer read whole, not another try: a scout's
+  // "self-hosted font file", then HostedFont and RemoteFont from its list, read as three ways of asking for fonts.
+  const searched = new Map<string, Set<string>>();
   asked.forEach((line, index) => {
     const question = askedOf(line).replace(/--search\s*/, '');
-    for (const word of wordsOf(question)) {
+    const words = wordsOf(question);
+    const byName = line.code === 0 && !/\s/.test(question.trim()) && !line.options.includes('--search');
+    const found = searched.get(line.by) ?? new Set<string>();
+    if (byName && [...words].some(word => found.has(word))) {
+      return;
+    }
+
+    if (line.code === 0 && !byName) {
+      searched.set(line.by, new Set([...found, ...words]));
+    }
+
+    for (const word of words) {
       const kept = byWord.get(word) ?? { questions: new Set<number>(), ways: new Map<string, Set<string>>() };
       kept.questions.add(index);
       kept.ways.set(line.by, (kept.ways.get(line.by) ?? new Set<string>()).add(question));

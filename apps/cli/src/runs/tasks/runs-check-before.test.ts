@@ -124,6 +124,34 @@ describe('a task’s acceptance set beside the run before it', () => {
     ]);
   });
 
+  // A tester read "the charts' tests pass as they were" as proving the change: it failed before only on the test the
+  // task added to that file.
+  it('says a line that proves the change only through the tests the task adds', async () => {
+    await bench.write('src/space/pages/about.ts', "export const about = { title: 'Hola' };\n");
+    await bench.write('src/space/pages/about.test.ts', 'Hola');
+    const plan = benchPlan();
+    plan.tasks[3].files = ['src/space/pages/about.ts', 'src/space/pages/about.test.ts'];
+    plan.tasks[3].acceptance = [
+      {
+        said: 'Its tests pass as they were',
+        check: 'grep -q "$(cat src/space/pages/about.test.ts)" src/space/pages/about.ts'
+      },
+      { said: 'About is Spanish', check: 'grep -q Acerca src/space/pages/about.ts' }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await writeInCopy(about.work, 'src/space/pages/about.test.ts', 'Acerca');
+    await completeTask(about.ctx, runId, 't-about');
+
+    const { lines } = await checkBefore(bench.agent('test-1'), runId, 't-about');
+
+    expect(lines.map(line => [line.said, provedBy(line), line.byOwnTests ?? false])).toEqual([
+      ['Its tests pass as they were', 'proves', true],
+      ['About is Spanish', 'proves', false]
+    ]);
+  });
+
   it('is refused for a task with no line a command checks, and one with no copy', async () => {
     const runId = await open();
     const about = await take('agent-1', 't-about');

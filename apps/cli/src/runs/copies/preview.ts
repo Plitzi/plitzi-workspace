@@ -20,6 +20,7 @@ import {
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
+import { SERVE_SCRIPTS } from '../../scaffold/paths';
 import {
   cloneFiles,
   fingerprint,
@@ -212,7 +213,7 @@ const serve = async (
   } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
   const scripts = await scriptsOf(dir);
-  const script = scripts['start:dev'] ? 'start:dev' : scripts.start ? 'start' : undefined;
+  const script = [...SERVE_SCRIPTS].reverse().find(each => Object.hasOwn(scripts, each));
   if (!script) {
     throw new RunRefusal('invalid', 'The project has no start or start:dev script to serve the run’s work with');
   }

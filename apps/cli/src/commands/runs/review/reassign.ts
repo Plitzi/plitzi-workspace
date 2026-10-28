@@ -32,6 +32,11 @@ export const taskReassign = (
         ...(reassigned.servers.length > 0
           ? [`Stopped what it left listening in its copy: ${reassigned.servers.join(', ')}.`]
           : []),
+        ...(reassigned.serversUnsaid === undefined
+          ? []
+          : [
+              `What it left listening in its copy was not looked for: ${reassigned.serversUnsaid} — one still running holds its port until it is stopped.`
+            ]),
         ...(reassigned.released.length > 0
           ? [
               `Let go of what it held by turns: ${reassigned.released.join(', ')}${reassigned.granted.length > 0 ? ` — to ${reassigned.granted.join(', ')}` : ''}${reassigned.settled.length > 0 ? `; merged: ${reassigned.settled.join(', ')}` : ''}${reassigned.integrations.length > 0 ? `; to integrate: ${reassigned.integrations.join(', ')}` : ''}.`

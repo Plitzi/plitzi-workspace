@@ -6,6 +6,7 @@ import { build } from 'esbuild';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { projectAdd } from '../../scaffold/packageManager';
 import { FUNCTIONS_DIR } from '../../scaffold/paths';
 import { projectHere } from '../project/existingProject';
 import { filesWouldWrite, sayDryRun } from '../shared/dryRun';
@@ -128,7 +129,7 @@ export const addFunctionsPackage = async (name: string, options: DryRunOptions):
     try {
       entry = createRequire(path.join(root, 'package.json')).resolve(`${name}/package.json`);
     } catch {
-      fail(`${name} is not installed in this project: install it first (npm install --save-dev ${name}), then add it.`);
+      fail(`${name} is not installed in this project: install it first (${projectAdd(`-D ${name}`)}), then add it.`);
 
       return;
     }

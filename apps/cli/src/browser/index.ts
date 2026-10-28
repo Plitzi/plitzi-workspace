@@ -11,7 +11,9 @@ import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
 import { applyConditions, heldOn } from './conditions';
+import { HEALTH_PATH } from './health';
 import { keepStatic, staticCacheDir } from './staticCache';
+import { projectAdd, projectExec, projectRun } from '../scaffold/packageManager';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { BrowserConditions } from './conditions';
@@ -249,7 +251,7 @@ export const chromiumOf = async (root: string): Promise<{ chromium: Chromium } |
     })();
     loaded = await import(pathToFileURL(core).href);
   } catch {
-    return { problem: 'This project has no @playwright/test installed: npm install -D @playwright/test' };
+    return { problem: `This project has no @playwright/test installed: ${projectAdd('-D @playwright/test')}` };
   }
 
   // Resolved as `require` resolves it, Playwright is its CommonJS entry: its exports arrive on the default one, which
@@ -278,7 +280,7 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
     return browser;
   } catch (error) {
     return {
-      problem: `Chromium did not start (${error instanceof Error ? error.message.split('\n')[0] : String(error)}): npx playwright install chromium`
+      problem: `Chromium did not start (${error instanceof Error ? error.message.split('\n')[0] : String(error)}): ${projectExec('playwright install chromium')}`
     };
   }
 };
@@ -314,14 +316,14 @@ export const isLocalTls = (origin: string): boolean => {
 /** `/health`, read the way the tools read the pages: a local certificate taken as it is. */
 export const readHealth = (origin: string): Promise<unknown> => {
   if (!isLocalTls(origin)) {
-    return fetch(`${origin}/health`)
+    return fetch(`${origin}${HEALTH_PATH}`)
       .then(response => response.json())
       .catch(() => null);
   }
 
   return new Promise(resolve => {
     https
-      .get(`${origin}/health`, { rejectUnauthorized: false }, response => {
+      .get(`${origin}${HEALTH_PATH}`, { rejectUnauthorized: false }, response => {
         let body = '';
         response.setEncoding('utf8');
         response.on('data', (chunk: string) => (body += chunk));
@@ -392,7 +394,7 @@ export const projectOrigin = async (
   const instance = isRecord(health) && typeof health.Instance === 'string' ? health.Instance : undefined;
   if (instance !== undefined && instance !== projectMark(root)) {
     return {
-      problem: `Port ${port} answers with ${answered ? `"${answered}"` : 'a project'} served from another folder, not this one${process.env.PORT ? ` (PORT=${process.env.PORT})` : ''}: this project's own server is not on it. Start it on a free port — npm start without PORT takes the next free one and writes it to ${DEV_SERVER_FILE}, where this looks`
+      problem: `Port ${port} answers with ${answered ? `"${answered}"` : 'a project'} served from another folder, not this one${process.env.PORT ? ` (PORT=${process.env.PORT})` : ''}: this project's own server is not on it. Start it on a free port — ${projectRun('start')} without PORT takes the next free one and writes it to ${DEV_SERVER_FILE}, where this looks`
     };
   }
 
@@ -400,7 +402,7 @@ export const projectOrigin = async (
   // run's work (`run preview --copy`) has no server until one is started in it.
   if (!isRecord(health)) {
     return {
-      problem: `No Plitzi server answers on port ${port} for ${root}${server.port === undefined ? ' — no npm start of this folder recorded where it serves' : ` — where its last npm start served (${DEV_SERVER_FILE})`}. Start it here: npm start — wherever it serves, it writes it to ${DEV_SERVER_FILE} and this finds it`
+      problem: `No Plitzi server answers on port ${port} for ${root}${server.port === undefined ? ` — no ${projectRun('start')} of this folder recorded where it serves` : ` — where its last ${projectRun('start')} served (${DEV_SERVER_FILE})`}. Start it here: ${projectRun('start')} — wherever it serves, it writes it to ${DEV_SERVER_FILE} and this finds it`
     };
   }
 
@@ -410,8 +412,8 @@ export const projectOrigin = async (
 
   return {
     problem: answered
-      ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
-      : `Nothing of this project answers on port ${port}${server.port !== undefined && process.env.PORT === undefined ? ` — where its last npm start served (${DEV_SERVER_FILE})` : ''}. Start it: npm start — wherever it serves, it writes it there and this finds it`
+      ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: ${projectRun('start')}`
+      : `Nothing of this project answers on port ${port}${server.port !== undefined && process.env.PORT === undefined ? ` — where its last ${projectRun('start')} served (${DEV_SERVER_FILE})` : ''}. Start it: ${projectRun('start')} — wherever it serves, it writes it there and this finds it`
   };
 };
 

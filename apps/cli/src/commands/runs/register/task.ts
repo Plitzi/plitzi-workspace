@@ -40,6 +40,7 @@ import {
 } from './options';
 import { count, duration, durationText, FOLLOW_MS, fraction } from '../../../options';
 import { BLOCK_NEEDS } from '../../../runs/core/model';
+import { projectExec } from '../../../scaffold/packageManager';
 import { groupHelp } from '../../register/helpGroups';
 import { withVisitorOptions } from '../../register/options';
 
@@ -255,7 +256,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .description(
       'A command of your own — a spec, a probe, a test file — run as the run’s checks are: a Playwright suite in its turn on the machine, what it printed kept in a file and what failed said, what the lead told you meanwhile with it'
     )
-    .argument('<command>', 'The command, quoted whole: "npx playwright test visual/room.spec.ts --repeat-each 3"')
+    .argument(
+      '<command>',
+      `The command, quoted whole: "${projectExec('playwright test visual/room.spec.ts --repeat-each 3')}"`
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)

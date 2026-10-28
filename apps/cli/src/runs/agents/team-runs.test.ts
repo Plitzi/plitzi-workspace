@@ -89,6 +89,39 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.estimate.agents).toBe(2);
   });
 
+  // Every derived test was `visual/`, `npx` and `node --test`: a project with its specs elsewhere, on vitest and pnpm,
+  // was handed specs its suite never read and checks it does not run.
+  it('are where the project keeps its tests, run by its own runner, through its package manager', async () => {
+    await bench.write(
+      'package.json',
+      JSON.stringify({
+        name: 'bench',
+        type: 'module',
+        private: true,
+        scripts: { start: 'node src/main.ts' },
+        devDependencies: { '@playwright/test': '^1.56.1', vitest: '^3.2.4' }
+      })
+    );
+    await bench.write('pnpm-lock.yaml', "lockfileVersion: '9.0'\n");
+    await bench.write('playwright.config.ts', "export default defineConfig({ testDir: './e2e/', use: {} });\n");
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-home');
+    plan.tasks[0].files.push('src/functions/book.ts');
+
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    const tests = checked.tasks.find(task => task.id === 't-home-tests');
+    expect(tests?.files).toEqual(['e2e/home.spec.ts', 'src/functions/book.test.ts']);
+    expect(tests?.acceptance.slice(-2)).toEqual([
+      {
+        said: 'Its pages’ tests pass against the copy served',
+        check: 'pnpm exec playwright test e2e/home.spec.ts --reporter=line'
+      },
+      { said: 'Its modules’ tests pass, and every test beside them', check: 'pnpm exec vitest run src/functions' }
+    ]);
+  });
+
   it('are a module’s alone, and checked by hand, in a project with no Playwright and no start script', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'test', { roles: ['tester'] });

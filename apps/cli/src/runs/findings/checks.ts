@@ -1,6 +1,7 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { clock, evidenceOf, strings, text } from './types';
+import { projectRun } from '../../scaffold/packageManager';
 
 import type { Finding, LogEntry } from './types';
 
@@ -143,7 +144,7 @@ export const stepsFailing = (log: readonly LogEntry[]): Finding[] => {
       title: `${each.task}: ${each.step} failed ${String(each.times)} checks`,
       evidence: [`by ${[...each.by].join(', ')}`, ...each.said.map(line => `it said: ${line}`)],
       times: each.times,
-      fix: `read what ${each.step} says before checking again — task check --fix for lint and format; npm run author for the space's own`,
+      fix: `read what ${each.step} says before checking again — task check --fix for lint and format; ${projectRun('author')} for the space's own`,
       subject: `step:${each.task}:${each.step}`
     }));
 };

@@ -11,6 +11,7 @@ import { acceptanceAccount, acceptanceAddresses, acceptanceStatuses, filledPatte
 import { DESIGN_READING } from '../../../runs/plan/reading';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
+import { projectExec } from '../../../scaffold/packageManager';
 import { act, runOf } from '../shell';
 import { messageLines } from '../text';
 
@@ -239,7 +240,7 @@ const binLine = (work: string): string[] => {
 
   return root
     ? [
-        `  The quickest plitzi, from anywhere: ${path.join(root, 'node_modules', '.bin', 'plitzi')} (npx adds ~0.2 s a call)`
+        `  The quickest plitzi, from anywhere: ${path.join(root, 'node_modules', '.bin', 'plitzi')} (${projectExec('plitzi')} adds ~0.2 s a call)`
       ]
     : [];
 };

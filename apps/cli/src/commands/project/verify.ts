@@ -8,6 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectHere } from './existingProject';
 import { USAGE_OFF } from '../../runs/core/usage';
+import { projectRun } from '../../scaffold/packageManager';
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from '../page/check';
 
 import type { ExistingProject } from './existingProject';
@@ -254,7 +255,7 @@ interface PagesChecked {
   signedIn?: { as: string; checks: number } | { problem: string } | { none: true };
 }
 
-const NOT_STARTED = 'start it (npm start) and verify again, or --no-pages to leave them';
+const NOT_STARTED = `start it (${projectRun('start')}) and verify again, or --no-pages to leave them`;
 
 /**
  * Nothing answered any page: the project is not served — never a page for signed-in visitors. A new project, its server

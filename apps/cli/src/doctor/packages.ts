@@ -8,7 +8,8 @@ import { sayer } from './types';
 import { compareVersions, floorOf, floorOnLine, satisfies, versionOf, versionText } from './versions';
 import { localPackages } from '../commands/project/localPackages';
 import { planPackages } from '../commands/project/upgrade';
-import { installCommand } from '../scaffold';
+import { installCommand, LOCKFILES } from '../scaffold';
+import { projectDlx } from '../scaffold/packageManager';
 import { CLI_VERSION, NODE_ENGINES, SDK_VERSION, packageJson } from '../scaffold/project';
 
 import type { Check, DoctorContext, Finding } from './types';
@@ -24,8 +25,6 @@ const UPGRADE_PACKAGES = 'plitzi upgrade packages --write';
 
 /** Without these the project does not start, author or build: missing, they are errors, any other a warning. */
 const ESSENTIAL_SCRIPTS: ReadonlySet<string> = new Set(['start', 'start:dev', 'build', 'start:prod', 'author']);
-
-const LOCKFILES = { 'package-lock.json': 'npm', 'yarn.lock': 'yarn', 'pnpm-lock.yaml': 'pnpm' } as const;
 
 const stringsOf = (value: unknown): Record<string, string> =>
   isRecord(value)
@@ -434,7 +433,7 @@ const sdkVersionChecks = (context: DoctorContext, sdk: readonly string[]): Findi
       say.warning(
         'cli-behind',
         `The project is on the SDK ${versionText(newest)}, and this CLI is ${CLI_VERSION}: what it checks and writes is older than the project.`,
-        { fix: 'npx @plitzi/cli@latest doctor' }
+        { fix: projectDlx('@plitzi/cli@latest doctor') }
       )
     );
   }
@@ -539,7 +538,7 @@ const installChecks = async (context: DoctorContext, sdk: readonly string[]): Pr
 const lockfileChecks = async (context: DoctorContext): Promise<Finding[]> => {
   const present = (
     await Promise.all(
-      Object.entries(LOCKFILES).map(async ([file, manager]) =>
+      LOCKFILES.map(async ([file, manager]) =>
         (await fs.access(path.join(context.root, file)).then(
           () => true,
           () => false

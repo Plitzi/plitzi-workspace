@@ -4,6 +4,8 @@ import { pathToFileURL } from 'node:url';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { projectExec } from '../../scaffold/packageManager';
+
 /**
  * The steps a server action runs — `list.put`, `flow.rateLimit`, `http.request` — as the project's own
  * `@plitzi/sdk-server` declares them: read from the version installed, so what is explained is what that project runs.
@@ -71,7 +73,9 @@ export const serverTasks = async (root: string): Promise<{ tasks: ServerTask[] }
 
   const loaded: unknown = await import(pathToFileURL(entry).href);
   if (!isRecord(loaded) || !isFunction(loaded.createTaskRegistry) || !isFunction(loaded.describeCatalog)) {
-    return { problem: 'the @plitzi/sdk-server installed here is too old to describe its steps: npx plitzi upgrade' };
+    return {
+      problem: `the @plitzi/sdk-server installed here is too old to describe its steps: ${projectExec('plitzi upgrade')}`
+    };
   }
 
   // Narrowed to what is called, and checked by what comes back: the module is read at run time.

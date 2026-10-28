@@ -9,6 +9,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { authorizedRequest } from '../../account/session';
 import { packSource } from '../../pack/source';
+import { projectAdd } from '../../scaffold/packageManager';
 import { RUNTIME_ENTRY } from '../../scaffold/paths';
 import { connectToSpace } from '../account/account';
 import { sayDryRun } from '../shared/dryRun';
@@ -67,7 +68,7 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   }
 
   fail(
-    'plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  npm install @plitzi/sdk-server'
+    `plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  ${projectAdd('@plitzi/sdk-server')}`
   );
 
   return undefined;

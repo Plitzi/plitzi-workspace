@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { activeRuns, readRecord } from './record';
 import { stopPreviewOf } from '../copies/previewRecord';
 import { stopListenersUnder } from '../copies/processes';
+import { foldersUnsaid } from '../copies/processTable';
 import { createExclusive, fingerprint, readOptional } from '../core/files';
 import { activeRunFile, runPaths } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
@@ -125,7 +126,9 @@ export const removeRun = async (ctx: RunContext, paths: RunPaths, runId: string)
   // The runs' folder with the last of them: the project's tmp/ as the run found it. Another run in it, it stays.
   await fs.rmdir(path.dirname(paths.dir)).catch(() => undefined);
 
-  return { ...(await removeInputs(ctx, inputs)), servers };
+  const unsaid = foldersUnsaid();
+
+  return { ...(await removeInputs(ctx, inputs)), servers, ...(unsaid === undefined ? {} : { serversUnsaid: unsaid }) };
 };
 
 export interface RemovedInputs {
@@ -135,6 +138,8 @@ export interface RemovedInputs {
   kept: string[];
   /** The servers left listening in its folders, stopped: `:49342 (tasks/t-vs-medal/cache/work)`. */
   servers: string[];
+  /** Why they could not be looked for, where the machine does not say a process's folder (Windows). */
+  serversUnsaid?: string;
 }
 
 /**

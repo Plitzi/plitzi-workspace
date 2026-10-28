@@ -1,4 +1,5 @@
 import { scriptsOf } from '../../commands/project/verify';
+import { projectExec } from '../../scaffold/packageManager';
 import { SCOPE_LIMIT_MINUTES, WORK_LIMIT_MINUTES, workLimitOf } from '../agents/limits';
 import { runsSuite } from '../copies/acceptance';
 
@@ -43,6 +44,6 @@ export const suiteNotices = async (root: string, tasks: readonly RunTask[]): Pro
   return whole.length === 0
     ? []
     : [
-        `A line of ${whole.join(', ')} runs a whole Playwright suite: name the task's own specs (npx playwright test <spec> …) — a check takes minutes at most, and the finish runs the whole result once`
+        `A line of ${whole.join(', ')} runs a whole Playwright suite: name the task's own specs (${projectExec('playwright test <spec> …')}) — a check takes minutes at most, and the finish runs the whole result once`
       ];
 };

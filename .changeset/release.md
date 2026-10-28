@@ -824,6 +824,20 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A stage refused is said as a stage** (`{ tasks: […] }`), never asked a plan's version, runId and goal.
 - **A failure's lines keep the name of the test that failed** — node's `✖`, TAP's `not ok` — beside its last lines:
   `task prove --mutate` and a flaky first run showed the tail of node's error object alone.
+- **The CLI speaks the project's package manager:** read off its lockfile, every command a message, a check or an
+  agent's prompt names is said its way (`pnpm author`, `pnpm exec playwright test …`, `yarn dlx …`) — a pnpm project
+  read `npm run …` and `npx …` throughout. One table of lockfiles where there were two.
+- **A run's derived tests are where the project keeps them:** a page's spec in its Playwright config's `testDir`, a
+  module's run by its own runner (vitest, jest, or node's) — every one was `visual/`, `npx` and `node --test`.
+- **Processes are read where `lsof` is missing:** Linux's `/proc` (a container), Windows' `netstat`; where the
+  machine says no process's folder (Windows), `server list` knows the project's by its `/health`, and the finish and a
+  reassign say the copies' servers were not looked for — they found nothing before, and said nothing.
+- **One reading of `/health`** (`browser/health.ts`) where six read it each their own way, and one list of the scripts
+  that serve a project (`SERVE_SCRIPTS`).
+- **`explain`'s findings no longer count reading an entry its search listed as another try:** a scout's search for a
+  self-hosted font, then the two entries it named, read as "did not answer the first time" — every run.
+- **`task prove --before` says a line that proves the change only through the tests the task adds:** a guard of what
+  was there ("the charts' tests pass as they were") read as proving it, its proof a new test in the same file.
 - **`task show` says a change made the same in several files once,** naming the others, and the files whose diff
   it leaves out in one line: a task that moved one import in 33 specs answered 10k characters, 5k of them one hint
   repeated.

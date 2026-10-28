@@ -8,6 +8,7 @@ import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } 
 import { noPageAt, pageFor } from './check/space';
 import { conditionsText } from '../../browser/conditions';
 import { authoredSpace } from '../../runs/plan/expectations';
+import { projectRun } from '../../scaffold/packageManager';
 import { conditionsOf } from '../register/options';
 import { fail, unanswered } from '../shared/terminal';
 
@@ -118,7 +119,7 @@ export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefi
         .filter(line => line !== '');
       const said = `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
 
-      return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: npm run author says why`;
+      return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: ${projectRun('author')} says why`;
     }, SPACE_FAILURE_META)
     .catch(() => undefined);
 

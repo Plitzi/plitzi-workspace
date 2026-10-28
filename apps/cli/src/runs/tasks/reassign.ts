@@ -9,6 +9,7 @@ import { requireLead } from '../agents/leads';
 import { readTeam, startedAgents } from '../agents/team';
 import { syncPreview } from '../copies/preview';
 import { stopListenersUnder } from '../copies/processes';
+import { foldersUnsaid } from '../copies/processTable';
 import { writeJson } from '../core/files';
 import { RunRefusal } from '../core/refusal';
 import { withLock } from '../core/store';
@@ -51,6 +52,8 @@ export const reassignTask = async (
   settled: string[];
   integrations: string[];
   servers: string[];
+  /** Why its copy's servers were not looked for: the machine says no process's folder (Windows). */
+  serversUnsaid?: string;
   to?: string;
   taken?: TakenTask;
 }> => {
@@ -81,6 +84,7 @@ export const reassignTask = async (
   const turns = [...(await lockedFiles(view.paths))].filter(([, lock]) => lock.kind === 'turn').map(([file]) => file);
   // What its agent left listening in the copy goes with it: a server of a copy no one holds is no one's to stop.
   const servers = stopListenersUnder(view.paths.work).map(server => `:${String(server.port)}`);
+  const unsaid = foldersUnsaid();
   await cutTask(view, `reassigned by ${ctx.agent}${asked.reason ? `: ${asked.reason}` : ''}`, ctx.now);
   if (to !== undefined) {
     await updateState(
@@ -136,6 +140,7 @@ export const reassignTask = async (
     settled,
     integrations,
     servers,
+    ...(unsaid === undefined ? {} : { serversUnsaid: unsaid }),
     ...(to ? { to } : lead ? { to: lead } : {}),
     ...(taken ? { taken } : {})
   };

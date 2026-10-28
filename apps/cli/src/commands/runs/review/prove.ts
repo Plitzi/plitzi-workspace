@@ -63,7 +63,7 @@ export const checkBeforeText = (
     const proved = provedBy(line);
     const head =
       proved === 'proves'
-        ? `${chalk.green('✓')} ${line.said} — fails before ${task}, passes with it: it proves the change`
+        ? `${chalk.green('✓')} ${line.said} — fails before ${task}, passes with it: it proves the change${line.byOwnTests ? ' — only through the tests it adds: what was there passes before it too (a guard, its proof the new tests beside it)' : ''}`
         : proved === 'proves-nothing'
           ? `${chalk.yellow('·')} ${line.said} — passes before ${task} too: it holds what was there already (a guard, as it may be meant), not the change`
           : proved === 'fails'

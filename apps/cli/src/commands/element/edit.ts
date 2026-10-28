@@ -18,6 +18,7 @@ import {
   slotText
 } from '../../fix/sourceEdits';
 import { loadTypeScript } from '../../projectTypeScript';
+import { projectRun } from '../../scaffold/packageManager';
 import { findProject } from '../project/existingProject';
 import { projectFormatter } from '../project/projectFormatter';
 import { AGAIN, noteRefused } from '../shared/repeats';
@@ -138,7 +139,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   const located = await locatedSpace(project.root);
   if ('problem' in located) {
     await refuse(
-      `Nothing was changed: the space does not author (${located.problem}). Fix that first (\`npm run author\`).`
+      `Nothing was changed: the space does not author (${located.problem}). Fix that first (\`${projectRun('author')}\`).`
     );
 
     return;

@@ -1,3 +1,5 @@
+import { projectRun } from '../scaffold/packageManager';
+
 import type { LintFinding, Severity, SourcePlace } from './types';
 
 /** The skills' references a project carries, where each practice is explained at length. */
@@ -63,12 +65,11 @@ export const LINT_RULES = {
   'space-does-not-author': {
     severity: 'error',
     means: 'the space does not author, so what authoring suggests about it could not be read',
-    docs: 'npm run author'
+    docs: projectRun('author')
   },
   'project-layout': {
     severity: 'error',
-    means:
-      'the project laid out where its server and `npm run author` refuse to start — each error is `plitzi doctor`’s to say',
+    means: `the project laid out where its server and \`${projectRun('author')}\` refuse to start — each error is \`plitzi doctor\`’s to say`,
     docs: 'plitzi doctor'
   },
   'source-unreadable': {

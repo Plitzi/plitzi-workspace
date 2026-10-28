@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { fileImports } from '../../pack/source';
 import { loadTypeScript } from '../../projectTypeScript';
+import { projectAdd } from '../../scaffold/packageManager';
 import { ACTIONS_ENTRY, FUNCTIONS_DIR, PLUGINS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from '../../scaffold/paths';
 import { exists } from '../core/files';
 import { projectPath, under } from '../core/paths';
@@ -63,7 +64,7 @@ const typeScriptFor = (root: string): typeof TypeScript => {
     // What `require` hands back is the TypeScript module, typed as the project's own import would see it.
     return cliRequire('typescript') as typeof TypeScript;
   } catch {
-    throw new Error('Reading who owns which file reads the imports with TypeScript:\n  npm install -D typescript');
+    throw new Error(`Reading who owns which file reads the imports with TypeScript:\n  ${projectAdd('-D typescript')}`);
   }
 };
 

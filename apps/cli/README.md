@@ -99,6 +99,10 @@ A Yarn project also gets a `.yarnrc.yml` pinning `nodeLinker: node-modules`. Yar
 default, and the project runs straight from `node_modules` — its server by Node, its plugins by the page server's
 bundler — so the linker is pinned to the layout npm and pnpm already give it.
 
+Once the project exists, the CLI reads its manager off its lockfile — from the folder it runs in up, a workspace's above
+a package of it — and says every command its way: an error's `pnpm author`, a check's `pnpm exec playwright test …`, an
+agent's `yarn lint`. The docs and skills write them as npm does.
+
 ## Node runs the TypeScript
 
 Every script that runs TypeScript — `start`, `author`, `page shot` — is plain `node`: Node 24 strips the types
