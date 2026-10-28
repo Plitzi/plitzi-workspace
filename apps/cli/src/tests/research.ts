@@ -27,8 +27,12 @@ export const researchSteps = (bench: () => Bench) => {
     progress: async (runId: string, card: string, progress: { fraction?: number; step?: string }): Promise<void> => {
       await reportProgress(await holding(runId, card), runId, card, progress);
     },
-    found: async (runId: string, card: string, text: string, options: { tasks?: string } = {}): Promise<Researched> =>
-      completeResearch(await holding(runId, card), runId, card, text, options),
+    found: async (
+      runId: string,
+      card: string,
+      text: string,
+      options: { tasks?: string; closes?: readonly string[] } = {}
+    ): Promise<Researched> => completeResearch(await holding(runId, card), runId, card, text, options),
     approveFound: (runId: string, card: string, leave?: readonly string[] | 'all'): Promise<ReviewedTask> =>
       reviewTask(lead(), runId, card, 'approve', [], 'refuse', leave === undefined ? {} : { leave }),
     sendBack: (runId: string, card: string, note: string): Promise<ReviewedTask> =>

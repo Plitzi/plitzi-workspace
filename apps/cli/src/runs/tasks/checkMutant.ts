@@ -193,7 +193,30 @@ const BROKEN = /\b(?:ReferenceError|SyntaxError|TypeError: \S+ is not a function
 const FAILED_TEST = /^\s*(?:✖|✘|×|not ok\b|FAIL\b|\d+\) )/;
 
 /** What of a failure says which test failed, before its last lines: a tester could not tell which test caught it. */
-export const failedTests = (output: readonly string[]): string[] => output.filter(line => FAILED_TEST.test(line));
+const failedTests = (output: readonly string[]): string[] => output.filter(line => FAILED_TEST.test(line));
+
+/**
+ * The tests a failure names, each once — its marker, its number and its time left out: Playwright names each failed test
+ * as it runs and again in its summary, and a tester read two of three from a cut of the tail, never how many.
+ */
+export const failedNames = (output: readonly string[]): string[] => [
+  ...new Set(
+    failedTests(output).map(line =>
+      line
+        .replace(/^\s*(?:✖|✘|×|not ok\s+\d+\s*-?|FAIL|\d+\))\s*(?:\d+\s+)?/, '')
+        .replace(/\s*\(\d+(?:\.\d+)?m?s\)\s*$/, '')
+        .trim()
+    )
+  )
+];
+
+/** What a failure printed, as a review reads it: how many tests failed and each by name, then its last lines. */
+export const failureText = (output: readonly string[], last: number): string => {
+  const names = failedNames(output);
+  const tail = output.filter(line => !FAILED_TEST.test(line)).slice(-last);
+
+  return [...(names.length > 0 ? [`${String(names.length)} failed — ${names.join(' · ')}`] : []), ...tail].join(' ⏎ ');
+};
 
 /**
  * What a line says of the mutant: it catches it, lets it pass, fails already on the copy, breaks — the mutant does not

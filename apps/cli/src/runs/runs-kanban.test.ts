@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leadItems, wakesLead } from './agents/leadWatch';
 import { setTeamAgent } from './agents/team';
-import { addBacklogItem } from './plan/backlog';
+import { finishRun } from './copies/merge';
+import { addBacklogItem, openBacklog, readBacklog } from './plan/backlog';
 import { scopePlan, SCOPE_SPIKE } from './plan/spike';
 import { settleFinding } from './report/settle';
 import { openRun } from './run';
@@ -10,6 +11,7 @@ import { completeTask, reviewTask, takeNext, takeTask } from './tasks';
 import { viewRun } from './view/view';
 import { researchSteps } from '../tests/research';
 import { benchPlan, makeBench, provenPlan, writeInCopy } from '../tests/runProject';
+import { refusal, runSteps } from '../tests/runSteps';
 
 import type { RunContext } from './run';
 import type { Bench } from '../tests/runProject';
@@ -25,7 +27,8 @@ afterEach(async () => {
 });
 
 const lead = (): RunContext => bench.agent('lead');
-const { found, progress, sendBack } = researchSteps(() => bench);
+const { approveFound, found, progress, sendBack } = researchSteps(() => bench);
+const { open: openWithSummary } = runSteps(() => bench);
 
 /** A developer takes a task, writes it and completes it: in review, as its agent leaves it. */
 const completed = async (name: string, taskId: string, file: string): Promise<void> => {
@@ -156,6 +159,27 @@ describe('an agent with nothing to take', () => {
 
     const idle = (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'idle-team');
     expect(idle?.text ?? '').not.toContain('scout-1');
+  });
+
+  // A scout found b-38 no longer happened, and had no task to carry the close: the lead closed it by hand.
+  it('closes a backlog item its research found no longer to do, as the run is applied — only one that is open', async () => {
+    await setTeamAgent(bench.root, 'scout', { roles: ['scout'] });
+    await addBacklogItem(lead(), { text: 'The suite hangs under load', by: 'lead' });
+    await openWithSummary(scopePlan('es-launch', 'See whether the suite still hangs'));
+    await takeNext(bench.agent('scout-1'), 'es-launch', 'scout', { timeoutMs: 30, everyMs: 10 });
+
+    const unknown = await refusal(found('es-launch', SCOPE_SPIKE, 'Gone', { closes: ['b-9'] }));
+    expect(unknown.message).toContain('--closes names b-9, which the backlog has not open');
+    await found('es-launch', SCOPE_SPIKE, 'Two whole passes, both green: it does not come back', { closes: ['b-1'] });
+    // Nothing closes before the lead approves it, and the run is applied.
+    expect((await openBacklog(bench.root)).map(item => item.id)).toEqual(['b-1']);
+    await approveFound('es-launch', SCOPE_SPIKE, 'all');
+
+    const finished = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
+    expect(finished.closedBacklog).toEqual(['b-1']);
+    expect((await readBacklog(bench.root)).find(item => item.id === 'b-1')?.done?.note).toBe(
+      "found by run es-launch's s-scope no longer to do: Two whole passes, both green: it does not come back"
+    );
   });
 
   // Woken eight times at the end for developers with nothing of theirs left, told to split the tester's spec.

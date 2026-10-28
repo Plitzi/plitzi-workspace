@@ -10,6 +10,7 @@ import { reviewAtComplete } from './reviews';
 import { isPrincipal, requireLead } from '../agents/leads';
 import { RunRefusal } from '../core/refusal';
 import { updateState, viewTask } from '../core/taskStore';
+import { notOpen } from '../plan/backlog';
 import { extendRun, seeStage } from '../plan/extend';
 import { uncheckedOf } from '../plan/plan';
 import { isResearch } from '../plan/spike';
@@ -106,10 +107,20 @@ export const completeResearch = async (
   runId: string,
   taskId: string,
   text: string,
-  { tasks }: { tasks?: string } = {}
+  { tasks, closes = [] }: { tasks?: string; closes?: readonly string[] } = {}
 ): Promise<Researched> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'complete a task');
+  // What it closes is open in the backlog: one unknown or closed already is said, never closed twice.
+  const unknown = await notOpen(ctx.root, closes);
+  if (unknown.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `--closes names ${unknown.join(', ')}, which the backlog has not open: plitzi run backlog lists what is — name those your finding closes`,
+      { task: taskId }
+    );
+  }
+
   const task = findTask(loaded, taskId);
   if (!isResearch(task)) {
     throw new RunRefusal(
@@ -120,7 +131,7 @@ export const completeResearch = async (
   }
 
   if (ctx.token === undefined && isPrincipal(ctx.agent)) {
-    return findOutAsLead(ctx, loaded, await viewTask(loaded.paths, task), text, tasks);
+    return findOutAsLead(ctx, loaded, await viewTask(loaded.paths, task), text, tasks, closes);
   }
 
   const view = await holderOf(ctx, loaded, task);
@@ -158,7 +169,13 @@ export const completeResearch = async (
       ...state,
       status: 'in-review',
       review: reviewAtComplete(state, at(ctx)),
-      proposed: { by: ctx.agent, at: at(ctx), text, tasks: proposed },
+      proposed: {
+        by: ctx.agent,
+        at: at(ctx),
+        text,
+        tasks: proposed,
+        ...(closes.length > 0 ? { closes: [...closes] } : {})
+      },
       notes: [
         ...state.notes,
         {
@@ -190,7 +207,8 @@ const findOutAsLead = async (
   loaded: LoadedRun,
   view: TaskView,
   text: string,
-  tasks: string | undefined
+  tasks: string | undefined,
+  closes: readonly string[]
 ): Promise<Researched> => {
   await requireLead(ctx, 'say what a research card found');
   if (view.owner !== undefined) {
@@ -207,7 +225,13 @@ const findOutAsLead = async (
     });
   }
 
-  const done = await stackFound(ctx, loaded, view, { at: at(ctx), by: ctx.agent, text }, tasks);
+  const done = await stackFound(
+    ctx,
+    loaded,
+    view,
+    { at: at(ctx), by: ctx.agent, text, ...(closes.length > 0 ? { closes: [...closes] } : {}) },
+    tasks
+  );
   await logSpent(ctx, loaded, view.task.id, 'spike');
   const waited = await readyWhatWaited(ctx, await loadRun(ctx, loaded.record.runId));
   if (waited.length > 0) {
@@ -240,7 +264,18 @@ export const approveResearch = async (
 
   const stage =
     proposed.tasks.length === 0 || leave === 'all' ? undefined : await leaveOut(view, proposed.tasks, leave);
-  const found = await stackFound(ctx, loaded, view, { at: proposed.at, by: proposed.by, text: proposed.text }, stage);
+  const found = await stackFound(
+    ctx,
+    loaded,
+    view,
+    {
+      at: proposed.at,
+      by: proposed.by,
+      text: proposed.text,
+      ...(proposed.closes === undefined ? {} : { closes: proposed.closes })
+    },
+    stage
+  );
   const closed = await closeApproved(
     ctx,
     await loadRun(ctx, loaded.record.runId),

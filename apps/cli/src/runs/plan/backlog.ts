@@ -2,10 +2,12 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { isResearch } from './spike';
 import { formattedJson } from '../../scaffold/formattedJson';
 import { readJson, writeAtomic } from '../core/files';
 import { acceptanceText } from '../core/model';
 import { RunRefusal } from '../core/refusal';
+import { viewTask } from '../core/taskStore';
 import { noticesOf } from '../talk/notices';
 
 import type { RunTask } from '../core/model';
@@ -164,7 +166,20 @@ export const notOpen = async (root: string, ids: readonly string[]): Promise<str
  * the ids it closed; one closed meanwhile is left as it is.
  */
 export const closeDoneByRun = async (ctx: RunContext, loaded: LoadedRun): Promise<string[]> => {
-  const doneBy = new Map(loaded.plan.tasks.flatMap(task => (task.closes ?? []).map(id => [id, task] as const)));
+  const doneBy = new Map<string, string>(
+    loaded.plan.tasks.flatMap(task =>
+      (task.closes ?? []).map(id => [id, `done by run ${loaded.record.runId}'s ${task.id}: ${task.title}`] as const)
+    )
+  );
+  // …and those its research found no longer to do (`--closes`), said with what it found.
+  for (const task of loaded.tasks.filter(isResearch)) {
+    for (const finding of (await viewTask(loaded.paths, task)).state.findings ?? []) {
+      for (const id of finding.closes ?? []) {
+        doneBy.set(id, `found by run ${loaded.record.runId}'s ${task.id} no longer to do: ${finding.text}`);
+      }
+    }
+  }
+
   if (doneBy.size === 0) {
     return [];
   }
@@ -172,21 +187,14 @@ export const closeDoneByRun = async (ctx: RunContext, loaded: LoadedRun): Promis
   const items = await readBacklog(ctx.root);
   const closed: string[] = [];
   const next = items.map(item => {
-    const task = doneBy.get(item.id);
-    if (!task || item.done) {
+    const note = doneBy.get(item.id);
+    if (note === undefined || item.done) {
       return item;
     }
 
     closed.push(item.id);
 
-    return {
-      ...item,
-      done: {
-        at: ctx.now().toISOString(),
-        by: ctx.agent,
-        note: `done by run ${loaded.record.runId}'s ${task.id}: ${task.title}`
-      }
-    };
+    return { ...item, done: { at: ctx.now().toISOString(), by: ctx.agent, note } };
   });
   if (closed.length > 0) {
     await writeBacklog(ctx.root, next);

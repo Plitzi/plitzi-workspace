@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { RunRefusal } from '../../../runs/core/refusal';
-import { caughtBy, checkBefore, checkMutant, failedTests, noTestBefore, provedBy } from '../../../runs/tasks';
+import { caughtBy, checkBefore, checkMutant, failureText, noTestBefore, provedBy } from '../../../runs/tasks';
 import { act, either } from '../shell';
 
 import type { LineBeforeAfter, LineMutated, Mutation } from '../../../runs/tasks';
@@ -76,7 +76,7 @@ export const checkBeforeText = (
       ...(!line.after.ok ? [['with it', line.after.output ?? []] as const] : []),
       ...(proved === 'proves' ? [['before', line.before.output ?? []] as const] : [])
     ].flatMap(([where, output]) =>
-      output.length === 0 ? [] : [chalk.dim(`    ${where}: ${output.slice(-LAST_LINES).join(' ⏎ ')}`)]
+      output.length === 0 ? [] : [chalk.dim(`    ${where}: ${failureText(output, LAST_LINES)}`)]
     );
 
     return [`  ${head}`, ...printed].join('\n');
@@ -147,17 +147,14 @@ export const checkMutantText = (
         : caught === 'fails'
           ? line.copy.output
           : undefined;
-    // Which test failed first, then its last lines: a tester could not tell the new test from an older one.
-    const shown =
-      output === undefined
-        ? []
-        : [...new Set([...failedTests(output).slice(0, LAST_LINES), ...output.slice(-LAST_LINES)])];
-
+    // Which tests failed, each by name, then its last lines: a tester could not tell the new test from an older one.
     return [
       `  ${head}`,
-      ...(shown.length === 0
+      ...(output === undefined || output.length === 0
         ? []
-        : [chalk.dim(`    ${caught === 'fails' ? 'on the copy' : 'on the mutant'}: ${shown.join(' ⏎ ')}`)])
+        : [
+            chalk.dim(`    ${caught === 'fails' ? 'on the copy' : 'on the mutant'}: ${failureText(output, LAST_LINES)}`)
+          ])
     ].join('\n');
   });
   const catching = lines.filter(line => caughtBy(line) === 'catches').length;

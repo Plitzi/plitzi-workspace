@@ -84,7 +84,8 @@ project's, in git), as the run finishes or is aborted, one already there kept on
 is open for the run being planned to take up; `run backlog` lists it, `run notice "…" [--on <where>]` keeps one
 at once with no run open (the person's, or an agent's between runs), and `run backlog done <id> --note "…"` closes one, saying
 how. A plan's task that does items says so — `"closes": ["b-3"]`, refused at `run open --dry-run` when one is not open — and they
-are closed as its run is applied, each saying the task and the run that did it.
+are closed as its run is applied, each saying the task and the run that did it — and so is one a research card found no
+longer to do (`task complete --found "…" --closes b-38`, the lead's approval its yes), saying what it found.
 
 **The run's feedback to Plitzi** (`feedback.ts`) is what a multi-agent run says of Plitzi itself, as `plitzi feedback`
 is a single agent's. Each agent reports every round it completes, with what it was like to work with Plitzi (below).

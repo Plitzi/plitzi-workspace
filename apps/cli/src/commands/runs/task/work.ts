@@ -295,7 +295,7 @@ export const taskComplete = (
  */
 export const taskFound = (
   named: string | undefined,
-  options: RunCommandOptions & { found?: string; tasks?: string }
+  options: RunCommandOptions & { found?: string; tasks?: string; closes?: string }
 ): Promise<void> =>
   act(
     options,
@@ -318,8 +318,12 @@ export const taskFound = (
       }
 
       const tasks = options.tasks === undefined ? {} : { tasks: path.resolve(options.tasks) };
+      const closes = (options.closes ?? '')
+        .split(',')
+        .map(id => id.trim())
+        .filter(id => id !== '');
 
-      return completeResearch(ctx, runId, taskId, options.found, tasks);
+      return completeResearch(ctx, runId, taskId, options.found, { ...tasks, closes });
     },
     found =>
       found.status === 'in-review'

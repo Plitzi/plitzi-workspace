@@ -20,10 +20,20 @@ export interface Finding {
   /** The question it answers: the plan's spike, or the one its agent asked when it moved the task back. */
   question: string;
   text: string;
+  /**
+   * The backlog items it found no longer to do — gone, or not reproduced — closed with it as the run is applied: a
+   * scout found b-38 did not come back, and had no task to carry the close.
+   */
+  closes?: string[];
 }
 
 export const isFinding = (value: unknown): value is Finding =>
-  isRecord(value) && isString(value.at) && isString(value.by) && isString(value.question) && isString(value.text);
+  isRecord(value) &&
+  isString(value.at) &&
+  isString(value.by) &&
+  isString(value.question) &&
+  isString(value.text) &&
+  (value.closes === undefined || (Array.isArray(value.closes) && value.closes.every(isString)));
 
 /** Research alone: a spike, and no file to write — done once its findings are said. */
 export const isResearch = (task: { spike?: string; files: readonly string[] }): boolean =>

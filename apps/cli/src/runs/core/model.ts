@@ -352,7 +352,14 @@ export interface TaskState {
    * the card (`TaskPaths.proposedStage`), stacked once the lead approves it (`task review --approve`, `--leave` what it
    * leaves out), dropped when it is sent back (`--changes`).
    */
-  proposed?: { by: string; at: string; text: string; tasks: string[] };
+  proposed?: {
+    by: string;
+    at: string;
+    text: string;
+    tasks: string[];
+    /** The backlog items it found no longer to do, closed with what it found as the run is applied. */
+    closes?: string[];
+  };
   /**
    * The agent the lead handed it to when it took it back (`task reassign --to <agent>`): offered to that one first, and
    * taken by no other — until it takes it.
@@ -651,7 +658,8 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isString(proposed.by) &&
       isString(proposed.at) &&
       isString(proposed.text) &&
-      isStrings(proposed.tasks)
+      isStrings(proposed.tasks) &&
+      optional(proposed.closes, isStrings)
   ) &&
   optional(
     value.handTo,

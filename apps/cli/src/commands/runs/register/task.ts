@@ -283,6 +283,10 @@ export const registerTaskGroup = (program: Command): Command => {
       'With --found: its result, the tasks it makes — a stage, as `run open` stacks, each task with its "findings"'
     )
     .option(
+      '--closes <items>',
+      'With --found: the backlog items it found no longer to do — b-3,b-7 — closed with what it found as the run is applied, once the lead approves'
+    )
+    .option(
       '--known-failure <why>',
       'Go to review although the checks fail — for a reason that weighs, said to the lead'
     )
@@ -309,9 +313,10 @@ export const registerTaskGroup = (program: Command): Command => {
           note?: string;
           found?: string;
           tasks?: string;
+          closes?: string;
         } & ExperienceFlags
       ) =>
-        options.found === undefined && options.tasks === undefined
+        options.found === undefined && options.tasks === undefined && options.closes === undefined
           ? taskComplete(task, options)
           : taskFound(task, options)
     );

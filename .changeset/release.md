@@ -844,6 +844,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   self-hosted font, then the two entries it named, read as "did not answer the first time" — every run.
 - **`task prove --before` says a line that proves the change only through the tests the task adds:** a guard of what
   was there ("the charts' tests pass as they were") read as proving it, its proof a new test in the same file.
+- **A research card closes a backlog item it found no longer to do:** `task complete --found "…" --closes b-38`,
+  closed with what it found as the run is applied, once the lead approves — a scout found b-38 did not come back and
+  had no task to carry the close.
+- **`task prove` says how many tests a failure names, each once:** a tester read two of three failed tests from a cut
+  of Playwright's tail, never how many.
 - **`task show` says a change made the same in several files once,** naming the others, and the files whose diff
   it leaves out in one line: a task that moved one import in 33 specs answered 10k characters, 5k of them one hint
   repeated.

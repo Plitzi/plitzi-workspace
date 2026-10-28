@@ -71,7 +71,7 @@ const backlogLines = ({ taken, researched, untaken }: Awaited<ReturnType<typeof 
   ...(researched.length === 0
     ? []
     : [
-        `Its research looks into ${researched.map(each => `${each.item.id} (${each.task})`).join(', ')} — the tasks it proposes close ${researched.length === 1 ? 'it' : 'them'} ("closes")`
+        `Its research looks into ${researched.map(each => `${each.item.id} (${each.task})`).join(', ')} — the tasks it proposes close ${researched.length === 1 ? 'it' : 'them'} ("closes"), or what it finds does (task complete --found "…" --closes <item>)`
       ]),
   ...(untaken.length === 0
     ? []

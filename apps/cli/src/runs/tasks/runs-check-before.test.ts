@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { caughtBy, checkBefore, checkMutant, completeTask, failedTests, provedBy, reviewTask } from '.';
+import { caughtBy, checkBefore, checkMutant, completeTask, failedNames, failureText, provedBy, reviewTask } from '.';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { changesNoPage } from '../plan/pagesOf';
@@ -240,7 +240,7 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
 
     const checked = await checkMutant(bench.agent('test-1'), runId, 't-about', [mutation]);
     expect(checked.lines.map(caughtBy)).toEqual(['catches', 'broken']);
-    expect(failedTests(checked.lines[0]?.mutant.output ?? [])).toEqual(['✖ the title is Spanish']);
+    expect(failedNames(checked.lines[0]?.mutant.output ?? [])).toEqual(['the title is Spanish']);
 
     const second = await checkMutant(bench.agent('test-1'), runId, 't-about', [mutation], [2]);
     expect(second.lines.map(line => line.said)).toEqual(['It runs']);
@@ -271,6 +271,27 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
 
     expect(path.isAbsolute(named)).toBe(true);
     expect(await fs.readFile(named, 'utf-8')).toContain("title: 'About'");
+  });
+
+  // A tester read two of three failed tests from a cut of Playwright's tail, never how many.
+  it('says how many tests a failure names, each once, then its last lines', () => {
+    const output = [
+      '  ✘  1 [rest] › visual/charts.spec.ts:55:5 › at 1440px › a week with claps (817ms)',
+      '  ✘  4 [rest] › visual/charts.spec.ts:139:5 › at 1440px › a week no one clapped in (411ms)',
+      '  ✘  5 [rest] › visual/charts.spec.ts:55:5 › at 390px › a week with claps (747ms)',
+      '  1) [rest] › visual/charts.spec.ts:55:5 › at 1440px › a week with claps',
+      '    Error: expect(received).toEqual(expected)',
+      '  3 failed',
+      '  1 passed (4.1s)'
+    ];
+
+    expect(failureText(output, 2)).toBe(
+      [
+        '3 failed — [rest] › visual/charts.spec.ts:55:5 › at 1440px › a week with claps · [rest] › visual/charts.spec.ts:139:5 › at 1440px › a week no one clapped in · [rest] › visual/charts.spec.ts:55:5 › at 390px › a week with claps',
+        '  3 failed',
+        '  1 passed (4.1s)'
+      ].join(' ⏎ ')
+    );
   });
 
   it('is refused for a change that names no one place, and a file the copy has not', async () => {

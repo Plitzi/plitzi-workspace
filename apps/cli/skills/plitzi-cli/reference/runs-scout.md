@@ -25,7 +25,9 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   first: `plitzi run open <stage.json> --dry-run --lines`** — checked as the lead stacks it, each line run once on the
   run's work, nothing stacked; stacking is the lead's, never yours. It is checked whole and goes to the lead's
   review, decided with the person: nothing is stacked until it approves. Sent back, `task next` hands it to you again
-  with what the lead asked — complete it again with that. Findings alone, no tasks: `--found "…"`, reviewed too:
+  with what the lead asked — complete it again with that. Findings alone, no tasks: `--found "…"`, reviewed too; an
+  item of the backlog you found no longer to do — gone, or not reproduced — `--closes b-38`, closed with your finding
+  as the run is applied:
   **every research card is the lead's to approve**, and adding or taking out tasks the lead's alone.
 - **Spend it as the run's time:** the scope is the big one (30 minutes); a later card answers one question an agent
   met — 10 minutes, the tools measuring (`page measure|play|check`), never a whole Playwright suite. Past it the lead
