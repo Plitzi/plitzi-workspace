@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.35",
+    "@plitzi/plitzi-ui": "^1.6.36",
     "date-fns": "^4.4.0",
     "immer": "^11.1.21",
     "zod": "^4.6.7"

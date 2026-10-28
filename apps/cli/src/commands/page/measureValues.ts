@@ -28,6 +28,9 @@ export const MEASURED = [
   // A link's hover that only underlines it read as "nothing changed": a run's designer needed a picture to see it.
   'text-decoration',
   'text-underline-offset',
+  // Whether its words wrap, and where a long one breaks: a run's long name on a key, proven by a script of its own.
+  'white-space',
+  'overflow-wrap',
   'opacity',
   'padding',
   'margin',

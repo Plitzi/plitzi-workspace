@@ -377,7 +377,9 @@ describe('what the run spent that it did not have to', () => {
       [
         use(1, 'dev-1', 'plitzi task show t-a', { chars: 64_000 }),
         // Asked for whole: the option the finding's fix points to, never said long.
-        use(2, 'lead', 'plitzi run report --full', { chars: 29_000 })
+        use(2, 'lead', 'plitzi run report --full', { chars: 29_000 }),
+        // …a brief's files asked whole, too.
+        use(3, 'dev-1', 'plitzi task context --files', { chars: 15_000 })
       ],
       [
         { by: 'dev-2', name: 'task check', command: 'plitzi task check', times: 4, within: 6 },

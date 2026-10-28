@@ -52,6 +52,11 @@ export interface ElementState {
    */
   colour: { text: string; ground: string };
   /**
+   * Its edge — border, outline, shadow — each as the browser draws it, `none` where it draws none: a run's picked
+   * swatch differed from the rest by its ring alone, and the play said nothing of it.
+   */
+  edge: { border: string; outline: string; shadow: string };
+  /**
    * Its animations as they stand — `float finished` — when it has any: a run's reaction floated in and out, and a
    * read after it said "hidden", as though the press had done nothing.
    */
@@ -225,6 +230,17 @@ export const stateOf = (node: Element): ElementState => {
     focused:
       document.activeElement !== null && (node === document.activeElement || node.contains(document.activeElement)),
     colour: { text: style.color, ground: groundOf(node) },
+    edge: {
+      border:
+        style.borderTopWidth === '0px' || style.borderTopStyle === 'none'
+          ? 'none'
+          : `${style.borderTopWidth} ${style.borderTopStyle} ${style.borderTopColor}`,
+      outline:
+        style.outlineWidth === '0px' || style.outlineStyle === 'none'
+          ? 'none'
+          : `${style.outlineWidth} ${style.outlineStyle} ${style.outlineColor}`,
+      shadow: style.boxShadow
+    },
     ...(node.getAnimations().length > 0
       ? {
           animations: node

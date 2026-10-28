@@ -63,6 +63,7 @@ The space is not written until these are fixed.
 | `computed-unknown` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
 | `condition-field-unpublished` | a `when` asking a step of its flow for a key it never publishes — `whenSucceeded` / `whenFailed` on anything but `runServerAction` | a key the step publishes (`explain <step>`): after `authLogin`, `when({ field: 'signedIn.ok', operator: '=', value: true }, …)` |
 | `condition-short-source` | a step's condition reading an element's source by the element's id alone — `roomStats.locked` — which reads nothing | the source named in full, as a template names it: `apiContainer_roomStats.locked` |
+| `condition-template` | a `when` rule with a template in its field or value — `value: '{{ list_genres.item.id }}'` — compared as that text, so it never holds | a path: `field: 'state.picks'`; another path as the value, `value: 'list_genres.item.id', isBinding: true`; an expression, a computed value |
 | `controls-other-row` | a button's `controls` naming an element a list draws in its rows, from outside that row | the button in the same row as what it shows and hides, or `controls` naming an element outside the list |
 | `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |

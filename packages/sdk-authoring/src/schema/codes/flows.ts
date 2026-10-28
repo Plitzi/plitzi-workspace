@@ -127,6 +127,12 @@ export const FLOW_CODES = {
     means: 'a `when` comparing a submitted field to `""` — a field nobody typed in is not sent',
     fix: "`operator: 'empty'` / `'notEmpty'`"
   },
+  'condition-template': {
+    kind: 'refused',
+    means:
+      "a `when` rule with a template in its field or value — `value: '{{ list_genres.item.id }}'` — compared as that text, so it never holds",
+    fix: "a path: `field: 'state.picks'`; another path as the value, `value: 'list_genres.item.id', isBinding: true`; an expression, a computed value"
+  },
   'condition-field-unpublished': {
     kind: 'refused',
     means:

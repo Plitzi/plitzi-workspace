@@ -2,7 +2,18 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { passedText, playedText, playOn, readTargets, sharedServerNote, stepsOf, unlikeIn, verdictOf } from './play';
+import {
+  failedAtText,
+  passedText,
+  playedText,
+  playOn,
+  readTargets,
+  sharedServerNote,
+  stepsOf,
+  unlikeIn,
+  verdictOf
+} from './play';
+import { stateReadsOf, valueAt } from './playHeld';
 import { passedOf } from './visit';
 
 import type { PlayedStep, PlaySide } from './play';
@@ -16,7 +27,8 @@ const at = (x: number, shown = true, enabled = true): ElementState => ({
   aria: {},
   focused: false,
   inView: 'whole',
-  colour: { text: 'rgb(0, 0, 0)', ground: 'rgb(255, 255, 255)' }
+  colour: { text: 'rgb(0, 0, 0)', ground: 'rgb(255, 255, 255)' },
+  edge: { border: 'none', outline: 'none', shadow: 'none' }
 });
 
 /** A row and its arrow, at the start and after one press — here and there. */
@@ -220,6 +232,30 @@ describe('what a step left', () => {
       '  avatar: hidden, enabled · float finished · colour now rgb(0, 160, 160) on rgb(20, 20, 20) (was rgb(255, 176, 0) on rgb(20, 20, 20))'
     ]);
   });
+  // A picked swatch differed from the rest by its ring alone: the play said shown, enabled, and a page measure proved it.
+  it('says an edge a step changed — a ring lit — and nothing of one it left alone', () => {
+    const ring = (shadow: string): ElementState => ({ ...at(0), edge: { border: 'none', outline: 'none', shadow } });
+    const lines = playedText([
+      { step: 'start', reads: [{ element: 'swatch-teal', here: ring('none') }] },
+      {
+        step: 'click swatch-teal',
+        reads: [{ element: 'swatch-teal', here: ring('rgb(0, 160, 160) 0px 0px 0px 2px') }]
+      },
+      {
+        step: 'hover swatch-teal',
+        reads: [{ element: 'swatch-teal', here: { ...ring('rgb(0, 160, 160) 0px 0px 0px 2px'), focused: true } }]
+      }
+    ]).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toEqual([
+      'start',
+      '  swatch-teal: shown, enabled',
+      'click swatch-teal',
+      '  swatch-teal: shown, enabled · shadow now rgb(0, 160, 160) 0px 0px 0px 2px (was none)',
+      'hover swatch-teal',
+      '  swatch-teal: shown, enabled · focused'
+    ]);
+  });
 });
 
 // Agents wrote `--read a,b,c` as `--width 390,1440` takes them, five times, and it was read as one element after every
@@ -379,5 +415,83 @@ describe('a page that goes on by itself as it opens', () => {
       '· /sign-in went on by itself as it opened: /sign-in (shown 180 ms) → / — the start is read there'
     );
     expect(passedOf('not json', 0)).toEqual([]);
+  });
+});
+
+// A reviewer held a toggle's limit to three crates and had no way to read state.roomGenres between the presses.
+describe('the page’s state in a play', () => {
+  const side = (states: unknown[]): PlaySide => ({
+    act: () => Promise.resolve(undefined),
+    read: targets => Promise.resolve(targets.map(() => at(0))),
+    state: () => Promise.resolve({ value: states.shift() })
+  });
+  const steps = [
+    { kind: 'click' as const, target: 'crate-rock' },
+    { kind: 'click' as const, target: 'crate-jazz' }
+  ];
+
+  it('reads state.<key> after each step, apart from the elements', async () => {
+    expect(stateReadsOf(['state.roomGenres', 'crate-rock', 'state.cart.items'])).toEqual({
+      keys: ['roomGenres', 'cart.items'],
+      elements: ['crate-rock']
+    });
+    const result = await playOn({ here: side([{}, { roomGenres: ['rock'] }, { roomGenres: ['rock'] }]) }, steps, [], {
+      state: ['roomGenres']
+    });
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toEqual([
+      'start',
+      '  state.roomGenres: unset',
+      'click crate-rock',
+      '  state.roomGenres: ["rock"] (a list of 1)',
+      'click crate-jazz',
+      '  state.roomGenres: as before'
+    ]);
+  });
+
+  it('reads a dotted path, a list’s place by its number', () => {
+    expect(valueAt({ cart: { items: [{ id: 'a' }, { id: 'b' }] } }, 'cart.items.1.id')).toBe('b');
+    expect(valueAt({ cart: {} }, 'cart.items.0')).toBeUndefined();
+  });
+
+  it('says once that a page without its dev tools has no state to read', async () => {
+    const result = await playOn(
+      {
+        here: {
+          act: () => Promise.resolve(undefined),
+          read: () => Promise.resolve([]),
+          state: () => Promise.resolve({ problem: 'the page has no dev tools on (debug mode)' })
+        }
+      },
+      steps,
+      [],
+      { state: ['roomGenres'] }
+    );
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(
+      playedText(result.played)
+        .map(line => stripVTControlCharacters(line))
+        .filter(line => line.includes('dev tools'))
+    ).toEqual(['  state: the page has no dev tools on (debug mode) (at every step)']);
+  });
+});
+
+// A tester dismissed a report at 390 and read "not on the page" of it at 1440: the widths share one server.
+describe('a play that fails at a later width', () => {
+  const steps = [{ kind: 'click' as const, target: 'moderation-dismiss' }];
+
+  it('says the widths before it played on the same server, and nothing of it at the first', () => {
+    expect(failedAtText(1440, 'Step 1: moderation-dismiss is not on the page', 1, steps)).toContain(
+      'Each width played on one server'
+    );
+    expect(failedAtText(390, 'Step 1: moderation-dismiss is not on the page', 0, steps)).toBe(
+      'At 390 px: Step 1: moderation-dismiss is not on the page'
+    );
   });
 });

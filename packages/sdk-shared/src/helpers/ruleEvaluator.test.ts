@@ -20,6 +20,15 @@ describe('evaluateRuleGroup', () => {
     expect(evaluateRuleGroup(rule('doesNotContain', 'racer'), values)).toBe(true);
   });
 
+  // A limit of three picks written as a rule read nothing — the path stopped at the list — and blocked every press.
+  it('reads a list’s length, and compares an unset field to nothing', () => {
+    const fewer: RuleGroup = { combinator: 'and', rules: [{ field: 'state.picks.length', operator: '<', value: 3 }] };
+
+    expect(evaluateRuleGroup(fewer, { state: { picks: ['arcade', 'rpg'] } })).toBe(true);
+    expect(evaluateRuleGroup(fewer, { state: { picks: ['arcade', 'rpg', 'racer'] } })).toBe(false);
+    expect(evaluateRuleGroup(fewer, { state: {} })).toBe(false);
+  });
+
   it('keeps contains a case-insensitive substring check against text', () => {
     expect(evaluateRuleGroup(rule('contains', 'RPG'), { state: { picks: 'an rpg fan' } })).toBe(true);
   });

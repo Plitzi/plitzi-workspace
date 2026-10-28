@@ -351,3 +351,23 @@ describe('a mutant that never runs', () => {
     );
   });
 });
+
+// A run's lead read "it proves the change" of a before whose server never answered: a module the change added, still
+// imported without it.
+describe('a before that never runs', () => {
+  it('proves nothing, said as broken — a test failing before it still proves', () => {
+    const line = (before: string[]) => ({
+      said: 'Its pages’ tests pass against the copy served',
+      check: 'npx playwright test visual/moderation.spec.ts',
+      before: { said: '', check: '', ok: false, output: before },
+      after: { said: '', check: '', ok: true }
+    });
+
+    expect(provedBy(line(["the copy's server stopped on an error before it answered on http://127.0.0.1:54462"]))).toBe(
+      'broken'
+    );
+    expect(provedBy(line(['  ✘ 1 [rest] › visual/moderation.spec.ts:66:1 › the log says it in words (3.2s)']))).toBe(
+      'proves'
+    );
+  });
+});

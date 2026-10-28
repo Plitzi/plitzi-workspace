@@ -6,6 +6,7 @@ import { comparePictures } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { awaited, capture, targetOn } from './capture';
+import { notOnPageText } from './notOnPage';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
@@ -349,7 +350,7 @@ export const actStep = async (
     const read = await targetOn(page, step.target);
     if ('problem' in read || !read.found) {
       return {
-        problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — its name, a tag or a selector; one with spaces in quotes: type ".panel textarea" hola`}.`
+        problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — ${await notOnPageText(page, step.target, 'a step before it')}; a selector with spaces is written in quotes: type ".panel textarea" hola`}.`
       };
     }
 

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { RUN_REPORTS_DIR } from '../../scaffold/paths';
+import { FULL_REPORT_FILE } from '../core/paths';
 
 /**
  * A run's reports, kept in the project as it ends (`.plitzi/plitzi-reports/runs/<run>/`) and committed with it: what its
@@ -83,9 +84,9 @@ export const readRunReports = async (root: string): Promise<KeptReport[]> => {
 /** What of a run's folder is no record of it: the project's files as it kept them, its pictures, who held which token. */
 const NOT_RECORDS = new Set(['blobs', 'shots', 'reference', 'scratch', 'identities', 'locks']);
 
-/** What of a folder's files is no record: a lock held, and a token's fingerprints. */
+/** What of a folder's files is no record: a lock held, a token's fingerprints, and the report written whole again. */
 const isRecordFile = (name: string): boolean =>
-  !name.endsWith('.lock') && name !== 'owner.json' && name !== 'revoked.json';
+  !name.endsWith('.lock') && name !== 'owner.json' && name !== 'revoked.json' && name !== FULL_REPORT_FILE;
 
 /**
  * The run's records, copied into `into` as the run keeps them, the person's machine left out of each: everything but

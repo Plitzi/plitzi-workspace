@@ -1,41 +1,11 @@
 import { INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { targetOn } from './shot/capture';
+import { notOnPageText } from './shot/notOnPage';
 
 import type { Measured, MeasuredExtra } from './measureValues';
 import type { BrowserPage, LayoutSession } from '../../browser';
 
 /** One element of an open page, read as `page measure` reads it: found by any name, its first shown, measured. */
-
-/**
- * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
- * (`.home-faq-answer-text`, a run's design-1), a class as an id — when that way finds it; how to name one else.
- */
-const otherSpelling = async (page: BrowserPage, target: string): Promise<string> => {
-  const name = /^[.#]?([A-Za-z_][\w-]*)$/.exec(target)?.[1];
-  const ways = name === undefined ? [] : [name, `.${name}`].filter(way => way !== target);
-  for (const way of ways) {
-    const other = await targetOn(page, way);
-    if (!('problem' in other) && other.found) {
-      return way === name
-        ? `${name} is an element's id here: write it without the dot`
-        : `${name} is a class here, no element's id: write it .${name}`;
-    }
-  }
-
-  // A component's instance is marked by its own name, never as an element: a run's scout wrote
-  // [data-plitzi-el="room-card-quiet-demo"] for one, and found data-plitzi-instance only by reading the page's HTML.
-  // Each name in turn: the rest of the selector may name the instance's parts, which are elements.
-  for (const written of target.matchAll(/\[data-plitzi-el="([^"]+)"\]/g)) {
-    const asInstance = `${target.slice(0, written.index)}[data-plitzi-instance="${written[1]}"]${target.slice(written.index + written[0].length)}`;
-    const other = await targetOn(page, asInstance);
-    if (!('problem' in other) && other.found) {
-      return `${written[1]} is a component’s instance, marked data-plitzi-instance, not data-plitzi-el: write ${asInstance}`;
-    }
-  }
-
-  // Not drawn here at all: a run's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".
-  return `not drawn here: a page for signed-in visitors (--as <username>), a part a click opens or a visitor’s steps make (--click, --steps), a route with a parameter written as one of its addresses (/r/night-drive, not /r/:slug) — or name it by its element's id (pricing-card), #its-id, or any selector (.plan-card, [data-plitzi-el="…"] > span; a part of one component's instance: [data-plitzi-instance="<instance>"] [data-plitzi-el="<part>"])`;
-};
 
 /** How long a picture measured is waited for before it is read as it is: a picture that never loads holds nothing. */
 const IMAGE_WAIT_MS = 5000;
@@ -182,7 +152,9 @@ export const measureOn = async (
   }
 
   if (!found.found) {
-    return { problem: `No element ${target} on ${page.url()} — ${await otherSpelling(page, target)}` };
+    return {
+      problem: `No element ${target} on ${page.url()} — ${await notOnPageText(page, target, '--click, --steps')}`
+    };
   }
 
   // Of several matches, the first a visitor sees: the original's first `.header__heading-logo` is its hidden menu

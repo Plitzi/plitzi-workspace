@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { linesOf } from './checkBefore';
 import { findTask } from './common';
+import { neverRan } from './neverRan';
 import { checkAcceptance } from '../copies/acceptance';
 import { SERVED_STATUSES } from '../copies/preview';
 import { cloneFiles, isCopied, projectFiles, readOptional } from '../core/files';
@@ -183,15 +184,6 @@ export const checkMutant = async (
   }
 };
 
-/**
- * A mutant that does not run — a name it does not define, a type it breaks, a syntax error, a space that does not
- * author, a server that never answers: its failure is its own, and proves nothing a test holds (a tester's mutant
- * naming no defined name read "fails on the mutant: it holds it"; two whose server never started — a module that did not
- * load, a space refused — read "1 of 1 line catches it").
- */
-const BROKEN =
-  /\b(?:ReferenceError|SyntaxError|TypeError: \S+ is not a function|ProjectModuleError)\b|error TS\d+:|from config\.webServer|the copy's server (?:stopped on an error|did not answer)/;
-
 /** The lines a failure names its tests by: node's `✖ name`, TAP's `not ok`, Playwright's and vitest's `✘`/`×`/`FAIL`. */
 const FAILED_TEST = /^\s*(?:✖|✘|×|not ok\b|FAIL\b|\d+\) )/;
 
@@ -232,6 +224,6 @@ export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'b
       ? 'fails'
       : line.mutant.ok
         ? 'misses'
-        : (line.mutant.output ?? []).some(each => BROKEN.test(each))
+        : neverRan(line.mutant.output)
           ? 'broken'
           : 'catches';

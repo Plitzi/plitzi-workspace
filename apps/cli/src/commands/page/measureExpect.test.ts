@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { expectationsMissed, expectedOf } from './measure';
+import { MEASURED } from './measureValues';
 
 // An acceptance line holding one page's value — a key latched: transform — piped page measure's --json into node -e.
 describe('page measure --expect', () => {
@@ -35,5 +36,12 @@ describe('page measure --expect', () => {
     expect(expectationsMissed([reading(undefined)], expected)).toEqual([
       '--expect transform=matrix(1,0,0,1,0,3): site-sign-in at 390 px has none read'
     ]);
+  });
+});
+
+// A long name on a key wrapped: proving it took a script of an agent's own, measure saying neither.
+describe('what measure reads of words', () => {
+  it('reads whether they wrap and where a long one breaks', () => {
+    expect(MEASURED).toEqual(expect.arrayContaining(['white-space', 'overflow-wrap']));
   });
 });

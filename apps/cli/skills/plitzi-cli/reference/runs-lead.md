@@ -6,13 +6,13 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
 
 ## The lead
 
-**You manage; the agents read.** Never started again, you read again every turn whatever you read once. The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
+**You manage; the agents read.** Never started again, you reread every turn what you read once. The spikes are a scout's, the reviews a tester's, in fresh contexts: you decide what they bring.
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site, a design, a brief —
    list every page, section and piece a visitor would miss as the plan's `inventory`
    (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
-"page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses a
-   piece that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run open <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data complete with every
+"page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run open --dry-run` refuses
+   one that is neither. A copy names its site (`"reference"`): `plitzi run reference` keeps it for `page shot --compare`, naming sections no piece covers. **Research is a card** (a spike, no files), a scout's; **you review every one's result**, and only you add or take out tasks. **The run opens on its scope** (`run start`): the scout proposes the tasks, each with its `"findings"`; `task next --role lead` hands them to you — decide them with the person: `task review s-scope --approve | --changes "…"` (`run open <stage> --dry-run` reads them). An agent's question is a block, yours to answer: `task unblock --answer`. With no scout, research is yours: `task complete s-scope --found "…" --tasks <stage.json>`. **What waits is said to the person before opening**: their choice too. Prepare what every task reads first — the data whole, every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview [unit]` — who owns which file. A page owns the modules only it imports;
    what two pages import (tokens, classes, a layout, a component) is **shared**, as is every entry. `space impact
@@ -49,11 +49,11 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    ```
 
    **Acceptance a command can tell** is `{ said, check }`: it runs in the task's copy at `complete`, passing on exit 0 —
-   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails when no copy of that element (any row of a list) shows the text, `"!<id>"` when one is shown — check what a
-   page shows, not a file's text. Else, text — and only text holds at your review alone:
-   a later task can undo it unseen (the dry run names a task with no check). A check runs again on the whole result at
-   the finish. **`notes`** hold for the whole run;
-   `plitzi task message all "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; past 6k the dry run says what it costs): what you
+   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails unless a copy of it (a list's row) shows the text, `"!<id>"` when one is
+   shown — what a page shows, not a file's text; a look, `page measure <path> <id> --expect "color=…"`. Else, text — and only text holds at your review alone:
+   a later task can undo it unseen (the dry run names a task with no check). Checks run again on the whole result at
+   finish. **`notes`** hold for the whole run;
+   `plitzi task message all "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; the dry run says its cost past 6k): what you
    learnt reading the project — every brief starts with it, and the references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its
    size is how many work at once; past `min`, on demand — `run watch` says when to start one (through its own CLI,

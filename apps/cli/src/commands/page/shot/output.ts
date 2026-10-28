@@ -88,3 +88,20 @@ export const smallPicture = (png: Uint8Array): string | undefined => {
 /** Whether a region of a comparison is the section asked: its name, its element's id, or its element. */
 export const matchesSection = (region: { name: string; element?: string }, section: string): boolean =>
   region.name === section || region.name.endsWith(`#${section}`) || region.element === section;
+
+/**
+ * A tall page's parts as one line says them: its folder and name once, the parts as a range — a scout's shot of two
+ * pages at two widths in two schemes listed 26-part pages whole, path after path: 16k characters for its names.
+ */
+export const tilesText = (tiles: readonly string[]): string => {
+  const numbered = tiles.map(tile => /^(.*-part-)(\d+)(\.[a-z]+)$/.exec(tile));
+  const first = numbered.at(0);
+  const one =
+    first !== undefined &&
+    first !== null &&
+    numbered.every(
+      (each, index) => each !== null && each[1] === first[1] && each[3] === first[3] && Number(each[2]) === index + 1
+    );
+
+  return one ? `${first[1]}1${first[3]} … ${first[1]}${String(tiles.length)}${first[3]}` : tiles.join(', ');
+};

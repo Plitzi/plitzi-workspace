@@ -5,6 +5,7 @@ import { keeperRoutes, MAX_SESSIONS, SESSION_IDLE_MS } from './keeperRoutes';
 import type { KeeperDeps } from './keeperRoutes';
 
 const colour = { text: 'rgb(0, 0, 0)', ground: 'rgb(255, 255, 255)' };
+const edge = { border: 'none', outline: 'none', shadow: 'none' };
 
 /** A page as the test knows it: its number, what was done on it, and whether it was closed. */
 interface Page {
@@ -60,7 +61,8 @@ const bench = (overrides: Partial<KeeperDeps<Page>> = {}) => {
         aria: {},
         focused: false,
         inView: 'whole',
-        colour
+        colour,
+        edge
       }),
     close: page => {
       page.closed = true;
@@ -134,7 +136,8 @@ describe('the kept browser’s routes', () => {
           aria: {},
           focused: false,
           inView: 'whole',
-          colour
+          colour,
+          edge
         },
         {
           offset: { x: 1, y: 0 },
@@ -144,7 +147,8 @@ describe('the kept browser’s routes', () => {
           aria: {},
           focused: false,
           inView: 'whole',
-          colour
+          colour,
+          edge
         }
       ]
     });

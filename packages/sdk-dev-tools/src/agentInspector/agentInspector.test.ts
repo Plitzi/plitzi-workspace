@@ -7,7 +7,7 @@ import { flowRunLine, flowRunOf } from './flowRuns';
 import { createAgentInspector } from './inspector';
 
 import type { FlowRun } from './flowRuns';
-import type { ElementInteraction, Log } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionNode, Log } from '@plitzi/sdk-shared';
 
 // Only the fields a flow summary reads; the rest of an interaction is what the builder edits.
 const step = (id: string, title: string, action: string): ElementInteraction =>
@@ -22,7 +22,7 @@ const step = (id: string, title: string, action: string): ElementInteraction =>
   }) as unknown as ElementInteraction;
 
 // A flow as the interactions write it when it ends: the trigger, and each step with its own times.
-const flowLog = (status: 'completed' | 'failed'): Log => ({
+const flowLog = (status: 'completed' | 'failed', last?: InteractionNode): Log => ({
   logType: status === 'failed' ? 'danger' : 'info',
   category: 'interactions',
   message: 'Interaction triggered',
@@ -37,7 +37,7 @@ const flowLog = (status: 'completed' | 'failed'): Log => ({
     nodes: {
       t: { node: step('t', 'Click', 'onClick'), status: 'success', postCallbacks: [], startTime: 0, endTime: 1 },
       a: { node: step('a', 'Add', 'setState'), status: 'success', postCallbacks: [], startTime: 1, endTime: 3 },
-      b: {
+      b: last ?? {
         node: step('b', 'Save', 'webHook'),
         status: status === 'failed' ? 'failed' : 'success',
         postCallbacks: [],
@@ -66,6 +66,30 @@ describe('flow runs', () => {
     });
     expect(run && flowRunLine(run)).toBe(
       '[flow] Click [onClick] on add → failed (2 steps, 14ms)\n  ✗ Save [webHook]: HTTP 500'
+    );
+  });
+
+  it('says a step whose server action was refused as refused, with the server’s words — never a success', () => {
+    const run = flowRunOf(
+      flowLog('completed', {
+        node: step('b', 'Made', 'runServerAction'),
+        status: 'success',
+        postCallbacks: [],
+        result: { status: 'failed', reason: 'invalid_input', runId: '', output: {}, error: 'Pick 1 to 3 genres.' },
+        startTime: 3,
+        endTime: 14
+      })
+    );
+
+    expect(run?.steps.at(-1)).toEqual({
+      title: 'Made',
+      action: 'runServerAction',
+      status: 'refused',
+      ms: 11,
+      error: 'Pick 1 to 3 genres. (invalid_input)'
+    });
+    expect(run && flowRunLine(run)).toBe(
+      '[flow] Click [onClick] on add → completed (2 steps, 14ms)\n  refused Made [runServerAction]: Pick 1 to 3 genres. (invalid_input)'
     );
   });
 

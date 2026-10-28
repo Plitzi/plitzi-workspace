@@ -888,6 +888,32 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   old context (`RunContext.session`). `task next` hands a task with its brief (`task context` stays, for `--files` and
   `--again`) and a review with what `task show` says of it. The prompt asks no progress step to start a piece. Two
   runs' agents spent ~20% of their calls to Plitzi on those four steps.
+- **Flags a shell variable held whole are read as its flags:** `"--steps  click …"` arrived as one argument (zsh does
+  not split `$FLAGS`) and was refused 12 runs running; it is split and said on stderr.
+- **A before that never runs proves nothing:** `task prove --before` read a copy whose server never answered — the
+  task's new module imported by what stayed — as "fails before, passes with it". Said as broken now, with `--mutate`.
+- **`page play --read state.<key>`** reads a key of the page's state (a dotted path, `state.cart.items.0`) after each
+  step, "as before" when it did not change: a reviewer held a toggle's limit to three and read each crate's shadow.
+- **`page play` says an edge a step changed** — border, outline, shadow, now and before: a picked swatch differed by
+  its ring alone, and a separate `page measure --click` proved it.
+- **`page measure --scheme light,dark`** measures both schemes in one call, and its `--steps` are played once per
+  scheme, each width read by resizing that page: a step that writes (an action, a report) was refused the second time.
+  It reads `white-space` and `overflow-wrap`.
+- **`page check`** says a list's rows past what its source held as "N drawn, more than the M its source held"; never
+  advises `nowrap` on a label that wraps a value of any length (a username); and a flow step whose server action was
+  refused says `refused — <the server's words>`, where it said "runServerAction success".
+- **Large answers cut:** a tall page's parts as one range in `page shot`, `run look`'s notes past half its budget as a
+  count; `--full` and `--files` are never counted against a command as large output.
+- **The skills say a look is held by `page measure --expect "<property>=<value>"`:** a design task's acceptance only
+  ever "passed already".
+- **A run's report groups Plitzi's findings by how each is taken up:** what Plitzi got wrong, where the agents went
+  round it, where it stood in the way, and what was said — to triage — each naming its part when it is not the CLI. A
+  report of twenty-three read as twenty-three things to change.
+- **A step's element not on the page says why it may not be drawn**, as `page measure` does — a visitor's page, a part
+  a step opens, a list's row a press removed — where it said "its name, a tag or a selector": a tester dismissed a
+  report and tried three more names. A play that fails at a later width says the widths before it shared its server.
+- **`run report --full` past 24k characters is written to the run's `report-full.md`** and the answer names it: a
+  lead read a 31k report three times, cut each time where its harness stops.
 - **A task runs the page specs the run gives it** (what its change may break) at its check: the project's own check runs
   no spec, and a run's task went to review "passed" while the spec of the page it changed failed two of ten.
 - **`page shot --as` names the account in the picture's file** (`messages-as-mika-390-dark.png`): one account's
@@ -1272,6 +1298,11 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   visitor, and whom it is for — the router's own decision. The CLI reads them instead of a copy of the router.
 - **`login-then-leaves`** warns of steps after `auth.login` on a page for signed-out visitors: the page sends whoever
   signs in on as the login succeeds, and those steps race it.
+- **`condition-template`**: a `when` rule with a template in its field or value is refused — a rule reads paths, and
+  held `{{ list_genres.item.id }}` as that text, so the guard blocked every press. The flows reference says what a
+  rule's field reads (a row's `list_<id>.item.*`, `state.*`, `computed.*`…), `isBinding` for a path as the value, and
+  how an unset field answers. A rule reads a list's count, `state.picks.length` (`@plitzi/plitzi-ui` ^1.6.36: its `get` stopped at a
+  list's own properties, so a limit written as a rule read nothing).
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
@@ -1460,6 +1491,8 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - A **Run** tab, offered only on a run's preview: progress, the tasks by where they stand, the agents and what needs
   someone.
 - The panel scrolls again.
+- **A refused server action is a `refused` step** in `window.__plitzi.flows()`, with the server's words and reason: the
+  step ran and its flow went on to a `whenFailed` notice, so it read "success".
 
 ## The workspace
 

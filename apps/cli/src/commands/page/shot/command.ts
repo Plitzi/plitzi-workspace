@@ -18,7 +18,7 @@ import {
   regionsText
 } from './compare';
 import { framesOf } from './frames';
-import { matchesSection, shotFile, smallPicture, tilesOf } from './output';
+import { matchesSection, shotFile, smallPicture, tilesOf, tilesText } from './output';
 import { otherPageAt } from './remote';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
@@ -651,7 +651,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     if (report.tiles) {
       console.log(
-        `A tall page, in ${String(report.tiles.length)} parts too, each read at its size: ${report.tiles.join(', ')}`
+        `A tall page, in ${String(report.tiles.length)} parts too, each read at its size: ${tilesText(report.tiles)}`
       );
     }
 

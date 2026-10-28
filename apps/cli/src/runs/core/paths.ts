@@ -77,6 +77,8 @@ export interface RunPaths {
   log: string;
   /** The lead's summary of the run, for its report. */
   summary: string;
+  /** `run report --full`, written whole when it is past one answer (`FULL_REPORT_FILE`). */
+  fullReport: string;
   /** What it was like for the lead to work with Plitzi (`experience.ts`), said with its summary. */
   leadExperience: string;
   /** The lead's primer, as the run keeps it: every task's brief starts with it. */
@@ -137,6 +139,9 @@ export const activeRunFile = (root: string): string => path.join(root, ACTIVE_RU
  */
 export const RUN_COPY_MARK = '.plitzi-run-copy';
 
+/** `run report --full` written whole when it is past one answer: the report again, never one of the run's records. */
+export const FULL_REPORT_FILE = 'report-full.md';
+
 export const runPaths = (root: string, runId: string): RunPaths => {
   const dir = path.join(runsDir(root), runId);
   const cache = path.join(dir, 'cache');
@@ -156,6 +161,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     merges: path.join(dir, 'merges'),
     log: path.join(dir, 'log.jsonl'),
     summary: path.join(dir, 'summary.md'),
+    fullReport: path.join(dir, FULL_REPORT_FILE),
     leadExperience: path.join(dir, 'lead-experience.json'),
     primer: path.join(dir, 'primer.md'),
     messages: path.join(dir, 'messages'),

@@ -68,9 +68,11 @@ export const checkBeforeText = (
           ? `${chalk.yellow('·')} ${line.said} — passes before ${task} too: it holds what was there already (a guard, as it may be meant), not the change`
           : proved === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails with ${task}${line.before.ok ? ', where it passed before it' : ', as before it'}`
-            : noTestBefore(line)
-              ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
-              : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
+            : proved === 'broken'
+              ? `${chalk.yellow('?')} ${line.said} — the code before ${task} does not run (a file it added is still imported without it), so it proves nothing — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
+              : noTestBefore(line)
+                ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
+                : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
     const printed = [
       ...(!line.before.ok && proved !== 'proves' ? [['before', line.before.output ?? []] as const] : []),
       ...(!line.after.ok ? [['with it', line.after.output ?? []] as const] : []),

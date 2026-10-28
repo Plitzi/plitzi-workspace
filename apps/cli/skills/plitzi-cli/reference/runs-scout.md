@@ -12,7 +12,8 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   you measured, with the command that measured it.
 - **It ends with the tasks it makes:** `plitzi task complete --found "what you found" --tasks <stage.json>`, in its
   copy — a stage: a plan's `tasks`, each with what you found for it in `"findings"` (the values, the files, the
-  reference's sections), its acceptance with a line a command proves (`{ said, check }`) — refused without:
+  reference's sections), its acceptance with a line a command proves (`{ said, check }`: what a page shows, `page check --expect`; a
+  look, `page measure --expect "<property>=<value>"`) — refused without:
 
   ```json
   { "tasks": [{ "id": "t-claps-add", "title": "…", "files": ["src/functions/claps.ts"], "touches": [],

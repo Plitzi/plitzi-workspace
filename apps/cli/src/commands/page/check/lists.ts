@@ -124,6 +124,11 @@ export const listText = (id: string, { rendered, source, copies, written }: List
     return `${id} ${rowsText(rendered)}, fed by the row it is in`;
   }
 
+  // More drawn than its source held when read — a click added a row after it was read: "3 of 2 rows" read backwards.
+  if (rendered > source) {
+    return `${id} ${rowsText(rendered)} drawn, more than the ${String(source)} its source held when read`;
+  }
+
   return `${id} ${rendered === source ? rowsText(source) : `${String(rendered)} of ${rowsText(source)}`}`;
 };
 

@@ -67,6 +67,10 @@ describe('plitzi page check / a list’s rows', () => {
   it('says what is drawn beside what the source holds', () => {
     expect(listText('plan-list', { rendered: 3, source: 3 })).toBe('plan-list 3 rows');
     expect(listText('home-writer-list', { rendered: 4, source: 8 })).toBe('home-writer-list 4 of 8 rows');
+    // A click added a row after its source was read: "3 of 2 rows" read backwards.
+    expect(listText('moderation-log-list', { rendered: 3, source: 2 })).toBe(
+      'moderation-log-list 3 rows drawn, more than the 2 its source held when read'
+    );
     expect(listText('search-hits', { rendered: null, source: 16 })).toBe('search-hits not rendered (16 in its source)');
     expect(listText('feed', { rendered: 0, source: null })).toBe('feed reads nothing');
     // A source the address names is read by the page, not the check: what it draws is said, never "reads nothing".

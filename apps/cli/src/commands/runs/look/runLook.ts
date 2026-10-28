@@ -1,10 +1,12 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 
+import { NOTE_LINE } from './lookText';
 import { answering, freePort } from '../../../runs/copies/acceptance';
 import { previewDir, startPreview } from '../../../runs/copies/preview';
 import { previewPort } from '../../../runs/copies/previewRecord';
 import { RunRefusal } from '../../../runs/core/refusal';
+import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import { acceptanceAddresses, drawnAtNoPage, examplePaths, runPages } from '../../../runs/plan/pagesOf';
 import { assertStatus, loadRun, logRun, readApproved } from '../../../runs/run';
 import { checkAccount, sessionCookie } from '../../page/check/account';
@@ -50,6 +52,26 @@ const ownCli = (cwd: string, args: string[]): Promise<{ code: number; out: strin
       }
     );
   });
+
+/**
+ * The run's look's page checks as a lead reads them: whole while short — past that, each page's lists and hidden parts
+ * left out and counted (a run's look answered 13k characters, every page's lists among its 36 checks).
+ */
+const checkWithin = (check: string, most: number): string => {
+  if (check.length <= most) {
+    return check;
+  }
+
+  const lines = check.split('\n');
+  const notes = lines.filter(line => NOTE_LINE.test(line)).length;
+
+  return [
+    ...lines.filter(line => !NOTE_LINE.test(line)),
+    ...(notes > 0
+      ? [`  · ${String(notes)} lines of lists and hidden parts left out: plitzi page check <page> says them`]
+      : [])
+  ].join('\n');
+};
 
 export const runLook = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
   act(
@@ -133,7 +155,7 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
               `Drawn at no page its imports reach — a component placed by name, the tokens — so looked at where the run's acceptance checks: ${looked.drawnAtNoPage.join(', ')} (another page: plitzi page check <address> --url ${looked.url})`
             ]
           : []),
-        looked.check,
+        checkWithin(looked.check, LARGE_OUTPUT / 2),
         `Pictures — 1440 and 390, light and dark: ${looked.shots}/`,
         looked.passed
           ? 'Then: plitzi run report --summary "…" and plitzi run finish'

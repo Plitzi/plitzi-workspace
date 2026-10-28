@@ -16,7 +16,16 @@ import { flushEdgesInPage, missedExpectations, textsInPage, wrappedLabelsInPage 
 import { listRows } from './lists';
 import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
-import { isNotFoundPage, markedIn, meantPage, noPageMessage, notShown, pageFor, serverProviderOf } from './space';
+import {
+  contentBound,
+  isNotFoundPage,
+  markedIn,
+  meantPage,
+  noPageMessage,
+  notShown,
+  pageFor,
+  serverProviderOf
+} from './space';
 import { statusIssuesOf } from './status';
 import { elementStyles } from './styles';
 import { faintTexts, textGrounds } from './themes';
@@ -313,15 +322,17 @@ const inspectHere = async (
     expect.filter(each => each.path === undefined || each.path === pathname),
     width
   );
-  const wrapped: CheckIssue[] = (
-    await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]')
-  ).map(each => ({
-    code: 'label-wraps',
-    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap). A link or button of three words or fewer is read as a label — a link alone across its column is a title, left to wrap — and its text's lines are counted where they are drawn`,
-    elementId: each.id,
-    label: each.label,
-    width
-  }));
+  // A label its data writes — a name in "Ban <name>" — is as long as the data: one line for it would run out of its
+  // row, so it is left to wrap (a run's ban key was told `nowrap` for the very wrapping its task asked).
+  const wrapped: CheckIssue[] = (await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]'))
+    .filter(each => !contentBound(authored?.schema, each.id))
+    .map(each => ({
+      code: 'label-wraps',
+      message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap). A link or button of three words or fewer is read as a label — a link alone across its column is a title, left to wrap — and its text's lines are counted where they are drawn`,
+      elementId: each.id,
+      label: each.label,
+      width
+    }));
   const flush: CheckIssue[] = (await page.evaluate(flushEdgesInPage, undefined)).map(each => ({
     code: 'flush-edge',
     message: `${each.id} sits on ${each.section}'s bottom edge at ${String(width)} px, its section keeping no space below it (padding-bottom 0): it touches whatever follows. Give the section its padding below — the space a reference's sections keep top and bottom — rather than a margin on the one element`,

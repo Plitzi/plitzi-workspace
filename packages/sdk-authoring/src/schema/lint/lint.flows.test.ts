@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { BUILTIN_GLOBAL_CALLBACKS, lintSpace } from '../../index';
 import { addElement, errorsOf, onClick, setFlow, step, warningsOf, withChange } from './tests/lintFixture';
 
+import type { Rule } from '@plitzi/sdk-shared/helpers';
+
 /**
  * Every rule of the linter, pinned by its code.
  *
@@ -227,6 +229,35 @@ describe('lintSpace', () => {
       expect(short).toHaveLength(1);
       expect(short[0].message).toContain('a source is named in full — `apiContainer_feed.locked`');
       expect(errorsOf(conditioned('apiContainer_feed.locked'))).not.toContain('condition-short-source');
+    });
+
+    // A guard on a list's row, `contains: '{{ list_genres.item.id }}'`, blocked every press: a rule held the template as
+    // text.
+    it('condition-template', () => {
+      const refused = (rule: Rule) =>
+        lintSpace(
+          withChange(({ schema }) => {
+            setFlow(schema, 'go', [
+              onClick(),
+              step('note', 'globalCallback', 'addNotification', {
+                elementId: 'space',
+                params: { content: 'Picked' },
+                when: { combinator: 'and', rules: [rule] }
+              })
+            ]);
+          })
+        ).errors.filter(issue => issue.code === 'condition-template');
+
+      const inValue = refused({ field: 'state.picks', operator: 'contains', value: '{{ list_genres.item.id }}' });
+      expect(inValue).toHaveLength(1);
+      expect(inValue[0].message).toContain("`value: 'list_genres.item.id', isBinding: true`");
+      expect(refused({ field: '{{ state.picks }}', operator: 'contains', value: 'rock' })[0]?.message).toContain(
+        "`field: 'state.picks'`"
+      );
+      expect(
+        refused({ field: 'state.picks', operator: 'contains', value: 'list_genres.item.id', isBinding: true })
+      ).toEqual([]);
+      expect(refused({ field: 'state.picks', operator: 'contains', value: 'rock' })).toEqual([]);
     });
 
     /** `whenSucceeded` after a sign-in: `login` answers `ok` and `reason`, never a server action's `status`. */

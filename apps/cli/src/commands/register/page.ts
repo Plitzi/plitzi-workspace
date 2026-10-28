@@ -168,7 +168,7 @@ export const registerPage = (pageGroup: Command): void => {
       'Played on the page before it is measured, as page play takes them — "type chat-input hi; press Enter": what only a visitor’s steps make, measured where it is drawn'
     )
     .addOption(widthsOption('The viewport widths, separated by commas: every element measured at each', [1440]))
-    .addOption(schemeOption())
+    .addOption(schemesOption())
     .option('--json', 'One object, for a tool or an agent');
   withVisitorOptions(measureCommand).action((route: string, elements: string[], options: MeasureOptions) =>
     measure(route, elements, options)
@@ -192,7 +192,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--read <element...>',
-      'The elements read after each step, by spaces or commas — "row => .slides" with --compare; a list\'s row by :2 or :last (card-name:last)'
+      'The elements read after each step, by spaces or commas — "row => .slides" with --compare; a list\'s row by :2 or :last (card-name:last); state.<key> reads a key of the page\'s state (state.cart.items), here'
     )
     .option('--compare <url>', 'Another page — the site a copy is made after — played beside it, step for step')
     .addOption(

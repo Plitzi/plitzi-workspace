@@ -756,9 +756,11 @@ project|run|<file>`, then `run resolve <run>`, no file, goes on).
   and reviews, never the project's files — and `scratch/` the scripts its agents wrote for themselves. No path of the
   machine and no token in any of them: send the folder to Plitzi's team, and Plitzi gets better from it. A run's id is
   its folder's: a second run of the same name is refused at `run open`. `run report` prints the run at a glance and each
-  problem's title (`--full`: the whole, as `report.md`); its waits and minutes count to the last approval, its tokens are
+  problem's title (`--full`: the whole, as `report.md` — past 24k characters, more than a harness shows of one
+  answer, written to the run's `report-full.md` and named); its waits and minutes count to the last approval, its tokens are
   what each agent's harness read, from the rounds' reports. `report.md` opens with **Before you apply** — what a person
-  decides on — and says each problem by part (the run and the CLI, the platform, the docs) and whether it is new or
+  decides on — and says Plitzi's problems by how each is taken up — what it got wrong, where agents went round it, where it stood
+  in the way, what was said, to triage — and whether each is new or
   was **met before** in a run the project keeps (where, counted in the bench's "Met before"): what a fix did not stop
   comes first. `run show <run> <file>` reads a version the run keeps — `--restore [backup]` puts the backup back, a
   person's — and `run attach <run> --release` lets the run go from this machine for another to attach. `--keep-backup` keeps the project's files as they were

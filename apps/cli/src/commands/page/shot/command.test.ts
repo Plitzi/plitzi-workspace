@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { framesOf } from './frames';
-import { eachOut, shotFile, smallPicture } from './output';
+import { eachOut, shotFile, smallPicture, tilesText } from './output';
 
 describe('a picture’s file', () => {
   // Two clips of one page wrote home-1440-light.png each, the second over the first before it was read.
@@ -79,5 +79,15 @@ describe('a clip pictured small', () => {
     expect(smallPicture(pngOf(350, 26))).toBe('350×26 px');
     expect(smallPicture(pngOf(350, 64))).toBeUndefined();
     expect(smallPicture(new Uint8Array(8))).toBeUndefined();
+  });
+});
+
+// A scout's shot of tall pages listed each part's whole path: 16k characters of names.
+describe('a tall page’s parts, said', () => {
+  it('as a range of one name when they are its numbered parts, else each', () => {
+    const parts = Array.from({ length: 13 }, (_, at) => `/p/tmp/shots/home-390-dark-part-${String(at + 1)}.png`);
+
+    expect(tilesText(parts)).toBe('/p/tmp/shots/home-390-dark-part-1.png … /p/tmp/shots/home-390-dark-part-13.png');
+    expect(tilesText(['/a.png', '/b.png'])).toBe('/a.png, /b.png');
   });
 });

@@ -1,5 +1,6 @@
 import { teamTasks } from './bench';
 import { FINDING_OWNERS, weighedText, weightOf } from '../findings';
+import { PLITZI_CLASSES, plitziClassOf } from '../findings/plitziClass';
 import { kindOf } from '../harness';
 import { tokensText } from './runMetrics';
 import { costShort } from './spent';
@@ -34,12 +35,8 @@ const ordinal = (n: number): string => `${String(n)}${n === 2 ? 'nd' : n === 3 ?
 const heaviestFirst = (findings: readonly Finding[]): Finding[] =>
   [...findings].sort((a, b) => weightOf(b) - weightOf(a));
 
-/** Plitzi's parts, in the order its team reads them. */
-const AREA_TITLES: readonly (readonly [PlitziArea, string])[] = [
-  ['cli', 'The run and the CLI'],
-  ['platform', 'The platform — the SDK, the server'],
-  ['docs', 'The docs and the skills']
-];
+/** Plitzi's part a finding is of, said beside it where it is not the CLI. */
+const AREA_NAMES: Record<PlitziArea, string> = { cli: 'the CLI', platform: 'the platform', docs: 'the docs' };
 
 /** The findings as a person reads them: by whose they are, each numbered, with its evidence and its fix. */
 export const findingsText = (
@@ -54,12 +51,13 @@ export const findingsText = (
   return owners.flatMap(owner => {
     const theirs = shown.filter(finding => finding.owner === owner);
 
-    // Plitzi's by its part — the flow and the CLI, the platform, the docs — as its team takes them up.
+    // Plitzi's by how each is taken up — what it got wrong, where the agents went round it, where it stood in the way,
+    // and what was said, to triage — never by its part alone: a run's report read as twenty things to change.
     const groups =
       owner === 'plitzi'
-        ? AREA_TITLES.map(([area, title]) => ({
+        ? PLITZI_CLASSES.map(([kind, title]) => ({
             title,
-            items: theirs.filter(finding => (finding.area ?? 'cli') === area)
+            items: theirs.filter(finding => plitziClassOf(finding.kind) === kind)
           })).filter(group => group.items.length > 0)
         : [{ title: undefined, items: theirs }];
     let number = 0;
@@ -74,8 +72,11 @@ export const findingsText = (
             ...heaviestFirst(group.items).flatMap(finding => {
               number += 1;
 
+              const area =
+                owner === 'plitzi' && finding.area && finding.area !== 'cli' ? ` · ${AREA_NAMES[finding.area]}` : '';
+
               return [
-                `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${finding.live ? ' · said live' : ''} · ${historyText(finding)}`,
+                `${String(number)}. **${finding.title}**${finding.times > 1 ? ` ×${String(finding.times)}` : ''}${area}${finding.live ? ' · said live' : ''} · ${historyText(finding)}`,
                 `   - ${weighedText(finding)}`,
                 ...finding.evidence.map(line => `   - ${line}`),
                 ...(finding.fix ? [`   - → ${finding.fix}`] : [])

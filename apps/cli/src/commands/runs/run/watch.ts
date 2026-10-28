@@ -1,3 +1,6 @@
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import chalk from 'chalk';
 
 import { durationText, FOLLOW_MS } from '../../../options';
@@ -5,6 +8,7 @@ import { ensureKeeper, keepAgents } from '../../../runs/agents/keeper';
 import { waitForLead } from '../../../runs/agents/leadWatch';
 import { showVersion } from '../../../runs/copies/merge';
 import { copyRunWork, startPreview, startTaskPreview } from '../../../runs/copies/preview';
+import { runPaths } from '../../../runs/core/paths';
 import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
 import { benchText, readBench } from '../../../runs/report/bench';
 import { experienceFrom } from '../../../runs/report/experience';
@@ -180,6 +184,21 @@ export const runShow = async (runId: string, file: string, options: ShowOptions)
     shown => shown.text ?? `(${shown.file} does not exist in that version)`
   );
 
+/** What `run report --full` prints whole: a harness cuts one answer near 30k characters (Claude Code's). */
+export const PRINTED_WHOLE = 24_000;
+
+/**
+ * The whole report as one answer — or, past what a harness shows of one, the brief and the file it is written to: a
+ * run's lead read a 31k `--full` three times in four minutes, each cut where its harness stops.
+ */
+export const fullAnswer = (whole: string, brief: string, file: string): { text: string; write: boolean } =>
+  whole.length > PRINTED_WHOLE
+    ? {
+        text: `${brief}\n\nThe whole report (${String(Math.round(whole.length / 1000))}k characters, past what one answer shows) is in ${file} — read it in parts.`,
+        write: true
+      }
+    : { text: whole, write: false };
+
 export const runReport = (
   runId: string | undefined,
   options: RunCommandOptions & { summary?: string; full?: boolean } & ExperienceFlags
@@ -198,11 +217,22 @@ export const runReport = (
 
       const loaded = await loadRun(ctx, id, { anyVersion: true });
       const summary = await readSummary(loaded);
+      const report = await buildReport(ctx, loaded);
+      if (options.full !== true || options.json === true) {
+        return { report, ...(summary === undefined ? {} : { summary }), answer: undefined };
+      }
 
-      return { report: await buildReport(ctx, loaded), ...(summary === undefined ? {} : { summary }) };
+      const file = runPaths(ctx.root, id).fullReport;
+      const whole = reportText(report, summary);
+      const answer = fullAnswer(whole, reportBrief(report), path.relative(ctx.root, file));
+      if (answer.write) {
+        await writeFile(file, `${whole}\n`);
+      }
+
+      return { report, ...(summary === undefined ? {} : { summary }), answer: answer.text };
     },
-    ({ report, summary }) =>
-      `${options.full === true ? reportText(report, summary) : reportBrief(report)}${summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
+    ({ report, summary, answer }) =>
+      `${answer ?? reportBrief(report)}${summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
   );
 
 export const runPreview = async (

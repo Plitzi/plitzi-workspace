@@ -192,7 +192,7 @@ export const lookText = (looked: Looked): string =>
   ].join('\n');
 
 /** A page check's lines a review reads past: each page's lists and what a breakpoint hides on purpose. */
-const NOTE_LINE = /^\s+· (?:lists:|hidden at this width by a breakpoint)/;
+export const NOTE_LINE = /^\s+· (?:lists:|hidden at this width by a breakpoint)/;
 
 /**
  * The look as a review reads it: whole while it stays one answer an agent reads again cheaply — past that, what it acts

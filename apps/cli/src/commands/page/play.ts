@@ -3,8 +3,11 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { readDevTools } from '@plitzi/sdk-authoring';
+
 import { pairOf } from './measure';
 import { settle } from './measureState';
+import { heldText, stateReadsOf, valueAt } from './playHeld';
 import { readState } from './playState';
 import { shotFile } from './shot/output';
 import { otherPageAt, pageAnswered } from './shot/remote';
@@ -20,6 +23,7 @@ import { projectHere } from '../project/existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../shared/terminal';
 
 import type { Pair } from './measure';
+import type { HeldRead } from './playHeld';
 import type { ElementState } from './playState';
 import type { BrowserPage, Scheme } from '../../browser';
 import type { ActingStep, PlayStep } from './shot/steps';
@@ -53,6 +57,21 @@ export const sharedServerNote = (widths: number, steps: readonly { kind: string 
   widths > 1 && steps.some(step => ACTING.has(step.kind))
     ? `Each width played on one server: what the first width’s steps changed there (a share spent, a vote cast) is what the next starts from${steps.some(step => step.kind === 'action') ? ' — its actions ran at the first width alone' : ''} — play each width alone, after plitzi server reset, to read each from a cold start.`
     : undefined;
+
+/**
+ * A play that failed at one width, and — past the first — that the widths before it played on the same server: a run's
+ * tester dismissed a report at 390, read "not on the page" of it at 1440, and went on to try three more names.
+ */
+export const failedAtText = (
+  width: number,
+  problem: string,
+  playedBefore: number,
+  steps: readonly { kind: string }[]
+): string => {
+  const shared = playedBefore > 0 ? sharedServerNote(playedBefore + 1, steps) : undefined;
+
+  return `At ${String(width)} px: ${problem}${shared ? `\n${shared}` : ''}`;
+};
 
 /**
  * `plitzi page play`: an interaction played step by step — a press, a drag, a key — and, after each step, how far each
@@ -100,6 +119,8 @@ export interface PlayedStep {
   pictured?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
   reads: { element: string; here?: ElementState; there?: ElementState; moved?: Moved; problem?: string }[];
+  /** Each `state.<key>` read, here: its value, or why the page's state could not be read. */
+  held?: HeldRead[] | { problem: string };
 }
 
 /** How far it moved since the step before, each side. */
@@ -125,6 +146,8 @@ export interface PlaySide {
   /** Where its page is now, path and query: a step that takes it elsewhere is said (`PlayedStep.went`). */
   address?: () => string;
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
+  /** The page's state, read through its dev tools: `state.<key>` asked with `--read`. */
+  state?: () => Promise<{ value: unknown } | { problem: string }>;
   /** A picture of the page where it stands (`shot [label]`): the file it is written to. */
   picture?: (index: number, label?: string) => Promise<string>;
 }
@@ -168,6 +191,13 @@ export const pageSide = (
     }
 
     return states;
+  },
+  state: async () => {
+    const tools = await readDevTools(page, { state: true });
+
+    return tools.available
+      ? { value: tools.state }
+      : { problem: 'the page has no dev tools on (debug mode), so its state cannot be read' };
   }
 });
 
@@ -176,7 +206,7 @@ export const playOn = async (
   sides: { here: PlaySide; there?: PlaySide },
   steps: readonly PlayStep[],
   reads: readonly Pair[],
-  { actions = true }: { actions?: boolean } = {}
+  { actions = true, state = [] }: { actions?: boolean; state?: readonly string[] } = {}
 ): Promise<{ played: PlayedStep[] } | { problem: string; side: keyof Pair }> => {
   const played: PlayedStep[] = [];
   let last: PlayedStep | undefined;
@@ -188,8 +218,18 @@ export const playOn = async (
 
     return 'problem' in read ? targets.map(() => read) : read;
   };
+  const readHeld = async (): Promise<PlayedStep['held']> => {
+    if (state.length === 0) {
+      return undefined;
+    }
+
+    const read = sides.here.state ? await sides.here.state() : { problem: 'its state cannot be read on this page' };
+
+    return 'problem' in read ? read : state.map(key => ({ key, value: valueAt(read.value, key) }));
+  };
   const readAll = async (label: string): Promise<PlayedStep> => {
-    const entry: PlayedStep = { step: label, reads: [] };
+    const held = await readHeld();
+    const entry: PlayedStep = { step: label, reads: [], ...(held ? { held } : {}) };
     const heres = await readSide(
       sides.here,
       reads.map(pair => pair.here)
@@ -398,6 +438,13 @@ export const passedText = (route: string, passed: readonly { path: string; ms: n
     .map((each, index) => (index === passed.length - 1 ? each.path : `${each.path} (shown ${String(each.ms)} ms)`))
     .join(' → ')} — the start is read there`;
 
+/** What a step changed of an edge — a ring lit, a border coloured — each part as it is now and was. */
+const edgeChange = (before: ElementState['edge'], now: ElementState['edge']): string =>
+  (['border', 'outline', 'shadow'] as const)
+    .filter(part => before[part] !== now[part])
+    .map(part => ` · ${part} now ${now[part]} (was ${before[part]})`)
+    .join('');
+
 /**
  * A played interaction in lines: each step, and each element as it left it — here, and there beside it. How far it
  * moved is said of an element some step moves; of one none does (a button), it would be noise on every line.
@@ -427,7 +474,9 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       read.here && before && (before.text !== read.here.colour.text || before.ground !== read.here.colour.ground)
         ? ` · colour now ${read.here.colour.text} on ${read.here.colour.ground} (was ${before.text} on ${before.ground})`
         : '';
-    const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}`;
+    const edgeBefore = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here?.edge;
+    const edge = read.here && edgeBefore ? edgeChange(edgeBefore, read.here.edge) : '';
+    const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}${edge}`;
     const there = read.there
       ? chalk.dim(
           ` | there ${said && read.moved?.there ? `moved ${moveText(read.moved.there)}, ` : ''}${stateText(read.there)}`
@@ -468,7 +517,8 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       const previous = at > 0 && played[at - 1]?.reads.at(index)?.problem === undefined ? readLine(at - 1, index) : '';
 
       return [line === previous ? `  ${read.element}: ${chalk.dim('as before')}` : line];
-    })
+    }),
+    ...heldText(played, at)
   ]);
 };
 
@@ -558,7 +608,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
 
   const { visitor, browser } = ready;
 
-  const reads = readTargets(options.read).map(pairOf);
+  const asked = stateReadsOf(readTargets(options.read));
+  const reads = asked.elements.map(pairOf);
   const results: { width: number; played: PlayedStep[]; unlike: string[]; loaded: LoadTiming }[] = [];
   try {
     for (const width of options.width ?? [1440]) {
@@ -639,7 +690,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
         steps,
         reads,
         {
-          actions: results.length === 0
+          actions: results.length === 0,
+          state: asked.keys
         }
       ).finally(async () => {
         await visitors.close();
@@ -650,7 +702,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       await ours.page.close();
       await theirs?.page.close();
       if ('problem' in outcome) {
-        (outcome.side === 'there' ? unanswered : fail)(`At ${String(width)} px: ${outcome.problem}`);
+        (outcome.side === 'there' ? unanswered : fail)(failedAtText(width, outcome.problem, results.length, steps));
 
         return;
       }

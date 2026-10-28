@@ -70,6 +70,8 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
   the platform only when the bug is general (reproducible by a platform test without the seed), and then present the
   evidence to Carlos _before_ changing it. When fixing a report, find the general rule that produced it and fix that —
   if it fits Plitzi's model.
+- **A run's finding is not yet a task.** Before changing the CLI from a run's `feedback.md`, decide whether it is
+  Plitzi's and needs a change at all: [improving the CLI](docs/en/improving-the-cli.md).
 - Defaults that cost differently per element (e.g. `loadStrategy`) are declared per type after auditing which need
   them; never flip a global default "to save resources".
 - **Backend in UTC.** Every `Intl.DateTimeFormat`/`toLocale*` in server code passes `timeZone: 'UTC'` and says "UTC".

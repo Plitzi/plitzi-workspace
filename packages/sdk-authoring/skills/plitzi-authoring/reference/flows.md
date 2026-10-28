@@ -164,7 +164,13 @@ Pages that see each other — cursors, presence, a shared board — talk over a 
 ## Lists as state
 
 `toggleInState({ key: 'picks', value })` keeps a list; `when({ field: 'state.picks', operator: 'contains', value })`
-asks it. `appendState({ key, value, withId: true })` stores `{ id, value }` — bind `.value`, address by `.id`.
+asks it. A rule reads PATHS, never templates (refused: `condition-template`): `field` is one — a named step
+(`sent.values.code`), `state.*`, `computed.*`, `flags.*`, route and query params, the sources around the element the
+flow is on (a row's `list_<id>.item.*` from inside the row); `value` is a literal, or another path with
+`isBinding: true` — `{ field: 'state.picks', operator: 'contains', value: 'list_genres.item.id', isBinding: true }`. An
+unset field holds no comparison (`=`, `contains`, `<`) and every negation (`!=`, `doesNotContain`). A list's count is
+`.length`, unset until the list is: three picks at most is `when([{ field: 'state.picks', operator: 'empty' }, { field:
+'state.picks.length', operator: '<', value: 3 }], step, 'or')`; any other expression, a computed value. `appendState({ key, value, withId: true })` stores `{ id, value }` — bind `.value`, address by `.id`.
 `whenFailed` matches every outcome that is not `completed` (also `skipped`, `aborted`). A failed run gives `reason`,
 and `error` only when the server or a step wrote one for the caller (a task throwing `ActionRefusal`, `flow.fail` with
 `tellCaller`) — so show `{{ saved.error ? saved.error : "…" }}`, never the bare `error`. That pair is one call:

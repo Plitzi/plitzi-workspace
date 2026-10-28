@@ -16,11 +16,23 @@ import type { Authored } from './space';
 import type { ClickAsk, ClickReport } from './types';
 import type { BrowserPage } from '../../../browser';
 import type { FieldFill } from '../../../options';
+import type { DevToolsFlow } from '@plitzi/sdk-authoring';
 
 /**
  * `--click`, `--hover` and `--fill`: an element clicked or pointed at, a field filled as a visitor would, and what it
  * changed.
  */
+
+/**
+ * A flow that ran, in a line: its trigger and each step as it ended — a refused one with the server's words, which a
+ * run's scout read as "runServerAction success" while the server said "Pick 1 to 3 genres."
+ */
+export const ranText = (flow: DevToolsFlow): string =>
+  `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${
+    flow.steps
+      .map(step => `${step.action} ${step.status}${step.status === 'refused' && step.error ? ` — ${step.error}` : ''}`)
+      .join(', ') || 'no steps'
+  }`;
 
 export const selectorOf = (authored: Authored | undefined, id: string): string =>
   authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : byNameOrId(id);
@@ -173,10 +185,7 @@ export const clickEffects = async (
       fillChanges = [
         ...toolsAfterFill.flows
           .filter(flow => !ranBeforeFill.has(`${flow.at}|${flow.trigger}|${String(flow.on)}`))
-          .map(
-            flow =>
-              `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
-          ),
+          .map(ranText),
         ...momentChanges(beforeFill, afterFill, { before: toolsBeforeFill.state, after: toolsAfterFill.state })
       ];
     }
@@ -228,10 +237,7 @@ export const clickEffects = async (
     ...(filled.length > 0 ? { filled } : {}),
     ...(fillChanges.length > 0 ? { fillChanges } : {}),
     changes: [
-      ...flows.map(
-        flow =>
-          `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
-      ),
+      ...flows.map(ranText),
       ...looks,
       ...momentChanges(before, after, { before: tools.state, after: toolsAfter.state })
     ],

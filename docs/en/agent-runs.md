@@ -1041,8 +1041,10 @@ lines rewritten after approval, the notices going to the backlog, the lead's own
 as **Applied**. Its head says the run's time apart: the work, the lead's close and the person's wait (`timeText`). A
 task past twice its estimate or three pieces of work says why from the log (`overrun.ts`: its acceptance rewritten,
 escalations, sends-back, what was stacked beside it, its breadth, that nobody cut it), and a close left open past
-fifteen minutes is the lead's (`slow-close`). Plitzi's problems are by its part — the run and the CLI, the platform, the
-docs (`areaOfSaid`, the part a notice names most). What the lead's summary adds is what no record says: how it felt,
+fifteen minutes is the lead's (`slow-close`). Plitzi's problems are by how each is taken up — what Plitzi got wrong,
+where the agents went round it, where it stood in the way, and what was said, to triage (`findings/plitziClass.ts`);
+each names its part when it is not the CLI (`areaOfSaid`, the part a notice names most). Which of them to change, and
+how: [improving the CLI](./improving-the-cli.md). What the lead's summary adds is what no record says: how it felt,
 and where the next run starts.
 
 **Each finding held against the runs before** (`findings/history.ts`): the project keeps every run's `report.json`, and

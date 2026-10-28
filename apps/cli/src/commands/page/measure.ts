@@ -23,7 +23,7 @@ import { fail, unanswered, UNANSWERED_EXIT } from '../shared/terminal';
 
 import type { StateAsked } from './measureState';
 import type { Difference, Measured, MeasuredExtra } from './measureValues';
-import type { Browser, Scheme } from '../../browser';
+import type { Browser, BrowserPage, Scheme } from '../../browser';
 import type { VisitorOptions } from '../register/options';
 import type { ActingStep } from './shot/steps';
 import type { Visitor, VisitView } from './visit';
@@ -49,7 +49,8 @@ const READING = 3;
 
 export interface MeasureOptions extends VisitorOptions {
   width?: number[];
-  scheme?: Scheme;
+  /** Each scheme measured, as --width each width: a picker's two schemes took two calls. */
+  scheme?: Scheme[];
   /** Another page — another site's, a reference — whose element is measured beside this one. */
   compare?: string;
   /** That page's element, by any selector: the element's own name when left out. One element asked only. */
@@ -170,7 +171,7 @@ const valueText = (value: string): string =>
 
 /** Each element read whose property is not the value expected: a line each, said where the command fails. */
 export const expectationsMissed = (readings: readonly Reading[], expected: readonly Expected[]): string[] =>
-  readings.flatMap(({ here, pair, width }) => {
+  readings.flatMap(({ here, pair, width, scheme }) => {
     if ('problem' in here) {
       return [];
     }
@@ -181,7 +182,7 @@ export const expectationsMissed = (readings: readonly Reading[], expected: reado
       return actual !== undefined && valueText(actual) === valueText(value)
         ? []
         : [
-            `--expect ${property}=${value}: ${pair.here} at ${String(width)} px ${actual === undefined ? 'has none read' : `is ${actual}`}`
+            `--expect ${property}=${value}: ${pair.here} at ${String(width)} px${scheme ? ` ${scheme}` : ''} ${actual === undefined ? 'has none read' : `is ${actual}`}`
           ];
     });
   });
@@ -253,6 +254,8 @@ const readKept = async (file: string, now: number): Promise<Kept | undefined> =>
 /** One element asked, at one width: ours, the other page's — and how old the other reading is, when it was kept. */
 export interface Reading {
   width: number;
+  /** The scheme it was read in, when one was asked. */
+  scheme?: Scheme;
   pair: Pair;
   here: Measured | { problem: string };
   there?: Measured | { problem: string };
@@ -307,6 +310,9 @@ const readOther = async (
   return read;
 };
 
+/** How long a page resized is given to lay itself out again before it is read. */
+const RESIZE_SETTLE_MS = 300;
+
 /** Every pair, at one width: ours on one page, the others' kept or read on one page of the other site. */
 const readAt = async (
   browser: Browser,
@@ -317,10 +323,23 @@ const readAt = async (
   options: Pick<MeasureOptions, 'same' | 'only' | 'fresh' | 'each'>,
   now: number,
   /** Whether the space authors an id with no box of its own (`boxless`): a provider, drawn as its children. */
-  boxless?: (id: string) => Promise<boolean>
+  boxless?: (id: string) => Promise<boolean>,
+  /**
+   * The page its steps were played on at the width before, read again at this one — its window resized, the steps not
+   * played twice: an action a step took (a report, a dismissal) was refused at the second width, and the measure stopped.
+   */
+  played?: { page?: BrowserPage; keep: (page: BrowserPage) => void }
 ): Promise<Reading[]> => {
   const extra = extraAsked(options);
-  const { page, answered, problem } = await openVisit(browser, where.origin, where.route, visitOf(view));
+  const reused = played?.page;
+  if (reused) {
+    await reused.setViewportSize({ width: view.width, height: VIEW_HEIGHT });
+    await reused.waitForTimeout(RESIZE_SETTLE_MS);
+  }
+
+  const { page, answered, problem } = reused
+    ? { page: reused, answered: true, problem: undefined }
+    : await openVisit(browser, where.origin, where.route, visitOf(view));
   // Another account's steps (`as dax: action room-create {…}`) set up a state the cold copy lacks before it is measured:
   // A run's tester could not measure an empty room some other visitor made.
   const visitors = visitorsOn(root, browser, where.origin, {
@@ -335,14 +354,20 @@ const readAt = async (
           problem ??
           `nothing answers at ${where.origin}${where.route} — the server measured is not running (start it, or say where with --url)`
       }
-    : ((await playedOn(page, view.steps ?? [], visitors).finally(() => visitors.close())) ??
-      (view.state ? await putIn(page, view.state, 'here') : undefined));
+    : reused
+      ? await visitors.close().then(() => undefined)
+      : ((await playedOn(page, view.steps ?? [], visitors).finally(() => visitors.close())) ??
+        (view.state ? await putIn(page, view.state, 'here') : undefined));
   // Every copy the page draws of an element, with --each: the first alone hid that three plates' readouts differed.
   const asked = options.each && !notPut ? (await Promise.all(pairs.map(pair => copiesOf(page, pair)))).flat() : pairs;
   const ours = notPut
     ? asked.map(() => notPut)
     : await Promise.all(asked.map(pair => measureOn(page, pair.here, { ...(boxless ? { boxless } : {}), extra })));
-  await page.close();
+  if (played && !notPut) {
+    played.keep(page);
+  } else {
+    await page.close();
+  }
 
   const { target } = where;
   const keys = asked.map(pair =>
@@ -427,6 +452,7 @@ const readAt = async (
 
     return {
       width: view.width,
+      ...(view.scheme ? { scheme: view.scheme } : {}),
       pair,
       here,
       ...(there ? { there } : {}),
@@ -591,7 +617,23 @@ export const measure = async (route: string, elements: string[], options: Measur
     }
 
     const readings: Reading[] = [];
-    for (const width of options.width ?? [1440]) {
+    const views = (options.scheme ?? [undefined]).flatMap(scheme =>
+      (options.width ?? [1440]).map(width => ({ width, scheme }))
+    );
+    // With steps, each scheme's page is played once and read at every width by resizing it: an action a step took is
+    // taken once — a report made twice was refused, and the measure stopped at its second width.
+    const playedPages = new Map<string, BrowserPage>();
+    for (const { width, scheme } of views) {
+      const kept = playedPages.get(scheme ?? '');
+      const played =
+        steps.length > 0
+          ? {
+              ...(kept ? { page: kept } : {}),
+              keep: (page: BrowserPage) => {
+                playedPages.set(scheme ?? '', page);
+              }
+            }
+          : undefined;
       readings.push(
         ...(await readAt(
           browser,
@@ -603,16 +645,19 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...visitViewOf(options),
             ...(options.motion ? { reducedMotion: false } : {}),
             ...visitor,
-            ...(options.scheme ? { scheme: options.scheme } : {}),
+            ...(scheme ? { scheme } : {}),
             ...(state ? { state } : {}),
             ...(steps.length > 0 ? { steps } : {})
           },
           options,
           now,
-          boxless
+          boxless,
+          played
         ))
       );
     }
+
+    await Promise.all([...playedPages.values()].map(page => page.close()));
 
     // Only what was asked of each, with --only: its box for a fit, never thirty properties to grep. Why one is not drawn
     // said once: a run's tester measured sixteen copies of a part, eight there, and read the paragraph eight times.
@@ -672,11 +717,13 @@ export const measure = async (route: string, elements: string[], options: Measur
               zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now)),
               noPage
             ].flatMap(note => (note === undefined ? [] : [chalk.dim(note)])),
-            ...widths.flatMap(width => [
-              ...(widths.length > 1 ? [chalk.bold.underline(`At ${String(width)} px`)] : []),
+            ...views.flatMap(({ width, scheme }) => [
+              ...(views.length > 1
+                ? [chalk.bold.underline(`At ${String(width)} px${scheme ? `, ${scheme}` : ''}`)]
+                : []),
               ...onceEach(
                 shownReadings
-                  .filter(reading => reading.width === width)
+                  .filter(reading => reading.width === width && reading.scheme === scheme)
                   .map(reading =>
                     readingText(
                       reading,

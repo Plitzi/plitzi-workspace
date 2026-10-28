@@ -566,6 +566,31 @@ const checkConditionGlobals = (
   }
 };
 
+/** A template's opening, `{{` or `{%`: a rule reads paths, and holds one as text. */
+const TEMPLATE = /\{[{%]/;
+
+/**
+ * A rule written as a template. A rule reads a path — its field always, its value with `isBinding` — and a template in
+ * either is the text it is written as: the field names nothing, the value is compared as `{{ … }}`, and the step never
+ * runs, with nothing said (a run's guard on a list's row, `contains: '{{ list_genres.item.id }}'`, blocked every press).
+ */
+const refuseConditionTemplate = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  for (const { field, value } of conditionRules(node.when)) {
+    const inField = TEMPLATE.test(field);
+    const inValue = typeof value === 'string' && TEMPLATE.test(value);
+    if (!inField && !inValue) {
+      continue;
+    }
+
+    const path = (inField ? field : String(value)).replace(/^\s*\{[{%]\s*|\s*[}%]\}\s*$/g, '');
+    ctx.error(
+      'condition-template',
+      `${where}: the condition of step "${node.id}" has a template in its ${inField ? 'field' : 'value'} (\`${inField ? field : String(value)}\`). A rule reads paths, never templates: the template is the text it is written as, so the rule answers the same whatever the page holds. ${inField ? `Name the path: \`field: '${path}'\`` : `Compare with another path as one: \`value: '${path}', isBinding: true\``} — or a computed value (\`computed.<name>\`) for an expression.`,
+      hostId
+    );
+  }
+};
+
 /** A form's submitted field, as a step reads it: `sent.values.code`. */
 const FORM_VALUE = /\.values\.[^.]+$/;
 
@@ -731,6 +756,7 @@ export const lintFlows = (ctx: LintContext): void => {
 
         warnStatePaths(ctx, node, where, host.id);
         warnBlankFormValue(ctx, node, where, host.id);
+        refuseConditionTemplate(ctx, node, where, host.id);
         checkWhileRunning(ctx, node, where, host.id);
         checkConditionFields(ctx, node, steps, where, host.id);
         checkConditionGlobals(ctx, node, steps, where, host.id);

@@ -157,6 +157,15 @@ export const serverProviderOf = (schema: Schema, id: string): string | undefined
   return undefined;
 };
 
+/** Whether an element's words are written by its data — a binding to its `content`: as long as the data is. */
+export const contentBound = (
+  schema: { flat: Record<string, SchemaElement | undefined> } | undefined,
+  id: string
+): boolean =>
+  Object.values(schema?.flat[id]?.definition.bindings ?? {}).some(list =>
+    list.some(binding => binding.to === 'content')
+  );
+
 /** Whether an element shows, or would start hidden, under a condition of its own: `visible` written on it. */
 const hasOwnCondition = (element: SchemaElement): boolean =>
   element.definition.initialState?.visibility === false ||

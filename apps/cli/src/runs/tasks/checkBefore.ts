@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { findTask } from './common';
+import { neverRan } from './neverRan';
 import { checkAcceptance, ranNoTest } from '../copies/acceptance';
 import { approvedCopy, SERVED_STATUSES } from '../copies/preview';
 import { exists } from '../core/files';
@@ -180,12 +181,18 @@ const isTestFile = (file: string): boolean => /\.(?:test|spec)\.[cm]?[jt]sx?$/.t
 export const noTestBefore = (line: LineBeforeAfter): boolean =>
   !line.before.ok && ranNoTest((line.before.output ?? []).join('\n'));
 
-/** What a line says of the change, from how it ran before it and with it. */
-export const provedBy = (line: LineBeforeAfter): 'proves' | 'proves-nothing' | 'fails' | 'unanswered' =>
+/**
+ * What a line says of the change, from how it ran before it and with it. A before that never ran — a module the change
+ * added, still imported without it: the server stopped — proves nothing, as a mutant that never runs does (a run's
+ * lead read "it proves the change" of a before whose server never answered).
+ */
+export const provedBy = (line: LineBeforeAfter): 'proves' | 'proves-nothing' | 'fails' | 'unanswered' | 'broken' =>
   line.after.unanswered === true || line.before.unanswered === true || noTestBefore(line)
     ? 'unanswered'
     : !line.after.ok
       ? 'fails'
       : line.before.ok
         ? 'proves-nothing'
-        : 'proves';
+        : neverRan(line.before.output)
+          ? 'broken'
+          : 'proves';

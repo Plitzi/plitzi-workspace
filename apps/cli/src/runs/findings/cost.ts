@@ -41,9 +41,11 @@ export const costFindings = (
 ): Finding[] => {
   const findings: Finding[] = [];
   const large = new Map<string, UsageLine[]>();
-  // An answer asked for whole (`--full`) is the option this finding's fix points to: a run's lead and tester were told,
-  // eight runs over, that `run report --full` and `task show --full` were long.
-  for (const line of usage.filter(each => each.chars >= LARGE_OUTPUT && !/(?:^|\s)--full\b/.test(each.command))) {
+  // An answer asked for whole (`--full`, a brief's files `--files`) is the option this finding's fix points to: a run's
+  // lead and tester were told, eight runs over, that `run report --full` and `task show --full` were long.
+  for (const line of usage.filter(
+    each => each.chars >= LARGE_OUTPUT && !/(?:^|\s)--(?:full|files)\b/.test(each.command)
+  )) {
     const { name } = line;
     large.set(name, [...(large.get(name) ?? []), line]);
   }
