@@ -243,10 +243,6 @@ export interface ListRows {
   written?: true;
 }
 
-/**
- * What `--click` is asked: the element, and the fields filled before it. Without an element, the fields filled are the
- * interaction — a search box, a filter that answers to typing — and what they changed is said.
- */
 /** What `--expect <id>~<text>` asks: the element shows the text, as the page was left — a check an acceptance can run. */
 export interface Expectation {
   element: string;
@@ -281,6 +277,10 @@ export interface CheckAsk {
   steps?: readonly ActingStep[];
 }
 
+/**
+ * What `--click` is asked: the element, and the fields filled before it. Without an element, the fields filled are the
+ * interaction — a search box, a filter that answers to typing — and what they changed is said.
+ */
 export interface ClickAsk {
   element?: string;
   fill: readonly FieldFill[];

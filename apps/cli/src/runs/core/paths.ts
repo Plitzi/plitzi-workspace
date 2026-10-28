@@ -254,7 +254,6 @@ export const isWithin = (dir: string, folder: string): boolean => {
  */
 export const COPY_TASK_FILE = 'tmp/plitzi-task.json';
 
-/** A folder inside a task's copy, read off its path: the project it belongs to, its run and its task. */
 /**
  * The project a run's folder belongs to — a task's copy, the finish's checked copy (`cache/check-…`), anything under
  * `tmp/plitzi-runs/` — `undefined` for a folder of no run. What reads the project's own settings from one (its `.env`).
@@ -282,6 +281,7 @@ export const scratchOf = (dir: string): { root: string; run: string } | undefine
   return run && scratch === 'scratch' ? { root: dir.slice(0, at), run } : undefined;
 };
 
+/** A folder inside a task's copy, read off its path: the project it belongs to, its run and its task. */
 export const copyOf = (dir: string): { root: string; run: string; task: string } | undefined => {
   const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
   const at = dir.indexOf(marker);

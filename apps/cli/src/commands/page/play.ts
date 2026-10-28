@@ -115,7 +115,6 @@ const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, 
 const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
   'target' in step ? { ...step, target: pairOf(step.target)[side] } : step;
 
-/** The steps, each played on each page, every element read after it — or what kept a step from happening. */
 /**
  * One page a play is played on: a page of this command's, or the other site's held warm in the kept browser
  * (`keptSession`) — a step acted and waited for until the page is still, elements read as `readState` reads them.

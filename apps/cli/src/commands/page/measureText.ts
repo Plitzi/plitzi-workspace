@@ -43,17 +43,17 @@ const pseudosOf = (here: Measured, there: Measured): string[] =>
   PSEUDOS.filter(pseudo => [here, there].some(side => Object.hasOwn(side.styles, `${pseudo}:content`)));
 
 /**
- * What every pair of a reading is compared on, said once above them — each pair then says what differs and "the rest
- * the same". A pair said the other page's address and its 25 properties alike, 470 characters of 900, and
- * a reading of six pairs said them six times; an agent read each again on every turn after.
- */
-/**
  * What a reading of one of several copies says of the rest: the first shown was measured, and how to measure each — in
  * the text and the JSON alike (two runs' agents read `"matches": 8` in the JSON and wrote one `>> nth=` a copy).
  */
 export const matchesNote = (matches: number): string =>
   `the first shown of ${String(matches)} it finds — --each measures each`;
 
+/**
+ * What every pair of a reading is compared on, said once above them — each pair then says what differs and "the rest
+ * the same". A pair said the other page's address and its 25 properties alike, 470 characters of 900, and
+ * a reading of six pairs said them six times; an agent read each again on every turn after.
+ */
 export const comparedText = (url: string | undefined): string =>
   chalk.dim(
     `${url ? `Beside ${url} (there) — each` : 'Each'} compared on ${MEASURED.join(', ')}, and the ${PSEUDOS.map(pseudo => `::${pseudo}`).join('/')} either page has (${PSEUDO_MEASURED.join(', ')}): below, what differs`

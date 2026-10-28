@@ -8,7 +8,7 @@ import { entryOf } from '../core/model';
 import { projectPath, under } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
 import { getBlob, placeVersion, putBlob } from '../core/store';
-import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../core/taskStore';
+import { readStart, revokedTokens, tokenPrint, viewTask } from '../core/taskStore';
 import { readApproved } from '../run';
 
 import type { ApprovedManifest, RunTask, TaskStart } from '../core/model';
@@ -242,11 +242,6 @@ export const refreshCopy = async (
 
   return brought.sort();
 };
-
-/** Who in the team does a task: its plan's role, a developer's when it says none. */
-/** Whether `task` holds a signal: for `plitzi run watch`'s "no signal" line. */
-export const withoutSignal = (view: TaskView, now: Date): boolean =>
-  view.owner !== undefined && isDisconnected(view.task, view.signalAt, now);
 
 /** What a task's copy changed against where it started, by project path: what is not the source left out. */
 export const changedInCopy = async (view: TaskView, start: TaskStart): Promise<string[]> => {

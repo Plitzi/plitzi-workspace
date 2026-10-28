@@ -219,10 +219,6 @@ export const handUnreadByName = (runDir: string, agent: string): { id: string; f
   return unread.map(({ id, from, text }) => ({ id, from, text }));
 };
 
-/**
- * Counts what this process prints from now, and, as it exits, says it in its run's usage — when it ran in one: a
- * command outside a run is nobody's cost to count. Never fails the command: a usage line not written is only not kept.
- */
 /** Whether a run's folder still holds its run: its record there — not a folder a finish is removing. */
 export const runStillThere = (runDir: string): boolean => existsSync(path.join(runDir, RECORD_FILE));
 
@@ -237,6 +233,10 @@ const keptPath = (command: CommandPath): CommandPath => ({
   args: command.args.map(arg => withoutSecrets(arg).slice(0, 120))
 });
 
+/**
+ * Counts what this process prints from now, and, as it exits, says it in its run's usage — when it ran in one: a
+ * command outside a run is nobody's cost to count. Never fails the command: a usage line not written is only not kept.
+ */
 export const startUsage = (
   args: readonly string[],
   cwd: string,

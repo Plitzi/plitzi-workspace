@@ -25,7 +25,6 @@ export interface CheckResult {
   reused?: string;
 }
 
-/** How a run checks a folder: the project's scripts by default, something else under test. */
 /**
  * `final`: the run's whole result, at its finish — held to everything. Otherwise a task's copy, or the run's work part
  * way: what one task declares for the tasks after it (a component, a token) is read by none yet, and said, not failed.
@@ -34,6 +33,7 @@ export interface CheckOptions {
   final?: boolean;
 }
 
+/** How a run checks a folder: the project's scripts by default, something else under test. */
 export type CheckRunner = (dir: string, projectRoot: string, options?: CheckOptions) => Promise<CheckResult>;
 
 /** A suggestion that something is declared and read by nothing yet — a component, a token, a class: `unused-component`. */

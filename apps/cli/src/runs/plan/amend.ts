@@ -134,7 +134,6 @@ const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => 
   return id => origins.get(id) ?? OPENED;
 };
 
-/** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
 /**
  * A task the run made from the plan rather than one the plan wrote — the tests of its developer tasks (`withTestTasks`):
  * it stays while every task it tests does. A run's amend of a stage dropped three of them, as "nobody had taken them",
@@ -145,6 +144,7 @@ const derivedFrom = (task: RunTask, next: RunPlan): boolean =>
   task.testsOf.length > 0 &&
   task.testsOf.every(id => next.tasks.some(each => each.id === id));
 
+/** The run's tasks as a stage's plan amends them: each it holds as it says, those it left out gone. */
 const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[]): PlannedTask[] =>
   plan.tasks
     .filter(task => !removed.some(each => each.id === task.id))

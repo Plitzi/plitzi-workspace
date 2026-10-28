@@ -66,12 +66,10 @@ export interface ShotOptions extends VisitorOptions {
 }
 
 /**
- * What a picture holds: the whole page (with its sections, which a diff is reported by), what the screen shows, or one
- * element. Every picture of one run — the first, a compared one, each frame — is taken the same way.
- */
-/**
- * How a picture is framed. An element's clip a click or a step opens (an FAQ's answer) is found as each picture is taken
- * (`later`): before the click it is not on the page, and the shot said "not on" (a run's design-1).
+ * How a picture is framed — what it holds: the whole page (with its sections, which a diff is reported by), what the
+ * screen shows, or one element. Every picture of one run — the first, a compared one, each frame — is taken the same
+ * way. An element a click or a step opens (an FAQ's answer) is found as each picture is taken (`later`): before the
+ * click it is not on the page, and the shot said "not on" (a run's designer).
  */
 export type Framing =
   | { kind: 'page' }
@@ -139,9 +137,10 @@ export interface ShotReport {
   undrawn?: string[];
   /** Where the page sent the browser instead — a page for signed-in visitors, to the sign-in: the picture is of that. */
   sentTo?: string;
-  /** With `click`: each element clicked, and the share of the picture that changed after it. */
-  /** Each click, what it changed — or that it opened the clip, pictured alone after it (`opened`). */
-  /** Each click, and how much of the picture it changed — and, nothing changed in a clip, what it changed outside it. */
+  /**
+   * With `click`: each element clicked and the share of the picture that changed after it — or that it opened the part
+   * (`--within`), pictured alone after it (`opened`); nothing changed in the part, what changed outside it (`outside`).
+   */
   clicked?: { target: string; changed: number; opened?: true; outside?: string[] }[];
   /** With `steps`: each picture the script took, and the share of it that changed since the one before. */
   steps?: { label: string; changed: number; outside?: string[] }[];

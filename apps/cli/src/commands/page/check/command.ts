@@ -19,7 +19,7 @@ import { runPaths, runsDir, taskPaths } from '../../../runs/core/paths';
 import { projectHere } from '../../project/existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../../shared/terminal';
 import { actingSteps } from '../shot/steps';
-import { visitorAsked, visitViewOf } from '../visit';
+import { sayConditions, visitViewOf, visitorAsked } from '../visit';
 
 import type { CheckAsk, CheckOptions, CheckReport, ClickAsk, Expectation } from './types';
 import type { ExistingProject } from '../../project/existingProject';
@@ -86,6 +86,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo }),
     ...(steps.length > 0 ? { steps } : {})
   };
+  sayConditions(options);
   const reports = await checkRoutes(project, routes.length > 0 ? routes : ['/'], {
     widths: options.width ?? [1440, 390],
     asked,
@@ -131,11 +132,6 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
 };
 
 /**
- * Pages of the running project checked, each at each width, in one browser: what `check` does for one route and
- * `verify` for every page that has no parameter in its path. A project the server does not answer for, or with no
- * browser, is a problem said once rather than a report per page.
- */
-/**
  * The folder a server named by `--url` serves, when it is one of this project's run copies or a run's preview: its `/health` says the mark
  * of the folder it serves, and the copy with that mark is the space its routes are judged by — not the project's own
  * (a real product page on a copy's server read as "the page for an address nothing answers", judged by the
@@ -175,6 +171,11 @@ const servedFolder = async (root: string, url: string): Promise<string | undefin
  */
 const ROUTES_AT_ONCE = 2;
 
+/**
+ * Pages of the running project checked, each at each width, in one browser: what `check` does for one route and
+ * `verify` for every page that has no parameter in its path. A project the server does not answer for, or with no
+ * browser, is a problem said once rather than a report per page.
+ */
 export const checkRoutes = async (
   project: { root: string; plitzi?: ExistingProject['plitzi'] },
   routes: readonly string[],

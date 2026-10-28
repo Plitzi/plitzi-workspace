@@ -52,13 +52,6 @@ const pageUnits = async (root: string, files: readonly string[]): Promise<Set<st
   );
 };
 
-/**
- * Whether any page draws one of these files — read off the imports alone, no space authored: a type, a setting with
- * no element (`settings.transientState` in the space's entry) or seed data is drawn by none.
- */
-export const drawnByAPage = async (root: string, files: readonly string[]): Promise<boolean> =>
-  (await pageUnits(root, files)).size > 0;
-
 export const pagesOf = async (
   root: string,
   files: readonly string[],
@@ -95,11 +88,6 @@ const patternOf = (route: string): RegExp =>
 export const lookedAmong = (page: string, looked: readonly string[]): boolean =>
   looked.some(each => each === page || patternOf(page).test(each.split(/[?#]/)[0] ?? each));
 
-/**
- * Routes to open, each pattern among them (`/boxeadores/:slug`) made an address the site itself links to: the first
- * link of its list page (`/boxeadores`), or else of the home page, that fits it — a visitor's way there, with no data
- * of the project's read. A pattern no link fits is said, never opened as it is.
- */
 /** Whether an address is one of a route's pages: `/r/night-drive/stats` of `/r/:slug/stats`. */
 export const pageFits = (route: string, address: string): boolean => patternOf(route).test(address.split(/[?#]/)[0]);
 
@@ -124,6 +112,11 @@ const answers = (address: URL, headers: Record<string, string>): Promise<boolean
     .then(answer => answer.ok)
     .catch(() => false);
 
+/**
+ * Routes to open, each pattern among them (`/boxeadores/:slug`) made an address the site itself links to: the first
+ * link of its list page (`/boxeadores`), or else of the home page, that fits it — a visitor's way there, with no data
+ * of the project's read. A pattern no link fits is said, never opened as it is.
+ */
 export const examplePaths = async (
   origin: string,
   routes: readonly string[],

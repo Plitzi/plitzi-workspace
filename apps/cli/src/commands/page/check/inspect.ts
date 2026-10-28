@@ -37,9 +37,6 @@ const HOVER_WIDTH = 1024;
 /** Only the keys named of what the page holds (`--state a,b`). */
 const namedOf = (held: Record<string, unknown>, names: readonly string[]): Record<string, unknown> =>
   Object.fromEntries(Object.entries(held).filter(([name]) => names.includes(name)));
-/**
- * One page checked at one width: opened, followed by its own links (`--then`), inspected whole, and reported.
- */
 
 /**
  * What the page has once hydrated and the server's HTML did not: inside a server provider, an issue per provider — its
@@ -123,7 +120,6 @@ const followLink = async (page: BrowserPage, origin: string, path: string): Prom
   return undefined;
 };
 
-/** What the page open in `page` is checked for, as it stands: what `checkAt` asks of its first page and `--then` of each next. */
 /**
  * An image the probe calls never loaded that the browser was answered for (2xx): it loaded and draws no size of its own
  * — an SVG with a viewBox and no width or height, a flag — which the browser reports as 0 wide (every
@@ -153,8 +149,6 @@ const hostOf = (url: string): string => {
  */
 export const HOST_TROUBLE =
   /ERR_(TIMED_OUT|CONNECTION_(RESET|CLOSED|TIMED_OUT)|EMPTY_RESPONSE|HTTP2_\w+|QUIC_\w+|NETWORK_CHANGED)/;
-
-/** A console error, with the document it came from when the browser says. */
 
 /**
  * The address an image issue names, when it is one the browser was told to ask again later (429) — or, for the images
@@ -236,6 +230,7 @@ const namedHydration = async (page: BrowserPage, address: string, errors: readon
   );
 };
 
+/** What the page open in `page` is checked for, as it stands: what `checkAt` asks of its first page and `--then` of each next. */
 const inspectHere = async (
   page: BrowserPage,
   {
@@ -497,6 +492,9 @@ const inspectHere = async (
   };
 };
 
+/**
+ * One page checked at one width: opened, followed by its own links (`--then`), inspected whole, and reported.
+ */
 export const checkAt = async (
   browser: Browser,
   origin: string,

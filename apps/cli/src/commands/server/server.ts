@@ -144,13 +144,6 @@ export interface ServerResetOptions {
   json?: boolean;
 }
 
-/**
- * Puts what this folder's server keeps (`state/` — its kv, its jobs) back to a cold start: the next start is a fresh
- * clone's. A reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
- * way back. A server of this folder holds the files open and writes them back: in a run's copy — served by its page
- * commands — it is stopped first and said (a run's designers were refused six times, and ran reset again in bursts);
- * in the project itself it may be a person's, and the reset is refused until they stop it.
- */
 /** Whether every server listening from inside `root` has stopped within `ms`. */
 const stoppedWithin = async (root: string, ms: number): Promise<boolean> => {
   const until = Date.now() + ms;
@@ -167,6 +160,13 @@ const stoppedWithin = async (root: string, ms: number): Promise<boolean> => {
   }
 };
 
+/**
+ * Puts what this folder's server keeps (`state/` — its kv, its jobs) back to a cold start: the next start is a fresh
+ * clone's. A reviewer's `page play` used the demo's data up, and emptying the copy's sqlite by hand was the only
+ * way back. A server of this folder holds the files open and writes them back: in a run's copy — served by its page
+ * commands — it is stopped first and said (a run's designers were refused six times, and ran reset again in bursts);
+ * in the project itself it may be a person's, and the reset is refused until they stop it.
+ */
 export const serverReset = async (options: ServerResetOptions): Promise<void> => {
   const project = await projectHere('whose server state to reset');
   if (!project) {

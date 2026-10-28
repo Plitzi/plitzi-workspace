@@ -1,9 +1,12 @@
+import chalk from 'chalk';
+
 import { audienceAt, openPage } from '@plitzi/sdk-authoring';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
 import { launchBrowser, openProjectPage, projectSettling } from '../../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
 import { noPageAt, pageFor } from './check/space';
+import { conditionsText } from '../../browser/conditions';
 import { authoredSpace } from '../../runs/plan/expectations';
 import { conditionsOf } from '../register/options';
 import { fail, unanswered } from '../shared/terminal';
@@ -214,18 +217,31 @@ export const visitorAsked = async (
 };
 
 /**
+ * The browser's conditions a page command was asked to read under — a request held, one failed, its clock held — said
+ * once, as it starts: a page read with its player held back is no page as a visitor reads it, and nothing said so.
+ */
+export const sayConditions = (options: VisitorOptions): void => {
+  const said = conditionsText(conditionsOf(options));
+  if (said !== undefined) {
+    process.stderr.write(`${chalk.dim(`· Read in a browser asked to: ${said}`)}\n`);
+  }
+};
+
+/**
  * Who reads and the browser it reads in: what every page command makes ready before its first page — a refusal said
  * as each says it (`--as` as the asker's, a browser that does not start as unanswered), `undefined` then.
  */
 export const visitorBrowser = async (
   root: string,
-  options: Pick<VisitorOptions, 'as' | 'guest'>,
+  options: VisitorOptions,
   asked: { own?: boolean } = {}
 ): Promise<{ visitor: Visitor; browser: Browser } | undefined> => {
   const visitor = await visitorAsked(root, options, asked);
   if (visitor === null) {
     return undefined;
   }
+
+  sayConditions(options);
 
   const browser = await launchBrowser(root);
   if ('problem' in browser) {

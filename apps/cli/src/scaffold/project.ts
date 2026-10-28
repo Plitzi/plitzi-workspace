@@ -44,6 +44,10 @@ export const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as
 /** The same version, bare: this CLI's own — what `--version` prints and what wrote a project's machinery. */
 export const CLI_VERSION = SDK_VERSION.slice(1);
 
+/** The React and the Vite every generated package is written against, project or plugin. */
+export const REACT_VERSION = '^19.2.8';
+export const VITE_VERSION = '^8.2.1';
+
 /**
  * What every generated project builds and checks itself with.
  *
@@ -51,10 +55,6 @@ export const CLI_VERSION = SDK_VERSION.slice(1);
  * `.tsx` file wherever it renders. The lint stack is the same one Plitzi's own packages use — type-checked rules,
  * with Prettier owning layout and `eslint-config-prettier` keeping ESLint out of that argument.
  */
-/** The React and the Vite every generated package is written against, project or plugin. */
-export const REACT_VERSION = '^19.2.8';
-export const VITE_VERSION = '^8.2.1';
-
 export const SHARED_DEV_DEPENDENCIES = {
   '@eslint/js': '^10.0.1',
   '@playwright/test': '^1.56.1',

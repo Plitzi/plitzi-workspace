@@ -152,10 +152,6 @@ const alive = (pid: number): boolean => {
 };
 
 /**
- * The run's keeper started, when the team says how to launch its agents and none runs already: one keeper a run,
- * outliving the command that started it. Answers its pid, or why none was started.
- */
-/**
  * The keeper's log — what it started and could not, read when an agent the run asked for never came — opened for it to
  * write in, its folder made: a run just opened has no `cache/` yet (a run's open crashed on it, the keeper unstarted).
  */
@@ -165,6 +161,10 @@ export const openKeeperLog = (cache: string): number => {
   return openSync(path.join(cache, 'keeper.log'), 'a');
 };
 
+/**
+ * The run's keeper started, when the team says how to launch its agents and none runs already: one keeper a run,
+ * outliving the command that started it. Answers its pid, or why none was started.
+ */
 export const ensureKeeper = async (
   ctx: RunContext,
   runId: string,

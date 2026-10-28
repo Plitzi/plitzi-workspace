@@ -145,13 +145,13 @@ export interface RunReport {
   agents: AgentTimeline[];
   /** What the agents' briefs weighed, part by part (`briefs.ts`): none when none was read. */
   briefs?: Briefs;
+  /** What the finish's dry run said, and the lines rewritten once their tasks were done: read before applying. */
+  apply?: ApplyFacts;
   /**
    * What every agent's harness spent — the lead's and the reviewers' too — as each piece of work ended (`spent`): what
    * it cost at the API's prices when every model has one, how much was its context read again, and the costliest pieces.
    * A run's report said tokens alone, and its $6.75 — a third of it one designer task — was read off its log by hand.
    */
-  /** What the finish's dry run said, and the lines rewritten once their tasks were done: read before applying. */
-  apply?: ApplyFacts;
   spend?: {
     cost?: number;
     cachedShare: number;
@@ -604,13 +604,13 @@ export const reportText = (
     ''
   ].join('\n');
 
+/** What waits on the run's keeper, not on the lead: an agent to start. */
+const KEEPER_KINDS: ReadonlySet<string> = new Set(['agents-needed']);
+
 /**
  * `plitzi run report --summary <file> --ease --hardest …`: the lead's report of the run — its summary, and what it was
  * like to work with Plitzi, as each agent said its rounds' — kept for the run's report and its feedback.
  */
-/** What waits on the run's keeper, not on the lead: an agent to start. */
-const KEEPER_KINDS: ReadonlySet<string> = new Set(['agents-needed']);
-
 export const writeSummary = async (
   ctx: RunContext,
   runId: string,

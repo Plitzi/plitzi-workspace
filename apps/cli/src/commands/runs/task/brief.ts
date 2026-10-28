@@ -189,10 +189,6 @@ export const taskContextCommand = (
   );
 
 /**
- * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
- * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
- */
-/**
  * What a brief says of a related task and of a note: enough to act on, the whole one command away. Read again on every
  * turn of the task, a run's briefs ran to 17k characters — 4k of it what two tasks before it were asked and how
  * their reviews went, their work already in the copy.
@@ -223,6 +219,10 @@ const findingsText = (title: string, findings: readonly Finding[], approved: Tas
       ]
     : [];
 
+/**
+ * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
+ * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
+ */
 export const briefOf = (context: TaskContext & { primerRead?: string }): string => {
   const { task, state } = context;
   const files = context.files.map(

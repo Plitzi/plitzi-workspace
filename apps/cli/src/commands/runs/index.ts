@@ -27,7 +27,7 @@ export {
 } from './run/lifecycle';
 export type { FinishOptions } from './run/lifecycle';
 export { taskNext, taskTake } from './task/next';
-export { claimCommand, taskClaim, taskClaims, taskDiscard, taskProposeShared } from './task/files';
+export { claimCommand, taskDiscard, taskProposeShared } from './task/files';
 export type { ClaimOptions } from './task/files';
 export { taskCheck, taskComplete, taskFound, taskProgress, taskUnblock } from './task/work';
 export { taskProve } from './review/prove';

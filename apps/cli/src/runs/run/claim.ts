@@ -158,7 +158,6 @@ const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promi
   return { removed, kept };
 };
 
-/** `folder` and the ones above it, while empty — never the project's root nor its `tmp/`. */
 /**
  * What the lead handed the run from inside the project — a plan, its primer — moved into the run's own folder
  * (`inputs/`, or `inputs/<stage>/` for a stage), where the lead edits them for `run amend`: nothing of the run lies in
@@ -189,6 +188,7 @@ export const takeInputs = async (
   return moved;
 };
 
+/** `folder` and the ones above it, while empty — never the project's root nor its `tmp/`. */
 const removeEmptyFolders = async (root: string, folder: string): Promise<void> => {
   const stops = new Set([path.resolve(root), path.resolve(root, 'tmp')]);
   for (

@@ -186,7 +186,6 @@ export const duration = (value: string): number => {
   return Math.round(ms);
 };
 
-/** A duration as a person reads it: `45 s`, `1 min 30 s`, `8 min`, `1 h 30 min`. */
 /**
  * How long a command that waits (`task next`, `run watch`, `task claim --wait`) waits when not told: under
  * the ten minutes a harness gives one command (Claude Code's), so the agent hears it end rather than losing it to the
@@ -195,6 +194,7 @@ export const duration = (value: string): number => {
 // Eight, not nine: a minute of margin for the command's own start and end (a run's agents set --timeout 8m).
 export const FOLLOW_MS = 8 * 60_000;
 
+/** A duration as a person reads it: `45 s`, `1 min 30 s`, `8 min`, `1 h 30 min`. */
 export const durationText = (ms: number): string => {
   const seconds = Math.round(ms / 1000);
   if (seconds < 60) {
@@ -302,11 +302,6 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
   return [...(previous ?? []), { element, value: value.slice(at + 1) }];
 };
 
-/** `--expect <id>~<text>`, once per element: the element shows the text. */
-/**
- * What an element shows, expected: `<id>~<text>`, or `<path> <id>~<text>` for one page of several — the path its own
- * word, a leading `/`: `--expect "/faq faq-title~Questions"`.
- */
 /**
  * One `--expect` read: `<id>~<text>`, `<id>` alone — the element is shown, whatever it says (a swatch, a picture: a run's
  * design-2 wrote `id~`) — either after `!` for its opposite (a guest sees no band: `!home-following`), and `<path> …`
@@ -326,6 +321,10 @@ export const readExpectation = (value: string): Expectation | undefined => {
     : { element, text, ...(absent ? { absent: true as const } : {}), ...(scoped?.[1] ? { path: scoped[1] } : {}) };
 };
 
+/**
+ * `--expect`, once per element — what an element shows, expected: `<id>~<text>`, or `<path> <id>~<text>` for one page of
+ * several, the path its own word, a leading `/`: `--expect "/faq faq-title~Questions"`.
+ */
 export const expectation = (value: string, previous: readonly Expectation[] | undefined): Expectation[] => {
   const read = readExpectation(value);
   if (!read) {

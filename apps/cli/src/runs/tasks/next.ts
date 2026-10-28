@@ -383,11 +383,6 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
 };
 
 /**
- * `plitzi task next`: waits until a task is ready for the role — another task approved, a block lifted — the
- * lead says something to the agent, or none ever will be (every task of it done), or `timeoutMs` passes. What an agent between tasks runs, rather than
- * stopping because nothing is ready this very moment.
- */
-/**
  * `plitzi task next`: the next task, taken in the same breath. Another agent taking the one offered meanwhile is
  * no refusal: the next ready one is tried. A task handed back as the caller's own (`yours`) is not taken again — its
  * token is still good. One that cannot be taken for another reason is refused as `take` refuses it.
@@ -441,6 +436,11 @@ export const takeNext = async (
   }
 };
 
+/**
+ * `plitzi task next`: waits until a task is ready for the role — another task approved, a block lifted — the
+ * lead says something to the agent, or none ever will be (every task of it done), or `timeoutMs` passes. What an agent between tasks runs, rather than
+ * stopping because nothing is ready this very moment.
+ */
 export const followNext = async (
   ctx: RunContext,
   runId: string,

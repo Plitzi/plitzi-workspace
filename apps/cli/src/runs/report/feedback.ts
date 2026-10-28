@@ -66,16 +66,16 @@ export interface RunFeedback {
   plitziReadMost: { file: string; times: number }[];
   /** What each review asked when it sent a task back: the agent's mistake, or what Plitzi did not let it see. */
   reviewsAsked: { task: string; round: number; by: string; asked: string }[];
-  /**
-   * Each agent's life, in figures: how often it was started and stopped, its minutes at work, stopped and silent, and
-   * why it stopped — what a board reading "no signal" or a team stopped for good is read from (the report has its moments).
-   */
   /** What the agents' briefs weighed, part by part: which part of `task context` an agent reads again the most. */
   briefs?: Briefs;
   /** What the run cost, by agent and by piece (`RunReport['spend']`). */
   spend?: RunReport['spend'];
   /** Each task's UI review, as the report says it: by a designer, or by the lead without one. */
   reviews: { id: string; reviewedBy?: string[] }[];
+  /**
+   * Each agent's life, in figures: how often it was started and stopped, its minutes at work, stopped and silent, and
+   * why it stopped — what a board reading "no signal" or a team stopped for good is read from (the report has its moments).
+   */
   lives: {
     agent: string;
     launches: number;
@@ -276,9 +276,6 @@ export const feedbackText = (data: RunFeedback): string =>
         .map(([step, times]) => `  - ${step} ×${String(times)}`)
     ])
   ].join('\n');
-
-export const buildFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise<string> =>
-  feedbackText(await feedbackOf(ctx, loaded));
 
 /**
  * The run's feedback, written in its folder of reports — which the project's formatter, lint and typecheck leave alone

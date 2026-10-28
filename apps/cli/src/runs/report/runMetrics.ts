@@ -180,10 +180,6 @@ const REPEATED = 3;
 const REPEAT_WINDOW_MIN = 10;
 
 /**
- * A call an agent is meant to make again: a wait that ends on news, and `task next`, which hands one piece of
- * work a call. A run counted test-1's 14 `task next` in 6 min as a loop — one a fresh session each.
- */
-/**
  * A call meant to be made again: a wait, a take — and a dry run, tried after each edit of what it checks (a run's
  * scout dry-ran its stage three times as it fixed it, said "ran run open --dry-run 3 times").
  */

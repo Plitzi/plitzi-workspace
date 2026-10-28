@@ -114,7 +114,6 @@ export const checkPlanFile = async (ctx: RunContext, file: string): Promise<Chec
   return (await readCheckedPlan(ctx.root, file)).checked;
 };
 
-/** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
 /** A primer is read whole by every agent: past this it no longer saves what it is for. */
 export const MAX_PRIMER_BYTES = 16 * 1024;
 
@@ -164,6 +163,7 @@ export const heavyPrimer = (primer: string | undefined, tasks: number): string[]
     : [];
 };
 
+/** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
 export const readCheckedPlan = async (
   root: string,
   file: string
@@ -191,14 +191,14 @@ export const readCheckedPlan = async (
   }
 };
 
-/**
- * `plitzi run open`: the plan checked, its folder made, and every file it will touch backed up before anything is
- * touched. Above the threshold of §14, a person confirms the estimate first.
- */
 /** What a person grants when the lead may write the run into the project: said in the words they confirm. */
 const LEAD_FINISHES =
   'let the lead write it into the project itself, once its report is written and the checks pass on the whole result';
 
+/**
+ * `plitzi run open`: the plan checked, its folder made, and every file it will touch backed up before anything is
+ * touched. Above the threshold of §14, a person confirms the estimate first.
+ */
 export const openRun = async (
   ctx: RunContext,
   file: string,

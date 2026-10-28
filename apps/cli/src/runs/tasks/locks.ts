@@ -415,7 +415,6 @@ const holderTaskOf = async (
   return undefined;
 };
 
-/** Refuses the wait of `taskId` on `holder` that would close a cycle — a file or an answer, all the same — naming it. */
 /** The tasks that run only after `taskId`: those whose `dependsOn` names it, or names one of them. */
 const runsAfter = (loaded: LoadedRun, taskId: string): Set<string> => {
   const after = new Set<string>();
@@ -432,6 +431,7 @@ const runsAfter = (loaded: LoadedRun, taskId: string): Set<string> => {
   return after;
 };
 
+/** Refuses the wait of `taskId` on `holder` that would close a cycle — a file or an answer, all the same — naming it. */
 export const assertNoWaitCycle = async (loaded: LoadedRun, taskId: string, holder: string): Promise<void> => {
   // A task that runs only after this one hands nothing on before this one is approved: the wait would never end, and the
   // agent's harness gave up on it first (a run's dev-1, at t-moderation-demo).

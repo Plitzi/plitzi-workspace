@@ -142,7 +142,6 @@ export interface CompletedTask {
   report: { round: number; experience?: true };
 }
 
-/** What a check that passed still warned of, each as `<check>: <warning>`. */
 /**
  * The checks' warnings a review reads: those on a file the task changed, each — and the rest counted in a line, theirs
  * whose file it is. An integrate task's review listed an unused-file warning on a file it never touched.

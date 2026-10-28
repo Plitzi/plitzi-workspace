@@ -294,7 +294,6 @@ export const reportText = (report: DoctorReport): string => {
   return lines.join('\n');
 };
 
-/** The project as every check reads it, or a reason there is none to check. */
 /**
  * What the checks read of `project` — or why it cannot be read: a `package.json` that is not JSON, a project that
  * `plitzi create` did not write. Said by the caller, which decides whether that ends it.
@@ -333,6 +332,7 @@ export const projectContext = async (project: ExistingProject): Promise<DoctorCo
   };
 };
 
+/** The project as every check reads it, or a reason there is none to check. */
 const contextOf = async (): Promise<DoctorContext | undefined> => {
   const project = await projectHere('to check');
   if (!project) {

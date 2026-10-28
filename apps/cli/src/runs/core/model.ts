@@ -55,11 +55,10 @@ export type Quality = (typeof QUALITIES)[number];
 export type Needs = (typeof NEEDS)[number];
 
 /**
- * A line of a task's acceptance: what is asked — and, when a command can tell, the command that checks it: run in the
- * task's copy at `complete`, it passes on exit 0. `$PLITZI_URL` in it is the copy served, `plitzi` this CLI:
- * `plitzi page check /walks --url $PLITZI_URL --expect walks-title~October`.
+ * A line of a task's acceptance: a sentence the review weighs, or one a command proves — and the inventory's pieces it
+ * proves. The command runs in the task's copy at `complete` and passes on exit 0; `$PLITZI_URL` in it is the copy
+ * served, `plitzi` this CLI: `plitzi page check /walks --url $PLITZI_URL --expect walks-title~October`.
  */
-/** A line of acceptance: a sentence the review weighs, or one a command proves — and the inventory's pieces it proves. */
 export type Acceptance = string | { said: string; check: string; covers?: string[] };
 
 /** What a line of acceptance asks, said. */
@@ -321,8 +320,10 @@ export interface TaskState {
   round: number;
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
-  /** `review`: past the round limit, for the lead to decide — approve it as it is, or answer it (`task unblock`). */
-  /** `spike`: what its agent asked found out first — the lead's answer, lifting it, is the task's finding. */
+  /**
+   * What stops it: its agent's reason and who unblocks it (`task tell --blocked`); `review`: past the round limit, for the
+   * lead to decide — approve it as it is, or answer it (`task unblock`).
+   */
   blockedBy?: { reason: string; needs: Needs; review?: boolean };
   cutAt?: { step: string; reason: string; at: string };
   notes: TaskNote[];

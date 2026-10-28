@@ -20,7 +20,7 @@ import type { ProposeOptions } from './talk';
  * A task's files beyond its own: claimed by turns, released, waited for, put back, requested.
  */
 
-export const taskClaims = (options: RunCommandOptions): Promise<void> =>
+const taskClaims = (options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => claims(ctx, await runOf(ctx, options, undefined, { anyone: true })),
@@ -36,7 +36,7 @@ export const taskClaims = (options: RunCommandOptions): Promise<void> =>
   );
 
 /** `plitzi task claim a.ts b.ts`: each file taken by turns, one after the other — a refusal stops at that file, said. */
-export const taskClaim = (files: string[], options: RunCommandOptions): Promise<void> =>
+const taskClaim = (files: string[], options: RunCommandOptions): Promise<void> =>
   act(
     options,
     async ctx => {

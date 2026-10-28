@@ -56,8 +56,10 @@ export interface TaskContext {
   primer?: string;
   /** The skill files this task reads first, by the files it writes — the rest when its work asks. */
   reading: string[];
-  /** Each of the task's files — from its copy while it holds one, else the run's — as text when it is text and small. */
-  /** `toCreate`: a file of the task's that does not exist yet — it is the task's to write. */
+  /**
+   * Each of the task's files — from its copy while it holds one, else the run's — as text when it is text and small;
+   * `toCreate`: one that does not exist yet, the task's to write.
+   */
   files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
   /**
    * Where the rest of the project is read from for it — what its files import, the data's shapes: its copy while it

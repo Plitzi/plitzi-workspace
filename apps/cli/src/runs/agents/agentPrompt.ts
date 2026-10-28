@@ -179,11 +179,6 @@ export const agentPrompt = ({
 const quoted = (word: string): string => (/^[\w./:=@-]+$/.test(word) ? word : `'${word.replace(/'/g, `'\\''`)}'`);
 
 /**
- * The command line that starts an agent in `harness`, headless — said with its prompt read from its file, run with the
- * prompt itself — and the model the team names for it, where the harness takes one. Claude Code is let run the shell
- * and edit files in the project: a run's agent does nothing else.
- */
-/**
  * Whether a harness runs a model of that name: Claude Code a Claude one (`claude-…`, or its aliases), Codex any other,
  * opencode one written `provider/model`. The team's model is one name for every harness: one the harness does not run
  * would refuse to start the agent.
@@ -212,6 +207,11 @@ const effortFor = (harness: Harness, effort: Effort | undefined): string | undef
       ? 'xhigh'
       : effort;
 
+/**
+ * The command line that starts an agent in `harness`, headless — said with its prompt read from its file, run with the
+ * prompt itself — and the model the team names for it, where the harness takes one. Claude Code is let run the shell
+ * and edit files in the project: a run's agent does nothing else.
+ */
 export const harnessCommand = (
   harness: Harness,
   prompt: { file: string; text: string },

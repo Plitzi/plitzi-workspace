@@ -61,8 +61,6 @@ export const UPGRADE_PARTS = ['files', 'packages', 'skills', 'migrations'] as co
 export const pinnedParts = (wanted: ReadonlySet<string>): string[] =>
   UPGRADE_PARTS.filter(part => part !== 'skills' && wanted.has(part));
 
-export type UpgradePart = (typeof UPGRADE_PARTS)[number];
-
 export interface UpgradeOptions {
   write?: boolean;
   /** Files of the project's own to replace anyway — `all` for every one. */

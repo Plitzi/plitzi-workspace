@@ -327,7 +327,6 @@ const cliShim = async (cache: string): Promise<string> => {
   return dir;
 };
 
-/** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
 /** How many acceptance lines run at once on one served copy: each a browser, as a look's commands are. */
 const ACCEPTANCE_AT_ONCE = 2;
 
@@ -368,6 +367,7 @@ const NO_TEST =
 /** A line's exit that answers nothing: a page command that could not read (2), a command not found or not runnable. */
 const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
 
+/** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
   {

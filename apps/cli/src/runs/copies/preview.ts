@@ -55,7 +55,6 @@ export const previewDir = (paths: { cache: string }): string => path.join(paths.
 /** The run as the preview's page shows it in its dev tools (`RUN_STATUS_PATH`), written as it goes. */
 const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
 
-/** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
 /** Why a task is not moving, said once for every surface that shows the run: what it starts after, waits for, needs. */
 const whyOf = (task: TaskLine): { why?: string } =>
   task.asking
@@ -84,6 +83,7 @@ const whyOf = (task: TaskLine): { why?: string } =>
                     }
                   : {};
 
+/** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
 export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,
   goal: view.goal,

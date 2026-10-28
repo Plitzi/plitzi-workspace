@@ -297,7 +297,6 @@ export interface Difference {
   inherited?: true;
 }
 
-/** The properties that differ — here, there — and those the two share: what is read first, and what is said in a line. */
 /**
  * Two values the same but for lengths within half a pixel of each other: a box 404.98px and one 404.86px tall draw
  * alike — held to the sub-pixel, a line failed for what no eye sees and an agent tuned a margin to 63.93px to pass it.
@@ -319,6 +318,7 @@ const withinAPixel = (ours: string, theirs: string, share = 0): boolean => {
  */
 const SIZE_SHARE: Readonly<Record<string, number>> = { width: 0.001, height: 0.001 };
 
+/** The properties that differ — here, there — and those the two share: what is read first, and what is said in a line. */
 export const differences = (
   here: Measured,
   there: Measured,

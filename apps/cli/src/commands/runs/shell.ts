@@ -340,11 +340,11 @@ const runNamed = async (ctx: RunContext, options: RunCommandOptions, named?: str
   );
 };
 
-/** The task a command is about: its copy's, which a named one must match. */
 /** The task a token holds — none for an agent's own token (a reviewer's, one between tasks). */
 export const tokenTask = (ctx: Pick<RunContext, 'token'>): string | undefined =>
   ctx.token ? TOKEN.exec(ctx.token)?.[2] : undefined;
 
+/** The task a command is about: its copy's, which a named one must match. */
 export const taskOf = (ctx: Pick<RunContext, 'token'>, named?: string): string => {
   const fromToken = ctx.token ? TOKEN.exec(ctx.token)?.[2] : undefined;
   if (named && fromToken && named !== fromToken) {
@@ -359,7 +359,6 @@ export const taskOf = (ctx: Pick<RunContext, 'token'>, named?: string): string =
   return task;
 };
 
-/** Runs a command: its answer printed as text or JSON, a refusal as what it is and what to do next, with its exit code. */
 /** The command as it was run, a token's secret kept out: what the run's activity says was asked. */
 const commandLine = (): string =>
   ['plitzi', ...process.argv.slice(2)]
@@ -392,6 +391,7 @@ const logFailure = async (ctx: RunContext | undefined, options: RunCommandOption
     .catch(() => undefined);
 };
 
+/** Runs a command: its answer printed as text or JSON, a refusal as what it is and what to do next, with its exit code. */
 export const act = async <T>(
   options: RunCommandOptions,
   work: (ctx: RunContext) => Promise<T>,

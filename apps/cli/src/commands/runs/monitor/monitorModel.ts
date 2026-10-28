@@ -129,7 +129,6 @@ export const TASK_LOOK: Record<TaskLine['status'], { glyph: string; label: strin
   done: { glyph: '✓', label: 'approved', tone: 'success' }
 };
 
-/** Where an agent stands, as a glyph, a word and a tone — the word drawn in its tone wherever an agent is listed. */
 /**
  * How an agent comes to the run, as the monitor marks it beside its name: the base starts with the run and keeps
  * running, one on demand only while work waits for it — told apart at a glance (Carlos read no difference in a muted
@@ -144,6 +143,7 @@ export const startsLook = (
       ? { glyph: '◇', label: 'on demand', tone: 'info' }
       : { glyph: '◆', label: 'base', tone: 'success' };
 
+/** Where an agent stands, as a glyph, a word and a tone — the word drawn in its tone wherever an agent is listed. */
 export const AGENT_LOOK: Record<AgentStatus, { glyph: string; label: string; tone: Tone }> = {
   working: { glyph: '●', label: 'working', tone: 'primary' },
   reviewing: { glyph: '●', label: 'reviewing', tone: 'link' },

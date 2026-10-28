@@ -316,10 +316,6 @@ export const capture = async (page: BrowserPage, how: Framing): Promise<Uint8Arr
 };
 
 /**
- * One page, pictured: the project's own (`origin` given — in the space's theme when one is asked for) or another site,
- * in the scheme it is told.
- */
-/**
  * Runs in the page: every animation that ends, ended — the page as it settles — and every loop held at its start. The
  * space's own motion is held by `MOTION_STILL_CSS`; another site's, or one written by hand, ran on: a run's
  * comparisons caught the original's late arrivals mid-fade, and read them as changes (6% on an artist's page).
@@ -341,6 +337,10 @@ const endAnimations = (): void => {
   }
 };
 
+/**
+ * One page, pictured: the project's own (`origin` given — in the space's theme when one is asked for) or another site,
+ * in the scheme it is told.
+ */
 export const pictureOf = async (
   browser: Browser,
   url: string,

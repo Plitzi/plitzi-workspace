@@ -4,7 +4,7 @@
  * reviewed; and, approved, merged into the run's work — never into the project, which only the final merge reaches.
  */
 
-export { cleanPath, findTask, holderOf, holderOrCoordinator, withoutSignal } from './common';
+export { cleanPath, findTask, holderOf, holderOrCoordinator } from './common';
 export {
   allLocks,
   assertNoWaitCycle,

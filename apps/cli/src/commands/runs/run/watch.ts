@@ -92,7 +92,6 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
             ].join('\n')
   );
 
-/** `plitzi run watch`: the run as it goes, again whenever it changes — one JSON object a line with --json. */
 /**
  * Whether who watches leads the run: its watch ends on what needs it. Every lead's watch was `--until lead` (83 of 83 in
  * two runs); a person follows the run (`run monitor`, or this).
@@ -115,6 +114,7 @@ const watchedByLead = async (runId: string | undefined, options: WatchRunOptions
   }
 };
 
+/** `plitzi run watch`: the run as it goes, again whenever it changes — one JSON object a line with --json. */
 export const runWatch = async (runId: string | undefined, options: WatchRunOptions): Promise<void> => {
   if (await watchedByLead(runId, options)) {
     return watchForLead(runId, options);

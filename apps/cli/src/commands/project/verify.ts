@@ -105,17 +105,17 @@ export const runScript = (
 const FAILING = /^\s*(✗|✘|×|- |FAIL\b)|\berror\b|Error:/;
 
 /**
- * A step's output, as much as says why it failed: its lines that hold anything, the last `TAIL` of them — and, cut, the
- * ones that say what failed first, in their place. A page check says its failure above what it read (`·` lines): its
- * last lines alone were what passed (`✓ / at 390 px`), and the failure at 1440 was cut.
- */
-/**
  * A line a script prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — every failed
  * a run's `author` began with it, and a run's t-predictions went to review failing "the same way without
  * this task: .env not found".
  */
 export const isNotice = (line: string): boolean => /\.env not found|Continuing without it/.test(line);
 
+/**
+ * A step's output, as much as says why it failed: its lines that hold anything, the last `TAIL` of them — and, cut, the
+ * ones that say what failed first, in their place. A page check says its failure above what it read (`·` lines): its
+ * last lines alone were what passed (`✓ / at 390 px`), and the failure at 1440 was cut.
+ */
 export const tail = (output: string): string[] => {
   const lines = output
     .split('\n')

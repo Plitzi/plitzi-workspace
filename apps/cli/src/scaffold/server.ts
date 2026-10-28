@@ -83,17 +83,17 @@ ${serveCall([spaceProperty, ...(actions ? ['actions', 'connectors'] : []), 'serv
 `;
 };
 
-/**
- * What the project's server does besides serving the space, in a file of the project's own: `src/main.ts` is the CLI's
- * — `plitzi upgrade` keeps it current — and a server that needed its images, its actions' limits or its `kv` had to edit
- * it, and port the edit by hand at every upgrade.
- */
 /** What a local project's server options say about its actions — the server runs them itself. */
 const ACTION_OPTIONS_DOC = ` * - \`action: { limits: { maxRequests, timeoutMs } }\` — a server action reading many sources: 20 requests and 10 s a
  *   run by default. \`action.kv\` — where \`kv\` keeps what it writes: \`${KV_FILE}\` by default; \`action.jobs.queue\` —
  *   where \`ctx.later\`, the schedules and the jobs wait: \`${JOBS_FILE}\` by default (\`createSqliteJobQueue\`, a database's).
 `;
 
+/**
+ * What the project's server does besides serving the space, in a file of the project's own: `src/main.ts` is the CLI's
+ * — `plitzi upgrade` keeps it current — and a server that needed its images, its actions' limits or its `kv` had to edit
+ * it, and port the edit by hand at every upgrade.
+ */
 const serverOptionsModule = (
   local: boolean
 ): string => `import type { ProjectServerOptions } from '@plitzi/sdk-server/project';

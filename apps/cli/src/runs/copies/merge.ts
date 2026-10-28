@@ -65,8 +65,10 @@ export interface FinishPlan {
   /** Files written over a change made outside the run, as the lead decided: said, and the other version kept. */
   overwrites: { file: string; task: string; by: string; at: string }[];
   checks?: CheckResult;
-  /** Every done task's acceptance checks, run again on the whole result: what a later task may have broken. */
-  /** `reused`: every line held on this same result before, none run again; `kept`: how many of them, the rest run. */
+  /**
+   * Every done task's acceptance checks, run again on the whole result: what a later task may have broken. `reused`:
+   * every line held on this same result before, none run again; `kept`: how many of them, the rest run.
+   */
   acceptance?: { results: AcceptanceAgain[]; reused?: string; kept?: number };
 }
 
@@ -89,7 +91,6 @@ const planFinish = async (ctx: RunContext, approved: ApprovedManifest): Promise<
   return plan;
 };
 
-/** What stops a run from finishing: tasks in hand, tasks left (without `--leave-pending`), requests not integrated. */
 /** What needs someone and keeps a run from closing: each said where it is answered — a finish never leaves one behind. */
 const OPEN_ATTENTION: Readonly<Partial<Record<Attention['kind'], string>>> = {
   message: 'read and answer it: plitzi task inbox',
@@ -111,6 +112,7 @@ const assertNothingOpen = async (ctx: RunContext, runId: string): Promise<void> 
   }
 };
 
+/** What stops a run from finishing: tasks in hand, tasks left (without `--leave-pending`), requests not integrated. */
 const assertFinishable = async (loaded: LoadedRun, leavePending: boolean): Promise<string[]> => {
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const inHand = views.filter(view =>
