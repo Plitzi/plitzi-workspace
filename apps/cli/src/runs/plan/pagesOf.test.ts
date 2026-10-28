@@ -7,10 +7,13 @@ import {
   acceptanceAddresses,
   acceptancePages,
   acceptanceStatuses,
+  drawnAtNoPage,
   examplePaths,
   filledPattern,
-  pagesToLook
+  pagesToLook,
+  runPages
 } from './pagesOf';
+import { makeBench } from '../../tests/runProject';
 
 import type { AddressInfo } from 'node:net';
 
@@ -181,5 +184,60 @@ describe('the addresses an acceptance names', () => {
     // pattern itself, which a run's look could not reach.
     expect(filledPattern('/r/:slug/stats', named)).toBe('/r/night-drive/stats');
     expect(filledPattern('/rooms/:id/edit', named)).toBe('/rooms/:id/edit');
+  });
+});
+
+// A run's look left out home, where three of its changes showed: a plugin's code, a component placed by name, the tokens.
+describe('the pages a run’s result is looked at on', () => {
+  it('reaches a page through what imports a file at any depth, and says a file no page reaches', async () => {
+    const bench = await makeBench();
+    try {
+      // The plugin's code, read by its element's declaration, which home's hero places.
+      await bench.write('src/plugins/Clock/format.ts', 'export const format = (at: number) => String(at);\n');
+      await bench.write(
+        'src/plugins/Clock/declaration.ts',
+        "import { format } from './format.ts';\n\nexport default { type: 'clock', format };\n"
+      );
+      await bench.write(
+        'src/space/pages/home/hero.ts',
+        "import clock from '../../../plugins/Clock/declaration.ts';\n\nexport const hero = { text: 'Welcome', clock };\n"
+      );
+      // A component the space registers and pages place by its name: no page imports it.
+      await bench.write('src/space/components/plate.ts', "export const plate = { name: 'plate' };\n");
+      await bench.write(
+        'src/space/index.ts',
+        `${(await bench.read('src/space/index.ts')) ?? ''}import { plate } from './components/plate.ts';\n\nexport const components = [plate];\n`
+      );
+
+      expect(
+        await drawnAtNoPage(bench.root, [
+          'src/plugins/Clock/format.ts',
+          'src/space/components/plate.ts',
+          'src/space/pages/menu.ts',
+          'src/plugins/Clock/format.test.ts',
+          'src/functions/orders.ts'
+        ])
+      ).toEqual(['src/space/components/plate.ts']);
+    } finally {
+      await bench.cleanup();
+    }
+  });
+
+  it('takes every page the tasks’ acceptance checks, beside those its files are drawn at', async () => {
+    const bench = await makeBench();
+    try {
+      expect(
+        await runPages(
+          bench.root,
+          ['src/space/components/plate.ts'],
+          [
+            { acceptance: [{ said: 'Home says the zone', check: 'npx plitzi page check / --expect "next~UTC"' }] },
+            { acceptance: [{ said: 'Explore too', check: 'npx plitzi page check /rooms --width 1440,390' }] }
+          ]
+        )
+      ).toEqual(['/', '/rooms']);
+    } finally {
+      await bench.cleanup();
+    }
   });
 });

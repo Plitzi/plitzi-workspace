@@ -1,7 +1,7 @@
-import { PUBLIC_DIR, SOURCE_DIR } from '@plitzi/sdk-shared/project';
+import { PLUGINS_DIR, PUBLIC_DIR, SOURCE_DIR, SPACE_DIR } from '@plitzi/sdk-shared/project';
 
 import { authoredHandles } from './expectations';
-import { readOwnership } from '../copies/ownership';
+import { impactOf, readOwnership } from '../copies/ownership';
 import { acceptanceText } from '../core/model';
 import { shellCommands } from '../core/shell';
 
@@ -25,10 +25,20 @@ export const MAX_PAGES = 8;
 /** `walkFilter` → `walk-filter`: a file's name as a page's id is usually written. */
 const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
-/** The pages' files a task's files are drawn by: each file's owner, or the pages a shared one is reached from. */
-const pageUnits = async (root: string, files: readonly string[]): Promise<Set<string>> => {
+/** A page's file as the page's name: `src/space/pages/home.ts` → `home`. */
+const pageName = (file: string): string =>
+  file
+    .slice(PAGES.length)
+    .split('/')[0]
+    ?.replace(/\.[cm]?tsx?$/, '') ?? '';
+
+/**
+ * The pages' names each file is drawn by: its owner, or the pages a shared one is reached from — and the pages that
+ * import it at any depth, for a unit of its own: a plugin's `format.ts` reaches home through its element's declaration
+ * and the sections placing it, where a run's look, by its owner alone, found no page.
+ */
+const pagesByFile = async (root: string, files: readonly string[]): Promise<Map<string, string[]>> => {
   const ownership = await readOwnership(root);
-  // A shared file — a component, the theme — is drawn at the pages that reach it, not at none of them.
   const unitsOf = (file: string): string[] => {
     const owner = ownership.ownerOf.get(file);
     if (owner) {
@@ -38,19 +48,38 @@ const pageUnits = async (root: string, files: readonly string[]): Promise<Set<st
     return ownership.shared.get(file) ?? [file];
   };
 
-  return new Set(
-    files.flatMap(unitsOf).flatMap(unit =>
-      unit.startsWith(PAGES)
-        ? [
-            unit
-              .slice(PAGES.length)
-              .split('/')[0]
-              ?.replace(/\.[cm]?tsx?$/, '') ?? ''
-          ]
-        : []
-    )
+  return new Map(
+    files.map(file => [
+      file,
+      [
+        ...new Set(
+          [...unitsOf(file), ...impactOf(ownership, file).files]
+            .filter(unit => unit.startsWith(PAGES))
+            .map(pageName)
+            .filter(Boolean)
+        )
+      ]
+    ])
   );
 };
+
+/** The pages' names a task's files are drawn by. */
+const pageUnits = async (root: string, files: readonly string[]): Promise<Set<string>> =>
+  new Set([...(await pagesByFile(root, files)).values()].flat());
+
+/**
+ * The space's and plugins' files no page reaches by its imports — a component placed by name, the tokens and the theme
+ * every page is drawn with: what a look at the pages the run changed cannot find by itself, said rather than skipped.
+ */
+export const drawnAtNoPage = async (root: string, files: readonly string[]): Promise<string[]> =>
+  [...(await pagesByFile(root, files))]
+    .filter(
+      ([file, pages]) =>
+        pages.length === 0 &&
+        (file.startsWith(`${SPACE_DIR}/`) || file.startsWith(`${PLUGINS_DIR}/`)) &&
+        !/\.(test|spec)\.[cm]?[jt]sx?$/.test(file)
+    )
+    .map(([file]) => file);
 
 export const pagesOf = async (
   root: string,
@@ -76,6 +105,22 @@ export const pagesOf = async (
 
   return [...new Set(paths)].slice(0, most);
 };
+
+/**
+ * Every page a run's whole result is looked at on: those its approved files are drawn at — none cut — and every page its
+ * tasks' acceptance checks, as a task's look takes both: a run's look by imports alone left out home, where three of
+ * its changes showed (a component placed by name, the tokens, a plugin's code).
+ */
+export const runPages = async (
+  root: string,
+  files: readonly string[],
+  tasks: readonly { acceptance: readonly Acceptance[] }[]
+): Promise<string[]> => [
+  ...new Set([
+    ...(await pagesOf(root, files, Number.POSITIVE_INFINITY)),
+    ...tasks.flatMap(task => acceptancePages(task.acceptance))
+  ])
+];
 
 /** A pattern's parameters, `:slug`, as what one segment of an address may be. */
 const patternOf = (route: string): RegExp =>

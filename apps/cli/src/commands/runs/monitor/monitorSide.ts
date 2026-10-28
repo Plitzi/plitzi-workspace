@@ -270,32 +270,40 @@ export const drawSide = (
 };
 
 /**
- * Which moments of a stream open, and which are open: a tool's call opens with what it asked and what it answered — a
- * person opening the question read only the question, the answer on its own row still cut — its answer alone too.
+ * Which moments of a stream open, by which key, and which are open: a tool's call is one thing with its answer — one
+ * arrow, on the call, opens what it asked and what it answered (a person read two arrows for one call, and opening the
+ * question left the answer cut). An answer whose call is not in the stream any more opens by itself.
  */
 const openingOf = (
   moments: readonly SessionMoment[],
   opened: ReadonlySet<string>
-): { opens: (moment: SessionMoment) => boolean; open: (moment: SessionMoment) => boolean } => {
+): {
+  opens: (moment: SessionMoment) => boolean;
+  open: (moment: SessionMoment) => boolean;
+  keyOf: (moment: SessionMoment) => string;
+  paired: (moment: SessionMoment) => boolean;
+} => {
+  const calls = new Map(
+    moments.flatMap(moment =>
+      moment.kind === 'tool' && moment.call !== undefined ? [[moment.call, momentKey(moment)] as const] : []
+    )
+  );
   const answered = new Set(
     moments.flatMap(moment =>
       moment.kind === 'result' && moment.whole !== undefined && moment.call !== undefined ? [moment.call] : []
     )
   );
-  const callsOpen = new Set(
-    moments.flatMap(moment =>
-      moment.kind === 'tool' && moment.call !== undefined && opened.has(momentKey(moment)) ? [moment.call] : []
-    )
-  );
+  const callOf = (moment: SessionMoment): string | undefined =>
+    moment.kind === 'result' && moment.call !== undefined ? calls.get(moment.call) : undefined;
+  const keyOf = (moment: SessionMoment): string => callOf(moment) ?? momentKey(moment);
   const opens = (moment: SessionMoment): boolean =>
     moment.whole !== undefined || (moment.kind === 'tool' && moment.call !== undefined && answered.has(moment.call));
 
   return {
     opens,
-    open: moment =>
-      opens(moment) &&
-      (opened.has(momentKey(moment)) ||
-        (moment.kind === 'result' && moment.call !== undefined && callsOpen.has(moment.call)))
+    open: moment => opens(moment) && opened.has(keyOf(moment)),
+    keyOf,
+    paired: moment => callOf(moment) !== undefined
   };
 };
 
@@ -363,11 +371,13 @@ const drawStream = (
     const opens = opening.opens(moment);
     const open = opening.open(moment);
     if (opens) {
-      p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key: momentKey(moment) } });
+      p.hits.push({ row, from: col - 2, to: end, action: { kind: 'moment', key: opening.keyOf(moment) } });
     }
 
     if (moment.kind === 'result') {
-      canvas.put(row, col + 2, open ? '▾ ' : moment.failed ? '✗ ' : opens ? '▸ ' : '⎿ ', {
+      // An answer of a call in the stream wears no arrow: its call's opens both.
+      const arrow = !opening.paired(moment) && opens;
+      canvas.put(row, col + 2, moment.failed ? '✗ ' : arrow && open ? '▾ ' : arrow ? '▸ ' : '⎿ ', {
         fg: moment.failed ? theme.danger : theme.subtle
       });
       canvas.put(row, col + 4, clip(moment.text, Math.max(0, end - col - 4)), {

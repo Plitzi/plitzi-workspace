@@ -152,7 +152,8 @@ describe("the sidebar's stream of the agent followed", () => {
   });
 
   // Carlos: opening a call's arrow showed what it asked, never what it answered — two arrows to open for one call.
-  it('opens a tool call with its answer — paired by the call, another answering between them — and its answer alone', async () => {
+  // …and two arrows for one call: the answer's own arrow is gone, the call's opens both.
+  it('opens a tool call with its answer by one arrow — paired by the call, another answering between them', async () => {
     const data = await monitorRun(lead(), await open());
     const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
     const asked = { at: 't1', kind: 'tool' as const, text: 'Bash npx plitzi task check', call: 'c1' };
@@ -183,6 +184,13 @@ describe("the sidebar's stream of the agent followed", () => {
       );
 
     const closed = screen({});
+    const closedText = closed.canvas.text().join('\n');
+    expect(closedText).toMatch(/⎿ fail 1/);
+    expect(closedText).toMatch(/⎿ export const a/);
+    expect(closedText.match(/▸/g)).toHaveLength(2);
+    // A click on the answer opens its call: the one key both rows share.
+    const keys = closed.hits.flatMap(each => (each.action.kind === 'moment' ? [each.action.key] : []));
+    expect(new Set(keys).size).toBe(2);
     // The call says nothing more than its line: it opens for its answer.
     const hit = closed.hits.find(each => each.action.kind === 'moment' && each.action.key === momentKey(asked));
     const opened =
@@ -194,7 +202,7 @@ describe("the sidebar's stream of the agent followed", () => {
       );
     const text = screen({ streamOpened: opened?.streamOpened }).canvas.text().join('\n');
     expect(text).toMatch(/▾ Bash npx plitzi task check/);
-    expect(text).toMatch(/▾ fail 1\s*\n\s*fail 1\s*\n\s*✗ the charts read once/);
+    expect(text).toMatch(/⎿ fail 1\s*\n\s*fail 1\s*\n\s*✗ the charts read once/);
     expect(text).not.toContain('export const b');
   });
 

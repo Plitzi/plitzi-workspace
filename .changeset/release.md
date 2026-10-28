@@ -816,8 +816,8 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   a whole opened near the end ran past the bottom); down to the run, the tasks a third of what is free at most; the
   wheel down over it goes to earlier moments, where it stays as moments come; a click on a moment opens it whole
   under its line; `e` widens the sidebar. The activity says a long line as far as its row reaches, where every line was
-  cut at 72 characters, mid-screen. A tool call opens with its answer, paired by the call's id (another call may answer
-  between them), and its answer alone too. The session is read further back while its end holds too few moments, up to
+  cut at 72 characters, mid-screen. A tool call and its answer wear one arrow, on the call, which opens both — paired by
+  the call's id (another call may answer between them); an answer whose call scrolled out opens by itself. The session is read further back while its end holds too few moments, up to
   8 MB — a screenshot is a line of a megabyte, and a scout's stream read "nothing said or done yet" each time its last
   line was one — and an image's base64 is left out before a line is read, said in the answer as
   `[image · 287 KB, not shown]`.
@@ -855,6 +855,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **`run look` looks at every page the run changed:** the pages that import a changed file at any depth, and every page
+  the tasks' acceptance checks, beside each file's own page; what no page reaches by its imports — a component placed
+  by name, the tokens — is said. A run's look left out home, where three of its changes showed.
 - **A task sent back is reworked in the session it was worked in:** each `launch` in the run's log names its session,
   and an agent started again for a task sent back to it resumes the session it last completed that task in — Claude
   Code's, while it is on the machine and its context is at most `freshContextAt`, in tokens — told the task came back

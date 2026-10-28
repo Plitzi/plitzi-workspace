@@ -125,7 +125,11 @@ The lead reviews only three kinds of task:
 
 `run watch` wakes it for nothing else (`leadItems`). Before it finishes, the lead looks once at the whole result:
 `run look` (`commands/runs/look/runLook.ts`) serves the approved work as `run preview` does, checks every page the run
-changed, and pictures each at 1440 and 390, in light and dark. `run finish` asks for that look after the last approval
+changed, and pictures each at 1440 and 390, in light and dark. Its pages (`runPages`) are those the approved files are
+drawn at — a file's page owner, the pages that reach a shared one, and the pages that import it at any depth (a
+plugin's code through its element's declaration and the sections placing it) — and every page the tasks' acceptance
+checks; a file of the space or a plugin no page reaches by its imports — a component placed by name, the tokens — is
+said (`drawnAtNoPage`), with how to look at another page. `run finish` asks for that look after the last approval
 (`notLookedAtYet`).
 
 Planning, amending, stacking a stage, answering, notes to every task, reassigning, reverting, reconciling, the summary
@@ -217,7 +221,7 @@ activity reads: what the model said
 project's paths as short as they read. It takes the height down to the run — the tasks a third of what is free at most —
 and the wheel over it scrolls it back (`streamBack`), where it stays as moments come after (`keptBack`); a moment
 whose line says less — a message's lines, a command, an answer — opens under it by a click (▸, ▾ open: its `whole`, the
-first 4000 characters), a tool's call with its answer (the two share the call's id, `call`); `e` widens the sidebar.
+first 4000 characters), a tool's call with its answer, one arrow on the call for both (the two share the call's id, `call`); `e` widens the sidebar.
 The session is read from its end, further back while it holds too few moments (up to 8 MB), and an image an answer
 carries is left out before its line is read and said in its place, with its weight. An agent the run did not start — the lead, in the harness a person runs — has no
 session the run keeps, and the stream says so; one just started has none yet.

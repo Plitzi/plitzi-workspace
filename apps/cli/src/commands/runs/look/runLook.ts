@@ -5,7 +5,7 @@ import { answering, freePort } from '../../../runs/copies/acceptance';
 import { previewDir, startPreview } from '../../../runs/copies/preview';
 import { previewPort } from '../../../runs/copies/previewRecord';
 import { RunRefusal } from '../../../runs/core/refusal';
-import { acceptanceAddresses, examplePaths, pagesOf } from '../../../runs/plan/pagesOf';
+import { acceptanceAddresses, drawnAtNoPage, examplePaths, runPages } from '../../../runs/plan/pagesOf';
 import { assertStatus, loadRun, logRun, readApproved } from '../../../runs/run';
 import { checkAccount, sessionCookie } from '../../page/check/account';
 import { act, runOf } from '../shell';
@@ -25,6 +25,8 @@ export interface RunLooked {
   pages: string[];
   /** Pages the run changed that no link of the site and no line of its acceptance reaches: not looked at, said. */
   unreached: string[];
+  /** Files the run changed that no page reaches by its imports — a component placed by name, the tokens: said. */
+  drawnAtNoPage: string[];
   /** What `page check` said of them, as it says it. */
   check: string;
   /** Whether every page passed its check. */
@@ -74,7 +76,8 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
 
         // Every page the run changed — none cut at a task's few — each route made an address the site reaches, as the
         // project's account sees it: a run's look missed four and checked two patterns as written (a 404).
-        const changed = await pagesOf(dir, approved, Number.POSITIVE_INFINITY);
+        const changed = await runPages(dir, approved, loaded.tasks);
+        const nowhere = await drawnAtNoPage(dir, approved);
         const named = [...new Set(loaded.tasks.flatMap(task => acceptanceAddresses(task.acceptance)))];
         const account = await checkAccount(dir);
         const cookie = account === undefined || 'problem' in account ? undefined : await sessionCookie(url, account);
@@ -103,7 +106,16 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         ]);
         await logRun(ctx, loaded.paths, { action: 'run-look', pages: looked, passed: check.code === 0 });
 
-        return { runId: run, url, pages: looked, unreached, check: check.out, passed: check.code === 0, shots };
+        return {
+          runId: run,
+          url,
+          pages: looked,
+          unreached,
+          drawnAtNoPage: nowhere,
+          check: check.out,
+          passed: check.code === 0,
+          shots
+        };
       } finally {
         served?.stop();
       }
@@ -114,6 +126,11 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         ...(looked.unreached.length > 0
           ? [
               `Not looked at — no link of the site nor line of the run reaches them: ${looked.unreached.join(', ')} (look at one yourself: plitzi page check <address> --url ${looked.url})`
+            ]
+          : []),
+        ...(looked.drawnAtNoPage.length > 0
+          ? [
+              `Drawn at no page its imports reach — a component placed by name, the tokens — so looked at where the run's acceptance checks: ${looked.drawnAtNoPage.join(', ')} (another page: plitzi page check <address> --url ${looked.url})`
             ]
           : []),
         looked.check,
