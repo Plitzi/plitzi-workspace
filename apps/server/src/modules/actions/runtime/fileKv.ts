@@ -11,6 +11,8 @@ export type FileKvOptions = {
   file: string;
   /** Who holds it, said to a second process that tries: `this project's server, on port 8080`. */
   owner?: string;
+  /** Where the process that holds it answers, for a second one to be pointed there: `http://localhost:8080`. */
+  serves?: string;
 };
 
 export type FileKv = ActionKvAdapter & {
@@ -81,8 +83,8 @@ const load = (file: string): Map<string, KvEntry> => {
  * primary's through the fleet (`fleetKv`); replicas use `createSqliteKv` (`@plitzi/sdk-server/sqlite`) or a database.
  * And a whole file per change: right for what a site keeps, not for a counter bumped thousands of times a second.
  */
-export const createFileKv = ({ file, owner }: FileKvOptions): FileKv => {
-  const lock = holdFile(file, owner, 'createFileKv');
+export const createFileKv = ({ file, owner, serves }: FileKvOptions): FileKv => {
+  const lock = holdFile(file, { owner, serves }, 'createFileKv');
   let entries: Map<string, KvEntry>;
   try {
     entries = load(file);

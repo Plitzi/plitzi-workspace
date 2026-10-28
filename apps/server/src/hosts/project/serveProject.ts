@@ -4,6 +4,7 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
   assertProjectLayout,
   layoutFindingText,
@@ -100,6 +101,26 @@ const REPORTS: ReadonlySet<string> = new Set([
 ]);
 
 export const isStartupReport = (error: unknown): error is Error => error instanceof Error && REPORTS.has(error.name);
+
+/**
+ * A second server of the project, started while the first runs, said as what it is: the project already served, where,
+ * since when, and how to stop it — where it said a state file was in use by a process, with a stack (Carlos: "debería
+ * ser más amigable"). Undefined for a holder that serves nothing, whose own report is said as it is.
+ */
+export const alreadyServed = (error: Error): string | undefined => {
+  const holder: unknown = Reflect.get(error, 'holder');
+  if (error.name !== 'FileInUseError' || !isRecord(holder) || typeof holder.serves !== 'string') {
+    return undefined;
+  }
+
+  const port = new URL(holder.serves).port;
+  const since = typeof holder.since === 'string' ? holder.since.slice(11, 16) : '';
+
+  return [
+    `This project is already running at ${holder.serves}${typeof holder.pid === 'number' ? ` (process ${String(holder.pid)}${since ? `, since ${since} UTC` : ''})` : ''}.`,
+    `Open it there — or stop it before starting another: Ctrl+C in its terminal, or plitzi server stop${port ? ` --port ${port}` : ''}.`
+  ].join('\n');
+};
 
 type ServeProjectBase = {
   /** The space's server actions (`src/actions/`), found by their id. Left out, the server runs none. */
@@ -401,7 +422,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   const kv =
     serverOptions.action?.kv ??
     fleetKv(() => {
-      keptKv = createFileKv({ file: path.join(stateDir, path.basename(KV_FILE)), owner: holder });
+      keptKv = createFileKv({ file: path.join(stateDir, path.basename(KV_FILE)), owner: holder, serves: localUrl });
 
       return keptKv;
     });
@@ -420,7 +441,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
             fleetJobQueue(() => {
               keptJobs = createFileJobQueue({
                 file: path.join(stateDir, path.basename(JOBS_FILE)),
-                owner: holder
+                owner: holder,
+                serves: localUrl
               });
 
               return keptJobs;
@@ -596,7 +618,7 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
       throw error;
     }
 
-    console.error(error.message);
+    console.error(alreadyServed(error) ?? error.message);
     process.exitCode = 1;
     process.exit(1);
   }

@@ -9,10 +9,16 @@ import { serverLog } from './serverLog';
  * whole after each change. `createFileKv` and `createFileJobQueue` keep theirs this way.
  */
 
-/** Who holds a file: written beside it (`<file>.lock`) while a process has it. */
-type Holder = { pid: number; since: string; owner?: string };
+/**
+ * Who holds a file: written beside it (`<file>.lock`) while a process has it — and, for a server, the address it
+ * answers at (`serves`), which a second one started beside it is pointed to.
+ */
+export type FileHolder = { pid: number; since: string; owner?: string; serves?: string };
 
-const holderIn = (lock: string): Holder | undefined => {
+/** What a process says of itself as it takes a file: who it is, and where it answers. */
+export type HolderOf = { owner?: string; serves?: string };
+
+const holderIn = (lock: string): FileHolder | undefined => {
   try {
     const parsed: unknown = JSON.parse(fs.readFileSync(lock, 'utf8'));
 
@@ -20,7 +26,8 @@ const holderIn = (lock: string): Holder | undefined => {
       ? {
           pid: parsed.pid,
           since: 'since' in parsed && typeof parsed.since === 'string' ? parsed.since : '?',
-          ...('owner' in parsed && typeof parsed.owner === 'string' ? { owner: parsed.owner } : {})
+          ...('owner' in parsed && typeof parsed.owner === 'string' ? { owner: parsed.owner } : {}),
+          ...('serves' in parsed && typeof parsed.serves === 'string' ? { serves: parsed.serves } : {})
         }
       : undefined;
   } catch {
@@ -45,9 +52,13 @@ const running = (pid: number): boolean => {
  * reading the end of it found no word of what to do.
  */
 export class FileInUseError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
+  /** The process that holds it: a server says where it answers, for the one refused to point there. */
+  readonly holder: FileHolder;
+
+  constructor(message: string, holder: FileHolder, options?: ErrorOptions) {
     super(message, options);
     this.name = 'FileInUseError';
+    this.holder = holder;
   }
 }
 
@@ -72,10 +83,15 @@ process.once('exit', () => held.forEach(letGo));
  * `--watch` left running after a restart. So a file has one holder: a second is refused, naming the first. A lock whose
  * process is gone — killed, crashed — is taken over.
  */
-export const holdFile = (file: string, owner: string | undefined, store: string): string => {
+export const holdFile = (file: string, { owner, serves }: HolderOf, store: string): string => {
   const lock = `${file}.lock`;
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const mine: Holder = { pid: process.pid, since: new Date().toISOString(), ...(owner ? { owner } : {}) };
+  const mine: FileHolder = {
+    pid: process.pid,
+    since: new Date().toISOString(),
+    ...(owner ? { owner } : {}),
+    ...(serves ? { serves } : {})
+  };
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       fs.writeFileSync(lock, JSON.stringify(mine), { flag: 'wx' });
@@ -91,6 +107,7 @@ export const holdFile = (file: string, owner: string | undefined, store: string)
       if (holder && running(holder.pid)) {
         throw new FileInUseError(
           `${store}: ${file} is in use by process ${String(holder.pid)}${holder.owner ? ` — ${holder.owner}` : ''}, since ${holder.since}. Two processes on one file write over each other's changes: stop that one first, or point \`file\` elsewhere.`,
+          holder,
           { cause: error }
         );
       }

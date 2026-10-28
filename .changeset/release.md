@@ -1424,6 +1424,10 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Server (`@plitzi/sdk-server`)
 
+- **A project's server started while it already runs says so**: "This project is already running at
+  http://localhost:8080 (process …, since 18:26 UTC)", and how to stop it — where it said its `state/kv.json` was in use
+  by a process, with a stack. A file store's lock keeps where its holder answers (`serves`), and `FileInUseError`
+  carries the holder.
 - **A page withheld from its visitor keeps its layout's data:** the site around the refusal is read as on every page —
   its header, its inbox — and only the page's own providers are kept back. A run's withheld page drew a blank avatar
   and no inbox, every layout source "could not be reached".

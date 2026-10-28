@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createFileJobQueue } from './fileQueue';
 import { describeJobQueue } from './tests/jobQueueContract';
 import { FileInUseError } from '../../../helpers/fileStore';
-import { isStartupReport } from '../../../hosts/project/serveProject';
+import { alreadyServed, isStartupReport } from '../../../hosts/project/serveProject';
 
 import type { FileJobQueue } from './fileQueue';
 import type { JobInput } from '@plitzi/sdk-shared';
@@ -107,7 +107,17 @@ describe('a JSON file queue, across a restart', () => {
     expect(() => createFileJobQueue({ file })).toThrow(/is in use by process/);
     // Said as it is when the server starts — a stack ending on its cause's EEXIST told the agent nothing to do.
     expect(() => createFileJobQueue({ file })).toThrow(FileInUseError);
-    expect(isStartupReport(new FileInUseError('in use'))).toBe(true);
+    expect(isStartupReport(new FileInUseError('in use', { pid: 1, since: '2026-10-28T18:26:48.134Z' }))).toBe(true);
+    // A second server of the project, started while the first runs: said as the project already served, and where.
+    const served = new FileInUseError('in use', {
+      pid: 96869,
+      since: '2026-10-28T18:26:48.134Z',
+      serves: 'http://localhost:8080'
+    });
+    expect(alreadyServed(served)).toBe(
+      'This project is already running at http://localhost:8080 (process 96869, since 18:26 UTC).\nOpen it there — or stop it before starting another: Ctrl+C in its terminal, or plitzi server stop --port 8080.'
+    );
+    expect(alreadyServed(new FileInUseError('in use', { pid: 1, since: '?' }))).toBeUndefined();
 
     const other = fileIn();
     fs.mkdirSync(path.dirname(other), { recursive: true });

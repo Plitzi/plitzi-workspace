@@ -12,6 +12,8 @@ export type FileJobQueueOptions = {
   file: string;
   /** Who holds it, said to a second process that tries: `the server of "acme", on port 8080`. */
   owner?: string;
+  /** Where the process that holds it answers, for a second one to be pointed there: `http://localhost:8080`. */
+  serves?: string;
   /** How many finished jobs to keep before the oldest are dropped. Default 500. */
   retainFinished?: number;
   /** What the queue calls now, in epoch ms. */
@@ -66,10 +68,11 @@ const load = (file: string): QueueState => {
 export const createFileJobQueue = ({
   file,
   owner,
+  serves,
   retainFinished = 500,
   clock = Date.now
 }: FileJobQueueOptions): FileJobQueue => {
-  const lock = holdFile(file, owner, 'createFileJobQueue');
+  const lock = holdFile(file, { owner, serves }, 'createFileJobQueue');
   let state: QueueState;
   try {
     state = load(file);
