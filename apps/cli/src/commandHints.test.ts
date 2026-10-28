@@ -18,6 +18,10 @@ describe('what a refused command line meant', () => {
     expect(commandHint("error: unknown option '--clip'", ['page', 'shot', '/', '--clip', 'hero'])).toContain(
       '--within <element>'
     );
+    // Eleven runs: a brief cut short sent a reviewer to `task context --full`.
+    expect(commandHint("error: unknown option '--full'", ['task', 'context', '--full'])).toContain(
+      'plitzi task show <task> --full'
+    );
     expect(commandHint("error: unknown option '--element'", ['page', 'check', '/'])).toBeUndefined();
     expect(commandHint("error: unknown option '--full'", ['page', 'shot', '/', '--full'])).toContain('--viewport');
     expect(commandHint("error: unknown option '--clip'", ['task', 'look', 'd-x', '/', '--clip', 'hero'])).toContain(

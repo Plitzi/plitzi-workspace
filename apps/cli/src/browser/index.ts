@@ -154,6 +154,8 @@ export interface BrowserPage {
   close(): Promise<void>;
   /** Loaded again, as a visitor's reload: what the page kept (its storage, a cookie) read back. */
   reload(options: { waitUntil: 'load' }): Promise<unknown>;
+  /** Back in the tab's history, as a visitor's back button: null when there is nowhere to go back to. */
+  goBack(options: { waitUntil: 'load' }): Promise<unknown>;
   /** The page's clock — `Date` and its timers — held from an instant and moved on by hand (`--clock`, `tick`). */
   clock: {
     install(options: { time: number }): Promise<void>;
@@ -503,7 +505,7 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
     ...(view.timezone ? { timezoneId: view.timezone } : {}),
     ...(view.scale ? { deviceScaleFactor: view.scale } : {})
   });
-  await Promise.all([keepOthers(browser, page, origin), withoutDevTools(page)]);
+  await Promise.all([keepOthers(browser, page, origin), withoutDevTools(page), watchMainThread(page)]);
   await page
     .context()
     .addCookies([
@@ -562,3 +564,26 @@ const hideDevToolsInPage = (css: string): void => {
 
 const withoutDevTools = (page: BrowserPage): Promise<void> =>
   page.addInitScript(hideDevToolsInPage, HIDE_DEV_TOOLS_CSS);
+
+/** Where a page keeps the long tasks it ran — its main thread busy past 50 ms at a time — for `page check` to read. */
+export const LONG_TASKS = '__plitziLongTasks';
+
+/**
+ * Run in the page before its own scripts: each long task's length, as the browser reports it. A lead wrote a probe of
+ * its own to learn whether a room's page held its main thread — what a visitor feels as a page that does not answer.
+ */
+const recordLongTasks = (key: string): void => {
+  const kept: number[] = [];
+  Object.defineProperty(window, key, { value: kept, configurable: true });
+  try {
+    new PerformanceObserver(list => {
+      for (const entry of list.getEntries()) {
+        kept.push(Math.round(entry.duration));
+      }
+    }).observe({ type: 'longtask', buffered: true });
+  } catch {
+    // A browser with no long-task timing says nothing of it: an empty list, never a failure.
+  }
+};
+
+const watchMainThread = (page: BrowserPage): Promise<void> => page.addInitScript(recordLongTasks, LONG_TASKS);

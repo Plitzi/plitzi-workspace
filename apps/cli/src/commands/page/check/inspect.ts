@@ -10,6 +10,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInWhereSent } from './account';
+import { busyOf } from './busy';
 import { clickEffects } from './click';
 import { flushEdgesInPage, missedExpectations, textsInPage, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
@@ -19,7 +20,7 @@ import { isNotFoundPage, markedIn, meantPage, noPageMessage, notShown, pageFor, 
 import { statusIssuesOf } from './status';
 import { elementStyles } from './styles';
 import { faintTexts, textGrounds } from './themes';
-import { projectSettling } from '../../../browser';
+import { LONG_TASKS, projectSettling } from '../../../browser';
 import { playedOn } from '../shot/steps';
 import { prepareVisit } from '../visit';
 
@@ -377,6 +378,7 @@ const inspectHere = async (
         .map(each => each.id)
     )
   ];
+  const busy = busyOf(await page.evaluate((key: string) => Reflect.get(window, key) as unknown, LONG_TASKS));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   const statusIssues: CheckIssue[] = statusIssuesOf({
     pathname,
@@ -465,6 +467,7 @@ const inspectHere = async (
     hiddenAtWidth: report.hiddenAtWidth,
     empty: report.empty,
     ...(cut.length > 0 ? { cut } : {}),
+    ...(busy ? { busy } : {}),
     outOfUse: report.outOfUse,
     consoleErrors: errors,
     failedRequests,

@@ -89,7 +89,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, source, clock, tick, action, as, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, clock, tick, action, as, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -110,7 +110,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, store, state, source, clock, tick, action, as, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, clock, tick, action, as, shot, frames, separated by ";"'
     });
   });
 
@@ -139,6 +139,15 @@ describe('the steps that set what a page remembers and what time it is', () => {
       { kind: 'clock', time: Date.parse('2026-10-25T20:00:00Z') },
       { kind: 'tick', ms: 300_000 },
       { kind: 'tick', ms: 1500 }
+    ]);
+  });
+
+  // A reviewer could not test a typing flag left on one page and come back to: no step went back.
+  it('reads a way to another page of the session and back', () => {
+    expect(parseSteps('type q hola; goto /rooms; back', 500)).toEqual([
+      { kind: 'type', target: 'q', text: 'hola' },
+      { kind: 'goto', path: '/rooms' },
+      { kind: 'back' }
     ]);
   });
 

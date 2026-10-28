@@ -7,7 +7,13 @@ import { isPrincipal } from '../../../runs/agents/leads';
 import { DESIGN_LOOK, DESIGNER } from '../../../runs/agents/team';
 import { acceptanceText } from '../../../runs/core/model';
 import { copyOf } from '../../../runs/core/paths';
-import { acceptanceAccount, acceptanceAddresses, acceptanceStatuses, filledPattern } from '../../../runs/plan/pagesOf';
+import {
+  acceptanceAccount,
+  acceptanceAddresses,
+  acceptanceStatuses,
+  acceptanceVisitors,
+  filledPattern
+} from '../../../runs/plan/pagesOf';
 import { DESIGN_READING } from '../../../runs/plan/reading';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
@@ -15,6 +21,7 @@ import { projectExec } from '../../../scaffold/packageManager';
 import { act, runOf } from '../shell';
 import { briefText, readBrief } from './brief';
 import { shownText } from './show';
+import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import { showTask } from '../../../runs/view/show';
 import { takeOnRead } from '../review/takeOnRead';
 import { BEFORE_STOP, messageLines } from '../text';
@@ -22,6 +29,7 @@ import { BEFORE_STOP, messageLines } from '../text';
 import type { Brief } from './brief';
 import type { RunTask } from '../../../runs/core/model';
 import type { NextTask, TakenTask } from '../../../runs/tasks';
+import type { TaskShown } from '../../../runs/view/show';
 import type { RunCommandOptions } from '../shell';
 
 /**
@@ -70,13 +78,33 @@ export const taskNext = (
         answer =>
           answer.taken
             ? takenText(answer.taken)
-            : [nextText(answer, answer.agent), ...(answer.shown ? ['', shownText(answer.shown)] : [])].join('\n')
+            : [nextText(answer, answer.agent), ...(answer.shown ? ['', handedShow(answer.shown)] : [])].join('\n')
       )
     : act(
         options,
         async ctx => ({ ...(await nextTask(ctx, await runOf(ctx, options), options.role)), agent: ctx.agent }),
         answer => nextText(answer, answer.agent)
       );
+};
+
+/**
+ * What went to review, as `task next` hands it: whole while the answer stays one an agent reads again cheaply — past
+ * that, its diffs left out, each a command away (a run's review hand-off answered 15k characters, read again every turn).
+ */
+export const handedShow = (shown: TaskShown): string => {
+  const whole = shownText(shown);
+  if (whole.length <= LARGE_OUTPUT / 2) {
+    return whole;
+  }
+
+  return shownText({
+    ...shown,
+    files: shown.files.map(file =>
+      file.diff === undefined
+        ? file
+        : { file: file.file, change: file.change, withheld: file.diff.split('\n').length + (file.more ?? 0) }
+    )
+  });
 };
 
 /** The earlier reviews' notes, counted: the last one's are what this round answers. */
@@ -89,7 +117,7 @@ const earlierText = (review: { earlier: number; task: { id: string } }): string[
  * The look a review starts from, as `task next` offers it: its pages signed in as its acceptance checks them, and a
  * page its acceptance checks with a status of its own looked at with it — a run's offer left out t-retro-pass's 404.
  */
-const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): string[] => {
+export const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): string[] => {
   // A route's pattern offered as an address its acceptance names: a run's designer was handed `/messages/:username`.
   const named = acceptanceAddresses(task.acceptance);
   // Each page once, and a route no address fills left to the look, which follows the site's links to one: offered as
@@ -98,14 +126,36 @@ const lookCommand = (task: RunTask, drawnAt: readonly string[], also: string): s
   const pages = filled.filter(page => !page.includes('/:'));
   const unfilled = filled.filter(page => page.includes('/:'));
   const as = acceptanceAccount(task.acceptance);
-  const signedIn = as === undefined ? '' : ` --as ${as}`;
+  // Each page as its acceptance checks it — a guest's, an account's — the rest as the project's account would: one look
+  // as dax was sent away from the sign-in pages a header task changed for guests.
+  const visitors = acceptanceVisitors(task.acceptance);
+  const byVisitor = new Map<string, string[]>();
+  for (const page of pages) {
+    const visitor = visitors.get(page) ?? as ?? '';
+    byVisitor.set(visitor, [...(byVisitor.get(visitor) ?? []), page]);
+  }
+
+  const visitorText = (visitor: string): string =>
+    visitor === '' ? '' : visitor === 'guest' ? ' --guest' : ` --as ${visitor}`;
   const byStatus = new Map<number, string[]>();
   for (const { page, status } of acceptanceStatuses(task.acceptance)) {
     byStatus.set(status, [...(byStatus.get(status) ?? []), page]);
   }
 
+  const unfilledText =
+    unfilled.length > 0
+      ? `   # and ${unfilled.join(', ')}: name an address of ${unfilled.length === 1 ? 'it' : 'each'}`
+      : '';
+
   return [
-    `plitzi task look ${task.id} ${pages.length > 0 ? pages.join(' ') : '<page…>'}${signedIn}${also}${pages.length > 0 ? '' : '   # no page of the space owns its files: name the ones it shows on'}${unfilled.length > 0 ? `   # and ${unfilled.join(', ')}: name an address of ${unfilled.length === 1 ? 'it' : 'each'}` : ''}`,
+    ...(pages.length === 0
+      ? [
+          `plitzi task look ${task.id} <page…>${visitorText(as ?? '')}${also}   # no page of the space owns its files: name the ones it shows on${unfilledText}`
+        ]
+      : [...byVisitor].map(
+          ([visitor, seen], index) =>
+            `plitzi task look ${task.id} ${seen.join(' ')}${visitorText(visitor)}${also}${index === 0 ? unfilledText : ''}`
+        )),
     ...[...byStatus].map(
       ([status, pages]) => `plitzi task look ${task.id} ${pages.join(' ')} --status ${String(status)}`
     )

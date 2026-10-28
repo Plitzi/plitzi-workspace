@@ -105,6 +105,7 @@ const isStep = (value: unknown): value is ActingStep => {
       return typeof value.ms === 'number';
     // Every step a play takes, the other site's page too: a `goto` there went unread as "not a step".
     case 'reload':
+    case 'back':
       return true;
     case 'goto':
       return typeof value.path === 'string';

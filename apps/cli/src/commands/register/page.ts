@@ -4,7 +4,7 @@ import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, 
 import { expectation, fill, pagePath, pagePathList, positiveInteger, scale, statusCode, widths } from '../../options';
 import { check } from '../page/check';
 import { importPage } from '../page/importPage';
-import { measure, onlyProperties, sameProperties } from '../page/measure';
+import { expectedOf, measure, onlyProperties, sameProperties } from '../page/measure';
 import { keepBrowser } from '../page/measureKeeper';
 import { outline } from '../page/outline';
 import { play } from '../page/play';
@@ -127,6 +127,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option('--focus <element>', 'Focus an element on both pages first, as --hover does — with --click, after them')
     .option(
+      '--press <element>',
+      'Hold an element down on both pages first — the mouse pressed and kept — and measure it as :active draws it: a key that pops up when pressed'
+    )
+    .option(
       '--click <element...>',
       'Click elements on both pages first, in order — "menu-toggle => .menu-button" — and measure the open state they leave'
     )
@@ -135,6 +139,11 @@ export const registerPage = (pageGroup: Command): void => {
         '--same <properties>',
         'Fail unless these are as the other page’s — font-size,border,before:background-image, or any CSS property by name (shorthands: border, font, size): an acceptance’s line, measured'
       ).argParser(sameProperties)
+    )
+    .option(
+      '--expect <property=value>',
+      'Fail unless each element measured computes this property to this value, at every width — "transform=matrix(1, 0, 0, 1, 0, 3)"; one a flag: an acceptance line holding one page’s value',
+      expectedOf
     )
     .addOption(
       new Option(

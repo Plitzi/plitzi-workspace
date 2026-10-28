@@ -2,10 +2,11 @@ import chalk from 'chalk';
 
 import { keepLook, keptLook, lookKey, pagesLooked } from './lookParts';
 import { pathGroups } from './lookPaths';
-import { lookText } from './lookText';
+import { lookTextWithin } from './lookText';
 import { runPaths, taskPaths } from '../../../runs/core/paths';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { viewTask } from '../../../runs/core/taskStore';
+import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import { changesNoPage } from '../../../runs/plan/pagesOf';
 import { loadRun } from '../../../runs/run';
 import { findTask } from '../../../runs/tasks';
@@ -87,7 +88,10 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           covered
         );
         covered.push(...looked.pages);
-        looks.push({ said: groups.length > 1 ? visitorText(group) : undefined, text: lookText(looked) });
+        looks.push({
+          said: groups.length > 1 ? visitorText(group) : undefined,
+          text: lookTextWithin(looked, LARGE_OUTPUT)
+        });
       }
 
       const text = looks

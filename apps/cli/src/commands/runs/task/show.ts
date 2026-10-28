@@ -181,7 +181,7 @@ const withheldLines = (task: string, files: readonly ShownFile[], full: boolean)
   return left.length === 0
     ? []
     : [
-        `  Not shown, ${String(left.length)} file${left.length === 1 ? '' : 's'}: ${left.join(', ')} — plitzi task show ${task} <file> --diff${full ? '' : ', or --full for every file that fits one answer'}`
+        `  Not shown, ${String(left.length)} file${left.length === 1 ? '' : 's'}: ${left.join(', ')} — plitzi task show ${task} <file> --diff${full ? '' : `, or plitzi task show ${task} --full for every file that fits one answer`}`
       ];
 };
 

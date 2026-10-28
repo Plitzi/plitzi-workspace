@@ -10,6 +10,7 @@ import { copyOf } from '../runs/core/paths';
 import { USAGE_OFF } from '../runs/core/usage';
 
 import type { Scheme } from './index';
+import type { StateAsked } from '../commands/page/measureState';
 import type { Measured, MeasuredExtra } from '../commands/page/measureValues';
 import type { Outline } from '../commands/page/outline';
 import type { ElementState } from '../commands/page/playState';
@@ -220,7 +221,11 @@ export interface KeptAsk extends KeptView {
    * Read in a state — elements hovered, focused or clicked in turn first — on a page of its own, never one others read:
    * a state left on a kept page would be the next reader's.
    */
-  state?: { kind: 'hover' | 'focus' | 'click'; targets: string[]; then?: { kind: 'hover' | 'focus'; target: string } };
+  state?: {
+    kind: StateAsked['kind'];
+    targets: string[];
+    then?: { kind: NonNullable<StateAsked['then']>['kind']; target: string };
+  };
 }
 
 /** An outline of the other page — what a click opened, or one part — read on a page of its own. */

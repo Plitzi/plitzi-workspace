@@ -244,6 +244,16 @@ describe('explain --search', () => {
       'filter:ago'
     );
     expect(explainSearch('the of in')).toEqual([]);
+    // Asked four ways by two agents of a run, none answered first: whether a form was submitted, as they put it.
+    for (const words of [
+      'form errors shown after submit touched field',
+      'form validation error before submit',
+      'form submitted'
+    ]) {
+      expect(explainSearch(words, 3).map(hit => `${hit.kind}:${hit.name}`)).toContain(
+        'field:apiContainer_<id>.submitted'
+      );
+    }
   });
 
   it('says an element’s source, field by field', () => {

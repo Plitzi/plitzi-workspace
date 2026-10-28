@@ -345,6 +345,33 @@ export const acceptanceAccount = (acceptance: readonly Acceptance[]): string | u
     .at(0);
 
 /**
+ * Who each page its acceptance checks is checked as — an account (`--as dax`), a guest (`--guest`), or the project's
+ * own when a line says neither: a header task checked /sign-in and /sign-up as a guest and /messages as dax, and its
+ * look opened all of them as dax — sent away from the sign-in pages, it never saw the keys it was about.
+ */
+export const acceptanceVisitors = (acceptance: readonly Acceptance[]): Map<string, string> => {
+  const visitors = new Map<string, string>();
+  for (const words of acceptance.flatMap(line => (typeof line === 'string' ? [] : shellCommands(line.check)))) {
+    const at = words.findIndex((word, index) => word === 'page' && PAGE_COMMANDS.has(words[index + 1] ?? ''));
+    if (at === -1) {
+      continue;
+    }
+
+    const account = words.includes('--guest') ? 'guest' : words.at(words.indexOf('--as') + 1);
+    const visitor = account !== undefined && (account === 'guest' || words.includes('--as')) ? account : undefined;
+    const rest = words.slice(at + 2);
+    const firstOption = rest.findIndex(word => word.startsWith('--'));
+    for (const page of (firstOption === -1 ? rest : rest.slice(0, firstOption)).filter(word => word.startsWith('/'))) {
+      if (visitor !== undefined && !visitors.has(page)) {
+        visitors.set(page, visitor);
+      }
+    }
+  }
+
+  return visitors;
+};
+
+/**
  * The pages a look opens: those asked — else those its files are drawn at and those its acceptance checks, together —
  * else the home page. A run's look at a plugin's file, drawn at no page, pictured the home page, where none of its
  * reactions is; a run's left out the 404 its acceptance checked, its files drawn at other pages.

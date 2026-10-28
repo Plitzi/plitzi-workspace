@@ -2,7 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { lookText, picturesText, unpicturedText } from './lookText';
+import { lookText, lookTextWithin, picturesText, unpicturedText } from './lookText';
 
 type Looked = Parameters<typeof lookText>[0];
 
@@ -196,5 +196,50 @@ describe('a look whose page says other words outside its parts', () => {
     expect(text).toContain('/rooms moved outside its parts too');
     // Said by the element and what of it differs — never two lines of twenty fields.
     expect(text).toContain('a: box 0,0,12x10 → 0,0,10x10');
+  });
+});
+
+// A designer's look of fifteen pages answered 23k characters, read again on every turn after.
+describe('a look past one answer', () => {
+  it('keeps what a review acts on and says in a line each what it leaves out — whole while short', () => {
+    const pages = Array.from({ length: 15 }, (_, index) => `/p${String(index)}`);
+    const looked = {
+      task: 't-header-keys',
+      url: 'http://127.0.0.1:50000',
+      ok: false,
+      check: pages
+        .flatMap(page => [
+          `✓ ${page} at 1440 px — 40 elements on screen, nothing wrong`,
+          '  · hidden at this width by a breakpoint, on purpose: site-burger',
+          `  · lists: ${'list-of-things 3 rows, '.repeat(6)}`
+        ])
+        .concat(['✗ /sign-in at 390 px', '  - "site-sign-in" is cut off at the edge of the screen by 12px'])
+        .join('\n'),
+      shots: pages.flatMap(page => [
+        `/run/shots/${page.slice(1)}-1440-light.png`,
+        `/run/shots/${page.slice(1)}-390-dark.png`
+      ]),
+      compared: pages.map(page => ({
+        route: page,
+        width: '1440',
+        scheme: 'light',
+        changed: 0,
+        sections: [],
+        dress: []
+      })),
+      timezone: 'UTC'
+    } as unknown as Looked;
+
+    const whole = stripVTControlCharacters(lookTextWithin(looked, 100_000));
+    expect(whole).toBe(stripVTControlCharacters(lookText(looked)));
+
+    const within = stripVTControlCharacters(lookTextWithin(looked, 3000));
+    expect(within.length).toBeLessThan(whole.length / 2);
+    // What it acts on first — the failure — is kept whole.
+    expect(within).toContain('"site-sign-in" is cut off at the edge of the screen by 12px');
+    expect(within).toContain('30 lines of lists and hidden parts left out: plitzi page check <page> says them');
+    expect(within).toContain('in /run/shots/');
+    expect(within).toContain('(30 pictures)');
+    expect(within).toContain('Nothing changed beside the run before it at 15 more');
   });
 });

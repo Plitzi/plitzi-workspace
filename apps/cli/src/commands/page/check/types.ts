@@ -105,6 +105,11 @@ export interface CheckReport {
    * of itself (data that varies is cut on purpose); `--expect "<id>~<text>"` holds one whole.
    */
   cut?: string[];
+  /**
+   * How long its main thread was busy in long tasks while it loaded — said past a quarter of a second, never a problem
+   * of itself: a development build runs long, and a visitor feels it as a page slow to answer.
+   */
+  busy?: { tasks: number; longest: number; total: number };
   /** Owed controls out of use on purpose — transparent and taking no press: an arrow at its end. Said, not a problem. */
   outOfUse: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */

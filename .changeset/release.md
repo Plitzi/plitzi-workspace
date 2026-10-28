@@ -856,6 +856,21 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **`page measure --expect property=value`** fails unless each element measured computes it, at every width: an
+  acceptance line holding one page's value (a key latched) piped `--json` into `node -e`. **`--press <element>`** holds
+  one down first, as `:active` draws it.
+- **`page play`, `page shot` and `page measure` take a `back` step**, as the browser's back: a page's state left and
+  come back to could not be tested.
+- **`page check` says a page's main thread busy as it loaded:** its long tasks, past a quarter of a second in all — a
+  lead wrote a probe of its own to learn whether a room's page held its main thread.
+- **`task look` past one answer keeps what a review acts on:** each page's lists, the pictures' names and the
+  comparisons where nothing changed are said in a line each — a designer's look of fifteen pages answered 23k.
+- **A review's look opens each page as its acceptance checks it** — `--guest`, `--as <account>` — where one look as
+  the task's account was sent away from the sign-in pages a header task changed for guests.
+- **`task next` hands a review whole while short, its diffs a command away past that:** a hand-off answered 15k.
+- **`task context --full` is answered with the commands that give it:** `--files`, and `task show <task> --full`.
+- **`explain` finds a form's `submitted` as agents ask for it** ("form errors shown after submit touched field"):
+  asked four ways by two agents, none answered first, seven runs running.
 - **A note or a brief cut short names the command that gives it whole** (`plitzi task show <task> --full`): said
   inside `task next`'s review hand-off too, a bare "--full" was tried on `task context`, which has none.
 - **A form says a submit was tried, and starts a flow when it refuses one** (`@plitzi/sdk-elements`,

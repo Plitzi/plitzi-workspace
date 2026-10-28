@@ -50,6 +50,8 @@ export type PageStep =
   | { kind: 'wait-for'; target: string; ms?: number }
   | { kind: 'reload' }
   | { kind: 'goto'; path: string }
+  /** Back where the visitor came from, as the browser's back does: a page's state left and come back to. */
+  | { kind: 'back' }
   | { kind: 'store'; key: string; value: string }
   | { kind: 'state'; key: string; value: unknown }
   | { kind: 'source'; key: string; value: unknown }
@@ -76,6 +78,7 @@ const STEP_NAMES = [
   'wait-for',
   'reload',
   'goto',
+  'back',
   'store',
   'state',
   'source',
@@ -330,6 +333,10 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         }
 
         steps.push({ kind: 'goto', path: argument });
+        break;
+      // A reviewer could not test a typing flag left on one page and come back to: no step went back.
+      case 'back':
+        steps.push({ kind: 'back' });
         break;
       case 'store': {
         const [key, ...value] = rest;

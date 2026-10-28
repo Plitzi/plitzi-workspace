@@ -60,11 +60,18 @@ export interface MeasureOptions extends VisitorOptions {
    */
   same?: string[];
   /**
+   * A property each element measured must hold, as the browser computes it — `transform=matrix(1, 0, 0, 1, 0, 3)` — or
+   * the command fails: an acceptance line holding one page's value (a key latched) piped `--json` into `node -e`.
+   */
+  expect?: Expected[];
+  /**
    * An element hovered, or focused, on both pages before the rest is measured — `fight-card => .fight-card`: what a
    * state changes, held by `--same` as the rest is (a run's medal fade could only be read by hand).
    */
   hover?: string;
   focus?: string;
+  /** An element held down on both pages — the mouse pressed and kept — as `:active` draws it. */
+  press?: string;
   /**
    * Elements clicked on both pages, in order, before the rest is measured — `menu-toggle => .menu-button`: an open
    * state, a drawer and a panel in it (a run's designer measured the original's filter drawer by a script of its own).
@@ -135,9 +142,53 @@ const measuredProperties =
     return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
   };
 
-/** What a measure reads besides what always is: the properties `--only` and `--same` name beyond those. */
-const extraAsked = (options: Pick<MeasureOptions, 'only' | 'same'>): MeasuredExtra =>
-  extraOf([...(options.only ?? []), ...(options.same ?? [])]);
+/** One `--expect`: a property, and the value it must compute to. */
+export interface Expected {
+  property: string;
+  value: string;
+}
+
+/** `--expect property=value`, each its own flag: a value holds commas (`matrix(1, 0, 0, 1, 0, 3)`), never a list. */
+export const expectedOf = (value: string, previous: Expected[] = []): Expected[] => {
+  const at = value.indexOf('=');
+  const property = at === -1 ? '' : value.slice(0, at).trim();
+  if (property === '' || !PROPERTY_NAME.test(property)) {
+    throw new InvalidArgumentError(
+      'takes a CSS property and the value it must compute to — transform=none, after:content="•" — one a flag'
+    );
+  }
+
+  return [...previous, { property, value: value.slice(at + 1).trim() }];
+};
+
+/** A computed value as compared: its spaces as one, so `matrix(1,0,…)` and `matrix(1, 0, …)` read alike. */
+const valueText = (value: string): string =>
+  value
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Each element read whose property is not the value expected: a line each, said where the command fails. */
+export const expectationsMissed = (readings: readonly Reading[], expected: readonly Expected[]): string[] =>
+  readings.flatMap(({ here, pair, width }) => {
+    if ('problem' in here) {
+      return [];
+    }
+
+    return expected.flatMap(({ property, value }) => {
+      const actual = Object.hasOwn(here.styles, property) ? here.styles[property] : undefined;
+
+      return actual !== undefined && valueText(actual) === valueText(value)
+        ? []
+        : [
+            `--expect ${property}=${value}: ${pair.here} at ${String(width)} px ${actual === undefined ? 'has none read' : `is ${actual}`}`
+          ];
+    });
+  });
+
+/** What a measure reads besides what always is: the properties `--only`, `--same` and `--expect` name beyond those. */
+const extraAsked = (options: Pick<MeasureOptions, 'only' | 'same' | 'expect'>): MeasuredExtra =>
+  extraOf([...(options.only ?? []), ...(options.same ?? []), ...(options.expect ?? []).map(each => each.property)]);
 
 /** The properties asked by name that the browser knows no property by: `--only glow`, refused before anything is read. */
 const unknownProperties = async (browser: Browser, extra: MeasuredExtra): Promise<string[]> => {
@@ -447,8 +498,10 @@ export const measure = async (route: string, elements: string[], options: Measur
 
   // Clicks first, in order, then one element hovered or focused: a menu opened and an item of it hovered. A hover
   // and a focus at once are no state a visitor reaches.
-  if (options.hover !== undefined && options.focus !== undefined) {
-    fail('One hovered or one focused at a time: --hover or --focus — after --click … when it is inside what they open');
+  if ([options.hover, options.focus, options.press].filter(each => each !== undefined).length > 1) {
+    fail(
+      'One hovered, focused or held down at a time: --hover, --focus or --press — after --click … when it is inside what they open'
+    );
 
     return;
   }
@@ -458,7 +511,9 @@ export const measure = async (route: string, elements: string[], options: Measur
       ? { kind: 'hover', pair: pairOf(options.hover) }
       : options.focus !== undefined
         ? { kind: 'focus', pair: pairOf(options.focus) }
-        : undefined;
+        : options.press !== undefined
+          ? { kind: 'press', pair: pairOf(options.press) }
+          : undefined;
   const state: StateAsked | undefined =
     options.click !== undefined
       ? { kind: 'click', pairs: options.click.map(pairOf), ...(last ? { then: last } : {}) }
@@ -566,9 +621,13 @@ export const measure = async (route: string, elements: string[], options: Measur
       here: onlyOf(reading.here, options.only),
       ...(reading.there ? { there: onlyOf(reading.there, options.only) } : {})
     }));
-    const failed = readings.some(
-      reading => 'problem' in reading.here || (reading.there && 'problem' in reading.there) || reading.unlike.length > 0
-    );
+    const missed = expectationsMissed(readings, options.expect ?? []);
+    const failed =
+      missed.length > 0 ||
+      readings.some(
+        reading =>
+          'problem' in reading.here || (reading.there && 'problem' in reading.there) || reading.unlike.length > 0
+      );
     const widths = options.width ?? [1440];
     const kept = target ? keptText(readings, now) : undefined;
     const noPage = await noPageNote(project.root, route);
@@ -593,7 +652,8 @@ export const measure = async (route: string, elements: string[], options: Measur
                 ? differences(reading.here, reading.there)
                 : {})
             })),
-            ...(options.same ? { same: options.same } : {})
+            ...(options.same ? { same: options.same } : {}),
+            ...(options.expect ? { expected: options.expect, missed } : {})
           })
         : [
             ...(state
@@ -627,7 +687,16 @@ export const measure = async (route: string, elements: string[], options: Measur
                     )
                   )
               )
-            ])
+            ]),
+            ...(options.expect === undefined
+              ? []
+              : missed.length === 0
+                ? [
+                    chalk.green(
+                      `✓ --expect ${options.expect.map(each => `${each.property}=${each.value}`).join(', ')}: every element read holds it`
+                    )
+                  ]
+                : missed.map(line => chalk.red(`✗ ${line}`)))
           ].join('\n')
     );
     // The other page's element not there is the question's, not this page's: unanswered (a run's logo line read the

@@ -164,6 +164,11 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
           `  · cut short at this width, by a box that cuts its text (an ellipsis, a clipped overflow): ${report.cut.join(', ')} — on purpose for data that varies; --expect "<id>~<text>" holds one whole`
         )
       : undefined;
+  const busy = report.busy
+    ? chalk.dim(
+        `  · its main thread busy in ${String(report.busy.tasks)} long task${report.busy.tasks === 1 ? '' : 's'} as it loaded, the longest ${String(report.busy.longest)} ms (${String(report.busy.total)} ms in all) — a visitor waits that long for a press to answer; a development build runs longer`
+      )
+    : undefined;
   const empty =
     report.empty.length > 0
       ? chalk.dim(`  · empty, with nothing in them yet and no size: ${report.empty.join(', ')}`)
@@ -179,6 +184,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
       ),
       ...(atWidth ? [atWidth] : []),
       ...(cut ? [cut] : []),
+      ...(busy ? [busy] : []),
       ...(empty ? [empty] : []),
       ...(outOfUse ? [outOfUse] : []),
       ...held

@@ -21,7 +21,8 @@ const declaration = elementDeclaration<FormAttributes>()({
   publishes: {
     values: "Each field's value, by its name",
     errors: "Each field's error, by its name — none while it is valid",
-    submitted: 'Whether a submit was tried — valid or not — since the form was shown or reset'
+    submitted:
+      "Whether a submit was tried — valid or not — since the form was shown or reset: what shows an error only after a submit, or hides a field's hint once one was tried (no `touched`: a field's own error shows once the field is left)"
   },
   triggers: {
     onSubmit: {

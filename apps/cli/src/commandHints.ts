@@ -55,6 +55,11 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots'
   },
   'task look': { '--clip': 'one part of each page pictured alone: plitzi task look <task> --within <element>' },
+  // Eleven runs reached for it: a brief's whole files are --files, a task's whole notes and diffs task show's --full.
+  'task context': {
+    '--full':
+      'its files whole: plitzi task context --files — the task’s notes, brief and diffs whole: plitzi task show <task> --full'
+  },
   'task check': {
     '--before': 'what a task’s acceptance proves is task prove: plitzi task prove <task> --before',
     '--mutate':

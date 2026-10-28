@@ -2,7 +2,9 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { nextText } from './next';
+import { handedShow, lookCommand, nextText } from './next';
+
+import type { TaskShown } from '../../../runs/view/show';
 
 // An agent met Plitzi's frictions and said them only in its last words, which the run's feedback never reads.
 describe('plitzi task next, with nothing left', () => {
@@ -37,5 +39,70 @@ describe('what the lead said, in an answer', () => {
     ).split('\n');
 
     expect(said.at(-1)).toBe('  ✉ lead (m2): Stop b-38 now');
+  });
+});
+
+// A review hand-off answered 15k characters — its diffs whole — read again on every turn after.
+describe('what went to review, as task next hands it', () => {
+  const shown = (diff: string): TaskShown => ({
+    task: {
+      id: 't-home',
+      title: 'Translate home',
+      files: ['src/space/pages/home/index.ts'],
+      dependsOn: [],
+      priority: 'high',
+      estimateMinutes: 10,
+      acceptance: ['Home reads in Spanish'],
+      kind: 'work'
+    },
+    status: 'in-review',
+    round: 0,
+    from: 'submitted',
+    files: [{ file: 'src/space/pages/home/index.ts', change: 'changed', diff }],
+    checks: 'passed',
+    notes: [],
+    agreements: [],
+    unanswered: [],
+    requests: [],
+    messages: [],
+    next: []
+  });
+
+  it('is whole while short, and past half of a large answer leaves its diffs a command away', () => {
+    expect(stripVTControlCharacters(handedShow(shown('+ export const home = 1;')))).toContain('export const home = 1;');
+
+    const long = Array.from({ length: 200 }, (_, at) => `+ export const line${String(at)} = '${'x'.repeat(40)}';`).join(
+      '\n'
+    );
+    const handed = stripVTControlCharacters(handedShow(shown(long)));
+    expect(handed).not.toContain('line199');
+    expect(handed).toContain('Not shown, 1 file: src/space/pages/home/index.ts (200 lines)');
+    expect(handed).toContain('plitzi task show t-home <file> --diff, or plitzi task show t-home --full');
+    expect(handed).toContain('Home reads in Spanish');
+  });
+});
+
+// A header task checked /sign-in and /sign-up as a guest and /messages as dax: its look opened all as dax, and a signed-in
+// visitor is sent away from the sign-in pages — it never saw the keys it was about.
+describe('the look a review is handed', () => {
+  it('opens each page as its acceptance checks it — a guest, an account — the rest as the account it names', () => {
+    const task = {
+      id: 't-header-keys',
+      title: 'Header keys latch',
+      files: ['src/space/shell/account.ts'],
+      dependsOn: [],
+      priority: 'high' as const,
+      estimateMinutes: 10,
+      kind: 'work' as const,
+      acceptance: [
+        { said: 'Sign in latches', check: 'plitzi page check /sign-in /sign-up --guest --width 390' },
+        { said: 'Mail latches', check: 'plitzi page check /messages --as dax --width 390' }
+      ]
+    };
+
+    expect(lookCommand(task, ['/sign-in', '/sign-up', '/messages', '/rooms'], ' --before')).toEqual([
+      'plitzi task look t-header-keys /sign-in /sign-up --guest --before',
+      'plitzi task look t-header-keys /messages /rooms --as dax --before'
+    ]);
   });
 });

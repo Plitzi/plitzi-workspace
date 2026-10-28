@@ -11,17 +11,22 @@ import type { SettlingRequest } from '@plitzi/sdk-authoring';
 
 /** The state both pages are measured in: an element of each hovered or focused first, or clicked, one after another. */
 export interface StateAsked {
-  kind: 'hover' | 'focus' | 'click';
+  kind: 'hover' | 'focus' | 'press' | 'click';
   /** One hovered or focused; clicked, each in turn. */
   pairs: Pair[];
   /**
    * After the clicks, one element hovered or focused: a state reached in two moves — a menu opened, an item of it
    * hovered (a run's design-1 asked it of `page measure` and `page shot`, and was refused).
    */
-  then?: { kind: 'hover' | 'focus'; pair: Pair };
+  then?: { kind: 'hover' | 'focus' | 'press'; pair: Pair };
 }
 
-const DONE: Record<StateAsked['kind'], string> = { hover: 'hovered', focus: 'focused', click: 'clicked' };
+const DONE: Record<StateAsked['kind'], string> = {
+  hover: 'hovered',
+  focus: 'focused',
+  press: 'held down',
+  click: 'clicked'
+};
 
 /** The longest what a step asked the server is waited for: a server action, a provider read again. */
 const ANSWER_MS = 5000;
@@ -121,6 +126,11 @@ const act = async (page: BrowserPage, element: PageElement, kind: StateAsked['ki
   } else if (kind === 'focus') {
     await page.keyboard.press('Shift');
     await element.focus({ timeout: 5000 });
+  } else if (kind === 'press') {
+    // Held, never let go: what the page draws on `:active` — a key pressed down — read while it is; a review of a latched
+    // key could not measure whether pressing it pops it up.
+    await element.hover({ timeout: 5000 });
+    await page.mouse.down();
   } else {
     await element.click({ timeout: 5000 });
   }

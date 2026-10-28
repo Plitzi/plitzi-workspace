@@ -190,3 +190,49 @@ export const lookText = (looked: Looked): string =>
       : []),
     `Then: plitzi task review ${looked.task} --approve | --changes "…"`
   ].join('\n');
+
+/** A page check's lines a review reads past: each page's lists and what a breakpoint hides on purpose. */
+const NOTE_LINE = /^\s+· (?:lists:|hidden at this width by a breakpoint)/;
+
+/**
+ * The look as a review reads it: whole while it stays one answer an agent reads again cheaply — past that, what it acts
+ * on first: each page's notes, the pictures' names past their folder and the comparisons where nothing changed left out,
+ * each said in a line (a designer's look of fifteen pages answered 23k characters, read again on every turn after).
+ */
+export const lookTextWithin = (looked: Looked, most: number): string => {
+  const whole = lookText(looked);
+  if (whole.length <= most) {
+    return whole;
+  }
+
+  const notes = looked.check.split('\n').filter(line => NOTE_LINE.test(line)).length;
+  const same = (looked.compared ?? []).filter(each => !each.problem && !differs(each));
+  const folders = [...new Set(looked.shots.map(shot => path.dirname(shot)))];
+
+  return lookText({
+    ...looked,
+    check: [
+      ...looked.check.split('\n').filter(line => !NOTE_LINE.test(line)),
+      ...(notes > 0
+        ? [
+            chalk.dim(
+              `  · ${String(notes)} lines of lists and hidden parts left out: plitzi page check <page> says them`
+            )
+          ]
+        : [])
+    ].join('\n'),
+    ...(looked.compared ? { compared: looked.compared.filter(each => !same.includes(each)) } : {}),
+    shots: folders.map(folder =>
+      path.join(folder, `(${String(looked.shots.filter(shot => path.dirname(shot) === folder).length)} pictures)`)
+    )
+  }).concat(
+    same.length > 0
+      ? `\n${chalk.dim(
+          `Nothing changed beside the run before it at ${String(same.length)} more: ${fewOf(
+            same.map(each => `${each.route} ${each.width} ${each.scheme}`),
+            ', '
+          )}`
+        )}`
+      : ''
+  );
+};

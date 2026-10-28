@@ -204,6 +204,8 @@ export const stepText = (step: ShotStep): string => {
       return `wait ${String(step.ms)} ms`;
     case 'reload':
       return 'reload';
+    case 'back':
+      return 'back';
     case 'goto':
       return `goto ${step.path}`;
     case 'store':
@@ -476,6 +478,9 @@ export const actStep = async (
     await page.waitForTimeout(step.ms);
   } else if (step.kind === 'reload') {
     await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+  } else if (step.kind === 'back') {
+    await page.goBack({ waitUntil: 'load' });
     await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
   } else if (step.kind === 'goto') {
     // Its path on the page's own site: a play beside another site goes to that site's page of it.

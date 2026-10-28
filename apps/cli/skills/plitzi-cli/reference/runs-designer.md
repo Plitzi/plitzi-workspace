@@ -36,8 +36,8 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   the next step's reviewer, and your verdict is refused. Your approval passes it to the next step, your notes with it. One round asks everything you want of it. A difference a visitor sees is sent back, never approved with a note —
   "approximate" is one. A control the task adds — an arrow, a dot, a pager, a drawer — you use there and back:
   `page play <path> --steps "click <el>; …" --read <el…>` says how far each step moved what, what it shows and takes a
-  press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another — what
-  holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
+  press, a colour a step changed, its animations, and where a step took the page (`goto <path>` opens another, `back`
+  comes back as the browser does — what holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
   played into: `state <key> <json>`, `source <provider.path> <json>` for a provider's answer (a list seen filled),
   `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a

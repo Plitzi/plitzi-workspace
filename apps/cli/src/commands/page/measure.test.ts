@@ -195,6 +195,10 @@ describe('page measure', () => {
     ).toBeUndefined();
     expect(acts).toEqual(['click', 'settled', 'hover', 'settled']);
     expect(stateText(menuItem, 'here')).toBe('site-avatar clicked, then site-menu-item hovered');
+    // A review of a latched key could not measure whether pressing it pops it up: held down, as :active draws it.
+    expect(stateText({ kind: 'press', pairs: [{ here: 'site-nav-charts', there: 'site-nav-charts' }] }, 'here')).toBe(
+      'site-nav-charts held down'
+    );
   });
 
   // Design-1 measured `.home-faq-answer-text` — the element's id, written as a class — and was told
