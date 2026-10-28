@@ -101,8 +101,11 @@ export const runScript = (
     child.on('close', code => resolve({ code: code ?? 1, output }));
   });
 
-/** A line that says what failed: a check's `✗` and its `- ` findings, a test's `FAIL`/`×`, a compiler's `error`. */
-const FAILING = /^\s*(✗|✘|×|- |FAIL\b)|\berror\b|Error:/;
+/**
+ * A line that says what failed: a check's `✗` and its `- ` findings, a test's `FAIL`/`×` — node's `✖`, TAP's `not ok` —
+ * a compiler's `error`. A tester read the tail of node's error object, never the name of the test that failed.
+ */
+const FAILING = /^\s*(✗|✘|✖|×|- |FAIL\b|not ok\b)|\berror\b|Error:/;
 
 /**
  * A line a script prints that says nothing of what failed: a copy's missing `.env`, expected (runs.md) — every failed

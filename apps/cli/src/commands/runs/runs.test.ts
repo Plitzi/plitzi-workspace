@@ -310,6 +310,40 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(ofPlitzi.code).toBe(REFUSAL_EXIT_CODES.invalid);
   }, 120_000);
 
+  // A scout's stage, its tasks alone as its skill shows one, was refused by run open --dry-run as "not a plan".
+  it('sees a stage of tasks alone on the open run with run open --dry-run, stacking nothing', async () => {
+    await openRun();
+    await bench.write(
+      'stage.json',
+      JSON.stringify({
+        tasks: [
+          {
+            id: 't-contact',
+            title: 'A contact page',
+            files: ['src/space/pages/contact.ts'],
+            dependsOn: [],
+            priority: 'medium',
+            estimateMinutes: 10,
+            acceptance: [{ said: 'There is a contact page', check: 'test -f src/space/pages/contact.ts' }]
+          }
+        ]
+      })
+    );
+
+    const seen = await plitzi(bench.root, ['run', 'open', 'stage.json', '--dry-run', '--lines']);
+    expect(seen.code).toBe(0);
+    expect(seen.json).toMatchObject({ stackedOn: 'es-launch', tasks: [{ id: 't-contact' }] });
+
+    // Refused, it is said as a stage — the fields it may leave out never asked of it.
+    await bench.write('bad.json', JSON.stringify({ leftOut: 'b-38', tasks: [] }));
+    const refused = await plitzi(bench.root, ['run', 'open', 'bad.json', '--dry-run']);
+    expect(refused.code).toBe(REFUSAL_EXIT_CODES.invalid);
+    const { message } = refused.json;
+    expect(message).toContain('is not a stage — { tasks: [');
+    expect(message).toContain('leftOut: lines of what the run does not do');
+    expect(message).not.toContain('version: 1, runId');
+  }, 120_000);
+
   // A run's dev-1 expected several files and met "too many arguments".
   it('puts several files of a copy back in one discard, and says them', async () => {
     await openRun();

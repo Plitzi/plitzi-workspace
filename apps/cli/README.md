@@ -664,7 +664,7 @@ plitzi run watch              # ends the moment something needs the lead: run it
 plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
 plitzi run preview --copy                  # the approved work as a folder of your scratch instead: research measures on it, apart
 plitzi run status --all                    # every run not yet written into the project, ready ones first
-plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend) — it only reads; p starts the preview, x stops it
+plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend; w follows an agent's own session under the sidebar's spend) — it only reads; p starts the preview, x stops it
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
 plitzi task show t-home --full             # as many diffs whole as one answer holds (12k characters), the rest a file at a time

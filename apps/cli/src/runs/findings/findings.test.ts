@@ -309,7 +309,11 @@ describe('what the run spent that it did not have to', () => {
 
   it('says a long answer, a task far over the median, a heavy context and the results read again the most', () => {
     const found = costFindings(
-      [use(1, 'dev-1', 'plitzi task show t-a', { chars: 64_000 })],
+      [
+        use(1, 'dev-1', 'plitzi task show t-a', { chars: 64_000 }),
+        // Asked for whole: the option the finding's fix points to, never said long.
+        use(2, 'lead', 'plitzi run report --full', { chars: 29_000 })
+      ],
       [
         { by: 'dev-2', name: 'task check', command: 'plitzi task check', times: 4, within: 6 },
         { by: 'lead', name: 'task show', command: 'plitzi task show t-a', times: 5, within: 7 },
@@ -331,6 +335,9 @@ describe('what the run spent that it did not have to', () => {
       ['costly-task', 'agent'],
       ['context-heavy', 'lead'],
       ['costly-result', 'plitzi']
+    ]);
+    expect(found.filter(each => each.kind === 'large-output').map(each => each.title)).toEqual([
+      'task show answered with 64k characters'
     ]);
     // One a command, its bursts the evidence: a run's nine "lead ran task show" were nine findings.
     expect(found[1].title).toBe('dev-2 ran task check 4 times in 6 min');

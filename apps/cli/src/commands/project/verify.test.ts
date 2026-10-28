@@ -109,6 +109,22 @@ describe('what a failed step says', () => {
       ].join('\n')
     );
     expect(typed).toContain("    Type 'T | Promise<T>' is not assignable to type 'Promise<unknown>'.");
+    // A tester read the tail of node's error object, never the name of the test that caught the mutant.
+    const node = tail(
+      [
+        '✔ says a track is there already (27ms)',
+        '✖ skips a track the room played (2.3ms)',
+        '  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:',
+        ...Array.from({ length: 20 }, (_, index) => `      at frame ${String(index)}`),
+        "    expected: 'VrDD2GSNs_I',",
+        "    operator: 'strictEqual'",
+        '  }'
+      ].join('\n')
+    );
+    expect(node).toContain('✖ skips a track the room played (2.3ms)');
+    expect(tail(['not ok 3 - skips a track', ...Array.from({ length: 20 }, () => '  ---')].join('\n'))).toContain(
+      'not ok 3 - skips a track'
+    );
     // Every failed `author` began with the missing .env, a line that says nothing of what failed.
     expect(tail('.env not found. Continuing without it.\nSpace "acme" was not written')).toEqual([
       'Space "acme" was not written'

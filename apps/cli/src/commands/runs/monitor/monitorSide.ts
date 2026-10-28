@@ -4,15 +4,15 @@ import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './m
 import { BARS, sparkline, spentInAll, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../../runs/report/spent';
 
-import type { MonitorUi, Paint, PreviewShown } from './monitorModel';
+import type { MonitorUi, Paint, PreviewShown, StreamShown } from './monitorModel';
 import type { Spent } from '../../../runs/report/spent';
 import type { AgentLine, Monitored } from '../../../runs/view/monitor';
 import type { TaskLine } from '../../../runs/view/view';
 
 /**
  * The Overview's sidebar, a surface of its own: the tasks (↑↓ choose, ⏎ opens one), the agents and where each stands,
- * what they spent, and the run's preview with what its server says. What does not fit goes first from the bottom of
- * the importance: the spend, which has a view of its own.
+ * what they spent, the stream of the agent followed (`w`, or a click on it), and the run's preview with what its server
+ * says. What does not fit goes first from the bottom of the importance: the spend, which has a view of its own.
  */
 
 export interface Rect {
@@ -65,7 +65,17 @@ const title = (p: Paint, row: number, rect: Rect, text: string, hint: string): v
   p.canvas.right(row, rect.left + rect.width - 2, hint, { fg: p.theme.subtle });
 };
 
-export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: PreviewShown, rect: Rect): void => {
+/** The fewest rows the followed agent's stream takes: its title and a few moments. */
+const STREAM_ROWS = 3 + 4;
+
+export const drawSide = (
+  p: Paint,
+  data: Monitored,
+  ui: MonitorUi,
+  preview: PreviewShown,
+  rect: Rect,
+  stream?: StreamShown
+): void => {
   const { canvas, theme, now } = p;
   const { view, agents, spend, stories } = data;
   for (let row = rect.top; row < rect.top + rect.height; row += 1) {
@@ -84,7 +94,8 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
   // Above them the run's: its last half hour a chart, and its tokens with how much of them was read again.
   const spendRows = 4 + (spend.length === 0 ? 0 : 3) + 2 * Math.min(4, Math.max(1, spend.length));
   // What the tasks may take once the rest has its rows: the spend given up first, the tasks never fewer than three.
-  const fixed = runRows + agentRows;
+  const followed = ui.agent !== undefined;
+  const fixed = runRows + agentRows + (followed ? STREAM_ROWS : 0);
   const withSpend = rect.height - fixed - spendRows >= 3 + 3 + (folded ? 1 : 0);
   const taskRoom = Math.max(3, rect.height - fixed - (withSpend ? spendRows : 0) - 3 - (folded ? 1 : 0));
 
@@ -148,10 +159,16 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
   // Agents.
   row += 1;
   const running = agents.filter(agent => !['not-started', 'stopped', 'done'].includes(agent.status)).length;
-  title(p, row, rect, 'Agents', `${String(running)} of ${String(agents.length)} running`);
+  title(p, row, rect, 'Agents', `${String(running)} of ${String(agents.length)} running · w follows`);
   row += 2;
   for (const agent of agents) {
     const look = AGENT_LOOK[agent.status];
+    if (agent.agent === ui.agent) {
+      canvas.fill(row, rect.left, rect.width, theme.selection);
+      canvas.put(row, rect.left, '▎', { fg: theme.primary, bg: theme.selection });
+    }
+
+    p.hits.push({ row, from: rect.left, to: rect.left + rect.width, action: { kind: 'agent', agent: agent.agent } });
     canvas.put(row, rect.left + 2, look.glyph, { fg: toneOf(theme, look.tone) });
     canvas.put(row, rect.left + 4, clip(agent.agent, 10), { fg: p.hues.get(agent.agent) ?? theme.text, bold: true });
     // Base or on demand, marked beside the name: who keeps running and who only comes for work.
@@ -220,8 +237,25 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
     }
   }
 
+  // The followed agent's stream: what its harness says and does, newest last, in the rows left above the run.
+  const runTop = rect.top + rect.height - runRows;
+  if (ui.agent !== undefined) {
+    row += 1;
+    title(p, row, rect, `Stream · ${ui.agent}`, 'live · w next');
+    row += 2;
+    drawStream(
+      p,
+      stream?.agent === ui.agent ? stream : undefined,
+      rect.left + 2,
+      end,
+      row,
+      Math.max(0, runTop - 1 - row)
+    );
+    row = runTop - 1;
+  }
+
   // Run: its preview — served from here (p) — and what its server says.
-  row = Math.max(row + 1, rect.top + rect.height - runRows);
+  row = Math.max(row + 1, runTop);
   title(p, row, rect, 'Run', `${String(view.approvedFiles)} files approved`);
   row += 2;
   drawPreviewLine(p, row, rect.left + 2, end, preview);
@@ -231,6 +265,52 @@ export const drawSide = (p: Paint, data: Monitored, ui: MonitorUi, preview: Prev
     canvas.put(row, rect.left + 4, clip(line, rect.width - 6), { fg: theme.muted });
     row += 1;
   }
+};
+
+/** The moments of a stream that fit in `rows`, newest at the bottom — or why there are none, or that it is being read. */
+const drawStream = (
+  p: Paint,
+  stream: StreamShown | undefined,
+  col: number,
+  end: number,
+  top: number,
+  rows: number
+): void => {
+  const { canvas, theme } = p;
+  if (rows === 0) {
+    return;
+  }
+
+  if (stream === undefined || 'problem' in stream) {
+    canvas.put(top, col, clip(stream === undefined ? 'reading its session…' : stream.problem, end - col), {
+      fg: theme.subtle
+    });
+
+    return;
+  }
+
+  if (stream.moments.length === 0) {
+    canvas.put(top, col, 'nothing said or done yet', { fg: theme.subtle });
+
+    return;
+  }
+
+  const hue = p.hues.get(stream.agent) ?? theme.primary;
+  stream.moments.slice(-rows).forEach((moment, offset) => {
+    const row = top + offset;
+    if (moment.kind === 'result') {
+      canvas.put(row, col + 2, moment.failed ? '✗ ' : '⎿ ', { fg: moment.failed ? theme.danger : theme.subtle });
+      canvas.put(row, col + 4, clip(moment.text, Math.max(0, end - col - 4)), {
+        fg: moment.failed ? theme.danger : theme.muted
+      });
+
+      return;
+    }
+
+    const said = moment.kind === 'said';
+    canvas.put(row, col, said ? '›' : '▸', { fg: said ? theme.text : hue, bold: true });
+    canvas.put(row, col + 2, clip(moment.text, Math.max(0, end - col - 2)), { fg: said ? theme.text : hue });
+  });
 };
 
 /** The preview's line: its address a link a click opens, where it stands, and the key that serves or stops it. */

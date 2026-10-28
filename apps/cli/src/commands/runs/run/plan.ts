@@ -37,8 +37,7 @@ import {
   checkPlanFile,
   openRun,
   pruneRuns,
-  readCheckedPlan,
-  readPlanFile
+  readCheckedPlan
 } from '../../../runs/run';
 import { LEAD } from '../../../runs/talk/messages';
 import { reviewRolesOf, reviewSteps, reviewTeamFrom } from '../../../runs/tasks/reviews';
@@ -197,9 +196,9 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
   act(
     options,
     async ctx => {
-      const plan = await readPlanFile(path.resolve(file));
       // A run open in the project: the plan is its next stage — seen as `run open` would stack it, by anyone, nothing
-      // written: a scout sees the stage its research card proposes the same way.
+      // written: a scout sees the stage its research card proposes the same way. A stage may be its tasks alone, its
+      // name and goal the run's: read as a stage, never first as a whole plan (a scout's was refused as "not a plan").
       const going = await openRunOf(ctx);
       if (going === undefined && options.lines === true) {
         throw new RunRefusal(
@@ -214,7 +213,7 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
       const research = stage === undefined ? undefined : await researchHeld(ctx, going?.runId);
       const checked = stage?.checked ?? (await checkPlanFile(ctx, path.resolve(file)));
       // Read after the check: a project's first plan writes the team it needs.
-      const { team } = await ensureTeam(ctx.root, plan);
+      const { team } = await ensureTeam(ctx.root, checked);
 
       // The agents work by the skills the project carries: older than the CLI, they teach what it no longer does.
       const staleSkills = (await planSkills(ctx.root).catch(() => ({ plans: [] }))).plans.map(each => each.name);

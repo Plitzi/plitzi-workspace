@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import { notOpen } from './backlog';
 import { coversOf, inventoryProblems } from './inventory';
@@ -132,6 +133,23 @@ const originsOf = async (loaded: LoadedRun): Promise<(id: string) => number> => 
   });
 
   return id => origins.get(id) ?? OPENED;
+};
+
+/** The stages' plans the run keeps (`inputs/<stage>/`): moved there as they were stacked from inside the project. */
+const stageFilesOf = async (loaded: LoadedRun): Promise<string[]> => {
+  const inputs = path.join(loaded.paths.dir, 'inputs');
+  const folders = await fs.readdir(inputs, { withFileTypes: true }).catch(() => []);
+  const files = await Promise.all(
+    folders
+      .filter(each => each.isDirectory())
+      .map(async each =>
+        (await fs.readdir(path.join(inputs, each.name)).catch(() => []))
+          .filter(name => name.endsWith('.json'))
+          .map(name => path.join(inputs, each.name, name))
+      )
+  );
+
+  return files.flat().sort();
 };
 
 /**
@@ -328,9 +346,15 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     !inventoryChanged &&
     reference === undefined
   ) {
+    // A stage's task is amended from that stage's file: a run's lead edited the opened plan, refused with nothing to go on.
+    const stages = stage ? [] : await stageFilesOf(loaded);
     throw new RunRefusal(
       'invalid',
-      `${file} asks nothing the run does not already: no task, note, goal, primer, inventory or reference changed`
+      `${file} asks nothing the run does not already: no task, note, goal, primer, inventory or reference changed${
+        stages.length > 0 || loaded.plan.tasks.some(task => originOf(task.id) !== OPENED)
+          ? ` — a task a stage stacked is amended from that stage's file, edited: plitzi run amend <stage.json>${stages.length > 0 ? ` (the run keeps ${stages.map(each => path.relative(ctx.root, each)).join(', ')})` : ''}`
+          : ''
+      }`
     );
   }
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { RUN_REPORTS_DIR } from '../../scaffold/paths';
 import { readJson, readOptional, writeJson } from '../core/files';
 import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from '../core/model';
 import { ID, runPaths, runsDir } from '../core/paths';
@@ -137,6 +138,15 @@ export const loadRun = async (ctx: RunContext, runId: string, options: LoadOptio
   const record = await readRecord(paths);
   const plan = await readJson(paths.plan, isRunPlan, 'a run’s plan (plan.json)');
   if (!record || !plan) {
+    // Applied, a run's folder goes and its report stays: an agent still waiting read "there is no run" and guessed why.
+    const report = path.join(RUN_REPORTS_DIR, runId);
+    if (await readOptional(path.join(ctx.root, report, 'report.md'))) {
+      throw new RunRefusal('not-found', `Run "${runId}" is over: finished and applied — its report is ${report}/`, {
+        run: runId,
+        next: 'nothing of it is left to do: stop'
+      });
+    }
+
     throw new RunRefusal('not-found', `There is no run "${runId}" in this project (${runsDir(ctx.root)})`, {
       run: runId
     });

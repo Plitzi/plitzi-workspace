@@ -809,6 +809,34 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **`run monitor`'s flow says who has each review:** one Review column, each card at its step and who says it; a long id gives way to the name, cut in its middle, where it
   took the name with it ("t-desk-selector-ai…"); a review nobody took yet reads "waiting".
 - **The monitor's approved column puts the latest approval first** — what just landed.
+- **`run monitor` follows an agent's stream:** `w` (or a click on an agent) shows, under the sidebar's spend, what it
+  said, each tool it called and on what, and the first line of each answer — read off the session its harness keeps
+  (Claude Code, Codex, OpenCode), as a headless agent prints only its last answer.
+- **`run open --dry-run` sees a stage of tasks alone on the open run:** a scout's stage, its name and goal the run's,
+  was refused as "not a plan" — read first as a whole plan.
+- **An agent with nothing to take is said to the lead only when the lead can act:** a stage to stack, a card to split, or
+  a review step its own — a run's lead was told to "decide" reviews its tester held.
+- **The activity says the keeper started an agent the run asked for,** not the lead whose token it used: a person read
+  "lead started test-1" beside a lead the monitor said was away.
+- **`task prove --before` proves a task whose change is its tests:** a line that passes with the task's own tests on the
+  run before it is run again on the run without them — a task that moved every spec onto a fixture read "passes before
+  too" of the line reading the specs.
+- **A stage refused is said as a stage** (`{ tasks: […] }`), never asked a plan's version, runId and goal.
+- **A failure's lines keep the name of the test that failed** — node's `✖`, TAP's `not ok` — beside its last lines:
+  `task prove --mutate` and a flaky first run showed the tail of node's error object alone.
+- **`task show` says a change made the same in several files once,** naming the others, and the files whose diff
+  it leaves out in one line: a task that moved one import in 33 specs answered 10k characters, 5k of them one hint
+  repeated.
+- **A round's results read again are named by their call, made before the round too:** the brief a `task next`
+  waited for read "unknown unknown".
+- **A command's answer asked whole (`--full`) is not said long** in the run's findings: it is the option their fix
+  points to.
+- **The scout's skill names `page play <path> --hold <host>`** for what holds a page's load: a scout wrote three
+  Playwright probes to find it.
+- **`run amend` of a plan that changes nothing says where a stage's task is amended:** its stage's file, the ones the
+  run keeps named.
+- **`run open --dry-run` says a test two tasks may break at once is the run's to give them** (`touches`), where it
+  named a file neither task wrote.
 - **`↻ restarting` in the monitor:** an agent stopped between two pieces of work for a fresh context reads restarting —
   before the run starts it again and after, until its first command — never "stopped" (a run's design-1), and the
   run counts it running from its launch.

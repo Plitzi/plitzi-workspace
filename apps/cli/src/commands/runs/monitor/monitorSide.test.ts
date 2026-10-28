@@ -7,6 +7,7 @@ import { monitorRun } from '../../../runs/view/monitor';
 import { makeBench } from '../../../tests/runProject';
 import { runSteps } from '../../../tests/runSteps';
 
+import type { MonitorUi, StreamShown } from './monitorModel';
 import type { Spent } from '../../../runs/report/spent';
 import type { Monitored } from '../../../runs/view/monitor';
 import type { Bench } from '../../../tests/runProject';
@@ -24,14 +25,19 @@ afterEach(async () => {
 const { lead, open } = runSteps(() => bench);
 
 /** The advanced panel's text at a wide terminal's size, a row a line. */
-const shown = (data: Monitored): string =>
-  monitorScreen(data, initialUi('advanced'), {
-    width: 180,
-    height: 60,
-    now: bench.now(),
-    theme: THEMES.dark,
-    preview: { state: { kind: 'none' }, output: [] }
-  })
+const shown = (data: Monitored, ui: Partial<MonitorUi> = {}, stream?: StreamShown): string =>
+  monitorScreen(
+    data,
+    { ...initialUi('advanced'), ...ui },
+    {
+      width: 180,
+      height: 60,
+      now: bench.now(),
+      theme: THEMES.dark,
+      preview: { state: { kind: 'none' }, output: [] },
+      ...(stream === undefined ? {} : { stream })
+    }
+  )
     .canvas.text()
     .join('\n');
 
@@ -74,5 +80,33 @@ describe("the sidebar's spend", () => {
     expect(text).toMatch(/▁+▂█\s+last 30 min/);
     expect(text).toMatch(/3\.1M tokens\s+95% cached/);
     expect(text).toMatch(/agent-1\s+█+\s+\$1\.84[^]*lead\s+█+░+\s+\$0\.92/);
+  });
+});
+
+// Carlos: a headless agent's output is its last answer alone — what it says and does, followed in the sidebar.
+describe("the sidebar's stream of the agent followed", () => {
+  it('says what the agent said and did, newest last, under the spend — and why there is none to read', async () => {
+    const data = await monitorRun(lead(), await open());
+    const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
+    const text = shown(
+      { ...data, spend: [] },
+      { agent },
+      {
+        agent,
+        moments: [
+          { at: 't1', kind: 'said', text: 'Checking the charts' },
+          { at: 't2', kind: 'tool', text: 'Bash npx plitzi task check' },
+          { at: 't3', kind: 'result', text: 'fail 1', failed: true }
+        ]
+      }
+    );
+
+    expect(text).toContain(`Stream · ${agent}`);
+    expect(text).toMatch(/› Checking the charts[\s\S]*▸ Bash npx plitzi task check[\s\S]*✗ fail 1/);
+    expect(text.indexOf('Spend')).toBeLessThan(text.indexOf('Stream ·'));
+    expect(shown(data, { agent }, { agent, problem: 'no Claude Code session of it on this machine yet' })).toContain(
+      'no Claude Code session of it on this machine yet'
+    );
+    expect(shown(data)).not.toContain('Stream ·');
   });
 });

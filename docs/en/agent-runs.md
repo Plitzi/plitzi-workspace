@@ -207,6 +207,14 @@ It is kept in the run's log as each piece of work ends (`spent`, `spent.ts`): a 
 from the agent's last, read from its sessions as the round's report reads them (`harness/spentIn`) — with each minute's
 tokens, so the chart has a piece's minutes when the piece ends, not while it is at work.
 
+Under the sidebar's spend, **Stream** follows one agent as it goes: `w` (or a click on its row in Agents) picks it, `w`
+again the next, and past the last none. A headless agent's own output is its last answer alone, so the stream is read
+off the session its harness keeps on the machine (`harness/moments.ts`) — Claude Code's file of the session its launch
+named, Codex's rollout and OpenCode's session that started with its process — every two seconds: what the model said
+(`›`), each tool and what it was asked (`▸`), and the first line of what it answered (`⎿`, `✗` when it failed), the
+project's paths as short as they read. An agent the run did not start — the lead, in the harness a person runs — has no
+session the run keeps, and the stream says so; one just started has none yet.
+
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
 by the letters typed in order; `?` lists the keys of the mode it is in. `p` starts the run's preview on 8300
 (`monitorPreview.ts`, what `run preview` serves), `x` stops it — whoever serves it: one `npm run start:preview` or another
@@ -226,8 +234,10 @@ approved (`all-approved`) and, at a whole and checked dry run of the finish, tha
 next (`ready`). `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
 act on it; `task show <task> <file>` is one of those files whole, read from where the diff is (`showTaskFile`). Its
-diffs stop at `DIFF_TOTAL` (240) lines in all, each file past it said with how to read it: one run's diffs ran to 24k
-characters, 46 of them over 12k. The commands that act on it are the caller's: a lead's, or — for an agent of the
+diffs stop at `DIFF_TOTAL` (240) lines in all, the files past it said in one line with how to read one: one run's diffs
+ran to 24k characters, 46 of them over 12k. A change made the same in several files — the lines it removes and adds,
+whatever is around them — is shown once, naming the others (`alike`): a run's tester read one import moved in 33 specs
+as 33 diffs and 31 lines of "not shown". The commands that act on it are the caller's: a lead's, or — for an agent of the
 team — `task tell --about` and `task propose` (a run's design-2 was offered `task message`, which refused its token).
 With no task named, it is the one the caller holds or reviews (`ownTask`); `task
 complete` takes its own task's id too, and refuses another's.
@@ -372,7 +382,9 @@ each line whether it proves the change (fails before, passes with it), proves no
 it: a run's tester copied a spec without its new line into its scratch to see it fail. A task of tests is set
 beside the run without the task it tests too — the project's version of its files — or its lines pass on both; a task's
 own test files go into its "before" from its copy, so its new tests run on the code before it — the run's old test file
-passed the old code — and a line that ran no test there (Playwright's "No tests found") answers nothing (`noTestBefore`).
+passed the old code — and a line that passes so is run again on the run bare, without anything of the task: failing
+there, its change is its tests themselves (every spec moved onto a fixture, a line reading the specs). A line that ran
+no test before it (Playwright's "No tests found") answers nothing (`noTestBefore`).
 Any line that runs tests and ran none — node's `tests 0` — fails saying so (`ranNoTest`), and a plan's line that names
 tests by node's pattern without its isolation off is refused: each file passes as one test of its own. `task
 check <task> --mutate <file> --from "…" --to "…"` (`checkMutant`) runs its acceptance on its copy and on a mutant — a
@@ -704,7 +716,8 @@ agents of its role have nothing to take; whether they share a file decides what 
 step its reviewer has held past its time — and
 `idle-team`, the run as a kanban: an agent running with no card worked, no review in hand and none of its roles ready,
 said with the way to feed it — the backlog's items no task closes, a step of a card's review a free agent of its role
-could take, a large card to split — or that nothing is left; never an agent while cards whose review names its role are
+could take, a large card to split — or, nothing left to give, the reviews the lead says itself; never when the lead can do
+nothing (what is left waits for another's review step or for work under way), never an agent while cards whose review names its role are
 still to be done, never an agent none of whose role's
 cards is left (it has done its part), and a card to split only of the idle agents' roles; said once for the same agents
 and the same board (`subject`: which agents, how many cards done), whatever its advice's words — a run's lead was

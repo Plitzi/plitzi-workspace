@@ -465,9 +465,14 @@ export const checkPlan = async (
     .filter(([, ids]) => ids.length > 1)
     .forEach(([file, ids]) => {
       const together = ids.filter(id => !ids.some(other => other !== id && (before(id, other) || before(other, id))));
+      // A test of the project's their change may break is given to them by the run, not named by them: said so — a
+      // scout read two tasks "changing" a test neither named.
+      const named = (id: string): boolean =>
+        written.tasks.some(task => task.id === id && (task.touches ?? []).some(raw => normalised(raw) === file));
+      const given = together.some(id => !named(id));
       if (together.length > 1) {
         notices.push(
-          `${file} is changed by ${together.map(id => `"${id}"`).join(' and ')} at once: at complete, changes to different lines merge by themselves; the same lines conflict, and one redoes its change — order them (dependsOn) if they change the same thing`
+          `${file}${given ? ', a test of the project their change may break (the run gives it to them, to fix there what they break),' : ''} is changed by ${together.map(id => `"${id}"`).join(' and ')} at once: at complete, changes to different lines merge by themselves; the same lines conflict, and one redoes its change — order them (dependsOn) if they change the same thing`
         );
       }
     });

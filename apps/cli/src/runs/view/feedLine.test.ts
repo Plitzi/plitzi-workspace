@@ -89,6 +89,13 @@ describe('the activity, in words', () => {
     );
   });
 
+  it('says an agent the run asked for as the keeper’s start, never the lead’s whose token it used', () => {
+    const launch = { at: '2026-10-28T01:17:49.000Z', by: 'lead', action: 'launch', agent: 'test-1', harness: 'claude' };
+
+    expect(feedOf({ ...launch, asked: true })).toMatchObject({ by: 'keeper', text: 'started test-1 in claude' });
+    expect(feedOf(launch)).toMatchObject({ by: 'lead' });
+  });
+
   it('says what a kept count of tokens is', () => {
     expect(
       feedOf({ at: '2026-10-23T12:49:18.473Z', by: 'lead', action: 'tokens', agents: ['dev-1', 'design-1'] })?.text

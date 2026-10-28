@@ -183,6 +183,11 @@ describe('the lead’s plan as the run goes', () => {
       added: ['t-contact', 't-menu-2'],
       ready: ['t-contact']
     });
+    // The opened plan, unchanged, asks nothing: a stage's task is amended from the stage's file, which the run keeps.
+    const unchanged = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(benchPlan())));
+    expect(unchanged.message).toContain(
+      "a task a stage stacked is amended from that stage's file, edited: plitzi run amend <stage.json> (the run keeps tmp/plitzi-runs/es-launch/inputs/es-stage-2/es-stage-2.plan.json)"
+    );
     const held = await take('agent-3', 't-contact');
     // Begun where the run is: the approved about page is in its copy.
     expect(await readInCopy(held.work, 'src/space/pages/about.ts')).toContain('es: true');
@@ -196,6 +201,12 @@ describe('the lead’s plan as the run goes', () => {
     await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/contact.ts'), 'utf-8')).toContain('contact');
     expect(await fs.readFile(path.join(bench.root, 'src/space/pages/about.ts'), 'utf-8')).toContain('es: true');
+    // An agent still waiting is told the run is over, never that there is no run: a run's dev-1 guessed it was removed.
+    const over = await refusal(viewRun(lead(), 'es-launch'));
+    expect(over.message).toBe(
+      'Run "es-launch" is over: finished and applied — its report is .plitzi/plitzi-reports/runs/es-launch/'
+    );
+    expect(over).toMatchObject({ code: 'not-found', detail: { next: 'nothing of it is left to do: stop' } });
   });
 
   // T-close-home named src/space/pages/home while t-home-top, in review, still had files to put there.

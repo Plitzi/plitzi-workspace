@@ -134,6 +134,26 @@ describe('the tests of a developer task, with a tester in the team', () => {
     expect(checked.notices.filter(notice => notice.includes('touches src/functions/book.test.ts'))).toEqual([]);
   });
 
+  // A scout read two tasks "changing" a test file neither named: the run had given it to both.
+  it('says a test two tasks at once may break as the run’s to give them, not as theirs', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    await bench.write(
+      'src/functions/history.test.ts',
+      "import { seedHistory } from './seedHistory.ts';\nimport { getChart } from './charts.ts';\n"
+    );
+    const plan = benchPlan();
+    plan.tasks[0].files.push('src/functions/seedHistory.ts');
+    plan.tasks[1].files.push('src/functions/charts.ts');
+
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+    expect(checked.notices.filter(notice => notice.includes('src/functions/history.test.ts'))).toEqual([
+      expect.stringContaining(
+        'src/functions/history.test.ts, a test of the project their change may break (the run gives it to them, to fix there what they break), is changed by "t-home" and "t-menu" at once'
+      )
+    ]);
+  });
+
   // One developer, who wrote what they test: the tests are the tester's.
   it('hands a tester what the task it tests was asked, and what its reviews asked on top', async () => {
     await bench.write(

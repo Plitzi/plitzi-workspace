@@ -389,7 +389,8 @@ describe('a scout at its research card', () => {
     const loaded = await loadRun(lead(), runId);
     const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
     const all = startedAgents(members).filter(each => each.agent !== 'agent-2');
-    const said = bottlenecks(views, all, bench.now(), [], all)
+    // A backlog to stack: the lead is told of those free only when it has something to give them.
+    const said = bottlenecks(views, all, bench.now(), ['b-1'], all)
       .map(each => each.text)
       .join(' ');
     // Free, in the drag's words, are those at nothing: never the scout at its research.

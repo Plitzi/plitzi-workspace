@@ -95,9 +95,10 @@ export const readPlanFile = async (
 
   if (!isRunPlan(parsed)) {
     const problems = runPlanProblems(parsed);
+    // A stage is said as one, its tasks alone: a scout read "{ version: 1, runId, goal, … }" over a stage that needs none.
     throw new RunRefusal(
       'invalid',
-      `${file} is not a plan — { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }${
+      `${file} is not a ${fill ? 'stage — { tasks: [{ id, title, files, priority, estimateMinutes, acceptance }] }' : 'plan — { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'}${
         problems.length > 0 ? `:\n${problems.map(each => `  - ${each}`).join('\n')}` : ''
       }`,
       { problems }

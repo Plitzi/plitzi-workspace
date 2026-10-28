@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { charsOf, numberOf, whatOf } from './types';
+import { answerTo, charsOf, numberOf, whatOf } from './types';
 
 import type { SessionRead } from './types';
 
@@ -45,12 +45,32 @@ const entriesOf = async (file: string): Promise<Record<string, unknown>[]> =>
     }
   });
 
-/** The session a Codex process wrote: started with it, in the project's folder or below. */
-const sessionOf = async (startedAt: number, root: string): Promise<Record<string, unknown>[] | undefined> => {
+/** A session's first entry — its start, `session_meta` — read alone: a session of hours is megabytes. */
+const firstEntryOf = async (file: string): Promise<Record<string, unknown> | undefined> => {
+  const handle = await fs.open(file, 'r').catch(() => undefined);
+  if (!handle) {
+    return undefined;
+  }
+
+  try {
+    const head = Buffer.alloc(16 * 1024);
+    const { bytesRead } = await handle.read(head, 0, head.length, 0);
+    const entry: unknown = JSON.parse(head.subarray(0, bytesRead).toString('utf-8').split('\n')[0] ?? '');
+
+    return isRecord(entry) ? entry : undefined;
+  } catch {
+    return undefined;
+  } finally {
+    await handle.close();
+  }
+};
+
+/** The file of the session a Codex process wrote: started with it, in the project's folder or below. */
+export const codexSessionFile = async (startedAt: number, root: string): Promise<string | undefined> => {
   for (const folder of dayFolders(startedAt)) {
     for (const name of (await fs.readdir(folder).catch((): string[] => [])).filter(each => each.endsWith('.jsonl'))) {
-      const entries = await entriesOf(path.join(folder, name));
-      const meta = entries.find(entry => entry.type === 'session_meta')?.payload;
+      const first = await firstEntryOf(path.join(folder, name));
+      const meta = first?.type === 'session_meta' ? first.payload : undefined;
       if (
         isRecord(meta) &&
         typeof meta.timestamp === 'string' &&
@@ -58,7 +78,7 @@ const sessionOf = async (startedAt: number, root: string): Promise<Record<string
         (meta.cwd === root || meta.cwd.startsWith(`${root}${path.sep}`)) &&
         Math.abs(Date.parse(meta.timestamp) - startedAt) <= STARTED_WITHIN_MS
       ) {
-        return entries;
+        return path.join(folder, name);
       }
     }
   }
@@ -84,10 +104,12 @@ export const readCodex = async (
   from: string,
   to: string
 ): Promise<SessionRead | undefined> => {
-  const entries = await sessionOf(startedAt, root);
-  if (!entries) {
+  const file = await codexSessionFile(startedAt, root);
+  if (file === undefined) {
     return undefined;
   }
+
+  const entries = await entriesOf(file);
 
   const read: SessionRead = { harness: 'codex', turns: [], calls: new Map(), results: [] };
   const meta = entries.find(entry => entry.type === 'session_meta')?.payload;
@@ -101,6 +123,23 @@ export const readCodex = async (
     records.length > 0
       ? records
       : entries.filter(entry => isRecord(entry.payload) && entry.payload.type === 'token_count')
+  );
+  // Every call of the session, whenever made: an answer in the window may be to one before it.
+  const asked = new Map(
+    entries.flatMap(entry => {
+      const payload = isRecord(entry.payload) ? entry.payload : {};
+
+      return (payload.type === 'function_call' || payload.type === 'custom_tool_call') &&
+        typeof payload.call_id === 'string' &&
+        typeof payload.name === 'string'
+        ? [
+            [
+              payload.call_id,
+              { tool: payload.name, what: whatOf(payload.name, argumentsOf(payload.arguments ?? payload.input)) }
+            ] as const
+          ]
+        : [];
+    })
   );
   for (const entry of entries) {
     const at = typeof entry.timestamp === 'string' ? entry.timestamp : '';
@@ -145,7 +184,7 @@ export const readCodex = async (
       (payload.type === 'function_call_output' || payload.type === 'custom_tool_call_output') &&
       typeof payload.call_id === 'string'
     ) {
-      read.results.push({ at, key: payload.call_id, chars: charsOf(payload.output) });
+      read.results.push({ at, chars: charsOf(payload.output), ...answerTo(asked, payload.call_id) });
     }
   }
 

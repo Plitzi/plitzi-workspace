@@ -2,6 +2,7 @@ import type { Canvas } from './monitorCanvas';
 import type { PreviewState } from './monitorPreview';
 import type { SpendSort } from './monitorSpend';
 import type { Theme } from './monitorTheme';
+import type { SessionMoment } from '../../../runs/harness/moments';
 import type { AgentLine, AgentStatus } from '../../../runs/view/monitor';
 import type { TaskLine } from '../../../runs/view/view';
 
@@ -57,6 +58,8 @@ export interface MonitorUi {
   frame: number;
   /** A word said for a moment in the status bar: what a key just did. */
   flash?: string;
+  /** The agent whose stream the sidebar follows (`w`, or a click on it): what its harness says and does, live. */
+  agent?: string;
 }
 
 export const initialUi = (mode: MonitorMode): MonitorUi => ({
@@ -75,7 +78,10 @@ export const initialUi = (mode: MonitorMode): MonitorUi => ({
 
 /** What a click on the screen does where it lands. */
 export type HitAction =
-  { kind: 'view'; view: MonitorView } | { kind: 'task'; index: number } | { kind: 'event'; key: string };
+  | { kind: 'view'; view: MonitorView }
+  | { kind: 'task'; index: number }
+  | { kind: 'event'; key: string }
+  | { kind: 'agent'; agent: string };
 
 export interface Hit {
   row: number;
@@ -94,6 +100,9 @@ export interface Area {
   width: number;
   height: number;
 }
+
+/** The stream of the agent followed: its harness's last moments, or why there are none to read. */
+export type StreamShown = { agent: string } & ({ moments: SessionMoment[] } | { problem: string });
 
 /** The preview as the panel shows it: where it stands, and what its server said last. */
 export interface PreviewShown {

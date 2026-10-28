@@ -13,7 +13,7 @@ import { drawAgentsView, drawFlowView, drawSpendView, drawTasksView } from './mo
 import type { Need } from './monitorAttention';
 import type { Canvas } from './monitorCanvas';
 import type { PaletteItem } from './monitorDialogs';
-import type { Area, Hit, MonitorUi, Paint, PreviewShown, Tone } from './monitorModel';
+import type { Area, Hit, MonitorUi, Paint, PreviewShown, StreamShown, Tone } from './monitorModel';
 import type { Theme } from './monitorTheme';
 import type { Monitored } from '../../../runs/view/monitor';
 
@@ -60,8 +60,9 @@ export const monitorScreen = (
     height,
     now,
     theme,
-    preview
-  }: { width: number; height: number; now: Date; theme: Theme; preview: PreviewShown }
+    preview,
+    stream
+  }: { width: number; height: number; now: Date; theme: Theme; preview: PreviewShown; stream?: StreamShown }
 ): Screen => {
   const canvas = createCanvas(width, height, theme);
   const p: Paint = {
@@ -89,7 +90,7 @@ export const monitorScreen = (
     const side = wide ? sideWidth(width) : 0;
     drawOverviewMain(p, data, ui, preview, { ...body, width: width - side - (wide ? 3 : 2) }, !wide);
     if (wide) {
-      drawSide(p, data, ui, preview, { ...body, left: width - side - 1, width: side });
+      drawSide(p, data, ui, preview, { ...body, left: width - side - 1, width: side }, stream);
     }
   } else if (ui.view === 'flow') {
     drawFlowView(p, data, ui, body);

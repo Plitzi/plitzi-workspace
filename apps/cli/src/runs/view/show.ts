@@ -47,6 +47,11 @@ export interface ShownFile {
   withheld?: number;
   /** Not text, or too large to diff. */
   binary?: boolean;
+  /**
+   * The other files whose change is this one's, line for line — said beside it, never shown again: a run's tester read one
+   * import moved in 33 specs as 33 diffs and 31 lines of "not shown".
+   */
+  alike?: string[];
 }
 
 export interface TaskShown {
@@ -226,6 +231,29 @@ export const showTask = async (
     read.push({ file, change, lines, size: lines.join('\n').length });
   }
 
+  // A change made the same in several files is read once: the lines it removes and adds, whatever is around them.
+  const changedLines = (lines: readonly string[]): string =>
+    lines
+      .slice(2)
+      .filter(line => line.startsWith('-') || line.startsWith('+'))
+      .join('\n');
+  const alike = new Map<string, string[]>();
+  const firstOf = new Map<string, string>();
+  for (const each of read) {
+    if ('lines' in each) {
+      const key = `${each.change}\n${changedLines(each.lines)}`;
+      const first = firstOf.get(key);
+      if (first === undefined) {
+        firstOf.set(key, each.file);
+      } else {
+        alike.set(first, [...(alike.get(first) ?? []), each.file]);
+      }
+    }
+  }
+
+  const folded = new Set([...alike.values()].flat());
+  read.splice(0, read.length, ...read.filter(each => !folded.has(each.file)));
+
   // Whole, every file — as long as the answer stays one an agent reads again cheaply: a run's `--full` answered 34k
   // characters, read again on every turn after. A file past it says its size and how to read it alone; one is always
   // shown.
@@ -250,8 +278,10 @@ export const showTask = async (
     }
 
     const { file, change, lines } = each;
+    const same = alike.get(file);
+    const withSame = same === undefined ? {} : { alike: same };
     if (full ? !whole.has(file) : left <= 0) {
-      files.push({ file, change, withheld: lines.length });
+      files.push({ file, change, withheld: lines.length, ...withSame });
       continue;
     }
 
@@ -261,7 +291,8 @@ export const showTask = async (
       file,
       change,
       diff: lines.slice(0, shown).join('\n'),
-      ...(lines.length > shown ? { more: lines.length - shown } : {})
+      ...(lines.length > shown ? { more: lines.length - shown } : {}),
+      ...withSame
     });
   }
 

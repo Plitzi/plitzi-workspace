@@ -87,9 +87,17 @@ const copied = (ui: MonitorUi, text: string): Step => ({
 });
 
 /** The keys only the advanced panel answers: what they move — a task, the activity, the spend — it alone shows. */
-const ADVANCED_KEYS = new Set(['up', 'down', 'return', 'left', 'right', 'a', 's', 'y']);
+const ADVANCED_KEYS = new Set(['up', 'down', 'return', 'left', 'right', 'a', 's', 'y', 'w']);
 
 const flashed = (ui: MonitorUi, said: string): Step => still({ ...ui, flash: said });
+
+/** The next agent whose stream is followed — none past the last, as a press after it stops following. */
+export const followedNext = (ui: MonitorUi, agents: readonly string[]): MonitorUi => {
+  const next = agents.at(ui.agent === undefined ? 0 : agents.indexOf(ui.agent) + 1);
+  const { agent: _followed, ...rest } = ui;
+
+  return next === undefined ? rest : { ...ui, agent: next };
+};
 
 /** This panel serves the preview: quitting stops it, so `q` says so before it does. */
 const servesPreview = (shown: Shown): boolean => shown.preview === 'starting' || shown.preview === 'serving';
@@ -302,6 +310,8 @@ export const onKey = (
             flash: 'put off — back once it says something else'
           })
         : still(ui);
+    case 'w':
+      return still(followedNext(ui, data?.agents.map(agent => agent.agent) ?? []));
     case 'y': {
       const task = data ? listedTasks(data.view.tasks, ui.showApproved).at(ui.selected) : undefined;
 
@@ -333,6 +343,13 @@ export const onMouse = (
       return hit.action.index === ui.selected
         ? { ...ui, dialog: { kind: 'task' } }
         : { ...ui, selected: hit.action.index };
+    }
+
+    if (hit?.action.kind === 'agent') {
+      // A click follows an agent's stream; a click on the one followed stops following it.
+      const { agent: _followed, ...rest } = ui;
+
+      return hit.action.agent === ui.agent ? rest : { ...ui, agent: hit.action.agent };
     }
 
     if (hit?.action.kind === 'event') {

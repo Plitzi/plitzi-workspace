@@ -233,11 +233,16 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
     // A bare "tokens" said nothing of what was kept.
     case 'tokens':
       return line('run', `kept what the harness counted each agent spent: ${listOf(entry.agents)}`);
-    case 'launch':
-      return line(
+    case 'launch': {
+      const said = line(
         'run',
         `started ${textOf(entry.agent)} in ${textOf(entry.harness)}${entry.resumed === true ? ', resuming its session' : ''}`
       );
+
+      // Asked by the run, the keeper started it with the lead's token: a person read "lead started test-1" beside a lead
+      // the monitor said was away.
+      return entry.asked === true ? { ...said, by: 'keeper' } : said;
+    }
     case 'message':
       // Each message is in the feed by its own words, read from the messages.
       return undefined;

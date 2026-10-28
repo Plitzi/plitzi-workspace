@@ -119,6 +119,30 @@ describe('what a Claude Code session spent in a round', () => {
     });
   });
 
+  // A round's heaviest result read "unknown unknown": the brief, answering a `task next` called before the round began.
+  it('names an answer in the window by its call, made before it', async () => {
+    const usage = { input_tokens: 10, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, output_tokens: 5 };
+    const folder = path.join(home, 'claude', 'projects', '-work-acme');
+    await fs.mkdir(folder, { recursive: true });
+    await fs.writeFile(
+      path.join(folder, `${SESSION}.jsonl`),
+      lines([
+        answer(0, 'waits', usage, [
+          { type: 'tool_use', id: 'u0', name: 'Bash', input: { command: 'plitzi task next --role developer' } }
+        ]),
+        {
+          type: 'user',
+          timestamp: T(2),
+          message: { content: [{ type: 'tool_result', tool_use_id: 'u0', content: 'b'.repeat(800) }] }
+        },
+        answer(3, 'reads', usage)
+      ])
+    );
+
+    const read = await harnessUsage({ sessions: [SESSION], processes: [], ...window });
+    expect(read?.heaviest).toEqual([{ tool: 'Bash', what: 'plitzi task next', results: 1, chars: 800, reread: 200 }]);
+  });
+
   it('reads nothing of a session it cannot find', async () => {
     expect(await harnessUsage({ sessions: [SESSION], processes: [], ...window })).toBeUndefined();
   });

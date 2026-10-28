@@ -56,8 +56,22 @@ export interface SessionRead {
   }[];
   /** Each tool call by its id: the tool, what it was asked in a few words, and what it was given whole. */
   calls: Map<string, { tool: string; what: string; input: string }>;
-  results: { at: string; key: string; chars: number }[];
+  /**
+   * Each tool's answer in the window, with what was asked of it — its call found anywhere in the session: a call made
+   * before the window (the `task next` that waited for the brief) left its answer, the heaviest, "unknown".
+   */
+  results: { at: string; chars: number; tool: string; what: string }[];
 }
+
+/** What a result answered, by its call's id: the call as the session made it — said unknown only when it is not there. */
+export const answerTo = (
+  asked: ReadonlyMap<string, { tool: string; what: string }>,
+  key: string
+): { tool: string; what: string } => {
+  const call = asked.get(key);
+
+  return call ? { tool: call.tool, what: call.what } : { tool: 'unknown', what: 'unknown' };
+};
 
 export const numberOf = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
@@ -145,14 +159,13 @@ export const usageOf = (reads: readonly SessionRead[]): HarnessUsage | undefined
 
   // The session that did most of the work says the harness and its model.
   const main = [...reads].sort((a, b) => b.turns.length - a.turns.length)[0];
-  const calls = new Map(reads.flatMap(read => [...read.calls]));
+  const calls = reads.flatMap(read => [...read.calls.values()]);
   const last = answered[answered.length - 1];
   const heaviest = new Map<string, HarnessUsage['heaviest'][number]>();
   for (const result of reads.flatMap(read => read.results)) {
-    const asked = calls.get(result.key) ?? { tool: 'unknown', what: 'unknown' };
     const after = answered.filter(turn => turn.at > result.at).length;
-    const kind = kindOf(asked.tool, asked.what);
-    const kept = heaviest.get(kind) ?? { tool: asked.tool, what: asked.what, results: 0, chars: 0, reread: 0 };
+    const kind = kindOf(result.tool, result.what);
+    const kept = heaviest.get(kind) ?? { tool: result.tool, what: result.what, results: 0, chars: 0, reread: 0 };
     kept.results += 1;
     kept.chars += result.chars;
     // About four characters a token: what the result was read again for in every turn after it.
@@ -161,7 +174,7 @@ export const usageOf = (reads: readonly SessionRead[]): HarnessUsage | undefined
   }
 
   const read = new Map<string, number>();
-  for (const call of calls.values()) {
+  for (const call of calls) {
     for (const file of new Set(call.input.match(PLITZI_FILE) ?? [])) {
       read.set(file, (read.get(file) ?? 0) + 1);
     }

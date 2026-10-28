@@ -101,6 +101,29 @@ describe('a task’s acceptance set beside the run before it', () => {
     ]);
   });
 
+  // A tester read "passes before too" of a task that moved every spec onto a fixture: its own tests, put on the run
+  // before it, were its change — the line reading the specs passed there.
+  it('sets a task whose change is its tests beside the run without them, where a line reading them fails', async () => {
+    await bench.write('src/space/pages/about.spec.ts', "import { test } from '@playwright/test';\n");
+    const plan = benchPlan();
+    plan.tasks[3].files = ['src/space/pages/about.spec.ts'];
+    plan.tasks[3].acceptance = [
+      { said: 'The spec takes the fixture', check: 'grep -q "./offline" src/space/pages/about.spec.ts' },
+      { said: 'The spec is there', check: 'test -f src/space/pages/about.spec.ts' }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.spec.ts', "import { test } from './offline';\n");
+    await completeTask(about.ctx, runId, 't-about');
+
+    const { lines } = await checkBefore(bench.agent('test-1'), runId, 't-about');
+
+    expect(lines.map(line => [line.said, provedBy(line)])).toEqual([
+      ['The spec takes the fixture', 'proves'],
+      ['The spec is there', 'proves-nothing']
+    ]);
+  });
+
   it('is refused for a task with no line a command checks, and one with no copy', async () => {
     const runId = await open();
     const about = await take('agent-1', 't-about');

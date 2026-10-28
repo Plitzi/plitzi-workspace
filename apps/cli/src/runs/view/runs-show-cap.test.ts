@@ -68,6 +68,31 @@ describe('a task shown', () => {
     ]);
   });
 
+  // A tester read one import moved in 33 specs as 33 diffs, and 31 lines of "not shown".
+  it('shows a change made the same in several files once, naming the others', async () => {
+    const before = (name: string, from: string) => `import { test } from '${from}';\n\nexport const ${name} = test;\n`;
+    for (const name of ['a', 'b', 'c', 'd']) {
+      await bench.write(`src/space/pages/home/${name}.ts`, before(name, '@playwright/test'));
+    }
+
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    const home = await take('agent-1', 't-home');
+    // The same line changed in a, b and c, each file else its own; d's changed otherwise.
+    for (const name of ['a', 'b', 'c']) {
+      await writeInCopy(home.work, `src/space/pages/home/${name}.ts`, before(name, './offline'));
+    }
+
+    await writeInCopy(home.work, 'src/space/pages/home/d.ts', before('d', './other'));
+    await completeTask(home.ctx, 'es-launch', 't-home');
+
+    const shown = await showTask(lead(), 'es-launch', 't-home');
+    const named = (file: string) => `src/space/pages/home/${file}.ts`;
+    expect(shown.files.map(each => [each.file, each.alike ?? []])).toEqual([
+      [named('a'), [named('b'), named('c')]],
+      [named('d'), []]
+    ]);
+  });
+
   // A tests card named two test files and wrote a third: a reviewer saw it only by setting the two lists side by side.
   it('says the files its card names that its work did not write', async () => {
     const plan = benchPlan();

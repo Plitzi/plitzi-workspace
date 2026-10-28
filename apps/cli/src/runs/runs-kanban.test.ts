@@ -55,6 +55,18 @@ describe('an agent with nothing to take', () => {
     expect(await idle()).toBe('');
   });
 
+  // A run's lead was told to "decide" the reviews its tester held: nothing of it was the lead's to do.
+  it('is not said while what is left waits for another reviewer’s step', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'test', { roles: ['tester'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-menu');
+    await openRun(lead(), await bench.writePlan(plan));
+    await completed('dev-1', 't-menu', 'src/space/pages/menu.ts');
+
+    expect((await viewRun(lead(), 'es-launch')).attention.map(item => item.kind)).not.toContain('idle-team');
+  });
+
   // A run's lead was woken at each approval for one idle developer, every card left in review: nothing to do but wait.
   it('wakes the lead for nothing: said with what wakes it, or as its watch ends', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });

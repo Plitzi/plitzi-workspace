@@ -36,12 +36,15 @@ const json = (value: unknown): Record<string, unknown> => {
 
 const iso = (ms: unknown): string => new Date(numberOf(ms)).toISOString();
 
-export const readOpenCode = async (
+/**
+ * The session an OpenCode process wrote — started with it, in the project's folder or below — with its store open:
+ * `read` is given both, and the store is closed after. None where there is no store, or this Node has no SQLite.
+ */
+export const withOpenCodeSession = async <T>(
   startedAt: number,
   root: string,
-  from: string,
-  to: string
-): Promise<SessionRead | undefined> => {
+  read: (database: import('node:sqlite').DatabaseSync, session: { id: string; version?: string }) => T
+): Promise<T | undefined> => {
   let database: import('node:sqlite').DatabaseSync;
   try {
     // Loaded when a session of its is read, never at the CLI's start.
@@ -61,9 +64,25 @@ export const readOpenCode = async (
       return undefined;
     }
 
+    return read(database, {
+      id: session.id,
+      ...(typeof session.version === 'string' ? { version: session.version } : {})
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const readOpenCode = (
+  startedAt: number,
+  root: string,
+  from: string,
+  to: string
+): Promise<SessionRead | undefined> =>
+  withOpenCodeSession(startedAt, root, (database, session) => {
     const read: SessionRead = {
       harness: 'opencode',
-      ...(typeof session.version === 'string' ? { version: session.version } : {}),
+      ...(session.version === undefined ? {} : { version: session.version }),
       turns: [],
       calls: new Map(),
       results: []
@@ -100,16 +119,11 @@ export const readOpenCode = async (
       }
 
       const key = typeof part.callID === 'string' ? part.callID : String(row.id);
-      read.calls.set(key, {
-        tool: part.tool,
-        what: whatOf(part.tool, state.input),
-        input: JSON.stringify(state.input ?? '')
-      });
-      read.results.push({ at: iso(row.time_created), key, chars: charsOf(state.output) });
+      const what = whatOf(part.tool, state.input);
+      read.calls.set(key, { tool: part.tool, what, input: JSON.stringify(state.input ?? '') });
+      // OpenCode keeps a call and its answer in one part: what was asked is always beside it.
+      read.results.push({ at: iso(row.time_created), chars: charsOf(state.output), tool: part.tool, what });
     }
 
     return read.turns.length === 0 ? undefined : read;
-  } finally {
-    database.close();
-  }
-};
+  });

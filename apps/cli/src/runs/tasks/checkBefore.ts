@@ -84,6 +84,7 @@ export const checkBefore = async (
   // The run before it in a folder of its own, made afresh: its state cold, and no server of a look's touched.
   const beforeDir = path.join(view.paths.cache, 'check-before');
   const beforeCache = path.join(view.paths.cache, 'check-before-cache');
+  const bareDir = path.join(view.paths.cache, 'check-before-bare');
   await fs.mkdir(beforeCache, { recursive: true });
   // A task of tests is proved by failing on the code it tests: its "before" is the run's work without that task's
   // change too — the project's own version of its files — or every line passes on both (a run's tester).
@@ -101,12 +102,23 @@ export const checkBefore = async (
 
     // Its own tests run on the code before it: the run's old test file passed the old code and proved nothing, and a
     // spec it adds was "No tests found" there — a failure that proved nothing either.
+    const ownTests: string[] = [];
     for (const file of [...task.files, ...(task.touches ?? [])].filter(isTestFile)) {
-      const own = under(view.paths.work, file);
-      if (await exists(own)) {
-        await fs.mkdir(path.dirname(under(beforeDir, file)), { recursive: true });
-        await fs.cp(own, under(beforeDir, file));
+      if (await exists(under(view.paths.work, file))) {
+        ownTests.push(file);
       }
+    }
+
+    // …and kept bare too, the run without anything of it: a task whose change is its tests themselves (every spec moved
+    // onto a fixture) had that change put back by its own tests, and a line reading the specs passed before it.
+    if (ownTests.length > 0) {
+      await fs.rm(bareDir, { recursive: true, force: true });
+      await fs.cp(beforeDir, bareDir, { recursive: true });
+    }
+
+    for (const file of ownTests) {
+      await fs.mkdir(path.dirname(under(beforeDir, file)), { recursive: true });
+      await fs.cp(under(view.paths.work, file), under(beforeDir, file));
     }
 
     const after = await checkAcceptance(task.acceptance, {
@@ -114,7 +126,22 @@ export const checkBefore = async (
       root: ctx.root,
       cache: view.paths.cache
     });
-    const before = await checkAcceptance(task.acceptance, { work: beforeDir, root: ctx.root, cache: beforeCache });
+    const placed = await checkAcceptance(task.acceptance, { work: beforeDir, root: ctx.root, cache: beforeCache });
+    // A line that passes with its tests on the code before it is run once more, on the run bare: failing there, the
+    // change it sees is its tests'.
+    const again = ownTests.length > 0 ? placed.flatMap((line, index) => (line.ok ? [index] : [])) : [];
+    const bare =
+      again.length > 0
+        ? await checkAcceptance(
+            task.acceptance.filter((_line, index) => again.includes(index)),
+            { work: bareDir, root: ctx.root, cache: beforeCache }
+          )
+        : [];
+    const before = placed.map((line, index) => {
+      const bareLine = bare.at(again.indexOf(index));
+
+      return bareLine !== undefined && !bareLine.ok && !ranNoTest((bareLine.output ?? []).join('\n')) ? bareLine : line;
+    });
 
     return {
       task: taskId,
@@ -128,6 +155,7 @@ export const checkBefore = async (
     };
   } finally {
     await fs.rm(beforeDir, { recursive: true, force: true });
+    await fs.rm(bareDir, { recursive: true, force: true });
   }
 };
 

@@ -36,7 +36,9 @@ find is said with its evidence, never guessed. The agents' half is [runs.md](run
   leave what is no longer asked and end with what you have.
 - **Reproduce with the CLI, not a script:** what two people do on one page — one closes a room, the other comes back —
   is `plitzi page play <path> --as <account> --steps "as <other> action room-close {…}; goto <path>; shot after"`:
-  each step read, pictured where you ask, the accounts signed in for you.
+  each step read, pictured where you ask, the accounts signed in for you. What holds a page's load — a font, a
+  thumbnail, a third-party script — is `plitzi page play <path> --hold <host> --steps "wait 3000"`: the host never
+  answered, and it says when the document was in and whether its load came; `--block <host>` makes it fail instead.
 - **Measure on the run's work, apart:** `plitzi run preview --copy` makes it a folder of your scratch, its state its own — serve
   it on a port of yours (`PORT=<free> npm start` there), never the project's own server nor its `state/`.
 - **Size the tasks for the team:** one task ten minutes of an agent's work (`run open --dry-run` says one past it), its files its own; what

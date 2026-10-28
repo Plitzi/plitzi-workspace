@@ -12,14 +12,16 @@ import { initialUi, LIVE_VERB } from './monitorModel';
 import { PREVIEW_LINES, previewControl } from './monitorPreview';
 import { monitorScreen, paletteFor, waitingScreen } from './monitorScreen';
 import { THEMES, themeOfBackground } from './monitorTheme';
+import { readLaunch } from '../../../runs/agents/launch';
 import { runPaths } from '../../../runs/core/paths';
 import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
+import { recentMoments } from '../../../runs/harness/moments';
 import { activeRuns, runIds } from '../../../runs/run';
 import { monitorRun } from '../../../runs/view/monitor';
 import { contextFor } from '../shell';
 
 import type { Effect, Key, Shown } from './monitorInput';
-import type { MonitorUi } from './monitorModel';
+import type { MonitorUi, StreamShown } from './monitorModel';
 import type { Screen, Waiting } from './monitorScreen';
 import type { ColorDepth, ThemeName } from './monitorTheme';
 import type { RunContext } from '../../../runs/run';
@@ -39,6 +41,10 @@ const FRAME_MS = 120;
 const CLOCK_MS = 1000;
 /** How long a word a key said stays in the status bar. */
 const FLASH_MS = 2500;
+
+/** How often the followed agent's stream is read again, and how many of its last moments. */
+const STREAM_MS = 2000;
+const STREAM_MOMENTS = 60;
 
 /** Which run to show: the one named, else the open one, else the newest the project has. */
 const runToShow = async (ctx: RunContext, named: string | undefined): Promise<string | undefined> => {
@@ -128,6 +134,7 @@ export const runMonitor = async (
   let screen: Screen | undefined;
   let waiting: Waiting = { title: 'Monitor', said: 'Reading the run…', tone: 'primary' };
   let previewOutput: string[] = [];
+  let stream: StreamShown | undefined;
   let flashTimer: ReturnType<typeof setTimeout> | undefined;
 
   // Many events in a moment — a wheel spun, a burst of writes — drawn once, at most every 16 ms.
@@ -154,7 +161,8 @@ export const runMonitor = async (
         height,
         now: new Date(),
         theme,
-        preview: { state: preview.state(last.view.previewPort), output: previewOutput }
+        preview: { state: preview.state(last.view.previewPort), output: previewOutput },
+        ...(stream === undefined ? {} : { stream })
       });
       lines = screen.canvas.ansi(depth);
     } else {
@@ -177,8 +185,45 @@ export const runMonitor = async (
     }
   };
 
+  /**
+   * The followed agent's stream, read off the session its harness keeps: one the run did not start (the lead, in the
+   * person's own harness) has none it knows of. Kept only while that agent is still the one followed.
+   */
+  const readStream = async (): Promise<void> => {
+    const agent = ui.agent;
+    const runId = last?.view.runId;
+    if (agent === undefined || runId === undefined) {
+      stream = undefined;
+
+      return;
+    }
+
+    const launch = await readLaunch(runPaths(ctx.root, runId), agent);
+    const read = launch
+      ? await recentMoments(
+          {
+            harness: launch.harness,
+            startedAt: launch.startedAt,
+            ...(launch.session === undefined ? {} : { session: launch.session })
+          },
+          ctx.root,
+          STREAM_MOMENTS
+        ).catch((error: unknown) => ({ problem: error instanceof Error ? error.message : String(error) }))
+      : { problem: 'not started by the run — its session is the harness it runs in, not one the run keeps' };
+    if (ui.agent === agent) {
+      stream = { agent, ...('problem' in read ? { problem: read.problem } : { moments: read }) };
+      drawSoon();
+    }
+  };
+
   /** The panel as a key or the mouse left it: a word it says now is said for a moment, then cleared. */
   const become = (next: MonitorUi): void => {
+    if (next.agent !== ui.agent) {
+      stream = undefined;
+      ui = next;
+      void readStream();
+    }
+
     if (next.flash !== undefined && next.flash !== ui.flash) {
       clearTimeout(flashTimer);
       flashTimer = setTimeout(() => {
@@ -293,6 +338,7 @@ export const runMonitor = async (
     // reports): a click opens a line, picks a task or a view; the wheel scrolls what it is over.
     process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?1000h\x1b[?1006h');
     const timer = setInterval(() => void look(), Math.max(1, options.interval ?? 5) * 1000);
+    const streaming = setInterval(() => void readStream(), STREAM_MS);
     let ticked = 0;
     const clock = setInterval(() => {
       ticked += FRAME_MS;
@@ -317,6 +363,7 @@ export const runMonitor = async (
       process.off('SIGINT', stopOwn);
       preview.quit();
       clearInterval(timer);
+      clearInterval(streaming);
       clearInterval(clock);
       clearTimeout(soon);
       clearTimeout(drawing);

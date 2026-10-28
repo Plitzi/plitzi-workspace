@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { listedTasks } from './monitorBoard';
-import { onKey, onMouse, QUIT_WARNING, splitInput } from './monitorInput';
+import { followedNext, onKey, onMouse, QUIT_WARNING, splitInput } from './monitorInput';
 import { initialUi } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
@@ -256,6 +256,22 @@ describe("the monitor's keys and mouse", () => {
         undefined
       );
     });
+  });
+});
+
+// Carlos: a headless agent's stream, seen in the sidebar under the spend once an agent of the list is picked.
+describe('the agent whose stream is followed', () => {
+  it('is the next one at each w — none past the last — and the one clicked, a click on it again none', () => {
+    const agents = ['dev-1', 'scout-1'];
+    const first = followedNext(initialUi('advanced'), agents);
+    expect(first.agent).toBe('dev-1');
+    expect(followedNext(first, agents).agent).toBe('scout-1');
+    expect(followedNext({ ...first, agent: 'scout-1' }, agents).agent).toBeUndefined();
+
+    const shown = nothing({ hits: [{ row: 9, from: 0, to: 40, action: { kind: 'agent', agent: 'scout-1' } }] });
+    const picked = onMouse(initialUi('advanced'), { button: 0, row: 9, col: 3 }, shown);
+    expect(picked?.agent).toBe('scout-1');
+    expect(picked && onMouse(picked, { button: 0, row: 9, col: 3 }, shown)?.agent).toBeUndefined();
   });
 });
 

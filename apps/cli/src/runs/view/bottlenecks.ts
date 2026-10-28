@@ -176,7 +176,7 @@ export const bottlenecks = (
     });
   }
 
-  found.push(...idleTeam(views, started, backlog));
+  found.push(...idleTeam(views, started, backlog, team));
 
   // A research card is a scout's, its result the lead's to approve (a proposal, said apart); with no scout the lead finds
   // it out.
@@ -203,7 +203,9 @@ export const idleTeam = (
   views: readonly TaskView[],
   /** The team's agents running now. */
   running: readonly StartedAgent[],
-  backlog: readonly string[]
+  backlog: readonly string[],
+  /** The whole team, running or not: whose a review's step is — a tester not started yet still says it. */
+  team: readonly StartedAgent[] = running
 ): Attention[] => {
   if (views.length === 0 || views.every(view => view.state.status === 'done')) {
     return [];
@@ -259,6 +261,18 @@ export const idleTeam = (
       ? [`split a large card still worked (${worked.join(', ')}) and hand a part (plitzi run amend)`]
       : [])
   ];
+  // With nothing to give, what is left of their roles waits for a review or for work under way: the lead is told only of
+  // a step it says — a run's lead was told to "decide" the reviews its tester held.
+  const wholeTeam = reviewTeamOfAgents(team);
+  const leadDecides = views.some(view => {
+    const role = idleRoles.has(roleOf(view.task)) ? stepRole(view, wholeTeam) : undefined;
+
+    return role !== undefined && stepReviewers(view, views, role, wholeTeam).includes(LEAD);
+  });
+  if (ways.length === 0 && !leadDecides) {
+    return [];
+  }
+
   const onDemand = new Set(running.filter(each => each.onDemand).map(each => each.agent));
 
   return [

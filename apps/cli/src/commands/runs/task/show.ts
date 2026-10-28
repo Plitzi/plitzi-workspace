@@ -7,6 +7,7 @@ import { takeOnRead } from '../review/takeOnRead';
 import { act, ownTask, runOf } from '../shell';
 import { list, messageLines, outsideLines, secondRunText } from '../text';
 
+import type { ShownFile } from '../../../runs/view/show';
 import type { RunCommandOptions } from '../shell';
 
 /** How much of a brief's finding `task show` says without --full: the rule it sets, not the whole page of it. */
@@ -124,7 +125,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
         ]),
         ...notesLines(shown.notes, options.full === true),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
-        `Changed (${FROM_TEXT[shown.from]}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
+        `Changed (${FROM_TEXT[shown.from]}): ${changedText(shown.files)}`,
         ...(shown.notReviewed
           ? [
               chalk.yellow(
@@ -144,15 +145,48 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
           each.binary
             ? [`  ${each.file}: not text — not shown`]
             : each.withheld !== undefined
-              ? [
-                  `  ${each.file}: ${String(each.withheld)} lines of diff, not shown — plitzi task show ${shown.task.id} ${each.file} --diff${options.full === true ? '' : ' (or --full for every file that fits one answer)'}`
+              ? []
+              : [
+                  each.diff ?? '',
+                  ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : []),
+                  ...(each.alike
+                    ? [`  The same change in ${String(each.alike.length)} more: ${each.alike.join(', ')}`]
+                    : [])
                 ]
-              : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
         ),
+        ...withheldLines(shown.task.id, shown.files, options.full === true),
         ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
       ].join('\n');
     }
   );
+
+/** The files it changed, by how — those changed alike among them: a run's list said "(changed)" after each of 34. */
+const changedText = (files: readonly ShownFile[]): string => {
+  const byChange = new Map<ShownFile['change'], string[]>();
+  for (const each of files) {
+    byChange.set(each.change, [...(byChange.get(each.change) ?? []), each.file, ...(each.alike ?? [])]);
+  }
+
+  return byChange.size === 0 ? '—' : [...byChange].map(([change, names]) => `${change} ${names.join(', ')}`).join('; ');
+};
+
+/**
+ * The files whose diff the answer leaves out, in one line with how to read one: a run's tester read the same hint 31
+ * times over, 5k characters of it.
+ */
+const withheldLines = (task: string, files: readonly ShownFile[], full: boolean): string[] => {
+  const left = files.flatMap(each =>
+    each.withheld === undefined
+      ? []
+      : [`${each.file} (${String(each.withheld)} lines${each.alike ? `, the same in ${each.alike.join(', ')}` : ''})`]
+  );
+
+  return left.length === 0
+    ? []
+    : [
+        `  Not shown, ${String(left.length)} file${left.length === 1 ? '' : 's'}: ${left.join(', ')} — plitzi task show ${task} <file> --diff${full ? '' : ', or --full for every file that fits one answer'}`
+      ];
+};
 
 /** `plitzi task show`: the task as its lead reviews it — or, with a file, that file whole. */
 export const taskShow = (
