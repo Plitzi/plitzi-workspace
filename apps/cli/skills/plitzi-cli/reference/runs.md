@@ -72,7 +72,7 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   --ask` (`--follow` waits for the answer). **Something the lead should know** — a finding, a choice you made, a risk —
   with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
   before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
-  says to you arrives with your next heartbeat, progress or completion — read it (`task inbox --all`: all again).
+  says to you arrives with your next command — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
   long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing
   --fraction 0.6 --eta 15 --done "…" --left "…" [--held-by "…"]`.
@@ -92,8 +92,8 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--friction "…"] [--note "…"]` — what
   it was like to Plitzi, the note to the lead; its review is the one its card names. A control you add you use first, there and back (`page play`). **A task never ends
-  with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
-  heartbeat says so first): split it. Only for a weighty reason: `plitzi task complete
+  with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (`task
+  progress` says so first): split it. Only for a weighty reason: `plitzi task complete
 --known-failure "why" [--fixed-by <task>|lead]`, its why naming each failing step. A check that fails the same way without your change (a person's,
   another task's) is not yours: it goes to review marked `preexisting`, and the lead is told. **What goes to review
   is your files as they are at `complete`**: write nothing in the copy after it — never reviewed nor merged. Changes requested come back with `task next`; `task show` is its diff.
@@ -107,13 +107,13 @@ The lead takes a task back at any time — `plitzi task reassign <task> --reason
 why on your next command, and stop (`reassigned`, 12); one handed to you comes first in your `task next`. `plitzi run stop` lets the
 tasks in hand finish; `run resume`. Before the final merge, `plitzi task revert <task> --reason "…"` takes a task's work
 out (what was built on it waits again), and `plitzi run show <run> <file> --restore` puts a file back from the backup. A person's: `run stop --force`, `run finish --apply`, `run abort`
-(writes nothing, leaves the report), `purge`.
+(writes nothing, leaves the report, removes the run).
 
 ## Exit codes
 
 | Code | Refused | Do |
 | --- | --- | --- |
-| 10 | `claimed` — another task's file | wait, request it, or take another task |
+| 10 | `claimed` — another task's file | wait (`task claim <file> --wait`), ask your change of it (`task propose --file`), or take another task |
 | 11 | `waiting` — queued for a file | go on with what does not need it |
 | 12 | `reassigned` — no longer yours | stop working on it |
 | 13 | `version-mismatch` | Plitzi upgraded: keep your work, `task next` waits for a person's `run attach` |

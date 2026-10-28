@@ -693,7 +693,7 @@ lead`) and do nothing else; tasks name the role that
   works them (`"role": "designer"`, a developer's when left out) and `task next --role` picks by it. The lead and the
   agents talk while they work: `task tell` (an agent's word — news, a question with `--ask`, what stops its task with
   `--blocked`, a note for the next with `--handoff`, where it stands with `--standing`), `task message
-<task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
+<task|all|@agent>` (the lead's word, handed to the agent with its next command), `task
 inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
   holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one.
 - **Every card on one board, reviewed alike:** a card's `review` names the roles that review it, in order (`["designer",
@@ -760,7 +760,7 @@ project|run|<file>`, then `run resolve <run>`, no file, goes on).
   person's — and `run attach <run> --release` lets the run go from this machine for another to attach. `--keep-backup` keeps the project's files as they were
   before the merge in `tmp/plitzi-backups/`; `run abort` (a person's) writes nothing, discards the agents' work and
   leaves the reports too.
-- **Cuts:** a task with no signal (15 minutes without a write, progress or heartbeat) can be reassigned; one taken again
+- **Cuts:** a task with no signal (15 minutes without a write, a command or progress) can be reassigned; one taken again
   starts from its last reviewed version — what was written since is never resumed. `run attach` picks a run up after
   the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
 - **Who calls is proved by a token**, never by a name typed: each agent's (`<run>.@<agent>.<secret>`) is made at its

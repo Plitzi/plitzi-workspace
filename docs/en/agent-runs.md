@@ -55,7 +55,7 @@ agents, answers them, reviews — the complete, strict review and the final word
 `task next --role` holds each agent to its role. The lead and the agents talk through the run's
 `messages/` (`messages.ts`, `talk.ts`): an agent's question is on top of `run status`; what the lead says to a task — or
 to every task in hand, or to an agent by name (`@dev-1`), which `task next` hands over between tasks — is handed over
-with the task's next heartbeat, progress or completion, marked read as it is; a question with a reply leaves `run
+with the agent's next command, marked read as it is; a question with a reply leaves `run
 status`. `run watch` (`leadWatch.ts`) is what a lead waits with in the background: it ends with what is new
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
 `lead-seen.json`. A note only to know (`task tell`) wakes it for nothing: it comes with what does, or as the watch
@@ -184,7 +184,7 @@ what each spent and the run with its preview; narrower, those are their own view
 
 **Flow** is the run's kanban: each task a card in its stage from to-do to approved, with what holds an agent; a task a
 review sent back is at work again with its agent, its card marked with the round it is at (`t-boxer ↺2`), never a stage
-apart. An agent is at one task at a time — the one it last did something on itself (taken, a heartbeat, a write:
+apart. An agent is at one task at a time — the one it last did something on itself (taken, its progress, a write:
 `TaskView.workedAt`, never a review that sent it back); the others it holds are held for it (`parkedFor`), so an agent
 is never on two cards at once. A lead is "reviewing" or "finds out" only at a review or a spike a card names it on. A
 pending task's card says what it waits for (`after t-boxer, t-lint`), and a stage with more cards than it shows is
@@ -616,7 +616,7 @@ card whose review names it is still to be done.
 approved work, its acceptance, the CLI (`tasks/checked.ts`) — for 30 minutes: a `task check` or `task complete` with the
 key unchanged says the result again rather than running it (`--fresh` runs it); the copy is served for the acceptance
 while the project's checks run (`serveForAcceptance`), and let go however they end. A look at a task with parts of its
-own compares each part alone beside the run before it (`compareLocalPart`, no page aligned), and reads that nothing
+own compares each part alone beside the run before it (`compareLocalParts`, no page aligned), and reads that nothing
 else moved — the page's drawing on both servers without its parts (`drawnSame`, `commands/page/same.ts`; positions read
 from each element's parent, so a part that grew moves nothing; what differs is named down to the innermost element that
 does). Its check, its parts' comparisons and that reading run at once, three at a time (`inTurns`); its check stands
@@ -675,8 +675,8 @@ first review; the developers' `runs.md` points to it in a line.
 
 A file past the space lint's `file-too-long` line (`MAX_LINES`, 400 lines that say something) is one nobody reads at
 once, an agent least. Every code file under a copy's `src/` that is past it and longer than in the project is said to
-the lead while the task works (`run status`, `run watch`, once a file), to the agent with each heartbeat
-and progress, and held at `complete`: a file the task took past the line — new, or under it in the project — refuses
+the lead while the task works (`run status`, `run watch`, once a file), to the agent at each `task
+progress`, and held at `complete`: a file the task took past the line — new, or under it in the project — refuses
 the completion until it is split. One already past it that the task made longer is said, not refused: the project's
 debt is not the task's.
 
@@ -692,7 +692,7 @@ already done but its acceptance, every reason at once: a done task is held at th
 the whole result, so a line of the lead's found wrong there is amended — it takes the place of the one its review
 accepted (`state.accepted`), marked `amended` until the finish runs it, and is said, not told: nobody is at the task.
 A plan is any of the run's: the one it opened with, a stage's as stacked, or several joined by hand — each speaks for the
-plans whose tasks it holds, read off the log (`extend`'s `added`), never by the `runId` it says: a task leaves only when
+plans whose tasks it holds, read off the log (each stacked stage's `extend` entry, its `added`), never by the `runId` it says: a task leaves only when
 a plan that holds its fellows leaves it out, a plan it does not hold keeps its tasks and the pieces they prove, and the
 goal, the inventory and the reference change only with the plan the run opened with. A stage that says the run's own id
 is named a stage's (`<run>-stage-<n>`) as it is stacked; who a task is for and when — its `role`, `quality` and `dependsOn` — changes while it is pending
@@ -950,7 +950,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   files go to whoever waits, makes ready what depended on it, and makes the integration tasks due.
 - **Waiting** on a file or an answer is a state; `--follow` (`task claim --wait`, `task propose --wait`, `task tell --ask`) stays until it comes,
   giving the task's sign of life meanwhile.
-- **Signal:** its commands, progress and heartbeats, and the newest write among its files in its copy. Without one for
+- **Signal:** its commands and progress, and the newest write among its files in its copy. Without one for
   15 minutes (or a quarter of its estimate) it is disconnected; its locks outlive that by 30 minutes, then another may
   take it. A cut — reassign, forced stop, a copy gone — revokes the token; the copy stays where it is until the task is
   taken again (a command running in it does not lose its folder), and the next taker starts from its last reviewed
@@ -960,7 +960,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   agent it is handed to (`state.handTo`: offered to that one first by `task next`, and refused to every other at `take`
   — an agent of the team of its role, else refused before anything is cut), or to the lead, who takes it then, a copy of
   its own. The log keeps who, from whom, to whom and why (`reassign`).
-- **A run gone stops what its agents left listening**: `finish`, `abort` and `purge` stop every server whose folder is
+- **A run gone stops what its agents left listening**: `finish` and `abort` stop every server whose folder is
   in the run's (`stopListenersUnder`, read off `lsof`) and say so — a run's copies' servers listened on after
   the finish removed their folders. A kept server's watchdog stops it once its record is gone with the run.
 - **An agent stops a server through the CLI, never by name** (`plitzi server stop [--port <port>]`, `commands/server/server.ts`):
@@ -1206,7 +1206,7 @@ which a name alone once let through. `task message` goes out in the lead's voice
 
 ## Who may do what (`run/`)
 
-A person's actions — the final merge, restore, a forced stop, abort, purge, taking a run over, re-pinning it, opening
+A person's actions — the final merge, restore, a forced stop, abort, taking a run over, re-pinning it, opening
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
 by typing the run's name. The lead's — opening, stopping, reviewing (and overwriting), reassigning, reverting,
 resolving a reconciliation and continuing, answering any proposal, the summary, a message to a task — are refused with
@@ -1258,7 +1258,7 @@ detail (`--json`).
 
 ## Not built, and left out
 
-- **`run replay`** — a run played again step by step on a copy, to debug a failure: the run's `log.jsonl`, each task's
+- **Replaying a run** — played again step by step on a copy, to debug a failure: the run's `log.jsonl`, each task's
   log and the report say what happened, and the run is gone once applied.
 - **Memory from reviews** — the space's memory is the project's `NOTES.md`, handed by `task context`; proposing entries
   from what reviews kept asking is not built.

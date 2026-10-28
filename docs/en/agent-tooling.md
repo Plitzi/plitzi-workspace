@@ -109,9 +109,9 @@ function in `__name`, which a page has not. Node 24's undici sets a socket's typ
 macOS that throws from a socket's event (`setTypeOfService EINVAL`) and ends the process: the CLI makes it best effort
 (`bestEffortTypeOfService`, `apps/cli/src/http/`) before anything runs.
 
-**One visitor, one way into a page.** Every page command — `page check`, `measure`, `play`, `outline`, `same`, `shot`
+**One visitor, one way into a page.** Every page command — `page check`, `measure`, `play`, `outline`, `shot`
 — and `task look` take the visitor's flags from one group (`withVisitorOptions`, `commands/register/options.ts`: `--as`,
-`--guest`, `--timezone`, `--presence`, `--clock`, `--block`, `--autoplay`, `--storage`, `--url`) and open the page
+`--guest`, `--timezone`, `--presence`, `--fresh`, `--clock`, `--block`, `--hold`, `--autoplay`, `--storage`, `--url`) and open the page
 through one module (`commands/page/visit.ts`): `visitorBrowser` resolves who reads and starts the browser, `prepareVisit`
 makes the page ready (its view, the browser's conditions, others' pictures stood in for, signed in first),
 `openVisit` opens it as a visitor's browser reads it. `task look` hands the flags on to the commands it runs

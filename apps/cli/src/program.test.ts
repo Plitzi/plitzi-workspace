@@ -18,6 +18,9 @@ import type { Command } from 'commander';
 const SRC = import.meta.dirname;
 const SKILLS = [path.join(SRC, '../skills'), path.join(SRC, '../../../packages/sdk-authoring/skills')];
 
+/** The workspace's pages on the CLI's agents and tools, for whoever works on it. */
+const DOCS = ['agent-runs.md', 'agent-tooling.md'].map(file => path.join(SRC, '../../../docs/en', file));
+
 const filesUnder = (dir: string, ext: RegExp): string[] =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const at = path.join(dir, entry.name);
@@ -296,11 +299,14 @@ const strayOptionsIn = (paragraph: string): string[] => {
 };
 
 describe('the commands the CLI tells anyone to run', () => {
-  it('are in its skills as it takes them', () => {
-    const problems = SKILLS.flatMap(dir =>
-      filesUnder(dir, /\.md$/).flatMap(file =>
-        problemsIn(codeOfMarkdown(fs.readFileSync(file, 'utf-8')), path.relative(SRC, file), { code: true })
-      )
+  // Its README too, and the workspace's pages on the runs: a renamed command lived on there, read by people and agents.
+  it('are in its skills, its README and the docs of its runs as it takes them', () => {
+    const problems = [
+      ...SKILLS.flatMap(dir => filesUnder(dir, /\.md$/)),
+      path.join(SRC, '../README.md'),
+      ...DOCS
+    ].flatMap(file =>
+      problemsIn(codeOfMarkdown(fs.readFileSync(file, 'utf-8')), path.relative(SRC, file), { code: true })
     );
 
     expect(problems).toEqual([]);
