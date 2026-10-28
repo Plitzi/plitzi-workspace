@@ -19,6 +19,7 @@ import { act, either } from '../shell';
 import { nearLimit } from '../text';
 
 import type { Finding } from '../../../runs/plan/spike';
+import type { RunContext } from '../../../runs/run';
 import type { TaskContext } from '../../../runs/tasks';
 import type { RunCommandOptions } from '../shell';
 
@@ -54,7 +55,7 @@ const filesOf = async (root: string, context: TaskContext): Promise<{ file: stri
   return shapes;
 };
 
-type Brief = TaskContext & {
+export type Brief = TaskContext & {
   /** When this agent read the primer whole on this task, unchanged since: said in a line, not again. */
   primerRead?: string;
   /** When this agent read this very brief in this session of its harness: said in a line, not again. */
@@ -126,6 +127,73 @@ export const readInSession = (
       entry[field] === mark
   );
 
+/**
+ * A task's brief, read as its holder reads it — kept in the run's log by its parts, a part read already in this session
+ * left out (`primerRead`, `readBefore`): what `task context` answers, and what `task next` hands with the task it gives.
+ */
+export const readBrief = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  { files = false, again = false }: { files?: boolean; again?: boolean } = {}
+): Promise<Brief> => {
+  const context = await taskContext(ctx, runId, taskId);
+  const paths = runPaths(ctx.root, runId);
+  const mark = context.primer === undefined ? undefined : primerMark(context.primer);
+  const reader = { agent: ctx.agent, task: taskId, session: sessionOfProcess().session };
+  const log = await readRunLog(paths);
+  // A run's briefs carried the lead's 7k primer every time one was read again — 46% of 230k characters re-read.
+  const primerRead = mark === undefined || again ? undefined : readInSession(log, reader, 'primer', mark)?.at;
+  const whole: Brief = {
+    ...context,
+    ...(typeof primerRead === 'string' ? { primerRead } : {}),
+    whole: files,
+    data: await filesOf(context.sourceRoot, context),
+    imports: await importedApis(context.sourceRoot, context.files)
+  };
+  // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
+  // heavy was guessed (61 briefs, up to 21k characters, read again for 1.1M tokens).
+  const parts = partsOf(whole);
+  const printed = Object.values(parts).join('\n');
+  const seen = primerMark(printed);
+  // The same brief asked again in one context is in it already: a run's dev-1 read its 13-18k four times.
+  const before = again ? undefined : readInSession(log, reader, 'seen', seen)?.at;
+  const brief: Brief =
+    typeof before === 'string' ? { ...whole, readBefore: { at: before, chars: printed.length } } : whole;
+  const primer = whole.primerRead === undefined ? (context.primer?.trim().length ?? 0) : 0;
+  await logRun(ctx, paths, {
+    action: 'brief',
+    task: taskId,
+    seen,
+    ...(reader.session === undefined ? {} : { session: reader.session }),
+    ...(mark === undefined || whole.primerRead !== undefined ? {} : { primer: mark }),
+    parts:
+      brief.readBefore === undefined
+        ? {
+            primer,
+            brief: parts.brief.length - primer,
+            files: parts.files.length,
+            shapes: parts.shapes.length,
+            imports: parts.imports.length
+          }
+        : { primer: 0, brief: 0, files: 0, shapes: 0, imports: 0 }
+  });
+
+  return brief;
+};
+
+/**
+ * A brief as an agent reads it. The files themselves only with --files: an agent reads the ones it changes with its own
+ * reader — one that must read a file before it edits it read each twice. A run's t-body-type: 57 KB with them, 3.5 KB
+ * without.
+ */
+export const briefText = (context: Brief): string =>
+  context.readBefore === undefined
+    ? Object.values(partsOf(context))
+        .filter(part => part !== '')
+        .join('\n')
+    : `${context.task.id}'s brief is as you read it at ${context.readBefore.at.slice(11, 16)} UTC (${String(context.readBefore.chars)} characters): nothing in it changed since — what is new comes with your commands. Lost from your context? plitzi task context --again`;
+
 export const taskContextCommand = (
   taskId: string | undefined,
   options: RunCommandOptions & { files?: boolean; again?: boolean }
@@ -134,59 +202,13 @@ export const taskContextCommand = (
     options,
     async ctx => {
       const target = await either(ctx, options, taskId);
-      const context = await taskContext(ctx, target.runId, target.taskId);
-      const paths = runPaths(ctx.root, target.runId);
-      const mark = context.primer === undefined ? undefined : primerMark(context.primer);
-      const reader = { agent: ctx.agent, task: target.taskId, session: sessionOfProcess().session };
-      const log = await readRunLog(paths);
-      // A run's briefs carried the lead's 7k primer every time one was read again — 46% of 230k characters re-read.
-      const primerRead =
-        mark === undefined || options.again === true ? undefined : readInSession(log, reader, 'primer', mark)?.at;
-      const whole: Brief = {
-        ...context,
-        ...(typeof primerRead === 'string' ? { primerRead } : {}),
-        whole: options.files === true,
-        data: await filesOf(context.sourceRoot, context),
-        imports: await importedApis(context.sourceRoot, context.files)
-      };
-      // What each part weighs, for the report: an agent reads its brief again on every turn after, and which part is
-      // heavy was guessed (61 briefs, up to 21k characters, read again for 1.1M tokens).
-      const parts = partsOf(whole);
-      const printed = Object.values(parts).join('\n');
-      const seen = primerMark(printed);
-      // The same brief asked again in one context is in it already: a run's dev-1 read its 13-18k four times.
-      const before = options.again === true ? undefined : readInSession(log, reader, 'seen', seen)?.at;
-      const brief: Brief =
-        typeof before === 'string' ? { ...whole, readBefore: { at: before, chars: printed.length } } : whole;
-      const primer = whole.primerRead === undefined ? (context.primer?.trim().length ?? 0) : 0;
-      await logRun(ctx, paths, {
-        action: 'brief',
-        task: target.taskId,
-        seen,
-        ...(reader.session === undefined ? {} : { session: reader.session }),
-        ...(mark === undefined || whole.primerRead !== undefined ? {} : { primer: mark }),
-        parts:
-          brief.readBefore === undefined
-            ? {
-                primer,
-                brief: parts.brief.length - primer,
-                files: parts.files.length,
-                shapes: parts.shapes.length,
-                imports: parts.imports.length
-              }
-            : { primer: 0, brief: 0, files: 0, shapes: 0, imports: 0 }
-      });
 
-      return brief;
+      return readBrief(ctx, target.runId, target.taskId, {
+        files: options.files === true,
+        again: options.again === true
+      });
     },
-    // The files themselves only with --files: an agent reads the ones it changes with its own reader — one that must
-    // read a file before it edits it read each twice. A run's t-body-type: 57 KB with them, 3.5 KB without.
-    context =>
-      context.readBefore === undefined
-        ? Object.values(partsOf(context))
-            .filter(part => part !== '')
-            .join('\n')
-        : `${context.task.id}'s brief is as you read it at ${context.readBefore.at.slice(11, 16)} UTC (${String(context.readBefore.chars)} characters): nothing in it changed since — what is new comes with your commands. Lost from your context? plitzi task context --again`
+    briefText
   );
 
 /**

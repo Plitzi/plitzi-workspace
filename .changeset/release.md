@@ -856,6 +856,12 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - **A task's brief says what the project's lint forbids in its files,** with its config's words — `no-restricted-imports`
   and its kin, read from what ESLint resolves for them: a developer learnt at `task check` that the project's specs take
   `test` from `./offline`.
+- **Agents work with fewer steps:** the answer that ends a piece — `task complete`, `task review`, a research card
+  handed on, an escalation — says whether the agent stops (its session ends there), where every agent called
+  `task next` only to hear "you can stop"; asked again by that session it is told again, never handed new work in the
+  old context (`RunContext.session`). `task next` hands a task with its brief (`task context` stays, for `--files` and
+  `--again`) and a review with what `task show` says of it. The prompt asks no progress step to start a piece. Two
+  runs' agents spent ~20% of their calls to Plitzi on those four steps.
 - **A task runs the page specs the run gives it** (what its change may break) at its check: the project's own check runs
   no spec, and a run's task went to review "passed" while the spec of the page it changed failed two of ten.
 - **`page shot --as` names the account in the picture's file** (`messages-as-mika-390-dark.png`): one account's

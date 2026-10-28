@@ -90,6 +90,8 @@ describe('plitzi run and plitzi task, as processes', () => {
     const taken = await plitzi(bench.root, ['task', 'next', 't-about', '--agent', 'dev-1']);
     expect(taken.code).toBe(0);
     const work = String(taken.json.work);
+    // Its brief with it: every agent asked for it next, a turn a task.
+    expect(taken.json.brief).toMatchObject({ task: { id: 't-about' } });
 
     const second = await plitzi(bench.root, ['task', 'next', 't-about', '--agent', 'dev-2']);
     expect(second.code).toBe(REFUSAL_EXIT_CODES.claimed);
@@ -105,6 +107,11 @@ describe('plitzi run and plitzi task, as processes', () => {
     const completed = await plitzi(work, ['task', 'complete', ...SAID], { PLITZI_TOKEN: await tokenOf('dev-1') });
     expect(completed.code).toBe(0);
     expect(completed.json).toMatchObject({ changed: ['src/space/pages/about.ts'] });
+    // Its piece ended, it is told it stops by the answer itself — not by a `task next` asked only for that.
+    expect(String(completed.json.stop)).toContain('t-about is complete');
+    // A tester handed its review with what went to it: every reviewer asked `task show` next.
+    const review = await plitzi(bench.root, ['task', 'next', '--agent', 'test-1', '--no-wait']);
+    expect(review.json).toMatchObject({ review: { task: { id: 't-about' } }, shown: { task: { id: 't-about' } } });
   }, 120_000);
 
   it('refuses a person’s action from a shell with no terminal with 17, and a stale token with 12', async () => {

@@ -1,6 +1,7 @@
 import { RunRefusal } from '../../../runs/core/refusal';
-import { escalateReview } from '../../../runs/tasks';
+import { escalateReview, stopAfterPiece } from '../../../runs/tasks';
 import { act, runOf } from '../shell';
+import { pieceEnd } from '../text';
 
 import type { ReviewOptions } from './review';
 
@@ -13,8 +14,14 @@ export const taskEscalate = (taskId: string, options: ReviewOptions & { escalate
         throw new RunRefusal('invalid', '--escalate is the review itself: leave out --approve and --changes');
       }
 
-      return escalateReview(ctx, await runOf(ctx, options), taskId, options.escalate);
+      const runId = await runOf(ctx, options);
+      await escalateReview(ctx, runId, taskId, options.escalate);
+
+      return { stop: await stopAfterPiece(ctx, runId) };
     },
-    () =>
-      `${taskId} goes to the lead to decide: it approves it, or sends it back with an answer. Your review is done — plitzi task next`
+    ({ stop }) =>
+      [
+        `${taskId} goes to the lead to decide: it approves it, or sends it back with an answer. Your review is done.`,
+        ...pieceEnd(stop, '  Next: plitzi task next')
+      ].join('\n')
   );

@@ -10,7 +10,7 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
 - **Against the inventory, not only the picture:** every section and piece the task's acceptance names is there, as the
   reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent back. Judge the
   version that went to review, on a page several tasks build only its part.
-- **Read it:** `plitzi task show t-home` is all of it, its diffs cut short (`--full`: as many whole as one answer holds;
+- **Read it:** `task next` hands the review with what `plitzi task show t-home` says — all of it, its diffs cut short (`--full`: as many whole as one answer holds;
   `<file> --diff`: one file's whole diff); `plitzi task look t-home
 --before` serves its copy, checks and pictures its pages beside the run before (its options:
   [runs-designer.md](runs-designer.md)) — once: after the designer's, unchanged, it repeats it. Your read of a task in

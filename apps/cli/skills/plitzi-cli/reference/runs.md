@@ -23,7 +23,7 @@ The lead's half — plan, open, close, stack — is [runs-lead.md](runs-lead.md)
 ## The agent
 
 ```bash
-cd <work> && plitzi task context   # the brief, its files' data and imports (--files: the files, whole)
+cd <work> && plitzi task context   # the brief again — task next hands it with the task (--files: the files, whole)
 ```
 
 Inside `work`, a command knows its task and run (`tmp/plitzi-task.json`) — never who you are.

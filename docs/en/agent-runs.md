@@ -334,7 +334,9 @@ design-2 waited ten minutes on one). A task does not complete with a proposal to
 
 ## A cold start, short (`reading.ts`, `history.ts`)
 
-Every agent starts cold, and most of what it would read is the same for all of them. A plan's `primer` — the lead's
+Every agent starts cold, and most of what it would read is the same for all of them. `task next` hands a task with its
+brief (`readBrief`, what `task context` prints) and a review with what `task show` says of it: two runs' agents asked
+each of them next, a turn a piece. A plan's `primer` — the lead's
 Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
 brief (`run open --dry-run` says one past 6k, half of `LARGE_OUTPUT`, with what it costs: every first brief carries it whole). What an
 agent read in this session of its harness is not printed again (`readInSession`, by the `brief` log entry's `session`):
@@ -544,8 +546,11 @@ is started `--pure`, without the person's plugins. Codex takes the person's `~/.
 **A fresh context** (`freshStart`, `nextRules.ts`; a team agent's `"session"`, `options.freshContextAt`): the CLI cannot
 empty a harness's context, so the agent ends its session instead — always between two pieces of work, a task completed
 or a review decided, never in one, so nothing it knows and has not written is lost. Its session is what it did since it
-was last launched or stopped (the log's `launch` and `stops`); once a piece of it ended, `task next` tells it to stop,
-before its own work is handed back — never while it is in one (`inAPiece`), read off the tasks' state, not the log: a
+was last launched or stopped (the log's `launch` and `stops`); once a piece of it ended, the answer that ended it —
+`task complete`, `task review`, a research card handed on, an escalation — tells it to stop (`stopAfterPiece`), so no
+`task next` is asked only to hear it; the same session asking `task next` after is told again (the `stops` entry keeps
+its `session`, `RunContext.session`), another is answered; `task next` tells it to stop itself where nothing else
+did, before its own work is handed back — never while it is in one (`inAPiece`), read off the tasks' state, not the log: a
 task it holds at work, waiting or blocked (a `task next` comes from an agent in a task too, its task blocked or given
 back), one sent back it took up again, a review it took and has not decided. Past the threshold or not, it stops only
 once that piece ends: `"session": "task"` (the default, `DEFAULT_SESSION`) after each piece; `"context"` once its

@@ -3,7 +3,16 @@ import fs from 'node:fs/promises';
 import { findTask } from './common';
 import { leadNext } from './leadNext';
 import { allLocks } from './locks';
-import { askedRoles, baseFirst, freshStart, lastAsked, reasonOf, markJoined, reviewsComing } from './nextRules';
+import {
+  askedRoles,
+  baseFirst,
+  freshStart,
+  lastAsked,
+  reasonOf,
+  markJoined,
+  reviewsComing,
+  stoppedIn
+} from './nextRules';
 import { reviewOffer, takeOfferedStep } from './reviewOffer';
 import { reviewFor, reviewRolesOf, reviewSteps, reviewTeamOf } from './reviews';
 import { spareTests } from './spareTests';
@@ -80,6 +89,8 @@ export interface NextTask {
   finished?: boolean;
   /** Finished for a fresh context between two pieces of work: started again by the run, its work not over. */
   fresh?: true;
+  /** Told to stop already, by the answer that ended its piece: said again, not kept again. */
+  stopped?: true;
   /** Finished: the tasks the caller worked, and where each ended — approved, or still with the lead. */
   worked?: { task: string; status: TaskStatus; finishedBy?: string }[];
   /** What the lead said to the caller by name and it had not read. */
@@ -107,11 +118,11 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   const next = await nextOf(ctx, loaded, role);
   // Nothing left for it, ever: the activity says the agent stops, and why — never a silence read as a hang. The lead
   // goes on to close the run: it never stops.
-  if (next.finished && !isPrincipal(ctx.agent)) {
+  if (next.finished && next.stopped !== true && !isPrincipal(ctx.agent)) {
     await logRun(ctx, loaded.paths, {
       action: 'stops',
       why: next.why ?? 'nothing is left for it',
-      ...(next.fresh ? { fresh: true } : {})
+      ...(next.fresh ? { fresh: true, ...stoppedIn(ctx) } : {})
     });
   }
 
@@ -134,7 +145,14 @@ const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promis
   // Between two pieces of work, before its own is handed back: the next session takes it up, with a fresh context.
   const fresh = await freshStart(ctx, loaded, views);
   if (fresh !== undefined) {
-    return { why: fresh.why, ready: [], messages, finished: true, fresh: true };
+    return {
+      why: fresh.why,
+      ready: [],
+      messages,
+      finished: true,
+      fresh: true,
+      ...(fresh.already ? { stopped: true as const } : {})
+    };
   }
 
   // What the caller holds and can go on with comes before anything new: an agent between tasks waits with `next`, and

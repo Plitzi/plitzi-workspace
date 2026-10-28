@@ -7,7 +7,7 @@ import { takeOnRead } from '../review/takeOnRead';
 import { act, ownTask, runOf } from '../shell';
 import { list, messageLines, outsideLines, secondRunText } from '../text';
 
-import type { ShownFile } from '../../../runs/view/show';
+import type { ShownFile, TaskShown } from '../../../runs/view/show';
 import type { RunCommandOptions } from '../shell';
 
 /** How much of a brief's finding `task show` says without --full: the rule it sets, not the whole page of it. */
@@ -57,6 +57,88 @@ export const notesLines = (notes: readonly { by: string; text: string }[], full:
 export const roundText = ({ status, round }: { status: string; round: number }): string =>
   status === 'in-review' ? `, round ${String(round + 1)}` : round > 0 ? `, round ${String(round)}` : '';
 
+/** A task as `task show` says it: its acceptance, its brief, its checks, its diff — what a reviewer starts from. */
+export const shownText = (shown: TaskShown, full = false): string => {
+  const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
+
+  return [
+    chalk.bold(
+      `${shown.task.id} — ${shown.task.title} · ${shown.status}${roundText(shown)}${shown.holder ? ` · ${shown.holder}` : ''}`
+    ),
+    `  ${roleOf(shown.task)} · its files: ${shown.task.files.join(', ')}`,
+    ...(shown.task.acceptance.length > 0
+      ? [
+          'Acceptance',
+          ...shown.task.acceptance.map(each => {
+            const result = shown.accepted?.find(one => one.said === acceptanceText(each));
+            const mark = result?.amended ? '↻' : result ? (result.ok ? '✓' : '✗') : shown.status === 'done' ? '✓' : '☐';
+
+            return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result?.amended ? chalk.dim(' — amended once done: held at the finish') : ''}${result && !result.ok && !result.amended ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
+          })
+        ]
+      : []),
+    // What it was asked in detail, beside its lines: a reviewer reads both (a run's tester had neither rule).
+    ...(shown.findings
+      ? [
+          'Its brief — what was found for it',
+          ...shown.findings.map(
+            each =>
+              `  · ${full || each.text.length <= BRIEF_CHARS ? each.text : `${each.text.slice(0, BRIEF_CHARS)}… (whole: --full)`}`
+          )
+        ]
+      : []),
+    knownFailure
+      ? chalk.yellow(
+          `Checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
+        )
+      : `Checks: ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
+    ...(shown.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${warning}`)),
+    ...(shown.agreements.length > 0
+      ? ['Agreed — check it holds', ...shown.agreements.map(each => `  ⇄ ${each.from} → ${each.to}: ${each.change}`)]
+      : []),
+    ...shown.unanswered.map(each =>
+      chalk.yellow(`  ⇄ unanswered ${each.id}: ${each.from} → ${each.to}: ${each.change}`)
+    ),
+    ...shown.requests.flatMap(each => [
+      `  ↗ request on ${each.file}${each.task === shown.task.id ? '' : ` from ${each.task}`}: ${each.summary}`,
+      ...(each.diff ? each.diff.split('\n').map(line => `      ${line}`) : [])
+    ]),
+    ...notesLines(shown.notes, full),
+    ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
+    `Changed (${FROM_TEXT[shown.from]}): ${changedText(shown.files)}`,
+    ...(shown.notReviewed
+      ? [
+          chalk.yellow(
+            `  ⚠ Its copy holds what did not go to review: ${list(shown.notReviewed)} — not shown, never merged`
+          )
+        ]
+      : []),
+    ...(shown.unwritten
+      ? [
+          chalk.yellow(
+            `  ⚠ Its card names ${list(shown.unwritten)}, which its work did not write — what it wrote instead is above`
+          )
+        ]
+      : []),
+    ...outsideLines(shown),
+    ...shown.files.flatMap(each =>
+      each.binary
+        ? [`  ${each.file}: not text — not shown`]
+        : each.withheld !== undefined
+          ? []
+          : [
+              each.diff ?? '',
+              ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : []),
+              ...(each.alike
+                ? [`  The same change in ${String(each.alike.length)} more: ${each.alike.join(', ')}`]
+                : [])
+            ]
+    ),
+    ...withheldLines(shown.task.id, shown.files, full),
+    ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
+  ].join('\n');
+};
+
 const taskShowSummary = (named: string | undefined, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
@@ -67,97 +149,7 @@ const taskShowSummary = (named: string | undefined, options: RunCommandOptions &
 
       return showTask(ctx, runId, taskId, { full: options.full ?? false });
     },
-    shown => {
-      const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
-
-      return [
-        chalk.bold(
-          `${shown.task.id} — ${shown.task.title} · ${shown.status}${roundText(shown)}${shown.holder ? ` · ${shown.holder}` : ''}`
-        ),
-        `  ${roleOf(shown.task)} · its files: ${shown.task.files.join(', ')}`,
-        ...(shown.task.acceptance.length > 0
-          ? [
-              'Acceptance',
-              ...shown.task.acceptance.map(each => {
-                const result = shown.accepted?.find(one => one.said === acceptanceText(each));
-                const mark = result?.amended
-                  ? '↻'
-                  : result
-                    ? result.ok
-                      ? '✓'
-                      : '✗'
-                    : shown.status === 'done'
-                      ? '✓'
-                      : '☐';
-
-                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result ? secondRunText(result) : ''}${result?.amended ? chalk.dim(' — amended once done: held at the finish') : ''}${result && !result.ok && !result.amended ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
-              })
-            ]
-          : []),
-        // What it was asked in detail, beside its lines: a reviewer reads both (a run's tester had neither rule).
-        ...(shown.findings
-          ? [
-              'Its brief — what was found for it',
-              ...shown.findings.map(
-                each =>
-                  `  · ${options.full === true || each.text.length <= BRIEF_CHARS ? each.text : `${each.text.slice(0, BRIEF_CHARS)}… (whole: --full)`}`
-              )
-            ]
-          : []),
-        knownFailure
-          ? chalk.yellow(
-              `Checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
-            )
-          : `Checks: ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
-        ...(shown.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${warning}`)),
-        ...(shown.agreements.length > 0
-          ? [
-              'Agreed — check it holds',
-              ...shown.agreements.map(each => `  ⇄ ${each.from} → ${each.to}: ${each.change}`)
-            ]
-          : []),
-        ...shown.unanswered.map(each =>
-          chalk.yellow(`  ⇄ unanswered ${each.id}: ${each.from} → ${each.to}: ${each.change}`)
-        ),
-        ...shown.requests.flatMap(each => [
-          `  ↗ request on ${each.file}${each.task === shown.task.id ? '' : ` from ${each.task}`}: ${each.summary}`,
-          ...(each.diff ? each.diff.split('\n').map(line => `      ${line}`) : [])
-        ]),
-        ...notesLines(shown.notes, options.full === true),
-        ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
-        `Changed (${FROM_TEXT[shown.from]}): ${changedText(shown.files)}`,
-        ...(shown.notReviewed
-          ? [
-              chalk.yellow(
-                `  ⚠ Its copy holds what did not go to review: ${list(shown.notReviewed)} — not shown, never merged`
-              )
-            ]
-          : []),
-        ...(shown.unwritten
-          ? [
-              chalk.yellow(
-                `  ⚠ Its card names ${list(shown.unwritten)}, which its work did not write — what it wrote instead is above`
-              )
-            ]
-          : []),
-        ...outsideLines(shown),
-        ...shown.files.flatMap(each =>
-          each.binary
-            ? [`  ${each.file}: not text — not shown`]
-            : each.withheld !== undefined
-              ? []
-              : [
-                  each.diff ?? '',
-                  ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : []),
-                  ...(each.alike
-                    ? [`  The same change in ${String(each.alike.length)} more: ${each.alike.join(', ')}`]
-                    : [])
-                ]
-        ),
-        ...withheldLines(shown.task.id, shown.files, options.full === true),
-        ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
-      ].join('\n');
-    }
+    shown => shownText(shown, options.full === true)
   );
 
 /** The files it changed, by how — those changed alike among them: a run's list said "(changed)" after each of 34. */

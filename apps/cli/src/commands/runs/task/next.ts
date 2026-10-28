@@ -13,8 +13,13 @@ import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
 import { projectExec } from '../../../scaffold/packageManager';
 import { act, runOf } from '../shell';
-import { messageLines } from '../text';
+import { briefText, readBrief } from './brief';
+import { shownText } from './show';
+import { showTask } from '../../../runs/view/show';
+import { takeOnRead } from '../review/takeOnRead';
+import { BEFORE_STOP, messageLines } from '../text';
 
+import type { Brief } from './brief';
 import type { RunTask } from '../../../runs/core/model';
 import type { NextTask, TakenTask } from '../../../runs/tasks';
 import type { RunCommandOptions } from '../shell';
@@ -44,9 +49,28 @@ export const taskNext = (
             follow ? { timeoutMs: options.timeout ?? FOLLOW_MS } : undefined
           );
 
-          return { ...next, agent: ctx.agent, ...(taken ? { taken } : {}) };
+          // The brief with the task: every agent asked for it next, a turn a task — read as its holder, by the token
+          // the take gave.
+          const brief = taken ? await readBrief({ ...ctx, token: taken.token }, runId, taken.task.id) : undefined;
+          // …and a review with what went to it: every reviewer asked `task show` next, a turn a review. Read, it is
+          // taken, as a show of it takes it.
+          const reviewing = next.review?.found === undefined ? next.review?.task.id : undefined;
+          const reviewed =
+            reviewing === undefined
+              ? undefined
+              : await takeOnRead(ctx, runId, reviewing).then(() => showTask(ctx, runId, reviewing));
+
+          return {
+            ...next,
+            agent: ctx.agent,
+            ...(taken ? { taken: { ...taken, ...(brief ? { brief } : {}) } } : {}),
+            ...(reviewed ? { shown: reviewed } : {})
+          };
         },
-        answer => (answer.taken ? takenText(answer.taken) : nextText(answer, answer.agent))
+        answer =>
+          answer.taken
+            ? takenText(answer.taken)
+            : [nextText(answer, answer.agent), ...(answer.shown ? ['', shownText(answer.shown)] : [])].join('\n')
       )
     : act(
         options,
@@ -125,7 +149,7 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
         )),
     review.precision
       ? `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`
-      : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review: plitzi task show ${review.task.id}`,
+      : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review is below (a file whole: plitzi task show ${review.task.id} <file> --diff)`,
     `  Send it back only for what its title, acceptance and brief ask — what was found for it, a 'do X, not Y' — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
     ...review.accepted.map(
@@ -221,11 +245,7 @@ export const nextText = (next: NextTask, agent: string): string =>
               ),
               // A run's dev-1 met four of Plitzi's frictions and said them only in its last words, which the
               // run's feedback never reads.
-              ...(next.finished
-                ? [
-                    '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not'
-                  ]
-                : [])
+              ...(next.finished ? [BEFORE_STOP] : [])
             ].join('\n'),
     // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
     ...(next.task && !next.review
@@ -245,7 +265,7 @@ const binLine = (work: string): string[] => {
     : [];
 };
 
-const takenText = (taken: TakenTask): string =>
+const takenText = (taken: TakenTask & { brief?: Brief }): string =>
   [
     chalk.bold(`Task "${taken.task.id}" is yours: ${taken.task.title}`),
     ...taken.proposals.map(each =>
@@ -267,12 +287,15 @@ const takenText = (taken: TakenTask): string =>
         ]
       : [`  Its files: ${taken.files.join(', ')}`]),
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
-    `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`,
+    taken.brief === undefined
+      ? `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`
+      : `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: its brief is below (plitzi task context --files adds its files whole)`,
     ...binLine(taken.work),
     isResearch(taken.task)
       ? '  See your stage first — each line run once: plitzi run open <stage.json> --dry-run --lines; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
       : '  Done: plitzi task check --fix (what lint and format fix by themselves, first), then plitzi task complete — in the copy',
-    ...messageLines(taken.messages)
+    ...messageLines(taken.messages),
+    ...(taken.brief === undefined ? [] : ['', briefText(taken.brief)])
   ].join('\n');
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>
@@ -281,8 +304,9 @@ export const taskTake = (taskId: string, options: RunCommandOptions & { role?: s
     async ctx => {
       const runId = await runOf(ctx, options);
       const taken = await takeTask(ctx, runId, taskId, options.role);
+      const brief = await readBrief({ ...ctx, token: taken.token }, runId, taken.task.id);
 
-      return { ...taken, run: runId };
+      return { ...taken, brief, run: runId };
     },
     takenText
   );

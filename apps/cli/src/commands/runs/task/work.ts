@@ -11,9 +11,16 @@ import { crossed, longFileText } from '../../../runs/plan/longFiles';
 import { experienceFrom } from '../../../runs/report/experience';
 import { logRun } from '../../../runs/run';
 import { tellLead } from '../../../runs/talk/talk';
-import { checkTask, completeResearch, completeTask, reportProgress, unblockTask } from '../../../runs/tasks';
+import {
+  checkTask,
+  completeResearch,
+  completeTask,
+  reportProgress,
+  stopAfterPiece,
+  unblockTask
+} from '../../../runs/tasks';
 import { act, holder, inHand, runOf } from '../shell';
-import { hhmm, list, messageLines, reusedServerText, secondRunText, slowLineText } from '../text';
+import { hhmm, list, messageLines, pieceEnd, reusedServerText, secondRunText, slowLineText } from '../text';
 
 import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { RunCommandOptions } from '../shell';
@@ -243,7 +250,9 @@ export const taskComplete = (
         await tellLead(ctx, runId, taskId, options.note);
       }
 
-      return completed;
+      const stop = await stopAfterPiece(ctx, runId);
+
+      return { ...completed, ...(stop === undefined ? {} : { stop }) };
     },
     completed =>
       [
@@ -284,7 +293,10 @@ export const taskComplete = (
             ]
           : []),
         chalk.dim(`  Round ${String(completed.report.round)}'s report kept for the run's, with what it was like`),
-        '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.',
+        ...pieceEnd(
+          completed.stop,
+          '  Nothing more on it until its review comes back: plitzi task next hands you what is next — a task you hold first.'
+        ),
         ...messageLines(completed.messages)
       ].join('\n')
   );
@@ -323,13 +335,17 @@ export const taskFound = (
         .map(id => id.trim())
         .filter(id => id !== '');
 
-      return completeResearch(ctx, runId, taskId, options.found, { ...tasks, closes });
+      const found = await completeResearch(ctx, runId, taskId, options.found, { ...tasks, closes });
+      const stop = own ? undefined : await stopAfterPiece(ctx, runId);
+
+      return { ...found, ...(stop === undefined ? {} : { stop }) };
     },
     found =>
       found.status === 'in-review'
         ? [
             `What you found on ${found.task} goes to the lead, who decides it${found.proposed && found.proposed.length > 0 ? ` with the person: ${found.proposed.join(', ')}` : ''} — nothing is stacked until it approves; what it asks comes with your next command.`,
-            ...(found.notices ?? []).map(notice => `  · ${notice}`)
+            ...(found.notices ?? []).map(notice => `  · ${notice}`),
+            ...(found.stop === undefined ? [] : pieceEnd(found.stop, ''))
           ].join('\n')
         : [
             `${found.task} is done: its findings go with every task that waits for it.${found.added ? ` It made ${found.added.join(', ')}${found.stage === undefined ? '' : ` — their plan, to amend them from: ${found.stage}`}.` : ''}${found.ready && found.ready.length > 0 ? ` Ready now: ${found.ready.join(', ')}.` : ''}`,

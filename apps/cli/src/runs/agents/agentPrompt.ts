@@ -54,12 +54,14 @@ const rules = (cli: string): string[] => [
   `- Never run \`${cli} run finish\`, \`run abort\`, \`run show --restore\` or \`run stop --force\` — a person's. Never \`git stash\`, \`checkout\` or \`reset\`.`,
   // A heredoc that never closed hung on stdin, and `pkill -f "cat"` to free it took the machine down.
   `- Stop a server with \`${cli} server stop --port <port>\` in the folder that started it — it stops that folder's alone; a command that hangs is your harness's to stop. Never \`pkill\`, \`killall\` nor a kill by name or pattern: they reach every process on the machine. Write files with your edit tools, never a heredoc through the shell.`,
-  '- A wait that ends is not your end: run `task next` again until it says "You can stop".',
+  // Agents asked `task next` after each complete and review only to hear "you can stop": the answer that ends a piece
+  // says it itself now.
+  '- A wait that ends is not your end: run `task next` again until it says "You can stop". A complete, a review or a research card handed on says it itself when your session ends there: then stop, with no `task next` after.',
   // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
   '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--held-by "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
   // A person following the run read commands where an agent's row should say what it is at — a tester's and a scout's
   // read their card alone.
-  '- As what you are at changes — at a task, a review or a research card — say it in your words: `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`. The person following the run reads it.',
+  '- As what you are at changes inside a task, a review or a research card, say it in your words: `PLITZI task progress --step "the hero: its title sits 4px low, moving it"`. The person following the run reads it — taking one up says itself: no step to start with.',
   // A run's scout-1 heard "narrow it" 2.5 min late, inside a Playwright probe of its own, and missed two more.
   '- A command of your own — a spec, a probe, a test file — through `PLITZI task run "<command>"`: a Playwright suite waits its turn on the machine, what it prints goes to a file and you read what failed, and what the lead said meanwhile comes with it. A couple of minutes at most (one spec, a few repeats): the lead reaches you only between commands.',
   // Two agents read the bundle's types, every command's help and a site's HTML to learn what Plitzi had.
@@ -140,7 +142,7 @@ export const agentPrompt = ({
           `- \`PLITZI task next\` hands you the run's research cards — its scope, the research its stages bring — taken as any card; an agent's question is the lead's. Find out (${reference === undefined ? '`page check`, `page shot`, `page measure`, the code' : `\`page measure …${beside}\`, \`page outline …${beside}\`, \`page shot …${beside} --dress\``}), write nothing of a task's; see the stage you propose first — \`PLITZI run open <stage.json> --dry-run --lines\` runs each line once, stacking nothing (stacking is the lead's) — and end each with what you found — \`PLITZI task complete --found "…" [--tasks <stage.json>]\`, in its copy, with the tasks it makes — the lead reviews it (with the person, the tasks) before anything is stacked; one it sends back comes back to you. With none left, \`task next\` says you can stop.`
         ]
       : [
-          "- Work only in the task's copy (the `work` folder its take prints): start with `PLITZI task context` there, and read the files you change yourself.",
+          "- Work only in the task's copy (the `work` folder its take prints): its brief comes with the task (`PLITZI task context --files` adds its files whole; `PLITZI task context --again` if it left your context), and read the files you change yourself.",
           ...(team.tester
             ? [
                 '- A task of tests (`<task>-tests`) comes to you only of work you did not write: its tests from what that task was asked — each line of its acceptance, both sides of each condition — never from its code, never bent to pass (a test the work fails, `PLITZI task tell` the lead).'

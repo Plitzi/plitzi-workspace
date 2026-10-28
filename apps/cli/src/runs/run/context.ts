@@ -42,6 +42,11 @@ export interface RunContext {
    */
   context?: () => Promise<number | undefined>;
   /**
+   * The caller's harness session (`agents/session.ts`): what a stop said with the answer that ended a piece of work is
+   * kept by, so the same session asking again is told again. Not said: none told apart, every one answered.
+   */
+  session?: () => string | undefined;
+  /**
    * What the caller's harness spent in a window, read from its sessions — those its commands ran in, and this one's
    * (`harness/spentIn`): what a piece of work ended is kept by (`spent.ts`). Not said: nothing is kept.
    */

@@ -13,7 +13,7 @@ import { benchPlan, designed, makeBench, writeInCopy } from '../../tests/runProj
 import { isRunRefusal } from '../core/refusal';
 import { loadRun, openRun, readRunLog, stopRun, writingTasks } from '../run';
 import { noticeRun } from '../talk/notices';
-import { completeTask, followNext, nextTask, reviewTask, takeTask } from '../tasks';
+import { completeTask, followNext, nextTask, reviewTask, stopAfterPiece, takeTask } from '../tasks';
 import { monitorRun } from '../view/monitor';
 import { viewRun } from '../view/view';
 
@@ -307,6 +307,35 @@ describe('agents on demand', () => {
 
   // Dev-1 read 30.9M tokens for three tasks, each turn reading again what the tasks before it left; a session
   // a task reads ~40 % less. The CLI cannot empty a harness's context: it tells the agent to stop, and the lead starts it.
+  // Agents called `task next` after each complete and review only to hear "you can stop": a turn a piece of work.
+  it('tells an agent to stop with the answer that ends its piece — and the same session asking again, again', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
+    await openRun(lead(), await bench.writePlan(benchPlan()));
+    bench.advance(STARTING_MS);
+    const taken = await takeTask(bench.agent('dev-1'), 'es-launch', 't-home');
+    await writeInCopy(taken.work, 'src/space/pages/home/index.ts', 'export const page = { round: 1 };\n');
+    // Each command in the session its harness says, as a started agent's runs.
+    const inSession = (session: string, token?: string) =>
+      bench.agent('dev-1', { session: () => session, ...(token === undefined ? {} : { token }) });
+    const holding = inSession('session-a', taken.token);
+    await completeTask(holding, 'es-launch', 't-home');
+
+    expect(await stopAfterPiece(holding, 'es-launch')).toContain('t-home is complete: you are started again');
+    // Asked again in that session — no start since — it is told again, never handed new work in the old context.
+    const again = await nextTask(inSession('session-a'), 'es-launch', 'developer');
+    expect(again).toMatchObject({ finished: true, stopped: true });
+    expect(again.task).toBeUndefined();
+    const stops = (await readRunLog((await loadRun(lead(), 'es-launch')).paths)).filter(
+      entry => entry.action === 'stops' && entry.by === 'dev-1'
+    );
+    expect(stops).toHaveLength(1);
+    // Started again — another session — it is answered, not told to stop again.
+    expect((await nextTask(inSession('session-b'), 'es-launch', 'developer')).stopped).toBeUndefined();
+    // One that keeps its session is told nothing of the kind.
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'keep' });
+    expect(await stopAfterPiece(holding, 'es-launch')).toBeUndefined();
+  });
+
   it('ends a session of one task once it is complete, and asks for the next — for its own sent back too', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     const team = await readTeam(bench.root);

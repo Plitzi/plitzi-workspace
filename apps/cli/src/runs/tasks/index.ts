@@ -18,6 +18,7 @@ export {
 } from './locks';
 export type { ClaimOutcome, Followed, HeldFile } from './locks';
 export { followNext, nextTask, takeNext } from './next';
+export { stopAfterPiece } from './nextRules';
 export type { NextTask } from './next';
 export { takeTask } from './take';
 export type { TakenTask } from './take';

@@ -115,3 +115,14 @@ export const secondRunText = (result: { firstFailed?: readonly string[] }): stri
         ` — passed on its second run; the first failed${result.firstFailed.length > 0 ? `: ${failedWhy(result.firstFailed) ?? ''}` : ''}`
       )
     : '';
+
+/** What an agent asked to stop is told before it does: a friction said now, or never — its last words are read by no one. */
+export const BEFORE_STOP =
+  '  Before you stop: what of Plitzi itself got in your way and is not said yet — plitzi run notice --plitzi "…", one each; the run’s feedback to Plitzi carries them, your last words do not';
+
+/**
+ * How the answer that ended a piece of work ends: that the agent stops now, and why (`stopAfterPiece`) — else where its
+ * next piece is asked for.
+ */
+export const pieceEnd = (stop: string | undefined, next: string): string[] =>
+  stop === undefined ? [next] : [stop, BEFORE_STOP];

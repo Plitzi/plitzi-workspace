@@ -12,6 +12,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { failedSteps } from './text';
 import { endsWith, HELD_WORD, heldBy } from '../../runs/agents/held';
 import { AGENT_TOKEN, identify, issuedText, UNNAMED } from '../../runs/agents/identity';
+import { sessionOfProcess } from '../../runs/agents/session';
 import { isQuality } from '../../runs/agents/team';
 import { projectChecks } from '../../runs/copies/checks';
 import { writtenByAnother } from '../../runs/core/compat';
@@ -195,6 +196,7 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
     person: askPerson,
     checks: projectChecks,
     context: () => contextNow(root, new Date()),
+    session: () => sessionOfProcess().session,
     spent: window => spentIn(root, window),
     // On stderr, dim: never in an answer read as JSON, nor in the one sentence a command ends with.
     ...(options.json === true || process.env.PLITZI_JSON === '1'

@@ -9,7 +9,8 @@ import { DEFAULT_SESSION, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../a
 import { isWorked } from '../agents/worked';
 import { createExclusive } from '../core/files';
 import { agentScratch } from '../core/paths';
-import { logRun, readRunLog } from '../run';
+import { viewTask } from '../core/taskStore';
+import { loadRun, logRun, readRunLog } from '../run';
 
 import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
@@ -49,7 +50,7 @@ export const freshStart = async (
   ctx: RunContext,
   loaded: LoadedRun,
   views: readonly TaskView[]
-): Promise<{ why: string } | undefined> => {
+): Promise<{ why: string; already?: true } | undefined> => {
   if (isPrincipal(ctx.agent)) {
     return undefined;
   }
@@ -67,6 +68,20 @@ export const freshStart = async (
     entry =>
       (entry.action === 'stops' && entry.by === ctx.agent) || (entry.action === 'launch' && entry.agent === ctx.agent)
   );
+  // Told to stop by the answer that ended its piece (`stopAfterPiece`): the same session asking again is told again —
+  // a new piece in it would be worked in the context the stop was for. Another session, or one it cannot tell (a
+  // harness that says none), is a start: what it asks is answered.
+  const last = began === -1 ? undefined : log.at(began);
+  const session = ctx.session?.();
+  if (
+    last?.action === 'stops' &&
+    last.fresh === true &&
+    typeof last.why === 'string' &&
+    session !== undefined &&
+    last.session === session
+  ) {
+    return { why: last.why, already: true };
+  }
   const ended = log.slice(began + 1).findLast(entry => entry.by === ctx.agent && PIECE_ENDS.has(String(entry.action)));
   if (!ended) {
     return undefined;
@@ -113,6 +128,33 @@ export const freshStart = async (
   return {
     why: `${piece}, and your context is ${thousands(context)} tokens, past the team's ${thousands(limit)} (freshContextAt): every turn reads it all again — you are started again with a fresh one for ${next}. You can stop`
   };
+};
+
+/** The session a stop is said to, kept with it: the one that asks again is told again. */
+export const stoppedIn = (ctx: Pick<RunContext, 'session'>): { session?: string } => {
+  const session = ctx.session?.();
+
+  return session === undefined ? {} : { session };
+};
+
+/**
+ * Whether the caller, its piece of work just ended — a task completed, a review decided, what a spike found handed on —
+ * stops now (`freshStart`), said with the answer that ended it and kept as `task next` keeps it: agents called `task
+ * next` only to hear "you can stop", a turn a piece — read again whole, every one.
+ */
+export const stopAfterPiece = async (ctx: RunContext, runId: string): Promise<string | undefined> => {
+  const loaded = await loadRun(ctx, runId);
+  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+  const fresh = await freshStart(ctx, loaded, views);
+  if (fresh === undefined) {
+    return undefined;
+  }
+
+  if (fresh.already !== true) {
+    await logRun(ctx, loaded.paths, { action: 'stops', why: fresh.why, fresh: true, ...stoppedIn(ctx) });
+  }
+
+  return fresh.why;
 };
 
 /**

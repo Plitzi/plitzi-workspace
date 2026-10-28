@@ -23,7 +23,7 @@ import {
 } from '../../../runs/plan/pagesOf';
 import { findingsOf, lookClips, taskParts } from '../../../runs/plan/taskParts';
 import { loadRun, logRun } from '../../../runs/run';
-import { findTask, notReviewedIn, reviewTask } from '../../../runs/tasks';
+import { findTask, notReviewedIn, reviewTask, stopAfterPiece } from '../../../runs/tasks';
 import { reviewSteps, reviewTeamOf } from '../../../runs/tasks/reviews';
 import { checkAccount, sessionCookie } from '../../page/check/account';
 import { projectSpace } from '../../page/check/space';
@@ -49,7 +49,7 @@ import {
 import { lookShotArgs } from '../look/lookShot';
 import { pictureName } from '../look/pictureName';
 import { act, runOf, runSelf } from '../shell';
-import { list } from '../text';
+import { list, pieceEnd } from '../text';
 
 import type { RunContext } from '../../../runs/run';
 import type { Difference } from '../../page/same';
@@ -590,9 +590,10 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
         );
       }
 
-      return reviewTask(
+      const runId = await runOf(ctx, options);
+      const reviewed = await reviewTask(
         ctx,
-        await runOf(ctx, options),
+        runId,
         taskId,
         options.approve ? 'approve' : 'changes',
         options.changes === undefined
@@ -622,24 +623,35 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               })
         }
       );
+      const stop = await stopAfterPiece(ctx, runId);
+
+      return { ...reviewed, ...(stop === undefined ? {} : { stop }) };
     },
     reviewed =>
-      reviewed.passed
-        ? `${taskId}'s ${reviewed.passed.role} review approved: its ${reviewed.passed.next}'s review is next. Next: plitzi task next`
-        : reviewed.found
-          ? [
-              `${taskId} approved: its findings go with every task that waits for it.${reviewed.found.added.length > 0 ? ` It made ${reviewed.found.added.join(', ')}${reviewed.found.stage === undefined ? '' : ` — their plan, to amend them from: ${reviewed.found.stage}`}.` : ''}${reviewed.found.left.length > 0 ? ` Left out, as you said: ${reviewed.found.left.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${reviewed.ready && reviewed.ready.length > 0 ? ` Ready now: ${reviewed.ready.join(', ')}.` : ''}`,
-              ...(reviewed.found.notices ?? []).map(notice => `  · ${notice}`)
-            ].join('\n')
-          : reviewed.verdict === 'approve'
-            ? approvedText(taskId, reviewed)
-            : [
-                reviewed.toLead
-                  ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
-                  : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
-                ...(reviewed.goesFirst
-                  ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]
-                  : []),
-                ...notReviewedText(reviewed.notReviewed, 'changes')
+      [
+        reviewed.passed
+          ? `${taskId}'s ${reviewed.passed.role} review approved: its ${reviewed.passed.next}'s review is next.`
+          : reviewed.found
+            ? [
+                `${taskId} approved: its findings go with every task that waits for it.${reviewed.found.added.length > 0 ? ` It made ${reviewed.found.added.join(', ')}${reviewed.found.stage === undefined ? '' : ` — their plan, to amend them from: ${reviewed.found.stage}`}.` : ''}${reviewed.found.left.length > 0 ? ` Left out, as you said: ${reviewed.found.left.join(', ')} — what they were for, put in the backlog (plitzi run notice "…").` : ''}${reviewed.ready && reviewed.ready.length > 0 ? ` Ready now: ${reviewed.ready.join(', ')}.` : ''}`,
+                ...(reviewed.found.notices ?? []).map(notice => `  · ${notice}`)
               ].join('\n')
+            : reviewed.verdict === 'approve'
+              ? approvedText(taskId, reviewed)
+              : [
+                  reviewed.toLead
+                    ? `${taskId}: ${String(reviewed.round)} rounds of changes — blocked for the lead to decide.`
+                    : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
+                  ...(reviewed.goesFirst
+                    ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]
+                    : []),
+                  ...notReviewedText(reviewed.notReviewed, 'changes')
+                ].join('\n'),
+        // A reviewer's piece ends with its verdict: told here whether it stops, not by a `task next` asked only for that.
+        ...(reviewed.stop === undefined
+          ? reviewed.passed
+            ? ['  Next: plitzi task next']
+            : []
+          : pieceEnd(reviewed.stop, ''))
+      ].join('\n')
   );
