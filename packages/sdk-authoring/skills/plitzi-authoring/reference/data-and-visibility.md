@@ -84,6 +84,10 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
 - `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.
   Only a page and its layouts are resolved — never inside a component: keep the provider on the page and hand the
   component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
+- A server provider's `query` is read by the page server too, so the page arrives with it instead of filling in after
+  load: a path of the space (`/data/…`) or another site's address (`https://…`, asked with GET and the headers it
+  declares — never the visitor's cookies, never a private address). Templated, bound, with the visitor's cookies or
+  another method is the browser's alone (`server-query-unresolved`): an `action` takes the address as its input.
 
 ### Typed by a sample
 

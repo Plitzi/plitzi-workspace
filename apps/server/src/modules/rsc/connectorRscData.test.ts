@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
+
 import { connectorRscData } from './connectorRscData';
 import { createActionsModule } from '../actions';
 
@@ -124,6 +126,33 @@ describe('connectorRscData', () => {
       gallery: { records: [{ url: 'cat.jpg' }] }
     });
     expect(await resolve({ action: 'cat-gallery' }, { enabled: false })).toEqual({});
+  });
+
+  // A server provider whose query nothing read drew empty with nothing said — authoring refuses it now, and a document
+  // written before says why where the page reads it, while developing.
+  it('says why a query the page server cannot read, or no file answers, is not resolved', async () => {
+    const getRscData = connectorRscData({ sayFailures: true });
+    const read = async (attributes: Record<string, unknown>) =>
+      (
+        await getRscData({
+          req,
+          spaceId: 1,
+          environment: 'main',
+          user: undefined,
+          ids: undefined,
+          loadOfflineData: () => Promise.resolve({ schema: schema(attributes, { enabled: true }) })
+        } as unknown as Parameters<typeof getRscData>[0])
+      ).serverData;
+
+    expect(await read({ query: 'https://api.example.com/{{ navigation.routeParams.id }}' })).toEqual({
+      gallery: {
+        [RSC_FAILURE]:
+          'the page server cannot read its query: it is written with a template, which the browser alone fills in'
+      }
+    });
+    expect(await read({ query: '/hours.json' })).toEqual({
+      gallery: { [RSC_FAILURE]: "no file of this server's answers /hours.json" }
+    });
   });
 
   it('leaves an element naming a connector this deployment cannot read out of the payload', async () => {

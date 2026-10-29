@@ -1,5 +1,8 @@
+import { serverQueryOf } from '@plitzi/sdk-shared/schema';
+
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
+import { externalQueryResolver } from './externalQueryResolver';
 import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
@@ -51,12 +54,14 @@ export const connectorRscData = ({
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
   const resolveDataFile = data ? dataLookupResolver(data) : undefined;
+  const resolveExternal = externalQueryResolver();
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
    *
    * A connector is the declarative read and stays the default; an action is the read a manifest cannot express; a
-   * file of the server's own is the read with no backend at all. Checked in that order so an element carrying more
+   * file of the server's own is the read with no backend at all, and another site's address is asked as the browser
+   * would have asked it (`externalQueryResolver`). Checked in that order so an element carrying more
    * than one keeps resolving the way its page already renders, instead of silently changing under them.
    */
   const resolveElement: RscElementResolver = async context => {
@@ -69,11 +74,31 @@ export const connectorRscData = ({
       return resolveAction ? resolveAction(context) : undefined;
     }
 
+    // A query the page server cannot read is said, never resolved to nothing: authoring refuses it
+    // (`server-query-unresolved`), and a document written before that rule says why where the page reads it.
+    const query = serverQueryOf(context.element);
+    if (query === undefined) {
+      return undefined;
+    }
+
+    if (query.kind === 'unresolved') {
+      throw new Error(`the page server cannot read its query: ${query.why}`);
+    }
+
+    if (query.kind === 'url') {
+      return resolveExternal(context);
+    }
+
     // The project's data first — its folder, or the space's as the platform keeps it, read through one lookup:
     // `/data/…` is its, wherever `publicDir` has a folder of that name.
     const fromData = resolveDataFile ? await resolveDataFile(context) : undefined;
+    const fromFile =
+      fromData !== undefined ? fromData : resolvePublicFile ? await resolvePublicFile(context) : undefined;
+    if (fromFile === undefined) {
+      throw new Error(`no file of this server's answers ${query.path}`);
+    }
 
-    return fromData !== undefined ? fromData : resolvePublicFile ? resolvePublicFile(context) : undefined;
+    return fromFile;
   };
 
   return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides, signal }) => {

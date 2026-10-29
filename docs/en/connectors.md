@@ -266,9 +266,15 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
      disguised as content).
    - `id in serverData` → the server's slice.
 3. **A provider with only a `query` keeps the browser's shape.** A server provider without a connector or an action —
-   a JSON file the deployment serves, resolved by `publicFileResolver` — is answered `{ status, data }`, as `useApi`
-   publishes it, and its mock is wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads
-   `<source>.data.<field>` whichever runtime the provider has, so moving one to the server changes no path.
+   a JSON file the deployment serves (`publicFileResolver`), the project's data (`dataLookupResolver`), or another
+   site's address (`externalQueryResolver`) — is answered `{ status, data }`, as `useApi` publishes it, and its mock is
+   wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads `<source>.data.<field>` whichever
+   runtime the provider has, so moving one to the server changes no path. Which of them reads a `query` is one rule,
+   `serverQueryOf` (`sdk-shared/schema`): another site's address is asked with GET and the headers the provider
+   declares, through `fetchOutbound` (no private network, every redirect judged), held to 5 MB, never with the
+   visitor's cookies; an answer that is no success or no JSON is the provider's error. A query only the browser can ask
+   — templated, bound, with the visitor's cookies, another method — is refused by authoring (`server-query-unresolved`) and, in a document written
+   before, said where the page reads it while developing; so is a path no file answers.
 4. **Only a page's tree and its layouts are resolved.** `collectServerElements` never walks into a component's tree,
    so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`). Server data is on
    unless the schema says `rsc: { enabled: false }` — the page render and `connectorRscData` read it the same way, so a
@@ -514,6 +520,7 @@ indexable).
 | Resolver (the RSC bridge) | `apps/server/src/modules/connectors/resolver.ts` |
 | Slice projection | `apps/server/src/modules/connectors/projection.ts` |
 | RSC resolution | `apps/server/src/modules/rsc/resolveRscData.ts` |
+| A server `query`: what it is, and another site's | `packages/sdk-shared/src/schema/serverQuery.ts`, `apps/server/src/modules/rsc/externalQueryResolver.ts` |
 | `server.ssr` injection (rscData + rscPath) | `apps/server/src/helpers/buildServerInfo.ts` |
 | RSC endpoint publication | `apps/server/src/core/services/resolve.ts` (`resolveRscEndpoint`) |
 | Route matcher (client/server) | `packages/sdk-shared/src/navigation/matchPath.ts` + `routes.ts` |

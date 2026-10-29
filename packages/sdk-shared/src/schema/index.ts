@@ -5,6 +5,7 @@ export * from './serverElements';
 export * from './providerAnswer';
 export * from './providerWhen';
 export * from './serverInput';
+export * from './serverQuery';
 export * from './pageHead';
 export * from './schemaSettings';
 export * from './snippet';

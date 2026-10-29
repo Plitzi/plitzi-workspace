@@ -129,6 +129,25 @@ describe('lintSpace', () => {
       expect(lintSpace({ schema, style }).errors.map(error => error.code)).not.toContain('server-source-in-browser');
     });
 
+    /** A server provider with a query the page server cannot read drew empty for ever, with nothing said. */
+    it('server-query-unresolved, for a server query only the browser could ask', () => {
+      const { schema, style } = story();
+      const { attributes } = schema.flat['post-data'];
+      const codes = () => lintSpace({ schema, style }).errors.map(error => error.code);
+      delete attributes.action;
+
+      attributes.query = 'https://api.example.com/posts/{{ navigation.routeParams.slug }}';
+      expect(codes()).toContain('server-query-unresolved');
+      attributes.query = 'https://api.example.com/posts';
+      attributes.method = 'post';
+      expect(codes()).toContain('server-query-unresolved');
+
+      delete attributes.method;
+      expect(codes()).not.toContain('server-query-unresolved');
+      attributes.query = '/data/posts.json';
+      expect(codes()).not.toContain('server-query-unresolved');
+    });
+
     /** The page server holds a `when` it knows all of; one on what the browser alone holds it resolves regardless. */
     it('server-when-unknown, for a server provider waiting on a state', () => {
       const { schema, style } = story();

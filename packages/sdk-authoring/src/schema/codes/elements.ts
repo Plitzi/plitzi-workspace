@@ -196,6 +196,12 @@ export const ELEMENT_CODES = {
       'a provider with an `action` or a `connector` asked from the browser — only the page server resolves those, so it never asks',
     fix: "`runtime: 'server'` on the provider"
   },
+  'server-query-unresolved': {
+    kind: 'refused',
+    means:
+      "a `runtime: 'server'` provider whose `query` the page server cannot read — templated, bound, asked with the visitor's cookies (`credentials: 'include'`) or another method than GET, or neither an address (`https://…`) nor a path (`/…`) — so it draws empty",
+    fix: "an `action`, whose input takes the address and keeps its secrets on the server — or no `runtime: 'server'`, and the browser asks it"
+  },
   'server-when-unknown': {
     kind: 'warned',
     means:

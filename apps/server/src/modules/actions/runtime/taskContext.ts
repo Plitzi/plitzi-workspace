@@ -1,6 +1,7 @@
 import { ActionRunError } from './errors';
 import { namespaceKv } from './namespaceKv';
 import { projectDataReader } from './projectData';
+import { cappedResponse } from '../../../helpers/outboundGuard';
 import { laterFor } from '../jobs/later';
 
 import type { createEmailSender } from './email';
@@ -10,49 +11,6 @@ import type { FunctionJobsService } from '../../functions/jobs';
 import type { LaterDeps } from '../jobs/later';
 import type { ActionKvStore, ActionRunRequest, ActionsConfig, ActionTaskContext, ResolvedActionLimits } from '../types';
 import type { RunUser } from '@plitzi/sdk-shared';
-
-/**
- * Holds an answer to what the run is allowed to carry.
- *
- * Two checks rather than one, because a body arrives in two ways. `Content-Length` is refused before a byte is
- * read, which is the cheap half; a chunked answer that declares nothing is counted AS it streams and errored the
- * moment it goes over — so the ceiling holds for a backend that lies about its size or never states one.
- *
- * The cap is on one response and not on the run: it exists so that a single answer cannot be unbounded, which is
- * a different failure from a flow that makes many small calls (that is `maxRequests`).
- */
-const capped = (response: Response, maxBytes: number): Response => {
-  const declared = Number(response.headers.get('content-length') ?? '');
-  if (Number.isFinite(declared) && declared > maxBytes) {
-    throw new ActionRunError('over_capacity', `Response is larger than the ${maxBytes} byte budget`);
-  }
-
-  if (!response.body) {
-    return response;
-  }
-
-  let seen = 0;
-  const counted = response.body.pipeThrough(
-    new TransformStream<Uint8Array, Uint8Array>({
-      transform: (chunk, controller) => {
-        seen += chunk.byteLength;
-        if (seen > maxBytes) {
-          controller.error(new ActionRunError('over_capacity', `Response exceeded the ${maxBytes} byte budget`));
-
-          return;
-        }
-
-        controller.enqueue(chunk);
-      }
-    })
-  );
-
-  return new Response(counted, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: response.headers
-  });
-};
 
 /**
  * Counts outbound calls, refuses past the budget, caps what one answer may carry back, and stamps the run's
@@ -96,7 +54,11 @@ export const createRunFetch = (
     const headers = new Headers(init?.headers);
     headers.set('X-Plitzi-Action-Lineage', lineage.join(','));
 
-    return capped(await base(input, { ...init, headers, signal: init?.signal ?? signal }), limits.maxResponseBytes);
+    return cappedResponse(
+      await base(input, { ...init, headers, signal: init?.signal ?? signal }),
+      limits.maxResponseBytes,
+      message => new ActionRunError('over_capacity', message)
+    );
   };
 };
 

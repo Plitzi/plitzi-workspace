@@ -203,3 +203,46 @@ export const fetchOutbound = async (
     target = next;
   }
 };
+
+/**
+ * Holds an answer to what its reader is allowed to carry — an action's run, a page server's read of another site.
+ *
+ * Two checks rather than one, because a body arrives in two ways. `Content-Length` is refused before a byte is
+ * read, which is the cheap half; a chunked answer that declares nothing is counted AS it streams and errored the
+ * moment it goes over — so the ceiling holds for a backend that lies about its size or never states one.
+ *
+ * The cap is on one response and not on the run or the page: it exists so that a single answer cannot be unbounded, which is
+ * a different failure from a flow that makes many small calls (that is `maxRequests`).
+ */
+export const cappedResponse = (response: Response, maxBytes: number, refuse: (message: string) => Error): Response => {
+  const declared = Number(response.headers.get('content-length') ?? '');
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw refuse(`Response is larger than the ${String(maxBytes)} byte budget`);
+  }
+
+  if (!response.body) {
+    return response;
+  }
+
+  let seen = 0;
+  const counted = response.body.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform: (chunk, controller) => {
+        seen += chunk.byteLength;
+        if (seen > maxBytes) {
+          controller.error(refuse(`Response exceeded the ${String(maxBytes)} byte budget`));
+
+          return;
+        }
+
+        controller.enqueue(chunk);
+      }
+    })
+  );
+
+  return new Response(counted, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+};

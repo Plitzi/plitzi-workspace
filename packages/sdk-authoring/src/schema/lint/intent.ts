@@ -1,6 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
+import { serverQueryOf, whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
 
 import { didYouMean } from '../suggest';
 import { stringsIn } from './context';
@@ -204,6 +204,21 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
     ctx.error(
       'server-source-in-browser',
       `${where} is asked from the browser, which reads only its \`query\`: its \`${serverOnly}\` is answered by the page server alone, so it never asks and everything bound to it stays empty. Give it \`runtime: 'server'\`.`,
+      element.id
+    );
+  }
+
+  // A server provider asked with a `query` alone is read by the page server — a file of its own, another site's
+  // address — and what it cannot read was left out of the page with nothing said: the provider drew empty for ever,
+  // since the browser never asks a server provider.
+  const query =
+    type === 'apiContainer' && element.definition.runtime === 'server' && !serverOnly
+      ? serverQueryOf(element)
+      : undefined;
+  if (query?.kind === 'unresolved') {
+    ctx.error(
+      'server-query-unresolved',
+      `${where} is resolved on the server (\`runtime: 'server'\`), and the page server cannot read its \`query\`: ${query.why}. Ask it with an \`action\`, whose input takes the address (\`navigation.routeParams.id\`) and whose secrets stay on the server — or drop \`runtime: 'server'\` and let the browser ask it.`,
       element.id
     );
   }

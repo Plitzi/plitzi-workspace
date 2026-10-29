@@ -1305,6 +1305,11 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
+- **`server-query-unresolved`** refuses a `runtime: 'server'` provider whose `query` the page server cannot read —
+  templated, bound, a token bound to the visitor, the visitor's cookies (`credentials: 'include'`), another method than GET, neither `https://…` nor `/…` — which drew
+  empty for ever: ask it with an `action`, whose input takes the address, or from the browser. One rule for authoring
+  and the server, `serverQueryOf` (`@plitzi/sdk-shared/schema`).
+
 - **`whileRunning('skip', …)` is kept in the document**, and read back by `specFromSpace`: it used to be dropped as
   the default, so a channel's `onMessage` flow that said `skip` on purpose still met `message-while-running` — whose
   own fix could never silence it. A trigger that says nothing is still `skip`; a space authored before keeps its
@@ -1500,6 +1505,13 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   refreshes were ~55 "scope collision" warnings a page.
 
 ## Server (`@plitzi/sdk-server`)
+
+- **A server provider reads another site's address while the page is built**: `apiContainer({ runtime: 'server',
+  query: 'https://…' })` is asked by the page server — GET, the headers it declares, never the visitor's cookies or a
+  private address (`fetchOutbound`), held to 5 MB and to the element's budget — so the page arrives with it instead of
+  filling in after hydration. It drew empty before, with nothing said. `getRscData` is now built for every server
+  that does not write its own, since an address needs nothing configured. A query no resolver reads — or a path no
+  file answers — says why where the page reads it while developing.
 
 - **A render action's ceiling is said where it is written**: `ActionLimits` gives each default, and `timeoutMs` and
   `defineAction` say that a page's section is cut at 5 s (`rsc.elementTimeoutMs`) whatever the action's own 10 s.

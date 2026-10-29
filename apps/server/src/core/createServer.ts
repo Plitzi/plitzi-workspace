@@ -73,7 +73,9 @@ const withDataLookup = <T extends { action?: SSRActionConfig; dataDir?: string }
  *  caches or plugin manager this one does. */
 /**
  * Fills in `getRscData` from whatever can produce a server element's data — `connectors`, `action.lookups`, the
- * files of `dataDir` and `publicDir` — when the deployment did not write one.
+ * files of `dataDir` and `publicDir`, another site's address — when the deployment did not write one. Always, then:
+ * a provider that asks another site needs nothing configured, and with none of the rest it drew empty until the
+ * browser asked.
  *
  * The lookups are already here and the assembly is entirely this package's — a resolver over `resolveRscData`.
  * Leaving it out meant every deployment passed the same lookups twice: once as config, for the write endpoint,
@@ -96,10 +98,7 @@ const withConnectorRsc = <
 >(
   config: T
 ): T => {
-  if (
-    config.adapters.getRscData ||
-    (!config.connectors && !config.action?.lookups && !config.publicDir && !config.dataDir)
-  ) {
+  if (config.adapters.getRscData) {
     return config;
   }
 
