@@ -230,6 +230,10 @@ The session is read from its end, further back while it holds too few moments (u
 carries is left out before its line is read and said in its place, with its weight. An agent the run did not start — the lead, in the harness a person runs — has no
 session the run keeps, and the stream says so; one just started has none yet.
 
+`r` opens the team: ↑ ↓ an entry, `+` one more of it, `−` one fewer (its min no more than its count), written to
+`.plitzi/team.json` as `run team set --count` writes it — the status bar says `r team`, and the agents view ends in it,
+a line a click opens.
+
 `ctrl+p` is a palette: a task, an agent (its line copies `plitzi task message @agent "…"`), a view or an action, found
 by the letters typed in order; `?` lists the keys of the mode it is in. `p` starts the run's preview on 8300
 (`monitorPreview.ts`, what `run preview` serves), `x` stops it — whoever serves it: one `npm run start:preview` or another

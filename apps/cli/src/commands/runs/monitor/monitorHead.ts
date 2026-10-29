@@ -249,8 +249,8 @@ export const drawStatus = (
   const other: [string, string] = ['m', ui.mode === 'simple' ? 'advanced' : 'simple'];
   const keys: [string, string][] =
     width >= 120
-      ? [other, ['p', 'start preview'], ['x', 'stop it'], ['?', 'help'], ['q', 'quit']]
-      : [other, ['?', 'help']];
+      ? [other, ['r', 'team'], ['p', 'start preview'], ['x', 'stop it'], ['?', 'help'], ['q', 'quit']]
+      : [other, ['r', 'team'], ['?', 'help']];
   let end = width - 2;
   for (const [key, label] of [...keys].reverse()) {
     end -= textWidth(label);

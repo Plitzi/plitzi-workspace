@@ -665,7 +665,8 @@ report`, …).
 ### Watching a run
 
 - **The monitor sets the team's size**: `r` opens the team, ↑ ↓ an entry, `+` one more of it, `−` one fewer (its min
-  no more than its count) — written as `run team set --count` writes it, with no other terminal.
+  no more than its count) — written as `run team set --count` writes it, with no other terminal. The status bar says
+  `r team`, and the agents view (`4`) ends in it as a line a click opens.
 
 - **A ready task held by another's claim is said to the lead** (`held-ahead`): which task holds which file, and that
   approving it frees the file. A run's ready task sat 22 minutes with three developers free.

@@ -208,6 +208,34 @@ describe("the monitor's keys and mouse", () => {
       expect(picked && onMouse(picked, click, over(data, picked))?.dialog).toEqual({ kind: 'task' });
     });
 
+    // The team could be changed from the panel, and nothing on the screen said so: the person looked and found no way.
+    it('says r on the status bar and under the agents, where a click opens the team as r does', async () => {
+      const runId = await open();
+      const data = await monitorRun(lead(), runId);
+      const ui = { ...initialUi('advanced'), view: 'agents' as const };
+      const screen = monitorScreen(data, ui, {
+        width: 160,
+        height: 48,
+        now: bench.now(),
+        theme: THEMES.dark,
+        preview: { state: { kind: 'none' }, output: [] }
+      });
+      const rows = screen.canvas.text();
+
+      expect(rows.at(-1)).toContain('r team');
+      expect(rows.some(row => row.includes('the team — more or fewer of a role'))).toBe(true);
+
+      const hint = over(data, ui).hits.find(hit => hit.action.kind === 'team');
+      if (!hint) {
+        throw new Error('the agents view has the team to click');
+      }
+
+      expect(onMouse(ui, { button: 0, row: hint.row, col: hint.from }, over(data, ui))?.dialog).toEqual({
+        kind: 'team',
+        at: 0
+      });
+    });
+
     it('starts the preview on p and stops it on x — whoever serves it — saying so when there is nothing to do', async () => {
       const runId = await open();
       const data = await monitorRun(lead(), runId);

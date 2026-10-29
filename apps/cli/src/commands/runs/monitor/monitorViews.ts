@@ -2,6 +2,7 @@ import { listedTasks, timeOf, withText } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
 import { flowStages, nameOf } from './monitorFlow';
 import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { keyHint } from './monitorNeeds';
 import { agentAt, heldText, shortModel } from './monitorSide';
 import { BARS, SORT_WORDS, sparkline, spendTable, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../../runs/report/spent';
@@ -199,7 +200,7 @@ export const drawAgentsView = (p: Paint, data: Monitored, rect: Rect): void => {
     ['TOKENS', c.tokens],
     ['AT', c.doing]
   ]);
-  data.agents.slice(0, rect.height - 3).forEach((agent, index) => {
+  data.agents.slice(0, rect.height - 4).forEach((agent, index) => {
     const row = rect.top + 3 + index;
     const look = AGENT_LOOK[agent.status];
     canvas.put(row, rect.left + 2, look.glyph, { fg: toneOf(theme, look.tone) });
@@ -229,6 +230,11 @@ export const drawAgentsView = (p: Paint, data: Monitored, rect: Rect): void => {
       { fg: theme.muted }
     );
   });
+  // Where the team is looked at, the way to change it: a role raised or lowered without another terminal.
+  const row = rect.top + rect.height - 1;
+  const from = rect.left + 2;
+  const to = keyHint(p, row, from, 'r', 'the team — more or fewer of a role');
+  p.hits.push({ row, from, to, action: { kind: 'team' } });
 };
 
 /**

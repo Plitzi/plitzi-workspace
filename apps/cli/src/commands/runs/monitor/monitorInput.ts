@@ -406,6 +406,10 @@ export const onMouse = (
         : { ...ui, agent: hit.action.agent, streamBack: 0 };
     }
 
+    if (hit?.action.kind === 'team') {
+      return (shown.data?.team.length ?? 0) > 0 ? { ...ui, dialog: { kind: 'team', at: 0 } } : undefined;
+    }
+
     if (hit?.action.kind === 'moment') {
       const opened = new Set(ui.streamOpened);
       if (!opened.delete(hit.action.key)) {

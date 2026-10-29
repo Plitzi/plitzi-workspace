@@ -120,7 +120,9 @@ export type HitAction =
   | { kind: 'event'; key: string }
   | { kind: 'agent'; agent: string }
   /** A moment of the followed stream: opened, or closed again. */
-  | { kind: 'moment'; key: string };
+  | { kind: 'moment'; key: string }
+  /** The team's dialog, as `r` opens it. */
+  | { kind: 'team' };
 
 export interface Hit {
   row: number;
