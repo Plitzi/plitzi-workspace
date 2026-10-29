@@ -76,6 +76,8 @@ export interface AmendedTask {
 export interface Amended {
   runId: string;
   tasks: AmendedTask[];
+  /** What it asked and was left as it was — a taken task's role, quality or what it waits for — each said, with why. */
+  leftOut?: string[];
   /** The plan's notes that are new, sent to every task. */
   notes: string[];
   goal?: string;
@@ -247,7 +249,11 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   }
 
   const changes: { task: PlannedTask; defined: RunTask; changed: string[]; done?: true }[] = [];
-  for (const task of next.tasks) {
+  // What changes only before a task is taken, asked of one taken: left as it was and said, the rest amended — a run's
+  // amendment of two tasks' acceptance and findings was refused whole for one dependsOn of a task in hand.
+  const leftOut: string[] = [];
+  for (const planned of next.tasks) {
+    let task = planned;
     const was = before.get(task.id);
     const defined = loaded.tasks.find(each => each.id === task.id);
     if (!was || !defined) {
@@ -294,9 +300,17 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     }
 
     if (who.length > 0 && (!UNTAKEN.includes(status) || viewed.owner !== undefined)) {
-      problems.push(
-        `Task "${task.id}" is ${status}: its ${who.join(' and ')} are what an agent took it as — they change only before it is taken`
+      leftOut.push(
+        `"${task.id}" is ${status}: its ${who.join(' and ')} — what an agent took it as — left as ${who.length === 1 ? 'it was' : 'they were'}; what it waits for now is told to its agent (plitzi task tell ${task.id} "…"), or a new task of its own`
       );
+      task = { ...task, ...Object.fromEntries(who.map(field => [field, was[field]])) };
+      const rest = changed.filter(field => !who.some(each => each === field));
+      if (rest.length === 0) {
+        continue;
+      }
+
+      problems.push(...(await acceptanceProblems(ctx.root, task)));
+      changes.push({ task, defined, changed: rest });
       continue;
     }
 
@@ -346,6 +360,17 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     !inventoryChanged &&
     reference === undefined
   ) {
+    // What it asked of a taken task, alone: said as what was not amended, never as nothing asked.
+    if (leftOut.length > 0) {
+      throw new RunRefusal(
+        'invalid',
+        `The plan is not amended — all it asks is of tasks taken:\n${leftOut.map(each => `  - ${each}`).join('\n')}`,
+        {
+          problems: leftOut
+        }
+      );
+    }
+
     // A stage's task is amended from that stage's file: a run's lead edited the opened plan, refused with nothing to go on.
     const stages = stage ? [] : await stageFilesOf(loaded);
     throw new RunRefusal(
@@ -510,7 +535,8 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     ...(primerChanged ? { primer: true as const } : {}),
     ...(removed.length > 0 ? { removed: removed.map(task => task.id) } : {}),
     ...(inventoryChanged ? { inventory: true as const } : {}),
-    ...(reference === undefined ? {} : { reference })
+    ...(reference === undefined ? {} : { reference }),
+    ...(leftOut.length > 0 ? { leftOut } : {})
   };
   await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
   // The amendment and its primer are the run's now: removed with it, as the plan it opened with.

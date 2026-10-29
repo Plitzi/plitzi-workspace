@@ -152,6 +152,38 @@ export const drawNeedsDialog = (p: Paint, needs: readonly Need[]): void => {
   });
 };
 
+/**
+ * The team, an entry a row — how many of it, how many start with the run, its roles — the one chosen marked: raised and
+ * lowered from here (`r`), as `run team set --count` writes it.
+ */
+export const drawTeamDialog = (p: Paint, team: Monitored['team'], at: number): void => {
+  const { canvas, theme } = p;
+  const frame = raise(p, 78, team.length + 7, 'Team · + one more · − one fewer');
+  team.forEach((entry, index) => {
+    const row = frame.top + 3 + index;
+    const chosen = index === at;
+    let col = canvas.put(row, frame.left + 3, chosen ? '▸ ' : '  ', { fg: theme.link, bold: true });
+    col = canvas.put(row, col, entry.name, { fg: theme.text, bold: chosen });
+    col = canvas.put(row, col + 2, `× ${String(entry.count)}`, { fg: chosen ? theme.link : theme.text, bold: true });
+    if (entry.min < entry.count) {
+      col = canvas.put(row, col + 2, `(${String(entry.min)} at the start)`, { fg: theme.subtle });
+    }
+
+    canvas.put(row, col + 2, clip(entry.roles.join(', '), frame.left + frame.width - col - 6), { fg: theme.muted });
+  });
+  canvas.put(
+    frame.top + frame.height - 3,
+    frame.left + 3,
+    clip(
+      'Written to .plitzi/team.json — the person’s to set; the lead moves agents between min and count',
+      frame.width - 6
+    ),
+    {
+      fg: theme.subtle
+    }
+  );
+};
+
 /** The keys of the mode it is in: what the status bar has no room for. A simple panel's are only its own. */
 export const drawHelp = (p: Paint, mode: MonitorMode): void => {
   const { canvas, theme } = p;
@@ -183,6 +215,7 @@ export const drawHelp = (p: Paint, mode: MonitorMode): void => {
     ],
     ['e', 'widens the sidebar — again, back as it was', false],
     ['t', 'light or dark', true],
+    ['r', 'the team: ↑ ↓ an entry, + one more of it, − one fewer — written to .plitzi/team.json', true],
     ['ctrl+p', 'commands: every task, agent, view and fix', true],
     ['q', 'quits — twice while a preview runs from here: it stops too', true]
   ];
@@ -205,6 +238,7 @@ export type PaletteAction =
   | { kind: 'mode' }
   | { kind: 'approved' }
   | { kind: 'theme' }
+  | { kind: 'team' }
   | { kind: 'quit' };
 
 export interface PaletteItem {
@@ -257,6 +291,7 @@ export const paletteItems = (p: Paint, data: Monitored, needs: readonly Need[]):
       hint: 't',
       action: { kind: 'theme' }
     },
+    { group: 'Panel', label: 'The team: more or fewer of a role', hint: 'r', action: { kind: 'team' } },
     { group: 'Panel', label: 'Quit', hint: 'q', action: { kind: 'quit' } }
   ];
 };

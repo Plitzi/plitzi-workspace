@@ -300,6 +300,28 @@ describe('handleActionCall', () => {
     ]);
   });
 
+  // A tester verified a render action no page used yet by importing its function into a probe of its own: a
+  // development server runs it the way a page's render does, its real fetch, hosts and limits — nowhere else.
+  it('runs a render action the way a render does on a development server, and refuses it anywhere else', async () => {
+    const rendered = entry({
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'render', params: { access: 'public' }, afterNode: 'compute' }),
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 7}' } })
+      }
+    });
+
+    const developing = await call(buildConfig(rendered, { devMode: true }), { actionId: 'quote', trigger: 'render' });
+    expect(developing.sent.status).toBe(200);
+    expect(developing.payload).toMatchObject({ status: 'completed', output: { total: 7 } });
+
+    const deployed = await call(buildConfig(rendered), { actionId: 'quote', trigger: 'render' });
+    expect(deployed.sent.status).toBe(403);
+    expect(deployed.payload.error).toContain('development server alone');
+
+    const called = await call(buildConfig(rendered, { devMode: true }), { actionId: 'quote' });
+    expect(called.sent.status).not.toBe(200);
+  });
+
   it('answers 404 for an action this space does not have', async () => {
     const { sent, payload } = await call(buildConfig(undefined), { actionId: 'missing' });
 

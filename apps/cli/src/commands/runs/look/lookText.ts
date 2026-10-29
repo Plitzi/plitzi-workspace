@@ -66,13 +66,29 @@ const differs = (each: NonNullable<Looked['compared']>[number]): boolean =>
 const besideSummary = (looked: Looked): string[] => {
   const compared = looked.compared ?? [];
   const moved = looked.movedElsewhere ?? [];
-  if (looked.notBeside === true || (compared.length === 0 && moved.length === 0 && looked.besideNothing !== true)) {
+  if (
+    looked.notBeside === true ||
+    (compared.length === 0 &&
+      moved.length === 0 &&
+      looked.besideNothing !== true &&
+      (looked.unpictured ?? []).length === 0)
+  ) {
     return [];
   }
 
   const found = compared.filter(differs);
   const unread = compared.filter(each => each.problem !== undefined).length;
   const views = `${String(compared.length)} view${compared.length === 1 ? '' : 's'} compared`;
+  // Not one view pictured is nothing compared — never "nothing differs": a run's look said it of steps that never played.
+  if (
+    unread === compared.length &&
+    moved.length === 0 &&
+    (compared.length > 0 || (looked.unpictured ?? []).length > 0)
+  ) {
+    return [
+      chalk.yellow('Beside the run before it: nothing could be compared — no view of it was pictured (below says why)')
+    ];
+  }
 
   return [
     chalk.bold(

@@ -1,4 +1,4 @@
-import { at, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
+import { at, broughtText, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
 import { letGoUntouched } from './locks';
 import { requireLead } from '../agents/leads';
 import { tellLeftInTmp } from '../copies/strays';
@@ -171,7 +171,7 @@ export const unblockTask = async (
               {
                 at: at(ctx),
                 by: 'plitzi',
-                text: `Its copy brought what the run approved meanwhile: ${brought.join(', ')}`
+                text: `Its copy brought in ${broughtText(brought)}`
               }
             ]
           : [])

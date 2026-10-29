@@ -439,7 +439,7 @@ export const buildProgram = (): Command => {
   program
     .command('feedback')
     .description(
-      'Start a report to Plitzi: writes the page in .plitzi/plitzi-reports/agents/<date>/ with the versions and the project already in it, and tells the agent how to fill and publish it — to send as a link'
+      'Start a report to Plitzi of Plitzi used without a run — one agent working the project: writes the page in .plitzi/plitzi-reports/agents/<date>/ with the versions and the project already in it, and tells the agent how to fill and publish it — to send as a link. A run of several agents reports itself: what it met of Plitzi is its report’s (plitzi run notice --plitzi), after its finish too (--run <run>)'
     )
     .option(
       '--previous <url>',
@@ -457,6 +457,10 @@ export const buildProgram = (): Command => {
     )
     .option('--strict', 'Warnings fail too (exit 1)')
     .addOption(new Option('--max-warnings <n>', 'More warnings than this fail (exit 1)').argParser(count))
+    .option(
+      '--against <folder>',
+      'Another copy of the project — the run’s work, a worktree of HEAD — linted too, and only what is new here said: what a change added, its lines moved or not'
+    )
     .option('--json', 'One object: { scope, notChecked, findings }, for a tool or an agent')
     .action((options: LintOptions) => lint(options));
 

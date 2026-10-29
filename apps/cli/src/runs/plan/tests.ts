@@ -242,15 +242,21 @@ const testChecks = (
 };
 
 /** The plan with a task of tests after each developer task — as it is when the team has no tester, otherwise. */
+/**
+ * A developer task that gets no task of tests: one that writes its tests itself (`own`, its files name them — as the
+ * plan meant), or one with none, and why.
+ */
+export type Untested = { task: string; own: string[] } | { task: string; why: string };
+
 export const withTestTasks = (
   plan: RunPlan,
   setup: TestSetup | undefined
-): { plan: RunPlan; added: string[]; untested: { task: string; why: string }[] } => {
+): { plan: RunPlan; added: string[]; untested: Untested[] } => {
   if (!setup) {
     return { plan, added: [], untested: [] };
   }
 
-  const untested: { task: string; why: string }[] = [];
+  const untested: Untested[] = [];
 
   const holderOf = new Map(plan.tasks.flatMap(task => task.files.map(file => [file, task.id] as const)));
   // What a task of the plan already tests: its `testsOf`, or what a tester's task of it waits for.
@@ -285,15 +291,17 @@ export const withTestTasks = (
       // Its own test files are its own tests, written with it — said so, never "another task's".
       const own = named.filter(file => holderOf.get(file) === task.id);
       const others = named.filter(file => holderOf.get(file) !== task.id);
-      untested.push({
-        task: task.id,
-        why:
-          named.length === 0
-            ? 'none of its files has a test file named for it — a component or a module no page owns'
-            : others.length === 0
-              ? `it writes its tests itself (${own.join(', ')}): none written by another`
-              : `its test files are another task's (${others.join(', ')})`
-      });
+      untested.push(
+        named.length > 0 && others.length === 0
+          ? { task: task.id, own }
+          : {
+              task: task.id,
+              why:
+                named.length === 0
+                  ? 'none of its files has a test file named for it — a component or a module no page owns'
+                  : `its test files are another task's (${others.join(', ')})`
+            }
+      );
       continue;
     }
 

@@ -250,6 +250,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...MUTATE_OPTIONS[1])
     .option(...MUTATE_OPTIONS[2])
     .option(...MUTATE_OPTIONS[3])
+    .option(
+      '--tests',
+      'With --mutate: the project’s own tests run too, on the copy and on the mutant, a line of their own — whether any test holds what a line a reviewer judges leans on'
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)

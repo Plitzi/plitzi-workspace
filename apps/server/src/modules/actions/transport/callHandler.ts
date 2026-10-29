@@ -129,6 +129,16 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     return;
   }
 
+  // Run the way a page's render runs it, asked of a development server alone: a render action no page uses yet tried
+  // with its real fetch, hosts and limits — a run's tester imported the function into a probe of its own instead.
+  if (body.trigger === 'render' && config.devMode !== true) {
+    fail(res, 'forbidden', 'A render is run from the command line on a development server alone (devMode)');
+
+    return;
+  }
+
+  const trigger = body.trigger === 'render' ? 'render' : 'call';
+
   /**
    * A call that never became a run, told to whoever keeps the deployment's records.
    *
@@ -141,7 +151,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       actionId: body.actionId,
       spaceId,
       environment,
-      trigger: 'call',
+      trigger,
       reason,
       callerId,
       ...(detail === undefined ? {} : { detail })
@@ -188,7 +198,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   let entryPoint;
   try {
     // Before anything is spent: a refusal here has taken no slot and no metering event.
-    entryPoint = precheckRun(entry, { trigger: 'call', input, user: req.ctx.user, lineage }).trigger;
+    entryPoint = precheckRun(entry, { trigger, input, user: req.ctx.user, lineage }).trigger;
     run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
@@ -279,7 +289,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       input,
       spaceId,
       environment,
-      trigger: 'call',
+      trigger,
       user: req.ctx.user,
       callerId,
       ...(origin ? { origin } : {}),

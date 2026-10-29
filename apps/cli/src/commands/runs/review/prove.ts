@@ -15,6 +15,8 @@ export type ProveOptions = RunCommandOptions & {
   to?: string[];
   /** `--line <n>`: the acceptance lines it runs, by their place — each said again. */
   line?: string[];
+  /** `--tests`: with `--mutate`, the project's own tests run too, a line of their own. */
+  tests?: boolean;
 };
 
 /** The places `--line` named, as numbers: one that is not is said as it is, and refused by the task's lines. */
@@ -69,7 +71,7 @@ export const checkBeforeText = (
           : proved === 'fails'
             ? `${chalk.yellow('✗')} ${line.said} — fails with ${task}${line.before.ok ? ', where it passed before it' : ', as before it'}`
             : proved === 'broken'
-              ? `${chalk.yellow('?')} ${line.said} — the code before ${task} does not run (a file it added is still imported without it), so it proves nothing — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
+              ? `${chalk.yellow('?')} ${line.said} — the code before ${task} does not run — what it printed is below (a file it adds, imported without it, is the usual one) — so it proves nothing — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
               : noTestBefore(line)
                 ? `${chalk.yellow('?')} ${line.said} — ran no test before ${task}: what it runs did not exist there, so it proves nothing either way — break the code it holds and see it fail: plitzi task prove ${task} --mutate <file> --from "…" --to "…"`
                 : `${chalk.yellow('?')} ${line.said} — could not be answered ${line.after.unanswered === true ? 'with' : 'before'} ${task}: the line's or the machine's, not the work's`;
@@ -118,7 +120,8 @@ const taskProveMutant = (named: string | undefined, options: ProveOptions): Prom
         runId,
         taskId,
         files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' })),
-        linesAsked(options)
+        linesAsked(options),
+        { tests: options.tests === true }
       );
     },
     ({ task, mutations, lines }) => checkMutantText(task, mutations, lines),

@@ -46,6 +46,15 @@ export const registerPage = (pageGroup: Command): void => {
         'Also an element: what it reads, what it shows, its own state, whether it is on screen — once for each element',
         (id: string, before: string[] = []) => (before.includes(id) ? before : [...before, id])
       )
+      .option(
+        '--sight <ids>',
+        'Also where a visitor sees each of these elements, separated by commas — in sight, out of sight until a box is scrolled, clipped by a box that does not scroll, under another element: a box drawn is not one seen',
+        (value: string) =>
+          value
+            .split(',')
+            .map(id => id.trim())
+            .filter(Boolean)
+      )
       .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
       .option(
         '--steps <script>',
@@ -245,14 +254,6 @@ export const registerPage = (pageGroup: Command): void => {
           .argParser(widths)
           .default([1280], '1280')
       )
-      .addOption(
-        new Option(
-          '--height <px>',
-          'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --within)'
-        )
-          .argParser(positiveInteger)
-          .default(800)
-      )
       .addOption(schemesOption())
       .addOption(
         new Option(
@@ -302,7 +303,7 @@ export const registerPage = (pageGroup: Command): void => {
         '--scroll-to <element>',
         'The page scrolled until this element is in view; the picture is the screen there'
       )
-      .option('--viewport', 'Only what fits the viewport, not the whole page')
+      .option('--viewport', 'Only what fits the viewport (--height tall), not the whole page')
       .option(
         '--click <element...>',
         'Click these in order once the page settles — each its name or a CSS selector, inside a plugin too — picturing what each changed (--frames pictures --every ms apart after each)'

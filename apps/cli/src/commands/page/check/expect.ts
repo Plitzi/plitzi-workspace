@@ -1,10 +1,12 @@
 import { closest } from '@plitzi/sdk-authoring';
+import { sightOf, sightText } from '@plitzi/sdk-shared/devTools';
 
 import { selectorOf } from './click';
 
 import type { Authored } from './space';
 import type { CheckIssue, Expectation } from './types';
 import type { BrowserPage } from '../../../browser';
+import type { Sight } from '@plitzi/sdk-shared/devTools';
 
 /**
  * `--expect`: what an element shows, held to the text asked — and a short label broken onto two lines (`label-wraps`).
@@ -17,13 +19,19 @@ export interface Copies {
   shown: string[];
   /** Of them, by their place in `shown`, those whose text runs past a box that cuts it: a visitor reads them cut short. */
   cut: number[];
+  /** Of them, by their place in `shown`, those a visitor sees only once a box is scrolled: that box, by name. */
+  scrolled?: Record<number, string>;
+  /** Copies drawn that no visitor sees — clipped, under another element: what each shows, and what keeps it unseen. */
+  unseen?: { text: string; why: string }[];
 }
 
-/** One element drawn: its id, what it shows, and whether its text runs past a box that cuts it. */
+/** One element drawn: its id, what it shows, whether its text runs past a box that cuts it, its place in the page. */
 export interface DrawnText {
   id: string;
   text: string;
   cut: boolean;
+  /** Its place among the elements the selector finds, in the page's order: what its sight is read by. */
+  index: number;
 }
 
 /**
@@ -88,13 +96,18 @@ export const textsInPage = ({
 
   return {
     present: nodes.length,
-    drawn: nodes
-      .filter(node => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
-      .map(node => ({
-        id: node.getAttribute('data-plitzi-el') ?? '',
-        text: (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim(),
-        cut: cuts(node) || (within && Array.from(node.querySelectorAll('*')).some(cuts))
-      }))
+    drawn: nodes.flatMap((node, index) =>
+      node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden'
+        ? [
+            {
+              id: node.getAttribute('data-plitzi-el') ?? '',
+              text: (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim(),
+              cut: cuts(node) || (within && Array.from(node.querySelectorAll('*')).some(cuts)),
+              index
+            }
+          ]
+        : []
+    )
   };
 };
 
@@ -119,12 +132,90 @@ export const attributesInPage = ({ selector, attribute }: { selector: string; at
   };
 };
 
-/** The copies of an element, as `textsInPage` read them. */
-export const copiesOf = ({ present, drawn }: ReturnType<typeof textsInPage>): Copies => ({
-  present,
-  shown: drawn.map(each => each.text),
-  cut: drawn.flatMap((each, index) => (each.cut ? [index] : []))
-});
+/**
+ * The copies of an element, as `textsInPage` read them and a visitor sees them: a copy drawn out of every visitor's
+ * sight (`sights`, by its place in the page) is said apart, never shown — a run's panel clipped by its column under the
+ * legend passed `--expect storm-name~ARNAB`. A copy whose sight was not read counts as seen.
+ */
+export const copiesOf = (
+  { present, drawn }: ReturnType<typeof textsInPage>,
+  sights: ReadonlyMap<number, Sight> = new Map()
+): Copies => {
+  const seen = drawn.filter(each => sights.get(each.index)?.seen !== false);
+  const unseen = drawn.flatMap(each => {
+    const sight = sights.get(each.index);
+
+    return sight && !sight.seen ? [{ text: each.text, why: sightText(sight) }] : [];
+  });
+  const scrolled = Object.fromEntries(
+    seen.flatMap((each, place) => {
+      const sight = sights.get(each.index);
+
+      return sight?.seen && sight.scrolled !== undefined ? [[place, sight.scrolled] as const] : [];
+    })
+  );
+
+  return {
+    present,
+    shown: seen.map(each => each.text),
+    cut: seen.flatMap((each, place) => (each.cut ? [place] : [])),
+    ...(Object.keys(scrolled).length > 0 ? { scrolled } : {}),
+    ...(unseen.length > 0 ? { unseen } : {})
+  };
+};
+
+/** How many copies of one element have their sight read: a list's first rows — past them, one is read as seen. */
+const SIGHTS_READ = 24;
+
+/** What a visitor sees of each copy drawn, by its place in the page (`sightOf`, run on the element itself). */
+const sightsOf = async (
+  page: BrowserPage,
+  selector: string,
+  drawn: readonly DrawnText[]
+): Promise<Map<number, Sight>> => {
+  const sights = new Map<number, Sight>();
+  for (const { index } of drawn.slice(0, SIGHTS_READ)) {
+    sights.set(
+      index,
+      await page
+        .locator(`${selector} >> nth=${String(index)}`)
+        .first()
+        .evaluate(sightOf, undefined)
+    );
+  }
+
+  return sights;
+};
+
+/**
+ * Where a visitor sees an element, in words (`--sight`): in sight, out of sight until a box is scrolled, or what keeps
+ * every copy of it unseen — a run's look said "0.1% differs" of a task that added a whole panel below its column's fold.
+ */
+export const sightSaid = async (page: BrowserPage, selector: string): Promise<string> => {
+  const texts = await page.evaluate(textsInPage, { selector, within: true });
+  if (texts.present === 0) {
+    return 'not on the page';
+  }
+
+  if (texts.drawn.length === 0) {
+    return `on the page, nothing of it drawn${texts.present > 1 ? ` — all ${String(texts.present)} copies` : ''}`;
+  }
+
+  const sights = [...(await sightsOf(page, selector, texts.drawn)).values()];
+  const seen = sights.filter(sight => sight.seen);
+  if (seen.some(sight => sight.scrolled === undefined)) {
+    return 'in sight';
+  }
+
+  return sightText(seen.at(0) ?? sights.at(0) ?? { seen: true });
+};
+
+/** The copies of an element as a visitor sees them: their words, and each one's sight. */
+const seenCopies = async (page: BrowserPage, selector: string): Promise<Copies> => {
+  const texts = await page.evaluate(textsInPage, { selector, within: true });
+
+  return copiesOf(texts, await sightsOf(page, selector, texts.drawn));
+};
 
 const quoted = (shown: string): string => `"${shown.length > 160 ? `${shown.slice(0, 160)}…` : shown}"`;
 
@@ -167,6 +258,13 @@ export const expectationMissed = (
 
   if (copies.present === 0) {
     return `${said}: no element ${element} is on the page${meantOnPage(element, onPage)}`;
+  }
+
+  // Drawn and out of every visitor's sight: what it holds is said, with what keeps it unseen.
+  const unseen =
+    copies.unseen?.find(each => matching(each.text)) ?? (copies.shown.length === 0 ? copies.unseen?.[0] : undefined);
+  if (unseen) {
+    return `${said}: ${element} ${text === '' || !matching(unseen.text) ? `shows ${quoted(unseen.text)}` : 'holds it'}, and no visitor sees it — ${unseen.why}`;
   }
 
   if (copies.shown.length === 0) {
@@ -324,13 +422,19 @@ export const missedExpectations = async (
     const { attribute } = expected;
     const copies =
       attribute === undefined
-        ? copiesOf(await page.evaluate(textsInPage, { selector, within: true }))
+        ? await seenCopies(page, selector)
         : await page.evaluate(attributesInPage, { selector, attribute });
     // An attribute's expectation is said as written: `site-sign-in[href]`, never the element's words.
     const named = attribute === undefined ? expected.element : `${expected.element}[${attribute}]`;
     const message = expectationMissed({ ...expected, element: named }, copies, onPage);
     if (message === undefined) {
-      met.push(`${expected.absent ? '!' : ''}${named}${expected.text === '' ? '' : `~${expected.text}`}`);
+      // Met only where a visitor scrolls a box to see it: said with it — a panel below its column's fold read as on screen.
+      const scrolled = Object.values(copies.scrolled ?? {});
+      const scrolledBy =
+        expected.absent || scrolled.length < copies.shown.length || scrolled.length === 0 ? undefined : scrolled[0];
+      met.push(
+        `${expected.absent ? '!' : ''}${named}${expected.text === '' ? '' : `~${expected.text}`}${scrolledBy === undefined ? '' : ` (out of sight until ${scrolledBy} is scrolled)`}`
+      );
     } else {
       missed.push({ code: 'expected-text', message, elementId: expected.element, width });
     }

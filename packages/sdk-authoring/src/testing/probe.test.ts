@@ -532,4 +532,22 @@ describe('probePage / elements shown empty', () => {
       { id: 'hero-art', times: 1, what: 'picture' }
     ]);
   });
+
+  // A run's GDACS alert dots were empty texts with a fill: read as words missing, on every page they were on.
+  it('reads an empty text that draws a box as a mark, not as words missing', () => {
+    sized(10, 10);
+    document.body.innerHTML = [
+      '<span data-plitzi-el="storm-alert" data-plitzi-empty style="background-color: rgb(192, 31, 31)"></span>',
+      '<span data-plitzi-el="legend-mark" data-plitzi-empty style="border-top-width: 2px; border-top-style: solid"></span>',
+      '<span data-plitzi-el="storm-name" data-plitzi-empty style="background-color: rgba(0, 0, 0, 0)"></span>',
+      // Said to be drawn for the look alone: a mark on purpose.
+      '<span data-plitzi-el="legend-dot" data-plitzi-empty aria-hidden="true" style="background-color: red"></span>'
+    ].join('');
+
+    expect(probePage(input([])).blank).toEqual([
+      { id: 'storm-alert', times: 1, what: 'mark' },
+      { id: 'legend-mark', times: 1, what: 'mark' },
+      { id: 'storm-name', times: 1, what: 'words' }
+    ]);
+  });
 });

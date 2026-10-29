@@ -16,6 +16,7 @@ import { crossed, longFilesIn, longFileText } from '../plan/longFiles';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { handOver } from '../talk/handOver';
 
+import type { Brought } from './common';
 import type { CheckResult } from '../copies/checks';
 import type { AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
@@ -48,7 +49,7 @@ export interface CheckedTask {
    */
   messages: Message[];
   /** What came into the copy first: approved since it was made, or changed in the project by a person. */
-  brought?: string[];
+  brought?: Brought[];
   /** `acceptance`: only the acceptance's commands were run — the project's checks were not, and `complete` runs them. */
   only?: 'acceptance';
   /** Files it changed that another task at work holds: `complete` refuses them — said now, before the work is done. */

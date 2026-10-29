@@ -28,6 +28,7 @@ import {
   runAllowFinish,
   runAmend,
   runTeam,
+  runTeamOptions,
   runTeamSet,
   runTeamUnset,
   runSettle,
@@ -70,7 +71,7 @@ import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { HelpGroup } from '../../register/helpGroups';
 import type { AgentOptions } from '../run/agent';
 import type { StartOptions } from '../run/start';
-import type { TeamSetOptions } from '../run/team';
+import type { TeamOptionsFlags, TeamSetOptions } from '../run/team';
 import type { Command } from 'commander';
 
 /**
@@ -178,6 +179,24 @@ export const registerRunGroup = (program: Command): Command => {
     .action((name: string, options: TeamSetOptions) => runTeamSet(name, options));
 
   team
+    .command('options')
+    .description(
+      'The team’s options, said — or changed, before and after, the file written by the CLI (never by hand: a file a run’s copies take fails their format checks)'
+    )
+    .option(
+      '--launch <harness>',
+      'The harness the CLI starts agents in by itself: claude, codex, opencode — none: the lead starts them'
+    )
+    .option(
+      '--design-review <level>',
+      'How closely a designer reviews another task’s UI: light, standard, high — none: standard'
+    )
+    .option('--start-grace <minutes>', 'How long an agent just started may say nothing (1 to 30) — none: 3')
+    .option('--fresh-context-at <tokens>', 'The context past which a "context" session starts fresh — none: 250000')
+    .option(...JSON_OPTION)
+    .action((options: TeamOptionsFlags) => runTeamOptions(options));
+
+  team
     .command('unset')
     .description('Take an agent out of the team — or, for lead, the lead’s own model')
     .argument('<name>', 'The agent, or lead')
@@ -266,10 +285,14 @@ export const registerRunGroup = (program: Command): Command => {
   runGroup
     .command('notice')
     .description(
-      'Something wrong you saw that no task owns — outside yours, there before the run: kept for the finish and the next stage, never fixed in your task; with no run open, kept in the project’s backlog'
+      'Something wrong you saw that no task owns — outside yours, there before the run: kept for the finish and the next stage, never fixed in your task; with no run open, kept in the project’s backlog; with --run of a run over, added to its report — what its lead finds reading it after --apply'
     )
     .argument('<text>', 'What is wrong — or - to read it from stdin')
     .option('--on <where>', 'Where it is: a page, an element, a file')
+    .option(
+      '--withdraw <notice>',
+      'Take back a notice filed by mistake, by its name (n3) — the text says why: kept in the log as withdrawn, out of the finish, report and feedback; the lead any, an agent its own'
+    )
     .addOption(
       new Option(
         '--plitzi <how>',
@@ -280,7 +303,7 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: PlitziHow }) =>
+    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: PlitziHow; withdraw?: string }) =>
       runNotice(text, options)
     );
 

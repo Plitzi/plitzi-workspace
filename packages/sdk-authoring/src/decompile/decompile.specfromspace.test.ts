@@ -432,8 +432,8 @@ describe('specToSource', () => {
       'layouts/shell.ts',
       'pages/guide.ts',
       'pages/home.ts',
-      // The page authoring gave the space for an unknown address, the project's own from here on.
-      'pages/plitzi-not-found.ts',
+      // The page authoring gave the space for an unknown address, the project's own from here on — by its name.
+      'pages/not-found.ts',
       'styles.ts'
     ]);
     expect(files['pages/home.ts']).toContain("import { card } from '../styles';");
@@ -460,7 +460,8 @@ describe('specToSource', () => {
     };
     const files = specToSource(specFromSpace(authorSpace(spec)).spec, { exportName: 'named', split: true });
 
-    expect(files['pages/analytics-page.ts']).toContain('export const analyticsPage: PageSpec');
+    // Its file by the page's name, as a person reads it: a seeded page came out as `page-1.ts`.
+    expect(files['pages/analytics.ts']).toContain('export const analyticsPage: PageSpec');
   });
 
   it('leaves out what a factory puts back — the type defaults and the default label', () => {

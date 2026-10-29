@@ -56,6 +56,19 @@ authoring and the elements learnt from the runs.
 <run>` with no file; `run prune` is gone — every `run open`, and `run watch` while it follows, prune; `explain
 --search "…"` → `explain "…"` (several words are a search). A command or flag written the old way is refused naming
   the new one. Agents' prompts and the skills say the new ones: `plitzi upgrade skills --write`.
+- **`page check --expect` holds what it expects.** The page's other findings, its console and refused requests are said
+  beside it and fail nothing — `page check` with no `--expect` holds the page whole, as the finish does. And a copy is
+  shown only when a visitor sees it: one clipped by a box that does not scroll, or under another element, is not.
+  Acceptance written as `page check … --json | jq` to get round the first can be written plainly again.
+- **`page shot` reads at 900 px tall by default**, as every page command does; `--height` is every page command's now
+  (`measure`, `play`, `outline`, `check`, `task look`). A page locked to its screen (`documentScroll: 'locked'`) is
+  pictured as the screen.
+- **`create --from` names a page's file by the page's name** (`pages/monitor.ts`, never `pages/page-1.ts`), and a large
+  page is a file a part (`pages/monitor/left-column.ts`): a project made before keeps its files; the next `space pull`
+  of a draft that changed writes the new ones beside them.
+- **A space's functions are read without their tests**: `*.test.*`, `*.spec.*` and `*.fixture.*` of `src/functions/`
+  stay in the project — `space push functions` sends them no more, and a functions draft that has them keeps them until
+  the next push.
 - **One command for each thing, read off the CLI itself.** A plan is opened, tried and rehearsed by one command:
   `run plan <file>` → `run open <file> --dry-run`, `run rehearse` → `run open <file> --dry-run --rehearse`, and
   `run open --spike` is gone (a run opens on its scope by itself). `run state` → `run status --all`; `run bench` →
@@ -348,6 +361,33 @@ start one. How it works: `docs/en/agent-runs.md`.
 
 ### The run
 
+- **A notice is named and withdrawn**: `n1`, `n2`… by its place; `run notice --withdraw n3 "why"` keeps it in the log as
+  withdrawn and out of the finish, the report and the feedback — the lead any, an agent its own.
+- **A run applied is amended from its report**: `run notice … --run <run>` (and `--withdraw`) after `--apply` writes into
+  the records the report keeps — its identities kept as digests prove its lead — writes the feedback again, and
+  `report.md` and `report.json` say each amendment and when. `plitzi feedback` is Plitzi used without a run.
+- **`run amend` leaves out what a taken task cannot change** — its role, quality, what it waits for — said, and amends
+  the rest; all it asks of tasks taken alone is refused naming each.
+- **`run team options`** sets the team's options (`--launch`, `--design-review`, `--start-grace`,
+  `--fresh-context-at`, `none` to take one out), the file written by the CLI — a run's copies failed `format` for an
+  hour on one written with jq.
+- **`task prove --mutate --tests`** runs the project's own tests on the mutant too, a line of their own.
+- **`run report --summary <file> --run <run>`** writes a finished run's summary again, in its place in the report.
+- **What comes into a task's copy is said by where it came from**: approved in the run, or changed in the project by no
+  task — and a failing complete blames one only when what fails names it. A run's refusal called a person's edit of
+  `.plitzi/team.json` "what the run approved" beside an `author` failure of the task's own, and its lead filed a bug of
+  the copies that was none.
+- **`run settle` takes a finding that left the lead's attention** since it was read (its task's next check passed).
+- **A task's brief** says what the work tasks it waits on were told before they were built in a line each, a command
+  away; research's findings stay whole (a feed task's brief was 22k, 15k of it nine tasks' notes). `task next` says a
+  review's acceptance once, with its results.
+- **`checks-failed` names each step that fails** and what it said first; a busy port is the machine's (`task prove`
+  answers it unanswered, never "the code does not run"), and a failed assertion's own words are said. Tasks that write
+  their own tests are said once, as what the plan does. A long run is confirmed by its minutes at the project's pace.
+- **`space push` goes to the project's own space** (`.plitzi/space.json`), never asking which; after it, the project's
+  files are what the space is — a pull of the same draft leaves them be, however they are laid out. "No space you can
+  reach" says who is signed in.
+
 - `plitzi run start "<the ask>"` checks what a run needs (a space in code, Chromium, the harness) and opens it on its
   scope: a **research card** ended with the tasks it found (`task complete s-scope --found "…" --tasks <stage.json>`). A plan
   also opens directly (`run open --dry-run`, then `run open`). Either way every file a task touches is backed up first.
@@ -623,6 +663,9 @@ report`, …).
   - A review taken and not decided is handed on; a task past three rounds goes back to the lead.
 
 ### Watching a run
+
+- **The monitor sets the team's size**: `r` opens the team, ↑ ↓ an entry, `+` one more of it, `−` one fewer (its min
+  no more than its count) — written as `run team set --count` writes it, with no other terminal.
 
 - **A ready task held by another's claim is said to the lead** (`held-ahead`): which task holds which file, and that
   approving it frees the file. A run's ready task sat 22 minutes with three developers free.
@@ -1051,6 +1094,34 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **What a visitor sees, not a box drawn** (`sightOf`, `@plitzi/sdk-shared/devTools`): `--expect` and the dev tools'
+  `element()` read an element as seen only when some of it is in sight — clipped by a box that does not scroll, past
+  the edge of a page locked to its screen, or under something drawn over every part of it is not. `page check --sight
+a,b` says where each is (in sight, out of sight until a box is scrolled, why not at all), and `task look` asks it of
+  every part of its task. A run's panel was "visible" at y=614 inside a 495 px column under the legend, and every
+  check passed on it.
+- **`--height <px>`** on every page command: a layout sized by the screen (`vh`) measured on a shorter laptop.
+- **An empty text that draws a box is a mark**, said as one with what to make it — `decorative: true`, or a
+  `container` — never "shows no words"; one already `decorative` is not read as empty at all. Problems many elements
+  share are said in one line.
+- **A picture waits for its canvas** — a map's tiles, a chart's first frame — up to 4 s, and says when it was still
+  changing. A part pictured has what is placed over it from outside hidden too.
+- **`--steps` that never answer** say the step that did not happen — never a stack trace — and a look that pictured no
+  view says nothing could be compared, never "nothing differs". A click on a name several copies carry says which it
+  pressed; `source <element-id>.<path>` writes the source that element publishes, and says its name.
+- **`--state <source>` prints a source named whole**, every key with its value; `--state computed.layerQuakes` one path.
+  `page measure` of more than three elements says each by its box (`--only` reads more). A line of 70k characters in a
+  check's output is cut, said by its size.
+- **Commands printed to be pasted are quoted** where a shell would read them otherwise (`'/?sample=active'`).
+- **What a plugin draws on a canvas is read too**: `page check` says a canvas painted one colour edge to edge (a globe
+  drawing nothing but its ground), failing nothing; `page play` reads an element's own state — a plugin that keeps its
+  camera there with `useElement().setElementState` is seen to change where its canvas looks the same; and the
+  `attribute <element>.<name> <json>` step gives an element an attribute no page binds yet, to see it drawn.
+- **`render <id> [json]`** runs a render action the way a page's render runs it — its real fetch, hosts and limits —
+  before any page uses it: a development server takes `trigger: 'render'` at `/_action`, and refuses it anywhere else.
+- **`space lint --against <folder>`** says only what is new here beside another copy of the project, lines moved or
+  not; a message said already is named by its code ("as above").
+
 - **`page measure` reads how a row lays out** — `flex-direction`, `justify-content`, `flex-grow`, `min-width` (said
   only when not their initial value), and `--only`/`--same` take them: a run's designer sharing five rules read them
   through display, gap and width.
@@ -1424,6 +1495,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Server (`@plitzi/sdk-server`)
 
+- **A render action's ceiling is said where it is written**: `ActionLimits` gives each default, and `timeoutMs` and
+  `defineAction` say that a page's section is cut at 5 s (`rsc.elementTimeoutMs`) whatever the action's own 10 s.
+
 - **A project's server started while it already runs says so**: "This project is already running at
   http://localhost:8080 (process …, since 18:26 UTC)", and how to stop it — where it said its `state/kv.json` was in use
   by a process, with a stack. A file store's lock keeps where its holder answers (`serves`), and `FileInUseError`
@@ -1527,6 +1601,9 @@ is no room at this address.` — one line, no stack — where the log said "ende
   on, `replayed`: a room's player reached from Explore said "Nothing is playing" until a reload.
 
 ## Dev tools (`@plitzi/sdk-dev-tools`)
+
+- **`element(id).visible` is what a visitor sees** (`sightOf`), and `sight` says why not — or the box to scroll.
+  `setSource` takes an element's id too, and answers the source it wrote.
 
 - A **Run** tab, offered only on a run's preview: progress, the tasks by where they stand, the agents and what needs
   someone.

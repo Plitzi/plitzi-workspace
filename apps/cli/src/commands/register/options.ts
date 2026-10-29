@@ -1,8 +1,8 @@
 import { InvalidArgumentError, Option } from 'commander';
 
-import { SCHEMES } from '../../browser';
+import { SCHEMES, VIEW_HEIGHT } from '../../browser';
 import { AUTOPLAY_CONDITIONS, STORAGE_CONDITIONS } from '../../browser/conditions';
-import { schemes, timeZone, widths } from '../../options';
+import { positiveInteger, schemes, timeZone, widths } from '../../options';
 import { projectRun } from '../../scaffold/packageManager';
 import { instantMs } from '../page/shotSteps';
 
@@ -112,6 +112,7 @@ export const conditionsOf = (options: ConditionOptions): BrowserConditions => ({
  */
 export const visitorArgs = (options: Omit<VisitorOptions, 'as' | 'guest' | 'url'>): string[] => [
   ...(options.timezone ? ['--timezone', options.timezone] : []),
+  ...(options.height === undefined ? [] : ['--height', String(options.height)]),
   ...(options.presence ? ['--presence'] : []),
   ...(options.fresh ? ['--fresh'] : []),
   ...(options.clock === undefined ? [] : ['--clock', new Date(options.clock).toISOString()]),
@@ -128,6 +129,8 @@ export interface VisitorOptions extends ConditionOptions {
   /** Read as a guest, though a page sends one away: the project's account is not signed in by itself. */
   guest?: boolean;
   timezone?: string;
+  /** The viewport's height: a screen of that size — what a layout sized by it (`vh`, a locked document) shows. */
+  height?: number;
   presence?: boolean;
   url?: string;
   /** Nothing an earlier call kept is read again: the other site's page, the space authored, the last look. */
@@ -154,6 +157,12 @@ export const withVisitorOptions = (command: Command, { url = true }: { url?: boo
         '--timezone <zone>',
         'The visitor’s time zone (IANA: America/Mexico_City): the page as someone there sees its hours — the machine’s when left out'
       ).argParser(timeZone)
+    )
+    .addOption(
+      new Option(
+        '--height <px>',
+        `The viewport's height — a screen of that size: what a layout sized by the screen (vh, a page locked to it) shows on a shorter laptop — ${String(VIEW_HEIGHT)} when left out`
+      ).argParser(positiveInteger)
     )
     .option(
       '--presence',

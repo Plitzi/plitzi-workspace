@@ -1,7 +1,17 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { HIDDEN_FOR_SHOT, hidePinned, pinnedScroll, showPinned } from './capture';
+import {
+  canvasDrawn,
+  HIDDEN_FOR_SHOT,
+  hidePinned,
+  largestCanvas,
+  lockedScreen,
+  pinnedScroll,
+  showPinned
+} from './capture';
+
+import type { BrowserPage } from '../../../browser';
 
 // A part clipped under a sticky site header was pictured with the header over its first rows — and, hidden by its
 // visibility, a header whose children keep `visibility: visible` of their own still drew them (a run's looks at 390).
@@ -75,5 +85,82 @@ describe('a sheet pinned over the page that scrolls on its own', () => {
     Object.defineProperty(sheet, 'scrollHeight', { value: 1359 });
     Object.defineProperty(sheet, 'clientHeight', { value: 800 });
     expect(pinnedScroll()).toBe(559);
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  document.head.innerHTML = '';
+});
+
+// A HUD's bar, set absolutely over its column, drew over the top of every part a look pictured inside it.
+describe('what is placed over an element pictured', () => {
+  it('is hidden when its box is on the element, and left when it is elsewhere', () => {
+    document.body.innerHTML = `
+      <div id="hud"><div id="bar" style="position: absolute"></div><div id="badge" style="position: absolute"></div>
+      <section id="panel"></section></div>`;
+    const boxes: Record<string, [number, number, number, number]> = {
+      bar: [0, 0, 1440, 140],
+      badge: [1200, 600, 40, 40],
+      panel: [22, 120, 300, 400]
+    };
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const [left, top, width, height] = boxes[this.id] ?? [0, 0, 0, 0];
+
+      return { left, top, width, height, right: left + width, bottom: top + height } as DOMRect;
+    });
+    const panel = document.getElementById('panel');
+    if (!panel) {
+      throw new Error('no panel');
+    }
+
+    expect(hidePinned(panel, HIDDEN_FOR_SHOT)).toBe(1);
+    expect(document.getElementById('bar')?.style.getPropertyValue('opacity')).toBe('0');
+    expect(document.getElementById('badge')?.style.getPropertyValue('opacity')).toBe('');
+    showPinned(HIDDEN_FOR_SHOT);
+  });
+});
+
+// A HUD locked to its screen was pictured unrolled: its log, which scrolls in its panel, read as one spilling over a
+// 2,092 px page.
+describe('a page locked to its screen', () => {
+  it('is read as the screen it is, and a page whose document scrolls as none', () => {
+    expect(lockedScreen()).toBeUndefined();
+
+    document.head.innerHTML = '<style>html, body { overflow-y: hidden }</style>';
+    expect(lockedScreen()).toBe(window.innerHeight);
+  });
+});
+
+// A run's look set a globe the run before had not drawn yet beside its own, and read "13.4% differs".
+describe('a canvas pictured', () => {
+  /** A page with one canvas whose looks differ by these shares, one after another: what `canvasDrawn` reads of it. */
+  const pageDrawing = (changes: number[], canvas = true) => {
+    const looks: number[] = [];
+    const page = {
+      evaluate: (fn: unknown) =>
+        Promise.resolve(
+          fn === largestCanvas
+            ? canvas
+              ? { x: 0, y: 0, width: 600, height: 600 }
+              : undefined
+            : { changed: changes.at(looks.push(0) - 1) ?? 0, regions: [] }
+        ),
+      screenshot: () => Promise.resolve(new Uint8Array(24)),
+      waitForTimeout: () => Promise.resolve()
+    };
+
+    // The fake answers what a wait for a canvas calls of a page, and nothing else a page has.
+    return { page: page as unknown as BrowserPage, looks };
+  };
+
+  it('is waited for until two looks barely differ — never when the page draws none', async () => {
+    const drawing = pageDrawing([40, 12, 1]);
+    expect(await canvasDrawn(drawing.page)).toBe(true);
+    expect(drawing.looks).toHaveLength(3);
+
+    const none = pageDrawing([40], false);
+    expect(await canvasDrawn(none.page)).toBe(true);
+    expect(none.looks).toHaveLength(0);
   });
 });

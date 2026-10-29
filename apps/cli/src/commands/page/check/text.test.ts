@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { reportText } from './text';
+import { namedOf } from './inspect';
+import { groupedProblems, reportText } from './text';
 
 import type { CheckReport } from './types';
 
@@ -136,5 +137,88 @@ describe('a page read signed in', () => {
       { state: false, elements: [] }
     );
     expect(failed).toContain('read signed in as mika: what a guest sees, --guest');
+  });
+});
+
+// A run's look printed some 150 lines of other tasks' findings, the same for every page and width, before the one line
+// about the task; and said "0.1% differs" of a panel added below its column's fold.
+describe('what a report says beside its verdict', () => {
+  it('counts the findings on other tasks’ elements in a line, and the rest of an expecting check’s page in a few', () => {
+    const text = reportText(
+      {
+        ...report(undefined),
+        apart: ['text-7', 'text-27', 'text-27'].map(elementId => ({
+          elementId,
+          message: `${elementId} shows no words`
+        })),
+        besides: ['a', 'b', 'c', 'd', 'e'].map(id => `${id} is hidden`)
+      },
+      { state: false, elements: [] }
+    );
+
+    expect(text).toContain(
+      "3 findings on elements another task writes, not this one's — text-7, text-27 (--json says each)"
+    );
+    expect(text).toContain('the page has 5 more findings, not what --expect asks — failing nothing here');
+    expect(text).toContain('… and 2 more (--json says each)');
+    expect(text).not.toContain('d is hidden');
+  });
+
+  it('says where a visitor sees each element asked, those in sight together', () => {
+    const text = reportText(
+      {
+        ...report(undefined),
+        sights: {
+          'layers-group': 'in sight',
+          'storm-row': 'in sight',
+          'tornadoes-panel': 'out of sight until left-column is scrolled'
+        }
+      },
+      { state: false, elements: [], sight: ['layers-group', 'storm-row', 'tornadoes-panel'] }
+    );
+
+    expect(text).toContain('· in sight: layers-group, storm-row');
+    expect(text).toContain('· tornadoes-panel: out of sight until left-column is scrolled');
+  });
+});
+
+// `page check --state computed` printed "computed: { … 21 more }", the very keys a run's tester asked for cut.
+describe('a source named in --state', () => {
+  it('is read whole, every key with its value — and a path into one, by itself', () => {
+    const computed: Record<string, unknown> = {
+      ...Object.fromEntries(Array.from({ length: 24 }, (_, index) => [`key${String(index)}`, index])),
+      layerQuakes: true
+    };
+    const text = reportText(
+      { ...report(undefined), sources: { computed } },
+      { state: true, stateOf: ['computed'], elements: [] }
+    );
+
+    expect(text).toContain('layerQuakes: true');
+    expect(text).not.toContain('more }');
+    expect(namedOf({ computed, other: 1 }, ['computed.layerQuakes', 'other', 'missing.key'])).toEqual({
+      'computed.layerQuakes': true,
+      other: 1
+    });
+  });
+});
+
+// A run's check printed twenty-five lines of one finding, one an element, before what else the page had.
+describe('problems many elements share', () => {
+  it('are said once, with the elements, and the rest as they are', () => {
+    const mark = 'is a text with no words that draws a box (a fill, a border) — a mark';
+    expect(
+      groupedProblems([
+        `text "text-7" ${mark}`,
+        `"storm-alert" ${mark}`,
+        `"legend-mark" (×2) ${mark}`,
+        'list "target" is on the page but not visible: it is a list with no rows',
+        'apiContainer_feed failed'
+      ])
+    ).toEqual([
+      `3 elements — text-7, storm-alert, legend-mark (×2) — each ${mark}`,
+      'list "target" is on the page but not visible: it is a list with no rows',
+      'apiContainer_feed failed'
+    ]);
   });
 });

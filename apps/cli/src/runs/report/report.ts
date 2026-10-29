@@ -461,8 +461,11 @@ const goalText = (runId: string, goal: string): string[] => {
   ];
 };
 
+/** The report's heading the lead's summary sits under: written again in place when a finished run is amended. */
+export const SUMMARY_HEADING = '## The lead’s summary';
+
 /** The lead's summary sits under a heading of the report's: its own headings go two levels down. */
-const nestedHeadings = (text: string): string =>
+export const nestedHeadings = (text: string): string =>
   text.replace(/^(#{1,4}) /gm, (_match, hashes: string) => `${hashes}## `);
 
 /**
@@ -529,7 +532,7 @@ export const reportText = (
     '## Using Plitzi — what it was like, every round’s and the lead’s',
     '',
     ...experienceText(report.experience),
-    '## The lead’s summary',
+    SUMMARY_HEADING,
     '',
     summary === undefined
       ? '_None was written: the problems above are what the run kept._'
@@ -615,6 +618,18 @@ const KEEPER_KINDS: ReadonlySet<string> = new Set(['agents-needed']);
  * `plitzi run report --summary <file> --ease --hardest …`: the lead's report of the run — its summary, and what it was
  * like to work with Plitzi, as each agent said its rounds' — kept for the run's report and its feedback.
  */
+/** The lead's summary and what the run was like to it, kept in the run's folder — open, or kept by its report. */
+export const keepSummary = async (
+  ctx: RunContext,
+  loaded: LoadedRun,
+  text: string,
+  experience: Experience
+): Promise<void> => {
+  await writeAtomic(loaded.paths.summary, text);
+  await writeAtomic(loaded.paths.leadExperience, `${JSON.stringify(experience, null, 2)}\n`);
+  await logRun(ctx, loaded.paths, { action: 'summary' });
+};
+
 export const writeSummary = async (
   ctx: RunContext,
   runId: string,
@@ -645,9 +660,7 @@ export const writeSummary = async (
     );
   }
 
-  await writeAtomic(loaded.paths.summary, text);
-  await writeAtomic(loaded.paths.leadExperience, `${JSON.stringify(experience, null, 2)}\n`);
-  await logRun(ctx, loaded.paths, { action: 'summary' });
+  await keepSummary(ctx, loaded, text, experience);
   const input = await inputOf(ctx, path.resolve(ctx.root, file));
   if (input) {
     await updateRecord(ctx, loaded.paths, record => ({

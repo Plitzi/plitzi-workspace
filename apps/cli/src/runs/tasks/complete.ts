@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { checkedStill, checkKey } from './checked';
-import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
+import { at, broughtText, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
 import { keepAlive } from './keepAlive';
 import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
@@ -40,7 +40,8 @@ import { proposalsOf, unansweredTo } from '../talk/agreements';
 import { handOver } from '../talk/handOver';
 import { LEAD, unreadForHolder } from '../talk/messages';
 
-import type { CheckResult } from '../copies/checks';
+import type { Brought } from './common';
+import type { CheckResult, CheckStep } from '../copies/checks';
 import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../core/model';
 import type { TaskView } from '../core/taskStore';
 import type { Experience } from '../report/experience';
@@ -123,7 +124,7 @@ const mergeMoved = async (
 export interface CompletedTask {
   changed: string[];
   /** Approved in the run, or changed in the project by a person, since the copy was made: brought in before the checks. */
-  brought: string[];
+  brought: Brought[];
   /** Shared files nobody else held, taken by turns as it completed: they go into the run with it. */
   claimed: string[];
   /** Files the run changed since the copy was made, put together with the task's change line by line. */
@@ -176,6 +177,21 @@ export interface CompleteOptions {
  * is refused, naming each; what it changed in a shared file it does not hold becomes a request — then the project's
  * checks run in the copy, and it goes to review.
  */
+/**
+ * What came into the copy on this complete that a failing step names — said as a cause only then: a run's refusal named
+ * every file brought, and its lead blamed a person's edit of team.json for an `author` failure of the task's own.
+ */
+export const namedBy = (failing: readonly CheckStep[], brought: readonly Brought[]): Brought[] =>
+  brought.filter(each => failing.some(step => (step.said ?? []).some(line => line.includes(each.file))));
+
+/**
+ * The steps that fail, each with the first thing it said — in the refusal's own words: the log and the lead read the
+ * message alone, and a run's lead guessed `format` on .plitzi/team.json from another task's question an hour later.
+ */
+export const failingSaid = (failing: readonly CheckStep[]): string =>
+  failing.map(step => `${step.name}${step.said?.[0] ? ` (${step.said[0].trim()})` : ''}`).join('; ') ||
+  'no step said which';
+
 export const completeTask = async (
   ctx: RunContext,
   runId: string,
@@ -385,7 +401,7 @@ export const completeTask = async (
         // and failed on a file the run had approved since — no word of which had come in.
         throw new RunRefusal(
           'checks-failed',
-          `The project's checks fail in task "${taskId}"'s copy${brought.length > 0 ? ` — and it took from the run, on this complete, what was approved since: ${brought.join(', ')}; what fails may come from them — the run's version of each: plitzi run show <run> <file>` : ''}`,
+          `The project's checks fail in task "${taskId}"'s copy — ${failingSaid(failing)}${namedBy(failing, brought).length > 0 ? ` — and what fails names what came into the copy on this complete, ${broughtText(namedBy(failing, brought))}: the version of each, plitzi run show <run> <file> (the run's) or the project's own` : ''}`,
           {
             task: taskId,
             ...(brought.length > 0 ? { brought } : {}),
@@ -639,7 +655,7 @@ export const completeTask = async (
  * `plitzi task discard`: a file of the copy put back to the run's version now — and the copy starts from it — with
  * whatever else the run approved since the copy was made and the task did not touch. Answers what it brought.
  */
-export const discardFile = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<string[]> => {
+export const discardFile = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<Brought[]> => {
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);

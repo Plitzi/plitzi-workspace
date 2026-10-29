@@ -142,8 +142,13 @@ export const RUN_COPY_MARK = '.plitzi-run-copy';
 /** `run report --full` written whole when it is past one answer: the report again, never one of the run's records. */
 export const FULL_REPORT_FILE = 'report-full.md';
 
-export const runPaths = (root: string, runId: string): RunPaths => {
-  const dir = path.join(runsDir(root), runId);
+export const runPaths = (root: string, runId: string): RunPaths => runPathsIn(root, path.join(runsDir(root), runId));
+
+/**
+ * A run's paths in a folder of its own: the run's while it is open (`runPaths`), and the records its report keeps once
+ * it is applied — what a finished run is read from to be amended (`loadKeptRun`).
+ */
+export const runPathsIn = (root: string, dir: string): RunPaths => {
   const cache = path.join(dir, 'cache');
 
   return {

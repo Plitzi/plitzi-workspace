@@ -13,7 +13,7 @@ import { pullFunctions, writeFunctionsState } from '../functions/functions';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from '../project/createFrom';
 import { findProject } from '../project/existingProject';
 import { projectFormatter } from '../project/projectFormatter';
-import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from '../project/spaceOrigin';
+import { digest, digestsOf, givenFiles, isSpaceFile, readOrigin, writeOrigin } from '../project/spaceOrigin';
 import { filesWouldWrite, sayDryRun } from '../shared/dryRun';
 import { fail } from '../shared/terminal';
 
@@ -240,6 +240,13 @@ export const pull = async (options: PullOptions): Promise<void> => {
     }
   }
 
+  // The space's documents as the project last had them — pulled or pushed: its files are the project's own of the same
+  // draft, never written over by the export's way of laying it out (a pull after a push called five "changed here").
+  const sameDraft = exported.draft !== null && exported.draft === origin.draft;
+  if (sameDraft) {
+    [...given.keys(), ...Object.keys(origin.files)].filter(isSpaceFile).forEach(file => untouched.add(file));
+  }
+
   const paths = [...new Set([...given.keys(), ...Object.keys(origin.files)])].filter(file => !untouched.has(file));
   const verdicts = new Map<string, Verdict>();
   for (const file of paths) {
@@ -269,6 +276,9 @@ export const pull = async (options: PullOptions): Promise<void> => {
     sayDryRun(`plitzi space pull — ${origin.space.name}, ${versionLabel(asked.version)}`, [
       ...(await filesWouldWrite(root, of('write'))),
       ...of('remove').map(file => `- ${file}`),
+      ...(sameDraft
+        ? [`= the space's pages, styles, actions and connectors — its draft is as this project last had it`]
+        : []),
       ...of('keep').map(file => `= ${file} — changed here, kept`),
       ...conflicts.map(
         file =>

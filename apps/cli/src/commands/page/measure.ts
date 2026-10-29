@@ -14,7 +14,8 @@ import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED, PSE
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
-import { noPageNote, openVisit, VIEW_HEIGHT, visitorBrowser, visitViewOf, zoneNote } from './visit';
+import { noPageNote, openVisit, visitorBrowser, visitViewOf, zoneNote } from './visit';
+import { VIEW_HEIGHT } from '../../browser';
 import { keptMeasure } from '../../browser/keptBrowser';
 import { originHere } from '../../runs/copies/copyServer';
 import { authoredHandles } from '../../runs/plan/expectations';
@@ -214,6 +215,30 @@ export const sameProperties = measuredProperties('--same');
 /** `--only`'s list: what is printed of each element — a fit asks for its box, not thirty properties. */
 export const onlyProperties = measuredProperties('--only');
 
+/** Past this many elements in one measure, with nothing named of them, each is said by its box alone. */
+const BOXES_PAST = 3;
+
+/**
+ * Whether a measure says each element by its box alone: many read at once, and nothing named of them — no property, no
+ * comparison, no expectation, no `--json` (which holds every one).
+ */
+export const readsBoxesOnly = (
+  elements: number,
+  options: {
+    only?: readonly string[];
+    all?: boolean;
+    same?: readonly string[];
+    expect?: readonly unknown[];
+    json?: boolean;
+  }
+): boolean =>
+  elements > BOXES_PAST &&
+  options.only === undefined &&
+  options.all !== true &&
+  options.same === undefined &&
+  options.expect === undefined &&
+  options.json !== true;
+
 /** How long a reading of another site is kept: a reference does not change within a run. */
 const KEPT_MS = 6 * 60 * 60_000;
 
@@ -289,7 +314,7 @@ const readOther = async (
 ): Promise<(Measured | { problem: string })[]> => {
   const other = await pageAnswered(browser, target, {
     width: view.width,
-    height: VIEW_HEIGHT,
+    height: view.height ?? VIEW_HEIGHT,
     reducedMotion: view.reducedMotion ?? true,
     ...(view.scheme ? { scheme: view.scheme } : {}),
     ...(view.timezone ? { timezone: view.timezone } : {}),
@@ -333,7 +358,7 @@ const readAt = async (
   const extra = extraAsked(options);
   const reused = played?.page;
   if (reused) {
-    await reused.setViewportSize({ width: view.width, height: VIEW_HEIGHT });
+    await reused.setViewportSize({ width: view.width, height: view.height ?? VIEW_HEIGHT });
     await reused.waitForTimeout(RESIZE_SETTLE_MS);
   }
 
@@ -400,7 +425,7 @@ const readAt = async (
         ? await keptMeasure(root, {
             url: target,
             width: view.width,
-            height: VIEW_HEIGHT,
+            height: view.height ?? VIEW_HEIGHT,
             ...(view.reducedMotion === false ? { reducedMotion: false } : {}),
             ...(view.scheme ? { scheme: view.scheme } : {}),
             targets: missing.map(index => asked[index].there),
@@ -661,10 +686,14 @@ export const measure = async (route: string, elements: string[], options: Measur
 
     // Only what was asked of each, with --only: its box for a fit, never thirty properties to grep. Why one is not drawn
     // said once: a run's tester measured sixteen copies of a part, eight there, and read the paragraph eight times.
+    // Many elements read at once, nothing named of them: their boxes — a run's measure of ten parts answered 31k
+    // characters, forty lines an element, where a layout's question is where each is and how big.
+    const boxesOnly = readsBoxesOnly(pairs.length, options);
+    const only = boxesOnly ? onlyProperties('box') : options.only;
     const shownReadings = saidOnce(readings).map(reading => ({
       ...reading,
-      here: onlyOf(reading.here, options.only),
-      ...(reading.there ? { there: onlyOf(reading.there, options.only) } : {})
+      here: onlyOf(reading.here, only),
+      ...(reading.there ? { there: onlyOf(reading.there, only) } : {})
     }));
     const missed = expectationsMissed(readings, options.expect ?? []);
     const failed =
@@ -711,8 +740,15 @@ export const measure = async (route: string, elements: string[], options: Measur
             ...(target ? [comparedText(target)] : []),
             ...(kept ? [kept] : []),
             chalk.dim(
-              `Read at ${widths.map(width => `${String(width)}×${String(VIEW_HEIGHT)}`).join(', ')} — x from the viewport's left, y from the page's top`
+              `Read at ${widths.map(width => `${String(width)}×${String(options.height ?? VIEW_HEIGHT)}`).join(', ')} — x from the viewport's left, y from the page's top`
             ),
+            ...(boxesOnly
+              ? [
+                  chalk.dim(
+                    `${String(pairs.length)} elements, each by its box — --only <properties>, or three at most, reads more of each`
+                  )
+                ]
+              : []),
             ...[
               zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now)),
               noPage
@@ -730,7 +766,7 @@ export const measure = async (route: string, elements: string[], options: Measur
                       options.same,
                       now,
                       kept !== undefined,
-                      options.all === true || options.only !== undefined
+                      options.all === true || only !== undefined
                     )
                   )
               )

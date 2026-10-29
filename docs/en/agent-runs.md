@@ -93,6 +93,10 @@ The lead adds its own report and experience (`run report --summary … --ease --
 finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run report --plitzi` writes it before that. It is
 `feedback.md` in the run's folder of reports (`.plitzi/plitzi-reports/runs/<run>/`, below), the file of it read first;
 its data is the report's (`report.json`). The person shares the folder with Plitzi's team; it is never sent by itself.
+A notice is named by its place (`n3`) and withdrawn by it, saying why (`run notice --withdraw n3 "…"`): kept in the log
+as withdrawn, out of the finish, the report and the feedback. After `--apply` the run is amended from its kept records
+(`records/`, its identities as digests prove its lead): `run notice … --run <run>` adds or withdraws, the feedback is
+written again and `report.md` and `report.json` say each amendment and when (`amend.ts`).
 It holds:
 - the findings of Plitzi and of the machine;
 - the experience, combined (below);

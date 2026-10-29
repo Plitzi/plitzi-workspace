@@ -106,6 +106,12 @@ describe('plitzi space push', () => {
     expect('connectors' in sent).toBe(false);
     expect(JSON.stringify(sent.documents.schema)).toContain('Welcome');
     expect((await readOrigin(project))?.draft).toBe('draft-2');
+
+    // The project's files are the space now, as the project has them: a dry run after the push said "→ space" again.
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+    await push([], { dryRun: true });
+    expect(said.join('\n')).not.toContain('→ space');
   });
 
   /**
@@ -328,7 +334,8 @@ describe('plitzi space push', () => {
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('plitzi space pull --environment main');
   });
 
-  it('pushes to the space the project came from, and to no other', async () => {
+  // A dry run of a project made with create --from opened the browser to choose a space: the project says its own.
+  it('pushes to the space the project came from, and to no other — never the one the CLI works in', async () => {
     const origin = await readOrigin(project);
     if (!origin) {
       throw new Error('create --from records where the project came from');
@@ -339,7 +346,7 @@ describe('plitzi space push', () => {
     await push(['space'], {});
 
     expect(process.exitCode).toBe(1);
-    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('This project is Another’s');
+    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('No space you can reach is Another');
     expect(platform.shop.imports).toHaveLength(0);
   });
 

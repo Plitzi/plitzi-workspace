@@ -154,6 +154,26 @@ describe('plitzi space pull', () => {
     expect(await read('src/space/pages/about.ts')).toBeDefined();
   });
 
+  // A pull after a push called five files "changed here, kept": the project laid the space out its own way, the export
+  // another — the same draft either way.
+  it('leaves the space’s files be while its draft is as the project last had it, however the project lays them out', async () => {
+    await write(
+      'src/space/pages/home.ts',
+      "import { hero } from './home/hero.ts';\nexport const homePage = { name: 'Home', body: [hero] };\n"
+    );
+    await write('src/space/pages/home/hero.ts', "export const hero = { type: 'container' };\n");
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+
+    await pull({ dryRun: true });
+
+    expect(said.join('\n')).toContain(
+      "= the space's pages, styles, actions and connectors — its draft is as this project last had it"
+    );
+    expect(said.join('\n')).not.toContain('changed here, kept');
+    expect(said.join('\n')).not.toContain('src/space/pages/about.ts');
+  });
+
   it('writes nothing when a file changed here and on the space — and takes the space’s with --force', async () => {
     platform.shop.pages['pages/home.ts'] = "export const homePage = { name: 'Theirs' };\n";
     platform.shop.pages['pages/about.ts'] = "export const aboutPage = { name: 'About, again' };\n";

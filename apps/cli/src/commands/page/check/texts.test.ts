@@ -42,8 +42,8 @@ describe('what each element drawn shows', () => {
     laidOut({ 'Rooftop Sessions': 175, Night: 40 });
 
     expect(textsInPage({ selector: '[data-plitzi-el="plate-room"]', within: false }).drawn).toEqual([
-      { id: 'plate-room', text: 'Rooftop Sessions', cut: true },
-      { id: 'plate-room', text: 'Night', cut: false }
+      { id: 'plate-room', text: 'Rooftop Sessions', cut: true, index: 0 },
+      { id: 'plate-room', text: 'Night', cut: false, index: 1 }
     ]);
     expect(textsInPage({ selector: '[data-plitzi-el="plate"]', within: false }).drawn.map(each => each.cut)).toEqual([
       false,
@@ -62,7 +62,7 @@ describe('what each element drawn shows', () => {
     Object.defineProperty(document.querySelector('h2'), 'scrollWidth', { value: 800 });
 
     expect(textsInPage({ selector: '[data-plitzi-el="room-coming-title"]', within: false }).drawn).toEqual([
-      { id: 'room-coming-title', text: 'Later this week', cut: false }
+      { id: 'room-coming-title', text: 'Later this week', cut: false, index: 0 }
     ]);
   });
 

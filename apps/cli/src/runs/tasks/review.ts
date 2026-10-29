@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
 import { closeApproved } from './closeApproved';
-import { at, findTask, refreshCopy } from './common';
+import { at, broughtText, findTask, refreshCopy } from './common';
 import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
 import { approveResearch, dropProposal } from './research';
 import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from './reviews';
@@ -376,7 +376,7 @@ const decide = async (
                 {
                   at: at(ctx),
                   by: 'plitzi',
-                  text: `Its copy brought what the run approved meanwhile: ${brought.join(', ')}`
+                  text: `Its copy brought in ${broughtText(brought)}`
                 }
               ]
             : [])

@@ -1,6 +1,6 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
-import { openProjectPage, projectSettling } from '../../../browser';
+import { openProjectPage, projectSettling, VIEW_HEIGHT } from '../../../browser';
 import { standInPictures } from '../visit';
 
 import type { CheckIssue } from './types';
@@ -262,10 +262,10 @@ export const themeIssues = async (
   origin: string,
   route: string,
   width: number,
-  { standIns = false }: { standIns?: boolean } = {}
+  { standIns = false, height = VIEW_HEIGHT }: { standIns?: boolean; height?: number } = {}
 ): Promise<CheckIssue[]> => {
   const read = async (scheme: 'light' | 'dark'): Promise<TextGround[]> => {
-    const page = await openProjectPage(browser, origin, { width, height: 900, reducedMotion: true, scheme });
+    const page = await openProjectPage(browser, origin, { width, height, reducedMotion: true, scheme });
     if (standIns) {
       await standInPictures(page, origin);
     }

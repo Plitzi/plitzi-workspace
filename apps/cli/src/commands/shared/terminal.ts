@@ -241,3 +241,10 @@ export const cdPrefix = (target: string): string => {
 
   return target === process.cwd() ? '' : `cd ${relative.length < target.length ? relative : target} && `;
 };
+
+/**
+ * A word of a command the CLI prints to be pasted: quoted when a shell would read it as something else — a `?` or `*`
+ * globs in zsh (a run's designer pasted `/?sample=active` and read "no matches found"), a `&` ends the line.
+ */
+export const shellWord = (word: string): string =>
+  /^[\w@%+=:,./<>…-]+$/.test(word) ? word : `'${word.replaceAll("'", "'\\''")}'`;

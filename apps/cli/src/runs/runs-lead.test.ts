@@ -579,10 +579,10 @@ describe('the lead’s plan as the run goes', () => {
     // Who a task is for changes until it is taken.
     const recast = benchPlan();
     recast.tasks[0].role = 'designer';
+    [recast.tasks[0].acceptance, recast.notes] = [amended.tasks[0].acceptance, amended.notes];
     const taken = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(recast)));
-    expect(taken.message).toContain('"t-home" is in-progress: its role are what an agent took it as');
+    expect(taken.message).toContain('"t-home" is in-progress: its role — what an agent took it as — left as it was');
     recast.tasks[0].role = amended.tasks[0].role;
-    recast.tasks[0].acceptance = amended.tasks[0].acceptance;
     recast.tasks[1].role = 'designer';
     recast.tasks[1].quality = 'high';
     expect(await amendRun(lead(), 'es-launch', await bench.writePlan(recast))).toMatchObject({

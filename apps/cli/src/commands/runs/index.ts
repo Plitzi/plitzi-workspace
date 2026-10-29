@@ -7,7 +7,7 @@
 export type { RunCommandOptions } from './shell';
 export { runAllowFinish, runAmend, runOpen, runPlan, runRehearse, runSettle } from './run/plan';
 export type { PlanOptions } from './run/plan';
-export { runTeam, runTeamSet, runTeamUnset } from './run/team';
+export { runTeam, runTeamOptions, runTeamSet, runTeamUnset } from './run/team';
 export { runMonitor } from './monitor/monitor';
 export { runUpgrade } from './run/upgrade';
 export type { UpgradeRunOptions } from './run/upgrade';

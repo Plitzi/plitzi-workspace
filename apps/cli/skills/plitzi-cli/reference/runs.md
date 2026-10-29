@@ -71,7 +71,8 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
 - **Say it with `plitzi task tell`, one kind at a time.** **Stuck, or unsure?** `plitzi task tell "Spanish or Catalan?"
   --ask` (`--follow` waits for the answer). **Something the lead should know** — a finding, a choice you made, a risk —
   with no answer needed: `plitzi task tell "…"` (holding no task — a reviewer — `--about <task> --token <yours>`). **Wrong, and no task's** — outside yours, there
-  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage. What the lead
+  before the run: `plitzi run notice "…" --on <page|element|file>`, kept for the next stage — one filed by mistake taken
+  back by its name (`--withdraw n3 "why"`; once the run is applied, with `--run <run>`). What the lead
   says to you arrives with your next command — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
   long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing

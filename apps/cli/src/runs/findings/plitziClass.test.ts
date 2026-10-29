@@ -84,6 +84,7 @@ describe('what is said of Plitzi, placed by whoever said it', () => {
     const said = saidOfPlitzi(
       [
         {
+          id: 'n1',
           at: '2026-10-28T14:40:00.000Z',
           by: 'test-1',
           text: 'run look answered 13k',

@@ -5,7 +5,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { measure, onlyProperties, pairOf, readingKey, saidOnce, sameProperties } from './measure';
+import { measure, onlyProperties, pairOf, readingKey, readsBoxesOnly, saidOnce, sameProperties } from './measure';
 import { measureOn, pseudoBoxes } from './measureOn';
 import { putIn, copiesOf, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
@@ -691,5 +691,16 @@ describe('why an element is not drawn', () => {
       'No element a on http://127.0.0.1:8080/ — not drawn here: a page for signed-in visitors',
       'No element b on http://127.0.0.1:8080/ — not drawn here either (why, above)'
     ]);
+  });
+});
+
+// A run's measure of ten parts answered 31k characters, forty lines an element, where its question was their boxes.
+describe('many elements measured at once', () => {
+  it('are said by their boxes, unless something of them is named', () => {
+    expect(readsBoxesOnly(10, {})).toBe(true);
+    expect(readsBoxesOnly(3, {})).toBe(false);
+    expect(readsBoxesOnly(10, { only: ['color'] })).toBe(false);
+    expect(readsBoxesOnly(10, { all: true })).toBe(false);
+    expect(readsBoxesOnly(10, { json: true })).toBe(false);
   });
 });

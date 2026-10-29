@@ -71,14 +71,6 @@ export const estimate = (
   const criticalPathMinutes = Math.max(0, ...roots.map(task => chains.get(task.id) ?? 0));
   const agents = Math.max(1, Math.min(agentsAsked, widthOf(tasks, takers)));
   const wallMinutes = Math.ceil(Math.max(criticalPathMinutes, totalMinutes / agents));
-  const reasons = [
-    agentsAsked > CONFIRM_ABOVE.agents
-      ? `up to ${String(agentsAsked)} agents at once (more than ${String(CONFIRM_ABOVE.agents)})`
-      : '',
-    wallMinutes > CONFIRM_ABOVE.wallMinutes
-      ? `about ${String(wallMinutes)} minutes (more than ${String(CONFIRM_ABOVE.wallMinutes)})`
-      : ''
-  ].filter(Boolean);
 
   return {
     tasks: tasks.length,
@@ -87,9 +79,41 @@ export const estimate = (
     criticalPathMinutes,
     wallMinutes,
     reviewRounds: tasks.length,
-    needsConfirmation: reasons.length > 0,
-    ...(reasons.length > 0 ? { why: reasons.join(', ') } : {})
+    ...confirmation(agentsAsked, wallMinutes)
   };
+};
+
+/** Whether a person confirms a run of this size before it opens, and why: its agents at once, its minutes. */
+const confirmation = (
+  agentsAsked: number,
+  wallMinutes: number,
+  paced?: number
+): Pick<PlanEstimate, 'needsConfirmation' | 'why'> => {
+  const minutes = paced ?? wallMinutes;
+  const reasons = [
+    agentsAsked > CONFIRM_ABOVE.agents
+      ? `up to ${String(agentsAsked)} agents at once (more than ${String(CONFIRM_ABOVE.agents)})`
+      : '',
+    minutes > CONFIRM_ABOVE.wallMinutes
+      ? `about ${String(minutes)} minutes${paced === undefined ? '' : ` at this project's pace (${String(wallMinutes)} estimated)`} (more than ${String(CONFIRM_ABOVE.wallMinutes)})`
+      : ''
+  ].filter(Boolean);
+
+  return { needsConfirmation: reasons.length > 0, ...(reasons.length > 0 ? { why: reasons.join(', ') } : {}) };
+};
+
+/**
+ * An estimate held to this project's pace, when its past runs say one: a person confirms the minutes the run will
+ * take, not the raw sum — a run the CLI estimated at 40-85 minutes at its pace asked its person three times as "more
+ * than 120".
+ */
+export const withPace = (base: PlanEstimate, agentsAsked: number, paced: Pick<PlanEstimate, 'paced'>): PlanEstimate => {
+  const rest: PlanEstimate = { ...base };
+  delete rest.why;
+
+  return paced.paced === undefined
+    ? base
+    : { ...rest, ...paced, ...confirmation(agentsAsked, base.wallMinutes, paced.paced.wallMinutes) };
 };
 
 /** Each task's estimate scaled to how this project's runs went: a task of no less than a minute. */

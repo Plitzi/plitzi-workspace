@@ -78,7 +78,8 @@ describe('what went to review, as task next hands it', () => {
     expect(handed).not.toContain('line199');
     expect(handed).toContain('Not shown, 1 file: src/space/pages/home/index.ts (200 lines)');
     expect(handed).toContain('plitzi task show t-home <file> --diff, or plitzi task show t-home --full');
-    expect(handed).toContain('Home reads in Spanish');
+    // Its acceptance is the review's own lines, each with its result: a run's hand-off said every line three times.
+    expect(handed).not.toContain('Home reads in Spanish');
   });
 });
 

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 
-import { at, cleanPath, findTask, holderOf, refreshCopy } from './common';
+import { at, broughtText, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { createExclusive, fingerprint, writeJson } from '../core/files';
 import { entryOf } from '../core/model';
 import { lockFile, runPaths, taskPaths, under } from '../core/paths';
@@ -315,7 +315,7 @@ export const grantWaiters = async (ctx: RunContext, loaded: LoadedRun, files: re
     const untouched = start !== undefined && inCopy === (start.files[file] ?? null);
     // The copy is brought up to the run: the file, if the task left it alone, and what was approved since it was made.
     const brought = await refreshCopy(ctx, loaded, next);
-    const also = brought.filter(each => each !== file);
+    const also = brought.filter(each => each.file !== file);
 
     await updateState(
       next.paths,
@@ -332,7 +332,7 @@ export const grantWaiters = async (ctx: RunContext, loaded: LoadedRun, files: re
               untouched
                 ? `${file} is yours now, with the version approved in the run`
                 : `${file} is yours now; your copy had changed it, so the approved version was not put in: compare them (plitzi task discard ${file} takes the run's)`
-            }${also.length > 0 ? `. Brought into your copy, approved since it was made: ${also.join(', ')}` : ''}`
+            }${also.length > 0 ? `. Brought into your copy too, ${broughtText(also)}` : ''}`
           }
         ]
       }),

@@ -1,7 +1,7 @@
-import { loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
+import { comparePictures, loadImages, openPage, unrollPage } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
-import { openOtherPage, paintedScheme, projectSettling } from '../../../browser';
+import { dataUrl, openOtherPage, paintedScheme, projectSettling } from '../../../browser';
 import { saySignedIn, sentElsewhere, signInWhereSent } from '../check';
 import { prepareVisit } from '../visit';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
@@ -189,6 +189,20 @@ const framing = (view: { viewport?: boolean; scrollTo?: string }, clip?: string)
 };
 
 /**
+ * Runs in the page: the screen's height when the page is drawn as a screen of its own — its document locked
+ * (`documentScroll: 'locked'`: html and body with no scroll) — its panes scrolling inside it; undefined when the
+ * document scrolls. Self-contained — it is serialised.
+ */
+export const lockedScreen = (): number | undefined =>
+  [document.documentElement, document.body].some(each => {
+    const { overflowY } = getComputedStyle(each);
+
+    return overflowY === 'hidden' || overflowY === 'clip';
+  })
+    ? window.innerHeight
+    : undefined;
+
+/**
  * Runs in the page: how much more a sheet pinned to the screen holds than it shows — a modal page (a run's room
  * stats) scrolls inside itself, and a whole-page picture showed its first screen alone. The widest such scroller's,
  * 0 when there is none. Self-contained — it is serialised.
@@ -227,22 +241,91 @@ export const pinnedScroll = (): number => {
   return more;
 };
 
+/** How long a picture waits for a canvas to be drawn — a map's tiles, a chart's first frame — at most. */
+const CANVAS_MS = 4_000;
+
+/** How often a canvas is looked at while it is drawn. */
+const CANVAS_EVERY_MS = 250;
+
+/** Below this share of a canvas changing between two looks it is drawn: what moves still is its own motion. */
+const CANVAS_STILL_PERCENT = 2;
+
+/**
+ * Runs in the page: the largest canvas in view worth waiting for — a map, a chart — by its place in the document, or
+ * none. Self-contained — it is serialised.
+ */
+export const largestCanvas = (): { x: number; y: number; width: number; height: number } | undefined => {
+  let found: { x: number; y: number; width: number; height: number } | undefined;
+  for (const canvas of Array.from(document.querySelectorAll('canvas'))) {
+    const box = canvas.getBoundingClientRect();
+    const left = Math.max(box.left, 0);
+    const top = Math.max(box.top, 0);
+    const width = Math.min(box.right, window.innerWidth) - left;
+    const height = Math.min(box.bottom, window.innerHeight) - top;
+    if (width >= 120 && height >= 120 && (!found || width * height > found.width * found.height)) {
+      found = { x: left + window.scrollX, y: top + window.scrollY, width, height };
+    }
+  }
+
+  return found;
+};
+
+/**
+ * Whether the page's canvas is drawn before it is pictured: looked at until two looks barely differ — or not within
+ * `CANVAS_MS`, which is said. A run's look compared a globe the run before had not drawn yet (a pale disc, "13.4%
+ * differs"), and pictured a page before its globe and panel were there.
+ */
+export const canvasDrawn = async (page: BrowserPage): Promise<boolean> => {
+  const clip = await page.evaluate(largestCanvas, undefined);
+  if (!clip) {
+    return true;
+  }
+
+  let before = await page.screenshot({ fullPage: true, clip });
+  for (const until = Date.now() + CANVAS_MS; Date.now() < until;) {
+    await page.waitForTimeout(CANVAS_EVERY_MS);
+    const now = await page.screenshot({ fullPage: true, clip });
+    const { changed } = await comparePictures(page, dataUrl(before), dataUrl(now));
+    if (changed < CANVAS_STILL_PERCENT) {
+      return true;
+    }
+
+    before = now;
+  }
+
+  return false;
+};
+
 /** The attribute a pinned element hidden for an element's picture carries: its own opacity, put back after. */
 export const HIDDEN_FOR_SHOT = 'data-plitzi-shot-hidden';
 
 /**
- * Runs in the page: every element pinned to the screen (fixed or sticky) that is neither the target, inside it nor
- * around it, hidden — what is drawn over a part scrolled to the top of the screen, a site's sticky header over the
+ * Runs in the page: every element pinned to the screen (fixed or sticky), or placed over the target from outside it
+ * (absolute, its box on the target's), that is neither the target, inside it nor around it, hidden — what is drawn over a part scrolled to the top of the screen, a site's sticky header over the
  * first rows of a run's queue in every clipped picture. Hidden by its opacity, which nothing in it can undo — a
  * header's children kept `visibility: visible` of their own, and were drawn over every part a look pictured at 390 —
  * and its box kept, so nothing moves. Self-contained — it is serialised.
  */
 export const hidePinned = (target: Element, attribute: string): number => {
   let hidden = 0;
+  const own = target.getBoundingClientRect();
+  // Placed over it from outside — a HUD's bar set absolutely over its column: drawn over a part pictured beneath it.
+  const over = (element: Element): boolean => {
+    const box = element.getBoundingClientRect();
+
+    return (
+      box.width > 0 &&
+      box.height > 0 &&
+      box.left < own.right &&
+      box.right > own.left &&
+      box.top < own.bottom &&
+      box.bottom > own.top
+    );
+  };
   for (const element of document.querySelectorAll<HTMLElement>('body *')) {
     const { position } = getComputedStyle(element);
     if (
-      (position === 'fixed' || position === 'sticky') &&
+      (position === 'fixed' || position === 'sticky' || (position === 'absolute' && over(element))) &&
       !element.contains(target) &&
       !target.contains(element) &&
       !element.hasAttribute(attribute)
@@ -469,10 +552,15 @@ export const pictureOf = async (
     }
   }
 
+  // A page drawn as a screen is pictured as one: unrolled, its panes' scroll read as the page spilling over.
+  const screen = await page.evaluate(lockedScreen, undefined);
   const how: Framing =
     later !== undefined
       ? { kind: 'element-later', target: later }
-      : framing(view, view.clip === undefined ? undefined : shown[view.clip]);
+      : framing(
+          { ...view, ...(screen === undefined ? {} : { viewport: true }) },
+          view.clip === undefined ? undefined : shown[view.clip]
+        );
 
   // Counted before the walk below, which shows every one of them.
   const settled = view.still
@@ -510,14 +598,18 @@ export const pictureOf = async (
     await page.evaluate(endAnimations, undefined);
   }
 
+  const drawn = await canvasDrawn(page);
+
   return {
     page,
     how,
     png: await capture(page, how),
+    ...(drawn ? {} : { canvasMoving: true as const }),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,
     unloaded: pictures.missing + pictures.embedsMissing,
     undrawn: pictures.embedsUndrawn,
-    ...(sentTo ? { sentTo } : {})
+    ...(sentTo ? { sentTo } : {}),
+    ...(screen !== undefined && how.kind === 'viewport' && !view.viewport && !view.scrollTo ? { screen } : {})
   };
 };

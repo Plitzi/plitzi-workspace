@@ -242,6 +242,19 @@ const findingsText = (title: string, findings: readonly Finding[], approved: Tas
       ]
     : [];
 
+/** What the work tasks a task waits on were told before they were built: theirs, each named, read with `task show`. */
+const toldText = (related: TaskContext['related']): string[] => {
+  const told = related.filter(each => each.research !== true && (each.findings ?? []).length > 0);
+  const size = (findings: readonly Finding[]): number =>
+    findings.reduce((sum, finding) => sum + finding.text.length, 0);
+
+  return told.length === 0
+    ? []
+    : [
+        `What the tasks it waits on were told before they were built — theirs, a command away (plitzi task show <task>): ${told.map(each => `${each.task} (${String(size(each.findings ?? []))} characters)`).join(', ')}`
+      ];
+};
+
 /**
  * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
  * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
@@ -305,9 +318,14 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
         ]
       : []),
     ...findingsText(`What ${task.id}'s spikes found`, state.findings ?? [], context.approved),
+    // What a research card it waits on found is what it builds on, whole. What a work task it waits on was told before
+    // it was built is that task's, said in a line: a run's feed task read nine tasks' notes, 15k of its 22k brief.
     ...context.related.flatMap(each =>
-      findingsText(`What ${each.task} found — read it before you build`, each.findings ?? [], context.approved)
+      each.research === true
+        ? findingsText(`What ${each.task} found — read it before you build`, each.findings ?? [], context.approved)
+        : []
     ),
+    ...toldText(context.related),
     ...(task.acceptance.length > 0
       ? [
           'Acceptance — a line with a check is run at complete; run it yourself in your copy first',

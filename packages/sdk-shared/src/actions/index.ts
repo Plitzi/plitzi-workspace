@@ -9,6 +9,7 @@ export {
   exportsByDefault,
   isFunctionsDefinitionFile,
   isFunctionsSourcePath,
+  isFunctionsTestPath,
   PLUGIN_FUNCTIONS_SOURCE,
   PLUGIN_ROUTES_SEGMENT,
   pluginRoutePath,

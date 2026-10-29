@@ -19,6 +19,7 @@ import {
   stopAfterPiece,
   unblockTask
 } from '../../../runs/tasks';
+import { broughtText } from '../../../runs/tasks/common';
 import { act, holder, inHand, runOf } from '../shell';
 import { hhmm, list, messageLines, pieceEnd, reusedServerText, secondRunText, slowLineText } from '../text';
 
@@ -95,11 +96,7 @@ export const taskCheck = (
     },
     checked =>
       [
-        ...(checked.brought
-          ? [
-              `Brought into your copy first — approved by the run, or changed in the project, since it was made: ${checked.brought.join(', ')}`
-            ]
-          : []),
+        ...(checked.brought ? [`Brought into your copy first, ${broughtText(checked.brought)}`] : []),
         ...(checked.fixed
           ? [
               checked.fixed.ran.length === 0
@@ -264,9 +261,7 @@ export const taskComplete = (
           ? [`  Put together with the run's newer version, line by line: ${completed.merged.join(', ')}`]
           : []),
         ...(completed.brought.length > 0
-          ? [
-              `  Brought into your copy before the checks, approved in the run since it was made: ${completed.brought.join(', ')}`
-            ]
+          ? [`  Brought into your copy before the checks, ${broughtText(completed.brought)}`]
           : []),
         ...(completed.requests.length > 0
           ? [`  Requests on shared files: ${completed.requests.map(each => each.file).join(', ')}`]

@@ -96,6 +96,10 @@ describe('what a failed step says', () => {
     ]);
     expect(said.at(-1)).toBe('✓ / at 390 px — nothing wrong');
     expect(tail('one\n\ntwo')).toEqual(['one', 'two']);
+    // `task run "npx plitzi space lint --json"` printed one line of 70k characters whole: a few lines are not few words.
+    const [json] = tail(`{"findings":[${'{"code":"element-empty"},'.repeat(3000)}]}`);
+    expect(json.length).toBeLessThan(500);
+    expect(json).toContain('characters on this line — the log holds it whole');
     // Tsc's error named its overloads, and its cause — the deepest line under it — was cut.
     const typed = tail(
       [

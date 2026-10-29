@@ -81,8 +81,11 @@ export const readRunReports = async (root: string): Promise<KeptReport[]> => {
   return kept.flat().sort((a, b) => a.at.localeCompare(b.at));
 };
 
-/** What of a run's folder is no record of it: the project's files as it kept them, its pictures, who held which token. */
-const NOT_RECORDS = new Set(['blobs', 'shots', 'reference', 'scratch', 'identities', 'locks']);
+/**
+ * What of a run's folder is no record of it: the project's files as it kept them, its pictures. Its identities are kept —
+ * each a digest of a token, never the token: what proves its lead amending it after the finish (`amend.ts`).
+ */
+const NOT_RECORDS = new Set(['blobs', 'shots', 'reference', 'scratch', 'locks']);
 
 /** What of a folder's files is no record: a lock held, a token's fingerprints, and the report written whole again. */
 const isRecordFile = (name: string): boolean =>

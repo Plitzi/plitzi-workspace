@@ -178,7 +178,10 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
     })),
     ...findings.blank.map(({ id, times, what }): PageIssue => ({
       code: 'element-empty',
-      message: `${named(id)}${times > 1 ? ` (×${String(times)})` : ''} shows ${what === 'picture' ? 'no picture' : 'no words'} — what it reads has nothing: a binding to a field the data lacks, or a row with none. Bind it to what the data has, or hide it while it is empty (\`visible\`)`,
+      message:
+        what === 'mark'
+          ? `${named(id)}${times > 1 ? ` (×${String(times)})` : ''} is a text with no words that draws a box (a fill, a border) — a mark: say so with \`decorative: true\` (a screen reader skips it, and no check reads it as words missing), or make it a \`container\``
+          : `${named(id)}${times > 1 ? ` (×${String(times)})` : ''} shows ${what === 'picture' ? 'no picture' : 'no words'} — what it reads has nothing: a binding to a field the data lacks, or a row with none. Bind it to what the data has, or hide it while it is empty (\`visible\`)`,
       elementId: id
     })),
     ...unboundImages(findings.brokenImages),

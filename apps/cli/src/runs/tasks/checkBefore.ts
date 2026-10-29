@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { findTask } from './common';
-import { neverRan } from './neverRan';
+import { neverRan, portBusy } from './neverRan';
 import { checkAcceptance, ranNoTest } from '../copies/acceptance';
 import { approvedCopy, SERVED_STATUSES } from '../copies/preview';
 import { exists } from '../core/files';
@@ -187,7 +187,11 @@ export const noTestBefore = (line: LineBeforeAfter): boolean =>
  * lead read "it proves the change" of a before whose server never answered).
  */
 export const provedBy = (line: LineBeforeAfter): 'proves' | 'proves-nothing' | 'fails' | 'unanswered' | 'broken' =>
-  line.after.unanswered === true || line.before.unanswered === true || noTestBefore(line)
+  line.after.unanswered === true ||
+  line.before.unanswered === true ||
+  noTestBefore(line) ||
+  portBusy(line.before.output) ||
+  portBusy(line.after.output)
     ? 'unanswered'
     : !line.after.ok
       ? 'fails'

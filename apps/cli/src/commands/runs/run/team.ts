@@ -7,6 +7,7 @@ import {
   readTeam,
   SESSION_MODES,
   setTeamAgent,
+  setTeamOptions,
   TEAM_FILE,
   teamAgentText,
   teamSize,
@@ -16,7 +17,7 @@ import {
 import { RunRefusal } from '../../../runs/core/refusal';
 import { act, projectCaller } from '../shell';
 
-import type { Effort, SessionMode, TeamChange } from '../../../runs/agents/team';
+import type { Effort, SessionMode, TeamChange, TeamOptions, TeamOptionsChange } from '../../../runs/agents/team';
 import type { RunCommandOptions } from '../shell';
 
 /**
@@ -128,3 +129,58 @@ export const runTeamUnset = (name: string, options: RunCommandOptions): Promise<
     async ctx => unsetTeamAgent(ctx.root, name),
     changed => `${changed.name}: ${memberText(changed.before)} → out of the team (${changed.file})`
   );
+
+/** What `run team options` is given: each option, `none` taking it out of the file. */
+export interface TeamOptionsFlags extends RunCommandOptions {
+  launch?: string;
+  designReview?: string;
+  startGrace?: string;
+  freshContextAt?: string;
+}
+
+/** A flag's number, or `null` for `none`: refused, saying the flag, when it is neither. */
+const numberOrNone = (flag: string, text: string | undefined): number | null | undefined => {
+  if (text === undefined) {
+    return undefined;
+  }
+
+  if (text === 'none') {
+    return null;
+  }
+
+  const value = Number(text);
+  if (!Number.isInteger(value)) {
+    throw new RunRefusal('invalid', `${flag} ${text}: a whole number, or none to take it out`);
+  }
+
+  return value;
+};
+
+/** `plitzi run team options`: the team's options, said — or changed, before and after, as the CLI writes the file. */
+export const runTeamOptions = (options: TeamOptionsFlags): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const { launch, designReview, startGrace, freshContextAt } = options;
+      const change: TeamOptionsChange = {
+        ...(launch === undefined ? {} : { launch: launch === 'none' ? null : launch }),
+        ...(designReview === undefined ? {} : { designReview: designReview === 'none' ? null : designReview }),
+        ...(startGrace === undefined ? {} : { startGraceMinutes: numberOrNone('--start-grace', startGrace) }),
+        ...(freshContextAt === undefined ? {} : { freshContextAt: numberOrNone('--fresh-context-at', freshContextAt) })
+      };
+
+      return setTeamOptions(ctx.root, change);
+    },
+    ({ before, after, file, unchanged }) =>
+      unchanged
+        ? `The team's options are ${optionsText(after)} already: nothing to change (${file})`
+        : `The team's options: ${optionsText(before)} → ${optionsText(after)} (${file})`
+  );
+
+/** The team's options in a line, each as the file names it — none said: the CLI's defaults. */
+const optionsText = (options: TeamOptions): string =>
+  Object.keys(options).length === 0
+    ? 'the defaults'
+    : Object.entries(options)
+        .map(([key, value]) => `${key} ${String(value)}`)
+        .join(', ');

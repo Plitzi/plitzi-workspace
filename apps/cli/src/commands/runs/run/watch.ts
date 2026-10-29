@@ -8,17 +8,26 @@ import { ensureKeeper, keepAgents } from '../../../runs/agents/keeper';
 import { waitForLead } from '../../../runs/agents/leadWatch';
 import { showVersion } from '../../../runs/copies/merge';
 import { copyRunWork, startPreview, startTaskPreview } from '../../../runs/copies/preview';
+import { readOptional } from '../../../runs/core/files';
 import { runPaths } from '../../../runs/core/paths';
 import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
+import { amendKeptRun } from '../../../runs/report/amend';
 import { benchText, readBench } from '../../../runs/report/bench';
 import { experienceFrom } from '../../../runs/report/experience';
-import { buildReport, readSummary, reportBrief, reportText, writeSummary } from '../../../runs/report/report';
+import {
+  buildReport,
+  keepSummary,
+  readSummary,
+  reportBrief,
+  reportText,
+  writeSummary
+} from '../../../runs/report/report';
 import { activeRuns, loadRun, pruneRuns } from '../../../runs/run';
 import { LEAD } from '../../../runs/talk/messages';
 import { runsState, viewRun } from '../../../runs/view/view';
 import { boardLines, runText } from '../../../runs/view/viewText';
 import { projectRun } from '../../../scaffold/packageManager';
-import { act, contextFor, runOf } from '../shell';
+import { act, contextFor, finishedRun, runOf } from '../shell';
 
 import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { RunCommandOptions } from '../shell';
@@ -208,6 +217,27 @@ export const runReport = (
     async ctx => {
       // The lead's report is its summary and what it was like, said together — asked before anything is written.
       const experience = options.summary === undefined ? undefined : experienceFrom(options, 'run report --summary');
+      // A run applied: its summary written again into the report it kept — what its lead adds reading it after.
+      const finished = await finishedRun(ctx, { ...options, ...(runId === undefined ? {} : { run: runId }) });
+      if (finished !== undefined && options.summary !== undefined && experience) {
+        const file = path.resolve(ctx.root, options.summary);
+        const text = (await readOptional(file))?.toString('utf-8');
+        if (text === undefined || text.trim() === '') {
+          throw new RunRefusal(
+            'invalid',
+            `--summary names a file, and ${options.summary} is ${text === undefined ? 'no file' : 'empty'}`
+          );
+        }
+
+        const { dir } = await amendKeptRun(ctx, finished, async kept => {
+          await keepSummary(ctx, kept, text, experience);
+
+          return 'wrote the summary again';
+        });
+
+        return { amended: dir };
+      }
+
       const id = await runOf(ctx, options, runId, {
         anyone: options.summary === undefined
       });
@@ -231,8 +261,10 @@ export const runReport = (
 
       return { report, ...(summary === undefined ? {} : { summary }), answer: answer.text };
     },
-    ({ report, summary, answer }) =>
-      `${answer ?? reportBrief(report)}${summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
+    said =>
+      'amended' in said
+        ? `The run's summary written again into its report — feedback.md, report.md and report.json, each saying so (${said.amended})`
+        : `${said.answer ?? reportBrief(said.report)}${said.summary === undefined ? '\nThe lead closes the run with its summary: plitzi run report --summary <file>' : ''}`
   );
 
 export const runPreview = async (

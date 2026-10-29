@@ -9,6 +9,7 @@ export type { LoadedRun, PersonGate, RunContext } from './context';
 export {
   activeRuns,
   assertStatus,
+  loadKeptRun,
   loadRun,
   logRun,
   pinDifference,

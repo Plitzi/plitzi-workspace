@@ -522,6 +522,7 @@ export const runAmend = (
         ...(amended.removed
           ? [`  out of the run, as nobody had taken them: ${amended.removed.join(', ')} — say it to the person`]
           : []),
-        ...(amended.inventory ? ['  the inventory: what the run covers and what waits, checked again'] : [])
+        ...(amended.inventory ? ['  the inventory: what the run covers and what waits, checked again'] : []),
+        ...(amended.leftOut ?? []).map(each => chalk.yellow(`  ⚠ not amended: ${each}`))
       ].join('\n')
   );

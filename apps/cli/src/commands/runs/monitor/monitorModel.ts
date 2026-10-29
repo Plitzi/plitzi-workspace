@@ -33,7 +33,9 @@ export type Dialog =
   | { kind: 'help' }
   /** Every notice, whole: what the box shows one of. */
   | { kind: 'needs' }
-  | { kind: 'palette'; query: string; at: number };
+  | { kind: 'palette'; query: string; at: number }
+  /** The team, an entry a row: how many of each, raised and lowered from here (`r`) — the person's to set. */
+  | { kind: 'team'; at: number };
 
 export interface MonitorUi {
   mode: MonitorMode;

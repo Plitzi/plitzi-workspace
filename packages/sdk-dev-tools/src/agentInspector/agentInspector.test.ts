@@ -5,6 +5,7 @@ import { createStore } from '@plitzi/nexus';
 
 import { flowRunLine, flowRunOf } from './flowRuns';
 import { createAgentInspector } from './inspector';
+import { recordAt } from './report';
 
 import type { FlowRun } from './flowRuns';
 import type { ElementInteraction, InteractionNode, Log } from '@plitzi/sdk-shared';
@@ -167,12 +168,27 @@ describe('window.__plitzi', () => {
       document
     });
 
-    expect(writer.setSource('apiContainer_chart.clapped', [{ title: 'Night Drive', claps: 12 }])).toBe(true);
+    expect(writer.setSource('apiContainer_chart.clapped', [{ title: 'Night Drive', claps: 12 }])).toBe(
+      'apiContainer_chart'
+    );
     expect(writer.sources('apiContainer_chart')).toEqual({
       clapped: [{ title: 'Night Drive', claps: 12 }],
       isLoading: false
     });
     expect(writer.setSource('apiContainer_none.items', [])).toBe(false);
+    // By its element's id, as a run's designer wrote it: the one source that element publishes, its name said.
+    expect(writer.setSource('chart.clapped', [])).toBe('apiContainer_chart');
+    expect(writer.sources('apiContainer_chart')).toEqual({ clapped: [], isLoading: false });
+    expect(writer.setSource('none.items', [])).toBe(false);
+  });
+
+  // A plugin's new attribute no page bound yet could not be seen drawn: only the page's state could be written.
+  it('gives an element an attribute as a page binding it would, and says when the space has no such element', () => {
+    expect(inspector.setAttribute('cart.content', '{{ state.total }}')).toBe('cart');
+    expect(recordAt(root.getState(), 'schema', 'flat', 'cart', 'attributes').content).toBe('{{ state.total }}');
+    expect(inspector.setAttribute('nowhere.content', 'x')).toBe(false);
+    expect(inspector.setAttribute('cart', 'x')).toBe(false);
+    inspector.setAttribute('cart.content', '{{ state.count }}');
   });
 
   it('reads a list’s rows from its provider and its own source, whatever store registered first', () => {
@@ -241,6 +257,32 @@ describe('window.__plitzi', () => {
       visible: false
     });
     expect(inspector.element('nowhere')).toBeUndefined();
+  });
+
+  // A run's panel read visible:true at y=614, clipped by its 495 px column: a box drawn is not one a visitor sees.
+  it('reads an element as visible only when a visitor sees it, and says what clips it', () => {
+    document.body.innerHTML =
+      '<div style="overflow-x: hidden; overflow-y: hidden" data-plitzi-el="left-column"><span data-id="cart">2 items</span></div>';
+    const column = document.body.firstElementChild;
+    const boxes = new Map<Element | null, DOMRect>([
+      [column, { left: 0, top: 118, right: 300, bottom: 613, width: 300, height: 495 } as DOMRect],
+      [
+        document.querySelector('[data-id="cart"]'),
+        { left: 0, top: 614, right: 300, bottom: 1079, width: 300, height: 465 } as DOMRect
+      ]
+    ]);
+    const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement
+    ) {
+      return boxes.get(this) ?? ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 } as DOMRect);
+    });
+
+    expect(inspector.element('cart')).toMatchObject({
+      visible: false,
+      sight:
+        'clipped by left-column, which hides what spills past it and does not scroll: nothing a visitor does brings it into sight'
+    });
+    rect.mockRestore();
   });
 
   it('finds an element inside a component, and says which component an instance places', () => {

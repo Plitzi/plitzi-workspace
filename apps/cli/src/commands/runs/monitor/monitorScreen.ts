@@ -1,6 +1,14 @@
 import { listedTasks } from './monitorBoard';
 import { clip, createCanvas, textWidth, wrap } from './monitorCanvas';
-import { drawHelp, drawNeedsDialog, drawPalette, drawTaskDialog, paletteFound, paletteItems } from './monitorDialogs';
+import {
+  drawHelp,
+  drawNeedsDialog,
+  drawPalette,
+  drawTaskDialog,
+  drawTeamDialog,
+  paletteFound,
+  paletteItems
+} from './monitorDialogs';
 import { drawHead, drawStatus, headRows } from './monitorHead';
 import { hhmm, toneOf } from './monitorModel';
 import { drawNeeds, keyHint, leadsOnly, needsRows, shownNeeds } from './monitorNeeds';
@@ -116,6 +124,8 @@ export const monitorScreen = (
     drawHelp(p, ui.mode);
   } else if (dialog?.kind === 'needs') {
     drawNeedsDialog(p, needs);
+  } else if (dialog?.kind === 'team') {
+    drawTeamDialog(p, data.team, dialog.at);
   } else if (dialog?.kind === 'palette') {
     drawPalette(p, paletteFound(paletteItems(p, data, needs), dialog.query), dialog.query, dialog.at);
   }

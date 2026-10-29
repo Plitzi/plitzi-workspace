@@ -5,7 +5,7 @@ import path from 'node:path';
 import { comparePictures } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { awaited, capture, targetOn } from './capture';
+import { awaited, capture, ROW, targetOn } from './capture';
 import { notOnPageText } from './notOnPage';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
@@ -30,6 +30,35 @@ const sizeOf = (png: Uint8Array): string =>
   png.length < 24
     ? ''
     : `${String(new DataView(png.buffer, png.byteOffset).getUint32(16))}x${String(new DataView(png.buffer, png.byteOffset).getUint32(20))}`;
+
+/**
+ * One click pictured: the share of the picture it changed — or that it opened the part pictured (`opened`), or made the
+ * picture another size (`resized`, before → after) — and what changed outside a part when nothing in it did.
+ */
+export interface Clicked {
+  target: string;
+  changed: number;
+  opened?: true;
+  resized?: string;
+  outside?: string[];
+}
+
+/**
+ * What a click made of the picture, by its size alone — none when it kept its size, and is compared share by share. A
+ * part the click opened is pictured alone after it, the page before it (`opened`); the whole page grown or shrunk by
+ * the click is no part opened, its sizes said (a run's toggle "opened undefined").
+ */
+export const sizeChange = (
+  before: Uint8Array,
+  after: Uint8Array,
+  opening: boolean
+): Pick<Clicked, 'opened' | 'resized'> | undefined => {
+  if (sizeOf(before) === sizeOf(after)) {
+    return undefined;
+  }
+
+  return opening ? { opened: true } : { resized: `${sizeOf(before)} → ${sizeOf(after)}` };
+};
 
 /** The page as it is — its screen and what it shows — when a picture is clipped to a part of it. */
 interface PageNow {
@@ -71,12 +100,9 @@ export const clickThrough = async (
   how: Framing,
   clicks: readonly string[],
   { frames, every }: { frames: number; every: number }
-): Promise<
-  | { moments: Moment[]; clicked: { target: string; changed: number; opened?: true; outside?: string[] }[] }
-  | { problem: string }
-> => {
+): Promise<{ moments: Moment[]; clicked: Clicked[] } | { problem: string }> => {
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
-  const clicked: { target: string; changed: number; opened?: true; outside?: string[] }[] = [];
+  const clicked: Clicked[] = [];
   for (const target of clicks) {
     const read = await targetOn(taken.page, target);
     if ('problem' in read) {
@@ -105,9 +131,9 @@ export const clickThrough = async (
     }
 
     const after = moments[moments.length - 1].png;
-    // A clip the click opened is pictured alone after it, the page before it: no share of one picture to say — opened.
-    if (sizeOf(before) !== sizeOf(after)) {
-      clicked.push({ target, changed: 100, opened: true });
+    const resized = sizeChange(before, after, how.kind === 'element-later');
+    if (resized) {
+      clicked.push({ target, changed: 100, ...resized });
     } else {
       const { changed } = await comparePictures(taken.page, dataUrl(before), dataUrl(after));
       const outside = changed === 0 ? await outsideClip(taken.page, pageBefore) : [];
@@ -225,6 +251,8 @@ export const stepText = (step: ShotStep): string => {
       return `state ${step.key}`;
     case 'source':
       return `source ${step.key}`;
+    case 'attribute':
+      return `attribute ${step.key}`;
     case 'clock':
       return `clock ${new Date(step.time).toISOString()}`;
     case 'tick':
@@ -234,7 +262,7 @@ export const stepText = (step: ShotStep): string => {
     case 'frames':
       return `frames ${String(step.count)}`;
     case 'action':
-      return `action ${step.action}`;
+      return `${step.render ? 'render' : 'action'} ${step.action}`;
     case 'as':
       return `as ${step.account}: ${stepText(step.step)}`;
   }
@@ -272,7 +300,8 @@ const keptAnswer = async (action: string, output: string): Promise<string> => {
 const runAction = async (
   page: BrowserPage,
   action: string,
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  render = false
 ): Promise<{ answer: string } | { refused: string }> => {
   const answer = await page.evaluate(
     async ({ path, body }: { path: string; body: string }) => {
@@ -280,7 +309,7 @@ const runAction = async (
 
       return { status: response.status, text: await response.text() };
     },
-    { path: ACTION_PATH, body: JSON.stringify({ actionId: action, input }) }
+    { path: ACTION_PATH, body: JSON.stringify({ actionId: action, input, ...(render ? { trigger: 'render' } : {}) }) }
   );
   let said: unknown;
   try {
@@ -308,7 +337,7 @@ const runAction = async (
   const signIn = answer.status === 401 ? ' — the page played signed out: --as <account> plays it signed in' : '';
 
   return {
-    refused: `action ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}${signIn}`
+    refused: `${render ? 'render' : 'action'} ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}${signIn}`
   };
 };
 
@@ -316,6 +345,15 @@ const runAction = async (
  * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
  * what kept it from happening, said by its step. `visitors` holds the other accounts' pages a step `as` one plays on.
  */
+/** Runs in the page: how many elements a CSS selector finds — one for a selector only Playwright reads. Serialised. */
+export const copiesOn = (selector: string): number => {
+  try {
+    return document.querySelectorAll(selector).length;
+  } catch {
+    return 1;
+  }
+};
+
 export const actStep = async (
   page: BrowserPage,
   step: ActingStep,
@@ -342,7 +380,7 @@ export const actStep = async (
   }
 
   if (step.kind === 'action') {
-    const ran = await runAction(page, step.action, step.input);
+    const ran = await runAction(page, step.action, step.input, step.render === true);
 
     return 'refused' in ran ? { problem: `Step ${String(index + 1)}: ${ran.refused}` } : ran;
   }
@@ -450,6 +488,9 @@ export const actStep = async (
 
     // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
     const from = page.url();
+    // A name several copies carry — a component's part, a list's row: the one pressed is said, and how to name another
+    // (a run's tester toggled the wrong panel, the first of several section headers, and was told nothing).
+    const copies = ROW.test(step.target) ? 1 : await page.evaluate(copiesOn, read.selector);
     try {
       await (step.kind === 'click'
         ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
@@ -481,6 +522,12 @@ export const actStep = async (
       for (const key of typedKeys(step.text)) {
         await ('press' in key ? page.keyboard.press(key.press) : page.keyboard.type(key.type));
       }
+    }
+
+    if (copies > 1) {
+      return {
+        answer: `${step.target} is on the page ${String(copies)} times: this pressed the first a visitor sees — ${step.target}:2 … ${step.target}:last names another`
+      };
     }
   } else if (step.kind === 'press') {
     await page.keyboard.press(step.key);
@@ -514,7 +561,7 @@ export const actStep = async (
         problem: `Step ${String(index + 1)}: the page's localStorage refused the value — its storage is blocked`
       };
     }
-  } else if (step.kind === 'state' || step.kind === 'source') {
+  } else if (step.kind === 'state' || step.kind === 'source' || step.kind === 'attribute') {
     const written = await page.evaluate(
       ({
         method,
@@ -524,7 +571,7 @@ export const actStep = async (
         method: string;
         key: string;
         value: unknown;
-      }): 'no-inspector' | 'unheld' | 'written' => {
+      }): 'no-inspector' | 'unheld' | { written: string } => {
         const inspector: unknown = Reflect.get(window, '__plitzi');
         const write: unknown =
           typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, method) : undefined;
@@ -532,23 +579,39 @@ export const actStep = async (
           return 'no-inspector';
         }
 
-        // setSource says whether a store holds the source; setState writes whatever key it is given.
-        return Reflect.apply(write, inspector, [key, value]) === false ? 'unheld' : 'written';
+        // setSource says the source it wrote, or false when no store holds it; setState writes whatever key it is given.
+        const done: unknown = Reflect.apply(write, inspector, [key, value]);
+
+        return done === false ? 'unheld' : { written: typeof done === 'string' ? done : (key.split('.')[0] ?? key) };
       },
-      { method: step.kind === 'state' ? 'setState' : 'setSource', key: step.key, value: step.value }
+      {
+        method: step.kind === 'state' ? 'setState' : step.kind === 'source' ? 'setSource' : 'setAttribute',
+        key: step.key,
+        value: step.value
+      }
     );
     if (written === 'no-inspector') {
       return {
-        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
+        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : step.kind === 'attribute' ? '.setAttribute' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
+      };
+    }
+
+    const [name = step.key] = step.key.split('.');
+    if (written === 'unheld' && step.kind === 'attribute') {
+      return {
+        problem: `Step ${String(index + 1)}: no element of the page is ${name} — its attribute is written on an element of the space by its id`
       };
     }
 
     if (written === 'unheld') {
-      const [name] = step.key.split('.');
-
       return {
-        problem: `Step ${String(index + 1)}: no provider on the page holds a source named ${name} — page check --state lists those it has`
+        problem: `Step ${String(index + 1)}: no provider on the page holds a source named ${name}, nor one of an element by that id — page check --state lists those it has`
       };
+    }
+
+    // Written by its element's id: the source's own name said, as a binding reads it.
+    if (step.kind === 'source' && written.written !== name) {
+      return { answer: `${name} is the element: its source is ${written.written} — written there` };
     }
   } else if (step.kind === 'clock' || step.kind === 'tick') {
     if (!clockHeld(page)) {
@@ -695,7 +758,11 @@ export const playedOn = async (
   visitors?: Visitors
 ): Promise<{ problem: string } | undefined> => {
   for (const [index, step] of steps.entries()) {
-    const done = await actStep(page, step, index, visitors);
+    // A step whose element never answers — a click that waits past its time — is a step that did not happen, said in
+    // a line: thrown, a run's look printed a TimeoutError's stack and went on to compare nothing.
+    const done = await actStep(page, step, index, visitors).catch((error: unknown) => ({
+      problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
+    }));
     if (done && 'problem' in done) {
       return done;
     }

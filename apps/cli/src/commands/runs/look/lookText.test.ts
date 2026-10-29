@@ -34,8 +34,12 @@ describe('a look that took no picture', () => {
     expect(stripVTControlCharacters(lookText({ ...looked, notBeside: true }))).toContain(
       'Not set beside the run before it — that nothing else moved is read with it: --before'
     );
+    // Steps that never played pictured nothing, and a run's look still said "nothing differs" beside the run before.
+    expect(stripVTControlCharacters(lookText(looked))).toContain(
+      'Beside the run before it: nothing could be compared — no view of it was pictured (below says why)'
+    );
     // A run's designer looked at its parts beside the run before it and read nothing — "nothing else moved" from silence.
-    expect(stripVTControlCharacters(lookText({ ...looked, besideNothing: true }))).toContain(
+    expect(stripVTControlCharacters(lookText({ ...looked, unpictured: undefined, besideNothing: true }))).toContain(
       'Beside the run before it: nothing differs, and nothing else of its pages moved'
     );
     // Its parts at 3 pages, 2 widths and 2 schemes: a line each among the pictures, read as silence by a run's lead.

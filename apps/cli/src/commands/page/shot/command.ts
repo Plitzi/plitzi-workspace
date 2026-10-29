@@ -23,7 +23,7 @@ import { otherPageAt } from './remote';
 import { clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
-import { dataUrl, projectOrigin } from '../../../browser';
+import { dataUrl, projectOrigin, VIEW_HEIGHT } from '../../../browser';
 import { copyOf, runPaths } from '../../../runs/core/paths';
 import { keptPage } from '../../../runs/plan/reference';
 import { PROJECT_TMP } from '../../../scaffold/paths';
@@ -256,7 +256,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const pathname = route ?? '/';
     const view: View = {
       width: options.width ?? 1280,
-      height: options.height ?? 800,
+      height: options.height ?? VIEW_HEIGHT,
       ...(options.scale ? { scale: options.scale } : {}),
       ...(options.scheme ? { scheme: options.scheme } : {}),
       // Beside a page of this machine — the run before a task — both sides held to what the project changed: motion
@@ -345,6 +345,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       scheme: taken.scheme,
       out,
       ...(taken.settled > 0 ? { settled: taken.settled } : {}),
+      ...(taken.screen === undefined ? {} : { screen: taken.screen }),
+      ...(taken.canvasMoving ? { canvasMoving: true as const } : {}),
       ...(taken.unloaded > 0 ? { unloaded: taken.unloaded } : {}),
       ...(taken.undrawn.length > 0 ? { undrawn: taken.undrawn } : {}),
       ...(taken.sentTo ? { sentTo: taken.sentTo } : {}),
@@ -571,6 +573,22 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
     }
 
+    if (report.canvasMoving) {
+      console.log(
+        chalk.yellow(
+          `${pathname}: a canvas of it (a map, a chart) was still changing after 4 s when pictured — what it draws may be half drawn: picture it again, or wait for what it loads`
+        )
+      );
+    }
+
+    if (report.screen !== undefined) {
+      console.log(
+        chalk.dim(
+          `${pathname} is locked to its screen (documentScroll: locked) — pictured as the screen, ${String(view.width)}×${String(report.screen)}, its panes scrolling inside it: --height shows another screen`
+        )
+      );
+    }
+
     if (report.settled) {
       console.log(
         chalk.dim(
@@ -633,15 +651,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
     }
 
-    for (const { target, changed, opened, outside } of report.clicked ?? []) {
+    for (const { target, changed, opened, resized, outside } of report.clicked ?? []) {
       console.log(
         opened
           ? `clicked ${target}: it opened ${String(options.within)}, pictured alone after it`
-          : changed > 0
-            ? `clicked ${target}: ${String(changed)}% of the picture changed`
-            : chalk.yellow(
-                `clicked ${target}: ${outsideText(outside) ?? 'nothing changed — the click did nothing to see'}`
-              )
+          : resized !== undefined
+            ? `clicked ${target}: the picture changed size, ${resized} — the page grew or shrank with it`
+            : changed > 0
+              ? `clicked ${target}: ${String(changed)}% of the picture changed`
+              : chalk.yellow(
+                  `clicked ${target}: ${outsideText(outside) ?? 'nothing changed — the click did nothing to see'}`
+                )
       );
     }
 

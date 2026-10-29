@@ -293,7 +293,9 @@ export const space = {
     expect(await readInCopy(b.work, 'src/space/pages/a.ts')).toContain('export const a');
     const followed = await followWait(b.ctx, 'shell-run', 't-b', { timeoutMs: 1000, everyMs: 10 });
     expect(followed.done).toBe(true);
-    expect(followed.note).toContain('Brought into your copy, approved since it was made: src/space/pages/a.ts');
+    expect(followed.note).toContain(
+      'Brought into your copy too, approved in the run since the copy was made: src/space/pages/a.ts'
+    );
   });
 
   it('complete brings in what was approved meanwhile before its checks, and a folder’s .gitkeep is the task’s to remove', async () => {

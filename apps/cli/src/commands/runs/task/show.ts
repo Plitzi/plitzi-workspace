@@ -63,7 +63,12 @@ export const roundText = ({ status, round }: { status: string; round: number }):
   status === 'in-review' ? `, round ${String(round + 1)}` : round > 0 ? `, round ${String(round)}` : '';
 
 /** A task as `task show` says it: its acceptance, its brief, its checks, its diff — what a reviewer starts from. */
-export const shownText = (shown: TaskShown, full = false): string => {
+export const shownText = (
+  shown: TaskShown,
+  full = false,
+  /** Handed with a review (`task next`), whose lines say each acceptance line and its result already: not again. */
+  { acceptance = true }: { acceptance?: boolean } = {}
+): string => {
   const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
 
   return [
@@ -71,7 +76,7 @@ export const shownText = (shown: TaskShown, full = false): string => {
       `${shown.task.id} — ${shown.task.title} · ${shown.status}${roundText(shown)}${shown.holder ? ` · ${shown.holder}` : ''}`
     ),
     `  ${roleOf(shown.task)} · its files: ${shown.task.files.join(', ')}`,
-    ...(shown.task.acceptance.length > 0
+    ...(acceptance && shown.task.acceptance.length > 0
       ? [
           'Acceptance',
           ...shown.task.acceptance.map(each => {

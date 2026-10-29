@@ -1,6 +1,8 @@
 import { requireLead } from '../agents/leads';
 import { RunRefusal } from '../core/refusal';
+import { runLiveFindings } from '../findings/live';
 import { loadRun, logRun, readRunLog, requireNoTask } from '../run';
+import { SETTLED, settledFindings } from './settled';
 import { ADVICE_KINDS } from '../view/bottlenecks';
 import { viewRun } from '../view/view';
 
@@ -12,13 +14,6 @@ import type { RunContext } from '../run';
  * silence: the note is kept in the log, beside the finding the report keeps. A run's close waited on three findings
  * no task held, with no way for the lead to settle one.
  */
-
-/** A finding the lead settled, as the log keeps it: what it was about, and what the lead did. */
-export const SETTLED = 'finding-settled';
-
-/** The subjects of the findings the lead settled, read off the run's log. */
-export const settledFindings = (log: readonly Record<string, unknown>[]): Set<string> =>
-  new Set(log.flatMap(entry => (entry.action === SETTLED && typeof entry.subject === 'string' ? [entry.subject] : [])));
 
 const isAdvice = (kind: string): boolean => ADVICE_KINDS.some(each => each === kind);
 
@@ -56,6 +51,22 @@ export const settleFinding = async (
     await logRun(ctx, loaded.paths, { action: SETTLED, subject, note: note.trim() });
 
     return { subject, text: `${subject}: not given at this moment — said no more in this run` };
+  }
+
+  // Read in the attention a moment before, and past since — its task's next check passed: still the run's, settled by
+  // its name. A run's lead settled two lines it had just read, and was told they were no finding.
+  if (!finding) {
+    const log = await readRunLog(loaded.paths);
+    const raised = (await runLiveFindings(loaded, log)).find(each => each.subject === subject);
+    if (raised) {
+      if (settledFindings(log).has(subject)) {
+        throw new RunRefusal('invalid', `"${subject}" is settled already: it is said no more in this run.`);
+      }
+
+      await logRun(ctx, loaded.paths, { action: SETTLED, subject, note: note.trim() });
+
+      return { subject, text: `${raised.title} — past already, settled as you said` };
+    }
   }
 
   if (!finding) {

@@ -11,8 +11,9 @@ import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInWhereSent } from './account';
 import { busyOf } from './busy';
-import { clickEffects } from './click';
-import { flushEdgesInPage, missedExpectations, textsInPage, wrappedLabelsInPage } from './expect';
+import { oneColourCanvases } from './canvases';
+import { clickEffects, selectorOf } from './click';
+import { flushEdgesInPage, missedExpectations, sightSaid, textsInPage, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
 import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
@@ -45,8 +46,26 @@ import type { Schema } from '@plitzi/sdk-shared';
 const HOVER_WIDTH = 1024;
 
 /** Only the keys named of what the page holds (`--state a,b`). */
-const namedOf = (held: Record<string, unknown>, names: readonly string[]): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(held).filter(([name]) => names.includes(name)));
+/**
+ * What `--state` names of what the page holds: a source or a key by its name, or a path into one (`computed.layerQuakes`)
+ * — each under the name it was asked by.
+ */
+export const namedOf = (held: Record<string, unknown>, names: readonly string[]): Record<string, unknown> =>
+  Object.fromEntries(
+    names.flatMap(name => {
+      if (Object.hasOwn(held, name)) {
+        return [[name, held[name]] as const];
+      }
+
+      const [first = '', ...path] = name.split('.');
+      let at: unknown = held[first];
+      for (const key of path) {
+        at = isRecord(at) ? at[key] : undefined;
+      }
+
+      return path.length > 0 && at !== undefined ? [[name, at] as const] : [];
+    })
+  );
 
 /**
  * What the page has once hydrated and the server's HTML did not: inside a server provider, an issue per provider — its
@@ -350,6 +369,11 @@ const inspectHere = async (
     };
   }
 
+  const sights: Record<string, string> = {};
+  for (const id of asked.sight ?? []) {
+    sights[id] = await sightSaid(page, selectorOf(authored, id));
+  }
+
   const data =
     authored && pageId && devTools.sources
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
@@ -389,6 +413,7 @@ const inspectHere = async (
         .map(each => each.id)
     )
   ];
+  const painted = await oneColourCanvases(page);
   const busy = busyOf(await page.evaluate((key: string) => Reflect.get(window, key) as unknown, LONG_TASKS));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   const statusIssues: CheckIssue[] = statusIssuesOf({
@@ -478,6 +503,7 @@ const inspectHere = async (
     hiddenAtWidth: report.hiddenAtWidth,
     empty: report.empty,
     ...(cut.length > 0 ? { cut } : {}),
+    ...(painted.length > 0 ? { oneColour: painted } : {}),
     ...(busy ? { busy } : {}),
     outOfUse: report.outOfUse,
     consoleErrors: errors,
@@ -501,6 +527,7 @@ const inspectHere = async (
       ? {}
       : { sources: asked.stateOf ? namedOf(shown.sources, asked.stateOf) : shown.sources }),
     ...(asked.elements.length > 0 ? { elements } : {}),
+    ...(Object.keys(sights).length > 0 ? { sights } : {}),
     ...(clicked === undefined ? {} : { clicked }),
     ...(sentWith === 404 ? { notFound: true as const } : {})
   };
@@ -523,7 +550,7 @@ export const checkAt = async (
   pathname: string,
   width: number,
   /** The visitor (`visit.ts`): its theme, zone, presence, browser — and others' pictures stood in for, a look's. */
-  view: Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns'>,
+  view: Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns' | 'height'>,
   authored: Authored | undefined,
   asked: CheckAsk,
   ssr: boolean,

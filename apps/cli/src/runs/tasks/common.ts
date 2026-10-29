@@ -49,8 +49,8 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
   if (ctx.token === undefined) {
     throw new RunRefusal(
       'invalid',
-      `This is the command of whoever holds task "${task.id}": run it in its copy, with your own token (--token)`,
-      { task: task.id }
+      `This is the command of whoever holds task "${task.id}": run it in its copy — cd ${view.paths.work} — where its token is read by itself (or give it: --token)`,
+      { task: task.id, next: `cd ${view.paths.work} && the same command again` }
     );
   }
 
@@ -159,12 +159,43 @@ const mergedInCopy = async (
  * the run twice). A changed file is told by its time first: the copy is not read whole at each call. A file handed on by turns arrives with what it imports, approved after the copy
  * was made. Answers what it brought.
  */
+/**
+ * A file brought into a task's copy, and from where: the run's approved work, or the project — a person's edit since
+ * the copy was made. Said apart: a run's refusal called a person's edit of `.plitzi/team.json` "what the run approved",
+ * and its lead blamed it for a failure it had nothing to do with.
+ */
+export interface Brought {
+  file: string;
+  from: 'run' | 'project';
+}
+
+/** What was brought into a copy, in words — each by where it came from. */
+export const broughtText = (brought: readonly Brought[]): string =>
+  [
+    ...(brought.some(each => each.from === 'run')
+      ? [
+          `approved in the run since the copy was made: ${brought
+            .filter(each => each.from === 'run')
+            .map(each => each.file)
+            .join(', ')}`
+        ]
+      : []),
+    ...(brought.some(each => each.from === 'project')
+      ? [
+          `changed in the project since, by no task: ${brought
+            .filter(each => each.from === 'project')
+            .map(each => each.file)
+            .join(', ')}`
+        ]
+      : [])
+  ].join('; ');
+
 export const refreshCopy = async (
   ctx: RunContext,
   loaded: LoadedRun,
   view: TaskView,
   file?: string
-): Promise<string[]> => {
+): Promise<Brought[]> => {
   const approved = await readApproved(loaded.paths);
   const start = await readStart(view.paths);
   if (!start) {
@@ -173,7 +204,7 @@ export const refreshCopy = async (
 
   const files = { ...start.files };
   const overlaid = new Set(start.overlaid);
-  const brought: string[] = [];
+  const brought: Brought[] = [];
   const copiedAt = Date.parse(start.copiedAt);
   const own = new Set(view.task.files);
   const editedInProject: string[] = [];
@@ -197,8 +228,9 @@ export const refreshCopy = async (
     // what is merged (t-sponsors' theme.ts lacked the run's new token, and author failed in its copy).
     if (each !== file && inCopy !== startedFrom) {
       if (!own.has(each) && (await mergedInCopy(ctx, loaded, approved, view, each, startedFrom))) {
-        files[each] = (await currentVersion(ctx, approved, each)).digest;
-        brought.push(each);
+        const merged = await currentVersion(ctx, approved, each);
+        files[each] = merged.digest;
+        brought.push({ file: each, from: merged.fromProject ? 'project' : 'run' });
       }
 
       continue;
@@ -229,7 +261,7 @@ export const refreshCopy = async (
     }
 
     files[each] = current.digest;
-    brought.push(each);
+    brought.push({ file: each, from: current.fromProject ? 'project' : 'run' });
   }
 
   await writeJson(view.paths.start, { ...start, files, overlaid: [...overlaid].sort() });
@@ -240,7 +272,7 @@ export const refreshCopy = async (
     await fs.rm(path.join(view.paths.work, LINT_CACHE_FILE), { force: true });
   }
 
-  return brought.sort();
+  return brought.sort((a, b) => a.file.localeCompare(b.file));
 };
 
 /** What a task's copy changed against where it started, by project path: what is not the source left out. */

@@ -47,7 +47,49 @@ export const keptToParts = (report: CheckReport, parts: Pick<TaskParts, 'ids' | 
     return report;
   }
 
-  return { ...without(report, theirs), apart: theirs.map(issue => issue.message) };
+  return {
+    ...without(report, theirs),
+    apart: theirs.map(issue => ({ elementId: issue.elementId ?? '', message: issue.message }))
+  };
+};
+
+/**
+ * What a page's issues are that a check with `--expect` does not ask: everything but the expectations themselves, what
+ * was asked of how it is sent (`--status`, `--redirects-to`), the steps and the sign-in — and the findings on an
+ * expected element, which are its own.
+ */
+const ASKED_CODES: ReadonlySet<CheckIssue['code']> = new Set([
+  'expected-text',
+  'page-status',
+  'redirected',
+  'steps-failed',
+  'not-signed-in',
+  'no-answer',
+  'no-page',
+  'server-render-failed'
+]);
+
+/**
+ * A check that expects is held to what it expects: the page's other findings, its console's errors and refused
+ * requests are said beside it and fail nothing. An acceptance line `page check / --expect layer-quakes` could not pass on
+ * a space whose page had problems before the run — a pulled Tremor's empty list, its hidden texts — and every page line
+ * of a plan was rewritten as `--json | jq`. `page check` with no `--expect` holds the page whole, as the finish does.
+ */
+export const keptToExpectations = (report: CheckReport, expected: ReadonlySet<string>): CheckReport => {
+  const besides = report.issues.filter(
+    issue => !ASKED_CODES.has(issue.code) && (issue.elementId === undefined || !expected.has(issue.elementId))
+  );
+  const errors = [
+    ...report.consoleErrors.map(error => `console: ${error}`),
+    ...report.failedRequests.map(request => `request refused: ${request}`)
+  ];
+  if (besides.length === 0 && errors.length === 0) {
+    return report;
+  }
+
+  const kept = without({ ...report, consoleErrors: [], failedRequests: [] }, besides);
+
+  return { ...kept, besides: [...besides.map(issue => issue.message), ...errors] };
 };
 
 /** A report with `moved` taken out of its issues, and its verdict again: passed once nothing else failed it. */

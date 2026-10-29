@@ -40,6 +40,8 @@ export interface TaskContext {
     asked?: { acceptance: string[]; reviews: string[] };
     /** What its spikes found out: research a task builds on, said where it is built. */
     findings?: Finding[];
+    /** A research card's: what it found is what the task builds on, said whole — a work task's notes were its own. */
+    research?: true;
   }[];
   /**
    * Its files the run approved a version of, when, and by which task: what a finding written before then may no longer
@@ -171,6 +173,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       changed: other.state.changed ?? [],
       notes: lastNotes(other),
       ...(other.state.findings && other.state.findings.length > 0 ? { findings: other.state.findings } : {}),
+      ...(isResearch(other.task) ? { research: true as const } : {}),
       ...(task.dependsOn.includes(id)
         ? {
             asked: {

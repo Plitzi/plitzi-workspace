@@ -21,8 +21,12 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
  *   source <path> <json>     a provider's answer, or a path in it, written where it keeps it — a list seen filled:
  *                            source apiContainer_chart.clapped '[{"title":"x"}]' (development pages; until it answers again)
+ *   attribute <id>.<name> <json>  an element's attribute given a value, as a page binding it would — a plugin's new
+ *                            one no page binds yet seen drawn: attribute map.storms '[{"id":"ARNAB"}]' (development pages)
  *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
  *   tick <duration>          the page's clock moved on, its timers run (needs `--clock`): 90s, 5m, 2h, 1500
+ *   render <id> [json]       a render action run the way a page's render runs it — its real fetch, hosts and limits —
+ *                            before any page uses it (a development server: npm run start:dev)
  *   action <id> [json]       one of the space's actions run as the page's visitor, through its /_action — the
  *                            server's data put in the state a step needs: action crate-hide '{"crate":"c1"}'
  *   as <account> <step>      the step played by another account, signed in on a page of its own (the password in
@@ -55,9 +59,10 @@ export type PageStep =
   | { kind: 'store'; key: string; value: string }
   | { kind: 'state'; key: string; value: unknown }
   | { kind: 'source'; key: string; value: unknown }
+  | { kind: 'attribute'; key: string; value: unknown }
   | { kind: 'clock'; time: number }
   | { kind: 'tick'; ms: number }
-  | { kind: 'action'; action: string; input: Record<string, unknown> };
+  | { kind: 'action'; action: string; input: Record<string, unknown>; render?: true };
 
 export type ShotStep =
   | PageStep
@@ -82,9 +87,11 @@ const STEP_NAMES = [
   'store',
   'state',
   'source',
+  'attribute',
   'clock',
   'tick',
   'action',
+  'render',
   'as',
   'shot',
   'frames'
@@ -348,7 +355,8 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         break;
       }
       case 'state':
-      case 'source': {
+      case 'source':
+      case 'attribute': {
         const [key, ...value] = rest;
         // Wrapped in single quotes as a shell writes it — `state show '{"id":"x"}'` — the JSON is what is inside.
         const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
@@ -360,23 +368,28 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
             problem:
               name === 'state'
                 ? `${at}: state needs a key and its value as JSON — got ${written === '' ? 'none' : written}: a text in double quotes (state dismissed "show-1"), true, 3, or an object (state show '{"title":"Late set"}')`
-                : `${at}: source needs a source's path and its value as JSON — got ${written === '' ? 'none' : written}: source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`
+                : name === 'attribute'
+                  ? `${at}: attribute needs <element>.<attribute> and its value as JSON — got ${written === '' ? 'none' : written}: attribute map.storms '[{"id":"ARNAB"}]'`
+                  : `${at}: source needs a source's path and its value as JSON — got ${written === '' ? 'none' : written}: source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`
           };
         }
 
-        if (!key) {
+        if (!key || (name === 'attribute' && !/^[^.]+\.[^.]+$/.test(key))) {
           return {
             problem:
               name === 'state'
                 ? `${at}: state needs a key and its value as JSON — state roomOpen true`
-                : `${at}: source needs a source's path and its value as JSON — source apiContainer_chart.isEmpty false`
+                : name === 'attribute'
+                  ? `${at}: attribute needs <element>.<attribute> and its value as JSON — attribute map.showStorms true`
+                  : `${at}: source needs a source's path and its value as JSON — source apiContainer_chart.isEmpty false`
           };
         }
 
         steps.push({ kind: name, key, value: parsed });
         break;
       }
-      case 'action': {
+      case 'action':
+      case 'render': {
         const [action, ...value] = rest;
         const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
         let input: unknown = {};
@@ -388,11 +401,11 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
 
         if (!action || !isRecord(input)) {
           return {
-            problem: `${at}: action needs the action's id and, when it takes one, its input as a JSON object — action dm-send '{"to":"juno","text":"hi"}'`
+            problem: `${at}: ${name} needs the action's id and, when it takes one, its input as a JSON object — ${name === 'render' ? `render tornadoes-feed '{}'` : `action dm-send '{"to":"juno","text":"hi"}'`}`
           };
         }
 
-        steps.push({ kind: 'action', action, input });
+        steps.push({ kind: 'action', action, input, ...(name === 'render' ? { render: true as const } : {}) });
         break;
       }
       case 'as': {

@@ -47,7 +47,40 @@ export interface LintOptions {
   strict?: boolean;
   /** More warnings than this fail. */
   maxWarnings?: number;
+  /** Another copy of the project — the run's, a worktree of HEAD — its findings left out: only what is new here. */
+  against?: string;
 }
+
+/**
+ * A finding as it is told apart from another copy's: its file, its code and its words — never its line, which a change
+ * above it moves. A run's tester wrote a script to lint two folders and compare what a refactor added.
+ */
+const sameFinding = (each: LintFinding): string => `${each.file ?? ''}\u0000${each.code}\u0000${each.message}`;
+
+/** What `here` finds that `there` does not — each as often as here holds it more — and how many are alike or gone. */
+export const newFindings = (
+  here: readonly LintFinding[],
+  there: readonly LintFinding[]
+): { fresh: LintFinding[]; same: number; gone: number } => {
+  const left = new Map<string, number>();
+  for (const each of there) {
+    left.set(sameFinding(each), (left.get(sameFinding(each)) ?? 0) + 1);
+  }
+
+  const fresh = here.filter(each => {
+    const count = left.get(sameFinding(each)) ?? 0;
+    if (count === 0) {
+      return true;
+    }
+
+    left.set(sameFinding(each), count - 1);
+
+    return false;
+  });
+  const gone = [...left.values()].reduce((sum, count) => sum + count, 0);
+
+  return { fresh, same: here.length - fresh.length, gone };
+};
 
 /**
  * What `plitzi space lint` does not check, and what does — said in every report, so nobody takes a clean lint for a space
@@ -70,6 +103,8 @@ export interface LintReport {
   maxWarnings?: number;
   counts: Record<Severity, number>;
   findings: LintFinding[];
+  /** With `--against`: the copy compared with, and its findings left out (`same`) or gone here — `findings` the new. */
+  against?: { dir: string; same: number; gone: number };
 }
 
 /** Where a space is, and what is not part of it, for the rules. */
@@ -167,7 +202,7 @@ const SEVERITY_TEXT: Record<Severity, string> = {
 
 const plural = (count: number, word: string): string => `${String(count)} ${word}${count === 1 ? '' : 's'}`;
 
-const fileText = (title: string, findings: readonly LintFinding[]): string[] => {
+const fileText = (title: string, findings: readonly LintFinding[], said: Set<string>): string[] => {
   const listed = new Map<string, number>();
   const lines = [chalk.underline(title)];
   for (const each of findings) {
@@ -175,8 +210,11 @@ const fileText = (title: string, findings: readonly LintFinding[]): string[] => 
     listed.set(each.code, shown + 1);
     if (shown < LISTED_PER_RULE) {
       const where = each.line === undefined ? '-' : `${String(each.line)}:${String(each.column ?? 1)}`;
+      // A message said already is named by its code: a run's lint said one sentence again in every file, 20k a call.
+      const message = said.has(`${each.code}\u0000${each.message}`) ? chalk.dim('as above') : each.message;
+      said.add(`${each.code}\u0000${each.message}`);
       lines.push(
-        `  ${chalk.dim(where.padEnd(8))} ${SEVERITY_TEXT[each.severity]}  ${each.message}  ${chalk.dim(each.code)}`
+        `  ${chalk.dim(where.padEnd(8))} ${SEVERITY_TEXT[each.severity]}  ${message}  ${chalk.dim(each.code)}`
       );
     }
   }
@@ -233,8 +271,17 @@ export const reportText = (report: LintReport): string => {
     groups.set(title, [...(groups.get(title) ?? []), each]);
   }
 
+  const said = new Set<string>();
   for (const [title, findings] of groups) {
-    lines.push(...fileText(title, findings));
+    lines.push(...fileText(title, findings, said));
+  }
+
+  if (report.against) {
+    lines.push(
+      chalk.dim(
+        `Against ${report.against.dir}: ${plural(report.findings.length, 'finding')} new here — ${String(report.against.same)} as there, ${String(report.against.gone)} there and gone here.`
+      )
+    );
   }
 
   if (report.findings.length > 0) {
@@ -361,10 +408,18 @@ export const lint = async (options: LintOptions): Promise<void> => {
 
   const { root, name } = project;
   const { findings, files } = await spaceFindings(project);
-  const report = reportOf({ root, name, entry: SPACE_ENTRY, files }, findings, {
+  const there =
+    options.against === undefined
+      ? undefined
+      : await spaceFindings({ ...project, root: await fs.realpath(path.resolve(options.against)) });
+  const compared = there ? newFindings(findings, there.findings) : undefined;
+  const report = reportOf({ root, name, entry: SPACE_ENTRY, files }, compared?.fresh ?? findings, {
     strict: Boolean(options.strict),
     maxWarnings: options.maxWarnings
   });
+  if (compared && options.against !== undefined) {
+    report.against = { dir: options.against, same: compared.same, gone: compared.gone };
+  }
   console.log(options.json ? JSON.stringify(report) : reportText(report));
   if (!report.ok) {
     process.exitCode = 1;

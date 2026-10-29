@@ -191,7 +191,8 @@ describe('stopping, cuts and disconnects', () => {
     await bench.write('src/space/theme.ts', 'export const theme = { tone: "formatted" };\n');
     await bench.write('src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
     const checked = await checkTask(home.ctx, 'es-launch', 't-home');
-    expect(checked.brought).toEqual(['src/space/theme.ts']);
+    // Said as what it is: a person's edit in the project, never the run's approval.
+    expect(checked.brought).toEqual([{ file: 'src/space/theme.ts', from: 'project' }]);
     expect(await readInCopy(home.work, 'src/space/theme.ts')).toContain('formatted');
     expect(await readInCopy(home.work, 'src/space/pages/home/hero.ts')).toContain('Bienvenidos');
     expect((await completeTask(home.ctx, 'es-launch', 't-home')).changed).toEqual(['src/space/pages/home/hero.ts']);

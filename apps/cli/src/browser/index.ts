@@ -29,6 +29,9 @@ import type { SettlingEvent, SettlingRequest } from '@plitzi/sdk-authoring';
  * when it loads, so the CLI depends on no driver.
  */
 
+/** The viewport's height every page is read at, unless a command asks otherwise (`--height`): said with what it read. */
+export const VIEW_HEIGHT = 900;
+
 export const SCHEMES = ['light', 'dark'] as const;
 
 export type Scheme = (typeof SCHEMES)[number];

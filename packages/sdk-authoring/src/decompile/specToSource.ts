@@ -1,5 +1,6 @@
 import { declaresAttribute, defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
+import { slugify } from '../schema/ids';
 import { isRuleSetSpec, isStyleDeclaration } from '../style';
 import { camel, deepEqual, keyLiteral, literal, RESERVED, withSuffix } from './literal';
 
@@ -179,6 +180,36 @@ class FileImports {
   }
 }
 
+/** The most elements one file of a split export holds before its largest parts go to files of their own. */
+const FILE_ELEMENTS = 24;
+
+/** The fewest elements a part split off holds: a list of single rows stays in its file, never a file a row. */
+const PART_ELEMENTS = 4;
+
+/** How many elements an element is, with every one inside it — a component's instance one, its own tree elsewhere. */
+const elementsIn = (spec: ElementSpec): number =>
+  1 + (spec.children ?? []).reduce((sum, child) => sum + elementsIn(child), 0);
+
+/**
+ * The elements of a file's top level that go to files of their own: the largest first, until what stays holds
+ * `FILE_ELEMENTS` at most — each part split the same way in its own file. A page of a few hundred elements was one file
+ * of 4,934 lines every task of a run wrote in.
+ */
+const partsOf = (top: readonly ElementSpec[]): ElementSpec[] => {
+  let left = top.reduce((sum, each) => sum + elementsIn(each), 0);
+  const parts: ElementSpec[] = [];
+  for (const each of [...top].sort((a, b) => elementsIn(b) - elementsIn(a))) {
+    if (left <= FILE_ELEMENTS || elementsIn(each) < PART_ELEMENTS) {
+      break;
+    }
+
+    parts.push(each);
+    left -= elementsIn(each) - 1;
+  }
+
+  return parts;
+};
+
 class SourceWriter {
   private readonly names = new Names();
 
@@ -188,6 +219,15 @@ class SourceWriter {
   private readonly files: SpecSourceFiles = {};
 
   private readonly packageName: string;
+
+  /** The folder of the file being written, from the space's root: where its imports of another file start. */
+  private at = '';
+
+  /** The elements written as a file of their own, split off the page or part that holds them (`partsOf`). */
+  private readonly parts = new Set<ElementSpec>();
+
+  /** Every file path given out, so two pages or two parts of one name are told apart. */
+  private readonly paths = new Set<string>();
 
   constructor(
     private readonly spec: SpaceSpec,
@@ -200,6 +240,32 @@ class SourceWriter {
   /** Another file of the split export, as an import names it. */
   private relative(path: string): string {
     return `${path}${this.options.importExtension ?? ''}`;
+  }
+
+  /** A file of the export, by its path from the root, as the file being written imports it. */
+  private importOf(path: string): string {
+    const from = this.at === '' ? [] : this.at.split('/');
+    const to = path.split('/');
+    let shared = 0;
+    while (shared < from.length && shared < to.length - 1 && from[shared] === to[shared]) {
+      shared += 1;
+    }
+
+    const up = from.length - shared;
+
+    return this.relative(`${up === 0 ? './' : '../'.repeat(up)}${to.slice(shared).join('/')}`);
+  }
+
+  /** A path not given out yet: `base`, or `base-2`, `base-3`… */
+  private freePath(base: string): string {
+    let path = base;
+    for (let index = 2; this.paths.has(path); index += 1) {
+      path = `${base}-${String(index)}`;
+    }
+
+    this.paths.add(path);
+
+    return path;
   }
 
   write(): SpecSourceFiles {
@@ -224,8 +290,10 @@ class SourceWriter {
       this.root(layout, 'LayoutSpec', main, `layouts/${layout.id}`)
     );
     const components = (this.spec.components ?? []).map(component => this.component(component, main));
+    // A page's file is named as a person reads the page — `pages/monitor.ts` — never by its id: a space seeded from a
+    // folder of panels came out as one `page-1.ts`.
     const pages = this.spec.pages.map(page =>
-      this.root(page, 'PageSpec', main, `pages/${page.id ?? (page.slug || 'home')}`)
+      this.root(page, 'PageSpec', main, this.freePath(`pages/${slugify(page.name, '') || slugify(page.slug, 'home')}`))
     );
 
     const classes = this.classesField(named, main);
@@ -384,7 +452,7 @@ class SourceWriter {
     return `const ${this.classVariables.get(name) ?? camel(name)} = styles(${literal(name)}, ${ruleSetLiteral(rules, ancestorKey)});`;
   }
 
-  private classReference(value: unknown, imports: FileImports, stylesPath = '../styles'): string {
+  private classReference(value: unknown, imports: FileImports, stylesPath?: string): string {
     if (Array.isArray(value)) {
       return `[${value.map(name => this.classReference(name, imports, stylesPath)).join(', ')}]`;
     }
@@ -398,10 +466,10 @@ class SourceWriter {
       return literal(value);
     }
 
-    // Split, a class is named from a page or a layout file one folder below the shared `styles.ts`, or from the
-    // space's own `index.ts` beside it.
+    // Split, a class is named from a page, a layout or a part below the shared `styles.ts`, or from the space's own
+    // `index.ts` beside it.
     if (this.options.split) {
-      imports.local(this.relative(stylesPath), variable);
+      imports.local(stylesPath === undefined ? this.importOf('styles') : this.relative(stylesPath), variable);
     }
 
     return variable;
@@ -412,13 +480,20 @@ class SourceWriter {
    */
   private root(spec: PageSpec | LayoutSpec, type: 'PageSpec' | 'LayoutSpec', main: FileImports, path: string): string {
     const imports = this.options.split ? new FileImports() : main;
+    const [at, partsFolder] = [this.at, this.partsFolder];
+    if (this.options.split) {
+      this.at = path.slice(0, path.lastIndexOf('/'));
+      this.partsFolder = path;
+      partsOf(spec.body).forEach(part => this.parts.add(part));
+    }
 
     const { body, ...fields } = spec;
     const parts = Object.entries(fields).map(([key, value]) =>
       key === 'class' ? `class: ${this.classReference(value, imports)}` : `${keyLiteral(key)}: ${literal(value)}`
     );
-    parts.push(`body: [${body.map(child => this.element(child, imports)).join(', ')}]`);
+    parts.push(`body: [${body.map(child => this.child(child, imports)).join(', ')}]`);
     const object = `{ ${parts.join(', ')} }`;
+    [this.at, this.partsFolder] = [at, partsFolder];
 
     if (!this.options.split) {
       return object;
@@ -429,6 +504,37 @@ class SourceWriter {
     this.files[`${path}.ts`] =
       `${imports.render(this.packageName)}\n\nexport const ${variable}: ${type} = ${object};\n`;
     main.local(this.relative(`./${path}`), variable);
+
+    return variable;
+  }
+
+  /** The folder the parts of the page being written go in: `pages/monitor` beside `pages/monitor.ts`. */
+  private partsFolder = '';
+
+  /** An element where it is placed: written inline, or — one split off its file (`partsOf`) — the part it is now. */
+  private child(spec: ElementSpec, imports: FileImports): string {
+    return this.parts.has(spec) ? this.part(spec, imports) : this.element(spec, imports);
+  }
+
+  /**
+   * An element of a large page written as a file of its own — `pages/monitor/left-column.ts`, an `ElementSpec` the page
+   * or the part around it imports — each file holding few enough elements to read whole, as a project keeps its files.
+   */
+  private part(spec: ElementSpec, imports: FileImports): string {
+    const folder = this.partsFolder;
+    const path = this.freePath(`${folder}/${slugify(spec.id ?? spec.type, 'part')}`);
+    const own = new FileImports();
+    const at = this.at;
+    this.at = folder;
+    partsOf(spec.children ?? []).forEach(part => this.parts.add(part));
+    const object = this.element(spec, own);
+    this.at = at;
+
+    const variable = this.names.claim(withSuffix(camel(spec.id ?? path.slice(path.lastIndexOf('/') + 1)), 'Part'));
+    own.types.add('ElementSpec');
+    this.files[`${path}.ts`] =
+      `${own.render(this.packageName)}\n\nexport const ${variable}: ElementSpec = ${object};\n`;
+    imports.local(this.importOf(path), variable);
 
     return variable;
   }
@@ -538,7 +644,7 @@ class SourceWriter {
 
     props.push(...this.authoringFields(spec, meta, imports));
     const children =
-      spec.children && spec.children.length > 0 ? spec.children.map(child => this.element(child, imports)) : undefined;
+      spec.children && spec.children.length > 0 ? spec.children.map(child => this.child(child, imports)) : undefined;
     // `factory(children)` and `factory(content)` are two signatures, never one: content with children takes props.
     const onlyChildren = props.length === 0 && children !== undefined && content === undefined;
     if (children && !onlyChildren) {

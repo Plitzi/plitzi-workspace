@@ -54,6 +54,31 @@ describe("a task's brief", () => {
     expect(note).toContain('(whole: --json)');
   });
 
+  // A run's feed task waited on nine tasks, and its brief carried each one's notes from before it was built: 15k of 22k
+  // characters, read again every turn.
+  it('says in a line what the work tasks before it were told, each a command away', async () => {
+    const plan = benchPlan();
+    const home = plan.tasks.find(task => task.id === 't-home');
+    const book = plan.tasks.find(task => task.id === 't-book');
+    if (!home || !book) {
+      throw new Error('the bench plan has t-home and t-book');
+    }
+
+    home.findings = `GDACS answers in ~9 s. ${'Its geometry has labelled segments. '.repeat(40)}`;
+    book.findings = 'Formal, usted.';
+    const runId = await open(plan);
+    const held = await take('agent-1', 't-home');
+    await writeInCopy(held.work, 'src/space/pages/home/index.ts', 'export const home = { es: true };\n');
+    await completeTask(held.ctx, runId, 't-home');
+    await reviewTask(lead(), runId, 't-home', 'approve', []);
+
+    const brief = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 't-book')));
+    expect(brief).not.toContain('Its geometry has labelled segments');
+    expect(brief).toMatch(
+      /What the tasks it waits on were told before they were built — theirs, a command away \(plitzi task show <task>\): t-home \(\d+ characters\)/
+    );
+  });
+
   // The CLI's sanity run: a scout's brief said "Its files:" with none, how a file beyond them goes in, and to read the
   // developers' half of the run.
   it('gives research what it finds out and its scout’s half to read — never files it does not write', async () => {

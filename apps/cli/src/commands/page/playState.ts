@@ -61,6 +61,11 @@ export interface ElementState {
    * read after it said "hidden", as though the press had done nothing.
    */
   animations?: string[];
+  /**
+   * What it keeps of its own — its element state, as the dev tools read it (`window.__plitzi.element(id).state`): a
+   * plugin's camera or focus, kept there, is read; a canvas alone read "as before" after a click that flew a globe.
+   */
+  own?: string;
 }
 
 /** Run in the page, on the element: where its content is, whether it is seen, whether it takes a press. */
@@ -241,6 +246,17 @@ export const stateOf = (node: Element): ElementState => {
           : `${style.outlineWidth} ${style.outlineStyle} ${style.outlineColor}`,
       shadow: style.boxShadow
     },
+    ...((): { own?: string } => {
+      const inspector: unknown = Reflect.get(window, '__plitzi');
+      const read: unknown =
+        typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, 'element') : undefined;
+      const id = node.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el');
+      const report: unknown = typeof read === 'function' && id ? Reflect.apply(read, inspector, [id]) : undefined;
+      const own: unknown = typeof report === 'object' && report !== null ? Reflect.get(report, 'state') : undefined;
+      const said = own === undefined ? '' : JSON.stringify(own);
+
+      return said === '' || said === '{}' ? {} : { own: said.length > 160 ? `${said.slice(0, 160)}…` : said };
+    })(),
     ...(node.getAnimations().length > 0
       ? {
           animations: node

@@ -1,3 +1,4 @@
+import { sightOf, sightText } from '@plitzi/sdk-shared/devTools';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /** An element as it is asked about — by the panel, by `window.__plitzi.element()` and through it `plitzi page check`. */
@@ -20,7 +21,10 @@ export type ElementReport = {
    * read, not worked out from the template. Cut at 300 characters.
    */
   text?: string;
+  /** Whether a visitor sees its first copy — scrolling where the page lets them (`sightOf`), not only a box drawn. */
   visible: boolean;
+  /** Why no visitor sees it — clipped, under another element — or the box they scroll to see it: said when either is so. */
+  sight?: string;
   box?: { x: number; y: number; width: number; height: number };
 };
 
@@ -93,7 +97,10 @@ const bindingsOf = (element: unknown): NonNullable<ElementReport['bindings']> =>
   );
 
 /** The element by its id in whichever tree holds it — the pages', or one component's — and that component. */
-const findElement = (schema: Record<string, unknown>, id: string): { element?: unknown; inComponent?: string } => {
+export const findElement = (
+  schema: Record<string, unknown>,
+  id: string
+): { element?: unknown; inComponent?: string } => {
   const flat = recordAt(schema, 'flat');
   if (Object.hasOwn(flat, id)) {
     return { element: flat[id] };
@@ -123,12 +130,13 @@ export const elementReport = (state: unknown, id: string, document: Document): E
   const node = nodes.at(0);
   const rect = node?.getBoundingClientRect();
   const style = node ? getComputedStyle(node) : undefined;
-  const visible =
-    rect !== undefined &&
-    rect.width > 0 &&
-    rect.height > 0 &&
-    style?.display !== 'none' &&
-    style?.visibility !== 'hidden';
+  // A box drawn is not one seen: a run's panel read visible at y=614, clipped by its column under the legend.
+  const sight = node && style?.display !== 'none' && style?.visibility !== 'hidden' ? sightOf(node) : undefined;
+  const visible = sight?.seen === true;
+  const said =
+    sight === undefined || (sight.seen ? sight.scrolled === undefined : sight.why === 'no-size')
+      ? undefined
+      : sightText(sight);
   const type = recordAt(element, 'definition').type;
   const attributes = recordAt(element, 'attributes');
   const instanceOf =
@@ -148,6 +156,7 @@ export const elementReport = (state: unknown, id: string, document: Document): E
     copies: nodes.length,
     ...(shown ? { text: shown.length > TEXT_MAX ? `${shown.slice(0, TEXT_MAX)}…` : shown } : {}),
     visible,
+    ...(said === undefined ? {} : { sight: said }),
     ...(rect
       ? {
           box: {

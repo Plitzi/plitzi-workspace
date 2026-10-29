@@ -71,8 +71,13 @@ export interface FakePlatform {
     pages: Record<string, string>;
     dependencies: Record<string, string>;
     snapshots: Partial<Record<string, Record<number, { pages: Record<string, string>; description: string }>>>;
-    /** Which state its draft is in (`SpaceExport.draft`): a push takes it to the next one. */
+    /**
+     * Which state its draft is in (`SpaceExport.draft`): a push takes it to the next one — and its pages changed on the
+     * space take it on too, as an edit in the builder does (`pagesAtDraft`).
+     */
     draft: string;
+    /** The pages as they were when the draft took its name: pages that differ are a draft moved on. */
+    pagesAtDraft?: string;
     /** Whether its draft holds work of its own: a project that never had it is refused without `force`. */
     worked: boolean;
     /** Every push it took, as it arrived. */
@@ -266,6 +271,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
           shop.imports.push(sent);
           shop.worked = true;
           shop.draft = `draft-${String(shop.imports.length + 1)}`;
+          shop.pagesAtDraft = JSON.stringify(shop.pages);
           json(res, 200, { ok: true, changed: true, draft: shop.draft });
         }
       } else if (url.pathname === '/spaces/shop/export' || url.pathname === '/spaces/3/export') {
@@ -339,6 +345,16 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     server.listen(0, '127.0.0.1', () => done());
   });
 
+  /** The draft's state as its pages are now: the one it took its name at, or one past it — an edit on the space. */
+  const draftNow = (): string => {
+    const pages = JSON.stringify(platform.shop.pages);
+    platform.shop.pagesAtDraft ??= pages;
+
+    return pages === platform.shop.pagesAtDraft
+      ? platform.shop.draft
+      : `${platform.shop.draft}~${createHash('sha256').update(pages).digest('hex').slice(0, 8)}`;
+  };
+
   /** What `GET /spaces/:id/export` answers for Shop: the draft, or a published environment's snapshot. */
   const shopExport = (url: URL): { status: number; body: SpaceExport | { error: string } } => {
     const askedEnvironment = url.searchParams.get('environment') ?? 'main';
@@ -370,7 +386,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         format: 1,
         space: { id: 3, name: 'Shop', permanentUrl: 'shop' },
         version,
-        draft: snapshot ? null : platform.shop.draft,
+        draft: snapshot ? null : draftNow(),
         authoring: url.searchParams.get('source') === 'cloud' ? null : { exportName: 'shop', files: pages },
         actions: [],
         connectors: [],

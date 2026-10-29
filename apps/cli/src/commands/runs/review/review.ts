@@ -295,7 +295,10 @@ export const lookAt = (
             ...(stepsChecked && options.steps !== undefined ? ['--steps', options.steps] : []),
             ...(options.status === undefined ? [] : ['--status', String(options.status)]),
             ...also,
-            ...(options.element ?? []).flatMap(id => ['--element', id])
+            ...(options.element ?? []).flatMap(id => ['--element', id]),
+            // Where a visitor sees each part it adds, read where the check reads the page: a run's look said "0.1%
+            // differs" of a task that added a panel below its column's fold, out of every picture.
+            ...(clips.length > 0 ? ['--sight', clips.join(',')] : [])
           ]);
         // The pages only a guest opens checked as one, the rest as the look reads them — one answer.
         const checkOf = async (pages: readonly string[], also: readonly string[]) => {
@@ -533,7 +536,11 @@ export const lookAt = (
           ...(before === undefined ? { notBeside: true } : {}),
           // Set beside the run before it, and nothing of it said: that nothing moved is said, never read from silence
           // (a run's designer, at a look of its parts alone).
-          ...(before !== undefined && compared.length === 0 && movedElsewhere.length === 0 && unchanged.size === 0
+          ...(before !== undefined &&
+          compared.length === 0 &&
+          movedElsewhere.length === 0 &&
+          unchanged.size === 0 &&
+          unpictured.length === 0
             ? { besideNothing: true as const }
             : {}),
           ...(stoppedUnder.length > 0 ? { stoppedUnder } : {}),

@@ -6,6 +6,7 @@ import { targetOn } from './shot/capture';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
+import { VIEW_HEIGHT } from '../../browser';
 import { keptOutline } from '../../browser/keptBrowser';
 import { originHere } from '../../runs/copies/copyServer';
 import { projectHere } from '../project/existingProject';
@@ -417,7 +418,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
       const kept = await keptOutline(project.root, {
         url: target,
         width,
-        height: 900,
+        height: options.height ?? VIEW_HEIGHT,
         reducedMotion: true,
         ...(options.scheme ? { scheme: options.scheme } : {}),
         ...asked
@@ -441,7 +442,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
         target !== undefined
           ? await pageAnswered(browser, target, {
               width,
-              height: 900,
+              height: options.height ?? VIEW_HEIGHT,
               reducedMotion: true,
               ...(options.scheme ? { scheme: options.scheme } : {})
             })

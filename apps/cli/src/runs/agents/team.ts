@@ -528,7 +528,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
     'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. "effort": how hard it thinks — low, medium, high, xhigh, max — left out, the harness’s own (Claude Code’s effort, Codex’s reasoning effort). Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts; "min" (from 0 to its count) starts only that many with the run, the rest on demand — started when work waits for it (run watch says which), and it stops once none is left; 0, every one on demand. "session": when its agents are started again with a fresh context, always between two pieces of work (a task completed, a review decided), never in one — "task" (the default) after each one, "context" once its context passes options.freshContextAt, "keep" never: every turn reads the whole context again, so a context that grew costs on every turn after (plitzi run team set dev --session context). A task sent back is reworked in the session it was worked in (Claude Code), while that context is at most options.freshContextAt. The lead keeps its session: it is the one you talk to. "resumeSession": true resumes an agent\'s own session when it is started again after it died with a task in hand — what it knew and had not written yet kept; Claude Code alone, and not a session past a size that would cost more to read again than to start over (plitzi run team set dev --resume-session). "skill": a markdown file of the project its agents read first — what a role of your own does (plitzi run team set a11y --roles accessibility --skill .claude/skills/accessibility/SKILL.md).',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   options:
-    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said.',
+    '"designReview": how closely a designer reviews another task\'s UI — "light" (its pages at 1440 and 390, the default scheme, nothing it does not touch), "standard" (both schemes and widths, its sections against the reference; the default), "high" (every page that reads its files, against the run before it too). A review costs what it looks at. "startGraceMinutes": how long an agent just started may say nothing before the tasks it holds read \'no signal\' — 3 when not said. "launch": the harness (claude, codex, opencode) the CLI starts the agents in by itself when the run asks for one — left out, the lead starts them. "freshContextAt": the context, in tokens, past which an agent of "session": "context" is started again fresh — 250000 when not said. Set them with plitzi run team options (--launch claude …), never by hand: a run\'s copies take this file, and one written unformatted fails their checks.',
   more: 'It starts small — every agent spends tokens, and only one developer starts with the run: a second developer, a designer for the cards whose review names one, a tester for every card’s QA (its tests written by a developer that did not write it), and a scout for the research cards — each started when work waits for it. The developers on Sonnet, the others and the lead on Opus. Grow it when a job asks — you decide: more developers (plitzi run team set dev --count 3 --min 2), a second tester when reviews queue (plitzi run team set test --count 2), a writer.'
 };
 
@@ -837,6 +837,51 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
   });
 
   return { name, ...(before ? { before } : {}), after, file: TEAM_FILE };
+};
+
+/**
+ * What `run team options` changes: each option as it was said — checked here, as the file is read — or `null` to take it
+ * out of the file (the CLI's default then).
+ */
+export type TeamOptionsChange = Partial<Record<keyof TeamOptions, unknown>>;
+
+/**
+ * `plitzi run team options`: the team's options written by the CLI, never by hand — a run's lead set `options.launch`
+ * with jq, the file came out unformatted, and every task's complete failed `format` on it for an hour. Each checked as
+ * the file is read; said before and after.
+ */
+export const setTeamOptions = async (
+  root: string,
+  change: TeamOptionsChange
+): Promise<{ before: TeamOptions; after: TeamOptions; file: string; unchanged?: true }> => {
+  const team = (await readTeam(root)) ?? { version: 1, agents: [] };
+  const before: TeamOptions = team.options ?? {};
+  const merged: Record<string, unknown> = { ...before };
+  for (const [key, value] of Object.entries(change)) {
+    if (value === null) {
+      Reflect.deleteProperty(merged, key);
+    } else if (value !== undefined) {
+      merged[key] = value;
+    }
+  }
+
+  const after = optionsOf(merged);
+  const refused = Object.keys(merged).filter(key => !Object.hasOwn(after, key));
+  if (refused.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `${TEAM_FILE}: ${refused.map(key => `${key} ${JSON.stringify(merged[key])}`).join(', ')} — designReview is ${QUALITIES.join(', ')}; startGraceMinutes 1 to ${String(MAX_START_GRACE_MINUTES)}; launch ${HARNESSES.join(', ')}; freshContextAt ${String(MIN_FRESH_CONTEXT_AT)} tokens or more`
+    );
+  }
+
+  if (JSON.stringify(after) === JSON.stringify(before)) {
+    return { before, after, file: TEAM_FILE, unchanged: true };
+  }
+
+  const { options: _options, ...rest } = team;
+  await writeTeam(root, { ...rest, ...(Object.keys(after).length > 0 ? { options: after } : {}) });
+
+  return { before, after, file: TEAM_FILE };
 };
 
 /** `plitzi run team unset <name>`: one agent out of the team — or, for `lead`, the lead's model and effort. */

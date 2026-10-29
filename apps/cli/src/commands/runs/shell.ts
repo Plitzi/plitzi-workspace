@@ -21,7 +21,7 @@ import { isRunRefusal, RunRefusal } from '../../runs/core/refusal';
 import { viewTask } from '../../runs/core/taskStore';
 import { ranCommand, USAGE_OFF, usageCaller } from '../../runs/core/usage';
 import { contextNow, spentIn } from '../../runs/harness';
-import { activeRuns, loadRun } from '../../runs/run';
+import { activeRuns, loadKeptRun, loadRun, readRecord } from '../../runs/run';
 import { LEAD } from '../../runs/talk/messages';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../project/existingProject';
@@ -223,6 +223,30 @@ const proveByToken = async (ctx: RunContext): Promise<void> => {
   if (run !== undefined) {
     await prove(ctx, run);
   }
+};
+
+/**
+ * The run a command names that is over — finished and applied, its report kept — with who calls proved against the
+ * identities its records keep: what amends it (`amend.ts`). None when it names none, or one still open.
+ */
+export const finishedRun = async (ctx: RunContext, options: RunCommandOptions): Promise<string | undefined> => {
+  const runId = options.run;
+  if (runId === undefined || (await readRecord(runPaths(ctx.root, runId))) !== undefined) {
+    return undefined;
+  }
+
+  const kept = await loadKeptRun(ctx.root, runId);
+  if (!kept) {
+    return undefined;
+  }
+
+  const pending = unproved.get(ctx);
+  if (pending) {
+    pending.prove((await identify(ctx.root, kept.paths, runId, pending.claim, ctx.now())).agent);
+    unproved.delete(ctx);
+  }
+
+  return runId;
 };
 
 /** Proves who calls `ctx` on `runId`, once: a token made at an agent's first command is said to it, on stderr. */

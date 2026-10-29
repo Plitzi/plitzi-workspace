@@ -40,6 +40,7 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   comes back as the browser does — what holds across pages) (a copy beside its reference: `"ours => theirs"`, `--compare <url> --same moved,shown,enabled`); one that moves
   nothing, or otherwise than asked — than the reference's, in a copy — is sent back. A state the demo data never has is
   played into: `state <key> <json>`, `source <provider.path> <json>` for a provider's answer (a list seen filled),
+  `attribute <element>.<attribute> <json>` for one no page binds yet (a plugin's new one, drawn),
   `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
   countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor), and `as <account>
   <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` in it. What the lead told you while

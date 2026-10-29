@@ -3,7 +3,18 @@ import { readFile } from 'node:fs/promises';
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actingSteps, actStep, endsActing, givenValueIn, interactionSteps, stepText, typedKeys } from './steps';
+import {
+  actingSteps,
+  actStep,
+  copiesOn,
+  endsActing,
+  givenValueIn,
+  interactionSteps,
+  playedOn,
+  sizeChange,
+  stepText,
+  typedKeys
+} from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -94,6 +105,21 @@ describe('a step another account plays, and an action', () => {
     expect(await actStep(refused.page, { kind: 'action', action: 'crate-hide', input: {} }, 2)).toEqual({
       problem: 'Step 3: action crate-hide answered 403: Only the host hides a crate'
     });
+  });
+
+  // A tester verified a render action no page used yet with a probe of its own: the step runs it the way a render does.
+  it('runs a render action the way a page’s render does, asking for its render way in', async () => {
+    const { page, asked } = pageAnswering(200, { runId: 'r3', status: 'completed', output: { items: 3 } });
+    expect(await actStep(page, { kind: 'action', action: 'tornadoes-feed', input: {}, render: true }, 0)).toEqual({
+      answer: '{"items":3}'
+    });
+    expect(asked[0]).toEqual({
+      path: '/_action',
+      body: JSON.stringify({ actionId: 'tornadoes-feed', input: {}, trigger: 'render' })
+    });
+    expect(parseSteps(`render tornadoes-feed '{}'`, 500)).toEqual([
+      { kind: 'action', action: 'tornadoes-feed', input: {}, render: true }
+    ]);
   });
 
   it('plays the step on the account’s own page, opened where this one is, and says one it could not', async () => {
@@ -230,5 +256,68 @@ describe('a field typed into', () => {
   it('replaces what it held — and an empty text empties it', () => {
     expect(typedKeys('8')).toEqual([{ press: 'ControlOrMeta+A' }, { type: '8' }]);
     expect(typedKeys('')).toEqual([{ press: 'ControlOrMeta+A' }, { press: 'Backspace' }]);
+  });
+});
+
+// A step whose element never answered threw out of `page check --steps`: a run's look printed a TimeoutError's stack,
+// then compared nothing.
+describe('a step that never answers, played before a page is read', () => {
+  it('is a step that did not happen, said in a line', async () => {
+    const fake = {
+      waitForSelector: () => Promise.reject(new Error('Timeout 10000ms exceeded.\n  waiting for locator'))
+    };
+    // The fake answers what this step calls of a page, and nothing else a page has.
+    const page = fake as unknown as BrowserPage;
+
+    expect(await playedOn(page, [{ kind: 'wait-for', target: '#size-wall' }])).toEqual({
+      problem: 'Step 1 (wait-for #size-wall) did not happen: Timeout 10000ms exceeded.'
+    });
+  });
+});
+
+// A layer toggle that grew the page was said "it opened undefined, pictured alone after it".
+describe('a click that changes the picture’s size', () => {
+  /** A PNG's header as far as its size: the signature, the IHDR chunk's length and name, then width and height. */
+  const png = (width: number, height: number): Uint8Array => {
+    const bytes = new Uint8Array(24);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(16, width);
+    view.setUint32(20, height);
+
+    return bytes;
+  };
+
+  it('opened the part pictured when one was waited for, and resized the page otherwise', () => {
+    expect(sizeChange(png(1440, 900), png(1440, 900), false)).toBeUndefined();
+    expect(sizeChange(png(1440, 900), png(300, 476), true)).toEqual({ opened: true });
+    expect(sizeChange(png(1440, 2092), png(1440, 1800), false)).toEqual({ resized: '1440x2092 → 1440x1800' });
+  });
+});
+
+// A tester's `click section-header-root` pressed the first of several section headers, and its toggle test ran on the
+// wrong panel: nothing said the name matched more than one.
+describe('a click on a name several copies carry', () => {
+  /** A page as far as a click meets it: its elements by how many copies the name has, a click that lands. */
+  const pageWith = (copies: number) => {
+    const element = { count: () => Promise.resolve(1), click: () => Promise.resolve() };
+    const page = {
+      url: () => 'http://127.0.0.1:8080/',
+      locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
+      evaluate: (fn: unknown) => Promise.resolve(fn === copiesOn ? copies : undefined),
+      on: () => undefined,
+      off: () => undefined,
+      waitForTimeout: () => Promise.resolve()
+    };
+
+    // The fake answers what a click calls of a page, and nothing else a page has.
+    return page as unknown as BrowserPage;
+  };
+
+  it('says which it pressed, and how to name another', async () => {
+    expect(await actStep(pageWith(3), { kind: 'click', target: 'section-header-root' }, 0)).toEqual({
+      answer:
+        'section-header-root is on the page 3 times: this pressed the first a visitor sees — section-header-root:2 … section-header-root:last names another'
+    });
+    expect(await actStep(pageWith(1), { kind: 'click', target: 'section-header-root' }, 0)).toBeUndefined();
   });
 });

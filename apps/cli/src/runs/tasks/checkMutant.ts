@@ -3,7 +3,9 @@ import path from 'node:path';
 
 import { linesOf } from './checkBefore';
 import { findTask } from './common';
-import { neverRan } from './neverRan';
+import { neverRan, portBusy } from './neverRan';
+import { scriptsOf } from '../../commands/project/verify';
+import { projectRun } from '../../scaffold/packageManager';
 import { checkAcceptance } from '../copies/acceptance';
 import { SERVED_STATUSES } from '../copies/preview';
 import { cloneFiles, isCopied, projectFiles, readOptional } from '../core/files';
@@ -95,11 +97,31 @@ export const checkMutant = async (
   /** One change or several — a behaviour the code holds in two places breaks only with both changed. */
   mutations: readonly Mutation[],
   /** The acceptance's lines to run, by their place (1 the first): all of them when left out. */
-  only: readonly number[] = []
+  only: readonly number[] = [],
+  /**
+   * The project's own tests run too, a line of their own (`--tests`): what a line a reviewer judges — "mapped from the
+   * member code, tested" — leans on, which a tester had to reason out with a probe of its own.
+   */
+  { tests = false }: { tests?: boolean } = {}
 ): Promise<{ task: string; mutations: Mutation[]; lines: LineMutated[] }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
-  const task = linesOf(findTask(loaded, taskId), only);
-  const view = await viewTask(loaded.paths, task);
+  const asked = linesOf(findTask(loaded, taskId), only);
+  const view = await viewTask(loaded.paths, asked);
+  const testScript = tests ? (await scriptsOf(view.paths.work)).test : undefined;
+  if (tests && testScript === undefined) {
+    throw new RunRefusal(
+      'invalid',
+      `${taskId}'s project has no test script to run on the mutant (package.json "test")`,
+      {
+        task: taskId
+      }
+    );
+  }
+
+  const task =
+    testScript === undefined
+      ? asked
+      : { ...asked, acceptance: [...asked.acceptance, { said: 'The project’s tests', check: projectRun('test') }] };
   if (!SERVED_STATUSES.includes(view.state.status)) {
     throw new RunRefusal(
       'invalid',
@@ -208,17 +230,52 @@ export const failedNames = (output: readonly string[]): string[] => [
 /** What a failure printed, as a review reads it: how many tests failed and each by name, then its last lines. */
 export const failureText = (output: readonly string[], last: number): string => {
   const names = failedNames(output);
-  const tail = output.filter(line => !FAILED_TEST.test(line)).slice(-last);
+  const asserted = assertionsOf(output);
+  const tail = output.filter(line => !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line)).slice(-last);
 
-  return [...(names.length > 0 ? [`${String(names.length)} failed — ${names.join(' · ')}`] : []), ...tail].join(' ⏎ ');
+  return [
+    ...(names.length > 0 ? [`${String(names.length)} failed — ${names.join(' · ')}`] : []),
+    ...asserted.map(message => `asserted: ${message}`),
+    ...tail.filter(line => !asserted.some(message => line.includes(message)))
+  ].join(' ⏎ ');
 };
+
+/**
+ * What an assertion said when it failed — node's `AssertionError [ERR_ASSERTION]: no spike`, an `Error: …`: the line a
+ * tester tells two asserts of one test apart by. The tail of node:test's failure is the error's fields
+ * (`expected: true, operator: '==', diff: 'simple' }`), and a tester made a second mutant to find which one caught it.
+ */
+const ASSERTION = /^\s*(?:AssertionError(?: \[ERR_ASSERTION\])?|Error|TypeError|RangeError): (.+)$/;
+
+/** The fields node prints of an assertion's error, after its message: nothing a review reads. */
+const ASSERTION_FIELD = /^\s*(?:generatedMessage|code|actual|expected|operator|diff): |^\s*\}\s*$/;
+
+/** How many assertions' messages a failure says: the first few, each once. */
+const ASSERTIONS_SAID = 3;
+
+/** A matcher's own words (`expect(received).toEqual(expected)`): the same for every assert, telling none apart. */
+const MATCHER = /^expect\(/;
+
+const assertionsOf = (output: readonly string[]): string[] =>
+  [
+    ...new Set(
+      output.flatMap(line => {
+        const message = ASSERTION.exec(line)?.[1]?.trim();
+
+        return message === undefined || MATCHER.test(message) ? [] : [message];
+      })
+    )
+  ].slice(0, ASSERTIONS_SAID);
 
 /**
  * What a line says of the mutant: it catches it, lets it pass, fails already on the copy, breaks — the mutant does not
  * run — or could not answer.
  */
 export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'broken' | 'unanswered' =>
-  line.copy.unanswered === true || line.mutant.unanswered === true
+  line.copy.unanswered === true ||
+  line.mutant.unanswered === true ||
+  portBusy(line.copy.output) ||
+  portBusy(line.mutant.output)
     ? 'unanswered'
     : !line.copy.ok
       ? 'fails'

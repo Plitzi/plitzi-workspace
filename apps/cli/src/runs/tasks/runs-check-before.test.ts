@@ -294,6 +294,30 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     );
   });
 
+  // A tester could not tell which of two asserts in one node:test case caught a mutant: its tail was the error's fields.
+  it('says what each failed assertion said, and leaves out the fields node prints after it', () => {
+    const output = [
+      '✖ each storm runs in time order (1.2ms)',
+      '  AssertionError [ERR_ASSERTION]: no spike: CHAMPI [125.5, 30.1] at 2026-10-22T18Z',
+      '      at TestContext.<anonymous> (src/functions/hazards/sample.test.ts:88:12)',
+      '    generatedMessage: false,',
+      "    code: 'ERR_ASSERTION',",
+      '    actual: false,',
+      '    expected: true,',
+      "    operator: '==',",
+      "    diff: 'simple'",
+      '  }'
+    ];
+
+    expect(failureText(output, 2)).toBe(
+      [
+        '1 failed — each storm runs in time order',
+        'asserted: no spike: CHAMPI [125.5, 30.1] at 2026-10-22T18Z',
+        '      at TestContext.<anonymous> (src/functions/hazards/sample.test.ts:88:12)'
+      ].join(' ⏎ ')
+    );
+  });
+
   it('is refused for a change that names no one place, and a file the copy has not', async () => {
     const plan = benchPlan();
     plan.tasks[3].acceptance = [{ said: 'About is there', check: 'test -f src/space/pages/about.ts' }];
@@ -311,6 +335,29 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     );
     expect((await refusal(mutant('../outside.ts', 'x'))).message).toContain('is no file of t-about');
     expect((await refusal(mutant('src/space/pages/none.ts', 'x'))).message).toContain('is no file of t-about');
+  });
+
+  // A tester could not run the project's tests on a mutant: a line a reviewer judges leans on them, with no command.
+  it('runs the project’s own tests on the mutant too, with --tests — a line of their own', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = ['Its country is mapped from the member code, tested'];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const code = 'GBR';\n");
+    const mutant = () =>
+      checkMutant(about.ctx, runId, 't-about', [{ file: 'src/space/pages/about.ts', from: 'GBR', to: 'NLD' }], [], {
+        tests: true
+      });
+
+    expect((await refusal(mutant())).message).toContain('has no test script to run on the mutant');
+    await writeInCopy(
+      about.work,
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { test: 'grep -q GBR src/space/pages/about.ts' } })}\n`
+    );
+
+    const { lines } = await mutant();
+    expect(lines.map(line => [line.said, caughtBy(line)])).toEqual([['The project’s tests', 'catches']]);
   });
 });
 

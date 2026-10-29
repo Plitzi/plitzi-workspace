@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { namedNotClosed, notOpen, openBacklog, stackableBacklog } from './backlog';
 import { elementFileNotices } from './elementFiles';
-import { estimate, pacedEstimate } from './estimate';
+import { estimate, pacedEstimate, withPace } from './estimate';
 import { expectationNotices, notFoundNotices } from './expectations';
 import { inventoryLeftOut, inventoryProblems } from './inventory';
 import { unmeasuredNotices } from './measuredValues';
@@ -217,11 +217,22 @@ export const checkPlan = async (
     );
   }
 
-  untested.forEach(({ task, why }) =>
+  // Tasks that write their tests themselves, as their files say: said once, as what the plan does — told to name their
+  // test files, which they did, a run's scout read the same advice six times with no way to clear it.
+  const own = untested.flatMap(each => ('own' in each ? [`${each.task} (${each.own.join(', ')})`] : []));
+  if (own.length > 0) {
     notices.push(
-      `"${task}" gets no task of tests: ${why}. Name its test file among its own "files" ("files": [..., "src/x.test.ts"]: it writes its tests itself), or in a task of tests of yours ("testsOf": ["${task}"], "files": ["visual/x.spec.ts"]) — or say "tests": false — so that none is said, not missed`
-    )
-  );
+      `Each writes its tests itself, as its files name them — no task of tests by another: ${own.join(', ')}`
+    );
+  }
+
+  untested.forEach(each => {
+    if ('why' in each) {
+      notices.push(
+        `"${each.task}" gets no task of tests: ${each.why}. Name its test file among its own "files" ("files": [..., "src/x.test.ts"]: it writes its tests itself), or in a task of tests of yours ("testsOf": ["${each.task}"], "files": ["visual/x.spec.ts"]) — or say "tests": false — so that none is said, not missed`
+      );
+    }
+  });
   // A stage is stacked on a team already at work: its size was said at the open, a stage of one fix read "1 task for 7
   // agents — a smaller team does it for less".
   notices.push(
@@ -666,10 +677,11 @@ export const checkPlan = async (
       .filter(file => !holder.has(file))
       .sort(),
     created: created.sort(),
-    estimate: {
-      ...estimate(tasks, agentsAsked, takersOf(team)),
-      ...(await pacedEstimate(root, tasks, agentsAsked, takersOf(team)))
-    },
+    estimate: withPace(
+      estimate(tasks, agentsAsked, takersOf(team)),
+      agentsAsked,
+      await pacedEstimate(root, tasks, agentsAsked, takersOf(team))
+    ),
     notices
   };
 };

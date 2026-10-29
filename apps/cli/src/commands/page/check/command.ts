@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { projectMark } from '@plitzi/sdk-shared/project';
 
-import { keptToReference, keptToTask } from './apart';
+import { keptToExpectations, keptToReference, keptToTask } from './apart';
 import { checkAt } from './inspect';
 import { logMark, serverLoggedIssues } from './serverLog';
 import { moduleSpace, projectSpace } from './space';
@@ -83,6 +83,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
         }
       : {}),
     elements: options.element ?? [],
+    ...(options.sight && options.sight.length > 0 ? { sight: options.sight } : {}),
     ...(options.status === undefined ? {} : { status: options.status }),
     ...(options.redirectsTo === undefined ? {} : { redirectsTo: options.redirectsTo }),
     ...(steps.length > 0 ? { steps } : {})
@@ -118,7 +119,10 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  const kept = await keptToReference(project.root, await keptToTask(project.root, reports));
+  const expected = new Set((options.expect ?? []).map(each => each.element));
+  const kept = (await keptToReference(project.root, await keptToTask(project.root, reports))).map(report =>
+    expected.size > 0 ? keptToExpectations(report, expected) : report
+  );
   console.log(options.json ? JSON.stringify(kept) : kept.map(report => reportText(report, asked)).join('\n'));
   const failed = kept.filter(report => !report.ok);
   // Nothing answered where the page was asked: no page was read, so none is said wrong.
@@ -195,7 +199,7 @@ export const checkRoutes = async (
     themes?: boolean;
     /** The space authored anew, never read back from an earlier check (`--fresh`). */
     fresh?: boolean;
-  } & Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns'> &
+  } & Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns' | 'height'> &
     Visitor
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
@@ -246,7 +250,8 @@ export const checkRoutes = async (
               ...(options.presence ? { presence: true } : {}),
               ...(options.timezone ? { timezone: options.timezone } : {}),
               ...(options.conditions ? { conditions: options.conditions } : {}),
-              ...(options.standIns ? { standIns: true } : {})
+              ...(options.standIns ? { standIns: true } : {}),
+              ...(options.height === undefined ? {} : { height: options.height })
             },
             authored,
             options.asked,
@@ -271,7 +276,8 @@ export const checkRoutes = async (
           // Light and dark, once a page, at its first width: said on its first report, failing it.
           options.themes
             ? themeIssues(browser, where.origin, route, options.widths[0] ?? 1440, {
-                standIns: options.standIns === true
+                standIns: options.standIns === true,
+                ...(options.height === undefined ? {} : { height: options.height })
               })
             : Promise.resolve([])
         ]);

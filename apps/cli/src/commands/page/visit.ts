@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { audienceAt, openPage } from '@plitzi/sdk-authoring';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 
-import { launchBrowser, openProjectPage, projectSettling } from '../../browser';
+import { launchBrowser, openProjectPage, projectSettling, VIEW_HEIGHT } from '../../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
 import { noPageAt, pageFor } from './check/space';
 import { conditionsText } from '../../browser/conditions';
@@ -24,9 +24,6 @@ import type { Schema } from '@plitzi/sdk-shared';
  * the visitor's options (the browser's conditions only on two, the time zone on five, an account on six).
  */
 
-/** The viewport's height every page is read at, unless a command asks otherwise: said with what it read. */
-export const VIEW_HEIGHT = 900;
-
 /** The visitor: its viewport, theme, zone, whether it takes part in channels, its browser — and others' pictures. */
 export interface VisitView extends Omit<ProjectView, 'height'> {
   height?: number;
@@ -35,11 +32,14 @@ export interface VisitView extends Omit<ProjectView, 'height'> {
 }
 
 /** The visitor's view a page command's flags ask for (`withVisitorOptions`): its zone, its channels, its browser. */
-export const visitViewOf = (options: VisitorOptions): Pick<VisitView, 'timezone' | 'presence' | 'conditions'> => {
+export const visitViewOf = (
+  options: VisitorOptions
+): Pick<VisitView, 'timezone' | 'presence' | 'conditions' | 'height'> => {
   const conditions = conditionsOf(options);
 
   return {
     ...(options.timezone ? { timezone: options.timezone } : {}),
+    ...(options.height === undefined ? {} : { height: options.height }),
     ...(options.presence ? { presence: true } : {}),
     ...(Object.keys(conditions).length > 0 ? { conditions } : {})
   };

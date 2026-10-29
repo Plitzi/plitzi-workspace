@@ -10,8 +10,8 @@ import { pushSpaceOf } from './pushSpace';
 import { PackError, packPlugin } from '../../pack';
 import { packSource } from '../../pack/source';
 import { projectEntries, projectFromSpace } from '../../scaffold/fromSpace';
-import { ACTIONS_DIR, DATA_DIR, FUNCTIONS_DIR, SPACE_DIR, SPACE_ENTRY } from '../../scaffold/paths';
-import { connectToSpace } from '../account/account';
+import { DATA_DIR, FUNCTIONS_DIR, SPACE_DIR, SPACE_ENTRY } from '../../scaffold/paths';
+import { apiFor, connectToSpace, signedIn } from '../account/account';
 import { functionsChange, pushFunctionsOf } from '../functions/functions';
 import { elementFolders, fileNameOf } from '../plugin/packPlugin';
 import { chooseTarget, listCdns, uploadZip } from '../plugin/uploadPlugin';
@@ -19,7 +19,15 @@ import { requestExport, versionLabel } from '../project/createFrom';
 import { findProject, readPackageJson } from '../project/existingProject';
 import { PUBLIC_ASSETS_DIR, projectAssetFiles, projectDataFiles } from '../project/projectFiles';
 import { projectFormatter } from '../project/projectFormatter';
-import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from '../project/spaceOrigin';
+import {
+  digest,
+  digestsOf,
+  givenFiles,
+  isSpaceFile,
+  readOrigin,
+  SPACE_FOLDERS,
+  writeOrigin
+} from '../project/spaceOrigin';
 import { DEFAULT_RUNTIME_ENTRY, pushRuntimeOf } from '../runtime/runtime';
 import { askChecks } from '../shared/askChecks';
 import { sayDryRun } from '../shared/dryRun';
@@ -134,13 +142,6 @@ const closureOf = async (
     return undefined;
   }
 };
-
-/** The folders the space part is made of: the pages, the actions, the connectors. */
-const SPACE_FOLDERS = [`${SPACE_DIR}/`, `${ACTIONS_DIR}/`, 'src/connectors/'];
-
-/** The space is code and JSON: a folder's `.gitkeep`, or a note beside its files, is never part of it. */
-const isSpaceFile = (file: string): boolean =>
-  SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file);
 
 /**
  * What the project can send, and whether each changed since the project last had the space. The plugins are grouped as
@@ -315,6 +316,25 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   return chosen;
 };
 
+/**
+ * The connection a push goes through: to the project's own space when it says one (`.plitzi/space.json`) — signed in,
+ * never asked which space, the session reaching every space its person can — else the space the CLI works in. A dry run
+ * of a project made with `create --from` opened the browser to choose a space before it said there was nothing to push.
+ */
+const pushConnection = async (
+  options: AccountOptions,
+  origin: SpaceOrigin | undefined
+): Promise<Connection | undefined> => {
+  if (!origin) {
+    return connectToSpace(options, 'to push to');
+  }
+
+  const api = await apiFor({ ...options, api: options.api ?? origin.api });
+  const signed = api === undefined ? undefined : await signedIn(api, `to push to ${origin.space.name}`);
+
+  return signed && { ...signed, space: origin.space };
+};
+
 /** A plugin packed as `plitzi plugin pack` packs it, and uploaded and installed as `plitzi plugin upload` does. */
 const pushPlugin = async (
   root: string,
@@ -438,6 +458,22 @@ const recordPush = async (
       files[file] = digest(bytes);
     }
   });
+  // A push of the space makes the project's own files what the space is: recorded as the project has them, never as the
+  // export writes the draft back — laid out its own way, a pull after a push called five files "changed here, kept".
+  if (parts.has('space')) {
+    const here = (await Promise.all(SPACE_FOLDERS.map(folder => filesUnder(root, folder)))).flat().filter(isSpaceFile);
+    for (const file of Object.keys(files).filter(isSpaceFile)) {
+      Reflect.deleteProperty(files, file);
+    }
+
+    for (const file of here) {
+      const digests = await digestsOf(root, file, format);
+      if (digests) {
+        files[file] = digests.formatted;
+      }
+    }
+  }
+
   // What went up to the CDN is what the space serves now: recorded as the project has it, at the address it took.
   for (const file of Object.keys(uploaded)) {
     const here = await digestsOf(root, file, format);
@@ -488,18 +524,9 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
     return;
   }
 
-  const connection = await connectToSpace({ ...options, api: options.api ?? origin?.api }, 'to push to');
+  const connection = await pushConnection(options, origin);
   const space = connection?.space;
   if (!connection || !space) {
-    return;
-  }
-
-  if (origin && origin.space.id !== space.id) {
-    fail(
-      `This project is ${origin.space.name}’s, and the CLI works in ${space.name}. ` +
-        'Switch to it with plitzi space use, and push again.'
-    );
-
     return;
   }
 

@@ -169,6 +169,9 @@ the component: the flow is visible in the space, and a button can do the same.
 
 - An action's param declared `number` or `boolean` arrives as one, written or bound; any other arrives as written.
 - To act when another element appears, `useElementVisible('tools')` (`@plitzi/plitzi-sdk`) — never watch classes.
+- What a visitor changes of its own view — a map's camera, the item it flew to — kept in its element state too,
+  `useElement().setElementState({ focus })`: `page play` and `page check --element` read it, where a canvas looks the
+  same to them before and after.
 - A name for screen readers is a prop of its own: declare `label`, write it as the root's `aria-label`.
 
 ## Behaving in the builder

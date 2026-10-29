@@ -43,7 +43,7 @@ export interface ProbeFindings {
    * a binding that read nothing, a field the data lacks. By id, with how many drew empty (one a list row). A run's room
    * cards read "Text" — a placeholder — where their line was bound to nothing, and every check passed.
    */
-  blank: { id: string; times: number; what: 'words' | 'picture' }[];
+  blank: { id: string; times: number; what: 'words' | 'picture' | 'mark' }[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
   brokenImages: { source: string; elementId?: string; loading?: true }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
@@ -676,16 +676,29 @@ export function probePage(input: ProbeInput): ProbeFindings {
   }
 
   // Seen and empty: what a hider takes away is not seen, so not missed.
-  const blankCounts = new Map<string, { times: number; what: 'words' | 'picture' }>();
+  const blankCounts = new Map<string, { times: number; what: 'words' | 'picture' | 'mark' }>();
   for (const node of document.querySelectorAll('[data-plitzi-empty]')) {
-    if (hiderOf(node)) {
+    // Drawn for the look alone (`decorative`, a screen reader skips it): a mark on purpose, never words missing.
+    if (hiderOf(node) || node.closest('[aria-hidden="true"]')) {
       continue;
     }
 
     const id = elementIdOf(node) ?? nameOf(node);
+    // A text with no words that draws a box — a fill, a border: a dot of colour a run made of an empty text, which reads
+    // as words missing. Said as what it is, with what to make it instead.
+    const style = getComputedStyle(node);
+    const fill = /rgba?\(([^)]+)\)/.exec(style.backgroundColor)?.[1]?.split(',');
+    const filled =
+      (fill !== undefined && (fill.length < 4 || Number.parseFloat(fill[3] ?? '1') > 0)) ||
+      (style.backgroundImage !== '' && style.backgroundImage !== 'none') ||
+      ['Top', 'Right', 'Bottom', 'Left'].some(
+        side =>
+          Number.parseFloat(style.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0 &&
+          style.getPropertyValue(`border-${side.toLowerCase()}-style`) !== 'none'
+      );
     const kept = blankCounts.get(id) ?? {
       times: 0,
-      what: node.tagName === 'IMG' ? ('picture' as const) : ('words' as const)
+      what: node.tagName === 'IMG' ? ('picture' as const) : filled ? ('mark' as const) : ('words' as const)
     };
     kept.times += 1;
     blankCounts.set(id, kept);

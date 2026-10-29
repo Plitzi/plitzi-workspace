@@ -5,6 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isTextFile } from '../../scaffold/fromSpace';
+import { ACTIONS_DIR, SPACE_DIR } from '../../scaffold/paths';
 
 import type { Formatter } from './projectFormatter';
 import type { ProjectFromSpace } from '../../scaffold/fromSpace';
@@ -54,6 +55,13 @@ const isStrings = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(entry => typeof entry === 'string');
 
 export const digest = (bytes: Uint8Array | string): string => createHash('sha256').update(bytes).digest('hex');
+
+/** The folders the space part is made of: the pages, the actions, the connectors. */
+export const SPACE_FOLDERS = [`${SPACE_DIR}/`, `${ACTIONS_DIR}/`, 'src/connectors/'];
+
+/** The space is code and JSON: a folder's `.gitkeep`, or a note beside its files, is never part of it. */
+export const isSpaceFile = (file: string): boolean =>
+  SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file);
 
 /**
  * A file of the project as a pull compares it: the digest of what the project's formatter makes of it — so a file only

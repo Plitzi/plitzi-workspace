@@ -1,14 +1,16 @@
 import { liveFindings } from './index';
+import { shellWord } from '../../commands/shared/terminal';
 import { refusedAgain } from '../agents/refusedAgain';
 import { unansweredLines } from '../copies/unansweredLines';
 import { readUsage } from '../core/usage';
 import { saidOfPlitzi } from '../report/experience';
-import { settledFindings } from '../report/settle';
+import { settledFindings } from '../report/settled';
 import { readTaskReports } from '../report/taskReports';
 import { noticesByOwner } from '../talk/notices';
 
 import type { readRunLog } from '../run';
 import type { LoadedRun } from '../run';
+import type { Finding } from './types';
 import type { Attention } from '../view/view';
 
 /**
@@ -18,6 +20,18 @@ import type { Attention } from '../view/view';
  * line that passed since — and what is Plitzi's is the run's feedback's, never the lead's to clear: a run ended
  * with ten of them standing, which read as ignored.
  */
+/** What the run's records raise now, read as `run watch` reads them: its log, its usage, what its agents said of Plitzi. */
+export const runLiveFindings = async (
+  loaded: LoadedRun,
+  log: Awaited<ReturnType<typeof readRunLog>>
+): Promise<Finding[]> =>
+  liveFindings({
+    log,
+    usage: readUsage(loaded.paths.dir),
+    // Frictions said at a complete as much as notices: two agents saying one thing is said while it can be acted on.
+    said: saidOfPlitzi((await noticesByOwner(loaded)).plitzi, await readTaskReports(loaded))
+  });
+
 export const liveAttention = async (
   loaded: LoadedRun,
   log: Awaited<ReturnType<typeof readRunLog>>,
@@ -39,18 +53,13 @@ export const liveAttention = async (
   return [
     ...refusedAgain(log, now).filter(item => !past(item.task)),
     ...unansweredLines(log),
-    ...liveFindings({
-      log,
-      usage: readUsage(loaded.paths.dir),
-      // Frictions said at a complete as much as notices: two agents saying one thing is said while it can be acted on.
-      said: saidOfPlitzi((await noticesByOwner(loaded)).plitzi, await readTaskReports(loaded))
-    })
+    ...(await runLiveFindings(loaded, log))
       .filter(finding => finding.owner !== 'plitzi' && !past(finding.task) && !told.has(finding.subject))
       .map((finding): Attention => ({
         kind: 'finding',
         subject: finding.subject,
         ...(finding.task ? { task: finding.task } : {}),
-        text: `${finding.title}${finding.fix ? ` — ${finding.fix}` : ''} · once handled: plitzi run settle ${finding.subject} --note "what you did"`,
+        text: `${finding.title}${finding.fix ? ` — ${finding.fix}` : ''} · once handled: plitzi run settle ${shellWord(finding.subject)} --note "what you did"`,
         who: 'lead'
       }))
   ];

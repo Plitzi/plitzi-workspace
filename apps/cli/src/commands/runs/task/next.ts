@@ -18,6 +18,7 @@ import { DESIGN_READING } from '../../../runs/plan/reading';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
 import { projectExec } from '../../../scaffold/packageManager';
+import { shellWord } from '../../shared/terminal';
 import { act, runOf } from '../shell';
 import { briefText, readBrief } from './brief';
 import { shownText } from './show';
@@ -92,19 +93,24 @@ export const taskNext = (
  * that, its diffs left out, each a command away (a run's review hand-off answered 15k characters, read again every turn).
  */
 export const handedShow = (shown: TaskShown): string => {
-  const whole = shownText(shown);
+  // Its acceptance is the review's lines above, each with its result: a run's hand-off said every line three times.
+  const whole = shownText(shown, false, { acceptance: false });
   if (whole.length <= LARGE_OUTPUT / 2) {
     return whole;
   }
 
-  return shownText({
-    ...shown,
-    files: shown.files.map(file =>
-      file.diff === undefined
-        ? file
-        : { file: file.file, change: file.change, withheld: file.diff.split('\n').length + (file.more ?? 0) }
-    )
-  });
+  return shownText(
+    {
+      ...shown,
+      files: shown.files.map(file =>
+        file.diff === undefined
+          ? file
+          : { file: file.file, change: file.change, withheld: file.diff.split('\n').length + (file.more ?? 0) }
+      )
+    },
+    false,
+    { acceptance: false }
+  );
 };
 
 /** The earlier reviews' notes, counted: the last one's are what this round answers. */
@@ -154,10 +160,10 @@ export const lookCommand = (task: RunTask, drawnAt: readonly string[], also: str
         ]
       : [...byVisitor].map(
           ([visitor, seen], index) =>
-            `plitzi task look ${task.id} ${seen.join(' ')}${visitorText(visitor)}${also}${index === 0 ? unfilledText : ''}`
+            `plitzi task look ${task.id} ${seen.map(shellWord).join(' ')}${visitorText(visitor)}${also}${index === 0 ? unfilledText : ''}`
         )),
     ...[...byStatus].map(
-      ([status, pages]) => `plitzi task look ${task.id} ${pages.join(' ')} --status ${String(status)}`
+      ([status, pages]) => `plitzi task look ${task.id} ${pages.map(shellWord).join(' ')} --status ${String(status)}`
     )
   ];
 };
@@ -200,11 +206,14 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
     review.precision
       ? `  Look for (${review.precision}, as the team asks — options.designReview) ${DESIGN_LOOK[review.precision]}`
       : `  Its QA: what it was asked, its checks, how it behaves (a control used there and back, a state the data opens), the code and the edge cases — what went to review is below (a file whole: plitzi task show ${review.task.id} <file> --diff)`,
-    `  Send it back only for what its title, acceptance and brief ask — what was found for it, a 'do X, not Y' — anything beyond it is plitzi run notice "…", never a round: ${review.task.acceptance.map(acceptanceText).join(' · ')}`,
+    `  Send it back only for what its title, acceptance and brief ask — what was found for it, a 'do X, not Y' — anything beyond it is plitzi run notice "…", never a round. Its acceptance${review.accepted.length > 0 ? ', as its checks measured it at complete' : ''}:`,
     // What its own checks measured at complete: the review starts from what fails, not by measuring all of it again.
-    ...review.accepted.map(
-      result => `    ${result.ok ? chalk.green('✓') : chalk.red('✗')} ${result.said}  ${chalk.dim(`[${result.check}]`)}`
-    ),
+    ...(review.accepted.length > 0
+      ? review.accepted.map(
+          result =>
+            `    ${result.ok ? chalk.green('✓') : chalk.red('✗')} ${result.said}  ${chalk.dim(`[${result.check}]`)}`
+        )
+      : review.task.acceptance.map(each => `    ☐ ${acceptanceText(each)}`)),
     ...(review.lastRound
       ? [
           chalk.yellow(

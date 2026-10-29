@@ -9,7 +9,7 @@ import { projectFormatter } from './projectFormatter';
 import { digestsOnDisk, writeOrigin } from './spaceOrigin';
 import { authorizedRequest } from '../../account/session';
 import { FUNCTIONS_DIR } from '../../scaffold/paths';
-import { signedIn } from '../account/account';
+import { signedIn, whoIs } from '../account/account';
 import { writeFunctionsState } from '../functions/functions';
 import { fail } from '../shared/terminal';
 
@@ -78,9 +78,19 @@ export const requestExport = async (
   }
 
   const said = isRecord(data) && typeof data.error === 'string' ? data.error : undefined;
+  if (status === 404) {
+    // A space that is there and not this account's reads as none: who is signed in is the way out, said — a run's
+    // lead read "Space not found", signed in as an account that was no member of the space's workspace.
+    const who = await whoIs(connection);
+
+    return {
+      ok: false,
+      error: `No space you can reach is ${name}${who.ok ? ` — you are signed in as ${who.value}` : ''}${said ? ` (the platform said: ${said})` : ''}. One of another workspace is reached signed in as one of its members: plitzi logout, then plitzi login as one.`
+    };
+  }
+
   const why: Partial<Record<number, string>> = {
-    403: `You may not take ${name} out: it takes being able to change it — its owner, an administrator or a writer.`,
-    404: said ?? `There is no space ${name} you can reach.`
+    403: `You may not take ${name} out: it takes being able to change it — its owner, an administrator or a writer.`
   };
 
   return { ok: false, error: why[status] ?? said ?? `The platform would not hand ${name} over (${String(status)}).` };

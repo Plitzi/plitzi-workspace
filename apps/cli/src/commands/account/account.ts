@@ -43,7 +43,7 @@ export const apiFor = async (options: AccountOptions): Promise<string | undefine
 };
 
 /** Who the connection signs in as, asked of the platform — which also proves the session still works. */
-const whoIs = async (connection: Connection): Promise<Outcome<string>> => {
+export const whoIs = async (connection: Connection): Promise<Outcome<string>> => {
   const answered = await authorizedRequest<{ details?: { email?: string; username?: string } }>(
     connection,
     '/auth/session'

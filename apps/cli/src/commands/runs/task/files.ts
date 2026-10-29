@@ -9,10 +9,12 @@ import {
   followWait,
   waitForFile
 } from '../../../runs/tasks';
+import { broughtText } from '../../../runs/tasks/common';
 import { act, holder, runOf } from '../shell';
 import { proposalOf } from './talk';
 import { list } from '../text';
 
+import type { Brought } from '../../../runs/tasks/common';
 import type { RunCommandOptions } from '../shell';
 import type { ProposeOptions } from './talk';
 
@@ -167,12 +169,12 @@ export const taskDiscard = (files: string[], options: RunCommandOptions): Promis
     options,
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
-      const brought = new Set<string>();
+      const brought = new Map<string, Brought>();
       const done: string[] = [];
       for (const file of files) {
         try {
           for (const each of await discardFile(ctx, runId, taskId, file)) {
-            brought.add(each);
+            brought.set(each.file, each);
           }
         } catch (error) {
           // What went back before it stays back: said with the refusal, never a list read as all or nothing.
@@ -188,10 +190,10 @@ export const taskDiscard = (files: string[], options: RunCommandOptions): Promis
         done.push(file);
       }
 
-      return { files, brought: [...brought].filter(each => !files.includes(each)).sort() };
+      return { files, brought: [...brought.values()].filter(each => !files.includes(each.file)) };
     },
     discarded =>
-      `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.brought.length > 0 ? ` Also brought in, approved since your copy was made: ${discarded.brought.join(', ')}` : ''}`
+      `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.brought.length > 0 ? ` Also brought in, ${broughtText(discarded.brought)}` : ''}`
   );
 
 /** `plitzi task propose --file <file> --change "…"`: a change asked of a shared file — one integration task applies them all. */

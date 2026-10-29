@@ -183,19 +183,30 @@ export type ActionTriggerParams = {
   name?: string;
 };
 
-/** Ceilings for one run. A per-action value may only tighten the deployment's own. */
+/**
+ * Ceilings for one run. A per-action value may only tighten the deployment's own. Left out, the deployment's — on
+ * Plitzi's the defaults below.
+ */
 export type ActionLimits = {
+  /**
+   * How long a run may take: 10 000 ms by default. A render action that feeds a page — an `apiContainer` with
+   * `runtime: 'server'` — has the page's own ceiling too, and the page's wins: each section is cut at 5 000 ms by
+   * default (`rsc.elementTimeoutMs` of the deployment), and arrives empty. Budget a render under the smaller: a run's
+   * developer budgeted 8.5 s against the 10 s, and the section came out empty.
+   */
   timeoutMs?: number;
-  /** Ceiling for a streaming run, which is allowed to be longer-lived than a request/response one. */
+  /** Ceiling for a streaming run, which is allowed to be longer-lived than a request/response one: 120 000 ms by default. */
   streamTimeoutMs?: number;
+  /** How many steps one run may take: 50 by default. */
   maxNodes?: number;
+  /** How many requests one run may make: 20 by default. */
   maxRequests?: number;
   /**
    * Bytes one outbound response may carry back into a flow.
    *
    * A timeout does not cover this: a backend answering a gigabyte quickly is a fast way to take a process down,
    * and every other ceiling here is about how LONG a run may take rather than how much it may hold. Counted per
-   * response rather than per run, because it exists to stop one answer from being unbounded.
+   * response rather than per run, because it exists to stop one answer from being unbounded. 5 000 000 by default.
    */
   maxResponseBytes?: number;
 };
@@ -554,6 +565,12 @@ export type ActionCallRequest = {
   input?: Record<string, unknown>;
   /** Replaces the derived single-flight key, so a caller can make a retry provably the same run. */
   idempotencyKey?: string;
+  /**
+   * `render`: run the way a page's render runs it — its `render` way in, its checks — answered by a development server
+   * alone (`devMode`): a render action no page uses yet, tried with its real fetch, hosts and limits (`page play`'s
+   * `render` step). Anywhere else, refused: a call is a call.
+   */
+  trigger?: 'render';
 };
 
 export type ActionCallResult = {

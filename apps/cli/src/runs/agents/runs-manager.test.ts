@@ -332,9 +332,12 @@ describe('a task that holds its own test file', () => {
       { ...plan.tasks[0], id: 't-shows', files: ['src/functions/shows.ts', 'src/functions/shows.test.ts'] }
     ];
     const { notices } = await checkPlanFile(lead(), await bench.writePlan(plan));
-    const said = notices.find(notice => notice.includes('"t-shows"')) ?? '';
-    expect(said).toContain('it writes its tests itself (src/functions/shows.test.ts)');
-    expect(said).not.toContain("another task's");
+    const said = notices.find(notice => notice.includes('t-shows')) ?? '';
+    expect(said).toBe(
+      'Each writes its tests itself, as its files name them — no task of tests by another: t-shows (src/functions/shows.test.ts)'
+    );
+    // What it already does is no advice: a run's scout was told six times to name the test file its tasks named.
+    expect(said).not.toContain('Name its test file');
   });
 });
 

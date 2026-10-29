@@ -10,3 +10,14 @@ const BROKEN =
 /** Whether what a check printed says the code it ran never ran: a mutant's own error, or a before that does not serve. */
 export const neverRan = (output: readonly string[] | undefined): boolean =>
   (output ?? []).some(each => BROKEN.test(each));
+
+/**
+ * A server that could not take its port — another process held it: the machine's at that moment, never the code's. A
+ * run's tester read "the code before does not run (a file it added is still imported without it)" of a before whose
+ * webServer said `cannot bind port 55659: already in use`.
+ */
+const PORT_BUSY = /\bEADDRINUSE\b|cannot bind port \d+|address already in use|port \d+ (?:is )?already in use/i;
+
+/** Whether what a check printed says its server could not take its port: the machine's, answered by a try again. */
+export const portBusy = (output: readonly string[] | undefined): boolean =>
+  (output ?? []).some(each => PORT_BUSY.test(each));

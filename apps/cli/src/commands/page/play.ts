@@ -14,6 +14,7 @@ import { otherPageAt, pageAnswered } from './shot/remote';
 import { actStep, playingSteps, stepText } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
+import { VIEW_HEIGHT } from '../../browser';
 import { keptSession } from '../../browser/keptBrowser';
 import { loadTiming, loadTimingText } from '../../browser/loadTiming';
 import { originHere } from '../../runs/copies/copyServer';
@@ -425,6 +426,7 @@ const stateText = (state: ElementState): string =>
     ...Object.entries(state.aria).map(([name, value]) => `${name} ${value}`),
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
     ...(state.rows === undefined ? [] : [`${String(state.rows)} rows`]),
+    ...(state.own === undefined ? [] : [`its own state ${state.own}`]),
     ...(state.text
       ? [
           `"${state.text.length > TEXT_SHOWN ? `${state.text.slice(0, TEXT_SHOWN)}…" (--json has its ${String(state.text.length)} characters)` : `${state.text}"`}`
@@ -651,7 +653,7 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       // 11–19 s a call (58 plays). Not kept, it is opened here as before.
       const view = {
         width,
-        height: 900,
+        height: options.height ?? VIEW_HEIGHT,
         reducedMotion: false,
         ...(options.scheme ? { scheme: options.scheme } : {})
       };

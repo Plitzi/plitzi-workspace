@@ -277,6 +277,10 @@ export type ActionCallInput<Spec extends ActionSpec> =
  * ```
  *
  * An action that only runs one of the space's tasks (a function of `src/functions/`) is a `taskAction`.
+ *
+ * How long it may take: 10 s a run (`limits.timeoutMs`, which may only tighten) — and, as a `render` that feeds a page,
+ * the page's own 5 s a section (the deployment's `rsc.elementTimeoutMs`), which wins: past it the section arrives empty.
+ * A render that waits on a slow source answers from what it kept, and refreshes it after.
  */
 export const defineAction = <const Spec extends ActionSpec>(spec: Spec): TypedActionEntry<ActionCallInput<Spec>> => {
   const triggers = Array.isArray(spec.trigger) ? spec.trigger : [spec.trigger];

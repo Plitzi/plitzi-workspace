@@ -1,4 +1,5 @@
 import type { PartCompared } from './compare';
+import type { Clicked } from './steps';
 import type { BrowserPage, Scheme } from '../../../browser';
 import type { BrowserConditions } from '../../../browser/conditions';
 import type { FieldFill } from '../../../options';
@@ -131,6 +132,13 @@ export interface ShotReport {
   frames?: { count: number; every: number; moving: RegionChange[]; slight: RegionChange[]; still: string[] };
   /** How many arrivals that wait for the scroll (`on: 'view'` or `'scroll'`) the whole-page picture shows as they end. */
   settled?: number;
+  /**
+   * The page is locked to its screen (`documentScroll: 'locked'`): pictured as the screen it is, never unrolled — a HUD
+   * whose log scrolls in its panel read as one spilling over a 2,092 px page. Its height, said.
+   */
+  screen?: number;
+  /** A canvas of it — a map, a chart — still changing when it was pictured: what it draws may be half drawn. */
+  canvasMoving?: true;
   /** Pictures of this page not drawn when it was taken. */
   unloaded?: number;
   /** Embeds from another site below the first screen: blank in a whole-page picture, which the browser draws only on screen. */
@@ -141,7 +149,7 @@ export interface ShotReport {
    * With `click`: each element clicked and the share of the picture that changed after it — or that it opened the part
    * (`--within`), pictured alone after it (`opened`); nothing changed in the part, what changed outside it (`outside`).
    */
-  clicked?: { target: string; changed: number; opened?: true; outside?: string[] }[];
+  clicked?: Clicked[];
   /** With `steps`: each picture the script took, and the share of it that changed since the one before. */
   steps?: { label: string; changed: number; outside?: string[] }[];
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
@@ -209,6 +217,10 @@ export interface Taken {
   unloaded: number;
   undrawn: string[];
   sentTo?: string;
+  /** Locked to its screen, and so pictured as the screen: its height (`ShotReport.screen`). */
+  screen?: number;
+  /** A canvas of it was still changing when it was pictured (`canvasDrawn`): what it draws may be half drawn. */
+  canvasMoving?: true;
 }
 
 /** A region moves when more than this share of it changed between two frames: below is anti-aliasing and carets. */

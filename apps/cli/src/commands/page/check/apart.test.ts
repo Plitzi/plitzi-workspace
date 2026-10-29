@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { keptToParts, keptToReference } from './apart';
+import { keptToExpectations, keptToParts, keptToReference } from './apart';
 import { answeredImage, HOST_TROUBLE, throttledImage } from './inspect';
 import { runPaths } from '../../../runs/core/paths';
 import { keptName } from '../../../runs/plan/reference';
@@ -41,7 +41,11 @@ describe('a page checked in a task’s copy', () => {
       parts
     );
 
-    expect(kept).toMatchObject({ ok: true, issues: [], apart: ['home-video-main’s label wraps'] });
+    expect(kept).toMatchObject({
+      ok: true,
+      issues: [],
+      apart: [{ elementId: 'home-video-main', message: 'home-video-main’s label wraps' }]
+    });
   });
 
   it('still fails on its own elements, and on what no element names', () => {
@@ -56,6 +60,53 @@ describe('a page checked in a task’s copy', () => {
 
     expect(own.ok).toBe(false);
     expect(page.ok).toBe(false);
+  });
+});
+
+// A pulled Tremor's empty list and hidden texts failed `page check / --expect layer-quakes` on a line its task met: every
+// page line of the plan was rewritten as `--json | jq`.
+describe('a page checked for what it is expected to show', () => {
+  it('is held to its expectations, the rest of the page said beside it', () => {
+    const page = {
+      ...report([
+        { code: 'element-empty', message: 'text-36 shows no words', elementId: 'text-36', width: 1440 },
+        { code: 'element-hidden', message: 'target is on the page but not visible', elementId: 'target', width: 1440 }
+      ]),
+      consoleErrors: ['ResizeObserver loop limit exceeded']
+    };
+    const held = keptToExpectations(page, new Set(['layer-quakes']));
+
+    expect(held).toMatchObject({
+      ok: true,
+      issues: [],
+      consoleErrors: [],
+      besides: [
+        'text-36 shows no words',
+        'target is on the page but not visible',
+        'console: ResizeObserver loop limit exceeded'
+      ]
+    });
+  });
+
+  it('still fails on an expectation missed, and on a finding of the element it expects', () => {
+    const missed = keptToExpectations(
+      report([
+        {
+          code: 'expected-text',
+          message: '--expect layer-quakes: not on the page',
+          elementId: 'layer-quakes',
+          width: 1440
+        }
+      ]),
+      new Set(['layer-quakes'])
+    );
+    const own = keptToExpectations(
+      report([{ code: 'element-empty', message: 'storm-name shows no words', elementId: 'storm-name', width: 1440 }]),
+      new Set(['storm-name'])
+    );
+
+    expect(missed.ok).toBe(false);
+    expect(own.ok).toBe(false);
   });
 });
 

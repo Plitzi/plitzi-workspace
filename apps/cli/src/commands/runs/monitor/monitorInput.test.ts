@@ -326,3 +326,37 @@ describe('what the terminal sends', () => {
     });
   });
 });
+
+// The person watching a run set the team's size in another terminal: the panel raises and lowers it.
+describe("the monitor's team", () => {
+  const withTeam = nothing({
+    data: {
+      view: { tasks: [] },
+      feed: [],
+      team: [
+        { name: 'dev', roles: ['developer'], count: 2, min: 2 },
+        { name: 'test', roles: ['tester'], count: 1, min: 0 }
+      ]
+    } as unknown as Monitored // The team alone: nothing else of a run is read by these keys.
+  });
+
+  it('opens on r, moves with ↑ ↓, and asks one more or one fewer of the entry chosen — its min no more than its count', () => {
+    const open = press(initialUi('simple'), 'r', withTeam).ui;
+    expect(open.dialog).toEqual({ kind: 'team', at: 0 });
+
+    expect(press(open, '+', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 3 }]);
+    expect(press(open, '-', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 1, min: 1 }]);
+
+    const tester = press(open, 'down', withTeam).ui;
+    expect(tester.dialog).toEqual({ kind: 'team', at: 1 });
+    const none = press(tester, '-', withTeam);
+    expect(none.effects).toEqual([]);
+    expect(none.ui.flash).toContain('test is one already');
+    expect(press(tester, 'escape', withTeam).ui.dialog).toBeUndefined();
+  });
+
+  it('says so when the team names no agent', () => {
+    const empty = nothing({ data: { view: { tasks: [] }, feed: [], team: [] } as unknown as Monitored });
+    expect(press(initialUi('simple'), 'r', empty).ui.flash).toContain('the team names no agent');
+  });
+});

@@ -4,7 +4,7 @@ import { SPEND_SORTS } from './monitorSpend';
 
 import type { Need } from './monitorAttention';
 import type { PaletteAction, PaletteItem } from './monitorDialogs';
-import type { Area, Hit, MonitorUi } from './monitorModel';
+import type { Area, Dialog, Hit, MonitorUi } from './monitorModel';
 import type { PreviewState } from './monitorPreview';
 import type { Monitored } from '../../../runs/view/monitor';
 
@@ -26,7 +26,9 @@ export type Effect =
   | { kind: 'start-preview' }
   | { kind: 'stop-preview' }
   | { kind: 'open-preview' }
-  | { kind: 'theme' };
+  | { kind: 'theme' }
+  /** An entry of the team set to this many (and its min no more than that): what `run team set --count` writes. */
+  | { kind: 'team-count'; name: string; count: number; min?: number };
 
 export interface Step {
   ui: MonitorUi;
@@ -163,6 +165,10 @@ const act = (ui: MonitorUi, action: PaletteAction, shown: Shown): Step => {
       return still({ ...closed, showApproved: !closed.showApproved, selected: 0 });
     case 'theme':
       return { ui: closed, effects: [{ kind: 'theme' }] };
+    case 'team':
+      return (shown.data?.team.length ?? 0) > 0
+        ? still({ ...closed, dialog: { kind: 'team', at: 0 } })
+        : flashed(closed, 'the team names no agent — plitzi run team set <name> --roles … adds one');
     case 'quit':
       return quitting(closed, shown);
   }
@@ -230,6 +236,10 @@ export const onKey = (
 
   if (dialog !== undefined && (key?.name === 'escape' || key?.name === 'return' || text === '?')) {
     return still({ ...ui, dialog: undefined });
+  }
+
+  if (dialog?.kind === 'team') {
+    return inTeam(ui, dialog, text, key, shown);
   }
 
   if (key?.name === 'q') {
@@ -314,6 +324,10 @@ export const onKey = (
       return still(followedNext(ui, data?.agents.map(agent => agent.agent) ?? []));
     case 'e':
       return flashed({ ...ui, sideWide: !ui.sideWide }, ui.sideWide ? 'sidebar as it was' : 'sidebar widened');
+    case 'r':
+      return (data?.team.length ?? 0) > 0
+        ? still({ ...ui, dialog: { kind: 'team', at: 0 } })
+        : flashed(ui, 'the team names no agent — plitzi run team set <name> --roles … adds one');
     case 'y': {
       const task = data ? listedTasks(data.view.tasks, ui.showApproved).at(ui.selected) : undefined;
 
@@ -322,6 +336,42 @@ export const onKey = (
     default:
       return still(ui);
   }
+};
+
+/**
+ * The team, raised and lowered from the panel: ↑ ↓ an entry, + one more of it, − one fewer — its min no more than its
+ * count — written as `run team set` writes it. The person watching the run set the team's size in another terminal.
+ */
+const inTeam = (
+  ui: MonitorUi,
+  dialog: Extract<Dialog, { kind: 'team' }>,
+  text: string | undefined,
+  key: Key | undefined,
+  shown: Shown
+): Step => {
+  const team = shown.data?.team ?? [];
+  const at = Math.min(dialog.at, Math.max(0, team.length - 1));
+  if (key?.name === 'down' || key?.name === 'up') {
+    const moved = team.length === 0 ? 0 : (at + (key.name === 'down' ? 1 : team.length - 1)) % team.length;
+
+    return still({ ...ui, dialog: { kind: 'team', at: moved } });
+  }
+
+  const entry = team.at(at);
+  const delta = text === '+' || text === '=' ? 1 : text === '-' || text === '_' ? -1 : 0;
+  if (!entry || delta === 0) {
+    return still(ui);
+  }
+
+  const count = entry.count + delta;
+  if (count < 1) {
+    return flashed(ui, `${entry.name} is one already — plitzi run team unset ${entry.name} takes it out of the team`);
+  }
+
+  return {
+    ui: { ...ui, flash: `${entry.name}: ${String(entry.count)} → ${String(count)}` },
+    effects: [{ kind: 'team-count', name: entry.name, count, ...(entry.min > count ? { min: count } : {}) }]
+  };
 };
 
 /** A mouse press, at a cell counted from 0: what the panel becomes — `undefined` when it lands on nothing it answers. */

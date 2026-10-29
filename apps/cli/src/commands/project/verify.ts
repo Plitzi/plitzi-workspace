@@ -115,6 +115,18 @@ const FAILING = /^\s*(✗|✘|✖|×|- |FAIL\b|not ok\b)|\berror\b|Error:/;
  */
 export const isNotice = (line: string): boolean => /\.env not found|Continuing without it/.test(line);
 
+/** The most of one line a step's output keeps: past it, a JSON answer on one line is said by its size. */
+const LINE_CHARS = 400;
+
+/**
+ * One line of a step's output as it is kept: whole, or its start and how long it ran — a few lines are counted, and a
+ * `space lint --json` of one 70k-character line was printed whole by `task run`.
+ */
+export const cutLine = (line: string): string =>
+  line.length <= LINE_CHARS
+    ? line
+    : `${line.slice(0, LINE_CHARS)}… (${String(line.length)} characters on this line — the log holds it whole)`;
+
 /**
  * A step's output, as much as says why it failed: its lines that hold anything, the last `TAIL` of them — and, cut, the
  * ones that say what failed first, in their place. A page check says its failure above what it read (`·` lines): its
@@ -123,7 +135,7 @@ export const isNotice = (line: string): boolean => /\.env not found|Continuing w
 export const tail = (output: string): string[] => {
   const lines = output
     .split('\n')
-    .map(line => line.trimEnd())
+    .map(line => cutLine(line.trimEnd()))
     .filter(line => line.trim() !== '' && !isNotice(line));
   if (lines.length <= TAIL) {
     return lines;

@@ -155,12 +155,31 @@ export interface Monitored {
   freshAt: ReadonlyMap<string, number>;
   /** Every run of the project, this one among them: which is shown, and that there are others. */
   runs: { runId: string; status: string }[];
+  /** The team's entries as `.plitzi/team.json` says them: how many of each, how many start with the run (`r`). */
+  team: TeamEntry[];
   /**
    * The stage the run is at, when stages were stacked on it (`run open <stage>` on the open run): its name, its goal — a stage stacked before
    * the log kept it has none, and the run's whole goal is said — and how many stages the run has, its first included.
    */
   stage?: { name: string; goal?: string; of: number };
 }
+
+/** One entry of the team, as the monitor raises and lowers it: its name, its roles, how many, how many at the start. */
+export interface TeamEntry {
+  name: string;
+  roles: string[];
+  count: number;
+  min: number;
+}
+
+/** The team's entries as the monitor shows them: what `run team set` reads, an entry's count 1 when it says none. */
+export const teamEntries = (team: Awaited<ReturnType<typeof readTeam>>): TeamEntry[] =>
+  (team?.agents ?? []).map(each => ({
+    name: each.name,
+    roles: [...each.roles],
+    count: each.count ?? 1,
+    min: each.min ?? each.count ?? 1
+  }));
 
 /** Each task's story, read off the run's log once. */
 export const storiesOf = (log: readonly Record<string, unknown>[]): Partial<Record<string, TaskStory>> => {
@@ -695,6 +714,7 @@ export const monitorRun = async (ctx: RunContext, runId: string, feedLength = 40
         .map(each => [each.agent, team?.options?.freshContextAt ?? FRESH_CONTEXT_AT] as const)
     ),
     runs,
+    team: teamEntries(team),
     ...(stage ? { stage } : {})
   };
 };

@@ -10,14 +10,15 @@ import {
   openBacklog,
   readBacklog
 } from '../../../runs/plan/backlog';
+import { amendKeptRun } from '../../../runs/report/amend';
 import { writeFeedback } from '../../../runs/report/feedback';
 import { loadRun } from '../../../runs/run';
 import { proposalsOf } from '../../../runs/talk/agreements';
-import { noticeRun, noticeText } from '../../../runs/talk/notices';
+import { logNotice, noticeRun, noticeText, withdrawNotice } from '../../../runs/talk/notices';
 import { answerProposal, proposeChange } from '../../../runs/talk/proposals';
 import { askLead, messageTasks, readInbox, tellLead, tellLeadAbout, unheardOf } from '../../../runs/talk/talk';
 import { blockTask, followWait, noteTask } from '../../../runs/tasks';
-import { act, either, holder, projectCaller, runIfOpen, runOf, taskOf } from '../shell';
+import { act, either, finishedRun, holder, projectCaller, runIfOpen, runOf, taskOf } from '../shell';
 import { exchangeLines, messageLines } from '../text';
 
 import type { BLOCK_NEEDS } from '../../../runs/core/model';
@@ -384,12 +385,43 @@ export const taskTell = (text: string, options: TellOptions): Promise<void> =>
  */
 export const runNotice = (
   text: string,
-  options: RunCommandOptions & { on?: string; plitzi?: PlitziHow }
+  options: RunCommandOptions & { on?: string; plitzi?: PlitziHow; withdraw?: string }
 ): Promise<void> =>
   act(
     options,
-    async (ctx): Promise<{ notice: Notice } | { kept: BacklogItem }> => {
+    async (
+      ctx
+    ): Promise<
+      { notice: Notice } | { kept: BacklogItem } | { withdrawn: Notice } | { amended: string; dir: string }
+    > => {
+      // A run over — finished and applied — amended as its lead reads its report: a notice added, or one withdrawn.
+      const finished = await finishedRun(ctx, options);
+      if (finished !== undefined) {
+        return {
+          ...(await amendKeptRun(ctx, finished, async kept => {
+            if (options.withdraw !== undefined) {
+              const notice = await withdrawNotice(ctx, kept, options.withdraw, text);
+
+              return `withdrew ${notice.id} (${notice.text}): ${text.trim()}`;
+            }
+
+            const notice = await logNotice(ctx, kept, text, {
+              ...(options.on ? { on: options.on } : {}),
+              ...(options.plitzi === undefined ? {} : { plitzi: options.plitzi })
+            });
+
+            return `noticed${notice.about === 'plitzi' ? ` of Plitzi (${notice.how ?? ''})` : ''} ${noticeText(notice)}`;
+          }).then(({ said, dir }) => ({ amended: said, dir })))
+        };
+      }
+
       const runId = await runIfOpen(ctx, options);
+      if (runId !== undefined && options.withdraw !== undefined) {
+        return {
+          withdrawn: await withdrawNotice(ctx, await loadRun(ctx, runId, { anyVersion: true }), options.withdraw, text)
+        };
+      }
+
       if (runId !== undefined) {
         return {
           notice: await noticeRun(ctx, runId, text, {
@@ -400,10 +432,19 @@ export const runNotice = (
         };
       }
 
+      if (options.withdraw !== undefined) {
+        throw new RunRefusal(
+          'invalid',
+          `No run is open to withdraw ${options.withdraw} from: a finished run's is withdrawn with --run <run>`
+        );
+      }
+
+      // A run's lead read its report after --apply and found more of Plitzi's: it goes in that run's report, never in a
+      // report of its own — `plitzi feedback` is for Plitzi used without a run.
       if (options.plitzi !== undefined) {
         throw new RunRefusal(
           'invalid',
-          'With no run open, what is wrong in Plitzi is a report of its own: plitzi feedback writes it, with the versions in it'
+          'No run is open: what a run met of Plitzi goes in that run’s report — plitzi run notice --plitzi <how> "…" --run <run>, after its finish too. Plitzi used without a run says it with plitzi feedback'
         );
       }
 
@@ -417,6 +458,14 @@ export const runNotice = (
     },
     // Said to whoever noticed it: an agent is told to go on with its task; the lead, that the next run takes it up.
     said => {
+      if ('amended' in said) {
+        return `Amended the run after its finish: ${said.amended} — its feedback written again, its report and data say it (${said.dir})`;
+      }
+
+      if ('withdrawn' in said) {
+        return `Withdrew ${said.withdrawn.id} (${said.withdrawn.text}): kept in the run's log as withdrawn, and out of its finish, report and feedback`;
+      }
+
       if ('kept' in said) {
         return `No run is open: kept ${said.kept.id} in ${BACKLOG_FILE} — ${said.kept.text}; a plan takes it up (a task's closes: ["${said.kept.id}"])`;
       }

@@ -13,6 +13,7 @@ import { PREVIEW_LINES, previewControl } from './monitorPreview';
 import { monitorScreen, paletteFor, waitingScreen } from './monitorScreen';
 import { THEMES, themeOfBackground } from './monitorTheme';
 import { readLaunch } from '../../../runs/agents/launch';
+import { setTeamAgent, TEAM_FILE } from '../../../runs/agents/team';
 import { runPaths } from '../../../runs/core/paths';
 import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
 import { recentMoments } from '../../../runs/harness/moments';
@@ -401,6 +402,24 @@ export const runMonitor = async (
         copyText(asked.text);
       } else if (asked.kind === 'theme') {
         themeName = themeName === 'dark' ? 'light' : 'dark';
+      } else if (asked.kind === 'team-count') {
+        // The person's own terminal: what `run team set --count` writes, said, and the panel read again with it.
+        setTeamAgent(ctx.root, asked.name, {
+          count: asked.count,
+          ...(asked.min === undefined ? {} : { min: asked.min })
+        })
+          .then(() => {
+            ui = { ...ui, flash: `${asked.name}: ${String(asked.count)} now — ${TEAM_FILE}` };
+
+            return look();
+          })
+          .catch((error: unknown) => {
+            ui = {
+              ...ui,
+              flash: `${asked.name} not changed: ${error instanceof Error ? error.message : String(error)}`
+            };
+            drawSoon();
+          });
       } else if (last && asked.kind === 'start-preview') {
         preview.start(last.view.runId, last.view.previewPort);
       } else if (last && asked.kind === 'stop-preview') {

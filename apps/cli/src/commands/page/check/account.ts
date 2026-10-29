@@ -5,6 +5,7 @@ import { openPage } from '@plitzi/sdk-authoring';
 import { projectSettling } from '../../../browser';
 import { runProjectOf } from '../../../runs/core/paths';
 import { projectSettings } from '../../project/projectSettings';
+import { shellWord } from '../../shared/terminal';
 
 import type { BrowserPage } from '../../../browser';
 
@@ -190,5 +191,5 @@ export const landingProblem = (
 
   return account
     ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
-    : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env — or \`--redirects-to ${landed}\` when that is what it is meant to do`;
+    : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${shellWord(pathname)} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env — or \`--redirects-to ${landed}\` when that is what it is meant to do`;
 };

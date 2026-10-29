@@ -6,7 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { RUN_REPORTS_DIR } from '../../scaffold/paths';
 import { readJson, readOptional, writeJson } from '../core/files';
 import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from '../core/model';
-import { ID, runPaths, runsDir } from '../core/paths';
+import { ID, runPaths, runPathsIn, runsDir } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
 import { withLock } from '../core/store';
 import { appendLog, readTasks } from '../core/taskStore';
@@ -174,6 +174,30 @@ export const loadRun = async (ctx: RunContext, runId: string, options: LoadOptio
   }
 
   // In the plan's order, the tasks the CLI made after: what `run status` and the report list them by.
+  const order = new Map(plan.tasks.map((task, index) => [task.id, index]));
+  const tasks = (await readTasks(paths)).sort(
+    (a, b) => (order.get(a.id) ?? order.size) - (order.get(b.id) ?? order.size) || a.id.localeCompare(b.id)
+  );
+
+  return { paths, plan, record, tasks };
+};
+
+/**
+ * A run finished and applied, read from the records its report keeps (`.plitzi/plitzi-reports/runs/<run>/records/`) —
+ * what amends it after the finish: none when the project keeps no report of it.
+ */
+export const loadKeptRun = async (root: string, runId: string): Promise<LoadedRun | undefined> => {
+  if (!ID.test(runId)) {
+    return undefined;
+  }
+
+  const paths = runPathsIn(root, path.join(root, RUN_REPORTS_DIR, runId, 'records'));
+  const record = await readRecord(paths);
+  const plan = await readJson(paths.plan, isRunPlan, 'a run’s plan (plan.json)').catch(() => undefined);
+  if (!record || !plan) {
+    return undefined;
+  }
+
   const order = new Map(plan.tasks.map((task, index) => [task.id, index]));
   const tasks = (await readTasks(paths)).sort(
     (a, b) => (order.get(a.id) ?? order.size) - (order.get(b.id) ?? order.size) || a.id.localeCompare(b.id)

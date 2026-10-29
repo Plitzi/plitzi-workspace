@@ -20,7 +20,7 @@ import { stackableBacklog } from '../plan/backlog';
 import { isResearch, roleOf } from '../plan/spike';
 import { chainMinutes, urgencies } from '../plan/urgency';
 import { readHistory } from '../report/history';
-import { settledFindings } from '../report/settle';
+import { settledFindings } from '../report/settled';
 import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, runIds } from '../run';
 import { proposalsOf } from '../talk/agreements';
 import { LEAD, messagesOf, standingText, unreadFor } from '../talk/messages';

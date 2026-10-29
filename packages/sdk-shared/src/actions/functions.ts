@@ -64,6 +64,13 @@ export const isFunctionsDefinitionFile = (file: string): boolean =>
  */
 export const exportsByDefault = (text: string): boolean => /^\s*export\s+default\b|\bas\s+default\s*[,}]/m.test(text);
 
+/**
+ * Whether a file of `functions/` is a test's — a test (`*.test.ts`, `*.spec.ts`) or what only tests read
+ * (`*.fixture.json`): the project's, never the space's. A run's push sent 33 files to the platform, a third of them
+ * tests and their fixtures; a working copy is read without them.
+ */
+export const isFunctionsTestPath = (path: string): boolean => /\.(test|spec|fixture)\.[A-Za-z0-9]+$/.test(path);
+
 /** How a reader reaches a directory, whatever it runs on: Node's `fs`, a test's map. */
 export type FunctionsSourceReader = {
   list: (dir: string) => Promise<{ name: string; directory: boolean }[]>;
@@ -72,7 +79,7 @@ export type FunctionsSourceReader = {
 
 /**
  * A space's functions as a directory holds them — every source file under `root`, by its path there (`lib/feed.ts`),
- * `node_modules` and dotted folders skipped. What a project's working copy is read as, by the CLI and by a server
+ * `node_modules`, dotted folders and the tests' files skipped. What a project's working copy is read as, by the CLI and by a server
  * loading its own; a directory that is not there reads as none.
  */
 export const readFunctionsSource = async (
@@ -94,7 +101,7 @@ export const readFunctionsSource = async (
         if (entry.name !== 'node_modules' && !entry.name.startsWith('.')) {
           await walk(path);
         }
-      } else if (isFunctionsSourcePath(path)) {
+      } else if (isFunctionsSourcePath(path) && !isFunctionsTestPath(path)) {
         files[path] = await reader.read(`${root}/${path}`);
       }
     }

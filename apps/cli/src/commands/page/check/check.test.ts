@@ -24,6 +24,7 @@ import {
   renderedRowsInPage,
   serverErrors,
   meantOnPage,
+  copiesOf,
   expectationMissed,
   wrappedLabelsInPage
 } from '.';
@@ -496,6 +497,39 @@ describe('an expectation held to every copy of its element', () => {
     expect(expectationMissed({ element: 'show-plate-room', text: 'Night Drive' }, plates, [])).toBeUndefined();
     // Shown at all is shown: a cut copy is there to see.
     expect(expectationMissed({ element: 'show-plate-room', text: '' }, plates, [])).toBeUndefined();
+  });
+
+  // A run's cyclone panel, clipped by its 495 px column and under the legend, passed --expect storm-name~ARNAB: a copy
+  // drawn is not one seen.
+  it('is met by a copy a visitor sees, and says what keeps one drawn out of sight', () => {
+    const drawn = {
+      present: 2,
+      drawn: [
+        { id: 'storm-name', text: 'ARNAB', cut: false, index: 0 },
+        { id: 'storm-name', text: 'VANCE', cut: false, index: 1 }
+      ]
+    };
+    const copies = copiesOf(
+      drawn,
+      new Map([
+        [0, { seen: false as const, why: 'covered' as const, by: 'legend-area' }],
+        [1, { seen: true as const, scrolled: 'left-column' }]
+      ])
+    );
+
+    expect(copies).toEqual({
+      present: 2,
+      shown: ['VANCE'],
+      cut: [],
+      scrolled: { 0: 'left-column' },
+      unseen: [{ text: 'ARNAB', why: 'under legend-area, drawn over every part of it in sight' }]
+    });
+    expect(expectationMissed({ element: 'storm-name', text: 'ARNAB' }, copies, [])).toBe(
+      '--expect storm-name~ARNAB: storm-name holds it, and no visitor sees it — under legend-area, drawn over every part of it in sight'
+    );
+    expect(expectationMissed({ element: 'storm-name', text: 'VANCE' }, copies, [])).toBeUndefined();
+    // None seen is none shown: a guest's "!" holds over a copy no visitor sees.
+    expect(expectationMissed({ element: 'storm-name', text: 'ARNAB', absent: true }, copies, [])).toBeUndefined();
   });
 
   // A scout could not hold a guest's Sign in to its `?next=`: page check read words alone, page play never failed.

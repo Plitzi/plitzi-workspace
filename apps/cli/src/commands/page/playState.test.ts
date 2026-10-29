@@ -75,3 +75,26 @@ describe('page play, in the page', () => {
     expect(stateOf(tracks)).toMatchObject({ text: 'Juno Nova', rows: 2 });
   });
 });
+
+// A row's click flew a globe, and play read the canvas "as before": nothing let a check read a plugin's own view.
+describe('an element’s own state, in the page', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, '__plitzi');
+    document.body.innerHTML = '';
+  });
+
+  it('is read as the dev tools keep it — a plugin’s camera — and left out when it keeps none', () => {
+    document.body.innerHTML = '<div data-plitzi-el="globe"><canvas></canvas></div>';
+    const globe = document.querySelector('[data-plitzi-el="globe"]');
+    if (!globe) {
+      throw new Error('no globe');
+    }
+
+    const states: Record<string, unknown> = { globe: { camera: { lng: 81.8, lat: 16.4 } } };
+    Reflect.set(window, '__plitzi', { element: (id: string) => ({ id, state: states[id] }) });
+    expect(stateOf(globe).own).toBe('{"camera":{"lng":81.8,"lat":16.4}}');
+
+    states.globe = {};
+    expect(stateOf(globe).own).toBeUndefined();
+  });
+});

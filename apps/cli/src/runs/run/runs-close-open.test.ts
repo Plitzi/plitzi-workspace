@@ -85,4 +85,32 @@ describe("the lead's close", () => {
     expect(log).toContain('"note":"In flight when it was told: nothing written"');
     await writeSummary(lead(), 'es-launch', 'summary.md', LEAD_SAID);
   });
+
+  // A run's lead settled two lines it had read failing: their task's next check passed between, and it was told they
+  // were no finding.
+  it('settles a line that failed again and again by its name, though its task has passed since', async () => {
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.filter(task => task.id === 't-home');
+    await openRun(lead(), await bench.writePlan(plan));
+    const { dir } = runPaths(bench.root, 'es-launch');
+    const line = 'The three layer toggles are in the header at both widths';
+    const check = (at: string, ok: boolean) =>
+      `${JSON.stringify({ at, by: 'agent-1', action: 'check', task: 't-home', ok, failed: ok ? [] : [`acceptance — ${line}`] })}\n`;
+    for (const at of ['10:00', '10:05', '10:10']) {
+      await fs.appendFile(path.join(dir, 'log.jsonl'), check(`2026-10-24T${at}:00.000Z`, false));
+    }
+
+    await fs.appendFile(path.join(dir, 'log.jsonl'), check('2026-10-24T10:20:00.000Z', true));
+
+    const settled = await settleFinding(
+      lead(),
+      'es-launch',
+      `line:t-home:${line}`,
+      'Amended: the column is hidden at 390'
+    );
+    expect(settled.text).toContain('past already, settled as you said');
+    expect((await refusal(settleFinding(lead(), 'es-launch', `line:t-home:${line}`, 'again'))).message).toContain(
+      'is settled already'
+    );
+  });
 });

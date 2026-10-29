@@ -4,14 +4,15 @@ import path from 'node:path';
 import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { noticeRun, noticesOf } from './notices';
-import { buildReport, reportText } from '../report/report';
+import { logNotice, noticeRun, noticesOf, withdrawNotice } from './notices';
+import { amendKeptRun } from '../report/amend';
+import { buildReport, keepSummary, reportText } from '../report/report';
 import { loadRun, readRunLog } from '../run';
 import { readInbox } from './talk';
 import { REPORTS_DIR } from '../../scaffold/paths';
 import { qualityFilesFor } from '../../scaffold/quality';
 import { benchPlan, makeBench } from '../../tests/runProject';
-import { runSteps } from '../../tests/runSteps';
+import { LEAD_SAID, runSteps } from '../../tests/runSteps';
 import { finishRun } from '../copies/merge';
 import { addBacklogItem, BACKLOG_FILE, backlogOfPlan, closeBacklogItem, openBacklog } from '../plan/backlog';
 import { extendRun } from '../plan/extend';
@@ -56,7 +57,27 @@ describe('run notice', () => {
 
     const text = reportText(await buildReport(lead(), loaded), undefined);
     expect(text).toContain('## Noticed, owned by no task');
-    expect(text).toContain('- The footer’s legal line wraps at 390 — lead');
+    expect(text).toContain('- n2: The footer’s legal line wraps at 390 — lead');
+  });
+
+  // A run's lead filed one of the experiment's own setup, Carlos said to leave it out, and nothing could withdraw it.
+  it('withdraws a notice by its name, saying why — the lead any, an agent its own — and leaves it out of the report', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    await noticeRun(menu.ctx, runId, 'The stats grid leaves an empty cell at 1440', { task: 't-menu' });
+    await noticeRun(lead(), runId, 'Linking the workspace CLI needs symlinks', { plitzi: 'no-way' });
+    const loaded = await loadRun(lead(), runId);
+
+    expect((await refusal(withdrawNotice(bench.agent('agent-1'), loaded, 'n2', 'not mine'))).message).toContain(
+      "Notice n2 is lead's"
+    );
+    expect((await refusal(withdrawNotice(lead(), loaded, 'n9', 'none'))).message).toContain('its notices are n1 to n2');
+    await withdrawNotice(lead(), loaded, 'n2', "The experiment's setup, not Plitzi's");
+
+    expect((await noticesOf(loaded)).map(each => each.id)).toEqual(['n1']);
+    expect((await refusal(withdrawNotice(lead(), loaded, 'n2', 'again'))).message).toContain('withdrawn already');
+    // A notice after it keeps its own name: withdrawn is not forgotten.
+    expect((await noticeRun(lead(), runId, 'The footer wraps')).id).toBe('n3');
   });
 
   it('refuses one that says nothing, and one from an agent of no team', async () => {
@@ -82,7 +103,7 @@ describe('the run’s feedback to Plitzi', () => {
 
     expect(finished.backlog).toEqual(['b-1']);
     // Said apart at the finish: what is Plitzi's is never listed as the project's next stage.
-    expect(finished.noticed).toEqual(['The footer’s legal line wraps at 390 — lead']);
+    expect(finished.noticed).toEqual(['n2: The footer’s legal line wraps at 390 — lead']);
     expect(finished.findings.filter(each => each.kind === 'said').map(each => [each.owner, each.title])).toEqual([
       ['plitzi', 'page measure reads no position, and every agent wrote a script for it']
     ]);
@@ -92,6 +113,47 @@ describe('the run’s feedback to Plitzi', () => {
     expect(feedback).toContain('**page measure reads no position, and every agent wrote a script for it**');
     expect(feedback).not.toContain('The footer’s legal line');
     expect(feedback).not.toContain(bench.root);
+
+    // Read after --apply, the report missed things: its lead adds one and takes one back, in the run's own report — a
+    // run's lead wrote three by hand into its feedback, which neither report.md nor report.json carried.
+    expect((await refusal(amendKeptRun(bench.agent('agent-1'), runId, () => Promise.resolve('')))).message).toContain(
+      'its lead, or its person, amends it'
+    );
+    await amendKeptRun(lead(), runId, async kept => {
+      const notice = await logNotice(lead(), kept, 'space push functions sends every test and fixture', {
+        plitzi: 'wrong'
+      });
+
+      return `noticed ${notice.id}`;
+    });
+    await amendKeptRun(lead(), runId, async kept => {
+      await withdrawNotice(lead(), kept, 'n1', 'Not Plitzi’s: the experiment’s setup');
+
+      return 'withdrew n1';
+    });
+    const amended = await fs.readFile(feedbackFile(bench.root, runId), 'utf-8');
+    expect(amended).toContain('**space push functions sends every test and fixture**');
+    expect(amended).not.toContain('page measure reads no position');
+    const dir = path.dirname(feedbackFile(bench.root, runId));
+    const report = await fs.readFile(path.join(dir, 'report.md'), 'utf-8');
+    expect(report.match(/## Amended after the finish/g)).toHaveLength(1);
+    expect(report).toContain('lead: noticed n3');
+    expect(report).toContain('lead: withdrew n1');
+    const data = JSON.parse(await fs.readFile(path.join(dir, 'report.json'), 'utf-8')) as { amendments: unknown[] };
+    expect(data.amendments).toHaveLength(2);
+
+    // Its summary written again: in its place in the report, every other section as it was.
+    await amendKeptRun(lead(), runId, async kept => {
+      await keepSummary(lead(), kept, '# Done\n\nThe push sent its tests too.\n', LEAD_SAID);
+
+      return 'wrote the summary again';
+    });
+    const summed = await fs.readFile(path.join(dir, 'report.md'), 'utf-8');
+    expect(summed).toContain('## The lead’s summary\n\n### Done\n\nThe push sent its tests too.');
+    expect(summed).not.toContain('_None was written');
+    expect(summed.match(/## The lead’s summary/g)).toHaveLength(1);
+    expect(summed).toContain('## Noticed, owned by no task');
+    expect(await fs.readFile(feedbackFile(bench.root, runId), 'utf-8')).toContain('The push sent its tests too.');
   });
 
   // The feedback a run left ended in a blank line, and the project's format check refused the next run.

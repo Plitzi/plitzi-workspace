@@ -89,7 +89,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, clock, tick, action, as, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -110,7 +110,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, clock, tick, action, as, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames, separated by ";"'
     });
   });
 
@@ -230,6 +230,18 @@ describe('a wait-for with its time', () => {
     expect(parseSteps('wait-for room-player', 0)).toEqual([{ kind: 'wait-for', target: 'room-player' }]);
     expect(parseSteps('wait-for room-player 90s', 0)).toEqual({
       problem: expect.stringContaining('wait-for takes an element and how long it waits at most, up to 60 s') as unknown
+    });
+  });
+});
+
+// A plugin's attribute no page bound yet could not be given a value for a look: only the page's state could.
+describe('an attribute step', () => {
+  it('names an element and its attribute, and takes the value as JSON', () => {
+    expect(parseSteps(`attribute map.storms '[{"id":"ARNAB"}]'`, 500)).toEqual([
+      { kind: 'attribute', key: 'map.storms', value: [{ id: 'ARNAB' }] }
+    ]);
+    expect(parseSteps('attribute map true', 500)).toMatchObject({
+      problem: expect.stringContaining('<element>.<attribute>') as string
     });
   });
 });

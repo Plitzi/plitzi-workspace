@@ -30,6 +30,8 @@ export interface CheckOptions extends VisitorOptions {
   state?: boolean | string;
   /** Elements by their ids (`--element` once each): what each reads, its own state, whether it is on screen. */
   element?: string[];
+  /** Elements by their ids (`--sight a,b`): where a visitor sees each — in sight, once a box is scrolled, or not. */
+  sight?: string[];
   /** The HTML the server sent, held against the page once hydrated. */
   ssr?: boolean;
   /** One element clicked, by its id, once the page has settled: what changed because of it, or that nothing did. */
@@ -105,6 +107,8 @@ export interface CheckReport {
    * of itself (data that varies is cut on purpose); `--expect "<id>~<text>"` holds one whole.
    */
   cut?: string[];
+  /** Its canvases painted one colour — a map or a chart drawing nothing but its ground: said, failing nothing. */
+  oneColour?: { id: string; colour: string }[];
   /**
    * How long its main thread was busy in long tasks while it loaded — said past a quarter of a second, never a problem
    * of itself: a development build runs long, and a visitor feels it as a page slow to answer.
@@ -113,7 +117,12 @@ export interface CheckReport {
   /** Owed controls out of use on purpose — transparent and taking no press: an arrow at its end. Said, not a problem. */
   outOfUse: string[];
   /** Checked in a task's copy: findings on elements other tasks write, said and failing nothing (`apart.ts`). */
-  apart?: string[];
+  apart?: { elementId: string; message: string }[];
+  /**
+   * With `--expect`: what else the page has — its findings, its console's errors, refused requests — said, failing
+   * nothing: the check holds what it expects (`apart.ts`), and `page check` without `--expect` holds the page whole.
+   */
+  besides?: string[];
   /** In a run that keeps a reference: labels wrapped as the original wraps them, said and failing nothing (`apart.ts`). */
   asTheOriginal?: string[];
   consoleErrors: string[];
@@ -129,6 +138,8 @@ export interface CheckReport {
   lists: Record<string, ListRows>;
   /** With `--expect`: each expectation the page met, as `<id>~<text>` — said, so a pass is seen to be checked. */
   expected?: string[];
+  /** With `--sight`: where a visitor sees each element asked — in sight, once a box is scrolled, or why not at all. */
+  sights?: Record<string, string>;
   /**
    * The images their host held back — answered 429 or 503, a connection let go or never answered, or dropped while it
    * answered the rest — its limit, met by checks asking at once: not the page's.
@@ -273,6 +284,8 @@ export interface CheckAsk {
    */
   stateOf?: readonly string[];
   elements: readonly string[];
+  /** `--sight <ids>`: where a visitor sees each of these elements (`sightOf`), said once a page and width. */
+  sight?: readonly string[];
   /** `--status 404`: the status the page is meant to be sent with — a page for an address nothing answers, checked. */
   status?: number;
   /**

@@ -38,16 +38,34 @@ describe('a complete whose checks fail', () => {
 
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
     // Failing in this task's copy alone: the run's work passes, so the failure is the copy's.
-    const failing: CheckRunner = dir =>
-      Promise.resolve(
-        dir === home.work
-          ? { ok: false, steps: [{ name: 'typecheck', ok: false, said: ['an import of menu.ts'] }] }
-          : { ok: true, steps: [] }
-      );
-    const refused = await refusal(completeTask({ ...home.ctx, checks: failing }, 'es-launch', 't-home'));
+    const failing =
+      (said: string): CheckRunner =>
+      dir =>
+        Promise.resolve(
+          dir === home.work
+            ? { ok: false, steps: [{ name: 'typecheck', ok: false, said: [said] }] }
+            : { ok: true, steps: [] }
+        );
+    const refused = await refusal(
+      completeTask(
+        { ...home.ctx, checks: failing('src/space/pages/menu.ts(1,1): error TS2322') },
+        'es-launch',
+        't-home'
+      )
+    );
 
     expect(refused.code).toBe('checks-failed');
-    expect(refused.message).toContain('it took from the run, on this complete, what was approved since');
-    expect(refused.message).toContain('src/space/pages/menu.ts');
+    expect(refused.message).toContain(
+      'what fails names what came into the copy on this complete, approved in the run since the copy was made: src/space/pages/menu.ts'
+    );
+    // The step that fails, in the refusal's own words: a run's lead read the message alone, and guessed it an hour later.
+    expect(refused.message).toContain('— typecheck (src/space/pages/menu.ts(1,1): error TS2322)');
+
+    // What fails names nothing that came in: nothing is blamed — a run's lead blamed a person's edit of team.json for an
+    // author failure of the task's own.
+    const own = await refusal(
+      completeTask({ ...home.ctx, checks: failing('hero.ts: a heading with no words') }, 'es-launch', 't-home')
+    );
+    expect(own.message).not.toContain('came into the copy');
   });
 });
