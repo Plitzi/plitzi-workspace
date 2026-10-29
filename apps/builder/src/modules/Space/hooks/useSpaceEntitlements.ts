@@ -10,7 +10,7 @@ type SpaceAnswer = { entitlements?: TSpaceEntitlements; access?: TSpaceAccess };
 
 /**
  * Read once per space and kept: a plan changes when someone pays, and the server refuses whatever the builder believed
- * in the meantime — this only decides what is shown locked before anyone runs into the refusal (RFC 0029 §7.4).
+ * in the meantime — this only decides what is shown locked before anyone runs into the refusal.
  */
 const asked = new Map<string, Promise<SpaceAnswer>>();
 

@@ -7,7 +7,7 @@ const { locked } = vi.hoisted(() => ({ locked: vi.fn() }));
 
 vi.mock('../../hooks/useSpaceEntitlements', () => ({ default: () => ({ locked }) }));
 
-// RFC 0029 §7.4: a panel says what the plan leaves out before anyone fills in a form the server refuses.
+// A panel says what the plan leaves out before anyone fills in a form the server refuses.
 describe('PlanNotice', () => {
   it('names the plan that includes the panel’s capability, what happens meanwhile and the way there', () => {
     locked.mockReturnValue({

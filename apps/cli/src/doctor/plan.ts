@@ -12,7 +12,7 @@ import type { Check, Finding } from './types';
 import type { TCapability, TSpaceEntitlements } from '@plitzi/sdk-shared/network';
 
 /**
- * What the project uses that the plan of the space it goes up to does not include (RFC 0029 §7.4) — asked of the
+ * What the project uses that the plan of the space it goes up to does not include — asked of the
  * platform, as the person signed in, only for a project made from a space there: a project of no space, or of a
  * self-hosted server that answers no plan, is never told about one. The rest of the doctor reads the project alone; this
  * area is the one question it has to ask.

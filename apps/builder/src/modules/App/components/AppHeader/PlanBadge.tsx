@@ -5,7 +5,7 @@ import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 /**
  * The space's plan, in the header beside what it spends — and, while the plan leaves something out, the way to one
- * that does not (RFC 0029 §7.4). Nothing on a server that answers no plan (self-hosted).
+ * that does not. Nothing on a server that answers no plan (self-hosted).
  */
 const PlanBadge = () => {
   const { entitlements } = useSpaceEntitlements();

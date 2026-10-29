@@ -11,7 +11,7 @@ export type PlanNoticeProps = {
 
 /**
  * Where a panel's capability is not in the space's plan, says so at its top — the plan that includes it and the way
- * there — before anyone fills in a form the server will refuse (RFC 0029 §7.4). Nothing when the plan includes it, or
+ * there — before anyone fills in a form the server will refuse. Nothing when the plan includes it, or
  * when the server answered no plan at all (a self-hosted deployment).
  */
 const PlanNotice = ({ capability, meanwhile }: PlanNoticeProps) => {

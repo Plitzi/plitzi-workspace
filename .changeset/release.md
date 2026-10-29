@@ -1487,7 +1487,7 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   cannot turn it off from its settings.
 - **The entitlements contract** (`@plitzi/sdk-shared/network`): `TSpaceEntitlements`, `TCapability`, `TPlanRefusal`,
   `isIncluded` (everything is included when a server answers none — a self-hosted one) and `isPlanRefusal`. What a
-  space's plan includes, for every surface to lock what it does not (RFC 0029 §7.4). `TSpaceEntitlements` carries
+  space's plan includes, for every surface to lock what it does not. `TSpaceEntitlements` carries
   `analyticsDays` (how far back the space's analytics are read), and `TWorkspaceEntitlements` says the same of a
   workspace: its seats (included, bought, taken), its ceilings and its capabilities.
 - **A space's role, for every surface to offer what it allows** (`@plitzi/sdk-shared/network`): `TSpaceAccess`

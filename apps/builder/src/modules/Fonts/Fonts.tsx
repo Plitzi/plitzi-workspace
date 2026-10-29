@@ -84,7 +84,7 @@ const Fonts = () => {
    */
   const handleMirror = useCallback(
     async (family: string) => {
-      // Mirroring keeps a copy on the CDN: a site plan's (RFC 0029 §4.2). The server refuses it anyway; this says so first.
+      // Mirroring keeps a copy on the CDN: a site plan's. The server refuses it anyway; this says so first.
       const uploadsLocked = locked('cdnUploads');
       if (uploadsLocked?.upgradeUrl) {
         addToast(

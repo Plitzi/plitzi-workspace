@@ -52,7 +52,7 @@ afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-// RFC 0029 §7.4: what the project uses that its space's plan leaves out, said before a push or a run finds out.
+// What the project uses that its space's plan leaves out, said before a push or a run finds out.
 describe('the doctor’s plan check', () => {
   it('names what the project uses that the plan does not include, where it is and the way to it', async () => {
     await fs.mkdir(path.join(root, path.dirname(RUNTIME_ENTRY)), { recursive: true });

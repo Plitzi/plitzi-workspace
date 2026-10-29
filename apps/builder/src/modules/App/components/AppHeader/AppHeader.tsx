@@ -43,7 +43,7 @@ const AppHeader = () => {
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
   const showSpaceIssues = useShowSpaceIssues();
-  // What the space's plan does not include is shown locked, and leads to the plan that does (RFC 0029 §7.4).
+  // What the space's plan does not include is shown locked, and leads to the plan that does.
   const { locked } = useSpaceEntitlements();
   // Snapshot and Publish are a publisher's: a role without them is not offered either.
   const { may } = useSpaceAccess();

@@ -9,7 +9,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// RFC 0029 §8: a cloud command on a plan that does not include it says the plan and the link, whatever command asked.
+// A cloud command on a plan that does not include it says the plan and the link, whatever command asked.
 describe('requestJson', () => {
   it('says a plan refusal as the server words it, with the way to the plan', async () => {
     const upgradeUrl = 'https://app.plitzi.com/pricing?space=7&plan=site';

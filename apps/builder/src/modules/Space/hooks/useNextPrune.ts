@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
-/** What taking the next snapshot of an environment would remove, as the server answers it (RFC 0029 §6.1). */
+/** What taking the next snapshot of an environment would remove, as the server answers it. */
 export type NextPrune = {
   /** Unpublished snapshots the space's plan keeps. */
   keep: number;

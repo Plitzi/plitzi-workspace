@@ -36,7 +36,7 @@ export const descriptionOf = (format: ExportFormat): string =>
 
 /**
  * Whether `format` is held back by the workspace's plan: the code is a paid plan's, the documents are every plan's — a
- * free workspace takes its work as JSON (RFC 0029 §8). `refused`: the server said so, the plan unread.
+ * free workspace takes its work as JSON. `refused`: the server said so, the plan unread.
  */
 export const exportLocked = (format: ExportFormat, isFree: boolean, refused: boolean): boolean =>
   format !== 'json' && (isFree || refused);

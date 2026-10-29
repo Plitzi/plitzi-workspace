@@ -32,7 +32,7 @@ const ENVIRONMENTS = [
 ] as const;
 
 const PublishForm = ({ environment, description = '', onClose, onSubmit }: PublishFormProps) => {
-  // An environment the space's plan does not include is shown, and locked with the plan that does (RFC 0029 §6.2).
+  // An environment the space's plan does not include is shown, and locked with the plan that does.
   const { included, locked } = useSpaceEntitlements();
   const first = ENVIRONMENTS.find(({ value }) => included(value))?.value ?? 'development';
   const form = useForm({

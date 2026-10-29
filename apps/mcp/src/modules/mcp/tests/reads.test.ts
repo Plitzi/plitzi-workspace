@@ -331,7 +331,7 @@ describe('MCP URI aliases under schema root', () => {
   });
 });
 
-// RFC 0029 §7.4: the agent reads the space's plan before it plans work the space cannot ship — and a deployment that
+// The agent reads the space's plan before it plans work the space cannot ship — and a deployment that
 // sells no plans (self-hosted) says nothing of one.
 describe('MCP primer: the space’s plan', () => {
   it('names the plan and, by the plan that includes them, what it does not', () => {

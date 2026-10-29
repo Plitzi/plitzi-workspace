@@ -1,5 +1,5 @@
 /**
- * What a space's plan includes, as a server tells the builder, the console and the CLI (RFC 0029 §7.4): each
+ * What a space's plan includes, as a server tells the builder, the console and the CLI: each
  * capability by name, included or not, and — when not — the plan that includes it and where to get it. The names are
  * the deployment's; a surface locks the ones it knows and shows the rest as they are.
  *
@@ -27,7 +27,7 @@ export type TSpaceEntitlements = {
 };
 
 /**
- * What a workspace's plan includes (RFC 0029 §4.1): its seats and how many are taken, its ceilings, and each capability
+ * What a workspace's plan includes: its seats and how many are taken, its ceilings, and each capability
  * — teams, custom roles, SSO, the audit log — as {@link TCapability}. A count of 0 is not enforced.
  */
 export type TWorkspaceEntitlements = {

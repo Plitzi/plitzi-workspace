@@ -14,7 +14,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// RFC 0029 §7.4: the builder locks what the plan does not include — and nothing when the server says nothing.
+// The builder locks what the plan does not include — and nothing when the server says nothing.
 describe('useSpaceEntitlements', () => {
   it('locks what the plan does not include, with the plan that does and the link', async () => {
     answer({
