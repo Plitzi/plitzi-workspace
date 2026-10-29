@@ -96,6 +96,33 @@ describe('acceptance, checks and what is left behind', () => {
     ]);
   });
 
+  // A run's dev-2 ran two checks of one copy at once: the second met the first's server, was told to stop "a server of
+  // your own", and broke the first. They run one after another, the second saying it waits.
+  it('runs two checks of one copy one after the other, the second saying it waits', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    let running = 0;
+    let most = 0;
+    const slow: CheckRunner = async () => {
+      running += 1;
+      most = Math.max(most, running);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      running -= 1;
+
+      return { ok: true, steps: [{ name: 'lint', ok: true }] };
+    };
+    const said: string[] = [];
+    const ctx = { ...menu.ctx, checks: slow, say: (line: string) => said.push(line) };
+
+    await Promise.all([
+      checkTask(ctx, runId, 't-menu', { fresh: true }),
+      checkTask(ctx, runId, 't-menu', { fresh: true })
+    ]);
+    expect(most).toBe(1);
+    expect(said.some(line => line.startsWith('another check of this copy is running'))).toBe(true);
+  });
+
   it('refuses a page check whose text the shell would split into a page', async () => {
     const plan = benchPlan();
     plan.tasks[0].acceptance = [

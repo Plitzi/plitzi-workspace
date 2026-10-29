@@ -4,7 +4,7 @@ import path from 'node:path';
 import { checkedStill, checkKey } from './checked';
 import { at, broughtText, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
-import { keepAlive } from './keepAlive';
+import { keepAlive, oneCheckAtATime } from './keepAlive';
 import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
 import { keepOlderWarnings, warningsAgainstRun } from './olderWarnings';
@@ -383,85 +383,88 @@ export const completeTask = async (
   const kept = await checkedStill(view.paths, await checkKey(loaded, view.paths, task, changed), ctx.now());
   // The copy served for the acceptance while the project's checks run; let go whatever ends them (a refusal too).
   const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
-  const serving = kept ? undefined : serveForAcceptance(task.acceptance, where);
-  // Its sign of life given while the checks run: the agent inside `complete` can give none.
-  const { checks, failing, preexisting, accepted, others } = await keepAlive(view, ctx.now, async () => {
-    const checks = kept?.checks ?? (await ctx.checks(view.paths.work, ctx.root));
-    const failing = checks.steps.filter(step => !step.ok);
-    // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
-    // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
-    const { without, dirs } = await againstRunWork(ctx, loaded, view, checks);
-    const preexisting = !knownFailure && without !== undefined ? failsWithout(checks, without, dirs) : false;
-    // A known failure covers what it names: a step only this copy fails, its reason silent on it, is the task's own
-    // (t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
-    const unsaid =
-      knownFailure && without !== undefined
-        ? ownFailing(checks, without, dirs).filter(step => !knownFailure.why.toLowerCase().includes(step.name))
-        : [];
-    if (unsaid.length > 0) {
-      throw new RunRefusal(
-        'checks-failed',
-        `${unsaid.map(step => step.name).join(', ')} ${unsaid.length === 1 ? 'fails' : 'fail'} in this copy and not in the run's work — this task's own, which the known failure does not say: fix ${unsaid.length === 1 ? 'it' : 'them'}, or name ${unsaid.length === 1 ? 'it' : 'them'} in plitzi task complete --known-failure "why"`,
-        { task: taskId, steps: unsaid }
-      );
-    }
-    if (!checks.ok) {
-      // The brake counts the copy's own failures: one the run's work fails the same way — a half-merged approval, a
-      // person's edit — is no agent's, said or not (the brake fired on the run's own breakage and stopped the
-      // stage that would have finished it).
-      if (without === undefined || !failsWithout(checks, without, dirs)) {
-        await recordBrake(ctx, loaded, 'checks-failed', taskId);
-      }
+  const { checks, failing, preexisting, accepted, others } = await oneCheckAtATime(view, ctx.say, () => {
+    const serving = kept ? undefined : serveForAcceptance(task.acceptance, where);
 
-      if (!knownFailure && !preexisting) {
-        // What the copy took from the run on this complete is said first: a run's test-1 checked green, completed,
-        // and failed on a file the run had approved since — no word of which had come in.
+    // Its sign of life given while the checks run: the agent inside `complete` can give none.
+    return keepAlive(view, ctx.now, async () => {
+      const checks = kept?.checks ?? (await ctx.checks(view.paths.work, ctx.root));
+      const failing = checks.steps.filter(step => !step.ok);
+      // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
+      // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
+      const { without, dirs } = await againstRunWork(ctx, loaded, view, checks);
+      const preexisting = !knownFailure && without !== undefined ? failsWithout(checks, without, dirs) : false;
+      // A known failure covers what it names: a step only this copy fails, its reason silent on it, is the task's own
+      // (t-contact's said the shell's empty layout, and its own duplicate token's typecheck went to review).
+      const unsaid =
+        knownFailure && without !== undefined
+          ? ownFailing(checks, without, dirs).filter(step => !knownFailure.why.toLowerCase().includes(step.name))
+          : [];
+      if (unsaid.length > 0) {
         throw new RunRefusal(
           'checks-failed',
-          `The project's checks fail in task "${taskId}"'s copy — ${failingSaid(failing)}${namedBy(failing, brought).length > 0 ? ` — and what fails names what came into the copy on this complete, ${broughtText(namedBy(failing, brought))}: the version of each, plitzi run show <run> <file> (the run's) or the project's own` : ''}`,
-          {
-            task: taskId,
-            ...(brought.length > 0 ? { brought } : {}),
-            steps: failing,
-            next: 'fix what fails and complete again — or, for a reason that weighs, task complete --known-failure "why" [--fixed-by <task>|lead]'
-          }
+          `${unsaid.map(step => step.name).join(', ')} ${unsaid.length === 1 ? 'fails' : 'fail'} in this copy and not in the run's work — this task's own, which the known failure does not say: fix ${unsaid.length === 1 ? 'it' : 'them'}, or name ${unsaid.length === 1 ? 'it' : 'them'} in plitzi task complete --known-failure "why"`,
+          { task: taskId, steps: unsaid }
         );
       }
+      if (!checks.ok) {
+        // The brake counts the copy's own failures: one the run's work fails the same way — a half-merged approval, a
+        // person's edit — is no agent's, said or not (the brake fired on the run's own breakage and stopped the
+        // stage that would have finished it).
+        if (without === undefined || !failsWithout(checks, without, dirs)) {
+          await recordBrake(ctx, loaded, 'checks-failed', taskId);
+        }
 
-      if (fixer && knownFailure) {
-        await updateState(
-          taskPaths(loaded.paths, fixer.id),
-          state => ({
-            ...state,
-            notes: [
-              ...state.notes,
-              {
-                at: at(ctx),
-                by: 'plitzi',
-                text: `"${taskId}" went to review with failing checks (${failing.map(step => step.name).join(', ')}) for you to fix: ${knownFailure.why}`
-              }
-            ]
-          }),
-          ctx.now
-        );
+        if (!knownFailure && !preexisting) {
+          // What the copy took from the run on this complete is said first: a run's test-1 checked green, completed,
+          // and failed on a file the run had approved since — no word of which had come in.
+          throw new RunRefusal(
+            'checks-failed',
+            `The project's checks fail in task "${taskId}"'s copy — ${failingSaid(failing)}${namedBy(failing, brought).length > 0 ? ` — and what fails names what came into the copy on this complete, ${broughtText(namedBy(failing, brought))}: the version of each, plitzi run show <run> <file> (the run's) or the project's own` : ''}`,
+            {
+              task: taskId,
+              ...(brought.length > 0 ? { brought } : {}),
+              steps: failing,
+              next: 'fix what fails and complete again — or, for a reason that weighs, task complete --known-failure "why" [--fixed-by <task>|lead]'
+            }
+          );
+        }
+
+        if (fixer && knownFailure) {
+          await updateState(
+            taskPaths(loaded.paths, fixer.id),
+            state => ({
+              ...state,
+              notes: [
+                ...state.notes,
+                {
+                  at: at(ctx),
+                  by: 'plitzi',
+                  text: `"${taskId}" went to review with failing checks (${failing.map(step => step.name).join(', ')}) for you to fix: ${knownFailure.why}`
+                }
+              ]
+            }),
+            ctx.now
+          );
+        }
       }
-    }
 
-    // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
-    // …or when what fails is the run's work's too (preexisting): no one's, it stops nothing of this task's.
-    const accepted = kept
-      ? kept.accepted
-      : checks.ok || (without !== undefined && failsWithout(checks, without, dirs))
-        ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}), ...sayLines(ctx.say) })
-        : [];
-    // Its own lines met: the approved tasks' lines on the pages it draws, on the same copy (`othersHeld`).
-    const others =
-      !kept && accepted.every(result => result.ok)
-        ? await othersHeld(loaded, taskId, changed, { ...where, ...(serving ? { serving } : {}) })
-        : [];
+      // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
+      // …or when what fails is the run's work's too (preexisting): no one's, it stops nothing of this task's.
+      const accepted = kept
+        ? kept.accepted
+        : checks.ok || (without !== undefined && failsWithout(checks, without, dirs))
+          ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}), ...sayLines(ctx.say) })
+          : [];
+      // Its own lines met: the approved tasks' lines on the pages it draws, on the same copy (`othersHeld`).
+      const others =
+        !kept && accepted.every(result => result.ok)
+          ? await othersHeld(loaded, taskId, changed, { ...where, ...(serving ? { serving } : {}) })
+          : [];
 
-    return { checks, failing, preexisting, accepted, others };
-  }).finally(() => letGo(serving));
+      return { checks, failing, preexisting, accepted, others };
+    }).finally(() => letGo(serving));
+  });
   const unmet = accepted.filter(result => !result.ok);
   // A line nothing could answer is the lead's, told: the brake is for the work, and the agent is told it is not its.
   const unread = await tellUnanswered(ctx, loaded, taskId, unmet);

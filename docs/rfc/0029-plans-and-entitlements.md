@@ -324,8 +324,15 @@ churn by reason; gross margin per site.
   runtime and connectors, and the snapshot dialog saying what the next snapshot removes
   (`GET /spaces/:id/snapshots/next-prune`). `plitzi doctor`'s `plan` area: what the project uses that its space's
   plan leaves out.
-- Carlos's: the gateway's real prices and the confirmed figures. Custom roles, SSO and the audit log are sold on
-  Business and are not built: §13.
+- Carlos's: the gateway's real prices and the confirmed figures.
+- Business, built after (2026-10-29): **custom roles** — a workspace's own roles out of a space's permissions
+  (`role.workspace_id`, `services/auth/spaceRoles.ts`, `/workspaces/:id/roles`, the website's Roles page), given like
+  the platform's to a team, a person or as the member role; **the audit log** — what is done in a workspace kept on
+  every plan (`workspace_audit_event`, `services/audit/`), read on Business (`/workspaces/:id/audit`, JSON or CSV, the
+  website's Audit log). **SSO is not built**: §13.
+- A downgraded site's custom domain (§13): served with the notice for `DOWNGRADED_DOMAIN_GRACE_DAYS` (14) from the
+  first request after the lapse, then "This page is not available." there; `*.plitzi.app` keeps the draft.
+- The JSON download is free on every plan (§3, the code is the customer's): the builder's export offers JSON on Free.
 
 **Phase 3 — margin** (done 2026-10-29)
 - Lifetime reshaped (§4.4): Plitzi's own accounts hold the internal plan (`billing/internal.ts`, `yarn internal`), and
@@ -364,8 +371,10 @@ churn by reason; gross margin per site.
 ## 13. Open questions
 
 - The exact allowances and prices — after the cost per site is measured (phase 3), with phase 1's hypotheses until then.
-- Whether multi-agent runs on the user's machine stay free for good (they cost Plitzi nothing) or become a workspace
-  convenience once hosted runs exist.
-- The JSON download's shape: the raw documents, or the documents plus the space's files.
-- How long a downgraded site's custom domain shows the notice before it is detached.
-- Custom roles, SSO and the audit log (Business) do not exist yet: built, or Business sold without them until they are.
+- SSO (Business): a workspace's own identity provider — the auth kernel's providers are the deployment's today. Built
+  (a generic OIDC provider per workspace in sdk-server, its secret kept encrypted, a verified email domain), or Business
+  sold without it until it is. `/pricing` names it.
+- White-label and the client editor seat (§4.3, phase 4): Carlos's decision before either is built.
+
+Decided: multi-agent runs on the user's machine stay free (§3: they cost Plitzi nothing); the JSON download is the raw
+documents, on every plan; a downgraded site's custom domain shows the notice for 14 days.

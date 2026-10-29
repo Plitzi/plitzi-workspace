@@ -1118,6 +1118,9 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   run", not again as messages; an amend as "the brief below is as amended"; the files near the line limit in one line;
   a done task it waits on by its name alone (its work is in the copy). A run's brief was 21k characters, a fifth of it
   said twice, read again every turn.
+- **The checks of one copy run one at a time.** A second `task check` or `complete` of a copy waits for the first, and
+  says so — never told to stop "a server of your own" that was the first check's: a run's agent stopped it, and broke
+  the first.
 - **A task answers for the space lint's warnings it adds, not the ones it found.** `complete` refuses a warning a task
   adds to a file it changed; one the file had in the run's work before it is kept as the run's notice — the project's
   backlog once the run ends — and said in its answer. A run's tasks renamed ids an acceptance line read (the line then

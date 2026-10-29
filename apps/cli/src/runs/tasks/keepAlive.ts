@@ -1,5 +1,8 @@
+import path from 'node:path';
+
 import { readJson, writeJson } from '../core/files';
 import { isTaskProgress } from '../core/model';
+import { withLock } from '../core/store';
 
 import type { TaskProgress } from '../core/model';
 import type { TaskView } from '../core/taskStore';
@@ -49,3 +52,23 @@ export const workedMs = (takenAt: string, progress: TaskProgress | undefined, no
 
   return Math.max(0, now.getTime() - Date.parse(takenAt) - (progress?.checkedMs ?? 0) - Math.max(0, holding));
 };
+
+/**
+ * The checks of one copy, one at a time: what serves its acceptance holds the copy — its port, its state — and a
+ * second beside it fails on it. A run's dev-2 ran two at once; the second was told "a server of your own still running"
+ * — the first check's — stopped it, and broke the first. The second waits for the first, and says so.
+ */
+export const oneCheckAtATime = <T>(
+  view: TaskView,
+  say: ((line: string) => void) | undefined,
+  work: () => Promise<T>
+): Promise<T> =>
+  withLock(path.join(view.paths.cache, 'check.lock'), work, {
+    ttlMs: 30 * 60_000,
+    waitMs: 30 * 60_000,
+    doing: 'another check of this copy',
+    onWait: since =>
+      say?.(
+        `another check of this copy is running${since ? ` (since ${since.slice(11, 19)} UTC)` : ''}: this one runs once it ends — its server is the CLI's, never stop it`
+      )
+  });

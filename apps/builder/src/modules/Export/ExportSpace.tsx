@@ -15,14 +15,14 @@ import useExportSession from './hooks/useExportSession';
  * A copy of the space on screen, as JSON or as the code that authors it.
  *
  * Generated as soon as a format is picked and shown before anything is saved, so the code can be copied straight into
- * an editor, or downloaded, from the one row of actions above it. A paid-plan capability: on the free plan the dialog
- * says what export is instead.
+ * an editor, or downloaded, from the one row of actions above it. The code is a paid plan's: on the free plan the dialog
+ * says so in its place and offers the JSON, which every plan downloads.
  */
 const ExportSpace = () => {
   const session = useExportSession();
   const { resolvedTheme } = useTheme();
   const { addToast } = useToast();
-  const { content, spaceExport } = session;
+  const { content, spaceExport, changeFormat } = session;
 
   const handleCopy = useCallback(async () => {
     if (content === undefined) {
@@ -32,6 +32,8 @@ const ExportSpace = () => {
     await navigator.clipboard.writeText(content);
     addToast('Copied to the clipboard', { appeareance: 'success', autoDismiss: true, placement: 'top-right' });
   }, [addToast, content]);
+
+  const pickJson = useCallback(() => changeFormat('json'), [changeFormat]);
 
   const handleDownload = useCallback(async () => {
     if (!spaceExport) {
@@ -52,7 +54,7 @@ const ExportSpace = () => {
         onDownload={handleDownload}
       />
       <p className="text-xs text-zinc-500 dark:text-zinc-400">{descriptionOf(session.format)}</p>
-      {session.locked && <ExportLocked planName={session.planName} />}
+      {session.locked && <ExportLocked planName={session.planName} onPickJson={pickJson} />}
       {!session.locked && session.error && (
         <Alert intent="error" size="sm">
           {session.error}

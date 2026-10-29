@@ -5,7 +5,7 @@ import { checkedStill, checkKey, keepChecked } from './checked';
 import { changedInCopy, findTask, holderOf, refreshCopy } from './common';
 import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
-import { keepAlive } from './keepAlive';
+import { keepAlive, oneCheckAtATime } from './keepAlive';
 import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../copies/acceptance';
@@ -113,33 +113,35 @@ export const checkTask = async (
       : undefined;
   // The copy served for the acceptance while the project's checks run: what came after them, beside them.
   const where = { work: view.paths.work, root: ctx.root, cache: view.paths.cache };
-  const serving = before ? undefined : serveForAcceptance(task.acceptance, where);
   let accepted: Awaited<ReturnType<typeof checkAcceptance>> = before?.accepted ?? [];
   let checks: CheckResult = before?.checks ?? { ok: true, steps: [] };
   let notOwnSteps: string[] = [];
-  // Its sign of life given while the checks run: the agent inside them can give none.
-  await keepAlive(view, ctx.now, async () => {
-    try {
-      if (!before) {
-        checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
-        notOwnSteps = checks.ok
-          ? []
-          : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
-        // What fails for nothing of the copy's stops nothing of it: a run's t-home went to review with its acceptance
-        // unrun, for a warning the run's work had too.
-        const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
-        accepted =
-          ownFailing.length === 0
-            ? await checkAcceptance(task.acceptance, {
-                ...where,
-                ...(serving ? { serving } : {}),
-                ...sayLines(ctx.say)
-              })
-            : [];
+  await oneCheckAtATime(view, ctx.say, async () => {
+    const serving = before ? undefined : serveForAcceptance(task.acceptance, where);
+    // Its sign of life given while the checks run: the agent inside them can give none.
+    await keepAlive(view, ctx.now, async () => {
+      try {
+        if (!before) {
+          checks = only === 'acceptance' ? checks : await ctx.checks(view.paths.work, ctx.root);
+          notOwnSteps = checks.ok
+            ? []
+            : stepsNotOwn(checks, await againstRunWork(ctx, loaded, view, checks)).map(step => step.name);
+          // What fails for nothing of the copy's stops nothing of it: a run's t-home went to review with its acceptance
+          // unrun, for a warning the run's work had too.
+          const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
+          accepted =
+            ownFailing.length === 0
+              ? await checkAcceptance(task.acceptance, {
+                  ...where,
+                  ...(serving ? { serving } : {}),
+                  ...sayLines(ctx.say)
+                })
+              : [];
+        }
+      } finally {
+        await letGo(serving);
       }
-    } finally {
-      await letGo(serving);
-    }
+    });
   });
 
   const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed).map(longFileText);

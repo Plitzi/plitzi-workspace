@@ -4,7 +4,7 @@ import useSpaceQuota from '@pmodules/Space/hooks/useSpaceQuota';
 
 import useSpaceExport from './useSpaceExport';
 import { orderedPaths } from '../helpers/exportFiles';
-import { DEFAULT_EXPORT_FORMAT } from '../helpers/exportFormats';
+import { DEFAULT_EXPORT_FORMAT, exportLocked } from '../helpers/exportFormats';
 
 import type { SpaceExportResult } from './useSpaceExport';
 import type { ExportFormat } from '../helpers/exportFormats';
@@ -13,8 +13,8 @@ import type { ExportFormat } from '../helpers/exportFormats';
  * One visit to the export dialog: the format picked, what each format came to, and which file is on screen.
  *
  * A format is generated the first time it is shown and kept, so going back to one already seen is instant — the dialog
- * is short-lived, and nothing in it edits the space. Nothing is generated for a free plan: the dialog says what export
- * is instead, and the server would refuse the code anyway.
+ * is short-lived, and nothing in it edits the space. A free plan's is the JSON alone: the code is not generated for it —
+ * the dialog says so and offers the JSON — and the server would refuse it anyway.
  */
 const useExportSession = () => {
   const { quota, error: quotaError } = useSpaceQuota();
@@ -28,7 +28,7 @@ const useExportSession = () => {
   // server holds the gate, and its refusal locks the dialog like the plan would have.
   const planLoading = !quota && !quotaError;
   const result = results[format];
-  const locked = quota?.isFree === true || (result?.ok === false && result.requiresPaidPlan);
+  const locked = exportLocked(format, quota?.isFree === true, result?.ok === false && result.requiresPaidPlan);
 
   useEffect(() => {
     if (planLoading || locked || results[format]) {
