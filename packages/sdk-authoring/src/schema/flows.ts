@@ -127,9 +127,9 @@ export const authorFlow = (
       flowId,
       enabled: step.enabled ?? true,
       ...(step.when ? { when: step.when } : {}),
-      // `skip` is what a trigger does unless told otherwise: written down, it would be a second way to say the default,
-      // and the document read back into code (`specFromSpace`) would not be the one written.
-      ...(step.whileRunning && step.whileRunning !== 'skip' ? { whileRunning: step.whileRunning } : {})
+      // Kept as said, `skip` included: absent is the same order, but a channel's flow is held to SAYING what a message
+      // arriving mid-run does (`message-while-running`), and a dropped `skip` left that rule nothing to read.
+      ...(step.whileRunning ? { whileRunning: step.whileRunning } : {})
     };
 
     return flow;

@@ -327,8 +327,6 @@ const readStep = (reader: SpecReader, node: ElementInteraction, host: string): O
     ...(on ? { on } : {}),
     ...(when ? { when } : {}),
     ...(!node.enabled ? { enabled: false } : {}),
-    ...(node.type === 'trigger' && node.whileRunning && node.whileRunning !== 'skip'
-      ? { whileRunning: node.whileRunning }
-      : {})
+    ...(node.type === 'trigger' && node.whileRunning ? { whileRunning: node.whileRunning } : {})
   };
 };

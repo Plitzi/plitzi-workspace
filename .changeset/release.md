@@ -1304,6 +1304,11 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
+- **`whileRunning('skip', …)` is kept in the document**, and read back by `specFromSpace`: it used to be dropped as
+  the default, so a channel's `onMessage` flow that said `skip` on purpose still met `message-while-running` — whose
+  own fix could never silence it. A trigger that says nothing is still `skip`; a space authored before keeps its
+  documents until it is authored again.
+
 - **`class-overrides-class` says the same property set over the class listed after it** (`gap` over `gap`, a longhand
   over a longhand, at one breakpoint), not only a shorthand erasing a longhand: a run's shared class, made of five
   `repeated-css` warnings, lost its `gap: 10px` to `btn`'s `8px` on two buttons — `btn` written later — while author,

@@ -136,24 +136,31 @@ describe('the skill’s recipes', () => {
     expect(() => whileRunning('queue', delay(1000))).toThrow('wraps a flow');
   });
 
-  it('writes a trigger that skips as one that says nothing: skipping is the default, with one way to say it', () => {
-    const { schema } = authorSpace({
+  it('keeps a skip that was said, and reads a trigger that says nothing as skipping', () => {
+    const { schema, warnings } = authorSpace({
       name: 'Skip',
       permanentUrl: 'skip',
+      channels: { room: { access: { mode: 'public' }, publish: 'clients' } },
       pages: [
         {
           id: 'home',
           name: 'Home',
           slug: '',
           isDefault: true,
-          body: [button({ id: 'go', content: 'Go', flows: [[whileRunning('skip', onClick()), delay(1000)]] })]
+          body: [
+            button({ id: 'go', content: 'Go', flows: [[onClick(), delay(1000)]] }),
+            channel({ id: 'room', topic: 'room', flows: [[whileRunning('skip', on('onMessage')), delay(1000)]] })
+          ]
         }
       ]
     });
-    const trigger = Object.values(schema.flat.go.definition.interactions ?? {}).find(node => node.type === 'trigger');
+    const triggerOf = (id: string) =>
+      Object.values(schema.flat[id].definition.interactions ?? {}).find(node => node.type === 'trigger');
 
-    expect(trigger).toBeDefined();
-    expect(trigger).not.toHaveProperty('whileRunning');
+    expect(triggerOf('go')).not.toHaveProperty('whileRunning');
+    // Said on purpose, as a channel's flow must say it: kept, so `message-while-running` reads it and stays quiet.
+    expect(triggerOf('room')?.whileRunning).toBe('skip');
+    expect(warnings.map(({ code }) => code)).not.toContain('message-while-running');
   });
 
   it('writes an element bound to nothing as one with no bindings: an empty list is no bindings, said one way', () => {
