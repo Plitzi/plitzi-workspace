@@ -9,6 +9,7 @@ export type LinkAttributes = AuthorableAttributes<LinkProps>;
 
 const declaration = elementDeclaration<LinkAttributes>()({
   type: 'link',
+  contentAttributes: ['content', 'href', 'label'],
   attributeValues: {
     mode: valuesOf<NonNullable<LinkProps['mode']>>()(['page', 'internal', 'external']),
     target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top']),

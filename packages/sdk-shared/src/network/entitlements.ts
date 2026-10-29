@@ -71,3 +71,24 @@ export const isPlanRefusal = (value: unknown): value is TPlanRefusal =>
   value.code === 'plan-required' &&
   'upgradeUrl' in value &&
   typeof value.upgradeUrl === 'string';
+
+/**
+ * What the caller may do on a space: the role it holds there — the strongest of its grants — and the space
+ * permissions that role allows (`spaceView`, `spaceContent`, `spaceUpdate`, `spaceCode`, `spacePublish`, `spaceManage`,
+ * `spaceDelete`). The builder offers what these allow and nothing the server would refuse; the server's gates are what
+ * make it true.
+ */
+export type TSpaceAccess = {
+  /** What a grant names: `spaceDesigner`, `admin`, a workspace's own. */
+  role: string;
+  /** The role as a person reads it: "Can design". */
+  label: string;
+  permissions: string[];
+};
+
+/**
+ * Whether the caller may do `permission` — everything, when the server answered no access: a self-hosted server or a
+ * development one with no roles of its own puts no lock on the builder.
+ */
+export const mayDo = (access: TSpaceAccess | undefined, permission: string): boolean =>
+  access === undefined || access.permissions.includes(permission);

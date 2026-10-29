@@ -95,15 +95,22 @@ const entryFromManifest = (type: string, manifest: PluginManifest): ComponentCat
     pluginSchema?.defaultStyle as { style?: { base?: { default?: Record<string, unknown> } } } | undefined
   )?.style?.base?.default;
   const defaultStyle = stringDeclarations(pluginBase);
+  // Untrusted too: only names, and only the element's own attributes, are what a content editor may change.
+  const attributes = keysOf(pluginSchema?.attributes);
+  const declaredContent: unknown = pluginSchema?.contentAttributes;
+  const contentAttributes = Array.isArray(declaredContent)
+    ? declaredContent.filter((name: unknown): name is string => typeof name === 'string' && attributes.includes(name))
+    : [];
 
   return {
     label,
     description,
     category: strOrUndefined(manifest.definition.category),
     custom: true,
-    attributes: keysOf(pluginSchema?.attributes),
+    attributes,
     styleSelectors: keysOf(elementDef?.styleSelectors),
     ...(defaultStyle ? { defaultStyle } : {}),
+    ...(contentAttributes.length > 0 ? { contentAttributes } : {}),
     ...(attributesTargets || initialStateTargets
       ? { bindingsAllowed: { attributes: attributesTargets, initialState: initialStateTargets } }
       : {})

@@ -99,6 +99,13 @@ export interface ElementDeclarationData {
    * authoring lint, which holds them to that context.
    */
   serverTemplates?: readonly string[];
+  /**
+   * The attributes that are the element's content — what it says or shows, never how: its words, a link's address, an
+   * image's source and its text alternative, a field's label. A space role that edits the content and not the design
+   * (`spaceContent`, a client editing a site an agency built) changes these alone, in the builder and at the server; an
+   * element that names none has nothing such a role may change.
+   */
+  contentAttributes?: readonly string[];
   content?: {
     attributes?: Record<string, unknown>;
     /** The attributes whose default is the builder's placeholder words, never a value ({@link ElementContentSpec}). */
@@ -286,7 +293,10 @@ export const elementDeclaration =
   // `const` so the declaration's own `type` stays the literal it was written as: the authoring surface maps a
   // document type name back to the element that declares it, and a widened `string` collapses that map into one
   // union of every element there is.
-  <const D extends ElementDeclarationSpec>(declaration: D): DeclaredElement<D, A> => {
+  // Its content attributes are its own props: a name the element does not take is a type error, not a gate that never opens.
+  <const D extends ElementDeclarationSpec & { contentAttributes?: readonly (keyof A & string)[] }>(
+    declaration: D
+  ): DeclaredElement<D, A> => {
     const { definition, builder, market, defaultStyle, settings } = declaration.content;
     const filled = {
       ...declaration,
@@ -348,6 +358,9 @@ export interface PluginSpec<
   market?: Partial<PluginContent<A>['market']>;
   /** The attributes a data source may be pointed at. Left out, every one. */
   bindable?: readonly (keyof A & string)[];
+  /** The attributes a role that edits the content and not the design may change — its words, a link, a
+   *  picture. Left out, none: a content editor changes nothing on it. */
+  contentAttributes?: readonly (keyof A & string)[];
   /** Its style before anybody styles it. */
   style?: PluginSchema['defaultStyle']['style'];
   /** More of the element's definition — children it starts with (`items`), its style selectors. */

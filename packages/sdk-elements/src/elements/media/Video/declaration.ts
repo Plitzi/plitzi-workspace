@@ -9,6 +9,7 @@ export type VideoAttributes = AuthorableAttributes<VideoProps>;
 
 const declaration = elementDeclaration<VideoAttributes>()({
   type: 'video',
+  contentAttributes: ['src'],
   content: {
     attributes: {
       src: '',

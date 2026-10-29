@@ -7,6 +7,8 @@ export type PluginSchema = {
   builder: PluginBuilder;
   initialItems?: string[];
   definition: Element['definition'];
+  /** The attributes a role that edits the content and not the design may change; none, it may change none. */
+  contentAttributes?: string[];
   defaultStyle: {
     name: string;
     displayMode: DisplayMode;

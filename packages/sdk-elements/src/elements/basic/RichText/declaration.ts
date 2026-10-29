@@ -9,6 +9,7 @@ export type RichTextAttributes = AuthorableAttributes<RichTextProps>;
 
 const declaration = elementDeclaration<RichTextAttributes>()({
   type: 'richText',
+  contentAttributes: ['content'],
   attributeValues: {
     format: valuesOf<NonNullable<RichTextProps['format']>>()(['html', 'markdown', 'text'])
   },

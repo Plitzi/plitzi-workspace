@@ -9,6 +9,7 @@ export type EmbedAttributes = AuthorableAttributes<EmbedProps>;
 
 const declaration = elementDeclaration<EmbedAttributes>()({
   type: 'embed',
+  contentAttributes: ['src', 'title'],
   content: {
     attributes: {
       src: '',

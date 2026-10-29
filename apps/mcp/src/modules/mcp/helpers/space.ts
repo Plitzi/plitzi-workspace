@@ -536,19 +536,22 @@ export class NoSpaceError extends Error {
   }
 }
 
-// What an agent hears when it tries to change a space through a member's grant that may only read it — one who lost
-// the right to edit since consenting: reads still work, so the agent has no reason to expect the write to fail. Says
-// what is needed instead of only that permission was denied.
-export const readOnlyGrantMessage =
-  'This connection may READ this space but not change it: the member who authorized it no longer has permission ' +
-  'to edit this space. Every write tool will fail the same way, ' +
-  'do not retry them — reads still work. To edit, the user must reconnect the integration and grant edit access.';
+// What an agent hears when it tries to change a space through a member's grant that may only read it: reads still
+// work, so the agent has no reason to expect the write to fail. The consumer's reason (`grant.readOnlyReason`) says
+// why when it knows — a role that views or edits only the content never had the right, it did not lose it; without
+// one, the member is told what is needed instead of only that permission was denied.
+export const readOnlyGrantMessage = (reason?: string): string =>
+  `This connection may READ this space but not change it: ${
+    reason ??
+    'the member who authorized it does not have permission to edit this space. To edit, the user must reconnect the ' +
+      'integration and grant edit access'
+  }. Every write tool will fail the same way, do not retry them — reads still work.`;
 
 /** Raised when a write runs under a grant that carries no write authority. Like NoSpaceError this is a STATE of
  *  the connection rather than a failed call, so the host renders it as a result the agent can act on. */
 export class ReadOnlyGrantError extends Error {
-  constructor() {
-    super(readOnlyGrantMessage);
+  constructor(reason?: string) {
+    super(readOnlyGrantMessage(reason));
     this.name = 'ReadOnlyGrantError';
   }
 }

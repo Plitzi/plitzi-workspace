@@ -12,6 +12,7 @@ const words = { fill: 'currentColor', 'font-size': '12px', 'font-family': 'inher
 
 const declaration = elementDeclaration<ChartAttributes>()({
   type: 'chart',
+  contentAttributes: ['label', 'emptyText'],
   attributeValues: {
     kind: valuesOf<NonNullable<ChartProps['kind']>>()(['bar', 'line', 'area', 'donut']),
     format: valuesOf<NonNullable<ChartProps['format']>>()(['number', 'percent', 'compact'])

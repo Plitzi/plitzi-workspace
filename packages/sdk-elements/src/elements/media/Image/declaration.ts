@@ -9,6 +9,7 @@ export type ImageAttributes = AuthorableAttributes<ImageProps>;
 
 const declaration = elementDeclaration<ImageAttributes>()({
   type: 'image',
+  contentAttributes: ['src', 'alt'],
   attributeValues: {
     fetchPriority: valuesOf<NonNullable<ImageProps['fetchPriority']>>()(['high', 'low', 'auto']),
     loadMode: valuesOf<NonNullable<ImageProps['loadMode']>>()(['auto', 'eager', 'lazy'])

@@ -77,7 +77,7 @@ Necesario para tocar persistencia, auth, la API o cualquier cosa que deba sobrev
 backend, porque es quien tiene las bases de datos y acuña las credenciales que el frontend necesita.
 
 **1. Backend** — en [plitzi-sdk-server](https://github.com/plitzi/plitzi-sdk-server), sigue su README:
-certificados con mkcert, entradas en `/etc/hosts`, `yarn docker:up` (bases de datos y Mailpit), y después schema y datos
+certificados con mkcert, entradas en `/etc/hosts`, `yarn services:up` (bases de datos y Mailpit), y después schema y datos
 de seed. Luego:
 
 ```bash

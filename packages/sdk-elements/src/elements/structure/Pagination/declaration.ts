@@ -9,6 +9,7 @@ export type PaginationAttributes = AuthorableAttributes<PaginationProps>;
 
 const declaration = elementDeclaration<PaginationAttributes>()({
   type: 'pagination',
+  contentAttributes: ['previousLabel', 'nextLabel', 'loadMoreLabel'],
   attributeValues: {
     mode: valuesOf<NonNullable<PaginationProps['mode']>>()(['pages', 'loadMore']),
     target: valuesOf<NonNullable<PaginationProps['target']>>()(['url', 'interaction'])

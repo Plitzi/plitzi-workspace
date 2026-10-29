@@ -340,6 +340,37 @@ describe('what is refused, and why', () => {
     });
   });
 
+  it('content attributes that are not the element’s — and carries the ones that are into the manifest', async () => {
+    const note = (contentAttributes: string[]) => ({
+      'index.ts': 'export default {};\n',
+      'declaration.ts': `export default ${JSON.stringify({
+        type: 'note',
+        contentAttributes,
+        content: {
+          attributes: { caption: 'Hi', rows: 1 },
+          definition: { label: 'Note' },
+          builder: {},
+          market: {},
+          defaultStyle: {}
+        }
+      })};\n`
+    });
+
+    await inTemp(async dir => {
+      await writeFiles(path.join(dir, 'src/plugins/Note'), note(['caption', 'colour']));
+      await expect(pack(dir, [path.join(dir, 'src/plugins/Note')])).rejects.toThrow(
+        '`contentAttributes` names "colour", which is not one of its attributes'
+      );
+
+      await writeFiles(path.join(dir, 'src/plugins/Note'), note(['caption']));
+      await pack(dir, [path.join(dir, 'src/plugins/Note')]);
+      const manifest = JSON.parse(await fs.readFile(path.join(dir, 'dist/out/plugin-manifest.json'), 'utf-8')) as {
+        pluginSchema: Record<string, { contentAttributes?: string[] }>;
+      };
+      expect(manifest.pluginSchema.note.contentAttributes).toEqual(['caption']);
+    });
+  });
+
   it('two elements of one type', async () => {
     await inTemp(async dir => {
       await element(dir, 'seat-picker', 'Seats');

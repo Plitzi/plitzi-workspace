@@ -11,8 +11,10 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import { StyleInspector } from '@plitzi/sdk-style/builder';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
+import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
+import ElementContentSettings from './ElementContentSettings';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementMotion from './ElementMotion';
 import ElementSettings from './ElementSettings';
@@ -38,6 +40,7 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
+  const { may } = useSpaceAccess();
   const [[selector, elementSelected], setSelector] = useBuilderStore(['selector', 'elementSelected']);
   const [displayMode] = useBuilderStore('displayMode');
   const [[selectors = undefined, element = undefined]] = useBuilderStore([
@@ -59,7 +62,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   );
 
   // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
-  const declared = (componentDefinitions.current[definition.type] as ComponentDefinition | undefined)?.definition;
+  const registered = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
+  const declared = registered?.definition;
 
   const handleClickListItems = useCallback((item: string) => setSelected(item), [setSelected]);
 
@@ -133,6 +137,25 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   if (!element) {
     return <NothingSelected />;
+  }
+
+  // A role that may not change the design: the element's content alone — editable, or shown to a viewer.
+  if (!may('spaceUpdate')) {
+    return (
+      <div className="mt-2 flex min-w-0 grow flex-col gap-2">
+        <BuilderBreadcrumb limit={4} />
+        <div className="flex grow basis-0 flex-col overflow-y-auto">
+          <ElementContentSettings
+            key={elementSelected}
+            type={element.definition.type}
+            registered={registered}
+            attributes={tempAttributes}
+            readOnly={!may('spaceContent')}
+            onChange={handleChange}
+          />
+        </div>
+      </div>
+    );
   }
 
   const {

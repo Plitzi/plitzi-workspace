@@ -22,6 +22,7 @@ export const isDocumentScroll = (value: unknown): value is DocumentScroll =>
 
 const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
+  contentAttributes: ['seoPageTitle', 'seoPageDescription'],
   serverTemplates: ['seoPageTitle', 'seoPageDescription', 'seoImage', 'seoImageAlt', 'notFound'],
   attributeValues: {
     documentScroll: DOCUMENT_SCROLLS,

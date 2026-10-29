@@ -54,6 +54,15 @@ describe('pluginCatalog', () => {
     });
   });
 
+  it('carries what a content editor may change, keeping only the element’s own attributes', async () => {
+    const hero = manifest().pluginSchema.acmeHero;
+    respondWith(manifest({ pluginSchema: { acmeHero: { ...hero, contentAttributes: ['headline', 'colour', 7] } } }));
+
+    const catalog = await pluginCatalog({ acmeHero: { resource: 'https://cdn.test/acme/content' } });
+
+    expect(catalog.acmeHero.contentAttributes).toEqual(['headline']);
+  });
+
   it('falls back to the plugin name when the element declares no label of its own', async () => {
     respondWith(manifest({ pluginSchema: { acmeBare: { attributes: {}, defaultStyle: {} } } }));
 

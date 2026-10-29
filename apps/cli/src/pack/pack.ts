@@ -96,6 +96,7 @@ export class PackError extends Error {}
 /** What the manifest reads of a declaration, checked rather than assumed: it is somebody's file. */
 interface Declaration {
   type: string;
+  contentAttributes?: string[];
   content: {
     attributes: Record<string, unknown>;
     definition: { label: string; description?: string } & Record<string, unknown>;
@@ -126,6 +127,20 @@ const checkDeclaration = (value: unknown, where: string): Declaration => {
 
   if (!isRecord(content.definition) || typeof content.definition.label !== 'string') {
     throw missing('`content.definition.label`');
+  }
+
+  const { contentAttributes } = value;
+  if (contentAttributes !== undefined) {
+    const attributes = isRecord(content.attributes) ? Object.keys(content.attributes) : [];
+    const unknown = Array.isArray(contentAttributes)
+      ? contentAttributes.filter(name => typeof name !== 'string' || !attributes.includes(name))
+      : [contentAttributes];
+    if (unknown.length > 0) {
+      throw new PackError(
+        `${where}: \`contentAttributes\` names ${unknown.map(name => JSON.stringify(name)).join(', ')}, which is not ` +
+          'one of its attributes. List the attributes a content editor may change — its words, a link, a picture.'
+      );
+    }
   }
 
   // Checked field by field just above; the cast only names the shape those checks established.
@@ -419,10 +434,17 @@ export const packPlugin = async ({
       declarations.map(
         ({
           type,
+          contentAttributes,
           content: { attributes, definition: elementDefinition, builder, defaultStyle }
-        }): [string, Omit<Declaration['content'], 'market'>] => [
+        }): [string, Omit<Declaration['content'], 'market'> & Pick<Declaration, 'contentAttributes'>] => [
           type,
-          { attributes, definition: elementDefinition, builder, defaultStyle }
+          {
+            attributes,
+            definition: elementDefinition,
+            builder,
+            defaultStyle,
+            ...(contentAttributes ? { contentAttributes } : {})
+          }
         ]
       )
     ),

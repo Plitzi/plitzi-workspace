@@ -9,6 +9,7 @@ export type ModalContainerAttributes = AuthorableAttributes<ModalContainerProps>
 
 const declaration = elementDeclaration<ModalContainerAttributes>()({
   type: 'modalContainer',
+  contentAttributes: ['title'],
   sourceType: 'modalContainer',
   triggers: {
     onModalOpen: {

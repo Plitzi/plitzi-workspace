@@ -1490,6 +1490,15 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   space's plan includes, for every surface to lock what it does not (RFC 0029 §7.4). `TSpaceEntitlements` carries
   `analyticsDays` (how far back the space's analytics are read), and `TWorkspaceEntitlements` says the same of a
   workspace: its seats (included, bought, taken), its ceilings and its capabilities.
+- **A space's role, for every surface to offer what it allows** (`@plitzi/sdk-shared/network`): `TSpaceAccess`
+  (the role, its label, its permissions) answered beside the entitlements, and `mayDo(access, permission)` — everything
+  allowed when a server answers none. An element declaration names its `contentAttributes` (`@plitzi/sdk-shared`, typed
+  against its attributes): the words, the link, the picture a role that edits the content may change. The built-in
+  elements declare theirs, read through `contentAttributesOf(type)` (`@plitzi/sdk-elements/elements/declarations`) —
+  the one map the builder's form and the server's gate both read.
+- **A plugin names its content too** (`definePlugin({ contentAttributes })`, typed against its attributes): `plitzi
+  plugin pack` writes them into the manifest — refusing one that is not an attribute, by name — and the builder's form,
+  the MCP's catalogue and the server's gate read them from there, a plugin's over a built-in type of the same name.
 
 - **`navigate` can replace the address** (`replace: true`, a step param and `navigation.navigate(url, { replace })`):
   Back skips it — a sheet opened by `?stats=1` and closed was reopened by Back. The store's `navigate` takes
@@ -1588,6 +1597,9 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Server (`@plitzi/sdk-server`)
 
+- **An agent told why it only reads** (`@plitzi/sdk-mcp`, `SSRGrant.readOnlyReason` in `@plitzi/sdk-shared`): a
+  consumer that knows why a grant may not write says so, and the MCP's refusal carries those words instead of its own —
+  a member whose role views or edits only the content never had the right to change the space; they did not lose it.
 - **Single sign-on with any OpenID Connect issuer** (`createOidcProvider`, `discoverOidc`): an issuer's discovery
   document, read and checked to be the issuer's; the authorization-code grant with PKCE and a `nonce`; the profile read
   from the ID token, verified against the issuer's published keys (asymmetric only), for this client, unexpired and
@@ -1719,6 +1731,12 @@ is no room at this address.` — one line, no stack — where the log said "ende
   hold in `PLITZI_STATE_DIR` when set (see the upgrade notes).
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
+
+- **The builder offers what the space role allows** (`useSpaceAccess`): a content editor selects an element
+  and edits its content in a form — no structure, styles, variables, state or code, and the media library alone; a
+  viewer sees the same, read-only; Snapshot and Publish only with publishing; Settings only with managing. The role is
+  shown in the header, and every change the role does not allow is refused before it is sent, in words that name the
+  role — the server holds to the same rule.
 
 - **What the space's plan does not include is shown locked** (`useSpaceEntitlements`, from
   `GET /spaces/:id/entitlements`): Snapshot and Publish carry a lock and open the plans instead of a form that would

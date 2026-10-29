@@ -13,6 +13,7 @@ import { generateCache } from '@plitzi/sdk-style';
 import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
 import { getInitialItems, makeIdMinter } from '@pmodules/Elements/ElementHelper';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
+import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import { isInRoot } from './helpers/elementChain';
 
@@ -78,6 +79,8 @@ const BuilderProvider = ({
     [eventBridge, onHandler]
   );
 
+  const designs = useSpaceAccess().may('spaceUpdate');
+
   const builderElementPermissions = useCallback(
     (element: Element, path?: string, defaultValue: boolean = true) => {
       const type = get(element, 'definition.type');
@@ -94,6 +97,11 @@ const BuilderProvider = ({
         permissions = { ...permissions, canDelete: false, canSnippet: false, canMove: false };
       }
 
+      // A role that may not change the design: selected and read, never deleted, dragged or moved.
+      if (!designs) {
+        permissions = { ...permissions, canDelete: false, canDragDrop: false, canMove: false, canSnippet: false };
+      }
+
       if (mode !== 'normal' && !path) {
         permissions.canSnippet = false;
       } else if (mode === 'normal' && path === 'canSnippet') {
@@ -106,7 +114,7 @@ const BuilderProvider = ({
 
       return permissions;
     },
-    [componentDefinitions, baseElementId, mode]
+    [componentDefinitions, baseElementId, mode, designs]
   ) as BuilderContextValue['builderElementPermissions'];
 
   const setSelected = useCallback(

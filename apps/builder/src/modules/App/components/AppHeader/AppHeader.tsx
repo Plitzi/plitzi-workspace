@@ -14,7 +14,7 @@ import ExportSpace from '@pmodules/Export';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import { issuesFromError, PUBLISH_REFUSED } from '@pmodules/Space/helpers/spaceIssues';
 import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
-import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
+import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import BorderButton from './BorderButton';
@@ -27,6 +27,7 @@ import PageHeader from './PageHeader';
 import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
+import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
 import ZoomButtons from './ZoomButtons';
 import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
@@ -44,6 +45,9 @@ const AppHeader = () => {
   const showSpaceIssues = useShowSpaceIssues();
   // What the space's plan does not include is shown locked, and leads to the plan that does (RFC 0029 §7.4).
   const { locked } = useSpaceEntitlements();
+  // Snapshot and Publish are a publisher's: a role without them is not offered either.
+  const { may } = useSpaceAccess();
+  const publishes = may('spacePublish');
   const snapshotsLocked = locked('snapshots');
   const domainLocked = locked('customDomain');
   const openPlans = useCallback((url: string) => {
@@ -224,10 +228,11 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
-        <RuntimeIdleNotice />
+        {may('spaceCode') && <RuntimeIdleNotice />}
         <IssuesButton />
         <QuotaMeter />
         <PlanBadge />
+        <RoleBadge />
         <button
           className={clsx(
             'flex h-7 w-7 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
@@ -254,34 +259,38 @@ const AppHeader = () => {
           >
             Export
           </Button>
-          <Button
-            id="header-publish"
-            size="sm"
-            title={
-              snapshotsLocked
-                ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
-                : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
-            }
-            onClick={handleClickPublish}
-            intent="secondary"
-          >
-            {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
-            Snapshot
-          </Button>
-          <Button
-            id="header-deploy"
-            size="sm"
-            title={
-              domainLocked
-                ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
-                : "Publish: put a revision live on an environment's domain."
-            }
-            onClick={handleClickDeploy}
-            disabled={loadingDeployment}
-          >
-            {domainLocked && !loadingDeployment && <Button.Icon icon="fa-solid fa-lock" />}
-            {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
-          </Button>
+          {publishes && (
+            <Button
+              id="header-publish"
+              size="sm"
+              title={
+                snapshotsLocked
+                  ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
+                  : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
+              }
+              onClick={handleClickPublish}
+              intent="secondary"
+            >
+              {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
+              Snapshot
+            </Button>
+          )}
+          {publishes && (
+            <Button
+              id="header-deploy"
+              size="sm"
+              title={
+                domainLocked
+                  ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
+                  : "Publish: put a revision live on an environment's domain."
+              }
+              onClick={handleClickDeploy}
+              disabled={loadingDeployment}
+            >
+              {domainLocked && !loadingDeployment && <Button.Icon icon="fa-solid fa-lock" />}
+              {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
+            </Button>
+          )}
         </div>
       </div>
     </div>

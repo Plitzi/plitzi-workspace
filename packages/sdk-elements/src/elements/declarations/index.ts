@@ -151,6 +151,19 @@ export const serverTemplatesByType: Readonly<Record<string, readonly string[]>> 
   )
 );
 
+/**
+ * Each type's content attributes (`contentAttributes`): what a role that edits the content and not the design
+ * may change on an element of that type — the server's gate and the builder's content form read this one map.
+ */
+export const contentAttributesByType: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  Object.values(elementDeclarations).flatMap(declaration =>
+    'contentAttributes' in declaration ? [[declaration.type, declaration.contentAttributes]] : []
+  )
+);
+
+/** The content attributes of `type`; none for a type no built-in element declares — it has nothing to edit there. */
+export const contentAttributesOf = (type: string): readonly string[] => contentAttributesByType[type] ?? [];
+
 // What the declarations are checked with, from beside the elements that own them — as readable outside a browser.
 export { interactionBasicTriggers } from '../../Element/helpers/elementConstants';
 export { DOCUMENT_SCROLLS, isDocumentScroll } from '../internal/Page/declaration';

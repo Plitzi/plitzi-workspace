@@ -40,6 +40,20 @@ describe('getPopups', () => {
     expect(left.filter(popup => isFullViewId(popup.id)).every(popup => popup.component === undefined)).toBe(true);
   });
 
+  // A role is offered the panels it may use — a content editor its files and the space's map, nothing else.
+  it('offers a role only the panels it may use', () => {
+    const contentOnly = (permission: string) => ['spaceView', 'spaceContent'].includes(permission);
+    const { left } = getPopups({ may: contentOnly });
+
+    // The server panel stays for its data, the content's — its sections of code are the code's (ContainerServer).
+    expect(left.map(popup => popup.id)).toEqual(['pages', 'assets', 'layerManager', 'usages', 'server']);
+    expect(getPopups({ may: permission => permission === 'spaceView' }).left.map(popup => popup.id)).toEqual([
+      'pages',
+      'layerManager',
+      'usages'
+    ]);
+  });
+
   it('opens what was open, and ignores an id an older builder kept', () => {
     const { left } = getPopups({ activeIds: ['variables', 'history', 'assistant'] });
 

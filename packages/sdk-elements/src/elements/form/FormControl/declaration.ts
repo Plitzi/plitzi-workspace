@@ -196,6 +196,7 @@ const withField: FieldParts = { field: fieldStyle };
 
 const declaration = elementDeclaration<FormControlAttributes>()({
   type: 'formControl',
+  contentAttributes: ['label', 'placeholder', 'options', 'requiredMessage', 'minLengthMessage', 'maxLengthMessage', 'minMessage', 'maxMessage', 'formatMessage', 'patternMessage', 'matchesMessage'],
   attributeValues: {
     subType: valuesOf<NonNullable<FormControlProps['subType']>>()([
       'text',

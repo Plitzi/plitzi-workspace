@@ -95,7 +95,7 @@ export const createMcpServer = async ({
   const requireWritableSpaceId = (): number => {
     const id = requireSpaceId();
     if (!grant?.canWrite) {
-      throw new ReadOnlyGrantError();
+      throw new ReadOnlyGrantError(grant?.readOnlyReason);
     }
 
     return id;

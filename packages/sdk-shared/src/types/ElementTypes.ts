@@ -37,7 +37,7 @@ export type InternalPropsSTG1<T extends InternalPropsExtension = InternalPropsEx
 
 export type ComponentDefinition = Pick<
   PluginSchema,
-  'attributes' | 'builder' | 'definition' | 'defaultStyle' | 'initialItems'
+  'attributes' | 'builder' | 'definition' | 'defaultStyle' | 'initialItems' | 'contentAttributes'
 > & {
   assets: Asset[];
   assetsSettings: Omit<Asset, 'isMain'>[];

@@ -28,6 +28,7 @@ const buttonStyle = {
 
 const declaration = elementDeclaration<ButtonAttributes>()({
   type: 'button',
+  contentAttributes: ['content'],
   attributeValues: {
     subType: valuesOf<NonNullable<ButtonProps['subType']>>()(['button', 'submit', 'reset']),
     contentPlacement: valuesOf<NonNullable<ButtonProps['contentPlacement']>>()(['before', 'after']),

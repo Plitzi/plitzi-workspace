@@ -9,6 +9,7 @@ export type SvgAttributes = AuthorableAttributes<SvgProps>;
 
 const declaration = elementDeclaration<SvgAttributes>()({
   type: 'svg',
+  contentAttributes: ['label'],
   content: {
     attributes: {
       content: '',

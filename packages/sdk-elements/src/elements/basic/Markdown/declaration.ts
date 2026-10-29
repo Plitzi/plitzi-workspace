@@ -9,6 +9,7 @@ export type MarkdownAttributes = AuthorableAttributes<MarkdownProps>;
 
 const declaration = elementDeclaration<MarkdownAttributes>()({
   type: 'markdown',
+  contentAttributes: ['content'],
   content: {
     placeholders: ['content'],
     attributes: {

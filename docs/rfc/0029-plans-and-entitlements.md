@@ -1,6 +1,6 @@
 # RFC 0029 — Plans and entitlements: charge for the cloud, not for the code
 
-- **Status:** Accepted — phases 1–3 built (2026-10-29), phase 4 but for the client editor seat (§12)
+- **Status:** Accepted — phases 1–4 built (2026-10-29); open: §13
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-29
 - **Scope:** `plitzi-sdk-server` (plans, subscriptions, metering, every gate, the website's pricing and console),
@@ -68,8 +68,8 @@ free, and every snapshot ever taken is stored for ever.
 
 | | Free | Team | Business | Enterprise |
 |---|---|---|---|---|
-| Price (hypothesis) | 0 | 19 €/month | 79 €/month | contract |
-| Seats | 1 | 3 included, + 7 € a seat | 10 included, + 9 € a seat | contract |
+| Price | 0 | `src/services/pricing/plans.ts` | `src/services/pricing/plans.ts` | contract |
+| Seats | 1 | 3 included, + a seat's price | 10 included, + a seat's price | contract |
 | Teams | — | 3 | unlimited | unlimited |
 | Custom roles | — | — | yes | yes |
 | SSO, audit log | — | — | yes | yes, + SLA |
@@ -103,8 +103,8 @@ longer of its workspace plan's window and its site plan's (§4.2).
 | A runtime of the space's own | — | — | — | yes |
 | Analytics kept | 7 days | 90 days | 1 year | 1 year |
 
-Price hypotheses, to be validated against the cost of serving a site (§10): **Site 12–15 €/month, App 39–49 €/month,
-App+ 99–149 €/month**, seeded at 12, 39 and 99; yearly billing with two months free, offered by default (a
+Prices: set on 2026-10-29 against the market, VAT and the gateway's fee taken into account — one place,
+`plitzi-sdk-server/src/services/pricing/` (`docs/billing/README.md` § Prices, `yarn prices`); yearly billing with two months free, offered by default (a
 yearly price is a plan row of its own, `interval: year`, at ten months).
 
 ### 4.3 Partner (agencies) — phase 4
@@ -294,7 +294,7 @@ churn by reason; gross margin per site.
   counted); the MCP's primer names the space's plan and, by the plan that includes them, what it does not
   (`getEntitlements`).
 
-**Phase 2 — site subscriptions and paying** (done 2026-10-29, prices awaiting Carlos)
+**Phase 2 — site subscriptions and paying** (done 2026-10-29)
 - Done: a plan has a `scope` (`workspace` | `site`) and a site plan its `siteTier`; the seeded catalogue is Site,
   App and App+ (site) and Team and Business (workspace), each with the price it shows; Pro and Max are closed to new
   checkouts and keep hosting their workspaces' spaces (`features.legacyHosting`) — a Team or Business plan sells
@@ -328,7 +328,7 @@ churn by reason; gross margin per site.
   runtime and connectors, and the snapshot dialog saying what the next snapshot removes
   (`GET /spaces/:id/snapshots/next-prune`). `plitzi doctor`'s `plan` area: what the project uses that its space's
   plan leaves out.
-- Carlos's: the gateway's real prices and the confirmed figures.
+- Carlos's: the prices made at the gateway (Paddle's price ids, `PADDLE_PRICE_*`), at the catalogue's figures.
 - Business, built after (2026-10-29): **custom roles** — a workspace's own roles out of a space's permissions
   (`role.workspace_id`, `services/auth/spaceRoles.ts`, `/workspaces/:id/roles`, the website's Roles page), given like
   the platform's to a team, a person or as the member role; **the audit log** — what is done in a workspace kept on
@@ -357,7 +357,7 @@ churn by reason; gross margin per site.
   retention and gross margin per site.
 - Carlos's: the unit costs, read from the infrastructure's bill.
 
-**Phase 4 — partners** (built 2026-10-29 but for the client editor seat)
+**Phase 4 — partners** (built 2026-10-29)
 - The partner plan (Partner, a workspace plan beside Business, `features.partner`): wholesale prices on the site plans
   it buys, by the paid sites it holds counting the one bought (`PARTNER_DISCOUNTS`, 15 % from the first, 25 % from
   ten, 35 % from fifty — hypotheses), each tier a gateway coupon applied at checkout; a tier with no coupon refuses the
@@ -369,14 +369,15 @@ churn by reason; gross margin per site.
   administer; the space moves (`spaces/move.ts`, shared with `/spaces/:id/move`), a lifetime site on it is freed, the
   agency's site plan for it ends at its renewal and the agency is credited `PARTNER_HANDOVER_CREDIT_MONTHS` of it —
   on Stripe as customer balance; on Paddle, which keeps none, the answer says the amount to credit by hand.
-- Not built, and why: **the client editor seat** needs a builder mode that edits content without design, which the
-  permissions do not separate today (`spaceUpdate` is both) — a decision of Carlos's before it is built. Plitzi itself
-  is not white-label (§4.3).
+- The client editor: the space role **Can edit content**, given to the client on their space — the builder offers them
+  the words, links and pictures, and the server refuses the rest (`plitzi-sdk-server` `docs/workspaces-and-teams.md`
+  § Space roles). A grant on one space takes no seat: seats are the workspace's members. Plitzi itself is not
+  white-label (§4.3).
 
 ## 13. Open questions
 
-- The exact allowances and prices — after the cost per site is measured (phase 3), with phase 1's hypotheses until then.
-- The client editor seat (§4.3, phase 4): Carlos's decision before it is built.
+- The page views each site plan includes — after a month of measured cost per site (phase 3), the hypotheses until then.
+- Whether a client editor should take a seat, or a cheaper one: today a grant on one space takes none.
 
 Decided: multi-agent runs on the user's machine stay free (§3: they cost Plitzi nothing); the JSON download is the raw
 documents, on every plan; a downgraded site's custom domain shows the notice for 14 days; Plitzi itself is not white-label

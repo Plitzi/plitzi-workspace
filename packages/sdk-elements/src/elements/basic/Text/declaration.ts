@@ -9,6 +9,7 @@ export type TextAttributes = AuthorableAttributes<TextProps>;
 
 const declaration = elementDeclaration<TextAttributes>()({
   type: 'text',
+  contentAttributes: ['content'],
   content: {
     placeholders: ['content'],
     attributes: {

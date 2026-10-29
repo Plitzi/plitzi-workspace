@@ -21,6 +21,10 @@ and `index.ts` (`Object.assign(Component, declaration, { pluginSettings: Setting
 `@plitzi/sdk-authoring/plugin`: the rest of what the builder needs is derived. An event or an action is declared there
 and registered by the component from there, never only in the component.
 
+`contentAttributes: ['caption']` names the attributes a person who may edit only a space's content (the **Can edit
+content** role) changes on it — its words, a link, a picture; left out, none, and they change nothing on it. The builder
+offers them as a form, and the server refuses any other change from that role.
+
 A plugin fires its events with `const fire = usePluginTrigger(declaration)` (`@plitzi/plitzi-sdk`), typed by the
 declaration: `fire('onPick', { seat })` — an undeclared event, or a payload missing a field its `preview` names, does
 not compile. Nothing fires while the page is edited. Fire whenever there is news — from the first effect too: a flow

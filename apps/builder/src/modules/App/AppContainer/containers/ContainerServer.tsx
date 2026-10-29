@@ -1,4 +1,5 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
+import { useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Actions from '@pmodules/Actions/Actions';
@@ -7,18 +8,20 @@ import Credentials from '@pmodules/Credentials';
 import Data from '@pmodules/Data';
 import Functions from '@pmodules/Functions';
 import Runtime from '@pmodules/Runtime';
+import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import PanelSections from '../../components/PanelSections';
 
 import type { PanelSection } from '../../components/PanelSections';
 
-const SECTIONS: [PanelSection, ...PanelSection[]] = [
-  { id: 'actions', label: 'Actions', content: <Actions /> },
-  { id: 'functions', label: 'Functions', content: <Functions /> },
-  { id: 'data', label: 'Data', content: <Data /> },
-  { id: 'connectors', label: 'Connectors', content: <Connectors /> },
-  { id: 'credentials', label: 'Credentials', content: <Credentials /> },
-  { id: 'runtime', label: 'Runtime', content: <Runtime /> }
+/** Each section with the space permission it takes: the data is the content's, the rest code or settings. */
+const SECTIONS: (PanelSection & { needs: string })[] = [
+  { id: 'actions', label: 'Actions', content: <Actions />, needs: 'spaceCode' },
+  { id: 'functions', label: 'Functions', content: <Functions />, needs: 'spaceCode' },
+  { id: 'data', label: 'Data', content: <Data />, needs: 'spaceContent' },
+  { id: 'connectors', label: 'Connectors', content: <Connectors />, needs: 'spaceCode' },
+  { id: 'credentials', label: 'Credentials', content: <Credentials />, needs: 'spaceManage' },
+  { id: 'runtime', label: 'Runtime', content: <Runtime />, needs: 'spaceCode' }
 ];
 
 /**
@@ -28,12 +31,19 @@ const SECTIONS: [PanelSection, ...PanelSection[]] = [
  */
 const ContainerServer = () => {
   const [hasServerRendering] = useBuilderStore('hasServerRendering');
+  const { may } = useSpaceAccess();
+  const sections = useMemo(() => SECTIONS.filter(section => may(section.needs)), [may]);
+  if (sections.length === 0) {
+    return null;
+  }
+
+  const [first, ...rest] = sections;
 
   return (
     <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-900">
       <PanelSections
         name="server"
-        sections={SECTIONS}
+        sections={[first, ...rest]}
         variant="page"
         notice={
           !hasServerRendering && (

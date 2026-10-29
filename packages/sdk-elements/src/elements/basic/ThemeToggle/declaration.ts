@@ -35,6 +35,7 @@ const buttonReset = {
 
 const declaration = elementDeclaration<ThemeToggleAttributes>()({
   type: 'themeToggle',
+  contentAttributes: ['lightLabel', 'darkLabel', 'systemLabel'],
   attributeValues: {
     subType: valuesOf<NonNullable<ThemeToggleProps['subType']>>()(['switch', 'segmented'])
   },

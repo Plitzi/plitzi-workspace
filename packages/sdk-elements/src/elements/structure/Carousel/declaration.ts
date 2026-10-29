@@ -24,6 +24,7 @@ const BY: InteractionCallbackParam = {
 
 const declaration = elementDeclaration<CarouselAttributes>()({
   type: 'carousel',
+  contentAttributes: ['label'],
   sourceType: 'carousel',
   publishes: {
     items: 'Every item it shows, one slide each',

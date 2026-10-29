@@ -95,10 +95,28 @@ const ASSET_SECTIONS: [PanelSection, ...PanelSection[]] = [
   { id: 'fonts', label: 'Fonts', content: <Fonts /> }
 ];
 
+/**
+ * What each panel is for, as a space permission: a role that does not allow it is not offered the panel —
+ * Layers, Usages and Pages read the space, so whoever may view it has them.
+ */
+const PANEL_NEEDS: Partial<Record<string, string>> = {
+  elements: 'spaceUpdate',
+  variables: 'spaceUpdate',
+  assets: 'spaceContent',
+  advanceStyle: 'spaceUpdate',
+  stateManager: 'spaceUpdate',
+  // Its data is the content's; the rest of it says what each section needs (ContainerServer).
+  server: 'spaceContent',
+  settings: 'spaceManage'
+};
+
 export const getPopups = ({
-  activeIds = []
+  activeIds = [],
+  may = () => true
 }: {
   activeIds?: string[];
+  /** Whether the person's role allows a space permission (`useSpaceAccess`); everything, when not said. */
+  may?: (permission: string) => boolean;
 }): {
   left: PopupInstance[];
   right: PopupInstance[];
@@ -124,7 +142,8 @@ export const getPopups = ({
     panel('assets', 3, activeIds, {
       icon: 'fa-solid fa-image',
       title: 'Assets',
-      component: <PanelSections name="assets" sections={ASSET_SECTIONS} />
+      // The files are the content's; the fonts, the design's.
+      component: <PanelSections name="assets" sections={may('spaceUpdate') ? ASSET_SECTIONS : [ASSET_SECTIONS[0]]} />
     }),
     panel('layerManager', 4, activeIds, {
       icon: 'fa-solid fa-layer-group',
@@ -154,7 +173,11 @@ export const getPopups = ({
     }),
     fullView('server', 8, activeIds, 'fa-solid fa-server', 'Server'),
     fullView('settings', 9, activeIds, 'fas fa-cog', 'Settings')
-  ];
+  ].filter(popup => {
+    const need = PANEL_NEEDS[popup.id];
+
+    return need === undefined || may(need);
+  });
 
   return { left, right: [], floating: [] };
 };

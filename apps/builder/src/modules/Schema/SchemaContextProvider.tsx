@@ -3,6 +3,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useMemo, useCallback, use, useEffect } from 'react';
 
 import { EventBridgeContext, useEventBridge } from '@plitzi/sdk-event-bridge';
@@ -14,6 +15,7 @@ import { SchemaContext } from '@plitzi/sdk-shared/schema/react';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueContext from '@pmodules/Queue/QueueContext';
+import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import type {
@@ -490,24 +492,70 @@ const SchemaContextProvider = ({
     schemaDetachInstance
   ]);
 
+  /**
+   * What a role may do, held to before anything is sent: an edit of an element's or a page's content asks
+   * the content, the rest the design. A shortcut, the context menu, the tree, the pages panel — every way in reaches
+   * the schema through these events, so one guard says it once, in the role's words, instead of a server refusal.
+   * Remote changes arrive by the subscription, never through here.
+   */
+  const { access, may } = useSpaceAccess();
+  const { addToast } = useToast();
+  const refuse = useCallback(
+    (permission: string) =>
+      addToast(
+        `${access?.label ?? 'Your role'} on this space does not ${permission === 'spaceContent' ? 'edit its content' : 'change its design'}.`,
+        { appeareance: 'warning', autoDismiss: true }
+      ),
+    [access?.label, addToast]
+  );
+  // Each handler keeps its own shape: one answered at once, or one that is waited for.
+  const allowed = useCallback(
+    <A extends unknown[]>(permission: string, handler: (...args: A) => void) =>
+      (...args: A): void => {
+        if (!may(permission)) {
+          refuse(permission);
+
+          return;
+        }
+
+        handler(...args);
+      },
+    [may, refuse]
+  );
+  const allowedAsync = useCallback(
+    <A extends unknown[]>(permission: string, handler: (...args: A) => void | Promise<void>) =>
+      async (...args: A): Promise<void> => {
+        if (!may(permission)) {
+          refuse(permission);
+
+          return;
+        }
+
+        await handler(...args);
+      },
+    [may, refuse]
+  );
+
   // When type = 'main'
   const mainEvents = useMemo(
     () => ({
-      schemaAddPage,
-      schemaHomePage,
-      schemaUpdatePage,
-      schemaRemovePage,
-      schemaAddPageFolder,
-      schemaUpdatePageFolder,
-      schemaRemovePageFolder,
-      schemaAddVariable,
-      schemaUpdateVariable,
-      schemaRemoveVariable,
-      schemaSetFlag,
-      schemaRemoveFlag,
-      schemaUpdateSettings
+      schemaAddPage: allowedAsync('spaceUpdate', schemaAddPage),
+      schemaHomePage: allowed('spaceUpdate', schemaHomePage),
+      schemaUpdatePage: allowed('spaceContent', schemaUpdatePage),
+      schemaRemovePage: allowed('spaceUpdate', schemaRemovePage),
+      schemaAddPageFolder: allowedAsync('spaceUpdate', schemaAddPageFolder),
+      schemaUpdatePageFolder: allowed('spaceUpdate', schemaUpdatePageFolder),
+      schemaRemovePageFolder: allowed('spaceUpdate', schemaRemovePageFolder),
+      schemaAddVariable: allowed('spaceUpdate', schemaAddVariable),
+      schemaUpdateVariable: allowed('spaceUpdate', schemaUpdateVariable),
+      schemaRemoveVariable: allowed('spaceUpdate', schemaRemoveVariable),
+      schemaSetFlag: allowed('spaceUpdate', schemaSetFlag),
+      schemaRemoveFlag: allowed('spaceUpdate', schemaRemoveFlag),
+      schemaUpdateSettings: allowed('spaceManage', schemaUpdateSettings)
     }),
     [
+      allowed,
+      allowedAsync,
       schemaAddPage,
       schemaHomePage,
       schemaUpdatePage,
@@ -529,21 +577,22 @@ const SchemaContextProvider = ({
 
   const events = useMemo(
     () => ({
-      schemaUpdate,
-      schemaAddElement,
-      schemaUpdateElement,
-      schemaRenameElement,
-      schemaUpdateElements,
-      schemaMoveElement,
-      schemaCloneElement,
-      schemaRemoveElement,
-      schemaAddSnippet,
-      schemaAddComponent,
-      schemaUpdateComponent,
-      schemaRemoveComponent,
-      schemaDetachInstance
+      schemaUpdate: allowed('spaceUpdate', schemaUpdate),
+      schemaAddElement: allowed('spaceUpdate', schemaAddElement),
+      schemaUpdateElement: allowed('spaceContent', schemaUpdateElement),
+      schemaRenameElement: allowed('spaceUpdate', schemaRenameElement),
+      schemaUpdateElements: allowed('spaceContent', schemaUpdateElements),
+      schemaMoveElement: allowed('spaceUpdate', schemaMoveElement),
+      schemaCloneElement: allowed('spaceUpdate', schemaCloneElement),
+      schemaRemoveElement: allowed('spaceUpdate', schemaRemoveElement),
+      schemaAddSnippet: allowed('spaceUpdate', schemaAddSnippet),
+      schemaAddComponent: allowed('spaceUpdate', schemaAddComponent),
+      schemaUpdateComponent: allowed('spaceUpdate', schemaUpdateComponent),
+      schemaRemoveComponent: allowed('spaceUpdate', schemaRemoveComponent),
+      schemaDetachInstance: allowed('spaceUpdate', schemaDetachInstance)
     }),
     [
+      allowed,
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
@@ -562,65 +611,15 @@ const SchemaContextProvider = ({
 
   useEventBridge('main', events);
 
-  const valueMemo = useMemo(() => {
-    return {
+  const valueMemo = useMemo(
+    () => ({
       dispatchSchema,
-      schemaUpdate,
-      schemaAddElement,
-      schemaUpdateElement,
-      schemaRenameElement,
-      schemaUpdateElements,
-      schemaMoveElement,
-      schemaCloneElement,
-      schemaRemoveElement,
-      schemaAddPage,
-      schemaHomePage,
-      schemaUpdatePage,
-      schemaRemovePage,
-      schemaAddPageFolder,
-      schemaUpdatePageFolder,
-      schemaRemovePageFolder,
-      schemaAddVariable,
-      schemaUpdateVariable,
-      schemaRemoveVariable,
-      schemaSetFlag,
-      schemaRemoveFlag,
-      schemaAddSnippet,
-      schemaUpdateSettings,
-      schemaAddComponent,
-      schemaUpdateComponent,
-      schemaRemoveComponent,
-      schemaDetachInstance
-    };
-  }, [
-    dispatchSchema,
-    schemaUpdate,
-    schemaAddElement,
-    schemaUpdateElement,
-    schemaRenameElement,
-    schemaUpdateElements,
-    schemaMoveElement,
-    schemaCloneElement,
-    schemaRemoveElement,
-    schemaAddSnippet,
-    schemaUpdateSettings,
-    schemaAddPage,
-    schemaHomePage,
-    schemaUpdatePage,
-    schemaRemovePage,
-    schemaAddPageFolder,
-    schemaUpdatePageFolder,
-    schemaRemovePageFolder,
-    schemaAddVariable,
-    schemaUpdateVariable,
-    schemaRemoveVariable,
-    schemaSetFlag,
-    schemaRemoveFlag,
-    schemaAddComponent,
-    schemaUpdateComponent,
-    schemaRemoveComponent,
-    schemaDetachInstance
-  ]);
+      ...events,
+      ...mainEvents,
+      schemaCloneElement: allowed('spaceUpdate', schemaCloneElement)
+    }),
+    [dispatchSchema, events, mainEvents, allowed, schemaCloneElement]
+  );
 
   return <SchemaContext value={valueMemo}>{children}</SchemaContext>;
 };

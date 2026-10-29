@@ -86,6 +86,9 @@ export type ComponentCatalogEntry = {
   defaultStyle?: Record<string, string>;
   /** Binding targets the type exposes, from the plugin manifest's `defaultStyle.bindingsAllowed`. */
   bindingsAllowed?: { attributes?: string[]; initialState?: string[] };
+  /** The attributes a role that edits the content and not the design may change: its words, a link, a
+   *  picture. Absent, none — an element of the type is the design's alone. */
+  contentAttributes?: string[];
 };
 
 /** Element type → its semantic metadata, keyed by the `type` string used in the schema. Covers BOTH the default

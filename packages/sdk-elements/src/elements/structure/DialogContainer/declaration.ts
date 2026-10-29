@@ -55,6 +55,7 @@ const footerButtonStyle = {
 
 const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
+  contentAttributes: ['headerLabel', 'acceptButtonLabel', 'rejectButtonLabel'],
   sourceType: 'dialogContainer',
   triggers: {
     onDialogAccept: {

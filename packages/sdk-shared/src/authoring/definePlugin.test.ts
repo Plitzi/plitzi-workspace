@@ -87,6 +87,24 @@ describe('definePlugin', () => {
     expect(declaration.triggers).toEqual({});
   });
 
+  it('names what a content editor may change among its own attributes, and only those', () => {
+    const declaration = definePlugin<JamAttributes>()({
+      type: 'jamDisc',
+      label: 'Jam Disc',
+      attributes: { bpm: 112, kit: 'nebula', still: false },
+      contentAttributes: ['kit']
+    });
+
+    expect(declaration.contentAttributes).toEqual(['kit']);
+    definePlugin<JamAttributes>()({
+      type: 'jamDisc',
+      label: 'Jam Disc',
+      attributes: { bpm: 112, kit: 'nebula', still: false },
+      // @ts-expect-error — `tempo` is not one of its attributes.
+      contentAttributes: ['tempo']
+    });
+  });
+
   it('carries its attributes and its events in its type, for the factory and the hook that read them', () => {
     const declaration = definePlugin<{ bpm?: number; pattern?: unknown[] }>()({
       type: 'jamDisc',

@@ -9,6 +9,7 @@ export type ParagraphAttributes = AuthorableAttributes<ParagraphProps>;
 
 const declaration = elementDeclaration<ParagraphAttributes>()({
   type: 'paragraph',
+  contentAttributes: ['content'],
   content: {
     placeholders: ['content'],
     attributes: {

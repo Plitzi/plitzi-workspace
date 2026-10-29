@@ -10,6 +10,7 @@ import BuilderSearch from '@pmodules/Builder/components/BuilderSearch';
 import { useOpenComponent } from '@pmodules/Components';
 import FontPreviews from '@pmodules/Fonts/FontPreviews';
 import ShortcutsProvider from '@pmodules/Shortcuts';
+import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
@@ -77,11 +78,12 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     [eventBridge]
   );
 
+  const { may } = useSpaceAccess();
   // The active ids are read as the panels open: what the person opens afterwards is the panels' own state. They open
   // again whenever a component is opened or closed — the scope they are drawn in is keyed by it — and then they have to
   // open as the person left them, not as they were when the builder loaded.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const popups = useMemo(() => getPopups({ activeIds: popupsActiveLeft }), [component?.id]);
+  const popups = useMemo(() => getPopups({ activeIds: popupsActiveLeft, may }), [component?.id, may]);
 
   return (
     <div className="flex grow flex-col overflow-auto">

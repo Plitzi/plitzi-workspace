@@ -1,36 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { isIncluded } from '@plitzi/sdk-shared/network';
+import { isIncluded, mayDo } from '@plitzi/sdk-shared/network';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
-import type { TCapability, TSpaceEntitlements } from '@plitzi/sdk-shared/network';
+import type { TCapability, TSpaceAccess, TSpaceEntitlements } from '@plitzi/sdk-shared/network';
+
+/** What the server answered of a space: its plan, and what the person's role there allows. */
+type SpaceAnswer = { entitlements?: TSpaceEntitlements; access?: TSpaceAccess };
 
 /**
  * Read once per space and kept: a plan changes when someone pays, and the server refuses whatever the builder believed
  * in the meantime — this only decides what is shown locked before anyone runs into the refusal (RFC 0029 §7.4).
  */
-const asked = new Map<string, Promise<TSpaceEntitlements | undefined>>();
+const asked = new Map<string, Promise<SpaceAnswer>>();
 
-const fetchEntitlements = async (url: string, userKey: string): Promise<TSpaceEntitlements | undefined> => {
+const fetchAnswer = async (url: string, userKey: string): Promise<SpaceAnswer> => {
   try {
     const response = await fetch(url, { credentials: 'include', headers: { 'plitzi-access-token': userKey } });
     if (!response.ok) {
-      return undefined;
+      return {};
     }
 
-    const body = (await response.json()) as { entitlements?: TSpaceEntitlements };
-
-    return body.entitlements;
+    // The server's JSON, read as the contract it answers; each field is checked where it is used (`isIncluded`, `mayDo`).
+    return (await response.json()) as SpaceAnswer;
   } catch {
-    // A server that answers none — self-hosted, or unreachable for a moment — means everything is included.
-    return undefined;
+    // A server that answers none — self-hosted, or unreachable for a moment — means everything is included and allowed.
+    return {};
   }
 };
 
-/** What the space's plan includes, and the way to what it does not. Everything, until the server says otherwise. */
-const useSpaceEntitlements = () => {
+/** The space's answer, asked once per space and shared by every hook below. */
+const useSpaceAnswer = (): SpaceAnswer => {
   const { server, userKey, webId } = useBuilderNetwork();
-  const [entitlements, setEntitlements] = useState<TSpaceEntitlements | undefined>();
+  const [answer, setAnswer] = useState<SpaceAnswer>({});
 
   useEffect(() => {
     if (!server.apiServer || !webId) {
@@ -38,12 +40,12 @@ const useSpaceEntitlements = () => {
     }
 
     const url = `${server.apiServer}/spaces/${webId}/entitlements`;
-    const pending = asked.get(url) ?? fetchEntitlements(url, userKey);
+    const pending = asked.get(url) ?? fetchAnswer(url, userKey);
     asked.set(url, pending);
     let current = true;
-    void pending.then(answer => {
+    void pending.then(next => {
       if (current) {
-        setEntitlements(answer);
+        setAnswer(next);
       }
     });
 
@@ -51,6 +53,29 @@ const useSpaceEntitlements = () => {
       current = false;
     };
   }, [server.apiServer, userKey, webId]);
+
+  return answer;
+};
+
+/**
+ * What the person's role on the space allows: the builder offers that and nothing the server would refuse —
+ * everything, until the server says otherwise.
+ */
+export const useSpaceAccess = () => {
+  const { access } = useSpaceAnswer();
+
+  return useMemo(
+    () => ({
+      access,
+      may: (permission: string): boolean => mayDo(access, permission)
+    }),
+    [access]
+  );
+};
+
+/** What the space's plan includes, and the way to what it does not. Everything, until the server says otherwise. */
+const useSpaceEntitlements = () => {
+  const { entitlements } = useSpaceAnswer();
 
   return useMemo(
     () => ({

@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { emptySpace, noSpaceErrorCode } from '../helpers';
+import { emptySpace, noSpaceErrorCode, readOnlyGrantErrorCode } from '../helpers';
 import { createMcpServer } from '../server';
 
 import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-shared';
@@ -85,5 +85,30 @@ describe('the grant a space is reached by', () => {
 
     expect(JSON.stringify(data)).toContain('secret.json');
     expect(read).toHaveBeenCalledWith('data');
+  });
+
+  // A role that views or edits only the content never had the right to change the design: the consumer says so, and
+  // the agent hears that rather than that access was lost.
+  it('refuses a write with the consumer’s reason, and keeps nothing', async () => {
+    const saveSchema = vi.fn();
+    const client = await connect(
+      {
+        spaceId: 9,
+        scope: 'agent',
+        userId: 4,
+        canWrite: false,
+        readOnlyReason: 'the member who authorized it can edit the content of this space, not its design'
+      },
+      { ...reading().adapters, saveSchema }
+    );
+
+    const answer = await client.callTool({
+      name: 'plitzi_apply',
+      arguments: { operations: [{ type: 'upsertPage', ref: 'home', slug: 'home' }] }
+    });
+
+    expect(JSON.stringify(answer)).toContain(readOnlyGrantErrorCode);
+    expect(JSON.stringify(answer)).toContain('can edit the content of this space, not its design');
+    expect(saveSchema).not.toHaveBeenCalled();
   });
 });

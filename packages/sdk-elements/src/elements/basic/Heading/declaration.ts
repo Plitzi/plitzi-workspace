@@ -9,6 +9,7 @@ export type HeadingAttributes = AuthorableAttributes<HeadingProps>;
 
 const declaration = elementDeclaration<HeadingAttributes>()({
   type: 'heading',
+  contentAttributes: ['content'],
   attributeValues: {
     subType: valuesOf<NonNullable<HeadingProps['subType']>>()(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
   },
