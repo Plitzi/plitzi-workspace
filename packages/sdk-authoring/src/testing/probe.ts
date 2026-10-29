@@ -157,7 +157,6 @@ export function probePage(input: ProbeInput): ProbeFindings {
     });
   };
 
-  /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
   /**
    * What makes a node that says something transparent: itself or an element around it at opacity 0 — a row whose
    * arrival never played stays blank with every box in place. An arrival still waiting to be seen is not it (it plays
@@ -196,6 +195,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     return undefined;
   };
 
+  /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
   const whyHidden = (node: Element, list: boolean): string => {
     const hider = hiderOf(node);
     if (hider) {
@@ -232,6 +232,26 @@ export function probePage(input: ProbeInput): ProbeFindings {
     return box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible' && !transparentAt(node);
   };
 
+  /**
+   * Hidden at this width on purpose — by a rule under a viewport condition — itself, or, with no box of its own
+   * (`display: contents`), every element inside it: a run's sheet pane, a wrapper of a legend a breakpoint hides on a
+   * tablet, failed the check that accepted the legend itself.
+   */
+  const hiddenByWidth = (node: Element): boolean => {
+    const hider = hiderOf(node);
+    if (hider) {
+      return laidOutByWidth(hider.at);
+    }
+
+    const children = [...node.children];
+
+    return (
+      getComputedStyle(node).display === 'contents' &&
+      children.length > 0 &&
+      children.every(child => !isVisible(child) && hiddenByWidth(child))
+    );
+  };
+
   const missing: string[] = [];
   const hidden: { id: string; reason: string }[] = [];
   const byWidth: string[] = [];
@@ -259,7 +279,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
       missing.push(id);
     } else if (!nodes.some(isVisible)) {
       const hider = hiderOf(nodes[0]);
-      if (hider && laidOutByWidth(hider.at)) {
+      if (hiddenByWidth(nodes[0])) {
         byWidth.push(id);
       } else if (!hider && container === true && nodes.every(holdsNothing)) {
         empty.push(id);

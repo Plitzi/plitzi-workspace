@@ -18,6 +18,10 @@ export interface LongTask {
   id: string;
   agent: string;
   takenAt: string;
+  /** Its agent's own time on it — taken since, less what the CLI's checks held it for (`workedMs`). */
+  workedMs: number;
+  /** Since when a check the CLI runs holds its agent. */
+  checking?: string;
   spentMinutes: number;
   estimateMinutes: number;
   /** What its agent last said of its progress. */
@@ -39,13 +43,16 @@ const DECIDE =
 export const longTaskAttention = (task: LongTask, messages: readonly Message[], now: Date): Attention | undefined => {
   const limit = workLimitOf(task.id);
   // Counted in milliseconds, as the asking is: by the rounded minutes a card was past its limit half a minute before
-  // its asking counted, and every pass of the watch and the keeper asked again — 77 times in 30 s.
-  const limits = Math.floor((now.getTime() - Date.parse(task.takenAt)) / (limit * 60_000));
-  if (limits < 1) {
+  // its asking counted, and every pass of the watch and the keeper asked again — 77 times in 30 s. Its agent's own
+  // time, and nothing while a check holds it: it cannot answer, and the check says how it ended (a run asked dev-2
+  // where it stood four minutes into its page's spec, three times in twenty minutes).
+  const limits = Math.floor(task.workedMs / (limit * 60_000));
+  if (limits < 1 || task.checking !== undefined) {
     return undefined;
   }
 
-  const crossedAt = Date.parse(task.takenAt) + limits * limit * 60_000;
+  // When it crossed its last limit, in the clock's time: what its checks held since is added back.
+  const crossedAt = now.getTime() - (task.workedMs - limits * limit * 60_000);
   const addresses = [task.id, agentAddress(task.agent)];
   // Every asking since the limit was crossed: the lead's watch and the keeper may both have asked.
   const asked = messages.filter(

@@ -1,9 +1,12 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
-import Form, { useForm } from '@plitzi/plitzi-ui/Form';
+import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
+
+import SnapshotPruneNotice from '../components/SnapshotPruneNotice';
 import VersionContents from '../components/VersionContents';
 
 import type { Environment } from '@plitzi/sdk-shared';
@@ -22,8 +25,22 @@ export type PublishFormProps = {
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof publishFormSchema>) => void;
 };
 
-const PublishForm = ({ environment = 'development', description = '', onClose, onSubmit }: PublishFormProps) => {
-  const form = useForm({ defaultValues: { environment, description }, config: { schema: publishFormSchema } });
+const ENVIRONMENTS = [
+  { value: 'development', label: 'Development' },
+  { value: 'staging', label: 'Staging' },
+  { value: 'production', label: 'Production' }
+] as const;
+
+const PublishForm = ({ environment, description = '', onClose, onSubmit }: PublishFormProps) => {
+  // An environment the space's plan does not include is shown, and locked with the plan that does (RFC 0029 §6.2).
+  const { included, locked } = useSpaceEntitlements();
+  const first = ENVIRONMENTS.find(({ value }) => included(value))?.value ?? 'development';
+  const form = useForm({
+    defaultValues: { environment: environment ?? first, description },
+    config: { schema: publishFormSchema }
+  });
+
+  const chosen = useFormWatch(form.formMethods, 'environment');
 
   const handleSubmitInternal = useCallback(
     (values: z.infer<typeof publishFormSchema>) => onSubmit?.(undefined, values),
@@ -42,10 +59,17 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
           copy only as a fallback. Rolling back to an older snapshot later keeps the environment's flags as they are.
         </Alert>
         <Form.Select name="environment" label="Environment" size="sm">
-          <option value="development">Development</option>
-          <option value="staging">Staging</option>
-          <option value="production">Production</option>
+          {ENVIRONMENTS.map(({ value, label }) => {
+            const requires = locked(value)?.requires;
+
+            return (
+              <option key={value} value={value} disabled={requires !== undefined}>
+                {requires ? `${label} — ${requires} plan` : label}
+              </option>
+            );
+          })}
         </Form.Select>
+        <SnapshotPruneNotice environment={chosen} />
         <Form.TextArea name="description" label="Description" placeholder="Brief description changes..." size="sm" />
       </Form.Body>
       <Form.Footer justify="end">

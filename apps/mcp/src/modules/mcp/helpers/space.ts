@@ -13,6 +13,7 @@ import type {
   Schema,
   Style
 } from '@plitzi/sdk-shared';
+import type { TSpaceEntitlements } from '@plitzi/sdk-shared/network';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
  *  stores and persists as separate documents (Space model / Style model), plus the space's `connectors` — a third
@@ -34,6 +35,8 @@ export interface Space {
    *  is. Absent when the deployment offers no data: then there is nothing to read and every data op is refused. */
   data?: DataDraft;
   catalog?: ComponentCatalog;
+  /** What the space's plan includes, read-only like `catalog`: absent on a deployment that sells no plans. */
+  entitlements?: TSpaceEntitlements;
   /**
    * The whole document, when `schema` is a view of one tree of it — a component's, which an op addressed to a
    * component edits as if it were the space's only tree. What a new name has to be free of is still all of it.
@@ -51,7 +54,8 @@ export const cloneSpace = (space: Space): Space => ({
   ...(space.functions ? { functions: structuredClone(space.functions) } : {}),
   ...(space.data ? { data: structuredClone(space.data) } : {}),
   ...(space.actionTasks ? { actionTasks: space.actionTasks } : {}),
-  ...(space.catalog ? { catalog: space.catalog } : {})
+  ...(space.catalog ? { catalog: space.catalog } : {}),
+  ...(space.entitlements ? { entitlements: space.entitlements } : {})
 });
 
 // A valid, fully-empty space — no cloud, no page, no styles. The seed a space-independent tool (plitzi_render)

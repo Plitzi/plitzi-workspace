@@ -167,6 +167,8 @@ export interface Measured {
   tag: string;
   /** Its first words, to tell it is the one meant. */
   text: string;
+  /** Where it is drawn and its size, in px, the page's (y counts what is scrolled): `styles`' x, y, width and height as numbers. */
+  box: { x: number; y: number; width: number; height: number };
   /** Each property read — `before:background-image` for a pseudo-element's. */
   styles: Record<string, string>;
   /** The properties it holds as its parent does: inherited, not its own. */

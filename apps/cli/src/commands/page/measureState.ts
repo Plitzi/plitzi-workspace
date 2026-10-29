@@ -136,6 +136,71 @@ const act = async (page: BrowserPage, element: PageElement, kind: StateAsked['ki
   }
 };
 
+/** What Playwright logs while it waits to press: the element over it, still moving, not shown, disabled. */
+const PRESS_WAITS: readonly { said: RegExp; why: (line: string) => string; passes: boolean }[] = [
+  {
+    said: /intercepts pointer events/,
+    why: line =>
+      `${/data-plitzi-el="([^"]+)"/.exec(line)?.[1] ?? /<([\w-]+)/.exec(line)?.[1] ?? 'another element'} is drawn over it and takes the press — what covers it goes first (the step that closes it), or press that`,
+    passes: true
+  },
+  { said: /element is not stable/, why: () => 'it was still moving (an animation, a layout settling)', passes: true },
+  { said: /element is not visible/, why: () => 'it is not shown', passes: true },
+  // `passes`: what the page settling may end — a disabled control stays so.
+  { said: /element is not enabled|disabled/, why: () => 'it is disabled', passes: false }
+];
+
+/**
+ * Why a step's press did not happen, out of Playwright's log: the element over it, still moving, hidden or disabled —
+ * never its first line alone ("locator.click: Timeout 3000ms exceeded", which a run's agents met a dozen times, read
+ * as "hidden, covered or disabled", and could not act on).
+ */
+export const stepFailure = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  const [first = '', ...log] = error.message.split('\n');
+  // The last of each: what it was waiting on when the time ran out.
+  const why = [...log]
+    .reverse()
+    .flatMap(line => PRESS_WAITS.filter(each => each.said.test(line)).map(each => each.why(line)))
+    .at(0);
+
+  // Nothing it waited on said, after the page was let settle: it never answered the press — busy, or the press went
+  // nowhere it could tell.
+  return why === undefined
+    ? /^locator\.(?:click|dblclick|tap|hover)\b.*Timeout/.test(first)
+      ? `${first} — the page did not answer the press, even once still: a wait-for <el> first waits for what it loads`
+      : first
+    : `${first} — ${why}`;
+};
+
+/**
+ * A press that waits out what the page is still doing: timed out with something over it or moving — a boot screen
+ * fading, a page busy on its first load — it is tried once more when the page has settled (`settle`). A run's agents
+ * found every first click of a page timing out until they put a `wait 4000` before it.
+ */
+export const patiently = async (page: BrowserPage, press: () => Promise<unknown>): Promise<void> => {
+  try {
+    await press();
+  } catch (error) {
+    // Timed out on what the page was still doing — something over it, moving, not yet shown, or a page too busy loading
+    // to answer at all (a run's check clicked a phone's tab in a development build 13 s busy, and failed with nothing
+    // said): once more, when the page is still. A disabled control waits for nothing.
+    const waited =
+      error instanceof Error &&
+      /Timeout/.test(error.message) &&
+      !PRESS_WAITS.some(each => !each.passes && each.said.test(error.message));
+    if (!waited) {
+      throw error;
+    }
+
+    await settle(page);
+    await press();
+  }
+};
+
 /**
  * Puts the page in the state asked — the element hovered or focused, or each clicked in turn — and waits for what it
  * starts to finish: a drawer's slide, a panel's fade.
@@ -163,11 +228,11 @@ export const putIn = async (
     try {
       const element = page.locator(found.selector).filter({ visible: true }).first();
       // A click may ask the server: what it lit is read once that lands. A hover or a focus asks nothing.
-      await (kind === 'click' ? answered(page, () => act(page, element, kind)) : act(page, element, kind));
+      await (kind === 'click'
+        ? answered(page, () => patiently(page, () => act(page, element, kind)))
+        : patiently(page, () => act(page, element, kind)));
     } catch (error) {
-      return {
-        problem: `${target} could not be ${DONE[kind]} on ${page.url()}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
-      };
+      return { problem: `${target} could not be ${DONE[kind]} on ${page.url()}: ${stepFailure(error)}` };
     }
 
     await settle(page);

@@ -10,7 +10,7 @@ import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { checkPlan } from '../plan/plan';
-import { loadRun } from '../run';
+import { loadRun, readRunLog } from '../run';
 import { askLead, messageTasks, readInbox, tellLead } from '../talk/talk';
 import { checkTask, completeTask, nextTask, reportProgress, revertTask, reviewTask, taskContext } from '../tasks';
 import { showTask } from '../view/show';
@@ -48,31 +48,51 @@ describe('acceptance, checks and what is left behind', () => {
     expect((await readInbox(lead(), runId)).map(message => message.text)).toContain('Prices come from menu.json');
   });
 
-  // Ten warnings in files the run's tasks changed, each said at complete and none fixed.
-  it('refuses a completion that leaves a warning of the space’s lint in a file it changed — not in one it did not', async () => {
+  // Ten warnings in files the run's tasks changed, each said at complete and none fixed — and later, tasks renamed ids
+  // an acceptance read and handed back a one-value change to a long file, to clear warnings older than them.
+  it('refuses a warning of the space’s lint a completion adds — and keeps one its file had before for the backlog', async () => {
+    // The space's lint, as the bench reads it: a warning in each file holding WARN, on the line it is.
+    const lint: CheckRunner = async dir => {
+      const warnings: string[] = [];
+      for (const file of ['src/space/pages/menu.ts', 'src/space/pages/about.ts']) {
+        const lines = (await fs.readFile(path.join(dir, file), 'utf-8').catch(() => '')).split('\n');
+        lines.forEach((line, index) => {
+          if (line.includes('WARN')) {
+            warnings.push(`${file}:${String(index + 1)} colour-not-token`);
+          }
+        });
+      }
+
+      return { ok: true, steps: [{ name: 'lint:space', ok: true, ...(warnings.length > 0 ? { warnings } : {}) }] };
+    };
+    await bench.write('src/space/pages/menu.ts', 'export const menu = { title: "Menu" }; // WARN\n');
     const runId = await open();
     const menu = await take('agent-1', 't-menu');
-    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
-    const warning =
-      (file: string): CheckRunner =>
-      () =>
-        Promise.resolve({
-          ok: true,
-          steps: [{ name: 'lint:space', ok: true, warnings: [`${file}:3 colour-not-token`] }]
-        });
-
-    const refused = await refusal(
-      completeTask({ ...menu.ctx, checks: warning('src/space/pages/menu.ts') }, runId, 't-menu')
+    const linted = { ...menu.ctx, checks: lint };
+    await writeInCopy(
+      menu.work,
+      'src/space/pages/menu.ts',
+      'export const tag = "new"; // WARN\nexport const menu = { title: "Menú" }; // WARN\n'
     );
-    expect(refused.code).toBe('checks-failed');
-    expect(refused.message).toContain('src/space/pages/menu.ts:3 colour-not-token');
 
-    await completeTask({ ...menu.ctx, checks: warning('src/space/pages/about.ts') }, runId, 't-menu');
+    const refused = await refusal(completeTask(linted, runId, 't-menu'));
+    expect(refused.code).toBe('checks-failed');
+    expect(refused.message).toContain('adds warnings');
+    expect(refused.message).toContain('src/space/pages/menu.ts:2 colour-not-token');
+    expect(refused.message).not.toContain('menu.ts:1 colour-not-token;');
+
+    // Its own fixed — the one older than it, moved a line down by its edit, left: kept for the backlog, not refused.
+    await writeInCopy(
+      menu.work,
+      'src/space/pages/menu.ts',
+      'export const tag = "new";\nexport const menu = { title: "Menú" }; // WARN\n'
+    );
+    const completed = await completeTask(linted, runId, 't-menu');
+    expect(completed.olderWarnings).toEqual(['src/space/pages/menu.ts:2 colour-not-token']);
     expect((await viewRun(lead(), runId)).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
-    // Its review reads the one on another's file as a count, never as its own (a run's integrate task).
-    const shown = await showTask(lead(), runId, 't-menu');
-    expect(shown.warnings).toEqual([
-      "1 more in files it did not change — another task's, or the project's: npx plitzi space lint lists them"
+    const kept = (await readRunLog((await loadRun(lead(), runId)).paths)).filter(entry => entry.action === 'notice');
+    expect(kept.map(entry => entry.text)).toEqual([
+      "The space's lint warns src/space/pages/menu.ts:2 colour-not-token — there before this run's change to the file: the project's to fix"
     ]);
   });
 

@@ -25,6 +25,7 @@ import { loadRun, pinDifference, pinnedNow, readApproved, readBase, readRunLog, 
 import { proposalsOf } from '../talk/agreements';
 import { LEAD, messagesOf, standingText, unreadFor } from '../talk/messages';
 import { allLocks, requestsOf } from '../tasks';
+import { workedMs } from '../tasks/keepAlive';
 import { leadStepWhy, reviewSteps, reviewTeamOfAgents, stepReviewers, stepRole } from '../tasks/reviews';
 
 import type { Needs, Priority, RunRecord, TaskState, TaskStatus, Waiting } from '../core/model';
@@ -64,6 +65,8 @@ export interface TaskLine {
   left?: TaskState['left'];
   estimateMinutes: number;
   spentMinutes?: number;
+  /** Since when a check the CLI runs holds its agent: it answers nothing until the check ends. */
+  checking?: string;
   /** Only while it is worked: a task in review, blocked or waiting has no agent on it to be heard from. */
   noSignal: boolean;
   /** When its holder took it: a task done again after a revert is another review, though its round is the same. */
@@ -220,7 +223,9 @@ const lineOf = (view: TaskView, now: Date, owesSignal: boolean, unblocks: string
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   ...(view.state.left ? { left: view.state.left } : {}),
   estimateMinutes: view.task.estimateMinutes,
-  ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
+  // The agent's own minutes: what the CLI's checks held it for is theirs (a page's spec, the machine's suite queue).
+  ...(view.owner ? { spentMinutes: Math.round(workedMs(view.owner.takenAt, view.progress, now) / 60_000) } : {}),
+  ...(view.progress?.checking && !past(view) ? { checking: view.progress.checking } : {}),
   noSignal: owesSignal && isWorked(view.state.status) && isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   ...(view.state.status === 'in-review' ? { since: view.state.updatedAt } : {}),
@@ -461,6 +466,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
               id: view.task.id,
               agent: atIt.agent,
               takenAt: atIt.takenAt,
+              workedMs: workedMs(atIt.takenAt, view.progress, now),
+              ...(view.progress?.checking ? { checking: view.progress.checking } : {}),
               spentMinutes: line.spentMinutes,
               estimateMinutes: view.task.estimateMinutes,
               ...(view.progress?.step ? { step: view.progress.step } : {})

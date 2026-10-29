@@ -3,16 +3,18 @@ import path from 'node:path';
 
 import { findTask } from './common';
 import { neverRan, portBusy } from './neverRan';
-import { checkAcceptance, ranNoTest } from '../copies/acceptance';
+import { writtenSince } from './pairApproval';
+import { checkAcceptance, ranNoTest, sayLines } from '../copies/acceptance';
 import { approvedCopy, SERVED_STATUSES } from '../copies/preview';
 import { exists } from '../core/files';
 import { acceptanceText } from '../core/model';
 import { under } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
-import { viewTask } from '../core/taskStore';
+import { readStart, viewTask } from '../core/taskStore';
 import { loadRun } from '../run';
 
 import type { Acceptance, AcceptanceResult } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 import type { RunContext } from '../run';
 
 /**
@@ -66,7 +68,7 @@ export const checkBefore = async (
   taskId: string,
   /** The acceptance's lines to run, by their place (1 the first): all of them when left out. */
   only: readonly number[] = []
-): Promise<{ task: string; lines: LineBeforeAfter[]; without: string[] }> => {
+): Promise<{ task: string; lines: LineBeforeAfter[]; without: string[]; afterAsCompleted?: true }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = linesOf(findTask(loaded, taskId), only);
   const view = await viewTask(loaded.paths, task);
@@ -127,12 +129,25 @@ export const checkBefore = async (
       await fs.cp(under(view.paths.work, file), under(beforeDir, file));
     }
 
-    const after = await checkAcceptance(task.acceptance, {
-      work: view.paths.work,
+    const measured = await asCompleted(view, task.acceptance);
+    if (measured) {
+      ctx.say?.('with it: as its complete measured it — its copy unchanged since');
+    }
+
+    const after =
+      measured ??
+      (await checkAcceptance(task.acceptance, {
+        work: view.paths.work,
+        root: ctx.root,
+        cache: view.paths.cache,
+        ...sayLines(ctx.say, 'with it')
+      }));
+    const placed = await checkAcceptance(task.acceptance, {
+      work: beforeDir,
       root: ctx.root,
-      cache: view.paths.cache
+      cache: beforeCache,
+      ...sayLines(ctx.say, 'before it')
     });
-    const placed = await checkAcceptance(task.acceptance, { work: beforeDir, root: ctx.root, cache: beforeCache });
     // A line that passes with its tests on the code before it is run once more, on the run bare: failing there, the
     // change it sees is its tests'. One that fails with them and runs one of them, too: passing bare, what fails before
     // it is only what the task adds.
@@ -160,6 +175,7 @@ export const checkBefore = async (
     return {
       task: taskId,
       without,
+      ...(measured ? { afterAsCompleted: true as const } : {}),
       lines: after.map((line, index) => ({
         said: line.said,
         check: line.check,
@@ -172,6 +188,42 @@ export const checkBefore = async (
     await fs.rm(beforeDir, { recursive: true, force: true });
     await fs.rm(bareDir, { recursive: true, force: true });
   }
+};
+
+/**
+ * What its `complete` measured of the task's acceptance, while its copy holds what went to review and nothing since: the
+ * same lines on the same files answer the same. A run's reviews ran a page's 4-minute spec again on the copy its
+ * complete had just run it on, one Playwright at a time on the machine, every other agent waiting behind it.
+ */
+export const asCompleted = async (
+  view: TaskView,
+  acceptance: readonly Acceptance[]
+): Promise<AcceptanceResult[] | undefined> => {
+  const { accepted, submitted } = view.state;
+  const start = await readStart(view.paths);
+  if (view.state.status !== 'in-review' || !accepted || !submitted || !start) {
+    return undefined;
+  }
+
+  if ((await writtenSince(view, start, submitted)).length > 0) {
+    return undefined;
+  }
+
+  const lines: AcceptanceResult[] = [];
+  for (const line of acceptance) {
+    if (typeof line === 'string') {
+      continue;
+    }
+
+    const measured = accepted.find(each => each.check === line.check);
+    if (measured === undefined) {
+      return undefined;
+    }
+
+    lines.push(measured);
+  }
+
+  return lines;
 };
 
 /** A test file, by its name: what a task's own tests are, run on the code before it. */

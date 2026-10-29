@@ -270,6 +270,9 @@ describe('what page play is asked', () => {
       'state.roomRemoveAt'
     ]);
     expect(readTargets(['.card, .row'])).toEqual(['.card, .row']);
+    // A tester's quoted list, its help's "by spaces or commas", read as one name that was not on the page.
+    expect(readTargets(['log-count map state.stormFloor'])).toEqual(['log-count', 'map', 'state.stormFloor']);
+    expect(readTargets(['.panel textarea'])).toEqual(['.panel textarea']);
   });
 
   it('reads the page as it rests with --read alone, and needs one of the two', () => {
@@ -365,6 +368,68 @@ describe('an action in a play', () => {
     expect(ran).toEqual([]);
     expect(result.played[1]?.idle?.here).toContain('room-create ran once, at the first width');
     expect(sharedServerNote(2, steps)).toContain('its actions ran at the first width alone');
+  });
+});
+
+// Two of a run's agents could not read what a plugin received; then the play printed a globe's seventeen bindings at
+// every step, the one a toggle moved lost among them.
+describe('what an element was given', () => {
+  it('says a few at the start, then only what a step changed — and a step that changed nothing as before', () => {
+    const given = (cyclone: boolean) => ({
+      events: '207 items',
+      feedKey: '"day"',
+      minMagnitude: '2.5',
+      layers: `{"earthquake":true,"cyclone":${String(cyclone)}}`
+    });
+    const lines = playedText([
+      { step: 'start', reads: [{ element: 'map', here: { ...at(0), given: given(true) } }] },
+      { step: 'click layer-storms', reads: [{ element: 'map', here: { ...at(0), given: given(false) } }] },
+      { step: 'wait 300 ms', reads: [{ element: 'map', here: { ...at(0), given: given(false) } }] }
+    ]).map(line => stripVTControlCharacters(line));
+
+    expect(lines).toContain(
+      '  map: shown, enabled · given events: 207 items; feedKey: "day"; minMagnitude: 2.5 (1 more: --json)'
+    );
+    expect(lines).toContain('  map: shown, enabled · given now layers: {"earthquake":true,"cyclone":false}');
+    expect(lines.at(-1)).toBe('  map: as before');
+  });
+});
+
+// A run's tester repeated a play's steps in page check to prove "locking a storm shows no failed flow".
+describe('a flow a step sets off that fails', () => {
+  it('is said under the step that set it off, never under one before it', async () => {
+    const failed: string[] = ['flow onLoad failed — Boot [setState]: there before'];
+    const side: PlaySide = {
+      act: step => {
+        if (step.kind === 'state') {
+          failed.push('flow onLock on map failed — Focus [focusHazard]: no hazard ep222026');
+        }
+
+        return Promise.resolve(undefined);
+      },
+      read: targets => Promise.resolve(targets.map(() => at(0))),
+      failedFlows: () => Promise.resolve([...failed])
+    };
+    const result = await playOn(
+      { here: side },
+      [
+        { kind: 'wait', ms: 10 },
+        { kind: 'state', key: 'selectedId', value: 'ep222026' }
+      ],
+      []
+    );
+    if (!('played' in result)) {
+      throw new Error(result.problem);
+    }
+
+    expect(result.played.map(entry => entry.failed)).toEqual([
+      undefined,
+      undefined,
+      ['flow onLock on map failed — Focus [focusHazard]: no hazard ep222026']
+    ]);
+    expect(playedText(result.played).map(line => stripVTControlCharacters(line))).toContain(
+      '  ✗ flow onLock on map failed — Focus [focusHazard]: no hazard ep222026'
+    );
   });
 });
 

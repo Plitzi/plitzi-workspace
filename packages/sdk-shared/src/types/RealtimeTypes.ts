@@ -128,5 +128,11 @@ export type SSRRealtimeConfig =
        * socket carries the visitor's cookies from any site, so every other origin is refused.
        */
       allowedOrigins?: string[];
+      /**
+       * Whether a space may open the channels it declares — a deployment's policy (a plan that does not include them,
+       * say). A refusal's words are what the page is answered with (HTTP 402); omitted, every space may. The
+       * platform's own topics (a job's) are not asked about.
+       */
+      admitSpace?: (spaceId: number) => Promise<string | undefined>;
     }
   | false;

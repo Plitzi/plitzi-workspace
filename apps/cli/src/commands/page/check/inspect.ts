@@ -27,6 +27,7 @@ import {
   pageFor,
   serverProviderOf
 } from './space';
+import { namedOf, unheldNames } from './stateNames';
 import { statusIssuesOf } from './status';
 import { elementStyles } from './styles';
 import { faintTexts, textGrounds } from './themes';
@@ -44,28 +45,6 @@ import type { Schema } from '@plitzi/sdk-shared';
 
 /** Under it a page is a phone's or a tablet's: laid out for a finger, with no pointer to hover with. */
 const HOVER_WIDTH = 1024;
-
-/** Only the keys named of what the page holds (`--state a,b`). */
-/**
- * What `--state` names of what the page holds: a source or a key by its name, or a path into one (`computed.layerQuakes`)
- * — each under the name it was asked by.
- */
-export const namedOf = (held: Record<string, unknown>, names: readonly string[]): Record<string, unknown> =>
-  Object.fromEntries(
-    names.flatMap(name => {
-      if (Object.hasOwn(held, name)) {
-        return [[name, held[name]] as const];
-      }
-
-      const [first = '', ...path] = name.split('.');
-      let at: unknown = held[first];
-      for (const key of path) {
-        at = isRecord(at) ? at[key] : undefined;
-      }
-
-      return path.length > 0 && at !== undefined ? [[name, at] as const] : [];
-    })
-  );
 
 /**
  * What the page has once hydrated and the server's HTML did not: inside a server provider, an issue per provider — its
@@ -441,7 +420,10 @@ const inspectHere = async (
     ...missed,
     ...wrapped,
     ...flush,
-    ...faint
+    ...faint,
+    ...(asked.state && asked.stateOf && devTools.available
+      ? unheldNames(isRecord(shown.state) ? shown.state : undefined, shown.sources, asked.stateOf, width)
+      : [])
   ];
 
   // What a document embedded in the page said (a video player's frame, by the origin of an iframe there) is that

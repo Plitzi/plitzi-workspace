@@ -255,6 +255,16 @@ const toldText = (related: TaskContext['related']): string[] => {
       ];
 };
 
+/** The files near the line of `MAX_LINES`, said in one line: where what is added to them goes. */
+const nearLimitText = (near: readonly { file: string; lines: number }[]): string[] =>
+  near.length === 0
+    ? []
+    : [
+        chalk.yellow(
+          `  ⚠ Near ${String(MAX_LINES)} non-blank lines: ${near.map(each => `${each.file} (${String(each.lines)})`).join(', ')} — what you add to ${near.length === 1 ? 'it' : 'one'} likely goes in a module of its own, beside it: a new file is yours (no task holds it; it goes in with your complete), though your files do not list it`
+        )
+      ];
+
 /**
  * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
  * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
@@ -367,9 +377,10 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
     ...(context.related.length > 0
       ? [`Related: ${context.related.map(each => `${each.task} (${each.status})`).join(', ')}`]
       : []),
-    // Its acceptance, what it was held to — not how its reviews went: its work is in the copy.
+    // Its acceptance, what it was held to — not how its reviews went — while it is still to be done: a done one's work
+    // is in the copy, and what it was asked is a command away (a run's brief held three done tasks' lines, 3.4k of 21k).
     ...context.related.flatMap(each =>
-      each.asked
+      each.asked && each.status !== 'done'
         ? [
             `What ${each.task} was asked — it is done before this one:`,
             ...each.asked.acceptance
@@ -381,12 +392,9 @@ export const briefOf = (context: TaskContext & { primerRead?: string }): string 
           ]
         : []
     ),
-    // A file near the line has little room: where the new part goes is decided before the first edit, not after.
-    ...nearLimit(context).map(each =>
-      chalk.yellow(
-        `  ⚠ ${each.file} is ${String(each.lines)} non-blank lines of ${String(MAX_LINES)}: what you add likely goes in a module of its own, beside it — a new file is yours (no task holds it; it goes in with your complete), though your files do not list it`
-      )
-    ),
+    // A file near the line has little room: where the new part goes is decided before the first edit, not after. Said
+    // once for all of them: six files near it were six copies of one sentence.
+    ...nearLimitText(nearLimit(context)),
     ...(context.reading.length > 0
       ? [`Read first, for this work — the rest of the skills when the work asks: ${context.reading.join(', ')}`]
       : []),

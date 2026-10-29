@@ -3,6 +3,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import ViewPage from '@pmodules/App/components/ViewPage';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import ConnectorForm from './components/ConnectorForm';
 import ConnectorList from './components/ConnectorList';
@@ -67,6 +68,7 @@ const Connectors = () => {
 
   return (
     <>
+      <PlanNotice capability="connectors" meanwhile="The connectors the space has stay editable." />
       {isLoading && <ViewPage description="Loading connectors…" />}
       {!isLoading && error && (
         <ViewPage>

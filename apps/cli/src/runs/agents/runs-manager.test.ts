@@ -339,6 +339,26 @@ describe('a task that holds its own test file', () => {
     // What it already does is no advice: a run's scout was told six times to name the test file its tasks named.
     expect(said).not.toContain('Name its test file');
   });
+
+  // A run's dry run gave t-path-dat-join, which held its tests, a second agent's task on the test file of a module it
+  // changed by one union member.
+  it('gets no task of tests for another module it changes: said as its own to add', async () => {
+    await bench.writeTeam(team(TESTERS));
+    const plan: RunPlan = benchPlan();
+    plan.tasks = [
+      {
+        ...plan.tasks[0],
+        id: 't-join',
+        files: ['src/functions/tornadoes.ts', 'src/functions/tornadoes.test.ts', 'src/functions/tornado-item.ts']
+      }
+    ];
+    const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
+
+    expect(checked.notices.find(notice => notice.includes('t-join'))).toBe(
+      'Each writes its tests itself, as its files name them — no task of tests by another: t-join (src/functions/tornadoes.test.ts; src/functions/tornado-item.test.ts too, when it changes what they test)'
+    );
+    expect(checked.notices.some(notice => notice.includes('t-join-tests'))).toBe(false);
+  });
 });
 
 describe('a research spike that depends on a task', () => {

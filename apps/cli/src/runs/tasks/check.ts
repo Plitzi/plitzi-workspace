@@ -8,7 +8,7 @@ import { fixChanged } from './fix';
 import { keepAlive } from './keepAlive';
 import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
-import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance';
+import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../copies/acceptance';
 import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
 import { readStart } from '../core/taskStore';
 import { failureLines } from '../core/usage';
@@ -130,7 +130,11 @@ export const checkTask = async (
         const ownFailing = checks.steps.filter(step => !step.ok && !notOwnSteps.includes(step.name));
         accepted =
           ownFailing.length === 0
-            ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
+            ? await checkAcceptance(task.acceptance, {
+                ...where,
+                ...(serving ? { serving } : {}),
+                ...sayLines(ctx.say)
+              })
             : [];
       }
     } finally {

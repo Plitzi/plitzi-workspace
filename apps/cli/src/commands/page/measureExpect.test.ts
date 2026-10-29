@@ -12,6 +12,7 @@ describe('page measure --expect', () => {
       selector: '[data-plitzi-el="site-sign-in"]',
       tag: 'a',
       text: 'Sign in',
+      box: { x: 0, y: 0, width: 0, height: 0 },
       styles: Object.fromEntries(transform === undefined ? [] : [['transform', transform]]),
       inherited: []
     },

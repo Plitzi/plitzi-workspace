@@ -10,6 +10,7 @@ import {
   pageMomentInPage,
   refusedFieldsInPage
 } from './moments';
+import { patiently, stepFailure } from '../measureState';
 import { byNameOrId } from '../shot/capture';
 
 import type { Authored } from './space';
@@ -191,9 +192,14 @@ export const clickEffects = async (
     }
 
     try {
-      await target.scrollIntoViewIfNeeded({ timeout: 3000 });
-    } catch {
-      return { element: label, problem: `${label} could not be brought into view`, changes: [], failed: [] };
+      await patiently(page, () => target.scrollIntoViewIfNeeded({ timeout: 3000 }));
+    } catch (error) {
+      return {
+        element: label,
+        problem: `${label} could not be brought into view: ${stepFailure(error)}`,
+        changes: [],
+        failed: []
+      };
     }
   }
 
@@ -205,13 +211,16 @@ export const clickEffects = async (
   if (target) {
     const from = page.url();
     try {
-      await (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 }));
+      await patiently(page, () => (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did its work: what changed is read on the page it went to.
       if (page.url() === from) {
-        const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
-
-        return { element: label, problem: `${label} could not be ${verb}: ${reason}`, changes: [], failed: [] };
+        return {
+          element: label,
+          problem: `${label} could not be ${verb}: ${stepFailure(error)}`,
+          changes: [],
+          failed: []
+        };
       }
     }
   } else {

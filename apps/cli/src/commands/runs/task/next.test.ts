@@ -2,8 +2,10 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { handedShow, lookCommand, nextText } from './next';
+import { besideBrief, handedShow, lookCommand, nextText } from './next';
 
+import type { Brief } from './brief';
+import type { Message } from '../../../runs/talk/messages';
 import type { TaskShown } from '../../../runs/view/show';
 
 // An agent met Plitzi's frictions and said them only in its last words, which the run's feedback never reads.
@@ -104,6 +106,37 @@ describe('the look a review is handed', () => {
     expect(lookCommand(task, ['/sign-in', '/sign-up', '/messages', '/rooms'], ' --before')).toEqual([
       'plitzi task look t-header-keys /sign-in /sign-up --guest --before',
       'plitzi task look t-header-keys /messages /rooms --as dax --before'
+    ]);
+  });
+});
+
+// A run's brief ran to 21k characters: the run's notes twice — as messages and as "What holds" — and an amend's message
+// restating the brief printed below it, read again on every turn after it.
+describe('what was said to a task, beside its brief', () => {
+  const said = (id: string, to: string, text: string, amended?: string[]): Message => ({
+    id,
+    from: 'lead',
+    to,
+    text,
+    at: '2026-10-29T10:00:00.000Z',
+    ...(amended ? { amended } : {})
+  });
+  // Only what besideBrief reads of a brief: the run's notes, and whether it is printed whole.
+  const brief = { runNotes: ['Every hazard check reads /?sample=active'] } as Brief;
+
+  it('says the run’s notes once, in the brief, and an amend as the brief below', () => {
+    const messages = besideBrief(
+      [
+        said('m1', '*', 'Every hazard check reads /?sample=active'),
+        said('m7', 't-window', 'The lead amended this task (acceptance). It now asks: all of it again', ['acceptance']),
+        said('m8', 't-window', 'Ask dev-2 before you touch the header')
+      ],
+      brief
+    );
+
+    expect(messages.map(each => each.text)).toEqual([
+      'The lead amended this task (acceptance): the brief below is as amended',
+      'Ask dev-2 before you touch the header'
     ]);
   });
 });

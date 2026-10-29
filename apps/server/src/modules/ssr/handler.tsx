@@ -3,6 +3,7 @@ import { buildBody } from './buildBody';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey } from '../../helpers/cache';
+import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
 
 import type { ServerCaches } from '../../helpers/cache';
@@ -37,6 +38,20 @@ const meterPage = async (
   } catch {
     return undefined;
   }
+};
+
+/**
+ * A page the deployment holds back (`SSRMeterDecision.unavailable`), in the words it chose: 503, kept by nobody — no
+ * cache, no index — and nothing of the space rendered. Light and dark, as the visitor's system is.
+ */
+const sendUnavailable = (res: SSRResponseHelpers, said: string): void => {
+  res.setStatus(503);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Not available</title><style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:16px/1.5 ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;color:#18181b}@media (prefers-color-scheme:dark){body{background:#09090b;color:#f4f4f5}}main{max-width:520px;padding:24px;text-align:center}</style></head><body><main><p>${escapeHtml(said)}</p></main></body></html>`
+  );
 };
 
 export const renderSSR = async (
@@ -89,7 +104,17 @@ export const renderSSR = async (
       // A cached page is still a page served, so it is still counted — a space that stopped being metered the
       // moment it got popular enough to hit the cache would be metered backwards. What the meter is told is that
       // this one was cheap to serve, the same fact `X-Cache` puts on the wire.
-      await meterPage(req, config, spaceId as number, environment, revision, true);
+      const decision = await meterPage(req, config, spaceId as number, environment, revision, true);
+      if (decision?.unavailable !== undefined) {
+        sendUnavailable(res, decision.unavailable);
+
+        return;
+      }
+
+      if (decision?.noindex) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      }
+
       res.send(cached.html, { compressed: cached.compressed });
 
       return;
@@ -99,6 +124,16 @@ export const renderSSR = async (
   // A draft preview is not a visit: it is the author looking at their own unsaved edits, and it is never cached.
   if (!offlineDataOverride) {
     req.ctx.meter = await meterPage(req, config, spaceId as number, environment, revision, false);
+    if (req.ctx.meter?.unavailable !== undefined) {
+      sendUnavailable(res, req.ctx.meter.unavailable);
+
+      return;
+    }
+
+    // An address the deployment does not host sites on, said to crawlers whatever the page's own robots say.
+    if (req.ctx.meter?.noindex) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
   }
 
   // Allocate metrics after the cache-hit early return — never wasted on hits.

@@ -39,8 +39,11 @@ const RETRY_MS = 3000;
 
 export type RealtimeRefusal = {
   topic: string;
-  /** `ungranted`: the channel is declared `grant: true`, and no grant the page sent opens this topic. */
-  reason: 'undeclared' | 'unauthenticated' | 'forbidden' | 'ungranted';
+  /**
+   * `ungranted`: the channel is declared `grant: true`, and no grant the page sent opens this topic. `unavailable`: the
+   * deployment does not open this space's channels (`realtime.admitSpace`).
+   */
+  reason: 'undeclared' | 'unauthenticated' | 'forbidden' | 'ungranted' | 'unavailable';
 };
 
 /** An answer in HTTP terms, whichever transport carries it: a status, and what went wrong when something did. */
@@ -102,7 +105,8 @@ export const admit = async (
   req: SSRRequest,
   resolveChannels: ChannelResolver,
   grants: RealtimeGrants,
-  jobs?: JobLookup
+  jobs?: JobLookup,
+  admitSpace?: (spaceId: number) => Promise<string | undefined>
 ): Promise<Admission> => {
   const { environment = 'main', spaceId, revision } = req.ctx.spaceDeployment ?? {};
   if (typeof spaceId !== 'number') {
@@ -119,6 +123,7 @@ export const admit = async (
   }
 
   const channels = await resolveChannels(spaceId, environment, revision);
+  const spaceRefusal = await admitSpace?.(spaceId);
   const accepted = new Map<string, ChannelDeclaration>();
   const granted = new Map<string, string>();
   const refused: RealtimeRefusal[] = [];
@@ -137,6 +142,12 @@ export const admit = async (
       continue;
     }
 
+    if (spaceRefusal !== undefined) {
+      refused.push({ topic, reason: 'unavailable' });
+
+      continue;
+    }
+
     const match = matchChannel(topic, channels);
     const refusal = match ? accessRefusal(match.declaration.access, req.ctx.user) : 'undeclared';
     const grant =
@@ -151,6 +162,10 @@ export const admit = async (
         granted.set(topic, grant);
       }
     }
+  }
+
+  if (accepted.size === 0 && spaceRefusal !== undefined) {
+    return { ok: false, answer: { status: 402, error: spaceRefusal, reason: 'unavailable', refused } };
   }
 
   if (accepted.size === 0) {
@@ -274,6 +289,8 @@ export type SubscribeDeps = {
   grants: RealtimeGrants;
   /** The way to the jobs `$job:<id>` is about — absent where the server runs none. */
   jobs?: JobLookup;
+  /** The deployment's say on whether a space opens its channels (`realtime.admitSpace`). */
+  admitSpace?: (spaceId: number) => Promise<string | undefined>;
 };
 
 /**
@@ -290,9 +307,10 @@ export const handleRealtimeSubscribe = async ({
   hub,
   resolveChannels,
   grants,
-  jobs
+  jobs,
+  admitSpace
 }: SubscribeDeps): Promise<void> => {
-  const admission = await admit(req, resolveChannels, grants, jobs);
+  const admission = await admit(req, resolveChannels, grants, jobs, admitSpace);
   if (!admission.ok) {
     answer(res, admission.answer);
 

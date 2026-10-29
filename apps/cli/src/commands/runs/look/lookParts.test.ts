@@ -47,6 +47,14 @@ describe('the pictures a look lists', () => {
     ).toEqual(['home-part-1.png', 'home-part-2.png']);
     expect(readablePictures(JSON.stringify({ out: 'home.png' }), 'home.png')).toEqual(['home.png']);
     expect(readablePictures('not json', 'home.png')).toEqual(['home.png']);
+    // Its steps played, the picture is what they left: `out` is the page before them — a run's look said a dossier was
+    // drawn and showed an empty TARGET LOCK.
+    expect(
+      readablePictures(
+        JSON.stringify({ out: 'lock.png', pictures: [{ label: 'after', out: 'lock-1.png' }] }),
+        'lock.png'
+      )
+    ).toEqual(['lock-1.png']);
   });
 });
 

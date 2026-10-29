@@ -21,6 +21,7 @@ import type {
 import type { Style } from './StyleTypes';
 import type { ActivityReader, SpaceActivityPage, SpaceActivityQuery } from '../activity/types';
 import type { FlagOverrides } from '../flags/resolveFlags';
+import type { TSpaceEntitlements } from '../network/entitlements';
 
 export type SSRSpaceDeployment = {
   /** Who may put this space in an iframe, as CSP `frame-ancestors` sources (e.g. `'self'`, `https://acme.com`,
@@ -113,6 +114,12 @@ export type SSRAdapters = {
    *  request. `canWrite` is what separates a read-only bearer from one that may change the space — the MCP
    *  refuses every write tool without it, and never infers the answer from the token itself. */
   getGrant?: (req: SSRRequest) => Promise<SSRGrant | undefined>;
+  /**
+   * Whether the tool calls a request carries may run — asked once per request that makes any, with how many it makes.
+   * A refusal's `error` is what the agent reads as each call's result, so it says why and the way past it (a plan's
+   * daily ceiling, say). Omitted, every call runs.
+   */
+  admitToolCalls?: (req: SSRRequest, calls: number) => Promise<{ error: string } | undefined>;
   /** Read the element schema for the MCP tools. Separate from `getOfflineData` (which is SSR/RSC shaped and
    *  strips `style.platform`); the MCP style resource needs the full documents, so schema and style split. */
   getSchema?: (spaceId: number, environment: Environment) => Promise<Schema | undefined>;
@@ -140,6 +147,9 @@ export type SSRAdapters = {
    *  whatever tasks it registered. Shaped as `ActionTaskDescriptor` in `@plitzi/sdk-server/actions`. Without it an
    *  agent authoring an action is guessing at the step vocabulary. */
   getActionTasks?: (spaceId: number) => Promise<ActionTaskDescriptor[] | undefined>;
+  /** What the space's plan includes (`TSpaceEntitlements`), for the primer to say before an agent plans work the space
+   *  cannot ship. Omitted — a self-hosted deployment — everything is included and the primer says nothing of a plan. */
+  getEntitlements?: (spaceId: number) => Promise<TSpaceEntitlements | undefined>;
   /** Create or replace one action, keyed by `entry.id`. When omitted, action ops apply in memory only and `apply`
    *  reports `persisted: false`. */
   saveAction?: (spaceId: number, entry: ActionEntry) => Promise<void>;
@@ -276,6 +286,19 @@ export type SSRMeterDecision = {
   /** This space is over the quota its plan allows and the render should say so — the "Made with Plitzi" badge
    *  on the free tier. Paid plans accrue overage instead and never set this. */
   degrade?: boolean;
+  /** The deployment's "Made with Plitzi" badge on this render — its attribution, on a plan that does not remove it. */
+  badge?: boolean;
+  /**
+   * This page is sent `X-Robots-Tag: noindex`: an address the deployment does not mean to host a site on — a free
+   * sub-domain — kept out of search results, where an abused one would do the most harm.
+   */
+  noindex?: boolean;
+  /**
+   * The deployment does not serve this page right now, and these are the words its visitor reads instead: the page is
+   * answered 503, never rendered, cached or indexed — an address the deployment holds back, as a free site whose
+   * owner has not confirmed their email.
+   */
+  unavailable?: string;
   /** Client reporting channel, injected into the page bootstrap. Omitted → the page reports nothing. Only a
    *  page render has anywhere to put it; the other kinds answer data, not a document. */
   analytics?: AnalyticsConfig;

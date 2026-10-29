@@ -40,7 +40,6 @@ describe("a task's brief", () => {
     await completeTask(held.ctx, runId, 't-home');
     await reviewTask(lead(), runId, 't-home', 'changes', [{ note: 'The hero is still in English at 390' }]);
     await completeTask(held.ctx, runId, 't-home');
-    await reviewTask(lead(), runId, 't-home', 'approve', []);
     await noteTask(lead(), runId, 't-book', `Keep the formal voice. ${'Every page says usted. '.repeat(30)}`);
 
     const brief = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 't-book')));
@@ -49,6 +48,11 @@ describe("a task's brief", () => {
     expect(asked).not.toContain('Home line 7 reads in Spanish');
     expect(asked).toContain('… 2 more: plitzi task show t-home');
     expect(asked).not.toContain('The hero is still in English');
+    // Done, its work is in the copy: what it was asked is a command away, never read again on every turn.
+    await reviewTask(lead(), runId, 't-home', 'approve', []);
+    const after = stripVTControlCharacters(briefOf(await taskContext(lead(), runId, 't-book')));
+    expect(after).not.toContain('What t-home was asked');
+    expect(after).toContain('Related: t-home (done)');
     const note = brief.split('\n').find(line => line.includes('Keep the formal voice')) ?? '';
     expect(note.length).toBeLessThan(400);
     expect(note).toContain('(whole: --json)');

@@ -556,7 +556,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       return;
     }
 
-    console.log(out);
+    // Said as the picture before when others follow it: a run's tester copied the first path printed, before its steps,
+    // for what they left — that is the last one.
+    console.log((report.pictures ?? []).length > 0 ? `before: ${out}` : out);
     // A part a few lines tall is pictured at its own size — a run's 11px legend came out 350×26: said, with --scale.
     const small = clip !== undefined && options.scale === undefined ? smallPicture(taken.png) : undefined;
     if (small) {

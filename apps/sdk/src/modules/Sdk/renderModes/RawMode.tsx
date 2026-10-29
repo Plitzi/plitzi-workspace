@@ -9,6 +9,7 @@ import { RUNTIME_STYLE_ID } from '@plitzi/sdk-shared/style';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
+import PlitziBadge from '../components/PlitziBadge';
 
 import type { RenderMode } from '@plitzi/sdk-shared';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
@@ -47,6 +48,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziProvider>
       <OverQuotaNotice />
+      <PlitziBadge />
     </SpaceContainer>
   );
 };

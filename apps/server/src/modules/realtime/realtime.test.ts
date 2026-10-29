@@ -355,6 +355,39 @@ describe('realtimeModuleFor', () => {
   });
 });
 
+// A deployment may keep a space's channels shut — a plan that does not include them — and the page is told why.
+describe('a space the deployment does not open', () => {
+  it('refuses its declared topics with the deployment’s words, as a 402', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
+    const { raw } = buildRaw();
+    const { res, sent } = buildRes();
+    const asked: number[] = [];
+
+    await handleRealtimeSubscribe({
+      req: request({ topics: 'board:1' }),
+      res,
+      raw,
+      signal: new AbortController().signal,
+      hub,
+      resolveChannels: resolverFor(CHANNELS),
+      grants: GRANTS,
+      admitSpace: spaceId => {
+        asked.push(spaceId);
+
+        return Promise.resolve('Realtime channels are included in the App plan and above.');
+      }
+    });
+
+    expect(asked).toEqual([SPACE.spaceId]);
+    expect(sent.status).toBe(402);
+    expect(JSON.parse(sent.body)).toEqual({
+      error: 'Realtime channels are included in the App plan and above.',
+      reason: 'unavailable',
+      refused: [{ topic: 'board:1', reason: 'unavailable' }]
+    });
+  });
+});
+
 describe('granted channels', () => {
   it('refuses a topic of a `grant: true` channel to a page that brings no grant, however well it knows the name', async () => {
     const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));

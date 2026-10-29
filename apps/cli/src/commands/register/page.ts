@@ -68,7 +68,7 @@ export const registerPage = (pageGroup: Command): void => {
       .addOption(
         new Option(
           '--expect <id~text>',
-          'The element shows this text (any case) — any copy of it, a list\'s rows — as the page was left, or the check fails: once per element; "!<id>" none shown; "<path> <id~text>" for one page — with --then, one naming none holds on the last; "<id>[href]~next=" what an attribute holds'
+          'The element shows this text — any case when written in one case, as the space wrote it when written in mixed case (a stylesheet\'s capitals aside) — any copy of it, a list\'s rows — as the page was left, or the check fails: once per element; "!<id>" none shown; "<path> <id~text>" for one page — with --then, one naming none holds on the last; "<id>[href]~next=" what an attribute holds'
         ).argParser(expectation)
       )
       .addOption(
@@ -197,7 +197,7 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--steps <script>',
-      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for <el> [time] (until it shows — 10 s, or the time said up to 60 s; a selector waits for a state: [data-state="stalled"]), reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots — in a task’s copy, the run’s pictures of it) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+      'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for <el> [time] (until it shows — 10 s, or the time said up to 60 s; a selector waits for a state: [data-state="stalled"]), reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor — its answer whole with --json), render <id> [json] (one the page runs as it renders, a provider’s, played so — dev mode), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots — in a task’s copy, the run’s pictures of it) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
     )
     .option(
       '--read <element...>',
@@ -318,10 +318,13 @@ export const registerPage = (pageGroup: Command): void => {
           'Type into a field first, as page check --fill does — before each --click, or alone, then pictured: once per field'
         ).argParser(fill)
       )
-      .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
+      .option(
+        '--sheet',
+        'Every picture taken on one contact sheet — before, after each --click, each frame; with --steps, each of its shot steps and what they leave (a click among them is pictured where a shot step follows it)'
+      )
       .option(
         '--steps <script>',
-        'An interaction, step by step: "click <el>; hover <el>; scroll <el> [dx] [dy]; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; action <id> [json]; as <account> <step>; shot [label]; frames <n> [ms]" — or @file with one per line'
+        'An interaction, step by step: "click <el>; hover <el>; scroll <el> [dx] [dy]; type <el> <text>; press <key>; wait <ms|3s>; wait-for <el>; action <id> [json]; render <id> [json]; as <account> <step>; shot [label]; frames <n> [ms]" — or @file with one per line'
       )
       .option('--reduced-motion', 'As a visitor who asked for less motion')
       .option('--json', 'One object, for a tool or an agent — { widths: [...] }, one each, for several pages or widths')

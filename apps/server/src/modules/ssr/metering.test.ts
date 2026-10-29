@@ -100,6 +100,44 @@ describe('SSR page metering', () => {
     expect(req.ctx.meter?.analytics?.key).toBe('k');
   });
 
+  // A free sub-domain is no place to host a site: kept out of search results, fresh or from the cache alike.
+  it('sends noindex when the adapter says the address is not one sites are hosted on', async () => {
+    meter.mockResolvedValue({ noindex: true, badge: true });
+    const cache = new TtlCache<string>(60_000, 10);
+    const req = request();
+    const fresh = response();
+
+    await render(req, fresh.res, caches(cache));
+    expect(fresh.headers['X-Robots-Tag']).toBe('noindex, nofollow');
+    expect(req.ctx.meter?.badge).toBe(true);
+
+    const cached = response();
+    await render(request(), cached.res, caches(cache));
+    expect(cached.headers['X-Robots-Tag']).toBe('noindex, nofollow');
+
+    meter.mockResolvedValue({});
+    const indexed = response();
+    await render(request(), indexed.res, caches());
+    expect(indexed.headers['X-Robots-Tag']).toBeUndefined();
+  });
+
+  // A free site whose owner never confirmed their email is held back: a notice, never the space, cached or not.
+  it('answers 503 with the words the adapter chose when it holds the page back', async () => {
+    meter.mockResolvedValue({ unavailable: 'This page is not available.' });
+    const cache = new TtlCache<string>(60_000, 10);
+    const { res, sent, headers } = response();
+    const status = vi.fn();
+    (res as unknown as { setStatus: (code: number) => void }).setStatus = status;
+
+    await render(request(), res, caches(cache));
+
+    expect(status).toHaveBeenCalledWith(503);
+    expect(headers['X-Robots-Tag']).toBe('noindex, nofollow');
+    expect(headers['Cache-Control']).toBe('no-store');
+    expect(sent[0]).toContain('This page is not available.');
+    expect(sent[0]).not.toContain('fresh');
+  });
+
   // Metering must never be able to fail a render.
   it('serves the page when the metering adapter throws', async () => {
     meter.mockRejectedValue(new Error('store down'));

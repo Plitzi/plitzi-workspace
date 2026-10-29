@@ -14,6 +14,7 @@ import ExportSpace from '@pmodules/Export';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import { issuesFromError, PUBLISH_REFUSED } from '@pmodules/Space/helpers/spaceIssues';
 import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
+import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import BorderButton from './BorderButton';
@@ -23,6 +24,7 @@ import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
 import MotionButton from './MotionButton';
 import PageHeader from './PageHeader';
+import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
@@ -40,8 +42,21 @@ const AppHeader = () => {
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
   const showSpaceIssues = useShowSpaceIssues();
+  // What the space's plan does not include is shown locked, and leads to the plan that does (RFC 0029 §7.4).
+  const { locked } = useSpaceEntitlements();
+  const snapshotsLocked = locked('snapshots');
+  const domainLocked = locked('customDomain');
+  const openPlans = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, []);
 
   const handleClickPublish = useCallback(async () => {
+    if (snapshotsLocked?.upgradeUrl) {
+      openPlans(snapshotsLocked.upgradeUrl);
+
+      return;
+    }
+
     // Read fresh before asking for a description: the server refuses a space with errors anyway, and finding that out
     // after filling in the form is finding it out one step too late.
     const issues = await refreshIssues();
@@ -86,9 +101,15 @@ const AppHeader = () => {
         placement: 'top-right'
       });
     }
-  }, [addToast, mutate, refreshIssues, showModal, showSpaceIssues]);
+  }, [addToast, mutate, openPlans, refreshIssues, showModal, showSpaceIssues, snapshotsLocked]);
 
   const handleClickDeploy = useCallback(async () => {
+    if (domainLocked?.upgradeUrl) {
+      openPlans(domainLocked.upgradeUrl);
+
+      return;
+    }
+
     const response = await showModal<{
       environment: string;
       domain: string;
@@ -128,7 +149,7 @@ const AppHeader = () => {
         placement: 'top-right'
       });
     }
-  }, [addToast, mutate, showModal]);
+  }, [addToast, domainLocked, mutate, openPlans, showModal]);
 
   const handleClickExport = useCallback(async () => {
     await showModal(
@@ -206,6 +227,7 @@ const AppHeader = () => {
         <RuntimeIdleNotice />
         <IssuesButton />
         <QuotaMeter />
+        <PlanBadge />
         <button
           className={clsx(
             'flex h-7 w-7 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
@@ -235,19 +257,29 @@ const AppHeader = () => {
           <Button
             id="header-publish"
             size="sm"
-            title="Snapshot: keep the draft as a revision you can publish, compare or roll back to."
+            title={
+              snapshotsLocked
+                ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
+                : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
+            }
             onClick={handleClickPublish}
             intent="secondary"
           >
+            {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
             Snapshot
           </Button>
           <Button
             id="header-deploy"
             size="sm"
-            title="Publish: put a revision live on an environment's domain."
+            title={
+              domainLocked
+                ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
+                : "Publish: put a revision live on an environment's domain."
+            }
             onClick={handleClickDeploy}
             disabled={loadingDeployment}
           >
+            {domainLocked && !loadingDeployment && <Button.Icon icon="fa-solid fa-lock" />}
             {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
           </Button>
         </div>

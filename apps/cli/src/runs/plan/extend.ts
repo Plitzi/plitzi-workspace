@@ -9,9 +9,9 @@ import { requireLead } from '../agents/leads';
 import { ensureTeam, teamSize } from '../agents/team';
 import { materialise } from '../copies/materialise';
 import { readOwnership } from '../copies/ownership';
-import { readJson, writeAtomic, writeJson } from '../core/files';
+import { fingerprint, readJson, writeAtomic, writeJson } from '../core/files';
 import { isBaseManifest } from '../core/model';
-import { taskPaths } from '../core/paths';
+import { lockFile, taskPaths, under } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
 import {
   assertStatus,
@@ -29,13 +29,14 @@ import {
 } from '../run';
 import { isResearch, startingState } from './spike';
 import { keepFiles } from '../core/store';
-import { viewTask } from '../core/taskStore';
+import { readStart, viewTask } from '../core/taskStore';
 import { EVERYONE, LEAD, sendMessage } from '../talk/messages';
 
 import type { CheckedPlan } from './plan';
 import type { LoadedRun, RunContext } from '../run';
 import type { TriedLine } from './tryLines';
 import type { RunPlan, RunTask } from '../core/model';
+import type { TaskView } from '../core/taskStore';
 
 /**
  * `plitzi run open` on an open run: the next plan stacked on an open run — begun where the run's work is, its tasks' copies made
@@ -63,6 +64,15 @@ export interface Extended {
   notices?: string[];
   /** `dryRun` with `lines`: each acceptance line run once on the run's work, with what it is (`tryLines.ts`). */
   tried?: TriedLine[];
+  /** Files a task at work held only as part of its page, unchanged in its copy, given to the stage's task naming them. */
+  released?: Released[];
+}
+
+/** A file handed from a task at work to a stage's task that names it (`releasable`). */
+export interface Released {
+  file: string;
+  from: string;
+  to: string;
 }
 
 /** A stage as it would stack: checked whole against the run, nothing written. */
@@ -74,6 +84,7 @@ interface SeenStage {
   primer: string | undefined;
   allowed: number;
   isReady: (task: RunTask) => boolean;
+  released: Released[];
 }
 
 /** The stage at `file` checked against the run as `run open` would stack it — refused, every reason at once. */
@@ -161,17 +172,24 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
 
     return seen;
   };
+  const released: Released[] = [];
   for (const task of checked?.tasks ?? []) {
-    // A file a task at work holds is named only by one that starts after it: waiting for it, it finds the file free.
+    // A file a task at work holds is named only by one that starts after it: waiting for it, it finds the file free —
+    // unless it holds it only as part of its page, never named and not changed yet: that one goes to the stage's task.
+    // A run's header fix waited on a task holding the page's 26 files for the one it named, and was folded into it.
     const after = waitsFor(task.id);
+    const named = next.tasks.find(each => each.id === task.id)?.files ?? [];
     for (const each of task.files.filter(owned => held.has(owned) && !after.has(held.get(owned) ?? ''))) {
-      problems.push(
-        `Task "${task.id}": ${each} is "${String(held.get(each))}"'s, still at work — wait for it (dependsOn) to name it`
-      );
+      const from = held.get(each) ?? '';
+      if (named.includes(each) && (await releasable(loaded, views, from, each))) {
+        released.push({ file: each, from, to: task.id });
+        continue;
+      }
+
+      problems.push(`Task "${task.id}": ${each} is "${from}"'s, still at work — wait for it (dependsOn) to name it`);
     }
 
     // A folder it names holds what a task at work writes there — files that task may not have made yet (// t-close-home's src/space/pages/home, t-home-top's sections in it, its topStyles.ts in no copy but its own).
-    const named = next.tasks.find(each => each.id === task.id)?.files ?? [];
     const inside = [...held].filter(
       ([file, holder]) => !after.has(holder) && named.some(folder => file.startsWith(`${folder}/`))
     );
@@ -207,7 +225,65 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
   const states = new Map(views.map(view => [view.task.id, view.state.status]));
   const isReady = (task: RunTask): boolean => task.dependsOn.every(dependency => states.get(dependency) === 'done');
 
-  return { loaded, next, checked, tasks, primer, allowed, isReady };
+  // Said by the dry run as by the stacking: what the stage takes from a task at work.
+  checked.notices.push(
+    ...released.map(
+      each =>
+        `${each.file} goes to "${each.to}": "${each.from}" held it only as part of its page, unchanged in its copy — it is told, and keeps its own`
+    )
+  );
+
+  return { loaded, next, checked, tasks, primer, allowed, isReady, released };
+};
+
+/**
+ * Whether `file`, held by `holder`, can go to a stage's task: the holder never named it — it came with its page's unit
+ * (`expandFiles`) — and has not changed it in its copy. What it named, or wrote in already, stays its own.
+ */
+const releasable = async (
+  loaded: LoadedRun,
+  views: readonly TaskView[],
+  holder: string,
+  file: string
+): Promise<boolean> => {
+  const named = loaded.plan.tasks.find(each => each.id === holder)?.files ?? [];
+  if (named.includes(file)) {
+    return false;
+  }
+
+  const view = views.find(each => each.task.id === holder);
+  const start = view ? await readStart(view.paths) : undefined;
+  if (!view || !start) {
+    return true;
+  }
+
+  return (await fingerprint(under(view.paths.work, file))) === (start.files[file] ?? null);
+};
+
+/** Hands each released file to its stage's task: out of its holder's files and locks, the holder told. */
+const handOverReleased = async (ctx: RunContext, loaded: LoadedRun, released: readonly Released[]): Promise<void> => {
+  for (const holder of new Set(released.map(each => each.from))) {
+    const task = loaded.tasks.find(each => each.id === holder);
+    const files = released.filter(each => each.from === holder);
+    if (!task) {
+      continue;
+    }
+
+    const paths = taskPaths(loaded.paths, holder);
+    await writeJson(paths.definition, {
+      ...task,
+      files: task.files.filter(each => !files.some(one => one.file === each))
+    });
+    for (const { file } of files) {
+      await fs.rm(lockFile(paths, file), { force: true });
+    }
+
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: holder,
+      text: `A stage gave ${files.map(each => `${each.file} to ${each.to}`).join(', ')}: ${files.length === 1 ? 'it was' : 'they were'} yours as part of your page, unchanged — leave ${files.length === 1 ? 'it' : 'them'}; a change you need there is a proposal (plitzi task propose ${files[0]?.to ?? '<task>'} --change "…")`
+    });
+  }
 };
 
 /** The run's goal with a stage's: each of its goals once, in the order they were stacked. */
@@ -229,12 +305,13 @@ export const seeStage = async (
   file: string,
   { lines = false }: { lines?: boolean } = {}
 ): Promise<Extended> => {
-  const { loaded, next, checked, tasks, primer, isReady } = await seenStage(ctx, runId, file);
+  const { loaded, next, checked, tasks, primer, isReady, released } = await seenStage(ctx, runId, file);
 
   return {
     runId,
     added: tasks.map(task => task.id),
     ready: tasks.filter(isReady).map(task => task.id),
+    ...(released.length > 0 ? { released } : {}),
     notes: next.notes?.length ?? 0,
     primer: primer !== undefined,
     checked: { ...checked, tasks },
@@ -247,7 +324,8 @@ export const extendRun = async (ctx: RunContext, runId: string, file: string): P
   requireNoTask(ctx, 'stack a stage on the run');
   await requireLead(ctx, 'stack a stage on the run');
 
-  const { loaded, next, checked, tasks, primer, allowed, isReady } = await seenStage(ctx, runId, file);
+  const { loaded, next, checked, tasks, primer, allowed, isReady, released } = await seenStage(ctx, runId, file);
+  await handOverReleased(ctx, loaded, released);
 
   // Their files as the project holds them now, kept beside the run's backup: what the finish restores from.
   const base = await readJson(loaded.paths.base, isBaseManifest, 'the run’s backup (base.json)');
@@ -345,6 +423,7 @@ export const extendRun = async (ctx: RunContext, runId: string, file: string): P
     ...(allowed > loaded.record.agents ? { agents: { before: loaded.record.agents, after: allowed } } : {}),
     ...(inputs.length > 0 ? { inputs } : {}),
     ...(takenUp.length > 0 ? { takenUp } : {}),
+    ...(released.length > 0 ? { released } : {}),
     ...(checked.notices.length > 0 ? { notices: checked.notices } : {})
   };
 };

@@ -49,7 +49,7 @@ const taskProveBefore = (named: string | undefined, options: ProveOptions): Prom
 
       return checkBefore(ctx, runId, taskId, linesAsked(options));
     },
-    ({ task, lines, without }) => checkBeforeText(task, lines, without)
+    ({ task, lines, without, afterAsCompleted }) => checkBeforeText(task, lines, without, afterAsCompleted === true)
   );
 
 const LAST_LINES = 4;
@@ -59,7 +59,9 @@ export const checkBeforeText = (
   task: string,
   lines: readonly LineBeforeAfter[],
   /** The tasks it tests, taken out of the run before it as well. */
-  without: readonly string[] = []
+  without: readonly string[] = [],
+  /** With it as its complete measured it, its copy unchanged since: not run again. */
+  asCompleted = false
 ): string => {
   const said = lines.map(line => {
     const proved = provedBy(line);
@@ -88,7 +90,7 @@ export const checkBeforeText = (
   const proving = lines.filter(line => provedBy(line) === 'proves').length;
 
   return [
-    `${task}'s acceptance, before it (the run's approved work${without.length > 0 ? `, without ${without.join(', ')}, which it tests` : ''}) and with it (its copy) — ${String(proving)} of ${String(lines.length)} ${lines.length === 1 ? 'line proves' : 'lines prove'} the change:`,
+    `${task}'s acceptance, before it (the run's approved work${without.length > 0 ? `, without ${without.join(', ')}, which it tests` : ''}) and with it (its copy${asCompleted ? ', as its complete measured it — unchanged since' : ''}) — ${String(proving)} of ${String(lines.length)} ${lines.length === 1 ? 'line proves' : 'lines prove'} the change:`,
     ...said
   ].join('\n');
 };

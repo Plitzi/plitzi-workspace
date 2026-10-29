@@ -18,6 +18,7 @@ const measured = (styles: Record<string, string>, text = 'VS'): Measured => ({
   selector: '[data-plitzi-el="vs"]',
   tag: 'span',
   text,
+  box: { x: 0, y: 0, width: 0, height: 0 },
   styles: Object.fromEntries(MEASURED.map(property => [property, styles[property] ?? 'normal'])),
   inherited: []
 });
@@ -533,6 +534,7 @@ describe('an element measured alone', () => {
       selector: '[data-plitzi-el="home-sign"]',
       tag: 'div',
       text: 'ACME',
+      box: { x: 0, y: 0, width: 0, height: 0 },
       styles: {
         'font-size': '32px',
         color: 'rgb(255, 176, 0)',
@@ -645,6 +647,7 @@ describe('a reading said short', () => {
       selector: '[data-plitzi-el="inbox"]',
       tag: 'div',
       text: 'Inbox',
+      box: { x: 0, y: 0, width: 0, height: 0 },
       styles: {
         'border-top': '2px solid rgb(42, 31, 22)',
         'border-right': '2px solid rgb(42, 31, 22)',

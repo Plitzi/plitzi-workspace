@@ -41,6 +41,7 @@ describe('a reading of an element a visitor does not see', () => {
       selector: '#follow',
       tag: 'button',
       text: 'Follow',
+      box: { x: 0, y: 0, width: 96, height: 0 },
       styles: { width: '96px' },
       inherited: []
     };

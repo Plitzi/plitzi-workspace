@@ -219,7 +219,13 @@ export const checkPlan = async (
 
   // Tasks that write their tests themselves, as their files say: said once, as what the plan does — told to name their
   // test files, which they did, a run's scout read the same advice six times with no way to clear it.
-  const own = untested.flatMap(each => ('own' in each ? [`${each.task} (${each.own.join(', ')})`] : []));
+  const own = untested.flatMap(each =>
+    'own' in each
+      ? [
+          `${each.task} (${each.own.join(', ')}${each.besides ? `; ${each.besides.join(', ')} too, when it changes what they test` : ''})`
+        ]
+      : []
+  );
   if (own.length > 0) {
     notices.push(
       `Each writes its tests itself, as its files name them — no task of tests by another: ${own.join(', ')}`

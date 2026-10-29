@@ -7,12 +7,13 @@ import { textOf } from './context';
 import { keepAlive } from './keepAlive';
 import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
+import { keepOlderWarnings, warningsAgainstRun } from './olderWarnings';
 import { othersHeld } from './othersHeld';
 import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from './reviews';
 import { isNotice } from '../../commands/project/verify';
 import { unifiedDiff } from '../../fix/diff';
 import { projectExec } from '../../scaffold/packageManager';
-import { checkAcceptance, letGo, serveForAcceptance } from '../copies/acceptance';
+import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../copies/acceptance';
 import { failsWithout, ownFailing } from '../copies/checks';
 import { mergeLines } from '../copies/merge3';
 import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
@@ -38,7 +39,7 @@ import { keepTaskReport } from '../report/taskReports';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
 import { proposalsOf, unansweredTo } from '../talk/agreements';
 import { handOver } from '../talk/handOver';
-import { LEAD, unreadForHolder } from '../talk/messages';
+import { agentAddress, asksStandingOnly, LEAD, markRead, unreadForHolder } from '../talk/messages';
 
 import type { Brought } from './common';
 import type { CheckResult, CheckStep } from '../copies/checks';
@@ -143,6 +144,8 @@ export interface CompletedTask {
   checkedAt?: string;
   /** The round's report, kept for the run's (`taskReports.ts`): which round, and whether it says what it was like. */
   report: { round: number; experience?: true };
+  /** The space lint's warnings its files had before it: not its own, kept as the run's notices for the backlog. */
+  olderWarnings?: string[];
 }
 
 /**
@@ -236,7 +239,21 @@ export const completeTask = async (
 
   // What the lead said to it, unread, comes before a review: a run's dev-1 completed 30 s after a send-back, the lead's
   // word on its scope unread, and the round answered none of it. Handed over here, read: the next complete goes on.
-  const fromLead = (await unreadForHolder(loaded, taskId, ctx.agent, false)).filter(message => message.from === LEAD);
+  // Only asked where it stands, it answers by completing: a run's question, sent while the complete ran the page's spec,
+  // refused that complete three times in twenty minutes.
+  const unreadNow = await unreadForHolder(loaded, taskId, ctx.agent, false);
+  const fromLead = unreadNow.filter(message => message.from === LEAD && !asksStandingOnly(message));
+  const answeredByComplete = unreadNow.filter(asksStandingOnly);
+  if (fromLead.length === 0 && answeredByComplete.length > 0) {
+    for (const reader of [taskId, agentAddress(ctx.agent)]) {
+      await markRead(
+        loaded,
+        reader,
+        answeredByComplete.filter(message => message.to === reader).map(message => message.id)
+      );
+    }
+  }
+
   if (fromLead.length > 0) {
     await unreadForHolder(loaded, taskId, ctx.agent, true);
     throw new RunRefusal(
@@ -435,7 +452,7 @@ export const completeTask = async (
     const accepted = kept
       ? kept.accepted
       : checks.ok || (without !== undefined && failsWithout(checks, without, dirs))
-        ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}) })
+        ? await checkAcceptance(task.acceptance, { ...where, ...(serving ? { serving } : {}), ...sayLines(ctx.say) })
         : [];
     // Its own lines met: the approved tasks' lines on the pages it draws, on the same copy (`othersHeld`).
     const others =
@@ -511,23 +528,29 @@ export const completeTask = async (
     );
   }
 
-  // A file it hands over has no warning of the space's lint, whoever wrote it: a run's run left ten in files its tasks
-  // changed — each said at complete, none fixed — and the finish passed with them.
+  // A warning of the space's lint it adds to a file it changed is its own to fix. One the file had before it is kept as
+  // the run's notice — the project's backlog once the run ends — never this task's: a run's tasks renamed ids an
+  // acceptance line read (the line then passed on nothing) and handed back a one-value change to a long file, to clear
+  // warnings older than them. Kept, not silent: a run before this left ten said at complete, and none fixed.
   const warned = (checks.steps.find(step => step.name === 'lint:space')?.warnings ?? []).filter(warning =>
     changed.some(file => warning.startsWith(`${file}:`) || warning.startsWith(`${file} `))
   );
-  if (warned.length > 0 && !knownFailure) {
+  const { own: ownWarnings, before: warnedBefore } =
+    warned.length > 0 ? await warningsAgainstRun(ctx, loaded, warned) : { own: [], before: [] };
+  if (ownWarnings.length > 0 && !knownFailure) {
     await recordBrake(ctx, loaded, 'checks-failed', taskId);
     throw new RunRefusal(
       'checks-failed',
-      `Task "${taskId}" leaves warnings of the space's lint in files it changed: ${warned.join('; ')}`,
+      `Task "${taskId}" adds warnings of the space's lint to files it changed: ${ownWarnings.join('; ')}`,
       {
         task: taskId,
-        steps: [{ name: 'lint:space — the files it changed', ok: false, said: warned }],
-        next: `fix each as ${projectExec('plitzi space lint')} says — there before the task or not, a file it hands over has none; one written so on purpose says it with quiet — and complete again`
+        steps: [{ name: 'lint:space — what it adds', ok: false, said: ownWarnings }],
+        next: `fix each as ${projectExec('plitzi space lint')} says — one written so on purpose says it with quiet — and complete again${warnedBefore.length > 0 ? ` (the file's older ones are kept for the backlog, not yours: ${warnedBefore.join('; ')})` : ''}`
       }
     );
   }
+
+  const keptWarnings = await keepOlderWarnings(ctx, loaded, taskId, warnedBefore);
 
   const existing = new Map((await readRequests(view.paths)).map(request => [request.file, request]));
   const requests: SharedRequest[] = [];
@@ -647,6 +670,7 @@ export const completeTask = async (
     changedInProject,
     ...(kept ? { checkedAt: kept.at } : {}),
     report: { round: report.round, ...(report.experience ? { experience: true as const } : {}) },
+    ...(keptWarnings.length > 0 ? { olderWarnings: keptWarnings } : {}),
     messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };

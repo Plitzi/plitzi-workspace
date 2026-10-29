@@ -5,6 +5,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import FunctionInspector from './components/FunctionInspector';
 import FunctionsEditor from './components/FunctionsEditor';
@@ -327,6 +328,7 @@ const Functions = () => {
 
   return (
     <div className="flex min-h-0 grow basis-0 flex-col">
+      <PlanNotice capability="functions" meanwhile="Functions can be written and saved; they do not run until then." />
       {/* Saving, discarding and the files' state mean nothing before there is code: the welcome is the page. */}
       {hasFiles && (
         <FunctionsHeader

@@ -8,6 +8,7 @@ import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
+import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import AddGoogleFont from './components/AddGoogleFont';
 import AddHostedFont from './components/AddHostedFont';
@@ -33,6 +34,7 @@ const Fonts = () => {
   const { addToast } = useToast();
   const { builderHandler } = use(BuilderContext);
   const { server, userKey, webId, environment } = useBuilderNetwork();
+  const { locked } = useSpaceEntitlements();
   const [mirroring, setMirroring] = useState<string>();
   const [[fonts = NO_FONTS, cache = '']] = useBuilderStore(['style.fonts', 'style.cache']);
 
@@ -82,6 +84,22 @@ const Fonts = () => {
    */
   const handleMirror = useCallback(
     async (family: string) => {
+      // Mirroring keeps a copy on the CDN: a site plan's (RFC 0029 §4.2). The server refuses it anyway; this says so first.
+      const uploadsLocked = locked('cdnUploads');
+      if (uploadsLocked?.upgradeUrl) {
+        addToast(
+          <span>
+            {uploadsLocked.label} is included in the {uploadsLocked.requires} plan.{' '}
+            <a href={uploadsLocked.upgradeUrl} target="_blank" rel="noreferrer noopener">
+              See the plans
+            </a>
+          </span>,
+          { appeareance: 'warning', autoDismiss: false, placement: 'top-right' }
+        );
+
+        return;
+      }
+
       setMirroring(family);
 
       try {
@@ -114,7 +132,7 @@ const Fonts = () => {
         setMirroring(undefined);
       }
     },
-    [addToast, builderHandler, environment, server.apiServer, userKey, webId]
+    [addToast, builderHandler, environment, locked, server.apiServer, userKey, webId]
   );
 
   const handleRemove = useCallback(

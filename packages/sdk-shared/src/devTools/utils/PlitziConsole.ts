@@ -190,14 +190,34 @@ class PlitziConsole {
 
   // Methods providers
 
+  /**
+   * Kept here, whoever listens: an element registers its methods as it mounts, often before the panel does, and what was
+   * registered then was lost — the panel and `window.__plitzi` read the same registry.
+   */
+  #providers = new Map<string, ProviderCallback>();
+
   addProviderMethod(methodName: string, callback: ProviderCallback) {
+    this.#providers.set(methodName, callback);
     this.callbackAddProvider?.(methodName, callback);
   }
 
   removeProviderMethod(methodName: string) {
+    this.#providers.delete(methodName);
     if (typeof this.callbackRemoveProvider === 'function') {
       this.callbackRemoveProvider(methodName);
     }
+  }
+
+  /** Every method registered now, by name: what a panel mounting late starts from. */
+  providerMethods(): Record<string, ProviderCallback> {
+    return Object.fromEntries(this.#providers);
+  }
+
+  /** What a registered method answers — undefined when none is registered by that name. */
+  providerData(methodName: string, ...args: unknown[]): unknown {
+    const method = this.#providers.get(methodName);
+
+    return method === undefined ? undefined : method(...args);
   }
 
   // Methods

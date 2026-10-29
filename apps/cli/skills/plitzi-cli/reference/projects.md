@@ -27,8 +27,9 @@ What a project gives you, so you use it rather than rebuild it:
 | `typecheck`, `lint`, `test`, `format` | before calling a change done — `test`: the modules' own `*.test.ts` (`node --test`) |
 
 `npx plitzi page play /path --steps "…" --read <el>`: `shot`'s steps, and after each how far each element moved, what
-it shows, whether it takes a press — where a step took the page (`→ <path>`), what an action answered (`←`), a list's
-row by `<el>:2` or `<el>:last`. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check`, `measure` and `page outline` play `--steps` before they read.
+it shows, whether it takes a press, what its bindings gave it (a plugin's attribute) — where a step took the page
+(`→ <path>`), what an action answered (`←`; whole in `--json`), a flow a step set off that failed (`✗`, failing the
+play), a list's row by `<el>:2` or `<el>:last`. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check`, `measure` and `page outline` play `--steps` before they read.
 
 Every page command reads as one visitor: a page that sends a guest away as the project's account (`PLITZI_CHECK_USER`), said — `--as <user>` another, `--guest` a guest; `--timezone <IANA>` (its hours there), `--presence` (takes part in its channels), and a browser that refuses: `--clock <instant>`, `--block <text>` (fails), `--hold <text>` (never answered: a loading state, a held load), `--autoplay refused`, `--storage refused`; `--fresh` reads anew whatever an earlier call kept (the other site's page, the space authored).
 

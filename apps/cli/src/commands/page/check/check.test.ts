@@ -480,6 +480,13 @@ describe('an expectation held to every copy of its element', () => {
       '--expect thread-why~Juno does not: thread-why shows "juno does not get messages." — in another case: a text written in mixed case is read as written (all one case to read any)'
     );
     expect(expectationMissed({ element: 'thread-why', text: 'JUNO DOES NOT' }, why, [])).toBeUndefined();
+    // A stylesheet's capitals change no word written: a run's label written "Events", shown "EVENTS", failed only at the
+    // finish once a later task set it in capitals.
+    const capitals = { present: 1, shown: ['EVENTS'], written: ['Events'], cut: [] };
+    expect(expectationMissed({ element: 'stat-events-label', text: 'Events' }, capitals, [])).toBeUndefined();
+    expect(expectationMissed({ element: 'stat-events-label', text: 'Event Log' }, capitals, [])).toContain(
+      'stat-events-label shows "EVENTS"'
+    );
     expect(expectationMissed({ element: 'follow-list-name', text: 'Vega' }, rows, [])).toBe(
       `--expect follow-list-name~Vega: none of follow-list-name's 2 copies shows it — "Nova", "Juno"`
     );
@@ -505,8 +512,8 @@ describe('an expectation held to every copy of its element', () => {
     const drawn = {
       present: 2,
       drawn: [
-        { id: 'storm-name', text: 'ARNAB', cut: false, index: 0 },
-        { id: 'storm-name', text: 'VANCE', cut: false, index: 1 }
+        { id: 'storm-name', text: 'ARNAB', written: 'Arnab', cut: false, index: 0 },
+        { id: 'storm-name', text: 'VANCE', written: 'Vance', cut: false, index: 1 }
       ]
     };
     const copies = copiesOf(
@@ -520,6 +527,7 @@ describe('an expectation held to every copy of its element', () => {
     expect(copies).toEqual({
       present: 2,
       shown: ['VANCE'],
+      written: ['Vance'],
       cut: [],
       scrolled: { 0: 'left-column' },
       unseen: [{ text: 'ARNAB', why: 'under legend-area, drawn over every part of it in sight' }]

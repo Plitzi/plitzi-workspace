@@ -508,6 +508,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     await sendMessage(ctx, loaded, {
       from: LEAD,
       to: task.id,
+      amended: changed,
       text: `The lead amended this task (${changed.join(', ')}). It now asks: ${task.title}${
         changed.includes('acceptance') ? ` — ${task.acceptance.map(each => acceptanceText(each)).join('; ')}` : ''
       }${changed.includes('spike') ? `. Its question is now: ${task.spike ?? ''} — what is no longer asked, leave` : ''}${changed.includes('findings') ? `. What was found for it now says: ${task.findings ?? 'nothing'}` : ''}. Read it again: plitzi task context`

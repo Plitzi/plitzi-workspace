@@ -114,6 +114,9 @@ export const agentScratch = (paths: RunPaths, agent: string): string => path.joi
 /** Where `--keep-backup` leaves what the final merge overwrote: out of the run, which goes, and out of git. */
 export const BACKUPS_DIR = `${PROJECT_TMP}/plitzi-backups`;
 
+/** Where a lead's own CLI stays once its run is over, to amend the report it left (`keepLeadCli`): out of git. */
+export const RUNS_OVER_DIR = `${PROJECT_TMP}/plitzi-runs-over`;
+
 /**
  * What the CLI and the project's own server keep in the project's `tmp/`: anything else that appears there while a run
  * is open was left by someone — said to the lead, never removed, since `tmp/` is the person's too.
@@ -121,6 +124,7 @@ export const BACKUPS_DIR = `${PROJECT_TMP}/plitzi-backups`;
 export const TOOL_TMP: readonly string[] = [
   RUNS_DIR,
   BACKUPS_DIR,
+  RUNS_OVER_DIR,
   DEV_SERVER_FILE,
   `${PROJECT_TMP}/shots`,
   `${PROJECT_TMP}/visual`,

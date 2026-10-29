@@ -47,6 +47,8 @@ export interface ReviewedTask {
   /** Approved: the shared files its requests went into — another task's held or not — and those that did not, and why. */
   fulfilled?: string[];
   unmerged?: { files: string[]; reason: string };
+  /** Approved over checks the run's work already failed the same way without it: not its own, told to the lead. */
+  runFails?: string[];
   /** Past the round limit: blocked for the lead to decide — the one that speaks to the person. */
   toLead?: boolean;
   /** Its files a person changed meanwhile, put together with its change (--merge). */
@@ -339,7 +341,8 @@ const decide = async (
 
     // Its next round says its own progress: a run's scope, sent back, read "writing the stage · 75 %" from the last.
     if (view.progress) {
-      await writeJson(view.paths.progress, { heartbeatAt: view.progress.heartbeatAt });
+      const { heartbeatAt, checkedMs } = view.progress;
+      await writeJson(view.paths.progress, { heartbeatAt, ...(checkedMs === undefined ? {} : { checkedMs }) });
     }
 
     const toLead = changesBlock(view.state);
@@ -519,11 +522,17 @@ const decide = async (
         }
       : undefined;
 
+  const runFails = [
+    ...new Set(
+      [...(into?.runFails ?? []), ...(went && !('failed' in went) ? (went.runFails ?? []) : [])].map(step => step.name)
+    )
+  ];
   const closed = await closeApproved(ctx, loaded, view, {
     round,
     merged,
     fulfilled,
     ...(unmerged ? { unmerged } : {}),
+    ...(runFails.length > 0 ? { runFails } : {}),
     notReviewed,
     step: isPrincipal(ctx.agent) ? LEAD : role
   });

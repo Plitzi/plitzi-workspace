@@ -6,6 +6,7 @@ import { changesNoPage, reviewPages } from '../plan/pagesOf';
 import { logRun, readRunLog } from '../run';
 import { agentAddress, LEAD, messagesOf, sendMessage } from '../talk/messages';
 
+import type { MergedNow } from './mergedNow';
 import type { ReviewTeam } from './reviews';
 import type { AcceptanceResult, Quality, RunTask } from '../core/model';
 import type { TaskView } from '../core/taskStore';
@@ -48,6 +49,8 @@ export interface ReviewOffer {
   told?: string[];
   /** A research card's: what its scout found, the tasks it proposes, and the stage they are kept in to read. */
   found?: { by: string; text: string; tasks: string[]; stage: string };
+  /** Put together with what the run approved since its copy was made, as its approval will: what the checks said. */
+  merged?: MergedNow;
 }
 
 /** A review offered to `agent`, at the step its card waits for: the card as it went to review, and what was said of it. */

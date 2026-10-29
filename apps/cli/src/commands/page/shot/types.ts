@@ -55,7 +55,7 @@ export interface ShotOptions extends VisitorOptions {
   click?: string[];
   /** Hovered once the page settles — after the clicks, an item of what they opened — and the page pictured so. */
   hover?: string;
-  /** Every picture taken — before, after each click, or each of `frames` — on one contact sheet. */
+  /** Every picture taken — before, after each click, each of `frames`, each `shot` step — on one contact sheet. */
   sheet?: boolean;
   /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
   from?: ShotMoment;

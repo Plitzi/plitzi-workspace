@@ -42,7 +42,8 @@ measured" [--on <element>] --token <yours>`, **within 8 minutes of taking it** (
   played into: `state <key> <json>`, `source <provider.path> <json>` for a provider's answer (a list seen filled),
   `attribute <element>.<attribute> <json>` for one no page binds yet (a plugin's new one, drawn),
   `store <key> <value>` then `reload`, `--clock <instant>` with `tick 5m` for a
-  countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor), and `as <account>
+  countdown, `action <id> '<json>'` for the server's data (an action run as the page's visitor; one the page runs as it
+  renders, a provider's: `render <id> '<json>'` — never a call trigger added for it), and `as <account>
   <step>` for what another person does — `as mika type dm-input hi; as mika press Enter` — seen on this page; a copy whose data a play used up goes back cold with `plitzi server reset` in it. What the lead told you while
   you looked is handed to you before your verdict goes: read it, then say it again.
 - **Ask what the task is, not more** — every round, the first too: send it back for what its title, acceptance and brief

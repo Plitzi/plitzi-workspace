@@ -28,7 +28,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       resolveChannels: realtime.resolveChannels,
       grants: realtime.grants,
       allowedOrigins: realtime.allowedOrigins,
-      ...(jobs ? { jobs } : {})
+      ...(jobs ? { jobs } : {}),
+      ...(realtime.admitSpace ? { admitSpace: realtime.admitSpace } : {})
     });
 
     return true;
@@ -44,7 +45,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       hub: realtime.hub,
       resolveChannels: realtime.resolveChannels,
       grants: realtime.grants,
-      ...(jobs ? { jobs } : {})
+      ...(jobs ? { jobs } : {}),
+      ...(realtime.admitSpace ? { admitSpace: realtime.admitSpace } : {})
     });
 
     return true;

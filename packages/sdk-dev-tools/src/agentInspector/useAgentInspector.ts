@@ -66,6 +66,7 @@ const useAgentInspector = (enabled: boolean): void => {
       setWatching: on => {
         watching = on;
       },
+      elementSources: id => pConsole.providerData(`getElementDataSource-${id}`),
       document
     });
     window.__plitzi = inspector;

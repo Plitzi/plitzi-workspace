@@ -7,6 +7,7 @@ import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
+import PlitziBadge from '../components/PlitziBadge';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
@@ -35,6 +36,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
           {pageId && <Page internalProps={pageValueMemo} />}
         </PlitziProvider>
         <OverQuotaNotice />
+        <PlitziBadge />
       </SpaceContainer>
     </ContainerFrame>
   );

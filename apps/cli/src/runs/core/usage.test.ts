@@ -62,6 +62,12 @@ describe('why a command failed, as its usage keeps it', () => {
       'Refused: task t-a is not yours (--token …'
     );
     expect(errorLine('')).toBeUndefined();
+    // A crashed child's output starts with where Node threw, not why: a run's look said that line for every picture.
+    expect(
+      errorLine(
+        "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/x/dist/bin.js'\n    at finalizeResolution (node:internal/modules/esm/resolve:274:11)"
+      )
+    ).toBe("Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/x/dist/bin.js'");
   });
 });
 

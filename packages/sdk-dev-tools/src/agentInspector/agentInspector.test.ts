@@ -259,6 +259,24 @@ describe('window.__plitzi', () => {
     expect(inspector.element('nowhere')).toBeUndefined();
   });
 
+  // Two of a run's agents could not tell what a plugin received: --element said the binding's template, never what the
+  // map's `hazards` held after a filter — one pictured the globe at two filters to compare.
+  it('says what each binding gave the element, from the sources it sees', () => {
+    document.body.innerHTML = '<span data-id="cart">2 items</span>';
+    const seeing = createAgentInspector({
+      root,
+      writeState,
+      stores: () => [provider],
+      runs: () => runs,
+      setWatching,
+      elementSources: id => (id === 'cart' ? { state: { count: 7 } } : undefined),
+      document
+    });
+
+    expect(seeing.element('cart')?.resolved).toEqual({ 'attributes.content': '7 items' });
+    expect(inspector.element('cart')?.resolved).toBeUndefined();
+  });
+
   // A run's panel read visible:true at y=614, clipped by its 495 px column: a box drawn is not one a visitor sees.
   it('reads an element as visible only when a visitor sees it, and says what clips it', () => {
     document.body.innerHTML =

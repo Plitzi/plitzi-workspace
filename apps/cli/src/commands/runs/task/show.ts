@@ -14,24 +14,38 @@ import type { RunCommandOptions } from '../shell';
 const BRIEF_CHARS = 600;
 
 /** `plitzi task show <task> <file>`: the file whole, where the diff is read from — the text alone, to read or to pipe. */
-const taskShowFile = (
+const taskShowFiles = (
   taskId: string | undefined,
-  file: string,
+  files: readonly string[],
   options: RunCommandOptions & { diff?: boolean }
 ): Promise<void> =>
   act(
     options,
     async ctx => {
       const runId = await runOf(ctx, options);
+      const task = taskId ?? (await ownTask(ctx, runId));
+      const shown = [];
+      for (const file of files) {
+        shown.push(await showTaskFile(ctx, runId, task, file));
+      }
 
-      return showTaskFile(ctx, runId, taskId ?? (await ownTask(ctx, runId)), file);
+      // One file is one object, as --json always gave it; several, a list.
+      return shown.length === 1 ? shown[0] : shown;
     },
-    shown =>
-      options.diff === true
-        ? (shown.diff ?? `${shown.file} of ${shown.task}: not text — no diff`)
-        : shown.text === undefined
-          ? `${shown.file} of ${shown.task} (${FROM_TEXT[shown.from]}): ${shown.binary ? 'not text — not shown' : 'removed by it'}`
-          : shown.text
+    // Several files, each under its name: a designer asked for two at once and was refused "too many arguments".
+    answered =>
+      (Array.isArray(answered) ? answered : [answered])
+        .map((each, _index, shown) => {
+          const text =
+            options.diff === true
+              ? (each.diff ?? `${each.file} of ${each.task}: not text — no diff`)
+              : each.text === undefined
+                ? `${each.file} of ${each.task} (${FROM_TEXT[each.from]}): ${each.binary ? 'not text — not shown' : 'removed by it'}`
+                : each.text;
+
+          return shown.length > 1 ? `${chalk.bold(`── ${each.file}`)}\n${text}` : text;
+        })
+        .join('\n')
   );
 
 /** Notes shown on a summary: the latest, each clipped — a lead read one task's 16k four times in nine minutes. */
@@ -193,11 +207,11 @@ const withheldLines = (task: string, files: readonly ShownFile[], full: boolean)
 /** `plitzi task show`: the task as its lead reviews it — or, with a file, that file whole. */
 export const taskShow = (
   first: string | undefined,
-  second: string | undefined,
+  rest: readonly string[],
   options: RunCommandOptions & { full?: boolean; diff?: boolean }
 ): Promise<void> => {
-  // A path alone is a file of the task one holds or reviews: a task id has no slash.
-  const [taskId, file] = second === undefined && first?.includes('/') === true ? [undefined, first] : [first, second];
+  // A path first is a file of the task one holds or reviews: a task id has no slash.
+  const [taskId, files] = first?.includes('/') === true ? [undefined, [first, ...rest]] : [first, rest];
 
-  return file === undefined ? taskShowSummary(taskId, options) : taskShowFile(taskId, file, options);
+  return files.length === 0 ? taskShowSummary(taskId, options) : taskShowFiles(taskId, files, options);
 };

@@ -11,9 +11,10 @@ export type Sight =
       /**
        * `clipped`: a box that hides what spills past it, and does not scroll (`overflow: hidden`, `clip`); `outside`: past
        * the edge of a screen that does not scroll to it (a page whose document is locked); `covered`: under something
-       * drawn over every part of it in sight; `no-size`: nothing of it drawn.
+       * drawn over every part of it in sight; `taken`: a control whose press another control over it takes — seen
+       * through a clear button, and never pressed; `no-size`: nothing of it drawn.
        */
-      why: 'clipped' | 'outside' | 'covered' | 'no-size';
+      why: 'clipped' | 'outside' | 'covered' | 'taken' | 'no-size';
       by?: string;
     };
 
@@ -124,6 +125,27 @@ export const sightOf = (node: Element): Sight => {
     return { seen: true };
   }
 
+  // A control is seen to be pressed: one under another control — a clear button placed over a header's filters — shows
+  // through it and takes no press. A run's chip sat under the fullscreen button at 2560 and read "in sight".
+  const pressable = (element: Element): boolean =>
+    element.matches(
+      'a[href], button, input, select, textarea, summary, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], [role="option"]'
+    ) || getComputedStyle(element).cursor === 'pointer';
+  if (pressable(node)) {
+    const middle = node.ownerDocument.elementFromPoint(
+      (inView.left + inView.right) / 2,
+      (inView.top + inView.bottom) / 2
+    );
+    let taker: Element | null = middle;
+    while (taker && !node.contains(taker) && !taker.contains(node) && !pressable(taker)) {
+      taker = taker.parentElement;
+    }
+
+    if (taker && !node.contains(taker) && !taker.contains(node)) {
+      return { seen: false, why: 'taken', by: nameOf(taker) };
+    }
+  }
+
   /** Whether an element draws over what is under it: a ground, a picture, a border, words of its own. */
   const draws = (element: Element): boolean => {
     const style = getComputedStyle(element);
@@ -186,6 +208,8 @@ export const sightText = (sight: Sight): string => {
       return 'past the edge of the screen, and the page does not scroll to it (its document is locked)';
     case 'covered':
       return `under ${sight.by ?? 'another element'}, drawn over every part of it in sight`;
+    case 'taken':
+      return `under ${sight.by ?? 'another control'}, which takes its press: a visitor sees it through it and cannot press it`;
     case 'no-size':
       return 'nothing of it is drawn (no size)';
   }

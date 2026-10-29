@@ -399,6 +399,22 @@ describe('a spike, a scout’s', () => {
     expect(await reviewTask(lead(), runId, 't-menu', 'approve', [])).toMatchObject({ verdict: 'approve' });
   });
 
+  // A run asked dev-2 where it stood while its complete ran the page's spec, and the question refused that complete
+  // three times in twenty minutes: completing is the answer — the task is done.
+  it('completes over the run’s own “where do you stand?”, and not over the lead’s words with it', async () => {
+    const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Reservar" };\n');
+    await messageTasks(lead(), runId, '@agent-1', '', undefined, true);
+    await completeTask(menu.ctx, runId, 't-menu');
+    expect(await statusOf(runId, 't-menu')).toBe('in-review');
+    expect(await unreadFor(await loadRun(lead(), runId), '@agent-1', false)).toEqual([]);
+
+    await reviewTask(lead(), runId, 't-menu', 'changes', [{ note: 'Say "Reservar" in the title too' }]);
+    await messageTasks(lead(), runId, 't-menu', 'Keep the title short', undefined, true);
+    expect((await refusal(completeTask(menu.ctx, runId, 't-menu'))).message).toContain('Keep the title short');
+  });
+
   it('proposes findings alone too: nothing is done until the lead approves it', async () => {
     const plan: RunPlan = benchPlan();
     plan.tasks.push({

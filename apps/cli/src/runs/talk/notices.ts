@@ -103,7 +103,7 @@ export const logNotice = async (
 export const NOTICE_WITHDRAWN = 'notice-withdrawn';
 
 /** Every notice a log holds, withdrawn or not, each named by its place: `n1`, `n2`… */
-const noticesIn = (log: readonly Record<string, unknown>[]): Notice[] =>
+export const noticesIn = (log: readonly Record<string, unknown>[]): Notice[] =>
   log
     .filter(entry => entry.action === 'notice' && typeof entry.text === 'string' && typeof entry.at === 'string')
     .flatMap((entry, index) =>

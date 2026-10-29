@@ -383,6 +383,10 @@ export interface TaskProgress {
   fraction?: number;
   step?: string;
   heartbeatAt: string;
+  /** Since when a check the CLI runs for it holds its agent (`keepAlive`): the agent can say nothing until it ends. */
+  checking?: string;
+  /** The time its checks held its agent since it was taken: not the agent's work, so not counted against its limit. */
+  checkedMs?: number;
 }
 
 /** A `.lock`: the reservation itself, at the file's path under its task's `locks/`. */
@@ -724,7 +728,9 @@ export const isTaskProgress = (value: unknown): value is TaskProgress =>
   isRecord(value) &&
   optional(value.fraction, isNumber) &&
   optional(value.step, isString) &&
-  isString(value.heartbeatAt);
+  isString(value.heartbeatAt) &&
+  optional(value.checking, isString) &&
+  optional(value.checkedMs, isNumber);
 
 export const isFileLock = (value: unknown): value is FileLock =>
   isRecord(value) &&

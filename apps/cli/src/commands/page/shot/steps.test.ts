@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
@@ -74,22 +72,23 @@ describe('a step another account plays, and an action', () => {
     return { page: page as unknown as BrowserPage, asked };
   };
 
-  // A tester needed a value past the cut of an action's answer, and asked the server with curl for it.
-  it('keeps an answer too long to say whole in a file, and says where', async () => {
+  // A tester needed a value past the cut of an action's answer, and asked the server with curl for it; a run's check
+  // line grepped the cut words for its third storm, the whole in a temporary file no line could name.
+  it('says an answer too long in part, and gives it whole for --json', async () => {
     const rooms = Array.from({ length: 20 }, (_, index) => ({ slug: `room-${String(index)}`, now: { seq: index } }));
     const { page } = pageAnswering(200, { runId: 'r1', status: 'completed', output: rooms });
     const done = await actStep(page, { kind: 'action', action: 'rooms-list', input: {} }, 0);
-    const file = done !== undefined && 'answer' in done ? /\(whole in (.+)\)$/.exec(done.answer)?.[1] : undefined;
 
-    expect(file).toBeDefined();
-    expect(JSON.parse(await readFile(file ?? '', 'utf-8'))).toEqual(rooms);
+    expect(done !== undefined && 'answer' in done ? done.answer : '').toMatch(/… \(whole with --json: its output\)$/);
+    expect(done !== undefined && 'output' in done ? done.output : undefined).toEqual(rooms);
   });
 
   it('runs the action as the page’s visitor, and says what a refusal said', async () => {
     const { page, asked } = pageAnswering(200, { runId: 'r1', status: 'completed', output: { hidden: true } });
     // What it answered is said: a run's dev-1 read an action's answer with page check --state.
     expect(await actStep(page, { kind: 'action', action: 'crate-hide', input: { crate: 'c1' } }, 0)).toEqual({
-      answer: '{"hidden":true}'
+      answer: '{"hidden":true}',
+      output: { hidden: true }
     });
     expect(asked[0]).toEqual({
       path: '/_action',
@@ -105,13 +104,20 @@ describe('a step another account plays, and an action', () => {
     expect(await actStep(refused.page, { kind: 'action', action: 'crate-hide', input: {} }, 2)).toEqual({
       problem: 'Step 3: action crate-hide answered 403: Only the host hides a crate'
     });
+    // A provider's action, refused a call: played as the page plays it — a run's agent opened a public trigger instead.
+    const render = pageAnswering(403, { error: 'This action cannot be started by a "call" trigger' });
+    expect(await actStep(render.page, { kind: 'action', action: 'storms-feed', input: {} }, 0)).toEqual({
+      problem:
+        'Step 1: action storms-feed answered 403: This action cannot be started by a "call" trigger — the page runs it as it renders: play it so, "render storms-feed {}", never with a trigger added for the check'
+    });
   });
 
   // A tester verified a render action no page used yet with a probe of its own: the step runs it the way a render does.
   it('runs a render action the way a page’s render does, asking for its render way in', async () => {
     const { page, asked } = pageAnswering(200, { runId: 'r3', status: 'completed', output: { items: 3 } });
     expect(await actStep(page, { kind: 'action', action: 'tornadoes-feed', input: {}, render: true }, 0)).toEqual({
-      answer: '{"items":3}'
+      answer: '{"items":3}',
+      output: { items: 3 }
     });
     expect(asked[0]).toEqual({
       path: '/_action',

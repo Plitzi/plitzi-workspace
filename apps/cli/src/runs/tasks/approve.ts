@@ -1,5 +1,8 @@
+import path from 'node:path';
+
 import { at } from './common';
 import { textOf } from './context';
+import { failsWithout } from '../copies/checks';
 import { checkVersions } from '../copies/materialise';
 import { mergeLines } from '../copies/merge3';
 import { fingerprint, readOptional, writeJson } from '../core/files';
@@ -9,7 +12,7 @@ import { RunRefusal } from '../core/refusal';
 import { getBlob, putBlob, withLock } from '../core/store';
 import { readApproved } from '../run';
 
-import type { CheckResult } from '../copies/checks';
+import type { CheckResult, CheckStep } from '../copies/checks';
 import type { ApprovedManifest, ProjectChange, SharedRequest, TaskStart } from '../core/model';
 import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
@@ -25,6 +28,8 @@ interface Built {
   merged: string[];
   /** Of the requests it was built from, those that went in, as `<task>/<request>`: the rest did not merge line by line. */
   requests?: string[];
+  /** The checks' steps the result fails as the run's work already did without it: not this change's, said to the lead. */
+  runFails?: CheckStep[];
 }
 
 /** A request of a task's on a shared file: what a build of requests merges. */
@@ -34,6 +39,10 @@ export interface Asked {
 }
 
 export const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Where the project's checks run a version of the run's (`checkVersions`): a folder each, named by its digests. */
+export const checkDirs = (cacheDir: string): RegExp =>
+  new RegExp(`${escapeRegExp(path.join(cacheDir, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g');
 
 export const digestsOf = (manifest: ApprovedManifest): Record<string, string | null> =>
   Object.fromEntries(Object.entries(manifest.files).map(([file, entry]) => [file, entry.digest]));
@@ -61,10 +70,18 @@ export const changeApproved = async (
       return undefined;
     }
 
+    let runFails: CheckStep[] | undefined;
     if (built.merged.length > 0 || checkAlways) {
       const checks = await checkVersions(ctx, loaded, digestsOf(built.next));
       if (!checks.ok) {
-        return { failed: checks };
+        // Failed as the run's work already fails without it — another approval's breakage — it is not this change's:
+        // a run held two finished tasks in review, every approval refused, over imports a third task had approved.
+        const without = await checkVersions(ctx, loaded, digestsOf(approved));
+        if (!failsWithout(checks, without, [checkDirs(loaded.paths.cache)])) {
+          return { failed: checks };
+        }
+
+        runFails = checks.steps.filter(step => !step.ok);
       }
     }
 
@@ -82,7 +99,7 @@ export const changeApproved = async (
       { now: ctx.now }
     );
     if (committed) {
-      return built;
+      return runFails ? { ...built, runFails } : built;
     }
   }
 

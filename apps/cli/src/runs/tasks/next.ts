@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { findTask } from './common';
 import { leadNext } from './leadNext';
 import { allLocks } from './locks';
+import { mergedNow } from './mergedNow';
 import {
   askedRoles,
   baseFirst,
@@ -30,7 +31,7 @@ import { isRunRefusal } from '../core/refusal';
 import { runChanged } from '../core/runChanged';
 import { isDisconnected, viewTask } from '../core/taskStore';
 import { readyTasks } from '../plan/plan';
-import { roleOf } from '../plan/spike';
+import { isResearch, roleOf } from '../plan/spike';
 import { writesTests } from '../plan/tests';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { handOver } from '../talk/handOver';
@@ -439,8 +440,12 @@ export const takeNext = async (
         return { next };
       }
 
-      if (await takeOfferedStep(ctx, loaded, await viewTask(loaded.paths, findTask(loaded, offered)), next.review)) {
-        return { next };
+      const reviewed = await viewTask(loaded.paths, findTask(loaded, offered));
+      if (await takeOfferedStep(ctx, loaded, reviewed, next.review)) {
+        // What its approval will check, checked as its review starts: the review is done on what goes in.
+        const merged = isResearch(reviewed.task) ? undefined : await mergedNow(ctx, loaded, reviewed);
+
+        return { next: merged ? { ...next, review: { ...next.review, merged } } : next };
       }
 
       tried.add(offered);

@@ -52,13 +52,42 @@ const operationOf = (body: unknown): string | undefined => {
   return undefined;
 };
 
+type JsonRpcMessage = { method?: unknown; id?: unknown };
+
+const messagesOf = (body: unknown): JsonRpcMessage[] =>
+  (Array.isArray(body) ? body : [body]).filter(
+    (message): message is JsonRpcMessage => typeof message === 'object' && message !== null
+  );
+
+const toolCallsIn = (body: unknown): number => messagesOf(body).filter(message => message.method === 'tools/call').length;
+
+/**
+ * A refused request's answer: every call it made reads the refusal as its result (`isError`), which is what an agent
+ * shows and acts on — a transport error would read as the server being down.
+ */
+const refuseToolCalls = (res: ServerResponse, body: unknown, error: string): void => {
+  const answers = messagesOf(body)
+    .filter(message => message.id !== undefined)
+    .map(message => ({
+      jsonrpc: '2.0',
+      id: message.id,
+      ...(message.method === 'tools/call'
+        ? { result: { content: [{ type: 'text', text: error }], isError: true } }
+        : { error: { code: -32000, message: error } })
+    }));
+
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(Array.isArray(body) ? answers : (answers[0] ?? null)));
+};
+
 // Drive one stateless request/response through a pre-built server. Callers that already hold the space
 // (e.g. the gateway, which resolves it from the request JWT) build the server and use this directly. Returns the
 // JSON-RPC method it served, for the caller's access log; the HTTP status is on the response.
 export const serveMcp = async (
   raw: IncomingMessage,
   res: ServerResponse,
-  server: McpServer
+  server: McpServer,
+  admitToolCalls?: (calls: number) => Promise<{ error: string } | undefined>
 ): Promise<string | undefined> => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -124,6 +153,14 @@ export const serveMcp = async (
       }
     }
 
+    const calls = toolCallsIn(body);
+    const refusal = calls > 0 ? await admitToolCalls?.(calls) : undefined;
+    if (refusal) {
+      refuseToolCalls(res, body, refusal.error);
+
+      return operationOf(body);
+    }
+
     await transport.handleRequest(raw, res, body);
 
     return operationOf(body);
@@ -153,7 +190,8 @@ export const handleMcp = async (
       adapters,
       getGrant: () => adapters.getGrant?.(req) ?? Promise.resolve(undefined),
       ...options
-    })
+    }),
+    adapters.admitToolCalls ? calls => adapters.admitToolCalls?.(req, calls) ?? Promise.resolve(undefined) : undefined
   );
 
 export { createMcpServer };

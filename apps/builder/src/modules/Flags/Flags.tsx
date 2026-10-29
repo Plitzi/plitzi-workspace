@@ -9,6 +9,7 @@ import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { withForcedFlag } from '@plitzi/sdk-shared/flags';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import FlagForm from './components/FlagForm';
 import FlagItem from './components/FlagItem';
@@ -125,6 +126,7 @@ const Flags = () => {
 
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
+      <PlanNotice capability="flagsPerEnvironment" meanwhile="Flags still go to an environment with each publish." />
       <Alert intent="info" size="sm" solid={false}>
         Flags are kept apart from the space's snapshots. Each environment has one set, used by every snapshot it serves:
         rolling a snapshot back keeps its flags, and Publish flags changes them without a new snapshot. A snapshot only

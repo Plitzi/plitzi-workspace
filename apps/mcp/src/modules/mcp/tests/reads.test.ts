@@ -331,6 +331,34 @@ describe('MCP URI aliases under schema root', () => {
   });
 });
 
+// RFC 0029 §7.4: the agent reads the space's plan before it plans work the space cannot ship — and a deployment that
+// sells no plans (self-hosted) says nothing of one.
+describe('MCP primer: the space’s plan', () => {
+  it('names the plan and, by the plan that includes them, what it does not', () => {
+    const entitlements = {
+      tierLabel: 'Free',
+      snapshotsKept: 0,
+      analyticsDays: 7,
+      capabilities: {
+        customDomain: { included: false, label: 'A custom domain', requires: 'Site', upgradeUrl: 'u' },
+        functions: { included: false, label: 'Running space functions', requires: 'App', upgradeUrl: 'u' },
+        runtime: { included: false, label: 'A runtime', requires: 'App+', upgradeUrl: 'u' }
+      }
+    };
+    const primer = readResource({ ...buildSpace(), entitlements }, 'main', 'plitzi://primer/main')?.data as {
+      plan?: unknown;
+    };
+
+    expect(primer.plan).toEqual({
+      name: 'Free',
+      notIncluded: { Site: ['customDomain'], App: ['functions'], 'App+': ['runtime'] }
+    });
+    expect(
+      (readResource(buildSpace(), 'main', 'plitzi://primer/main')?.data as { plan?: unknown }).plan
+    ).toBeUndefined();
+  });
+});
+
 describe('MCP primer bootstrap (R4)', () => {
   it('bundles guide, types, css and summaries in one read', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://primer/main');

@@ -15,7 +15,7 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
   // From what the page logged before this panel mounted: opening it from the badge can mount it again elsewhere in
   // the layout, and a panel that started empty showed none of the warnings its badge counted.
   const [logs, setLogs] = useState<Log[]>(() => pConsole.history());
-  const [providers, setProviders] = useState<Record<string, ProviderCallback>>({});
+  const [providers, setProviders] = useState<Record<string, ProviderCallback>>(() => pConsole.providerMethods());
   const initRef = useRef(false);
 
   const handleAddLog = useCallback(

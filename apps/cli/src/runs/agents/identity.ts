@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { readTeam, startedAgents } from './team';
 import { createExclusive, readJson, writeAtomic } from '../core/files';
+import { RUNS_OVER_DIR } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
 import { LEAD } from '../talk/messages';
 
@@ -93,6 +94,44 @@ export const writeCli = async (paths: RunPaths, agent: string): Promise<string> 
       '#!/bin/sh',
       `# ${agent}'s plitzi: the project's, with ${agent}'s token (PLITZI_TOKEN), read on each command.`,
       `PLITZI_TOKEN="$(cat ${shellQuoted(tokenFile(paths, agent))})"`,
+      'export PLITZI_TOKEN',
+      `exec ${shellQuoted(bin)} "$@"`,
+      ''
+    ].join('\n')
+  );
+  await fs.chmod(file, 0o755);
+
+  return file;
+};
+
+/** Where the lead's own CLI is kept once its run is over: the project's git-ignored tmp/, never the committed report. */
+export const leadCliOver = (root: string, runId: string): string =>
+  path.join(root, RUNS_OVER_DIR, runId, LEAD, 'plitzi');
+
+/**
+ * The lead's own CLI, kept past its run: the run's folder goes when its work is applied, and with it the lead's token —
+ * while the report keeps its identity's digest, so the lead can still amend it (`run notice --run`, `amend.ts`). Two
+ * runs' leads found what to add after `--apply` and were refused "who is calling?", and wrote it into the feedback by
+ * hand. Undefined when the lead had no token there (a person led it).
+ */
+export const keepLeadCli = async (paths: RunPaths, runId: string): Promise<string | undefined> => {
+  const token = await fs.readFile(tokenFile(paths, LEAD), 'utf-8').catch(() => undefined);
+  if (token === undefined || token.trim() === '') {
+    return undefined;
+  }
+
+  const file = leadCliOver(paths.root, runId);
+  const tokenAt = path.join(path.dirname(file), 'token');
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await writeAtomic(tokenAt, token);
+  await fs.chmod(tokenAt, 0o600);
+  const bin = path.join(paths.root, 'node_modules', '.bin', 'plitzi');
+  await writeAtomic(
+    file,
+    [
+      '#!/bin/sh',
+      `# The lead's own CLI once run ${runId} is over: what amends its report (its notices, its summary).`,
+      `PLITZI_TOKEN="$(cat ${shellQuoted(tokenAt)})"`,
       'export PLITZI_TOKEN',
       `exec ${shellQuoted(bin)} "$@"`,
       ''

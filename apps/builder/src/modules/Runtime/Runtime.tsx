@@ -5,6 +5,7 @@ import EmptyState from '@pmodules/App/components/EmptyState';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import ViewSection from '@pmodules/App/components/ViewSection';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import RuntimeCodeNote from './components/RuntimeCodeNote';
 import RuntimeEnvironments from './components/RuntimeEnvironments';
@@ -69,6 +70,7 @@ const Runtime = () => {
         </Button>
       }
     >
+      <PlanNotice capability="runtime" meanwhile="A runtime pushed is kept; it does not start until then." />
       {isLoading && <span className="text-sm text-gray-500 dark:text-zinc-400">Loading…</span>}
       {!isLoading && environments.length === 0 && (
         <EmptyState icon="fa-solid fa-server" title="No runtime yet" description={DESCRIPTION} />

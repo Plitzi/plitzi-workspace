@@ -4,15 +4,17 @@ import path from 'node:path';
 import { format } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { LEAD } from './messages';
 import { logNotice, noticeRun, noticesOf, withdrawNotice } from './notices';
 import { amendKeptRun } from '../report/amend';
 import { buildReport, keepSummary, reportText } from '../report/report';
-import { loadRun, readRunLog } from '../run';
+import { loadKeptRun, loadRun, readRunLog } from '../run';
 import { readInbox } from './talk';
 import { REPORTS_DIR } from '../../scaffold/paths';
 import { qualityFilesFor } from '../../scaffold/quality';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { LEAD_SAID, runSteps } from '../../tests/runSteps';
+import { identify, issueToken } from '../agents/identity';
 import { finishRun } from '../copies/merge';
 import { addBacklogItem, BACKLOG_FILE, backlogOfPlan, closeBacklogItem, openBacklog } from '../plan/backlog';
 import { extendRun } from '../plan/extend';
@@ -154,6 +156,29 @@ describe('the run’s feedback to Plitzi', () => {
     expect(summed.match(/## The lead’s summary/g)).toHaveLength(1);
     expect(summed).toContain('## Noticed, owned by no task');
     expect(await fs.readFile(feedbackFile(bench.root, runId), 'utf-8')).toContain('The push sent its tests too.');
+  });
+
+  // Two runs' leads found what to add after --apply and were refused "who is calling?": the lead's token went with the
+  // run's folder. Its own CLI stays, and its token is proved against the identity the report keeps.
+  it('keeps the lead’s own CLI past the apply, its token proved against the report’s records', async () => {
+    const runId = await open();
+    const issued = await issueToken((await loadRun(lead(), runId)).paths, runId, LEAD, bench.now());
+    await doTask('agent-1', 't-about', 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    const finished = await finishRun(bench.person(true), runId, { apply: true, leavePending: true });
+
+    expect(finished.leadCli?.run).toBe(runId);
+    const cli = finished.leadCli?.cli ?? '';
+    expect(path.relative(bench.root, cli).startsWith('tmp/')).toBe(true);
+    const token = await fs.readFile(path.join(path.dirname(cli), 'token'), 'utf-8');
+    expect(token.trim()).toBe(issued?.token);
+    const kept = await loadKeptRun(bench.root, runId);
+    if (!kept) {
+      throw new Error('the applied run keeps its report');
+    }
+
+    expect(await identify(bench.root, kept.paths, runId, { kind: 'agent', token: token.trim() }, bench.now())).toEqual({
+      agent: LEAD
+    });
   });
 
   // The feedback a run left ended in a blank line, and the project's format check refused the next run.

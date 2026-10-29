@@ -102,6 +102,27 @@ describe('sightOf', () => {
     expect(sightOf(el('panel'))).toEqual({ seen: true });
   });
 
+  // A run's REPORT chip sat under the header's clear fullscreen button at 2560 and read "in sight": its icon drew over the
+  // word, and a press went to the button.
+  it('reads a control another control is over as one it cannot press — and a clear layer that takes no press as seen', () => {
+    document.body.innerHTML =
+      '<button data-plitzi-el="filter-report" data-box="2445,20,78,24">REPORT</button>' +
+      '<div data-plitzi-el="corner" data-box="2450,10,76,40"><button data-plitzi-el="fullscreen" data-box="2450,10,36,40"></button></div>' +
+      '<div data-plitzi-el="layer" data-box="0,0,2560,900"></div>';
+    Object.defineProperty(window, 'innerWidth', { value: 2560, configurable: true });
+    const over = (id: string) =>
+      Object.defineProperty(document, 'elementFromPoint', { value: () => el(id), configurable: true });
+
+    over('fullscreen');
+    expect(sightOf(el('filter-report'))).toEqual({ seen: false, why: 'taken', by: 'fullscreen' });
+    expect(sightText(sightOf(el('filter-report')))).toBe(
+      'under fullscreen, which takes its press: a visitor sees it through it and cannot press it'
+    );
+
+    over('layer');
+    expect(sightOf(el('filter-report'))).toEqual({ seen: true });
+  });
+
   it('reads an element with nothing drawn as not seen, said in words', () => {
     document.body.innerHTML = '<span data-plitzi-el="dot" data-box="0,0,0,0"></span>';
 

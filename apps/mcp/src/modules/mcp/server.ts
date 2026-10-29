@@ -106,16 +106,19 @@ export const createMcpServer = async ({
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
     // space read, so it is fetched best-effort and degrades to built-in-only type descriptions. Connectors are
     // read the same way: a deployment that wires no connector adapter still edits pages and styles.
-    const [schema, style, catalog, connectors, actions, actionTasks, functions, data] = await Promise.all([
-      adapters.getSchema?.(id, MCP_ENV),
-      adapters.getStyle?.(id, MCP_ENV),
-      adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
-      adapters.getConnectors?.(id).catch(() => undefined),
-      adapters.getActions?.(id).catch(() => undefined),
-      adapters.getActionTasks?.(id).catch(() => undefined),
-      adapters.getFunctions?.(id).catch(() => undefined),
-      adapters.getData?.(id).catch(() => undefined)
-    ]);
+    const [schema, style, catalog, connectors, actions, actionTasks, functions, data, entitlements] = await Promise.all(
+      [
+        adapters.getSchema?.(id, MCP_ENV),
+        adapters.getStyle?.(id, MCP_ENV),
+        adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
+        adapters.getConnectors?.(id).catch(() => undefined),
+        adapters.getActions?.(id).catch(() => undefined),
+        adapters.getActionTasks?.(id).catch(() => undefined),
+        adapters.getFunctions?.(id).catch(() => undefined),
+        adapters.getData?.(id).catch(() => undefined),
+        adapters.getEntitlements?.(id).catch(() => undefined)
+      ]
+    );
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
     }
@@ -128,7 +131,8 @@ export const createMcpServer = async ({
       actions: actions ?? [],
       actionTasks,
       ...(functions ? { functions } : {}),
-      ...(data ? { data } : {})
+      ...(data ? { data } : {}),
+      ...(entitlements ? { entitlements } : {})
     };
   };
 

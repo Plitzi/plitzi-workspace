@@ -11,6 +11,7 @@ import { checkFunctions } from './functions';
 import { checkLayout } from './layout';
 import { checkMachinery } from './machinery';
 import { checkPackages } from './packages';
+import { checkPlan } from './plan';
 import { checkPlugins } from './plugins';
 import { checkRecords, checkSkills } from './records';
 import { checkSources } from './sources';
@@ -119,7 +120,8 @@ const CHECKS: readonly [DoctorArea, Check][] = [
   ['functions', checkFunctions],
   ['records', checkRecords],
   ['skills', checkSkills],
-  ['team', checkTeam]
+  ['team', checkTeam],
+  ['plan', checkPlan]
 ];
 
 /**

@@ -233,6 +233,11 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
                           `What it noticed and left, kept for the next run in ${BACKLOG_FILE}: ${finished.backlog.join(', ')} (plitzi run backlog)`
                         ]
                       : []),
+                    ...(finished.leadCli
+                      ? [
+                          `What the lead finds reading the report after this goes into it, never written in by hand: ${finished.leadCli.cli} run notice --run ${finished.leadCli.run} --plitzi <wrong|no-way|in-the-way> "…"`
+                        ]
+                      : []),
                     ...(finished.closedBacklog
                       ? [
                           `Of the backlog, what its tasks did, closed: ${finished.closedBacklog.join(', ')} (plitzi run backlog --all)`
@@ -284,6 +289,11 @@ export const runAbort = (runId: string | undefined, options: RunCommandOptions):
         ...('problem' in aborted.report
           ? [`  No report was left: ${aborted.report.problem}`]
           : reportLines(aborted.report)),
+        ...(aborted.leadCli
+          ? [
+              `  What the lead finds reading it goes into it, never written in by hand: ${aborted.leadCli.cli} run notice --run ${aborted.leadCli.run} --plitzi <wrong|no-way|in-the-way> "…"`
+            ]
+          : []),
         ...inputLines(aborted.inputs)
       ].join('\n')
   );

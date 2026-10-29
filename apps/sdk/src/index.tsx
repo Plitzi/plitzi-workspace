@@ -376,6 +376,9 @@ export type PlitziSdkProps = {
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says
    *  so. Never authored — a space cannot turn it off from its own settings. */
   overQuota?: boolean;
+  /** Set by the server that metered this render: the deployment's "Made with Plitzi" badge, on a plan that does not
+   *  remove it. Never authored — a space cannot turn it off from its own settings. */
+  badge?: boolean;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
   /** Where Font Awesome's sheet is served, for the panels the SDK draws in a root of their own (the dev tools, the

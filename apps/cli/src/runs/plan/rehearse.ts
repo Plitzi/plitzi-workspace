@@ -443,8 +443,20 @@ export const rehearse = (
     .sort((a, b) => b.estimateMinutes - a.estimateMinutes)
     .at(0);
   if (longestTask && criticalPath.minutes >= played.wallMinutes * 0.8) {
+    // What most of the run waits on, on the path: its contract first — the shapes others build on, in minutes — lets
+    // them start beside its implementation. A run's chain of seven left its agents waiting 216 min against 274 of work.
+    const waitedOn = (id: string): number => tasks.filter(task => task.dependsOn.includes(id)).length;
+    const hub = criticalPath.tasks
+      .flatMap(id => tasks.find(task => task.id === id) ?? [])
+      .sort((a, b) => waitedOn(b.id) - waitedOn(a.id))
+      .at(0);
+    const idle = team.reduce((sum, agent) => sum + agent.idleMinutes, 0);
     advice.push(
-      `The critical path decides the run (${criticalPath.tasks.join(' → ')}, ${String(criticalPath.minutes)} min of ${String(played.wallMinutes)}): more agents do not shorten it — split ${longestTask.id} (${String(longestTask.estimateMinutes)} min) or let what waits for it start sooner`
+      `The critical path decides the run (${criticalPath.tasks.join(' → ')}, ${String(criticalPath.minutes)} min of ${String(played.wallMinutes)}; the team idle ${String(idle)} min): more agents do not shorten it — split ${longestTask.id} (${String(longestTask.estimateMinutes)} min)${
+        hub && waitedOn(hub.id) > 1
+          ? `, or give ${hub.id}, which ${String(waitedOn(hub.id))} tasks wait for, a task of its contract alone first — the types, the element's declaration, the ids they read — so they start beside its work rather than after it`
+          : ' or let what waits for it start sooner'
+      }`
     );
   }
 

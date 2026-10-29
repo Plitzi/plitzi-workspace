@@ -17,6 +17,11 @@ export interface Copies {
   present: number;
   /** Each copy drawn — on the page, with a box of its own — by what it shows, whitespace folded. */
   shown: string[];
+  /**
+   * The same copies by the words the space wrote — before a stylesheet's capitals (`text-transform`): what a line
+   * written in mixed case is held to. Absent where they are the words shown (an attribute's value).
+   */
+  written?: string[];
   /** Of them, by their place in `shown`, those whose text runs past a box that cuts it: a visitor reads them cut short. */
   cut: number[];
   /** Of them, by their place in `shown`, those a visitor sees only once a box is scrolled: that box, by name. */
@@ -29,6 +34,8 @@ export interface Copies {
 export interface DrawnText {
   id: string;
   text: string;
+  /** Its words as the space wrote them (`textContent`), whitespace folded: `text` is them as shown, capitals and all. */
+  written: string;
   cut: boolean;
   /** Its place among the elements the selector finds, in the page's order: what its sight is read by. */
   index: number;
@@ -102,6 +109,7 @@ export const textsInPage = ({
             {
               id: node.getAttribute('data-plitzi-el') ?? '',
               text: (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim(),
+              written: node.textContent.replace(/\s+/g, ' ').trim(),
               cut: cuts(node) || (within && Array.from(node.querySelectorAll('*')).some(cuts)),
               index
             }
@@ -158,6 +166,7 @@ export const copiesOf = (
   return {
     present,
     shown: seen.map(each => each.text),
+    written: seen.map(each => each.written),
     cut: seen.flatMap((each, place) => (each.cut ? [place] : [])),
     ...(Object.keys(scrolled).length > 0 ? { scrolled } : {}),
     ...(unseen.length > 0 ? { unseen } : {})
@@ -229,12 +238,18 @@ export const expectationMissed = (
   onPage: readonly string[]
 ): string | undefined => {
   const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `~${text}`}`;
-  // In any case — a legend a stylesheet capitalises reads "ON AIR" — unless written in mixed case, which is read as
-  // written: a line that must prove a capital (a display name "Juno" over a username "juno") could not be written.
+  // In any case — a legend a stylesheet capitalises reads "ON AIR" — unless written in mixed case, which is held to the
+  // words as the space wrote them: a line that must prove a capital (a display name "Juno" over a username "juno")
+  // could not be written otherwise. A stylesheet's capitals change no word written: a run's "stat-events-label~Events"
+  // passed at its task's complete and failed at the finish once the label was set in capitals.
   const asWritten = /\p{Lu}/u.test(text) && /\p{Ll}/u.test(text);
-  const matching = (each: string): boolean =>
-    asWritten ? each.includes(text) : each.toLowerCase().includes(text.toLowerCase());
-  const showing = copies.shown.filter(matching);
+  const matchingAt = (each: string, index: number): boolean =>
+    asWritten
+      ? each.includes(text) || (copies.written?.[index] ?? '').includes(text)
+      : each.toLowerCase().includes(text.toLowerCase());
+  // A copy no visitor sees is read by what it shows alone.
+  const matching = (each: string): boolean => matchingAt(each, -1);
+  const showing = copies.shown.filter(matchingAt);
   if (absent) {
     return showing.length === 0
       ? undefined
@@ -242,7 +257,7 @@ export const expectationMissed = (
   }
 
   // Shown whole by one copy at least: a copy whose box cuts its words reads part of them, whatever its text holds.
-  const whole = copies.shown.filter((each, index) => matching(each) && !copies.cut.includes(index));
+  const whole = copies.shown.filter((each, index) => matchingAt(each, index) && !copies.cut.includes(index));
   if (whole.length > 0 || (showing.length > 0 && text === '')) {
     return undefined;
   }

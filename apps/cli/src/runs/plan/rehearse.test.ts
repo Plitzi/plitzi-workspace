@@ -112,6 +112,23 @@ describe('a plan rehearsed before any agent starts', () => {
     expect(text).toContain('By agents: 1 → 75 min, 2 → 55 min');
   });
 
+  // A run's chain of seven left its agents waiting 216 min against 274 of work: what most waits on, its contract first.
+  it('says which task on the critical path to give a contract task of its own, when several wait for it', async () => {
+    const plan = benchPlan();
+    const [home, menu, book, about] = plan.tasks;
+    plan.tasks = [
+      { ...home, id: 't-model', estimateMinutes: 30, dependsOn: [] },
+      { ...menu, id: 't-map', estimateMinutes: 30, dependsOn: ['t-model'] },
+      { ...book, id: 't-log', estimateMinutes: 10, dependsOn: ['t-model'] },
+      { ...about, id: 't-sheet', estimateMinutes: 10, dependsOn: ['t-model'] }
+    ];
+    const played = await rehearsed(plan, { agents: 3, reviewMinutes: 5 });
+
+    expect(played.advice.join('\n')).toContain(
+      "or give t-model, which 3 tasks wait for, a task of its contract alone first — the types, the element's declaration, the ids they read — so they start beside its work rather than after it"
+    );
+  });
+
   it('reads a folder of pages loaded by convention as imported, and a page made there registers nowhere', async () => {
     await bench.write(
       'src/space/index.ts',

@@ -6,8 +6,12 @@ import { finishRun } from './merge';
 import { makeBench, readInCopy, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { taskPaths } from '../core/paths';
+import { viewTask } from '../core/taskStore';
 import { loadRun, readApproved } from '../run';
+import { messagesOf } from '../talk/messages';
 import { checkTask, claimFile, completeTask, requestShared, reviewTask, taskContext, waitForFile } from '../tasks';
+import { findTask } from '../tasks/common';
+import { mergedNow } from '../tasks/mergedNow';
 import { viewRun } from '../view/view';
 
 import type { Bench } from '../../tests/runProject';
@@ -162,12 +166,56 @@ export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price
     await completeTask(home.ctx, 'es-launch', 't-home');
     await completeTask(menu.ctx, 'es-launch', 't-menu');
     await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    // Said as its review starts, as its approval will check it: a run's tester learned it only at --approve.
+    const loadedNow = await loadRun(lead(), 'es-launch');
+    expect(await mergedNow(lead(), loadedNow, await viewTask(loadedNow.paths, findTask(loadedNow, 't-menu')))).toEqual({
+      since: ['t-home'],
+      failing: ['author']
+    });
 
     const refused = await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []));
     expect(refused.code).toBe('conflict');
     expect(refused.message).toContain("fail the project's checks (author) without what it asked of src/space/theme.ts");
     const approved = await readApproved((await loadRun(lead(), 'es-launch')).paths);
     expect(Object.keys(approved.files)).not.toContain('src/space/pages/menu.ts');
+  });
+
+  // A run held two finished tasks in review, every approval refused, for tests a third task's approved imports broke:
+  // what fails the same way without the change is the run's, not the change's.
+  it('approves over a failure the run’s work already has without it, the same way — said to the reviewer and the lead', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(
+      home.work,
+      'src/space/theme.ts',
+      `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, badge: {} };
+`
+    );
+    await writeInCopy(
+      menu.work,
+      'src/space/theme.ts',
+      `import { tokens } from './tokens.ts';
+
+export const theme = { card: { color: tokens.ink }, price: {} };
+`
+    );
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', "export const menu = { id: 'menu', title: 'Carta' };\n");
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    // Broken in the run's work by a change of nobody's in review here: every check of the run fails it from now.
+    await bench.write('src/space/pages/about.ts', 'export const about = BROKEN;\n');
+
+    const approved = await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+    expect(approved).toMatchObject({ verdict: 'approve', runFails: ['author'] });
+    const loaded = await loadRun(lead(), 'es-launch');
+    expect(Object.keys((await readApproved(loaded.paths)).files)).toContain('src/space/pages/menu.ts');
+    expect((await messagesOf(loaded)).filter(message => message.to === 'lead').map(message => message.text)).toEqual([
+      expect.stringContaining("t-menu is approved over checks the run's work already fails without it (author)")
+    ]);
   });
 
   // One integration a file made t-shell's requests on site.json, tokens.ts and index.ts three tasks, each

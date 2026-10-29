@@ -25,6 +25,13 @@ export const approvedText = (taskId: string, reviewed: ReviewedTask): string =>
           )
         ]
       : []),
+    ...((reviewed.runFails ?? []).length > 0
+      ? [
+          chalk.yellow(
+            `  ⚠ The run's work already fails ${list(reviewed.runFails ?? [])} without it, the same way: it went in, not its own — the lead is told`
+          )
+        ]
+      : []),
     ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
     ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
     ...(reviewed.previewProblem

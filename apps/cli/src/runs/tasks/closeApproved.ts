@@ -10,7 +10,7 @@ import { lockedFiles, revokeOwner, updateState } from '../core/taskStore';
 import { logSpent } from '../report/spent';
 import { loadRun, logRun, readApproved } from '../run';
 import { proposalsOf } from '../talk/agreements';
-import { sendMessage } from '../talk/messages';
+import { LEAD, sendMessage } from '../talk/messages';
 
 import type { ReviewedTask } from './review';
 import type { TaskView } from '../core/taskStore';
@@ -27,6 +27,8 @@ export interface Approval {
   notReviewed: string[];
   /** The role whose step approved it — its last, or the lead's word on any. */
   step?: string;
+  /** The checks' steps the run's work already failed without it, failed the same way with it: not its own. */
+  runFails?: string[];
 }
 
 /**
@@ -38,7 +40,7 @@ export const closeApproved = async (
   ctx: RunContext,
   loaded: LoadedRun,
   view: TaskView,
-  { round, merged, fulfilled, unmerged, notReviewed, step }: Approval
+  { round, merged, fulfilled, unmerged, notReviewed, step, runFails }: Approval
 ): Promise<ReviewedTask> => {
   const verdict = 'approve' as const;
   const taskId = view.task.id;
@@ -58,7 +60,8 @@ export const closeApproved = async (
     fulfilled,
     // Nothing silent: a request that did not go in, and why — its integration task applies it.
     ...(unmerged ? { unmerged } : {}),
-    ...(step === undefined ? {} : { step })
+    ...(step === undefined ? {} : { step }),
+    ...(runFails && runFails.length > 0 ? { runFails } : {})
   });
   await logSpent(ctx, loaded, taskId, 'review');
   // Its copy goes — but never from under the shell that approved it: one there was left in a folder gone, every command
@@ -84,6 +87,17 @@ export const closeApproved = async (
       from: taskId,
       to: each.to,
       text: `${taskId} is approved: what you agreed with it (${each.id}: ${each.change.slice(0, 160)}${each.change.length > 160 ? '…' : ''}) can be applied now — its files are in the run's work, and your copy brings them with your next complete or plitzi task discard <file>`
+    });
+  }
+
+  // Went in over what the run's work already failed: the lead hears it — the finish needs it green, and whoever broke it
+  // fixes it — never the task that met it.
+  if (runFails && runFails.length > 0) {
+    await sendMessage(ctx, refreshed, {
+      from: taskId,
+      to: LEAD,
+      fyi: true,
+      text: `${taskId} is approved over checks the run's work already fails without it (${runFails.join(', ')}), failed the same way: not its own. The finish needs them green — whoever's approval broke them fixes it`
     });
   }
 
@@ -124,6 +138,7 @@ export const closeApproved = async (
     settled,
     fulfilled,
     ...(unmerged ? { unmerged } : {}),
+    ...(runFails && runFails.length > 0 ? { runFails } : {}),
     ...(joined.length > 0 ? { joined } : {}),
     ...(notReviewed.length > 0 ? { notReviewed } : {}),
     ...(callerInCopy ? { copyLeft: ctx.root } : {})

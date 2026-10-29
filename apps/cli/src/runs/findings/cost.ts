@@ -42,9 +42,11 @@ export const costFindings = (
   const findings: Finding[] = [];
   const large = new Map<string, UsageLine[]>();
   // An answer asked for whole (`--full`, a brief's files `--files`) is the option this finding's fix points to: a run's
-  // lead and tester were told, eight runs over, that `run report --full` and `task show --full` were long.
+  // lead and tester were told, eight runs over, that `run report --full` and `task show --full` were long. One asked as
+  // data (`--json`) is a tool's to read — jq, a file: a run's 1.6M-character `page check --state --json`, piped to jq
+  // every time, was its third finding by weight. What an agent read whole is the harness's measure ("read again").
   for (const line of usage.filter(
-    each => each.chars >= LARGE_OUTPUT && !/(?:^|\s)--(?:full|files)\b/.test(each.command)
+    each => each.chars >= LARGE_OUTPUT && !/(?:^|\s)--(?:full|files|json)\b/.test(each.command)
   )) {
     const { name } = line;
     large.set(name, [...(large.get(name) ?? []), line]);

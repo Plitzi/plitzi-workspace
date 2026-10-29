@@ -163,6 +163,11 @@ export type RenderSettings = {
    */
   overQuota?: boolean;
   /**
+   * The deployment's "Made with Plitzi" badge, as the SERVER decided when it metered the render: on a plan that does
+   * not remove it. Like `overQuota`, a fact about the account behind the site that nothing an author writes can set.
+   */
+  badge?: boolean;
+  /**
    * Whether every element carries `data-plitzi-el="<its id>"`, which is what an end-to-end test addresses it by.
    *
    * On unless a deployment says otherwise, and that default is the point: a consumer's own suite has to work

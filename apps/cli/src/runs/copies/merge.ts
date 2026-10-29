@@ -5,6 +5,7 @@ import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { leftInTmp } from './strays';
 import { stopKeptBrowser } from '../../browser/keptBrowser';
+import { keepLeadCli } from '../agents/identity';
 import { requireLead } from '../agents/leads';
 import { notHoldingText } from '../core/acceptedOn';
 import { fingerprint, readJson, readOptional, writeJson } from '../core/files';
@@ -270,6 +271,8 @@ export interface Finished {
   backlog?: string[];
   /** Written: the backlog's items its tasks said they do (`closes`), closed. */
   closedBacklog?: string[];
+  /** The lead's own CLI kept past the run (`keepLeadCli`), and the run: what amends its report after this. */
+  leadCli?: { cli: string; run: string };
   /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
   leftInTmp?: string[];
   /** What the run shows went wrong, whose and what would stop it (`findings/`): said, never refusing — kept in the report. */
@@ -522,6 +525,8 @@ export const finishRun = async (
   const closedBacklog = await closeDoneByRun(ctx, loaded);
   // The browser its measures kept the other site in: never one left behind the run.
   await stopKeptBrowser(ctx.root);
+  // The lead's own CLI stays, to amend the report it reads after this: its token goes with the run's folder otherwise.
+  const leadCli = await keepLeadCli(loaded.paths, runId);
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
@@ -535,6 +540,7 @@ export const finishRun = async (
     ...(kept ? { backup: kept } : {}),
     ...(backlog.length > 0 ? { backlog } : {}),
     ...(closedBacklog.length > 0 ? { closedBacklog } : {}),
+    ...(leadCli ? { leadCli: { cli: leadCli, run: runId } } : {}),
     ...leftThere
   };
 };

@@ -15,6 +15,7 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   isHydrating: false,
   hydrated: false,
   overQuota: false,
+  badge: false,
   testAttributes: true,
   ownsHead: true,
   enclosed: false
@@ -35,6 +36,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
       isHydrating,
       hydrated,
       overQuota,
+      badge,
       testAttributes,
       ownsHead,
       enclosed
@@ -47,6 +49,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
     'render.isHydrating',
     'render.hydrated',
     'render.overQuota',
+    'render.badge',
     'render.testAttributes',
     'render.ownsHead',
     'render.enclosed'
@@ -61,6 +64,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
       isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating,
       hydrated: hydrated ?? DEFAULT_RENDER_SETTINGS.hydrated,
       overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota,
+      badge: badge ?? DEFAULT_RENDER_SETTINGS.badge,
       testAttributes: testAttributes ?? DEFAULT_RENDER_SETTINGS.testAttributes,
       ownsHead: ownsHead ?? DEFAULT_RENDER_SETTINGS.ownsHead,
       enclosed: enclosed ?? DEFAULT_RENDER_SETTINGS.enclosed
@@ -73,6 +77,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
       isHydrating,
       hydrated,
       overQuota,
+      badge,
       testAttributes,
       ownsHead,
       enclosed

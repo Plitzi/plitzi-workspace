@@ -19,7 +19,8 @@ export const DOCTOR_AREAS = [
   'functions',
   'records',
   'skills',
-  'team'
+  'team',
+  'plan'
 ] as const;
 
 export type DoctorArea = (typeof DOCTOR_AREAS)[number];

@@ -7,6 +7,7 @@ import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import ViewSection from '@pmodules/App/components/ViewSection';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import ChannelCard from './components/ChannelCard';
 import { checkChannels, draftOf, NEW_CHANNEL } from './helpers';
@@ -86,6 +87,7 @@ const Channels = () => {
       className="gap-8"
       description="Channels carry what happens to every page listening, as it happens: a page opens one with a Channel element, and a server action speaks on it with its Publish On Channel step. A page may open only a channel the space declares here."
     >
+      <PlanNotice capability="realtime" meanwhile="Channels can be declared; pages are refused them until then." />
       <ViewSection title="Channels">
         {Object.entries(drafts).map(([pattern, draft]) => (
           <ChannelCard

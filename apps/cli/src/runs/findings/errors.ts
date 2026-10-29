@@ -1,4 +1,5 @@
 import { clock, evidenceOf } from './types';
+import { REFUSAL_EXIT_CODES } from '../core/refusal';
 import { isVerdict } from '../report/taskReports';
 
 import type { Finding } from './types';
@@ -16,6 +17,17 @@ const AS_WRITTEN =
 
 const MACHINE =
   /ECONNREFUSED|EADDRINUSE|EACCES|EPERM|ENOSPC|EMFILE|permission denied|Chromium is not installed|Executable doesn't exist|EBADENGINE/i;
+
+/**
+ * A refusal that judges the work or the plan, as the command is for: a check's verdict, a review's approval whose merge
+ * fails the project's checks, a dry run's plan that does not stack. A run's report listed "run open failed ×3" and
+ * "task review failed ×3" among what Plitzi got wrong — each one a plan or a change refused with its way out.
+ */
+const judged = (line: UsageLine): boolean =>
+  isVerdict(line) ||
+  (line.name === 'task review' &&
+    (line.code === REFUSAL_EXIT_CODES.conflict || line.code === REFUSAL_EXIT_CODES['checks-failed'])) ||
+  (line.name === 'run open' && line.options.includes('--dry-run'));
 
 /** The same error this many times is a pattern, not bad luck. */
 const AGAIN = 2;
@@ -51,7 +63,7 @@ export const errorFindings = (usage: readonly UsageLine[]): Finding[] => {
   const machine = failed.filter(line => MACHINE.test(line.error ?? '') && !asWritten.includes(line));
   // An `explain` with no answer is said by its own finding (`explain.ts`), with the question: a run said each twice.
   const rest = failed.filter(
-    line => !asWritten.includes(line) && !machine.includes(line) && !isVerdict(line) && line.name !== 'explain'
+    line => !asWritten.includes(line) && !machine.includes(line) && !judged(line) && line.name !== 'explain'
   );
 
   return [

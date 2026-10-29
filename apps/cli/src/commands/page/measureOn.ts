@@ -277,6 +277,13 @@ export const measureOn = async (
           tag,
           ...(root ? { spaceRoot: root.getAttribute('data-plitzi-el') ?? '' } : {}),
           text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60),
+          // In numbers, the page's: what a line compares — a run's lead parsed "2445px" with jq to tell an overlap.
+          box: {
+            x: Math.round(placed.left),
+            y: Math.round(placed.top + window.scrollY),
+            width: Math.round(placed.width),
+            height: Math.round(placed.height)
+          },
           styles,
           inherited: parent
             ? inheritable.filter(property => computed.getPropertyValue(property) === parent.getPropertyValue(property))

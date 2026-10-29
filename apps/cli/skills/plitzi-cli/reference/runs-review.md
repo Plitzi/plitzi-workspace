@@ -34,7 +34,10 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   sent back starts its review again from its first step. Past three rounds (any step's)
   it is the lead's: approve as it is, answer, or ask the person. **What you cannot decide** — what was asked reads two
   ways, a change past the task, a disagreement with its developer — is the lead's: `--escalate "…"` instead of a verdict. A `task complete --known-failure` says why and which task fixes it —
-  weigh that. The approval merges what went to review, not the copy as it is. Two in review that read each other's
+  weigh that. The approval merges what went to review, not the copy as it is — with what the run approved since: your
+  review says, as you take it, whether that passes the project's checks; a failure the run's work already has the same
+  way is not the task's, and goes in told to the lead. `task prove` reads its copy's side as its complete measured it
+  while the copy is unchanged. Two in review that read each other's
   files: `--approve --with <the other>` puts both in as one change.
 - **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when the
   changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the other

@@ -63,6 +63,7 @@ const ASKED_CODES: ReadonlySet<CheckIssue['code']> = new Set([
   'page-status',
   'redirected',
   'steps-failed',
+  'state-unheld',
   'not-signed-in',
   'no-answer',
   'no-page',

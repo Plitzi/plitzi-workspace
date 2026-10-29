@@ -329,7 +329,20 @@ describe('commands that failed, by why', () => {
       use(6, 'dev-2', 'plitzi task check', { code: 1, error: 'refused: lint fails' }),
       // explain's misses are its own finding's: a run said "explain active" there and here.
       use(7, 'dev-1', 'plitzi explain active', { code: 1, error: '"active" is no element' }),
-      use(8, 'dev-1', 'plitzi explain icon', { code: 1, error: '"icon" is no element' })
+      use(8, 'dev-1', 'plitzi explain icon', { code: 1, error: '"icon" is no element' }),
+      // A plan and a change judged, as the command is for: a run listed both among what Plitzi got wrong.
+      use(9, 'scout-1', 'plitzi run open stage.json --dry-run', {
+        code: 20,
+        options: ['--dry-run'],
+        error: 'Refused (invalid): The plan is not stacked on "backlog":'
+      }),
+      use(10, 'lead', 'plitzi run open stage.json --dry-run', {
+        code: 20,
+        options: ['--dry-run'],
+        error: 'Refused (invalid): The plan is not stacked on "backlog":'
+      }),
+      use(11, 'test-1', 'plitzi task review t-a --approve', { code: 18, error: '✗ test' }),
+      use(12, 'lead', 'plitzi task review t-a --approve', { code: 18, error: '✗ test' })
     ];
 
     expect(errorFindings(usage).map(each => [each.kind, each.owner, each.times, each.live ?? false])).toEqual([
@@ -379,7 +392,9 @@ describe('what the run spent that it did not have to', () => {
         // Asked for whole: the option the finding's fix points to, never said long.
         use(2, 'lead', 'plitzi run report --full', { chars: 29_000 }),
         // …a brief's files asked whole, too.
-        use(3, 'dev-1', 'plitzi task context --files', { chars: 15_000 })
+        use(3, 'dev-1', 'plitzi task context --files', { chars: 15_000 }),
+        // …and data asked for a tool to read: a run's `page check --state --json`, piped to jq.
+        use(4, 'dev-3', 'plitzi page check / --state --json', { chars: 1_640_000 })
       ],
       [
         { by: 'dev-2', name: 'task check', command: 'plitzi task check', times: 4, within: 6 },

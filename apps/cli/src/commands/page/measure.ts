@@ -9,7 +9,7 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { measureOn } from './measureOn';
 import { putIn, copiesOf, stateText } from './measureState';
-import { comparedText, keptText, matchesNote, readingText } from './measureText';
+import { comparedText, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
 import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
@@ -748,7 +748,9 @@ export const measure = async (route: string, elements: string[], options: Measur
                     `${String(pairs.length)} elements, each by its box — --only <properties>, or three at most, reads more of each`
                   )
                 ]
-              : []),
+              : options.only === undefined && options.same === undefined && target === undefined
+                ? [chalk.dim(WHOLE_SAID)]
+                : []),
             ...[
               zoneNote(options.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone, new Date(now)),
               noPage

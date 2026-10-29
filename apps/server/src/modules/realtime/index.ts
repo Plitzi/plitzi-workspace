@@ -32,6 +32,8 @@ export type RealtimeModule = {
   transport: RealtimeTransport;
   /** Origins besides the server's own whose pages may open a socket. */
   allowedOrigins: readonly string[];
+  /** The deployment's say on whether a space opens its channels (`realtime.admitSpace`). */
+  admitSpace?: (spaceId: number) => Promise<string | undefined>;
   resolveChannels: ChannelResolver;
   /** The grants issued for topics of channels declared `grant: true`, and the check a subscription makes. */
   grants: RealtimeGrants;
@@ -107,6 +109,7 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
     path: config.realtime?.path ?? '/_realtime',
     transport: config.realtime?.transport ?? 'sse',
     allowedOrigins: config.realtime?.allowedOrigins ?? [],
+    ...(config.realtime?.admitSpace ? { admitSpace: config.realtime.admitSpace } : {}),
     resolveChannels,
     grants,
     close: () => hub.closeAll(),

@@ -1,5 +1,11 @@
+import { get } from '@plitzi/plitzi-ui/helpers';
+
+import { getBindingsDetails } from '@plitzi/sdk-shared/dataSource';
 import { sightOf, sightText } from '@plitzi/sdk-shared/devTools';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { Element } from '@plitzi/sdk-shared';
 
 /** An element as it is asked about — by the panel, by `window.__plitzi.element()` and through it `plitzi page check`. */
 export type ElementReport = {
@@ -12,6 +18,12 @@ export type ElementReport = {
   attributes?: Record<string, unknown>;
   /** What it reads: each binding's target, its source and, when it has one, its template. */
   bindings?: { category: string; to: string; source: string; template?: string }[];
+  /**
+   * What each binding gave it now — `<category>.<to>`, from the sources it sees (a list's rows: the last row drawn): what a plugin
+   * received (the map's `hazards` after a filter), which the template alone does not say. Only while its sources can be
+   * read (debug mode).
+   */
+  resolved?: Record<string, unknown>;
   /** The element's own UI state — an open dropdown, a tab — as the runtime keeps it. */
   state?: unknown;
   /** How many copies are on the page: a list row's elements are one per row, a component's one per instance. */
@@ -117,10 +129,47 @@ export const findElement = (
 };
 
 /**
- * What an element is and how it is doing, read from the root store's state and the page: its type and attributes, what
- * it binds to, its own state, and where it is on screen. Undefined for an id neither the document nor the page knows.
+ * What each binding of `element` gives it from `sources` — the sources one copy of it sees — worked out as the element
+ * does (`getBindingsDetails`), so what is said is what it received.
  */
-export const elementReport = (state: unknown, id: string, document: Document): ElementReport | undefined => {
+export const resolvedBindings = (
+  element: unknown,
+  sources: Record<string, unknown>
+): Record<string, unknown> | undefined => {
+  const bindings = bindingsOf(element);
+  if (bindings.length === 0) {
+    return undefined;
+  }
+
+  const result = getBindingsDetails(
+    // Read untyped from the root store as the panel reads it: a source's value is whatever its provider answered.
+    sources as Record<string, RuleValue>,
+    // The store's own element, read untyped: getBindingsDetails reads only its attributes and its definition's bindings.
+    { attributes: recordAt(element, 'attributes'), definition: recordAt(element, 'definition') } as Pick<
+      Element,
+      'attributes' | 'definition'
+    >
+  );
+
+  return Object.fromEntries(
+    bindings.map(({ category, to }) => [
+      `${category}.${to}`,
+      plain(get(result, category === 'initialState' ? ['definition', 'initialState', to] : [category, to]))
+    ])
+  );
+};
+
+/**
+ * What an element is and how it is doing, read from the root store's state and the page: its type and attributes, what
+ * it binds to, what they gave it (`sourcesOf`: the sources an element sees, by its id), its own state, and where it is
+ * on screen. Undefined for an id neither the document nor the page knows.
+ */
+export const elementReport = (
+  state: unknown,
+  id: string,
+  document: Document,
+  sourcesOf?: (id: string) => unknown
+): ElementReport | undefined => {
   const { element, inComponent } = findElement(recordAt(state, 'schema'), id);
   const nodes = Array.from(document.querySelectorAll(`[data-id="${id}"]`));
   if (!isRecord(element) && nodes.length === 0) {
@@ -145,6 +194,8 @@ export const elementReport = (state: unknown, id: string, document: Document): E
       : undefined;
   const ownState = recordAt(state, 'runtime', 'elements')[id];
   const shown = node instanceof HTMLElement ? textOf(node).replace(/\s+/g, ' ').trim() : '';
+  const sources = sourcesOf?.(id);
+  const resolved = isRecord(element) && isRecord(sources) ? resolvedBindings(element, sources) : undefined;
 
   return {
     id,
@@ -152,6 +203,7 @@ export const elementReport = (state: unknown, id: string, document: Document): E
     ...(inComponent === undefined ? {} : { inComponent }),
     ...(instanceOf === undefined ? {} : { instanceOf }),
     ...(isRecord(element) ? { attributes: recordAt(plain(element), 'attributes'), bindings: bindingsOf(element) } : {}),
+    ...(resolved === undefined ? {} : { resolved }),
     ...(ownState === undefined ? {} : { state: plain(ownState) }),
     copies: nodes.length,
     ...(shown ? { text: shown.length > TEXT_MAX ? `${shown.slice(0, TEXT_MAX)}…` : shown } : {}),

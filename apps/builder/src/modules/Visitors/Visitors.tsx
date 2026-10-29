@@ -1,5 +1,6 @@
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import ViewPage from '@pmodules/App/components/ViewPage';
+import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
 import VisitorGrants from './components/VisitorGrants';
 import VisitorRoles from './components/VisitorRoles';
@@ -18,6 +19,10 @@ const Visitors = () => {
       className="gap-8"
       description="Who may do what on the published site, signed in with their Plitzi account: the roles the space declares, and the people you give them to."
     >
+      <PlanNotice
+        capability="visitors"
+        meanwhile="Roles and grants are kept; signed-in visitors hold none of them until then."
+      />
       <VisitorRoles roles={roles} />
       <VisitorGrants roles={Object.keys(roles)} />
     </ViewPage>

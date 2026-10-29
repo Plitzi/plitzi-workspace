@@ -4,9 +4,12 @@ import path from 'node:path';
 
 import { runsSuite, SUITE_LOCK, suiteScripts } from './acceptance';
 import { runScript, tail } from '../../commands/project/verify';
+import { isWorked } from '../agents/worked';
 import { withLock } from '../core/store';
+import { viewTask } from '../core/taskStore';
 import { loadRun } from '../run';
 import { readInbox } from '../talk/talk';
+import { keepAlive } from '../tasks/keepAlive';
 
 import type { RunContext } from '../run';
 import type { Message } from '../talk/messages';
@@ -53,19 +56,26 @@ export const runOwnCommand = async (
     lock?: string;
   } = {}
 ): Promise<OwnCommandRun> => {
-  await loadRun(ctx, runId, { anyVersion: true });
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const cwd = ctx.cwd ?? process.cwd();
   const suite = runsSuite(command, await suiteScripts(ctx.root));
   const started = Date.now();
   const run = (): Promise<{ code: number; output: string }> => runScript(cwd, command, ctx.root);
-  const { code, output } = suite
-    ? await withLock(lock, run, {
-        ttlMs: 30 * 60_000,
-        waitMs: SUITE_WAIT_MS,
-        doing: "another agent's Playwright suite on this machine",
-        ...(onWait ? { onWait } : {})
-      })
-    : await run();
+  const ran = (): Promise<{ code: number; output: string }> =>
+    suite
+      ? withLock(lock, run, {
+          ttlMs: 30 * 60_000,
+          waitMs: SUITE_WAIT_MS,
+          doing: "another agent's Playwright suite on this machine",
+          ...(onWait ? { onWait } : {})
+        })
+      : run();
+  // Its holder's own command, the suite's queue too, holds it as a check does: its sign of life is given, and the time
+  // is not counted against its limit (a run's agents waited minutes for the machine's suite, asked where they stood).
+  const held = task === undefined ? undefined : loaded.tasks.find(each => each.id === task);
+  const view = held === undefined ? undefined : await viewTask(loaded.paths, held);
+  const { code, output } =
+    view?.owner?.agent === ctx.agent && isWorked(view.state.status) ? await keepAlive(view, ctx.now, ran) : await ran();
   const ms = Date.now() - started;
   // Out of the project and its copies: the project's tmp/ is the person's, and the run's scratch goes to its report.
   const dir = path.join(os.tmpdir(), 'plitzi-task-run', runId, ctx.agent);

@@ -10,6 +10,7 @@ import { runPaths, taskPaths } from '../../../runs/core/paths';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { withLock } from '../../../runs/core/store';
 import { viewTask } from '../../../runs/core/taskStore';
+import { errorLine } from '../../../runs/core/usage';
 import {
   acceptanceAccount,
   acceptanceAddresses,
@@ -321,11 +322,15 @@ export const lookAt = (
         // Why a picture was not taken, kept to be said: "No picture could be taken" alone left a run's reviewers to
         // page through it themselves — a page for the signed-in, a part new since the run before.
         const unpictured: { what: string; why: string }[] = [];
+        // The line that says what failed, never a stack's first: a run's look said "node:internal/modules/run_main:107"
+        // for every picture, the error itself lines below it.
         const notTaken = (what: string, output: string): void => {
-          const why = output
-            .split('\n')
-            .map(line => line.trim())
-            .find(line => line !== '' && !line.startsWith('{'));
+          const why = errorLine(
+            output
+              .split('\n')
+              .filter(line => !line.trim().startsWith('{'))
+              .join('\n')
+          );
           unpictured.push({ what, why: why ?? 'the picture failed, saying nothing' });
         };
         const named = (route: string, clip: string | undefined, width: string, scheme: string, after = false) =>

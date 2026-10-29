@@ -1,5 +1,7 @@
 import tls from 'node:tls';
 
+import { isPlanRefusal } from '@plitzi/sdk-shared/network';
+
 /**
  * The CLI's requests to the platform, and what it says when one never arrives.
  *
@@ -53,12 +55,21 @@ export const requestJson = async <T>(url: string, init: RequestInit = {}): Promi
   }
 
   const text = await response.text();
+  let data: unknown;
   try {
-    // The platform's JSON, read for the fields each caller names: every one is checked where it is used.
-    return { ok: true, status: response.status, data: (text ? JSON.parse(text) : {}) as T };
+    data = text ? JSON.parse(text) : {};
   } catch {
     return { ok: false, error: `${new URL(url).pathname} answered ${response.status}, and not with JSON.` };
   }
+
+  // A plan that does not include what was asked — said as the server says it, with the plan and the link, whatever
+  // command asked: no command carries a plan of its own, and a self-hosted server never answers one.
+  if (isPlanRefusal(data)) {
+    return { ok: false, error: data.error.includes(data.upgradeUrl) ? data.error : `${data.error} ${data.upgradeUrl}` };
+  }
+
+  // The platform's JSON, read for the fields each caller names: every one is checked where it is used.
+  return { ok: true, status: response.status, data: data as T };
 };
 
 export const postForm = <T>(url: string, body: Record<string, string>): Promise<Reply<T>> =>

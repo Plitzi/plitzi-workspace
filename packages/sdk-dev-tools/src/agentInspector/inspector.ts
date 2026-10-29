@@ -37,6 +37,8 @@ export type AgentInspectorOptions = {
   runs: () => readonly FlowRun[];
   /** Whether each flow is said in the console as it ends. */
   setWatching: (on: boolean) => void;
+  /** The sources an element sees, by its id — its scope's, a list row's included: what its bindings read. */
+  elementSources?: (id: string) => unknown;
   document: Document;
 };
 
@@ -49,8 +51,8 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   setSource(path, value)
                        writes a source, or a path in it (apiContainer_site.items — or by its element, site.items),
                        where its provider keeps it — what the page shows filled; until the provider answers again
-  element(id)          an element by its id, in a page or a component: type, attributes, what it reads, its own state,
-                       the component it places, copies, on screen, box
+  element(id)          an element by its id, in a page or a component: type, attributes, what it reads and what each
+                       binding gave it (resolved), its own state, the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
   serverFailures()     why each server element failed on the page server since the page loaded, by id
   watch(on = true)     one console line per flow as it ends`;
@@ -65,6 +67,7 @@ export const createAgentInspector = ({
   stores,
   runs,
   setWatching,
+  elementSources,
   document
 }: AgentInspectorOptions): AgentInspector => ({
   help: () => HELP,
@@ -137,7 +140,7 @@ export const createAgentInspector = ({
 
     return id;
   },
-  element: id => elementReport(root.getState(), id, document),
+  element: id => elementReport(root.getState(), id, document, elementSources),
   flows: (limit = 20) => runs().slice(-limit),
   serverFailures: () => recordAt(root.getState(), 'rsc', 'failures'),
   watch: (on = true) => {

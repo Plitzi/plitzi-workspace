@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { foundIn, markShown, outlineIn } from './outline';
+import { foundIn, hiderName, markShown, outlineIn } from './outline';
 
 /** jsdom lays nothing out: every element given a box, the hidden ones none. */
 const laidOut = () =>
@@ -126,5 +126,39 @@ describe('page outline --find', () => {
         'WORDMARK'
       )
     ).toEqual([{ selector: '[data-plitzi-el="auth-brand-wordmark"]', depth: 0, box, element: 'auth-brand-wordmark' }]);
+  });
+});
+
+// A page's four providers, each a wrapper with no box of its own, took the whole depth: "1153 more under these".
+describe('a wrapper with no box of its own', () => {
+  it('is listed and walked through at its own depth', () => {
+    laidOut();
+    document.body.innerHTML = `
+      <div data-plitzi-el="monitor" style="display: contents"><div data-plitzi-el="feed" style="display: contents"><div data-plitzi-el="storms-feed" style="display: contents">
+        <section data-plitzi-el="log"><ul data-plitzi-el="contacts"><li data-plitzi-el="row">Vance</li></ul></section>
+      </div></div></div>`;
+
+    expect(outlineIn({ depth: 1, limit: 50, words: 8 })).toMatchObject({
+      elements: [
+        expect.objectContaining({ element: 'monitor', depth: 0 }),
+        expect.objectContaining({ element: 'feed', depth: 0 }),
+        expect.objectContaining({ element: 'storms-feed', depth: 0 }),
+        expect.objectContaining({ element: 'log', depth: 0 }),
+        expect.objectContaining({ element: 'contacts', depth: 1 })
+      ],
+      more: 1
+    });
+  });
+});
+
+// A tester outlined the log at 390, where a breakpoint hides it: Playwright waited 30 s and the CLI crashed with a stack.
+describe('a part hidden where it is outlined', () => {
+  it('is said with what hides it', () => {
+    document.body.innerHTML = `<section data-plitzi-el="log" style="display: none"><ul data-plitzi-el="contacts"></ul></section>`;
+
+    const named = (id: string): Element => document.querySelector(`[data-plitzi-el="${id}"]`) ?? document.body;
+
+    expect(hiderName(named('contacts'))).toBe('display: none on log');
+    expect(hiderName(named('log'))).toBe('display: none on itself');
   });
 });

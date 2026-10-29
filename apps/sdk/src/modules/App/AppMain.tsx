@@ -57,6 +57,8 @@ export type AppMainProps = {
   debugMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota. */
   overQuota?: boolean;
+  /** Set by the server that metered this render: the deployment's badge, on a plan that does not remove it. */
+  badge?: boolean;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   /** The flags this embedding decides — see `PlitziSdkProps`. */
@@ -97,6 +99,7 @@ const AppMain = ({
   previewMode = true,
   debugMode = false,
   overQuota = false,
+  badge = false,
   runStatus = false,
   analytics,
   onInitEventBridge,
@@ -133,9 +136,10 @@ const AppMain = ({
       'render.environment',
       'render.isHydrating',
       'render.hydrated',
-      'render.overQuota'
+      'render.overQuota',
+      'render.badge'
     ],
-    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota]
+    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, badge]
   );
 
   /**

@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { linesOf } from './checkBefore';
+import { asCompleted, linesOf } from './checkBefore';
 import { findTask } from './common';
 import { neverRan, portBusy } from './neverRan';
 import { scriptsOf } from '../../commands/project/verify';
 import { projectRun } from '../../scaffold/packageManager';
-import { checkAcceptance } from '../copies/acceptance';
+import { checkAcceptance, sayLines } from '../copies/acceptance';
 import { SERVED_STATUSES } from '../copies/preview';
 import { cloneFiles, isCopied, projectFiles, readOptional } from '../core/files';
 import { under } from '../core/paths';
@@ -184,12 +184,21 @@ export const checkMutant = async (
       await fs.writeFile(under(dir, file), text);
     }
 
-    const copy = await checkAcceptance(task.acceptance, {
-      work: view.paths.work,
+    // Its copy as its complete measured it, unchanged since: only the mutant is run.
+    const copy =
+      (await asCompleted(view, task.acceptance)) ??
+      (await checkAcceptance(task.acceptance, {
+        work: view.paths.work,
+        root: ctx.root,
+        cache: view.paths.cache,
+        ...sayLines(ctx.say, 'its copy')
+      }));
+    const mutant = await checkAcceptance(task.acceptance, {
+      work: dir,
       root: ctx.root,
-      cache: view.paths.cache
+      cache,
+      ...sayLines(ctx.say, 'the mutant')
     });
-    const mutant = await checkAcceptance(task.acceptance, { work: dir, root: ctx.root, cache });
 
     return {
       task: taskId,
@@ -231,7 +240,9 @@ export const failedNames = (output: readonly string[]): string[] => [
 export const failureText = (output: readonly string[], last: number): string => {
   const names = failedNames(output);
   const asserted = assertionsOf(output);
-  const tail = output.filter(line => !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line)).slice(-last);
+  const tail = output
+    .filter(line => !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line) && !STACK_FRAME.test(line))
+    .slice(-last);
 
   return [
     ...(names.length > 0 ? [`${String(names.length)} failed — ${names.join(' · ')}`] : []),
@@ -246,6 +257,13 @@ export const failureText = (output: readonly string[], last: number): string => 
  * (`expected: true, operator: '==', diff: 'simple' }`), and a tester made a second mutant to find which one caught it.
  */
 const ASSERTION = /^\s*(?:AssertionError(?: \[ERR_ASSERTION\])?|Error|TypeError|RangeError): (.+)$/;
+
+/**
+ * A frame of the runner's own stack (`at Test.postRun (node:internal/test_runner/test:974:18)`): where node was, nothing
+ * of the test — a tester read node's frames listed after the tests that caught its mutant, as if they were tests too. A
+ * frame in the project's files says where in the test it failed, and stays.
+ */
+const STACK_FRAME = /^\s*at\s(?:.*\()?node:[^)]*\)?\s*$/;
 
 /** The fields node prints of an assertion's error, after its message: nothing a review reads. */
 const ASSERTION_FIELD = /^\s*(?:generatedMessage|code|actual|expected|operator|diff): |^\s*\}\s*$/;

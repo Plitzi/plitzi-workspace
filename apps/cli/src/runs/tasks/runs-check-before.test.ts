@@ -46,6 +46,33 @@ describe('a task’s acceptance set beside the run before it', () => {
     ]);
   });
 
+  // A run's reviews ran a page's 4-minute spec again on a copy its complete had just run it on: the same lines on the
+  // same files answer the same.
+  it('takes its copy’s side as its complete measured it while the copy is unchanged — and runs it again once it moved', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [
+      { said: 'About is Spanish', check: 'grep -q Acerca src/space/pages/about.ts && echo ran >> ../ran.log' }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about');
+    const ran = path.join(path.dirname(about.work), 'ran.log');
+    const runs = async (): Promise<number> =>
+      (await fs.readFile(ran, 'utf-8').catch(() => '')).split('\n').filter(Boolean).length;
+    const atComplete = await runs();
+
+    const proved = await checkBefore(bench.agent('test-1'), runId, 't-about');
+    expect(proved.afterAsCompleted).toBe(true);
+    expect(proved.lines.map(line => provedBy(line))).toEqual(['proves']);
+    // Run before it alone: its copy's side read from its complete.
+    expect(await runs()).toBe(atComplete);
+
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca de' };\n");
+    expect((await checkBefore(bench.agent('test-1'), runId, 't-about')).afterAsCompleted).toBeUndefined();
+    expect(await runs()).toBe(atComplete + 1);
+  });
+
   // A run's tester was pointed at --before for a task of tests, and every line passed on both: what it tests was
   // approved already, in the run before it.
   it('sets a task of tests beside the run without the task it tests, where its lines fail', async () => {
@@ -295,11 +322,13 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
   });
 
   // A tester could not tell which of two asserts in one node:test case caught a mutant: its tail was the error's fields.
-  it('says what each failed assertion said, and leaves out the fields node prints after it', () => {
+  it('says what each failed assertion said, and leaves out the fields and the runner’s frames node prints after it', () => {
     const output = [
       '✖ each storm runs in time order (1.2ms)',
       '  AssertionError [ERR_ASSERTION]: no spike: CHAMPI [125.5, 30.1] at 2026-10-22T18Z',
       '      at TestContext.<anonymous> (src/functions/hazards/sample.test.ts:88:12)',
+      '      at Test.runInAsyncScope (node:async_hooks:211:14)',
+      '      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)',
       '    generatedMessage: false,',
       "    code: 'ERR_ASSERTION',",
       '    actual: false,',

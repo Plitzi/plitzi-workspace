@@ -246,7 +246,14 @@ const testChecks = (
  * A developer task that gets no task of tests: one that writes its tests itself (`own`, its files name them — as the
  * plan meant), or one with none, and why.
  */
-export type Untested = { task: string; own: string[] } | { task: string; why: string };
+export type Untested =
+  | {
+      task: string;
+      own: string[];
+      /** The test files of its other modules it names none of: its own to add when it changes what they test. */
+      besides?: string[];
+    }
+  | { task: string; why: string };
 
 export const withTestTasks = (
   plan: RunPlan,
@@ -282,6 +289,14 @@ export const withTestTasks = (
 
     const named = testFilesFor(task.files, setup);
     const files = named.filter(file => !holderOf.has(file));
+    // A task that names a test file of its own writes its tests: none by another for a module it changed in a line — a
+    // run's dry run gave t-path-dat-join, whose tests were its own, a second agent's task on another module's test file.
+    const ownNamed = named.filter(file => holderOf.get(file) === task.id);
+    if (ownNamed.length > 0) {
+      untested.push({ task: task.id, own: ownNamed, ...(files.length > 0 ? { besides: files } : {}) });
+      continue;
+    }
+
     const breaks = files.filter(file => setup.existing?.has(file) === true);
     if (breaks.length > 0) {
       touched.set(task.id, breaks);

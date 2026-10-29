@@ -280,6 +280,13 @@ export const taskComplete = (
         ...completed.accepted.map(
           each => `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}`
         ),
+        ...(completed.olderWarnings
+          ? [
+              chalk.dim(
+                `  The space's lint warned of these before your change, in files you changed — kept as the run's notices for the project's backlog, not yours: ${completed.olderWarnings.join('; ')}`
+              )
+            ]
+          : []),
         ...(completed.changedInProject.length > 0
           ? [
               chalk.yellow(

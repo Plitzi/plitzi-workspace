@@ -1,5 +1,15 @@
 import { handOver } from './handOver';
-import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, standingText, unreadFor } from './messages';
+import {
+  agentAddress,
+  EVERYONE,
+  LEAD,
+  messagesOf,
+  replyTo,
+  sendMessage,
+  STANDING_QUESTION,
+  standingText,
+  unreadFor
+} from './messages';
 import { isPrincipal, requireALead, requireLead } from '../agents/leads';
 import { readTeam, startedAgents } from '../agents/team';
 import { writeJson } from '../core/files';
@@ -257,9 +267,7 @@ export const messageTasks = async (
   }
 
   // Asked where it stands, it answers whole: how far, how long still, what is done and left, what holds it.
-  const said = standing
-    ? `${text.trim() === '' ? '' : `${text.trim()} — `}Where do you stand? Answer now: plitzi task tell --standing --fraction <0-1> --eta <minutes left> --done "what is done" --left "what is left" [--held-by "what holds you"]`
-    : text;
+  const said = standing ? `${text.trim() === '' ? '' : `${text.trim()} — `}${STANDING_QUESTION}` : text;
   const sent: Message[] = [];
   for (const target of targets) {
     const answers = standing ? undefined : (reply ?? open[0]);

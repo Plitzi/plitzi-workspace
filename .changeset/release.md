@@ -298,6 +298,14 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   (the visual suite's server keeps `tmp/visual/state`); a project that changed it sets the variable by hand. A store the
   project opens itself — a SQLite database in `src/config/serverOptions.ts` — should open in that folder too.
 
+- **What a page command says changed in a few places a check line reads.** `page play` fails when a step sets off a
+  flow that fails (said `✗` under the step), and an `action` step's answer is whole in `--json` (`output`) — no longer in
+  a temporary file. `page check --state <name>` that names nothing on the page is a problem of the check, with the names
+  there are — and a source is named by its element's id too (`storms-feed`). `--sight` and `--expect` read a control
+  under another control (a clear button over a chip) as not seen: its press goes to the other. `--expect id~Text` in
+  mixed case holds the words as the space wrote them, whatever capitals a stylesheet sets. `task show <task> <files…>`
+  takes several files (one is still one object in `--json`). `page measure`'s readings carry `box` in numbers.
+
 ## Several agents on one project (`@plitzi/cli`)
 
 - **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
@@ -1097,7 +1105,50 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 - `plitzi space pages` answers with `space overview`; the functions skill says a function reads no environment variable
   (a credential, `src/data/` or the input), which `explain` finds.
 
+- **Nothing of the run's own makes an agent wait for nothing.** A task's 10 minutes are its agent's own: what the CLI's
+  checks hold it for — a page's spec, the machine's Playwright queue, `task run` of a suite — is said apart
+  (`checkedMs`) and never counted, and nothing asks it where it stands while a check runs. `task complete` answers the
+  run's own "where do you stand?" — it was refusing the very complete that answered it, three times in twenty minutes.
+  An approval whose merge fails the project's checks the way the run's work already fails without it goes in, told to
+  the lead (`runFails`), instead of holding finished tasks in review behind another's breakage. A review taken says, as
+  it starts, whether the task put together with what the run approved since passes the checks (`mergedNow`) — a pass is
+  kept for the approval that follows. `task prove --before` and `--mutate` read the copy's side as its complete measured
+  it while the copy is unchanged, and every acceptance run says its lines as it goes and the suite queue it waits in.
+- **`task next` says each thing once.** The files said by the brief alone; the run's notes in "What holds for the whole
+  run", not again as messages; an amend as "the brief below is as amended"; the files near the line limit in one line;
+  a done task it waits on by its name alone (its work is in the copy). A run's brief was 21k characters, a fifth of it
+  said twice, read again every turn.
+- **A task answers for the space lint's warnings it adds, not the ones it found.** `complete` refuses a warning a task
+  adds to a file it changed; one the file had in the run's work before it is kept as the run's notice — the project's
+  backlog once the run ends — and said in its answer. A run's tasks renamed ids an acceptance line read (the line then
+  passed on nothing) and handed back a one-value change to a long file, to clear warnings older than them.
+- **A stage takes a file a task at work holds only as part of its page.** A task that names a page holds every file
+  only that page reaches; a stage's task naming one of them that the holder never named and has not changed gets it,
+  the holder told — a run's header fix could not be a task of its own, its 26 files held for the one its task named.
+- **The rehearsal names the contract to split off.** When the critical path decides the run, its advice names the task
+  on it that most wait for, to give a task of its contract alone first — the types, the element's declaration, the ids
+  — so they start beside its work.
+- **A run's lead amends its report after `--apply`.** The lead's own CLI stays in `tmp/plitzi-runs-over/<run>/lead/`
+  (`--apply` and `run abort` name it), its token proved against the identity the report keeps: `run notice --run <run>`
+  no longer answers "who is calling?".
+- **The report blames Plitzi for what was Plitzi's.** A plan or a change judged — `run open --dry-run` refusing a plan, a
+  review's approval refused by the checks — is no CLI error, and an answer asked as data (`--json`, piped to a tool) is
+  no answer too long. A task that writes its own tests gets no second agent's task for another module it touches: its
+  test file is said as its own to add.
+
+## Plans (`@plitzi/cli`)
+
+- **`plitzi doctor` has a `plan` area:** for a project made from a space on a platform, signed in, what the project uses
+  that the space's plan leaves out — functions, a runtime, the CLI's cloud commands — each a warning with the file it
+  is about and the link to the plan that includes it (`plan-excludes-<capability>`). Not signed in, an `info` says the
+  plan was not checked; a self-hosted server that answers no plan is never told about one.
+
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
+
+- **A cloud command on a plan that does not include it says the plan and the link**: every request to the platform
+  (`requestJson`) reads a `plan-required` refusal (`isPlanRefusal`) and answers it as its error, with the
+  `upgradeUrl` — `plitzi create --from`, `space push`, `source keep`, a plugin upload — instead of each command's
+  "answered 402". No command carries a plan of its own; a self-hosted server never sends one.
 
 - **What a visitor sees, not a box drawn** (`sightOf`, `@plitzi/sdk-shared/devTools`): `--expect` and the dev tools'
   `element()` read an element as seen only when some of it is in sight — clipped by a box that does not scroll, past
@@ -1307,6 +1358,17 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   as one drawn by its children. **`page check --state <names>`** holds only those; a space that does not author is said
   by its first lines, not a count.
 
+- **A press waits out what the page is still doing, and says what stopped it.** A click, hover or scroll of `--steps`,
+  `--click` or `page play` that times out with something over it or still moving (a boot screen fading, a first load
+  busy) is tried once more when the page has settled; one that still fails names what was over it — "boot is drawn
+  over it and takes the press" — never "Timeout 3000ms exceeded" alone. `page outline --within` a part hidden at that width
+  says what hides it, never a 30 s timeout and a stack; a wrapper with no box of its own (a provider) takes no depth.
+  `task look --steps` pictures what its steps left — it showed the page before them, beside a check that read the
+  dossier drawn — and a picture not taken says the error, not Node's first stack line. `page play --read 'a b c'`
+  splits by spaces as by commas; `--read` says what a plugin's bindings gave it; `page shot` says its first picture as
+  `before:` when steps follow. `task prove --mutate` leaves node's own stack frames out of what failed. A wrapper with
+  no box of its own (`display: contents`) is hidden on purpose when everything inside it is (`probePage`).
+
 ## Authoring (`@plitzi/sdk-authoring`)
 
 - **`server-query-unresolved`** refuses a `runtime: 'server'` provider whose `query` the page server cannot read —
@@ -1414,6 +1476,15 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
 
+- **`PlitziBadge`**: the deployment's "Made with Plitzi" badge, with a link to report the site, drawn in every render
+  mode when the server says so (`render.badge`, on SSR and on the client's `InitQuery`), light and dark. A space
+  cannot turn it off from its settings.
+- **The entitlements contract** (`@plitzi/sdk-shared/network`): `TSpaceEntitlements`, `TCapability`, `TPlanRefusal`,
+  `isIncluded` (everything is included when a server answers none — a self-hosted one) and `isPlanRefusal`. What a
+  space's plan includes, for every surface to lock what it does not (RFC 0029 §7.4). `TSpaceEntitlements` carries
+  `analyticsDays` (how far back the space's analytics are read), and `TWorkspaceEntitlements` says the same of a
+  workspace: its seats (included, bought, taken), its ceilings and its capabilities.
+
 - **`navigate` can replace the address** (`replace: true`, a step param and `navigation.navigate(url, { replace })`):
   Back skips it — a sheet opened by `?stats=1` and closed was reopened by Back. The store's `navigate` takes
   `{ external, replace }` now, where it took `isExternal`: a plugin that passed `true` passes `{ external: true }`.
@@ -1511,8 +1582,26 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Server (`@plitzi/sdk-server`)
 
+- **A deployment may cap the tool calls its MCP answers** (`admitToolCalls`, a new optional MCP adapter): asked with
+  how many calls a request makes; a refusal's words are what each call reads as its result (`isError`), so the agent
+  says why rather than reporting a server gone. Omitted, every call runs.
+- **`realtime.admitSpace`:** whether a space may open the channels it declares — a deployment's policy. Refused, its
+  topics answer `unavailable` and the page a 402 with the deployment's words; omitted, every space may.
+- **The MCP's primer names the space's plan** (`getEntitlements`, a new optional MCP adapter): the plan and, by the
+  plan that includes them, the capabilities it does not — so an agent does not plan a custom domain or a function the
+  space cannot ship. A deployment without the adapter says nothing of a plan.
+
+- **The metering adapter can hold a page back** (`SSRMeterDecision.unavailable`): the page is answered 503 with the
+  words the adapter chose, light and dark, never rendered, cached or indexed — fresh or from the HTML cache. A free
+  site whose owner never confirmed their email is held back this way on Plitzi's cloud; a self-hosted server's
+  metering never sets it.
+- **The metering adapter decides the badge and `noindex` too** (`SSRMeterDecision.badge`, `.noindex`): a deployment's
+  "Made with Plitzi" badge rides the render (`render.badge`, beside `overQuota`) and a page it does not mean to host a
+  site on is sent `X-Robots-Tag: noindex` — fresh or from the HTML cache. A self-hosted server's metering sets neither,
+  so it never shows either.
+
 - **A server provider reads another site's address while the page is built**: `apiContainer({ runtime: 'server',
-  query: '{{ apiUrl }}/posts/{{ navigation.routeParams.id }}' })` is filled in with what the page server knows — the
+query: '{{ apiUrl }}/posts/{{ navigation.routeParams.id }}' })` is filled in with what the page server knows — the
   space's variables for this host, `navigation` — and asked there: GET, the headers it declares, never the visitor's
   cookies, held to 5 MB and to the element's budget — so the page arrives with it instead of filling in after
   hydration. It drew empty before, with nothing said. `getRscData` is now built for every server that does not write
@@ -1612,6 +1701,15 @@ is no room at this address.` — one line, no stack — where the log said "ende
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 
+- **What the space's plan does not include is shown locked** (`useSpaceEntitlements`, from
+  `GET /spaces/:id/entitlements`): Snapshot and Publish carry a lock and open the plans instead of a form that would
+  fail on save; the snapshot form shows each environment the plan lacks with the plan that has it; mirroring a font
+  says the same. A server that answers no entitlements locks nothing.
+- **The plan in the header**, beside what the space spends, with an Upgrade while the plan leaves something out; a
+  notice at the top of functions, visitors, channels, flags, the runtime and connectors when the plan does not include
+  them, saying what the work does meanwhile; and the snapshot dialog saying which snapshots the next one removes
+  (`GET /spaces/:id/snapshots/next-prune`).
+
 - **Settings → Sharing:** the site's name, language, icon, share image, theme colour and `robots.txt`, checked as they
   are typed by the same rule authoring refuses on.
 - **A page's SEO** takes its share image, its description and its kind, with robots, and shows the link's card.
@@ -1632,6 +1730,11 @@ is no room at this address.` — one line, no stack — where the log said "ende
 
 - **`element(id).visible` is what a visitor sees** (`sightOf`), and `sight` says why not — or the box to scroll.
   `setSource` takes an element's id too, and answers the source it wrote.
+
+- **`element(id).resolved`: what each binding gave the element**, worked out from the sources it sees — what a plugin
+  received, which its template alone does not say. `pConsole` keeps the methods elements register (`providerMethods`,
+  `providerData`): one registered before the panel mounted was lost.
+- **`sightOf` says `taken`**: a control another control is drawn over — its press goes there.
 
 - A **Run** tab, offered only on a run's preview: progress, the tasks by where they stand, the agents and what needs
   someone.

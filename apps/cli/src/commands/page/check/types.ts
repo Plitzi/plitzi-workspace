@@ -72,7 +72,8 @@ export interface CheckIssue {
     | 'faint-text'
     | 'flush-edge'
     | 'form-held-back'
-    | 'server-logged';
+    | 'server-logged'
+    | 'state-unheld';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;

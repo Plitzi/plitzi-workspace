@@ -236,9 +236,13 @@ export const outlineIn = (input: {
         ...(named === null ? {} : { element: named }),
         ...(screenReaderOnly ? { screenReaderOnly: true as const } : {})
       });
+      // A wrapper with no box of its own (`display: contents` — a provider around the page) is listed and walked through
+      // at its own depth: a page's four providers took the whole depth, and the outline named no element under them
+      // ("1153 more under these").
+      const passes = getComputedStyle(child).display === 'contents';
       // A drawing is one thing to measure, never its paths; what is inside a part for screen readers is theirs too.
       if (child.tagName !== 'svg' && !screenReaderOnly) {
-        walk(child, depth + 1);
+        walk(child, passes ? depth : depth + 1);
       }
     }
   };
@@ -276,6 +280,22 @@ export const outlineText = (outline: Outline, within?: string, opened = false): 
   chalk.dim('Each is what page measure takes: plitzi page measure <path> "<ours> => <one of these>" --compare <url>')
 ];
 
+/** Run in the page: what keeps `node` from showing — itself or an element around it, hidden — named as the page names it. */
+export const hiderName = (node: Element): string | undefined => {
+  for (let at: Element | null = node; at !== null; at = at.parentElement) {
+    const style = getComputedStyle(at);
+    const how =
+      style.display === 'none' ? 'display: none' : style.visibility === 'hidden' ? 'visibility: hidden' : undefined;
+    if (how !== undefined) {
+      const name = at.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el') ?? at.tagName.toLowerCase();
+
+      return `${how} on ${at === node ? 'itself' : name}`;
+    }
+  }
+
+  return undefined;
+};
+
 /**
  * A page outlined as it is open: its elements clicked first — what they opened listed alone, unless a part is named —
  * then the part named, or the whole page. What `page outline` does on a page of its own and the kept browser does on a
@@ -310,13 +330,21 @@ export const outlineOnPage = async (
   }
 
   if (part?.found === true) {
-    await page
-      .locator(part.selector)
-      .filter({ visible: true })
-      .first()
-      .evaluate((node, mark: string) => {
-        node.setAttribute(mark, '');
-      }, OUTLINE_ROOT);
+    const shown = page.locator(part.selector).filter({ visible: true }).first();
+    // On the page and shown at no copy: said with what hides it — waited on, it crashed with Playwright's 30 s timeout
+    // and a stack (a run's tester, a part a breakpoint hides on a phone).
+    if ((await shown.count()) === 0) {
+      const hider = await page.locator(part.selector).first().evaluate(hiderName, undefined);
+
+      return {
+        problem: `${asked.within ?? ''} is on the page and not shown here${hider ? ` — ${hider}` : ''}: outline it at a width it shows at, or what is shown around it`,
+        phase: 'part'
+      };
+    }
+
+    await shown.evaluate((node, mark: string) => {
+      node.setAttribute(mark, '');
+    }, OUTLINE_ROOT);
   }
 
   try {

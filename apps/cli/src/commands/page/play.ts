@@ -3,12 +3,12 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { readDevTools } from '@plitzi/sdk-authoring';
+import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
 
 import { pairOf } from './measure';
-import { settle } from './measureState';
+import { settle, stepFailure } from './measureState';
 import { heldText, stateReadsOf, valueAt } from './playHeld';
-import { readState } from './playState';
+import { givenText, readState } from './playState';
 import { shotFile } from './shot/output';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actStep, playingSteps, stepText } from './shot/steps';
@@ -114,8 +114,11 @@ export interface PlayedStep {
   went?: Partial<Record<keyof Pair, string>>;
   /** Its target was scrolled into view before it, as a pointer reaches it: what moved is measured from there. */
   reached?: true;
-  /** What an action step answered — its output, clipped. */
+  /** The flows the step set off that failed, as `page check` says each. */
+  failed?: string[];
+  /** What an action step answered — its output, clipped — and whole, for --json. */
   answer?: string;
+  output?: unknown;
   /** A `shot` step's pictures, each side's file. */
   pictured?: Partial<Record<keyof Pair, string>>;
   /** Each element read, by how it was asked, here and — with `--compare` — there. */
@@ -143,7 +146,10 @@ const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
  */
 export interface PlaySide {
   /** What kept the step from happening — or an action's answer, said under its step. */
-  act: (step: ActingStep, index: number) => Promise<{ problem: string } | { answer: string } | undefined>;
+  act: (
+    step: ActingStep,
+    index: number
+  ) => Promise<{ problem: string } | { answer: string; output?: unknown } | undefined>;
   /** Where its page is now, path and query: a step that takes it elsewhere is said (`PlayedStep.went`). */
   address?: () => string;
   read: (targets: readonly string[]) => Promise<(ElementState | { problem: string })[] | { problem: string }>;
@@ -151,6 +157,8 @@ export interface PlaySide {
   state?: () => Promise<{ value: unknown } | { problem: string }>;
   /** A picture of the page where it stands (`shot [label]`): the file it is written to. */
   picture?: (index: number, label?: string) => Promise<string>;
+  /** Every flow that failed on the page so far, as `page check` says one, read through its dev tools. */
+  failedFlows?: () => Promise<string[]>;
 }
 
 /** A page of this command's as a side of a play — `visitors`, the other accounts its `as` steps play as. */
@@ -193,6 +201,8 @@ export const pageSide = (
 
     return states;
   },
+  failedFlows: async () =>
+    (await readDevTools(page, { state: false })).flows.filter(flow => flow.status === 'failed').map(failedFlowText),
   state: async () => {
     const tools = await readDevTools(page, { state: true });
 
@@ -294,6 +304,7 @@ export const playOn = async (
 
     const idle: Partial<Record<keyof Pair, string>> = {};
     const was = { here: sides.here.address?.(), there: sides.there?.address?.() };
+    const failedBefore = (await sides.here.failedFlows?.())?.length ?? 0;
     const names = sides.there ? (['here', 'there'] as const) : (['here'] as const);
     // A write to the server is made once: a run's designer created two rooms with one play at two widths.
     if (step.kind === 'action' && !actions) {
@@ -335,7 +346,7 @@ export const playOn = async (
       await readAll('reached');
     }
 
-    let answer: string | undefined;
+    let answer: { answer: string; output?: unknown } | undefined;
     for (const name of names) {
       const at = acting(name);
       if (!at) {
@@ -348,10 +359,10 @@ export const playOn = async (
           return { problem: done.problem, side: name };
         }
 
-        answer = done?.answer ?? answer;
+        answer = done ?? answer;
       } catch (error) {
         return {
-          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`,
+          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${stepFailure(error)}`,
           side: name
         };
       }
@@ -363,12 +374,18 @@ export const playOn = async (
       ...(now.there !== undefined && now.there !== was.there ? { there: now.there } : {})
     };
     const entry = await readAll(stepText(step));
+    // What the step set off and failed, said under it: a run's tester repeated a play's steps in page check to prove
+    // "locking a storm shows no failed flow".
+    const failed = ((await sides.here.failedFlows?.()) ?? []).slice(failedBefore);
     played.push({
       ...entry,
+      ...(failed.length > 0 ? { failed } : {}),
       ...(Object.keys(idle).length > 0 ? { idle } : {}),
       ...(Object.keys(went).length > 0 ? { went } : {}),
       ...(reached ? { reached: true as const } : {}),
-      ...(answer === undefined ? {} : { answer })
+      ...(answer === undefined
+        ? {}
+        : { answer: answer.answer, ...(answer.output === undefined ? {} : { output: answer.output }) })
     });
   }
 
@@ -414,7 +431,7 @@ const moveText = ({ x, y }: { x: number; y: number }): string =>
         .filter(Boolean)
         .join(', ');
 
-const stateText = (state: ElementState): string =>
+const stateText = (state: ElementState, before?: ElementState): string =>
   [
     `${state.shown ? 'shown' : state.screenReaderOnly ? 'for screen readers only' : 'hidden'}, ${state.enabled ? 'enabled' : 'no press'}`,
     // Said when it is not plainly there: half out of the viewport, out of it, or under something drawn over it.
@@ -427,6 +444,8 @@ const stateText = (state: ElementState): string =>
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
     ...(state.rows === undefined ? [] : [`${String(state.rows)} rows`]),
     ...(state.own === undefined ? [] : [`its own state ${state.own}`]),
+    ...givenText(state.given, before?.given),
+
     ...(state.text
       ? [
           `"${state.text.length > TEXT_SHOWN ? `${state.text.slice(0, TEXT_SHOWN)}…" (--json has its ${String(state.text.length)} characters)` : `${state.text}"`}`
@@ -478,7 +497,8 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
         : '';
     const edgeBefore = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here?.edge;
     const edge = read.here && edgeBefore ? edgeChange(edgeBefore, read.here.edge) : '';
-    const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here) : ''}${colour}${edge}`;
+    const hereBefore = at === 0 ? undefined : played[at - 1]?.reads.at(index)?.here;
+    const here = `${said && read.moved ? `moved ${moveText(read.moved.here)}, ` : ''}${read.here ? stateText(read.here, hereBefore) : ''}${colour}${edge}`;
     const there = read.there
       ? chalk.dim(
           ` | there ${said && read.moved?.there ? `moved ${moveText(read.moved.there)}, ` : ''}${stateText(read.there)}`
@@ -494,6 +514,7 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
       ? [chalk.dim('  (scrolled into view first, as a pointer reaches it: moves are from there)')]
       : []),
     ...(entry.answer === undefined ? [] : [`  ← ${entry.answer}`]),
+    ...(entry.failed ?? []).map(flow => chalk.red(`  ✗ ${flow}`)),
     ...(entry.pictured?.here ? [`  ▣ ${entry.pictured.here}`] : []),
     ...(entry.pictured?.there ? [chalk.dim(`  ▣ there ${entry.pictured.there}`)] : []),
     ...(entry.went?.here ? [`  → ${entry.went.here}`] : []),
@@ -514,11 +535,19 @@ export const playedText = (played: readonly PlayedStep[]): string[] => {
             : [`  ${read.element}: ${chalk.red(read.problem)} ${chalk.dim('(at every step)')}`];
       }
 
-      const line = readLine(at, index);
-      // Read again as it was: said so — a run's nine steps repeated two elements whole at each, 21k characters.
-      const previous = at > 0 && played[at - 1]?.reads.at(index)?.problem === undefined ? readLine(at - 1, index) : '';
+      // Read again as it was — the same state, nothing moved: said so — a run's nine steps repeated two elements whole
+      // at each, 21k characters. By the reads, not their lines: a line says what a step changed, never the same twice.
+      const earlier = at > 0 ? played[at - 1]?.reads.at(index) : undefined;
+      const still = (moved: NonNullable<typeof read.moved>['here'] | undefined): boolean =>
+        moved === undefined || (moved.x === 0 && moved.y === 0);
+      const same =
+        earlier !== undefined &&
+        earlier.problem === undefined &&
+        JSON.stringify([earlier.here, earlier.there]) === JSON.stringify([read.here, read.there]) &&
+        still(read.moved?.here) &&
+        still(read.moved?.there);
 
-      return [line === previous ? `  ${read.element}: ${chalk.dim('as before')}` : line];
+      return [same ? `  ${read.element}: ${chalk.dim('as before')}` : readLine(at, index)];
     }),
     ...heldText(played, at)
   ]);
@@ -546,12 +575,14 @@ export const verdictOf = (
 const READ_NAME = /^(?:[\w-]+(?::(?:\d+|last))?|state\.[\w.-]+)$/;
 
 /**
- * `--read a,b,c` as `--width 390,1440` takes them: a list of names, each read — a selector's comma is kept. A list
- * holding a row (`card:last`) or a state key (`state.roomRemoveAt`) is a list too: a run's scout read three as one.
+ * `--read a,b,c` as `--width 390,1440` takes them, and `--read 'a b c'` as its help says — by spaces or commas: a list of
+ * names, each read; a selector's comma or space is kept (`.card, .row`, `.panel textarea`). A list holding a row
+ * (`card:last`) or a state key (`state.roomRemoveAt`) is a list too: a run's scout read three as one, and a tester's
+ * quoted list read as one name.
  */
 export const readTargets = (read: readonly string[] = []): string[] =>
   read.flatMap(each => {
-    const parts = each.split(',');
+    const parts = each.split(/[\s,]+/).filter(Boolean);
 
     return parts.length > 1 && parts.every(part => READ_NAME.test(part)) ? parts : [each];
   });
@@ -752,7 +783,8 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
           ...(shared ? [chalk.yellow(shared)] : [])
         ].join('\n')
   );
-  if (unlike.length > 0) {
+  // A flow that failed fails the play, as it fails a check of the page.
+  if (unlike.length > 0 || results.some(each => each.played.some(entry => (entry.failed ?? []).length > 0))) {
     process.exitCode = 1;
   } else if (missing) {
     // An element nothing answered for is a line nobody can hold: said as such, never as a pass.

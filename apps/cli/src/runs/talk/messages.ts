@@ -46,7 +46,20 @@ export interface Message {
   asksStanding?: true;
   /** Where a task stands, as its agent answers the lead (`task tell --standing`): what the lead decides on. */
   standing?: Standing;
+  /** The lead amended the task it is sent to (`run amend`): what changed — its brief says the rest as amended. */
+  amended?: string[];
 }
+
+/** Where the lead asks a task's agent where it stands — with words of its own before it, or alone (the run's asking). */
+export const STANDING_QUESTION =
+  'Where do you stand? Answer now: plitzi task tell --standing --fraction <0-1> --eta <minutes left> --done "what is done" --left "what is left" [--held-by "what holds you"]';
+
+/**
+ * Only asking where it stands, nothing else said: a task that completes answers it — it is done. A lead's words before
+ * the question are still read first.
+ */
+export const asksStandingOnly = (message: Message): boolean =>
+  message.asksStanding === true && message.text === STANDING_QUESTION;
 
 /** A task's standing, as its agent says it when the lead asks: how far, how long still, what is done, left, holding it. */
 export interface Standing {
@@ -83,7 +96,9 @@ const isMessage = (value: unknown): value is Message =>
   (value.fyi === undefined || typeof value.fyi === 'boolean') &&
   (value.about === undefined || typeof value.about === 'string') &&
   (value.asksStanding === undefined || value.asksStanding === true) &&
-  (value.standing === undefined || isStanding(value.standing));
+  (value.standing === undefined || isStanding(value.standing)) &&
+  (value.amended === undefined ||
+    (Array.isArray(value.amended) && value.amended.every((each: unknown) => typeof each === 'string')));
 
 const isRead = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');

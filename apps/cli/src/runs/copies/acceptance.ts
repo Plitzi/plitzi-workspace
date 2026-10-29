@@ -347,23 +347,44 @@ const NO_TEST =
 const isUnanswered = (code: number): boolean => code === UNANSWERED_EXIT || code === 126 || code === 127;
 
 /** Every checked line of `acceptance`, run in `work`: what each answered. None checked, none run. */
+/**
+ * Each line said as it starts, where a command says what it is at (`ctx.say`): a reviewer's `task prove --before` ran
+ * past ten minutes with nothing printed, and the review was decided without it. `where` names the side — "before it".
+ */
+export const sayLines = (
+  say: ((line: string) => void) | undefined,
+  where?: string
+): Pick<AcceptanceRun, 'onLine' | 'onWait'> =>
+  say === undefined
+    ? {}
+    : {
+        onLine: (index, total, said, again) =>
+          say(
+            `${where === undefined ? '' : `${where}, `}${again ? 'again, ' : ''}line ${String(index + 1)}/${String(total)}: ${said}`
+          ),
+        // Said, never waited on in silence: a run's agents queued minutes behind each other's specs, told nothing.
+        onWait: since =>
+          say(
+            `waiting for another agent's Playwright suite on this machine${since ? ` (since ${since.slice(11, 19)} UTC)` : ''}: this line runs once it ends`
+          )
+      };
+
+/** How an acceptance is run: where, and what it says as it goes. */
+interface AcceptanceRun {
+  work: string;
+  root: string;
+  cache: string;
+  /** The copy already being served (`serveForAcceptance`): used, rather than started now. */
+  serving?: Serving;
+  /** Each line as it starts — and again, once more after a failure: what a long check is at. */
+  onLine?: (index: number, total: number, said: string, again: boolean) => void;
+  /** A line of a Playwright suite waiting its turn on the machine, since when another holds it. */
+  onWait?: (since: string | undefined) => void;
+}
+
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
-  {
-    work,
-    root,
-    cache,
-    onLine,
-    serving
-  }: {
-    work: string;
-    root: string;
-    cache: string;
-    /** The copy already being served (`serveForAcceptance`): used, rather than started now. */
-    serving?: Serving;
-    /** Each line as it starts — and again, once more after a failure: what a long check is at. */
-    onLine?: (index: number, total: number, said: string, again: boolean) => void;
-  }
+  { work, root, cache, onLine, onWait, serving }: AcceptanceRun
 ): Promise<AcceptanceResult[]> => {
   const checked = acceptance.filter(isChecked);
   if (checked.length === 0) {
@@ -406,7 +427,8 @@ export const checkAcceptance = async (
       ? withLock(SUITE_LOCK, () => runOnce(each, at, again), {
           ttlMs: 30 * 60_000,
           waitMs: 30 * 60_000,
-          doing: "another agent's Playwright suite on this machine"
+          doing: "another agent's Playwright suite on this machine",
+          ...(onWait ? { onWait } : {})
         })
       : runOnce(each, at, again);
   try {

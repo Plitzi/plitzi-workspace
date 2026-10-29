@@ -75,8 +75,9 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   back by its name (`--withdraw n3 "why"`; once the run is applied, with `--run <run>`). What the lead
   says to you arrives with your next command — read it (`task inbox --all`: all again).
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"` (at a review too), every 2 minutes in a
-  long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes): answer at once: `plitzi task tell --standing
-  --fraction 0.6 --eta 15 --done "…" --left "…" [--held-by "…"]`.
+  long think. **The lead asks where you stand** (past the 10 minutes a piece of work takes — your own: the checks the CLI
+  runs for you never count): answer at once: `plitzi task tell --standing
+  --fraction 0.6 --eta 15 --done "…" --left "…" [--held-by "…"]` — or complete, if you are done: that answers it.
 - **A spike** is a scout's (the lead's with none), its result the lead's to approve: what is built is decided by what
   it finds — your brief has what was found for your task.
 - **Your specs, never the suite**: a check of yours runs the specs of what you change (`npx playwright test
@@ -89,8 +90,8 @@ takes a lang prop" --wait` (not one in review); it answers `plitzi task answer t
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes.
 - **Before done:** `npm run typecheck` (seconds), then `plitzi task check --fix` — eslint and prettier fix what they can first — runs what `complete` holds
-  the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning in a file you
-  changed: iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
+  the copy to — the project's checks, the acceptance's commands, long files, no `space lint` warning you add to a file
+  (one it had before is kept for the backlog, not yours): iterate on it, not on `complete`, whose failures count toward the run's brake. It hands you the lead's news. What you declare for later tasks, unread yet, is a warning.
 - **Done:** `plitzi task complete --ease <1-5> --hardest "…" [--plitzi-no-way "…"] [--friction "…"] [--note "…"]` — what
   it was like to Plitzi (of Plitzi, as what it was: `--plitzi-wrong` it said something untrue, `--plitzi-no-way`
   nothing in it did it, `--plitzi-in-the-way` it refused what you meant; `--friction` the project, the plan), the note

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { namedOf } from './inspect';
+import { namedOf, unheldNames } from './stateNames';
 import { groupedProblems, reportText } from './text';
 
 import type { CheckReport } from './types';
@@ -200,6 +200,24 @@ describe('a source named in --state', () => {
       'computed.layerQuakes': true,
       other: 1
     });
+  });
+
+  // A run's lead asked `--state storms-feed`, the apiContainer's id, and read `{}` with no word: only the internal
+  // `apiContainer_storms-feed` answered.
+  it('reads a source by its element’s id, and says a name that holds nothing, with what the page holds', () => {
+    const sources = { 'apiContainer_storms-feed': { items: [1, 2] }, list_contacts: { items: [] } };
+    expect(namedOf(sources, ['storms-feed', 'contacts.items'])).toEqual({
+      'storms-feed': { items: [1, 2] },
+      'contacts.items': []
+    });
+    expect(unheldNames({ selectedId: '' }, sources, ['storms-feed', 'selectedId', 'storm-feed'], 1440)).toEqual([
+      {
+        code: 'state-unheld',
+        message:
+          '--state storm-feed: the page holds no state key or source by that name — its sources: apiContainer_storms-feed, list_contacts; its state: selectedId',
+        width: 1440
+      }
+    ]);
   });
 });
 

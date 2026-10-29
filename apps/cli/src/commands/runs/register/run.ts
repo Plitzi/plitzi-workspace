@@ -53,6 +53,7 @@ import {
 import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } from '../../../options';
 import { PLITZI_HOW_MEANS, PLITZI_HOWS } from '../../../runs/findings/plitziClass';
 import { groupHelp } from '../../register/helpGroups';
+import { fail } from '../../shared/terminal';
 import { runAgent } from '../run/agent';
 import { runStart } from '../run/start';
 
@@ -560,19 +561,28 @@ export const registerRunGroup = (program: Command): Command => {
     .description(
       'A version of a file the run keeps: the run’s, the backup when it opened, or the project’s — or, --restore, the backup put back into the project (a person’s)'
     )
-    .argument('<run>', 'The run')
-    .argument('<file>', 'The project file')
+    .argument('[run]', 'The run')
+    .argument('[file]', 'The project file')
     .addOption(new Option('--version <which>', 'Which one').choices(['run', 'base', 'project']).default('run'))
     .option(
       '--restore [backup]',
       'Put the project file back from a backup — base (when the run opened, when left out) or a merge (before it): a person’s'
     )
     .option(...JSON_OPTION)
-    .action((run: string, file: string, options: ShowOptions) =>
-      options.restore === undefined
+    .action((run: string | undefined, file: string | undefined, options: ShowOptions) => {
+      // Read as "show the run" by a run's tester, twice in two runs: what it shows is a file, and the run is its status.
+      if (run === undefined || file === undefined) {
+        fail(
+          `run show reads one file the run keeps: plitzi run show ${run ?? '<run>'} <file> [--version run|base|project] — the run as it stands is plitzi run status${run === undefined ? '' : ` ${run}`}`
+        );
+
+        return;
+      }
+
+      return options.restore === undefined
         ? runShow(run, file, options)
-        : runRestore(run, file, { ...options, from: options.restore === true ? 'base' : options.restore })
-    );
+        : runRestore(run, file, { ...options, from: options.restore === true ? 'base' : options.restore });
+    });
 
   runGroup
     .command('attach')

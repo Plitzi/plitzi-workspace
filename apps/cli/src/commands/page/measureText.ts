@@ -277,3 +277,7 @@ export const readingText = (
       : [])
   ].join('\n');
 };
+
+/** Said under a reading of each element whole: two of a run's testers grepped forty lines of one down to its box. */
+export const WHOLE_SAID =
+  'Each element whole — what is asked alone: --only box (or font, border, size, any property), its words: page play --read <elements>';

@@ -115,6 +115,29 @@ describe('probePage / hidden by the width it is drawn at', () => {
     // hidden by its base rule and shown only at another width — is the one hidden; a browser hides the nav too.
     expect(findings.byWidth).toEqual(['bar']);
   });
+
+  // A run's sheet pane — a wrapper with no box of its own around a legend a breakpoint hides on a tablet — failed the
+  // check that accepted the legend itself, hidden at that width on purpose.
+  it('reads a wrapper with no box of its own as hidden on purpose when all inside it is', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      // The probe reads only the size; a whole DOMRect would be fields nothing here looks at.
+      return (hiddenByDisplay(this) ? { width: 0, height: 0 } : { width: 100, height: 20 }) as DOMRect;
+    });
+    document.head.innerHTML = `<style>
+      .legend { display: none }
+      @media (max-width: 1px) { .legend { display: block } }
+    </style>`;
+    document.body.innerHTML = `
+      <div data-plitzi-el="pane" style="display: contents"><div data-plitzi-el="legend" class="legend">Depth</div></div>
+      <div data-plitzi-el="empty-pane" style="display: contents"><p data-plitzi-el="gone" style="display: none">x</p></div>`;
+
+    const findings = probePage(input(['pane', 'legend', 'empty-pane']));
+
+    expect(findings.byWidth).toEqual(['pane', 'legend']);
+    expect(findings.hidden).toEqual([
+      { id: 'empty-pane', reason: 'it has no box of its own (display:contents) and nothing inside it shows' }
+    ]);
+  });
 });
 
 // The home's wide-screen sides, shown from 1600 px by a container condition written in their class, read as

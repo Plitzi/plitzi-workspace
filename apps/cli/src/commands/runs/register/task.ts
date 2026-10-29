@@ -457,8 +457,8 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .argument('[task]', 'The task — the one you hold or review when left out')
     .argument(
-      '[file]',
-      'One file it changed, whole — as the diff reads it: as it went to review, its copy, or approved'
+      '[files...]',
+      'Files it changed, each whole — as the diff reads it: as it went to review, its copy, or approved'
     )
     .option(
       '--full',
@@ -466,17 +466,14 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(
       '--diff',
-      'With a file: its whole diff from where the task started — the task’s own change, never another’s approved since'
+      'With files: each one’s whole diff from where the task started — the task’s own change, never another’s approved since'
     )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
-        task: string | undefined,
-        file: string | undefined,
-        options: RunCommandOptions & { full?: boolean; diff?: boolean }
-      ) => taskShow(task, file, options)
+      (task: string | undefined, files: string[], options: RunCommandOptions & { full?: boolean; diff?: boolean }) =>
+        taskShow(task, files, options)
     );
 
   taskGroup

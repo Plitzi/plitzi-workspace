@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { digestsOf, escapeRegExp } from './approve';
+import { checkDirs, digestsOf } from './approve';
 import { failedWhy } from '../../commands/project/verify';
 import { ownFailing } from '../copies/checks';
 import { checkVersions } from '../copies/materialise';
@@ -33,10 +33,7 @@ export const againstRunWork = async (
   checks: CheckResult
 ): Promise<AgainstRunWork> => ({
   without: checks.ok ? undefined : await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))),
-  dirs: [
-    `${view.paths.work}${path.sep}`,
-    new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
-  ]
+  dirs: [`${view.paths.work}${path.sep}`, checkDirs(loaded.paths.cache)]
 });
 
 /** The failing steps that are not the copy's: those the run's work fails the same way. */

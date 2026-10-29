@@ -327,10 +327,17 @@ export const picturesOf = (output: string): string[] => {
 };
 
 /**
- * The picture a shot says it took, as its reader reads it: a tall page's parts (`tiles`) when it was cut into them —
- * a phone's whole page shrank to 97 px wide in a viewer — else the picture.
+ * The picture a shot says it took, as its reader reads it: what its steps left — the last picture — when it played
+ * some, `out` being the page before them (a run's designer was shown an empty TARGET LOCK by a look that said the
+ * dossier was drawn); a tall page's parts (`tiles`) when it was cut into them — a phone's whole page shrank to 97 px
+ * wide in a viewer — else the picture.
  */
 export const readablePictures = (output: string, out: string): string[] => {
+  const after = picturesOf(output).at(-1);
+  if (after !== undefined) {
+    return [after];
+  }
+
   try {
     const report: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
     const tiles = isRecord(report) && Array.isArray(report.tiles) ? report.tiles : [];

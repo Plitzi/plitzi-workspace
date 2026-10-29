@@ -37,6 +37,7 @@ import { definitionRefs, fontsToAI, styleVariablesToAI } from '../tools/operatio
 
 import type { Space } from '../helpers';
 import type { Env, ResourceEnvelope } from '../types';
+import type { TSpaceEntitlements } from '@plitzi/sdk-shared/network';
 
 /**
  * How much of the cold-start bundle the SPACE may fill, in characters of JSON.
@@ -123,6 +124,22 @@ const fit = (sections: Section[], budget: number) => {
  *  the resource that answers it in full — eliding one costs a round-trip, never information.
  *
  *  Returns undefined when the URI is not the primer. */
+/**
+ * The space's plan, in one line an agent reads before it plans work: what the plan is called and, by the plan that
+ * includes them, what it does not include — so an agent does not build a custom domain or a function the space cannot
+ * ship, and tells the person which plan would. Capability names, not prose: the refusal carries the words.
+ */
+const planOf = ({ tierLabel, capabilities }: TSpaceEntitlements) => {
+  const notIncluded: Record<string, string[]> = {};
+  for (const [name, { included, requires }] of Object.entries(capabilities)) {
+    if (!included && requires) {
+      (notIncluded[requires] ??= []).push(name);
+    }
+  }
+
+  return { name: tierLabel, ...(Object.keys(notIncluded).length > 0 ? { notIncluded } : {}) };
+};
+
 export const readPrimerResource = (space: Space, env: Env, uri: string): ResourceEnvelope<unknown> | undefined => {
   if (uri !== primerUri(env)) {
     return undefined;
@@ -182,6 +199,7 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
 
   return envelope({
     guide: guideQuickstart,
+    ...(space.entitlements ? { plan: planOf(space.entitlements) } : {}),
     cssProperties,
     cssShorthands,
     ...bundle,

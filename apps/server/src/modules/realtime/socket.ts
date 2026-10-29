@@ -75,6 +75,8 @@ export type SocketDeps = {
   allowedOrigins: readonly string[];
   /** The way to the jobs `$job:<id>` is about — absent where the server runs none. */
   jobs?: JobLookup;
+  /** The deployment's say on whether a space opens its channels (`realtime.admitSpace`). */
+  admitSpace?: (spaceId: number) => Promise<string | undefined>;
 };
 
 /**
@@ -94,7 +96,8 @@ export const handleRealtimeSocket = async ({
   resolveChannels,
   grants,
   allowedOrigins,
-  jobs
+  jobs,
+  admitSpace
 }: SocketDeps): Promise<void> => {
   if (!originAllowed(raw, req, allowedOrigins)) {
     answer(res, { status: 403, error: 'A page of another origin may not open this', reason: 'foreign' });
@@ -102,7 +105,7 @@ export const handleRealtimeSocket = async ({
     return;
   }
 
-  const admission = await admit(req, resolveChannels, grants, jobs);
+  const admission = await admit(req, resolveChannels, grants, jobs, admitSpace);
   if (!admission.ok) {
     answer(res, admission.answer);
 

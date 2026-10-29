@@ -1,7 +1,3 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-
 import { comparePictures } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
@@ -11,7 +7,7 @@ import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
-import { answered, settle } from '../measureState';
+import { answered, patiently, settle, stepFailure } from '../measureState';
 import { parseSteps } from '../shotSteps';
 
 import type { BrowserPage } from '../../../browser';
@@ -118,11 +114,9 @@ export const clickThrough = async (
     const before = moments[moments.length - 1].png;
     const pageBefore = await pageNow(taken.page, how);
     try {
-      await element.click({ timeout: 3000 });
+      await patiently(taken.page, () => element.click({ timeout: 3000 }));
     } catch (error) {
-      return {
-        problem: `${target} could not be clicked — hidden, covered or disabled: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
-      };
+      return { problem: `${target} could not be clicked: ${stepFailure(error)}` };
     }
 
     for (let frame = 1; frame <= Math.max(1, frames); frame += 1) {
@@ -281,19 +275,6 @@ const ACTION_PATH = '/_action';
 const ANSWER_CHARS = 200;
 
 /**
- * An action's answer too long to say, kept whole in a file of its own, out of the project: a tester needed a value past
- * the cut — the seq of what played — and asked the server with curl for it.
- */
-const keptAnswer = async (action: string, output: string): Promise<string> => {
-  const dir = path.join(os.tmpdir(), 'plitzi-answers');
-  await fs.mkdir(dir, { recursive: true });
-  const file = path.join(dir, `${action.replace(/[^\w-]+/g, '-')}-${String(Date.now())}.json`);
-  await fs.writeFile(file, output);
-
-  return file;
-};
-
-/**
  * The space's action run from the page, as its visitor — its cookies, its origin: what it answered, or why it refused.
  * A run's dev-1 read an action's answer with page check --state, the play's step having said nothing of it.
  */
@@ -302,7 +283,7 @@ const runAction = async (
   action: string,
   input: Record<string, unknown>,
   render = false
-): Promise<{ answer: string } | { refused: string }> => {
+): Promise<{ answer: string; output?: unknown } | { refused: string }> => {
   const answer = await page.evaluate(
     async ({ path, body }: { path: string; body: string }) => {
       const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
@@ -322,22 +303,29 @@ const runAction = async (
   if (answer.status < 400 && status === COMPLETED) {
     const output = isRecord(said) && said.output !== undefined ? JSON.stringify(said.output) : undefined;
 
-    return {
-      answer:
-        output === undefined
-          ? 'completed, with no output'
-          : output.length > ANSWER_CHARS
-            ? `${output.slice(0, ANSWER_CHARS)}… (whole in ${await keptAnswer(action, output)})`
-            : output
-    };
+    // Whole in --json, where a check line reads it (`| jq`): a run's line grepped the clipped words for its third storm,
+    // and its whole answer sat in a temporary file no line could name.
+    return output === undefined || !isRecord(said)
+      ? { answer: 'completed, with no output' }
+      : {
+          answer:
+            output.length > ANSWER_CHARS ? `${output.slice(0, ANSWER_CHARS)}… (whole with --json: its output)` : output,
+          output: said.output
+        };
   }
 
   const why = isRecord(said) && typeof said.error === 'string' ? said.error : answer.text.slice(0, 300);
   // A public page plays signed out: a run's designer was answered 401 and not told how to play it signed in.
   const signIn = answer.status === 401 ? ' — the page played signed out: --as <account> plays it signed in' : '';
+  // An action the page runs as it renders (a provider's) is played as the page plays it: a run's agent gave two feeds
+  // a public call trigger to pass a check — the space's public surface widened for a test.
+  const asRender =
+    !render && /"call" trigger/.test(why)
+      ? ` — the page runs it as it renders: play it so, ${JSON.stringify(`render ${action} ${JSON.stringify(input)}`)}, never with a trigger added for the check`
+      : '';
 
   return {
-    refused: `${render ? 'render' : 'action'} ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}${signIn}`
+    refused: `${render ? 'render' : 'action'} ${action} answered ${String(answer.status)}${status ? `, ${status}` : ''}: ${why}${signIn}${asRender}`
   };
 };
 
@@ -359,7 +347,7 @@ export const actStep = async (
   step: ActingStep,
   index: number,
   visitors?: Visitors
-): Promise<{ problem: string } | { answer: string } | undefined> => {
+): Promise<{ problem: string } | { answer: string; output?: unknown } | undefined> => {
   if (step.kind === 'as') {
     const theirs = visitors
       ? await visitors.pageOf(step.account, `${new URL(page.url()).pathname}${new URL(page.url()).search}`)
@@ -425,7 +413,7 @@ export const actStep = async (
     }
 
     if (step.kind === 'hover') {
-      await shown(read.selector).hover({ timeout: 3000 });
+      await patiently(page, () => shown(read.selector).hover({ timeout: 3000 }));
       return undefined;
     }
 
@@ -493,8 +481,8 @@ export const actStep = async (
     const copies = ROW.test(step.target) ? 1 : await page.evaluate(copiesOn, read.selector);
     try {
       await (step.kind === 'click'
-        ? answered(page, () => shown(read.selector).click({ timeout: 3000 }))
-        : shown(read.selector).click({ timeout: 3000 }));
+        ? answered(page, () => patiently(page, () => shown(read.selector).click({ timeout: 3000 })))
+        : patiently(page, () => shown(read.selector).click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
       // dev-1 read a plain locator timeout, with nothing of the navigation in it).
@@ -675,9 +663,7 @@ export const playSteps = async (
         }
       }
     } catch (error) {
-      return {
-        problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
-      };
+      return { problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${stepFailure(error)}` };
     }
   }
 
@@ -761,7 +747,7 @@ export const playedOn = async (
     // A step whose element never answers — a click that waits past its time — is a step that did not happen, said in
     // a line: thrown, a run's look printed a TimeoutError's stack and went on to compare nothing.
     const done = await actStep(page, step, index, visitors).catch((error: unknown) => ({
-      problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`
+      problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${stepFailure(error)}`
     }));
     if (done && 'problem' in done) {
       return done;

@@ -173,6 +173,7 @@ const NetworkContextProvider = ({
        * space that has been paid up since the last load stops saying it is over.
        */
       setSdkStore('render.overQuota', Space.render?.overQuota ?? false);
+      setSdkStore('render.badge', Space.render?.badge ?? false);
 
       setInternalData({
         schema: { ...EMPTY_SCHEMA.schema, ...schemaFromWire(Space.schema) },

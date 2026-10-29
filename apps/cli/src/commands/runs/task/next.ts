@@ -2,11 +2,14 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { briefText, readBrief } from './brief';
+import { shownText } from './show';
 import { FOLLOW_MS } from '../../../options';
 import { isPrincipal } from '../../../runs/agents/leads';
 import { DESIGN_LOOK, DESIGNER } from '../../../runs/agents/team';
 import { acceptanceText } from '../../../runs/core/model';
 import { copyOf } from '../../../runs/core/paths';
+import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import {
   acceptanceAccount,
   acceptanceAddresses,
@@ -16,19 +19,18 @@ import {
 } from '../../../runs/plan/pagesOf';
 import { DESIGN_READING } from '../../../runs/plan/reading';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
+import { EVERYONE } from '../../../runs/talk/messages';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
+import { showTask } from '../../../runs/view/show';
 import { projectExec } from '../../../scaffold/packageManager';
 import { shellWord } from '../../shared/terminal';
-import { act, runOf } from '../shell';
-import { briefText, readBrief } from './brief';
-import { shownText } from './show';
-import { LARGE_OUTPUT } from '../../../runs/findings/cost';
-import { showTask } from '../../../runs/view/show';
 import { takeOnRead } from '../review/takeOnRead';
+import { act, runOf } from '../shell';
 import { BEFORE_STOP, messageLines } from '../text';
 
 import type { Brief } from './brief';
 import type { RunTask } from '../../../runs/core/model';
+import type { Message } from '../../../runs/talk/messages';
 import type { NextTask, TakenTask } from '../../../runs/tasks';
 import type { TaskShown } from '../../../runs/view/show';
 import type { RunCommandOptions } from '../shell';
@@ -169,6 +171,38 @@ export const lookCommand = (task: RunTask, drawnAt: readonly string[], also: str
 };
 
 /**
+ * What its approval will put in, checked as the review starts: its change together with what the run approved since its
+ * copy was made — a merge that fails is said before the review is done, not at `--approve`.
+ */
+const mergedText = (review: NonNullable<NextTask['review']>): string[] => {
+  const { merged } = review;
+  if (!merged) {
+    return [];
+  }
+
+  const together = `put together with what the run approved since its copy was made (${merged.since.join(', ')})`;
+  if (merged.conflict !== undefined) {
+    return [
+      chalk.yellow(
+        `  ⚠ Its change does not go in ${together}: ${merged.conflict} — its approval is refused the same way: send it back now (plitzi task review ${review.task.id} --changes "…") to redo it on the run's version`
+      )
+    ];
+  }
+
+  if (merged.failing) {
+    return [
+      chalk.yellow(
+        `  ⚠ ${together}, it fails the project's checks (${merged.failing.join(', ')}), which its copy alone passed — its approval is refused for it: send it back now (plitzi task review ${review.task.id} --changes "…") naming what fails, or review its copy knowing it`
+      )
+    ];
+  }
+
+  return [
+    `  ${together.charAt(0).toUpperCase()}${together.slice(1)}, it passes the project's checks${merged.runFails ? ` but for ${merged.runFails.join(', ')}, which the run's work fails the same way without it — not its own` : ''}: what you review is what goes in`
+  ];
+};
+
+/**
  * A review, as `task next` hands it — whatever step it is, a designer's look or a tester's QA: what to look at, what for,
  * and how to say it.
  */
@@ -194,6 +228,7 @@ const reviewText = (review: NonNullable<NextTask['review']>, agent: string): str
       : []),
     ...earlierText(review),
     `  It changed: ${review.changed.join(', ') || 'nothing said'} — in its copy, ${review.copy}`,
+    ...mergedText(review),
     // A designer's look is set beside the run before it, measured — its dress too; any other looks at it as it went.
     ...(review.noPage
       ? [
@@ -344,7 +379,10 @@ const takenText = (taken: TakenTask & { brief?: Brief }): string =>
                 `  Compare with the original (page shot <path> --compare ${taken.reference} --within <section> --dress), read its computed styles, measure`
               ])
         ]
-      : [`  Its files: ${taken.files.join(', ')}`]),
+      : // The brief below says them, each with its size: said here only without it.
+        taken.brief === undefined
+        ? [`  Its files: ${taken.files.join(', ')}`]
+        : []),
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     taken.brief === undefined
       ? `  Run its commands in its copy — cd ${taken.work} — with your token, and they know the task: start with plitzi task context`
@@ -353,9 +391,31 @@ const takenText = (taken: TakenTask & { brief?: Brief }): string =>
     isResearch(taken.task)
       ? '  See your stage first — each line run once: plitzi run open <stage.json> --dry-run --lines; done: plitzi task complete --found "…" [--tasks <stage.json>], in the copy — the lead approves it'
       : '  Done: plitzi task check --fix (what lint and format fix by themselves, first), then plitzi task complete — in the copy',
-    ...messageLines(taken.messages),
+    ...messageLines(taken.brief === undefined ? taken.messages : besideBrief(taken.messages, taken.brief)),
     ...(taken.brief === undefined ? [] : ['', briefText(taken.brief)])
   ].join('\n');
+
+/**
+ * What was said to a task, beside its brief in the same answer: the run's notes are the brief's "What holds for the whole
+ * run", and an amend's restatement is the brief as amended — each said once. A run's brief ran to 21k characters, a
+ * fifth of it the same words twice, read again on every turn after it.
+ */
+export const besideBrief = (messages: readonly Message[], brief: Brief): Message[] => {
+  const notes = new Set(brief.readBefore === undefined ? brief.runNotes : []);
+
+  return messages.flatMap(message =>
+    message.to === EVERYONE && notes.has(message.text)
+      ? []
+      : message.amended !== undefined && brief.readBefore === undefined
+        ? [
+            {
+              ...message,
+              text: `The lead amended this task (${message.amended.join(', ')}): the brief below is as amended`
+            }
+          ]
+        : [message]
+  );
+};
 
 export const taskTake = (taskId: string, options: RunCommandOptions & { role?: string }): Promise<void> =>
   act(
