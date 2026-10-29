@@ -32,7 +32,7 @@ const proxyWith = (fetch: typeof globalThis.fetch, transform?: ImageTransform) =
     cacheDir: cacheDir(),
     fetch,
     transform,
-    lookup: PUBLIC
+    outbound: { lookup: PUBLIC }
   });
 
 describe('the image endpoint', () => {
@@ -133,7 +133,7 @@ describe('the image endpoint', () => {
         cacheDir: cacheDir(),
         fetch,
         transform,
-        lookup: PUBLIC,
+        outbound: { lookup: PUBLIC },
         now: () => clock
       });
 

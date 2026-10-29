@@ -23,6 +23,10 @@ authoring and the elements learnt from the runs.
 
 ## To do when you upgrade
 
+- **`createServer({ outbound: { privateOrigins } })` replaces `allowPrivatePluginHosts`.** A space's requests — a
+  plugin's address, a server `query`, `http.request`, a connector, a function's `fetch` — reach no private address but
+  the origins the deployment names as its own: a development machine whose bucket is on localhost writes
+  `outbound: { privateOrigins: ['http://localhost:9000'] }` where it wrote `allowPrivatePluginHosts: true`.
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
   plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22
@@ -1306,9 +1310,10 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 ## Authoring (`@plitzi/sdk-authoring`)
 
 - **`server-query-unresolved`** refuses a `runtime: 'server'` provider whose `query` the page server cannot read —
-  templated, bound, a token bound to the visitor, the visitor's cookies (`credentials: 'include'`), another method than GET, neither `https://…` nor `/…` — which drew
-  empty for ever: ask it with an `action`, whose input takes the address, or from the browser. One rule for authoring
-  and the server, `serverQueryOf` (`@plitzi/sdk-shared/schema`).
+  bound, a template over what the browser alone holds (a `state`, `auth`, another provider — the space's variables
+  and `navigation` are the server's too), the visitor's cookies (`credentials: 'include'`), another method than GET,
+  neither `https://…` nor `/…` — which drew empty for ever. One rule for authoring and the server,
+  `serverQueryProblem` / `serverQueryOf` (`@plitzi/sdk-shared/schema`).
 
 - **`whileRunning('skip', …)` is kept in the document**, and read back by `specFromSpace`: it used to be dropped as
   the default, so a channel's `onMessage` flow that said `skip` on purpose still met `message-while-running` — whose
@@ -1507,11 +1512,16 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 ## Server (`@plitzi/sdk-server`)
 
 - **A server provider reads another site's address while the page is built**: `apiContainer({ runtime: 'server',
-  query: 'https://…' })` is asked by the page server — GET, the headers it declares, never the visitor's cookies or a
-  private address (`fetchOutbound`), held to 5 MB and to the element's budget — so the page arrives with it instead of
-  filling in after hydration. It drew empty before, with nothing said. `getRscData` is now built for every server
-  that does not write its own, since an address needs nothing configured. A query no resolver reads — or a path no
-  file answers — says why where the page reads it while developing.
+  query: '{{ apiUrl }}/posts/{{ navigation.routeParams.id }}' })` is filled in with what the page server knows — the
+  space's variables for this host, `navigation` — and asked there: GET, the headers it declares, never the visitor's
+  cookies, held to 5 MB and to the element's budget — so the page arrives with it instead of filling in after
+  hydration. It drew empty before, with nothing said. `getRscData` is now built for every server that does not write
+  its own, since an address needs nothing configured. A query no resolver reads — or a path no file answers — says
+  why where the page reads it while developing.
+- **`outbound.privateOrigins`: the deployment's own origins on its network.** Every request a space writes goes through
+  `fetchOutbound`, which refuses a private address — and refused the deployment's own local S3 or internal API with
+  it, so a self-hosted server could not read its own files. The origins named there are reached, and only they; one
+  that is no `scheme://host:port` is refused when the server is built.
 
 - **A render action's ceiling is said where it is written**: `ActionLimits` gives each default, and `timeoutMs` and
   `defineAction` say that a page's section is cut at 5 s (`rsc.elementTimeoutMs`) whatever the action's own 10 s.

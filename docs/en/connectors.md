@@ -270,10 +270,13 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    site's address (`externalQueryResolver`) — is answered `{ status, data }`, as `useApi` publishes it, and its mock is
    wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads `<source>.data.<field>` whichever
    runtime the provider has, so moving one to the server changes no path. Which of them reads a `query` is one rule,
-   `serverQueryOf` (`sdk-shared/schema`): another site's address is asked with GET and the headers the provider
-   declares, through `fetchOutbound` (no private network, every redirect judged), held to 5 MB, never with the
-   visitor's cookies; an answer that is no success or no JSON is the provider's error. A query only the browser can ask
-   — templated, bound, with the visitor's cookies, another method — is refused by authoring (`server-query-unresolved`) and, in a document written
+   `serverQueryOf` (`sdk-shared/schema`): its template is filled in with what the page server knows of the visit —
+   the space's variables resolved for this host (`resolveVariables`, as the browser resolves them) and `navigation` —
+   into `RscResolveContext.templateData`; another site's address is asked with GET and the headers the provider
+   declares, through `fetchOutbound` (no private network but the deployment's `outbound.privateOrigins`, every
+   redirect judged), held to 5 MB, never with the visitor's cookies; an answer that is no success or no JSON is the
+   provider's error. A query only the browser can ask
+   — bound, a template over what the browser alone holds (a state, auth, another provider), the visitor's cookies, another method — is refused by authoring (`server-query-unresolved`) and, in a document written
    before, said where the page reads it while developing; so is a path no file answers.
 4. **Only a page's tree and its layouts are resolved.** `collectServerElements` never walks into a component's tree,
    so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`). Server data is on

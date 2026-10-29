@@ -97,7 +97,38 @@ export type HostLookup = (hostname: string) => Promise<{ address: string }[]>;
 const resolveAll: HostLookup = hostname => dnsLookup(hostname, { all: true, verbatim: true });
 
 /**
- * Checks the URL an authored document asked for, including what its hostname RESOLVES to.
+ * What the deployment says of the requests its spaces write.
+ *
+ * `privateOrigins` are the origins on its own network an authored request may reach all the same — its storage, its
+ * CDN, its API, put there by whoever runs it and named in its configuration, never by a document. Every other private
+ * address stays closed: a self-hosted server whose files live on a local S3 serves them to its pages without opening
+ * the network they sit in. `lookup` is how a name is resolved, a test's to replace.
+ */
+export type OutboundOptions = { lookup?: HostLookup; privateOrigins?: readonly string[] };
+
+/**
+ * The deployment's own origins as `new URL(…).origin` writes them, refusing what is not one — said when the server is
+ * built, rather than as every request that should have reached it failing.
+ */
+export const privateOriginsOf = (origins: readonly string[] | undefined): string[] =>
+  (origins ?? []).map(origin => {
+    let url: URL;
+    try {
+      url = new URL(origin);
+    } catch {
+      throw new Error(`outbound.privateOrigins: "${origin}" is not an origin — write it as http://host:port`);
+    }
+
+    if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.origin !== origin.replace(/\/$/, '')) {
+      throw new Error(`outbound.privateOrigins: "${origin}" is not an origin — write it as http://host:port, no path`);
+    }
+
+    return url.origin;
+  });
+
+/**
+ * Checks the URL an authored document asked for, including what its hostname RESOLVES to — unless it is one of the
+ * origins the deployment names as its own (`privateOrigins`).
  *
  * The literal check alone was never enough and said so: `http://metadata.example.com/` is a public-looking name
  * whose A record can be `169.254.169.254`, and nothing about the string gives that away. So the name is resolved
@@ -109,9 +140,16 @@ const resolveAll: HostLookup = hostname => dnsLookup(hostname, { all: true, verb
  * answering a public address here and a private one when the socket is opened a moment later — which is closed
  * only by resolving and connecting to the same address, and that belongs in the transport rather than here.
  */
-export const assertOutboundAllowed = async (url: URL, lookup: HostLookup = resolveAll): Promise<void> => {
+export const assertOutboundAllowed = async (
+  url: URL,
+  { lookup = resolveAll, privateOrigins = [] }: OutboundOptions = {}
+): Promise<void> => {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error(`Request protocol "${url.protocol}" is not allowed`);
+  }
+
+  if (privateOrigins.includes(url.origin)) {
+    return;
   }
 
   if (isBlockedHost(url.hostname)) {
@@ -178,13 +216,13 @@ export const fetchOutbound = async (
   base: typeof fetch,
   url: URL,
   init: RequestInit = {},
-  lookup: HostLookup = resolveAll
+  options: OutboundOptions = {}
 ): Promise<Response> => {
   let target = url;
   let request = init;
 
   for (let hop = 0; ; hop += 1) {
-    await assertOutboundAllowed(target, lookup);
+    await assertOutboundAllowed(target, options);
 
     const response = await base(target.toString(), { ...request, redirect: 'manual' });
     const location = response.headers.get('location');

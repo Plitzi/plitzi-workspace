@@ -40,6 +40,7 @@ const context = (
     flat: { provider1: provider, ...flat },
     routeParams,
     queryParams,
+    templateData: { variables: {}, routeParams, queryParams, origin: '' },
     // A real RSC resolve always carries the deployment it is rendering: the resolver reads the manifest as of it.
     req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,
@@ -69,6 +70,7 @@ const boundContext = (attributes: Record<string, unknown>, boundSource: string):
     flat: { posts: provider, text1: text },
     routeParams: {},
     queryParams: {},
+    templateData: { variables: {}, routeParams: {}, queryParams: {}, origin: '' },
     // A real RSC resolve always carries the deployment it is rendering: the resolver reads the manifest as of it.
     req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,

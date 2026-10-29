@@ -4,6 +4,7 @@ import { fetchConnectorRecords } from './engine';
 import { collectBoundPaths, projectSlice } from './projection';
 
 import type { ConnectorCredential, ConnectorFilter, ConnectorManifest } from './types';
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 import type { RscElementResolver } from '../rsc/resolveRscData';
 import type { SpaceRevision } from '@plitzi/sdk-shared';
 
@@ -75,7 +76,7 @@ const toPage = (queryParams: Record<string, string>, attributes: ProviderAttribu
  * draft, not an error.
  */
 export const createConnectorResolver =
-  ({ getConnector, getCredential, fetchImpl }: ConnectorLookups): RscElementResolver =>
+  ({ getConnector, getCredential, fetchImpl }: ConnectorLookups, outbound?: OutboundOptions): RscElementResolver =>
   async ({ element, flat, routeParams, queryParams, spaceId, environment, req }) => {
     // Environment AND revision from the same record: read one from the deployment and the other from the resolve
     // context and the pair can name a snapshot nobody published.
@@ -113,7 +114,8 @@ export const createConnectorResolver =
         routeParams,
         queryParams
       },
-      fetchImpl
+      fetchImpl,
+      outbound
     });
 
     // The state flags travel with the data so an empty or failed provider is authorable with the elements that

@@ -68,12 +68,17 @@ const functionFetch =
       Object.entries(init.headers ?? {}).map(([name, value]) => [name, render(value)])
     );
 
-    return fetchOutbound(ctx.fetch, url, {
-      method: init.method ?? 'GET',
-      headers,
-      body: init.body === undefined ? undefined : render(init.body),
-      signal: init.signal ? AbortSignal.any([ctx.signal, init.signal]) : ctx.signal
-    });
+    return fetchOutbound(
+      ctx.fetch,
+      url,
+      {
+        method: init.method ?? 'GET',
+        headers,
+        body: init.body === undefined ? undefined : render(init.body),
+        signal: init.signal ? AbortSignal.any([ctx.signal, init.signal]) : ctx.signal
+      },
+      ctx.outbound
+    );
   };
 
 /**

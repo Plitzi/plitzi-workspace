@@ -1,5 +1,6 @@
 import { createActionsModule } from './index';
 import { actionLookupsOf, dbDriversOf, functionsConfigOf } from '../../core/configSeam';
+import { privateOriginsOf } from '../../helpers/outboundGuard';
 import { realtimeModuleFor } from '../realtime';
 
 import type { ActionsModule } from './index';
@@ -42,6 +43,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     signingSecret: config.action?.signingSecret,
     dbDrivers: dbDriversOf(config.action?.dbDrivers),
     email: config.action?.email,
+    outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
     onRun: config.action?.onRun,
     realtime: realtimeModuleFor(config)
   });

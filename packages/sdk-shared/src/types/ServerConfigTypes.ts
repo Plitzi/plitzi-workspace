@@ -272,6 +272,22 @@ export type SSRRscConfig = {
   elementTimeoutMs?: number;
 };
 
+/**
+ * What the requests a space's documents write may reach from inside this server — a server provider's `query`, an
+ * action's `http.request`, a connector, a function's `fetch`, a plugin's address.
+ *
+ * Each is typed by whoever edits a space and sent from a trusted network position, so none reaches a private address
+ * (`localhost`, this server's own network, the cloud's metadata) — but the deployment's own storage, CDN or API may sit
+ * on that network, put there by whoever runs it. Those origins are named here, and only they are reached.
+ */
+export type SSROutboundConfig = {
+  /**
+   * Origins on this server's own network a space's requests may reach: `http://localhost:9000` for a local S3, the
+   * cluster's `http://api.internal` — an origin (`scheme://host:port`), no path. Everything else private stays closed.
+   */
+  privateOrigins?: string[];
+};
+
 export type SSRServerConfig = {
   port?: number;
   host?: string;
@@ -346,12 +362,9 @@ export type SSRServerConfig = {
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
   autoLoadSchemaPlugins?: boolean;
   /**
-   * Whether a schema plugin may be read from a private address — `localhost`, the network this server runs in. A
-   * plugin's address is typed by whoever edits a space and read from inside this server, so it answers to the rule
-   * every authored request does and is refused there; turn this on only on a development machine whose bucket is on
-   * localhost. Default: false.
+   * What the requests a space's documents write may reach from inside this server. See {@link SSROutboundConfig}.
    */
-  allowPrivatePluginHosts?: boolean;
+  outbound?: SSROutboundConfig;
   /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
   fonts?: SSRFontsConfig;
   /** Remote pictures resized by this server — see {@link SSRImagesConfig}. Absent, images keep their own `src`. */

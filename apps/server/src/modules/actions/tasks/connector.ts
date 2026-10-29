@@ -95,7 +95,8 @@ const read: ActionTask<ReadParams> = {
         offset: toNumber(params.offset),
         filters: parseFilters(params.filters)
       },
-      fetchImpl: ctx.fetch
+      fetchImpl: ctx.fetch,
+      outbound: ctx.outbound
     });
 
     return { records: result.records, pageInfo: result.pageInfo };
@@ -142,7 +143,8 @@ const write: ActionTask<WriteParams> = {
       resource: params.resource || undefined,
       recordId: params.recordId || undefined,
       values: parseValues(params.values),
-      fetchImpl: ctx.fetch
+      fetchImpl: ctx.fetch,
+      outbound: ctx.outbound
     });
 
     return { record: record ?? null };

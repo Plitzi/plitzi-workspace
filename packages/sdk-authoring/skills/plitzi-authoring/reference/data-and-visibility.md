@@ -86,8 +86,11 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
 - A server provider's `query` is read by the page server too, so the page arrives with it instead of filling in after
   load: a path of the space (`/data/…`) or another site's address (`https://…`, asked with GET and the headers it
-  declares — never the visitor's cookies, never a private address). Templated, bound, with the visitor's cookies or
-  another method is the browser's alone (`server-query-unresolved`): an `action` takes the address as its input.
+  declares — never the visitor's cookies, never a private address the deployment does not name as its own). Its
+  template may read the space's variables and `navigation` (`'{{ apiUrl }}/posts/{{ navigation.routeParams.id }}'`);
+  bound, over a `state` or `auth`, with the visitor's cookies or another method it is the browser's alone
+  (`server-query-unresolved`): an `action` takes that as its input. What the server reads rides in the page's HTML: a
+  file of megabytes the page draws (a map's geometry) stays a browser `query` with `cache: true`.
 
 ### Typed by a sample
 

@@ -1,3 +1,4 @@
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
@@ -18,11 +19,13 @@ import {
 } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
+import { requestOrigin } from '../../core/requestParser';
 import { onAbort } from '../../helpers/onAbort';
 import { serverLog } from '../../helpers/serverLog';
 
 import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 import type { FlagOverrides } from '@plitzi/sdk-shared/flags';
+import type { ServerTemplateData } from '@plitzi/sdk-shared/schema';
 
 /** Everything an element resolver needs to turn one `runtime: 'server'` element into its data slice. */
 export type RscResolveContext = {
@@ -36,6 +39,8 @@ export type RscResolveContext = {
   flat: Record<string, Element>;
   routeParams: Record<string, string | undefined>;
   queryParams: Record<string, string>;
+  /** What the page server knows of the visit as a template reads it — the space's variables for this host, `navigation`. */
+  templateData: ServerTemplateData;
   req: SSRRequest;
   spaceId: number;
   environment: Environment;
@@ -174,6 +179,18 @@ export const resolveRscData = async ({
     return { serverData: {} };
   }
 
+  // Resolved once for the page, as the browser resolves them for it: the variables for this host and this address.
+  const templateData: ServerTemplateData = {
+    variables: resolveVariables(schema.variables, {
+      routeParams,
+      queryParams: req.query,
+      hostname: req.hostname,
+      environment
+    }),
+    routeParams,
+    queryParams: req.query,
+    origin: requestOrigin(req) || `${req.protocol}://${req.hostname}`
+  };
   const byId = new Map(all.map(element => [element.id, element] as const));
   const serverIds = new Set(byId.keys());
   const resolving = new Map<string, Promise<unknown>>();
@@ -251,6 +268,7 @@ export const resolveRscData = async ({
             flat: schema.flat,
             routeParams,
             queryParams: req.query,
+            templateData,
             req,
             spaceId,
             environment,

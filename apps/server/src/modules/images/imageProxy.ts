@@ -9,7 +9,7 @@ import { writeFileAtomic } from '../../helpers/atomicFile';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 
 import type { ImageFormat, ImageTransform } from './transform';
-import type { HostLookup } from '../../helpers/outboundGuard';
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 
 /** What a request for a picture asked: the picture, the width, and what the browser takes (its `Accept`). */
 export type ImageRequest = { url?: string; width?: string; accept?: string };
@@ -23,7 +23,8 @@ export type ImageProxyOptions = {
   fetch: typeof fetch;
   /** `sharp`'s, when it is installed; without one a picture is passed through, cached. */
   transform?: ImageTransform;
-  lookup?: HostLookup;
+  /** The deployment's own origins a picture may come from on its network (`outbound.privateOrigins`); a test's lookup. */
+  outbound?: OutboundOptions;
   now?: () => number;
 };
 
@@ -145,7 +146,7 @@ type Fetched = { changed: true; body: Buffer; meta: OriginalMeta } | { changed: 
  * its own network.
  */
 export const createImageProxy = (options: ImageProxyOptions): ((request: ImageRequest) => Promise<ImageAnswer>) => {
-  const { domains, cacheDir, transform, lookup, now = Date.now } = options;
+  const { domains, cacheDir, transform, outbound, now = Date.now } = options;
   const failedUntil = new Map<string, number>();
   const revalidating = oneAtATime<undefined>();
   const fetchingOriginal = oneAtATime<{ body: Buffer; meta: OriginalMeta }>();
@@ -221,7 +222,7 @@ export const createImageProxy = (options: ImageProxyOptions): ((request: ImageRe
         allowedFetch,
         source,
         { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
-        lookup
+        outbound
       );
     } catch (error) {
       throw error instanceof HostNotAllowed

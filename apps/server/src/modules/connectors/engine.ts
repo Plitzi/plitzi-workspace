@@ -14,6 +14,7 @@ import type {
   ConnectorResponseMapping,
   ConnectorResult
 } from './types';
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 
 /** Everything that describes the connection rather than one call: the same for every endpoint the manifest holds. */
 type ConnectorConnection = Omit<ConnectorManifest, 'endpoints'>;
@@ -28,6 +29,8 @@ export type FetchConnectorOptions = {
   query?: ConnectorQuery;
   /** Injected so tests — and a future edge runtime — can supply their own transport. */
   fetchImpl?: typeof fetch;
+  /** The deployment's own origins on its network a manifest may name (`outbound.privateOrigins`). */
+  outbound?: OutboundOptions;
 };
 
 export type WriteConnectorOptions = {
@@ -39,6 +42,8 @@ export type WriteConnectorOptions = {
   recordId?: string;
   values?: Record<string, unknown>;
   fetchImpl?: typeof fetch;
+  /** The deployment's own origins on its network a manifest may name (`outbound.privateOrigins`). */
+  outbound?: OutboundOptions;
 };
 
 /** Only scalars can become a URL fragment, a header or a record key. Anything else is treated as absent. */
@@ -236,7 +241,8 @@ export const fetchConnectorRecords = async ({
   endpoint = DEFAULT_READ_ENDPOINT,
   credential = {},
   query = {},
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  outbound
 }: FetchConnectorOptions): Promise<ConnectorResult> => {
   const { endpoints, ...connection } = manifest;
   // Looked up by presence rather than by index: the map is open, and an element can name an endpoint that was
@@ -281,11 +287,12 @@ export const fetchConnectorRecords = async ({
 
   // The same rule the `http.request` task follows, and for the same reason: a manifest's `baseUrl` is typed by a
   // customer, and this call goes out from inside the cluster.
-  const response = await fetchOutbound(fetchImpl, url, {
-    method,
-    headers,
-    body: sendsBody ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined
-  });
+  const response = await fetchOutbound(
+    fetchImpl,
+    url,
+    { method, headers, body: sendsBody ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined },
+    outbound
+  );
   if (!response.ok) {
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${url.pathname}`);
   }
@@ -328,7 +335,8 @@ export const writeConnectorRecord = async ({
   resource,
   recordId,
   values = {},
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  outbound
 }: WriteConnectorOptions): Promise<ConnectorRecord | undefined> => {
   const { endpoints, ...connection } = manifest;
   const operation = endpoints.write?.[action];
@@ -350,11 +358,18 @@ export const writeConnectorRecord = async ({
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(operation.headers ?? {}, variables) };
   headers['Content-Type'] = 'application/json';
 
-  const response = await fetchOutbound(fetchImpl, url, {
-    method: operation.method,
-    headers,
-    body: BODYLESS_METHODS.includes(operation.method) ? undefined : JSON.stringify(wrapBody(values, operation.bodyPath))
-  });
+  const response = await fetchOutbound(
+    fetchImpl,
+    url,
+    {
+      method: operation.method,
+      headers,
+      body: BODYLESS_METHODS.includes(operation.method)
+        ? undefined
+        : JSON.stringify(wrapBody(values, operation.bodyPath))
+    },
+    outbound
+  );
   if (!response.ok) {
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${action} on ${url.pathname}`);
   }

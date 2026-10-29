@@ -1,3 +1,4 @@
+import { privateOriginsOf } from '../../helpers/outboundGuard';
 import { serverLog } from '../../helpers/serverLog';
 import { writeConnectorRecord } from '../connectors/engine';
 
@@ -107,7 +108,8 @@ export const handleAction = async (
       resource,
       recordId: body.recordId,
       values: body.values,
-      fetchImpl: lookups.fetchImpl
+      fetchImpl: lookups.fetchImpl,
+      outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) }
     });
 
     res.setStatus(200);

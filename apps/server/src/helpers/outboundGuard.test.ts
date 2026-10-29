@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { assertOutboundAllowed, fetchOutbound, isBlockedHost } from './outboundGuard';
+import { assertOutboundAllowed, fetchOutbound, isBlockedHost, privateOriginsOf } from './outboundGuard';
 
 const resolvesTo = (address: string) => () => Promise.resolve([{ address }]);
 const unresolvable = () => Promise.reject(new Error('ENOTFOUND'));
@@ -87,15 +87,15 @@ describe('isBlockedHost', () => {
 
 describe('assertOutboundAllowed', () => {
   it('refuses a protocol that is not http', async () => {
-    await expect(assertOutboundAllowed(new URL('file:///etc/passwd'), resolvesTo('1.1.1.1'))).rejects.toThrow(
-      /protocol/
-    );
+    await expect(
+      assertOutboundAllowed(new URL('file:///etc/passwd'), { lookup: resolvesTo('1.1.1.1') })
+    ).rejects.toThrow(/protocol/);
   });
 
   it('refuses a literal private address', async () => {
-    await expect(assertOutboundAllowed(new URL('http://169.254.169.254/'), resolvesTo('1.1.1.1'))).rejects.toThrow(
-      /not allowed/
-    );
+    await expect(
+      assertOutboundAllowed(new URL('http://169.254.169.254/'), { lookup: resolvesTo('1.1.1.1') })
+    ).rejects.toThrow(/not allowed/);
   });
 
   /**
@@ -106,26 +106,52 @@ describe('assertOutboundAllowed', () => {
    */
   it('refuses a public-looking name that resolves somewhere private', async () => {
     await expect(
-      assertOutboundAllowed(new URL('https://metadata.example.com/latest/'), resolvesTo('169.254.169.254'))
+      assertOutboundAllowed(new URL('https://metadata.example.com/latest/'), { lookup: resolvesTo('169.254.169.254') })
     ).rejects.toThrow(/not allowed/);
   });
 
   /** The AAAA-record form of the same thing: a name whose IPv6 answer is a private IPv4 address in disguise. */
   it('refuses a name that resolves to a private IPv4 address mapped into IPv6', async () => {
     await expect(
-      assertOutboundAllowed(new URL('https://api.example.com/'), resolvesTo('::ffff:127.0.0.1'))
+      assertOutboundAllowed(new URL('https://api.example.com/'), { lookup: resolvesTo('::ffff:127.0.0.1') })
     ).rejects.toThrow(/not allowed/);
   });
 
   it('allows a name that resolves somewhere public', async () => {
     await expect(
-      assertOutboundAllowed(new URL('https://api.example.com/'), resolvesTo('93.184.216.34'))
+      assertOutboundAllowed(new URL('https://api.example.com/'), { lookup: resolvesTo('93.184.216.34') })
     ).resolves.toBeUndefined();
+  });
+
+  /**
+   * The deployment's own storage, CDN or API on its network: named in its configuration by whoever runs it, never by a
+   * document — and only that origin, not the network it sits in.
+   */
+  it('allows an origin the deployment names as its own, and no other on its network', async () => {
+    const privateOrigins = privateOriginsOf(['http://localhost:9000']);
+
+    await expect(
+      assertOutboundAllowed(new URL('http://localhost:9000/seeds/catalogue.json'), { privateOrigins })
+    ).resolves.toBeUndefined();
+    await expect(assertOutboundAllowed(new URL('http://localhost:6379/'), { privateOrigins })).rejects.toThrow(
+      /not allowed/
+    );
+    await expect(assertOutboundAllowed(new URL('http://169.254.169.254/'), { privateOrigins })).rejects.toThrow(
+      /not allowed/
+    );
+  });
+
+  it('refuses, when the server is built, a private origin that is no origin', () => {
+    expect(privateOriginsOf(['https://cdn.internal:8443/'])).toEqual(['https://cdn.internal:8443']);
+    expect(() => privateOriginsOf(['http://localhost:9000/bucket'])).toThrow('no path');
+    expect(() => privateOriginsOf(['localhost:9000'])).toThrow('is not an origin');
   });
 
   /** Nothing to judge, and the request is about to fail on its own with a better error than this could give. */
   it('allows a name that does not resolve', async () => {
-    await expect(assertOutboundAllowed(new URL('https://nowhere.invalid/'), unresolvable)).resolves.toBeUndefined();
+    await expect(
+      assertOutboundAllowed(new URL('https://nowhere.invalid/'), { lookup: unresolvable })
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -133,9 +159,9 @@ describe('fetchOutbound', () => {
   it('refuses a private destination without sending anything', async () => {
     const base = vi.fn<typeof fetch>();
 
-    await expect(fetchOutbound(base, new URL('http://[::ffff:127.0.0.1]/'), {}, publicLookup)).rejects.toThrow(
-      /not allowed/
-    );
+    await expect(
+      fetchOutbound(base, new URL('http://[::ffff:127.0.0.1]/'), {}, { lookup: publicLookup })
+    ).rejects.toThrow(/not allowed/);
     expect(base).not.toHaveBeenCalled();
   });
 
@@ -148,9 +174,9 @@ describe('fetchOutbound', () => {
   it('refuses a redirect to a private destination', async () => {
     const base = vi.fn<typeof fetch>().mockResolvedValueOnce(redirectTo('http://169.254.169.254/latest/meta-data/'));
 
-    await expect(fetchOutbound(base, new URL('https://api.example.com/'), {}, publicLookup)).rejects.toThrow(
-      /not allowed/
-    );
+    await expect(
+      fetchOutbound(base, new URL('https://api.example.com/'), {}, { lookup: publicLookup })
+    ).rejects.toThrow(/not allowed/);
     expect(base).toHaveBeenCalledTimes(1);
     expect(base.mock.calls[0]?.[1]?.redirect).toBe('manual');
   });
@@ -161,7 +187,12 @@ describe('fetchOutbound', () => {
       .mockResolvedValueOnce(redirectTo('/v2/items', 301))
       .mockResolvedValueOnce(new Response('ok'));
 
-    const response = await fetchOutbound(base, new URL('https://api.example.com/v1/items'), {}, publicLookup);
+    const response = await fetchOutbound(
+      base,
+      new URL('https://api.example.com/v1/items'),
+      {},
+      { lookup: publicLookup }
+    );
 
     expect(await response.text()).toBe('ok');
     expect(base.mock.calls[1]?.[0]).toBe('https://api.example.com/v2/items');
@@ -172,9 +203,9 @@ describe('fetchOutbound', () => {
       .fn<typeof fetch>()
       .mockImplementation(() => Promise.resolve(redirectTo('https://api.example.com/')));
 
-    await expect(fetchOutbound(base, new URL('https://api.example.com/'), {}, publicLookup)).rejects.toThrow(
-      /redirects/
-    );
+    await expect(
+      fetchOutbound(base, new URL('https://api.example.com/'), {}, { lookup: publicLookup })
+    ).rejects.toThrow(/redirects/);
   });
 
   /** What a browser's fetch does too: 303 always, and 301/302 after a POST, continue as a bodiless GET. */
@@ -188,7 +219,7 @@ describe('fetchOutbound', () => {
       base,
       new URL('https://api.example.com/submit'),
       { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } },
-      publicLookup
+      { lookup: publicLookup }
     );
 
     const followed = base.mock.calls[1]?.[1];
@@ -203,7 +234,12 @@ describe('fetchOutbound', () => {
       .mockResolvedValueOnce(redirectTo('https://api.example.com/moved', 307))
       .mockResolvedValueOnce(new Response('ok'));
 
-    await fetchOutbound(base, new URL('https://api.example.com/submit'), { method: 'PUT', body: '{}' }, publicLookup);
+    await fetchOutbound(
+      base,
+      new URL('https://api.example.com/submit'),
+      { method: 'PUT', body: '{}' },
+      { lookup: publicLookup }
+    );
 
     expect(base.mock.calls[1]?.[1]?.method).toBe('PUT');
     expect(base.mock.calls[1]?.[1]?.body).toBe('{}');
@@ -220,7 +256,7 @@ describe('fetchOutbound', () => {
       base,
       new URL('https://api.example.com/'),
       { headers: { Authorization: 'Bearer secret', Cookie: 'a=b', 'X-Trace': '1' } },
-      publicLookup
+      { lookup: publicLookup }
     );
 
     const headers = new Headers(base.mock.calls[1]?.[1]?.headers);

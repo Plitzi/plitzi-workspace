@@ -107,12 +107,17 @@ const request: ActionTask<HttpRequestParams> = {
 
     // Protocol, literal address and what the NAME resolves to, for this URL and every redirect it takes — one rule,
     // shared with the connector engine, which reaches the outside world on a manifest's say-so as this does on a flow's.
-    const response = await fetchOutbound(ctx.fetch, url, {
-      method,
-      headers,
-      body: hasBody ? JSON.stringify(parseJsonParam(params.body, 'Body')) : undefined,
-      signal: ctx.signal
-    });
+    const response = await fetchOutbound(
+      ctx.fetch,
+      url,
+      {
+        method,
+        headers,
+        body: hasBody ? JSON.stringify(parseJsonParam(params.body, 'Body')) : undefined,
+        signal: ctx.signal
+      },
+      ctx.outbound
+    );
 
     const text = await response.text();
     let data: unknown = text;

@@ -6,6 +6,7 @@ import { writeFileAtomic } from '../../helpers/atomicFile';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { serverLog } from '../../helpers/serverLog';
 
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 import type { PluginManager } from '../../plugins/manager';
 import type { OfflineDataRaw, PluginManifest, PluginRaw, PluginSourceFile } from '@plitzi/sdk-shared';
 
@@ -48,15 +49,13 @@ const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCach
   }
 };
 
-/** Where a plugin may be read from: anywhere public, and — on a development machine only — a private address too. */
-type ManifestReach = { allowPrivateHosts: boolean };
-
-const fetchAndStore = async (dir: string, resource: string, reach: ManifestReach): Promise<PluginManifest | null> => {
+const fetchAndStore = async (dir: string, resource: string, reach: OutboundOptions): Promise<PluginManifest | null> => {
   try {
     const url = `${resource}/plugin-manifest.json`;
     // The resource is written by whoever edits the space and fetched from inside the cluster, so it answers to the
-    // same outbound rule as a flow's `http.request`; a refusal lands in the catch below like any other failed fetch.
-    const res = reach.allowPrivateHosts ? await fetch(url) : await fetchOutbound(fetch, new URL(url));
+    // same outbound rule as a flow's `http.request` — the deployment's own bucket reached as one of its
+    // `privateOrigins` — and a refusal lands in the catch below like any other failed fetch.
+    const res = await fetchOutbound(fetch, new URL(url), {}, reach);
     if (!res.ok) {
       serverLog.warn('SSR', `Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
       return null;
@@ -74,7 +73,7 @@ const fetchAndStore = async (dir: string, resource: string, reach: ManifestReach
   }
 };
 
-const revalidate = (dir: string, resource: string, reach: ManifestReach): void => {
+const revalidate = (dir: string, resource: string, reach: OutboundOptions): void => {
   if (refreshing.has(resource)) {
     return;
   }
@@ -86,7 +85,7 @@ const revalidate = (dir: string, resource: string, reach: ManifestReach): void =
 const fetchManifest = async (
   pluginManager: PluginManager,
   resource: string,
-  reach: ManifestReach
+  reach: OutboundOptions
 ): Promise<PluginManifest | null> => {
   const dir = manifestCacheDir(pluginManager);
 
@@ -126,7 +125,7 @@ const isAbsoluteUrl = (url: string): boolean => url.startsWith('http://') || url
 const registerPlugin = async (
   pluginManager: PluginManager,
   plugin: PluginRaw,
-  reach: ManifestReach
+  reach: OutboundOptions
 ): Promise<string | null> => {
   if (!plugin.resource || !isAbsoluteUrl(plugin.resource)) {
     return null;
@@ -168,7 +167,7 @@ const registerPlugin = async (
 export const registerExternalPlugins = async (
   pluginManager: PluginManager,
   offlineData: OfflineDataRaw | undefined,
-  reach: ManifestReach = { allowPrivateHosts: false },
+  reach: OutboundOptions = {},
   registered: ReadonlySet<string> = new Set()
 ): Promise<string[]> => {
   const plugins = offlineData?.plugins?.filter(plugin => !registered.has(plugin.type));

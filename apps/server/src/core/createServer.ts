@@ -1,4 +1,5 @@
 import { actionLookupsOf, connectorLookupsOf } from './configSeam';
+import { privateOriginsOf } from '../helpers/outboundGuard';
 import { actionsModuleFor } from '../modules/actions/moduleFor';
 import { dataDirLookup } from '../modules/actions/runtime/projectData';
 import { connectorRscData } from '../modules/rsc/connectorRscData';
@@ -14,6 +15,7 @@ import type {
   SSRActionConfig,
   SSRPageAdapters,
   SSRRscConfig,
+  SSROutboundConfig,
   SSRPageServerConfig,
   SSRServer,
   SSRServerConfig
@@ -94,6 +96,7 @@ const withConnectorRsc = <
     publicDir?: string;
     dataDir?: string;
     devMode?: boolean;
+    outbound?: SSROutboundConfig;
   }
 >(
   config: T
@@ -117,7 +120,8 @@ const withConnectorRsc = <
     // A server with no actions has no lookup to put the folder in; it reads it the same way all the same.
     data: actions?.lookups.getData ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
     elementTimeoutMs: config.rsc?.elementTimeoutMs,
-    sayFailures: config.devMode === true
+    sayFailures: config.devMode === true,
+    outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) }
   });
 
   return resolved;

@@ -130,14 +130,19 @@ describe('lintSpace', () => {
     });
 
     /** A server provider with a query the page server cannot read drew empty for ever, with nothing said. */
-    it('server-query-unresolved, for a server query only the browser could ask', () => {
+    it('server-query-unresolved, for a server query only the browser could ask — not one over what the server knows', () => {
       const { schema, style } = story();
       const { attributes } = schema.flat['post-data'];
       const codes = () => lintSpace({ schema, style }).errors.map(error => error.code);
       delete attributes.action;
 
-      attributes.query = 'https://api.example.com/posts/{{ navigation.routeParams.slug }}';
+      attributes.query = 'https://api.example.com/posts/{{ state.slug }}';
       expect(codes()).toContain('server-query-unresolved');
+      attributes.query = 'items.json';
+      expect(codes()).toContain('server-query-unresolved');
+      // What the page server knows of the visit is filled in there, as the browser fills it in.
+      attributes.query = 'https://api.example.com/posts/{{ navigation.routeParams.slug }}';
+      expect(codes()).not.toContain('server-query-unresolved');
       attributes.query = 'https://api.example.com/posts';
       attributes.method = 'post';
       expect(codes()).toContain('server-query-unresolved');

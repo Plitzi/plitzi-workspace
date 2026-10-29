@@ -63,7 +63,15 @@ const schema = (attributes: Record<string, unknown>, rsc: Schema['rsc'] | null):
   ...(rsc ? { rsc } : {})
 });
 
-const req = { method: 'GET', path: '/', query: {}, ctx: {} } as unknown as SSRRequest;
+const req = {
+  method: 'GET',
+  path: '/',
+  query: {},
+  headers: {},
+  hostname: 'shop.example.com',
+  protocol: 'https',
+  ctx: {}
+} as unknown as SSRRequest;
 
 const resolve = (attributes: Record<string, unknown>, rsc: Schema['rsc'] | null = { enabled: true }) => {
   const lookups = { getAction: () => Promise.resolve(entry) };
@@ -144,15 +152,46 @@ describe('connectorRscData', () => {
         } as unknown as Parameters<typeof getRscData>[0])
       ).serverData;
 
-    expect(await read({ query: 'https://api.example.com/{{ navigation.routeParams.id }}' })).toEqual({
+    expect(await read({ query: 'https://api.example.com/{{ state.id }}' })).toEqual({
       gallery: {
         [RSC_FAILURE]:
-          'the page server cannot read its query: it is written with a template, which the browser alone fills in'
+          "the page server cannot read its query: its template reads `state`, which the browser alone holds — the page server knows the space's variables and `navigation` (a route param is `navigation.routeParams.x`)"
       }
     });
     expect(await read({ query: '/hours.json' })).toEqual({
       gallery: { [RSC_FAILURE]: "no file of this server's answers /hours.json" }
     });
+  });
+
+  // `{{ dataPath }}` is the space's variable as this host resolves it — the same value the browser would have read.
+  it('fills a query in with the space’s variables for this host before reading it', async () => {
+    const getRscData = connectorRscData({ sayFailures: true });
+    const withVariable = schema({ query: '{{ dataPath }}' }, { enabled: true });
+    withVariable.variables = [
+      {
+        name: 'dataPath',
+        category: 'urls',
+        type: 'text',
+        value: '/elsewhere.json',
+        subValues: [
+          {
+            when: { combinator: 'and', rules: [{ field: 'hostname', operator: '=', value: 'shop.example.com' }] },
+            value: '/hours.json'
+          }
+        ]
+      }
+    ];
+
+    const payload = await getRscData({
+      req,
+      spaceId: 1,
+      environment: 'main',
+      user: undefined,
+      ids: undefined,
+      loadOfflineData: () => Promise.resolve({ schema: withVariable })
+    } as unknown as Parameters<typeof getRscData>[0]);
+
+    expect(payload.serverData).toEqual({ gallery: { [RSC_FAILURE]: "no file of this server's answers /hours.json" } });
   });
 
   it('leaves an element naming a connector this deployment cannot read out of the payload', async () => {

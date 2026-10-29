@@ -2,10 +2,11 @@ import { serverQueryOf } from '@plitzi/sdk-shared/schema';
 
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
-import { externalQueryResolver } from './externalQueryResolver';
+import { externalQueryReader } from './externalQueryReader';
 import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 import type { ActionsModule } from '../actions';
 import type { RscElementResolver } from './resolveRscData';
 import type { ProjectDataLookup } from '../actions/runtime/projectData';
@@ -34,7 +35,8 @@ export const connectorRscData = ({
   publicDir,
   data,
   elementTimeoutMs,
-  sayFailures = false
+  sayFailures = false,
+  outbound
 }: {
   connectors?: ConnectorLookups;
   actions?: { lookups: ActionLookups; module: ActionsModule };
@@ -49,12 +51,14 @@ export const connectorRscData = ({
   elementTimeoutMs?: number;
   /** While developing: a failed element says why where the page reads it. */
   sayFailures?: boolean;
+  /** The deployment's own origins a connector or a query may reach on its network (`outbound.privateOrigins`). */
+  outbound?: OutboundOptions;
 }): NonNullable<SSRAdapters['getRscData']> => {
-  const resolveConnector = connectors ? createConnectorResolver(connectors) : undefined;
+  const resolveConnector = connectors ? createConnectorResolver(connectors, outbound) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
   const resolveDataFile = data ? dataLookupResolver(data) : undefined;
-  const resolveExternal = externalQueryResolver();
+  const readExternal = externalQueryReader({ outbound });
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
@@ -76,7 +80,7 @@ export const connectorRscData = ({
 
     // A query the page server cannot read is said, never resolved to nothing: authoring refuses it
     // (`server-query-unresolved`), and a document written before that rule says why where the page reads it.
-    const query = serverQueryOf(context.element);
+    const query = serverQueryOf(context.element, context.templateData);
     if (query === undefined) {
       return undefined;
     }
@@ -86,14 +90,19 @@ export const connectorRscData = ({
     }
 
     if (query.kind === 'url') {
-      return resolveExternal(context);
+      return readExternal(query, context.signal);
     }
 
+    // A file is read at the path its template came to, as the browser would have asked for it.
+    const atPath = {
+      ...context,
+      element: { ...context.element, attributes: { ...context.element.attributes, query: query.path } }
+    };
     // The project's data first — its folder, or the space's as the platform keeps it, read through one lookup:
     // `/data/…` is its, wherever `publicDir` has a folder of that name.
-    const fromData = resolveDataFile ? await resolveDataFile(context) : undefined;
+    const fromData = resolveDataFile ? await resolveDataFile(atPath) : undefined;
     const fromFile =
-      fromData !== undefined ? fromData : resolvePublicFile ? await resolvePublicFile(context) : undefined;
+      fromData !== undefined ? fromData : resolvePublicFile ? await resolvePublicFile(atPath) : undefined;
     if (fromFile === undefined) {
       throw new Error(`no file of this server's answers ${query.path}`);
     }

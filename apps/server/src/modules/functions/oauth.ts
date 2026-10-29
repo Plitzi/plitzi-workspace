@@ -76,7 +76,7 @@ type Pending = {
 /** What the parts of a run `ctx.oauth` uses are: its fetch, its kv, its credentials, its sealing, who and where. */
 export type OAuthRun = Pick<
   ActionTaskContext,
-  'fetch' | 'kv' | 'credential' | 'seal' | 'open' | 'origin' | 'oauthCallbackOrigin' | 'user' | 'signal'
+  'fetch' | 'outbound' | 'kv' | 'credential' | 'seal' | 'open' | 'origin' | 'oauthCallbackOrigin' | 'user' | 'signal'
 >;
 
 const refused = (message: string, code: FunctionOAuthRefusal): ActionRefusal => new ActionRefusal(message, { code });
@@ -98,7 +98,7 @@ const endpointsOf = async (run: OAuthRun, connection: string, spec: FunctionOAut
       published = kept.endpoints;
     } else {
       const url = new URL(`${spec.issuer.replace(/\/+$/, '')}/.well-known/openid-configuration`);
-      const answer = await fetchOutbound(run.fetch, url, { method: 'GET', signal: run.signal });
+      const answer = await fetchOutbound(run.fetch, url, { method: 'GET', signal: run.signal }, run.outbound);
       const metadata: unknown = answer.ok ? await answer.json().catch(() => undefined) : undefined;
       const authorize = isRecord(metadata) ? stringField(metadata, 'authorization_endpoint') : undefined;
       const token = isRecord(metadata) ? stringField(metadata, 'token_endpoint') : undefined;
@@ -177,12 +177,12 @@ const tokenRequest = async (
     }
   }
 
-  const answer = await fetchOutbound(run.fetch, new URL(url), {
-    method: 'POST',
-    headers,
-    body: form.toString(),
-    signal
-  });
+  const answer = await fetchOutbound(
+    run.fetch,
+    new URL(url),
+    { method: 'POST', headers, body: form.toString(), signal },
+    run.outbound
+  );
   const body: unknown = await answer.json().catch(() => undefined);
   const said = isRecord(body) ? body : {};
   if (!answer.ok || typeof said.access_token !== 'string') {
@@ -418,15 +418,20 @@ export const oauthFor = (
       // The code's own signal cuts this request short — the token's renewal too — and the run's ends it regardless.
       const signal = init.signal ? AbortSignal.any([run.signal, init.signal]) : run.signal;
       const send = (tokens: Tokens) =>
-        fetchOutbound(run.fetch, url, {
-          method: init.method ?? 'GET',
-          headers: {
-            ...init.headers,
-            authorization: `${/^bearer$/i.test(tokens.type) ? 'Bearer' : tokens.type} ${tokens.access}`
+        fetchOutbound(
+          run.fetch,
+          url,
+          {
+            method: init.method ?? 'GET',
+            headers: {
+              ...init.headers,
+              authorization: `${/^bearer$/i.test(tokens.type) ? 'Bearer' : tokens.type} ${tokens.access}`
+            },
+            body: init.body,
+            signal
           },
-          body: init.body,
-          signal
-        });
+          run.outbound
+        );
       const tokens = await tokensOf(connection, owner, { signal });
       if (!tokens) {
         throw notConnected(connection);

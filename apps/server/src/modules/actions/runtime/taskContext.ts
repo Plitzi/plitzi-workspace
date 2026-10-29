@@ -147,6 +147,7 @@ export const taskContextFor = (
       return { manifest, credential };
     },
     fetch: runFetch,
+    ...(config.outbound ? { outbound: config.outbound } : {}),
     kv: namespaceKv(kv, request.spaceId),
     dbDrivers: config.dbDrivers ?? [],
     email,

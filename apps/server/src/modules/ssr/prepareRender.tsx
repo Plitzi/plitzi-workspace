@@ -33,6 +33,7 @@ import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { hydrationPayload, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
+import { privateOriginsOf } from '../../helpers/outboundGuard';
 import { ssrPaintedCookieName } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
@@ -394,7 +395,7 @@ export const prepareRender = async (
         registerExternalPlugins(
           pluginManager,
           offlineData,
-          { allowPrivateHosts: config.allowPrivatePluginHosts === true },
+          { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
           pluginBaseNames
         )
       )

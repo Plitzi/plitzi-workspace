@@ -39,8 +39,8 @@ describe('registerExternalPlugins', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  /** A development machine's bucket is on localhost, and a server told so reads a plugin from there. */
-  it('reads a plugin from a private host only where the server allows it', async () => {
+  /** A development machine's bucket is on localhost: a server that names it as its own reads a plugin from there. */
+  it('reads a plugin from a private host only when it is one of the server’s own origins', async () => {
     const manifest = { version: '1.0.0', assets: { main: { type: 'script', isMain: true, src: 'widget.mjs' } } };
     vi.stubGlobal(
       'fetch',
@@ -49,7 +49,12 @@ describe('registerExternalPlugins', () => {
     const local = spaceWith('http://localhost:9000/bucket/widget');
 
     expect(await registerExternalPlugins(pluginManager(), local)).toEqual([]);
-    expect(await registerExternalPlugins(pluginManager(), local, { allowPrivateHosts: true })).toEqual(['widget']);
+    expect(
+      await registerExternalPlugins(pluginManager(), local, { privateOrigins: ['http://localhost:6379'] })
+    ).toEqual([]);
+    expect(
+      await registerExternalPlugins(pluginManager(), local, { privateOrigins: ['http://localhost:9000'] })
+    ).toEqual(['widget']);
   });
 
   it('registers a plugin published on a public host', async () => {
@@ -73,7 +78,7 @@ describe('registerExternalPlugins', () => {
       await registerExternalPlugins(
         pluginManager(),
         spaceWith('https://93.184.216.34/widget/1.0.0'),
-        { allowPrivateHosts: false },
+        {},
         new Set(['widget'])
       )
     ).toEqual([]);

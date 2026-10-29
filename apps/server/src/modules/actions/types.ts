@@ -1,5 +1,6 @@
 import type { LaterAnswer, LaterRequest } from './jobs/later';
 import type { ActionEmailSender } from './runtime/email';
+import type { OutboundOptions } from '../../helpers/outboundGuard';
 import type { FunctionsConfig } from '../functions/config';
 import type { FunctionJobs, FunctionPresence, FunctionVisitor } from '../functions/contract';
 import type { SpaceFunctions } from '../functions/protocol';
@@ -237,6 +238,11 @@ export type ActionTaskContext = {
   credential: (identifier: string) => Promise<ActionCredential | undefined>;
   connector: (connectorId: string) => Promise<ResolvedConnector | undefined>;
   fetch: typeof fetch;
+  /**
+   * What an authored request may reach from here, handed to `fetchOutbound` with every one: the deployment's own
+   * origins on its network (`outbound.privateOrigins`) and nothing else private. Absent, nothing private.
+   */
+  outbound?: OutboundOptions;
   /** Key/value storage, namespaced to this space by the runner — a key one space writes is a key only it reads. */
   kv: ActionKvStore;
   /** The database engines this deployment registered, for the `db.query` task. */
@@ -377,6 +383,8 @@ export type ActionsConfig = {
   jobs?: ActionJobsConfig | false;
   /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */
   rateLimit?: { webhookPerMinute?: number };
+  /** The deployment's own origins on its network a flow's request may reach (`outbound.privateOrigins`), validated. */
+  outbound?: OutboundOptions;
   /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
   dbDrivers?: ActionDbDriver[];
   /** The limits on `email.send`: messages per space per day, and whether an SMTP host may be on a private network. */

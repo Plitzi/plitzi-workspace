@@ -1,6 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { serverQueryOf, whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
+import { serverQueryOf, serverQueryProblem, whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
 
 import { didYouMean } from '../suggest';
 import { stringsIn } from './context';
@@ -10,6 +10,24 @@ import { checkPageTarget } from './pages';
 
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
+
+/** No visit at all: what a query written without a template comes to does not depend on one. */
+const NO_VISIT = { variables: {}, routeParams: {}, queryParams: {}, origin: '' };
+
+/**
+ * Why the address a query is written as is none the page server reads — known before a visit only when it is written
+ * without a template; one with a template is held to what it reads (`serverQueryProblem`), and its address to the visit.
+ */
+const literalQueryProblem = (element: Element): string | undefined => {
+  const { query } = element.attributes;
+  if (typeof query !== 'string' || query.includes('{{')) {
+    return undefined;
+  }
+
+  const read = serverQueryOf(element, NO_VISIT);
+
+  return read?.kind === 'unresolved' ? read.why : undefined;
+};
 
 const ADDRESS_PARAM = /navigation\.(?:routeParams|queryParams)\.([\w-]+)/g;
 
@@ -211,14 +229,14 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
   // A server provider asked with a `query` alone is read by the page server — a file of its own, another site's
   // address — and what it cannot read was left out of the page with nothing said: the provider drew empty for ever,
   // since the browser never asks a server provider.
-  const query =
+  const unreadable =
     type === 'apiContainer' && element.definition.runtime === 'server' && !serverOnly
-      ? serverQueryOf(element)
+      ? (serverQueryProblem(element, ctx.variables) ?? literalQueryProblem(element))
       : undefined;
-  if (query?.kind === 'unresolved') {
+  if (unreadable !== undefined) {
     ctx.error(
       'server-query-unresolved',
-      `${where} is resolved on the server (\`runtime: 'server'\`), and the page server cannot read its \`query\`: ${query.why}. Ask it with an \`action\`, whose input takes the address (\`navigation.routeParams.id\`) and whose secrets stay on the server — or drop \`runtime: 'server'\` and let the browser ask it.`,
+      `${where} is resolved on the server (\`runtime: 'server'\`), and the page server cannot read its \`query\`: ${unreadable}. Ask it with an \`action\`, whose input takes what the browser holds and whose secrets stay on the server — or drop \`runtime: 'server'\` and let the browser ask it.`,
       element.id
     );
   }
