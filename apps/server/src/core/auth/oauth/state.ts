@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 export interface OAuthFlowState {
   provider: string;
   nonce: string;
+  /** OpenID Connect's `nonce`, apart from `nonce` (the `state` the provider echoes): an ID token must carry this one. */
+  idNonce: string;
   verifier: string;
   redirect: string;
 }
@@ -44,6 +46,7 @@ export const startFlow = (
   const state: OAuthFlowState = {
     provider,
     nonce: base64Url(randomBytes(16)),
+    idNonce: base64Url(randomBytes(16)),
     verifier: createCodeVerifier(),
     redirect
   };
@@ -77,5 +80,11 @@ export const consumeFlow = (
     return null;
   }
 
-  return { provider: claims.provider, nonce: claims.nonce, verifier: claims.verifier, redirect: claims.redirect };
+  return {
+    provider: claims.provider,
+    nonce: claims.nonce,
+    idNonce: claims.idNonce,
+    verifier: claims.verifier,
+    redirect: claims.redirect
+  };
 };

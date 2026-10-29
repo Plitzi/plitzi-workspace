@@ -20,7 +20,8 @@ const socialStub = (overrides: Partial<SocialAuth> = {}): SocialAuth =>
   ({
     list: () => [{ id: 'google', label: 'Google', url: '/auth/google/login' }],
     get: () => undefined,
-    start: () => ({ redirectTo: 'https://accounts.google.test/o/oauth2?x=1', stateCookie: 'nonce.v', ttl: 600 }),
+    start: () =>
+      Promise.resolve({ redirectTo: 'https://accounts.google.test/o/oauth2?x=1', stateCookie: 'nonce.v', ttl: 600 }),
     complete: () => Promise.resolve({ ok: true as const, redirectTo: 'https://app.test/home', account: { id: 7 } }),
     ...overrides
   }) as unknown as SocialAuth;
@@ -104,7 +105,7 @@ describe('social auth route handlers', () => {
   });
 
   it('reads the provider from the path when the host router fills in no params', async () => {
-    const start = vi.fn(() => ({ redirectTo: 'https://p.test/go', stateCookie: 'n', ttl: 60 }));
+    const start = vi.fn(() => Promise.resolve({ redirectTo: 'https://p.test/go', stateCookie: 'n', ttl: 60 }));
     const routes = handlersFor(socialStub({ start }));
     const { res } = response();
 
@@ -113,8 +114,39 @@ describe('social auth route handlers', () => {
     expect(start).toHaveBeenCalledWith('github', undefined);
   });
 
+  it('answers which single sign-on an address has, and a 404 that says so when its domain has none', async () => {
+    const sso = vi.fn((email: string) =>
+      Promise.resolve(
+        email === 'ada@acme.test'
+          ? { provider: { id: 'sso-1', label: 'Acme', url: '/auth/sso-1/login' } }
+          : { error: 'elsewhere.test has no single sign-on here: sign in another way' }
+      )
+    );
+    const routes = handlersFor(socialStub({ sso }));
+    const found = response();
+    const none = response();
+
+    await run(routes, '/sso', request('/sso', { email: 'ada@acme.test' }), found.res);
+    await run(routes, '/sso', request('/sso', { email: 'bob@elsewhere.test' }), none.res);
+
+    expect(found.state).toMatchObject({ status: 200, body: { provider: { id: 'sso-1' } } });
+    expect(none.state).toMatchObject({
+      status: 404,
+      body: { error: expect.stringContaining('no single sign-on') as unknown }
+    });
+  });
+
+  it('says a provider cannot be reached when starting it throws, rather than hanging', async () => {
+    const routes = handlersFor(socialStub({ start: () => Promise.reject(new Error('issuer down')) }));
+    const { res, state } = response();
+
+    await run(routes, '/:provider/login', request('/sso-1/login'), res);
+
+    expect(state).toMatchObject({ status: 502, body: { error: 'sso-1 cannot be reached to sign in right now' } });
+  });
+
   it('answers 404 for a provider that is not registered, rather than redirecting nowhere', async () => {
-    const routes = handlersFor(socialStub({ start: () => undefined }));
+    const routes = handlersFor(socialStub({ start: () => Promise.resolve(undefined) }));
     const { res, state } = response();
 
     await run(routes, '/:provider/login', request('/nope/login'), res);
@@ -286,6 +318,6 @@ describe('social auth route handlers', () => {
 
     const paths = get.mock.calls.map(call => String(call[0]));
 
-    expect(paths).toEqual(['/providers', '/continue', '/:provider/login', '/:provider/callback']);
+    expect(paths).toEqual(['/providers', '/continue', '/sso', '/:provider/login', '/:provider/callback']);
   });
 });

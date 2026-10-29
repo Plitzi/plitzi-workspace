@@ -1167,10 +1167,24 @@ Postgres, MySQL, Mongo or an identity service:
 | `findByRefreshToken(token)` | renewal — the row is its revocation switch. `refreshExpiresAt` overrides the token's own expiry |
 | `findMembership(userId, spaceId)` | space-level permission checks (`auth.can`) |
 | `createAccount`, `findByEmail`, `setResetToken`, `sendMail`, … | signup, password reset, verification |
+| `passwordSignInRefused(account)` | an organization's own sign-in required: asked once the password is proved, its words a 401 `sso-required` |
 
 **What is absent decides what the deployment offers.** No `createAccount`, no signup — and the route answers 404
 rather than failing at runtime. Declining a flow is one act: do not implement it. `GET /auth/capabilities` publishes
 the result, so a sign-in page renders what the backend actually answers instead of a button that dead-ends.
+
+### Signing in through a provider
+
+`createSocialAuth` (`@plitzi/sdk-server/auth`) is the authorization-code grant with PKCE, its state in a signed cookie,
+and `mountSocialAuthRoutes` (`@plitzi/sdk-server/handlers`) its routes: `/providers`, `/<provider>/login`,
+`/<provider>/callback`, `/continue`, `/sso`. Google and GitHub are built in — credentials alone register one — and
+`createOidcProvider({ id, label, issuer, clientId, clientSecret, redirectUri })` is any OpenID Connect issuer: its
+discovery document read and checked to be the issuer's, the profile read from the ID token verified against its
+published keys (asymmetric only), for this client, with the flow's `nonce`. What stays yours is `linkAccount(provider,
+profile)` — who comes back — and, for an organization's own sign-in set up by its administrators rather than by the
+deployment (single sign-on), `resolveProvider(id, redirectUri)`, a provider resolved per request, with
+`providerForEmail(email)`: which one signs an address in, what `GET /sso?email=` answers. A refusal of yours is an
+`OAuthFailure(reason, message, detail?)`: the browser lands on its target with `?error=<reason>&detail=<detail>`.
 
 ### …or don't: `@plitzi/sdk-server/mysql`
 

@@ -96,7 +96,9 @@ its data is the report's (`report.json`). The person shares the folder with Plit
 A notice is named by its place (`n3`) and withdrawn by it, saying why (`run notice --withdraw n3 "…"`): kept in the log
 as withdrawn, out of the finish, the report and the feedback. After `--apply` the run is amended from its kept records
 (`records/`, its identities as digests prove its lead): `run notice … --run <run>` adds or withdraws, the feedback is
-written again and `report.md` and `report.json` say each amendment and when (`amend.ts`).
+written again and `report.md` and `report.json` say each amendment and when (`amend.ts`). The lead's own CLI outlives
+the run's folder for it (`tmp/plitzi-runs-over/<run>/lead/plitzi`, named by `--apply` and `run abort`): a lead's
+amendment after applying answered "who is calling?".
 It holds:
 - the findings of Plitzi and of the machine;
 - the experience, combined (below);
@@ -368,7 +370,10 @@ their estimates, from the last ten runs, with five tasks at least) and say the e
 `run open <plan>` while a run is open adds the plan's tasks to it, as its next stage — a stage may be its `tasks` alone, its name and
 goal the run's, and its team's size is held to the run's open work with it: their copies start from what it approved, they may
 wait for its tasks (`dependsOn`), their files are backed up beside its own, and one `finish` writes the stages into the
-project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds. `run
+project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds — but
+for one it holds only as part of its page: a task naming a page holds every file only that page reaches, and a stage's
+task naming one of those the holder never named and has not changed gets it, the holder told (`releasable`,
+`handOverReleased`; a run's header fix could not be a task of its own, its 26 files held for the one its task named). `run
 open <stage> --dry-run --lines` — anyone's, a scout's too — runs each of the stage's acceptance lines once on the run's approved work (`tryLines.ts`, on
 the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
 value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
@@ -612,7 +617,9 @@ A tester in the team gives every developer task a task of its tests, `<id>-tests
 task's acceptance, not its code, by an agent that did not write it. It is a developer's (`role: developer`,
 `testsOf: [<id>]`): the tester's Opus goes to its reviews, the tests are developer work on Sonnet (Carlos). Never
 written by an agent that worked what it tests (`writesTests`: `task next` offers it to none of them, `task next <task>` and
-`task reassign --to` refuse it); with no developer that may — a team of one — it is the tester's (`spareTests`). The
+`task reassign --to` refuse it); with no developer that may — a team of one — it is the tester's (`spareTests`). A task
+that writes its own tests gets none (`Untested.besides`): another module it touches is said as its own test file to
+add, not a second agent's task. The
 keeper starts a developer for one only among those that may write it (`agentsNeeded`), and `run open --dry-run --rehearse` plays it the
 same. Its files are where the project's tests are
 — a page's spec in its Playwright config's `testDir` (`visual/<page>.spec.ts` when it names none) when the project has
@@ -772,7 +779,9 @@ once it is approved. It answers the schedule, each agent's idle time, the critic
 ready before an agent could take it, and the files changed by tasks at work at the same time — one holding a file
 another touches, two touching one, or two new pages registering in one entry — and plays it again for each number of
 agents, `null` where some task is never done. One estimate and one review a task: rounds of changes and questions are
-not in it, and it says so.
+not in it, and it says so. When the critical path decides the run, its advice names the task on it that most wait for,
+to give a task of its contract alone first — the types, the element's declaration, the ids — so they start beside its
+work.
 
 ## The run's folder (`paths.ts`)
 
@@ -883,12 +892,13 @@ much of the run waits for it; between the two it decides (`idle`).
 
 **A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any card at work — research too — past
 the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — Carlos: past ten
-minutes something is usually wrong) is asked where it stands by the run itself, again at each limit more
+minutes something is usually wrong) — counted on the agent's own time, the CLI's checks apart (below) — is asked where
+it stands by the run itself, again at each limit more
 (`longTask.ts`, `askStandings.ts`: the lead's `run watch` and the keeper ask in the lead's voice, `task message
 @<agent> --standing` — a run's lead, woken for two long research cards, asked neither). The agent answers whole —
 `task tell --standing --fraction <0-1> --eta <minutes> --done "…" --left "…" [--held-by "…"]` (`--about <task>`
 holding none), refused when a part is missing — as the answer to that asking, its fraction kept as the task's
-progress. The standing wakes the lead (`decide`: a note only to know that is still the lead's to decide on) with what
+progress; a `complete` answers it too (`asksStandingOnly`), and nothing asks while one of the CLI's checks runs. The standing wakes the lead (`decide`: a note only to know that is still the lead's to decide on) with what
 it may do: let it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back
 (Carlos: the lead decides on the answer). None within `STANDING_GRACE_MS` (3 min) wakes the lead to decide without
 it (`long-task` `x<n>:unanswered`): the agent is at something long of its own. A message reaches an agent only with
@@ -906,6 +916,8 @@ project's suite — `playwright test`, or a script that is one (`suiteScripts`) 
 (2 min) keeps how long it took (`AcceptanceResult.ms`), said at `task check` and `complete`; a failed one whose
 Playwright reused the copy served on `PORT` says its config's `webServer` never started (`reused`). While a check or a
 complete runs, the task gives a sign of life every minute (`keepAlive`): one long pass read "no signal — reassign it".
+The time it holds the agent is said apart (`checking`, `checkedMs`) and never counted as the agent's (`workedMs`): a
+run asked "where do you stand?" four minutes into a page's spec, then refused the very complete that answered it.
 Every task approved, `run watch` wakes the lead to close (`leadItems`): one sat open past its last approval. A
 `complete` with the lead's word unread is refused with it, read (`unreadForHolder`): a run's dev-1 completed 30 s after
 a send-back, its scope message unread, and the round answered none of it.
@@ -944,7 +956,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   failing as the last one of the task did, on the same input (`input`, the check's key) and the same failures, says so
   (`failedAlikeAt`) — dev-1 checked twelve times in nine minutes. A backup an editor left (`roomBrowse.test.ts-E` from
   macOS's `sed -i -E`) fails the check and is refused at `complete` (`backupFiles`, `strays.ts`). A failing step's
-  output keeps, under each failing line, its deepest lines (`tail`: tsc's cause, under the overloads it tried).
+  output keeps, under each failing line, its deepest lines (`tail`: tsc's cause, under the overloads it tried). **The
+  checks of one copy run one at a time** (`oneCheckAtATime`, `keepAlive.ts`: the copy's `check.lock`): a second `task
+  check` or `complete` waits for the first and says so — what serves the first is the CLI's, never "a server of your
+  own" to stop (a run's dev-2 stopped it, and broke the first).
 - **A task sent back waits for its agent:** while that agent is at another task of its own, the one sent back is
   parked for it (`parkedFor`, "dev-1 at t-menu first") and handed to it by its next `task next`, before anything new —
   never to a free agent, and never read "no signal — reassign it" meanwhile: the agent that wrote it has the context
@@ -963,9 +978,12 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
   read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails
-  only the finish's, on the whole result (`CheckOptions.final`). A warning of the space's lint in a file the task
-  changed refuses `complete` (`checks-failed`) — there before it or not, a file it hands over has none; one written so
-  on purpose says it with `quiet` — where one in a file it did not change is said as there before it.
+  only the finish's, on the whole result (`CheckOptions.final`). A warning of the space's lint the task **adds** to a
+  file it changed refuses `complete` (`checks-failed`); one written so on purpose says it with `quiet`. One the file had
+  in the run's work before the task — counted by file and rule (`olderWarnings.ts`) — is the run's, not the task's: kept
+  as a run notice, the project's backlog once the run ends, and said in `complete`'s answer. Refused for warnings older
+  than them, a run's tasks renamed ids an acceptance line read (the line then passed on nothing) and handed back a
+  one-value change to a long file.
 - **Complete:** refused with a proposal to it unanswered, and with its copy gone (said as gone, with the take that
   starts it again — not as every file removed). The copy against `start.json`: a change to another task's file is
   refused (`claimed`) naming each; to a shared file, or one in no task, taken by turns when nobody holds it and a request
@@ -995,7 +1013,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   changed the project's file while the task worked on it. That one stops the approval, naming the file; the lead decides: `--overwrite` writes the task's
   version over the change at the finish — recorded as an override, said in `run status`, the finish and the report, and
   the other version kept — or `--changes` sends it back to take the project's version and redo. Approved, it lets its
-  files go to whoever waits, makes ready what depended on it, and makes the integration tasks due.
+  files go to whoever waits, makes ready what depended on it, and makes the integration tasks due. A review taken says,
+  as it starts, whether the task put together with what the run approved since passes the checks (`mergedNow`), and a
+  pass is kept for the approval. An approval whose merge fails the checks only the way the run's approved work already
+  fails without it goes in, told to the lead (`runFails`): finished tasks were held in review behind another's breakage.
 - **Waiting** on a file or an answer is a state; `--follow` (`task claim --wait`, `task propose --wait`, `task tell --ask`) stays until it comes,
   giving the task's sign of life meanwhile.
 - **Signal:** its commands and progress, and the newest write among its files in its copy. Without one for
@@ -1051,7 +1072,9 @@ task past twice its estimate or three pieces of work says why from the log (`ove
 escalations, sends-back, what was stacked beside it, its breadth, that nobody cut it), and a close left open past
 fifteen minutes is the lead's (`slow-close`). Plitzi's problems are by how each is taken up — what Plitzi got wrong,
 where the agents went round it, where it stood in the way, and what was said, to triage (`findings/plitziClass.ts`);
-each names its part when it is not the CLI (`areaOfSaid`, the part a notice names most). Which of them to change, and
+each names its part when it is not the CLI (`areaOfSaid`, the part a notice names most). A plan or a change judged —
+`run open --dry-run` refusing a plan, the checks refusing an approval — is no CLI error, and an answer asked as data
+(`--json`, piped to a tool) is no answer too long. Which of them to change, and
 how: [improving the CLI](./improving-the-cli.md). What the lead's summary adds is what no record says: how it felt,
 and where the next run starts.
 

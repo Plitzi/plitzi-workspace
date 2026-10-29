@@ -1,6 +1,6 @@
 # RFC 0029 — Plans and entitlements: charge for the cloud, not for the code
 
-- **Status:** Accepted — phases 1–3 built (2026-10-29), phase 4 but for white-label and the client editor seat (§12)
+- **Status:** Accepted — phases 1–3 built (2026-10-29), phase 4 but for the client editor seat (§12)
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-29
 - **Scope:** `plitzi-sdk-server` (plans, subscriptions, metering, every gate, the website's pricing and console),
@@ -109,9 +109,13 @@ yearly price is a plan row of its own, `interval: year`, at ten months).
 
 ### 4.3 Partner (agencies) — phase 4
 
-Wholesale pricing on site plans by volume, white-label (the builder on the agency's domain, its logo on the client's
-sign-in), a **client editor** seat (content without the design), usage reports per client site to bill from, and a
+Wholesale pricing on site plans by volume, a **client editor** seat (content without the design), usage reports per client site to bill from, and a
 **handover** that makes the client a direct Plitzi customer with the agency rewarded in account credit. See §9.
+
+**Plitzi itself is never white-label** (Carlos, 2026-10-29): it is one strong brand, as Webflow is — an agency's
+clients sign in to Plitzi and edit in Plitzi, never under the agency's name or domain. What is built with Plitzi is
+another matter: a site or a product made from a template carries its maker's brand alone (no badge on a paid plan),
+so white-label products are made with Plitzi — templates are how.
 
 ### 4.4 Self-hosted and Lifetime
 
@@ -329,7 +333,10 @@ churn by reason; gross margin per site.
   (`role.workspace_id`, `services/auth/spaceRoles.ts`, `/workspaces/:id/roles`, the website's Roles page), given like
   the platform's to a team, a person or as the member role; **the audit log** — what is done in a workspace kept on
   every plan (`workspace_audit_event`, `services/audit/`), read on Business (`/workspaces/:id/audit`, JSON or CSV, the
-  website's Audit log). **SSO is not built**: §13.
+  website's Audit log); **single sign-on** — any OpenID Connect issuer, for the email domain a workspace proves by DNS
+  (`createOidcProvider` and run-time providers in sdk-server; `workspace_sso`, `services/sso/`, `/workspaces/:id/sso`,
+  the website's Single sign-on page and the auth space's): its people who are not members join on a free seat, and,
+  required, the domain's password sign-in is refused (`sso-required`).
 - A downgraded site's custom domain (§13): served with the notice for `DOWNGRADED_DOMAIN_GRACE_DAYS` (14) from the
   first request after the lapse, then "This page is not available." there; `*.plitzi.app` keeps the draft.
 - The JSON download is free on every plan (§3, the code is the customer's): the builder's export offers JSON on Free.
@@ -350,7 +357,7 @@ churn by reason; gross margin per site.
   retention and gross margin per site.
 - Carlos's: the unit costs, read from the infrastructure's bill.
 
-**Phase 4 — partners** (built 2026-10-29 but for white-label and the client editor seat)
+**Phase 4 — partners** (built 2026-10-29 but for the client editor seat)
 - The partner plan (Partner, a workspace plan beside Business, `features.partner`): wholesale prices on the site plans
   it buys, by the paid sites it holds counting the one bought (`PARTNER_DISCOUNTS`, 15 % from the first, 25 % from
   ten, 35 % from fifty — hypotheses), each tier a gateway coupon applied at checkout; a tier with no coupon refuses the
@@ -362,19 +369,15 @@ churn by reason; gross margin per site.
   administer; the space moves (`spaces/move.ts`, shared with `/spaces/:id/move`), a lifetime site on it is freed, the
   agency's site plan for it ends at its renewal and the agency is credited `PARTNER_HANDOVER_CREDIT_MONTHS` of it —
   on Stripe as customer balance; on Paddle, which keeps none, the answer says the amount to credit by hand.
-- Not built, and why: **white-label** — the builder on an agency's domain is the builder served per host (DNS, TLS,
-  the app's own origin), and the agency's logo on the client's sign-in needs a workspace's brand (a logo kept and
-  served) the auth space reads; **the client editor seat** needs a builder mode that edits content without design,
-  which the permissions do not separate today (`spaceUpdate` is both). Each is a decision of Carlos's before it is
-  built.
+- Not built, and why: **the client editor seat** needs a builder mode that edits content without design, which the
+  permissions do not separate today (`spaceUpdate` is both) — a decision of Carlos's before it is built. Plitzi itself
+  is not white-label (§4.3).
 
 ## 13. Open questions
 
 - The exact allowances and prices — after the cost per site is measured (phase 3), with phase 1's hypotheses until then.
-- SSO (Business): a workspace's own identity provider — the auth kernel's providers are the deployment's today. Built
-  (a generic OIDC provider per workspace in sdk-server, its secret kept encrypted, a verified email domain), or Business
-  sold without it until it is. `/pricing` names it.
-- White-label and the client editor seat (§4.3, phase 4): Carlos's decision before either is built.
+- The client editor seat (§4.3, phase 4): Carlos's decision before it is built.
 
 Decided: multi-agent runs on the user's machine stay free (§3: they cost Plitzi nothing); the JSON download is the raw
-documents, on every plan; a downgraded site's custom domain shows the notice for 14 days.
+documents, on every plan; a downgraded site's custom domain shows the notice for 14 days; Plitzi itself is not white-label
+(what is built with it, from templates, may be).

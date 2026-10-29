@@ -1,6 +1,6 @@
 import { requestProfileJson } from '../client';
 
-import type { OAuthProfile, OAuthProvider, OAuthProviderConfig } from '../types';
+import type { OAuthProfile, OAuthProvider, OAuthProviderConfig, OAuthTokens } from '../types';
 
 const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 const TOKENINFO_URL = 'https://oauth2.googleapis.com/tokeninfo';
@@ -37,7 +37,7 @@ export const createGoogleProvider = (config: OAuthProviderConfig): OAuthProvider
     return info.aud === config.clientId;
   },
 
-  async fetchProfile(accessToken: string): Promise<OAuthProfile> {
+  async fetchProfile({ accessToken }: OAuthTokens): Promise<OAuthProfile> {
     const profile = await requestProfileJson<GoogleUserInfo>(USERINFO_URL, {
       Authorization: `Bearer ${accessToken}`
     });

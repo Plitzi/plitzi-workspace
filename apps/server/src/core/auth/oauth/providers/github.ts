@@ -1,6 +1,6 @@
 import { requestProfileJson } from '../client';
 
-import type { OAuthProfile, OAuthProvider, OAuthProviderConfig } from '../types';
+import type { OAuthProfile, OAuthProvider, OAuthProviderConfig, OAuthTokens } from '../types';
 
 const USER_URL = 'https://api.github.com/user';
 const EMAILS_URL = 'https://api.github.com/user/emails';
@@ -57,7 +57,7 @@ export const createGitHubProvider = (config: OAuthProviderConfig): OAuthProvider
     return response.ok;
   },
 
-  async fetchProfile(accessToken: string): Promise<OAuthProfile> {
+  async fetchProfile({ accessToken }: OAuthTokens): Promise<OAuthProfile> {
     const headers = apiHeaders(accessToken);
     const user = await requestProfileJson<GitHubUser>(USER_URL, headers);
 

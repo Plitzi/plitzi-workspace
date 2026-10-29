@@ -36,6 +36,9 @@ authoring and the elements learnt from the runs.
   lived in `plitzi/` and `.plitzi/`. `plitzi doctor` says `older-layout`, and `doctor --fix` moves them, with the
   scripts, the `tsconfig*.json` and the ignore files. `plitzi upgrade` asks for it first. A tsconfig has to name
   `.plitzi/**/*`: TypeScript skips a dot folder named bare.
+- **A social provider's `fetchProfile` takes the tokens** — `fetchProfile({ accessToken, idToken, nonce })` where it
+  took the access token — and `createSocialAuth(...).start` is async. A deployment's own provider adapter reads
+  `accessToken` off the object; a caller of `start` awaits it.
 - **`PLITZI_TOKEN`** replaces `PLITZI_TASK_TOKEN`. A block that needs the person and `run open --agents` are gone: only
   the lead talks to the person, and the team's size is how many agents work at once.
 - **`plitzi upgrade`** brings the new scripts (`start:preview`, the visual suite's own server on port 8400, `test`) and
@@ -1584,6 +1587,19 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   refreshes were ~55 "scope collision" warnings a page.
 
 ## Server (`@plitzi/sdk-server`)
+
+- **Single sign-on with any OpenID Connect issuer** (`createOidcProvider`, `discoverOidc`): an issuer's discovery
+  document, read and checked to be the issuer's; the authorization-code grant with PKCE and a `nonce`; the profile read
+  from the ID token, verified against the issuer's published keys (asymmetric only), for this client, unexpired and
+  carrying this sign-in's nonce — a rotated key is read again once a minute at most.
+- **Providers known at run time** (`resolveProvider`, a new optional social adapter): an organization's own sign-in,
+  set up by its administrators rather than the deployment, resolved per request under an id of the deployment's.
+  `providerForEmail` and `GET /auth/sso?email=` answer which one signs an address in, or a 404 that says there is none.
+- **A refusal of the deployment's own** (`OAuthFailureReason` `not_permitted`, `OAuthFailure.detail`): carried back
+  as `?error=not_permitted&detail=<code>`, for a screen to say which.
+- **A password that may not sign in** (`passwordSignInRefused`, a new optional account adapter): asked once the password
+  is proved right; refused, the sign-in is a 401 with the reason `sso-required` and the adapter's words
+  (`@plitzi/sdk-shared`'s `AuthFailureReason` has it, so a sign-in page reads it as such rather than as `network`).
 
 - **A deployment may cap the tool calls its MCP answers** (`admitToolCalls`, a new optional MCP adapter): asked with
   how many calls a request makes; a refusal's words are what each call reads as its result (`isError`), so the agent

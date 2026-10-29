@@ -36,7 +36,8 @@ itself once (`--agent design-1`) and is answered both. A token, name or role not
 
 - **Write only in `work`**, never in the project; run the project's scripts there (no `node_modules` nor `.env` of its
   own). `plitzi page check /pets --width 1440,390` from `work` serves the copy for the CLI's
-  commands (kept 3 min) — `--expect <id>~<text>`; a script of your own serves it itself (`PORT=<free> npm start`) and stops it with
+  commands (kept 3 min) — `--expect <id>~<text>`; a second check of your copy waits for the first, whose server is the
+  CLI's (never stop it); a script of your own serves it itself (`PORT=<free> npm start`) and stops it with
   `plitzi server stop --port <port>` there (never `pkill` nor a kill by name). Your
   scripts, logs and pictures go in the copy's `tmp/`; between tasks,
   `tmp/plitzi-runs/<run>/scratch/<your name>/`; never the project's `tmp/`.

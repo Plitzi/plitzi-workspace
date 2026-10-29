@@ -1,7 +1,7 @@
 import { OAuthFailure } from './types';
 
 import type { OAuthFlowState } from './state';
-import type { OAuthProvider } from './types';
+import type { OAuthProvider, OAuthTokens } from './types';
 
 export function buildAuthorizationUrl(provider: OAuthProvider, state: OAuthFlowState, challenge?: string): string {
   const params = new URLSearchParams({
@@ -18,6 +18,10 @@ export function buildAuthorizationUrl(provider: OAuthProvider, state: OAuthFlowS
     params.set('code_challenge_method', 'S256');
   }
 
+  if (provider.sendsNonce) {
+    params.set('nonce', state.idNonce);
+  }
+
   return `${provider.authorizationUrl}?${params.toString()}`;
 }
 
@@ -27,7 +31,7 @@ export async function exchangeCodeForToken(
   provider: OAuthProvider,
   code: string,
   state: OAuthFlowState
-): Promise<string> {
+): Promise<OAuthTokens> {
   const body = new URLSearchParams({
     code,
     client_id: provider.config.clientId,
@@ -54,7 +58,7 @@ export async function exchangeCodeForToken(
     throw new OAuthFailure('exchange_failed', `${provider.id} rejected the authorization code (${response.status})`);
   }
 
-  const payload = (await response.json()) as { access_token?: string; error?: string };
+  const payload = (await response.json()) as { access_token?: string; id_token?: string; error?: string };
 
   if (!payload.access_token) {
     throw new OAuthFailure(
@@ -63,7 +67,11 @@ export async function exchangeCodeForToken(
     );
   }
 
-  return payload.access_token;
+  return {
+    accessToken: payload.access_token,
+    ...(payload.id_token ? { idToken: payload.id_token } : {}),
+    nonce: state.idNonce
+  };
 }
 
 // Shared by the adapters' fetchProfile: any non-2xx from a provider's user API is a profile failure, never an

@@ -217,6 +217,31 @@ describe('signing in', () => {
     });
     expect((await api.login({ username: 'ada', password: 'nope' })).body).not.toHaveProperty('reason');
   });
+  /**
+   * An organization that signs its people in through its own single sign-on: the right password buys no session, and
+   * the refusal names the way in — said only to somebody who proved the password, like every other.
+   */
+  it('sends an account its organization signs in elsewhere to its single sign-on, once the password is proved', async () => {
+    const refused = vi.fn(() => Promise.resolve('Acme signs in with its single sign-on: use Continue with SSO'));
+    const api = build({ findByUsername: () => Promise.resolve(ada), passwordSignInRefused: refused });
+
+    expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({
+      ok: false,
+      status: 401,
+      body: { error: 'Acme signs in with its single sign-on: use Continue with SSO', reason: 'sso-required' }
+    });
+    expect(await api.login({ username: 'ada', password: 'nope' })).toMatchObject({ status: 401 });
+    expect(refused).toHaveBeenCalledTimes(1);
+    expect(
+      await build({
+        findByUsername: () => Promise.resolve(ada),
+        passwordSignInRefused: () => Promise.resolve(undefined)
+      }).login({
+        username: 'ada',
+        password: 'pw'
+      })
+    ).toMatchObject({ ok: true });
+  });
 });
 
 describe('renewing and ending a session', () => {

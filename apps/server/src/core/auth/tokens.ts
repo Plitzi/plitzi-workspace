@@ -71,7 +71,9 @@ export type AuthFailure =
    * The password was right and the address has never answered. Separate from `inactive` because it is the one
    * refusal whose owner can clear it themselves, and a screen that cannot tell them apart has to guess.
    */
-  | 'unverified';
+  | 'unverified'
+  /** The password was right, and the account's organization signs it in through its own single sign-on instead. */
+  | 'sso-required';
 
 export const authFailureMessage: Record<AuthFailure, string> = {
   missing: 'Authentication required',
@@ -87,7 +89,8 @@ export const authFailureMessage: Record<AuthFailure, string> = {
   'origin-not-allowed': 'Access Not Authorized',
   'domain-not-allowed': 'This token is not allowed on this domain',
   inactive: 'Account is not active',
-  unverified: 'Account is not verified'
+  unverified: 'Account is not verified',
+  'sso-required': 'Sign in with your organization’s single sign-on'
 };
 
 const DAY = 86400;

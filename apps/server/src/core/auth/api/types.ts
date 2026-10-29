@@ -218,6 +218,13 @@ export interface AccountAdapters {
   findByRefreshToken?: (token: string) => Promise<AccountRecord | undefined>;
   createAccount?: (account: { username: string; email: string; passwordHash: string }) => Promise<AccountRecord>;
   findByEmail?: (email: string) => Promise<AccountRecord | undefined>;
+  /**
+   * Why `account` may not sign in with a password, if it may not: its organization requires its own single sign-on.
+   * Asked only once the password is proved right — what is said of an account before that is said to anybody who
+   * types its address. The refusal is a 401 with the reason `sso-required` and these words — a 401 like `unverified`,
+   * the other refusal of a right password: it is what a browser's sign-in reads a reason from.
+   */
+  passwordSignInRefused?: (account: AccountRecord) => Promise<string | undefined>;
   setPassword?: (userId: number, passwordHash: string) => Promise<void>;
   setResetToken?: (userId: number, token: string) => Promise<void>;
   findByResetToken?: (token: string) => Promise<AccountRecord | undefined>;

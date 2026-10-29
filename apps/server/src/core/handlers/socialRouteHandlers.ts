@@ -110,20 +110,39 @@ export const createSocialAuthRouteHandlers = ({
       }
     },
     {
+      /**
+       * `?email=` — the single sign-on that signs that address in, by its domain: `{ provider: { id, label, url } }`,
+       * or a 404 that says there is none. Asked before the browser is sent anywhere, so a screen can say "no single
+       * sign-on for that domain" in place rather than send somebody to a dead end.
+       */
+      method: 'GET',
+      path: '/sso',
+      handle: async (req, res) => {
+        const email: unknown = req.query?.email;
+        const found = await social.sso(typeof email === 'string' ? email : '');
+        res.status('provider' in found ? 200 : 404).json(found);
+      }
+    },
+    {
       method: 'GET',
       path: '/:provider/login',
-      handle: (req, res) => {
-        const started = social.start(providerOf(req), req.query?.redirect);
-        if (!started) {
-          res.status(404).json({ error: 'Unknown provider' });
+      handle: async (req, res) => {
+        const providerId = providerOf(req);
+        try {
+          const started = await social.start(providerId, req.query?.redirect);
+          if (!started) {
+            res.status(404).json({ error: 'Unknown provider' });
 
-          return Promise.resolve();
+            return;
+          }
+
+          cookies.writeFlow(req, res, started.stateCookie, started.ttl);
+          res.redirect(started.redirectTo);
+        } catch (error: unknown) {
+          // A run-time provider whose issuer cannot be read: said, not a hang — the person can sign in another way.
+          report(error, { method: 'GET', path: `/${providerId}/login` });
+          res.status(502).json({ error: `${providerId} cannot be reached to sign in right now` });
         }
-
-        cookies.writeFlow(req, res, started.stateCookie, started.ttl);
-        res.redirect(started.redirectTo);
-
-        return Promise.resolve();
       }
     },
     {

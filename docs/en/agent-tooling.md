@@ -48,7 +48,10 @@ after the space; a port held by another project is refused rather than photograp
 a person. The same data in text is what an agent needs, so the page's dev tools publish it as `window.__plitzi` and
 `page check` reads it: the flows that failed while the page loaded are problems on every check, and `--state` / `--element`
 print what the page holds. `window.__plitzi.element()`, the panel's **Runtime** tab and `check --element` are one report
-(`sdk-dev-tools/src/agentInspector/report.ts`).
+(`sdk-dev-tools/src/agentInspector/report.ts`): with what each binding gave the element (`resolved`, worked out from the
+sources it sees — what a plugin received, which its template alone does not say), and whether a visitor sees it
+(`visible`, `sight`: clipped, under another element, out of the screen, or `taken` — a control drawn over it takes its
+press).
 The sources it reads are also held to the page: `dataIssues` (`@plitzi/sdk-authoring`) walks every binding of
 the page against the answer its provider gave, so a path that answer lacks is said with the keys it has, and a provider
 that failed is said once rather than as every element it left empty — and said though everything that reads it is
@@ -102,7 +105,14 @@ page's picture in parts a model reads at their size rather than one shrunk to 97
 action at the first width alone — a designer's two widths made two rooms; `task look` names its pictures' folder once; `task show
 --full` holds as many diffs whole as one answer does (12k characters, `LARGE_OUTPUT`), the rest a file at a time.
 `page check --state <names>` holds only the sources and state keys named (one source's answer was 50k characters of
-every one); `page measure` says the viewport it read at, takes a positioned box's `top|right|bottom|left`, and says an
+every one) — a source named by its element's id too (`storms-feed`), and a name nothing on the page holds a problem of
+the check, with the names there are (`state-unheld`); `page play` says the state it starts from once (`given`) and then
+only what each step changed, fails when a step sets off a flow that fails, and keeps an `action` step's answer whole in
+`--json`; `--read 'a b c'` splits by spaces as by commas, and says what a plugin's bindings gave it (`resolved`). `--expect
+id~Text` in mixed case holds the words as the space wrote them, whatever capitals a stylesheet sets; `--sight` and
+`--expect` read a control another control is drawn over as not seen (`taken`: its press goes there). A press that times
+out on a page still settling is tried once more, and one that still fails names what was over it. `task show <task>
+<files…>` takes several files; `page measure`'s readings carry `box` in numbers; `page measure` says the viewport it read at, takes a positioned box's `top|right|bottom|left`, and says an
 element the space authors with no box of its own (`boxless`, a provider) as one — never "not drawn here" with guesses.
 What a browser runs on the page (`page.evaluate`) is self-contained, and tried with the built CLI: tsx wraps a named
 function in `__name`, which a page has not. Node 24's undici sets a socket's type of service on every request, and on

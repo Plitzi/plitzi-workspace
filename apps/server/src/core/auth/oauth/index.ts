@@ -10,7 +10,9 @@ import type { AccountRecord } from '../api';
 
 export { OAuthFailure } from './types';
 export { requestProfileJson } from './client';
-export type { OAuthFailureReason, OAuthProfile, OAuthProvider, OAuthProviderConfig } from './types';
+export { createOidcProvider, discoverOidc } from './providers/oidc';
+export type { OidcDiscovery, OidcProviderOptions } from './providers/oidc';
+export type { OAuthFailureReason, OAuthProfile, OAuthProvider, OAuthProviderConfig, OAuthTokens } from './types';
 
 export type OAuthProviderFactory = (config: OAuthProviderConfig) => OAuthProvider;
 
@@ -40,13 +42,28 @@ export interface SocialAuthAdapters {
    * {@link OAuthFailure} reports the reason to the browser; anything else is a server error.
    */
   linkAccount: (provider: string, profile: OAuthProfile) => Promise<AccountRecord>;
+  /**
+   * A provider known only at run time — an organization's own sign-in (single sign-on), configured by its
+   * administrators rather than by the deployment: asked for an id the configured providers do not have, with the
+   * callback address that id is reached at. `createOidcProvider` makes one from an issuer, a client and a secret.
+   */
+  resolveProvider?: (id: string, redirectUri: string) => Promise<OAuthProvider | undefined>;
+  /** Which run-time provider signs in `email`, by its domain, if any: what single sign-on starts from (`sso`). */
+  providerForEmail?: (email: string) => Promise<string | undefined>;
+}
+
+/** A provider a sign-in screen can send somebody to: its name and the address that starts it. */
+export interface ListedProvider {
+  id: string;
+  label: string;
+  url: string;
 }
 
 export type StartedFlow = { redirectTo: string; stateCookie: string; ttl: number };
 
 export type CompletedFlow =
   | { ok: true; redirectTo: string; account: AccountRecord }
-  | { ok: false; redirectTo?: string; error: string; reason: OAuthFailureReason };
+  | { ok: false; redirectTo?: string; error: string; reason: OAuthFailureReason; detail?: string };
 
 /**
  * Social sign-in, as two functions and a list.
@@ -98,8 +115,21 @@ export const createSocialAuth = ({
     allowedRedirects: config.allowedRedirects
   });
 
-  const withError = (target: string, reason: OAuthFailureReason): string =>
-    `${target}${target.includes('?') ? '&' : '?'}error=${encodeURIComponent(reason)}`;
+  const withError = (target: string, reason: OAuthFailureReason, detail?: string): string =>
+    `${target}${target.includes('?') ? '&' : '?'}error=${encodeURIComponent(reason)}${
+      detail ? `&detail=${encodeURIComponent(detail)}` : ''
+    }`;
+
+  const loginBase = config.loginBaseUrl ?? config.callbackBaseUrl ?? '';
+  const listed = (provider: OAuthProvider): ListedProvider => ({
+    id: provider.id,
+    label: provider.label,
+    url: `${loginBase}/auth/${provider.id}/login`
+  });
+
+  /** A configured provider, or one the deployment resolves at run time; never a run-time one under a configured id. */
+  const lookup = async (id: string): Promise<OAuthProvider | undefined> =>
+    registry.get(id) ?? (await adapters.resolveProvider?.(id, `${config.callbackBaseUrl ?? ''}/auth/${id}/callback`));
 
   return {
     /**
@@ -112,17 +142,31 @@ export const createSocialAuth = ({
     sanitizeRedirect,
 
     /** Registered providers, so a front-end renders exactly the buttons that will work. */
-    list: () =>
-      [...registry.values()].map(provider => ({
-        id: provider.id,
-        label: provider.label,
-        url: `${config.loginBaseUrl ?? config.callbackBaseUrl ?? ''}/auth/${provider.id}/login`
-      })),
+    list: (): ListedProvider[] => [...registry.values()].map(listed),
 
+    /** A configured provider. Run-time ones are not here: they sign in through the flow, never a token handed over. */
     get: (id: string): OAuthProvider | undefined => registry.get(id),
 
-    start: (providerId: string, redirect: unknown): StartedFlow | undefined => {
-      const provider = registry.get(providerId);
+    /**
+     * The single sign-on that signs in `email`, if its domain has one — or why there is none. Asked by a sign-in
+     * screen before it sends anybody anywhere, so an address with no sign-on of its own hears so instead of a 404.
+     */
+    sso: async (email: string): Promise<{ provider: ListedProvider } | { error: string }> => {
+      const address = email.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
+        return { error: 'An email address is required' };
+      }
+
+      const id = await adapters.providerForEmail?.(address);
+      const provider = id ? await lookup(id) : undefined;
+
+      return provider
+        ? { provider: listed(provider) }
+        : { error: `${address.split('@')[1] ?? address} has no single sign-on here: sign in another way` };
+    },
+
+    start: async (providerId: string, redirect: unknown): Promise<StartedFlow | undefined> => {
+      const provider = await lookup(providerId);
       if (!provider) {
         return undefined;
       }
@@ -140,7 +184,7 @@ export const createSocialAuth = ({
       providerId: string,
       params: { code?: string; state?: string; error?: string; stateCookie?: string }
     ): Promise<CompletedFlow> => {
-      const provider = registry.get(providerId);
+      const provider = await lookup(providerId);
       if (!provider) {
         return { ok: false, error: 'Unknown provider', reason: 'invalid_state' };
       }
@@ -159,8 +203,8 @@ export const createSocialAuth = ({
       }
 
       try {
-        const accessToken = await exchangeCodeForToken(provider, params.code, flow);
-        const profile = await provider.fetchProfile(accessToken);
+        const tokens = await exchangeCodeForToken(provider, params.code, flow);
+        const profile = await provider.fetchProfile(tokens);
         // The flow's job ends at "this is who came back". Minting the session is the caller's, which keeps this
         // free of the API that mints it.
         const account = await adapters.linkAccount(provider.id, profile);
@@ -168,12 +212,14 @@ export const createSocialAuth = ({
         return { ok: true, redirectTo: flow.redirect, account };
       } catch (error) {
         const reason: OAuthFailureReason = error instanceof OAuthFailure ? error.reason : 'server_error';
+        const detail = error instanceof OAuthFailure ? error.detail : undefined;
 
         return {
           ok: false,
-          redirectTo: withError(flow.redirect, reason),
+          redirectTo: withError(flow.redirect, reason, detail),
           error: error instanceof Error ? error.message : 'server_error',
-          reason
+          reason,
+          ...(detail === undefined ? {} : { detail })
         };
       }
     }

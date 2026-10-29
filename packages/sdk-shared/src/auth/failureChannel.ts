@@ -39,6 +39,7 @@ const REASONS: AuthFailureReason[] = [
   'revoked',
   'inactive',
   'unverified',
+  'sso-required',
   'malformed',
   'outdated',
   'network'

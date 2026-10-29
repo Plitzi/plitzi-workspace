@@ -118,6 +118,14 @@ export const sessionFlows = ({
       return refuse(401, authFailureMessage[reason], reason);
     }
 
+    const ssoOnly = await adapters.passwordSignInRefused?.(account);
+    if (ssoOnly) {
+      throttleSucceeded({ action: 'login', key: username, carrier });
+      record({ type: 'login.failed', userId: account.id, carrier, detail: { username, reason: 'sso-required' } });
+
+      return refuse(401, ssoOnly, 'sso-required');
+    }
+
     /**
      * The password was right. If there is a proven second factor, that buys a CHALLENGE and not a session — an
      * enrolment that was started and never confirmed does not count, or a scan that failed would lock the

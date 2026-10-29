@@ -37,7 +37,14 @@ export {
 } from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
 export { generateToken, hashPassword, verifyPassword } from './core/auth/passwords';
-export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
+export {
+  BUILT_IN_PROVIDERS,
+  OAuthFailure,
+  createOidcProvider,
+  createSocialAuth,
+  discoverOidc,
+  requestProfileJson
+} from './core/auth/oauth';
 export { createRedirectPolicy } from './core/auth/redirects';
 export { isDocumentNavigation, renewForNavigation } from './core/auth/renewal';
 export type { RenewalOptions } from './core/auth/renewal';
@@ -121,10 +128,14 @@ export type {
 } from './core/auth/identity';
 export type {
   CompletedFlow,
+  ListedProvider,
   OAuthFailureReason,
   OAuthProfile,
   OAuthProvider,
   OAuthProviderConfig,
+  OAuthTokens,
+  OidcDiscovery,
+  OidcProviderOptions,
   SocialAuth,
   SocialAuthAdapters,
   SocialAuthConfig,

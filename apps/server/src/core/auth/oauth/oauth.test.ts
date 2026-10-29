@@ -48,9 +48,9 @@ describe('the state that survives the round trip', () => {
   });
 
   // RFC 7636: the verifier never leaves this server, only its hash does.
-  it('sends the challenge, never the verifier', () => {
+  it('sends the challenge, never the verifier', async () => {
     const { state } = startFlow('google', '/spaces', SECRET, 600);
-    const started = build().start('google', '/spaces');
+    const started = await build().start('google', '/spaces');
 
     expect(codeChallenge(state.verifier)).not.toBe(state.verifier);
     expect(started?.redirectTo).toContain('code_challenge=');
@@ -59,29 +59,29 @@ describe('the state that survives the round trip', () => {
 });
 
 describe('where the browser is sent afterwards', () => {
-  const target = (redirect: unknown): string => {
-    const started = build().start('google', redirect);
+  const target = async (redirect: unknown): Promise<string> => {
+    const started = await build().start('google', redirect);
     const nonce = new URL(started?.redirectTo ?? '').searchParams.get('state');
 
     return consumeFlow(started?.stateCookie, 'google', nonce, SECRET)?.redirect ?? '';
   };
 
-  it('keeps a relative path', () => {
-    expect(target('/spaces/42')).toBe('/spaces/42');
+  it('keeps a relative path', async () => {
+    expect(await target('/spaces/42')).toBe('/spaces/42');
   });
 
   // Protocol-relative and backslash variants read as a path but navigate off-site.
-  it('refuses the paths that only look relative', () => {
-    expect(target('//evil.test/steal')).toBe('https://app.test/spaces');
-    expect(target('/\\evil.test')).toBe('https://app.test/spaces');
+  it('refuses the paths that only look relative', async () => {
+    expect(await target('//evil.test/steal')).toBe('https://app.test/spaces');
+    expect(await target('/\\evil.test')).toBe('https://app.test/spaces');
   });
 
-  it('refuses an absolute URL to an origin nobody allowed', () => {
-    expect(target('https://evil.test/steal')).toBe('https://app.test/spaces');
+  it('refuses an absolute URL to an origin nobody allowed', async () => {
+    expect(await target('https://evil.test/steal')).toBe('https://app.test/spaces');
   });
 
-  it('keeps an absolute URL to an allowed one', () => {
-    expect(target('https://app.test/spaces/42')).toBe('https://app.test/spaces/42');
+  it('keeps an absolute URL to an allowed one', async () => {
+    expect(await target('https://app.test/spaces/42')).toBe('https://app.test/spaces/42');
   });
 });
 
@@ -105,8 +105,8 @@ describe('which providers exist', () => {
     expect(social.list().map(entry => entry.id)).toEqual(['acme']);
   });
 
-  it('has nothing to start for a provider it does not know', () => {
-    expect(build().start('nope', '/')).toBeUndefined();
+  it('has nothing to start for a provider it does not know', async () => {
+    expect(await build().start('nope', '/')).toBeUndefined();
   });
 });
 
@@ -120,7 +120,7 @@ describe('coming back', () => {
 
   it('reports a refusal at the provider on the vetted target, so the page can say what happened', async () => {
     const social = build();
-    const started = social.start('google', '/spaces');
+    const started = await social.start('google', '/spaces');
     const nonce = new URL(started?.redirectTo ?? '').searchParams.get('state');
 
     const result = await social.complete('google', {

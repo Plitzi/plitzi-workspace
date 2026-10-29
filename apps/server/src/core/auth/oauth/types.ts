@@ -8,6 +8,16 @@ export interface OAuthProviderConfig {
  * The identity a provider reports back. `emailVerified` is what makes linking safe: an incoming account may only be
  * matched onto an existing one by an address the provider itself checked.
  */
+/**
+ * What the token endpoint answered. `idToken` is OpenID Connect's — a signed statement of who signed in — and `nonce` is
+ * the value this flow sent with the authorization request, which an ID token must carry back to be this flow's.
+ */
+export interface OAuthTokens {
+  accessToken: string;
+  idToken?: string;
+  nonce: string;
+}
+
 export interface OAuthProfile {
   id: string;
   email: string;
@@ -34,7 +44,9 @@ export interface OAuthProvider {
   authorizationParams?: Record<string, string>;
   /** Extra headers on the token request. GitHub returns form-encoded bodies unless asked for JSON. */
   tokenHeaders?: Record<string, string>;
-  fetchProfile: (accessToken: string) => Promise<OAuthProfile>;
+  /** OpenID Connect: send the flow's `nonce` with the authorization request, for the ID token to carry back. */
+  sendsNonce?: boolean;
+  fetchProfile: (tokens: OAuthTokens) => Promise<OAuthProfile>;
   /**
    * Proves a token was issued **for this application**, and not merely that it is a valid token belonging to
    * somebody. Only the credential exchange needs it, where the token arrives from a browser rather than from a code
@@ -53,16 +65,26 @@ export type OAuthFailureReason =
   | 'email_unverified'
   | 'email_missing'
   | 'account_inactive'
+  /**
+   * The provider proved who this is, and the deployment does not let them in — an address outside what the provider
+   * may vouch for, a place with no room. `OAuthFailure.detail` says which, in the deployment's own words.
+   */
+  | 'not_permitted'
   | 'server_error';
 
 /** Carried all the way to the browser as `?error=<reason>` on the redirect target, so a front-end can tell "you
  *  cancelled" from "that account is disabled" without parsing prose. */
 export class OAuthFailure extends Error {
   readonly reason: OAuthFailureReason;
+  /** A short code of the deployment's, carried as `&detail=<code>` beside the reason, for a screen to say more by. */
+  readonly detail?: string;
 
-  constructor(reason: OAuthFailureReason, message: string) {
+  constructor(reason: OAuthFailureReason, message: string, detail?: string) {
     super(message);
     this.name = 'OAuthFailure';
     this.reason = reason;
+    if (detail !== undefined) {
+      this.detail = detail;
+    }
   }
 }

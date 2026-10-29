@@ -28,9 +28,20 @@ export type AuthState = 'init' | 'initLoading' | 'authenticating' | 'authenticat
  * It is terminal like `inactive` — there is no session to be had — but it is the only refusal a person can do
  * something about, which is why it is worth telling them apart. A sign-in screen that cannot distinguish them says
  * "that email or password was not right" to somebody whose password was fine, and they try it again.
+ *
+ * `sso-required` is the other one about the way in: the password was right, and the account's organization signs it in
+ * through its own single sign-on — a sign-in screen sends them there.
  */
 export type AuthFailureReason =
-  'missing' | 'expired' | 'revoked' | 'inactive' | 'unverified' | 'malformed' | 'outdated' | 'network';
+  | 'missing'
+  | 'expired'
+  | 'revoked'
+  | 'inactive'
+  | 'unverified'
+  | 'sso-required'
+  | 'malformed'
+  | 'outdated'
+  | 'network';
 
 /** What an auth backend hands back from a grant (login, refresh) or an identity call. Both halves are optional:
  *  a backend may answer a refresh with tokens alone, or an identity call with a user alone. */
