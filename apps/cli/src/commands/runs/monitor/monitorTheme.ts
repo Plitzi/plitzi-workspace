@@ -99,11 +99,22 @@ const hex = (rgb: readonly number[]): string =>
     )
     .join('')}`;
 
+/** The colours mixed so far: a theme has a few dozen, mixed again on every frame a dialog is open over them. */
+const mixed = new Map<string, string>();
+
 /** `a` moved toward `b` by `amount` (0 is `a`): a colour receding toward the ground under a dialog. */
 export const mix = (a: string, b: string, amount: number): string => {
-  const [x, y] = [channels(a), channels(b)];
+  const key = `${a}|${b}|${String(amount)}`;
+  const known = mixed.get(key);
+  if (known !== undefined) {
+    return known;
+  }
 
-  return hex(x.map((value, index) => value * (1 - amount) + (y[index] ?? 0) * amount));
+  const [x, y] = [channels(a), channels(b)];
+  const result = hex(x.map((value, index) => value * (1 - amount) + (y[index] ?? 0) * amount));
+  mixed.set(key, result);
+
+  return result;
 };
 
 /** The theme a terminal's background asks for: light past the middle of its luminance (OSC 11's answer). */

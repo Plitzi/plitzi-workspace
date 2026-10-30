@@ -201,13 +201,27 @@ export const createCanvas = (width: number, height: number, theme: Theme): Canva
     },
     recede: keep => {
       const toward = theme.name === 'light' ? '#d9d9e3' : '#000000';
+      // Each style of the board receded once, and the cells that shared it share what it became: a screen is a handful
+      // of styles over thousands of cells, and a dialog left open is drawn again on every frame.
+      const receded = new Map<Style, Style>();
+      const recededOf = (style: Style): Style => {
+        const known = receded.get(style);
+        if (known) {
+          return known;
+        }
+
+        const bg = mix(style.bg ?? theme.base, toward, theme.name === 'light' ? 0.55 : 0.4);
+        const next = { ...style, bg, fg: mix(style.fg ?? theme.text, bg, 0.7), bold: false };
+        receded.set(style, next);
+
+        return next;
+      };
       rows.forEach((line, row) =>
         line.forEach((cell, col) => {
           const kept =
             row >= keep.top && row < keep.top + keep.height && col >= keep.left && col < keep.left + keep.width;
           if (!kept) {
-            const bg = mix(cell.style.bg ?? theme.base, toward, theme.name === 'light' ? 0.55 : 0.4);
-            cell.style = { ...cell.style, bg, fg: mix(cell.style.fg ?? theme.text, bg, 0.7), bold: false };
+            cell.style = recededOf(cell.style);
           }
         })
       );
@@ -230,8 +244,31 @@ export const createCanvas = (width: number, height: number, theme: Theme): Canva
       }
     },
     text: () => rows.map(line => line.map(cell => (cell.spill ? '' : cell.ch)).join('')),
-    ansi: depth =>
-      rows.map(line => {
+    ansi: depth => {
+      // A style's escape worked out once a frame, not once a cell: cells written with one style share its object.
+      const sgrs = new Map<Style, string>();
+      const sgrOf = (style: Style): string => {
+        const known = sgrs.get(style);
+        if (known !== undefined) {
+          return known;
+        }
+
+        const codes = [
+          '0',
+          ...(style.bold ? ['1'] : []),
+          ...(style.underline ? ['4'] : []),
+          ...(style.strike ? ['9'] : []),
+          ...(depth <= 1 && style.selected ? ['7'] : []),
+          ...(style.fg ? [colorCodes(style.fg, depth, false)] : []),
+          ...(style.bg && depth >= 2 ? [colorCodes(style.bg, depth, true)] : [])
+        ].filter((code): code is string => code !== undefined);
+        const sgr = `\x1b[${codes.join(';')}m`;
+        sgrs.set(style, sgr);
+
+        return sgr;
+      };
+
+      return rows.map(line => {
         let out = '';
         let last = '';
         let link: string | undefined;
@@ -241,16 +278,7 @@ export const createCanvas = (width: number, height: number, theme: Theme): Canva
           }
 
           const { style } = cell;
-          const codes = [
-            '0',
-            ...(style.bold ? ['1'] : []),
-            ...(style.underline ? ['4'] : []),
-            ...(style.strike ? ['9'] : []),
-            ...(depth <= 1 && style.selected ? ['7'] : []),
-            ...(style.fg ? [colorCodes(style.fg, depth, false)] : []),
-            ...(style.bg && depth >= 2 ? [colorCodes(style.bg, depth, true)] : [])
-          ].filter((code): code is string => code !== undefined);
-          const sgr = `\x1b[${codes.join(';')}m`;
+          const sgr = sgrOf(style);
           if (style.link !== link) {
             out += `\x1b]8;;${style.link ?? ''}\x1b\\`;
             link = style.link;
@@ -265,7 +293,8 @@ export const createCanvas = (width: number, height: number, theme: Theme): Canva
         }
 
         return `${out}${link === undefined ? '' : '\x1b]8;;\x1b\\'}\x1b[0m`;
-      })
+      });
+    }
   };
 };
 

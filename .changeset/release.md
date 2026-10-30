@@ -319,6 +319,8 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **The monitor stays light with a dialog open**: the board receding under it cost three times a frame (16 ms, every
+  frame while the spinner turns); each colour and style is now worked out once a frame, not once a cell (5 ms).
 - **The monitor's team panel (`r`) takes ← → as well**: → one more of the entry, ← one fewer, beside `+` and `−` — the
   hand on ↑ ↓ to move between entries stays where it is.
 - **A run of up to 7 agents opens without the person** (`run open`): a team has more kinds of agent now — scouts,
