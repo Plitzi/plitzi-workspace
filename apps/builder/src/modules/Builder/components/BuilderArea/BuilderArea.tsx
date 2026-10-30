@@ -137,11 +137,17 @@ const BuilderArea = ({
     }
 
     const frame = ref.current;
-    const rootOf = (): Element => (frame?.contentDocument ?? document).documentElement;
-    let stop = liveCanvas(rootOf(), { reveal: previewMode });
+    // A frame mounted anew holds a document still being made, with no root yet — `documentElement` is typed as always
+    // there and is not, `:root` asked says so: it is made live once its `load` brings the document that stays.
+    const live = (): (() => void) => {
+      const root = (frame?.contentDocument ?? document).querySelector(':root');
+
+      return root ? liveCanvas(root, { reveal: previewMode }) : () => undefined;
+    };
+    let stop = live();
     const follow = (): void => {
       stop();
-      stop = liveCanvas(rootOf(), { reveal: previewMode });
+      stop = live();
     };
     frame?.addEventListener('load', follow);
 

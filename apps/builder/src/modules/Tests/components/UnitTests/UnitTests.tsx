@@ -4,6 +4,7 @@ import EmptyState from '@pmodules/App/components/EmptyState';
 import ViewSection from '@pmodules/App/components/ViewSection';
 
 import UnitTestRow from './components/UnitTestRow';
+import { problemsOfTest } from '../../helpers';
 
 import type { UnitTest } from '@plitzi/sdk-shared';
 import type { TSpaceUnitTestResult } from '@plitzi/sdk-shared/network';
@@ -11,6 +12,8 @@ import type { TSpaceUnitTestResult } from '@plitzi/sdk-shared/network';
 export type UnitTestsProps = {
   tests: UnitTest[];
   results: TSpaceUnitTestResult[];
+  /** What the server said is wrong with the tests as written: a check it names is marked. */
+  problems: readonly string[];
   onAdd: () => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
@@ -20,7 +23,7 @@ export type UnitTestsProps = {
  * The space's unit tests: one element each, resolved for a state and its data with no browser — run against the saved
  * document on every save, as the issues are.
  */
-const UnitTests = ({ tests, results, onAdd, onEdit, onRemove }: UnitTestsProps) => (
+const UnitTests = ({ tests, results, problems, onAdd, onEdit, onRemove }: UnitTestsProps) => (
   <ViewSection
     title="Element checks — unit tests"
     actions={
@@ -48,6 +51,7 @@ const UnitTests = ({ tests, results, onAdd, onEdit, onRemove }: UnitTestsProps) 
         key={test.id}
         test={test}
         result={results.find(result => result.id === test.id)}
+        problems={problemsOfTest(problems, 'unit', test.id)}
         onEdit={onEdit}
         onRemove={onRemove}
       />

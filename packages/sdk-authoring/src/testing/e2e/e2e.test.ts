@@ -53,6 +53,24 @@ describe('the document’s e2e tests as written', () => {
     ]);
   });
 
+  it('takes a wrong address its space answers with its own not-found page — a flow may start there to test it', () => {
+    const { schema: withNotFound } = authorSpace({
+      name: 'Shop',
+      permanentUrl: 'shop',
+      pages: [
+        { name: 'Home', slug: '', body: [text('Welcome', { id: 'welcome' })] },
+        { name: 'Not found', slug: '*', body: [text('Not here', { id: 'lost' })] }
+      ]
+    });
+    const lost = e2e.test({ id: 'lost', title: 'Lost', page: '/nowhere', steps: [e2e.expectShown('lost')] });
+
+    expect(e2eTestProblems(withNotFound, [lost])).toEqual([]);
+    expect(e2eTestProblems(schema, [lost])).toEqual([
+      'e2e test "lost": no page of the space answers /nowhere — a path one of its pages has',
+      'e2e test "lost", step 1 (expectShown): no element "lost" in the space — name one by its id'
+    ]);
+  });
+
   it('says each step as a person reads it', () => {
     expect(adds.steps.map(stepText)).toEqual(['click add', 'cart-count shows "1"', 'cart-count.bottom <= legend.top']);
   });

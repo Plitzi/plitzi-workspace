@@ -11,8 +11,9 @@ import TestsArea from './components/TestsArea';
 import TestsSummary from './components/TestsSummary';
 import UnitTestForm from './components/UnitTestForm';
 import UnitTests from './components/UnitTests';
-import { elementOptions, newUnitTest, withUnitTest } from './helpers';
+import { elementOptions, newUnitTest, problemsOfKind, testsNeedingLook, withUnitTest } from './helpers';
 import useSpaceTests from './hooks/useSpaceTests';
+import useTestProblems from './hooks/useTestProblems';
 import TestStudioContext from './studio/TestStudioContext';
 
 import type { UnitTest } from '@plitzi/sdk-shared';
@@ -37,6 +38,8 @@ const TABS: { id: Tab; label: string }[] = [
 const Tests = ({ externalStyle = '' }: TestsProps) => {
   const { answer, isLoading, save, runE2e } = useSpaceTests();
   const studio = use(TestStudioContext);
+  // Read here, against the document being edited — as a snapshot reads them.
+  const problems = useTestProblems(studio.tests, studio.flow);
   const { enter, leave, load } = studio;
   const { showDialog } = useModal();
   const [flat] = useBuilderStore('schema.flat');
@@ -71,6 +74,11 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   }, [answer, enter, load]);
   useEffect(() => leave, [leave]);
 
+  // What each tab holds that needs a look: the flows' problems on Flows, the element checks' and their misses on theirs.
+  const needsLook: Record<Tab, number> = {
+    flows: testsNeedingLook(problems, 'e2e').length,
+    checks: problemsOfKind(problems, 'unit').length + (answer?.unitFailed ?? 0)
+  };
   const handleTab = useCallback((next: Tab) => () => setTab(next), [setTab]);
   const handleRunOnServer = useCallback(async () => {
     setServerRunning(true);
@@ -126,7 +134,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
 
   return (
     <div className="flex min-h-0 grow flex-col">
-      <div className="flex h-11 shrink-0 items-end gap-1 border-b border-gray-200 px-4 dark:border-zinc-800">
+      <div className="flex h-11 shrink-0 items-end gap-1 border-b border-gray-300 px-4 dark:border-zinc-700">
         {TABS.map(each => (
           <button
             key={each.id}
@@ -134,7 +142,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
             role="tab"
             aria-selected={tab === each.id}
             className={clsx(
-              'focus-visible:outline-primary-500 -mb-px cursor-pointer border-b-2 px-3 pb-2.5 text-sm transition-colors duration-150 focus-visible:outline-2',
+              'focus-visible:outline-primary-500 -mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 pb-2.5 text-sm transition-colors duration-150 focus-visible:outline-2',
               {
                 'border-primary-ui text-primary-text font-medium': tab === each.id,
                 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100':
@@ -144,6 +152,18 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
             onClick={handleTab(each.id)}
           >
             {each.label}
+            {needsLook[each.id] > 0 && (
+              <i
+                role="img"
+                aria-label={`${String(needsLook[each.id])} to look at`}
+                title={
+                  needsLook[each.id] === 1
+                    ? '1 test here needs a look'
+                    : `${String(needsLook[each.id])} tests here need a look`
+                }
+                className="fa-solid fa-circle-exclamation text-xs text-amber-500"
+              />
+            )}
           </button>
         ))}
       </div>
@@ -151,6 +171,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
         <TestsArea
           externalStyle={externalStyle}
           answer={answer}
+          problems={problems}
           serverRun={serverRun}
           serverRunning={serverRunning}
           onRunOnServer={handleRunOnServer}
@@ -163,10 +184,11 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           description="One element in a given situation — shown or hidden, the words it reads, the look it wears — checked in an instant on every save. A snapshot or a publish waits for them, as it waits for the flows."
         >
           {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
-          {answer && <TestsSummary answer={answer} />}
+          {answer && <TestsSummary answer={answer} problems={problems} />}
           <UnitTests
             tests={unit}
             results={answer?.unit ?? []}
+            problems={problems}
             onAdd={handleAddUnit}
             onEdit={handleEditUnit}
             onRemove={handleRemoveUnit}

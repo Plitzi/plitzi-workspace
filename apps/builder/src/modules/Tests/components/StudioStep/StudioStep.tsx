@@ -12,6 +12,8 @@ export type StudioStepProps = {
   step: E2eStep;
   /** How it went the last time the test was played; none before. */
   play?: StepPlay;
+  /** What is wrong with it as written: marked, and said on it. */
+  problems?: readonly string[];
   /** What a person calls the element it names. */
   nameOf: (target: string) => string;
   /** Editing and moving are off while the test plays or records. */
@@ -58,6 +60,7 @@ const StudioStep = ({
   count,
   step,
   play,
+  problems = [],
   nameOf,
   locked,
   onPoint,
@@ -82,8 +85,10 @@ const StudioStep = ({
         {
           'border-primary-ui bg-primary-50 dark:bg-primary-400/10': play?.state === 'running' || play?.state === 'next',
           'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40': play?.state === 'failed',
+          'border-amber-400 bg-amber-50 dark:border-amber-700/70 dark:bg-amber-950/30':
+            problems.length > 0 && play?.state !== 'failed',
           'border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:hover:bg-zinc-800/60':
-            play?.state !== 'running' && play?.state !== 'next' && play?.state !== 'failed',
+            play?.state !== 'running' && play?.state !== 'next' && play?.state !== 'failed' && problems.length === 0,
           'opacity-50': play?.state === 'notRun'
         }
       )}
@@ -150,6 +155,12 @@ const StudioStep = ({
           </span>
         )}
       </div>
+      {problems.length > 0 && (
+        <p className="flex gap-1.5 pl-6 text-xs text-amber-800 dark:text-amber-200">
+          <i className="fa-solid fa-circle-exclamation mt-0.5 text-amber-500" />
+          {problems.join(' ')}
+        </p>
+      )}
       {play?.state === 'failed' && <p className="pl-6 text-xs text-red-700 dark:text-red-300">{play.read}</p>}
       {play?.state === 'next' && <p className="text-primary-text pl-6 text-xs">Next: press “Next step” to play it.</p>}
     </li>

@@ -13,6 +13,8 @@ import type { E2eStep } from '@plitzi/sdk-shared';
 export type FlowStripProps = {
   steps: E2eStep[];
   plays: (StepPlay | undefined)[];
+  /** What is wrong with a step as written, by its index: said on the step itself. */
+  stepProblems?: ReadonlyMap<number, string[]>;
   /** The step open to be changed, if one is. */
   editing?: number;
   locked: boolean;
@@ -50,8 +52,8 @@ const segmentClass = (step: E2eStep, play: StepPlay | undefined): string => {
  * must hold once it is, joined by arrows. When this, then that.
  */
 const FlowStrip = (props: FlowStripProps) => {
-  const { steps, plays, editing, locked, nameOf, elements, onPoint, onPlayTo, onEdit, onMove, onRemove, onDone } =
-    props;
+  const { steps, plays, stepProblems, editing, locked, nameOf, elements } = props;
+  const { onPoint, onPlayTo, onEdit, onMove, onRemove, onDone } = props;
   const moments = momentsOf(steps);
   const card = ({ step, index }: PlacedStep) =>
     editing === index && !locked ? (
@@ -71,6 +73,7 @@ const FlowStrip = (props: FlowStripProps) => {
         count={steps.length}
         step={step}
         play={plays[index]}
+        problems={stepProblems?.get(index)}
         nameOf={nameOf}
         locked={locked}
         onPoint={onPoint}

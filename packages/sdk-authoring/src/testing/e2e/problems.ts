@@ -28,7 +28,12 @@ export const e2eTestProblems = (document: Schema, tests: readonly E2eTest[] = do
     }
 
     seen.add(test.id);
-    const answered = [false, true].some(signedIn => pageAt(document, test.page, { signedIn }).action === 'normal');
+    // A page answers it — the space's own not-found page too: a flow may start on a wrong address to test that page.
+    const answered = [false, true].some(signedIn => {
+      const page = pageAt(document, test.page, { signedIn });
+
+      return page.action === 'normal' || (page.action === 'notFound' && page.pageId !== undefined);
+    });
     if (!answered) {
       problems.push(`${at}: no page of the space answers ${test.page} — a path one of its pages has`);
     }

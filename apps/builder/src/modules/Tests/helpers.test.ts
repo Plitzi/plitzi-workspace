@@ -4,9 +4,13 @@ import {
   STEP_KINDS,
   UNIT_KINDS,
   emptyOf,
+  flowProblemsOf,
   momentsOf,
+  problemInWords,
+  problemsOfKind,
   moved,
   nextId,
+  testsNeedingLook,
   valueOf,
   valueText,
   withE2eTest,
@@ -67,5 +71,68 @@ describe('a flow read as moments', () => {
 
   it('starts at the first thing done when nothing is checked before it', () => {
     expect(momentsOf([click('add'), shown('count')]).map(moment => moment.action?.index)).toEqual([0]);
+  });
+});
+
+describe('a problem of a test, as its author reads it', () => {
+  const tests = {
+    e2e: [{ id: 'finds-the-way-back', title: 'A wrong address leads back', page: '/', steps: [] }],
+    unit: [{ id: 'badge', title: 'The badge counts', element: 'count', expect: [] }]
+  };
+
+  it('names the test by its title, and says what is wrong as a sentence', () => {
+    expect(problemInWords('e2e test "finds-the-way-back": no page answers /nope', tests)).toEqual({
+      test: 'A wrong address leads back',
+      said: 'No page answers /nope.'
+    });
+    expect(problemInWords('unit test "badge", step 2 (visible): no element "count"', tests)).toEqual({
+      test: 'The badge counts, step 2',
+      said: 'No element "count".'
+    });
+  });
+
+  it('says a problem it cannot place as it was said', () => {
+    expect(problemInWords('the tests could not be read', tests)).toEqual({
+      test: '',
+      said: 'the tests could not be read'
+    });
+  });
+});
+
+describe('the problems of each kind of test, where each is shown', () => {
+  const problems = [
+    'e2e test "lost": no page answers /nowhere',
+    'unit test "badge": no element "count"',
+    'e2e test "lost", step 2 (click): no element "back"',
+    'the tests could not be read'
+  ];
+
+  it("keeps the flows' for the flows and the element checks' for theirs", () => {
+    expect(problemsOfKind(problems, 'unit')).toEqual(['unit test "badge": no element "count"']);
+    expect(problemsOfKind(problems, 'e2e')).toHaveLength(2);
+  });
+
+  it('names each test that needs a look once', () => {
+    expect(testsNeedingLook(problems, 'e2e')).toEqual(['lost']);
+    expect(testsNeedingLook(problems, 'unit')).toEqual(['badge']);
+  });
+});
+
+describe('a flow\'s problems, placed where each is fixed', () => {
+  it('puts a page on where it starts, a width on its device, a step on that step', () => {
+    const placed = flowProblemsOf(
+      [
+        'e2e test "lost": no page of the space answers /nowhere — a path one of its pages has',
+        'e2e test "lost": a width of 90 px is no screen\'s — 390, 768 or 1440',
+        'e2e test "lost", step 2 (click): no element "back" in the space — name one by its id',
+        'e2e test "other": no page of the space answers /x'
+      ],
+      'lost'
+    );
+
+    expect(placed.page).toEqual(['No page of the space answers /nowhere — a path one of its pages has.']);
+    expect(placed.device).toEqual(["A width of 90 px is no screen's — 390, 768 or 1440."]);
+    expect([...placed.steps.entries()]).toEqual([[1, ['No element "back" in the space — name one by its id.']]]);
+    expect(placed.other).toEqual([]);
   });
 });

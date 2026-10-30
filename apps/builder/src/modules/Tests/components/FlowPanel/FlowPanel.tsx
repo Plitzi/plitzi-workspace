@@ -8,7 +8,16 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import { elementNameOf, elementOptions, emptyOf, moved, STEP_KINDS, stepKindOf, stepOf } from '../../helpers';
+import {
+  elementNameOf,
+  elementOptions,
+  emptyOf,
+  moved,
+  flowProblemsOf,
+  STEP_KINDS,
+  stepKindOf,
+  stepOf
+} from '../../helpers';
 import TestStudioContext from '../../studio/TestStudioContext';
 import FlowStrip from '../FlowStrip';
 
@@ -21,6 +30,8 @@ const DEVICES = [
 ];
 
 export type FlowPanelProps = {
+  /** What the server said is wrong with the tests as written: the flow chosen says its own. */
+  problems: readonly string[];
   /** The flow chosen, or every flow played in turn — its log, and what came of it. */
   view: 'steps' | 'run';
   onView: (view: 'steps' | 'run') => void;
@@ -33,7 +44,7 @@ export type FlowPanelProps = {
  * pointed at lights its element on the page, each pressed plays the flow up to it. While every flow plays in turn, the
  * log of their steps; once they have, what came of it in a line.
  */
-const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
+const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
   const studio = use(TestStudioContext);
   const { flow, dirty, mode, playingAll, paused, checking, plays, log, outcome, playedMs } = studio;
   const { edit, play, pause, resume, next, stop, record, check, point, save, discard, stepDelay, setStepDelay } =
@@ -59,6 +70,8 @@ const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
   }, [log.length]);
 
   const steps = useMemo(() => flow?.steps ?? [], [flow]);
+  // What is wrong with the flow, each where it is fixed: where it starts, its device, a step — or the flow itself.
+  const placed = useMemo(() => (flow ? flowProblemsOf(problems, flow.id) : undefined), [flow, problems]);
   const setSteps = useCallback((next: E2eStep[]) => flow && edit({ ...flow, steps: next }), [edit, flow]);
   const handleTitle = useCallback((title: string) => flow && edit({ ...flow, title }), [edit, flow]);
   const handlePage = useCallback((page: string) => flow && edit({ ...flow, page }), [edit, flow]);
@@ -149,21 +162,35 @@ const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
               />
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">{steps.length} steps · starts on</span>
-            <Select
-              size="sm"
-              name="page"
-              aria-label="Starts on"
-              value={flow.page}
-              disabled={locked}
-              onChange={handlePage}
+            <span
+              className={clsx('flex items-center gap-1.5 rounded-md', {
+                'ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900': placed?.page.length
+              })}
+              title={placed?.page.join(' ')}
             >
-              {[...new Set([flow.page, ...pages])].map(page => (
-                <option key={page} value={page}>
-                  {page}
-                </option>
-              ))}
-            </Select>
-            <IconGroup gap={4} className="h-8">
+              {placed?.page.length ? <i className="fa-solid fa-circle-exclamation pl-1 text-amber-500" /> : null}
+              <Select
+                size="sm"
+                name="page"
+                aria-label="Starts on"
+                value={flow.page}
+                disabled={locked}
+                onChange={handlePage}
+              >
+                {[...new Set([flow.page, ...pages])].map(page => (
+                  <option key={page} value={page}>
+                    {page}
+                  </option>
+                ))}
+              </Select>
+            </span>
+            <IconGroup
+              gap={4}
+              className={clsx('h-8', {
+                'rounded-md ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900':
+                  placed?.device.length
+              })}
+            >
               {DEVICES.map(device => (
                 <IconGroup.Icon
                   key={device.width}
@@ -197,6 +224,12 @@ const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
           {(mode !== 'idle' || checking) && <span className="size-1.5 animate-pulse rounded-full bg-current" />}
           {status.said}
         </span>
+        {view === 'run' && playingAll && (
+          <Button iconPlacement="before" size="xs" intent="secondary" onClick={stop}>
+            <Button.Icon icon="fa-solid fa-stop" />
+            Stop
+          </Button>
+        )}
         {view === 'run' && !playingAll && (
           <Button size="xs" intent="secondary" onClick={handleShowSteps}>
             Back to the flow
@@ -379,6 +412,30 @@ const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
                 {outcome.said}
               </div>
             )}
+            {placed && placed.page.length + placed.device.length + placed.other.length > 0 && (
+              <div
+                role="status"
+                className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100"
+              >
+                <i className="fa-solid fa-circle-exclamation mt-0.5 text-amber-500" />
+                <ul className="flex flex-col gap-0.5">
+                  {placed.page.map(said => (
+                    <li key={said}>
+                      <b className="font-semibold">Starts on {flow.page}:</b> {said} Choose one of its pages above.
+                    </li>
+                  ))}
+                  {placed.device.map(said => (
+                    <li key={said}>
+                      <b className="font-semibold">Device:</b> {said} Choose a phone, a tablet or a desktop above.
+                    </li>
+                  ))}
+                  {placed.other.map(said => (
+                    <li key={said}>{said}</li>
+                  ))}
+                  <li className="text-amber-700 dark:text-amber-300">A snapshot waits until it is fixed.</li>
+                </ul>
+              </div>
+            )}
             {mode === 'playing' && paused && (
               <div
                 role="status"
@@ -397,6 +454,7 @@ const FlowPanel = ({ view, onView, onSaved }: FlowPanelProps) => {
               </div>
             ) : (
               <FlowStrip
+                stepProblems={placed?.steps}
                 steps={steps}
                 plays={plays}
                 editing={editing}

@@ -5,6 +5,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
+import { problemsOfKind, testsNeedingLook } from '../../helpers';
 import TestStudioContext from '../../studio/TestStudioContext';
 import AreaStats from '../AreaStats';
 import CanvasPane from '../CanvasPane';
@@ -17,6 +18,8 @@ import type { TSpaceRunE2eTestsMutation, TSpaceTests } from '@plitzi/sdk-shared/
 export type TestsAreaProps = {
   externalStyle: string;
   answer?: TSpaceTests;
+  /** What is wrong with the tests as written, read against the document being edited. */
+  problems: readonly string[];
   serverRun?: TSpaceRunE2eTestsMutation;
   serverRunning: boolean;
   onRunOnServer: () => void;
@@ -36,6 +39,7 @@ const today = (): string =>
 const TestsArea = ({
   externalStyle,
   answer,
+  problems,
   serverRun,
   serverRunning,
   onRunOnServer,
@@ -44,7 +48,7 @@ const TestsArea = ({
 }: TestsAreaProps) => {
   const studio = use(TestStudioContext);
   const { tests, flow, dirty, mode, playingAll, paused, checking, plays, states, log, playedMs, outcome } = studio;
-  const { select, create, remove, playAll } = studio;
+  const { select, create, remove, playAll, stop } = studio;
   const { showDialog } = useModal();
   const [definition] = useBuilderStore('schema.definition');
   const [view, setView] = useState<'steps' | 'run'>('steps');
@@ -147,15 +151,23 @@ const TestsArea = ({
         <Button size="sm" intent="secondary" disabled={serverRunning || flows.length === 0} onClick={onRunOnServer}>
           {serverRunning ? 'Playing on the server…' : 'Run on the server'}
         </Button>
-        <Button
-          iconPlacement="before"
-          size="sm"
-          disabled={mode !== 'idle' || flows.length === 0}
-          onClick={handlePlayAll}
-        >
-          <Button.Icon icon="fa-solid fa-play" />
-          Play all
-        </Button>
+        {/* Every flow played in turn is stopped where it was started: the rest are said as stopped. */}
+        {playingAll ? (
+          <Button iconPlacement="before" size="sm" intent="secondary" title="Stop playing the flows" onClick={stop}>
+            <Button.Icon icon="fa-solid fa-stop" />
+            Stop
+          </Button>
+        ) : (
+          <Button
+            iconPlacement="before"
+            size="sm"
+            disabled={mode !== 'idle' || flows.length === 0}
+            onClick={handlePlayAll}
+          >
+            <Button.Icon icon="fa-solid fa-play" />
+            Play all
+          </Button>
+        )}
       </div>
       <AreaStats
         stats={[
@@ -187,17 +199,25 @@ const TestsArea = ({
       <div className="flex min-h-0 grow gap-4">
         <div className="flex min-w-0 grow flex-col gap-4">
           <CanvasPane externalStyle={externalStyle} />
-          <FlowPanel view={view} onView={setView} onSaved={setProblem} />
+          <FlowPanel problems={problems} view={view} onView={setView} onSaved={setProblem} />
         </div>
         <div className="flex w-96 shrink-0 flex-col gap-4">
           <FlowList
             serverRun={serverRun}
+            problems={problems}
             onSelect={handleSelect}
             onCreate={handleCreate}
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
           />
-          <GateCard ready={passing + (answer?.unitPassed ?? 0)} total={flows.length + unitTotal} onChecks={onChecks} />
+          <GateCard
+            ready={passing + (answer?.unitPassed ?? 0)}
+            total={flows.length + unitTotal}
+            flowsNeedLook={testsNeedingLook(problems, 'e2e')}
+            checksNeedLook={problemsOfKind(problems, 'unit').length + (answer?.unitFailed ?? 0)}
+            onChecks={onChecks}
+            onShowFlow={handleSelect}
+          />
           {problem && <p className="text-xs text-red-600 dark:text-red-400">{problem}</p>}
         </div>
       </div>

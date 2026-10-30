@@ -31,6 +31,7 @@ describe('the unit tests listed', () => {
             problem: null
           }
         ]}
+        problems={[]}
         onAdd={vi.fn()}
         onEdit={onEdit}
         onRemove={vi.fn()}
@@ -45,8 +46,24 @@ describe('the unit tests listed', () => {
   });
 
   it('starts empty, saying what a unit test is for', () => {
-    render(<UnitTests tests={[]} results={[]} onAdd={vi.fn()} onEdit={vi.fn()} onRemove={vi.fn()} />);
+    render(<UnitTests tests={[]} results={[]} problems={[]} onAdd={vi.fn()} onEdit={vi.fn()} onRemove={vi.fn()} />);
 
     expect(screen.getByText('No element checks yet')).toBeTruthy();
+  });
+
+  it('marks a check that needs a look, and says what is wrong under it', () => {
+    render(
+      <UnitTests
+        tests={tests}
+        results={[]}
+        problems={['unit test "lit": no element "plan" in the space — name one by its id']}
+        onAdd={vi.fn()}
+        onEdit={vi.fn()}
+        onRemove={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByRole('img', { name: /^Needs a look/ })).toHaveLength(1);
+    expect(screen.getByText('No element "plan" in the space — name one by its id.')).toBeTruthy();
   });
 });

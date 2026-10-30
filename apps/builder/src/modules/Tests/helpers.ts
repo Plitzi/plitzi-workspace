@@ -304,3 +304,90 @@ export const momentsOf = (steps: readonly E2eStep[]): FlowMoment[] => {
 
   return moments[0].checks.length === 0 ? moments.slice(1) : moments;
 };
+
+/** A problem the server said of a test, taken apart: which kind of test, its id, the step if one, what is wrong. */
+const parseProblem = (problem: string) => {
+  const match = /^(e2e|unit) test "([^"]+)"(?:, step (\d+) \((\w+)\))?: (.*)$/.exec(problem);
+  if (!match) {
+    return undefined;
+  }
+
+  const [, kind, id, step, , said] = match;
+
+  // A sentence, as it is read beside others: capitalised, and closed.
+  const sentence = said.charAt(0).toUpperCase() + said.slice(1);
+
+  return { kind, id, step, said: /[.!?]$/.test(sentence) ? sentence : `${sentence}.` };
+};
+
+/**
+ * A problem the server said of a test, as the person reads it: the test by the title they gave it — not its id — and
+ * what is wrong with it, a sentence.
+ */
+export const problemInWords = (problem: string, tests: SpaceTests): { test: string; said: string } => {
+  const parsed = parseProblem(problem);
+  if (!parsed) {
+    return { test: '', said: problem };
+  }
+
+  const list: readonly { id: string; title: string }[] = (parsed.kind === 'e2e' ? tests.e2e : tests.unit) ?? [];
+  const title = list.find(each => each.id === parsed.id)?.title || parsed.id;
+
+  return { test: parsed.step ? `${title}, step ${parsed.step}` : title, said: parsed.said };
+};
+
+/** What the server said is wrong with one test — of a kind, by its id — each a sentence; none when it said nothing. */
+export const problemsOfTest = (problems: readonly string[], kind: 'e2e' | 'unit', id: string): string[] =>
+  problems.flatMap(problem => {
+    const parsed = parseProblem(problem);
+    if (!parsed || parsed.kind !== kind || parsed.id !== id) {
+      return [];
+    }
+
+    return [parsed.step ? `Step ${parsed.step}: ${parsed.said}` : parsed.said];
+  });
+
+/** The problems the server said of one kind of test — the flows', or the element checks' — each as it said it. */
+export const problemsOfKind = (problems: readonly string[], kind: 'e2e' | 'unit'): string[] =>
+  problems.filter(problem => parseProblem(problem)?.kind === kind);
+
+/** The tests of a kind that need a look, by id, each once and in the order the server named them. */
+export const testsNeedingLook = (problems: readonly string[], kind: 'e2e' | 'unit'): string[] => [
+  ...new Set(
+    problems.flatMap(problem => {
+      const parsed = parseProblem(problem);
+
+      return parsed?.kind === kind ? [parsed.id] : [];
+    })
+  )
+];
+
+/** What is wrong with one flow, by where it is fixed: where it starts, its device, a step, or the flow as a whole. */
+export type FlowProblems = { page: string[]; device: string[]; steps: Map<number, string[]>; other: string[] };
+
+/**
+ * A flow's problems placed where they are fixed — the field or the step a person changes — so each is said beside it
+ * rather than in a list apart.
+ */
+export const flowProblemsOf = (problems: readonly string[], id: string): FlowProblems => {
+  const placed: FlowProblems = { page: [], device: [], steps: new Map(), other: [] };
+  for (const problem of problems) {
+    const parsed = parseProblem(problem);
+    if (parsed?.kind !== 'e2e' || parsed.id !== id) {
+      continue;
+    }
+
+    if (parsed.step) {
+      const index = Number(parsed.step) - 1;
+      placed.steps.set(index, [...(placed.steps.get(index) ?? []), parsed.said]);
+    } else if (/no page of the space answers/i.test(parsed.said)) {
+      placed.page.push(parsed.said);
+    } else if (/a width of/i.test(parsed.said)) {
+      placed.device.push(parsed.said);
+    } else {
+      placed.other.push(parsed.said);
+    }
+  }
+
+  return placed;
+};

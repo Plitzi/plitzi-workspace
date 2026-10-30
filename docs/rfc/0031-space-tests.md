@@ -206,7 +206,7 @@ deployment runs a browser for them, and said as not run where it does not — ne
    area (§ 6.1: the page live beside the flows, played to any step, recorded, every flow in turn with its log) on
    `CanvasPage`; **Run on the server** and its run replayed (`E2eRunView`) (`apps/builder/src/modules/Tests`,
    `studio/`; `e2e/tests/builder/spaceTests.spec.ts`). The demo: Corner Bakery (`plitzi-sdk-server`,
-   `prisma/seeds/spaces/demo/cornerBakery`), four element checks and three flows, one of them on a phone.
+   `prisma/seeds/spaces/demo/cornerBakery`), seven element checks and eight flows across its pages — one on a phone, one on a tablet, one from a wrong address.
 4. **The server runner** — done. `runE2eOnDraft` (`plitzi-sdk-server`, `services/validation/spaceTestsE2e.ts`) plays
    them on the draft in Playwright's Chromium on the server, the draft followed from page to page by a preview session;
    with no browser there it answers why they were not run. `SpaceRunE2eTests` runs them for the builder with a picture

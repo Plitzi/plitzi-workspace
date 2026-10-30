@@ -342,13 +342,18 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   least) lets each step be seen working on the page; it, the flow chosen and the tab open are kept through a reload.
   A flow reads as it runs: a timeline of its steps, filled as they play (red where one failed, pressed to play up to
   it), and its moments side by side — the page as it opens, then each thing done with what must hold after it. The
-  page scrolls to the element each step is about, within itself, and its ring stays on it as it moves. It all runs on `runE2eTest`, the canvas given as its page; **Run on the
+  page scrolls to the element each step is about, within itself, and its ring stays on it as it moves. **Play all**
+  turns into **Stop** while it plays: the flow playing stops before its next step and the rest are said as stopped.
+  A test that cannot be read as it is written is read in the builder itself, against the document as it is being
+  edited — the reading a snapshot makes — and said calmly where it is fixed: its tab and its row marked, a page it starts
+  on that no page answers on that field, a step on that step; the element checks' on their tab, the flows' on theirs. It all runs on `runE2eTest`, the canvas given as its page; **Run on the
   server** plays them in the server's browser and **View run** replays a run (`@plitzi/plitzi-builder`,
   `SpaceRunE2eTests` in `@plitzi/sdk-shared`).
 - **`runE2eTest` can be held and stopped**: `beforeStep` is waited for before each step (a player pauses there) and
   `signal` stops the run before its next one — the rest not run, the result `stopped`. A `type` step writes in the
   element when it is a field, or in the field inside it — a form control's input is drawn within the element its id
-  marks (`locateField`, `@plitzi/sdk-authoring`).
+  marks (`locateField`, `@plitzi/sdk-authoring`). A flow may start on a wrong address its space answers with its own
+  not-found page (`slug: '*'`): `e2eTestProblems` takes it, to test that page.
 - **The page's state bridge on another window**: `useAgentInspector(enabled, target)` puts `window.__plitzi` on the
   window it is given — the builder's canvas, where a flow's state steps read and write (`@plitzi/sdk-dev-tools`,
   `agentInspector`).

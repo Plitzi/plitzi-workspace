@@ -170,6 +170,32 @@ describeTarget('builder', subject => {
       await capture('play-all');
     });
 
+    test('says what is wrong with a step on the step itself, as it is written', async ({ page }) => {
+      await openTests(page, subject.origin);
+      await page.getByRole('button', { name: 'New flow' }).click();
+      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      await panel.getByRole('combobox', { name: 'Add a step by hand' }).selectOption('expectPosition');
+      await panel.getByRole('button', { name: 'Done' }).click();
+
+      // Read as it is written, before it is saved: the step says it is no relation, on itself.
+      await expect(panel.getByText(/is no relation/)).toBeVisible();
+      await expect(page.getByRole('tab', { name: /Flows/ }).getByRole('img', { name: /to look at/ })).toBeVisible();
+    });
+
+    test('stops every flow played in turn when asked, and says where they stand', async ({ page }) => {
+      await openTests(page, subject.origin);
+      await page.getByRole('button', { name: 'Play all' }).click();
+
+      const flows = page.getByRole('region', { name: 'Flows' });
+      await expect(flows.getByText('Live')).toBeVisible();
+      await page.getByRole('button', { name: 'Stop' }).first().click();
+
+      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      await expect(panel.getByText('Stopped.', { exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(flows.getByText('Stopped', { exact: true }).first()).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Play all' })).toBeEnabled();
+    });
+
     test('plays the flows on the server and replays a run step by step', async ({ page, capture }) => {
       await openTests(page, subject.origin);
       await page.getByRole('button', { name: 'Run on the server' }).click();

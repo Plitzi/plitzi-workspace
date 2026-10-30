@@ -4,9 +4,10 @@ import { use } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import { elementNameOf } from '../../helpers';
+import { elementNameOf, problemsOfTest } from '../../helpers';
 import { sentenceText } from '../../studio/sentences';
 import TestStudioContext from '../../studio/TestStudioContext';
+import NeedsLook from '../NeedsLook';
 
 import type { FlowState } from '../../studio/TestStudioContext';
 import type { E2eTest } from '@plitzi/sdk-shared';
@@ -15,6 +16,8 @@ import type { TSpaceRunE2eTestsMutation } from '@plitzi/sdk-shared/network';
 export type FlowListProps = {
   /** The flows as the server last played them, when it did. */
   serverRun?: TSpaceRunE2eTestsMutation;
+  /** What the server said is wrong with the tests as written: a flow it names is marked. */
+  problems: readonly string[];
   onSelect: (id: string) => void;
   onCreate: () => void;
   onRemove: (id: string) => void;
@@ -87,7 +90,7 @@ const firstLineOf = (flow: E2eTest, nameOf: (target: string) => string): string 
  * The space's flows, each a row: its letter, what it is, what it does first and where it stands — the chosen one lit,
  * played on the page on the left when it is chosen.
  */
-const FlowList = ({ serverRun, onSelect, onCreate, onRemove, onViewServerRun }: FlowListProps) => {
+const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewServerRun }: FlowListProps) => {
   const { tests, flow, dirty, states, mode, playingAll } = use(TestStudioContext);
   const [flat] = useBuilderStore('schema.flat');
   const flows = tests.e2e ?? [];
@@ -149,7 +152,8 @@ const FlowList = ({ serverRun, onSelect, onCreate, onRemove, onViewServerRun }: 
                 {String.fromCharCode(65 + (index % 26))}
               </span>
               <div className="flex min-w-0 grow flex-col">
-                <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="flex min-w-0 items-center gap-1.5 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <NeedsLook problems={problemsOfTest(problems, 'e2e', each.id)} />
                   {current.title || 'A new flow'}
                   {chosen && dirty && <span className="text-primary-text"> · not saved</span>}
                 </span>
