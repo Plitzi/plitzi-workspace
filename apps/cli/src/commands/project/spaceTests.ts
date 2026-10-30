@@ -79,7 +79,7 @@ const runE2e = async (
 };
 
 /**
- * The project's own tests (RFC 0031), as the space's document keeps them — written in its spec, authored with it: those
+ * The project's own tests, as the space's document keeps them — written in its spec, authored with it: those
  * written wrong said first and nothing run; then the unit tests, no browser; then the e2e tests, each a page of the
  * project's server played as a visitor. What the snapshot and the publish would hold. Answers how it went, or why it
  * could not be asked: `plitzi test` says it, `plitzi verify` counts it as one of its checks.

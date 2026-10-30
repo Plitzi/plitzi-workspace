@@ -339,6 +339,8 @@ describe('MCP primer: the space’s plan', () => {
       tierLabel: 'Free',
       snapshotsKept: 0,
       analyticsDays: 7,
+      journeysPerSpace: 1,
+      serverRunsPerMonth: 10,
       capabilities: {
         customDomain: { included: false, label: 'A custom domain', requires: 'Site', upgradeUrl: 'u' },
         functions: { included: false, label: 'Running space functions', requires: 'App', upgradeUrl: 'u' },

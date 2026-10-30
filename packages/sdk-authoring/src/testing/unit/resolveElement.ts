@@ -6,7 +6,7 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, Schema, UnitGiven } from '@plitzi/sdk-shared';
 
 /**
- * A space's logic checked without a browser (RFC 0031, unit tests): what one element of the document resolves to for a
+ * A space's logic checked without a browser (unit tests): what one element of the document resolves to for a
  * state and the data it reads — its attributes after bindings and templates, its style, its visibility, its variants —
  * evaluated with the functions the SDK draws it with. In milliseconds: a pricing chooser's forty combinations of answers
  * were once a test of their own, written by hand over `processTwig`.

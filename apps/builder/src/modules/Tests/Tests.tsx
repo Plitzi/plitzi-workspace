@@ -12,6 +12,7 @@ import TestsSummary from './components/TestsSummary';
 import UnitTestForm from './components/UnitTestForm';
 import UnitTests from './components/UnitTests';
 import { elementOptions, newUnitTest, problemsOfKind, testsNeedingLook, withUnitTest } from './helpers';
+import useServerPlay from './hooks/useServerPlay';
 import useSpaceTests from './hooks/useSpaceTests';
 import useTestProblems from './hooks/useTestProblems';
 import TestStudioContext from './studio/TestStudioContext';
@@ -32,7 +33,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 /**
- * The space's own tests (RFC 0031), kept in its document and held where it ships. Its flows — what a visitor does, end
+ * The space's own tests, kept in its document and held where it ships. Its flows — what a visitor does, end
  * to end — beside the page they are played on; its element checks — one element for a state, checked on every save.
  */
 const Tests = ({ externalStyle = '' }: TestsProps) => {
@@ -50,6 +51,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   const [editing, setEditing] = useState<UnitTest>();
   const [serverRun, setServerRun] = useState<TSpaceRunE2eTestsMutation>();
   const [serverRunning, setServerRunning] = useState(false);
+  const { play: serverPlay, settle: settleServerPlay } = useServerPlay();
   const [viewing, setViewing] = useState<string>();
   const elements = useMemo(() => elementOptions(flat), [flat]);
   const tests = useMemo(() => answer?.tests ?? { unit: [], e2e: [] }, [answer]);
@@ -86,8 +88,9 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
       setServerRun(await runE2e());
     } finally {
       setServerRunning(false);
+      settleServerPlay();
     }
-  }, [runE2e]);
+  }, [runE2e, settleServerPlay]);
   const handleSaveUnit = useCallback(
     async (test: UnitTest) => {
       const result = await save(withUnitTest(studio.tests, test, editing?.id ?? test.id));
@@ -174,6 +177,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           problems={problems}
           serverRun={serverRun}
           serverRunning={serverRunning}
+          serverPlay={serverPlay}
           onRunOnServer={handleRunOnServer}
           onViewServerRun={setViewing}
           onChecks={handleTab('checks')}

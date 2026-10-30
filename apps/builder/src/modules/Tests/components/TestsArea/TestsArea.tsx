@@ -8,11 +8,14 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { problemsOfKind, testsNeedingLook } from '../../helpers';
 import TestStudioContext from '../../studio/TestStudioContext';
 import AreaStats from '../AreaStats';
+import CalmNote from '../CalmNote';
 import CanvasPane from '../CanvasPane';
 import FlowList from '../FlowList';
 import FlowPanel from '../FlowPanel';
 import GateCard from '../GateCard';
+import ServerPlayCard from '../ServerPlayCard';
 
+import type { ServerPlay } from '../../hooks/useServerPlay';
 import type { TSpaceRunE2eTestsMutation, TSpaceTests } from '@plitzi/sdk-shared/network';
 
 export type TestsAreaProps = {
@@ -22,6 +25,8 @@ export type TestsAreaProps = {
   problems: readonly string[];
   serverRun?: TSpaceRunE2eTestsMutation;
   serverRunning: boolean;
+  /** The journeys the server is playing now, heard as they play — this person's run or anyone's. */
+  serverPlay?: ServerPlay;
   onRunOnServer: () => void;
   onViewServerRun: (id: string) => void;
   onChecks: () => void;
@@ -32,7 +37,7 @@ const today = (): string =>
   new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /**
- * The space's flows, played on its page (RFC 0031): the page live on the left, the flows on the right — each with how it
+ * The space's flows, played on its page: the page live on the left, the flows on the right — each with how it
  * went — and the flow chosen below, step by step. What is pressed on the right is played on the left; what is done on
  * the left, recorded, is written on the right. Above, where things stand: what is playing, and the numbers that count.
  */
@@ -42,6 +47,7 @@ const TestsArea = ({
   problems,
   serverRun,
   serverRunning,
+  serverPlay,
   onRunOnServer,
   onViewServerRun,
   onChecks
@@ -60,6 +66,9 @@ const TestsArea = ({
   const unitTotal = (answer?.unitPassed ?? 0) + (answer?.unitFailed ?? 0);
   const running = plays.findIndex(each => each?.state === 'running' || each?.state === 'next');
   const playingFlow = flows.find(each => states[each.id]?.state === 'playing');
+  // One play at a time per space: while one is heard playing, the server would refuse another.
+  const onServer = serverPlay && !serverPlay.ended ? serverPlay : undefined;
+  const titleOf = (id: string) => flows.find(each => each.id === id)?.title || id;
 
   const leaveUnsaved = useCallback(
     async () =>
@@ -148,8 +157,13 @@ const TestsArea = ({
           </span>
         </div>
         <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Draft · {today()}</span>
-        <Button size="sm" intent="secondary" disabled={serverRunning || flows.length === 0} onClick={onRunOnServer}>
-          {serverRunning ? 'Playing on the server…' : 'Run on the server'}
+        <Button
+          size="sm"
+          intent="secondary"
+          disabled={serverRunning || onServer !== undefined || flows.length === 0}
+          onClick={onRunOnServer}
+        >
+          {serverRunning || onServer ? 'Playing on the server…' : 'Run on the server'}
         </Button>
         {/* Every flow played in turn is stopped where it was started: the rest are said as stopped. */}
         {playingAll ? (
@@ -204,12 +218,15 @@ const TestsArea = ({
         <div className="flex w-96 shrink-0 flex-col gap-4">
           <FlowList
             serverRun={serverRun}
+            serverPlay={onServer}
             problems={problems}
             onSelect={handleSelect}
             onCreate={handleCreate}
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
           />
+          {onServer && <ServerPlayCard play={onServer} titleOf={titleOf} />}
+          {serverRun?.notRun && <CalmNote>{serverRun.notRun}</CalmNote>}
           <GateCard
             ready={passing + (answer?.unitPassed ?? 0)}
             total={flows.length + unitTotal}

@@ -3,12 +3,15 @@ import clsx from 'clsx';
 import { use } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import { elementNameOf, problemsOfTest } from '../../helpers';
 import { sentenceText } from '../../studio/sentences';
 import TestStudioContext from '../../studio/TestStudioContext';
+import CalmNote from '../CalmNote';
 import NeedsLook from '../NeedsLook';
 
+import type { ServerPlay } from '../../hooks/useServerPlay';
 import type { FlowState } from '../../studio/TestStudioContext';
 import type { E2eTest } from '@plitzi/sdk-shared';
 import type { TSpaceRunE2eTestsMutation } from '@plitzi/sdk-shared/network';
@@ -16,6 +19,8 @@ import type { TSpaceRunE2eTestsMutation } from '@plitzi/sdk-shared/network';
 export type FlowListProps = {
   /** The flows as the server last played them, when it did. */
   serverRun?: TSpaceRunE2eTestsMutation;
+  /** The journeys the server is playing now: their pills say how far each got there. */
+  serverPlay?: ServerPlay;
   /** What the server said is wrong with the tests as written: a flow it names is marked. */
   problems: readonly string[];
   onSelect: (id: string) => void;
@@ -90,7 +95,15 @@ const firstLineOf = (flow: E2eTest, nameOf: (target: string) => string): string 
  * The space's flows, each a row: its letter, what it is, what it does first and where it stands — the chosen one lit,
  * played on the page on the left when it is chosen.
  */
-const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewServerRun }: FlowListProps) => {
+const FlowList = ({
+  serverRun,
+  serverPlay,
+  problems,
+  onSelect,
+  onCreate,
+  onRemove,
+  onViewServerRun
+}: FlowListProps) => {
   const { tests, flow, dirty, states, mode, playingAll } = use(TestStudioContext);
   const [flat] = useBuilderStore('schema.flat');
   const flows = tests.e2e ?? [];
@@ -98,12 +111,18 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
   const shown = flow && !flows.some(each => each.id === flow.id) ? [...flows, flow] : flows;
   const live = mode === 'playing';
   const nameOf = (target: string) => elementNameOf(flat, target);
+  const { entitlements } = useSpaceEntitlements();
+  const limit = entitlements?.journeysPerSpace ?? null;
+  // At the plan's number a new journey would be refused on saving: it is not offered. Those kept stay editable.
+  const full = limit !== null && shown.length >= limit;
+  const more = entitlements?.moreJourneys;
 
   return (
     <section className="flex min-h-0 flex-col gap-2" aria-label="Journeys">
       <div className="flex items-center gap-3">
         <span className="grow text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-          Flows · {shown.length}
+          Journeys · {shown.length}
+          {limit !== null && ` of ${String(limit)}`}
         </span>
         <span
           className={clsx('flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase', {
@@ -114,16 +133,30 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
           <span className={clsx('size-1.5 rounded-full', { 'animate-pulse bg-red-500': live, 'bg-zinc-400': !live })} />
           {live ? 'Live' : 'Idle'}
         </span>
-        <Button size="xs" intent="secondary" iconPlacement="before" disabled={live} onClick={onCreate}>
+        <Button
+          size="xs"
+          intent="secondary"
+          iconPlacement="before"
+          disabled={live || full}
+          title={full ? 'The plan keeps no more journeys in this space' : undefined}
+          onClick={onCreate}
+        >
           <Button.Icon icon="fa-solid fa-plus" />
           New journey
         </Button>
       </div>
+      {full && entitlements && (
+        <CalmNote link={more ? { label: 'See the plans', href: more.upgradeUrl } : undefined}>
+          The {entitlements.tierLabel} plan keeps {limit} {limit === 1 ? 'journey' : 'journeys'} per space — yours keep
+          playing and can be changed.
+          {more && ` ${more.requires} keeps ${more.allows === null ? 'as many as you like' : String(more.allows)}.`}
+        </CalmNote>
+      )}
       <ol className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700">
         {shown.map((each, index) => {
           const chosen = flow?.id === each.id;
           const current = chosen ? flow : each;
-          const state = states[each.id] ?? { state: 'idle' };
+          const state = serverPlay?.journeys[each.id] ?? states[each.id] ?? { state: 'idle' };
           const onServer = serverRun?.results.find(result => result.id === each.id);
           const playing = state.state === 'playing';
 

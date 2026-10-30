@@ -35,6 +35,8 @@ authoring and the elements learnt from the runs.
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
+- **A page given to `runE2eTest` chooses a select's option**: `E2eElement` has `selectOption(value, { timeout })`, as
+  Playwright's locator does — a page written by hand (not Playwright's) adds it.
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
   plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22
@@ -319,7 +321,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## A space's tests (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`)
 
-- **Tests are part of the space's document** (`Schema.tests`, RFC 0031), in two kinds kept apart. **Unit tests**
+- **Tests are part of the space's document** (`Schema.tests`; how it works: docs/en/space-tests.md), in two kinds kept apart. **Unit tests**
   (`tests.unit`): one element of a page resolved for a state and its sources, no browser — its attributes after bindings
   and templates, its style, whether it shows (with every element around it), a class's variant, a key of its state:
   `unit.test({ element, given, expect: [unit.variant('pill', 'current')] })`, `runUnitTests(schema)`,
@@ -346,15 +348,25 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   ring stays on it as it moves. A test that cannot be read as it is written is read in the builder itself, against the
   document as it is being edited, and said calmly where it is fixed: its tab and its row marked, a page it starts on
   that no page answers on that field, a step on that step. It all runs on `runE2eTest`, the canvas given as its page;
-  **Run on the server** plays them in the server's browser and **View run** replays a run (`@plitzi/plitzi-builder`,
-  `SpaceRunE2eTests` in `@plitzi/sdk-shared`).
+  **Run on the server** plays them in the server's browser, shown as it plays — each journey's pill, and a card with
+  its step and the page after it, from `SPACE_TESTS_PLAYING` on the space's channel (in every builder open on the
+  space, an agent's runs too) — and **View run** replays a run (`@plitzi/plitzi-builder`, `SpaceRunE2eTests` and
+  `SPACE_TESTS_PLAYING` in `@plitzi/sdk-shared`).
+- **What a plan allows of a space's tests** is in its entitlements: `journeysPerSpace` and `serverRunsPerMonth`
+  (`null`, no limit), and `moreJourneys` / `moreServerRuns` — the plan that gives more, and the way there
+  (`TMoreOf`, `@plitzi/sdk-shared`). The builder offers no new journey at the plan's number and says so calmly, and says
+  why a run on the server was not made (another one playing, the month's used).
 - **A test the space no longer answers is a warning of the space**: `test-unreadable`, raised by `lintSpace` (and so by
   `author`, `plitzi space lint`, the builder's issues and the publish gate) for an element check or a journey that names
   a page, an element or a relation the space no longer has (`@plitzi/sdk-authoring`).
 - **`runE2eTest` can be held and stopped**: `beforeStep` is waited for before each step (a player pauses there) and
   `signal` stops the run before its next one — the rest not run, the result `stopped`. A `type` step writes in the
   element when it is a field, or in the field inside it — a form control's input is drawn within the element its id
-  marks (`locateField`, `@plitzi/sdk-authoring`). A journey may start on a wrong address its space answers with its own
+  marks (`locateField`, `@plitzi/sdk-authoring`). A press acts on the copy a visitor sees — the first shown, or the one
+  named — and one on the page but shown nowhere at this width is said so; a select is chosen from and a date, time,
+  colour or range set whole; a range is dragged from its thumb; a click waits for what it asked the server
+  (`shownCopy`, `hiddenAtWidth`, `giveValue`, `valueFieldIn`, `dragElement`, `answered`, `targetOf`, `fieldsOf`).
+  `E2eElement` gains `selectOption`. A journey may start on a wrong address its space answers with its own
   not-found page (`slug: '*'`): `e2eTestProblems` takes it, to test that page.
 - **The page's state bridge on another window**: `useAgentInspector(enabled, target)` puts `window.__plitzi` on the
   window it is given — the builder's canvas, where a journey's state steps read and write (`@plitzi/sdk-dev-tools`,
@@ -363,7 +375,9 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   the unit tests, then the e2e tests against its server (`--unit`, `--e2e`, `--url`, `--json`); a failure exits 1
   (`@plitzi/cli`). The press made once, the reading of a press that failed, the hydration wait and the relations
   between two elements' sides are sdk-authoring's now (`pressOnce`, `pressFailure`, `awaitHydration`,
-  `parseRelation`, `relationHolds`): `page play`, `check` and `measure --expect` use the same ones. **`plitzi verify`**
+  `parseRelation`, `relationHolds`): `page play`, `check` and `measure --expect` use the same ones, and `page play` /
+  `check --steps` press through the engine's own pieces — the copy shown, a value given, a range's thumb, the server's
+  answer — keeping their own grammar of targets and steps. **`plitzi verify`**
   runs them as one of its checks, `space tests` — the element checks alone with `--no-pages` — through the same code
   as `plitzi test` (`playSpaceTests`).
 - **`plitzi_test`** (`@plitzi/sdk-mcp`): an agent lists a space's tests with the element checks' report, saves them,

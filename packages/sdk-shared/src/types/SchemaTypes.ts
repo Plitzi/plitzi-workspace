@@ -234,7 +234,7 @@ export type Schema = {
   flat: Record<string, Element>;
   definition: { name: string; permanentUrl: string };
   variables: SchemaVariable[];
-  /** The space's tests, kept with it and run against it: a snapshot and a publish need them passing (RFC 0031). */
+  /** The space's tests, kept with it and run against it: a snapshot and a publish need them passing. */
   tests?: SpaceTests;
   /** Keyed by the name each is read by. A space that declares none has none — documents written before flags too. */
   flags?: Record<string, SchemaFlag>;

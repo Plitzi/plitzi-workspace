@@ -36,6 +36,15 @@ describe('what a payload has to look like', () => {
     expect(validateSpaceEvent('SPACE_ADD_PLUGIN', { plugin: { type: 'seatPicker', settings: {} } }).ok).toBe(false);
   });
 
+  it('carries a journey played on the server, step by step and once it ends', () => {
+    const step = { run: 'r1', test: 'orders', at: 0, of: 2, played: 3, steps: 7, ok: true };
+    expect(validateSpaceEvent('SPACE_TESTS_PLAYING', step).ok).toBe(true);
+    expect(
+      validateSpaceEvent('SPACE_TESTS_PLAYING', { ...step, ended: true, frame: 'data:image/jpeg;base64,AA' }).ok
+    ).toBe(true);
+    expect(validateSpaceEvent('SPACE_TESTS_PLAYING', { ...step, of: 0 }).ok).toBe(false);
+  });
+
   it('rejects a payload missing what the handler will read', () => {
     const result = validateSpaceEvent('SPACE_MOVE_ELEMENT', { from: 'a', to: 'b', elementId: 'el1' });
 

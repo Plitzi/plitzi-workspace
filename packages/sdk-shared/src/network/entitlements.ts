@@ -16,6 +16,9 @@ export type TCapability = {
   upgradeUrl?: string;
 };
 
+/** The cheapest plan above this one that allows more of a count, what it allows (`null`, no limit) and where to get it. */
+export type TMoreOf = { requires: string; allows: number | null; upgradeUrl: string };
+
 export type TSpaceEntitlements = {
   /** The plan as a person reads it: "Free", "App+". */
   tierLabel: string;
@@ -23,6 +26,14 @@ export type TSpaceEntitlements = {
   snapshotsKept: number;
   /** Days of the space's analytics read back; 0 reads all the server keeps. */
   analyticsDays: number;
+  /** Journeys (e2e tests) the space may keep; `null` has no limit. Played on the builder's canvas without one. */
+  journeysPerSpace: number | null;
+  /** Journeys played on the server a month (UTC), "Run on the server"; `null` has no limit. A publish's are not counted. */
+  serverRunsPerMonth: number | null;
+  /** The plan that keeps more journeys, when this one has a limit and one above keeps more. */
+  moreJourneys?: TMoreOf;
+  /** The plan that plays more journeys on the server, when this one has a limit and one above plays more. */
+  moreServerRuns?: TMoreOf;
   capabilities: Record<string, TCapability>;
 };
 

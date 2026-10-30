@@ -4,7 +4,7 @@ import type { SpaceTests } from '../../../../../types';
 export type TSpaceUnitTestResult = { id: string; title: string; ok: boolean; misses: string[]; problem: string | null };
 
 /**
- * The space's own tests (RFC 0031) and how they stand against the saved document — what a snapshot would meet:
+ * The space's own tests and how they stand against the saved document — what a snapshot would meet:
  * `problems` refuse it, a failed unit test refuses it, and the e2e tests this server runs no browser for are named.
  */
 export type TSpaceTests = {

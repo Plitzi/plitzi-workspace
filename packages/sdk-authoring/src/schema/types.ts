@@ -510,7 +510,7 @@ export interface SpaceSpec {
    */
   computed?: Record<string, string>;
   /**
-   * The space's own tests (RFC 0031), kept in its document: `unit` — an element resolved for a state, no browser — and
+   * The space's own tests, kept in its document: `unit` — an element resolved for a state, no browser — and
    * `e2e` — a visitor's steps on a page. Written with `unit.test(…)` and `e2e.test(…)`; run by `plitzi test`, and a
    * snapshot and a publish wait for them.
    */

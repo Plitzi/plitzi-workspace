@@ -130,7 +130,7 @@ const emptyConnection = (typename: string) => ({
   __typename: typename
 });
 
-/** The space's tests (RFC 0031) as the mocked backend keeps them: what the last save stored, every unit test passing. */
+/** The space's tests as the mocked backend keeps them: what the last save stored, every unit test passing. */
 const testsAnswer = (tests: { unit?: { id: string; title: string }[]; e2e?: { id: string }[] }) => ({
   tests,
   problems: [],

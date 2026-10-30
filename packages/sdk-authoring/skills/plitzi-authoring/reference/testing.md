@@ -45,7 +45,14 @@ no browser.
   none — is the warning `test-unreadable` of `lintSpace` and `author`, wherever the space was changed: a `plitzi space
   lint`, an MCP batch ("This change leaves a test of the space unreadable…"), the builder. Fix the test, or the space.
 - **A journey may start on a wrong address** its space answers with its own not-found page (`slug: '*'`), to test it.
-- **A `type` step names the element** — a form control's id — and writes in the field inside it.
+- **A `type` step names the element** — a form control's id — and writes in the field inside it; a select is chosen
+  from (its option's value or label), a date, a time or a range set whole.
+- **A press acts on the copy a visitor sees**: the first shown, or the one named (`row:3`, `row:last`). An element on
+  the page and shown nowhere at the test's width fails as "hidden at this width" — press what that width shows (the
+  burger, then the item), or give the test the width that shows it.
+- **A plan keeps a number of journeys per space, and plays a number on the server a month** — Free one journey, more on
+  each plan up; element checks and plays in the builder's canvas have no limit. A save past it is refused, naming the
+  plan that keeps more: never delete a journey of the space's to make room for yours — say so.
 - **What only a browser of its own plays** — `clock`, `answers`, `reload` — is played by the server's run ("Run on the
   server", `plitzi test`), not by the builder's canvas.
 

@@ -49,10 +49,11 @@ starts, plan it with the person**: [runs-plan.md](runs-plan.md) — the goal, th
    ```
 
    **Acceptance a command can tell** is `{ said, check }`: it runs in the task's copy at `complete`, passing on exit 0 —
-   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails unless a copy of it (a list's row) shows the text, `"!<id>"` when one is
-   shown — what a page shows, not a file's text; a look, `page measure <path> <id> --expect "color=…"`. Else, text — and only text holds at your review alone:
-   a later task can undo it unseen (the dry run names a task with no check). Checks run again on the whole result at
-   finish. **`notes`** hold for the whole run;
+   `plitzi` is this CLI, `$PLITZI_URL` the copy served. `page check --expect "<id>~<text>"` fails unless a copy (a list's row) shows the text, `"!<id>"` when one is
+   shown — a page's, not a file's text; a look, `page measure <path> <id> --expect "color=…"`; a journey, `plitzi
+   test <id>`. Else, text — and only text holds at your review alone:
+   a later task can undo it unseen (the dry run names a task with none). The finish runs every
+   check again. **`notes`** hold for the whole run;
    `plitzi task message all "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB; the dry run says its cost past 6k): what you
    learnt reading the project — every brief starts with it, and the references its files need. **The team** is the project's,
    `.plitzi/team.json` — grow it as the job asks (`plitzi run team set dev --count 3 --min 1 --model <m>`): its

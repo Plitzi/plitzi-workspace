@@ -1,7 +1,7 @@
 import type { E2eStep, E2eTest, SpaceTests, UnitExpectation, UnitTest } from '@plitzi/sdk-shared';
 
 /**
- * The space's tests as the builder edits them (RFC 0031): two kinds kept apart — unit tests, one element resolved with
+ * The space's tests as the builder edits them: two kinds kept apart — unit tests, one element resolved with
  * no browser, and e2e tests, a visitor's steps on a page — each edited as a list of rows whose fields its kind says.
  */
 

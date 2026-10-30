@@ -6,7 +6,17 @@ describe('the entitlements contract', () => {
   it('includes everything when the server answered none — a self-hosted deployment', () => {
     expect(isIncluded(undefined, 'customDomain')).toBe(true);
     expect(
-      isIncluded({ tierLabel: 'Free', snapshotsKept: 0, analyticsDays: 7, capabilities: {} }, 'unknownToThisServer')
+      isIncluded(
+        {
+          tierLabel: 'Free',
+          snapshotsKept: 0,
+          analyticsDays: 7,
+          journeysPerSpace: 1,
+          serverRunsPerMonth: 10,
+          capabilities: {}
+        },
+        'unknownToThisServer'
+      )
     ).toBe(true);
   });
 
@@ -15,6 +25,8 @@ describe('the entitlements contract', () => {
       tierLabel: 'Free',
       snapshotsKept: 0,
       analyticsDays: 7,
+      journeysPerSpace: 1,
+      serverRunsPerMonth: 10,
       capabilities: { customDomain: { included: false, label: 'A custom domain', requires: 'Site', upgradeUrl: 'u' } }
     };
 

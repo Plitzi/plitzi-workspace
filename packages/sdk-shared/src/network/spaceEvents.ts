@@ -179,8 +179,28 @@ export const spaceEventSchemas = {
   SPACE_UPDATE_PLUGIN: z.object({ plugin }),
   SPACE_REMOVE_PLUGIN: z.object({ pluginType: z.string() }),
   SPACE_UPDATE_SETTINGS: z.object({ path: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
-  /** The space's tests saved whole (RFC 0031): an open builder lists them as they are now. */
+  /** The space's tests saved whole: an open builder lists them as they are now. */
   SPACE_UPDATE_TESTS: z.object({ tests: z.custom<SpaceTests>(isRecord) }),
+  /**
+   * A journey the server plays on asking, as it plays: after each step, and once when it ends. Every builder
+   * open on the space shows the run live; the run's own answer is still the report.
+   */
+  SPACE_TESTS_PLAYING: z.object({
+    /** The run it belongs to: one answer of "Run on the server", or of an agent's `plitzi_test run`. */
+    run: z.string(),
+    test: z.string(),
+    /** The journey's place in the run (from 0), and how many the run plays. */
+    at: z.number().int().nonnegative(),
+    of: z.number().int().positive(),
+    /** Its steps played so far, of how many. */
+    played: z.number().int().nonnegative(),
+    steps: z.number().int().nonnegative(),
+    /** Whether the last step played held — or, once it `ended`, whether the journey passed. */
+    ok: z.boolean(),
+    ended: z.boolean().optional(),
+    /** The page after the step, as a data URL, when the run keeps pictures. */
+    frame: z.string().optional()
+  }),
 
   STYLE_ADD_SELECTOR: z.object({
     displayMode,

@@ -1,5 +1,5 @@
 /**
- * A space's tests (RFC 0031), kept in its document beside its pages — written in the builder, by code or by an agent —
+ * A space's tests, kept in its document beside its pages — written in the builder, by code or by an agent —
  * and run against the document they are kept in: a snapshot and a publish need them passing.
  *
  * Two kinds, apart on purpose:

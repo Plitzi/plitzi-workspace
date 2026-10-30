@@ -1,13 +1,17 @@
+export { answered, dragElement, giveValue, hiddenAtWidth, shownCopy, valueFieldIn } from './act';
+export type { Copy } from './act';
 export { e2e } from './define';
 export {
   awaitHydration,
+  fieldsOf,
   HYDRATION_MS,
   locateField,
   locateTarget,
   pressFailure,
   pressOnce,
   settle,
-  targetId
+  targetId,
+  targetOf
 } from './page';
 export type { E2eElement, E2eLocator, E2ePage } from './page';
 export { EDGES, parseRelation, relationElements, relationHolds, sidePx } from './position';

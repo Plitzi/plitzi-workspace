@@ -993,7 +993,8 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   the project's script, run in the copy with the project's binaries: `author` first, alone, and the rest three at a
   time once it passes, every failing one printed — then the acceptance's checks (`acceptance.ts`): each `{ said, check }` line's command run in
   the copy, passing on exit 0, with `plitzi` on the path as this CLI (a shim in the task's cache) and `$PLITZI_URL` the
-  copy served by its own start script on a free port while they run. A line that fails runs once more after the others:
+  copy served by its own start script on a free port while they run. A journey the space keeps is one such line:
+  `plitzi test <journey-id> --url $PLITZI_URL` ([A space's own tests](./space-tests.md)). A line that fails runs once more after the others:
   one a busy server failed passes then and says it passed on its second run (`firstFailed`), one that fails twice is
   unmet. The finish fails fast instead (`failFast`): the Playwright suites first, a failed line run again at once, and the
   first that fails twice stops it — what had not started is `notRun`, run at the next finish, what passed kept. What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to

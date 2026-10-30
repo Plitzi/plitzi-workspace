@@ -1,18 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  actingSteps,
-  actStep,
-  copiesOn,
-  endsActing,
-  givenValueIn,
-  interactionSteps,
-  playedOn,
-  sizeChange,
-  stepText,
-  typedKeys
-} from './steps';
+import { actingSteps, actStep, endsActing, interactionSteps, playedOn, sizeChange, stepText, typedKeys } from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -183,32 +172,6 @@ describe('the steps a page is read after', () => {
   });
 });
 
-// A run's scout typed `2026-10-29` and `10292026` into a date field and its onChange never ran: keys land in a segment.
-describe('a field given a value whole', () => {
-  it('is a select chosen from, or a date, time, colour or range set — the one named or the one inside it', () => {
-    document.body.innerHTML = [
-      '<div data-plitzi-el="when"><label>Date</label><input type="date"></div>',
-      '<input data-plitzi-el="at" type="time">',
-      '<div data-plitzi-el="genre"><select><option>a</option></select></div>',
-      '<div data-plitzi-el="title"><input type="text"></div>',
-      '<div data-plitzi-el="both"><input type="date"><input type="time"></div>'
-    ].join('');
-
-    expect(givenValueIn('[data-plitzi-el="when"]')).toEqual({
-      selector: '[data-plitzi-el="when"] input[type="date"]',
-      how: 'value'
-    });
-    expect(givenValueIn('[data-plitzi-el="at"]')).toEqual({ selector: '[data-plitzi-el="at"]', how: 'value' });
-    expect(givenValueIn('[data-plitzi-el="genre"]')).toEqual({
-      selector: '[data-plitzi-el="genre"] select',
-      how: 'select'
-    });
-    expect(givenValueIn('[data-plitzi-el="title"]')).toBeUndefined();
-    // Two fields inside: which one is the step's to name.
-    expect(givenValueIn('[data-plitzi-el="both"]')).toBeUndefined();
-  });
-});
-
 // A tester waited for a state three tries of ten seconds bring with chained fixed waits: a wait-for gave up at 10 s.
 describe('a wait-for step played', () => {
   it('waits as long as it says, 10 s when it says nothing', async () => {
@@ -327,11 +290,15 @@ describe('a press on a page that has not hydrated', () => {
 describe('a click on a name several copies carry', () => {
   /** A page as far as a click meets it: its elements by how many copies the name has, a click that lands. */
   const pageWith = (copies: number) => {
-    const element = { count: () => Promise.resolve(1), click: () => Promise.resolve() };
+    const element = {
+      count: () => Promise.resolve(1),
+      click: () => Promise.resolve(),
+      boundingBox: () => Promise.resolve({ x: 0, y: 0, width: 80, height: 20 })
+    };
     const page = {
       url: () => 'http://127.0.0.1:8080/',
-      locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
-      evaluate: (fn: unknown) => Promise.resolve(fn === copiesOn ? copies : undefined),
+      locator: () => ({ first: () => element, nth: () => element, count: () => Promise.resolve(copies) }),
+      evaluate: () => Promise.resolve(undefined),
       on: () => undefined,
       off: () => undefined,
       waitForTimeout: () => Promise.resolve(),
@@ -358,13 +325,13 @@ describe('a drag held, and let go', () => {
     const pointer: string[] = [];
     const element = {
       count: () => Promise.resolve(1),
-      boundingBox: () => Promise.resolve({ x: 0, y: 100, width: 40, height: 20 }),
-      evaluate: () => Promise.resolve(0.5)
+      boundingBox: () => Promise.resolve({ x: 0, y: 100, width: 40, height: 20 })
     };
     const page = {
       url: () => 'http://127.0.0.1:8080/',
-      locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
-      evaluate: () => Promise.resolve(undefined),
+      locator: () => ({ first: () => element, nth: () => element, count: () => Promise.resolve(1) }),
+      // Where the thumb sits along the handle: its middle, as for anything that is no range.
+      evaluate: () => Promise.resolve(0.5),
       waitForSelector: () => Promise.resolve(),
       mouse: {
         move: () => {

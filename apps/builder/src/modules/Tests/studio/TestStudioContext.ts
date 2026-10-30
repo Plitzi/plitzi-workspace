@@ -5,7 +5,7 @@ import { STEP_DELAY_S } from './stepDelay';
 import type { E2eStep, E2eTest, SpaceTests } from '@plitzi/sdk-shared';
 
 /**
- * The builder's Tests area (RFC 0031): the space's flows beside its page — the canvas, live and in preview, on the left;
+ * The builder's Tests area: the space's flows beside its page — the canvas, live and in preview, on the left;
  * the flows on the right, each with how it went; the flow chosen below, its steps in words. What is pressed on the
  * right is played on the left: a flow chosen opens on its page and device, a step pressed replays the flow up to it,
  * Record turns what is done on the page into steps.

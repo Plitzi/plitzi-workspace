@@ -5,7 +5,7 @@ import { describeTarget, expect, test } from '../../fixtures';
 import type { Page } from '@playwright/test';
 
 /**
- * The space's own tests (RFC 0031) in the builder: their view; an element check written in its form; a flow written in
+ * The space's own tests in the builder: their view; an element check written in its form; a flow written in
  * the studio by using the page beside it and played there; and every flow played in turn on the page, with a log.
  * Against the mocked backend, which keeps what a save sends — the runner on the server is held by the server's suite.
  */
@@ -194,6 +194,44 @@ describeTarget('builder', subject => {
       await expect(panel.getByText('Stopped.', { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(flows.getByText('Stopped', { exact: true }).first()).toBeVisible();
       await expect(page.getByRole('button', { name: 'Play all' })).toBeEnabled();
+    });
+
+    test('offers no new journey once the plan keeps no more, and names the plan that keeps more', async ({ page }) => {
+      // A plan that keeps the three journeys the space has: answered for this page, before the builder asks.
+      await page.route(
+        url => /^api\./.test(url.host) && /^\/spaces\/[^/]+\/entitlements$/.test(url.pathname),
+        async route => {
+          const headers = {
+            'access-control-allow-origin': (await route.request().headerValue('origin')) ?? '*',
+            'access-control-allow-credentials': 'true',
+            'access-control-allow-headers': 'plitzi-access-token, content-type'
+          };
+          const entitlements = {
+            tierLabel: 'Free',
+            snapshotsKept: 0,
+            analyticsDays: 7,
+            journeysPerSpace: 3,
+            serverRunsPerMonth: 10,
+            moreJourneys: { requires: 'Site', allows: 10, upgradeUrl: 'https://plitzi.test/pricing?plan=site' },
+            capabilities: {}
+          };
+          await route.fulfill(
+            route.request().method() === 'OPTIONS'
+              ? { status: 204, headers }
+              : { status: 200, contentType: 'application/json', headers, body: JSON.stringify({ entitlements }) }
+          );
+        }
+      );
+      await openTests(page, subject.origin);
+
+      const flows = page.getByRole('region', { name: 'Journeys' });
+      await expect(flows.getByText('Journeys · 3 of 3')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'New journey' })).toBeDisabled();
+      await expect(flows.getByRole('status')).toContainText('The Free plan keeps 3 journeys per space');
+      await expect(flows.getByRole('link', { name: 'See the plans' })).toHaveAttribute(
+        'href',
+        'https://plitzi.test/pricing?plan=site'
+      );
     });
 
     test('plays the flows on the server and replays a run step by step', async ({ page, capture }) => {

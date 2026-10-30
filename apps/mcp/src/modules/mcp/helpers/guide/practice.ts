@@ -98,7 +98,8 @@ you touch; fix them in the same batch. Then look:
 A space keeps its tests in its document, and **a snapshot and a publish wait for them**: what you change must leave them
 passing. Two kinds — the builder calls them **element checks** (unit) and **journeys** (e2e: what a visitor does, from
 start to end — not an interaction's flow). \`plitzi_test { action: 'list' }\` says them and how the element checks
-stand; \`run\` plays the journeys on the draft, where the deployment has a browser. Write them whole with \`set\`:
+stand; \`run\` plays the journeys on the draft, where the deployment has a browser — one play at a time per space, each
+journey counted against the plan's month (a refusal says why, and when it comes back). Write them whole with \`set\`:
 - \`unit\`: \`{ id, title, element, given: { state, sources }, expect: [{ kind: 'visible' | 'attribute' | 'style' |
   'variant' | 'state', … }] }\` — one element resolved for a state, no browser.
 - \`e2e\`: \`{ id, title, page, width, steps: [{ kind: 'click', element }, { kind: 'expectText', element, text }, …] }\`
@@ -107,4 +108,6 @@ stand; \`run\` plays the journeys on the draft, where the deployment has a brows
 A batch that leaves a test unreadable — an element it presses removed, the page it starts on renamed — says so in its
 warnings ("This change leaves a test of the space unreadable…"): fix the test in the same batch, or say why.
 When a test fails over a change the user asked for, say so and fix the test with them — never delete it to pass.
+The plan keeps a number of journeys per space (Free one): a \`set\` that adds past it is refused, naming the plan that
+keeps more — tell the user; never remove a journey of theirs to make room.
 `;

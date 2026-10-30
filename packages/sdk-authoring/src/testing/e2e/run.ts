@@ -1,6 +1,7 @@
 import { sameValue } from '@plitzi/sdk-shared/history';
 
-import { awaitHydration, locateField, locateTarget, pressFailure, pressOnce, settle, targetId } from './page';
+import { answered, dragElement, giveValue, hiddenAtWidth, shownCopy } from './act';
+import { awaitHydration, fieldsOf, pressFailure, pressOnce, settle, targetId, targetOf } from './page';
 import { parseRelation, relationElements, relationHolds, sidePx } from './position';
 import { answerAction } from '../answerAction';
 import { openPage } from '../settle';
@@ -10,7 +11,7 @@ import type { Box } from './position';
 import type { E2eAction, E2eExpectation, E2eStep, E2eTest } from '@plitzi/sdk-shared';
 
 /**
- * An e2e test run in a browser (RFC 0031): its page opened as a visitor's, each step played as the CLI learnt to play
+ * An e2e test run in a browser: its page opened as a visitor's, each step played as the CLI learnt to play
  * one — after the space hydrates, pressed once, the page settled before the next — and each expectation held for its
  * time before it fails, saying what it read.
  */
@@ -193,18 +194,27 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
         return absent;
       }
 
-      const element = step.kind === 'type' ? locateField(page, step.element) : locateTarget(page, step.element);
-      if (step.kind === 'type' && (await element.count()) === 0) {
+      const { selector, copy } = targetOf(step.element);
+      if (step.kind === 'type' && (await giveValue(page, selector, step.text, copy))) {
+        break;
+      }
+
+      const found = await shownCopy(page, step.kind === 'type' ? fieldsOf(selector) : selector, copy);
+      if ('absent' in found) {
         return `${step.element} is no field and holds none — a type step writes in an input, a text area or a select`;
       }
 
-      await pressOnce(page, () =>
-        step.kind === 'click'
-          ? element.click({ timeout: 3000 })
-          : step.kind === 'hover'
-            ? element.hover({ timeout: 3000 })
-            : element.fill(step.text, { timeout: 3000 })
-      );
+      if ('hidden' in found) {
+        return hiddenAtWidth(step.element, step.kind);
+      }
+
+      const { element } = found;
+      // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
+      await (step.kind === 'click'
+        ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000 })))
+        : pressOnce(page, () =>
+            step.kind === 'hover' ? element.hover({ timeout: 3000 }) : element.fill(step.text, { timeout: 3000 })
+          ));
       break;
     }
     case 'press':
@@ -212,21 +222,32 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
       break;
     case 'scroll':
     case 'drag': {
-      const box = await locateTarget(page, step.element).boundingBox();
+      const { selector, copy } = targetOf(step.element);
+      const found = await shownCopy(page, selector, copy);
+      if ('absent' in found) {
+        return `${step.element} is not on the page`;
+      }
+
+      if ('hidden' in found) {
+        return hiddenAtWidth(step.element, step.kind);
+      }
+
+      if (step.kind === 'drag') {
+        const why = await dragElement(page, found.element, selector, { dx: step.dx, dy: step.dy });
+        if (why !== undefined) {
+          return `${step.element}: ${why}`;
+        }
+
+        break;
+      }
+
+      const box = await found.element.boundingBox();
       if (!box) {
-        return `${step.element} is not shown — nothing to ${step.kind}`;
+        return `${step.element} is not shown — nothing to scroll`;
       }
 
-      const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
-      await page.mouse.move(x, y);
-      if (step.kind === 'scroll') {
-        await page.mouse.wheel(step.dx ?? 0, step.dy ?? 0);
-      } else {
-        await page.mouse.down();
-        await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
-        await page.mouse.up();
-      }
-
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.wheel(step.dx ?? 0, step.dy ?? 0);
       break;
     }
     case 'waitFor': {

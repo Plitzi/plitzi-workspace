@@ -30,7 +30,7 @@ const standing = (schema: Schema) => {
 };
 
 /**
- * The space's own tests (RFC 0031), kept in its document: read, saved whole, or run — the unit tests here, the e2e ones
+ * The space's own tests, kept in its document: read, saved whole, or run — the unit tests here, the e2e ones
  * on the draft where the deployment plays them. What a snapshot and a publish hold the space to.
  */
 export const test = async (

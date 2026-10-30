@@ -1,3 +1,4 @@
+import type { Copy } from './act';
 import type { RoutingPage } from '../answerAction';
 import type { SettlingPage } from '../settle';
 
@@ -11,6 +12,8 @@ export interface E2eElement {
   click(options: { timeout: number }): Promise<void>;
   hover(options: { timeout: number }): Promise<void>;
   fill(text: string, options: { timeout: number }): Promise<void>;
+  /** A select's option chosen by its value or its label. */
+  selectOption(value: string, options: { timeout: number }): Promise<unknown>;
   boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>;
 }
 
@@ -194,6 +197,22 @@ const copyOf = (all: E2eLocator, copy: string | undefined): E2eElement =>
 const markOf = (id: string): string => `[data-plitzi-el="${id.replace(/"/g, '\\"')}"]`;
 
 /**
+ * What a target names, as a selector and the copy — `bin-bar:3` the third a list draws, `bin-bar:last` the last, else
+ * none named.
+ */
+export const targetOf = (target: string): { selector: string; copy: Copy } => {
+  const copy = /^(.+):(\d+|last)$/.exec(target);
+
+  return {
+    selector: markOf(copy ? copy[1] : target),
+    copy: copy === null ? undefined : copy[2] === 'last' ? 'last' : Number(copy[2])
+  };
+};
+
+/** The fields an element is or holds: itself when it is one, else those inside it — a form control draws its own. */
+export const fieldsOf = (selector: string): string => `${selector}${FIELD}, ${selector} ${FIELD}`;
+
+/**
  * An element as a step names it — `bin-bar`, the third copy a list draws `bin-bar:3`, the last `bin-bar:last` — found
  * on the page by the mark the SDK draws every element with.
  */
@@ -211,9 +230,8 @@ const FIELD = ':is(input, textarea, select, [contenteditable=""], [contenteditab
  */
 export const locateField = (page: E2ePage, target: string): E2eElement => {
   const copy = /^(.+):(\d+|last)$/.exec(target);
-  const mark = markOf(copy ? copy[1] : target);
 
-  return copyOf(page.locator(`${mark}${FIELD}, ${mark} ${FIELD}`), copy?.[2]);
+  return copyOf(page.locator(fieldsOf(markOf(copy ? copy[1] : target))), copy?.[2]);
 };
 
 /** The element's id a target names, its copy left out. */

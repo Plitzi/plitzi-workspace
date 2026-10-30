@@ -1,14 +1,23 @@
-import { comparePictures, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
+import {
+  answered,
+  comparePictures,
+  dragElement,
+  giveValue,
+  hiddenAtWidth,
+  pressFailure,
+  pressOnce,
+  settle,
+  shownCopy
+} from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { awaited, capture, ROW, targetOn } from './capture';
+import { awaited, capture, targetOn } from './capture';
 import { notOnPageText } from './notOnPage';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
 import { awaitHydration } from '../hydration';
-import { answered } from '../measureState';
 import { parseSteps } from '../shotSteps';
 
 import type { BrowserPage } from '../../../browser';
@@ -166,12 +175,6 @@ export const interactionSteps = (
     : undefined;
 
 /**
- * How a field named by `selector` takes a value — run in the page, so it reads nothing of this module: a select is
- * chosen from, and a date, a time, a colour or a range set whole — keys land in one segment of a date and set nothing (a
- * run's scout typed `2026-10-29` and `10292026` into one and its onChange never ran). The element itself, or the one such
- * field inside it (a `formControl` wraps it); nothing, it is typed into.
- */
-/**
  * The keys a `type` step presses: what the field held selected first, as a person does — typed after it, a price field
  * kept its old amount too — then the text, or, with none (`fill rate ''`), the selection deleted: a run's tester read
  * a number field emptied that still held its 5, the step said as typed.
@@ -180,41 +183,6 @@ export const typedKeys = (text: string): ({ press: string } | { type: string })[
   { press: 'ControlOrMeta+A' },
   text === '' ? { press: 'Backspace' } : { type: text }
 ];
-
-export const givenValueIn = (selector: string): { selector: string; how: 'select' | 'value' } | undefined => {
-  const node = document.querySelector(selector);
-  if (node === null) {
-    return undefined;
-  }
-
-  const kinds = [
-    { how: 'select', matches: 'select' },
-    {
-      how: 'value',
-      matches: ['date', 'time', 'datetime-local', 'month', 'week', 'color', 'range']
-        .map(type => `input[type="${type}"]`)
-        .join(', ')
-    }
-  ] as const;
-  for (const kind of kinds) {
-    if (node.matches(kind.matches)) {
-      return { selector, how: kind.how };
-    }
-
-    const inside = node.querySelectorAll(kind.matches);
-    const only = inside.length === 1 ? inside[0] : undefined;
-    if (only) {
-      const type = only.getAttribute('type');
-
-      return {
-        selector: `${selector} ${type === null ? only.localName : `${only.localName}[type="${type}"]`}`,
-        how: kind.how
-      };
-    }
-  }
-
-  return undefined;
-};
 
 /** What a step is, as its label and `page play` say it. */
 export const stepText = (step: ShotStep): string => {
@@ -332,15 +300,6 @@ const runAction = async (
   };
 };
 
-/** Runs in the page: how many elements a CSS selector finds — one for a selector only Playwright reads. Serialised. */
-export const copiesOn = (selector: string): number => {
-  try {
-    return document.querySelectorAll(selector).length;
-  } catch {
-    return 1;
-  }
-};
-
 /** The steps a visitor plays with a press of theirs, which a page that has not hydrated drops. */
 const PRESSES: ReadonlySet<ActingStep['kind']> = new Set(['click', 'hover', 'scroll', 'type', 'drag', 'press']);
 
@@ -397,9 +356,6 @@ export const actStep = async (
     return undefined;
   }
 
-  // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
-  // document, timed out at 1440 where the column's own was there to type into.
-  const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
   if (PRESSES.has(step.kind)) {
     const late = await awaitHydration(page);
     if (late !== undefined) {
@@ -421,44 +377,41 @@ export const actStep = async (
       };
     }
 
-    // On the page and drawn nowhere at this width — a burger at 1440, the nav behind it at 390: said at its own step,
-    // where a run's dev-1 saw the step pass and the next one fail on what it should have opened.
-    if ((await shown(read.selector).count()) === 0) {
+    // The copy a visitor sees — a page drawing a control per width hides the other; on the page and drawn nowhere at
+    // this width, said at its own step, where a run's dev-1 saw the step pass and the next one fail on what it should
+    // have opened. The engine's choice, as a journey's step makes it.
+    const found = await shownCopy(page, read.selector);
+    if (!('element' in found)) {
       return {
-        problem: `Step ${String(index + 1)}: ${step.target} is on the page but hidden at this width — a breakpoint, or a menu that is closed: ${step.kind} what a visitor sees here, or play it at the width that shows it`
+        problem: `Step ${String(index + 1)}: ${'hidden' in found ? hiddenAtWidth(step.target, step.kind) : `${step.target} is not on the page any more`}`
       };
     }
 
-    // A select is chosen and a date set, not typed into: the element named, or the one inside it a `formControl` wraps.
-    if (step.kind === 'type') {
-      const given = await page.evaluate(givenValueIn, read.selector);
-      if (given?.how === 'select') {
-        await page.locator(given.selector).first().selectOption(step.text, { timeout: 3000 });
-        return undefined;
-      }
+    const { element, copies } = found;
+    // The same copy, for what only a browser driver does to it: brought into view, read in place.
+    const shown = page.locator(read.selector).nth(found.at);
 
-      if (given?.how === 'value') {
-        await page.locator(given.selector).first().fill(step.text, { timeout: 3000 });
-        return undefined;
-      }
+    // A select is chosen and a date set, not typed into: the element named, or the one inside it a `formControl` wraps.
+    if (step.kind === 'type' && (await giveValue(page, read.selector, step.text))) {
+      return undefined;
     }
 
     if (step.kind === 'hover') {
-      await pressOnce(page, () => shown(read.selector).hover({ timeout: 3000 }));
+      await pressOnce(page, () => element.hover({ timeout: 3000 }));
       return undefined;
     }
 
     // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
     if (step.kind === 'scroll' && !step.by) {
-      await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
+      await shown.scrollIntoViewIfNeeded({ timeout: 3000 });
       return undefined;
     }
 
     // Its own content scrolled by so much — a row across, a list within its box — and said when it did not move: a
     // box whose content fits, or one that scrolls the other way.
     if (step.kind === 'scroll' && step.by) {
-      await shown(read.selector).scrollIntoViewIfNeeded({ timeout: 3000 });
-      const moved = await shown(read.selector).evaluate((node, by: { dx: number; dy: number }) => {
+      await shown.scrollIntoViewIfNeeded({ timeout: 3000 });
+      const moved = await shown.evaluate((node, by: { dx: number; dy: number }) => {
         const [left, top] = [node.scrollLeft, node.scrollTop];
         node.scrollBy({ left: by.dx, top: by.dy, behavior: 'instant' });
 
@@ -477,47 +430,23 @@ export const actStep = async (
       return undefined;
     }
 
-    // Pressed at its middle, moved in steps a hand would make, let go: a range's handle, a slider, a card dragged.
+    // Held: the finger stays down for what follows to read the page mid-drag, until a `release` or the page closes.
     if (step.kind === 'drag') {
-      const box = await shown(read.selector).boundingBox({ timeout: 3000 });
-      if (box === null) {
-        return { problem: `Step ${String(index + 1)}: ${step.target} is not shown — nothing to drag` };
-      }
+      const why = await dragElement(page, element, read.selector, {
+        dx: step.dx,
+        dy: step.dy,
+        held: step.held === true
+      });
 
-      // A range is pressed at its thumb, where its value puts it — at its middle, the handle on top of it moved
-      // instead (a run's two-handle price range).
-      const along = await shown(read.selector).evaluate(node => {
-        if (!(node instanceof HTMLInputElement) || node.type !== 'range') {
-          return 0.5;
-        }
-
-        const [min, max] = [Number(node.min || 0), Number(node.max || 100)];
-
-        return max > min ? (Number(node.value) - min) / (max - min) : 0.5;
-      }, undefined);
-      // The thumb travels the track less its own width, about the input's height: at its end it sits inside it.
-      const thumb = Math.min(box.height, box.width);
-      const [x, y] = [box.x + thumb / 2 + (box.width - thumb) * along, box.y + box.height / 2];
-      await page.mouse.move(x, y);
-      await page.mouse.down();
-      await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
-      // Held: the finger stays down for what follows to read the page mid-drag, until a `release` or the page closes.
-      if (!step.held) {
-        await page.mouse.up();
-      }
-
-      return undefined;
+      return why === undefined ? undefined : { problem: `Step ${String(index + 1)}: ${step.target}: ${why}` };
     }
 
     // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
     const from = page.url();
-    // A name several copies carry — a component's part, a list's row: the one pressed is said, and how to name another
-    // (a run's tester toggled the wrong panel, the first of several section headers, and was told nothing).
-    const copies = ROW.test(step.target) ? 1 : await page.evaluate(copiesOn, read.selector);
     try {
       await (step.kind === 'click'
-        ? answered(page, () => pressOnce(page, () => shown(read.selector).click({ timeout: 3000 })))
-        : pressOnce(page, () => shown(read.selector).click({ timeout: 3000 })));
+        ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000 })))
+        : pressOnce(page, () => element.click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
       // dev-1 read a plain locator timeout, with nothing of the navigation in it).

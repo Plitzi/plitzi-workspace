@@ -1,6 +1,6 @@
 import type { AuthoringCodeEntry } from './entry';
 
-/** The space's own tests (RFC 0031), read as the rest of the space is: one that cannot be read is said where all is. */
+/** The space's own tests, read as the rest of the space is: one that cannot be read is said where all is. */
 export const TEST_CODES = {
   'test-unreadable': {
     kind: 'warned',

@@ -178,7 +178,7 @@ export type SSRAdapters = {
     write: SSRWriteContext
   ) => Promise<ActionRunReport>;
   /**
-   * Play the space's e2e tests (RFC 0031) on its draft, in a browser of the deployment's — those named, or all: each
+   * Play the space's e2e tests on its draft, in a browser of the deployment's — those named, or all: each
    * test's result, or why none was run there. When omitted, an agent's e2e tests are said as not run.
    */
   runE2eTests?: (spaceId: number, ids: readonly string[]) => Promise<{ results: unknown[] } | { notRun: string }>;

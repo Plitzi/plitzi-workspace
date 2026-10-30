@@ -1,10 +1,9 @@
-import { pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
+import { answered, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
 
 import { targetOn } from './shot/capture';
 
 import type { Asked, Pair } from './measure';
 import type { BrowserPage, PageElement } from '../../browser';
-import type { SettlingRequest } from '@plitzi/sdk-authoring';
 
 /**
  * The state `page measure` reads both pages in — an element hovered or focused, or several clicked in turn — put on a
@@ -28,40 +27,6 @@ const DONE: Record<StateAsked['kind'], string> = {
   focus: 'focused',
   press: 'held down',
   click: 'clicked'
-};
-
-/** The longest what a step asked the server is waited for: a server action, a provider read again. */
-const ANSWER_MS = 5000;
-
-/**
- * A step run with what it asks the server answered before the page is read: a run's down key, lit by the vote's
- * answer, measured unlit — `--click` read the page before the action landed. A stream (an event source, a socket) never
- * finishes, and is not waited for.
- */
-export const answered = async (page: BrowserPage, step: () => Promise<void>): Promise<void> => {
-  const pending = new Set<SettlingRequest>();
-  const asked = (request: SettlingRequest): void => {
-    const { accept = '' } = request.headers();
-    if (['fetch', 'xhr'].includes(request.resourceType()) && !accept.includes('text/event-stream')) {
-      pending.add(request);
-    }
-  };
-  const done = (request: SettlingRequest): void => {
-    pending.delete(request);
-  };
-  page.on('request', asked);
-  page.on('requestfinished', done);
-  page.on('requestfailed', done);
-  try {
-    await step();
-    for (const until = Date.now() + ANSWER_MS; pending.size > 0 && Date.now() < until;) {
-      await page.waitForTimeout(50);
-    }
-  } finally {
-    page.off('request', asked);
-    page.off('requestfinished', done);
-    page.off('requestfailed', done);
-  }
 };
 
 /** The state in words: `menu-toggle clicked, then submenu-row`. */

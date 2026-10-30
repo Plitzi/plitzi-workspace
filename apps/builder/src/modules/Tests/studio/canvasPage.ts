@@ -3,7 +3,7 @@ import { reveal } from './reveal';
 import type { E2eElement, E2eLocator, E2ePage } from '@plitzi/sdk-authoring';
 
 /**
- * The builder's canvas as the page an e2e test is played on (RFC 0031): the same runner as the CLI's and the server's —
+ * The builder's canvas as the page an e2e test is played on: the same runner as the CLI's and the server's —
  * `runE2eTest`, given this instead of Playwright's page — pressing the elements the SDK draws in the canvas' iframe. A
  * press waits as Playwright's does, and says why it could not happen in the words of Playwright's own log, so the runner
  * reads a failure the same way whichever page played it.
@@ -119,6 +119,13 @@ const writeValue = (node: Element, text: string): boolean => {
   return true;
 };
 
+/** The value of a select's option named by its value or its label — as a browser driver chooses one — or none. */
+const optionValue = (node: Element, wanted: string): string | undefined => {
+  const options = [...node.querySelectorAll('option')];
+
+  return (options.find(option => option.value === wanted) ?? options.find(option => option.label === wanted))?.value;
+};
+
 export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: CanvasPageOptions): E2ePage => {
   const view = (): Window => {
     const window = iframe.contentWindow;
@@ -196,6 +203,21 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
           throw new Error('locator.fill: Error: Element is not an <input>, <textarea> or <select> element');
         }
 
+        node.dispatchEvent(new Event('input', { bubbles: true }));
+        node.dispatchEvent(new Event('change', { bubbles: true }));
+      }),
+    selectOption: (wanted, { timeout }) =>
+      pressed('selectOption', pick, timeout, node => {
+        const value = node.localName === 'select' ? optionValue(node, wanted) : undefined;
+        if (value === undefined) {
+          throw new Error(
+            node.localName === 'select'
+              ? `locator.selectOption: Error: no option of the select is "${wanted}"`
+              : 'locator.selectOption: Error: Element is not a <select> element'
+          );
+        }
+
+        writeValue(node, value);
         node.dispatchEvent(new Event('input', { bubbles: true }));
         node.dispatchEvent(new Event('change', { bubbles: true }));
       }),
