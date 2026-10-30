@@ -47,8 +47,36 @@ const mockSockets = async (page: Page): Promise<void> => {
   );
 };
 
+/** The api role's REST calls the builder makes on boot, answered as a deployment that sells no plans answers them.
+ *
+ *  `/spaces/:id/entitlements` says what the space's plan includes and what the person's role there may do. A
+ *  deployment with no plans answers nothing of either, and the builder then locks nothing — so `{}` is the truth of
+ *  this run, not a stand-in for a server. Asked with the session's credentials and a header of its own, the browser
+ *  preflights it, and both legs are answered for the page's own origin. */
+const mockApi = async (page: Page): Promise<void> => {
+  await page.route(
+    url => /^api\./.test(url.host) && /^\/spaces\/[^/]+\/entitlements$/.test(url.pathname),
+    async route => {
+      const origin = (await route.request().headerValue('origin')) ?? '*';
+      const headers = {
+        'access-control-allow-origin': origin,
+        'access-control-allow-credentials': 'true',
+        'access-control-allow-headers': 'plitzi-access-token, content-type',
+        'access-control-allow-methods': 'GET, OPTIONS'
+      };
+
+      await route.fulfill(
+        route.request().method() === 'OPTIONS'
+          ? { status: 204, headers }
+          : { status: 200, contentType: 'application/json', headers, body: '{}' }
+      );
+    }
+  );
+};
+
 export const mockBackend = async (page: Page, space: OfflineDataRaw): Promise<void> => {
   await mockSockets(page);
+  await mockApi(page);
 
   await page.route(
     url => url.pathname === '/' && /server\./.test(url.host),
