@@ -1,10 +1,12 @@
 import { rm } from 'node:fs/promises';
 
+import { settle } from '@plitzi/sdk-authoring';
+
 import { keeperRoutes } from './keeperRoutes';
 import { keeperServer } from './keeperServer';
 import { keptPages } from './keptPages';
 import { measureOn } from './measureOn';
-import { putIn, settle } from './measureState';
+import { putIn } from './measureState';
 import { outlineOnPage } from './outline';
 import { readState } from './playState';
 import { launchBrowser } from '../../browser';

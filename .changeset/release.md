@@ -317,6 +317,34 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   mixed case holds the words as the space wrote them, whatever capitals a stylesheet sets. `task show <task> <files…>`
   takes several files (one is still one object in `--json`). `page measure`'s readings carry `box` in numbers.
 
+## A space's tests (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`)
+
+- **Tests are part of the space's document** (`Schema.tests`, RFC 0031), in two kinds kept apart. **Unit tests**
+  (`tests.unit`): one element of a page resolved for a state and its sources, no browser — its attributes after bindings
+  and templates, its style, whether it shows (with every element around it), a class's variant, a key of its state:
+  `unit.test({ element, given, expect: [unit.variant('pill', 'current')] })`, `runUnitTests(schema)`,
+  `unitTestProblems`, `resolveElement`. **E2e tests** (`tests.e2e`): a page, a width, a visitor's steps and what must
+  hold as they go, elements by id — `e2e.test({ page, steps: [e2e.click('add'), e2e.expectText('count', '1')] })`,
+  `runE2eTest(page, test, { origin })`, `e2eTestProblems`. The runner presses once, after the space hydrates, the page
+  settled between actions, each expectation held for its time and a failure said with what it read; actions answered
+  and the clock held by the test, for the same result every run.
+- **The builder has a Tests view** (beside Server): the space's unit and e2e tests listed apart, each with how it stands
+  against the saved document — passes, fails with what it read, not run here — written and edited in their forms
+  (`@plitzi/plitzi-builder`). `readSpaceTests` reads a document's tests from outside, every way they are not tests
+  said; `RoutingPage.route` answers anything, as Playwright's newer `Disposable` does.
+- **The builder plays and records e2e tests**: **Run e2e tests** plays them on the draft on the server, and **View run**
+  replays one step by step in its device frame beside its log. **Record steps** in an e2e test's form puts the canvas
+  in preview: each click and each field typed becomes a step, and **Click to expect** makes the next click hold what
+  the element shows; **Stop** gives the form back with the steps added (`@plitzi/plitzi-builder`, `SpaceRunE2eTests`
+  in `@plitzi/sdk-shared`).
+- **`plitzi test [id…]`** runs the project's own tests, as its spec writes them: those written wrong said first, then
+  the unit tests, then the e2e tests against its server (`--unit`, `--e2e`, `--url`, `--json`); a failure exits 1
+  (`@plitzi/cli`). The press made once, the reading of a press that failed, the hydration wait and the relations
+  between two elements' sides are sdk-authoring's now (`pressOnce`, `pressFailure`, `awaitHydration`,
+  `parseRelation`, `relationHolds`): `page play`, `check` and `measure --expect` use the same ones.
+- **`plitzi_test`** (`@plitzi/sdk-mcp`): an agent lists a space's tests with the unit tests' report, saves them, and
+  runs the e2e ones on the draft through the server's runner (`runE2eTests`, a server adapter of `@plitzi/sdk-shared`).
+
 ## Several agents on one project (`@plitzi/cli`)
 
 - **`page measure --expect` holds where two elements stand**, at every width: `--expect "activity.bottom + 8 <=

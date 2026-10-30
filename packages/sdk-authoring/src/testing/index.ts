@@ -39,3 +39,6 @@ export { pressShortcut, shortcutKey } from './shortcut';
 export type { KeyboardDriver } from './shortcut';
 export { singlePageSpace, withElement } from './variants';
 export type { ElementPatch } from './variants';
+export { readSpaceTests } from './tests';
+export * from './unit';
+export * from './e2e';

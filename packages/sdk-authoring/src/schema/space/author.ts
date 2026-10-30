@@ -397,6 +397,7 @@ export class SpaceAuthor {
       flat: this.flatMap.flat,
       variables: this.spec.schemaVariables ?? [],
       ...(this.spec.flags ? { flags: this.spec.flags } : {}),
+      ...(this.spec.tests ? { tests: this.spec.tests } : {}),
       settings: {
         ...this.spec.settings,
         // The keyframes at the top and the notifications' rules at the end: where the style editor reads each back.

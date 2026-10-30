@@ -55,6 +55,8 @@ import SpacePublishMutation from './Space/SpacePublishMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
 import SpaceRemovePluginMutation from './Space/SpaceRemovePluginMutation';
 import SpaceRenameElementMutation from './Space/SpaceRenameElementMutation';
+import SpaceRunE2eTestsMutation from './Space/SpaceRunE2eTestsMutation';
+import SpaceSetTestsMutation from './Space/SpaceSetTestsMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
 import SpaceUpdateElementsMutation from './Space/SpaceUpdateElementsMutation';
 import SpaceUpdateMutation from './Space/SpaceUpdateMutation';
@@ -122,6 +124,8 @@ import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
 import type { TSpaceFixIssuesMutation } from './Space/SpaceFixIssuesMutation';
 import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
 import type { TSpaceRenameElementMutation } from './Space/SpaceRenameElementMutation';
+import type { TSpaceRunE2eTestsMutation } from './Space/SpaceRunE2eTestsMutation';
+import type { TSpaceSetTestsMutation } from './Space/SpaceSetTestsMutation';
 import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
 
 export type BuilderMutationsMap = {
@@ -193,6 +197,8 @@ export type BuilderMutationsMap = {
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
   SpaceUpdateSettings: unknown;
+  SpaceSetTests: TSpaceSetTestsMutation;
+  SpaceRunE2eTests: TSpaceRunE2eTestsMutation;
 
   StyleAddSelector: unknown;
   StyleUpdateSelector: unknown;
@@ -280,6 +286,8 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,
+  SpaceSetTests: SpaceSetTestsMutation,
+  SpaceRunE2eTests: SpaceRunE2eTestsMutation,
 
   StyleAddSelector: StyleAddSelectorMutation,
   StyleUpdateSelector: StyleUpdateSelectorMutation,
@@ -299,5 +307,6 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
 };
 
 export type { TSpaceFix } from './Space/SpaceFixIssuesMutation';
+export type { TSpaceE2eResult, TSpaceE2eStepResult, TSpaceRunE2eTestsMutation } from './Space/SpaceRunE2eTestsMutation';
 
 export default BuilderMutations;

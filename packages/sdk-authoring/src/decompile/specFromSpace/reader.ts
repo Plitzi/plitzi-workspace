@@ -161,6 +161,8 @@ export class SpecReader {
       ...(isEmpty(settings) ? {} : { settings }),
       ...(computed && !isEmpty(computed) ? { computed } : {}),
       ...(schema.flags && !isEmpty(schema.flags) ? { flags: schema.flags } : {}),
+      // The space's own tests travel with it, as written: a project runs them with `plitzi test` and pushes them back.
+      ...((schema.tests?.unit?.length ?? 0) + (schema.tests?.e2e?.length ?? 0) > 0 ? { tests: schema.tests } : {}),
       ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
       ...(isEmpty(keyframes) ? {} : { keyframes }),

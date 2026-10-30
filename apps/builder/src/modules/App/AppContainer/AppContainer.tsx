@@ -11,6 +11,7 @@ import { useOpenComponent } from '@pmodules/Components';
 import FontPreviews from '@pmodules/Fonts/FontPreviews';
 import ShortcutsProvider from '@pmodules/Shortcuts';
 import { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
+import { RecordingBar, TestsRecordingProvider } from '@pmodules/Tests';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
@@ -18,6 +19,7 @@ import ContainerDefault from './containers/ContainerDefault';
 import ContainerServer from './containers/ContainerServer';
 import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
+import ContainerTests from './containers/ContainerTests';
 import { getPopups, isFullViewId } from '../helpers/utils';
 import useSitemapOpen from '../hooks/useSitemapOpen';
 
@@ -35,12 +37,13 @@ const separatorsBefore = ['layerManager', 'server'];
 const LEFT_PANEL_WIDTH = 335;
 
 const FULL_VIEWS: Record<FullViewId, ReactNode> = {
+  tests: <ContainerTests />,
   server: <ContainerServer />,
   settings: <ContainerSettings />
 };
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
-  const { previewMode } = use(AppContext);
+  const { previewMode, setPreviewMode } = use(AppContext);
   const { eventBridge } = use(EventBridgeContext);
   const [currentPageId] = useBuilderStore('navigation.currentPageId');
   // A component open in the canvas is its root — and the whole builder below is drawn in its scope, so the layers, the
@@ -60,6 +63,16 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   // an older builder names nothing here, and the canvas is drawn.
   const activeView = popupsActiveLeft[0];
   const fullView = isFullViewId(activeView) ? FULL_VIEWS[activeView] : undefined;
+
+  // An e2e test's steps recorded in the canvas: the canvas shown as a visitor uses it, then the Tests view again.
+  const handleRecordStart = useCallback(() => {
+    setPopupsActiveLeft([]);
+    setPreviewMode(true);
+  }, [setPopupsActiveLeft, setPreviewMode]);
+  const handleRecordStop = useCallback(() => {
+    setPreviewMode(false);
+    setPopupsActiveLeft(['tests']);
+  }, [setPopupsActiveLeft, setPreviewMode]);
 
   const handleChangePopups = useCallback(
     (placement: PopupPlacement, _state: PopupUpdateState, popups: Record<PopupPlacement, PopupInstance[]>) => {
@@ -90,48 +103,51 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
       {/* The space's families, in the EDITOR's document — the canvas is an iframe, and nothing it loads reaches
           the panels that have to draw a font's name in its own typeface. */}
       <FontPreviews />
-      <BuilderSearch>
-        <AppHeader />
-        <StoreProvider key={component?.id ?? ''} inherit="live" name="OpenComponent" value={scope}>
-          <BuilderProvider baseElementId={baseElementId} onHandler={builderHandler}>
-            <PopupProvider
-              popups={popups}
-              multi
-              multiExpanded
-              onChange={handleChangePopups}
-              renderLeftPopup={false}
-              renderRightPopup={false}
-              renderFloatingPopup={!previewMode}
-            >
-              <ShortcutsProvider>
-                <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
-                  {!previewMode && (
-                    <PopupSidePanel
-                      size="md"
-                      className="max-h-[calc(100vh-48px)] overflow-y-auto"
-                      placementTabs="left"
-                      placement="left"
-                      separatorsBefore={separatorsBefore}
-                      minWidth={280}
-                      maxWidth={800}
-                      width={leftWidth}
-                      canHide
-                      onResize={setLeftWidth}
-                    />
-                  )}
-                  <div className="flex grow basis-0 flex-col overflow-hidden">
-                    {fullView}
-                    {!fullView && sitemapOpen && <ContainerSitemap />}
-                    {!fullView && !sitemapOpen && (
-                      <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+      <TestsRecordingProvider onStart={handleRecordStart} onStop={handleRecordStop}>
+        <BuilderSearch>
+          <AppHeader />
+          <StoreProvider key={component?.id ?? ''} inherit="live" name="OpenComponent" value={scope}>
+            <BuilderProvider baseElementId={baseElementId} onHandler={builderHandler}>
+              <PopupProvider
+                popups={popups}
+                multi
+                multiExpanded
+                onChange={handleChangePopups}
+                renderLeftPopup={false}
+                renderRightPopup={false}
+                renderFloatingPopup={!previewMode}
+              >
+                <ShortcutsProvider>
+                  <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
+                    {!previewMode && (
+                      <PopupSidePanel
+                        size="md"
+                        className="max-h-[calc(100vh-48px)] overflow-y-auto"
+                        placementTabs="left"
+                        placement="left"
+                        separatorsBefore={separatorsBefore}
+                        minWidth={280}
+                        maxWidth={800}
+                        width={leftWidth}
+                        canHide
+                        onResize={setLeftWidth}
+                      />
                     )}
+                    <div className="flex grow basis-0 flex-col overflow-hidden">
+                      <RecordingBar />
+                      {fullView}
+                      {!fullView && sitemapOpen && <ContainerSitemap />}
+                      {!fullView && !sitemapOpen && (
+                        <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </ShortcutsProvider>
-            </PopupProvider>
-          </BuilderProvider>
-        </StoreProvider>
-      </BuilderSearch>
+                </ShortcutsProvider>
+              </PopupProvider>
+            </BuilderProvider>
+          </StoreProvider>
+        </BuilderSearch>
+      </TestsRecordingProvider>
     </div>
   );
 };

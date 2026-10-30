@@ -93,4 +93,14 @@ you touch; fix them in the same batch. Then look:
   (their new content + version) and retry on top of the fresh state. This is exactly how a file editor forces a
   re-read after a stale write: it is what keeps concurrent agents from silently overwriting each other's changes, so
   never omit it "to save a call".
+
+## The space's own tests — \`plitzi_test\`
+A space keeps its tests in its document, and **a snapshot and a publish wait for them**: what you change must leave them
+passing. \`plitzi_test { action: 'list' }\` says them and how the unit ones stand; \`run\` plays them — the e2e ones on
+the draft, where the deployment has a browser. Write them whole with \`set\`:
+- \`unit\`: \`{ id, title, element, given: { state, sources }, expect: [{ kind: 'visible' | 'attribute' | 'style' |
+  'variant' | 'state', … }] }\` — one element resolved for a state, no browser.
+- \`e2e\`: \`{ id, title, page, width, steps: [{ kind: 'click', element }, { kind: 'expectText', element, text }, …] }\`
+  — a visitor's steps on a page, elements by id (a list's copy \`row:3\`), what must hold between them.
+When a test fails over a change the user asked for, say so and fix the test with them — never delete it to pass.
 `;

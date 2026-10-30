@@ -33,15 +33,7 @@ export type AuthState = 'init' | 'initLoading' | 'authenticating' | 'authenticat
  * through its own single sign-on — a sign-in screen sends them there.
  */
 export type AuthFailureReason =
-  | 'missing'
-  | 'expired'
-  | 'revoked'
-  | 'inactive'
-  | 'unverified'
-  | 'sso-required'
-  | 'malformed'
-  | 'outdated'
-  | 'network';
+  'missing' | 'expired' | 'revoked' | 'inactive' | 'unverified' | 'sso-required' | 'malformed' | 'outdated' | 'network';
 
 /** What an auth backend hands back from a grant (login, refresh) or an identity call. Both halves are optional:
  *  a backend may answer a refresh with tokens alone, or an identity call with a user alone. */

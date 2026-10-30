@@ -31,3 +31,4 @@ export * from './ServerConfigTypes';
 export * from './ServerLogTypes';
 export * from './OAuthTypes';
 export * from './PreviewTypes';
+export * from './TestTypes';

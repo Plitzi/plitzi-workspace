@@ -23,6 +23,7 @@ import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
+import { useCanvasRecording } from '@pmodules/Tests';
 
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
@@ -105,6 +106,8 @@ const BuilderArea = ({
   );
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
+  // An e2e test's steps, recorded from what is done in the canvas while one is recorded.
+  useCanvasRecording(ref);
   const refContainer = useRef<HTMLDivElement>(null);
 
   // Replaying restarts what is already running: an arrival that played once sits finished, and turning the motion on

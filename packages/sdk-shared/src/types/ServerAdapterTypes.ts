@@ -177,6 +177,11 @@ export type SSRAdapters = {
     params: Record<string, unknown>,
     write: SSRWriteContext
   ) => Promise<ActionRunReport>;
+  /**
+   * Play the space's e2e tests (RFC 0031) on its draft, in a browser of the deployment's — those named, or all: each
+   * test's result, or why none was run there. When omitted, an agent's e2e tests are said as not run.
+   */
+  runE2eTests?: (spaceId: number, ids: readonly string[]) => Promise<{ results: unknown[] } | { notRun: string }>;
   /** The space's own data: the draft's JSON files its server providers read (`/data/<file>`), and which copy they are.
    *  When omitted, the MCP offers no data resource and refuses the data ops. */
   getData?: (spaceId: number) => Promise<DataDraft | undefined>;

@@ -1,0 +1,58 @@
+import Button from '@plitzi/plitzi-ui/Button';
+
+import EmptyState from '@pmodules/App/components/EmptyState';
+import ViewSection from '@pmodules/App/components/ViewSection';
+
+import UnitTestRow from './components/UnitTestRow';
+
+import type { UnitTest } from '@plitzi/sdk-shared';
+import type { TSpaceUnitTestResult } from '@plitzi/sdk-shared/network';
+
+export type UnitTestsProps = {
+  tests: UnitTest[];
+  results: TSpaceUnitTestResult[];
+  onAdd: () => void;
+  onEdit: (id: string) => void;
+  onRemove: (id: string) => void;
+};
+
+/**
+ * The space's unit tests: one element each, resolved for a state and its data with no browser — run against the saved
+ * document on every save, as the issues are.
+ */
+const UnitTests = ({ tests, results, onAdd, onEdit, onRemove }: UnitTestsProps) => (
+  <ViewSection
+    title="Unit tests"
+    actions={
+      tests.length > 0 && (
+        <Button size="sm" onClick={onAdd}>
+          Add unit test
+        </Button>
+      )
+    }
+  >
+    {tests.length === 0 && (
+      <EmptyState
+        icon="fa-solid fa-flask"
+        title="No unit tests yet"
+        description="Say what an element must be for a state: shown or hidden, the words it reads, the variant it wears. They run on every save, in milliseconds, and a snapshot waits for them."
+        action={
+          <Button size="sm" onClick={onAdd}>
+            Add unit test
+          </Button>
+        }
+      />
+    )}
+    {tests.map(test => (
+      <UnitTestRow
+        key={test.id}
+        test={test}
+        result={results.find(result => result.id === test.id)}
+        onEdit={onEdit}
+        onRemove={onRemove}
+      />
+    ))}
+  </ViewSection>
+);
+
+export default UnitTests;

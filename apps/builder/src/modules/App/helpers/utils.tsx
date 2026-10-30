@@ -23,7 +23,7 @@ import type { ReactNode } from 'react';
  * The entries of the sidebar that REPLACE the canvas instead of opening beside it. `AppContainer` draws them; here they
  * are only an icon, and alone on the side while open.
  */
-export const FULL_VIEW_IDS = ['server', 'settings'] as const;
+export const FULL_VIEW_IDS = ['tests', 'server', 'settings'] as const;
 
 export type FullViewId = (typeof FULL_VIEW_IDS)[number];
 
@@ -105,6 +105,8 @@ const PANEL_NEEDS: Partial<Record<string, string>> = {
   assets: 'spaceContent',
   advanceStyle: 'spaceUpdate',
   stateManager: 'spaceUpdate',
+  // Writing what the space must do is editing it: a test is part of its document.
+  tests: 'spaceUpdate',
   // Its data is the content's; the rest of it says what each section needs (ContainerServer).
   server: 'spaceContent',
   settings: 'spaceManage'
@@ -171,8 +173,9 @@ export const getPopups = ({
       component: <StateManager />,
       size: 'custom'
     }),
-    fullView('server', 8, activeIds, 'fa-solid fa-server', 'Server'),
-    fullView('settings', 9, activeIds, 'fas fa-cog', 'Settings')
+    fullView('tests', 8, activeIds, 'fa-solid fa-vial', 'Tests'),
+    fullView('server', 9, activeIds, 'fa-solid fa-server', 'Server'),
+    fullView('settings', 10, activeIds, 'fas fa-cog', 'Settings')
   ].filter(popup => {
     const need = PANEL_NEEDS[popup.id];
 

@@ -92,7 +92,8 @@ export const SPACE_FIELDS = [
   'pageFolders',
   'layouts',
   'components',
-  'pages'
+  'pages',
+  'tests'
 ] as const satisfies readonly (keyof SpaceSpec)[];
 
 /** The fields that are not attributes. An attribute sharing one of these names cannot be written flat. */

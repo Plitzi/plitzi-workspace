@@ -50,7 +50,8 @@ export const SPACE_SPEC_KEYS = [
   'pageFolders',
   'layouts',
   'components',
-  'pages'
+  'pages',
+  'tests'
 ] as const satisfies readonly (keyof SpaceSpec)[];
 
 export const COMPONENT_SPEC_KEYS = [

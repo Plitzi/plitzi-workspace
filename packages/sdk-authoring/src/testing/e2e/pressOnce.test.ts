@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { patiently } from './measureState';
+import { pressOnce } from './page';
 
-import type { BrowserPage } from '../../browser';
+import type { E2ePage } from './page';
 
 /** A page as far as waiting for it to be still asks of it. */
-const page = { evaluate: () => Promise.resolve() } as unknown as BrowserPage;
+const page = { evaluate: () => Promise.resolve() } as unknown as E2ePage;
 
 /** A press that times out the first time it is made, with the call log Playwright writes then. */
 const timingOut = (log: string) => {
@@ -28,8 +28,15 @@ describe('a press that timed out', () => {
     const { presses, press } = timingOut(
       '  - performing click action\n  - click action done\n  - waiting for scheduled navigations to finish'
     );
-    await patiently(page, press);
+    await pressOnce(page, press);
 
+    expect(presses).toEqual([1]);
+  });
+
+  it('is not made again on a control that is disabled: the page settling changes nothing', async () => {
+    const { presses, press } = timingOut('  - element is not enabled');
+
+    await expect(pressOnce(page, press)).rejects.toThrow(/Timeout/);
     expect(presses).toEqual([1]);
   });
 
@@ -37,7 +44,7 @@ describe('a press that timed out', () => {
     const { presses, press } = timingOut(
       '  - waiting for element to be visible, enabled and stable\n  - scrolling into view if needed'
     );
-    await patiently(page, press);
+    await pressOnce(page, press);
 
     expect(presses).toEqual([1, 2]);
   });

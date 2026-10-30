@@ -73,7 +73,7 @@ export const standIn = (url: string): string => {
 };
 
 /** Every picture from another site than `origin`, answered by its stand-in (`VisitView.standIns`). */
-export const standInPictures = (page: BrowserPage, origin: string): Promise<void> =>
+export const standInPictures = (page: BrowserPage, origin: string): Promise<unknown> =>
   page.route(
     url => url.origin !== origin,
     async route =>

@@ -32,7 +32,8 @@ import type {
   SpaceFont,
   Style,
   StyleVariables,
-  Snippet
+  Snippet,
+  SpaceTests
 } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 import type { ElementMotion, OgType } from '@plitzi/sdk-shared/schema';
@@ -508,6 +509,12 @@ export interface SpaceSpec {
    * element's source (a list row, a provider) is not readable here: bind that on the element.
    */
   computed?: Record<string, string>;
+  /**
+   * The space's own tests (RFC 0031), kept in its document: `unit` — an element resolved for a state, no browser — and
+   * `e2e` — a visitor's steps on a page. Written with `unit.test(…)` and `e2e.test(…)`; run by `plitzi test`, and a
+   * snapshot and a publish wait for them.
+   */
+  tests?: SpaceTests;
   /**
    * Templates by name, for what an element shows of its data: `formats: { price: "{{ source|currency('USD') }}" }`
    * once, then `text({ from: 'products.item.price', as: 'price' })` anywhere. `source` is the value `from` reads.

@@ -1,6 +1,7 @@
 import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
 import type { ChannelDeclarations } from './RealtimeTypes';
 import type { SnippetStyle } from './SnippetTypes';
+import type { SpaceTests } from './TestTypes';
 import type { BuiltinParam } from '../authoring/paramSpec';
 import type { ElementMotion } from '../schema/motion';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -233,6 +234,8 @@ export type Schema = {
   flat: Record<string, Element>;
   definition: { name: string; permanentUrl: string };
   variables: SchemaVariable[];
+  /** The space's tests, kept with it and run against it: a snapshot and a publish need them passing (RFC 0031). */
+  tests?: SpaceTests;
   /** Keyed by the name each is read by. A space that declares none has none — documents written before flags too. */
   flags?: Record<string, SchemaFlag>;
   settings: {

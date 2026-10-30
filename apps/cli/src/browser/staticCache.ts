@@ -107,7 +107,7 @@ const answer = async (route: PageRoute, dir: string): Promise<void> => {
  * whose files are never kept; none, for another site's page, whose own pictures and fonts are kept too (its page
  * itself, and what its scripts fetch, never are). Registered before any handler that stands in for a request.
  */
-export const keepStatic = (page: BrowserPage, dir: string, own?: string): Promise<void> =>
+export const keepStatic = (page: BrowserPage, dir: string, own?: string): Promise<unknown> =>
   page.route(
     url => url.origin !== own,
     async route => {

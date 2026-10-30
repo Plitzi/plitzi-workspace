@@ -102,7 +102,7 @@ describe('page measure --expect, two elements', () => {
         right: { px: 300 }
       }
     ]);
-    expect(() => expectedOf('activity.bottom <= legend')).toThrow(/a relation is two sides/);
+    expect(() => expectedOf('activity.bottom <= legend')).toThrow(/is no relation: two sides/);
   });
 
   it('holds at every width, and says by how much one misses', () => {

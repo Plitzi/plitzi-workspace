@@ -3,10 +3,9 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
+import { failedFlowText, pressFailure, readDevTools, settle } from '@plitzi/sdk-authoring';
 
 import { pairOf } from './measure';
-import { settle, stepFailure } from './measureState';
 import { heldText, stateReadsOf, valueAt } from './playHeld';
 import { givenText, readState } from './playState';
 import { shotFile } from './shot/output';
@@ -362,7 +361,7 @@ export const playOn = async (
         answer = done ?? answer;
       } catch (error) {
         return {
-          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${stepFailure(error)}`,
+          problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen${name === 'there' ? ' there' : ''}: ${pressFailure(error)}`,
           side: name
         };
       }

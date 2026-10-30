@@ -80,14 +80,20 @@ export interface PageElement {
   setChecked(checked: boolean, options: { timeout: number }): Promise<void>;
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
   /** Where it is drawn on the screen, or null when it is not: what a drag presses at. */
-  boundingBox(options: { timeout: number }): Promise<{ x: number; y: number; width: number; height: number } | null>;
+  boundingBox(options?: { timeout: number }): Promise<{ x: number; y: number; width: number; height: number } | null>;
 }
 
 /** A request the page made, held by `route`: answered here, or let through as it was. */
 export interface PageRoute {
-  request(): { resourceType(): string; url(): string; method(): string };
+  request(): {
+    resourceType(): string;
+    url(): string;
+    method(): string;
+    postData(): string | null;
+    headers(): Record<string, string>;
+  };
   fulfill(response: {
-    status: number;
+    status?: number;
     contentType?: string;
     headers?: Record<string, string>;
     body: string | Uint8Array;
@@ -126,7 +132,16 @@ export interface BrowserPage {
    * The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view — or the
    * first of them shown (`filter({ visible: true })`): a page that draws one control per width hides the other.
    */
-  locator(selector: string): { first(): PageElement; filter(options: { visible: boolean }): { first(): PageElement } };
+  /**
+   * The elements a selector finds: the first, the last or the nth — and, filtered to those shown, the first of them. As
+   * an e2e test's runner reads them (`runE2eTest`), each copy a list draws by its place.
+   */
+  locator(selector: string): PageElement & {
+    first(): PageElement;
+    last(): PageElement;
+    nth(index: number): PageElement;
+    filter(options: { visible: boolean }): { first(): PageElement };
+  };
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;
   waitForTimeout(milliseconds: number): Promise<void>;
@@ -139,6 +154,8 @@ export interface BrowserPage {
     move(x: number, y: number, options?: { steps: number }): Promise<void>;
     down(): Promise<void>;
     up(): Promise<void>;
+    /** The wheel turned over where the pointer is: what scrolls the pane under it. */
+    wheel(dx: number, dy: number): Promise<void>;
   };
   /** A stylesheet added to the page as it is now: what a capture leaves out or holds still. */
   addStyleTag(options: { content: string }): Promise<unknown>;
@@ -155,7 +172,7 @@ export interface BrowserPage {
   /** Where the page is now — after any redirect the server answered with. */
   url(): string;
   /** What the page asks for, answered here first: a picture of another site stood in for, the rest let through. */
-  route(matcher: (url: URL) => boolean, handler: (route: PageRoute) => Promise<void>): Promise<void>;
+  route(matcher: string | ((url: URL) => boolean), handler: (route: PageRoute) => Promise<void>): Promise<unknown>;
   /** Closed once pictured: a run of many pages holds one at a time. */
   close(): Promise<void>;
   /** Loaded again, as a visitor's reload: what the page kept (its storage, a cookie) read back. */

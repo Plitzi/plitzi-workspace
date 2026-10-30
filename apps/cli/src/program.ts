@@ -9,6 +9,7 @@ import { cert } from './commands/project/cert';
 import create from './commands/project/create';
 import createPlugin from './commands/project/createPlugin';
 import { dataDescribe } from './commands/project/data';
+import { spaceTest } from './commands/project/spaceTests';
 import { upgrade, UPGRADE_PARTS } from './commands/project/upgrade';
 import { verify } from './commands/project/verify';
 import { registerElement } from './commands/register/element';
@@ -51,6 +52,7 @@ import type { CertOptions } from './commands/project/cert';
 import type { CreateOptions } from './commands/project/create';
 import type { CreatePluginOptions } from './commands/project/createPlugin';
 import type { DataDescribeOptions } from './commands/project/data';
+import type { SpaceTestOptions } from './commands/project/spaceTests';
 import type { UpgradeOptions } from './commands/project/upgrade';
 import type { VerifyOptions } from './commands/project/verify';
 import type { RunCommandOptions } from './commands/runs';
@@ -382,6 +384,18 @@ export const buildProgram = (): Command => {
     .action((options: VerifyOptions) => verify(options));
 
   program
+    .command('test')
+    .argument('[ids...]', 'The tests to run, by id — every one when none is named')
+    .description(
+      "The space's own tests, as its document keeps them: those written wrong said first, the unit tests (no browser), then the e2e tests on the project's pages — what a snapshot and a publish hold"
+    )
+    .option('--unit', 'The unit tests alone: no browser, no server')
+    .option('--e2e', 'The e2e tests alone')
+    .option('--url <origin>', 'Where the project is served, when not by its own server')
+    .option('--json', 'One object, for a tool or an agent')
+    .action((ids: string[], options: SpaceTestOptions) => spaceTest(ids, options));
+
+  program
     .command('explain')
     .argument(
       '[name]',
@@ -588,7 +602,7 @@ export const buildProgram = (): Command => {
   groupHelp(program, [
     {
       heading: 'Make and change a project — what an agent uses by default:',
-      commands: ['create', 'space', 'page', 'element', 'plugin', 'data', 'explain', 'verify']
+      commands: ['create', 'space', 'page', 'element', 'plugin', 'data', 'explain', 'test', 'verify']
     },
     {
       heading: 'Keep the project whole — its machinery, its servers, HTTPS on your network:',
@@ -613,6 +627,7 @@ export const buildProgram = (): Command => {
   New to it? Make a project, then ask your agent for what you want — it works the project with the commands above:
     npx @plitzi/cli create my-site     a project that renders a space, its skills for your agent in .claude/skills/
     ${projectRun('start').padEnd(35)}serve it
+    ${projectExec('plitzi test').padEnd(35)}the space's own tests: unit (no browser), then e2e on its pages
     ${projectExec('plitzi verify').padEnd(35)}left passing: author, lints, types, tests, format, every page
 
   Alone, or a team of agents (multi-agent mode): your agent works alone by default. A team — several agents, in

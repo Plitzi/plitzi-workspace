@@ -49,11 +49,17 @@ const harness = async (own?: string) => {
 
     let answered: Answered = 'fallback';
     await handler({
-      request: () => ({ url: () => url, resourceType: () => type, method: () => method }),
+      request: () => ({
+        url: () => url,
+        resourceType: () => type,
+        method: () => method,
+        postData: () => null,
+        headers: () => ({})
+      }),
       fulfill: response => {
         answered = {
           fulfilled: {
-            status: response.status,
+            status: response.status ?? 200,
             ...(response.headers ? { headers: response.headers } : {}),
             body: Buffer.from(response.body).toString('utf-8')
           }

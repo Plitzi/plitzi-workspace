@@ -6,6 +6,7 @@ import { lookTool } from './look';
 import { readTool } from './read';
 import { renderTool } from './render';
 import { searchTool } from './search';
+import { testTool } from './test';
 import { tryFunctionTool } from './tryFunction';
 
 import type { ToolDef } from './shared/tool';
@@ -31,6 +32,7 @@ export const tools: ToolDef[] = [
   renderTool,
   lookTool,
   tryFunctionTool,
+  testTool,
   activityTool
 ];
 

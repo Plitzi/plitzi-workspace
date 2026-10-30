@@ -25,6 +25,7 @@ describe('MCP tool registry (defineTool descriptors)', () => {
       'plitzi_search',
       'plitzi_set_attributes',
       'plitzi_set_classes',
+      'plitzi_test',
       'plitzi_try_function'
     ]);
     expect(tools.every(t => typeof t.execute === 'function')).toBe(true);

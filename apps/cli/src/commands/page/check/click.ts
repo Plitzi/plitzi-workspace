@@ -1,3 +1,4 @@
+import { pressFailure, pressOnce } from '@plitzi/sdk-authoring';
 import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
 
 import {
@@ -10,7 +11,6 @@ import {
   pageMomentInPage,
   refusedFieldsInPage
 } from './moments';
-import { patiently, stepFailure } from '../measureState';
 import { byNameOrId } from '../shot/capture';
 
 import type { Authored } from './space';
@@ -192,11 +192,11 @@ export const clickEffects = async (
     }
 
     try {
-      await patiently(page, () => target.scrollIntoViewIfNeeded({ timeout: 3000 }));
+      await pressOnce(page, () => target.scrollIntoViewIfNeeded({ timeout: 3000 }));
     } catch (error) {
       return {
         element: label,
-        problem: `${label} could not be brought into view: ${stepFailure(error)}`,
+        problem: `${label} could not be brought into view: ${pressFailure(error)}`,
         changes: [],
         failed: []
       };
@@ -211,13 +211,13 @@ export const clickEffects = async (
   if (target) {
     const from = page.url();
     try {
-      await patiently(page, () => (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 })));
+      await pressOnce(page, () => (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did its work: what changed is read on the page it went to.
       if (page.url() === from) {
         return {
           element: label,
-          problem: `${label} could not be ${verb}: ${stepFailure(error)}`,
+          problem: `${label} could not be ${verb}: ${pressFailure(error)}`,
           changes: [],
           failed: []
         };

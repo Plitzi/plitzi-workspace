@@ -1,4 +1,4 @@
-import { comparePictures } from '@plitzi/sdk-authoring';
+import { comparePictures, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { awaited, capture, ROW, targetOn } from './capture';
@@ -8,7 +8,7 @@ import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
 import { awaitHydration } from '../hydration';
-import { answered, patiently, settle, stepFailure } from '../measureState';
+import { answered } from '../measureState';
 import { parseSteps } from '../shotSteps';
 
 import type { BrowserPage } from '../../../browser';
@@ -115,9 +115,9 @@ export const clickThrough = async (
     const before = moments[moments.length - 1].png;
     const pageBefore = await pageNow(taken.page, how);
     try {
-      await patiently(taken.page, () => element.click({ timeout: 3000 }));
+      await pressOnce(taken.page, () => element.click({ timeout: 3000 }));
     } catch (error) {
-      return { problem: `${target} could not be clicked: ${stepFailure(error)}` };
+      return { problem: `${target} could not be clicked: ${pressFailure(error)}` };
     }
 
     for (let frame = 1; frame <= Math.max(1, frames); frame += 1) {
@@ -444,7 +444,7 @@ export const actStep = async (
     }
 
     if (step.kind === 'hover') {
-      await patiently(page, () => shown(read.selector).hover({ timeout: 3000 }));
+      await pressOnce(page, () => shown(read.selector).hover({ timeout: 3000 }));
       return undefined;
     }
 
@@ -516,8 +516,8 @@ export const actStep = async (
     const copies = ROW.test(step.target) ? 1 : await page.evaluate(copiesOn, read.selector);
     try {
       await (step.kind === 'click'
-        ? answered(page, () => patiently(page, () => shown(read.selector).click({ timeout: 3000 })))
-        : patiently(page, () => shown(read.selector).click({ timeout: 3000 })));
+        ? answered(page, () => pressOnce(page, () => shown(read.selector).click({ timeout: 3000 })))
+        : pressOnce(page, () => shown(read.selector).click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
       // dev-1 read a plain locator timeout, with nothing of the navigation in it).
@@ -709,7 +709,7 @@ export const playSteps = async (
         }
       }
     } catch (error) {
-      return { problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${stepFailure(error)}` };
+      return { problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${pressFailure(error)}` };
     }
   }
 
@@ -793,7 +793,7 @@ export const playedOn = async (
     // A step whose element never answers — a click that waits past its time — is a step that did not happen, said in
     // a line: thrown, a run's look printed a TimeoutError's stack and went on to compare nothing.
     const done = await actStep(page, step, index, visitors).catch((error: unknown) => ({
-      problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${stepFailure(error)}`
+      problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${pressFailure(error)}`
     }));
     if (done && 'problem' in done) {
       return done;

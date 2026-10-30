@@ -30,10 +30,12 @@ describe('getPopups', () => {
       'usages',
       'advanceStyle',
       'stateManager',
+      'tests',
       'server',
       'settings'
     ]);
     expect(left.filter(popup => popup.placementSettings?.left?.multi === false).map(popup => popup.id)).toEqual([
+      'tests',
       'server',
       'settings'
     ]);

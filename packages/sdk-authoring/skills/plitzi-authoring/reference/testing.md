@@ -1,5 +1,43 @@
 # Testing what you authored
 
+## The space's own tests — `tests` in the spec
+
+A space keeps its tests in its document, beside its pages: `plitzi test` runs them, and a snapshot and a publish wait
+for them. Two kinds, apart:
+
+```ts
+import { e2e, unit } from '@plitzi/sdk-authoring';
+
+export const space: SpaceSpec = {
+  // …its pages…
+  tests: {
+    // One element resolved for a state, no browser: attributes, style, `visible`, a class's `variant`, its `state`.
+    unit: [
+      unit.test({
+        id: 'app-lit',
+        title: 'Choosing App lights its step',
+        element: 'plan-app',
+        given: { state: { plan: 'app' } }, // sources too: `list_rows: { item, index }`
+        expect: [unit.variant('rung', 'current')]
+      })
+    ],
+    // A visitor's steps on a page, what must hold between them — elements by id, a list's copy as `row:3`.
+    e2e: [
+      e2e.test({
+        id: 'adds',
+        title: 'A visitor adds a coffee',
+        page: '/menu',
+        width: 390,
+        answers: { 'menu-items': { items: [] } }, // an action answered by the test: the same data every run
+        steps: [e2e.click('add-flat-white'), e2e.expectText('cart-count', '1'), e2e.expectPosition('cart.bottom <= footer.top')]
+      })
+    ]
+  }
+};
+```
+
+A flow is held by an e2e test; a unit test holds what one element makes of a state. `plitzi test --unit` runs no browser.
+
 ## One call: `inspectPage`
 
 ```ts

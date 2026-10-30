@@ -1,8 +1,11 @@
 import { InvalidArgumentError } from 'commander';
 
+import { EDGES, parseRelation, relationHolds, sidePx } from '@plitzi/sdk-authoring';
+
 import { PSEUDOS, styleOf } from './measureValues';
 
 import type { Reading } from './measure';
+import type { Relation } from '@plitzi/sdk-authoring';
 
 /**
  * `page measure --expect`: what an element must compute a property to — the value, or the least or most a number of
@@ -22,72 +25,29 @@ export interface PropertyExpected {
   at?: '>=' | '<=';
 }
 
-/** An edge or a size of an element's box, in px of the page. */
-export const EDGES = ['left', 'right', 'top', 'bottom', 'width', 'height'] as const;
-
-export type Edge = (typeof EDGES)[number];
-
-/** One side of a relation: an element's edge give or take some px, or a number of px alone. */
-export interface RelationSide {
-  element?: string;
-  edge?: Edge;
-  px: number;
-}
-
 /**
- * Where two elements stand to each other, at every width: `activity.bottom + 8 <= legend-area.top`. A run's every layout
- * line — one row, clear of the corner, above the legend — was ~300 characters of jq over `--json` boxes, read by every
- * agent on every turn.
+ * Where two elements stand to each other, at every width — `activity.bottom + 8 <= legend-area.top` — read and held as
+ * an e2e test's `expectPosition` is (`parseRelation`, sdk-authoring): one reading of a relation, whoever writes it.
  */
-export interface RelationExpected {
-  said: string;
-  left: RelationSide;
-  at: (typeof RELATIONS)[number];
-  right: RelationSide;
-}
+export type RelationExpected = Relation;
 
 export type Expected = PropertyExpected | RelationExpected;
 
-const RELATIONS = ['<=', '>=', '<', '>', '='] as const;
+/** What names an element's edge (`a.bottom`) is written as a relation. */
+const NAMES_AN_EDGE = new RegExp(`[\\w-]\\.(?:${EDGES.join('|')})\\b`);
 
-const SIDE = new RegExp(
-  `^(?:([\\w-]+)\\.(${EDGES.join('|')})\\s*(?:([+-])\\s*(\\d+(?:\\.\\d+)?)(?:px)?)?|(-?\\d+(?:\\.\\d+)?)(?:px)?)$`
-);
-
-const sideOf = (text: string): RelationSide | undefined => {
-  const match = SIDE.exec(text.trim());
-  if (!match) {
-    return undefined;
-  }
-
-  // A group that did not take part is undefined, whatever the array's type says.
-  const [element, edge, sign, offset, alone] = [1, 2, 3, 4, 5].map(group => match.at(group));
-  if (alone !== undefined) {
-    return { px: Number(alone) };
-  }
-
-  const px = offset === undefined ? 0 : Number(offset) * (sign === '-' ? -1 : 1);
-
-  return { element, edge: EDGES.find(each => each === edge), px };
-};
-
-/** A relation written as one, or nothing: what names an element's edge (`a.bottom`) on either side is one. */
+/** A relation written as one, or nothing — refused, saying how one is written, when it names an edge and is none. */
 export const relationOf = (value: string): RelationExpected | undefined => {
-  const match = /^(.+?)\s*(<=|>=|<|>|=)\s*(.+)$/.exec(value.trim());
-  if (!match || !new RegExp(`[\\w-]\\.(?:${EDGES.join('|')})\\b`).test(value)) {
+  if (!NAMES_AN_EDGE.test(value)) {
     return undefined;
   }
 
-  const [, leftText, sign, rightText] = match;
-  const [left, right] = [sideOf(leftText), sideOf(rightText)];
-  const at = RELATIONS.find(each => each === sign);
-  if (!left || !right || !at || (left.element === undefined && right.element === undefined)) {
-    throw new InvalidArgumentError(
-      `${value}: a relation is two sides — an element's edge (${EDGES.join(', ')}) give or take px, or px alone — and <=, >=, <, > or =: "activity.bottom + 8 <= legend-area.top"`
-    );
+  const relation = parseRelation(value);
+  if ('problem' in relation) {
+    throw new InvalidArgumentError(relation.problem);
   }
 
-  return { said: value.trim(), left, at, right };
+  return relation;
 };
 
 /** The elements relations name, to be measured with those asked. */
@@ -99,39 +59,6 @@ export const relationElements = (expected: readonly Expected[]): string[] =>
 /** An expectation as it was written. */
 export const expectedText = (each: Expected): string =>
   'said' in each ? each.said : `${each.property}${each.at ?? '='}${each.value}`;
-
-/** A side's px from the boxes read, by element: the edge's place, give or take — or the element not read. */
-export const sidePx = (
-  side: RelationSide,
-  boxOf: (element: string) => { x: number; y: number; width: number; height: number } | undefined
-): number | { missing: string } => {
-  if (side.element === undefined || side.edge === undefined) {
-    return side.px;
-  }
-
-  const box = boxOf(side.element);
-  if (!box) {
-    return { missing: side.element };
-  }
-
-  const edge = {
-    left: box.x,
-    right: box.x + box.width,
-    top: box.y,
-    bottom: box.y + box.height,
-    width: box.width,
-    height: box.height
-  }[side.edge];
-
-  return edge + side.px;
-};
-
-/** Whether two px stand as the relation says, to a tenth of a px: a box's edge is a fraction the layout rounds. */
-export const relationHolds = (left: number, at: RelationExpected['at'], right: number): boolean => {
-  const [a, b] = [Math.round(left * 10) / 10, Math.round(right * 10) / 10];
-
-  return { '<=': a <= b, '>=': a >= b, '<': a < b, '>': a > b, '=': a === b }[at];
-};
 
 /** `--expect property=value` (or `>=`, `<=`), or a relation of two elements' edges, each its own flag. */
 export const expectedOf = (value: string, previous: Expected[] = []): Expected[] => {

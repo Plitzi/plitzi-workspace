@@ -14,7 +14,7 @@ export interface AnsweredRoute {
 
 /** What `answerAction` needs of a page — a Playwright `Page` is one. */
 export interface RoutingPage {
-  route(url: string, handler: (route: AnsweredRoute) => Promise<void>): Promise<void>;
+  route(url: string, handler: (route: AnsweredRoute) => Promise<void>): Promise<unknown>;
 }
 
 export interface AnswerActionOptions {

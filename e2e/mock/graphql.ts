@@ -130,7 +130,31 @@ const emptyConnection = (typename: string) => ({
   __typename: typename
 });
 
-const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined> = {
+/** The space's tests (RFC 0031) as the mocked backend keeps them: what the last save stored, every unit test passing. */
+const testsAnswer = (tests: { unit?: { id: string; title: string }[]; e2e?: { id: string }[] }) => ({
+  tests,
+  problems: [],
+  unitPassed: tests.unit?.length ?? 0,
+  unitFailed: 0,
+  unit: (tests.unit ?? []).map(test => ({
+    id: test.id,
+    title: test.title,
+    ok: true,
+    misses: [],
+    problem: null,
+    __typename: 'SpaceUnitTestResult'
+  })),
+  e2eNotRun: (tests.e2e ?? []).map(test => test.id),
+  __typename: 'SpaceTests'
+});
+
+/** A picture of a page after a step, as the run view shows it: one grey pixel, enough to be an image. */
+const FRAME =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN89+5dPQAJBwOyeKKnngAAAABJRU5ErkJggg==';
+
+let savedTests: { unit?: { id: string; title: string }[]; e2e?: { id: string }[] } = { unit: [], e2e: [] };
+
+const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string, unknown>) => unknown) | undefined> = {
   InitQuery: initQuery,
   SpaceConnectorsQuery: () => ({ data: { SpaceConnectors: emptyConnection('SpaceConnectorListType') } }),
   /** A space with no server actions still has to ANSWER: the builder reads `.edges` off whatever comes back, and
@@ -186,6 +210,35 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
   /** The header's problems button asks at boot, and again whenever the save queue drains. Same rule: `.errors` off
    *  `true` is nothing, and Apollo reports the missing field as an error the page guard catches. A mocked space is one
    *  the linter finds nothing in. */
+  /** The Tests view asks at its first paint and after each save: what the last save stored. */
+  SpaceTestsQuery: () => ({ data: { SpaceTests: testsAnswer(savedTests) } }),
+  SpaceSetTestsMutation: (_space, variables) => {
+    // What the builder sent, kept as the server would keep it — read back by the next SpaceTestsQuery.
+    savedTests = isRecord(variables.tests) ? variables.tests : {};
+
+    return { data: { SpaceSetTests: testsAnswer(savedTests) } };
+  },
+  /** The draft's e2e tests played: every one passing, a picture after each step — what the run view replays. */
+  SpaceRunE2eTestsMutation: () => ({
+    data: {
+      SpaceRunE2eTests: {
+        results: (savedTests.e2e ?? []).map(test => ({
+          id: test.id,
+          title: test.id,
+          ok: true,
+          ms: 1200,
+          steps: ((test as { steps?: { kind: string }[] }).steps ?? []).map(step => ({
+            said: step.kind,
+            ok: true,
+            ms: 300,
+            frame: FRAME
+          }))
+        })),
+        notRun: null,
+        __typename: 'SpaceE2eRun'
+      }
+    }
+  }),
   SpaceIssuesQuery: () => ({
     data: { SpaceIssues: { errors: [], warnings: [], suggestions: [], __typename: 'SpaceIssues' } }
   }),
@@ -236,7 +289,7 @@ export const answerGraphQL = (raw: string | null, space: OfflineDataRaw): unknow
     const name = operation.operationName ?? '';
     const handler = handlers[name];
 
-    return handler ? handler(space) : acknowledge(name);
+    return handler ? handler(space, operation.variables ?? {}) : acknowledge(name);
   });
 
   return Array.isArray(body) ? answers : answers[0];

@@ -147,6 +147,7 @@ export const createMcpServer = async ({
     deleteAction,
     saveFunctions,
     tryFunction,
+    runE2eTests,
     saveData,
     getActivity
   } = adapters;
@@ -206,6 +207,7 @@ export const createMcpServer = async ({
     ...(tryFunction
       ? { tryFunction: (task, params) => tryFunction(requireWritableSpaceId(), task, params, write) }
       : {}),
+    ...(runE2eTests ? { runE2eTests: (ids: readonly string[]) => runE2eTests(requireSpaceId(), ids) } : {}),
     // The agent's own writes are recorded as the MCP's, for the member it acts for (see `SSRWriteContext`).
     ...(getActivity
       ? {

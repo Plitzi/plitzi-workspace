@@ -17,6 +17,7 @@ import type {
   SpaceComponent,
   SpaceComponentDeclaration,
   SpaceFont,
+  SpaceTests,
   Style,
   StyleCategory,
   StyleItem,
@@ -178,6 +179,8 @@ export const spaceEventSchemas = {
   SPACE_UPDATE_PLUGIN: z.object({ plugin }),
   SPACE_REMOVE_PLUGIN: z.object({ pluginType: z.string() }),
   SPACE_UPDATE_SETTINGS: z.object({ path: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
+  /** The space's tests saved whole (RFC 0031): an open builder lists them as they are now. */
+  SPACE_UPDATE_TESTS: z.object({ tests: z.custom<SpaceTests>(isRecord) }),
 
   STYLE_ADD_SELECTOR: z.object({
     displayMode,

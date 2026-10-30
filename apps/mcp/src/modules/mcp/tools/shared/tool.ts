@@ -28,6 +28,8 @@ export interface ToolContext {
   /** Runs one task of the space's functions in the sandbox, for the person behind the connection — when the host
    *  wired it. Only plitzi_try_function uses it. */
   tryFunction?: (task: string, params: Record<string, unknown>) => Promise<ActionRunReport>;
+  /** Plays the space's e2e tests on its draft, when the host wired it. Only plitzi_test uses it. */
+  runE2eTests?: (ids: readonly string[]) => Promise<{ results: unknown[] } | { notRun: string }>;
   /** What happened on the space after a cursor, waited for — when the host wired it. Only plitzi_activity uses it. */
   activity?: (query: SpaceActivityQuery) => Promise<SpaceActivityPage>;
 }

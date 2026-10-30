@@ -16,6 +16,7 @@ import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
+import SpaceTestsQuery from './Space/SpaceTestsQuery';
 import SpaceVersionContentsQuery from './Space/SpaceVersionContentsQuery';
 import SpaceVisitorsQuery from './Space/SpaceVisitorsQuery';
 
@@ -37,12 +38,14 @@ import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
+import type { TSpaceTestsQuery } from './Space/SpaceTestsQuery';
 import type { TSpaceVersionContentsQuery } from './Space/SpaceVersionContentsQuery';
 import type { TSpaceVisitorsQuery } from './Space/SpaceVisitorsQuery';
 
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
 export type { TQuotaPlane, TSpaceQuota } from './Space/SpaceQuotaQuery';
 export type { TSpaceIssue, TSpaceIssues, TSpaceSuggestion } from './Space/SpaceIssuesQuery';
+export type { TSpaceTests, TSpaceUnitTestResult } from './Space/SpaceTestsQuery';
 export type { TSnapshotMarker, TSpaceChanges } from './Space/SpaceChangesQuery';
 
 export type BuilderQueriesMap = {
@@ -50,6 +53,7 @@ export type BuilderQueriesMap = {
   SpaceLatestRevision: TSpaceLatestRevisionQuery;
   SpaceQuota: TSpaceQuotaQuery;
   SpaceIssues: TSpaceIssuesQuery;
+  SpaceTests: TSpaceTestsQuery;
   SpaceChanges: TSpaceChangesQuery;
   SpaceResources: TSpaceResourcesQuery;
   SpaceDeployments: TSpaceDeploymentsQuery;
@@ -73,6 +77,7 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceLatestRevision: SpaceLatestRevisionQuery,
   SpaceQuota: SpaceQuotaQuery,
   SpaceIssues: SpaceIssuesQuery,
+  SpaceTests: SpaceTestsQuery,
   SpaceChanges: SpaceChangesQuery,
   SpaceResources: SpaceResourcesQuery,
   SpaceDeployments: SpaceDeploymentsQuery,
