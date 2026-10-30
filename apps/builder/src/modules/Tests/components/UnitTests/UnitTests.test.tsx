@@ -47,6 +47,6 @@ describe('the unit tests listed', () => {
   it('starts empty, saying what a unit test is for', () => {
     render(<UnitTests tests={[]} results={[]} onAdd={vi.fn()} onEdit={vi.fn()} onRemove={vi.fn()} />);
 
-    expect(screen.getByText('No unit tests yet')).toBeTruthy();
+    expect(screen.getByText('No element checks yet')).toBeTruthy();
   });
 });

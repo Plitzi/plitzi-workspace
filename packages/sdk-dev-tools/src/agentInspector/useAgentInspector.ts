@@ -22,17 +22,19 @@ declare global {
 const KEPT_RUNS = 100;
 
 /**
- * Puts the selected instance's state, sources, elements and flows on `window.__plitzi`, while the dev tools are on.
+ * Puts the selected instance's state, sources, elements and flows on `window.__plitzi`, while the dev tools are on — or
+ * on another window's, `target`: the builder's canvas is an iframe whose document the SDK draws in from the editor's.
  *
  * The panel shows all of it to a person; an agent driving the page through a browser reads text, and was left inferring
  * state from classes in the DOM. Every flow that ends is kept from the moment the dev tools mount.
  */
-const useAgentInspector = (enabled: boolean): void => {
+const useAgentInspector = (enabled: boolean, target?: Window | null): void => {
   const root = useContext(StoreContext);
   const setCommon = useCommonStoreSetter();
 
   useEffect(() => {
-    if (!enabled || !root) {
+    const on = target === undefined ? window : target;
+    if (!enabled || !root || !on) {
       return;
     }
 
@@ -67,17 +69,17 @@ const useAgentInspector = (enabled: boolean): void => {
         watching = on;
       },
       elementSources: id => pConsole.providerData(`getElementDataSource-${id}`),
-      document
+      document: on.document
     });
-    window.__plitzi = inspector;
+    on.__plitzi = inspector;
 
     return () => {
       stopListening();
-      if (window.__plitzi === inspector) {
-        delete window.__plitzi;
+      if (on.__plitzi === inspector) {
+        delete on.__plitzi;
       }
     };
-  }, [enabled, root, setCommon]);
+  }, [enabled, root, setCommon, target]);
 };
 
 export default useAgentInspector;

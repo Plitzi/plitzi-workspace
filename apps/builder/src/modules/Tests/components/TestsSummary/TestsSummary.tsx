@@ -16,12 +16,12 @@ const TestsSummary = ({ answer }: TestsSummaryProps) => {
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
         <span className={holds ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-          <b className="text-2xl font-semibold">{answer.unitPassed}</b>/{total} unit tests pass
+          <b className="text-2xl font-semibold">{answer.unitPassed}</b>/{total} element checks pass
         </span>
         <span className="text-gray-500 dark:text-zinc-400">
-          <b className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{answer.tests.e2e?.length ?? 0}</b> e2e
-          tests
-          {answer.e2eNotRun.length > 0 && ' — not run here: this server has no browser for them yet'}
+          <b className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{answer.tests.e2e?.length ?? 0}</b>{' '}
+          flows
+          {answer.e2eNotRun.length > 0 && ' — played with “Play all here”, or “Run on the server”'}
         </span>
       </div>
       {!holds && (

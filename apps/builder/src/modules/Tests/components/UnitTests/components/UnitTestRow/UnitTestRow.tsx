@@ -19,7 +19,7 @@ const UnitTestRow = ({ test, result, onEdit, onRemove }: UnitTestRowProps) => {
   const handleRemove = useCallback(() => onRemove(test.id), [onRemove, test.id]);
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border border-gray-200 px-3 py-2 dark:border-zinc-700">
+    <div className="flex items-start justify-between gap-3 rounded-md border border-gray-300 px-3 py-2 dark:border-zinc-700">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="truncate text-sm text-zinc-900 dark:text-zinc-100">{test.title || test.id}</span>
         <span className="font-mono text-xs text-gray-500 dark:text-zinc-400">

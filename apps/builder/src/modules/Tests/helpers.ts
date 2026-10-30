@@ -50,8 +50,8 @@ const element = (label = 'Element'): FieldSpec => ({ name: 'element', label, kin
 /** A step of an e2e test — something done, or something that must hold — by kind. */
 export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
   click: { label: 'Click', fields: [element()] },
-  hover: { label: 'Hover', fields: [element()] },
-  type: { label: 'Type', fields: [element('Field'), { name: 'text', label: 'Text', kind: 'text' }] },
+  hover: { label: 'Point at', fields: [element()] },
+  type: { label: 'Type into a field', fields: [element('Field'), { name: 'text', label: 'Text', kind: 'text' }] },
   press: { label: 'Press a key', fields: [{ name: 'key', label: 'Key (Enter, Meta+k)', kind: 'text' }] },
   scroll: {
     label: 'Scroll',
@@ -69,37 +69,37 @@ export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
       { name: 'dy', label: 'Down (px)', kind: 'number' }
     ]
   },
-  waitFor: { label: 'Wait for', fields: [element()] },
-  goto: { label: 'Go to', fields: [{ name: 'path', label: 'Path', kind: 'text' }] },
-  back: { label: 'Back', fields: [] },
-  reload: { label: 'Reload', fields: [] },
+  waitFor: { label: 'Wait for it to show', fields: [element()] },
+  goto: { label: 'Go to a page', fields: [{ name: 'path', label: 'Page address (/pricing)', kind: 'text' }] },
+  back: { label: 'Go back', fields: [] },
+  reload: { label: 'Reload the page', fields: [] },
   setState: {
-    label: 'Set state',
+    label: 'Set a state value',
     fields: [
       { name: 'key', label: 'Key', kind: 'text' },
       { name: 'value', label: 'Value', kind: 'value' }
     ]
   },
   setSource: {
-    label: 'Set a source',
+    label: 'Set data',
     fields: [
       { name: 'path', label: 'Path (apiContainer_feed.items)', kind: 'text' },
       { name: 'value', label: 'Value', kind: 'value' }
     ]
   },
-  tick: { label: 'Move the clock', fields: [{ name: 'ms', label: 'Milliseconds', kind: 'number' }] },
-  expectShown: { label: 'Expect shown', fields: [element()] },
-  expectHidden: { label: 'Expect hidden', fields: [element()] },
-  expectText: { label: 'Expect text', fields: [element(), { name: 'text', label: 'Text', kind: 'text' }] },
+  tick: { label: 'Let time pass', fields: [{ name: 'ms', label: 'Milliseconds', kind: 'number' }] },
+  expectShown: { label: 'Check it shows', fields: [element()] },
+  expectHidden: { label: 'Check it is hidden', fields: [element()] },
+  expectText: { label: 'Check its words', fields: [element(), { name: 'text', label: 'Text', kind: 'text' }] },
   expectState: {
-    label: 'Expect state',
+    label: 'Check a state value',
     fields: [
       { name: 'key', label: 'Key', kind: 'text' },
       { name: 'value', label: 'Value', kind: 'value' }
     ]
   },
   expectAttribute: {
-    label: 'Expect attribute',
+    label: 'Check an attribute',
     fields: [
       element(),
       { name: 'name', label: 'Attribute', kind: 'text' },
@@ -107,7 +107,7 @@ export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
     ]
   },
   expectStyle: {
-    label: 'Expect style',
+    label: 'Check a style',
     fields: [
       element(),
       { name: 'property', label: 'CSS property', kind: 'text' },
@@ -115,10 +115,15 @@ export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
     ]
   },
   expectPosition: {
-    label: 'Expect position',
+    label: 'Check where it sits',
     fields: [{ name: 'relation', label: 'Relation (a.bottom + 8 <= b.top)', kind: 'text' }]
   }
 };
+
+/** A step's kind as a select names it — any string — to what it takes, or none for one no step is. */
+const STEP_KIND_SPECS = new Map<string, KindSpec>(Object.entries(STEP_KINDS));
+
+export const stepKindOf = (kind: string): KindSpec | undefined => STEP_KIND_SPECS.get(kind);
 
 /** The widths an e2e test is played at, as the builder offers them. */
 export const WIDTHS = [
@@ -205,6 +210,26 @@ export const elementOptions = (flat: Record<string, { definition: { label?: stri
     .map(([id, element]) => ({ value: id, label: `${element.definition.label || element.definition.type} · ${id}` }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
+/**
+ * What a person calls the element a step names: the label it was given — else its id, which a space's author chose — and
+ * which copy, for one a list draws more than once.
+ */
+export const elementNameOf = (
+  flat: Partial<Record<string, { definition: { label?: string; type: string } }>>,
+  target: string
+): string => {
+  const match = /^(.+?)(?::(\d+|last))?$/.exec(target);
+  const id = match?.[1] ?? target;
+  const copy: string | undefined = match?.[2];
+  const definition = flat[id]?.definition;
+  // A label the builder gave by itself names the type ("Button"), and says nothing of WHICH button.
+  const bare = (words: string) => words.replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const labelled = definition?.label && bare(definition.label) !== bare(definition.type);
+  const name = labelled ? (definition.label ?? id) : id;
+
+  return copy === undefined ? name : `${name} (${copy === 'last' ? 'the last' : `#${copy}`})`;
+};
+
 /** A row as the builder edits it: a kind and the fields it took. */
 export type Row = { kind: string } & Record<string, unknown>;
 
@@ -245,3 +270,37 @@ export const shownStepOf = (steps: readonly { ok: boolean; notRun?: true }[]): n
 
 /** How wide the device frame draws a page of a width: a phone at its size, anything wider scaled to fit. */
 export const frameWidthOf = (width: number): number => Math.min(width, 390);
+
+/** A step of a flow, where it sits in it. */
+export type PlacedStep = { step: E2eStep; index: number };
+
+/** One moment of a flow: something done — none for the page as it opens — and what must hold once it is. */
+export type FlowMoment = { action?: PlacedStep; checks: PlacedStep[] };
+
+const EXPECTS = new Set<string>([
+  'expectShown',
+  'expectHidden',
+  'expectText',
+  'expectState',
+  'expectAttribute',
+  'expectStyle',
+  'expectPosition'
+]);
+
+/**
+ * A flow read as a person reads it: moments, each a thing done and the checks after it — "when this, then that". The
+ * checks before anything is done are the page as it opens; a flow that checks nothing there does not start with one.
+ */
+export const momentsOf = (steps: readonly E2eStep[]): FlowMoment[] => {
+  const moments: FlowMoment[] = [{ checks: [] }];
+  steps.forEach((step, index) => {
+    const placed = { step, index };
+    if (EXPECTS.has(step.kind)) {
+      moments[moments.length - 1].checks.push(placed);
+    } else {
+      moments.push({ action: placed, checks: [] });
+    }
+  });
+
+  return moments[0].checks.length === 0 ? moments.slice(1) : moments;
+};

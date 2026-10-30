@@ -4,6 +4,7 @@ import {
   STEP_KINDS,
   UNIT_KINDS,
   emptyOf,
+  momentsOf,
   moved,
   nextId,
   valueOf,
@@ -12,7 +13,7 @@ import {
   withUnitTest
 } from './helpers';
 
-import type { SpaceTests, UnitTest } from '@plitzi/sdk-shared';
+import type { E2eStep, SpaceTests, UnitTest } from '@plitzi/sdk-shared';
 
 const shows: UnitTest = { id: 'unit-1', title: 'Shows', element: 'hello', expect: [{ kind: 'visible', value: true }] };
 
@@ -47,5 +48,24 @@ describe('the space’s tests as the builder edits them', () => {
   it('moves a row up or down, and leaves the list as it was past either end', () => {
     expect(moved(['a', 'b', 'c'], 2, -1)).toEqual(['a', 'c', 'b']);
     expect(moved(['a', 'b', 'c'], 0, -1)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+const shown = (element: string): E2eStep => ({ kind: 'expectShown', element });
+const click = (element: string): E2eStep => ({ kind: 'click', element });
+
+describe('a flow read as moments', () => {
+  it('is each thing done with the checks after it, the page as it opens first when it is checked', () => {
+    const moments = momentsOf([shown('empty'), click('add'), shown('count'), shown('summary'), click('clear')]);
+
+    expect(moments.map(moment => [moment.action?.index, moment.checks.map(check => check.index)])).toEqual([
+      [undefined, [0]],
+      [1, [2, 3]],
+      [4, []]
+    ]);
+  });
+
+  it('starts at the first thing done when nothing is checked before it', () => {
+    expect(momentsOf([click('add'), shown('count')]).map(moment => moment.action?.index)).toEqual([0]);
   });
 });

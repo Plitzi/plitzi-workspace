@@ -1,6 +1,6 @@
 import { sameValue } from '@plitzi/sdk-shared/history';
 
-import { awaitHydration, locateTarget, pressFailure, pressOnce, settle, targetId } from './page';
+import { awaitHydration, locateField, locateTarget, pressFailure, pressOnce, settle, targetId } from './page';
 import { parseRelation, relationElements, relationHolds, sidePx } from './position';
 import { answerAction } from '../answerAction';
 import { openPage } from '../settle';
@@ -36,6 +36,8 @@ export interface E2eResult {
   steps: E2eStepResult[];
   /** Why it could not start: the page did not open, or never hydrated. */
   problem?: string;
+  /** Stopped by whoever ran it (`signal`) before its last step: the steps after are not run, and it did not pass. */
+  stopped?: true;
 }
 
 export interface E2eRunOptions {
@@ -55,6 +57,13 @@ export interface E2eRunOptions {
   onStep?: (page: E2ePage, step: E2eStepResult, index: number) => Promise<string | undefined>;
   /** The window's height, in px. 900. */
   height?: number;
+  /**
+   * Waited for before each step is played: a player shows the step about to be played, and holds it there while it is
+   * paused or played a step at a time.
+   */
+  beforeStep?: (step: E2eStep, index: number) => Promise<void>;
+  /** Stops the run before its next step: the rest said as not run, the run as stopped. */
+  signal?: AbortSignal;
 }
 
 /** A step in words. */
@@ -184,7 +193,11 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
         return absent;
       }
 
-      const element = locateTarget(page, step.element);
+      const element = step.kind === 'type' ? locateField(page, step.element) : locateTarget(page, step.element);
+      if (step.kind === 'type' && (await element.count()) === 0) {
+        return `${step.element} is no field and holds none — a type step writes in an input, a text area or a select`;
+      }
+
       await pressOnce(page, () =>
         step.kind === 'click'
           ? element.click({ timeout: 3000 })
@@ -417,7 +430,17 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
 
   const steps: E2eStepResult[] = [];
   let stopped = false;
+  let halted = false;
   for (const step of test.steps) {
+    if (!stopped && options.beforeStep) {
+      await options.beforeStep(step, steps.length);
+    }
+
+    if (!stopped && options.signal?.aborted) {
+      stopped = true;
+      halted = true;
+    }
+
     if (stopped) {
       steps.push({ said: stepText(step), ok: false, notRun: true, ms: 0 });
       continue;
@@ -444,13 +467,21 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     stopped = read !== undefined;
   }
 
-  return { id: test.id, title: test.title, ok: !stopped, ms: Date.now() - started, steps };
+  return {
+    id: test.id,
+    title: test.title,
+    ok: !stopped,
+    ms: Date.now() - started,
+    steps,
+    ...(halted ? { stopped: true as const } : {})
+  };
 };
 
 /** A run as a person reads it: the test, then each step — the failed one with what it read, those after it not run. */
 export const e2eResultText = (result: E2eResult): string[] => [
   `${result.ok ? '✓' : '✗'} ${result.id} — ${result.title} (${(result.ms / 1000).toFixed(1)} s)`,
   ...(result.problem ? [`  ${result.problem}`] : []),
+  ...(result.stopped ? ['  stopped before its last step'] : []),
   ...result.steps.map(step =>
     step.notRun
       ? `  · ${step.said} — not run`

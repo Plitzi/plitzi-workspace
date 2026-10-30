@@ -64,4 +64,40 @@ describeTarget('harness', () => {
       '  · click kept-keep — not run'
     ]);
   });
+
+  test('shows each step before it is played, and stops where whoever plays it says', async ({ page }) => {
+    const before: number[] = [];
+    const stop = new AbortController();
+    const result = await runE2eTest(
+      page,
+      e2e.test({
+        id: 'stopped',
+        title: 'Stopped after its first step',
+        page: '/',
+        steps: [e2e.click(KEPT_IDS.keep), e2e.expectText(KEPT_IDS.keptText, 'saved'), e2e.click(KEPT_IDS.draft)]
+      }),
+      {
+        origin: HARNESS_ORIGIN,
+        open: () => open(page),
+        signal: stop.signal,
+        beforeStep: (_step, index) => {
+          before.push(index);
+          if (index === 1) {
+            stop.abort();
+          }
+
+          return Promise.resolve();
+        }
+      }
+    );
+
+    expect(before).toEqual([0, 1]);
+    expect(result).toMatchObject({ ok: false, stopped: true });
+    expect(e2eResultText(result).slice(1)).toEqual([
+      '  stopped before its last step',
+      '  ✓ click kept-keep',
+      '  · kept-text shows "saved" — not run',
+      '  · click kept-draft — not run'
+    ]);
+  });
 });

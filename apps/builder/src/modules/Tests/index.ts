@@ -1,4 +1,4 @@
 export { default } from './Tests';
-export { default as RecordingBar } from './components/RecordingBar';
-export { default as TestsRecordingProvider } from './recording/TestsRecordingProvider';
-export { default as useCanvasRecording } from './recording/useCanvasRecording';
+export { default as TestStudioContext } from './studio/TestStudioContext';
+export { default as TestStudioProvider } from './studio/TestStudioProvider';
+export { default as useCanvasStudio } from './studio/useCanvasStudio';

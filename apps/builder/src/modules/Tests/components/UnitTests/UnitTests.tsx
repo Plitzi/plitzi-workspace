@@ -22,11 +22,11 @@ export type UnitTestsProps = {
  */
 const UnitTests = ({ tests, results, onAdd, onEdit, onRemove }: UnitTestsProps) => (
   <ViewSection
-    title="Unit tests"
+    title="Element checks — unit tests"
     actions={
       tests.length > 0 && (
         <Button size="sm" onClick={onAdd}>
-          Add unit test
+          Add an element check
         </Button>
       )
     }
@@ -34,11 +34,11 @@ const UnitTests = ({ tests, results, onAdd, onEdit, onRemove }: UnitTestsProps) 
     {tests.length === 0 && (
       <EmptyState
         icon="fa-solid fa-flask"
-        title="No unit tests yet"
-        description="Say what an element must be for a state: shown or hidden, the words it reads, the variant it wears. They run on every save, in milliseconds, and a snapshot waits for them."
+        title="No element checks yet"
+        description="Say what an element must be in a given situation: shown or hidden, the words it reads, the look it wears. They are checked on every save, in an instant, and a snapshot waits for them."
         action={
           <Button size="sm" onClick={onAdd}>
-            Add unit test
+            Add an element check
           </Button>
         }
       />

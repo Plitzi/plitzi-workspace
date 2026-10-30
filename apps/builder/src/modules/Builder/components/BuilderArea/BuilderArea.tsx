@@ -23,7 +23,7 @@ import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
-import { useCanvasRecording } from '@pmodules/Tests';
+import { useCanvasStudio } from '@pmodules/Tests';
 
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
@@ -47,6 +47,8 @@ export type BuilderAreaProps = {
   mobilePreview?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
+  /** The canvas alone, its frame — size, padding, shadow — drawn by whoever places it: the Tests area's devices. */
+  bare?: boolean;
 };
 
 const BuilderArea = ({
@@ -58,7 +60,8 @@ const BuilderArea = ({
   headerTitle = '',
   mobilePreview = false,
   previewMode = false,
-  debugMode = false
+  debugMode = false,
+  bare = false
 }: BuilderAreaProps) => {
   const [cache] = useBuilderStore('style.cache');
   const [fonts = NO_FONTS] = useBuilderStore('style.fonts');
@@ -106,8 +109,8 @@ const BuilderArea = ({
   );
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
-  // An e2e test's steps, recorded from what is done in the canvas while one is recorded.
-  useCanvasRecording(ref);
+  // The canvas an e2e test open in the studio is played and recorded in.
+  useCanvasStudio(ref);
   const refContainer = useRef<HTMLDivElement>(null);
 
   // Replaying restarts what is already running: an arrival that played once sits finished, and turning the motion on
@@ -193,16 +196,16 @@ const BuilderArea = ({
           'min-w-150 overflow-hidden': multiPagesMode,
           'basis-0 overflow-auto': !multiPagesMode && !mobilePreview,
           grow: !mobilePreview && !mobilePreview,
-          'px-4 pt-4 pb-2': mode === 'normal',
-          'p-2': mode !== 'normal',
-          'max-w-360': displayMode === 'desktop',
-          'max-w-3xl': displayMode === 'tablet',
-          'max-w-106.25': displayMode === 'mobile'
+          'px-4 pt-4 pb-2': mode === 'normal' && !bare,
+          'p-2': mode !== 'normal' && !bare,
+          'max-w-360': displayMode === 'desktop' && !bare,
+          'max-w-3xl': displayMode === 'tablet' && !bare,
+          'max-w-106.25': displayMode === 'mobile' && !bare
         },
         className
       )}
     >
-      <div className="mx-auto mb-2 flex w-full grow basis-0 flex-col shadow">
+      <div className={clsx('flex w-full grow basis-0 flex-col', { 'mx-auto mb-2 shadow': !bare })}>
         {mode === 'normal' && showHeader && (
           <BuilderAreaHeader
             baseElementId={baseElementId}

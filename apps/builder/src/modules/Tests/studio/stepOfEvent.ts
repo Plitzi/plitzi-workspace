@@ -1,4 +1,4 @@
-import type { Row } from '../helpers';
+import type { E2eStep } from '@plitzi/sdk-shared';
 
 // The canvas is an iframe: its nodes are not instances of this window's `Element`, so they are told by their node type.
 const isElement = (target: EventTarget | null): target is Element =>
@@ -28,14 +28,14 @@ export const targetOfEvent = (event: Event): string | undefined => {
 export const shownTextOf = (event: Event): string =>
   (spaceElementOf(event)?.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
-/** The step a click is: a press — or, while expecting, what the element shows. */
-export const clickStep = (event: Event, expecting: boolean): Row | undefined => {
+/** The step a click is: a press — or, while checking, what the element shows. */
+export const clickStep = (event: Event, checking: boolean): E2eStep | undefined => {
   const element = targetOfEvent(event);
   if (element === undefined) {
     return undefined;
   }
 
-  if (!expecting) {
+  if (!checking) {
     return { kind: 'click', element };
   }
 
@@ -49,7 +49,7 @@ const TYPED_FIELDS = new Set(['textarea', 'input']);
 const PRESSED_INPUTS = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'range', 'color']);
 
 /** The step a field changed is: what was typed in it. */
-export const changeStep = (event: Event): Row | undefined => {
+export const changeStep = (event: Event): E2eStep | undefined => {
   const element = targetOfEvent(event);
   const field = event.target;
   if (element === undefined || !isElement(field) || !TYPED_FIELDS.has(field.localName)) {

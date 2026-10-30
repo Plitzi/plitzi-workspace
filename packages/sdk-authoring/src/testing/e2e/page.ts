@@ -186,19 +186,34 @@ export const pressOnce = async (page: E2ePage, press: () => Promise<unknown>): P
   }
 };
 
+/** The copy a target names — `bin-bar:3`, `bin-bar:last` — of what a selector finds, else the first. */
+const copyOf = (all: E2eLocator, copy: string | undefined): E2eElement =>
+  copy === undefined ? all.first() : copy === 'last' ? all.last() : all.nth(Number(copy) - 1);
+
+/** The mark the SDK draws an element with, as a selector. */
+const markOf = (id: string): string => `[data-plitzi-el="${id.replace(/"/g, '\\"')}"]`;
+
 /**
  * An element as a step names it — `bin-bar`, the third copy a list draws `bin-bar:3`, the last `bin-bar:last` — found
  * on the page by the mark the SDK draws every element with.
  */
 export const locateTarget = (page: E2ePage, target: string): E2eElement => {
   const copy = /^(.+):(\d+|last)$/.exec(target);
-  const id = copy ? copy[1] : target;
-  const all = page.locator(`[data-plitzi-el="${id.replace(/"/g, '\\"')}"]`);
-  if (!copy) {
-    return all.first();
-  }
 
-  return copy[2] === 'last' ? all.last() : all.nth(Number(copy[2]) - 1);
+  return copyOf(page.locator(markOf(copy ? copy[1] : target)), copy?.[2]);
+};
+
+const FIELD = ':is(input, textarea, select, [contenteditable=""], [contenteditable="true"])';
+
+/**
+ * The field a `type` step writes in: the element, when it is one — or the field inside it, as a form control draws its
+ * input within the element its id marks.
+ */
+export const locateField = (page: E2ePage, target: string): E2eElement => {
+  const copy = /^(.+):(\d+|last)$/.exec(target);
+  const mark = markOf(copy ? copy[1] : target);
+
+  return copyOf(page.locator(`${mark}${FIELD}, ${mark} ${FIELD}`), copy?.[2]);
 };
 
 /** The element's id a target names, its copy left out. */

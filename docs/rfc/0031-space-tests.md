@@ -139,17 +139,38 @@ records.
 
 ## 6. The four consumers
 
-### 6.1 The builder — a Tests area
+### 6.1 The builder — the Tests area
 
-A mode of its own beside the canvas:
+A view of the builder's own (the sidebar's Tests), in two tabs: **Flows** (e2e tests) and **Element checks** (unit
+tests), named as a person who builds the space reads them. The Flows tab is one screen, its parts working together:
 
-- **Left**: the page in a device frame (390, 768, 1440), drawn live from the server as the e2e test runs.
-- **Right**: the space's e2e tests, each with its state — passed, failed, running, queued — and its last run.
-- **Bottom**: the run's log, step by step, the failed one opened with what it read.
-- **Recording**: press Record and use the preview; each click, type or scroll becomes a step, its element by id. Pick an
-  element and say what must hold of it — shown, its text, the state key it wrote — and it becomes an expectation.
+- **Where things stand**, above: the space, what is happening now in a line ("Playing “A visitor orders…” · step 3
+  of 5", "Recording…", how the last play ended), and large numbers — flows passing, steps played, element checks
+  passing, the last play's time. **Play all** and **Run on the server** beside them.
+- **The page**, on the left: the space itself, live and in preview, in the chosen flow's device — a phone, a tablet
+  or a browser window, nothing around it.
+- **The flows**, on the right: each a row — its letter, its title, its first action in words, its device — with where it
+  stands as a pill (Ready, Queued, Playing 3/5, Passes, Fails, On the server); the one chosen lit. Below them the rule
+  they are kept for: before a snapshot or a publish, every flow and every element check must pass — and how many are
+  ready.
+- **The flow chosen**, below — as tall as it needs, up to a share, the page keeping the rest: what it checks, where it
+  starts, its device; Play, Step by step (Continue / Next step), Stop, the pause between steps, Record, Add a check,
+  Save; a timeline of its steps (filled as played, red where one failed, pressed to play up to it); and its moments
+  side by side — the page as it opens, then each thing done with the checks after it ("when this, then that"). While every flow plays in turn, the
+  log of their steps by flow; once they have, what came of it in a line ("3 flows. All pass.").
 
-The builder runs no browser: the server does.
+What is pressed on the right is played on the left: a flow chosen opens on its page and device as a new visitor; a
+step's ▶ plays the flow up to it and holds the page there; pointing at a step lights its element. What is done on the
+left is written on the right: Record turns each click and field typed into a step, Add a check turns a click on what
+must show into a check (it presses nothing).
+
+The page is played by the same runner as the CLI's and the server's: `runE2eTest`, given the canvas as its page
+(`CanvasPage`: the E2ePage contract over the iframe — presses as DOM events, a value typed through the field's own
+setter, a press that cannot happen said in the words of Playwright's log, so `pressOnce` and `pressFailure` read it
+unchanged; the page's state bridge, `window.__plitzi`, put on the canvas' window). Every play starts as a new visitor:
+the canvas drawn again and the state empty — the author's state, preview and device put back when the area closes.
+What needs a browser of its own (a held clock, actions answered by the flow, a reload) is said so, and played by
+**Run on the server**, whose run is replayed step by step in its device frame.
 
 ### 6.2 The server — e2e tests on a draft
 
@@ -181,11 +202,11 @@ deployment runs a browser for them, and said as not run where it does not — ne
    they stand), `SpaceSetTests` (saved whole, refused when not tests), `SPACE_UPDATE_TESTS`; a snapshot and a publish
    refused while a unit test fails or one is written wrong (`SPACE_TESTS_FAILED`), the e2e tests said as not run
    (`plitzi-sdk-server`: `services/validation/spaceTests.ts`, `test/e2e/flows/spaces/space-tests.e2e.test.ts`).
-3. **The builder's Tests area** — done. The view (sidebar, beside Server): unit and e2e tests listed apart with how
-   each stands, written and edited in their forms, removed; **Run e2e tests** plays them on the draft, and a run is
-   replayed step by step in its device frame with its log (`E2eRunView`); **Record steps** in an e2e test's form puts
-   the canvas in preview, and each click, field typed or "Click to expect" there becomes a step of the test
-   (`apps/builder/src/modules/Tests`, `recording/`; `e2e/tests/builder/spaceTests.spec.ts`).
+3. **The builder's Tests area** — done. The Tests view (element checks and flows apart, how each stands), the Tests
+   area (§ 6.1: the page live beside the flows, played to any step, recorded, every flow in turn with its log) on
+   `CanvasPage`; **Run on the server** and its run replayed (`E2eRunView`) (`apps/builder/src/modules/Tests`,
+   `studio/`; `e2e/tests/builder/spaceTests.spec.ts`). The demo: Corner Bakery (`plitzi-sdk-server`,
+   `prisma/seeds/spaces/demo/cornerBakery`), four element checks and three flows, one of them on a phone.
 4. **The server runner** — done. `runE2eOnDraft` (`plitzi-sdk-server`, `services/validation/spaceTestsE2e.ts`) plays
    them on the draft in Playwright's Chromium on the server, the draft followed from page to page by a preview session;
    with no browser there it answers why they were not run. `SpaceRunE2eTests` runs them for the builder with a picture
@@ -205,6 +226,8 @@ deployment runs a browser for them, and said as not run where it does not — ne
 - **`page play`/`check --steps` played through `runE2eTest`** rather than sharing its parts: their steps are the CLI's
   own grammar today.
 - **One run at a time per space, and a plan's allowance of runs** (`services/entitlements`).
+- **The canvas plays what a page does by itself**: a hover is the events, not CSS `:hover`; a key is its events, Enter
+  in a form field submits it. What a real browser alone does is played on the server.
 
 ## 8. Left out
 

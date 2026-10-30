@@ -328,15 +328,30 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   `runE2eTest(page, test, { origin })`, `e2eTestProblems`. The runner presses once, after the space hydrates, the page
   settled between actions, each expectation held for its time and a failure said with what it read; actions answered
   and the clock held by the test, for the same result every run.
-- **The builder has a Tests view** (beside Server): the space's unit and e2e tests listed apart, each with how it stands
-  against the saved document — passes, fails with what it read, not run here — written and edited in their forms
+- **The builder has a Tests view** (beside Server): the space's **element checks** (unit tests) and **flows** (e2e
+  tests) listed apart, each with how it stands against the saved document; an element check written in its form
   (`@plitzi/plitzi-builder`). `readSpaceTests` reads a document's tests from outside, every way they are not tests
   said; `RoutingPage.route` answers anything, as Playwright's newer `Disposable` does.
-- **The builder plays and records e2e tests**: **Run e2e tests** plays them on the draft on the server, and **View run**
-  replays one step by step in its device frame beside its log. **Record steps** in an e2e test's form puts the canvas
-  in preview: each click and each field typed becomes a step, and **Click to expect** makes the next click hold what
-  the element shows; **Stop** gives the form back with the steps added (`@plitzi/plitzi-builder`, `SpaceRunE2eTests`
-  in `@plitzi/sdk-shared`).
+- **The Tests area: a space's flows played beside its page.** The page live on the left, at the chosen flow's device;
+  the flows on the right, each with its letter, its first action and where it stands (Ready, Queued, Playing 3/5,
+  Passes, Fails, On the server), and the rule they are kept for — before a snapshot or a publish, every flow and every
+  element check must pass; the flow chosen below, its steps in words. Choosing a flow opens it on its page as a new
+  visitor; a step's ▶ plays the flow up to it and holds the page there; **Record** and **Add a check** write it by
+  using the page; **Play all** plays every flow in turn with a log, then says what came of it in a line. Above, what is
+  happening now and the numbers that count. A **pause between steps** (0.25 s unless the person sets their own, 0 the
+  least) lets each step be seen working on the page; it, the flow chosen and the tab open are kept through a reload.
+  A flow reads as it runs: a timeline of its steps, filled as they play (red where one failed, pressed to play up to
+  it), and its moments side by side — the page as it opens, then each thing done with what must hold after it. The
+  page scrolls to the element each step is about, within itself, and its ring stays on it as it moves. It all runs on `runE2eTest`, the canvas given as its page; **Run on the
+  server** plays them in the server's browser and **View run** replays a run (`@plitzi/plitzi-builder`,
+  `SpaceRunE2eTests` in `@plitzi/sdk-shared`).
+- **`runE2eTest` can be held and stopped**: `beforeStep` is waited for before each step (a player pauses there) and
+  `signal` stops the run before its next one — the rest not run, the result `stopped`. A `type` step writes in the
+  element when it is a field, or in the field inside it — a form control's input is drawn within the element its id
+  marks (`locateField`, `@plitzi/sdk-authoring`).
+- **The page's state bridge on another window**: `useAgentInspector(enabled, target)` puts `window.__plitzi` on the
+  window it is given — the builder's canvas, where a flow's state steps read and write (`@plitzi/sdk-dev-tools`,
+  `agentInspector`).
 - **`plitzi test [id…]`** runs the project's own tests, as its spec writes them: those written wrong said first, then
   the unit tests, then the e2e tests against its server (`--unit`, `--e2e`, `--url`, `--json`); a failure exits 1
   (`@plitzi/cli`). The press made once, the reading of a press that failed, the hydration wait and the relations

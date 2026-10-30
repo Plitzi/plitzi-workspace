@@ -152,7 +152,13 @@ const testsAnswer = (tests: { unit?: { id: string; title: string }[]; e2e?: { id
 const FRAME =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN89+5dPQAJBwOyeKKnngAAAABJRU5ErkJggg==';
 
-let savedTests: { unit?: { id: string; title: string }[]; e2e?: { id: string }[] } = { unit: [], e2e: [] };
+type MockTests = { unit?: { id: string; title: string }[]; e2e?: { id: string }[] };
+
+/** Each space's tests, as its document starts them (`schema.tests`) and as the builder saved them since. */
+const savedTests = new WeakMap<OfflineDataRaw, MockTests>();
+
+const testsOf = (space: OfflineDataRaw): MockTests =>
+  savedTests.get(space) ?? space.schema.tests ?? { unit: [], e2e: [] };
 
 const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string, unknown>) => unknown) | undefined> = {
   InitQuery: initQuery,
@@ -211,18 +217,18 @@ const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string
    *  `true` is nothing, and Apollo reports the missing field as an error the page guard catches. A mocked space is one
    *  the linter finds nothing in. */
   /** The Tests view asks at its first paint and after each save: what the last save stored. */
-  SpaceTestsQuery: () => ({ data: { SpaceTests: testsAnswer(savedTests) } }),
-  SpaceSetTestsMutation: (_space, variables) => {
+  SpaceTestsQuery: space => ({ data: { SpaceTests: testsAnswer(testsOf(space)) } }),
+  SpaceSetTestsMutation: (space, variables) => {
     // What the builder sent, kept as the server would keep it — read back by the next SpaceTestsQuery.
-    savedTests = isRecord(variables.tests) ? variables.tests : {};
+    savedTests.set(space, isRecord(variables.tests) ? variables.tests : {});
 
-    return { data: { SpaceSetTests: testsAnswer(savedTests) } };
+    return { data: { SpaceSetTests: testsAnswer(testsOf(space)) } };
   },
   /** The draft's e2e tests played: every one passing, a picture after each step — what the run view replays. */
-  SpaceRunE2eTestsMutation: () => ({
+  SpaceRunE2eTestsMutation: space => ({
     data: {
       SpaceRunE2eTests: {
-        results: (savedTests.e2e ?? []).map(test => ({
+        results: (testsOf(space).e2e ?? []).map(test => ({
           id: test.id,
           title: test.id,
           ok: true,
