@@ -28,6 +28,16 @@ const HEAVY_CONTEXT = 150_000;
 /** A kind of result read again for this many tokens over the run. */
 const COSTLY_RESULT = 1_000_000;
 
+/** The heaviest parts of an answer, as its command said them: what to cut first, never guessed. */
+const partsText = (parts: Record<string, number> | undefined): string => {
+  const heaviest = Object.entries(parts ?? {})
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([part, size]) => `${part} ${String(size)}`);
+
+  return heaviest.length > 0 ? ` (${heaviest.join(', ')})` : '';
+};
+
 const median = (values: readonly number[]): number => {
   const sorted = [...values].sort((a, b) => a - b);
 
@@ -60,7 +70,10 @@ export const costFindings = (
       area: 'cli',
       title: `${name} answered with ${String(Math.round(sorted[0].chars / 1000))}k characters${lines.length > 1 ? ` (×${String(lines.length)} over ${String(LARGE_OUTPUT / 1000)}k)` : ''}`,
       evidence: evidenceOf(
-        sorted.map(line => `${clock(line.at)} ${line.by}: ${String(line.chars)} chars — ${line.command.slice(0, 90)}`)
+        sorted.map(
+          line =>
+            `${clock(line.at)} ${line.by}: ${String(line.chars)} chars — ${line.command.slice(0, 90)}${partsText(line.parts)}`
+        )
       ),
       times: lines.length,
       fix: 'what an agent acts on first and short, the rest asked for with an option of the same command, or a narrower target',

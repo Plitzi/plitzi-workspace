@@ -23,7 +23,7 @@ export interface PlanEstimate {
 }
 
 /** Above either, a person confirms the estimate before the run opens. */
-export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
+export const CONFIRM_ABOVE = { agents: 7, wallMinutes: 120 } as const;
 
 /**
  * How many of the tasks can be worked at once: the widest level of the plan — tasks with as many before them — each

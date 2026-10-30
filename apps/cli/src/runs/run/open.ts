@@ -111,9 +111,23 @@ export const readPlanFile = async (
 /** `plitzi run open --dry-run`: the plan held to the rules, expanded and estimated — nothing written. */
 export const checkPlanFile = async (ctx: RunContext, file: string): Promise<CheckedPlan> => {
   await assertNoOtherRun(ctx);
+  const { checked } = await readCheckedPlan(ctx.root, file);
+  const primer = await readPrimer(await readPlanFile(file), file);
 
-  return (await readCheckedPlan(ctx.root, file)).checked;
+  return primer !== undefined && primer.length > PRIMER_SAID
+    ? { ...checked, notices: [...checked.notices, primerNotice(primer.length)] }
+    : checked;
 };
+
+/** Past this a primer is said long at the dry run: every agent reads it whole, at each session's first brief. */
+export const PRIMER_SAID = 3000;
+
+/**
+ * The dry run's word on a long primer: a run's was 4.3k of every first brief — 30 % of a 14.5k one — read again on each
+ * turn after. What every task needs stays in it; what one task needs goes in that task's findings, read by it alone.
+ */
+export const primerNotice = (chars: number): string =>
+  `The primer is ${String(chars)} characters: every agent reads it whole in its first brief, and again each turn after — keep in it what every task needs; what one task needs goes in that task's "findings", read by it alone`;
 
 /** A primer is read whole by every agent: past this it no longer saves what it is for. */
 export const MAX_PRIMER_BYTES = 16 * 1024;

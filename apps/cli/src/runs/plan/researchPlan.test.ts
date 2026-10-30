@@ -85,3 +85,18 @@ describe('a plan of research alone', () => {
     expect(backlog.untaken.map(each => each.id)).toEqual(['b-3']);
   });
 });
+
+// A run's primer was 4.3k of every first brief — 30 % of a 14.5k one — read again on each turn after.
+describe('a plan’s primer, long', () => {
+  it('is said at the dry run, with where what one task needs goes — and a short one is not', async () => {
+    await bench.write('long-primer.md', `# Primer\n${'Every check reads the phone at 390 × 844. '.repeat(90)}`);
+    await bench.write('short-primer.md', '# Primer\nEvery check reads the phone at 390 × 844.');
+    const notices = async (primer: string) =>
+      (await checkPlanFile(lead(), await bench.writePlan({ ...benchPlan(), primer }))).notices;
+
+    expect(await notices('long-primer.md')).toContainEqual(
+      expect.stringMatching(/^The primer is 37\d\d characters: every agent reads it whole in its first brief/)
+    );
+    expect((await notices('short-primer.md')).some(each => each.startsWith('The primer is'))).toBe(false);
+  });
+});

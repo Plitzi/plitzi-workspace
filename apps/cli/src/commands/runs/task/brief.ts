@@ -9,6 +9,7 @@ import { sessionOfProcess } from '../../../runs/agents/session';
 import { namesServedCopy } from '../../../runs/copies/acceptance';
 import { acceptanceText } from '../../../runs/core/model';
 import { runPaths } from '../../../runs/core/paths';
+import { answerParts } from '../../../runs/core/usage';
 import { importedApis } from '../../../runs/plan/moduleApis';
 import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { logRun, readRunLog } from '../../../runs/run';
@@ -68,15 +69,41 @@ export type Brief = TaskContext & {
 /** A class a module declares (`roomAmbient = styles('room-ambient', …) — …`): read by its name alone. */
 const CLASS_LINE = /^(\w+) = styles\(/;
 
+/** How much of a name's doc the brief says beside its signature: what it is for, not all it does. */
+const DOC_SHOWN = 60;
+
+/** How many of a module's names the brief says with their signature: past them, by name in a line. */
+const NAMES_SIGNED = 8;
+
+/** A name's line with its doc cut to `DOC_SHOWN`, at a word: its signature, how it is called, always whole. */
+const signedLine = (line: string): string => {
+  const at = line.indexOf(' — ');
+  const doc = at === -1 ? '' : line.slice(at + 3);
+  if (doc.length <= DOC_SHOWN) {
+    return line;
+  }
+
+  const cut = doc.slice(0, DOC_SHOWN);
+
+  return `${line.slice(0, at)} — ${cut.slice(0, Math.max(cut.lastIndexOf(' '), DOC_SHOWN / 2)).trimEnd()}…`;
+};
+
 /**
  * A module's names as the brief says them: its classes in one line, by name — how a class is "called" says nothing,
- * and a room's forty classes were 3k of an 18k brief, read five times — and the rest, each its line.
+ * and a room's forty classes were 3k of an 18k brief, read five times — and the rest each its line, its signature
+ * whole and its doc short; past `NAMES_SIGNED`, by name, the module a read away. A run's map component imported 38
+ * names from nine modules: 5.6k of a 14.5k brief, half of it docs.
  */
-export const importedLines = (names: readonly string[]): string[] => {
+export const importedLines = (names: readonly string[], module = 'the module'): string[] => {
   const classes = names.flatMap(name => CLASS_LINE.exec(name)?.[1] ?? []);
   const rest = names.filter(name => !CLASS_LINE.test(name));
+  const unsigned = rest.slice(NAMES_SIGNED).map(name => /^[\w$]+/.exec(name)?.[0] ?? name);
 
-  return [...(classes.length > 0 ? [`  classes: ${classes.join(', ')}`] : []), ...rest.map(name => `  ${name}`)];
+  return [
+    ...(classes.length > 0 ? [`  classes: ${classes.join(', ')}`] : []),
+    ...rest.slice(0, NAMES_SIGNED).map(name => `  ${signedLine(name)}`),
+    ...(unsigned.length > 0 ? [`  also ${unsigned.join(', ')} — how each is called: ${module}`] : [])
+  ];
 };
 
 /** The brief's parts as printed: the task's own, the files themselves (`--files`), the data's shapes, what they import. */
@@ -98,7 +125,7 @@ const partsOf = (context: Brief): { brief: string; files: string; shapes: string
         chalk.bold(
           '── What these files import from the rest of the project — how each is called, not its body (read the file only for what this does not say):'
         ),
-        ...context.imports.flatMap(each => [each.file, ...importedLines(each.names)])
+        ...context.imports.flatMap(each => [each.file, ...importedLines(each.names, each.file)])
       ]
     : []
   ).join('\n')
@@ -161,6 +188,16 @@ export const readBrief = async (
   const brief: Brief =
     typeof before === 'string' ? { ...whole, readBefore: { at: before, chars: printed.length } } : whole;
   const primer = whole.primerRead === undefined ? (context.primer?.trim().length ?? 0) : 0;
+  if (brief.readBefore === undefined) {
+    answerParts({
+      primer,
+      brief: parts.brief.length - primer,
+      files: parts.files.length,
+      shapes: parts.shapes.length,
+      imports: parts.imports.length
+    });
+  }
+
   await logRun(ctx, paths, {
     action: 'brief',
     task: taskId,

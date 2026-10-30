@@ -311,6 +311,17 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **A run of up to 7 agents opens without the person** (`run open`): a team has more kinds of agent now — scouts,
+  designers, testers — and past 5 every open needed the person to confirm it. Above 7, or 120 minutes, it still does.
+- **What an answer is made of, kept**: a command whose answer has parts — a brief (primer, the task's own, files,
+  shapes, imports), a review handed (the review, what went to it) — says each part's size on its usage line, and the
+  report's "answered with Nk characters" names the heaviest three. A run's `task next` answered 15k three runs running
+  and which part was heavy was guessed: the imports, 5.7k.
+- **A brief's imports, shorter**: each name's signature whole and its doc cut to 60 characters at a word; past 8 names
+  of a module, the rest by name, the module named to read — a run's 5.6k of imports read 4.3k, every signature kept.
+- **A long primer said at the dry run** (past 3,000 characters): every agent reads it whole in its first brief, and
+  again each turn after — what one task needs goes in that task's findings.
+
 - **A first plan's lines tried before opening** (`run open <plan> --dry-run --lines` with no run open): on the project
   as it is, where it refused.
 - **The finish fails fast**: its acceptance runs the Playwright suites first, a failed line again at once, and stops at

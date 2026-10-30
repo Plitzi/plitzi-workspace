@@ -395,6 +395,24 @@ describe('what the run spent that it did not have to', () => {
     harness
   });
 
+  // A run's task next answered 15k three runs running; which part was heavy — the brief's imports — was guessed.
+  it('says what a long answer was made of, its heaviest parts first, as its command said them', () => {
+    const [found] = costFindings(
+      [
+        use(1, 'dev-3', 'plitzi task next', {
+          chars: 14_547,
+          parts: { primer: 4272, brief: 3709, imports: 5720, files: 0 }
+        })
+      ],
+      [],
+      []
+    );
+
+    expect(found.evidence).toContain(
+      '10:01 UTC dev-3: 14547 chars — plitzi task next (imports 5720, primer 4272, brief 3709)'
+    );
+  });
+
   it('says a long answer, a task far over the median, a heavy context and the results read again the most', () => {
     const found = costFindings(
       [

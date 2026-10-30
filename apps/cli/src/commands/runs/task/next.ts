@@ -9,6 +9,7 @@ import { isPrincipal } from '../../../runs/agents/leads';
 import { DESIGN_LOOK, DESIGNER } from '../../../runs/agents/team';
 import { acceptanceText } from '../../../runs/core/model';
 import { copyOf } from '../../../runs/core/paths';
+import { answerParts } from '../../../runs/core/usage';
 import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import {
   acceptanceAccount,
@@ -78,16 +79,22 @@ export const taskNext = (
             ...(reviewed ? { shown: reviewed } : {})
           };
         },
-        answer =>
-          answer.taken
-            ? takenText(answer.taken)
-            : [nextText(answer, answer.agent), ...(answer.shown ? ['', handedShow(answer.shown)] : [])].join('\n')
+        answer => (answer.taken ? takenText(answer.taken) : handedText(answer))
       )
     : act(
         options,
         async ctx => ({ ...(await nextTask(ctx, await runOf(ctx, options), options.role)), agent: ctx.agent }),
         answer => nextText(answer, answer.agent)
       );
+};
+
+/** A review handed with what went to it: the review's words and what it shows, each kept on the usage line by size. */
+const handedText = (answer: NextTask & { agent: string; shown?: TaskShown }): string => {
+  const review = nextText(answer, answer.agent);
+  const shown = answer.shown ? handedShow(answer.shown) : '';
+  answerParts({ review: review.length, shown: shown.length });
+
+  return [review, ...(shown === '' ? [] : ['', shown])].join('\n');
 };
 
 /**

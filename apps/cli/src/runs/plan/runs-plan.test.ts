@@ -505,9 +505,10 @@ describe('how many agents at once', () => {
     expect(lost && isRunRefusal(lost.reason) ? lost.reason.code : undefined).toBe('agent-limit');
   });
 
-  it('above 5 agents a person confirms', async () => {
+  // A team grew past five with its kinds of agent — scouts, designers, testers — and every open needed the person.
+  it('above 7 agents a person confirms', async () => {
     const file = await bench.writePlan(benchPlan());
-    expect((await refusal(openWith(lead(), file, 6))).code).toBe('person-only');
+    expect((await refusal(openWith(lead(), file, 8))).code).toBe('person-only');
   });
 });
 

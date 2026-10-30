@@ -43,7 +43,20 @@ export interface UsageLine extends CommandPath {
   output?: string[];
   /** The harness process it ran under, `<program>:<pid>:<started>`, when its sessions are kept by its own id. */
   process?: string;
+  /**
+   * What its answer is made of, in characters, as the command says it (`answerParts`): a run's `task next` answered 15k
+   * three runs running, and which part was heavy was guessed — the brief's imports, 5.7k of it.
+   */
+  parts?: Record<string, number>;
 }
+
+/** What this command's answer is made of, as it said it: kept on its usage line. */
+let partsSaid: Record<string, number> | undefined;
+
+/** Said by a command whose answer is made of parts — a brief, a review handed — what each weighs, in characters. */
+export const answerParts = (parts: Record<string, number>): void => {
+  partsSaid = { ...partsSaid, ...Object.fromEntries(Object.entries(parts).filter(([, size]) => size > 0)) };
+};
 
 /** How much of what a command printed is kept to say why it failed: its start and its end, where that is said. */
 const KEPT_OUTPUT = 4000;
@@ -308,7 +321,8 @@ export const startUsage = (
       ...(session ? { session } : {}),
       ...(harness ? { process: harness } : {}),
       ...(error ? { error } : {}),
-      ...(output.length > 0 ? { output } : {})
+      ...(output.length > 0 ? { output } : {}),
+      ...(partsSaid && Object.keys(partsSaid).length > 0 ? { parts: partsSaid } : {})
     };
     try {
       appendFileSync(path.join(where.runDir, USAGE_FILE), `${JSON.stringify(line)}\n`);

@@ -719,7 +719,7 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
 - **As many agents as the team has** (`.plitzi/team.json`: every new project starts with two developers — one with the
   run, the other on demand — and a designer on Sonnet, few agents at once — and what each role does is in it, and in `run team`; one made before it gets the team its
-  first plan needs; above 5 a person confirms): past it, taking one waits for one to finish. After each piece of work —
+  first plan needs; above 7 a person confirms): past it, taking one waits for one to finish. After each piece of work —
   a task completed, a review decided, never in one — an agent is started again with a fresh context, every turn
   reading the whole context again; `"session": "context"` starts it again only once its context passes
   `options.freshContextAt` (250k tokens), `"keep"` never (`run team set dev --session context`). The lead that plans
