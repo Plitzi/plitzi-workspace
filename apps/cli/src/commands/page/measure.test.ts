@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { measure, onlyProperties, pairOf, readingKey, readsBoxesOnly, saidOnce, sameProperties } from './measure';
 import { measureOn, pseudoBoxes } from './measureOn';
-import { putIn, copiesOf, stateText } from './measureState';
+import { putIn, copiesOf, ROWS_MOST, stateText } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
 import { differences, extraOf, MEASURED, PSEUDO_MEASURED } from './measureValues';
 
@@ -354,6 +354,13 @@ describe('page measure', () => {
       '.show-plate >> nth=2'
     ]);
     expect(await copiesOf(drawn(1), pair)).toEqual([pair]);
+    // A strip of 24 bars was measured to its 20th, the four after it unsaid: every copy, and past the most, how many.
+    expect(await copiesOf(drawn(24), pair)).toHaveLength(24);
+    expect((await copiesOf(drawn(ROWS_MOST + 5), pair)).at(-1)).toEqual({
+      here: `.show-plate >> nth=${String(ROWS_MOST)}`,
+      there: '.show-plate',
+      beyond: 5
+    });
   });
 
   // A run's first measures: Cinzel with another fallback, borders of no width, one gold in two notations — noise.
@@ -704,6 +711,5 @@ describe('many elements measured at once', () => {
     expect(readsBoxesOnly(3, {})).toBe(false);
     expect(readsBoxesOnly(10, { only: ['color'] })).toBe(false);
     expect(readsBoxesOnly(10, { all: true })).toBe(false);
-    expect(readsBoxesOnly(10, { json: true })).toBe(false);
   });
 });

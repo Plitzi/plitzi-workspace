@@ -151,6 +151,9 @@ export const stepsFailing = (log: readonly LogEntry[]): Finding[] => {
     }));
 };
 
+/** How near an amend a notice of Plitzi's its author files is the reason for it. */
+const BESIDE_MS = 2 * 60_000;
+
 /** Why a task's acceptance was rewritten once the run had begun, read off what came before it. */
 type AmendCause = 'unworked' | 'broke-approved' | 'check' | 'lead';
 
@@ -190,9 +193,17 @@ const amendedLines = (log: readonly LogEntry[]): Amended[] =>
           const since = before.filter(other => text(other.at) >= text(taken.at));
           const unanswered = since.findLast(other => other.action === 'check' && other.task === task)?.notOwn;
           const unread = strings(unanswered).find(line => line.startsWith(ACCEPTANCE));
-          const noticed = since.findLast(
-            other => other.action === 'notice' && other.about === 'plitzi' && other.task === task
-          );
+          // …or one the lead amends for a fault of Plitzi's it files beside the amend, of no task: a run's every stepped
+          // line rewritten with a wait for a press Plitzi dropped read as fourteen lines the lead wrote wrong.
+          const noticed =
+            since.findLast(other => other.action === 'notice' && other.about === 'plitzi' && other.task === task) ??
+            log.find(
+              other =>
+                other.action === 'notice' &&
+                other.about === 'plitzi' &&
+                other.by === entry.by &&
+                Math.abs(Date.parse(text(other.at)) - Date.parse(at)) <= BESIDE_MS
+            );
           if (unread !== undefined || noticed !== undefined) {
             return [
               {

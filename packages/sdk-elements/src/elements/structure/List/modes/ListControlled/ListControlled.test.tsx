@@ -157,6 +157,44 @@ describe('ListControlled', () => {
     expect(mounts).toHaveBeenCalledTimes(2);
   });
 
+  // A run's activity strip: each bin kept its id while its count changed, and its bar kept the old height until the
+  // count was put in the id.
+  it('draws a row’s new values when its record changes under the same key', () => {
+    const { getByTestId, rerender } = renderList([{ id: 'a', name: 'Alpha' }]);
+    expect(getByTestId('row-a').textContent).toBe('Alpha');
+
+    rerender(
+      <StoreProvider value={{}}>
+        <ListControlled className="" items={[{ id: 'a', name: 'Alpha, again' }]}>
+          <RowTemplate />
+        </ListControlled>
+      </StoreProvider>
+    );
+
+    expect(getByTestId('row-a').textContent).toBe('Alpha, again');
+  });
+
+  // …read by its field, as a binding reads it (`bins.item.pct`): the path under the row's item is told too.
+  it('tells a binding on a field of the row’s item that it changed', () => {
+    const Named = () => {
+      const dataSource = useElementDataSource({ sources: ['list_my-list.item.name'] });
+      const name = (dataSource['list_my-list'] as { item?: { name?: string } } | undefined)?.item?.name;
+
+      return <div data-testid="named">{name}</div>;
+    };
+    const named = (name: string) => (
+      <StoreProvider value={{}}>
+        <ListControlled className="" items={[{ id: 'a', name }]}>
+          <Named />
+        </ListControlled>
+      </StoreProvider>
+    );
+    const { getByTestId, rerender } = render(named('Alpha'));
+    rerender(named('Alpha, again'));
+
+    expect(getByTestId('named').textContent).toBe('Alpha, again');
+  });
+
   // A template counts with it — `index + 1` is the next row, not "01".
   it('publishes each row’s position as a number', () => {
     const indexes: unknown[] = [];

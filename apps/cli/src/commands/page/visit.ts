@@ -6,6 +6,7 @@ import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { launchBrowser, openProjectPage, projectSettling, VIEW_HEIGHT } from '../../browser';
 import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } from './check/account';
 import { noPageAt, pageFor } from './check/space';
+import { awaitHydration } from './hydration';
 import { conditionsText } from '../../browser/conditions';
 import { authoredSpace } from '../../runs/plan/expectations';
 import { projectRun } from '../../scaffold/packageManager';
@@ -329,8 +330,12 @@ export const openVisit = async (
   }
 
   // A text the browser rewrites after hydration (a visitor's time, read in its zone) read before it was the server's:
-  // A run's hero read "19:00H CEST" once, "11:00H GMT-6" after. A page with no space root has no wait.
-  await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+  // A run's hero read "19:00H CEST" once, "11:00H GMT-6" after.
+  const late = await awaitHydration(page);
+  if (late !== undefined) {
+    return { page, answered: false, problem: late };
+  }
+
   await page.evaluate(() => document.fonts.ready.then(() => undefined), undefined);
 
   return {

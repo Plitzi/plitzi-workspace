@@ -53,7 +53,12 @@ export const runPlanProblems = (value: unknown): string[] => {
     };
     check(isString(each.id), 'id', 'its name');
     check(isString(each.title), 'title', 'a line');
-    check(isStrings(each.files), 'files', 'the paths it writes');
+    // A research card writes nothing, and says so: a run's lead left `files` out of one and read only "the paths it writes".
+    check(
+      isStrings(each.files),
+      'files',
+      isString(each.spike) ? 'the paths it writes — [] for research, which writes none' : 'the paths it writes'
+    );
     check(optional(each.dependsOn, isStrings), 'dependsOn', 'the ids it waits for — left out for none');
     check(isPriority(each.priority), 'priority', PRIORITIES.join(', '));
     check(isNumber(each.estimateMinutes), 'estimateMinutes', 'minutes, a number');

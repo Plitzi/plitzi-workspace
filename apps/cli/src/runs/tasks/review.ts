@@ -387,7 +387,15 @@ const decide = async (
       }),
       ctx.now
     );
-    await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round, step: role });
+    // Past its rounds it is the lead's, not its agent's: said, so the run's replay does not hand it back to the agent.
+    await logRun(ctx, loaded.paths, {
+      action: 'review',
+      task: taskId,
+      verdict,
+      round,
+      step: role,
+      ...(toLead ? { toLead: true } : {})
+    });
     await logSpent(ctx, loaded, taskId, 'review');
     const goesFirst = toLead ? [] : await tellItGoesFirst(ctx, loaded, view);
 

@@ -64,6 +64,7 @@ export interface CheckIssue {
     | 'not-server-rendered'
     | 'not-signed-in'
     | 'steps-failed'
+    | 'not-hydrated'
     | 'redirected'
     | 'page-status'
     | 'expected-text'

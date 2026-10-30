@@ -1,21 +1,21 @@
 ---
-'@plitzi/plitzi-builder': patch
-'@plitzi/cli': patch
-'@plitzi/sdk-mcp': patch
-'@plitzi/plitzi-sdk': patch
-'@plitzi/sdk-server': patch
-'@plitzi/sdk-auth': patch
-'@plitzi/sdk-authoring': patch
-'@plitzi/sdk-dev-tools': patch
-'@plitzi/sdk-elements': patch
-'@plitzi/sdk-event-bridge': patch
-'@plitzi/sdk-interactions': patch
-'@plitzi/sdk-navigation': patch
-'@plitzi/sdk-plugins': patch
-'@plitzi/sdk-schema': patch
-'@plitzi/sdk-shared': patch
-'@plitzi/sdk-style': patch
-'@plitzi/sdk-variables': patch
+'@plitzi/plitzi-builder': minor
+'@plitzi/cli': minor
+'@plitzi/sdk-mcp': minor
+'@plitzi/plitzi-sdk': minor
+'@plitzi/sdk-server': minor
+'@plitzi/sdk-auth': minor
+'@plitzi/sdk-authoring': minor
+'@plitzi/sdk-dev-tools': minor
+'@plitzi/sdk-elements': minor
+'@plitzi/sdk-event-bridge': minor
+'@plitzi/sdk-interactions': minor
+'@plitzi/sdk-navigation': minor
+'@plitzi/sdk-plugins': minor
+'@plitzi/sdk-schema': minor
+'@plitzi/sdk-shared': minor
+'@plitzi/sdk-style': minor
+'@plitzi/sdk-variables': minor
 ---
 
 A team of agents on one project (`plitzi run`, `plitzi task`), the page tools those agents measure with, and what
@@ -160,7 +160,7 @@ complete --found "…" [--tasks <stage.json>]`) and reviewed by the lead (`task 
 - **The report measures what was waited for.** A card's time to take runs from when it could be taken — a tests card
   from the approval it waited for, not the stage that stacked it; a card handed back is at it again when its agent reads
   its brief; the kept browser's process is no agent's time in the CLI (a run read 641 s of it).
-- **What encore-12's agents asked for.** A research card's stage is refused while a task of it has no acceptance line a
+- **Research is proved, and a page check hears the server.** A research card's stage is refused while a task of it has no acceptance line a
   command proves, naming them (the scope was sent back once for them). A note to the lead (`task tell`) wakes it no
   more: it comes with what does, or as the watch ends ("Nothing that needs the lead … " and the notes under it). `page
 check` fails on what the server logged as failed while its pages were opened (`server-logged`), when the server is
@@ -169,7 +169,7 @@ check` fails on what the server logged as failed while its pages were opened (`s
 --status 403" "/withheld --as juno"` — one look a visitor, each told what the others covered. `page shot --within <part>
 --showing <elements>` pictures the copy of a part drawn more than once that shows the most of them, and a look
   pictures a component where the task's elements show (a playing room card stood for an idle one's change).
-- **What encore-13's agents asked for.** `task look` serves a task's copy cold, as the run before is served — a copy
+- **`task look` and the page commands read closer.** `task look` serves a task's copy cold, as the run before is served — a copy
   warm with its agent's plays read "moved" where only its data had — pictures one part with `--within <element>` and a
   task of more than three parts whole, leaves what is pinned over a part (a sticky header) out of its picture, and says
   what differs between the sides field by field (`container-57: box 0,0,249x314 → 0,0,249x331`), not as a dump. Every
@@ -184,7 +184,7 @@ check` fails on what the server logged as failed while its pages were opened (`s
   A step `scroll <element> <dx> [dy]` scrolls its content (a row across), saying when it did not move; a number after
   another step's element is refused, not handed to Playwright. A task approved from a shell inside its copy leaves the
   copy for it, going with the run, and says to go back to the project.
-- **What encore-14 taught the runs.** Research is split by the lead into a card per part, what it knows in each card's
+- **Research split by part; the team's size is the person's.** Research is split by the lead into a card per part, what it knows in each card's
   `findings`, and `run amend` changes a card's question (told to it); more research cards ready than scouts is said,
   the team's size being the person's — `run team set` refuses a lead's token that would raise it. An agent on demand
   starts as soon as work of its role waits with none free, up to the team's most. The lead's messages come last in an
@@ -196,7 +196,7 @@ check` fails on what the server logged as failed while its pages were opened (`s
   the brief, a research card's next steps, and a stage's file as changed; a task of tests is set beside the run without
   what it tests; a stage stacked mid-run hears nothing of the team's size or inventory; the finish names no culprit it
   did not find; the agents' skill keeps a long output in a file.
-- **What encore-16 asked of the runs.** The board's advice — a task held behind another, an agent with nothing to take
+- **Quieter advice, sharper proofs.** The board's advice — a task held behind another, an agent with nothing to take
   — waits for the lead's next wake, never wakes it, and an idle agent is said again only when another goes idle. The
   monitor says what a tester and a scout are at — their review's or research card's step, "Finding out" — and every
   role is asked to say it. `task prove --mutate` says a mutant that does not run apart from one a test catches, and
@@ -219,7 +219,7 @@ check` fails on what the server logged as failed while its pages were opened (`s
   hidden on the page — no empty box, no gap of its parent's; the builder keeps it to drop into. A project's server
   started beside another of its folder says who holds the file and how to stop it, as a report, not a stack ending on
   `EEXIST`.
-- **What encore-15's agents asked for.** `task prove --before` runs a task's own tests on the code before it, and a
+- **What a task's acceptance proves, on the code before it.** `task prove --before` runs a task's own tests on the code before it, and a
   line that ran no test there proves nothing; any line that runs tests and ran none fails, and a plan's node test
   pattern without its isolation off is refused. `--mutate` takes several changes at once. A page command hands the
   agent what was said to it, whole. `task look` pictures what its steps bring beside the run before too, names its
@@ -229,14 +229,14 @@ check` fails on what the server logged as failed while its pages were opened (`s
   the most files whole. A run's commands in a folder under its scratch are the run's. `page shot --element` points at
   `--within`. The skills show a stage's shape and how a spec finds a component's instance, and say how to hide a slot
   left empty.
-- **What encore-15 showed of the runs.** The lead's row on the monitor says it watching the run, deciding, or away
+- **The lead's row, and cards past their limit asked once.** The lead's row on the monitor says it watching the run, deciding, or away
   from it — at the person's, its watch ended and no command since — with what waits for it. A card past its limit is
   asked where it stands once, by the clock (it was asked every pass for half a minute), and `task message` no longer
   says an agent waiting inside an ask hears it late. A plan of research alone is estimated by its scouts, asks for no
   inventory, keeps the team's base for the tasks it brings, and its cards take up the backlog items they name. `run
 amend` reads the stage a research card's approval keeps as it is, and amends what a task closes. A plugin's modules
   that draw nothing ask for no designer; a task waiting on one whose file it touches is not told to drop the wait.
-- **What encore-14's activity asked of the runs.** A card past its limit is asked where it stands by the run itself
+- **A card past its limit is asked where it stands.** A card past its limit is asked where it stands by the run itself
   (the lead's watch and the keeper), the lead woken with the answer — a standing answered wakes it, where it waited as a
   note — or, none in 3 minutes, to decide without it. `task message` says when the agent has run no command for minutes
   and hears it only after. `task run "<command>"` runs an agent's own command: a Playwright suite in its turn on the
@@ -263,7 +263,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   report says the command's name, no longer the whole line it was given.
 - **The report before an apply says what weighs on it.** A line of the finish's dry run that held only when run again
   is said with what its first run said, and one that took minutes with its time ("Held only when run again", "Slow"):
-  encore-13's finish took ten minutes on one line that failed once, and its report said only that it passed. A run past
+  a finish took ten minutes on one line that failed once, and its report said only that it passed. A run past
   its estimate is measured to ready to apply — the person's wait after is not the lead's (it read 96 min of 51, 48 of
   them the wait). Plitzi's problems are pointed at `run report --plitzi` before the apply, `feedback.md` after it, the
   file it names written only then. Why a line failed is the last line saying a failure — a test runner's run ends on its
@@ -282,7 +282,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   their specs on 8400 with `reuseExistingServer`, a copy's specs passing on another copy's code. `plitzi upgrade` writes
   it into a `playwright.config.ts` nobody changed; one the project changed takes the same line by hand (`const OWN = …`,
   from the scaffold's).
-- **Page tools, from encore-12:** `page check --ssr --as <user>` holds the HTML the server sent that visitor, not a
+- **Page tools:** `page check --ssr --as <user>` holds the HTML the server sent that visitor, not a
   guest's (six providers read "not in the HTML"); a `type` or `fill` step sets a date, time, colour or range field whole
   (keys set nothing in a date's segments); `page measure` names `data-plitzi-instance` when a selector wrote an instance
   as an element; `page check --fresh` and `page shot --fresh` say the option is `task check`'s and `task look`'s.
@@ -319,6 +319,47 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **`page measure --expect` holds where two elements stand**, at every width: `--expect "activity.bottom + 8 <=
+  legend-area.top"` — left, right, top, bottom, width or height of each, give or take px; the elements it names are
+  measured too, and a miss says both sides and by how much. A run's every layout line was ~300 characters of jq over
+  `--json` boxes, read by every agent each turn.
+- **`page check` says what a visitor cannot reach** (`out-of-reach`, `@plitzi/sdk-authoring`'s inspection): what is
+  below the fold of a pane that scrolls with its scrollbar hidden, and what is drawn below the screen of a page that does
+  not scroll. A run's left column hid two panels that way, and every check said nothing was wrong.
+- **The rehearsal says what one tester more saves** (`run open --dry-run --rehearse`), when it saves a tenth of the run:
+  a run's lone tester made 23 reviews while tasks waited for it, and the second was the person's to allow mid-run.
+- **`run open` says when the lead's session led runs before**: each of its turns reads them again — a run's lead read
+  33.8M tokens, more than its team. A fresh session for the lead is advised.
+- **A line the lead rewrites for a fault of Plitzi's is Plitzi's in the report**: one amended beside a notice the lead
+  files of Plitzi, no task named, no longer counts as a line the lead wrote wrong (fourteen did, a run's wait for a press
+  Plitzi dropped).
+- **A press is made once.** A click that went out and timed out after — Playwright waiting on what it set off, on a
+  busy dev page — was made again, and a toggle pressed twice read as never pressed: a run's `page measure --steps`
+  measured the page as before its clicks, and its lines passed or failed by the machine's load.
+- **A press waits for the page to take it.** Every command that plays steps — `page play`, `measure`, `shot`, `check`,
+  `task look` — waits up to 30 s for the space to hydrate before a click, a type or a drag, and after a `reload`, `back`
+  or `goto`; one that never hydrates is said on the step, never played (a run's clicks on a cold dev page were lost, and
+  the readings after them were said as though they had landed); `page check` says such a page (`not-hydrated`) rather
+  than read the server's HTML as it. `page shot` and `task look` let the page settle between
+  two actions, as the others do: a menu read "hidden at this width" mid-opening.
+- **A dry run never stops your server.** `run open <plan> --dry-run --lines` with no run open tries the lines on the
+  project: a server you run there is used as it is and left running — it stopped yours, and the page stayed down. Its
+  first try no longer ends on `ENOENT` for a cache not made yet, and each line is said as it starts.
+- **One command once.** A command several lines hold — a page's suite, held by each task that changes the page — runs
+  once for all of them, at a check, a dry run and the finish: a stage's dry run ran the same suite for twenty minutes.
+- **A run's tests card can be amended** (`run amend`): what it asks — its acceptance, its title — named in a stage's
+  file, never its files. Its tester wrote the tests in a spec of its own, and nothing could point the card's line there.
+- **`task prove` runs a line amended since `complete`** rather than reading its stored result: five lines amended with
+  a wait read as failing "with it".
+- **`page measure` reads what it says.** A side of a box asked alone — `--only padding-left`, `--expect
+  padding-left=16px` — is read and said as itself, not as `padding` and "none read". `--each` measures up to 100 copies
+  and says how many more there were (it stopped at 20 unsaid). `a,b,c` is three elements, as `page play --read` takes
+  them. Many elements with nothing named of them are said by their box in `--json` too, with how to read more (62k
+  characters of it, for boxes read with jq).
+- **What a look could not picture is said whole**, no longer cut at 200 characters mid-word ("for signed-in visitors
+  (--"); a line cut elsewhere ends at a word, with "…".
+- **A card sent back past its review rounds is the lead's**, and the report no longer says its agent held two tasks
+  when it took another. A research card that leaves out `files` is told `[]` is what research writes.
 - **The monitor stays light with a dialog open**: the board receding under it cost three times a frame (16 ms, every
   frame while the spinner turns); each colour and style is now worked out once a frame, not once a cell (5 ms).
 - **The monitor's team panel (`r`) takes ← → as well**: → one more of the entry, ← one fewer, beside `+` and `−` — the
@@ -374,7 +415,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 --standing` asks; the agent answers whole with `task tell --standing --fraction --eta --done --left [--held-by]`
     (refused when a part is missing), its fraction kept as the task's progress, and the standing wakes the lead with
     what it may do — let it go on, change its course, unblock, narrow or split it, or take it back.
-  - **Seen in encore-10:** `run start` names the run from the ask's first words when `--run` is left out (its help
+  - **Opening a run:** `run start` names the run from the ask's first words when `--run` is left out (its help
     said so; it was refused) and says nothing of what happens next when it was refused; `run open` says the scope is the
     scout's when the team has one (it told the lead to find it out). The monitor puts a spike someone finds out **at
     work** (its scout named), one nobody took — or proposed, with the lead — in the spike column; `run status` names
@@ -1125,7 +1166,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 - **The run's report reads straighter.** A copy of the project an agent made by hand in its scratch is said as one
   (`Copies of the project made by hand`, fixed by `run copy`), and only the files it wrote there count as its scripts —
-  encore-10's "1250 scripts" were four copies and ten probes. A refusal that hands over the lead's word (a verdict, a
+  one run's "1250 scripts" were four copies and ten probes. A refusal that hands over the lead's word (a verdict, a
   complete) is a step of the flow, never "refused N times over". `task look` with more pages than it pictures says the
   rest as not looked at, with the look that pictures them.
 - **A run's report needs nothing before its apply.** It starts with **Before you apply** — the finish's dry run, tasks

@@ -10,6 +10,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { landingProblem, saySignedIn, signInWhereSent } from './account';
+import { awaitHydration } from '../hydration';
 import { busyOf } from './busy';
 import { oneColourCanvases } from './canvases';
 import { clickEffects, selectorOf } from './click';
@@ -673,6 +674,11 @@ export const checkAt = async (
   const landing = landingProblem(page.url(), pathname, meant, readAs);
   if (landing !== undefined) {
     return uncheckedHere({ code: 'redirected', message: landing, width });
+  }
+
+  const late = await awaitHydration(page);
+  if (late !== undefined) {
+    return uncheckedHere({ code: 'not-hydrated', message: late, width });
   }
 
   // The visitor's own steps, before the page is read: what they make is what is checked.

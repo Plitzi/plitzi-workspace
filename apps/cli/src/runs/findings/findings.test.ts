@@ -66,6 +66,15 @@ describe('how tasks and sessions were held', () => {
         { at: T(5), by: 'dev-1', action: 'complete', task: 't-room' }
       ])
     ).toEqual([]);
+    // Sent back past its rounds, it is the lead's to decide: its agent taking another holds one (a run said two).
+    expect(
+      twoTasks([
+        { at: T(1), by: 'dev-1', action: 'take', task: 't-totals' },
+        { at: T(2), by: 'dev-1', action: 'complete', task: 't-totals' },
+        { at: T(3), by: 'design-1', action: 'review', task: 't-totals', verdict: 'changes', round: 3, toLead: true },
+        { at: T(4), by: 'dev-1', action: 'take', task: 't-log' }
+      ])
+    ).toEqual([]);
   });
 
   it('says commands a session ran after it was told to stop — not a notice nor a tell, nor a session started again', () => {
@@ -231,6 +240,16 @@ describe('what the checks say of themselves', () => {
       ]
     ]);
     expect(brokeApproved(log)[0].evidence.at(-1)).toBe("10:06 UTC t-broken's acceptance amended for it");
+
+    // Amended by the lead for a fault of Plitzi's it filed beside the amend, naming no task: Plitzi's, not the lead's.
+    const beside: LogEntry[] = [
+      take(2, 't-stepped'),
+      amend(8, 't-stepped'),
+      { at: T(9), by: 'lead', action: 'notice', about: 'plitzi', text: 'a click before the page hydrates is dropped' }
+    ];
+    expect(linesAmended(beside).map(each => [each.owner, each.evidence])).toEqual([
+      ['plitzi', ['10:08 UTC t-stepped: a click before the page hydrates is dropped']]
+    ]);
   });
 });
 

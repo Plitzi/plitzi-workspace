@@ -270,7 +270,8 @@ export const stateOf = (node: Element): ElementState => {
               Object.entries(resolved).map(([to, value]) => [
                 to.replace(/^attributes\./, ''),
                 Array.isArray(value)
-                  ? `${String(value.length)} items${value.length > 0 ? `, the first ${cut(JSON.stringify(value[0]), 80)}` : ''}`
+                  ? // Every row is read by measuring an element of it, each copy: a run's tester wrote a probe instead.
+                    `${String(value.length)} items${value.length > 0 ? `, the first ${cut(JSON.stringify(value[0]), 80)}` : ''}${value.length > 1 ? ' — every row: page measure <an element of the row> --each' : ''}`
                   : value === undefined
                     ? 'nothing'
                     : cut(JSON.stringify(value), 120)

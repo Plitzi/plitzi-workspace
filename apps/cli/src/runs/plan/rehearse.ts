@@ -514,6 +514,29 @@ const contentionWhy = (contention: Contention): string =>
       ? 'they say they touch it'
       : 'what they make registers there';
 
+/**
+ * What one tester more would save the same plan, when it saves a tenth of it (5 min at least) — or nothing: a run's
+ * lone tester made 23 reviews, tasks waited minutes for it, and the second it could have had was the person's to allow
+ * mid-run. Said at the rehearsal, before the open.
+ */
+export const oneMoreTester = (
+  tasks: readonly RunTask[],
+  options: RehearsalOptions,
+  context: { ownership: Ownership; created: readonly string[] },
+  rehearsed: Rehearsal
+): { testers: number; wallMinutes: number; longestWait: number } | undefined => {
+  if (options.reviewers?.by !== 'testers' || rehearsed.reviews.longestWait === 0) {
+    return undefined;
+  }
+
+  const testers = options.reviewers.count + 1;
+  const more = rehearse(tasks, { ...options, reviewers: { by: 'testers', count: testers } }, context);
+
+  return rehearsed.wallMinutes - more.wallMinutes >= Math.max(5, rehearsed.wallMinutes / 10)
+    ? { testers, wallMinutes: more.wallMinutes, longestWait: more.reviews.longestWait }
+    : undefined;
+};
+
 export const rehearsalText = (runId: string, rehearsal: Rehearsal, reviewMinutes: number): string =>
   [
     `Rehearsal of "${runId}" with ${agentsText(rehearsal.agents)} and ${String(reviewMinutes)} min a review: about ${String(rehearsal.wallMinutes)} min to the last approval — nothing opened, nothing written.`,

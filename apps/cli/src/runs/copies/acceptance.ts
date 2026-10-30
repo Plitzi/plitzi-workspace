@@ -177,6 +177,17 @@ export const serveCopy = async (
   // theirs by hand before every check (21 times), refused until they did. It is the copy's by its folder and its
   // /health, never stopped by a name.
   const running = await ownServer(work);
+  // The project itself, not a copy — a first plan's lines tried before a run opens: a server running there is the
+  // person's, never stopped. A run's dry run stopped the one its person served the project on, and the page stayed
+  // down for the run. The lines are run on it instead: it serves the project as it is.
+  if (running !== undefined && path.resolve(work) === path.resolve(root)) {
+    process.stderr.write(
+      `· the lines run on your own server on :${String(running)}, which serves the project — left running\n`
+    );
+
+    return { url: `http://127.0.0.1:${String(running)}`, port: running, stop: () => undefined, keep: () => undefined };
+  }
+
   if (running !== undefined) {
     const pid = listenersUnder(realpathSync(work)).find(each => each.port === running)?.pid;
     if (pid === undefined) {
@@ -205,8 +216,10 @@ export const serveCopy = async (
   const record = path.join(PROJECT_TMP, 'plitzi-cache', 'acceptance-server.json');
   await fs.rm(path.join(work, record), { force: true });
   const env = (await fs.readFile(path.join(root, '.env'), 'utf-8').catch(() => undefined)) ?? '';
-  // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why.
+  // What the server says goes to a log in the task's cache: when it does not answer, its last lines say why. The cache
+  // may not be there yet — a plan's lines tried on the project before any run made one ended on ENOENT.
   const logFile = serverLogOf(cache);
+  await fs.mkdir(cache, { recursive: true });
   const log = await fs.open(logFile, 'w');
   const child = spawn(script, {
     cwd: work,
@@ -394,7 +407,30 @@ export const notRunText = (notRun: number): string =>
     ? ` (the finish stopped there: ${String(notRun)} line${notRun === 1 ? '' : 's'} not run yet, at the next finish — what passed is kept)`
     : '';
 
+/**
+ * Each checked line of `acceptance` run, its result in its place — a command several lines hold run once: a stage's
+ * tasks each held their page's suite, and a dry run of its lines ran the same suite ten times over twenty minutes.
+ */
 export const checkAcceptance = async (
+  acceptance: readonly Acceptance[],
+  run: AcceptanceRun
+): Promise<AcceptanceResult[]> => {
+  const checked = acceptance.filter(isChecked);
+  const once = checked.filter((line, index) => checked.findIndex(each => each.check === line.check) === index);
+  if (once.length === checked.length) {
+    return checkEach(checked, run);
+  }
+
+  const answered = await checkEach(once, run);
+
+  return checked.map(line => {
+    const result = answered[once.findIndex(each => each.check === line.check)];
+
+    return { ...result, said: line.said };
+  });
+};
+
+const checkEach = async (
   acceptance: readonly Acceptance[],
   { work, root, cache, onLine, onWait, serving, failFast }: AcceptanceRun
 ): Promise<AcceptanceResult[]> => {

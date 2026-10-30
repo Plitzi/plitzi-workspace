@@ -7,9 +7,9 @@ import { InvalidArgumentError } from 'commander';
 
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { holds, PROPERTY_NAME } from './measureExpected';
+import { expectationsMissed, expectedText, PROPERTY_NAME, relationElements } from './measureExpected';
 import { measureOn } from './measureOn';
-import { putIn, copiesOf, stateText } from './measureState';
+import { putIn, copiesOf, ROWS_MOST, stateText } from './measureState';
 import { comparedText, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
 import { asksExtra, differences, DRAWN, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED } from './measureValues';
 import { otherPageAt, pageAnswered } from './shot/remote';
@@ -103,6 +103,9 @@ export interface Pair {
   there: string;
 }
 
+/** An element asked, or the copies of one past those `--each` measures: said as a reading that failed, never unsaid. */
+export type Asked = Pair & { beyond?: number };
+
 /** `pricing-card => .plan-card`: ours, then the other page's; one name alone is both. */
 export const pairOf = (asked: string): Pair => {
   const arrow = asked.indexOf('=>');
@@ -145,28 +148,13 @@ const measuredProperties =
     return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
   };
 
-/** Each element read whose property is not the value expected: a line each, said where the command fails. */
-export const expectationsMissed = (readings: readonly Reading[], expected: readonly Expected[]): string[] =>
-  readings.flatMap(({ here, pair, width, scheme }) => {
-    if ('problem' in here) {
-      return [];
-    }
-
-    return expected.flatMap(each => {
-      const { property, value, at } = each;
-      const actual = Object.hasOwn(here.styles, property) ? here.styles[property] : undefined;
-
-      return actual !== undefined && holds(actual, each)
-        ? []
-        : [
-            `--expect ${property}${at ?? '='}${value}: ${pair.here} at ${String(width)} px${scheme ? ` ${scheme}` : ''} ${actual === undefined ? 'has none read' : `is ${actual}`}`
-          ];
-    });
-  });
-
 /** What a measure reads besides what always is: the properties `--only`, `--same` and `--expect` name beyond those. */
 const extraAsked = (options: Pick<MeasureOptions, 'only' | 'same' | 'expect'>): MeasuredExtra =>
-  extraOf([...(options.only ?? []), ...(options.same ?? []), ...(options.expect ?? []).map(each => each.property)]);
+  extraOf([
+    ...(options.only ?? []),
+    ...(options.same ?? []),
+    ...(options.expect ?? []).flatMap(each => ('said' in each ? [] : [each.property]))
+  ]);
 
 /** The properties asked by name that the browser knows no property by: `--only glow`, refused before anything is read. */
 const unknownProperties = async (browser: Browser, extra: MeasuredExtra): Promise<string[]> => {
@@ -196,7 +184,7 @@ const BOXES_PAST = 3;
 
 /**
  * Whether a measure says each element by its box alone: many read at once, and nothing named of them — no property, no
- * comparison, no expectation, no `--json` (which holds every one).
+ * comparison, no expectation. `--json` too: a run's agents read 62k characters of it to take each element's box with jq.
  */
 export const readsBoxesOnly = (
   elements: number,
@@ -205,15 +193,13 @@ export const readsBoxesOnly = (
     all?: boolean;
     same?: readonly string[];
     expect?: readonly unknown[];
-    json?: boolean;
   }
 ): boolean =>
   elements > BOXES_PAST &&
   options.only === undefined &&
   options.all !== true &&
   options.same === undefined &&
-  options.expect === undefined &&
-  options.json !== true;
+  options.expect === undefined;
 
 /** How long a reading of another site is kept: a reference does not change within a run. */
 const KEPT_MS = 6 * 60 * 60_000;
@@ -360,10 +346,19 @@ const readAt = async (
       : ((await playedOn(page, view.steps ?? [], visitors).finally(() => visitors.close())) ??
         (view.state ? await putIn(page, view.state, 'here') : undefined));
   // Every copy the page draws of an element, with --each: the first alone hid that three plates' readouts differed.
-  const asked = options.each && !notPut ? (await Promise.all(pairs.map(pair => copiesOf(page, pair)))).flat() : pairs;
+  const asked: readonly Asked[] =
+    options.each && !notPut ? (await Promise.all(pairs.map(pair => copiesOf(page, pair)))).flat() : pairs;
   const ours = notPut
     ? asked.map(() => notPut)
-    : await Promise.all(asked.map(pair => measureOn(page, pair.here, { ...(boxless ? { boxless } : {}), extra })));
+    : await Promise.all(
+        asked.map(pair =>
+          pair.beyond === undefined
+            ? measureOn(page, pair.here, { ...(boxless ? { boxless } : {}), extra })
+            : Promise.resolve({
+                problem: `${String(pair.beyond)} more copies, past the ${String(ROWS_MOST)} --each measures: name fewer — a selector of the rows asked, or nth= of one`
+              })
+        )
+      );
   if (played && !notPut) {
     played.keep(page);
   } else {
@@ -506,13 +501,29 @@ export const onceEach = (lines: readonly string[]): string[] => {
   return [...counts].map(([line, count]) => (count > 1 ? `${line} (×${String(count)})` : line));
 };
 
+const NAME_LIST = /^[\w-]+(?:,[\w-]+)+$/u;
+
+/**
+ * The elements asked, a list of names written with commas taken apart — `a,b,c`, as `page play --read` takes them: a
+ * run's tester was answered "No element a,b,c". A selector whose commas are CSS's (`.card, .tile`) stays one.
+ */
+export const elementsAsked = (elements: readonly string[]): string[] =>
+  elements.flatMap(each => (NAME_LIST.test(each) ? each.split(',') : [each]));
+
 export const measure = async (route: string, elements: string[], options: MeasureOptions): Promise<void> => {
   const project = await projectHere('whose page to measure');
   if (!project) {
     return;
   }
 
-  const pairs = elements.map(pairOf);
+  // The elements a relation names are measured with those asked: it reads their boxes.
+  const named = elementsAsked(elements);
+  const pairs = [
+    ...named,
+    ...relationElements(options.expect ?? []).filter(
+      (element, index, all) => !named.includes(element) && all.indexOf(element) === index
+    )
+  ].map(pairOf);
   if (options.there !== undefined) {
     if (pairs.length !== 1) {
       fail('--there names the other page’s element of one element asked: for several, write each as "ours => theirs"');
@@ -703,7 +714,12 @@ export const measure = async (route: string, elements: string[], options: Measur
                 : {})
             })),
             ...(options.same ? { same: options.same } : {}),
-            ...(options.expect ? { expected: options.expect, missed } : {})
+            ...(options.expect ? { expected: options.expect, missed } : {}),
+            ...(boxesOnly
+              ? {
+                  note: `${String(pairs.length)} elements, each by its box — --only <properties>, --all, or three at most, reads more of each`
+                }
+              : {})
           })
         : [
             ...(state
@@ -754,7 +770,7 @@ export const measure = async (route: string, elements: string[], options: Measur
               : missed.length === 0
                 ? [
                     chalk.green(
-                      `✓ --expect ${options.expect.map(each => `${each.property}${each.at ?? '='}${each.value}`).join(', ')}: every element read holds it`
+                      `✓ --expect ${options.expect.map(expectedText).join(', ')}: every element read holds it`
                     )
                   ]
                 : missed.map(line => chalk.red(`✗ ${line}`)))

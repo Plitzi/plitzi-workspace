@@ -2,6 +2,7 @@ import { openPage } from '@plitzi/sdk-authoring';
 
 import { projectSettling } from '../../../browser';
 import { checkAccount } from '../check';
+import { awaitHydration } from '../hydration';
 import { prepareVisit } from '../visit';
 
 import type { Browser, BrowserPage } from '../../../browser';
@@ -50,7 +51,13 @@ export const visitorsOn = (root: string, browser: Browser, origin: string, view:
         return { problem: `as ${username}: nothing answered at ${origin}${at}` };
       }
 
-      await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+      const late = await awaitHydration(page);
+      if (late !== undefined) {
+        await page.close();
+
+        return { problem: `as ${username}: ${late}` };
+      }
+
       pages.set(username, page);
 
       return page;

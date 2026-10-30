@@ -89,6 +89,22 @@ export const sideOf = (value: string, side: number): string => {
 };
 
 /**
+ * A property's value in a reading, a side of a box's spacing (`padding-left`) read off the shorthand it is measured as —
+ * or nothing, for one not read.
+ */
+export const styleOf = (styles: Readonly<Record<string, string>>, property: string): string | undefined => {
+  if (Object.hasOwn(styles, property)) {
+    return styles[property];
+  }
+
+  const longhand = Object.hasOwn(SIDE_LONGHANDS, property) ? SIDE_LONGHANDS[property] : undefined;
+
+  return longhand === undefined
+    ? undefined
+    : sideOf(Object.hasOwn(styles, longhand.shorthand) ? styles[longhand.shorthand] : '0px', longhand.side);
+};
+
+/**
  * What is read of a box's `::before` and `::after`, when it draws one: a run's VS medal paints its fill on `::before`,
  * where a reading of the box alone saw none — and the plan written from it asked the fill away.
  */
@@ -346,13 +362,7 @@ export const differences = (
   there: Measured,
   asked: readonly string[] = []
 ): { differ: Difference[]; same: string[] } => {
-  const value = (side: Measured, property: string): string => {
-    const longhand = Object.hasOwn(SIDE_LONGHANDS, property) ? SIDE_LONGHANDS[property] : undefined;
-
-    return longhand
-      ? sideOf(side.styles[longhand.shorthand] ?? '0px', longhand.side)
-      : (side.styles[property] ?? 'none');
-  };
+  const value = (side: Measured, property: string): string => styleOf(side.styles, property) ?? 'none';
   const alike = (property: string): boolean => {
     const [ours, theirs] = [comparable(property, value(here, property)), comparable(property, value(there, property))];
 
@@ -391,16 +401,20 @@ export const onlyOf = (
     return read;
   }
 
-  const shown = new Set<string>(
-    only.map(each => (Object.hasOwn(SIDE_LONGHANDS, each) ? SIDE_LONGHANDS[each].shorthand : each))
-  );
+  // A side asked alone is said as asked — `padding-left: 16px`, never the shorthand it was read off: a run's line
+  // expected `padding-left=16px`, was shown `padding` and read "none".
+  const sides = only.filter(each => Object.hasOwn(SIDE_LONGHANDS, each));
+  const shown = new Set<string>(only.filter(each => !sides.includes(each)));
   const undrawn = PSEUDOS.filter(
     pseudo => only.some(each => each.startsWith(`${pseudo}:`)) && !Object.hasOwn(read.styles, `${pseudo}:content`)
   );
 
   return {
     ...read,
-    styles: Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))),
+    styles: {
+      ...Object.fromEntries(Object.entries(read.styles).filter(([key]) => shown.has(key))),
+      ...Object.fromEntries(sides.map(side => [side, styleOf(read.styles, side) ?? '0px']))
+    },
     ...(undrawn.length > 0 ? { undrawn } : {})
   };
 };

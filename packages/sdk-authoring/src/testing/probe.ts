@@ -52,6 +52,12 @@ export interface ProbeFindings {
   cutOff: { id: string; pixels: number }[];
   /** Words that cannot be told from what is behind them, with their contrast against it (WCAG's ratio, 1 to 21). */
   illegible: { text: string; contrast: number; elementId?: string }[];
+  /**
+   * What of the space a visitor has no way to reach, below the fold: in a pane that scrolls with its scrollbar hidden
+   * (`pane`, how much more it holds than it shows), or on a page that does not scroll at all (no `pane`). The
+   * outermost of what is past the fold, by id.
+   */
+  outOfReach: { pane?: string; pixels: number; below: string[] }[];
 }
 
 /**
@@ -500,6 +506,82 @@ export function probePage(input: ProbeInput): ProbeFindings {
     }
   }
 
+  /**
+   * What a visitor cannot get to. A pane that scrolls up and down with its scrollbar hidden, holding more than it shows,
+   * is scrolled by nobody who cannot see it scrolls: a run's left column grew, two of its panels went below the screen,
+   * and every check read the page whole. Nor is anything below the screen of a page that does not scroll — its
+   * document locked — unless a pane of its own scrolls to it. Not the space's root, which is the page scrolling.
+   */
+  const outOfReach: ProbeFindings['outOfReach'] = [];
+  if (input.overflow) {
+    const shown = (node: Element): boolean =>
+      node.checkVisibility({ opacityProperty: true, visibilityProperty: true }) &&
+      node.getBoundingClientRect().height > 0;
+    /** The outermost of `nodes`: one inside another listed is said by that one. */
+    const outermost = (nodes: Element[]): string[] =>
+      nodes
+        .filter(node => !nodes.some(other => other !== node && other.contains(node)))
+        .map(node => node.getAttribute('data-plitzi-el') ?? '')
+        .filter(id => id !== '');
+    const scrollsDown = (node: Element): boolean => ['auto', 'scroll'].includes(getComputedStyle(node).overflowY);
+    for (const pane of document.querySelectorAll('[data-plitzi-el]')) {
+      const hiddenBy = pane.scrollHeight - pane.clientHeight;
+      if (
+        hiddenBy <= 24 ||
+        pane.parentElement?.closest('[data-plitzi-el]') === null ||
+        !scrollsDown(pane) ||
+        getComputedStyle(pane).scrollbarWidth !== 'none' ||
+        !shown(pane)
+      ) {
+        continue;
+      }
+
+      const fold = pane.getBoundingClientRect().bottom;
+      const below = outermost(
+        [...pane.querySelectorAll('[data-plitzi-el]')].filter(
+          node => shown(node) && node.getBoundingClientRect().top >= fold - 1
+        )
+      );
+      const id = pane.getAttribute('data-plitzi-el');
+      if (id && below.length > 0) {
+        outOfReach.push({ pane: id, pixels: Math.round(hiddenBy), below: below.slice(0, 4) });
+      }
+    }
+
+    // Locked: the document hides what overflows it, and no pane the SDK scrolls a page in scrolls instead — a hidden
+    // document still says its whole height, so whether it scrolls is read off how it overflows, not its size.
+    const locked = [document.documentElement, document.body].some(node =>
+      ['hidden', 'clip'].includes(getComputedStyle(node).overflowY)
+    );
+    const pageScrolls = [...document.querySelectorAll('.plitzi-sdk')].some(
+      node => scrollsDown(node) && node.scrollHeight > node.clientHeight + 1
+    );
+    if (locked && !pageScrolls) {
+      const fold = window.innerHeight;
+      const inPane = (node: Element): boolean => {
+        for (let at = node.parentElement; at && at !== document.body; at = at.parentElement) {
+          if (scrollsDown(at) && at.scrollHeight > at.clientHeight + 1) {
+            return true;
+          }
+        }
+
+        return false;
+      };
+      const past = [...document.querySelectorAll('[data-plitzi-el]')].filter(
+        node =>
+          shown(node) &&
+          node.getBoundingClientRect().top >= fold - 1 &&
+          getComputedStyle(node).position !== 'fixed' &&
+          !inPane(node)
+      );
+      const below = outermost(past);
+      if (below.length > 0) {
+        const lowest = Math.max(...past.map(node => node.getBoundingClientRect().bottom));
+        outOfReach.push({ pixels: Math.round(lowest - fold), below: below.slice(0, 4) });
+      }
+    }
+  }
+
   const illegible: ProbeFindings['illegible'] = [];
   if (input.legibility) {
     /**
@@ -738,6 +820,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     brokenImages,
     overflow,
     cutOff,
-    illegible
+    illegible,
+    outOfReach
   };
 }

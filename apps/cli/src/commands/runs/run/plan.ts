@@ -5,6 +5,7 @@ import chalk from 'chalk';
 
 import { issueToken } from '../../../runs/agents/identity';
 import { ensureKeeper, keeperText, leadStartText } from '../../../runs/agents/keeper';
+import { sessionOfProcess } from '../../../runs/agents/session';
 import {
   heldRoles,
   ensureTeam,
@@ -26,10 +27,11 @@ import { amendRun } from '../../../runs/plan/amend';
 import { backlogOfPlan, backlogText } from '../../../runs/plan/backlog';
 import { atPace } from '../../../runs/plan/estimate';
 import { extendRun, seeStage } from '../../../runs/plan/extend';
-import { rehearsalText, rehearse } from '../../../runs/plan/rehearse';
+import { oneMoreTester, rehearsalText, rehearse } from '../../../runs/plan/rehearse';
 import { isResearch, opensOnResearch, roleOf, SCOPE_SPIKE, scopePlan } from '../../../runs/plan/spike';
 import { tryLinesOnProject } from '../../../runs/plan/tryLines';
 import { triedText } from '../../../runs/plan/tryLines';
+import { ledBefore } from '../../../runs/report/ledBefore';
 import { settleFinding } from '../../../runs/report/settle';
 import {
   activeRuns,
@@ -324,20 +326,34 @@ export const runRehearse = (file: string, options: PlanOptions & { review?: numb
           )
         : undefined;
 
+      const rehearsed = rehearse(
+        checked.tasks,
+        { agents, roles, reviewMinutes, reviewers },
+        { ownership, created: checked.created }
+      );
+      const saves = oneMoreTester(
+        checked.tasks,
+        { agents, roles, reviewMinutes, reviewers },
+        { ownership, created: checked.created },
+        rehearsed
+      );
+
       return {
         runId: checked.runId,
         reviewMinutes,
-        ...rehearse(
-          checked.tasks,
-          { agents, roles, reviewMinutes, reviewers },
-          { ownership, created: checked.created }
-        ),
+        ...rehearsed,
+        ...(saves ? { oneMoreTester: saves } : {}),
         ...(paced && atThisPace ? { paced: { ...paced, wallMinutes: atThisPace.wallMinutes } } : {})
       };
     },
     rehearsed =>
       [
         rehearsalText(rehearsed.runId, rehearsed, rehearsed.reviewMinutes),
+        ...(rehearsed.oneMoreTester
+          ? [
+              `With ${String(rehearsed.oneMoreTester.testers)} testers: about ${String(rehearsed.oneMoreTester.wallMinutes)} min to the last approval, not ${String(rehearsed.wallMinutes)} — the longest wait for a review ${String(rehearsed.oneMoreTester.longestWait)} min, not ${String(rehearsed.reviews.longestWait)}. The team's size is yours: plitzi run team set <its testers' entry> --count ${String(rehearsed.oneMoreTester.testers)}`
+            ]
+          : []),
         ...(rehearsed.paced ? [`${pacedText(rehearsed.paced)} — the reviews' minutes as given`] : [])
       ].join('\n')
   );
@@ -379,7 +395,8 @@ const openedRun = async (ctx: RunContext, file: string | undefined, options: Pla
     leadCli: lead.cli,
     launch: team?.options?.launch,
     // Who finds out the scope: a scout of the team, or the lead with none.
-    scouts: team ? startedAgents(team).flatMap(each => (each.roles.includes(SCOUT) ? [each.agent] : [])) : []
+    scouts: team ? startedAgents(team).flatMap(each => (each.roles.includes(SCOUT) ? [each.agent] : [])) : [],
+    ledBefore: await ledBefore(ctx.root, sessionOfProcess().session)
   };
 };
 
@@ -391,6 +408,13 @@ const openedText = (opened: Awaited<ReturnType<typeof openedRun>>): string =>
       `The lead's own CLI: ${opened.leadCli} — every command of the run as the lead goes through it, which passes the lead's token (${opened.leadToken}, kept in ${opened.leadTokenFile}); a command as lead without it is refused`
     ),
     leadStartText(opened.leadCli, opened.launch),
+    ...(opened.ledBefore.length > 0
+      ? [
+          chalk.yellow(
+            `This session led ${opened.ledBefore.join(', ')} before: each of its turns reads them again, past what the run's own work costs — the lead of this one is best a fresh session, its token passed to it as above`
+          )
+        ]
+      : []),
     ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
     ...(opened.inputs.length > 0
       ? [

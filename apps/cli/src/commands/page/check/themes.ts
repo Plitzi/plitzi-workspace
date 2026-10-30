@@ -1,6 +1,7 @@
 import { openPage } from '@plitzi/sdk-authoring';
 
 import { openProjectPage, projectSettling, VIEW_HEIGHT } from '../../../browser';
+import { awaitHydration } from '../hydration';
 import { standInPictures } from '../visit';
 
 import type { CheckIssue } from './types';
@@ -272,7 +273,8 @@ export const themeIssues = async (
 
     try {
       await openPage(page, `${origin}${route}`, projectSettling(page));
-      await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+      // A page that does not hydrate is said by the check's own reading of it (`not-hydrated`), not again per theme.
+      await awaitHydration(page);
 
       return await page.evaluate(textGrounds, undefined);
     } finally {

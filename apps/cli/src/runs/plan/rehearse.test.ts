@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { checkPlan } from './plan';
-import { rehearsalText, rehearse } from './rehearse';
+import { oneMoreTester, rehearsalText, rehearse } from './rehearse';
 import { benchPlan, makeBench, teamFor } from '../../tests/runProject';
 import { readOwnership } from '../copies/ownership';
 
@@ -37,6 +37,26 @@ describe('a plan rehearsed before any agent starts', () => {
 
     expect(played.scheduled.find(task => task.task === 't-menu')).toMatchObject({ approved: 25, waitedForReview: 0 });
     expect(played.reviews).toMatchObject({ by: 'testers', count: 2, longestWait: 0 });
+  });
+
+  // A run's lone tester made 23 reviews and tasks waited for it: what one more would save is said before the open.
+  it('says what one tester more saves, when it saves something worth a person’s say', async () => {
+    const ownership = await readOwnership(bench.root);
+    const plan = benchPlan();
+    const options: RehearsalOptions = { agents: 3, reviewMinutes: 30, reviewers: { by: 'testers', count: 1 } };
+    const checked = await checkPlan(bench.root, plan, ownership, teamFor(plan, options.agents));
+    const context = { ownership, created: checked.created };
+    const lone = rehearse(checked.tasks, options, context);
+
+    expect(lone.reviews.longestWait).toBeGreaterThan(0);
+    expect(oneMoreTester(checked.tasks, options, context, lone)).toMatchObject({ testers: 2 });
+    expect(oneMoreTester(checked.tasks, options, context, lone)?.wallMinutes).toBeLessThan(lone.wallMinutes);
+
+    // Nothing waits for a review: nothing to save, nothing said.
+    const unhurried: RehearsalOptions = { agents: 3, reviewMinutes: 5, reviewers: { by: 'testers', count: 2 } };
+    expect(
+      oneMoreTester(checked.tasks, unhurried, context, rehearse(checked.tasks, unhurried, context))
+    ).toBeUndefined();
   });
 
   // A lone tester's own tasks were played into its own queue: no tester may review them — a developer does, its time

@@ -215,8 +215,10 @@ export const asCompleted = async (
       continue;
     }
 
+    // A line amended since is a place kept for its first run, never a result: a run's prove read five amended lines as
+    // failing "with it", run on nothing.
     const measured = accepted.find(each => each.check === line.check);
-    if (measured === undefined) {
+    if (measured === undefined || measured.amended !== undefined) {
       return undefined;
     }
 

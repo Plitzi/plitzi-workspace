@@ -325,11 +325,13 @@ export const lookAt = (
         // The line that says what failed, never a stack's first: a run's look said "node:internal/modules/run_main:107"
         // for every picture, the error itself lines below it.
         const notTaken = (what: string, output: string): void => {
+          // Whole: a reason is said once, with every picture it stopped — cut, it read "for signed-in visitors (--".
           const why = errorLine(
             output
               .split('\n')
               .filter(line => !line.trim().startsWith('{'))
-              .join('\n')
+              .join('\n'),
+            { most: Infinity }
           );
           unpictured.push({ what, why: why ?? 'the picture failed, saying nothing' });
         };

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { failedWhy } from '../../commands/project/verify';
-import { checkAcceptance } from '../copies/acceptance';
+import { checkAcceptance, sayLines } from '../copies/acceptance';
 import { acceptanceOnResult } from '../copies/materialise';
 import { readApproved } from '../run';
 
@@ -112,7 +112,9 @@ export const tryLinesOnProject = async (
   const results = await checkAcceptance(lines, {
     work: ctx.root,
     root: ctx.root,
-    cache: path.join(ctx.root, PROJECT_TMP, 'plitzi-cache', 'lines')
+    cache: path.join(ctx.root, PROJECT_TMP, 'plitzi-cache', 'lines'),
+    // Each said as it starts: a dry run of a dozen lines said nothing until the last ended.
+    ...sayLines(ctx.say)
   });
 
   return results.map((result, index) => {

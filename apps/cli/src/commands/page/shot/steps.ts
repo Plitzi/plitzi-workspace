@@ -7,6 +7,7 @@ import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
+import { awaitHydration } from '../hydration';
 import { answered, patiently, settle, stepFailure } from '../measureState';
 import { parseSteps } from '../shotSteps';
 
@@ -331,10 +332,6 @@ const runAction = async (
   };
 };
 
-/**
- * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
- * what kept it from happening, said by its step. `visitors` holds the other accounts' pages a step `as` one plays on.
- */
 /** Runs in the page: how many elements a CSS selector finds — one for a selector only Playwright reads. Serialised. */
 export const copiesOn = (selector: string): number => {
   try {
@@ -344,6 +341,24 @@ export const copiesOn = (selector: string): number => {
   }
 };
 
+/** The steps a visitor plays with a press of theirs, which a page that has not hydrated drops. */
+const PRESSES: ReadonlySet<ActingStep['kind']> = new Set(['click', 'hover', 'scroll', 'type', 'drag', 'press']);
+
+/** A page a step loaded, hydrated before what follows reads or presses it — or the step said as not done. */
+const hydratedAfter = async (
+  page: BrowserPage,
+  step: ActingStep,
+  index: number
+): Promise<{ problem: string } | undefined> => {
+  const late = await awaitHydration(page);
+
+  return late === undefined ? undefined : { problem: `Step ${String(index + 1)} (${stepText(step)}): ${late}` };
+};
+
+/**
+ * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
+ * what kept it from happening, said by its step. `visitors` holds the other accounts' pages a step `as` one plays on.
+ */
 export const actStep = async (
   page: BrowserPage,
   step: ActingStep,
@@ -385,6 +400,13 @@ export const actStep = async (
   // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
   // document, timed out at 1440 where the column's own was there to type into.
   const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
+  if (PRESSES.has(step.kind)) {
+    const late = await awaitHydration(page);
+    if (late !== undefined) {
+      return { problem: `Step ${String(index + 1)} (${stepText(step)}) was not played: ${late}` };
+    }
+  }
+
   if (
     step.kind === 'click' ||
     step.kind === 'hover' ||
@@ -536,14 +558,17 @@ export const actStep = async (
     await page.waitForTimeout(step.ms);
   } else if (step.kind === 'reload') {
     await page.reload({ waitUntil: 'load' });
-    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+
+    return hydratedAfter(page, step, index);
   } else if (step.kind === 'back') {
     await page.goBack({ waitUntil: 'load' });
-    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+
+    return hydratedAfter(page, step, index);
   } else if (step.kind === 'goto') {
     // Its path on the page's own site: a play beside another site goes to that site's page of it.
     await page.goto(new URL(step.path, page.url()).href, { waitUntil: 'load' });
-    await page.waitForSelector('[data-hydrated]', { timeout: 10_000 }).catch(() => undefined);
+
+    return hydratedAfter(page, step, index);
   } else if (step.kind === 'store') {
     const stored = await page.evaluate(
       ({ key, value }: { key: string; value: string }) => {
@@ -663,6 +688,14 @@ export const playSteps = async (
         const done = await actStep(page, step, index, visitors);
         if (done && 'problem' in done) {
           return done;
+        }
+
+        // Settled before the next action, as every other command plays them: a run's `click filters-toggle; click
+        // window-month` found the month's button "hidden at this width" mid-opening, where `page measure` pressed it.
+        // Before a picture it is not: `frames` is for what moves.
+        const next = steps.at(index + 1);
+        if (next !== undefined && next.kind !== 'shot' && next.kind !== 'frames') {
+          await settle(page);
         }
       } else if (step.kind === 'shot') {
         await picture(step.label ?? `step ${String(index + 1)}`);

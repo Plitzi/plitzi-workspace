@@ -151,8 +151,8 @@ export const registerPage = (pageGroup: Command): void => {
       ).argParser(sameProperties)
     )
     .option(
-      '--expect <property=value>',
-      'Fail unless each element measured computes this property to this value, at every width — "transform=matrix(1, 0, 0, 1, 0, 3)" — or a number of it at least (>=) or at most (<=) one: width>=44px, drawn-width>=340px; one a flag: an acceptance line holding one page’s value',
+      '--expect <property=value|relation>',
+      'Fail unless each element measured computes this property to this value, at every width — "transform=matrix(1, 0, 0, 1, 0, 3)" — or a number of it at least (>=) or at most (<=) one: width>=44px, drawn-width>=340px — or where two elements stand, at every width: "activity.bottom + 8 <= legend-area.top" (left, right, top, bottom, width, height; the elements it names are measured too); one a flag: an acceptance line holding one page’s value',
       expectedOf
     )
     .addOption(

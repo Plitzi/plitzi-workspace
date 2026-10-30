@@ -41,6 +41,7 @@ export type PageIssueCode =
   | 'element-empty'
   | 'sideways-scroll'
   | 'cut-off'
+  | 'out-of-reach'
   | 'illegible-text'
   | 'heading-skipped'
   | 'control-unnamed'
@@ -191,6 +192,13 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       code: 'cut-off',
       message: `${named(id)} is cut off at the edge of the screen by ${String(pixels)}px — an ancestor hides what spills past it, so nothing scrolls to it: let the row wrap, or give it room`,
       elementId: id
+    })),
+    ...findings.outOfReach.map(({ pane, pixels, below }): PageIssue => ({
+      code: 'out-of-reach',
+      message: pane
+        ? `${named(pane)} scrolls with its scrollbar hidden and holds ${String(pixels)}px more than it shows: ${below.map(named).join(', ')} below its fold, which nothing tells a visitor is there — show its scrollbar, or make it fit`
+        : `the page does not scroll, and ${below.map(named).join(', ')} ${below.length === 1 ? 'is' : 'are'} drawn below the screen by up to ${String(pixels)}px — a visitor never reaches ${below.length === 1 ? 'it' : 'them'}: let the page or a pane of it scroll, or make it fit`,
+      ...about(pane ?? below.at(0))
     })),
     ...findings.illegible.map(({ text, contrast, elementId }): PageIssue => ({
       code: 'illegible-text',

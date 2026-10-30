@@ -62,6 +62,11 @@ describe('why a command failed, as its usage keeps it', () => {
       'Refused: task t-a is not yours (--token …'
     );
     expect(errorLine('')).toBeUndefined();
+    // Cut where a word ends, and said as cut — a run's look read "for signed-in visitors (--"; whole when asked.
+    const long = `x is not on the page — ${'a reason of some length '.repeat(12)}(--as <username>)`;
+    expect(errorLine(long)).toMatch(/^x is not on the page — [a-z ]+[a-z]…$/);
+    expect(errorLine(long)?.length).toBeLessThanOrEqual(200);
+    expect(errorLine(long, { most: Infinity })).toBe(long);
     // A crashed child's output starts with where Node threw, not why: a run's look said that line for every picture.
     expect(
       errorLine(

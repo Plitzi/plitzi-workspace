@@ -1,6 +1,6 @@
 import { targetOn } from './shot/capture';
 
-import type { Pair } from './measure';
+import type { Asked, Pair } from './measure';
 import type { BrowserPage, PageElement } from '../../browser';
 import type { SettlingRequest } from '@plitzi/sdk-authoring';
 
@@ -181,6 +181,9 @@ export const stepFailure = (error: unknown): string => {
  * fading, a page busy on its first load — it is tried once more when the page has settled (`settle`). A run's agents
  * found every first click of a page timing out until they put a `wait 4000` before it.
  */
+/** Playwright's call log once it dispatched the press: what happens after is no reason to press again. */
+const PERFORMED = /performing \w+ action/;
+
 export const patiently = async (page: BrowserPage, press: () => Promise<unknown>): Promise<void> => {
   try {
     await press();
@@ -194,6 +197,14 @@ export const patiently = async (page: BrowserPage, press: () => Promise<unknown>
       !PRESS_WAITS.some(each => !each.passes && each.said.test(error.message));
     if (!waited) {
       throw error;
+    }
+
+    // Pressed already, timed out after — on a busy page Playwright's wait for what the press set off outlasts it: pressed
+    // again, a toggle was put back, and a run's clicks read as never made (its call log said "click action done").
+    if (error instanceof Error && PERFORMED.test(error.message)) {
+      await settle(page);
+
+      return;
     }
 
     await settle(page);
@@ -241,25 +252,43 @@ export const putIn = async (
   return undefined;
 };
 
-/** How many copies of one element `--each` measures, at most. */
-const ROWS_MOST = 20;
+/** How many copies of one element `--each` measures, at most: a run's strip of 24 bars was cut at 20, unsaid. */
+export const ROWS_MOST = 100;
 
-/** Every row a list draws of an element, as its own selector — the element alone when it is drawn once. */
-export const copiesOf = async (page: BrowserPage, pair: Pair): Promise<Pair[]> => {
+/** How far the copies past those are counted, to say how many were left. */
+const COUNTED_MOST = 1000;
+
+/**
+ * Every row a list draws of an element, as its own selector — the element alone when it is drawn once — and those past
+ * `ROWS_MOST`, as one pair that says how many.
+ */
+export const copiesOf = async (page: BrowserPage, pair: Pair): Promise<Asked[]> => {
   const found = await targetOn(page, pair.here);
   if ('problem' in found || !found.found) {
     return [pair];
   }
 
-  const rows: Pair[] = [];
-  for (let index = 0; index < ROWS_MOST; index += 1) {
-    const nth = `${found.selector} >> nth=${String(index)}`;
-    if ((await page.locator(nth).first().count()) === 0) {
-      break;
-    }
-
-    rows.push({ here: nth, there: pair.there });
+  let count = 0;
+  while (
+    count < COUNTED_MOST &&
+    (await page
+      .locator(`${found.selector} >> nth=${String(count)}`)
+      .first()
+      .count()) > 0
+  ) {
+    count += 1;
   }
 
-  return rows.length > 1 ? rows : [pair];
+  if (count <= 1) {
+    return [pair];
+  }
+
+  const rows = Array.from({ length: Math.min(count, ROWS_MOST) }, (_, index) => ({
+    here: `${found.selector} >> nth=${String(index)}`,
+    there: pair.there
+  }));
+
+  return count > ROWS_MOST
+    ? [...rows, { here: `${found.selector} >> nth=${String(ROWS_MOST)}`, there: pair.there, beyond: count - ROWS_MOST }]
+    : rows;
 };

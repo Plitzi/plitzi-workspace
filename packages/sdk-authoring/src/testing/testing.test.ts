@@ -59,7 +59,8 @@ const clean: ProbeFindings = {
   brokenImages: [],
   overflow: null,
   cutOff: [],
-  illegible: []
+  illegible: [],
+  outOfReach: []
 };
 
 describe('testing/onScreen', () => {
@@ -188,6 +189,24 @@ describe('testing/describeFindings', () => {
       { code: 'sideways-scroll', elementId: 'cover' },
       { code: 'cut-off', elementId: 'title' },
       { code: 'illegible-text', elementId: undefined }
+    ]);
+  });
+
+  // A run's left column grew past the screen in a pane that hides its scrollbar, and every check read the page whole.
+  it('says what a visitor cannot reach: below a pane that hides its scrollbar, or below a page that does not scroll', () => {
+    const said = describeFindings(owed, {
+      ...clean,
+      outOfReach: [
+        { pane: 'rows', pixels: 254, below: ['title'] },
+        { pixels: 80, below: ['logo', 'cover'] }
+      ]
+    });
+
+    expect(said).toEqual([
+      expect.stringMatching(
+        /"rows" scrolls with its scrollbar hidden and holds 254px more than it shows: .*title.* below its fold/
+      ),
+      expect.stringMatching(/the page does not scroll, and .*logo.*cover.* are drawn below the screen by up to 80px/)
     ]);
   });
 

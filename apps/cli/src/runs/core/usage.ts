@@ -96,7 +96,7 @@ export const keptCommand = (args: readonly string[]): string =>
  * Why a command that failed failed, in a line: the line that says it is an error (commander's `error: …`, a `✗`, a
  * refusal), else its first — secrets cut as its command's are.
  */
-export const errorLine = (stderr: string): string | undefined => {
+export const errorLine = (stderr: string, { most = 200 }: { most?: number } = {}): string | undefined => {
   const said = stderr
     .split('\n')
     // Colours are how a terminal shows it, not what it says.
@@ -105,7 +105,19 @@ export const errorLine = (stderr: string): string | undefined => {
     .filter(line => line !== '' && !line.startsWith('·'));
   const line = said.find(each => /^(error\b|✗|refused\b)|\b(Error|refused|cannot|is not)\b/.test(each)) ?? said.at(0);
 
-  return line === undefined ? undefined : withoutSecrets(line).slice(0, 200);
+  return line === undefined ? undefined : cutAtWord(withoutSecrets(line), most);
+};
+
+/** A line no longer than `most`, cut where a word ends and said as cut: a run's look read "visitors (-- — …". */
+const cutAtWord = (line: string, most: number): string => {
+  if (line.length <= most) {
+    return line;
+  }
+
+  const cut = line.slice(0, most - 1);
+  const word = cut.lastIndexOf(' ');
+
+  return `${word > most / 2 ? cut.slice(0, word) : cut}…`;
 };
 
 /**

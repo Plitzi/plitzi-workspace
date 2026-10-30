@@ -300,6 +300,28 @@ describe('a click that changes the picture’s size', () => {
   });
 });
 
+// A run's clicks landed on a dev page that had not hydrated, did nothing, and the reading after them was said as
+// though they had.
+describe('a press on a page that has not hydrated', () => {
+  it('is not played, and says why', async () => {
+    const page = {
+      url: () => 'http://127.0.0.1:8080/',
+      // A space drawn by the server, never taken over: its elements there, the hydrated mark never.
+      waitForSelector: (selector: string) =>
+        selector === '[data-hydrated]' ? Promise.reject(new Error('Timeout')) : Promise.resolve()
+    };
+
+    // The fake answers what a press asks of a page before it plays, and nothing else a page has.
+    const done = await actStep(page as unknown as BrowserPage, { kind: 'click', target: 'layer-quakes' }, 0);
+
+    expect(done).toEqual({
+      problem: expect.stringContaining(
+        'Step 1 (click layer-quakes) was not played: the page had not hydrated'
+      ) as unknown
+    });
+  });
+});
+
 // A tester's `click section-header-root` pressed the first of several section headers, and its toggle test ran on the
 // wrong panel: nothing said the name matched more than one.
 describe('a click on a name several copies carry', () => {
@@ -312,7 +334,9 @@ describe('a click on a name several copies carry', () => {
       evaluate: (fn: unknown) => Promise.resolve(fn === copiesOn ? copies : undefined),
       on: () => undefined,
       off: () => undefined,
-      waitForTimeout: () => Promise.resolve()
+      waitForTimeout: () => Promise.resolve(),
+      // Hydrated: what a press waits for is there.
+      waitForSelector: () => Promise.resolve()
     };
 
     // The fake answers what a click calls of a page, and nothing else a page has.
@@ -341,6 +365,7 @@ describe('a drag held, and let go', () => {
       url: () => 'http://127.0.0.1:8080/',
       locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
       evaluate: () => Promise.resolve(undefined),
+      waitForSelector: () => Promise.resolve(),
       mouse: {
         move: () => {
           pointer.push('move');

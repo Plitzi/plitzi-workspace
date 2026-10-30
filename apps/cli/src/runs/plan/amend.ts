@@ -178,7 +178,14 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   // A stage as a research card's approval keeps it is its tasks alone: read with the run's name and goal, as stacked.
   const next: RunPlan = await readPlanFile(file, { runId, goal: loaded.plan.goal });
   const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));
-  if (!next.tasks.some(task => before.has(task.id))) {
+  // The tests cards the run made (`withTestTasks`) are no plan's, and are amended all the same — what they are asked,
+  // never their shape: a run's tester wrote its tests in a spec of its own, and its card's line ran another, the run's
+  // lead with no way to point it there.
+  const made = new Map(
+    loaded.tasks.filter(task => task.testsOf !== undefined && !before.has(task.id)).map(task => [task.id, task])
+  );
+  const planned = next.tasks.filter(task => !made.has(task.id));
+  if (!next.tasks.some(task => before.has(task.id) || made.has(task.id))) {
     throw new RunRefusal(
       'invalid',
       `${file} holds none of run "${runId}"'s tasks: it is neither the plan the run opened with nor a stage stacked on it`
@@ -199,17 +206,17 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
       untold.some(task => task.acceptance.some(line => coversOf(line).includes(piece.id)))
   );
   const whole: RunPlan = stage
-    ? next
+    ? { ...next, tasks: planned }
     : {
         ...next,
-        tasks: [...next.tasks, ...untold.filter(task => !next.tasks.some(each => each.id === task.id))],
+        tasks: [...planned, ...untold.filter(task => !next.tasks.some(each => each.id === task.id))],
         ...(next.inventory || untoldPieces.length > 0
           ? { inventory: [...(next.inventory ?? []), ...untoldPieces] }
           : {})
       };
 
   const problems: string[] = [];
-  const added = next.tasks.filter(task => !before.has(task.id)).map(task => task.id);
+  const added = planned.filter(task => !before.has(task.id)).map(task => task.id);
   if (added.length > 0) {
     problems.push(
       `${added.map(id => `"${id}"`).join(', ')} the run does not have: a task more is a stage stacked on it — plitzi run open <its plan>`
@@ -254,7 +261,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const leftOut: string[] = [];
   for (const planned of next.tasks) {
     let task = planned;
-    const was = before.get(task.id);
+    const was = before.get(task.id) ?? made.get(task.id);
     const defined = loaded.tasks.find(each => each.id === task.id);
     if (!was || !defined) {
       continue;

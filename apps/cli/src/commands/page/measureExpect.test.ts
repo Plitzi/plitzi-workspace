@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { expectationsMissed } from './measure';
-import { expectedOf } from './measureExpected';
+import { expectationsMissed, expectedOf, relationElements } from './measureExpected';
 import { MEASURED } from './measureValues';
 
 // An acceptance line holding one page's value — a key latched: transform — piped page measure's --json into node -e.
@@ -72,5 +71,57 @@ describe('what measure reads of words', () => {
 describe('what measure reads of layers', () => {
   it('reads a box’s z-index beside its position', () => {
     expect(MEASURED).toEqual(expect.arrayContaining(['position', 'z-index']));
+  });
+});
+
+// A run's layout lines — one row, clear of the corner, above the legend — were each ~300 characters of jq over --json.
+describe('page measure --expect, two elements', () => {
+  const at = (id: string, box: { x: number; y: number; width: number; height: number }, width = 1440) => ({
+    width,
+    pair: { here: id, there: id },
+    here: { selector: `[data-plitzi-el="${id}"]`, tag: 'div', text: '', box, styles: {}, inherited: [] },
+    unlike: []
+  });
+  const relation = expectedOf('activity.bottom + 8 <= legend-area.top');
+
+  it('reads a relation of edges, give or take px, and the elements it names', () => {
+    expect(relation).toEqual([
+      {
+        said: 'activity.bottom + 8 <= legend-area.top',
+        left: { element: 'activity', edge: 'bottom', px: 8 },
+        at: '<=',
+        right: { element: 'legend-area', edge: 'top', px: 0 }
+      }
+    ]);
+    expect(relationElements(relation)).toEqual(['activity', 'legend-area']);
+    expect(expectedOf('filters.width >= 300px')).toEqual([
+      {
+        said: 'filters.width >= 300px',
+        left: { element: 'filters', edge: 'width', px: 0 },
+        at: '>=',
+        right: { px: 300 }
+      }
+    ]);
+    expect(() => expectedOf('activity.bottom <= legend')).toThrow(/a relation is two sides/);
+  });
+
+  it('holds at every width, and says by how much one misses', () => {
+    const fits = [
+      at('activity', { x: 22, y: 483, width: 300, height: 132 }),
+      at('legend-area', { x: 22, y: 627, width: 300, height: 253 })
+    ];
+    expect(expectationsMissed(fits, relation)).toEqual([]);
+
+    const past = [
+      ...fits.map(each => ({ ...each, width: 390 })),
+      at('activity', { x: 22, y: 500, width: 300, height: 135 }),
+      at('legend-area', { x: 22, y: 627, width: 300, height: 253 })
+    ];
+    expect(expectationsMissed(past, relation)).toEqual([
+      '--expect "activity.bottom + 8 <= legend-area.top": at 1440 px 643 <= 627 does not hold — 16 px apart'
+    ]);
+    expect(expectationsMissed([fits[0]], relation)).toEqual([
+      '--expect "activity.bottom + 8 <= legend-area.top": legend-area at 1440 px has no box read — not drawn there, or hidden'
+    ]);
   });
 });
