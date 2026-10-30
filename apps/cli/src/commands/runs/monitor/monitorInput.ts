@@ -339,8 +339,9 @@ export const onKey = (
 };
 
 /**
- * The team, raised and lowered from the panel: ↑ ↓ an entry, + one more of it, − one fewer — its min no more than its
- * count — written as `run team set` writes it. The person watching the run set the team's size in another terminal.
+ * The team, raised and lowered from the panel: ↑ ↓ an entry, → or + one more of it, ← or − one fewer — its min no
+ * more than its count — written as `run team set` writes it. The person watching the run set the team's size in another
+ * terminal. ← → beside the arrows that move between entries: the hand stays where it is.
  */
 const inTeam = (
   ui: MonitorUi,
@@ -358,7 +359,12 @@ const inTeam = (
   }
 
   const entry = team.at(at);
-  const delta = text === '+' || text === '=' ? 1 : text === '-' || text === '_' ? -1 : 0;
+  const delta =
+    key?.name === 'right' || text === '+' || text === '='
+      ? 1
+      : key?.name === 'left' || text === '-' || text === '_'
+        ? -1
+        : 0;
   if (!entry || delta === 0) {
     return still(ui);
   }

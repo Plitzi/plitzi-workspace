@@ -22,19 +22,26 @@ import { browserHost, moveDrawn } from './viewTransition';
 
 import type { CommonState, NavigateHow, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
-import type { PathMatch } from 'react-router-dom';
+import type { Location, NavigateFunction, NavigationType, PathMatch } from 'react-router-dom';
 
 export type NavigationProviderProps = {
   children: ReactNode;
   currentPageId?: string;
 };
 
+/** What the router says of the address — absent in a widget render, which has no router to ask. */
+type RouterState = { location: Location; navigationType: NavigationType; navigate: NavigateFunction };
+
 /** How long a navigation waits for the destination's data before going anyway. */
 const PREFETCH_TIMEOUT_MS = 1500;
 
 const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: NavigationProviderProps) => {
+const NavigationCore = ({
+  children,
+  currentPageId: currentPageIdProp,
+  router
+}: NavigationProviderProps & { router?: RouterState }) => {
   const { server } = use(NetworkContext);
   // The root store, for the prefetch below: `refreshRsc` writes what it fetched where every element reads it.
   const store = useStoreById<CommonState>();
@@ -56,21 +63,18 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
    * not: a space embedded in an application with a router of its own routes in memory, so the window's address
    * never moves and matching the page against it left every internal link doing nothing at all.
    *
-   * Guarded like `useNavigate` below: a widget render has no router to ask.
+   * Absent in a widget render, which has no router to ask (`NavigationProvider`).
    */
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const routerLocation = renderMode !== 'widget' ? useLocation() : undefined;
-  // How it came there — a link, or back and forward — for the scroll it opens at. Guarded as the location is.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const navigationType = renderMode !== 'widget' ? useNavigationType() : undefined;
+  const routerLocation = router?.location;
+  // How it came there — a link, or back and forward — for the scroll it opens at.
+  const navigationType = router?.navigationType;
   const { queryParams, hostname, origin, location } = useNavigation({ server, routerLocation });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const pageFoldersRef = useRef(pageFolders);
   pageFoldersRef.current = pageFolders;
   const { authenticated, user } = use(AuthContext);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const routerNavigate = renderMode !== 'widget' ? useNavigate() : undefined;
+  const routerNavigate = router?.navigate;
   /**
    * The router's `navigate`, reached through a ref: it is a new function whenever the location changes, and the one
    * built on it below is published to the store, where every link on the page reads it. Depending on it made each
@@ -360,6 +364,26 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   }
 
   return children;
+};
+
+/** Inside a router: what it says of the address, read on every render and handed to the navigation. */
+const RoutedNavigation = (props: NavigationProviderProps) => {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const navigate = useNavigate();
+
+  return <NavigationCore {...props} router={{ location, navigationType, navigate }} />;
+};
+
+/**
+ * The space's navigation. A widget render has no router — it draws one element, or a space inside another — so it
+ * navigates without one; every other render reads the router it is mounted in. The mode is fixed for a render's life,
+ * so neither branch is ever swapped for the other under the same tree.
+ */
+const NavigationProvider = (props: NavigationProviderProps) => {
+  const { renderMode } = useRenderSettings();
+
+  return renderMode === 'widget' ? <NavigationCore {...props} /> : <RoutedNavigation {...props} />;
 };
 
 export default NavigationProvider;

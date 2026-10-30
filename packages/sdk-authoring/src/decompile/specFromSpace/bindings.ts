@@ -1,4 +1,4 @@
-import { BINDING_CATEGORIES, LEGACY_ELEMENT_TYPES, bindingsOf, conditionOf, isEmpty, correct } from './values';
+import { BINDING_CATEGORIES, bindingsOf, conditionOf, isEmpty, correct } from './values';
 import { elementCallbacks, elementSourceTypes, elementTriggers } from '../../elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../../schema';
@@ -227,7 +227,7 @@ const liveSteps = (reader: SpecReader, chain: ElementInteraction[], element: Ele
       return undefined;
     }
 
-    return type && Object.hasOwn(LEGACY_ELEMENT_TYPES, type) ? LEGACY_ELEMENT_TYPES[type].type : type;
+    return type;
   };
   const offers = (catalog: Record<string, string[]>, id: string, action: string): boolean => {
     const type = typeOf(id);

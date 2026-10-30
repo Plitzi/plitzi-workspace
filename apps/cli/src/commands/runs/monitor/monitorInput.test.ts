@@ -368,12 +368,15 @@ describe("the monitor's team", () => {
     } as unknown as Monitored // The team alone: nothing else of a run is read by these keys.
   });
 
-  it('opens on r, moves with ↑ ↓, and asks one more or one fewer of the entry chosen — its min no more than its count', () => {
+  it('opens on r, moves with ↑ ↓, and asks one more (→ +) or one fewer (← −) of the entry chosen — its min no more than its count', () => {
     const open = press(initialUi('simple'), 'r', withTeam).ui;
     expect(open.dialog).toEqual({ kind: 'team', at: 0 });
 
     expect(press(open, '+', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 3 }]);
     expect(press(open, '-', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 1, min: 1 }]);
+    // ← → beside ↑ ↓: the same hand raises and lowers what it moved to.
+    expect(press(open, 'right', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 3 }]);
+    expect(press(open, 'left', withTeam).effects).toEqual([{ kind: 'team-count', name: 'dev', count: 1, min: 1 }]);
 
     const tester = press(open, 'down', withTeam).ui;
     expect(tester.dialog).toEqual({ kind: 'team', at: 1 });

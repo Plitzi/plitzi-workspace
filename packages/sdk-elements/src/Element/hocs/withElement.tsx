@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 
@@ -17,7 +16,7 @@ import useElementInternal from '../hooks/useElementInternal';
 import type { ElementContextValue } from '../ElementContext';
 import type { ElementParentContextValue } from '../ElementParentContext';
 import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
-import type { FC, ReactNode } from 'react';
+import type { FC, ReactNode, RefObject } from 'react';
 
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
@@ -28,61 +27,34 @@ export type WithElementProps<T> = {
 } & T;
 
 // Single component on purpose: under `plitziJsxSkipHOC` it returns the lightweight identity-only branch before the
-// heavy resolution hooks, which is a conditional-hooks pattern (hence the file-level rules-of-hooks disable). It is
-// safe because `plitziJsxSkipHOC` is invariant for a given mounted element, so hook order never changes across its
-// re-renders. Splitting the two branches into separate components would only add a wrapper level to the React DevTools
-// tree for every element.
+// heavy resolution (`useResolvedElement`). Safe because `plitziJsxSkipHOC` is invariant for a given mounted element, so
+// hook order never changes across its re-renders; splitting the branches into components would only add a level to the
+// React tree for every element.
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const name = WrappedComponent.displayName || WrappedComponent.name;
 
-  const WithElementComponent = (props: WithElementProps<T>) => {
-    const ref = useRef<HTMLElement>(undefined);
-    // Previous render's input snapshot, diffed under `debugMode` so the tracing panel can show which prop/data changed.
-    // Declared unconditionally (hooks rules) even though only the debug branch reads it.
-    const prevInputsRef = useRef<Record<string, unknown> | undefined>(undefined);
-    const { id, rootId } = props.internalProps;
-    // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
-    // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
-    // of its own, but its descendants still have to see that an ancestor hid them.
-    const parentElement = use(ElementParentContext);
-    const parentVisible = parentElement?.visible ?? true;
-    /**
-     * This instance's tracing identity — see `ElementContextValue.traceId`.
-     *
-     * `useId` and not the element id, because a controlled list renders the same element once per row and the panel
-     * has to tell those rows apart. Read unconditionally: `debugMode` is a runtime toggle, and a hook whose call
-     * depended on it would change the hook order of every element on the page the moment somebody pressed it.
-     */
-    const instanceId = useId();
-    const traceId = `${id}${instanceId}`;
-    /**
-     * A skipHOC element passes its PARENT's trace id through rather than minting one.
-     *
-     * It renders no `Profiler` of its own, so a trace id here would name a node the collector never hears about, and
-     * everything below it would hang off a parent that is not in the tree — which the viewer reads as a root. Passing
-     * the parent through nests those descendants under the nearest ancestor that actually rendered.
-     */
-    const skipTraceId = parentElement?.traceId ?? traceId;
-    const skipEntry = useMemo<ElementContextValue<'skipHOC'>>(
-      () => ({ id, rootId, visible: parentVisible, traceId: skipTraceId, plitziJsxSkipHOC: true }),
-      [id, rootId, parentVisible, skipTraceId]
-    );
-
-    const skipParent = useMemo<ElementParentContextValue>(
-      () => ({ visible: parentVisible, traceId: skipTraceId }),
-      [parentVisible, skipTraceId]
-    );
-
-    if (props.plitziJsxSkipHOC) {
-      return (
-        <ElementParentContext value={skipParent}>
-          <ElementContext value={skipEntry}>
-            <WrappedComponent {...props} />
-          </ElementContext>
-        </ElementParentContext>
-      );
+  /**
+   * The element resolved — its data from the store, its state, what the wrapped component is given — and drawn: every
+   * hook a full element runs. Its own hook so the one place a render skips it (`plitziJsxSkipHOC`) is one call, not the
+   * rule turned off for the whole file.
+   */
+  const useResolvedElement = (
+    props: WithElementProps<T>,
+    {
+      ref,
+      prevInputsRef,
+      traceId,
+      parentElement,
+      parentVisible
+    }: {
+      ref: RefObject<HTMLElement | undefined>;
+      prevInputsRef: RefObject<Record<string, unknown> | undefined>;
+      traceId: string;
+      parentElement: ElementParentContextValue | undefined;
+      parentVisible: boolean;
     }
-
+  ): ReactNode => {
+    const { id, rootId } = props.internalProps;
     const {
       settings: { previewMode, debugMode },
       root: { baseElementId }
@@ -152,7 +124,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           <WrappedComponent {...wrappedProps} ref={ref} />
         </ErrorBoundary>
       );
-    }, [internalProps.attributes, props, customProps, children]);
+    }, [internalProps.attributes, props, customProps, children, ref]);
 
     const tree = (
       <ElementParentContext value={parentData}>
@@ -190,6 +162,60 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     }
 
     return tree;
+  };
+
+  const WithElementComponent = (props: WithElementProps<T>) => {
+    const ref = useRef<HTMLElement>(undefined);
+    // Previous render's input snapshot, diffed under `debugMode` so the tracing panel can show which prop/data changed.
+    // Declared unconditionally (hooks rules) even though only the debug branch reads it.
+    const prevInputsRef = useRef<Record<string, unknown> | undefined>(undefined);
+    const { id, rootId } = props.internalProps;
+    // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
+    // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
+    // of its own, but its descendants still have to see that an ancestor hid them.
+    const parentElement = use(ElementParentContext);
+    const parentVisible = parentElement?.visible ?? true;
+    /**
+     * This instance's tracing identity — see `ElementContextValue.traceId`.
+     *
+     * `useId` and not the element id, because a controlled list renders the same element once per row and the panel
+     * has to tell those rows apart. Read unconditionally: `debugMode` is a runtime toggle, and a hook whose call
+     * depended on it would change the hook order of every element on the page the moment somebody pressed it.
+     */
+    const instanceId = useId();
+    const traceId = `${id}${instanceId}`;
+    /**
+     * A skipHOC element passes its PARENT's trace id through rather than minting one.
+     *
+     * It renders no `Profiler` of its own, so a trace id here would name a node the collector never hears about, and
+     * everything below it would hang off a parent that is not in the tree — which the viewer reads as a root. Passing
+     * the parent through nests those descendants under the nearest ancestor that actually rendered.
+     */
+    const skipTraceId = parentElement?.traceId ?? traceId;
+    const skipEntry = useMemo<ElementContextValue<'skipHOC'>>(
+      () => ({ id, rootId, visible: parentVisible, traceId: skipTraceId, plitziJsxSkipHOC: true }),
+      [id, rootId, parentVisible, skipTraceId]
+    );
+
+    const skipParent = useMemo<ElementParentContextValue>(
+      () => ({ visible: parentVisible, traceId: skipTraceId }),
+      [parentVisible, skipTraceId]
+    );
+
+    if (props.plitziJsxSkipHOC) {
+      return (
+        <ElementParentContext value={skipParent}>
+          <ElementContext value={skipEntry}>
+            <WrappedComponent {...props} />
+          </ElementContext>
+        </ElementParentContext>
+      );
+    }
+
+    // `plitziJsxSkipHOC` is invariant for a mounted element, so this call is made on every render of it or on none: the
+    // hook order never changes. A component of its own would add a level to the React tree for every element.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useResolvedElement(props, { ref, prevInputsRef, traceId, parentElement, parentVisible });
   };
 
   WithElementComponent.displayName = `withElement(${name})`;

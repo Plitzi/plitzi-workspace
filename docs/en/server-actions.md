@@ -861,8 +861,7 @@ createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: crea
 
 On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as they are in Redis — and a value is a
 `MEDIUMTEXT`, so one past 64 KB is kept whole, and a job carries the `job_key` a run set for later is replaced by.
-A table made before those is brought up to them on first use; with `createTables: false`, run the statements of
-`mysqlJobSchemaUpgrades()` your tables still lack in your own migrations, once each.
+With `createTables: false`, your own migrations create the tables from `mysqlJobSchemaStatements()`.
 
 Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
 [`09-schedules`](../../examples/self-hosting/09-schedules) is one written out: every method of the queue

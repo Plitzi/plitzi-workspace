@@ -4,14 +4,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { readBindings, readFlows } from './bindings';
 import { classesOf, elementBaseStyle, keepClassList } from './classes';
 import { childrenOf, dropField } from './tree';
-import {
-  ATTRIBUTE_NAMES,
-  ATTRIBUTE_VALUE_FIXES,
-  DEFINITION_FIELDS,
-  LEGACY_ELEMENT_TYPES,
-  isEmpty,
-  correct
-} from './values';
+import { ATTRIBUTE_NAMES, ATTRIBUTE_VALUE_FIXES, DEFINITION_FIELDS, isEmpty, correct } from './values';
 import { defaultAttributes } from '../../elements';
 import { isSuggestionCode } from '../../schema/codes';
 import { flagSpecOf } from '../../schema/flags';
@@ -20,23 +13,8 @@ import type { SpecReader } from './reader';
 import type { ElementSpec } from '../../schema';
 import type { Element } from '@plitzi/sdk-shared';
 
-const typeOf = (
-  reader: SpecReader,
-  element: Element
-): { type: string; legacy?: (typeof LEGACY_ELEMENT_TYPES)[string] } => {
+const typeOf = (reader: SpecReader, element: Element): string => {
   const original = element.definition.type;
-  const legacy = LEGACY_ELEMENT_TYPES[original] as (typeof LEGACY_ELEMENT_TYPES)[string] | undefined;
-  if (legacy) {
-    correct(
-      reader,
-      'legacy-element-type',
-      `"${element.id}" was a ${original}, which is a ${legacy.type} today.`,
-      element.id
-    );
-
-    return { type: legacy.type, legacy };
-  }
-
   if (!Object.hasOwn(ATTRIBUTE_NAMES, original) && !reader.pluginTypes.has(original)) {
     correct(
       reader,
@@ -46,7 +24,7 @@ const typeOf = (
     );
   }
 
-  return { type: original };
+  return original;
 };
 
 export const readElement = (reader: SpecReader, element: Element): ElementSpec => {
@@ -58,20 +36,14 @@ export const readElement = (reader: SpecReader, element: Element): ElementSpec =
     }
   }
 
-  const { type, legacy } = typeOf(reader, element);
+  const type = typeOf(reader, element);
   // Some documents store an element with no attributes as an empty ARRAY, which reads as an object with none.
   const stored = isRecord(element.attributes) ? element.attributes : {};
-  const attributes = readAttributes(
-    reader,
-    type,
-    legacy ? legacy.attributes(stored) : stored,
-    placedNames(reader, element)
-  );
+  const attributes = readAttributes(reader, type, stored, placedNames(reader, element));
   const keepId = reader.options.keepIds === true || !reader.derived.has(element.id);
 
   const { base: baseSelector, ...slotSelectors } = definition.styleSelectors;
   const baseStyle = elementBaseStyle(reader, baseSelector, element.id);
-  const style = legacy?.css && !baseStyle.class && !baseStyle.css ? { ...baseStyle, css: legacy.css } : baseStyle;
   const slots = Object.fromEntries(
     Object.entries(slotSelectors).flatMap(([slot, selector]) => {
       const names = selector ? classesOf(selector) : [];
@@ -99,7 +71,7 @@ export const readElement = (reader: SpecReader, element: Element): ElementSpec =
     type,
     ...(keepId ? { id: element.id } : {}),
     attributes,
-    ...style,
+    ...baseStyle,
     ...(variant ? { variant } : {}),
     ...(isEmpty(slots) ? {} : { slots }),
     ...(bind ? { bind } : {}),

@@ -273,7 +273,6 @@ describe('specFromSpace / what it repairs', () => {
   it('reports every repair it made', () => {
     expect(new Set(codes)).toEqual(
       new Set([
-        'legacy-element-type',
         'folded-state-selector',
         'unwritable-css',
         'dropped-field',
@@ -306,14 +305,6 @@ describe('specFromSpace / what it repairs', () => {
     expect(repairs.map(repair => repair.message)).toEqual(
       expect.arrayContaining([expect.stringContaining('page attribute "keepState"')])
     );
-  });
-
-  it('turns a navbar into a list laid out in a row, and its items into list items', () => {
-    const nav = spec.pages[0].body[0];
-
-    expect(nav.type).toBe('list');
-    expect(nav.attributes).toEqual({ subType: 'ul' });
-    expect(nav.children?.[0].type).toBe('listItem');
   });
 
   it('folds a hover stored as a class of its own into the class, and keeps the unwritable rule under the same selector', () => {
@@ -630,15 +621,6 @@ const legacy = (): SpaceDocuments => {
 
   // A full URL in page mode, which rendered as a path inside the space.
   flat.out.attributes.mode = 'page';
-  // A navbar and its items: types the builder no longer ships.
-  flat.nav.definition.type = 'navbar';
-  flat.nav.attributes = { subtype: 'ul', direction: 'left' };
-  flat.nav.definition.items = ['item'];
-  flat.item = {
-    id: 'item',
-    attributes: {},
-    definition: { type: 'navbarItem', label: 'Item', rootId: 'home', parentId: 'nav', styleSelectors: { base: '' } }
-  };
   // A hover stored as a class of its own, and a rule the style editor cannot hold.
   const hover: StyleItem = {
     name: 'box:hover',

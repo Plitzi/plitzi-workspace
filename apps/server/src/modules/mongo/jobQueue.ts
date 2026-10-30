@@ -19,16 +19,10 @@ import type { Collection, Db, Document } from 'mongodb';
 /** Mongo's code for a unique index that refused a second document with the same key. */
 const DUPLICATE_KEY = 11000;
 
-/** Mongo's code for a collection that does not exist yet. */
-const NAMESPACE_NOT_FOUND = 26;
-
 /** Spread into a plain array: the queries take a mutable list. */
 const TERMINAL: JobStatus[] = [...TERMINAL_JOB_STATUSES];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** The index jobs were looked up by their action with, before they had a target. */
-const LEGACY_ACTION_INDEX = 'spaceId_1_actionId_1_updatedAt_-1';
 
 /** The database, or how to reach it — a getter for a deployment whose client is replaced when it reconnects. */
 export type MongoDbSource = Db | (() => Db);
@@ -126,19 +120,6 @@ export const createMongoJobQueue = ({
 
   let ready: Promise<void> | undefined;
 
-  /** Whether the index jobs were found by before targets is there — on a collection not made yet, nothing is. */
-  const legacyIndexIsThere = async (): Promise<boolean> => {
-    try {
-      return await jobsOf().indexExists(LEGACY_ACTION_INDEX);
-    } catch (error) {
-      if ((error as { code?: number }).code === NAMESPACE_NOT_FOUND) {
-        return false;
-      }
-
-      throw error;
-    }
-  };
-
   /**
    * The indexes the queue cannot work without, built once on first use.
    *
@@ -147,16 +128,6 @@ export const createMongoJobQueue = ({
    * index each and merged already sorted.
    */
   const build = async (): Promise<void> => {
-    // A job written before jobs had a target is a run of an action, as every job then was: given its target once, and
-    // the index on the field it replaced taken away (it is not there on a queue made since — nothing to drop).
-    await jobsOf().updateMany({ target: { $exists: false } }, [
-      { $set: { target: { kind: 'action', name: '$actionId', trigger: '$trigger' } } },
-      { $unset: ['actionId', 'trigger'] }
-    ]);
-    if (await legacyIndexIsThere()) {
-      await jobsOf().dropIndex(LEGACY_ACTION_INDEX);
-    }
-
     await Promise.all([
       jobsOf().createIndex({ status: 1, runAt: 1 }),
       jobsOf().createIndex({ status: 1, leaseUntil: 1 }),

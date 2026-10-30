@@ -158,7 +158,7 @@ export const drawNeedsDialog = (p: Paint, needs: readonly Need[]): void => {
  */
 export const drawTeamDialog = (p: Paint, team: Monitored['team'], at: number): void => {
   const { canvas, theme } = p;
-  const frame = raise(p, 78, team.length + 7, 'Team · + one more · − one fewer');
+  const frame = raise(p, 78, team.length + 7, 'Team · → + one more · ← − one fewer');
   team.forEach((entry, index) => {
     const row = frame.top + 3 + index;
     const chosen = index === at;
@@ -215,7 +215,7 @@ export const drawHelp = (p: Paint, mode: MonitorMode): void => {
     ],
     ['e', 'widens the sidebar — again, back as it was', false],
     ['t', 'light or dark', true],
-    ['r', 'the team: ↑ ↓ an entry, + one more of it, − one fewer — written to .plitzi/team.json', true],
+    ['r', 'the team: ↑ ↓ an entry, → + one more of it, ← − one fewer — written to .plitzi/team.json', true],
     ['ctrl+p', 'commands: every task, agent, view and fix', true],
     ['q', 'quits — twice while a preview runs from here: it stops too', true]
   ];

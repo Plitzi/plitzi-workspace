@@ -27,6 +27,12 @@ authoring and the elements learnt from the runs.
   plugin's address, a server `query`, `http.request`, a connector, a function's `fetch` — reach no private address but
   the origins the deployment names as its own: a development machine whose bucket is on localhost writes
   `outbound: { privateOrigins: ['http://localhost:9000'] }` where it wrote `allowPrivatePluginHosts: true`.
+- **A job queue made before jobs had a target is no longer brought up to date.** `createMongoJobQueue` and
+  `createMysqlJobQueue` read the shape they write and nothing older: a Mongo `action_jobs` collection or a MySQL
+  `action_jobs` / `action_kv` table made by 0.38.20 or before is emptied or dropped, and the queue makes it again on
+  first use. `mysqlJobSchemaUpgrades` is gone with what it listed; `mysqlJobSchemaStatements` still creates the tables.
+- **`specFromSpace` no longer reads `navbar` and `navbarItem`**, element types no builder writes: a document that still
+  holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
@@ -313,6 +319,8 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **The monitor's team panel (`r`) takes ← → as well**: → one more of the entry, ← one fewer, beside `+` and `−` — the
+  hand on ↑ ↓ to move between entries stays where it is.
 - **A run of up to 7 agents opens without the person** (`run open`): a team has more kinds of agent now — scouts,
   designers, testers — and past 5 every open needed the person to confirm it. Above 7, or 120 minutes, it still does.
 - **What an answer is made of, kept**: a command whose answer has parts — a brief (primer, the task's own, files,
@@ -1777,6 +1785,8 @@ is no room at this address.` — one line, no stack — where the log said "ende
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 
+- **Every repair the export names is said in words**: renamed element ids, custom CSS folded into its class, flows on
+  events that never fire, steps nothing answers and parameters a step does not take showed their bare code.
 - **The builder offers what the space role allows** (`useSpaceAccess`): a content editor selects an element
   and edits its content in a form — no structure, styles, variables, state or code, and the media library alone; a
   viewer sees the same, read-only; Snapshot and Publish only with publishing; Settings only with managing. The role is

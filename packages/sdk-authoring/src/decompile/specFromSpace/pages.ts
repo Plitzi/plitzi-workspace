@@ -6,15 +6,7 @@ import { readBindings, readFlows } from './bindings';
 import { baseStyle, pageStyle } from './classes';
 import { readElement } from './elements';
 import { componentRoots, childrenOf, dropField } from './tree';
-import {
-  BINDING_CATEGORIES,
-  LAYOUT_ATTRIBUTES,
-  LEGACY_ELEMENT_TYPES,
-  PAGE_ATTRIBUTES,
-  bindingsOf,
-  isEmpty,
-  correct
-} from './values';
+import { BINDING_CATEGORIES, LAYOUT_ATTRIBUTES, PAGE_ATTRIBUTES, bindingsOf, isEmpty, correct } from './values';
 import { flagSpecOf } from '../../schema/flags';
 
 import type { SpecReader } from './reader';
@@ -42,8 +34,6 @@ export const derivedIds = (reader: SpecReader, roots: Roots): Set<string> => {
   componentRoots(roots).forEach(visit);
   [...roots.layouts, ...roots.pages].forEach(root => childrenOf(reader, root, false).forEach(visit));
 
-  const authoredType = ({ definition: { type } }: Element): string =>
-    Object.hasOwn(LEGACY_ELEMENT_TYPES, type) ? LEGACY_ELEMENT_TYPES[type].type : type;
   const named = new Set<string>([...roots.layouts, ...roots.pages].map(root => root.id));
   for (const element of order) {
     if (reader.references.has(element.id)) {
@@ -60,7 +50,7 @@ export const derivedIds = (reader: SpecReader, roots: Roots): Set<string> => {
         continue;
       }
 
-      const type = authoredType(element);
+      const type = element.definition.type;
       let next = (counters.get(type) ?? 0) + 1;
       while (named.has(`${type}-${next}`)) {
         next += 1;

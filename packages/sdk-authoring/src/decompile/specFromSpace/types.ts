@@ -3,7 +3,6 @@ import type { Element, SpaceComponent } from '@plitzi/sdk-shared';
 
 export type SpecCorrectionCode =
   | 'legacy-element-id'
-  | 'legacy-element-type'
   | 'unknown-element-type'
   | 'dropped-field'
   | 'dropped-attribute'

@@ -1,4 +1,4 @@
-import { execute, selectRows } from '../query';
+import { execute } from '../query';
 
 import type { Queryable } from '../query';
 
@@ -102,75 +102,6 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
   ];
 };
 
-/** A change to tables made before it, and how to tell a table still needs it. */
-type SchemaUpgrade = {
-  needed: (db: Queryable, prefix: string) => Promise<boolean>;
-  statements: (prefix: string) => string[];
-};
-
-/** The columns a table of this database has, by name, with their types. */
-const columnsOf = async (db: Queryable, table: string): Promise<Map<string, string>> => {
-  const columns = await selectRows<{ name: string; type: string }>(
-    db,
-    `SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
-    [table]
-  );
-
-  return new Map(columns.map(column => [column.name, column.type.toLowerCase()]));
-};
-
-const UPGRADES: readonly SchemaUpgrade[] = [
-  // A `kv` key as bytes and a value past 64 KB: the table was first made with `VARCHAR` and `TEXT`.
-  {
-    needed: async (db, prefix) => {
-      const columns = await columnsOf(db, `${prefix}action_kv`);
-
-      return columns.get('k') !== 'varbinary' || columns.get('v') !== 'mediumtext';
-    },
-    statements: prefix => [
-      `ALTER TABLE ${jobTables(prefix).kv} MODIFY k VARBINARY(764) NOT NULL, MODIFY v MEDIUMTEXT NOT NULL`
-    ]
-  },
-  // The key a run set for later is replaced and cancelled by.
-  {
-    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('job_key'),
-    statements: prefix => [
-      `ALTER TABLE ${jobTables(prefix).jobs} ADD COLUMN job_key VARCHAR(191) NULL AFTER missed,
-      ADD KEY action_jobs_key (space_id, job_key, status)`
-    ]
-  },
-  // What a job runs became a target — an action, or a job of the space's functions — beside what a job of the functions
-  // keeps: what it saved, how far it is, what it answered, a pause asked of it, how long it has run. The rows already
-  // there are the actions' they always were: each is given its target from its action and trigger.
-  {
-    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('target_kind'),
-    statements: prefix => {
-      const { jobs } = jobTables(prefix);
-
-      return [
-        `ALTER TABLE ${jobs} ADD COLUMN target_kind VARCHAR(16) NULL AFTER space_id,
-        ADD COLUMN target_name VARCHAR(191) NULL AFTER target_kind, ADD COLUMN target MEDIUMTEXT NULL AFTER target_name,
-        ADD COLUMN state MEDIUMTEXT NULL, ADD COLUMN progress TEXT NULL, ADD COLUMN result MEDIUMTEXT NULL,
-        ADD COLUMN pause_requested TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN active_ms BIGINT NOT NULL DEFAULT 0`,
-        `UPDATE ${jobs} SET target_kind = 'action', target_name = action_id,
-        target = JSON_OBJECT('kind', 'action', 'name', action_id, 'trigger', trigger_type)`,
-        `ALTER TABLE ${jobs} MODIFY target_kind VARCHAR(16) NOT NULL, MODIFY target_name VARCHAR(191) NOT NULL,
-        MODIFY target MEDIUMTEXT NOT NULL, DROP COLUMN action_id, DROP COLUMN trigger_type,
-        ADD KEY action_jobs_target (space_id, target_name, updated_at)`
-      ];
-    }
-  }
-];
-
-/**
- * What brings tables made before the columns above up to them — for a deployment that runs its own migrations: each
- * statement once, the ones its tables still lack. `ensureJobTables` does it by itself, and only where a table needs
- * it: an `ALTER` copies the table.
- */
-export const mysqlJobSchemaUpgrades = (prefix = ''): string[] =>
-  UPGRADES.flatMap(upgrade => upgrade.statements(prefix));
-
 /** The server's now, in epoch ms, as an SQL expression — what every comparison reads instead of a caller's clock. */
 export const NOW_MS = 'CAST(ROUND(UNIX_TIMESTAMP(NOW(3)) * 1000) AS SIGNED)';
 
@@ -186,14 +117,6 @@ export const ensureJobTables = (db: Queryable, prefix: string, create: boolean):
     ready ??= (async () => {
       for (const statement of mysqlJobSchemaStatements(prefix)) {
         await execute(db, statement);
-      }
-
-      for (const upgrade of UPGRADES) {
-        if (await upgrade.needed(db, prefix)) {
-          for (const statement of upgrade.statements(prefix)) {
-            await execute(db, statement);
-          }
-        }
       }
     })().catch((error: unknown) => {
       ready = undefined;

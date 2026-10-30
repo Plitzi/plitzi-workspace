@@ -28,9 +28,9 @@ describe('groupCorrections', () => {
 });
 
 describe('repairLabel', () => {
-  it('says what a kind of repair is, and falls back to its code for one it does not know', () => {
+  it('says what a kind of repair is', () => {
     expect(repairLabel('dropped-attribute')).toBe('Attributes nothing reads removed');
-    expect(repairLabel('something-new')).toBe('something-new');
+    expect(repairLabel('dead-step')).toBe('Steps nothing answers removed');
   });
 });
 

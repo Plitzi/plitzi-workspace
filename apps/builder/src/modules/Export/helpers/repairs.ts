@@ -1,8 +1,11 @@
-import type { SpecCorrection } from '@plitzi/sdk-authoring';
+import type { SpecCorrection, SpecCorrectionCode } from '@plitzi/sdk-authoring';
 
-/** What each kind of repair is, said the way someone reading the export would say it. */
-const REPAIR_LABELS: Record<string, string> = {
-  'legacy-element-type': 'Elements updated to today’s types',
+/**
+ * What each kind of repair is, said the way someone reading the export would say it — one for every code the reader
+ * can give, so a new one fails the build until it is named here.
+ */
+const REPAIR_LABELS: Record<SpecCorrectionCode, string> = {
+  'legacy-element-id': 'Element ids renamed to their names',
   'unknown-element-type': 'Element types kept as they are',
   'dropped-field': 'Unused element fields removed',
   'dropped-attribute': 'Attributes nothing reads removed',
@@ -13,21 +16,30 @@ const REPAIR_LABELS: Record<string, string> = {
   'folded-state-selector': 'Hover rules merged into their class',
   'dropped-selector': 'Selectors that cannot be authored removed',
   'unwritable-css': 'CSS kept in custom CSS',
+  'folded-custom-css': 'Custom CSS merged into its class',
   'unknown-style-state': 'Rules for unknown states removed',
   'broken-binding': 'Bindings to nothing removed',
   'fixed-binding-source': 'Binding sources corrected',
   'broken-flow': 'Broken interaction flows removed',
+  'dead-flow': 'Flows on events that never fire removed',
+  'dead-step': 'Steps nothing answers removed',
   'fixed-global-callback': 'Interaction targets corrected',
   'dropped-initial-state': 'Unsupported initial state removed',
+  'dropped-param': 'Parameters a step does not take removed',
   'missing-folder': 'References to missing folders removed',
   'broken-layout': 'Broken layout references removed'
 };
 
-export const repairLabel = (code: string): string => REPAIR_LABELS[code] ?? code;
+export const repairLabel = (code: SpecCorrectionCode): string => REPAIR_LABELS[code];
 
 /** Removed, corrected or kept: what the reader DID, which is what the icon beside a kind of repair says. */
-export const repairIcon = (code: string): string => {
-  if (code.startsWith('fixed-') || code === 'folded-state-selector' || code === 'legacy-element-type') {
+export const repairIcon = (code: SpecCorrectionCode): string => {
+  if (
+    code.startsWith('fixed-') ||
+    code === 'folded-state-selector' ||
+    code === 'folded-custom-css' ||
+    code === 'legacy-element-id'
+  ) {
     return 'fa-solid fa-wrench';
   }
 
@@ -54,7 +66,7 @@ export const messageParts = (message: string): MessagePart[] =>
     .filter(part => part.text !== '');
 
 export type CorrectionGroup = {
-  code: string;
+  code: SpecCorrectionCode;
   label: string;
   total: number;
   messages: { text: string; count: number }[];
@@ -62,7 +74,7 @@ export type CorrectionGroup = {
 
 /** The repairs by kind, in the order each kind first appeared — the same repair made several times listed once. */
 export const groupCorrections = (corrections: SpecCorrection[]): CorrectionGroup[] => {
-  const groups = new Map<string, Map<string, number>>();
+  const groups = new Map<SpecCorrectionCode, Map<string, number>>();
   for (const { code, message } of corrections) {
     const messages = groups.get(code) ?? new Map<string, number>();
     messages.set(message, (messages.get(message) ?? 0) + 1);

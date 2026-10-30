@@ -5,32 +5,7 @@ import { elementAttributeNames } from '../../elements';
 
 import type { SpecReader } from './reader';
 import type { SpecCorrectionCode } from './types';
-import type { CssProps } from '../../style';
 import type { BindingCategory, ElementBinding, ElementInteraction } from '@plitzi/sdk-shared';
-
-/**
- * Element types the builder no longer ships, and what each one is today.
- *
- * A `navbar` was a horizontal list of links; the element that renders a list is `list`, so a navbar becomes one —
- * laid out in a row, because that is what the old element did without being asked.
- */
-export const LEGACY_ELEMENT_TYPES: Record<
-  string,
-  { type: string; attributes: (legacy: Record<string, unknown>) => Record<string, unknown>; css?: CssProps }
-> = {
-  navbar: {
-    type: 'list',
-    attributes: legacy => ({ subType: legacy.subtype === 'ol' ? 'ol' : 'ul' }),
-    css: {
-      display: 'flex',
-      'list-style-type': 'none',
-      'padding-left': '0px',
-      'margin-top': '0px',
-      'margin-bottom': '0px'
-    }
-  },
-  navbarItem: { type: 'listItem', attributes: () => ({}) }
-};
 
 export const DEFINITION_FIELDS = new Set([
   'label',
