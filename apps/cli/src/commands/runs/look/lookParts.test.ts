@@ -81,6 +81,18 @@ describe('the dress a comparison says changed', () => {
   });
 });
 
+// A run's look said "at 390 dark: nothing changed" beside the run before it — its own picture had no globe drawn yet.
+describe('a comparison whose canvas was not drawn', () => {
+  it('says so, rather than that nothing changed', () => {
+    const output = JSON.stringify({ canvasMoving: true, compare: { changed: 0, regions: [], decorations: [] } });
+
+    expect(comparedOf(output)).toEqual({ changed: 0, sections: [], dress: [], canvasMoving: true });
+    expect(comparedOf(JSON.stringify({ compare: { changed: 0, regions: [], decorations: [] } }))).not.toHaveProperty(
+      'canvasMoving'
+    );
+  });
+});
+
 // /settings and /messages send a guest to the sign-in from their own flows, declaring no access: a run's designers
 // looked at them as guests five times, and pictured the sign-in.
 describe('the pages a guest is sent away from', () => {

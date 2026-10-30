@@ -311,6 +311,18 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 
 ## Several agents on one project (`@plitzi/cli`)
 
+- **A first plan's lines tried before opening** (`run open <plan> --dry-run --lines` with no run open): on the project
+  as it is, where it refused.
+- **The finish fails fast**: its acceptance runs the Playwright suites first, a failed line again at once, and stops at
+  the first that fails twice — the lines not started yet said, and run at the next finish, what passed kept. A run's
+  two finishes ran every line, ~12 min each, to refuse a spec a 2-min run would have shown.
+- **A finish refused by timeouts on a busy machine says so**: when every failed line ran out of time and the machine's
+  load was past 1.5 a core, the refusal says it first — nothing says the result is broken — and the report no longer
+  blames the tasks' changes for it.
+- **A card's folder counts as written** when the work wrote in it: `task show` said a plugin's folder was not written
+  beside its seven files.
+- **The run's own process named as such** in the monitor's activity: "the run", where it said "keeper".
+
 - **One lead, the manager; a tester reviews every task; a scout finds out the spikes.** The lead is the person's harness
   and never starts again, so whatever it reads it reads again every turn: a run's lead, scoping and reviewing, spent 68%
   of the run. Now:
@@ -1151,6 +1163,21 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
 
 ## Page tools (`@plitzi/cli`, `@plitzi/sdk-authoring`)
 
+- **What an element draws, measured** (`page measure <element> --only drawn`): `drawn-x`, `drawn-y`, `drawn-width`,
+  `drawn-height` — the bounds of its pixels unlike its background, pictured alone (what lies over it hidden for that
+  moment): a map canvas's globe, a chart's plot. A run's designer and tester each decoded a screenshot with a script of
+  their own to hold a globe's size.
+- **`--expect` holds a number at least or at most one** (`page measure --expect drawn-width>=340px`, `width<=44px`); a
+  sign beside no number is refused.
+- **A drag held** (`--steps "drag sheet-handle 0 -120 hold; release"`): the finger stays down, so what follows reads
+  the page mid-drag — a style only a drag sets, the height a sheet follows — until `release`.
+- **A text held whole** (`page check --expect "log-count=1 contact"`): `=` is the whole text, `~` a part of it — "1
+  contact" passed on "1 contacts".
+- **A canvas still blank is not drawn**: a picture waits until its canvas is still and holds something; `task look`
+  says a comparison whose canvas was not drawn yet, where it said "nothing changed".
+- **An element out of sight is said, not a stack trace**: `page shot --within` and `task look`'s parts give up an
+  element that never comes into view (a phone's sheet at 1440) after 8 s, saying why.
+
 - **A cloud command on a plan that does not include it says the plan and the link**: every request to the platform
   (`requestJson`) reads a `plan-required` refusal (`isPlanRefusal`) and answers it as its error, with the
   `upgradeUrl` — `plitzi create --from`, `space push`, `source keep`, a plugin upload — instead of each command's
@@ -1481,6 +1508,11 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   list's own properties, so a limit written as a rule read nothing).
 
 ## Elements and the SDK (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`, `@plitzi/sdk-shared`)
+
+- **A binding's `sourceTo` is the field's previous value, never the bound one**: with none before it was the source,
+  so a `styleVariant` appended to it spread a word into `{"0":"o","1":"n", …}` beside its key, and a `styleSelector`
+  appended to nothing repeated the source. Now `undefined` there: a variant appended to nothing is its own key alone, a
+  selector appended to nothing is itself.
 
 - **`PlitziBadge`**: the deployment's "Made with Plitzi" badge, with a link to report the site, drawn in every render
   mode when the server says so (`render.badge`, on SSR and on the client's `InitQuery`), light and dark. A space

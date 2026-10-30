@@ -267,6 +267,8 @@ export interface Expectation {
   text: string;
   /** The opposite, `!<id>`: no copy of it shown — none showing the text, with one. */
   absent?: true;
+  /** `<id>=<text>`: a copy shows this text whole — not a part of a longer one. */
+  whole?: true;
   /**
    * `<id>[href]~next=`: what an attribute of it holds, not its words — where a link goes: a run's scout could hold a
    * guest's Sign in to its `?next=` with no line of `page check` (`page play` printed it, and never failed).

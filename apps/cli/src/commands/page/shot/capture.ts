@@ -6,6 +6,7 @@ import { saySignedIn, sentElsewhere, signInWhereSent } from '../check';
 import { prepareVisit } from '../visit';
 import { BARE, IMAGES_BUDGET_MS, REMOTE_IMAGES_BUDGET_MS, WAITING_FOR_SCROLL } from './types';
 import { projectRun } from '../../../scaffold/packageManager';
+import { drawnBounds, pixelsOf } from '../drawn';
 
 import type { Framing, Taken, View } from './types';
 import type { Browser, BrowserPage } from '../../../browser';
@@ -271,9 +272,10 @@ export const largestCanvas = (): { x: number; y: number; width: number; height: 
 };
 
 /**
- * Whether the page's canvas is drawn before it is pictured: looked at until two looks barely differ — or not within
- * `CANVAS_MS`, which is said. A run's look compared a globe the run before had not drawn yet (a pale disc, "13.4%
- * differs"), and pictured a page before its globe and panel were there.
+ * Whether the page's canvas is drawn before it is pictured: looked at until two looks barely differ and it holds
+ * something unlike its background — or not within `CANVAS_MS`, which is said. A run's look compared a globe the run
+ * before had not drawn yet (a pale disc, "13.4% differs"), and pictured a page before its globe and panel were there;
+ * another's said "nothing changed" of a canvas still blank — still, and not drawn.
  */
 export const canvasDrawn = async (page: BrowserPage): Promise<boolean> => {
   const clip = await page.evaluate(largestCanvas, undefined);
@@ -286,7 +288,7 @@ export const canvasDrawn = async (page: BrowserPage): Promise<boolean> => {
     await page.waitForTimeout(CANVAS_EVERY_MS);
     const now = await page.screenshot({ fullPage: true, clip });
     const { changed } = await comparePictures(page, dataUrl(before), dataUrl(now));
-    if (changed < CANVAS_STILL_PERCENT) {
+    if (changed < CANVAS_STILL_PERCENT && drawnBounds(pixelsOf(now)) !== undefined) {
       return true;
     }
 
@@ -360,11 +362,17 @@ export const showPinned = (attribute: string): void => {
  * One element's picture, nothing pinned to the screen drawn over it — the one way an element is pictured: a part set
  * beside the run before was pictured another way, a site's sticky header over it (a run's looks at 390).
  */
+/**
+ * How long an element is waited for, in sight and still, before its picture is given up: drawn and out of sight — a
+ * phone's sheet pushed below the page at 1440 — it never comes into view, and Playwright's 30 s ended in a stack trace.
+ */
+export const ELEMENT_SHOT_MS = 8000;
+
 export const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
   const element = page.locator(selector).first();
   await element.evaluate(hidePinned, HIDDEN_FOR_SHOT);
   try {
-    return await element.screenshot();
+    return await element.screenshot({ timeout: ELEMENT_SHOT_MS });
   } finally {
     await page.evaluate(showPinned, HIDDEN_FOR_SHOT);
   }
@@ -599,11 +607,23 @@ export const pictureOf = async (
   }
 
   const drawn = await canvasDrawn(page);
+  let png: Uint8Array;
+  try {
+    png = await capture(page, how);
+  } catch (error) {
+    if (how.kind !== 'element') {
+      throw error;
+    }
+
+    return {
+      problem: `${view.clip ?? how.selector} is on ${url} and could not be pictured — out of sight at this width (placed off the screen, or behind what hides it), or never still: picture it at the width that shows it (${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)})`
+    };
+  }
 
   return {
     page,
     how,
-    png: await capture(page, how),
+    png,
     ...(drawn ? {} : { canvasMoving: true as const }),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,

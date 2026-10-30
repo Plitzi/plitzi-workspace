@@ -307,12 +307,34 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
  * design-2 wrote `id~`) — either after `!` for its opposite (a guest sees no band: `!home-following`), and `<path> …`
  * for one page. Nothing when it is none of them. What the option and a plan's acceptance lines (`expectedIds`) both read.
  */
+/** Where the element ends and what it shows starts: the first `~` (holds) or `=` (is, whole) outside brackets and quotes. */
+const textAt = (said: string): { at: number; whole: boolean } => {
+  let depth = 0;
+  let quote = '';
+  for (let index = 0; index < said.length; index += 1) {
+    const char = said.charAt(index);
+    if (quote !== '') {
+      quote = char === quote ? '' : quote;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '[' || char === '(') {
+      depth += 1;
+    } else if (char === ']' || char === ')') {
+      depth -= 1;
+    } else if (depth === 0 && (char === '~' || char === '=')) {
+      return { at: index, whole: char === '=' };
+    }
+  }
+
+  return { at: -1, whole: false };
+};
+
 export const readExpectation = (value: string): Expectation | undefined => {
   const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
   const said = (scoped?.[2] ?? value).trim();
   const absent = said.startsWith('!');
   const rest = absent ? said.slice(1) : said;
-  const at = rest.indexOf('~');
+  const { at, whole } = textAt(rest);
   const named = (at === -1 ? rest : rest.slice(0, at)).trim();
   const ofAttribute = /^(.+)\[([a-z][\w-]*)\]$/i.exec(named);
   const element = ofAttribute?.[1] ?? named;
@@ -324,20 +346,22 @@ export const readExpectation = (value: string): Expectation | undefined => {
         element,
         text,
         ...(ofAttribute?.[2] ? { attribute: ofAttribute[2] } : {}),
+        ...(whole ? { whole: true as const } : {}),
         ...(absent ? { absent: true as const } : {}),
         ...(scoped?.[1] ? { path: scoped[1] } : {})
       };
 };
 
 /**
- * `--expect`, once per element — what an element shows, expected: `<id>~<text>`, or `<path> <id>~<text>` for one page of
+ * `--expect`, once per element — what an element shows, expected: `<id>~<text>` (holds it), `<id>=<text>` (is it, whole:
+ * "1 contact" never passes on "1 contacts", which a run's lead held with jq), or `<path> <id>~<text>` for one page of
  * several, the path its own word, a leading `/`: `--expect "/faq faq-title~Questions"`.
  */
 export const expectation = (value: string, previous: readonly Expectation[] | undefined): Expectation[] => {
   const read = readExpectation(value);
   if (!read) {
     throw new InvalidArgumentError(
-      'What an element shows is expected as <id>~<text> — or <id> alone for "it is shown", either after ! for "it is not" — and <path> <id~text> for one page: --expect "/walks walks-title~October".'
+      'What an element shows is expected as <id>~<text> (holds it), <id>=<text> (is it, whole) — or <id> alone for "it is shown", either after ! for "it is not" — and <path> <id~text> for one page: --expect "/walks walks-title~October".'
     );
   }
 

@@ -11,8 +11,10 @@ const callback = (
   const { originalSelector, append, selector } = params;
 
   const finalSelector: string[] = [];
-  if (append && !originalSelector && dataSources.sourceTo) {
-    finalSelector.push(...[dataSources.sourceTo as string, selector as string]);
+  // Appended to the selector the field held — or alone when it held none: `sourceTo` is the field's, never the source.
+  if (append && !originalSelector) {
+    const held = typeof dataSources.sourceTo === 'string' ? dataSources.sourceTo : '';
+    finalSelector.push(...(held ? [held] : []), selector as string);
   } else if (originalSelector && append) {
     const originalSelector = get(_element as Element, 'definition.styleSelectors.base', '');
     if (originalSelector) {

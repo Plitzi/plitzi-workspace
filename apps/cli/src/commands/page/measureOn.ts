@@ -1,3 +1,4 @@
+import { drawnOn } from './drawn';
 import { INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { targetOn } from './shot/capture';
 import { notOnPageText } from './shot/notOnPage';
@@ -314,7 +315,8 @@ export const measureOn = async (
     ...read,
     styles: {
       ...read.styles,
-      ...(drawn.length > 0 && !shown.hidden ? await pseudoPlaces(page, found.selector, drawn) : {})
+      ...(drawn.length > 0 && !shown.hidden ? await pseudoPlaces(page, found.selector, drawn) : {}),
+      ...(extra?.drawn && !shown.hidden ? await drawnOn(page, found.selector) : {})
     }
   };
 };

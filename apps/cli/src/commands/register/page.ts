@@ -4,7 +4,8 @@ import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, 
 import { expectation, fill, pagePath, pagePathList, positiveInteger, scale, statusCode, widths } from '../../options';
 import { check } from '../page/check';
 import { importPage } from '../page/importPage';
-import { expectedOf, measure, onlyProperties, sameProperties } from '../page/measure';
+import { measure, onlyProperties, sameProperties } from '../page/measure';
+import { expectedOf } from '../page/measureExpected';
 import { keepBrowser } from '../page/measureKeeper';
 import { outline } from '../page/outline';
 import { play } from '../page/play';
@@ -151,13 +152,13 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .option(
       '--expect <property=value>',
-      'Fail unless each element measured computes this property to this value, at every width — "transform=matrix(1, 0, 0, 1, 0, 3)"; one a flag: an acceptance line holding one page’s value',
+      'Fail unless each element measured computes this property to this value, at every width — "transform=matrix(1, 0, 0, 1, 0, 3)" — or a number of it at least (>=) or at most (<=) one: width>=44px, drawn-width>=340px; one a flag: an acceptance line holding one page’s value',
       expectedOf
     )
     .addOption(
       new Option(
         '--only <properties>',
-        'Only these of each element, printed — box (x, y, width, height, padding, margin), font, border, size, or any CSS property by name (overflow-x, after:margin-left): a fit asks for its box'
+        'Only these of each element, printed — box (x, y, width, height, padding, margin), font, border, size, drawn (the bounds of what it paints unlike its background: a canvas’s globe, a chart), or any CSS property by name (overflow-x, after:margin-left): a fit asks for its box'
       ).argParser(onlyProperties)
     )
     .option(

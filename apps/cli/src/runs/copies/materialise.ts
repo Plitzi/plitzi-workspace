@@ -170,7 +170,9 @@ export const acceptanceOnResult = async (
   ctx: RunContext,
   loaded: LoadedRun,
   versions: Record<string, string | null>,
-  lines: readonly { task: string; said: string; check: string }[]
+  lines: readonly { task: string; said: string; check: string }[],
+  /** The finish's: the first line that fails twice stops it (`checkAcceptance`'s `failFast`). */
+  { failFast }: { failFast?: true } = {}
 ): Promise<{ results: AcceptanceAgain[]; reused?: string; kept?: number }> => {
   if (lines.length === 0) {
     return { results: [] };
@@ -214,6 +216,7 @@ export const acceptanceOnResult = async (
         work: dir,
         root: ctx.root,
         cache: loaded.paths.cache,
+        ...(failFast ? { failFast } : {}),
         ...(ctx.say
           ? {
               onLine: (index: number, total: number, said: string, again: boolean) =>

@@ -20,10 +20,12 @@ const getValues = (
 
   // `source` is the bound value and nothing else: a source with no value yet is `undefined`, not the attribute's current
   // value — that is `sourceTo`. Falling back to it made `{{ source|default('x') }}` never take its default and a
-  // `{{ source ? … }}` read an element's placeholder text as an answer.
+  // `{{ source ? … }}` read an element's placeholder text as an answer. Nor is `sourceTo` ever the bound value: a field
+  // with none before is `undefined` there — given the source, a `styleVariant` appended to it spread the word "on" into
+  // `{"0":"o","1":"n"}` beside its own key (a run's sheet).
   return {
     fromValue: sourcePath ? get(dataSource, sourcePath) : undefined,
-    toValue: get(result, toPath, sourcePath ? get(dataSource, sourcePath) : undefined)
+    toValue: get(result, toPath)
   };
 };
 

@@ -1,6 +1,12 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { triedText, verdictOf } from './tryLines';
+import { triedText, tryLinesOnProject, verdictOf } from './tryLines';
+
+import type { RunContext } from '../run';
 
 const REFERENCE = 'https://www.example.com';
 
@@ -40,5 +46,34 @@ describe('a stage’s lines, run once on the run’s work', () => {
 
     expect(lines[0]).toContain('t-b: The dots — the other site has no element it reads');
     expect(lines[1]).toContain('t-a: Its height — fails for its value');
+  });
+});
+
+// A run's lead looped over a first plan's checks by hand before opening: --lines refused with no run open.
+describe('a first plan’s lines, tried on the project as it is', () => {
+  it('runs each line in the project and says what it is', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-lines-'));
+    try {
+      // What trying lines reads of a run's context is its project's folder alone.
+      const ctx = { root } as unknown as RunContext;
+      const tried = await tryLinesOnProject(ctx, {
+        tasks: [
+          {
+            id: 't-a',
+            acceptance: [
+              { said: 'It holds already', check: 'node -e "process.exit(0)"' },
+              { said: 'It is the work', check: 'node -e "process.exit(1)"' }
+            ]
+          }
+        ]
+      });
+
+      expect(tried.map(each => [each.task, each.said, each.verdict])).toEqual([
+        ['t-a', 'It holds already', 'passes'],
+        ['t-a', 'It is the work', 'value']
+      ]);
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
   });
 });

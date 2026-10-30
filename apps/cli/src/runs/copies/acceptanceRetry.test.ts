@@ -76,3 +76,30 @@ describe('a line that ran no test', () => {
     expect(result.output?.[0]).toContain('ran no test');
   });
 });
+
+// A run's two finishes ran every line, ~12 min each, to refuse a spec a 2-min run would have shown.
+describe('the finish’s acceptance, failing fast', () => {
+  it('runs a failed line again at once, and stops at the first that fails twice — the rest not run', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'acceptance-fast-'));
+    folders.push(work);
+
+    const results = await checkAcceptance(
+      [
+        { said: 'Broken', check: 'echo still broken; exit 1' },
+        // Slower than the broken line's two runs: still at work beside it when the finish stops.
+        { said: 'Beside it', check: 'node -e "setTimeout(() => {}, 1500)"' },
+        { said: 'After it', check: 'exit 0' },
+        { said: 'Last', check: 'exit 0' }
+      ],
+      { work, root: work, cache: path.join(work, 'cache'), failFast: true }
+    );
+
+    expect(results).toEqual([
+      { said: 'Broken', check: 'echo still broken; exit 1', ok: false, output: ['still broken'] },
+      // Started beside the broken one, two at a time: it ran; what had not started when it stopped did not.
+      { said: 'Beside it', check: 'node -e "setTimeout(() => {}, 1500)"', ok: true },
+      { said: 'After it', check: 'exit 0', ok: false, notRun: true },
+      { said: 'Last', check: 'exit 0', ok: false, notRun: true }
+    ]);
+  });
+});

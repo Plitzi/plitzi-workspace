@@ -380,11 +380,23 @@ interface AcceptanceRun {
   onLine?: (index: number, total: number, said: string, again: boolean) => void;
   /** A line of a Playwright suite waiting its turn on the machine, since when another holds it. */
   onWait?: (since: string | undefined) => void;
+  /**
+   * The finish's: the suites first, a failed line run again at once, and the first that fails twice stops it — the
+   * lines not started yet answered `notRun`. A run's two finishes ran every line, ~12 min each, to refuse a spec a
+   * 2-min run would have shown: what fails is known as soon as it can be.
+   */
+  failFast?: true;
 }
+
+/** What a fast finish left: the lines it had not started when one failed twice, said beside it — or nothing. */
+export const notRunText = (notRun: number): string =>
+  notRun > 0
+    ? ` (the finish stopped there: ${String(notRun)} line${notRun === 1 ? '' : 's'} not run yet, at the next finish — what passed is kept)`
+    : '';
 
 export const checkAcceptance = async (
   acceptance: readonly Acceptance[],
-  { work, root, cache, onLine, onWait, serving }: AcceptanceRun
+  { work, root, cache, onLine, onWait, serving, failFast }: AcceptanceRun
 ): Promise<AcceptanceResult[]> => {
   const checked = acceptance.filter(isChecked);
   if (checked.length === 0) {
@@ -432,44 +444,76 @@ export const checkAcceptance = async (
         })
       : runOnce(each, at, again);
   try {
+    /** A line's answer from one run of it: passed, or failed with what it printed. */
+    const answerOf = (
+      each: (typeof checked)[number],
+      { code, output, ms }: { code: number; output: string; ms: number }
+    ) => {
+      const passed = code === 0 && !ranNoTest(output);
+
+      return {
+        said: each.said,
+        check: each.check,
+        ok: passed,
+        // Kept only past the time a check should take: what is said of it.
+        ...(ms > SLOW_LINE_MS ? { ms } : {}),
+        ...(passed ? {} : { output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output) }),
+        ...(code !== 0 && served && runsSuite(each.check, scripts) ? { reused: served.port } : {})
+      };
+    };
+    /** A failed line run once more, on its own: passed the second time, said so; failed again, broken. */
+    const again = async (at: number, result: AcceptanceResult): Promise<AcceptanceResult> => {
+      onLine?.(at, checked.length, result.said, true);
+      const { code, output } = await run(checked[at], at, true);
+
+      return code === 0 && !ranNoTest(output)
+        ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
+        : {
+            ...result,
+            output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output),
+            ...(isUnanswered(code) ? { unanswered: true as const } : {})
+          };
+    };
+    // The finish's order: the suites first — the slowest lines, where another task's change and a busy machine show.
+    const order = checked
+      .map((each, index) => ({ index, suite: runsSuite(each.check, scripts) }))
+      .sort((a, b) => Number(b.suite) - Number(a.suite))
+      .map(each => each.index);
+    let stopped = false;
+    const results = new Array<AcceptanceResult>(checked.length);
     // Two at a time: a run's t-body-type ran a measure, then a check of four pages, one after the other — 11 s
     // of its 18 s check, each line a browser of its own the other did not wait on.
-    const results: AcceptanceResult[] = await inTurns(
-      checked.map((each, index) => async () => {
-        onLine?.(index, checked.length, each.said, false);
-        const { code, output, ms } = await run(each, index);
-        const passed = code === 0 && !ranNoTest(output);
+    await inTurns(
+      (failFast ? order : checked.map((_, index) => index)).map(at => async () => {
+        const each = checked[at];
+        if (stopped) {
+          results[at] = { said: each.said, check: each.check, ok: false, notRun: true };
 
-        return {
-          said: each.said,
-          check: each.check,
-          ok: passed,
-          // Kept only past the time a check should take: what is said of it.
-          ...(ms > SLOW_LINE_MS ? { ms } : {}),
-          ...(passed ? {} : { output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output) }),
-          ...(code !== 0 && served && runsSuite(each.check, scripts) ? { reused: served.port } : {})
-        };
+          return;
+        }
+
+        onLine?.(at, checked.length, each.said, false);
+        const first = answerOf(each, await run(each, at));
+        // Fast: a failed line is run again at once, and the first that fails twice stops what has not started.
+        const answer = failFast && !first.ok ? await again(at, first) : first;
+        if (failFast && !answer.ok) {
+          stopped = true;
+        }
+
+        results[at] = answer;
       }),
       ACCEPTANCE_AT_ONCE
     );
 
     // Each line that failed, once more after the others and on its own: what a slow server failed passes now, and
-    // says it did only the second time; a broken line fails again, with what it printed then.
-    for (const [at, result] of results.entries()) {
-      if (result.ok) {
-        continue;
+    // says it did only the second time; a broken line fails again, with what it printed then. The finish's were run
+    // again at once.
+    if (!failFast) {
+      for (const [at, result] of results.entries()) {
+        if (!result.ok) {
+          results[at] = await again(at, result);
+        }
       }
-
-      onLine?.(at, checked.length, result.said, true);
-      const { code, output } = await run(checked[at], at, true);
-      results[at] =
-        code === 0 && !ranNoTest(output)
-          ? { said: result.said, check: result.check, ok: true, firstFailed: result.output ?? [] }
-          : {
-              ...result,
-              output: code === 0 ? [NO_TEST, ...tail(output)] : tail(output),
-              ...(isUnanswered(code) ? { unanswered: true as const } : {})
-            };
     }
 
     return results;

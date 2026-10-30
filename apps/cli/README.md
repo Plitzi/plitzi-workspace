@@ -329,7 +329,8 @@ space outside its quotes and brackets (`[aria-label="Search the site"]` is one),
 pointer over it and leaves it there, for the next `shot`; `scroll <element>` brings it into view, and `scroll <element>
 <dx> [dy]` scrolls its own content by so many pixels — a row across — saying when it did not move (its content fits, or
 it was at that end); a number after any other step's element is refused, never read as part of a selector; `drag <element> <dx> [dy]` presses it — a range at its thumb —
-moves it that many pixels and lets go. A step acts on the element shown: a page drawing one per width hides the other.
+moves it that many pixels and lets go; `drag <element> <dx> [dy] hold` keeps the finger down, so the steps and reads after
+it see the page mid-drag (a style only a drag sets, the height a sheet follows), until `release` lets go. A step acts on the element shown: a page drawing one per width hides the other.
 With `--compare`, `--click "ours => theirs"` clicks each page in turn and sets their screens side by side once clicked —
 an open drawer, a panel in it — with no sections or words read.
 
@@ -391,7 +392,9 @@ element read again as it was says `as before`; `--json` has every read whole.
 `page measure` says each element by what it says of itself: what is at its initial value or inherited is counted, not
 printed (`--all` prints every property, `--only box,font` a few — and any CSS property by its name, a pseudo-element's
 as `after:<property>`: `--only overflow-x,scroll-snap-type`, one the browser knows no property by refused before
-anything is read, a pseudo-element it does not draw said), a data URI by its kind and size, and how many elements
+anything is read, a pseudo-element it does not draw said; `--only drawn` reads what it paints rather than its box —
+`drawn-x`, `drawn-y`, `drawn-width`, `drawn-height`, the bounds of its pixels unlike its background, pictured alone: a
+canvas's globe, a chart's plot; `--expect` holds a number at least or at most one, `--expect drawn-width>=340px`), a data URI by its kind and size, and how many elements
 its selector finds when it measured the first shown (`--each` measures every copy — a component’s instances, a list’s rows). Four sides alike are one line (`border`, `inset`), a layer drawn again
 says how many times (`×4`). It reads `animation`, `position`, `max-width`, `grid-area`, `text-decoration`,
 `align-items`, and a pseudo-element's `position`/`top`/`left`, `display`, `vertical-align` and its `x`/`y` (off

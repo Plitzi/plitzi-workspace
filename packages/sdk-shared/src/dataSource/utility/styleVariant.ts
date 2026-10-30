@@ -1,5 +1,7 @@
 import { set } from '@plitzi/plitzi-ui/helpers/lodash';
 
+import { isRecord } from '../../helpers';
+
 import type { DataSourceUtility, DataSourceUtilityParamsValue, Element, Style, StyleItem } from '../../types';
 
 const callback = (
@@ -23,7 +25,10 @@ const callback = (
     return set({}, currentKey, variantValue);
   }
 
-  return set({ ...dataSources.sourceTo }, currentKey, variantValue);
+  // Appended to the variants the element holds — an object of them, never a word spread into one.
+  const held = dataSources.sourceTo;
+
+  return set(isRecord(held) ? { ...held } : {}, currentKey, variantValue);
 };
 
 const groupEntries = (entries: { groupLabel: string; option: { value: string; label: string } }[]) => {

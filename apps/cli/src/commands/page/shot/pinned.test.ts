@@ -10,6 +10,7 @@ import {
   pinnedScroll,
   showPinned
 } from './capture';
+import { pngOf } from '../tests/png';
 
 import type { BrowserPage } from '../../../browser';
 
@@ -135,7 +136,7 @@ describe('a page locked to its screen', () => {
 // A run's look set a globe the run before had not drawn yet beside its own, and read "13.4% differs".
 describe('a canvas pictured', () => {
   /** A page with one canvas whose looks differ by these shares, one after another: what `canvasDrawn` reads of it. */
-  const pageDrawing = (changes: number[], canvas = true) => {
+  const pageDrawing = (changes: number[], canvas = true, drawn = true) => {
     const looks: number[] = [];
     const page = {
       evaluate: (fn: unknown) =>
@@ -146,7 +147,11 @@ describe('a canvas pictured', () => {
               : undefined
             : { changed: changes.at(looks.push(0) - 1) ?? 0, regions: [] }
         ),
-      screenshot: () => Promise.resolve(new Uint8Array(24)),
+      // A disc on a dark field, or the field alone: what the canvas holds when it is pictured.
+      screenshot: () =>
+        Promise.resolve(
+          pngOf(8, 8, (x, y) => (drawn && x > 2 && x < 5 && y > 2 && y < 5 ? [200, 220, 240, 255] : [10, 10, 10, 255]))
+        ),
       waitForTimeout: () => Promise.resolve()
     };
 
@@ -162,5 +167,10 @@ describe('a canvas pictured', () => {
     const none = pageDrawing([40], false);
     expect(await canvasDrawn(none.page)).toBe(true);
     expect(none.looks).toHaveLength(0);
+  });
+
+  // A run's look said "nothing changed" of a globe not drawn yet: its canvas was still because it was blank.
+  it('is not drawn while it is still and blank', async () => {
+    expect(await canvasDrawn(pageDrawing([0, 0, 0], true, false).page)).toBe(false);
   });
 });

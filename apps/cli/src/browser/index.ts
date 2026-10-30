@@ -60,7 +60,8 @@ export interface PageResponse {
 
 /** One element of a page, as `shot --within` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */
 export interface PageElement {
-  screenshot(): Promise<Uint8Array>;
+  /** `timeout`: how long it waits for the element to be in sight and still — 30 s when not said. */
+  screenshot(options?: { timeout: number }): Promise<Uint8Array>;
   scrollIntoViewIfNeeded(options?: { timeout: number }): Promise<void>;
   /** How many elements the selector finds: none is an element not on the page. */
   count(): Promise<number>;
@@ -118,6 +119,8 @@ export interface BrowserPage {
   screenshot(options: {
     fullPage: boolean;
     clip?: { x: number; y: number; width: number; height: number };
+    /** One pixel a CSS px, whatever the screen's density: what a picture is measured in (`page measure --only drawn`). */
+    scale?: 'css';
   }): Promise<Uint8Array>;
   /**
    * The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view — or the

@@ -495,6 +495,25 @@ describe('an expectation held to every copy of its element', () => {
     );
   });
 
+  // A run's lead could not hold a singular — "1 contact" passed on "1 contacts" — and piped page play --json into jq.
+  it('reads <id>=<text> as the whole text, and <id>~<text> as a part of it', () => {
+    const count = { present: 1, shown: ['1 contacts'], cut: [] };
+
+    expect(readExpectation('log-count=1 contact')).toEqual({ element: 'log-count', text: '1 contact', whole: true });
+    expect(readExpectation('[data-kind="quake"]~M6')).toEqual({ element: '[data-kind="quake"]', text: 'M6' });
+    expect(expectationMissed({ element: 'log-count', text: '1 contact' }, count, [])).toBeUndefined();
+    expect(expectationMissed({ element: 'log-count', text: '1 contact', whole: true }, count, [])).toBe(
+      '--expect log-count=1 contact: log-count shows "1 contacts"'
+    );
+    expect(
+      expectationMissed(
+        { element: 'log-count', text: '1 contact', whole: true },
+        { ...count, shown: [' 1  contact '] },
+        []
+      )
+    ).toBeUndefined();
+  });
+
   // A run's show plate read "ROOFTOP SESSIO…" and its line held: the words were in the page, cut by an ellipsis.
   it('is met only by a copy that shows the text whole — one its box cuts reads part of it', () => {
     const plates = { present: 2, shown: ['Rooftop Sessions', 'Night Drive'], cut: [0] };

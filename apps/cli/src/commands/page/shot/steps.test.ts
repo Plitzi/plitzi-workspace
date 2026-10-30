@@ -327,3 +327,52 @@ describe('a click on a name several copies carry', () => {
     expect(await actStep(pageWith(1), { kind: 'click', target: 'section-header-root' }, 0)).toBeUndefined();
   });
 });
+
+// A run's designer and tester each wrote a Playwright probe to read a style only a drag sets, the finger still down.
+describe('a drag held, and let go', () => {
+  const pageRecording = () => {
+    const pointer: string[] = [];
+    const element = {
+      count: () => Promise.resolve(1),
+      boundingBox: () => Promise.resolve({ x: 0, y: 100, width: 40, height: 20 }),
+      evaluate: () => Promise.resolve(0.5)
+    };
+    const page = {
+      url: () => 'http://127.0.0.1:8080/',
+      locator: () => ({ first: () => element, filter: () => ({ first: () => element }) }),
+      evaluate: () => Promise.resolve(undefined),
+      mouse: {
+        move: () => {
+          pointer.push('move');
+
+          return Promise.resolve();
+        },
+        down: () => {
+          pointer.push('down');
+
+          return Promise.resolve();
+        },
+        up: () => {
+          pointer.push('up');
+
+          return Promise.resolve();
+        }
+      }
+    };
+
+    // The fake answers what a drag calls of a page, and nothing else a page has.
+    return { page: page as unknown as BrowserPage, pointer };
+  };
+
+  it('keeps the finger down until a release, and lets a plain drag go', async () => {
+    const held = pageRecording();
+    await actStep(held.page, { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120, held: true }, 0);
+    expect(held.pointer).toEqual(['move', 'down', 'move']);
+    await actStep(held.page, { kind: 'release' }, 1);
+    expect(held.pointer.at(-1)).toBe('up');
+
+    const plain = pageRecording();
+    await actStep(plain.page, { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120 }, 0);
+    expect(plain.pointer).toEqual(['move', 'down', 'move', 'up']);
+  });
+});

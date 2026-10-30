@@ -7,10 +7,11 @@ import { InvalidArgumentError } from 'commander';
 
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
+import { holds, PROPERTY_NAME } from './measureExpected';
 import { measureOn } from './measureOn';
 import { putIn, copiesOf, stateText } from './measureState';
 import { comparedText, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
-import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
+import { asksExtra, differences, DRAWN, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED } from './measureValues';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
@@ -22,6 +23,7 @@ import { authoredHandles } from '../../runs/plan/expectations';
 import { projectHere } from '../project/existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../shared/terminal';
 
+import type { Expected } from './measureExpected';
 import type { StateAsked } from './measureState';
 import type { Difference, Measured, MeasuredExtra } from './measureValues';
 import type { Browser, BrowserPage, Scheme } from '../../browser';
@@ -116,11 +118,10 @@ const GROUPS: Record<string, readonly string[]> = {
   font: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform'],
   size: ['width', 'height'],
   // Where it is and how big, its spacing with it: what a fit is checked by — a run's agents grepped it out of 30.
-  box: ['x', 'y', 'width', 'height', 'padding', 'margin']
+  box: ['x', 'y', 'width', 'height', 'padding', 'margin'],
+  // What it draws, off its picture: a canvas's globe, a chart's plot (`DRAWN`).
+  drawn: [...DRAWN]
 };
-
-/** A CSS property's name, as `getComputedStyle` takes it: `overflow-x`, `-webkit-line-clamp`, a pseudo's `after:margin-left`. */
-const PROPERTY_NAME = new RegExp(`^(?:(?:${PSEUDOS.join('|')}):)?-?[a-z][a-z0-9-]*$`);
 
 /**
  * `--same`'s and `--only`'s list: each a property always measured, a pseudo-element's (`before:background-image`), a
@@ -144,32 +145,6 @@ const measuredProperties =
     return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
   };
 
-/** One `--expect`: a property, and the value it must compute to. */
-export interface Expected {
-  property: string;
-  value: string;
-}
-
-/** `--expect property=value`, each its own flag: a value holds commas (`matrix(1, 0, 0, 1, 0, 3)`), never a list. */
-export const expectedOf = (value: string, previous: Expected[] = []): Expected[] => {
-  const at = value.indexOf('=');
-  const property = at === -1 ? '' : value.slice(0, at).trim();
-  if (property === '' || !PROPERTY_NAME.test(property)) {
-    throw new InvalidArgumentError(
-      'takes a CSS property and the value it must compute to — transform=none, after:content="•" — one a flag'
-    );
-  }
-
-  return [...previous, { property, value: value.slice(at + 1).trim() }];
-};
-
-/** A computed value as compared: its spaces as one, so `matrix(1,0,…)` and `matrix(1, 0, …)` read alike. */
-const valueText = (value: string): string =>
-  value
-    .replace(/\s*,\s*/g, ', ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
 /** Each element read whose property is not the value expected: a line each, said where the command fails. */
 export const expectationsMissed = (readings: readonly Reading[], expected: readonly Expected[]): string[] =>
   readings.flatMap(({ here, pair, width, scheme }) => {
@@ -177,13 +152,14 @@ export const expectationsMissed = (readings: readonly Reading[], expected: reado
       return [];
     }
 
-    return expected.flatMap(({ property, value }) => {
+    return expected.flatMap(each => {
+      const { property, value, at } = each;
       const actual = Object.hasOwn(here.styles, property) ? here.styles[property] : undefined;
 
-      return actual !== undefined && valueText(actual) === valueText(value)
+      return actual !== undefined && holds(actual, each)
         ? []
         : [
-            `--expect ${property}=${value}: ${pair.here} at ${String(width)} px${scheme ? ` ${scheme}` : ''} ${actual === undefined ? 'has none read' : `is ${actual}`}`
+            `--expect ${property}${at ?? '='}${value}: ${pair.here} at ${String(width)} px${scheme ? ` ${scheme}` : ''} ${actual === undefined ? 'has none read' : `is ${actual}`}`
           ];
     });
   });
@@ -778,7 +754,7 @@ export const measure = async (route: string, elements: string[], options: Measur
               : missed.length === 0
                 ? [
                     chalk.green(
-                      `✓ --expect ${options.expect.map(each => `${each.property}=${each.value}`).join(', ')}: every element read holds it`
+                      `✓ --expect ${options.expect.map(each => `${each.property}${each.at ?? '='}${each.value}`).join(', ')}: every element read holds it`
                     )
                   ]
                 : missed.map(line => chalk.red(`✗ ${line}`)))

@@ -255,7 +255,17 @@ const partPicture = async (taken: Taken, part: string): Promise<Uint8Array | { p
     return { problem: `${part} is not drawn on ${taken.page.url()}` };
   }
 
-  return elementShot(taken.page, read.selector);
+  // Drawn and out of sight — a phone's sheet pushed below the page at 1440 — waits for a view it never gets: said as
+  // the part's own, where a run's `task look` printed Playwright's stack trace mid-answer.
+  try {
+    return await elementShot(taken.page, read.selector);
+  } catch (error) {
+    const why = error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
+
+    return {
+      problem: `${part} is on ${taken.page.url()} and could not be pictured — out of sight at this width, or never still (${why})`
+    };
+  }
 };
 
 /** A part's name as a file's: what the pictures of one part of several are told apart by. */

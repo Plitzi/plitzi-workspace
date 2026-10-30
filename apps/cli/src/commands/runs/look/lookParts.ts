@@ -155,6 +155,11 @@ export interface BeforeAfter {
   dress: string[];
   sideBySide?: string;
   problem?: string;
+  /**
+   * A canvas of the page — a map, a chart — still blank or changing when pictured: what it draws was not compared, and
+   * "nothing changed" would not be true (a run's look said it of a globe not drawn yet).
+   */
+  canvasMoving?: true;
 }
 
 /** A look's server that stopped while it looked — why, and its last lines — or nothing while it serves. */
@@ -222,7 +227,8 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
           : []
       ),
       dress: dressOf(decorations, listOf),
-      ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {})
+      ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {}),
+      ...(isRecord(answer) && answer.canvasMoving === true ? { canvasMoving: true as const } : {})
     };
   } catch {
     return { sections: [], dress: [], problem: 'the comparison could not be read' };

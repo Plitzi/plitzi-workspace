@@ -51,6 +51,55 @@ describe('getBindingsDetails', () => {
     expect((result.style as Record<string, unknown>).backgroundColor).toBe('red');
   });
 
+  // A run's phone sheet bound its tab's word through twigTemplate and an appended styleVariant: with no variant held
+  // before, `sourceTo` was the bound word, spread beside the key as {"0":"o","1":"n","sheetTarget":{"base":"on"}}.
+  it('appends a style variant to what the element holds, and to nothing when it holds none', () => {
+    const variant = () =>
+      makeElement({
+        initialState: [
+          binding({
+            source: 'computed.tab',
+            to: 'styleVariant',
+            transformers: [
+              { action: 'twigTemplate', params: { template: "{{ source == 'log' ? 'on' : '' }}" } },
+              { action: 'styleVariant', params: { key: 'sheetTarget.base', variant: '', append: 'true' } }
+            ]
+          })
+        ]
+      });
+    const withHeld = variant();
+    withHeld.definition.initialState = { styleVariant: { sheet: { base: 'half' } } };
+
+    expect(getBindingsDetails({ computed: { tab: 'log' } }, variant()).definition.initialState?.styleVariant).toEqual({
+      sheetTarget: { base: 'on' }
+    });
+    expect(getBindingsDetails({ computed: { tab: 'log' } }, withHeld).definition.initialState?.styleVariant).toEqual({
+      sheet: { base: 'half' },
+      sheetTarget: { base: 'on' }
+    });
+  });
+
+  it('gives a transformer the field’s previous value as sourceTo — nothing when it had none, never the bound value', () => {
+    const asked = (attributes: Record<string, unknown>) =>
+      makeElement(
+        {
+          attributes: [
+            binding({
+              source: 'variables.word',
+              to: 'text',
+              transformers: [
+                { action: 'twigTemplate', params: { template: "{{ sourceTo ? 'had ' ~ sourceTo : 'none' }}" } }
+              ]
+            })
+          ]
+        },
+        attributes
+      );
+
+    expect(getBindingsDetails({ variables: { word: 'on' } }, asked({})).attributes.text).toBe('none');
+    expect(getBindingsDetails({ variables: { word: 'on' } }, asked({ text: 'Log' })).attributes.text).toBe('had Log');
+  });
+
   it('writes initialState bindings under definition.initialState', () => {
     const element = makeElement({ initialState: [binding({ source: 'variables.on', to: 'visibility' })] });
     const result = getBindingsDetails({ variables: { on: true } }, element);

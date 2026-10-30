@@ -34,7 +34,7 @@ export const sayIfAllDone = async (ctx: RunContext, runId: string): Promise<void
     await logRun(ctx, now.paths, {
       action: 'all-approved',
       tasks: now.tasks.length,
-      next: 'plitzi run finish — the dry run checks the whole result; a person applies it'
+      next: 'plitzi run finish — the dry run checks the whole result, the suites first, and stops at the first line that fails twice; a person applies it'
     });
   }
 };

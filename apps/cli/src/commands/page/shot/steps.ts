@@ -228,7 +228,9 @@ export const stepText = (step: ShotStep): string => {
     case 'type':
       return `type ${step.target}`;
     case 'drag':
-      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}`;
+      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}${step.held ? ' hold' : ''}`;
+    case 'release':
+      return 'release';
     case 'press':
       return `press ${step.key}`;
     case 'wait':
@@ -373,6 +375,13 @@ export const actStep = async (
     return 'refused' in ran ? { problem: `Step ${String(index + 1)}: ${ran.refused}` } : ran;
   }
 
+  // The finger a `drag … hold` kept down, let go where it is.
+  if (step.kind === 'release') {
+    await page.mouse.up();
+
+    return undefined;
+  }
+
   // The one shown: a page drawing a control per width hides the other — a field of a phone's drawer, the first in the
   // document, timed out at 1440 where the column's own was there to type into.
   const shown = (selector: string) => page.locator(selector).filter({ visible: true }).first();
@@ -470,7 +479,11 @@ export const actStep = async (
       await page.mouse.move(x, y);
       await page.mouse.down();
       await page.mouse.move(x + step.dx, y + step.dy, { steps: 12 });
-      await page.mouse.up();
+      // Held: the finger stays down for what follows to read the page mid-drag, until a `release` or the page closes.
+      if (!step.held) {
+        await page.mouse.up();
+      }
+
       return undefined;
     }
 

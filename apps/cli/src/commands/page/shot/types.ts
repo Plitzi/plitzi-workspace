@@ -137,7 +137,7 @@ export interface ShotReport {
    * whose log scrolls in its panel read as one spilling over a 2,092 px page. Its height, said.
    */
   screen?: number;
-  /** A canvas of it — a map, a chart — still changing when it was pictured: what it draws may be half drawn. */
+  /** A canvas of it — a map, a chart — still changing, or blank, when it was pictured: what it draws may be missing. */
   canvasMoving?: true;
   /** Pictures of this page not drawn when it was taken. */
   unloaded?: number;

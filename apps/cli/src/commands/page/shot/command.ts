@@ -578,7 +578,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     if (report.canvasMoving) {
       console.log(
         chalk.yellow(
-          `${pathname}: a canvas of it (a map, a chart) was still changing after 4 s when pictured — what it draws may be half drawn: picture it again, or wait for what it loads`
+          `${pathname}: a canvas of it (a map, a chart) was still changing, or not drawn yet, after 4 s when pictured — what it draws may be half drawn or missing: picture it again, or wait for what it loads`
         )
       );
     }

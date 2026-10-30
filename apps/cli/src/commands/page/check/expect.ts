@@ -233,20 +233,22 @@ const quoted = (shown: string): string => `"${shown.length > 160 ? `${shown.slic
  * and a lead's "the list holds Juno" read the first row's Nova; `!` holds when none does — a guest shown no band.
  */
 export const expectationMissed = (
-  { element, text, absent }: Expectation,
+  { element, text, absent, whole: isWhole }: Expectation,
   copies: Copies,
   onPage: readonly string[]
 ): string | undefined => {
-  const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `~${text}`}`;
+  const said = `--expect ${absent ? '!' : ''}${element}${text === '' ? '' : `${isWhole ? '=' : '~'}${text}`}`;
   // In any case — a legend a stylesheet capitalises reads "ON AIR" — unless written in mixed case, which is held to the
   // words as the space wrote them: a line that must prove a capital (a display name "Juno" over a username "juno")
   // could not be written otherwise. A stylesheet's capitals change no word written: a run's "stat-events-label~Events"
   // passed at its task's complete and failed at the finish once the label was set in capitals.
   const asWritten = /\p{Lu}/u.test(text) && /\p{Ll}/u.test(text);
+  const holds = (shown: string, wanted: string): boolean =>
+    isWhole ? shown.replace(/\s+/g, ' ').trim() === wanted.replace(/\s+/g, ' ').trim() : shown.includes(wanted);
   const matchingAt = (each: string, index: number): boolean =>
     asWritten
-      ? each.includes(text) || (copies.written?.[index] ?? '').includes(text)
-      : each.toLowerCase().includes(text.toLowerCase());
+      ? holds(each, text) || holds(copies.written?.[index] ?? '', text)
+      : holds(each.toLowerCase(), text.toLowerCase());
   // A copy no visitor sees is read by what it shows alone.
   const matching = (each: string): boolean => matchingAt(each, -1);
   const showing = copies.shown.filter(matchingAt);

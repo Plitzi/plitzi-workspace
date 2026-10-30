@@ -91,6 +91,11 @@ export interface AcceptanceResult {
   /** How long it ran, in ms, when past `SLOW_LINE_MS`: said, a suite where the task's own specs would do. */
   ms?: number;
   /**
+   * Not run: a line before it failed twice and the finish stopped there (`failFast`) — it runs at the next finish, what
+   * passed kept. `ok` is false and it is no failure of its own.
+   */
+  notRun?: true;
+  /**
    * A failed line whose Playwright found the copy served on this port (`PORT`) and reused it: its config's `webServer`,
    * and the env it gives the server, never started. A run's dev-1 read the failure as a product bug.
    */

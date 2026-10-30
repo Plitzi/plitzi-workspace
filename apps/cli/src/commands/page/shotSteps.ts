@@ -10,7 +10,11 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *   scroll <element> [dx] [dy]  brought into view, as a reader scrolling to it — the footer, a section below the fold;
  *                            with how far, in pixels, its own content scrolled instead — a row across: scroll genres 200
  *   type <element> <text>    text typed into a field, in place of what it held: type ".panel textarea" hi
- *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle
+ *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle;
+ *                            `hold` after it keeps the finger down, so what follows reads the page mid-drag (a style
+ *                            only a drag sets, the height a sheet follows): drag sheet-handle 0 -120 hold
+ *   release                  the finger held by `drag … hold` let go where it is — a play that ends held lets go as
+ *                            its page closes
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms|3s>             time passing
  *   wait-for <element> [time] until it is on the page and shown — 10 s at most, or the time said, up to 60 s: a CSS
@@ -47,7 +51,8 @@ export type PageStep =
   | { kind: 'hover'; target: string }
   | { kind: 'scroll'; target: string; by?: { dx: number; dy: number } }
   | { kind: 'type'; target: string; text: string }
-  | { kind: 'drag'; target: string; dx: number; dy: number }
+  | { kind: 'drag'; target: string; dx: number; dy: number; held?: true }
+  | { kind: 'release' }
   | { kind: 'press'; key: string }
   | { kind: 'wait'; ms: number }
   /** `ms`: how long it waits at most — 10 s when not said. */
@@ -78,6 +83,7 @@ const STEP_NAMES = [
   'type',
   'fill',
   'drag',
+  'release',
   'press',
   'wait',
   'wait-for',
@@ -301,18 +307,23 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
       }
       case 'drag': {
         const { target, rest: by } = leadingTarget(rest.join(' '));
-        const [dx, dy = '0'] = by.split(/\s+/);
+        const words = by.split(/\s+/).filter(Boolean);
+        const held = words.at(-1) === 'hold';
+        const [dx, dy = '0'] = held ? words.slice(0, -1) : words;
         const x = pixels(dx);
         const y = pixels(dy);
         if (!target || x === undefined || y === undefined || (x === 0 && y === 0)) {
           return {
-            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag volume-handle -120`
+            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold`
           };
         }
 
-        steps.push({ kind: 'drag', target, dx: x, dy: y });
+        steps.push({ kind: 'drag', target, dx: x, dy: y, ...(held ? { held: true as const } : {}) });
         break;
       }
+      case 'release':
+        steps.push({ kind: 'release' });
+        break;
       case 'press':
         if (!argument) {
           return { problem: `${at}: press needs a key — Enter, Escape, ArrowDown…` };

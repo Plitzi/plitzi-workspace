@@ -1,8 +1,13 @@
+import path from 'node:path';
+
+import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
+
 import { failedWhy } from '../../commands/project/verify';
+import { checkAcceptance } from '../copies/acceptance';
 import { acceptanceOnResult } from '../copies/materialise';
 import { readApproved } from '../run';
 
-import type { AcceptanceResult, RunTask } from '../core/model';
+import type { AcceptanceResult, RunPlan, RunTask } from '../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**
@@ -76,6 +81,46 @@ export const tryLines = async (ctx: RunContext, loaded: LoadedRun, tasks: readon
 
     return {
       task: result.task,
+      said: result.said,
+      verdict,
+      ...(verdict === 'refused' || verdict === 'theirs-missing' ? (why ? { why } : {}) : {})
+    };
+  });
+};
+
+/** The lines of `tasks` that a command checks, each once, with its task. */
+const checkedLines = (tasks: readonly Pick<RunTask, 'id' | 'acceptance'>[]) =>
+  tasks.flatMap(task =>
+    task.acceptance.flatMap(line =>
+      typeof line === 'string' ? [] : [{ task: task.id, said: line.said, check: line.check }]
+    )
+  );
+
+/**
+ * A first plan's lines, tried on the project as it is — no run open to try them on: what a run's lead did by hand,
+ * each check of the plan looped over with PLITZI_URL, before opening, the moment the lines matter most.
+ */
+export const tryLinesOnProject = async (
+  ctx: RunContext,
+  plan: { tasks: readonly Pick<RunTask, 'id' | 'acceptance'>[]; reference?: RunPlan['reference'] }
+): Promise<TriedLine[]> => {
+  const lines = checkedLines(plan.tasks);
+  if (lines.length === 0) {
+    return [];
+  }
+
+  const results = await checkAcceptance(lines, {
+    work: ctx.root,
+    root: ctx.root,
+    cache: path.join(ctx.root, PROJECT_TMP, 'plitzi-cache', 'lines')
+  });
+
+  return results.map((result, index) => {
+    const verdict = verdictOf(result, plan.reference);
+    const why = failedWhy(result.output);
+
+    return {
+      task: lines[index]?.task ?? '',
       said: result.said,
       verdict,
       ...(verdict === 'refused' || verdict === 'theirs-missing' ? (why ? { why } : {}) : {})

@@ -122,6 +122,13 @@ export const PSEUDO_MEASURED = [
 export const PSEUDOS = ['before', 'after'] as const;
 
 /**
+ * What an element draws, read off its picture rather than its box: the bounds of the pixels unlike its own background —
+ * the disc a map's canvas paints, a chart's plot — in the page's px. A run's designer and tester each decoded a PNG with
+ * a script of their own to hold a globe's drawn size; `--only drawn` reads them, `--expect drawn-width>=340px` holds one.
+ */
+export const DRAWN = ['drawn-x', 'drawn-y', 'drawn-width', 'drawn-height'] as const;
+
+/**
  * Properties asked by name beyond those always read — `--only overflow-x`, `--same after:scroll-snap-align` — read
  * the same way: a list that grew by a property each run (`list-style`, `y`, `right`) takes any the browser knows.
  */
@@ -129,6 +136,8 @@ export interface MeasuredExtra {
   properties: string[];
   /** Read of each pseudo-element drawn, as `before:<property>`. */
   pseudo: string[];
+  /** Whether what it draws is read (`DRAWN`): a picture of it taken and looked through, asked only by name. */
+  drawn?: true;
 }
 
 const PSEUDO_ASKED = new RegExp(`^(?:${PSEUDOS.join('|')}):(.+)$`);
@@ -137,18 +146,24 @@ const PSEUDO_ASKED = new RegExp(`^(?:${PSEUDOS.join('|')}):(.+)$`);
 export const extraOf = (asked: readonly string[]): MeasuredExtra => {
   const always = new Set<string>([...MEASURED, ...Object.keys(SIDE_LONGHANDS)]);
   const pseudoAlways = new Set<string>(PSEUDO_MEASURED);
-  const properties = asked.filter(each => !each.includes(':') && !always.has(each));
+  const drawn = new Set<string>(DRAWN);
+  const properties = asked.filter(each => !each.includes(':') && !always.has(each) && !drawn.has(each));
   const pseudo = asked.flatMap(each => {
     const property = PSEUDO_ASKED.exec(each)?.[1];
 
     return property === undefined || pseudoAlways.has(property) ? [] : [property];
   });
 
-  return { properties: [...new Set(properties)], pseudo: [...new Set(pseudo)] };
+  return {
+    properties: [...new Set(properties)],
+    pseudo: [...new Set(pseudo)],
+    ...(asked.some(each => drawn.has(each)) ? { drawn: true as const } : {})
+  };
 };
 
 /** Whether anything is asked beyond what is always read. */
-export const asksExtra = (extra: MeasuredExtra): boolean => extra.properties.length > 0 || extra.pseudo.length > 0;
+export const asksExtra = (extra: MeasuredExtra): boolean =>
+  extra.properties.length > 0 || extra.pseudo.length > 0 || extra.drawn === true;
 
 /** What an element takes from its parent unless it says its own: what differs on every element of a page alike. */
 export const INHERITED = new Set<string>([

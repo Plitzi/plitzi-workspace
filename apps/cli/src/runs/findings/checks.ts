@@ -2,6 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { clock, evidenceOf, strings, text } from './types';
 import { projectRun } from '../../scaffold/packageManager';
+import { BUSY_TIMEOUTS } from '../copies/busy';
 import { brokenNamedIn } from '../core/acceptedOn';
 
 import type { Finding, LogEntry } from './types';
@@ -213,7 +214,14 @@ const amendedLines = (log: readonly LogEntry[]): Amended[] =>
  * approved tasks' lines amended for it, which are this, not lines written wrong.
  */
 export const brokeApproved = (log: readonly LogEntry[]): Finding[] => {
-  const broke = log.filter(entry => entry.action === 'refused' && brokenNamedIn(text(entry.message)) !== undefined);
+  // Lines that only ran out of time on a busy machine broke nothing (`BUSY_TIMEOUTS`): a run's report blamed the
+  // tasks' changes for two finishes the machine's load refused.
+  const broke = log.filter(
+    entry =>
+      entry.action === 'refused' &&
+      brokenNamedIn(text(entry.message)) !== undefined &&
+      !text(entry.message).includes(BUSY_TIMEOUTS)
+  );
   const amended = amendedLines(log).filter(each => each.cause === 'broke-approved');
 
   return broke.length === 0

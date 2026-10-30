@@ -377,7 +377,8 @@ task naming one of those the holder never named and has not changed gets it, the
 open <stage> --dry-run --lines` — anyone's, a scout's too — runs each of the stage's acceptance lines once on the run's approved work (`tryLines.ts`, on
 the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
 value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
-line is wrong), or one its command refuses — the lines to fix first. `run
+line is wrong), or one its command refuses — the lines to fix first; with no run open, a first plan's are run on the
+project as it is (`tryLinesOnProject`), the moment they matter most. `run
 open` with a run going says to stack on it. `run status --all` lists the project's runs not yet written into it — the ready
 ones first, each with the command that applies it; read off the project's own `tmp/plitzi-runs/`, so every terminal on
 it sees the same, and no other project's runs.
@@ -994,7 +995,8 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   the copy, passing on exit 0, with `plitzi` on the path as this CLI (a shim in the task's cache) and `$PLITZI_URL` the
   copy served by its own start script on a free port while they run. A line that fails runs once more after the others:
   one a busy server failed passes then and says it passed on its second run (`firstFailed`), one that fails twice is
-  unmet. What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
+  unmet. The finish fails fast instead (`failFast`): the Playwright suites first, a failed line run again at once, and the
+  first that fails twice stops it — what had not started is `notRun`, run at the next finish, what passed kept. What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
   review, **its files kept as they are now** (`submitted`, by fingerprint): what the review keeps and the approval
   merges, never the copy, which its agent may go on writing — `--note` tells the lead what to look at with it. A sign of
   life of a task in review is answered as one in review. `run open --dry-run` refuses a check it could not run: empty,

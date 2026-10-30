@@ -36,6 +36,17 @@ const DIFF_LINES = 80;
  */
 const DIFF_TOTAL = 240;
 
+/**
+ * The files a card names that the work wrote nothing of: a folder it names (`src/plugins/SheetHandle`) is written when a
+ * file in it is — a run's card named the plugin's folder, the work wrote its seven files, and `task show` said it did not.
+ */
+export const unwrittenOf = (named: readonly string[], changed: readonly string[]): string[] =>
+  named.filter(each => {
+    const folder = each.replace(/\/+$/, '');
+
+    return !changed.some(file => file === folder || file.startsWith(`${folder}/`));
+  });
+
 export interface ShownFile {
   file: string;
   /** Whether the copy adds it, changes it or removes it. */
@@ -321,11 +332,8 @@ export const showTask = async (
   );
 
   const notReviewed = submitted ? await notReviewedIn(ctx, runId, taskId) : [];
-  const written = new Set(changed);
   const unwritten =
-    view.state.status === 'in-review' || view.state.status === 'done'
-      ? task.files.filter(file => !written.has(file))
-      : [];
+    view.state.status === 'in-review' || view.state.status === 'done' ? unwrittenOf(task.files, changed) : [];
 
   return {
     task,

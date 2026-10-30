@@ -82,14 +82,22 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
     expect(parseSteps('drag price-max', 500)).toEqual({
       problem:
-        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag volume-handle -120'
+        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold'
     });
+  });
+
+  // A run's designer and tester each wrote a Playwright probe to read a sheet while the finger was still on it.
+  it('reads a drag held down for what follows, and the release that lets it go', () => {
+    expect(parseSteps('drag sheet-handle 0 -120 hold; release', 500)).toEqual([
+      { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120, held: true },
+      { kind: 'release' }
+    ]);
   });
 
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -110,7 +118,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames, separated by ";"'
     });
   });
 

@@ -28,6 +28,7 @@ import { atPace } from '../../../runs/plan/estimate';
 import { extendRun, seeStage } from '../../../runs/plan/extend';
 import { rehearsalText, rehearse } from '../../../runs/plan/rehearse';
 import { isResearch, opensOnResearch, roleOf, SCOPE_SPIKE, scopePlan } from '../../../runs/plan/spike';
+import { tryLinesOnProject } from '../../../runs/plan/tryLines';
 import { triedText } from '../../../runs/plan/tryLines';
 import { settleFinding } from '../../../runs/report/settle';
 import {
@@ -201,13 +202,6 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
       // written: a scout sees the stage its research card proposes the same way. A stage may be its tasks alone, its
       // name and goal the run's: read as a stage, never first as a whole plan (a scout's was refused as "not a plan").
       const going = await openRunOf(ctx);
-      if (going === undefined && options.lines === true) {
-        throw new RunRefusal(
-          'invalid',
-          '--lines runs a stage’s acceptance on the open run’s work, and no run is open: plitzi run open <plan> --dry-run holds a first plan to the rules'
-        );
-      }
-
       const stage = going
         ? await seeStage(ctx, going.runId, path.resolve(file), { lines: options.lines ?? false })
         : undefined;
@@ -223,7 +217,12 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ...checked,
         team,
         ...(going ? { stackedOn: going.runId } : {}),
-        ...(stage?.tried ? { tried: stage.tried } : {}),
+        // No run open: a first plan's lines tried on the project as it is, before opening.
+        ...(stage?.tried
+          ? { tried: stage.tried }
+          : going === undefined && options.lines === true
+            ? { tried: await tryLinesOnProject(ctx, checked) }
+            : {}),
         ...(research === undefined ? {} : { research }),
         staleSkills,
         // A stage's: what the run's tasks before it take up is taken too.

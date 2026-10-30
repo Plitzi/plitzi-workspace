@@ -9,6 +9,7 @@ import { afterStop, twoSessions, twoTasks } from './sessions';
 import { groupAlike } from './words';
 import { saidFindings, workaroundFindings } from './workarounds';
 import { ranAs } from '../../tests/ranAs';
+import { BUSY_TIMEOUTS } from '../copies/busy';
 import { breaksApprovedText, brokenNamedIn, notHoldingText } from '../core/acceptedOn';
 
 import type { LogEntry } from './types';
@@ -166,6 +167,15 @@ describe('what the checks say of themselves', () => {
       )
     ).toEqual(['t-queue', 't-room']);
     expect(brokeApproved([refused(1, 'Task "t-a"\'s acceptance is not met')])).toEqual([]);
+    // A finish refused only by lines timing out on a busy machine broke nothing: a run's report blamed the tasks for it.
+    expect(
+      brokeApproved([
+        refused(
+          1,
+          `Every line that failed ${BUSY_TIMEOUTS} (load 42 on 10 cores). ${notHoldingText([{ task: 't-sheet', said: 'the sheet specs pass' }])}`
+        )
+      ])
+    ).toEqual([]);
   });
 
   it('says why each acceptance was rewritten once the run had begun — the lead’s only for a line written wrong', () => {

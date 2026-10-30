@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { notRunText } from './acceptance';
+import { busyTimeoutsNote } from './busy';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { leftInTmp } from './strays';
@@ -416,14 +418,19 @@ export const finishRun = async (
       })
     )
   ).flat();
-  plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines);
-  const broken = plan.acceptance.results.filter(each => !each.ok);
+  // Fast: the first line that fails twice stops the finish — what fails is known as soon as it can be, and what passed
+  // is kept for the next one.
+  plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines, { failFast: true });
+  const broken = plan.acceptance.results.filter(each => !each.ok && each.notRun !== true);
+  const notRun = plan.acceptance.results.filter(each => each.notRun === true).length;
   if (broken.length > 0) {
+    // Lines that only ran out of time on a busy machine are said so, first: nothing says the result is broken.
+    const busy = busyTimeoutsNote(broken.map(each => each.output ?? []));
     throw new RunRefusal(
       'checks-failed',
       // Said as what is known — the line fails now — never a culprit it did not find: a run's finish blamed "another
       // task's work" for a check's own false reading.
-      `${notHoldingText(broken)} — each line's output below says why: another task's change since its review, a line amended since and run only now, or the check reading the page otherwise. Nothing is written: a task of the run puts it right (plitzi run open <stage>), a line that is wrong is amended (plitzi run amend), or the lead reverts what broke it (plitzi task revert)`,
+      `${busy ? `${busy}. ` : ''}${notHoldingText(broken)}${notRunText(notRun)} — each line's output below says why: another task's change since its review, a line amended since and run only now, or the check reading the page otherwise. Nothing is written: a task of the run puts it right (plitzi run open <stage>), a line that is wrong is amended (plitzi run amend), or the lead reverts what broke it (plitzi task revert)`,
       {
         steps: broken.map(each => ({
           name: `acceptance — ${each.task}: ${each.said}`,

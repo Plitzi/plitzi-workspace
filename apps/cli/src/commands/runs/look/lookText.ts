@@ -197,7 +197,7 @@ export const lookText = (looked: Looked): string =>
           ...looked.compared.map(each =>
             each.problem
               ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? 'nothing changed' : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? (each.canvasMoving ? 'nothing changed it could compare — its canvas (a map, a chart) was not drawn yet when pictured: look again' : 'nothing changed') : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
           )
         ]
       : []),
