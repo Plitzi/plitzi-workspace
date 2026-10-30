@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import { useMemo, useRef } from 'react';
 
