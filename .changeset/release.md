@@ -27,6 +27,8 @@ authoring and the elements learnt from the runs.
   plugin's address, a server `query`, `http.request`, a connector, a function's `fetch` — reach no private address but
   the origins the deployment names as its own: a development machine whose bucket is on localhost writes
   `outbound: { privateOrigins: ['http://localhost:9000'] }` where it wrote `allowPrivatePluginHosts: true`.
+- **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
+  a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
   plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22

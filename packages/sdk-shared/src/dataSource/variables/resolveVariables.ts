@@ -1,6 +1,6 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
-import type { SchemaVariable, SchemaVariableValue } from '../types';
+import type { SchemaVariable, SchemaVariableValue } from '../../types';
 
 /** What a variable's `subValues` are matched against — everything a `when` rule may name. */
 export type VariableScope = {

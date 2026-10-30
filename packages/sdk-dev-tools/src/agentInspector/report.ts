@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { getBindingsDetails } from '@plitzi/sdk-shared/dataSource';
-import { sightOf, sightText } from '@plitzi/sdk-shared/devTools';
+import { sightOf, sightText } from '@plitzi/sdk-shared/devTools/sight';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';

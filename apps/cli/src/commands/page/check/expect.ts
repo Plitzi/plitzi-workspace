@@ -1,12 +1,12 @@
 import { closest } from '@plitzi/sdk-authoring';
-import { sightOf, sightText } from '@plitzi/sdk-shared/devTools';
+import { sightOf, sightText } from '@plitzi/sdk-shared/devTools/sight';
 
 import { selectorOf } from './click';
 
 import type { Authored } from './space';
 import type { CheckIssue, Expectation } from './types';
 import type { BrowserPage } from '../../../browser';
-import type { Sight } from '@plitzi/sdk-shared/devTools';
+import type { Sight } from '@plitzi/sdk-shared/devTools/sight';
 
 /**
  * `--expect`: what an element shows, held to the text asked — and a short label broken onto two lines (`label-wraps`).

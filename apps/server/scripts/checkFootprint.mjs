@@ -20,11 +20,15 @@ import { fileURLToPath } from 'url';
 const BUDGET = {
   // 205: the job queue's rules are one module every queue shares (`queueRules`), and the default queue is the fleet's
   // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
-  '@plitzi/sdk-server': 205,
+  // 207: a provider's server `query` read from an external URL (`externalQueryReader`), and the page handler's error
+  // page escaped by the one helper (`escapeHtml`).
+  '@plitzi/sdk-server': 207,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
-  '@plitzi/sdk-shared': 147,
+  // 150: its server `query` (`serverQuery`) over the space's variables, resolved as the browser resolves them
+  // (`dataSource/variables` — an entry of its own, so the computed values and their `deepEqual` stay the browser's).
+  '@plitzi/sdk-shared': 150,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,

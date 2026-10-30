@@ -1,5 +1,5 @@
-import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource/variables';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
 import {
