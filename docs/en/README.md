@@ -10,6 +10,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Repository structure](./repository-structure.md) | Apps and packages layout |
 | [Development](./development.md) | Stack, commands, and contribution workflow |
 | [Testing](./testing.md) | Vitest for units, Playwright for what a browser opens |
+| [A space's own tests](./space-tests.md) | Element checks and journeys kept in a space's document: one engine, read by the builder's Tests area, the CLI, the MCP and the publish gate |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
 | [Components](./components.md) | Reusable subtrees: where they live in the schema, how an instance renders, the operations every writer shares, and what is left open |
 | [Authoring spaces](./authoring-spaces.md) | Writing a space — or a publishable template — as TypeScript instead of exported JSON: elements, style, bindings and flows |

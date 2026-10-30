@@ -73,7 +73,7 @@ const openTests = async (page: Page, origin: string): Promise<void> => {
 describeTarget('builder', subject => {
   test('writes an element check and lists it with how it stands', async ({ page, capture }) => {
     await openTests(page, subject.origin);
-    await expect(page.getByText(/^No flows yet/)).toBeVisible();
+    await expect(page.getByText(/^No journeys yet/)).toBeVisible();
     await page.getByRole('tab', { name: 'Element checks' }).click();
     await expect(page.getByText('No element checks yet')).toBeVisible();
     await capture('tests-empty');
@@ -94,9 +94,9 @@ describeTarget('builder', subject => {
     test('writes a flow by using the page beside it, plays it there and saves it', async ({ page, capture }) => {
       await openTests(page, subject.origin);
       await expect(canvas(page).locator('[data-plitzi-el="hello"]')).toBeVisible({ timeout: 30_000 });
-      await page.getByRole('button', { name: 'New flow' }).click();
+      await page.getByRole('button', { name: 'New journey' }).click();
 
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
       await panel.getByLabel('What it checks').fill('A visitor is thanked');
       await panel.getByRole('button', { name: 'Record' }).click();
       await expect(canvas(page).locator('[data-plitzi-el="hello"]')).toBeVisible({ timeout: 30_000 });
@@ -114,12 +114,12 @@ describeTarget('builder', subject => {
 
       await panel.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(panel.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
-      await expect(page.getByRole('region', { name: 'Flows' }).getByText('A visitor is thanked')).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Journeys' }).getByText('A visitor is thanked')).toBeVisible();
     });
 
     test('plays a flow up to the step pressed, and holds the page there', async ({ page, capture }) => {
       await openTests(page, subject.origin);
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
       await expect(panel.getByLabel('What it checks')).toHaveValue('A visitor says hello and is thanked');
 
       // The second step — the click — pressed: the flow plays to it, and the page holds as it leaves it.
@@ -135,12 +135,12 @@ describeTarget('builder', subject => {
 
     test('opens the flow last chosen again after a reload, and plays at the pause asked for', async ({ page }) => {
       await openTests(page, subject.origin);
-      const flows = page.getByRole('region', { name: 'Flows' });
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      const flows = page.getByRole('region', { name: 'Journeys' });
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
       await flows.getByText('A visitor types their name on a phone').click();
       await expect(panel.getByLabel('What it checks')).toHaveValue('A visitor types their name on a phone');
 
-      // 0 is the least: each step played at once — and kept, as the flow chosen is, through a reload.
+      // 0 is the least: each step played at once — and kept, as the journey chosen is, through a reload.
       await page.getByLabel('Pause between steps, in seconds').fill('0');
       await page.reload({ waitUntil: 'domcontentloaded' });
       await expect(panel.getByLabel('What it checks')).toHaveValue('A visitor types their name on a phone', {
@@ -158,11 +158,11 @@ describeTarget('builder', subject => {
       await openTests(page, subject.origin);
       await page.getByRole('button', { name: 'Play all' }).click();
 
-      const flows = page.getByRole('region', { name: 'Flows' });
+      const flows = page.getByRole('region', { name: 'Journeys' });
       await expect(flows.getByText('Live')).toBeVisible();
       await capture('play-all-live');
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
-      await expect(panel.getByText('1 of 3 flows fail.')).toBeVisible({ timeout: 60_000 });
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
+      await expect(panel.getByText('1 of 3 journeys fail.')).toBeVisible({ timeout: 60_000 });
       await expect(flows.getByText('Passes', { exact: true })).toHaveCount(2);
       await expect(flows.getByText('Fails', { exact: true })).toHaveCount(1);
       await expect(panel.getByText(/it reads "Welcome back/).first()).toBeVisible();
@@ -172,25 +172,25 @@ describeTarget('builder', subject => {
 
     test('says what is wrong with a step on the step itself, as it is written', async ({ page }) => {
       await openTests(page, subject.origin);
-      await page.getByRole('button', { name: 'New flow' }).click();
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      await page.getByRole('button', { name: 'New journey' }).click();
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
       await panel.getByRole('combobox', { name: 'Add a step by hand' }).selectOption('expectPosition');
       await panel.getByRole('button', { name: 'Done' }).click();
 
       // Read as it is written, before it is saved: the step says it is no relation, on itself.
       await expect(panel.getByText(/is no relation/)).toBeVisible();
-      await expect(page.getByRole('tab', { name: /Flows/ }).getByRole('img', { name: /to look at/ })).toBeVisible();
+      await expect(page.getByRole('tab', { name: /Journeys/ }).getByRole('img', { name: /to look at/ })).toBeVisible();
     });
 
     test('stops every flow played in turn when asked, and says where they stand', async ({ page }) => {
       await openTests(page, subject.origin);
       await page.getByRole('button', { name: 'Play all' }).click();
 
-      const flows = page.getByRole('region', { name: 'Flows' });
+      const flows = page.getByRole('region', { name: 'Journeys' });
       await expect(flows.getByText('Live')).toBeVisible();
       await page.getByRole('button', { name: 'Stop' }).first().click();
 
-      const panel = page.getByRole('region', { name: 'The flow chosen' });
+      const panel = page.getByRole('region', { name: 'The journey chosen' });
       await expect(panel.getByText('Stopped.', { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(flows.getByText('Stopped', { exact: true }).first()).toBeVisible();
       await expect(page.getByRole('button', { name: 'Play all' })).toBeEnabled();

@@ -252,6 +252,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `tablet-rule-skips-mobile` | a tablet rule phones never get — mobile inherits desktop, not tablet | write it under `compact` (tablet and mobile together) |
 | `template-never-resolved` | a condition in an attribute, which only resolves `{{ name\|filter }}` — used as written | move it into `bindTemplate` |
 | `template-or-value` | a template's `or` (or `and`) beside a text or a number — `sort or 'listeners'` — which answers true or false, never the value | a fallback value with `??`: `sort ?? 'listeners'`; a test with `or` between two conditions |
+| `test-unreadable` | a test of the space — an element check or a flow — that cannot be read as it is written: a page no page of the space answers, an element it no longer has, a relation that is none. A snapshot and a publish wait for it | the test as the message says — or the space back to what the test expects |
 | `transient-state-without-keep-state` | `transientState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `transientState` |
 | `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's declaration goes in `authorSpace(space, { plugins: [declaration] })` |
 | `unknown-global-callback` | a global callback no built-in source declares — it runs only if something registers it | the built-in it suggests, or make sure a plugin or module of the space registers it |

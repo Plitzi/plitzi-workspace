@@ -173,6 +173,24 @@ export const lintDraft = (draft: Space, ops: Operation[], before?: Space): Valid
     return preExisting(issue) ? `Pre-existing issue in element "${issue.elementId ?? ''}": ${line}` : line;
   });
 
+  // The space's own tests, read against the space the batch leaves: one it breaks — an element a flow presses removed,
+  // a page it starts on renamed — is said, for a snapshot waits for it. Ones broken before the batch are not its.
+  const testsNow = all.filter(issue => issue.code === 'test-unreadable');
+  if (testsNow.length > 0) {
+    const testsBefore = new Set(
+      before
+        ? readingOf(before)
+            .all.filter(issue => issue.code === 'test-unreadable')
+            .map(issue => issue.message)
+        : []
+    );
+    for (const issue of testsNow.filter(each => !testsBefore.has(each.message))) {
+      warnings.push(
+        `This change leaves a test of the space unreadable — a snapshot waits until it is fixed: ${issue.message}`
+      );
+    }
+  }
+
   // Not a malformation: styling a provider that renders no element is what a batch does by accident, so it is said
   // about the element as it now stands.
   for (const id of touched) {

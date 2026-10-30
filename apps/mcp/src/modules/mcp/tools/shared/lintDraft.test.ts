@@ -185,4 +185,23 @@ describe('fixTouched', () => {
 
     expect(fixTouched(before, [patch('label')]).space).toBe(before);
   });
+
+  it('says a test of the space the batch leaves unreadable — and only the ones it broke', () => {
+    const before = space();
+    before.schema.tests = {
+      e2e: [{ id: 'reads', title: 'Reads the label', page: '/', steps: [{ kind: 'expectShown', element: 'label' }] }]
+    };
+    const draft = drafted(before, next => {
+      delete next.schema.flat.label;
+      next.schema.flat.home.definition.items = (next.schema.flat.home.definition.items ?? []).filter(
+        id => id !== 'label'
+      );
+    });
+
+    const { warnings } = lintDraft(draft, [patch('home')], before);
+
+    expect(warnings.filter(warning => warning.startsWith('This change leaves a test'))).toEqual([
+      'This change leaves a test of the space unreadable — a snapshot waits until it is fixed: e2e test "reads", step 1 (expectShown): no element "label" in the space — name one by its id'
+    ]);
+  });
 });

@@ -15,6 +15,7 @@ import { lintQuiet } from './quiet';
 import { lintTypeSlots } from './slots';
 import { lintStyle } from './style';
 import { lintComputed } from './templates';
+import { lintTests } from './tests';
 
 import type { LintCatalogs, LintIssue } from './context';
 import type { Schema, Style } from '@plitzi/sdk-shared';
@@ -61,6 +62,7 @@ export const lintSpace = (
   lintFlows(ctx);
   lintStyle(ctx);
   lintAccessibility(ctx);
+  lintTests(ctx);
 
   // Each component's tree, read as what it is: closed, with nothing around it but `props` and the globals. The rules
   // that are about the whole space — pages, computed values, flags, channels, the stylesheet — were read above, once.

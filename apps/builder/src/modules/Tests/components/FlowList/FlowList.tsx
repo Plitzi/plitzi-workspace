@@ -100,7 +100,7 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
   const nameOf = (target: string) => elementNameOf(flat, target);
 
   return (
-    <section className="flex min-h-0 flex-col gap-2" aria-label="Flows">
+    <section className="flex min-h-0 flex-col gap-2" aria-label="Journeys">
       <div className="flex items-center gap-3">
         <span className="grow text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
           Flows · {shown.length}
@@ -116,7 +116,7 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
         </span>
         <Button size="xs" intent="secondary" iconPlacement="before" disabled={live} onClick={onCreate}>
           <Button.Icon icon="fa-solid fa-plus" />
-          New flow
+          New journey
         </Button>
       </div>
       <ol className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700">
@@ -154,7 +154,7 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
               <div className="flex min-w-0 grow flex-col">
                 <span className="flex min-w-0 items-center gap-1.5 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   <NeedsLook problems={problemsOfTest(problems, 'e2e', each.id)} />
-                  {current.title || 'A new flow'}
+                  {current.title || 'A new journey'}
                   {chosen && dirty && <span className="text-primary-text"> · not saved</span>}
                 </span>
                 <span className="truncate font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -183,7 +183,7 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
               {!live && (
                 <button
                   type="button"
-                  title="Remove this flow"
+                  title="Remove this journey"
                   className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-[11px] text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-gray-200 hover:text-red-600 dark:hover:bg-zinc-700"
                   onClick={event => {
                     event.stopPropagation();
@@ -198,7 +198,8 @@ const FlowList = ({ serverRun, problems, onSelect, onCreate, onRemove, onViewSer
         })}
         {shown.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            No flows yet. A flow is what a visitor does on the page, and what must show as they go.
+            No journeys yet. A journey is what a visitor does on the page, from start to end, and what must show as they
+            go.
           </li>
         )}
       </ol>

@@ -31,7 +31,8 @@ They ask for what they want; the project, the commands and the checks are yours 
 2. **Serve it and show it:** `npm start`, and give them the address it prints.
 3. **Change what they ask:** in `src/space/` — `npx plitzi element where <id|words>` says where an element is written;
    `npx plitzi space watch --json` in the background answers each save with what it did.
-4. **Leave it passing:** `npx plitzi verify` before you say it is done — only what fails is printed.
+4. **Leave it passing:** `npx plitzi verify` before you say it is done — only what fails is printed; the space's own
+   tests are one of its checks.
 
 ```bash
 npx plitzi element edit hero-cta --set content="Hi"     # an attribute written where the code has it, checked

@@ -109,7 +109,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       new Promise<HTMLIFrameElement>((resolve, reject) => {
         const late = setTimeout(() => {
           awaitingCanvas.current = undefined;
-          reject(new Error('The page on the left did not show again in time: choose the flow again.'));
+          reject(new Error('The page on the left did not show again in time: choose the journey again.'));
         }, CANVAS_MS);
         awaitingCanvas.current = iframe => {
           clearTimeout(late);
@@ -320,7 +320,10 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
 
       const server = needsServer(played);
       if (server) {
-        setOutcome({ ok: false, said: `This flow needs a browser of its own (${server}): press "Run on the server".` });
+        setOutcome({
+          ok: false,
+          said: `This journey needs a browser of its own (${server}): press "Run on the server".`
+        });
         stateAt(played.id, { state: 'server', why: server });
 
         return;
@@ -500,8 +503,8 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
         controller.signal.aborted
           ? { ok: false, said: 'Stopped.' }
           : failed === 0
-            ? { ok: true, said: `${String(passed)} ${passed === 1 ? 'flow' : 'flows'}. All pass.` }
-            : { ok: false, said: `${String(failed)} of ${String(passed + failed)} flows fail.` }
+            ? { ok: true, said: `${String(passed)} ${passed === 1 ? 'journey' : 'journeys'}. All pass.` }
+            : { ok: false, said: `${String(failed)} of ${String(passed + failed)} journeys fail.` }
       );
     };
 

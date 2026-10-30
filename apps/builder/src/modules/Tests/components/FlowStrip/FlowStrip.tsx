@@ -86,7 +86,7 @@ const FlowStrip = (props: FlowStripProps) => {
 
   return (
     <div className="flex min-h-0 flex-col gap-3">
-      <div className="flex h-2 shrink-0 gap-0.5" aria-label="The flow's steps, in order">
+      <div className="flex h-2 shrink-0 gap-0.5" aria-label="The journey's steps, in order">
         {steps.map((step, index) => (
           <button
             key={index}

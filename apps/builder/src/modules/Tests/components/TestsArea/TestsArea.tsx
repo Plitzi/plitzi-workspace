@@ -66,11 +66,11 @@ const TestsArea = ({
       !dirty ||
       showDialog(
         <Modal.Header>
-          <h4>Leave the flow without saving?</h4>
+          <h4>Leave the journey without saving?</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-3 py-2">
-            <h4>“{flow?.title || 'This flow'}” has changes that are not saved. They are lost if you leave it.</h4>
+            <h4>“{flow?.title || 'This journey'}” has changes that are not saved. They are lost if you leave it.</h4>
           </div>
         </Modal.Body>
       ),
@@ -96,7 +96,7 @@ const TestsArea = ({
       const title = flows.find(each => each.id === id)?.title || id;
       const sure = await showDialog(
         <Modal.Header>
-          <h4>Remove the flow</h4>
+          <h4>Remove the journey</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-3 py-2">
@@ -119,14 +119,14 @@ const TestsArea = ({
   const now = checking
     ? 'Click what must show on the page: its words become a check.'
     : mode === 'recording'
-      ? `Recording “${flow?.title || 'a new flow'}”: each click and each thing typed on the page becomes a step.`
+      ? `Recording “${flow?.title || 'a new journey'}”: each click and each thing typed on the page becomes a step.`
       : playingAll
-        ? `Playing every flow in turn${playingFlow ? ` · “${playingFlow.title || playingFlow.id}”` : ''}`
+        ? `Playing every journey in turn${playingFlow ? ` · “${playingFlow.title || playingFlow.id}”` : ''}`
         : mode === 'playing'
-          ? `${paused ? 'Held at' : 'Playing'} “${flow?.title || 'the flow'}” · step ${String(Math.max(running, 0) + 1)} of ${String(flow?.steps.length ?? 0)}`
+          ? `${paused ? 'Held at' : 'Playing'} “${flow?.title || 'the journey'}” · step ${String(Math.max(running, 0) + 1)} of ${String(flow?.steps.length ?? 0)}`
           : outcome
             ? outcome.said
-            : 'Choose a flow to see it on the page, or play them all.';
+            : 'Choose a journey to see it on the page, or play them all.';
 
   return (
     <div className="flex min-h-0 grow flex-col gap-4 overflow-hidden px-5 py-4">
@@ -153,7 +153,7 @@ const TestsArea = ({
         </Button>
         {/* Every flow played in turn is stopped where it was started: the rest are said as stopped. */}
         {playingAll ? (
-          <Button iconPlacement="before" size="sm" intent="secondary" title="Stop playing the flows" onClick={stop}>
+          <Button iconPlacement="before" size="sm" intent="secondary" title="Stop playing the journeys" onClick={stop}>
             <Button.Icon icon="fa-solid fa-stop" />
             Stop
           </Button>
@@ -174,7 +174,7 @@ const TestsArea = ({
           {
             value: String(passing),
             of: `/${String(flows.length)}`,
-            label: 'Flows pass',
+            label: 'Journeys pass',
             ...(flows.some(each => states[each.id]?.state === 'failed')
               ? { tone: 'bad' as const }
               : passing > 0 && passing === flows.length

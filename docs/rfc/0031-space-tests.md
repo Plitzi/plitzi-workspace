@@ -1,6 +1,6 @@
 # RFC 0031 — Space tests: one way to say a page works
 
-- **Status:** Accepted — phases 1 to 6 done; what is left of them is listed under § 7, Still to do
+- **Status:** Accepted — phases 1 to 6 done. How it works now is owned by [docs/en/space-tests.md](../en/space-tests.md); what is left is listed under § 7, Still to do, and this RFC goes when that is done
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-30
 - **Scope:** `sdk-authoring` (a testing layer: unit tests of a space's logic, e2e tests and the one runner), the
@@ -141,26 +141,26 @@ records.
 
 ### 6.1 The builder — the Tests area
 
-A view of the builder's own (the sidebar's Tests), in two tabs: **Flows** (e2e tests) and **Element checks** (unit
-tests), named as a person who builds the space reads them. The Flows tab is one screen, its parts working together:
+A view of the builder's own (the sidebar's Tests), in two tabs: **Journeys** (e2e tests) and **Element checks** (unit
+tests), named as a person who builds the space reads them. The Journeys tab is one screen, its parts working together:
 
 - **Where things stand**, above: the space, what is happening now in a line ("Playing “A visitor orders…” · step 3
-  of 5", "Recording…", how the last play ended), and large numbers — flows passing, steps played, element checks
+  of 5", "Recording…", how the last play ended), and large numbers — journeys passing, steps played, element checks
   passing, the last play's time. **Play all** and **Run on the server** beside them.
-- **The page**, on the left: the space itself, live and in preview, in the chosen flow's device — a phone, a tablet
+- **The page**, on the left: the space itself, live and in preview, in the chosen journey's device — a phone, a tablet
   or a browser window, nothing around it.
-- **The flows**, on the right: each a row — its letter, its title, its first action in words, its device — with where it
+- **The journeys**, on the right: each a row — its letter, its title, its first action in words, its device — with where it
   stands as a pill (Ready, Queued, Playing 3/5, Passes, Fails, On the server); the one chosen lit. Below them the rule
-  they are kept for: before a snapshot or a publish, every flow and every element check must pass — and how many are
+  they are kept for: before a snapshot or a publish, every journey and every element check must pass — and how many are
   ready.
-- **The flow chosen**, below — as tall as it needs, up to a share, the page keeping the rest: what it checks, where it
+- **The journey chosen**, below — as tall as it needs, up to a share, the page keeping the rest: what it checks, where it
   starts, its device; Play, Step by step (Continue / Next step), Stop, the pause between steps, Record, Add a check,
   Save; a timeline of its steps (filled as played, red where one failed, pressed to play up to it); and its moments
-  side by side — the page as it opens, then each thing done with the checks after it ("when this, then that"). While every flow plays in turn, the
-  log of their steps by flow; once they have, what came of it in a line ("3 flows. All pass.").
+  side by side — the page as it opens, then each thing done with the checks after it ("when this, then that"). While every journey plays in turn, the
+  log of their steps by journey; once they have, what came of it in a line ("3 journeys. All pass.").
 
-What is pressed on the right is played on the left: a flow chosen opens on its page and device as a new visitor; a
-step's ▶ plays the flow up to it and holds the page there; pointing at a step lights its element. What is done on the
+What is pressed on the right is played on the left: a journey chosen opens on its page and device as a new visitor; a
+step's ▶ plays the journey up to it and holds the page there; pointing at a step lights its element. What is done on the
 left is written on the right: Record turns each click and field typed into a step, Add a check turns a click on what
 must show into a check (it presses nothing).
 
@@ -169,7 +169,7 @@ The page is played by the same runner as the CLI's and the server's: `runE2eTest
 setter, a press that cannot happen said in the words of Playwright's log, so `pressOnce` and `pressFailure` read it
 unchanged; the page's state bridge, `window.__plitzi`, put on the canvas' window). Every play starts as a new visitor:
 the canvas drawn again and the state empty — the author's state, preview and device put back when the area closes.
-What needs a browser of its own (a held clock, actions answered by the flow, a reload) is said so, and played by
+What needs a browser of its own (a held clock, actions answered by the journey, a reload) is said so, and played by
 **Run on the server**, whose run is replayed step by step in its device frame.
 
 ### 6.2 The server — e2e tests on a draft

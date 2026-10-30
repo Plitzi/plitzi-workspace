@@ -34,7 +34,7 @@ const TestsSummary = ({ answer, problems: all }: TestsSummaryProps) => {
         </span>
         <span className="text-gray-500 dark:text-zinc-400">
           <b className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{answer.tests.e2e?.length ?? 0}</b>{' '}
-          flows — played with “Play all here”, or “Run on the server”
+          journeys — played with “Play all”, or “Run on the server”
         </span>
       </div>
       {needs > 0 && (

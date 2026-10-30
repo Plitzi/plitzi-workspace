@@ -19,15 +19,15 @@ import TestStudioContext from './studio/TestStudioContext';
 import type { UnitTest } from '@plitzi/sdk-shared';
 import type { TSpaceRunE2eTestsMutation } from '@plitzi/sdk-shared/network';
 
-type Tab = 'flows' | 'checks';
+type Tab = 'journeys' | 'checks';
 
 export type TestsProps = {
-  /** The editor's own CSS for the canvas the flows are played on. */
+  /** The editor's own CSS for the canvas the journeys are played on. */
   externalStyle?: string;
 };
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'flows', label: 'Flows' },
+  { id: 'journeys', label: 'Journeys' },
   { id: 'checks', label: 'Element checks' }
 ];
 
@@ -45,8 +45,8 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   const [flat] = useBuilderStore('schema.flat');
   const [elementSelected] = useBuilderStore('elementSelected');
   // The tab last open, open again after a reload.
-  const [storedTab, setTab] = useStorage<Tab>('builder-state.tests.tab', 'flows');
-  const tab: Tab = storedTab === 'checks' ? 'checks' : 'flows';
+  const [storedTab, setTab] = useStorage<Tab>('builder-state.tests.tab', 'journeys');
+  const tab: Tab = storedTab === 'checks' ? 'checks' : 'journeys';
   const [editing, setEditing] = useState<UnitTest>();
   const [serverRun, setServerRun] = useState<TSpaceRunE2eTestsMutation>();
   const [serverRunning, setServerRunning] = useState(false);
@@ -74,9 +74,9 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   }, [answer, enter, load]);
   useEffect(() => leave, [leave]);
 
-  // What each tab holds that needs a look: the flows' problems on Flows, the element checks' and their misses on theirs.
+  // What each tab holds that needs a look: the journeys' problems on Journeys, the element checks' and their misses on theirs.
   const needsLook: Record<Tab, number> = {
-    flows: testsNeedingLook(problems, 'e2e').length,
+    journeys: testsNeedingLook(problems, 'e2e').length,
     checks: problemsOfKind(problems, 'unit').length + (answer?.unitFailed ?? 0)
   };
   const handleTab = useCallback((next: Tab) => () => setTab(next), [setTab]);
@@ -167,7 +167,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           </button>
         ))}
       </div>
-      {tab === 'flows' ? (
+      {tab === 'journeys' ? (
         <TestsArea
           externalStyle={externalStyle}
           answer={answer}
@@ -181,7 +181,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
       ) : (
         <ViewPage
           className="gap-8"
-          description="One element in a given situation — shown or hidden, the words it reads, the look it wears — checked in an instant on every save. A snapshot or a publish waits for them, as it waits for the flows."
+          description="One element in a given situation — shown or hidden, the words it reads, the look it wears — checked in an instant on every save. A snapshot or a publish waits for them, as it waits for the journeys."
         >
           {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
           {answer && <TestsSummary answer={answer} problems={problems} />}

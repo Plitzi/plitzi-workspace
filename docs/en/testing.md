@@ -121,6 +121,7 @@ yarn e2e
 
 ## See also
 
+- [A space's own tests](./space-tests.md) — the tests a space keeps in its document, not this repo's
 - [Development](./development.md) — stack, commands, contribution workflow
 - [`e2e/README.md`](../../e2e/README.md) — targets, gates, fixtures, adding a spec
 - [`examples/README.md`](../../examples/README.md) — the examples the suite checks

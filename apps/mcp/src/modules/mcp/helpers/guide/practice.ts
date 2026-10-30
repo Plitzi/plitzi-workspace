@@ -96,11 +96,15 @@ you touch; fix them in the same batch. Then look:
 
 ## The space's own tests — \`plitzi_test\`
 A space keeps its tests in its document, and **a snapshot and a publish wait for them**: what you change must leave them
-passing. \`plitzi_test { action: 'list' }\` says them and how the unit ones stand; \`run\` plays them — the e2e ones on
-the draft, where the deployment has a browser. Write them whole with \`set\`:
+passing. Two kinds — the builder calls them **element checks** (unit) and **journeys** (e2e: what a visitor does, from
+start to end — not an interaction's flow). \`plitzi_test { action: 'list' }\` says them and how the element checks
+stand; \`run\` plays the journeys on the draft, where the deployment has a browser. Write them whole with \`set\`:
 - \`unit\`: \`{ id, title, element, given: { state, sources }, expect: [{ kind: 'visible' | 'attribute' | 'style' |
   'variant' | 'state', … }] }\` — one element resolved for a state, no browser.
 - \`e2e\`: \`{ id, title, page, width, steps: [{ kind: 'click', element }, { kind: 'expectText', element, text }, …] }\`
-  — a visitor's steps on a page, elements by id (a list's copy \`row:3\`), what must hold between them.
+  — a visitor's steps on a page, elements by id (a list's copy \`row:3\`), what must hold between them; \`type\` names
+  a form control and writes in its field; \`page\` may be a wrong address the space's own not-found page answers.
+A batch that leaves a test unreadable — an element it presses removed, the page it starts on renamed — says so in its
+warnings ("This change leaves a test of the space unreadable…"): fix the test in the same batch, or say why.
 When a test fails over a change the user asked for, say so and fix the test with them — never delete it to pass.
 `;

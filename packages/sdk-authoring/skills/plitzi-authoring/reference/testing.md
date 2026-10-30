@@ -2,8 +2,10 @@
 
 ## The space's own tests — `tests` in the spec
 
-A space keeps its tests in its document, beside its pages: `plitzi test` runs them, and a snapshot and a publish wait
-for them. Two kinds, apart:
+A space keeps its tests in its document, beside its pages, and every door reads the same records: the builder's
+**Tests** area plays them on its canvas, `plitzi test` and `plitzi verify` run them, the MCP's `plitzi_test` lists, saves
+and runs them, and a snapshot and a publish wait for them. Two kinds, apart — **element checks** (unit tests) and
+**journeys** (e2e tests: what a visitor does, from start to end; not an interaction's flow):
 
 ```ts
 import { e2e, unit } from '@plitzi/sdk-authoring';
@@ -36,7 +38,16 @@ export const space: SpaceSpec = {
 };
 ```
 
-A flow is held by an e2e test; a unit test holds what one element makes of a state. `plitzi test --unit` runs no browser.
+A journey is held by an e2e test; an element check holds what one element makes of a state. `plitzi test --unit` runs
+no browser.
+
+- **Read with the space.** A test the space no longer answers — a page renamed, an element removed, a relation that is
+  none — is the warning `test-unreadable` of `lintSpace` and `author`, wherever the space was changed: a `plitzi space
+  lint`, an MCP batch ("This change leaves a test of the space unreadable…"), the builder. Fix the test, or the space.
+- **A journey may start on a wrong address** its space answers with its own not-found page (`slug: '*'`), to test it.
+- **A `type` step names the element** — a form control's id — and writes in the field inside it.
+- **What only a browser of its own plays** — `clock`, `answers`, `reload` — is played by the server's run ("Run on the
+  server", `plitzi test`), not by the builder's canvas.
 
 ## One call: `inspectPage`
 

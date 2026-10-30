@@ -118,7 +118,7 @@ describe('the problems of each kind of test, where each is shown', () => {
   });
 });
 
-describe('a flow\'s problems, placed where each is fixed', () => {
+describe("a flow's problems, placed where each is fixed", () => {
   it('puts a page on where it starts, a width on its device, a step on that step', () => {
     const placed = flowProblemsOf(
       [

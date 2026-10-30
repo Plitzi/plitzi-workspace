@@ -139,7 +139,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
 
   return (
     <section
-      aria-label="The flow chosen"
+      aria-label="The journey chosen"
       className={clsx(
         'flex shrink-0 flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-zinc-700',
         // As tall as what it holds, up to a share of the room — the page above keeps the rest; the log of every flow a
@@ -206,7 +206,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
         ) : (
           <>
             <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {view === 'run' ? 'Every flow, in turn' : 'No flow chosen'}
+              {view === 'run' ? 'Every journey, in turn' : 'No journey chosen'}
             </span>
             {view === 'run' && (
               <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">— each as a new visitor</span>
@@ -232,7 +232,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
         )}
         {view === 'run' && !playingAll && (
           <Button size="xs" intent="secondary" onClick={handleShowSteps}>
-            Back to the flow
+            Back to the journey
           </Button>
         )}
       </header>
@@ -367,7 +367,8 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                 {outcome.said}
               </span>
               <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                {log.length} steps in {((playedMs ?? 0) / 1000).toFixed(1)} s, on the draft, each flow as a new visitor.
+                {log.length} steps in {((playedMs ?? 0) / 1000).toFixed(1)} s, on the draft, each journey as a new
+                visitor.
               </span>
             </div>
           )}

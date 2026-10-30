@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectHere } from './existingProject';
+import { playSpaceTests, spaceTestsText } from './spaceTests';
 import { USAGE_OFF } from '../../runs/core/usage';
 import { projectRun } from '../../scaffold/packageManager';
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from '../page/check';
@@ -24,6 +25,9 @@ import type { Account, CheckReport } from '../page/check';
  *   plitzi verify
  *   plitzi verify --no-pages     # the pages left out, said as such
  */
+
+/** The check the space's own tests are, in verify's list. */
+const SPACE_TESTS = 'space tests';
 
 export interface VerifyOptions {
   /** Commander's `--no-pages`: false when the pages are to be left out. */
@@ -224,8 +228,31 @@ export const verify = async (options: VerifyOptions): Promise<void> => {
     results.push({ name: step.name, ok, ...(ok ? {} : { said: tail(output), ...(fixes ? { fix: step.fix } : {}) }) });
     // One broken file fails every step after it the same way: the first is the one to fix, the rest run once it passes.
     if (!ok && !options.keepGoing) {
-      waiting.push(...steps.slice(index + 1).map(each => each.name), ...(options.pages === false ? [] : ['pages']));
+      waiting.push(
+        ...steps.slice(index + 1).map(each => each.name),
+        SPACE_TESTS,
+        ...(options.pages === false ? [] : ['pages'])
+      );
       break;
+    }
+  }
+
+  // The space's own tests, as a snapshot holds them: its element checks always; its flows on the project's server,
+  // unless the pages are left out — then a browser is not wanted. A space with no tests has nothing to say here.
+  if (waiting.length === 0) {
+    const played = await playSpaceTests(project, [], options.pages === false ? { unit: true } : {});
+    const result: StepResult | undefined =
+      'problem' in played
+        ? { name: SPACE_TESTS, ok: false, said: [played.problem] }
+        : played.count === 0
+          ? undefined
+          : { name: SPACE_TESTS, ok: played.ok, ...(played.ok ? {} : { said: spaceTestsText(played) }) };
+    if (result) {
+      results.push(result);
+    }
+
+    if (result && !result.ok && !options.keepGoing && options.pages !== false) {
+      waiting.push('pages');
     }
   }
 

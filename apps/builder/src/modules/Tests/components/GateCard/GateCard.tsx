@@ -1,7 +1,7 @@
 export type GateCardProps = {
   ready: number;
   total: number;
-  /** The flows that cannot be read as written, by id: said calmly, the first one shown on asking. */
+  /** The journeys that cannot be read as written, by id: said calmly, the first one shown on asking. */
   flowsNeedLook: readonly string[];
   /** Element checks written so they cannot be read, or that do not hold. */
   checksNeedLook: number;
@@ -22,7 +22,7 @@ const GateCard = ({ ready, total, flowsNeedLook, checksNeedLook, onChecks, onSho
       Before a snapshot or a publish
     </span>
     <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-      Every flow and every element check must pass.
+      Every journey and every element check must pass.
     </span>
     <div className="flex items-baseline gap-2">
       <span className="text-2xl leading-none font-semibold text-zinc-900 tabular-nums dark:text-zinc-50">{ready}</span>
@@ -42,8 +42,10 @@ const GateCard = ({ ready, total, flowsNeedLook, checksNeedLook, onChecks, onSho
         onClick={() => onShowFlow(flowsNeedLook[0])}
       >
         <i className="fa-solid fa-circle-exclamation" />
-        {flowsNeedLook.length === 1 ? '1 flow needs a look' : `${String(flowsNeedLook.length)} flows need a look`} —
-        show it
+        {flowsNeedLook.length === 1
+          ? '1 journey needs a look'
+          : `${String(flowsNeedLook.length)} journeys need a look`}{' '}
+        — show it
       </button>
     )}
     {checksNeedLook > 0 && (
