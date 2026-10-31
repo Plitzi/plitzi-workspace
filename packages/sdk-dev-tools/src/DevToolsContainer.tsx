@@ -15,6 +15,7 @@ import DevToolsRoot from './DevToolsRoot';
 import { useIsSelectedInstance } from './instanceRegistry';
 import PageContext from './PageContext';
 import useHydrated from './useHydrated';
+import useNarrowWindow from './useNarrowWindow';
 import useRegisterQueriesStore from './useRegisterQueriesStore';
 import useRegisterRootStore from './useRegisterRootStore';
 
@@ -120,7 +121,9 @@ const DevToolsContainer = ({
    * laid it out the other, and React does not patch that up — it leaves the two disagreeing.
    */
   const hydrated = useHydrated();
-  const dockedAt = hydrated ? orientation : DEFAULT_ORIENTATION;
+  // A window too narrow for the panel beside the page docks it at the bottom, whatever was chosen on a wider one.
+  const narrow = useNarrowWindow();
+  const dockedAt = hydrated && !narrow ? orientation : DEFAULT_ORIENTATION;
   // Only the selected instance renders the (single) panel; all enabled instances still register in the dropdown.
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
   useRegisterRootStore(enabled || inspector);

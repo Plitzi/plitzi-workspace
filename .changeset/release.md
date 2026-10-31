@@ -1327,7 +1327,7 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   root, no token — is counted as the agent whose named commands ran in its session (`namedBySession`): a run's lead
   had 29 "unnamed" lines beside its own. A burst of `page measure --expect` that passed at last is a check run after
   each edit, as `task run` and `task check` are, never "run again and again"; the program itself run again is named as
-  it was (`plitzi --version`), where the title said "ran  6 times". A file left in the project's `tmp/` is told to every
+  it was (`plitzi --version`), where the title named no command ("unnamed ran 6 times"). A file left in the project's `tmp/` is told to every
   agent, and says so: "nobody can tell whose it is — if it is yours, move it; if not, nothing to do".
 - **`task look` reads its own answers.** It took a picture's path from the last line of what a page command printed,
   stdout and stderr together, and a warning after the JSON made it show the picture before the steps; it reads the
@@ -1586,7 +1586,7 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 - **A step only some widths need** (`at <widths> <step>`: `at 390`, `at <=767`, `at >=768`): played where the window is
   that wide and passed over, said, at the others — so one `page measure --width 1440,390` holds both where a phone
   opens a tab first. A run's lead wrote its stage with a script, every check twice. `page measure` plays such steps
-  again at each width.
+  again at each width, and every page command refuses an `at` that names none of the widths it reads.
 - **A step that would do nothing is refused, not passed.** `source` of a list's row (`list_x.item.title`) and an
   `attribute` a binding gives are drawn over at once: `--steps` and a journey's step refuse them, naming the source to
   write — a run's agent wrote both and read its unchanged page as a bug. A `type` step focuses its field, as a journey
@@ -2061,6 +2061,11 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - **Report what you see** in the Run tab, on a run's preview: point at an element, say what is wrong, send it to the
   lead. What the person does on the page is kept from its load (each press of an element of the space, what each field
   holds once typed — never a password, never the dev tools') and sent with it; nothing is sent until they press Send.
+
+- **A window under 900 px docks the panel at the bottom** (`useNarrowWindow`): beside the page it took 500 px at least,
+  and at 390 it ran off the screen over the page whole. The side-panel button says why it is off there; the choice
+  made on a wider window comes back with it. The tab shown is scrolled into sight in its row: at 390 the Run tab was
+  open under a row showing Logs alone.
 
 - **`setSource` and `setAttribute` refuse what would be drawn over** and answer `{ refused }` naming why: a list row's
   source (`list_x.item…`, what the list's binding gives) and an attribute a binding gives (`setSource` its source

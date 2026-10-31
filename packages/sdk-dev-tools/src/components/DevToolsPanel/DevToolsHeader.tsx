@@ -1,9 +1,10 @@
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import DevToolsButton from './DevToolsButton';
 import ThemeControl from './ThemeControl';
 import { useScopeSelector } from '../../scope/useScope';
+import useNarrowWindow, { SIDE_PANEL_WINDOW_MIN } from '../../useNarrowWindow';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ChangeEvent } from 'react';
@@ -51,6 +52,14 @@ const DevToolsHeader = ({
   run = false
 }: DevToolsHeaderProps) => {
   const tabs = TABS.filter(tab => (tab.id !== 'qa' || qa) && (tab.id !== 'run' || run));
+  const narrow = useNarrowWindow();
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  // The tab shown is in sight in its row, which scrolls when the panel is narrow: at 390 the Run tab was open under a
+  // row showing Logs alone.
+  useEffect(() => {
+    tabsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [tabSelected]);
   const { options: scopeOptions, value: scopeValue, onSelect: onSelectScope } = useScopeSelector();
 
   const handleClickOrientation = useCallback(() => {
@@ -66,13 +75,15 @@ const DevToolsHeader = ({
 
   return (
     <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
-      <div className="flex items-stretch overflow-x-auto">
+      <div ref={tabsRef} role="tablist" className="flex min-w-0 items-stretch overflow-x-auto">
         {tabs.map(tab => {
           const isActive = tabSelected === tab.id;
 
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
               onClick={handleClickTab(tab.id)}
               className={clsx(
                 'flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2 font-medium transition-colors',
@@ -112,7 +123,14 @@ const DevToolsHeader = ({
         <ThemeControl />
         <DevToolsButton
           iconClassName={clsx('fa-solid fa-table-columns', { 'rotate-90': orientation === 'vertical' })}
-          title={orientation === 'horizontal' ? 'Switch to side panel' : 'Switch to bottom panel'}
+          title={
+            narrow
+              ? `At the bottom while the window is under ${String(SIDE_PANEL_WINDOW_MIN)} px: beside it, the page would have no room`
+              : orientation === 'horizontal'
+                ? 'Switch to side panel'
+                : 'Switch to bottom panel'
+          }
+          disabled={narrow}
           onClick={handleClickOrientation}
         />
         <DevToolsButton iconClassName="fa-solid fa-xmark" title="Collapse to the indicator" onClick={onCollapse} />

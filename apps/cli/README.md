@@ -415,7 +415,7 @@ server's data is put in its state by `action <id> [json]` — one of the space's
 its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
 in (the password in `PLITZI_CHECK_PASSWORD`), opened where this one is: `as mika goto /messages/dax; as mika type
 dm-input hi`. Both reach the project's own server, never `--compare`'s site. A step only some widths need is
-`at <widths> <step>` — `390`, `<=767`, `>=768` — passed over at the others, so one command reads every width:
+`at <widths> <step>` — `390`, `<=767`, `>=768` — passed over at the others (one that names no width read is refused), so one command reads every width:
 `--width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x"`, the tab a phone opens first. The steps are one vocabulary: `page play`
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
 they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
