@@ -48,11 +48,15 @@ const ringOf = (document: Document): HTMLElement => {
   return ring;
 };
 
-/** The element lit in each canvas, followed as the page scrolls under it. */
+/** The element lit in each canvas, followed while it is lit. */
 const lit = new WeakMap<Document, Element>();
 
-/** The canvases whose scrolling is already listened to: one listener each, however often a ring comes and goes. */
-const followed = new WeakSet<Document>();
+/** Whether an element takes room on the page: one hidden has nothing to ring — a ring round its empty box sits in a corner. */
+const shown = (node: Element): boolean => {
+  const box = node.getBoundingClientRect();
+
+  return box.width > 0 && box.height > 0 && node.checkVisibility({ visibilityProperty: true });
+};
 
 const place = (ring: HTMLElement, node: Element): void => {
   const box = node.getBoundingClientRect();
@@ -64,26 +68,86 @@ const place = (ring: HTMLElement, node: Element): void => {
   });
 };
 
-/** The ring kept on its element while anything in the page scrolls — the play's own scrolling, or the person's. */
-const follow = (document: Document): void => {
-  if (followed.has(document)) {
+/** What keeps a canvas' ring on its element: everything that can move it, watched while one is lit and dropped after. */
+type Follower = { stop: () => void; watch: (node: Element) => void };
+
+const followers = new WeakMap<Document, Follower>();
+
+/**
+ * The ring on its element, or gone with it: put back where the element is now, or cleared once it left the page or
+ * stopped being drawn — a play that moves to another page takes the element away, and a ring left where it was rings
+ * whatever the new page drew there.
+ */
+const refresh = (document: Document): void => {
+  const node = lit.get(document);
+  const ring = document.querySelector<HTMLElement>(`[${MARK}]`);
+  if (!node || !ring) {
     return;
   }
 
-  followed.add(document);
-  document.addEventListener(
-    'scroll',
-    () => {
-      const node = lit.get(document);
-      const ring = document.querySelector<HTMLElement>(`[${MARK}]`);
-      if (node && ring) {
-        // Stuck to it while it moves; the next step's ring glides again.
-        ring.style.transition = 'none';
-        place(ring, node);
-      }
+  if (!node.isConnected || !shown(node)) {
+    clearSpotlight(document);
+
+    return;
+  }
+
+  // Stuck to it while it moves; the next step's ring glides again.
+  ring.style.transition = 'none';
+  place(ring, node);
+};
+
+/**
+ * Follows the lit element through anything that moves it: the page scrolling — the play's own scrolling, or the
+ * person's — the canvas resizing, the element resizing, and the page changing under it, a navigation above all. Once a
+ * frame at most, however much changed in it.
+ */
+const follow = (document: Document, node: Element): void => {
+  const view = document.defaultView;
+  if (!view) {
+    return;
+  }
+
+  const kept = followers.get(document);
+  if (kept) {
+    kept.watch(node);
+
+    return;
+  }
+
+  let frame = 0;
+  const schedule = () => {
+    if (frame === 0) {
+      frame = view.requestAnimationFrame(() => {
+        frame = 0;
+        refresh(document);
+      });
+    }
+  };
+  // The ring's own moves are changes to the page too: left in, every placing would ask for the next.
+  const changes = new MutationObserver(records => {
+    if (records.some(record => !(record.target instanceof view.HTMLElement && record.target.hasAttribute(MARK)))) {
+      schedule();
+    }
+  });
+  changes.observe(document.body, { childList: true, subtree: true, attributes: true });
+  const sizes = new view.ResizeObserver(schedule);
+  document.addEventListener('scroll', schedule, { capture: true, passive: true });
+  view.addEventListener('resize', schedule);
+  const follower: Follower = {
+    watch: next => {
+      sizes.disconnect();
+      sizes.observe(next);
     },
-    { capture: true, passive: true }
-  );
+    stop: () => {
+      view.cancelAnimationFrame(frame);
+      changes.disconnect();
+      sizes.disconnect();
+      document.removeEventListener('scroll', schedule, { capture: true });
+      view.removeEventListener('resize', schedule);
+    }
+  };
+  follower.watch(node);
+  followers.set(document, follower);
 };
 
 /**
@@ -102,17 +166,14 @@ export const spotlight = (document: Document | null | undefined, target: string 
     return;
   }
 
-  // An element hidden takes no room on the page: there is nothing to ring — a ring round its empty box sits in the
-  // page's corner.
-  const shown = node.getBoundingClientRect();
-  if (shown.width === 0 || shown.height === 0 || !node.checkVisibility({ visibilityProperty: true })) {
+  if (!shown(node)) {
     clearSpotlight(document);
 
     return;
   }
 
-  follow(document);
   lit.set(document, node);
+  follow(document, node);
   const ring = ringOf(document);
   const { ring: color, glow } = TONES[tone];
   Object.assign(ring.style, {
@@ -128,6 +189,8 @@ export const spotlight = (document: Document | null | undefined, target: string 
 export const clearSpotlight = (document: Document | null | undefined): void => {
   if (document) {
     lit.delete(document);
+    followers.get(document)?.stop();
+    followers.delete(document);
     document.querySelector(`[${MARK}]`)?.remove();
   }
 };

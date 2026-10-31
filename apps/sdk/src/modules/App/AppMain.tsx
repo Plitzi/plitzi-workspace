@@ -57,6 +57,8 @@ export type AppMainProps = {
   debugMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota. */
   overQuota?: boolean;
+  /** Set by the server that metered this render: the space has nearly spent its allowance. */
+  quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's badge, on a plan that does not remove it. */
   badge?: boolean;
   analytics?: AnalyticsConfig;
@@ -101,6 +103,7 @@ const AppMain = ({
   previewMode = true,
   debugMode = false,
   overQuota = false,
+  quotaNear = false,
   badge = false,
   runStatus = false,
   inspector = false,
@@ -140,9 +143,10 @@ const AppMain = ({
       'render.isHydrating',
       'render.hydrated',
       'render.overQuota',
+      'render.quotaNear',
       'render.badge'
     ],
-    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, badge]
+    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, quotaNear, badge]
   );
 
   /**

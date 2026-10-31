@@ -297,6 +297,11 @@ export type SSRMeterDecision = {
   /** The deployment's "Made with Plitzi" badge on this render — its attribution, on a plan that does not remove it. */
   badge?: boolean;
   /**
+   * This space has nearly spent its plan's allowance and the render should say so, calmly — before `degrade` would. The
+   * deployment decides where: Plitzi says it on the shared domain, where the visitor is the one who might tell the owner.
+   */
+  quotaNear?: boolean;
+  /**
    * This page is sent `X-Robots-Tag: noindex`: an address the deployment does not mean to host a site on — a free
    * sub-domain — kept out of search results, where an abused one would do the most harm.
    */

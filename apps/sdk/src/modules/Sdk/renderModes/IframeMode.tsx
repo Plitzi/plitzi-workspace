@@ -6,8 +6,8 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 
 import SpaceContainer from '../../Space/SpaceContainer';
-import OverQuotaNotice from '../components/OverQuotaNotice';
 import PlitziBadge from '../components/PlitziBadge';
+import QuotaNotice from '../components/QuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
@@ -35,7 +35,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
               are keyed by element id and pages never share one, so nothing from the old page survives. */}
           {pageId && <Page internalProps={pageValueMemo} />}
         </PlitziProvider>
-        <OverQuotaNotice />
+        <QuotaNotice />
         <PlitziBadge />
       </SpaceContainer>
     </ContainerFrame>

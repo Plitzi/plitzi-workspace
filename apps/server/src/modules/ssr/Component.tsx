@@ -23,6 +23,8 @@ export type ComponentProps = {
   debugMode?: boolean;
   /** Set when the metering adapter degrades this render: the account behind this space is over its quota. */
   overQuota?: boolean;
+  /** Set when the metering adapter says the space has nearly spent its allowance. */
+  quotaNear?: boolean;
   /** Set when the metering adapter keeps the deployment's badge on this render. */
   badge?: boolean;
   /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
@@ -47,6 +49,7 @@ const Component = ({
   sdkIconsStylePath,
   debugMode = false,
   overQuota,
+  quotaNear,
   badge,
   theme,
   state,
@@ -69,6 +72,7 @@ const Component = ({
       sdkIconsStylePath={sdkIconsStylePath}
       debugMode={debugMode}
       {...(overQuota === undefined ? {} : { overQuota })}
+      {...(quotaNear === undefined ? {} : { quotaNear })}
       {...(badge === undefined ? {} : { badge })}
       {...(theme === undefined ? {} : { theme })}
       {...(state === undefined ? {} : { state })}

@@ -57,6 +57,10 @@ const FlowStrip = (props: FlowStripProps) => {
   const { onPoint, onPlayTo, onEdit, onMove, onRemove, onDone } = props;
   const titleOf = checkTitleOf(use(TestStudioContext).tests.unit ?? []);
   const moments = momentsOf(steps);
+  const editingIn = (moment: (typeof moments)[number]) =>
+    !locked &&
+    editing !== undefined &&
+    [...(moment.action ? [moment.action] : []), ...moment.checks].some(({ index }) => index === editing);
   // A step of the timeline: its kind as its colour, how it went as its fill — pressed, played up to it.
   const segment = ({ step, index }: PlacedStep) => (
     <button
@@ -111,8 +115,14 @@ const FlowStrip = (props: FlowStripProps) => {
             {at > 0 && (
               <i className="fa-solid fa-arrow-right mt-[21px] shrink-0 text-xs text-zinc-400 dark:text-zinc-500" />
             )}
+            {/* As wide as what it says, sharing what room there is: the columns fit the strip when their least does, and
+                only past that does it scroll. A lone step needs less than one with its checks; the one being edited keeps
+                room for its form. */}
             <section
-              className="flex w-88 shrink-0 flex-col gap-1.5"
+              className={clsx(
+                'flex max-w-104 flex-[1_1_auto] flex-col gap-1.5',
+                editingIn(moment) ? 'min-w-88' : moment.checks.length > 0 ? 'min-w-60' : 'min-w-48'
+              )}
               aria-label={
                 moment.action ? `Step ${String(moment.action.index + 1)} and its checks` : 'The page as it opens'
               }

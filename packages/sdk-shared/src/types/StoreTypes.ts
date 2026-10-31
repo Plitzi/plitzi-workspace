@@ -163,6 +163,11 @@ export type RenderSettings = {
    */
   overQuota?: boolean;
   /**
+   * This space has nearly spent its plan's allowance, as the SERVER decided when it metered the render: the page says so
+   * before `overQuota` would. Like `overQuota`, nothing an author writes can set it.
+   */
+  quotaNear?: boolean;
+  /**
    * The deployment's "Made with Plitzi" badge, as the SERVER decided when it metered the render: on a plan that does
    * not remove it. Like `overQuota`, a fact about the account behind the site that nothing an author writes can set.
    */

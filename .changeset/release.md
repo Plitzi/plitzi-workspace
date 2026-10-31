@@ -35,6 +35,8 @@ authoring and the elements learnt from the runs.
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
+- **`OverQuotaNotice` is `QuotaNotice`, and its classes `plitzi-quota-notice`** (`--near`, `--over`, `__text`,
+  `__cta`) where they were `plitzi-over-quota…`: a page that styled the old ones restyles the new.
 - **A `DraftStore` of a deployment's own keeps `inspected`** beside `reusable` — what it was given to `put` comes back
   from `take` — or a test runner's session renders without the state bridge, and a journey that sets the state fails
   on the server.
@@ -1672,6 +1674,10 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   appended to nothing repeated the source. Now `undefined` there: a variant appended to nothing is its own key alone, a
   selector appended to nothing is itself.
 
+- **A site says when its allowance is nearly spent** (`render.quotaNear`, set from `SSRMeterDecision.quotaNear` on SSR
+  and from `InitQuery`'s `render.quotaNear` on the client): a calm line, neutral in either scheme, in the corner the
+  over-quota notice uses — the same `QuotaNotice`, amber only once it is over. Never both, and nothing an author writes
+  sets it; the deployment decides where it is said.
 - **`PlitziBadge`**: the deployment's "Made with Plitzi" badge, with a link to report the site, drawn in every render
   mode when the server says so (`render.badge`, on SSR and on the client's `InitQuery`), light and dark. A space
   cannot turn it off from its settings.
@@ -1787,6 +1793,10 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Server (`@plitzi/sdk-server`)
 
+- **Terms at sign-up** (`createAuth({ api: { terms: { version } } })`): a deployment that names the terms an account
+  is opened under has `/auth/signup` refuse a sign-up without `acceptedTerms` (`true`, or a form's `"true"`) — 400,
+  `field: 'acceptedTerms'` — and hands `createAccount` the version accepted and when (`termsAccepted`), to keep as the
+  record of what each person agreed to. Naming none asks for nothing, as before.
 - **An agent told why it only reads** (`@plitzi/sdk-mcp`, `SSRGrant.readOnlyReason` in `@plitzi/sdk-shared`): a
   consumer that knows why a grant may not write says so, and the MCP's refusal carries those words instead of its own —
   a member whose role views or edits only the content never had the right to change the space; they did not lose it.
@@ -1922,6 +1932,13 @@ is no room at this address.` — one line, no stack — where the log said "ende
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 
+- **The ring a played step draws stays on its element**: it follows it when the page moves it without a scroll — a
+  list growing, the canvas resized — and goes when the element does, so a play that moves to another page no longer
+  leaves it ringing whatever the new page drew there.
+- **A journey's moments size to what they say.** Each column of the flow strip is as wide as its steps, between a
+  minimum — narrower for a lone step than for one with its checks, wider for the one being edited — and a maximum, and
+  they share the room there is: the strip scrolls only once their minimums do not fit, where every column used to take
+  the same fixed width.
 - **One way to build a panel.** Every sidebar panel and every view that takes the canvas' place is made of the same
   pieces: the search and the primary action at the top right (a "+" beside a search, the action's name when alone —
   no button pinned at a panel's foot any more), one tab row (`ViewTabs`: the segmented theme, as real tab buttons a

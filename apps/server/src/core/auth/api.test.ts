@@ -377,6 +377,51 @@ describe('recovering a password', () => {
  * the destination the caller named travels to the mail, where the deployment that composes the link decides whether
  * it is one of its own. The kernel carries it and judges nothing: it has no policy to judge by.
  */
+describe('the terms an account is opened under', () => {
+  const made = vi.fn((account: { username: string; email: string; termsAccepted?: { version: string; at: Date } }) =>
+    Promise.resolve({ ...ada, id: 4, username: account.username, email: account.email })
+  );
+  const signup = (config: AuthApiConfig, acceptedTerms?: boolean) =>
+    build(
+      {
+        findByUsername: () => Promise.resolve(undefined),
+        findByEmail: () => Promise.resolve(undefined),
+        createAccount: made
+      },
+      { hashPassword: (p: string) => Promise.resolve(`${p}-hashed`), verifyOnSignup: true, ...config }
+    ).signup({
+      username: 'grace',
+      email: 'grace@example.com',
+      password: 'correct horse battery',
+      ...(acceptedTerms === undefined ? {} : { acceptedTerms })
+    });
+
+  it('refuses a sign-up that does not accept them, naming the field, and makes no account', async () => {
+    made.mockClear();
+
+    expect(await signup({ terms: { version: '2026-10-31' } }, false)).toMatchObject({
+      ok: false,
+      status: 400,
+      body: { field: 'acceptedTerms' }
+    });
+    expect(made).not.toHaveBeenCalled();
+  });
+
+  it('tells the store which version was accepted, and when', async () => {
+    made.mockClear();
+
+    expect(await signup({ terms: { version: '2026-10-31' } }, true)).toMatchObject({ ok: true, status: 201 });
+    expect(made.mock.calls[0]?.[0].termsAccepted).toEqual({ version: '2026-10-31', at: expect.any(Date) as Date });
+  });
+
+  it('asks for nothing on a deployment that names no terms', async () => {
+    made.mockClear();
+
+    expect(await signup({})).toMatchObject({ ok: true, status: 201 });
+    expect(made.mock.calls[0]?.[0]).not.toHaveProperty('termsAccepted');
+  });
+});
+
 describe('confirming an address', () => {
   type Mail = { to: string; template: string; data: Record<string, string> };
 

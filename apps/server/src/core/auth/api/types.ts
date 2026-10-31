@@ -216,7 +216,13 @@ export interface AccountAdapters {
 
   findByUsername?: (username: string) => Promise<AccountRecord | undefined>;
   findByRefreshToken?: (token: string) => Promise<AccountRecord | undefined>;
-  createAccount?: (account: { username: string; email: string; passwordHash: string }) => Promise<AccountRecord>;
+  createAccount?: (account: {
+    username: string;
+    email: string;
+    passwordHash: string;
+    /** The terms the person accepted as they signed up, when the deployment asks for them (`terms`). */
+    termsAccepted?: { version: string; at: Date };
+  }) => Promise<AccountRecord>;
   findByEmail?: (email: string) => Promise<AccountRecord | undefined>;
   /**
    * Why `account` may not sign in with a password, if it may not: its organization requires its own single sign-on.
@@ -328,6 +334,13 @@ export interface AuthApiConfig {
   generateToken?: () => string;
   /** Whether a new account may sign in immediately or has to confirm its address first. */
   verifyOnSignup?: boolean;
+  /**
+   * The terms an account is opened under. Set, `/auth/signup` refuses a sign-up that does not say `acceptedTerms: true`
+   * (400, `field: 'acceptedTerms'`), and `createAccount` is told which version was accepted and when — the record a
+   * deployment keeps of what each person agreed to. `version` is the deployment's own name for the text in force (a
+   * date, a number); change it when the terms change.
+   */
+  terms?: { version: string };
   /**
    * The global capability an administrator must hold to act on somebody else's account. Named rather than fixed,
    * because what a deployment calls its permissions is its own vocabulary. Default `userManage`.

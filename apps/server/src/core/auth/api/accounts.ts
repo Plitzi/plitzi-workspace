@@ -9,6 +9,7 @@ export const accountsFlows = ({
   hashPassword,
   generateToken,
   verifyOnSignup,
+  terms,
   record,
   mintLink,
   linkExpired,
@@ -27,6 +28,15 @@ export const accountsFlows = ({
     const password = asText(fields.password);
     if (!username || !email || !password) {
       return refuse(400, 'A username, an email and a password are required');
+    }
+
+    // A form posts what it holds as text: `"true"` is the box ticked as surely as `true` is.
+    if (terms && fields.acceptedTerms !== true && fields.acceptedTerms !== 'true') {
+      return {
+        ok: false,
+        status: 400,
+        body: { error: 'Accept the terms of service to create an account', field: 'acceptedTerms' }
+      };
     }
 
     const weak = await rejectPassword(password, { username, email });
@@ -65,7 +75,8 @@ export const accountsFlows = ({
     const account = await adapters.createAccount({
       username,
       email,
-      passwordHash: await hashPassword(password)
+      passwordHash: await hashPassword(password),
+      ...(terms ? { termsAccepted: { version: terms.version, at: new Date() } } : {})
     });
 
     if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {

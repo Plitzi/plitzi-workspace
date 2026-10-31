@@ -6,7 +6,7 @@ export type TInitQuery = {
     schema: SchemaRaw;
     style: Style;
     /** What the server decided about this render. Server-side facts the space cannot author away. */
-    render?: { overQuota: boolean; badge?: boolean };
+    render?: { overQuota: boolean; quotaNear?: boolean; badge?: boolean };
   };
 };
 
@@ -78,6 +78,7 @@ const InitQuery = /* GraphQL */ `
       # would have been handed in an SSR bootstrap travels here instead.
       render {
         overQuota
+        quotaNear
         badge
       }
     }

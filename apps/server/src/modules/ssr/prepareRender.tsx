@@ -289,10 +289,12 @@ export const prepareRender = async (
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
   // same view again would double it.
-  const { degrade, badge: meteredBadge, analytics } = req.ctx.meter ?? {};
+  const { degrade, badge: meteredBadge, quotaNear: meteredNear, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
   // The fact that the ACCOUNT is over its quota: only the server can state it, so a space cannot turn the notice off.
   const overQuota = degrade ? true : undefined;
+  // …and nearly over it, said calmly before it is: never both.
+  const quotaNear = meteredNear && !degrade ? true : undefined;
   // The deployment's attribution, decided with the metering: a space cannot remove it from its own settings either.
   const badge = meteredBadge ? true : undefined;
 
@@ -371,6 +373,7 @@ export const prepareRender = async (
       ...(paintedState ? { state: paintedState } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
       ...(overQuota ? { overQuota } : {}),
+      ...(quotaNear ? { quotaNear } : {}),
       ...(badge ? { badge } : {}),
       ...(actionRuns ? { actionRuns } : {}),
       ...(runStatus ? { runStatus } : {}),
@@ -479,6 +482,7 @@ export const prepareRender = async (
       sdkDevToolsStylePath,
       sdkIconsStylePath,
       overQuota,
+      quotaNear,
       badge,
       theme,
       ...(paintedState ? { state: paintedState } : {}),

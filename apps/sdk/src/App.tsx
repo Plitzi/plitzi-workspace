@@ -77,6 +77,9 @@ export type AppProps = {
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says
    *  so. Never authored — a space cannot turn it off from its own settings. */
   overQuota?: boolean;
+  /** Set by the server that metered this render: the space has nearly spent its allowance, so the page says so
+   *  calmly before `overQuota` would. Never authored. */
+  quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's "Made with Plitzi" badge, on a plan that does not
    *  remove it. Never authored — a space cannot turn it off from its own settings. */
   badge?: boolean;
