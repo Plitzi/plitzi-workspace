@@ -63,6 +63,7 @@ const useAgentInspector = (enabled: boolean, target?: Window | null): void => {
     const inspector = createAgentInspector({
       root,
       writeState: (key, value) => setCommon(`runtime.state.${key}`, value),
+      writeTestAccount: account => setCommon('runtime.testAccount', account),
       stores: () => getDevStoresSnapshot().map(entry => entry.store),
       runs: () => runs,
       setWatching: on => {

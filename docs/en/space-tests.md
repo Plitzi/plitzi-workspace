@@ -21,6 +21,17 @@ itself, a list's row, are laid over them). A rule written once is held at every 
 journey may also start with a state — `given: { state: { items: 3 } }`, set as the page opens — to reach a case
 without the steps that lead to it. Both read and write the page's state bridge, `window.__plitzi`.
 
+**Signed in, as a test account.** A journey plays as a guest, or `as` one of the space's test accounts —
+`tests.accounts: [{ id, email?, roles?, permissions? }]`, declared in the tests alone: no account of the platform's,
+no password, the same document in every tier. Played as one, the page shows that visitor: the auth source holds its
+details and a token no server takes (`test:<id>`), `can()` answers by its permissions, a page for signed-in visitors
+opens, and signing out drops it. The API does not know it — what the page asks the API it asks as a guest — so a
+journey with an account reads and moves, and never writes as anybody. Each runner signs the page in the same way,
+through the bridge (`signInAs`, then `navigate` to the journey's page — a guarded page opened first sent a guest to
+sign in), and again after every load (`goto`, `reload`, `back`); the SDK's `AuthContextProvider` lays the account
+over the session (`runtime.testAccount`, `testAccountAuth` in `@plitzi/sdk-auth`). `e2eTestProblems` says an `as`
+no account answers, an id declared twice, and a role or permission no name can be.
+
 ```ts
 import { e2e, unit } from '@plitzi/sdk-authoring';
 
@@ -73,6 +84,14 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
     - **Play all** plays every journey in turn, with a log and a closing line.
   - Each play starts as a new visitor: the canvas is drawn again and the state emptied; the author's state comes back
     when the area closes.
+  - And with none of the editor's session, as the server plays it (`playingJourney`, `GuestWhilePlaying`): the page
+    reads a guest (`guestAuth`: the auth source empty, `can` false), or the journey's own account, and its pages' access
+    holds — the canvas otherwise leaves every page open for editing, and a journey that met a guarded page passed on
+    the server and failed here. A session the journey signs in to is its own, and is read; the account is dropped when
+    it ends.
+  - **Test accounts** (the area's card): who a journey plays as — added, edited (never its id: the journeys name it)
+    and removed, saved with the tests; one a journey plays as is kept, naming it. Each journey says who it plays as
+    beside where it starts (**As a guest**, **As <account>**).
   - Problems:
     - Read in the builder (`useTestProblems`), against the document as edited.
     - Said calmly where they are fixed: the tab, the row, the field (where it starts, its device), the step.

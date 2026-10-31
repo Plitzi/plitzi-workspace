@@ -3,7 +3,28 @@ import { parseRelation, relationElements } from './position';
 import { isExpectation } from './run';
 import { pageAt } from '../../schema/route';
 
-import type { E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
+import type { E2eAccount, E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
+
+/** A test account's id, and each of its roles and permissions: letters, digits, `-` and `_`. */
+const NAME = /^[A-Za-z0-9_-]+$/;
+
+/** What is wrong with the test accounts as declared: an id twice, or a name no role or permission may have. */
+const accountProblems = (accounts: readonly E2eAccount[]): string[] => {
+  const seen = new Set<string>();
+
+  return accounts.flatMap(account => {
+    const at = `test account "${account.id}"`;
+    const twice = seen.has(account.id);
+    seen.add(account.id);
+    const wrong = [...(account.roles ?? []), ...(account.permissions ?? [])].filter(name => !NAME.test(name));
+
+    return [
+      ...(NAME.test(account.id) ? [] : [`${at}: an id is letters, digits, - and _ — editor, visitor-pro`]),
+      ...(twice ? [`${at}: its id is another test account's — each has its own`] : []),
+      ...wrong.map(name => `${at}: "${name}" is no role or permission's name — letters, digits, - and _ (spaceEdit)`)
+    ];
+  });
+};
 
 /** The element a step names, if it names one. */
 const named = (step: E2eStep): string | undefined => ('element' in step ? step.element : undefined);
@@ -17,15 +38,18 @@ export const e2eTestProblems = (
   document: Schema,
   tests: readonly E2eTest[] = document.tests?.e2e ?? [],
   /** The element checks a step may hold (`expectCheck`): the document's, unless the caller edits others. */
-  checks: readonly UnitTest[] = document.tests?.unit ?? []
+  checks: readonly UnitTest[] = document.tests?.unit ?? [],
+  /** The test accounts a test may play as (`as`): the document's, unless the caller edits others. */
+  accounts: readonly E2eAccount[] = document.tests?.accounts ?? []
 ): string[] => {
+  const accountIds = new Set(accounts.map(account => account.id));
   const checkIds = new Set(checks.map(check => check.id));
   // Every element a page draws, a component's parts too: what a step may name.
   const elements = new Set([
     ...Object.keys(document.flat),
     ...Object.values(document.components).flatMap(component => Object.keys(component.flat))
   ]);
-  const problems: string[] = [];
+  const problems: string[] = [...accountProblems(accounts)];
   const seen = new Set<string>();
   for (const test of tests) {
     const at = `e2e test "${test.id}"`;
@@ -42,6 +66,12 @@ export const e2eTestProblems = (
     });
     if (!answered) {
       problems.push(`${at}: no page of the space answers ${test.page} — a path one of its pages has`);
+    }
+
+    if (test.as !== undefined && !accountIds.has(test.as)) {
+      problems.push(
+        `${at}: it plays as "${test.as}", which is none of the test accounts — declare it in tests.accounts, or play it as a guest`
+      );
     }
 
     if (test.width !== undefined && (test.width < 200 || test.width > 4000)) {

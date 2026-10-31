@@ -14,7 +14,7 @@ export const testShape = {
   tests: z
     .record(z.string(), z.unknown())
     .optional()
-    .describe('With set: `{ unit: [...], e2e: [...] }`, every test of the space — what is left out is removed'),
+    .describe('With set: `{ unit, e2e, accounts }`, every test of the space — what is left out is removed'),
   ids: z.array(z.string()).optional().describe('With run: the tests to run, by id; all when none')
 };
 
@@ -23,7 +23,11 @@ const standing = (schema: Schema) => {
   const report = runUnitTests(schema);
 
   return {
-    tests: { unit: schema.tests?.unit ?? [], e2e: schema.tests?.e2e ?? [] },
+    tests: {
+      unit: schema.tests?.unit ?? [],
+      e2e: schema.tests?.e2e ?? [],
+      ...(schema.tests?.accounts ? { accounts: schema.tests.accounts } : {})
+    },
     problems: [...unitTestProblems(schema), ...e2eTestProblems(schema)],
     unit: { passed: report.passed, failed: report.failed, failing: report.results.filter(result => !result.ok) }
   };

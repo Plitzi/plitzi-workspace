@@ -11,6 +11,23 @@
 export interface SpaceTests {
   unit?: UnitTest[];
   e2e?: E2eTest[];
+  /** Who the journeys may play as, signed in: declared here alone — see `E2eAccount`. */
+  accounts?: E2eAccount[];
+}
+
+/**
+ * Somebody signed in, as the space's journeys play them: declared in the tests alone — no account of the platform's,
+ * no password. A journey that plays `as` one shows its pages that visitor: the auth source holds these details and a
+ * token no server takes (`test:<id>`), `can()` answers by these permissions, a page for signed-in visitors opens. The
+ * server's API does not know it: what a page asks the API it asks as a guest — a journey with an account reads and
+ * moves, it never writes.
+ */
+export interface E2eAccount {
+  /** What the journeys name it by, and its username on the page: letters, digits, `-` and `_`. */
+  id: string;
+  email?: string;
+  roles?: string[];
+  permissions?: string[];
 }
 
 /** What a unit test resolves its element for. */
@@ -104,6 +121,8 @@ export interface E2eTest {
   /** The window's width, in px: 1440 when left out. */
   width?: number;
   scheme?: 'light' | 'dark';
+  /** The account it plays as, signed in (`accounts`, by id): a guest when left out. */
+  as?: string;
   /**
    * Server actions answered by the test, by id: what they return, so the test reads the same data every time. An
    * action it does not name is answered by the space as for a visitor.

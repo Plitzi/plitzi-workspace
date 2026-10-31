@@ -418,6 +418,17 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   counts of them. A batch that leaves a test unreadable says so in its warnings ("This change leaves a test of
   the space unreadable…"), only for the tests it broke.
 
+- **A journey plays signed in, as a test account.** `tests.accounts: [{ id, email?, roles?, permissions? }]`, declared
+  in the tests alone — no account of the platform's, no password — and `as: '<id>'` on a journey (`e2e.account`,
+  `e2e.test({ as })`). The page shows that visitor: the auth source holds its details and a token no server takes
+  (`test:<id>`), `can()` answers by its permissions, a page for signed-in visitors opens, signing out drops it
+  (`testAccountAuth`, `guestAuth` in `@plitzi/sdk-auth`; `runtime.testAccount`). The API does not know it, so a
+  journey with an account reads and moves, never writes as anybody. Every runner signs the page in the same way, through
+  the dev tools' bridge (`window.__plitzi.signInAs`, `navigate` — new in `@plitzi/sdk-dev-tools`), and again after each
+  load. `e2eTestProblems` says an `as` no account answers, an id twice and a name no role can have; `readSpaceTests`,
+  the MCP's `plitzi_test` and the server's tests keep the accounts with the rest (`@plitzi/sdk-shared`,
+  `@plitzi/sdk-authoring`, `@plitzi/sdk-auth`, `@plitzi/sdk-dev-tools`, `@plitzi/sdk-mcp`).
+
 ## Several agents on one project (`@plitzi/cli`)
 
 - **`page measure --expect` holds where two elements stand**, at every width: `--expect "activity.bottom + 8 <=
@@ -1991,6 +2002,11 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - **The ring a played step draws stays on its element**: it follows it when the page moves it without a scroll — a
   list growing, the canvas resized — and goes when the element does, so a play that moves to another page no longer
   leaves it ringing whatever the new page drew there.
+- **A journey plays on the canvas as on the server: with none of the editor's session.** The page reads a guest, or the
+  journey's own test account, and its pages' access holds while it plays (`playingJourney`); a session the journey
+  signs in to is its own. A journey that met a guarded page — the account, sending a visitor with no session to sign
+  in — passed on the server and failed on the canvas, where every page is left open for editing. The Tests area has a
+  **Test accounts** card, and each journey says who it plays as (**As a guest**, **As <account>**).
 - **A space setting can be removed again**: the settings mutation's `value` may be left out (it was `Json!`), so a box
   unticked or a field emptied in the space's settings — "Keep AI crawlers out", robots.txt, the site's name — takes the
   setting away instead of failing with "Variable "$value" … was not provided".

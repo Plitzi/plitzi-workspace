@@ -122,7 +122,7 @@ describe('a document’s tests read from outside', () => {
         'tests.e2e[0].steps[0].dy: a number'
       ]
     });
-    expect(readSpaceTests('none')).toEqual({ problems: ['tests: { unit?: [...], e2e?: [...] }'] });
+    expect(readSpaceTests('none')).toEqual({ problems: ['tests: { unit?: [...], e2e?: [...], accounts?: [...] }'] });
   });
 
   it('reads a journey that starts with a state and holds an element check, and says either written wrong', () => {

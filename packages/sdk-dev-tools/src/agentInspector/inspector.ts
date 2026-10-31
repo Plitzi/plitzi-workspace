@@ -5,6 +5,7 @@ import { elementReport, findElement, plain, recordAt } from './report';
 import type { FlowRun } from './flowRuns';
 import type { ElementReport } from './report';
 import type { DevStore } from '@plitzi/nexus';
+import type { E2eAccount } from '@plitzi/sdk-shared';
 
 /** `window.__plitzi`: the page's state, data, elements and flows, in text, for whoever cannot read the panel. */
 export type AgentInspector = {
@@ -27,6 +28,13 @@ export type AgentInspector = {
   /** Why each server element failed on the page server since the page loaded, by id — answered later or not. */
   serverFailures: () => Record<string, unknown>;
   watch: (on?: boolean) => string;
+  /**
+   * The page's visitor signed in as a journey's test account (`tests.accounts`): its details, roles and permissions,
+   * with no session the server knows — `null` signs it out. What it signed in as, or why not.
+   */
+  signInAs: (account: unknown) => string | Refused;
+  /** The page moved to a path of the space as its links move it, without loading it again: the path, or false. */
+  navigate: (path: string) => string | false;
 };
 
 /** A write refused, and why: a value that would be written and drawn over, or written where nothing reads it. */
@@ -52,6 +60,8 @@ export type AgentInspectorOptions = {
   root: DevStore;
   /** Writes one key of `runtime.state`, as a `setState` step does. */
   writeState: (key: string, value: unknown) => void;
+  /** Sets the test account the page shows signed in (`runtime.testAccount`), or none. */
+  writeTestAccount: (account: E2eAccount | undefined) => void;
   /** Every store the dev tools know — a provider's data lives in its own. */
   stores: () => readonly DevStore[];
   /** The flows that ran, newest last. */
@@ -78,15 +88,41 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
                        binding gave it (resolved), its own state, the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
   serverFailures()     why each server element failed on the page server since the page loaded, by id
-  watch(on = true)     one console line per flow as it ends`;
+  watch(on = true)     one console line per flow as it ends
+  signInAs(account)    the visitor signed in as a journey's test account ({ id, email?, roles?, permissions? }) —
+                       no session the server knows; signInAs(null) signs it out
+  navigate(path)       the page moved to a path of the space as a link moves it, without loading it again`;
 
 /** Whether a store's own value of a source is laid over one inherited from above: the merged value has keys it lacks. */
 const extendsInherited = (own: unknown, merged: unknown): boolean =>
   isRecord(own) && isRecord(merged) && Object.keys(merged).some(key => !Object.hasOwn(own, key));
 
+/** Names as a test account's id, roles and permissions are written: letters, digits, `-` and `_`. */
+const NAME = /^[A-Za-z0-9_-]+$/;
+
+const isNames = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(each => typeof each === 'string' && NAME.test(each));
+
+/** A test account as a journey declares one, or none: what `signInAs` takes. */
+const accountOf = (value: unknown): E2eAccount | undefined =>
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  NAME.test(value.id) &&
+  (value.email === undefined || typeof value.email === 'string') &&
+  (value.roles === undefined || isNames(value.roles)) &&
+  (value.permissions === undefined || isNames(value.permissions))
+    ? {
+        id: value.id,
+        ...(typeof value.email === 'string' ? { email: value.email } : {}),
+        ...(isNames(value.roles) ? { roles: value.roles } : {}),
+        ...(isNames(value.permissions) ? { permissions: value.permissions } : {})
+      }
+    : undefined;
+
 export const createAgentInspector = ({
   root,
   writeState,
+  writeTestAccount,
   stores,
   runs,
   setWatching,
@@ -191,5 +227,34 @@ export const createAgentInspector = ({
     setWatching(on);
 
     return on ? 'Each flow is said in the console as it ends.' : 'Flows are no longer said in the console.';
+  },
+  signInAs: value => {
+    if (value === null || value === undefined) {
+      writeTestAccount(undefined);
+
+      return 'Signed out: the page shows a guest.';
+    }
+
+    const account = accountOf(value);
+    if (!account) {
+      return {
+        refused:
+          'A test account is { id, email?, roles?, permissions? }: an id, roles and permissions of letters, digits, - and _'
+      };
+    }
+
+    writeTestAccount(account);
+
+    return `Signed in as ${account.id}: what the page shows that visitor — no session the server knows.`;
+  },
+  navigate: path => {
+    const move: unknown = recordAt(root.getState(), 'navigation').navigate;
+    if (typeof move !== 'function') {
+      return false;
+    }
+
+    Reflect.apply(move, undefined, [path]);
+
+    return path;
   }
 });

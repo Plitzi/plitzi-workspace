@@ -1,4 +1,4 @@
-import type { E2eAction, E2eExpectation, E2eTarget, E2eTest } from '@plitzi/sdk-shared';
+import type { E2eAccount, E2eAction, E2eExpectation, E2eTarget, E2eTest } from '@plitzi/sdk-shared';
 
 /**
  * E2e tests as code: `e2e.test({ page, steps: [e2e.click('add'), e2e.expectText('count', '1')] })` — the same records the
@@ -6,6 +6,8 @@ import type { E2eAction, E2eExpectation, E2eTarget, E2eTest } from '@plitzi/sdk-
  */
 export const e2e = {
   test: (test: E2eTest): E2eTest => test,
+  /** Somebody a journey plays as, signed in (`as`): declared in `tests.accounts` alone — no account of the platform's. */
+  account: (account: E2eAccount): E2eAccount => account,
   click: (element: E2eTarget): E2eAction => ({ kind: 'click', element }),
   hover: (element: E2eTarget): E2eAction => ({ kind: 'hover', element }),
   type: (element: E2eTarget, text: string): E2eAction => ({ kind: 'type', element, text }),

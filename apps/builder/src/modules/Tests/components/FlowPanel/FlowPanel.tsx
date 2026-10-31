@@ -48,7 +48,7 @@ export type FlowPanelProps = {
  */
 const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
   const studio = use(TestStudioContext);
-  const { flow, dirty, mode, playingAll, paused, checking, plays, log, outcome, playedMs } = studio;
+  const { flow, dirty, mode, playingAll, paused, checking, plays, log, outcome, playedMs, tests } = studio;
   const { edit, play, pause, resume, next, stop, record, check, point, save, discard, stepDelay, setStepDelay } =
     studio;
   const [[flat, pageDefinitions, pageFolders]] = useBuilderStore([
@@ -91,6 +91,18 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
     [edit, flow]
   );
   const handleWidth = useCallback((width: number) => () => flow && edit({ ...flow, width }), [edit, flow]);
+  // Who it plays as: a guest, or one of the space's test accounts (`as`).
+  const handleAs = useCallback(
+    (as: string) => {
+      if (!flow) {
+        return;
+      }
+
+      const { as: _as, ...rest } = flow;
+      edit(as ? { ...rest, as } : rest);
+    },
+    [edit, flow]
+  );
   const handlePlay = useCallback(() => play(), [play]);
   const handleStepping = useCallback(() => play({ stepping: true }), [play]);
   const handlePlayTo = useCallback((index: number) => play({ until: index }), [play]);
@@ -217,6 +229,22 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                 />
               ))}
             </IconGroup>
+            <Select
+              size="sm"
+              name="as"
+              aria-label="Plays as"
+              title="Who it plays as: a guest, or a test account signed in"
+              value={flow.as ?? ''}
+              disabled={locked}
+              onChange={handleAs}
+            >
+              <option value="">As a guest</option>
+              {(tests.accounts ?? []).map(account => (
+                <option key={account.id} value={account.id}>
+                  As {account.id}
+                </option>
+              ))}
+            </Select>
           </>
         ) : (
           <>

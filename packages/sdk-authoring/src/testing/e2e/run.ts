@@ -10,7 +10,7 @@ import { runUnitTest } from '../unit/run';
 
 import type { E2ePage } from './page';
 import type { Box } from './position';
-import type { E2eAction, E2eExpectation, E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
+import type { E2eAccount, E2eAction, E2eExpectation, E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
 
 /**
  * An e2e test run in a browser: its page opened as a visitor's, each step played as the CLI learnt to play
@@ -69,7 +69,8 @@ export interface E2eRunOptions {
   signal?: AbortSignal;
   /**
    * The document the journey's element checks are read from (`expectCheck`): the builder's as edited, the server's
-   * draft, the project's space as authored. Without it, a step that holds one says so.
+   * draft, the project's space as authored. Without it, a step that holds one says so. Its test accounts are the ones
+   * a journey plays as (`tests.accounts`).
    */
   space?: Schema;
 }
@@ -190,8 +191,42 @@ const bridge = (page: E2ePage, call: { method: string; args: unknown[] }): Promi
 const NO_BRIDGE =
   "the page has no window.__plitzi — the SDK's dev tools put it there in debug mode: the space's state is read and set through it";
 
+/** Where the page is: its path and query, as a link to it is written. */
+const whereNow = (page: E2ePage): Promise<string> =>
+  page.evaluate(() => `${window.location.pathname}${window.location.search}`, undefined);
+
+/**
+ * The page's visitor signed in as the journey's test account, and the page moved to `path` as a link moves it — where a
+ * page for signed-in visitors sent a guest to sign in — or why not. Said again after every load: a load forgets it.
+ */
+const asAccount = async (page: E2ePage, account: E2eAccount, path: string): Promise<string | undefined> => {
+  const signed = await bridge(page, { method: 'signInAs', args: [account] });
+  if (signed === 'none') {
+    return `it plays as ${account.id}, signed in through window.__plitzi — which the SDK's dev tools put on a page in debug mode, and this page has none`;
+  }
+
+  if (isRecord(signed.answer) && typeof signed.answer.refused === 'string') {
+    return `it plays as ${account.id}: ${signed.answer.refused}`;
+  }
+
+  const moved = await bridge(page, { method: 'navigate', args: [path] });
+  if (moved === 'none' || moved.answer === false) {
+    return `it plays as ${account.id}, and the page could not be moved to ${path} once signed in`;
+  }
+
+  await settle(page);
+
+  return undefined;
+};
+
 /** One action played, or why it could not be. */
-const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: boolean): Promise<string | undefined> => {
+const act = async (
+  page: E2ePage,
+  step: E2eAction,
+  origin: string,
+  clockHeld: boolean,
+  account: E2eAccount | undefined
+): Promise<string | undefined> => {
   const missing = async (target: string): Promise<string | undefined> =>
     (await readOf(page, target)).found ? undefined : `${target} is not on the page`;
   switch (step.kind) {
@@ -274,13 +309,18 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
     case 'goto':
     case 'back':
     case 'reload': {
+      const reloaded = step.kind === 'reload' ? await whereNow(page) : undefined;
       await (step.kind === 'goto'
         ? openPage(page, new URL(step.path, origin).href)
         : step.kind === 'back'
           ? page.goBack({ waitUntil: 'load' })
           : page.reload({ waitUntil: 'load' }));
+      const late = await awaitHydration(page);
+      if (late !== undefined || !account) {
+        return late;
+      }
 
-      return awaitHydration(page);
+      return asAccount(page, account, step.kind === 'goto' ? step.path : (reloaded ?? (await whereNow(page))));
     }
     case 'setState':
     case 'setSource': {
@@ -522,6 +562,19 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     return failed(late);
   }
 
+  // Signed in as its test account before anything is played, on the page it starts on.
+  const account = test.as === undefined ? undefined : options.space?.tests?.accounts?.find(each => each.id === test.as);
+  if (test.as !== undefined && !account) {
+    return failed(
+      `it plays as "${test.as}", which is none of the space's test accounts — declare it in tests.accounts`
+    );
+  }
+
+  const signedIn = account ? await asAccount(page, account, test.page) : undefined;
+  if (signedIn !== undefined) {
+    return failed(signedIn);
+  }
+
   const given = await startFrom(page, test);
   if (given !== undefined) {
     return failed(given);
@@ -550,7 +603,7 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     try {
       read = isExpectation(step)
         ? await expectHeld(page, step, expectMs, options.space)
-        : await act(page, step, origin, test.clock !== undefined);
+        : await act(page, step, origin, test.clock !== undefined, account);
     } catch (error) {
       read = `it could not be played: ${pressFailure(error)}`;
     }

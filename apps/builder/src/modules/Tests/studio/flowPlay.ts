@@ -1,8 +1,8 @@
 import { isExpectation } from '@plitzi/sdk-authoring';
 
 import type { FlowState, StepPlay } from './TestStudioContext';
-import type { E2eResult } from '@plitzi/sdk-authoring';
-import type { E2eStep, E2eTest } from '@plitzi/sdk-shared';
+import type { E2eResult, E2eRunOptions } from '@plitzi/sdk-authoring';
+import type { E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
 
 /** What a play in the Tests area is made of, without the area: devices, how a step and a flow stand, the lit tone. */
 
@@ -44,3 +44,26 @@ export const documentOf = (frame: { current: HTMLIFrameElement | null }) => fram
 
 /** How a step is lit on the page: something done, or something checked. */
 export const toneOf = (step: E2eStep) => (isExpectation(step) ? 'check' : 'act');
+
+/** How long a check is held before it fails, on the canvas — the page is the editor's, already loaded. */
+const CHECK_MS = 3000;
+
+/** What a play is handed by whoever runs it: its stop, and what it says before and after each step. */
+export type PlayHooks = Pick<E2eRunOptions, 'beforeStep' | 'onStep'> & { signal: AbortSignal };
+
+/** What a flow played on the canvas runs with: the editor's page, its element checks as `space` holds them. */
+export const canvasRun = (
+  played: E2eTest,
+  { signal, beforeStep, onStep }: PlayHooks,
+  space: Schema
+): E2eRunOptions => ({
+  origin: window.location.origin,
+  expectMs: CHECK_MS,
+  signal,
+  space,
+  open: async opened => {
+    await opened.goto(new URL(played.page, window.location.origin).href, { waitUntil: 'domcontentloaded' });
+  },
+  ...(beforeStep ? { beforeStep } : {}),
+  ...(onStep ? { onStep } : {})
+});

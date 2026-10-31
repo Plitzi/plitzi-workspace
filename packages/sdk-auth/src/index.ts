@@ -11,6 +11,7 @@ export * from './AuthManager';
 export * from './types';
 
 export { readSessionHint } from './helpers/sessionHint';
+export { guestAuth, testAccountAuth } from './helpers/sessionViews';
 export { nowInSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 
 export { useAuth, AuthContext, AuthContextProvider, AuthProvider };

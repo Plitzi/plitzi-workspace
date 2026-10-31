@@ -7,6 +7,7 @@ import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StylePseudo, StyleState } from './StyleTypes';
+import type { E2eAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
@@ -69,6 +70,12 @@ export type CommonState = {
      * list the host's screens unless the host can give it the list.
      */
     host?: Record<string, unknown>;
+    /**
+     * The test account a journey plays as (`tests.accounts`, its `as`), set through the dev tools' inspector: the page
+     * reads it as the visitor signed in — the auth source, `can()`, the pages for signed-in visitors. Never a session the
+     * server knows; only where the inspector is (a development page, a server's run of the journeys).
+     */
+    testAccount?: E2eAccount;
     // Element State
     elements?: Record<string, unknown>;
   };
@@ -313,6 +320,13 @@ export type BuilderState = CommonState & {
    * Editor-only and never published: `navigation` still holds the resolved values, which is what the page reads.
    */
   urlTest?: { routeParams: RouteParams; queryParams: QueryParams; hostname: string };
+  /**
+   * A journey is being played on the canvas, as the server plays it: by a visitor with no session of the editor's. The
+   * page reads none (the auth source empty, `can` false) and is held to its pages' access, which the canvas otherwise
+   * leaves open for editing — a journey that met a guarded page passed on the server and failed here. The journey's own
+   * account (`as`), or a session it signs in to, is read. Editor-only and never published.
+   */
+  playingJourney?: boolean;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

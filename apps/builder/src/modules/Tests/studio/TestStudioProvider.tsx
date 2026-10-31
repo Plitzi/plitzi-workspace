@@ -7,32 +7,30 @@ import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 
 import { createCanvasPage } from './canvasPage';
-import { deviceOf, documentOf, needsServer, playOf, seconds, stateOf, toneOf } from './flowPlay';
+import { canvasRun, deviceOf, documentOf, needsServer, playOf, seconds, stateOf, toneOf } from './flowPlay';
 import { checkTitleOf, sentenceText, stepElementOf } from './sentences';
 import { clearSpotlight, spotlight } from './spotlight';
 import { pauseBefore, STEP_DELAY_S, stepDelayOf } from './stepDelay';
 import TestStudioContext from './TestStudioContext';
+import usePlayJourney from './usePlayJourney';
 import { elementNameOf, newE2eTest, withE2eTest } from '../helpers';
 import useSaveSpaceTests from '../hooks/useSaveSpaceTests';
 
+import type { PlayHooks } from './flowPlay';
 import type { FlowState, PlayLogLine, StepPlay, StudioMode, TestStudioValue } from './TestStudioContext';
-import type { E2eResult, E2eRunOptions } from '@plitzi/sdk-authoring';
+import type { E2eResult } from '@plitzi/sdk-authoring';
 import type { E2eStep, E2eTest, SpaceTests } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-/** How long a check is held before it fails, on the canvas — the page is the editor's, already loaded. */
-const CHECK_MS = 3000;
-
 /** How long the canvas may take to be drawn again before a play gives up on it. */
 const CANVAS_MS = 15_000;
-
-type Hooks = Pick<E2eRunOptions, 'beforeStep' | 'onStep'> & { signal: AbortSignal };
 
 const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const { previewMode, setPreviewMode, displayMode, setDisplayMode } = use(AppContext);
   const { setTheme } = useTheme(SPACE_THEME_AREA);
   const [[navigate, flat, definition]] = useBuilderStore(['navigation.navigate', 'schema.flat', 'schema.definition']);
   const [runtimeState, setRuntimeState] = useBuilderStore('runtime.state');
+  const asJourney = usePlayJourney();
   const [schema] = useBuilderStore('schema');
   const store = useSaveSpaceTests();
   // The person's own, kept as the builder keeps its other preferences.
@@ -136,39 +134,33 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
     [navigate, setDisplayMode, setRuntimeState]
   );
 
-  /** One flow played on a fresh canvas, as a new visitor: the state empty, the page drawn again. */
+  /**
+   * One flow played on a fresh canvas, as a new visitor: the state empty, the page drawn again — and none of the
+   * editor's session, as the server plays it (`playingJourney`): a guest, or the flow's own account (`as`).
+   */
   const playOnCanvas = useCallback(
-    async (played: E2eTest, { signal, beforeStep, onStep }: Hooks): Promise<E2eResult> => {
-      // Its device first, then the page drawn anew in it: the canvas the run holds is the one it plays on.
-      setDisplayMode(deviceOf(played.width));
-      const iframe = await freshCanvas();
-      const page = createCanvasPage({
-        iframe,
-        navigate,
-        back: () => window.history.back(),
-        resize: width => setDisplayMode(deviceOf(width)),
-        // A flow that says nothing of the scheme plays on the canvas as it is: the person's choice is not overridden.
-        scheme: scheme => {
-          if (played.scheme) {
-            setTheme(scheme);
+    (played: E2eTest, hooks: PlayHooks): Promise<E2eResult> =>
+      asJourney(async () => {
+        // Its device first, then the page drawn anew in it: the canvas the run holds is the one it plays on.
+        setDisplayMode(deviceOf(played.width));
+        const iframe = await freshCanvas();
+        const page = createCanvasPage({
+          iframe,
+          navigate,
+          back: () => window.history.back(),
+          resize: width => setDisplayMode(deviceOf(width)),
+          // A flow that says nothing of the scheme plays on the canvas as it is: the person's choice is not overridden.
+          scheme: scheme => {
+            if (played.scheme) {
+              setTheme(scheme);
+            }
           }
-        }
-      });
+        });
 
-      return runE2eTest(page, played, {
-        origin: window.location.origin,
-        expectMs: CHECK_MS,
-        signal,
         // Its element checks as they stand in the area, saved or not.
-        space: { ...schemaRef.current, tests: testsRef.current },
-        open: async opened => {
-          await opened.goto(new URL(played.page, window.location.origin).href, { waitUntil: 'domcontentloaded' });
-        },
-        ...(beforeStep ? { beforeStep } : {}),
-        ...(onStep ? { onStep } : {})
-      });
-    },
-    [freshCanvas, navigate, setDisplayMode, setTheme]
+        return runE2eTest(page, played, canvasRun(played, hooks, { ...schemaRef.current, tests: testsRef.current }));
+      }),
+    [asJourney, freshCanvas, navigate, setDisplayMode, setTheme]
   );
 
   /** A step played, as a line of the log. */

@@ -129,14 +129,44 @@ describe('window.__plitzi', () => {
   }));
   const runs: FlowRun[] = [];
   const writeState = vi.fn();
+  const writeTestAccount = vi.fn();
   const setWatching = vi.fn();
   const inspector = createAgentInspector({
     root,
     writeState,
+    writeTestAccount,
     stores: () => [provider],
     runs: () => runs,
     setWatching,
     document
+  });
+
+  // A journey that plays as one of the space's test accounts: the page's visitor, signed in, with no session.
+  it('signs the visitor in as a test account, refuses one written wrong, and signs it out', () => {
+    expect(inspector.signInAs({ id: 'editor', roles: ['editor'], permissions: ['spaceEdit'] })).toContain('editor');
+    expect(writeTestAccount).toHaveBeenLastCalledWith({ id: 'editor', roles: ['editor'], permissions: ['spaceEdit'] });
+    expect(inspector.signInAs({ id: 'an editor' })).toEqual({
+      refused: expect.stringContaining('{ id, email?') as unknown
+    });
+    expect(inspector.signInAs(null)).toContain('guest');
+    expect(writeTestAccount).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('moves the page as a link does — or says it cannot, on a page with no navigation', () => {
+    expect(inspector.navigate('/account')).toBe(false);
+
+    const navigate = vi.fn();
+    const routed = createAgentInspector({
+      root: createStore<Record<string, unknown>>(() => ({ navigation: { navigate } })),
+      writeState: vi.fn(),
+      writeTestAccount: vi.fn(),
+      stores: () => [],
+      runs: () => [],
+      setWatching: vi.fn(),
+      document
+    });
+    expect(routed.navigate('/account')).toBe('/account');
+    expect(navigate).toHaveBeenCalledWith('/account');
   });
 
   it('reads and writes the state, as plain data', () => {
@@ -162,6 +192,7 @@ describe('window.__plitzi', () => {
     const writer = createAgentInspector({
       root: page,
       writeState,
+      writeTestAccount: vi.fn(),
       stores: () => [chart],
       runs: () => runs,
       setWatching,
@@ -221,6 +252,7 @@ describe('window.__plitzi', () => {
       const reader = createAgentInspector({
         root: page,
         writeState,
+        writeTestAccount: vi.fn(),
         stores: () => order,
         runs: () => runs,
         setWatching,
@@ -250,6 +282,7 @@ describe('window.__plitzi', () => {
     const writer = createAgentInspector({
       root: schema,
       writeState,
+      writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
       setWatching,
@@ -273,6 +306,7 @@ describe('window.__plitzi', () => {
     const reader = createAgentInspector({
       root: holder,
       writeState,
+      writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
       setWatching,
@@ -306,6 +340,7 @@ describe('window.__plitzi', () => {
     const seeing = createAgentInspector({
       root,
       writeState,
+      writeTestAccount: vi.fn(),
       stores: () => [provider],
       runs: () => runs,
       setWatching,
@@ -366,6 +401,7 @@ describe('window.__plitzi', () => {
     const reader = createAgentInspector({
       root: withComponent,
       writeState,
+      writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
       setWatching,

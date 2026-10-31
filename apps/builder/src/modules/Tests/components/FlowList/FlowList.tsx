@@ -194,6 +194,7 @@ const FlowList = ({
                 </span>
                 <span className="truncate font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
                   “{firstLineOf(current, nameOf)}” · {DEVICE(current.width)}
+                  {current.as ? ` · as ${current.as}` : ''}
                 </span>
               </div>
               {onServer && (

@@ -22,7 +22,10 @@ const useTestProblems = (tests: SpaceTests, flow?: E2eTest): string[] => {
         : [...saved, flow]
       : saved;
 
-    return [...unitTestProblems(schema, tests.unit ?? []), ...e2eTestProblems(schema, flows, tests.unit ?? [])];
+    return [
+      ...unitTestProblems(schema, tests.unit ?? []),
+      ...e2eTestProblems(schema, flows, tests.unit ?? [], tests.accounts ?? [])
+    ];
   }, [flow, schema, tests]);
 };
 

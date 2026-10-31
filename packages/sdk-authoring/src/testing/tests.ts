@@ -1,6 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import type { E2eStep, E2eTest, SpaceTests, UnitExpectation, UnitTest } from '@plitzi/sdk-shared';
+import type { E2eAccount, E2eStep, E2eTest, SpaceTests, UnitExpectation, UnitTest } from '@plitzi/sdk-shared';
 
 /**
  * A document's tests as they arrive from outside — the builder's save, an agent's call, a file — read into their records,
@@ -100,6 +100,7 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
       ? []
       : [`${at}.scheme: light or dark`]),
     ...(value.clock === undefined || isString(value.clock) ? [] : [`${at}.clock: an instant, 2026-10-30T09:00:00Z`]),
+    ...(value.as === undefined || isString(value.as) ? [] : [`${at}.as: the id of a test account it plays as`]),
     ...(value.answers === undefined ||
     (isRecord(value.answers) && Object.values(value.answers).every(answer => isRecord(answer)))
       ? []
@@ -126,14 +127,39 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
   return problems.length > 0 ? { problems } : { value: value as unknown as E2eTest };
 };
 
-/** A document's tests read from anything — `{ unit?: [...], e2e?: [...] }` — or every way they are not. */
+const isNames = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
+
+/** A test account as declared — `{ id, email?, roles?, permissions? }` — or every way it is not one. */
+const readAccount = (value: unknown, at: string): Read<E2eAccount> => {
+  if (!isRecord(value)) {
+    return { problems: [`${at}: a test account — { id, email?, roles?, permissions? }`] };
+  }
+
+  const problems = [
+    ...fieldsMissing(value, { id: 'string' }).map(each => `${at}.${each}`),
+    ...(value.email === undefined || isString(value.email) ? [] : [`${at}.email: an address`]),
+    ...(value.roles === undefined || isNames(value.roles) ? [] : [`${at}.roles: a list of role names`]),
+    ...(value.permissions === undefined || isNames(value.permissions)
+      ? []
+      : [`${at}.permissions: a list of permission names`])
+  ];
+
+  // Every field of it read above, each as its kind says: what reaches here is the record.
+  return problems.length > 0 ? { problems } : { value: value as unknown as E2eAccount };
+};
+
+/** A document's tests read from anything — `{ unit?, e2e?, accounts? }` — or every way they are not. */
 export const readSpaceTests = (value: unknown): { tests: SpaceTests } | { problems: string[] } => {
   if (!isRecord(value)) {
-    return { problems: ['tests: { unit?: [...], e2e?: [...] }'] };
+    return { problems: ['tests: { unit?: [...], e2e?: [...], accounts?: [...] }'] };
   }
 
   const problems: string[] = [];
-  const read = <T>(list: unknown, name: 'unit' | 'e2e', each: (value: unknown, at: string) => Read<T>): T[] => {
+  const read = <T>(
+    list: unknown,
+    name: 'unit' | 'e2e' | 'accounts',
+    each: (value: unknown, at: string) => Read<T>
+  ): T[] => {
     if (list === undefined) {
       return [];
     }
@@ -157,6 +183,7 @@ export const readSpaceTests = (value: unknown): { tests: SpaceTests } | { proble
   };
   const unit = read(value.unit, 'unit', readUnit);
   const e2e = read(value.e2e, 'e2e', readE2e);
+  const accounts = read(value.accounts, 'accounts', readAccount);
 
-  return problems.length > 0 ? { problems } : { tests: { unit, e2e } };
+  return problems.length > 0 ? { problems } : { tests: { unit, e2e, ...(accounts.length > 0 ? { accounts } : {}) } };
 };

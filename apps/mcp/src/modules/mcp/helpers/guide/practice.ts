@@ -106,7 +106,10 @@ journey counted against the plan's month (a refusal says why, and when it comes 
   — a visitor's steps on a page, elements by id (a list's copy \`row:3\`), what must hold between them; \`type\` names
   a form control and writes in its field; \`page\` may be a wrong address the space's own not-found page answers.
   \`{ kind: 'expectCheck', check: '<unit id>' }\` holds an element check for the state the journey reached;
-  \`given: { state: { … } }\` starts it with a state. The primer names both kinds' ids and titles.
+  \`given: { state: { … } }\` starts it with a state; \`as: '<account>'\` plays it signed in as a test account.
+- \`accounts\`: \`{ id, email?, roles?, permissions? }\` — who a journey plays as, declared here alone: no real account
+  and no password, so what the page asks the API it asks as a guest — a page for signed-in visitors, a role's view.
+The primer names both kinds' ids and titles.
 A batch that leaves a test unreadable — an element it presses removed, the page it starts on renamed — says so in its
 warnings ("This change leaves a test of the space unreadable…"): fix the test in the same batch, or say why.
 When a test fails over a change the user asked for, say so and fix the test with them — never delete it to pass.

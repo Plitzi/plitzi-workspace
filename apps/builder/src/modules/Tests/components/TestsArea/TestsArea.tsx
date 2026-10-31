@@ -16,6 +16,7 @@ import FlowPanel from '../FlowPanel';
 import GateCard from '../GateCard';
 import PlanUsage from '../PlanUsage';
 import ServerPlayCard from '../ServerPlayCard';
+import TestAccounts from '../TestAccounts';
 
 import type { ServerPlay } from '../../hooks/useServerPlay';
 import type { TSpaceRunE2eTestsMutation, TSpaceTests } from '@plitzi/sdk-shared/network';
@@ -228,6 +229,7 @@ const TestsArea = ({
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
           />
+          <TestAccounts />
           {why && <Notice tone="caution">{why}</Notice>}
           {onServer && <ServerPlayCard play={onServer} titleOf={titleOf} />}
           {serverRun?.notRun && <Notice tone="caution">{serverRun.notRun}</Notice>}

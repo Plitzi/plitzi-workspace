@@ -9,6 +9,7 @@ import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 import AuthContext from './AuthContext';
 import { publishedSession } from './helpers/publishedSession';
 import { resolveAuthSettings } from './helpers/resolveAuthSettings';
+import { testAccountAuth } from './helpers/sessionViews';
 import useAuth from './hooks/useAuth';
 import useSessionQueryReset from './hooks/useSessionQueryReset';
 
@@ -178,7 +179,14 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     [manager, state, authenticated, previewMode, user]
   );
 
-  return <AuthContext value={valueMemo}>{!loading && children}</AuthContext>;
+  // A journey's test account, set through the dev tools' inspector: the page shows that visitor, signed in.
+  const [testAccount, setTestAccount] = useCommonStore('runtime.testAccount');
+  const value = useMemo(
+    () => (testAccount ? testAccountAuth(valueMemo, testAccount, () => setTestAccount(undefined)) : valueMemo),
+    [testAccount, setTestAccount, valueMemo]
+  );
+
+  return <AuthContext value={value}>{!loading && children}</AuthContext>;
 };
 
 export default AuthContextProvider;

@@ -15,10 +15,11 @@ export type NavigationProviderProps = {
 };
 
 const NavigationProvider = ({ children }: NavigationProviderProps) => {
-  const [[pageFolders, pageDefinitions, urlTest]] = useBuilderStore([
+  const [[pageFolders, pageDefinitions, urlTest, playingJourney]] = useBuilderStore([
     'schema.pageFolders',
     'pageDefinitions',
-    'urlTest'
+    'urlTest',
+    'playingJourney'
   ]);
   const { previewMode } = useRenderSettings();
   const { server } = useBuilderNetwork();
@@ -28,9 +29,11 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
 
+  // The canvas leaves every page open for editing; a journey played on it is held to their access, as on the server.
+  const guarded = !previewMode || playingJourney === true;
   const paths = useMemo(
-    () => getPaths(pageDefinitions, pageFolders, previewMode ? undefined : authenticated, server.basePath, previewMode),
-    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+    () => getPaths(pageDefinitions, pageFolders, guarded ? authenticated : undefined, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, guarded, authenticated, server.basePath, previewMode]
   );
 
   const matchResult = useMemo(

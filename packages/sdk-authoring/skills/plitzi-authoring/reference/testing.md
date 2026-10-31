@@ -50,6 +50,10 @@ no browser.
   it at each point a flow reaches. `given: { state: { … } }` starts a journey with a state, as the page opens: a case
   reached without the steps to it. Both use the page's state bridge — the builder, `plitzi test` and the server's runner
   all have it.
+- **Signed in: `as` a test account.** `tests.accounts: [e2e.account({ id: 'member', roles: ['user'] })]` and
+  `e2e.test({ …, as: 'member' })`: the page shows that visitor signed in (its details, roles, permissions; a page for
+  signed-in visitors opens). Declared in the tests alone — no real account, no password — so the API answers it as a
+  guest: a journey with an account reads and moves, never writes.
 - **A `type` step names the element** — a form control's id — and writes in the field inside it; a select is chosen
   from (its option's value or label), a date, a time or a range set whole.
 - **A press acts on the copy a visitor sees**: the first shown, or the one named (`row:3`, `row:last`). An element on
