@@ -16,14 +16,15 @@ const AppDirectory = () => {
   ]);
   const { webId } = useBuilderNetwork();
   // Which folders are open, the way the style inspector keeps its sections: one record, every folder closed until it is
-  // opened. Keyed by space too, since two spaces can have a folder of one id.
+  // opened — but the root, which holds every page, open until it is closed. Keyed by space too, since two spaces can have
+  // a folder of one id.
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
     'builder-state.pageFolders.collapsedCache',
     {}
   );
   const keyOf = useCallback((folderId: string) => `${String(webId)}:${folderId || 'root'}`, [webId]);
   const isCollapsed = useCallback(
-    (folderId: string) => collapsedCache[keyOf(folderId)] ?? true,
+    (folderId: string) => collapsedCache[keyOf(folderId)] ?? folderId !== '',
     [collapsedCache, keyOf]
   );
   const handleCollapse = useCallback(
