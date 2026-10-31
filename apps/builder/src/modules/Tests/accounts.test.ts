@@ -1,25 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { accountFrom, draftOf, namesOf, playedAs, withAccount } from './accounts';
+import { accountFrom, draftOf, playedAs, withAccount } from './accounts';
 
 describe('the test accounts, as the Tests area edits them', () => {
-  it('reads a form into an account — each list as typed, each name once — or says what to fix', () => {
-    expect(namesOf('editor, viewer\nviewer')).toEqual(['editor', 'viewer']);
-    expect(
-      accountFrom({ id: ' editor ', email: '', roles: 'editor', permissions: 'spaceEdit, spaceView' }, [])
-    ).toEqual({
+  it('reads a form into an account — its roles as chosen — or says what to fix', () => {
+    expect(accountFrom({ id: ' editor ', email: '', roles: ['editor'] }, [])).toEqual({
       id: 'editor',
-      roles: ['editor'],
-      permissions: ['spaceEdit', 'spaceView']
+      roles: ['editor']
     });
-    expect(accountFrom({ id: 'an editor', email: '', roles: '', permissions: '' }, [])).toEqual({
+    expect(accountFrom({ id: 'an editor', email: '', roles: [] }, [])).toEqual({
       problem: 'Its id is letters, digits, - and _: editor, visitor-pro'
     });
     expect(accountFrom(draftOf({ id: 'editor' }), ['editor'])).toEqual({
       problem: '"editor" is another test account’s id'
-    });
-    expect(accountFrom({ id: 'editor', email: '', roles: 'space.editor', permissions: '' }, [])).toEqual({
-      problem: '"space.editor" is no role or permission’s name: letters, digits, - and _ (spaceEdit)'
     });
   });
 

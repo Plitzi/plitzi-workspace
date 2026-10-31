@@ -1,6 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { use, useCallback, useMemo, useState } from 'react';
 
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
+
 import AccountForm from './components/AccountForm';
 import AccountRow from './components/AccountRow';
 import { playedAs, withAccount } from '../../accounts';
@@ -17,6 +19,8 @@ import type { E2eAccount } from '@plitzi/sdk-shared';
 const TestAccounts = () => {
   const { tests, flow, mode, load } = use(TestStudioContext);
   const { mayTest } = useMayTest();
+  const [visitorRoles] = useBuilderStore('schema.settings.visitorRoles');
+  const spaceRoles = useMemo(() => Object.keys(visitorRoles ?? {}), [visitorRoles]);
   const store = useSaveSpaceTests();
   const [editing, setEditing] = useState<string>();
   const [problem, setProblem] = useState<string>();
@@ -79,8 +83,9 @@ const TestAccounts = () => {
           </Button>
         )}
       </div>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Who a journey plays as, signed in. No real account: what the page asks the API, it asks as a guest.
+      <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+        Who a journey plays as, signed in, with the space’s visitor roles. No real account: what the page asks the API,
+        it asks as a guest.
       </p>
       {accounts.length > 0 && (
         <ul className="divide-y divide-gray-200 dark:divide-zinc-700">
@@ -88,6 +93,7 @@ const TestAccounts = () => {
             <AccountRow
               key={account.id}
               account={account}
+              spaceRoles={spaceRoles}
               locked={locked}
               onEdit={setEditing}
               onRemove={handleRemove}
@@ -100,6 +106,7 @@ const TestAccounts = () => {
           key={editing}
           {...(editedAccount ? { account: editedAccount } : {})}
           taken={taken}
+          spaceRoles={spaceRoles}
           onSave={handleSave}
           onCancel={handleCancel}
         />

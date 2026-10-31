@@ -7,7 +7,7 @@ import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StylePseudo, StyleState } from './StyleTypes';
-import type { E2eAccount } from './TestTypes';
+import type { SignedInTestAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
@@ -75,7 +75,7 @@ export type CommonState = {
      * reads it as the visitor signed in — the auth source, `can()`, the pages for signed-in visitors. Never a session the
      * server knows; only where the inspector is (a development page, a server's run of the journeys).
      */
-    testAccount?: E2eAccount;
+    testAccount?: SignedInTestAccount;
     // Element State
     elements?: Record<string, unknown>;
   };

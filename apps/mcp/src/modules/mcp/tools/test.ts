@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { e2eTestProblems, readSpaceTests, runUnitTests, unitTestProblems } from '@plitzi/sdk-authoring';
+import {
+  e2eTestProblems,
+  readSpaceTests,
+  runUnitTests,
+  testAccountWarnings,
+  unitTestProblems
+} from '@plitzi/sdk-authoring';
 
 import { defineTool } from './shared/tool';
 
@@ -29,6 +35,8 @@ const standing = (schema: Schema) => {
       ...(schema.tests?.accounts ? { accounts: schema.tests.accounts } : {})
     },
     problems: [...unitTestProblems(schema), ...e2eTestProblems(schema)],
+    // A test account's role the space removed since: warned — the journey plays without it.
+    warnings: testAccountWarnings(schema),
     unit: { passed: report.passed, failed: report.failed, failing: report.results.filter(result => !result.ok) }
   };
 };

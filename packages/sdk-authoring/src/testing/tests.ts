@@ -129,19 +129,19 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
 
 const isNames = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
 
-/** A test account as declared — `{ id, email?, roles?, permissions? }` — or every way it is not one. */
+/** A test account as declared — `{ id, email?, roles? }` — or every way it is not one. */
 const readAccount = (value: unknown, at: string): Read<E2eAccount> => {
   if (!isRecord(value)) {
-    return { problems: [`${at}: a test account — { id, email?, roles?, permissions? }`] };
+    return { problems: [`${at}: a test account — { id, email?, roles? }`] };
   }
 
   const problems = [
     ...fieldsMissing(value, { id: 'string' }).map(each => `${at}.${each}`),
     ...(value.email === undefined || isString(value.email) ? [] : [`${at}.email: an address`]),
-    ...(value.roles === undefined || isNames(value.roles) ? [] : [`${at}.roles: a list of role names`]),
-    ...(value.permissions === undefined || isNames(value.permissions)
+    ...(value.roles === undefined || isNames(value.roles) ? [] : [`${at}.roles: a list of the space's role names`]),
+    ...(value.permissions === undefined
       ? []
-      : [`${at}.permissions: a list of permission names`])
+      : [`${at}.permissions: none of its own — what it may is what its roles give (settings.visitorRoles)`])
   ];
 
   // Every field of it read above, each as its kind says: what reaches here is the record.

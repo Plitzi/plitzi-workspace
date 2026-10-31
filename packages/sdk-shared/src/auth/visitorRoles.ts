@@ -80,3 +80,15 @@ export const visitorAccess = (
 
   return { roles, permissions: [...new Set(roles.flatMap(role => checked.roles[role]))] };
 };
+
+/**
+ * What a set of roles gives in a space — the permissions of each, once — and the roles it names that the space does not
+ * declare (removed since, or never there): what a test account signed in as them may, and what it is warned of.
+ */
+export const rolesGrant = (
+  declared: VisitorRoles | undefined,
+  roles: readonly string[]
+): { permissions: string[]; missing: string[] } => ({
+  permissions: [...new Set(roles.flatMap(role => declared?.[role] ?? []))],
+  missing: roles.filter(role => !declared || !Object.hasOwn(declared, role))
+});

@@ -5,20 +5,16 @@ import type { E2eAccount, E2eTest } from '@plitzi/sdk-shared';
  * here alone, no account of the platform's.
  */
 
-/** An account's id, and each of its roles and permissions: letters, digits, `-` and `_`. */
+/** An account's id: letters, digits, `-` and `_`. */
 const NAME = /^[A-Za-z0-9_-]+$/;
 
-/** An account as its form holds it: each list as a person types it, `editor, viewer`. */
-export type AccountDraft = { id: string; email: string; roles: string; permissions: string };
-
-/** Names as a person types them — `editor, viewer` or one a line — each once. */
-export const namesOf = (text: string): string[] => [...new Set(text.split(/[\s,]+/).filter(Boolean))];
+/** An account as its form holds it: the roles chosen from the space's own. */
+export type AccountDraft = { id: string; email: string; roles: string[] };
 
 export const draftOf = (account?: E2eAccount): AccountDraft => ({
   id: account?.id ?? '',
   email: account?.email ?? '',
-  roles: (account?.roles ?? []).join(', '),
-  permissions: (account?.permissions ?? []).join(', ')
+  roles: account?.roles ?? []
 });
 
 /** The account a form holds, or what keeps it from being one — said where it is fixed. */
@@ -28,9 +24,6 @@ export const accountFrom = (
   taken: readonly string[]
 ): E2eAccount | { problem: string } => {
   const id = draft.id.trim();
-  const roles = namesOf(draft.roles);
-  const permissions = namesOf(draft.permissions);
-  const wrong = [...roles, ...permissions].find(name => !NAME.test(name));
   if (!NAME.test(id)) {
     return { problem: 'Its id is letters, digits, - and _: editor, visitor-pro' };
   }
@@ -39,18 +32,9 @@ export const accountFrom = (
     return { problem: `"${id}" is another test account’s id` };
   }
 
-  if (wrong !== undefined) {
-    return { problem: `"${wrong}" is no role or permission’s name: letters, digits, - and _ (spaceEdit)` };
-  }
-
   const email = draft.email.trim();
 
-  return {
-    id,
-    ...(email ? { email } : {}),
-    ...(roles.length > 0 ? { roles } : {}),
-    ...(permissions.length > 0 ? { permissions } : {})
-  };
+  return { id, ...(email ? { email } : {}), ...(draft.roles.length > 0 ? { roles: draft.roles } : {}) };
 };
 
 /** The accounts with this one in its place — or last, when it is new. */

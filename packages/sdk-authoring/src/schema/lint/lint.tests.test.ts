@@ -36,4 +36,18 @@ describe('the space’s own tests, read with the rest of it', () => {
       })
     ]);
   });
+
+  it('test-account-role-gone: a test account holding a role the space removed — warned, and played without it', () => {
+    const { warnings } = authorSpace({
+      name: 'Console',
+      permanentUrl: 'console',
+      settings: { visitorRoles: { editor: ['spaceEdit'] } },
+      pages: [{ name: 'Home', slug: '', body: [text('Hi', { id: 'hi' })] }],
+      tests: { accounts: [e2e.account({ id: 'reviewer', roles: ['editor', 'reviewer'] })] }
+    });
+
+    expect(warnings.filter(issue => issue.code === 'test-account-role-gone')).toEqual([
+      expect.objectContaining({ message: expect.stringContaining('the space has no role "reviewer"') as unknown })
+    ]);
+  });
 });

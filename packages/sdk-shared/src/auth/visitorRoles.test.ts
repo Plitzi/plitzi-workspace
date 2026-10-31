@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkVisitorRoles, visitorAccess } from './visitorRoles';
+import { checkVisitorRoles, rolesGrant, visitorAccess } from './visitorRoles';
 
 describe('checkVisitorRoles', () => {
   it('reads a map of role to permissions', () => {
@@ -42,5 +42,22 @@ describe('visitorAccess', () => {
     expect(visitorAccess({ author: 'postPublish' }, ['author'])).toEqual({ roles: [], permissions: [] });
     // `toString` is on every object's prototype: a role name must be the space's own, not inherited.
     expect(visitorAccess(declared, ['toString'])).toEqual({ roles: [], permissions: [] });
+  });
+});
+
+// A test account holds the space's roles: what they give, and a role the space has removed since, said apart.
+describe('rolesGrant', () => {
+  it('gives each permission of the roles once, and names a role the space does not declare', () => {
+    const declared = { author: ['postPublish'], editor: ['postPublish', 'postEdit'] };
+
+    expect(rolesGrant(declared, ['author', 'editor'])).toEqual({
+      permissions: ['postPublish', 'postEdit'],
+      missing: []
+    });
+    expect(rolesGrant(declared, ['editor', 'reviewer'])).toEqual({
+      permissions: ['postPublish', 'postEdit'],
+      missing: ['reviewer']
+    });
+    expect(rolesGrant(undefined, ['editor'])).toEqual({ permissions: [], missing: ['editor'] });
   });
 });

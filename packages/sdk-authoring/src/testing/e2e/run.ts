@@ -1,3 +1,4 @@
+import { rolesGrant } from '@plitzi/sdk-shared/auth';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { sameValue } from '@plitzi/sdk-shared/history';
 
@@ -10,7 +11,7 @@ import { runUnitTest } from '../unit/run';
 
 import type { E2ePage } from './page';
 import type { Box } from './position';
-import type { E2eAccount, E2eAction, E2eExpectation, E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
+import type { E2eAction, E2eExpectation, E2eStep, E2eTest, Schema, SignedInTestAccount } from '@plitzi/sdk-shared';
 
 /**
  * An e2e test run in a browser: its page opened as a visitor's, each step played as the CLI learnt to play
@@ -199,7 +200,7 @@ const whereNow = (page: E2ePage): Promise<string> =>
  * The page's visitor signed in as the journey's test account, and the page moved to `path` as a link moves it — where a
  * page for signed-in visitors sent a guest to sign in — or why not. Said again after every load: a load forgets it.
  */
-const asAccount = async (page: E2ePage, account: E2eAccount, path: string): Promise<string | undefined> => {
+const asAccount = async (page: E2ePage, account: SignedInTestAccount, path: string): Promise<string | undefined> => {
   const signed = await bridge(page, { method: 'signInAs', args: [account] });
   if (signed === 'none') {
     return `it plays as ${account.id}, signed in through window.__plitzi — which the SDK's dev tools put on a page in debug mode, and this page has none`;
@@ -225,7 +226,7 @@ const act = async (
   step: E2eAction,
   origin: string,
   clockHeld: boolean,
-  account: E2eAccount | undefined
+  account: SignedInTestAccount | undefined
 ): Promise<string | undefined> => {
   const missing = async (target: string): Promise<string | undefined> =>
     (await readOf(page, target)).found ? undefined : `${target} is not on the page`;
@@ -570,7 +571,12 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     );
   }
 
-  const signedIn = account ? await asAccount(page, account, test.page) : undefined;
+  // What its roles give in the space, as for a visitor: a role the space no longer declares gives nothing.
+  const signedInAs = account && {
+    ...account,
+    permissions: rolesGrant(options.space?.settings.visitorRoles, account.roles ?? []).permissions
+  };
+  const signedIn = signedInAs ? await asAccount(page, signedInAs, test.page) : undefined;
   if (signedIn !== undefined) {
     return failed(signedIn);
   }
@@ -603,7 +609,7 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     try {
       read = isExpectation(step)
         ? await expectHeld(page, step, expectMs, options.space)
-        : await act(page, step, origin, test.clock !== undefined, account);
+        : await act(page, step, origin, test.clock !== undefined, signedInAs);
     } catch (error) {
       read = `it could not be played: ${pressFailure(error)}`;
     }

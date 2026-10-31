@@ -18,7 +18,7 @@ export interface SpaceTests {
 /**
  * Somebody signed in, as the space's journeys play them: declared in the tests alone — no account of the platform's,
  * no password. A journey that plays `as` one shows its pages that visitor: the auth source holds these details and a
- * token no server takes (`test:<id>`), `can()` answers by these permissions, a page for signed-in visitors opens. The
+ * token no server takes (`test:<id>`), `can()` answers by what its roles give, a page for signed-in visitors opens. The
  * server's API does not know it: what a page asks the API it asks as a guest — a journey with an account reads and
  * moves, it never writes.
  */
@@ -26,8 +26,16 @@ export interface E2eAccount {
   /** What the journeys name it by, and its username on the page: letters, digits, `-` and `_`. */
   id: string;
   email?: string;
+  /**
+   * The space's visitor roles it holds (`settings.visitorRoles`): what it may is what they give, as for a visitor. One
+   * the space no longer declares is warned of, and gives nothing.
+   */
   roles?: string[];
-  permissions?: string[];
+}
+
+/** A test account as a page is signed in as it: its roles' permissions worked out (`rolesGrant`). */
+export interface SignedInTestAccount extends E2eAccount {
+  permissions: string[];
 }
 
 /** What a unit test resolves its element for. */

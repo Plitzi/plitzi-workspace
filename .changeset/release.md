@@ -418,16 +418,19 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   counts of them. A batch that leaves a test unreadable says so in its warnings ("This change leaves a test of
   the space unreadable…"), only for the tests it broke.
 
-- **A journey plays signed in, as a test account.** `tests.accounts: [{ id, email?, roles?, permissions? }]`, declared
-  in the tests alone — no account of the platform's, no password — and `as: '<id>'` on a journey (`e2e.account`,
-  `e2e.test({ as })`). The page shows that visitor: the auth source holds its details and a token no server takes
-  (`test:<id>`), `can()` answers by its permissions, a page for signed-in visitors opens, signing out drops it
-  (`testAccountAuth`, `guestAuth` in `@plitzi/sdk-auth`; `runtime.testAccount`). The API does not know it, so a
-  journey with an account reads and moves, never writes as anybody. Every runner signs the page in the same way, through
-  the dev tools' bridge (`window.__plitzi.signInAs`, `navigate` — new in `@plitzi/sdk-dev-tools`), and again after each
-  load. `e2eTestProblems` says an `as` no account answers, an id twice and a name no role can have; `readSpaceTests`,
-  the MCP's `plitzi_test` and the server's tests keep the accounts with the rest (`@plitzi/sdk-shared`,
-  `@plitzi/sdk-authoring`, `@plitzi/sdk-auth`, `@plitzi/sdk-dev-tools`, `@plitzi/sdk-mcp`).
+- **A journey plays signed in, as a test account.** `tests.accounts: [{ id, email?, roles? }]`, declared in the tests
+  alone — no account of the platform's, no password — and `as: '<id>'` on a journey (`e2e.account`,
+  `e2e.test({ as })`). Its roles are the space's visitor roles, and what it may is what they give (`rolesGrant`); a role
+  the space removed since is warned (`test-account-role-gone`, `testAccountWarnings`) and gives nothing. The page shows
+  that visitor: the auth source holds its details and a token no server takes (`test:<id>`), `can()` answers by its
+  roles, a page for signed-in visitors opens, signing out drops it (`testAccountAuth`, `guestAuth` in
+  `@plitzi/sdk-auth`; `runtime.testAccount`). The API does not know it, so a journey with an account reads and moves,
+  never writes as anybody. Every runner signs the page in the same way, through the dev tools' bridge
+  (`window.__plitzi.signInAs`, `navigate` — new in `@plitzi/sdk-dev-tools`), and again after each load.
+  `e2eTestProblems` says an `as` no account answers and an id twice; `readSpaceTests`, the MCP's `plitzi_test` (with
+  its warnings) and the server's tests keep the accounts with the rest. In the builder, roles are chosen from the
+  space's, never typed (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`, `@plitzi/sdk-auth`, `@plitzi/sdk-dev-tools`,
+  `@plitzi/sdk-mcp`).
 
 ## Several agents on one project (`@plitzi/cli`)
 

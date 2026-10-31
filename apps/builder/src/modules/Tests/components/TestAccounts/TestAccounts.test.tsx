@@ -2,6 +2,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
+
 import TestAccounts from './TestAccounts';
 import useMayTest from '../../hooks/useMayTest';
 import useSaveSpaceTests from '../../hooks/useSaveSpaceTests';
@@ -12,6 +14,7 @@ import type { SpaceTests } from '@plitzi/sdk-shared';
 
 vi.mock('../../hooks/useMayTest', () => ({ default: vi.fn() }));
 vi.mock('../../hooks/useSaveSpaceTests', () => ({ default: vi.fn() }));
+vi.mock('@plitzi/sdk-shared/store', () => ({ useBuilderStore: vi.fn() }));
 
 const tests: SpaceTests = {
   unit: [],
@@ -19,7 +22,12 @@ const tests: SpaceTests = {
   accounts: [{ id: 'editor', roles: ['editor'] }]
 };
 
-const area = (load = vi.fn()) => {
+/** The space's visitor roles, as the builder holds them: `editor` and `viewer` — or fewer, once one is removed. */
+const declare = (roles: Record<string, string[]>) =>
+  vi.mocked(useBuilderStore).mockImplementation((() => [roles]) as unknown as typeof useBuilderStore);
+
+const area = (load = vi.fn(), roles: Record<string, string[]> = { editor: ['pageEdit'], viewer: ['pageView'] }) => {
+  declare(roles);
   vi.mocked(useMayTest).mockReturnValue({ mayTest: true });
   const store = vi.fn(() => Promise.resolve({ ok: true as const }));
   vi.mocked(useSaveSpaceTests).mockReturnValue(store);
@@ -39,7 +47,8 @@ describe('the test accounts card', () => {
     const { store, load } = area();
     fireEvent.click(screen.getByRole('button', { name: /Add/ }));
     fireEvent.change(screen.getByLabelText('Id'), { target: { value: 'viewer' } });
-    fireEvent.change(screen.getByLabelText('Roles'), { target: { value: 'viewer' } });
+    // Chosen from the space's roles, never typed: the one the account has is not offered again.
+    fireEvent.change(screen.getByLabelText('Add a role'), { target: { value: 'viewer' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(load).toHaveBeenCalled());
@@ -60,5 +69,11 @@ describe('the test accounts card', () => {
       screen.getByText('An editor edits a page plays as editor: play it as a guest or another account first.')
     ).toBeTruthy();
     expect(store).not.toHaveBeenCalled();
+  });
+
+  it('warns of a role the space has removed since the account was given it', () => {
+    area(vi.fn(), { viewer: ['pageView'] });
+
+    expect(screen.getByText(/The space has no role "editor" now/)).toBeTruthy();
   });
 });

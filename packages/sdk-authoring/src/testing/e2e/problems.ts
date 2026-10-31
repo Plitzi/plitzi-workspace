@@ -1,3 +1,5 @@
+import { rolesGrant } from '@plitzi/sdk-shared/auth';
+
 import { targetId } from './page';
 import { parseRelation, relationElements } from './position';
 import { isExpectation } from './run';
@@ -5,10 +7,10 @@ import { pageAt } from '../../schema/route';
 
 import type { E2eAccount, E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
 
-/** A test account's id, and each of its roles and permissions: letters, digits, `-` and `_`. */
+/** A test account's id: letters, digits, `-` and `_`. */
 const NAME = /^[A-Za-z0-9_-]+$/;
 
-/** What is wrong with the test accounts as declared: an id twice, or a name no role or permission may have. */
+/** What is wrong with the test accounts as declared: an id no account may have, or one twice. */
 const accountProblems = (accounts: readonly E2eAccount[]): string[] => {
   const seen = new Set<string>();
 
@@ -16,15 +18,28 @@ const accountProblems = (accounts: readonly E2eAccount[]): string[] => {
     const at = `test account "${account.id}"`;
     const twice = seen.has(account.id);
     seen.add(account.id);
-    const wrong = [...(account.roles ?? []), ...(account.permissions ?? [])].filter(name => !NAME.test(name));
 
     return [
       ...(NAME.test(account.id) ? [] : [`${at}: an id is letters, digits, - and _ — editor, visitor-pro`]),
-      ...(twice ? [`${at}: its id is another test account's — each has its own`] : []),
-      ...wrong.map(name => `${at}: "${name}" is no role or permission's name — letters, digits, - and _ (spaceEdit)`)
+      ...(twice ? [`${at}: its id is another test account's — each has its own`] : [])
     ];
   });
 };
+
+/**
+ * What a test account holds that the space no longer gives (`test-account-role-gone`): a visitor role removed from
+ * `settings.visitorRoles` since it was chosen. Warned, never refused — the journey plays without it, and says so.
+ */
+export const testAccountWarnings = (
+  document: Schema,
+  accounts: readonly E2eAccount[] = document.tests?.accounts ?? []
+): string[] =>
+  accounts.flatMap(account =>
+    rolesGrant(document.settings.visitorRoles, account.roles ?? []).missing.map(
+      role =>
+        `test account "${account.id}": the space has no role "${role}" — removed from its visitor roles since, or never there; a journey plays it without it: choose one the space has`
+    )
+  );
 
 /** The element a step names, if it names one. */
 const named = (step: E2eStep): string | undefined => ('element' in step ? step.element : undefined);

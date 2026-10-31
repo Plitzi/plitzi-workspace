@@ -1,4 +1,4 @@
-import { e2eTestProblems } from '../../testing/e2e/problems';
+import { e2eTestProblems, testAccountWarnings } from '../../testing/e2e/problems';
 import { unitTestProblems } from '../../testing/unit/problems';
 
 import type { LintContext } from './context';
@@ -18,5 +18,9 @@ export const lintTests = (ctx: LintContext): void => {
     ...e2eTestProblems(ctx.schema, tests.e2e ?? [])
   ]) {
     ctx.warn('test-unreadable', problem);
+  }
+
+  for (const warning of testAccountWarnings(ctx.schema)) {
+    ctx.warn('test-account-role-gone', warning);
   }
 };

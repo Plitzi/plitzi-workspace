@@ -5,7 +5,7 @@ import { elementReport, findElement, plain, recordAt } from './report';
 import type { FlowRun } from './flowRuns';
 import type { ElementReport } from './report';
 import type { DevStore } from '@plitzi/nexus';
-import type { E2eAccount } from '@plitzi/sdk-shared';
+import type { SignedInTestAccount } from '@plitzi/sdk-shared';
 
 /** `window.__plitzi`: the page's state, data, elements and flows, in text, for whoever cannot read the panel. */
 export type AgentInspector = {
@@ -61,7 +61,7 @@ export type AgentInspectorOptions = {
   /** Writes one key of `runtime.state`, as a `setState` step does. */
   writeState: (key: string, value: unknown) => void;
   /** Sets the test account the page shows signed in (`runtime.testAccount`), or none. */
-  writeTestAccount: (account: E2eAccount | undefined) => void;
+  writeTestAccount: (account: SignedInTestAccount | undefined) => void;
   /** Every store the dev tools know — a provider's data lives in its own. */
   stores: () => readonly DevStore[];
   /** The flows that ran, newest last. */
@@ -103,8 +103,8 @@ const NAME = /^[A-Za-z0-9_-]+$/;
 const isNames = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string' && NAME.test(each));
 
-/** A test account as a journey declares one, or none: what `signInAs` takes. */
-const accountOf = (value: unknown): E2eAccount | undefined =>
+/** A test account as a journey signs in as it — its roles' permissions worked out — or none: what `signInAs` takes. */
+const accountOf = (value: unknown): SignedInTestAccount | undefined =>
   isRecord(value) &&
   typeof value.id === 'string' &&
   NAME.test(value.id) &&
@@ -115,7 +115,7 @@ const accountOf = (value: unknown): E2eAccount | undefined =>
         id: value.id,
         ...(typeof value.email === 'string' ? { email: value.email } : {}),
         ...(isNames(value.roles) ? { roles: value.roles } : {}),
-        ...(isNames(value.permissions) ? { permissions: value.permissions } : {})
+        permissions: isNames(value.permissions) ? value.permissions : []
       }
     : undefined;
 

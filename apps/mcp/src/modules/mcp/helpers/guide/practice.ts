@@ -107,8 +107,9 @@ journey counted against the plan's month (a refusal says why, and when it comes 
   a form control and writes in its field; \`page\` may be a wrong address the space's own not-found page answers.
   \`{ kind: 'expectCheck', check: '<unit id>' }\` holds an element check for the state the journey reached;
   \`given: { state: { … } }\` starts it with a state; \`as: '<account>'\` plays it signed in as a test account.
-- \`accounts\`: \`{ id, email?, roles?, permissions? }\` — who a journey plays as, declared here alone: no real account
-  and no password, so what the page asks the API it asks as a guest — a page for signed-in visitors, a role's view.
+- \`accounts\`: \`{ id, email?, roles? }\` — who a journey plays as, declared here alone: no real account and no
+  password, so what the page asks the API it asks as a guest — a page for signed-in visitors, a role's view. Its roles
+  are the space's visitor roles (\`settings.visitorRoles\`), what it may is what they give; one removed since is warned.
 The primer names both kinds' ids and titles.
 A batch that leaves a test unreadable — an element it presses removed, the page it starts on renamed — says so in its
 warnings ("This change leaves a test of the space unreadable…"): fix the test in the same batch, or say why.

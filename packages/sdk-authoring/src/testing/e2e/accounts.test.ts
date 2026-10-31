@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { e2e, e2eTestProblems, runE2eTest } from './index';
+import { e2e, e2eTestProblems, runE2eTest, testAccountWarnings } from './index';
 import { text } from '../../elements';
 import { authorSpace } from '../../schema';
 import { readSpaceTests } from '../tests';
@@ -10,25 +10,21 @@ import type { E2ePage } from './page';
 const { schema } = authorSpace({
   name: 'Console',
   permanentUrl: 'console',
+  settings: { visitorRoles: { editor: ['spaceEdit', 'spaceView'] } },
   pages: [
     { name: 'Sign in', slug: '', body: [text('Sign in', { id: 'sign-in' })] },
     { name: 'Account', slug: 'account', accessLevel: 'authenticated', body: [text('Yours', { id: 'yours' })] }
   ]
 });
 
-const editor = e2e.account({
-  id: 'editor',
-  email: 'editor@test.invalid',
-  roles: ['editor'],
-  permissions: ['spaceEdit']
-});
+const editor = e2e.account({ id: 'editor', email: 'editor@test.invalid', roles: ['editor'] });
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe('a journey played as a test account', () => {
-  it('names an account the tests declare, each declared once and named as roles are', () => {
+  it('names an account the tests declare, each declared once', () => {
     const asEditor = e2e.test({
       id: 'as-editor',
       title: 'The account, as an editor',
@@ -41,16 +37,27 @@ describe('a journey played as a test account', () => {
     expect(e2eTestProblems(schema, [{ ...asEditor, as: 'owner' }], [], [editor])).toEqual([
       'e2e test "as-editor": it plays as "owner", which is none of the test accounts — declare it in tests.accounts, or play it as a guest'
     ]);
-    expect(e2eTestProblems(schema, [], [], [editor, { id: 'editor', roles: ['space editor'] }])).toEqual([
-      'test account "editor": its id is another test account\'s — each has its own',
-      'test account "editor": "space editor" is no role or permission\'s name — letters, digits, - and _ (spaceEdit)'
+    expect(e2eTestProblems(schema, [], [], [editor, { id: 'editor' }])).toEqual([
+      'test account "editor": its id is another test account\'s — each has its own'
+    ]);
+  });
+
+  // A role removed from the space after an account was given it: warned, and played without.
+  it('warns of a role the space no longer declares', () => {
+    expect(testAccountWarnings(schema, [editor, { id: 'reviewer', roles: ['editor', 'reviewer'] }])).toEqual([
+      'test account "reviewer": the space has no role "reviewer" — removed from its visitor roles since, or never there; a journey plays it without it: choose one the space has'
     ]);
   });
 
   it('are read with the tests from outside — every way one is not said', () => {
     expect(readSpaceTests({ accounts: [editor] })).toEqual({ tests: { unit: [], e2e: [], accounts: [editor] } });
     expect(readSpaceTests({ accounts: [{ roles: 'editor' }] })).toEqual({
-      problems: ['tests.accounts[0].id: words', 'tests.accounts[0].roles: a list of role names']
+      problems: ['tests.accounts[0].id: words', "tests.accounts[0].roles: a list of the space's role names"]
+    });
+    expect(readSpaceTests({ accounts: [{ id: 'editor', permissions: ['spaceEdit'] }] })).toEqual({
+      problems: [
+        'tests.accounts[0].permissions: none of its own — what it may is what its roles give (settings.visitorRoles)'
+      ]
     });
   });
 
@@ -81,8 +88,9 @@ describe('a journey played as a test account', () => {
     );
 
     expect(played.problem).toBeUndefined();
+    // Signed in with what its roles give in the space.
     expect(calls).toEqual([
-      ['signInAs', editor],
+      ['signInAs', { ...editor, permissions: ['spaceEdit', 'spaceView'] }],
       ['navigate', '/account']
     ]);
   });

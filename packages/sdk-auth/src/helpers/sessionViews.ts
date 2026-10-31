@@ -1,6 +1,6 @@
 import { omit } from '@plitzi/plitzi-ui/helpers';
 
-import type { AuthContextValue, E2eAccount } from '@plitzi/sdk-shared';
+import type { AuthContextValue, SignedInTestAccount } from '@plitzi/sdk-shared';
 
 /**
  * The page's auth as a visitor with no session sees it — as the server plays a journey: signed out, no one's details or
@@ -14,12 +14,16 @@ export const guestAuth = (auth: AuthContextValue): AuthContextValue => ({
 });
 
 /**
- * The page's auth as a journey's test account (`tests.accounts`) — signed in with its details, roles and permissions,
+ * The page's auth as a journey's test account (`tests.accounts`) — signed in with its details, roles and what they give,
  * and a token no server takes (`test:<id>`): a page that reads its session by the token sees one, and the API answers
  * it as a guest. Signing out drops it (`signOut`), as a person's would.
  */
-export const testAccountAuth = (auth: AuthContextValue, account: E2eAccount, signOut: () => void): AuthContextValue => {
-  const permissions = account.permissions ?? [];
+export const testAccountAuth = (
+  auth: AuthContextValue,
+  account: SignedInTestAccount,
+  signOut: () => void
+): AuthContextValue => {
+  const { permissions } = account;
 
   return {
     ...auth,
