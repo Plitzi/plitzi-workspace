@@ -297,3 +297,21 @@ describe('the steps the CLI teaches', () => {
     expect(stepsUsage(['frames'])).not.toContain('frames');
   });
 });
+
+// A quake on a map's canvas has no element of its own: a run's tester wrote a probe to press one, the lead another.
+describe('a point of an element pressed', () => {
+  it('is read in percent of its box, from its top left', () => {
+    expect(parseSteps('click map 30%,60%; hover "#globe canvas" 12.5%, 100%', 500)).toEqual([
+      { kind: 'click', target: 'map', point: { x: 30, y: 60 } },
+      { kind: 'hover', target: '#globe canvas', point: { x: 12.5, y: 100 } }
+    ]);
+  });
+
+  it('is refused past its box, or in pixels', () => {
+    for (const script of ['click map 130%,60%', 'click map 120,340', 'hover map 30%']) {
+      expect(parseSteps(script, 500)).toEqual({
+        problem: expect.stringContaining('where in its box, in percent from its top left') as unknown
+      });
+    }
+  });
+});

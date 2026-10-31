@@ -28,9 +28,9 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
       ([name, value]) => `  · source ${name}: ${asked.stateOf ? valuesOf(value) : shapeOf(value)}`
     ),
     ...Object.entries(report.elements ?? {}).flatMap(([id, { read, styles }]) => [
-      read === null || read === undefined
-        ? `  · element ${id}: the page's dev tools read no element by that name`
-        : `  · element ${id}: ${JSON.stringify(read)}`,
+      ...(isRecord(read)
+        ? elementReadText(id, read)
+        : [`  · element ${id}: the page's dev tools read no element by that name`]),
       ...('unread' in styles
         ? [`  · element ${id}: its styles cannot be read — ${styles.unread}`]
         : [
@@ -45,6 +45,34 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
             ...inertText(styles.inert, report.width, styles.wornBy).map(line => `  · element ${id}: ${line}`)
           ])
     ])
+  ];
+};
+
+/**
+ * An element as the dev tools read it, a few lines: what it is and shows, its own state, and what its bindings gave it
+ * by shape — whole with --json. Printed whole, a map's read (every hazard it was given) was 1.6 million characters.
+ */
+export const elementReadText = (id: string, read: Record<string, unknown>): string[] => {
+  const copies = typeof read.copies === 'number' ? read.copies : 1;
+  const what = [
+    typeof read.type === 'string' ? read.type : '',
+    typeof read.instanceOf === 'string' ? `an instance of ${read.instanceOf}` : '',
+    copies > 1 ? `${String(copies)} copies, the first read` : '',
+    read.visible === true ? 'seen' : `not seen${typeof read.sight === 'string' ? ` — ${read.sight}` : ''}`,
+    isRecord(read.box) ? `box ${shortOf(read.box, 80)}` : '',
+    typeof read.text === 'string' ? `text ${shortOf(read.text, 120)}` : ''
+  ].filter(Boolean);
+
+  return [
+    `  · element ${id}: ${what.join(', ')} (whole: --json)`,
+    ...(isRecord(read.attributes) ? [`  · element ${id} attributes: ${shapeOf(read.attributes)}`] : []),
+    ...(read.state === undefined ? [] : [`  · element ${id} own state: ${shortOf(read.state, 160)}`]),
+    // The dev tools keep one element's sources by its id: a list row's are the last row's drawn.
+    ...(isRecord(read.resolved)
+      ? [
+          `  · element ${id} given${copies > 1 ? ` (the last drawn of its ${String(copies)} copies)` : ''}: ${shapeOf(read.resolved)}`
+        ]
+      : [])
   ];
 };
 
@@ -275,6 +303,12 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
           `  · cut short at this width, by a box that cuts its text (an ellipsis, a clipped overflow): ${report.cut.join(', ')} — on purpose for data that varies; --expect "<id>~<text>" holds one whole`
         )
       : undefined;
+  const spilled =
+    report.spilled && report.spilled.length > 0
+      ? chalk.yellow(
+          `  · runs past its box at this width, nothing cutting it — drawn over what is beside it: ${report.spilled.join(', ')} — let it wrap, give it room, or cut it (an ellipsis)`
+        )
+      : undefined;
   const painted = (report.oneColour ?? []).map(each =>
     chalk.yellow(
       `  · canvas ${each.id}: painted one colour, ${each.colour}, edge to edge — a map or a chart drawing nothing but its ground? What a canvas draws is read only as a picture: plitzi page shot`
@@ -300,6 +334,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
       ),
       ...(atWidth ? [atWidth] : []),
       ...painted,
+      ...(spilled ? [spilled] : []),
       ...(cut ? [cut] : []),
       ...(busy ? [busy] : []),
       ...(empty ? [empty] : []),
@@ -318,6 +353,7 @@ export const reportText = (report: CheckReport, asked: CheckAsk): string => {
     ...report.consoleErrors.map(error => `  - console: ${error}`),
     ...report.failedRequests.map(request => `  - request refused: ${request}`),
     ...painted,
+    ...(spilled ? [spilled] : []),
     ...(empty ? [empty] : []),
     ...(outOfUse ? [outOfUse] : []),
     ...held

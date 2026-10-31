@@ -33,6 +33,10 @@ authoring and the elements learnt from the runs.
   first use. `mysqlJobSchemaUpgrades` is gone with what it listed; `mysqlJobSchemaStatements` still creates the tables.
 - **`specFromSpace` no longer reads `navbar` and `navbarItem`**, element types no builder writes: a document that still
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
+- **Two flows of one element may not give a step one name** (`step-duplicate`): they share one record, and the later
+  step took the earlier's place with nothing said — a map's press selected nothing for it. A step left unnamed is named
+  past every name the element's flows wrote (`setState-3` beside a hand-written `setState-1`), where it took a name
+  another flow had. A space that wrote one name in two flows names each its own.
 - **`window.__plitzi.setSource` and `setAttribute` may answer `{ refused: string }`** besides the name written or
   `false`: a caller that read any truthy answer as written reads `refused` first.
 
@@ -1620,6 +1624,35 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   is the Plitzi MCP's, made there; the CLI works on a project — self-hosted, or a space taken out with `create --from`,
   whose `space push` an MCP edit meanwhile makes refuse until `space pull` (`@plitzi/cli`, `@plitzi/sdk-authoring`).
   The MCP's instructions say it from its side (`@plitzi/sdk-mcp`).
+
+- **What the page tools said that was not so, from a run on a map.** `page play --read` of a list's row said what the
+  dev tools resolved for the last row drawn as that row's (`given (the last drawn of its 17 copies, not this one …)`
+  now). `page check --element` prints the element by shape, its bindings by size — whole with `--json` — where a map's
+  read was 1.6 million characters. `task look --click` pictures the page after the click: its pictures and "nothing
+  changed" were of the page before it. A look beside the run before counts what changed outside every section — a
+  globe drawn behind them — where it said "nothing changed". `page check` says the words that run past their box with
+  nothing cutting them, drawn over what is beside them (failing nothing). `page check --click` waits for its element to
+  show — a cold copy's tab "could not be brought into view" — and `page check --click` and `page shot --click` say an
+  element found and not shown at that width as such, never a press timed out; a name not on the page is answered with
+  the names like it the page has (`the page has sheet-tab-log, sheet-tab-summary, … — no sheet-tab-board`). `page
+  measure --each` says one line for copies all hidden for one reason. A mutant's failure leaves out node quoting its
+  own source (`throw er; // Unhandled 'error' event`). `page play --reduced-motion` is answered that a play is that
+  visitor already.
+
+- **A point of an element pressed or pointed at — `click <el> 30%,60%`, `hover <el> 30%,60%`.** What a canvas draws has
+  no element of its own: a run's tester and its lead each wrote a probe to press a quake on a map, and a globe that
+  selected nothing was called working. The point is in percent of the element's box, from its top left, in every
+  command's steps; what covers it is said, as a press's is. `E2eElement`'s `click` and `hover` take Playwright's
+  `position` (`@plitzi/sdk-authoring`).
+- **A `--steps` script's pictures are the moment they are taken.** A part pictured (`--within`) is cut out of one picture
+  of the screen, never its own picture waiting for its box to be still, and what changed between pictures is worked out
+  once the steps are played: shots written 300 ms apart around a reticle over a turning globe came out 8 s apart. A
+  part not shown at a picture says so in its label (`— .seismic__reticle not shown, the screen pictured`). What is
+  pinned under a part pictured — a map behind a reticle — is kept: only what is drawn over it is hidden for its
+  picture, where the map was hidden and the reticle pictured on a blank ground.
+- **On macOS the page commands draw WebGL on the GPU** (`--enable-gpu`): headless, Chromium drew it on the CPU — a map's
+  globe at `--scale 3` took 2–4 s a picture and kept six cores busy; 0.85 s on the GPU. A page kept from a run before
+  (`run reference`) may differ once in what its canvases draw.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 

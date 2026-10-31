@@ -88,3 +88,23 @@ describe('what each element drawn shows', () => {
     );
   });
 });
+
+// A run's meta line ran 60 px past its 160 px column, under the next one, and page check said nothing wrong.
+describe('words that run past their box', () => {
+  it('are read by how far, nothing cutting them — never when a box cuts them, or has no width', () => {
+    document.body.innerHTML = [
+      '<div data-plitzi-el="contact-meta" style="white-space: nowrap">Italy · European Severe Weather Database</div>',
+      '<div data-plitzi-el="plate-room" style="text-overflow: ellipsis; overflow: hidden">Italy · European Severe Weather Database</div>',
+      '<div data-plitzi-el="contact-age">ended 3h</div>'
+    ].join('');
+    laidOut({ 'Italy · European Severe Weather Database': 222, 'ended 3h': 50 });
+
+    expect(
+      textsInPage({ selector: '[data-plitzi-el]', within: false }).drawn.map(({ id, spills }) => ({ id, spills }))
+    ).toEqual([
+      { id: 'contact-meta', spills: 62 },
+      { id: 'plate-room', spills: undefined },
+      { id: 'contact-age', spills: undefined }
+    ]);
+  });
+});

@@ -10,7 +10,7 @@ import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 import { expectationsMissed, expectedText, PROPERTY_NAME, relationElements } from './measureExpected';
 import { measureOn } from './measureOn';
 import { putIn, copiesOf, ROWS_MOST, stateText } from './measureState';
-import { comparedText, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
+import { comparedText, hiddenCopiesJoined, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
 import { asksExtra, differences, DRAWN, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED } from './measureValues';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
@@ -756,17 +756,19 @@ export const measure = async (route: string, elements: string[], options: Measur
                 ? [chalk.bold.underline(`At ${String(width)} px${scheme ? `, ${scheme}` : ''}`)]
                 : []),
               ...onceEach(
-                shownReadings
-                  .filter(reading => reading.width === width && reading.scheme === scheme)
-                  .map(reading =>
-                    readingText(
-                      reading,
-                      options.same,
-                      now,
-                      kept !== undefined,
-                      options.all === true || only !== undefined
-                    )
-                  )
+                hiddenCopiesJoined(
+                  shownReadings.filter(reading => reading.width === width && reading.scheme === scheme)
+                ).map(reading =>
+                  'said' in reading
+                    ? chalk.yellow(reading.said)
+                    : readingText(
+                        reading,
+                        options.same,
+                        now,
+                        kept !== undefined,
+                        options.all === true || only !== undefined
+                      )
+                )
               )
             ]),
             ...(options.expect === undefined

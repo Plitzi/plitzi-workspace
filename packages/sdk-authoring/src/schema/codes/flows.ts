@@ -25,7 +25,7 @@ export const FLOW_CODES = {
   },
   'step-duplicate': {
     kind: 'refused',
-    means: 'two steps with one name in a flow or an action',
+    means: 'two steps with one name in a flow, in two flows of one element, or in an action',
     fix: 'a name each'
   },
   'step-type': {

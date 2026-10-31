@@ -71,6 +71,11 @@ export interface ElementState {
    * by its length: what a plugin received (a map's `hazards` after a filter), which neither its template nor a canvas says.
    */
   given?: Record<string, string>;
+  /**
+   * How many copies it has, when more than one (a list's row): the dev tools keep one element's sources by its id, so
+   * what it was given is the last copy's drawn — a run's tester read the last row's title as every row's.
+   */
+  copies?: number;
 }
 
 /** Run in the page, on the element: where its content is, whether it is seen, whether it takes a press. */
@@ -251,7 +256,7 @@ export const stateOf = (node: Element): ElementState => {
           : `${style.outlineWidth} ${style.outlineStyle} ${style.outlineColor}`,
       shadow: style.boxShadow
     },
-    ...((): { own?: string; given?: Record<string, string> } => {
+    ...((): { own?: string; given?: Record<string, string>; copies?: number } => {
       const inspector: unknown = Reflect.get(window, '__plitzi');
       const read: unknown =
         typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, 'element') : undefined;
@@ -261,6 +266,7 @@ export const stateOf = (node: Element): ElementState => {
         typeof report === 'object' && report !== null ? Reflect.get(report, name) : undefined;
       const cut = (text: string, most: number): string => (text.length > most ? `${text.slice(0, most)}…` : text);
       const own = field('state');
+      const copies = field('copies');
       const said = own === undefined ? '' : JSON.stringify(own);
       const resolved = field('resolved');
       // Each value short: a list by its length and its first row, so a filter's effect reads as a count that moved.
@@ -281,7 +287,8 @@ export const stateOf = (node: Element): ElementState => {
 
       return {
         ...(said === '' || said === '{}' ? {} : { own: cut(said, 160) }),
-        ...(Object.keys(given).length === 0 ? {} : { given })
+        ...(Object.keys(given).length === 0 ? {} : { given }),
+        ...(typeof copies === 'number' && copies > 1 && Object.keys(given).length > 0 ? { copies } : {})
       };
     })(),
     ...(node.getAnimations().length > 0
@@ -324,19 +331,27 @@ const GIVEN_SAID = 3;
  * What its bindings gave it: at the start the first few, after a step only what changed — a run's play printed a globe's
  * seventeen bindings at every step, the one a toggle moved lost among them.
  */
-export const givenText = (given: ElementState['given'], before: ElementState['given'] | undefined): string[] => {
+export const givenText = (
+  given: ElementState['given'],
+  before: ElementState['given'] | undefined,
+  copies?: number
+): string[] => {
   const all = Object.entries(given ?? {});
+  const whose =
+    copies === undefined ? '' : ` (the last drawn of its ${String(copies)} copies, not this one — its text is its own)`;
   if (before === undefined) {
     const said = all.slice(0, GIVEN_SAID).map(([to, value]) => `${to}: ${value}`);
 
     return said.length === 0
       ? []
       : [
-          `given ${said.join('; ')}${all.length > GIVEN_SAID ? ` (${String(all.length - GIVEN_SAID)} more: --json)` : ''}`
+          `given${whose} ${said.join('; ')}${all.length > GIVEN_SAID ? ` (${String(all.length - GIVEN_SAID)} more: --json)` : ''}`
         ];
   }
 
   const changed = all.filter(([to, value]) => before[to] !== value);
 
-  return changed.length === 0 ? [] : [`given now ${changed.map(([to, value]) => `${to}: ${value}`).join('; ')}`];
+  return changed.length === 0
+    ? []
+    : [`given now${whose} ${changed.map(([to, value]) => `${to}: ${value}`).join('; ')}`];
 };

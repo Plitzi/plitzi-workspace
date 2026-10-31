@@ -90,6 +90,11 @@ const isStep = (value: unknown): value is ActingStep => {
   switch (value.kind) {
     case 'click':
     case 'hover':
+      return (
+        typeof value.target === 'string' &&
+        (value.point === undefined ||
+          (isRecord(value.point) && typeof value.point.x === 'number' && typeof value.point.y === 'number'))
+      );
     case 'scroll':
       return typeof value.target === 'string';
     case 'wait-for':

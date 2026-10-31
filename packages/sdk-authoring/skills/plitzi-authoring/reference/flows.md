@@ -61,7 +61,8 @@ Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{
 ## Reading what came before
 
 `named('quote', step)` is how a later step reads an earlier one: `{{ quote.output.total }}`. The trigger too:
-`named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to. A
+`named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to. An
+element's flows share one record of steps: a name is one step's across all of them (`step-duplicate`). A
 refused submit — a rule a control declares broken — starts `onInvalid()` (`{{ <id>.errors.<name> }}`) instead, and the
 form's source says one was tried, valid or not, as `submitted`: a hint under a field steps aside once the field's own
 error speaks — `visible: { source: '<form id>', template: '{{ not source.submitted }}' }`.

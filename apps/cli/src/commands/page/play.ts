@@ -428,7 +428,7 @@ const stateText = (state: ElementState, before?: ElementState): string =>
     ...(state.value !== undefined ? [`value "${state.value}"`] : []),
     ...(state.rows === undefined ? [] : [`${String(state.rows)} rows`]),
     ...(state.own === undefined ? [] : [`its own state ${state.own}`]),
-    ...givenText(state.given, before?.given),
+    ...givenText(state.given, before?.given, state.copies),
 
     ...(state.text
       ? [

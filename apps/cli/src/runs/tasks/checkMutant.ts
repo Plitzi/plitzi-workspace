@@ -243,7 +243,12 @@ export const failureText = (output: readonly string[], last: number): string => 
   const tail = output
     .filter(
       line =>
-        !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line) && !STACK_FRAME.test(line) && !PIPE_CLOSED.test(line)
+        !FAILED_TEST.test(line) &&
+        !ASSERTION_FIELD.test(line) &&
+        !STACK_FRAME.test(line) &&
+        !PIPE_CLOSED.test(line) &&
+        !RUNNER_SOURCE.test(line) &&
+        line.trim() !== ''
     )
     .slice(-last);
 
@@ -283,6 +288,12 @@ const MATCHER = /^expect\(/;
  * a test asserted, though it reads like one, and a tester took it for the mutant's failure.
  */
 const PIPE_CLOSED = /\bEPIPE\b|Emitted 'error' event on Socket|Emitted error event on Socket/;
+
+/**
+ * Node quoting its own source where an `'error'` went unhandled — `node:events:497`, `throw er; // Unhandled 'error'
+ * event`, the `^` under it — before the error itself: the runner's lines, which a tester read as the mutant's failure.
+ */
+const RUNNER_SOURCE = /^\s*(?:node:[\w/]+:\d+|throw er; \/\/ Unhandled 'error' event|\^+)\s*$/;
 
 /** An assertion's own error, before a bare `Error:` a library threw on the way: the line the test wrote comes first. */
 const ASSERTION_ERROR = /^\s*AssertionError/;

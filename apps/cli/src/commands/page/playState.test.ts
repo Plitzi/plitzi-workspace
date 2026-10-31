@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { stateOf } from './playState';
+import { givenText, stateOf } from './playState';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -96,5 +96,15 @@ describe('an element’s own state, in the page', () => {
 
     states.globe = {};
     expect(stateOf(globe).own).toBeUndefined();
+  });
+});
+
+// A run's tester read every row's title as "135 kt · East Pacific": the dev tools keep a row's sources by its id.
+describe('what a list row was given', () => {
+  it('says it is the last copy drawn, not the row read', () => {
+    expect(givenText({ 'content.title': '"135 kt · East Pacific"' }, undefined, 17)).toEqual([
+      'given (the last drawn of its 17 copies, not this one — its text is its own) content.title: "135 kt · East Pacific"'
+    ]);
+    expect(givenText({ 'content.title': '"Rome"' }, undefined)).toEqual(['given content.title: "Rome"']);
   });
 });

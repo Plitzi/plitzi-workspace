@@ -60,6 +60,12 @@ describe('a look that took no picture', () => {
     expect(
       stripVTControlCharacters(lookText({ ...looked, compared: [...twelve, view('/menu', 3, ['nav 3%'])] }))
     ).toContain('Beside the run before it: 1 of 13 views compared differ (/menu) — below');
+    // A globe drawn behind every section, there before and not now: a run's look said "nothing changed" of it.
+    const globe = stripVTControlCharacters(lookText({ ...looked, compared: [view('/', 41, [])] }));
+    expect(globe).toContain('Beside the run before it: 1 of 1 view compared differ (/) — below');
+    expect(globe).toContain(
+      '/ at 1440 light: 41% differs — outside its sections (a canvas or a backdrop behind them): see it side by side'
+    );
   });
 
   // A run's look said "No picture could be taken" of / as a guest and signed in, with no reason given.

@@ -39,7 +39,7 @@ describe('an element asked for, in a page’s report', () => {
       { state: false, elements: ['fight-card-corner-name', 'fight-card-name'] }
     );
 
-    expect(text).toContain('element fight-card-corner-name: {"box":{"width":120}}');
+    expect(text).toContain('element fight-card-corner-name: not seen, box {"width":120} (whole: --json)');
     expect(text).toContain(
       'element fight-card-corner-name: its styles cannot be read — fight-card-corner-name is no element of the space as authored'
     );
@@ -238,5 +238,16 @@ describe('problems many elements share', () => {
       'list "target" is on the page but not visible: it is a list with no rows',
       'apiContainer_feed failed'
     ]);
+  });
+});
+
+// A run's meta line ran past its column while the check said "nothing wrong": said beside it, failing nothing.
+describe('words that run past their box, in a page’s report', () => {
+  it('are said under a check that passes, each by how far', () => {
+    expect(
+      reportText({ ...report(undefined), spilled: ['contact-meta by 62 px'] }, { state: false, elements: [] })
+    ).toContain(
+      'runs past its box at this width, nothing cutting it — drawn over what is beside it: contact-meta by 62 px'
+    );
   });
 });

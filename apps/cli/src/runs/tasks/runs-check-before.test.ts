@@ -350,6 +350,10 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
   // A tester read `asserted: write EPIPE` as the mutant's failure: the check's own `| grep -q` closing the output early.
   it('leaves out the check’s own pipe closing, and says the test’s assertion first', () => {
     const output = [
+      'node:events:497',
+      "      throw er; // Unhandled 'error' event",
+      '      ^',
+      '',
       'Error: write EPIPE',
       '    at afterWriteDispatched (node:internal/stream_base_commons:161:15)',
       "Emitted 'error' event on Socket instance at:",
@@ -358,7 +362,8 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
       '    at src/functions/tornadoes.test.ts:433:31'
     ];
 
-    expect(failureText(output, 2)).toBe(
+    // Node's quote of its own source, where the pipe's error went unhandled, is none of the test's either.
+    expect(failureText(output, 10)).toBe(
       [
         '1 failed — src/functions/tornadoes.test.ts > request budget > stays within 20 requests',
         'asserted: expected 21 to be less than or equal to 20',

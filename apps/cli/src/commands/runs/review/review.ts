@@ -229,6 +229,10 @@ export const lookAt = (
           ...(options.click ? ['--click', options.click] : []),
           ...(options.hover ? ['--hover', options.hover] : [])
         ];
+        // What each picture is taken after: the visitor's steps, or the click — a run's look with --click pictured the
+        // page before it, and set that beside the run before as "nothing changed".
+        const pictureSteps =
+          options.click === undefined ? options.steps : `click ${JSON.stringify(options.click)}; wait 600`;
         // The pages only a shared file of it reaches — a data file every page reads, a theme: read beside the run
         // before it, and pictured only where they changed.
         const ownership = await readOwnership(preview.dir);
@@ -351,7 +355,7 @@ export const lookAt = (
                   url: preview.url,
                   reader: [...visiting, ...signedInFor(route)],
                   clip: clipArgs(clip, showing),
-                  steps: options.steps,
+                  steps: pictureSteps,
                   width,
                   scheme,
                   out
@@ -369,7 +373,7 @@ export const lookAt = (
                         clip: clipArgs(clip, showing),
                         // Its steps first: the hover is of the state they bring.
                         steps: [
-                          options.steps,
+                          pictureSteps,
                           `hover ${JSON.stringify(options.hover)}; wait 600; shot hovering ${options.hover}`
                         ]
                           .filter(each => each !== undefined)
@@ -414,7 +418,7 @@ export const lookAt = (
                     reader: [...visiting, ...signedInFor(route)],
                     compare: before?.url ?? '',
                     clip: clipArgs(clip, showing),
-                    steps: options.steps,
+                    steps: pictureSteps,
                     width,
                     scheme,
                     out
@@ -430,7 +434,7 @@ export const lookAt = (
                   url: preview.url,
                   reader: [...visiting, ...signedInFor(route)],
                   clip: clipArgs(clip, showing),
-                  steps: options.steps,
+                  steps: pictureSteps,
                   width,
                   scheme,
                   out,

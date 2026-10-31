@@ -59,7 +59,9 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
   'page play': {
     '--element': '--read <element…> says what elements show after the steps',
     // Asked five runs running: a picture is a step of its own.
-    '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots'
+    '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots',
+    // Two runs, page shot's flag carried over: a play is a visitor who asked for less motion already.
+    '--reduced-motion': 'page play plays as a visitor who asked for less motion already — leave it out'
   },
   'task look': { '--clip': 'one part of each page pictured alone: plitzi task look <task> --within <element>' },
   // Eleven runs reached for it: a brief's whole files are --files, a task's whole notes and diffs task show's --full.

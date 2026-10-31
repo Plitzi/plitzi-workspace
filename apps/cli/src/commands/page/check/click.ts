@@ -11,6 +11,7 @@ import {
   pageMomentInPage,
   refusedFieldsInPage
 } from './moments';
+import { hiddenWhyInPage } from '../measureOn';
 import { byNameOrId } from '../shot/capture';
 
 import type { Authored } from './space';
@@ -39,6 +40,12 @@ export const selectorOf = (authored: Authored | undefined, id: string): string =
   authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : byNameOrId(id);
 
 const FIELDS = 'input, textarea, select';
+
+/**
+ * How long an element clicked is waited for to show: a cold copy of a development build kept its main thread busy for
+ * seconds on load, and a tab clicked before it drew "could not be brought into view" — and was there on the next try.
+ */
+const SHOWN_WAIT_MS = 10_000;
 
 /** The elements of the space the fields inside a node belong to: the nearest element around each. */
 const fieldOwnersInPage = (node: Element, selector: string): string[] =>
@@ -137,9 +144,26 @@ export const clickEffects = async (
 ): Promise<ClickReport> => {
   const label = id ?? 'the fields filled';
   const verb = hover ? 'hovered' : 'clicked';
-  const target = id === undefined ? undefined : await firstShown(page.locator(selectorOf(authored, id)));
+  const all = id === undefined ? undefined : page.locator(selectorOf(authored, id));
+  await all
+    ?.filter({ visible: true })
+    .first()
+    .waitFor({ state: 'visible', timeout: SHOWN_WAIT_MS })
+    .catch(() => undefined);
+  const target = all && (await firstShown(all));
   if (target && (await target.count()) === 0) {
     return { element: label, problem: `no element ${label} is on this page`, changes: [], failed: [] };
+  }
+
+  if (target && !(await target.isVisible())) {
+    const why = await target.evaluate(hiddenWhyInPage, undefined).catch(() => 'not drawn');
+
+    return {
+      element: label,
+      problem: `${label} is on this page and not shown here (${why}): nothing to be ${verb} — open what holds it first (--click its toggle) or read a width it shows at`,
+      changes: [],
+      failed: []
+    };
   }
 
   const looksOf = () =>

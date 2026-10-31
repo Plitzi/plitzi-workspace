@@ -14,16 +14,17 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { awaited, capture, targetOn } from './capture';
 import { notOnPageText } from './notOnPage';
+import { outsideClip, screenNow, shotNow, shotsCompared } from './scriptShots';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
-import { momentChanges, pageMomentInPage } from '../check/moments';
 import { awaitHydration } from '../hydration';
+import { hiddenWhyInPage } from '../measureOn';
 import { parseSteps, widthRangeText } from '../shotSteps';
 
 import type { BrowserPage } from '../../../browser';
-import type { PageMoment } from '../check/types';
 import type { ShotStep } from '../shotSteps';
+import type { ScriptShot } from './scriptShots';
 import type { Framing, Moment, Taken } from './types';
 import type { Visitors } from './visitors';
 import type { ActionRunStatus } from '@plitzi/sdk-shared';
@@ -67,37 +68,6 @@ export const sizeChange = (
   return opening ? { opened: true } : { resized: `${sizeOf(before)} → ${sizeOf(after)}` };
 };
 
-/** The page as it is — its screen and what it shows — when a picture is clipped to a part of it. */
-interface PageNow {
-  moment: PageMoment;
-  png: Uint8Array;
-}
-
-const pageNow = async (page: BrowserPage, how: Framing): Promise<PageNow | undefined> =>
-  how.kind === 'element' || how.kind === 'element-later'
-    ? { moment: await page.evaluate(pageMomentInPage, undefined), png: await page.screenshot({ fullPage: false }) }
-    : undefined;
-
-/**
- * What changed on the page since `before` while a clipped picture stayed the same — the screen, and what it shows: a
- * click opened a plugin's picker beside the part pictured, and its shot said "nothing changed — the click did nothing to
- * see" (a run's tester and designer). Whatever draws it — a marked element or a plugin's own — the screen says it.
- */
-const outsideClip = async (page: BrowserPage, before: PageNow | undefined): Promise<string[]> => {
-  if (before === undefined) {
-    return [];
-  }
-
-  const moment = await page.evaluate(pageMomentInPage, undefined);
-  const screen = await page.screenshot({ fullPage: false });
-  const { changed } = await comparePictures(page, dataUrl(before.png), dataUrl(screen));
-
-  return [
-    ...(changed > 0 ? [`${String(changed)}% of the screen`] : []),
-    ...momentChanges(before.moment, moment, { before: undefined, after: undefined })
-  ];
-};
-
 /**
  * Each element clicked in turn, and the page pictured after it — `frames` pictures `every` ms apart, or one. What a
  * click changed is measured against the picture before it: nothing at all is said, as a click that did nothing.
@@ -117,13 +87,26 @@ export const clickThrough = async (
     }
 
     if (!read.found) {
-      return { problem: `${target} is not on the page: --click takes an element's name, a tag or a selector.` };
+      return { problem: `${target} is not on the page — ${await notOnPageText(taken.page, target, '--click')}` };
     }
 
-    const element = taken.page.locator(read.selector).filter({ visible: true }).first();
+    // Found and drawn nowhere — a sheet closed at this width: said as it is, never a press timed out.
+    const all = taken.page.locator(read.selector);
+    if ((await all.filter({ visible: true }).count()) === 0) {
+      const why = await all
+        .first()
+        .evaluate(hiddenWhyInPage, undefined)
+        .catch(() => 'not drawn');
+
+      return {
+        problem: `${target} is on the page and not shown here (${why}): nothing to click — open what holds it first (--click <its toggle> ${target}) or picture a width it shows at`
+      };
+    }
+
+    const element = all.filter({ visible: true }).first();
 
     const before = moments[moments.length - 1].png;
-    const pageBefore = await pageNow(taken.page, how);
+    const pageBefore = await screenNow(taken.page, how);
     try {
       await pressOnce(taken.page, () => element.click({ timeout: 3000 }));
     } catch (error) {
@@ -205,7 +188,7 @@ export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
     case 'click':
     case 'hover':
-      return `${step.kind} ${step.target}`;
+      return `${step.kind} ${step.target}${step.point ? ` ${String(step.point.x)}%,${String(step.point.y)}%` : ''}`;
     case 'wait-for':
       return `wait-for ${step.target}${step.ms === undefined ? '' : ` ${String(step.ms)} ms`}`;
     case 'scroll':
@@ -423,8 +406,21 @@ export const actStep = async (
       return undefined;
     }
 
+    // A point of its box, in px from its top left as the driver takes it: inside the box, its far edge included.
+    const point = step.kind === 'click' || step.kind === 'hover' ? step.point : undefined;
+    const box = point ? await element.boundingBox() : null;
+    const position =
+      box && point
+        ? {
+            position: {
+              x: Math.min(Math.max(0, box.width - 1), (box.width * point.x) / 100),
+              y: Math.min(Math.max(0, box.height - 1), (box.height * point.y) / 100)
+            }
+          }
+        : {};
+
     if (step.kind === 'hover') {
-      await pressOnce(page, () => element.hover({ timeout: 3000 }));
+      await pressOnce(page, () => element.hover({ timeout: 3000, ...position }));
       return undefined;
     }
 
@@ -477,7 +473,7 @@ export const actStep = async (
       const focused = step.kind === 'type' && (await shown.evaluate(focusField, FIELD));
       if (!focused) {
         await (step.kind === 'click'
-          ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000 })))
+          ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000, ...position })))
           : pressOnce(page, () => element.click({ timeout: 3000 })));
       }
     } catch (error) {
@@ -638,19 +634,13 @@ export const playSteps = async (
   { moments: Moment[]; changes: { label: string; changed: number; outside?: string[] }[] } | { problem: string }
 > => {
   const { page } = taken;
+  // The screen the first picture's surroundings are read against, taken before the steps' clock starts.
+  const start = how.kind === 'element' || how.kind === 'element-later' ? await shotNow(page, how, 'before') : undefined;
   const started = Date.now();
-  const moments: Moment[] = [{ label: 'before', png: taken.png }];
-  const changes: { label: string; changed: number; outside?: string[] }[] = [];
-  let pageBefore = await pageNow(page, how);
+  // Taken as the steps reach them, set beside each other once they are played: a picture is the moment, nothing more.
+  const shots: ScriptShot[] = [];
   const picture = async (label: string): Promise<void> => {
-    const before = moments[moments.length - 1].png;
-    const png = await capture(page, how);
-    const at = `${label} · +${String(Date.now() - started)} ms`;
-    moments.push({ label: at, png });
-    const { changed } = await comparePictures(page, dataUrl(before), dataUrl(png));
-    const outside = changed === 0 ? await outsideClip(page, pageBefore) : [];
-    changes.push({ label: at, changed, ...(outside.length > 0 ? { outside } : {}) });
-    pageBefore = await pageNow(page, how);
+    shots.push(await shotNow(page, how, `${label} · +${String(Date.now() - started)} ms`));
   };
 
   for (const [index, step] of steps.entries()) {
@@ -691,7 +681,7 @@ export const playSteps = async (
     await picture('after');
   }
 
-  return { moments, changes };
+  return shotsCompared(page, { png: taken.png, ...(start ? { screen: start } : {}) }, shots);
 };
 
 /** Whether steps end on an action rather than a picture: what it leaves is then pictured once more. */

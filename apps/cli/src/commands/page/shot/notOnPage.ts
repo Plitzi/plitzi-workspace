@@ -19,12 +19,29 @@ const copiesOf = async (page: Parameters<typeof targetOn>[0], selector: string):
   return COPIES_LOOK;
 };
 
+/** A page a name is looked for on: found by a selector, and read in it for the names it has. */
+type NamedPage = Parameters<typeof targetOn>[0] & {
+  evaluate: <R, A>(fn: (arg: A) => R, arg: A) => Promise<R>;
+};
+
+/** The element names on the page that start as `stem` does — runs in the page, self-contained. */
+const namesFromInPage = (stem: string): string[] => [
+  ...new Set(
+    Array.from(document.querySelectorAll('[data-plitzi-el]'), node => node.getAttribute('data-plitzi-el') ?? '').filter(
+      name => name.startsWith(stem)
+    )
+  )
+];
+
+/** How many of the names like it are said. */
+const LIKE_SAID = 8;
+
 /**
  * What to write instead of a name not on the page: the same name the other way — an element's id written as a class
  * (`.home-faq-answer-text`, a run's design-1), a class as an id — when that way finds it; how to name one else.
  */
 export const notOnPageText = async (
-  page: Parameters<typeof targetOn>[0],
+  page: NamedPage,
   target: string,
   /** How this command reaches a part a visitor's press makes: `--click, --steps`, or a step before it. */
   reach: string
@@ -57,6 +74,14 @@ export const notOnPageText = async (
     if (!('problem' in other) && other.found) {
       return `${written[1]} is a component’s instance, marked data-plitzi-instance, not data-plitzi-el: write ${asInstance}`;
     }
+  }
+
+  // A name of a family the page has, mistaken: a run's dev-1 clicked sheet-tab-board, where the tabs were log, summary
+  // and legend.
+  const stem = name === undefined ? '' : name.slice(0, name.lastIndexOf('-') + 1);
+  const like = stem.length > 3 ? await page.evaluate(namesFromInPage, stem).catch(() => []) : [];
+  if (like.length > 0) {
+    return `the page has ${like.slice(0, LIKE_SAID).join(', ')}${like.length > LIKE_SAID ? `, … (${String(like.length)})` : ''} — no ${name ?? target}`;
   }
 
   // Not drawn here at all: a run's dev-1 measured a host's desk as a guest, on /r/ with no room — told only "No element".

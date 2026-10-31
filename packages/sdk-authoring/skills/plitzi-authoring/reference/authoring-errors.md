@@ -159,7 +159,7 @@ The space is not written until these are fixed.
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
 | `state-painted-not-kept` | a `paintedState` key that `keptState` does not keep — the server draws with what is kept | add it to `keptState`, or leave it out of `paintedState` |
 | `state-shape` | a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS | a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors` |
-| `step-duplicate` | two steps with one name in a flow or an action | a name each |
+| `step-duplicate` | two steps with one name in a flow, in two flows of one element, or in an action | a name each |
 | `step-name` | a step name a later step cannot read as `{{ name.field }}` | a letter first, then letters, digits, `-` and `_` |
 | `step-params` | a step param that does not exist, or a value outside its options | the params and values it lists |
 | `step-type` | a step `type` that does not exist | the step builders — `setState(…)`, `navigate(…)` — write it |

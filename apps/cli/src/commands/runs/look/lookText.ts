@@ -54,9 +54,12 @@ const fewOf = (items: readonly string[], joiner: string): string =>
 
 export type Looked = Awaited<ReturnType<typeof lookAt>>;
 
-/** Whether a comparison found something: a section that changed, or a dress added or taken away. */
+/**
+ * Whether a comparison found something: the picture, in a section or outside every one — a globe drawn behind them, which
+ * a run's look said "nothing changed" of beside a run before that had it — or a dress added or taken away.
+ */
 const differs = (each: NonNullable<Looked['compared']>[number]): boolean =>
-  each.problem === undefined && ((each.changed !== 0 && each.sections.length > 0) || each.dress.length > 0);
+  each.problem === undefined && ((each.changed ?? 0) > 0 || each.dress.length > 0);
 
 /**
  * Beside the run before it, in one line, said before the pictures: what differs, or that nothing does. A look of its
@@ -197,7 +200,7 @@ export const lookText = (looked: Looked): string =>
           ...looked.compared.map(each =>
             each.problem
               ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-              : `  ${each.route} at ${each.width} ${each.scheme}: ${(each.changed === 0 || each.sections.length === 0) && each.dress.length === 0 ? (each.canvasMoving ? 'nothing changed it could compare — its canvas (a map, a chart) was not drawn yet when pictured: look again' : 'nothing changed') : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+              : `  ${each.route} at ${each.width} ${each.scheme}: ${!differs(each) ? (each.canvasMoving ? 'nothing changed it could compare — its canvas (a map, a chart) was not drawn yet when pictured: look again' : 'nothing changed') : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : (each.changed ?? 0) > 0 ? ' — outside its sections (a canvas or a backdrop behind them): see it side by side' : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}${each.canvasMoving ? ' — its canvas was not drawn yet when pictured: look again' : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
           )
         ]
       : []),

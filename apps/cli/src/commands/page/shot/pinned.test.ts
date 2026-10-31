@@ -42,6 +42,37 @@ describe('what is pinned over an element pictured', () => {
   });
 });
 
+// A reticle drawn on a map pinned behind it was pictured on a blank ground: the map, hidden as pinned, was under it.
+describe('what is pinned under an element pictured', () => {
+  it('is kept: only what is drawn over it is hidden', () => {
+    document.body.innerHTML = `
+      <div id="map" style="position: fixed"></div>
+      <div id="reticle" style="pointer-events: none"></div>
+      <div id="legend" style="position: fixed"></div>`;
+    const [map, reticle, legend] = ['map', 'reticle', 'legend'].map(id => document.getElementById(id));
+    if (!map || !reticle || !legend) {
+      throw new Error('no page');
+    }
+
+    // The map the whole screen, the reticle in it, the legend over its corner: drawn legend, reticle, map, from the top.
+    map.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 800);
+    reticle.getBoundingClientRect = () => new DOMRect(100, 100, 60, 60);
+    legend.getBoundingClientRect = () => new DOMRect(0, 0, 140, 140);
+    document.elementsFromPoint = (x: number, y: number) => [
+      ...(x < 140 && y < 140 ? [legend] : []),
+      // An overlay takes no pointer: only made to take it is it found under one.
+      ...(reticle.style.pointerEvents === 'auto' ? [reticle] : []),
+      map
+    ];
+
+    expect(hidePinned(reticle, HIDDEN_FOR_SHOT)).toBe(1);
+    expect(legend.style.getPropertyValue('opacity')).toBe('0');
+    expect(map.style.getPropertyValue('opacity')).toBe('');
+    expect(reticle.style.pointerEvents).toBe('none');
+    showPinned(HIDDEN_FOR_SHOT);
+  });
+});
+
 // The room's stats sheet scrolls inside itself; its lower blocks never showed in a whole-page picture.
 describe('a sheet pinned over the page that scrolls on its own', () => {
   const sized = (id: string, box: { scrollHeight: number; clientHeight: number; width: number }) => {

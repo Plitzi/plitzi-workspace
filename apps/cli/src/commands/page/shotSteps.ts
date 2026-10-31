@@ -5,8 +5,11 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  * queue that fills, a restart, an opening watched frame by frame. What `--click` cannot say: a wait between two
  * presses, a picture only where it is asked for, text typed into a field.
  *
- *   click <element>          a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too
- *   hover <element>          the pointer put over it, and left there — what a hover shows, pictured by the next shot
+ *   click <element> [x%,y%]  a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too; at
+ *                            a point of its box, from its top left, where its centre is not what is pressed — a quake
+ *                            on a map's canvas: click map 30%,60%
+ *   hover <element> [x%,y%]  the pointer put over it, and left there — what a hover shows, pictured by the next shot;
+ *                            at a point of its box as a click takes one
  *   scroll <element> [dx] [dy]  brought into view, as a reader scrolling to it — the footer, a section below the fold;
  *                            with how far, in pixels, its own content scrolled instead — a row across: scroll genres 200
  *   type <element> <text>    text typed into a field, in place of what it held: type ".panel textarea" hi
@@ -49,9 +52,15 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  */
 
 /** A step one visitor plays on its own page: every step but a picture, or one played as another account. */
+/** A point of an element's box, in percent from its top left: `30%,60%`. */
+export interface BoxPoint {
+  x: number;
+  y: number;
+}
+
 export type PageStep =
-  | { kind: 'click'; target: string }
-  | { kind: 'hover'; target: string }
+  | { kind: 'click'; target: string; point?: BoxPoint }
+  | { kind: 'hover'; target: string; point?: BoxPoint }
   | { kind: 'scroll'; target: string; by?: { dx: number; dy: number } }
   | { kind: 'type'; target: string; text: string }
   | { kind: 'drag'; target: string; dx: number; dy: number; held?: true }
@@ -90,8 +99,8 @@ export type ShotStep =
  * command's `--steps` help are made from — two help texts typed by hand had left out half of them.
  */
 export const STEP_USAGE = [
-  ['click', 'click <el>'],
-  ['hover', 'hover <el>'],
+  ['click', 'click <el> [x%,y%]'],
+  ['hover', 'hover <el> [x%,y%]'],
   ['scroll', 'scroll <el> [dx] [dy]'],
   ['type', 'type <el> <text>'],
   ['drag', 'drag <el> <dx> [dy] [hold]'],
@@ -124,6 +133,12 @@ export const stepsUsage = (without: readonly string[] = []): string =>
 
 // `fill` is `type` by the name a Playwright user reaches for (a run's dev-1): typing replaces what a field held either way.
 const STEP_NAMES = STEP_USAGE.flatMap(([name]) => (name === 'type' ? ['type', 'fill'] : [name]));
+
+/** A point of a box, as a step writes it: `30%,60%`, from its top left. */
+const BOX_POINT = /^(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%$/;
+
+/** What reads as a point written some other way — in pixels, one number alone: refused with the way it is written. */
+const POINT_LIKE = /^-?[\d.]+%?,\s*-?[\d.]+%?$|^-?[\d.]+%$/;
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
@@ -314,6 +329,21 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
           }
 
           steps.push({ kind: 'wait-for', target: unquoted(target), ms });
+          break;
+        }
+
+        // A point of its box: what a canvas draws has no element of its own to name — a run's tester wrote a probe of
+        // its own to press a quake on a map.
+        const point = BOX_POINT.exec(after);
+        if ((name === 'click' || name === 'hover') && (point || POINT_LIKE.test(after))) {
+          const [x, y] = point ? [Number(point[1]), Number(point[2])] : [Number.NaN, Number.NaN];
+          if (!(x >= 0 && x <= 100 && y >= 0 && y <= 100)) {
+            return {
+              problem: `${at}: ${name} takes an element and, to ${name === 'click' ? 'press' : 'point at'} a point of it, where in its box, in percent from its top left — ${name} map 30%,60% (a selector with spaces goes in quotes)`
+            };
+          }
+
+          steps.push({ kind: name, target: unquoted(target), point: { x, y } });
           break;
         }
 

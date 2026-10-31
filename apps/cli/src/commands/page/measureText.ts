@@ -139,7 +139,7 @@ const sidesJoined = (entries: [string, string][]): [string, string][] =>
   );
 
 /** Why it is not drawn, and that its place and size are not said: what a hidden box reads (0, 0) is nobody's. */
-const hiddenText = (why: string): string =>
+export const hiddenText = (why: string): string =>
   `a visitor sees none of what it finds — ${why}; its place and size are not on the page, so not said`;
 
 /** What a hidden element's reading does not say: where it is and how big, which a box drawn nowhere has none of. */
@@ -281,3 +281,42 @@ export const readingText = (
 /** Said under a reading of each element whole: two of a run's testers grepped forty lines of one down to its box. */
 export const WHOLE_SAID =
   'Each element whole — what is asked alone: --only box (or font, border, size, any property), its words: page play --read <elements>';
+
+/** The copy `--each` reads (`<selector> >> nth=<n>`), as the element asked — else none. */
+const COPY = /^(.+) >> nth=\d+$/;
+
+/**
+ * The copies of an element `--each` read, every one hidden for one reason, said as one line where it came — a run's
+ * tester read the same sentence for seventeen rows of a sheet's pane that was not open. Any other reading as it is.
+ */
+export const hiddenCopiesJoined = (readings: readonly Reading[]): (Reading | { said: string })[] => {
+  const baseOf = (reading: Reading): string | undefined =>
+    reading.there === undefined && !('problem' in reading.here) && reading.here.hidden !== undefined
+      ? `${COPY.exec(reading.pair.here)?.[1] ?? ''}|${reading.here.hidden}`
+      : undefined;
+  const counts = new Map<string, number>();
+  readings.forEach(reading => {
+    const base = baseOf(reading);
+    if (base !== undefined && !base.startsWith('|')) {
+      counts.set(base, (counts.get(base) ?? 0) + 1);
+    }
+  });
+  const said = new Set<string>();
+
+  return readings.flatMap((reading): (Reading | { said: string })[] => {
+    const base = baseOf(reading);
+    const count = base === undefined ? 0 : (counts.get(base) ?? 0);
+    if (base === undefined || count < 2 || 'problem' in reading.here) {
+      return [reading];
+    }
+
+    if (said.has(base)) {
+      return [];
+    }
+
+    said.add(base);
+    const [element] = base.split('|');
+
+    return [{ said: `${element}: all ${String(count)} copies — ${hiddenText(reading.here.hidden ?? '')}` }];
+  });
+};

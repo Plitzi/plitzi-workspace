@@ -386,13 +386,18 @@ const inspectHere = async (
   const heldBackForm = heldBackIssues(clicked?.heldBack ?? [], width);
   // What a visitor reads cut short, by the element whose own text is cut: a title shown as "ROOFTOP SESSIO…" was said
   // by no check the run ran.
-  const cut = [
-    ...new Set(
-      (await page.evaluate(textsInPage, { selector: '[data-plitzi-el]', within: false })).drawn
-        .filter(each => each.cut && each.id !== '')
-        .map(each => each.id)
+  const drawnTexts = (await page.evaluate(textsInPage, { selector: '[data-plitzi-el]', within: false })).drawn;
+  const cut = [...new Set(drawnTexts.filter(each => each.cut && each.id !== '').map(each => each.id))];
+  // What runs past its box, by element, the farthest of its copies.
+  const spilled = Object.entries(
+    drawnTexts.reduce<Record<string, number>>(
+      (all, each) =>
+        each.spills === undefined || each.id === ''
+          ? all
+          : { ...all, [each.id]: Math.max(all[each.id] ?? 0, each.spills) },
+      {}
     )
-  ];
+  ).map(([id, px]) => `${id} by ${String(px)} px`);
   const painted = await oneColourCanvases(page);
   const busy = busyOf(await page.evaluate((key: string) => Reflect.get(window, key) as unknown, LONG_TASKS));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
@@ -486,6 +491,7 @@ const inspectHere = async (
     hiddenAtWidth: report.hiddenAtWidth,
     empty: report.empty,
     ...(cut.length > 0 ? { cut } : {}),
+    ...(spilled.length > 0 ? { spilled } : {}),
     ...(painted.length > 0 ? { oneColour: painted } : {}),
     ...(busy ? { busy } : {}),
     outOfUse: report.outOfUse,

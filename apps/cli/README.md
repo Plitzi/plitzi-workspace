@@ -417,10 +417,12 @@ its `/_action` — and what another person does by `as <account> <step>`, played
 in (the password in `PLITZI_CHECK_PASSWORD`), opened where this one is: `as mika goto /messages/dax; as mika type
 dm-input hi`. Both reach the project's own server, never `--compare`'s site. A step only some widths need is
 `at <widths> <step>` — `390`, `<=767`, `>=768` — passed over at the others (one that names no width read is refused), so one command reads every width:
-`--width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x"`, the tab a phone opens first. The steps are one vocabulary: `page play`
+`--width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x"`, the tab a phone opens first. A click or a
+hover lands on its element's centre, or on a point of its box said in percent from its top left — what a canvas draws
+has no element of its own: `click map 30%,60%` presses a quake on a map. The steps are one vocabulary: `page play`
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
 they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page). Every step, as `page shot --help`
-prints them: `click <el>`, `hover <el>`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy] [hold]`, `release`, `press <key>`, `wait <ms|3s>`, `wait-for <el> [time]`, `reload`, `goto <path>`, `back`, `store <key> <value>`, `state <key> <json>`, `source <path> <json>`, `attribute <id>.<name> <json>`, `clock <instant>`, `tick <duration>`, `action <id> [json]`, `render <id> [json]`, `as <account> <step>`, `at <widths> <step>`, `shot [label]`, `frames <n> [ms]` (`frames` is `page shot`'s alone).
+prints them: `click <el> [x%,y%]`, `hover <el> [x%,y%]`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy] [hold]`, `release`, `press <key>`, `wait <ms|3s>`, `wait-for <el> [time]`, `reload`, `goto <path>`, `back`, `store <key> <value>`, `state <key> <json>`, `source <path> <json>`, `attribute <id>.<name> <json>`, `clock <instant>`, `tick <duration>`, `action <id> [json]`, `render <id> [json]`, `as <account> <step>`, `at <widths> <step>`, `shot [label]`, `frames <n> [ms]` (`frames` is `page shot`'s alone).
 
 A look at a task reads the pages only a shared file of the task reaches on both servers — the task's copy and the run
 before it — every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not

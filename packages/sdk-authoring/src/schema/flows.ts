@@ -60,23 +60,30 @@ const assertStepIds = (ids: string[], where: string): void => {
   }
 };
 
+/** The names written by hand on the steps of these flows. */
+const namedIn = (flows: StepSpec[][]): Set<string> =>
+  new Set(flows.flatMap(steps => steps.flatMap(step => (step.id ? [step.id] : []))));
+
 /**
  * The ids a flow's steps are written under. A step's output is addressed as `{{ <id>.field }}` from every later step,
  * so an unnamed one still gets a name worth reading — `navigate-2` — counted per action, which is what a person would
  * have called it anyway.
  */
-const stepIds = (steps: StepSpec[], counters: Map<string, number>): string[] => {
-  const named = new Set(steps.map(step => step.id).filter(Boolean) as string[]);
-
-  return steps.map(step => {
+const stepIds = (
+  steps: StepSpec[],
+  counters: Map<string, number>,
+  named: ReadonlySet<string> = namedIn([steps])
+): string[] =>
+  steps.map(step => {
     if (step.id) {
       return step.id;
     }
 
     const base = step.action.replace(/[^A-Za-z0-9]/g, '') || step.type;
     let next = (counters.get(base) ?? 0) + 1;
-    // Past anything the author named in the same flow: a minted `navigate-1` landing on a step already called
-    // `navigate-1` would not read as a duplicate, it would silently be the same entry of the record.
+    // Past anything the author named on the element, in any of its flows: they share one record, and a minted
+    // `navigate-1` landing on a step already called `navigate-1` would not read as a duplicate — it would silently be
+    // the same entry of the record.
     while (named.has(`${base}-${next}`)) {
       next += 1;
     }
@@ -85,13 +92,13 @@ const stepIds = (steps: StepSpec[], counters: Map<string, number>): string[] => 
 
     return `${base}-${next}`;
   });
-};
 
 /** Every step's id, flow by flow, as `authorFlows` writes them — where a step of the document was in the source. */
 export const flowStepIds = (flows: StepSpec[][]): string[][] => {
   const counters = new Map<string, number>();
+  const named = namedIn(flows);
 
-  return flows.map(steps => stepIds(steps, counters));
+  return flows.map(steps => stepIds(steps, counters, named));
 };
 
 /**
@@ -104,12 +111,10 @@ export const flowStepIds = (flows: StepSpec[][]): string[][] => {
 export const authorFlow = (
   steps: StepSpec[],
   host?: string,
-  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
-  // would have the second flow's `navigate` overwrite the first one's.
-  counters: Map<string, number> = new Map()
+  // Given by `authorFlows`, which names the steps of every flow on the element together: they all land in one
+  // `interactions` record.
+  ids: string[] = stepIds(steps, new Map())
 ): Record<string, ElementInteraction> => {
-  const ids = stepIds(steps, counters);
-
   assertStepIds(ids, host ? `the flow on "${host}"` : 'this flow');
   const flowId = ids[0] ?? '';
 
@@ -227,10 +232,19 @@ export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>
 
 /** An element's flows — each a trigger and its steps — as the document's interactions, every node given its id. */
 export const authorFlows = (flows: StepSpec[][], host?: string): Record<string, ElementInteraction> => {
-  const counters = new Map<string, number>();
+  const ids = flowStepIds(flows);
 
-  return flows.reduce<Record<string, ElementInteraction>>(
-    (all, steps) => ({ ...all, ...authorFlow(steps, host, counters) }),
-    {}
-  );
+  return flows.reduce<Record<string, ElementInteraction>>((all, steps, index) => {
+    const flow = authorFlow(steps, host, ids[index]);
+    const taken = Object.keys(flow).find(id => Object.hasOwn(all, id));
+    // One record for every flow of the element: a name two flows give their steps would keep the later step alone.
+    if (taken !== undefined) {
+      throw new AuthoringError(
+        'step-duplicate',
+        `Two flows on ${host ? `"${host}"` : 'this element'} name a step "${taken}". An element's flows share one record keyed by step id, so the later replaces the earlier — name each its own.`
+      );
+    }
+
+    return { ...all, ...flow };
+  }, {});
 };

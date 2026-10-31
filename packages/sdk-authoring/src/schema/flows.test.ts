@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorFlow, named, when, whenFailed, whenSucceeded } from './flows';
+import { authorFlow, authorFlows, named, when, whenFailed, whenSucceeded } from './flows';
 
 import type { Rule } from './flows';
 import type { StepSpec } from './types';
@@ -105,5 +105,32 @@ describe('when', () => {
   /** A step with no condition carries no `when` at all, rather than an empty group that evaluates to nothing. */
   it('writes no condition when none was asked for', () => {
     expect(authorFlow([named('go', step('navigate'))]).go).not.toHaveProperty('when');
+  });
+});
+
+/** An element's flows land in one record keyed by step id: no step of one may take the place of another's. */
+describe('authorFlows', () => {
+  const trigger = (action: string): StepSpec => ({ type: 'trigger', action });
+
+  // A shared step written without a name, in a flow beside one that named its steps as the minted ones would be.
+  it('names an unnamed step past what any flow of the element named by hand', () => {
+    const shared = step('setState');
+    const nodes = authorFlows(
+      [
+        [trigger('onLoad'), shared],
+        [named('picked', trigger('picked')), named('setState-1', step('setState')), named('setState-2', shared)]
+      ],
+      'map'
+    );
+
+    expect(Object.keys(nodes)).toEqual(['onLoad-1', 'setState-3', 'picked', 'setState-1', 'setState-2']);
+    expect(nodes['setState-1'].flowId).toBe('picked');
+    expect(nodes['setState-3'].flowId).toBe('onLoad-1');
+  });
+
+  it('refuses one name given to steps of two flows', () => {
+    expect(() =>
+      authorFlows([[named('go', trigger('onClick'))], [trigger('onLoad'), named('go', step('navigate'))]], 'map')
+    ).toThrow('Two flows on "map" name a step "go"');
   });
 });

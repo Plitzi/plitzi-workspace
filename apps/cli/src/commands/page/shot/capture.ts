@@ -334,10 +334,40 @@ export const hidePinned = (target: Element, attribute: string): number => {
       box.bottom > own.top
     );
   };
+  // Drawn under it where both are now — a map pinned behind a reticle drawn on it: what the part is pictured over, kept
+  // (a run's designer pictured a reticle's brackets on a blank ground). Read at a point both cover, the part made to take
+  // the pointer for it (an overlay takes none); one not over it now, or out of the screen, is taken as over it.
+  const under = (element: Element): boolean => {
+    const box = element.getBoundingClientRect();
+    const x = (Math.max(box.left, own.left) + Math.min(box.right, own.right)) / 2;
+    const y = (Math.max(box.top, own.top) + Math.min(box.bottom, own.bottom)) / 2;
+    if (!over(element) || x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) {
+      return false;
+    }
+
+    const style = target instanceof HTMLElement || target instanceof SVGElement ? target.style : undefined;
+    const [was, priority] = [
+      style?.getPropertyValue('pointer-events') ?? '',
+      style?.getPropertyPriority('pointer-events')
+    ];
+    style?.setProperty('pointer-events', 'auto', 'important');
+    const stack = document.elementsFromPoint(x, y);
+    if (was === '') {
+      style?.removeProperty('pointer-events');
+    } else {
+      style?.setProperty('pointer-events', was, priority);
+    }
+
+    const part = stack.findIndex(node => target === node || target.contains(node));
+    const its = stack.findIndex(node => element === node || element.contains(node));
+
+    return part !== -1 && its !== -1 && part < its;
+  };
   for (const element of document.querySelectorAll<HTMLElement>('body *')) {
     const { position } = getComputedStyle(element);
     if (
       (position === 'fixed' || position === 'sticky' || (position === 'absolute' && over(element))) &&
+      !under(element) &&
       !element.contains(target) &&
       !target.contains(element) &&
       !element.hasAttribute(attribute)

@@ -109,6 +109,11 @@ export interface CheckReport {
    * of itself (data that varies is cut on purpose); `--expect "<id>~<text>"` holds one whole.
    */
   cut?: string[];
+  /**
+   * The elements whose own words run past their box at this width, nothing cutting them — drawn over what is beside
+   * them — each by how far: said, never a problem of itself.
+   */
+  spilled?: string[];
   /** Its canvases painted one colour — a map or a chart drawing nothing but its ground: said, failing nothing. */
   oneColour?: { id: string; colour: string }[];
   /**

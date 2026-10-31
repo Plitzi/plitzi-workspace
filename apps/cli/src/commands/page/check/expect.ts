@@ -37,6 +37,11 @@ export interface DrawnText {
   /** Its words as the space wrote them (`textContent`), whitespace folded: `text` is them as shown, capitals and all. */
   written: string;
   cut: boolean;
+  /**
+   * How far its own words run past its box, nothing cutting them (overflow visible), in px — drawn over what is beside
+   * it: a run's meta line ran 60 px under the next column, and page check said nothing wrong.
+   */
+  spills?: number;
   /** Its place among the elements the selector finds, in the page's order: what its sight is read by. */
   index: number;
 }
@@ -100,6 +105,32 @@ export const textsInPage = ({
 
     return (across && (laid.right > right + 1 || laid.left < left - 1)) || (clamped && laid.bottom > bottom + 1);
   };
+  // Its own words past its box with nothing to cut them: drawn over what is beside it. A box of no width is a label
+  // placed on purpose (a pin's), never one its words outgrew.
+  const spills = (each: Element): number => {
+    if (!(each instanceof HTMLElement) || each.getClientRects().length === 0 || forScreenReaders(each)) {
+      return 0;
+    }
+
+    const style = getComputedStyle(each);
+    const words = Array.from(each.childNodes).filter(
+      child => child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== ''
+    );
+    const box = each.getBoundingClientRect();
+    // `overflow` read too: a DOM without layout (a test's) does not spread the shorthand into `overflowX`.
+    const kept = /hidden|clip|auto|scroll/.test(`${style.overflowX} ${style.overflow}`);
+    if (words.length === 0 || box.width < 1 || style.display === 'inline' || kept) {
+      return 0;
+    }
+
+    const range = document.createRange();
+    range.setStartBefore(words[0]);
+    range.setEndAfter(words[words.length - 1]);
+    const laid = range.getBoundingClientRect();
+    const past = Math.max(laid.right - box.right, box.left - laid.left);
+
+    return past > 2 ? Math.round(past) : 0;
+  };
 
   return {
     present: nodes.length,
@@ -111,6 +142,7 @@ export const textsInPage = ({
               text: (node instanceof HTMLElement ? node.innerText : node.textContent).replace(/\s+/g, ' ').trim(),
               written: node.textContent.replace(/\s+/g, ' ').trim(),
               cut: cuts(node) || (within && Array.from(node.querySelectorAll('*')).some(cuts)),
+              ...(spills(node) > 0 ? { spills: spills(node) } : {}),
               index
             }
           ]

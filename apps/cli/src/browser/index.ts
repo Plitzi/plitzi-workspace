@@ -67,6 +67,8 @@ export interface PageElement {
   count(): Promise<number>;
   /** Whether it is drawn: on the page and not hidden — what a picture of it needs. */
   isVisible(): Promise<boolean>;
+  /** Waits until it is in that state — a `timeout` that passes throws. */
+  waitFor(options: { state: 'attached' | 'detached' | 'visible' | 'hidden'; timeout: number }): Promise<void>;
   click(options: { timeout: number }): Promise<void>;
   /** The pointer put over it, and left there: what a hover shows. */
   hover(options: { timeout: number }): Promise<void>;
@@ -230,7 +232,7 @@ export interface Browser {
 }
 
 export interface Chromium {
-  launch(): Promise<Browser>;
+  launch(options?: { args?: string[] }): Promise<Browser>;
 }
 
 const isChromium = (value: unknown): value is Chromium => isRecord(value) && typeof value.launch === 'function';
@@ -291,6 +293,14 @@ export const chromiumOf = async (root: string): Promise<{ chromium: Chromium } |
   return { chromium };
 };
 
+/**
+ * What Chromium is launched with to draw a page's WebGL on the machine's GPU: headless, it draws it on the CPU
+ * (SwiftShader) — a map's turning globe at `--scale 3` took 2–4 s a picture, 0.85 s on the GPU, and a script's shots
+ * written 300 ms apart came out seconds apart (a run's designer). On macOS alone, where every machine has one: a server
+ * or a CI runner elsewhere may have none, and is left as Chromium chooses.
+ */
+export const gpuArgs = (platform: NodeJS.Platform): string[] => (platform === 'darwin' ? ['--enable-gpu'] : []);
+
 /** The project's `@playwright/test`'s Chromium, launched — or why there is none. */
 export const launchBrowser = async (root: string): Promise<Browser | { problem: string }> => {
   const loaded = await chromiumOf(root);
@@ -299,7 +309,7 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
   }
 
   try {
-    const browser = await loaded.chromium.launch();
+    const browser = await loaded.chromium.launch({ args: gpuArgs(process.platform) });
     launchedFor.set(browser, root);
 
     return browser;

@@ -9,8 +9,9 @@ import type { SettlingPage } from '../settle';
 /** One element of the page, as a step presses or reads it. */
 export interface E2eElement {
   count(): Promise<number>;
-  click(options: { timeout: number }): Promise<void>;
-  hover(options: { timeout: number }): Promise<void>;
+  /** `position`: the point pressed, in px from its box's top left — the centre when not said. */
+  click(options: { timeout: number; position?: { x: number; y: number } }): Promise<void>;
+  hover(options: { timeout: number; position?: { x: number; y: number } }): Promise<void>;
   fill(text: string, options: { timeout: number }): Promise<void>;
   /** A select's option chosen by its value or its label. */
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;

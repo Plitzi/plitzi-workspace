@@ -73,6 +73,9 @@ describe('what a refused command line meant', () => {
     );
     expect(commandHint("error: unknown option '--take'", ['task', 'next', '--take'])).toContain('--peek');
     expect(commandHint("error: unknown option '--shot'", ['page', 'play', '/r/x', '--shot'])).toContain('shot opened');
+    expect(
+      commandHint("error: unknown option '--reduced-motion'", ['page', 'play', '/', '--reduced-motion'])
+    ).toContain('less motion already');
     expect(commandHint("error: unknown option '--until'", ['run', 'watch', '--until', 'lead'])).toContain('lead');
     expect(commandHint("error: unknown option '--search'", ['explain', '--search', 'carousel end'])).toContain(
       'plitzi explain "carousel end"'
