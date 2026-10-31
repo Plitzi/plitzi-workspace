@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { Fragment } from 'react';
 
+import RunReport from './RunReport';
 import RunTaskRow from './RunTaskRow';
 
 import type { RunSnapshot, RunSnapshotAgent, RunSnapshotTask } from '@plitzi/sdk-shared/runs';
@@ -58,7 +59,8 @@ const AgentRow = ({ agent }: { agent: RunSnapshotAgent }) => (
 /**
  * The run of agents this preview serves (`plitzi run preview`): what the page is being built by — how far it is, each
  * task by where it stands, who has it and who reviews it, every agent, and what happened last. The page shows the
- * approved work as each task is approved; this says what is coming. Read only: the run is worked from the terminal.
+ * approved work as each task is approved; this says what is coming. The run is worked from the terminal; what the
+ * person sees wrong on the page is reported from here, to its lead (`RunReport`).
  */
 const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
   if (!snapshot) {
@@ -109,6 +111,10 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
           {snapshot.expectedEnd ? ` · expected end ${hhmm(snapshot.expectedEnd)}` : ''}
         </span>
       </div>
+
+      <Section title="Report what you see">
+        <RunReport />
+      </Section>
 
       {/* Side by side when the panel is wide: the tasks, and who is at work. */}
       <div className="grid grid-cols-1 items-start gap-3 @2xl:grid-cols-2">

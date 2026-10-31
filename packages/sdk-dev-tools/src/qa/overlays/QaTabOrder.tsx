@@ -1,6 +1,6 @@
 import { use, useEffect, useState } from 'react';
 
-import QaContext from '../QaContext';
+import PageContext from '../../PageContext';
 import { tabOrderOf } from '../tabOrder';
 
 /** How long the page has to stay still before the order is worked out again. */
@@ -11,7 +11,7 @@ const REORDER_AFTER_MS = 200;
  * that is where they would expect.
  */
 const QaTabOrder = () => {
-  const { pageRef } = use(QaContext);
+  const pageRef = use(PageContext);
   const [order, setOrder] = useState<Element[]>([]);
   const [, setFrame] = useState(0);
 

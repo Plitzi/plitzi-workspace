@@ -3,6 +3,7 @@ export type { Copy } from './act';
 export { e2e } from './define';
 export {
   awaitHydration,
+  FIELD,
   fieldsOf,
   HYDRATION_MS,
   locateField,

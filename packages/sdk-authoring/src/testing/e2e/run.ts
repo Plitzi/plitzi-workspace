@@ -296,6 +296,11 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
         return `no source of the page is ${step.path} — a source is written by its element's id: apiContainer_feed.items`;
       }
 
+      // Written where the page would not draw it — a list row's item: the bridge says why, and the step fails with it.
+      if (isRecord(set.answer) && typeof set.answer.refused === 'string') {
+        return set.answer.refused;
+      }
+
       break;
     }
     case 'tick':

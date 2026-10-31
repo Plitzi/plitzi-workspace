@@ -1,6 +1,6 @@
 import { use, useEffect, useState } from 'react';
 
-import QaContext from '../QaContext';
+import PageContext from '../../PageContext';
 import { XRAY, XRAY_ATTRIBUTE, XRAY_MARKS } from '../xray';
 
 import type { XrayFilter, XrayMark } from '../xray';
@@ -63,7 +63,7 @@ export type QaXrayTagsProps = { filter: TaggedFilter };
  * its parts are bound, conditional, interactive or moving without pointing at each one.
  */
 const QaXrayTags = ({ filter }: QaXrayTagsProps) => {
-  const { pageRef } = use(QaContext);
+  const pageRef = use(PageContext);
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {

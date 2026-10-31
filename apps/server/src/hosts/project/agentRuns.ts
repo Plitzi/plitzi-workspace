@@ -1,9 +1,14 @@
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { ACTIVE_RUN_FILE } from '@plitzi/sdk-shared/project';
-import { RUN_STATUS_PATH } from '@plitzi/sdk-shared/runs';
+import { RUN_REPORT_PATH, RUN_STATUS_PATH, runReportProblems } from '@plitzi/sdk-shared/runs';
+
+import { refusedCrossSite } from '../../core/http/stages/crossSiteWrites';
+import { readRawBody } from '../../core/requestParser';
 
 import type { Stage } from '../../core/http/types';
 
@@ -83,4 +88,56 @@ export const runStatusStage =
     }
 
     return Promise.resolve(true);
+  };
+
+/**
+ * What the person watching a run's preview reports from its page (`RUN_REPORT_PATH`, the dev tools' Run tab): checked,
+ * and left as a file of its own in `dir` — the folder `plitzi run preview` names in `RUN_REPORTS_ENV` and hands on to
+ * the run's lead. Answered 202: the lead reads it with its next command, not now. Only on a preview's server.
+ */
+export const runReportStage =
+  (dir: string): Stage =>
+  async ctx => {
+    const { req, res, raw } = ctx;
+    if (req.path !== RUN_REPORT_PATH) {
+      return false;
+    }
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    if (req.method !== 'POST') {
+      res.setStatus(405);
+      res.send(JSON.stringify({ error: `A report is sent with POST to ${RUN_REPORT_PATH}` }));
+
+      return true;
+    }
+
+    if (refusedCrossSite(ctx)) {
+      return true;
+    }
+
+    let body: unknown;
+    try {
+      body = JSON.parse(await readRawBody(raw));
+    } catch {
+      body = undefined;
+    }
+
+    const problems = runReportProblems(body);
+    if (problems.length > 0) {
+      res.setStatus(400);
+      res.send(JSON.stringify({ error: `The report was not kept: ${problems.join('; ')}`, problems }));
+
+      return true;
+    }
+
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.join(dir, `${String(Date.now())}-${randomBytes(4).toString('hex')}.json`),
+      `${JSON.stringify(body)}\n`
+    );
+    res.setStatus(202);
+    res.send(JSON.stringify({ received: true, note: 'The run’s lead gets it with its next command' }));
+
+    return true;
   };

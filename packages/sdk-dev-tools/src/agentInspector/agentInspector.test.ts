@@ -184,11 +184,19 @@ describe('window.__plitzi', () => {
 
   // A plugin's new attribute no page bound yet could not be seen drawn: only the page's state could be written.
   it('gives an element an attribute as a page binding it would, and says when the space has no such element', () => {
-    expect(inspector.setAttribute('cart.content', '{{ state.total }}')).toBe('cart');
-    expect(recordAt(root.getState(), 'schema', 'flat', 'cart', 'attributes').content).toBe('{{ state.total }}');
+    expect(inspector.setAttribute('cart.title', 'Your basket')).toBe('cart');
+    expect(recordAt(root.getState(), 'schema', 'flat', 'cart', 'attributes').title).toBe('Your basket');
     expect(inspector.setAttribute('nowhere.content', 'x')).toBe(false);
     expect(inspector.setAttribute('cart', 'x')).toBe(false);
-    inspector.setAttribute('cart.content', '{{ state.count }}');
+  });
+
+  // A run's designer wrote strongest-magnitude.content "WATCH", saw nothing change, and nothing said why: it is bound.
+  it('refuses an attribute a binding gives, naming what to write instead, and leaves it as it was', () => {
+    expect(inspector.setAttribute('cart.content', 'WATCH')).toEqual({
+      refused:
+        "cart.content is given by its binding, from state.count: what is written on it is drawn over at once — write what it reads (setSource('state.count', …))"
+    });
+    expect(recordAt(root.getState(), 'schema', 'flat', 'cart', 'attributes').content).toBe('{{ state.count }}');
   });
 
   it('reads a list’s rows from its provider and its own source, whatever store registered first', () => {
@@ -224,6 +232,38 @@ describe('window.__plitzi', () => {
         list_feed: { items: picks }
       });
     }
+  });
+
+  // A run's designer wrote strongestPick.item and saw nothing change: a row's item comes from the list's items.
+  it('refuses a list row’s item, naming the source its items are bound from', () => {
+    const schema = createStore<Record<string, unknown>>(() => ({
+      schema: {
+        flat: {
+          feed: {
+            definition: { type: 'list', bindings: { attributes: [{ to: 'items', source: 'feed.records' }] } },
+            attributes: {}
+          }
+        }
+      },
+      runtime: { sources: { list_feed: { items: [] } } }
+    }));
+    const writer = createAgentInspector({
+      root: schema,
+      writeState,
+      stores: () => [],
+      runs: () => runs,
+      setWatching,
+      document
+    });
+
+    expect(writer.setSource('list_feed.item', { label: 'WATCH' })).toEqual({
+      refused:
+        "list_feed.item is each row's own — a list's item comes from its items, bound from feed.records: write that source (setSource('feed.records', …))"
+    });
+    expect(writer.setSource('feed.item.label', 'WATCH')).toEqual({
+      refused:
+        "list_feed.item.label is each row's own — a list's item comes from its items, bound from feed.records: write that source (setSource('feed.records', …))"
+    });
   });
 
   it('cuts a value that holds itself, and nothing else', () => {

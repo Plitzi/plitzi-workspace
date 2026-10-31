@@ -8,9 +8,12 @@ import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
 import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import useAgentInspector from './agentInspector/useAgentInspector';
+// The recorder alone, not the Run tab: the panel is loaded only once it opens, and the steps are kept from the page's load.
+import useStepRecorder from './components/DevToolsPanel/tabs/RunViewer/stepRecorder';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import DevToolsRoot from './DevToolsRoot';
 import { useIsSelectedInstance } from './instanceRegistry';
+import PageContext from './PageContext';
 import useHydrated from './useHydrated';
 import useRegisterQueriesStore from './useRegisterQueriesStore';
 import useRegisterRootStore from './useRegisterRootStore';
@@ -123,6 +126,8 @@ const DevToolsContainer = ({
   useRegisterRootStore(enabled || inspector);
   useRegisterQueriesStore(isSelected, effectiveInstanceId);
   useAgentInspector(enabled ? isSelected : inspector);
+  // What the person does on a run's preview, kept from the page's load: a report from the Run tab says how they got there.
+  useStepRecorder(enabled && isSelected && run);
 
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),
@@ -169,32 +174,33 @@ const DevToolsContainer = ({
       onCollapse={handleCollapse}
       onTabSelect={handleTabSelect}
       onChangeOrientation={handleChangeOrientation}
-      pageRef={pageRef}
       qa={qa}
       run={run}
     />
   );
   const overlay = isSelected && hydrated && (
     <DevToolsRoot>
-      <DevToolsContextProvider>
-        <Suspense fallback={null}>
-          {renderMode === 'default' && panel}
-          {renderMode === 'shadow' && (
-            // Marked from outside: a capture hides the dev tools by a rule on the page (`HIDE_DEV_TOOLS_CSS`), and a
-            // page's rules stop at a shadow root — the badge inside it was in every `plitzi page shot`.
-            <div style={{ display: 'contents' }} {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}>
-              <ContainerShadow>
-                {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
-                {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
-                <ContainerShadow.Content>
-                  <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                  {panel}
-                </ContainerShadow.Content>
-              </ContainerShadow>
-            </div>
-          )}
-        </Suspense>
-      </DevToolsContextProvider>
+      <PageContext value={pageRef}>
+        <DevToolsContextProvider>
+          <Suspense fallback={null}>
+            {renderMode === 'default' && panel}
+            {renderMode === 'shadow' && (
+              // Marked from outside: a capture hides the dev tools by a rule on the page (`HIDE_DEV_TOOLS_CSS`), and a
+              // page's rules stop at a shadow root — the badge inside it was in every `plitzi page shot`.
+              <div style={{ display: 'contents' }} {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}>
+                <ContainerShadow>
+                  {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
+                  {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
+                  <ContainerShadow.Content>
+                    <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
+                    {panel}
+                  </ContainerShadow.Content>
+                </ContainerShadow>
+              </div>
+            )}
+          </Suspense>
+        </DevToolsContextProvider>
+      </PageContext>
     </DevToolsRoot>
   );
 

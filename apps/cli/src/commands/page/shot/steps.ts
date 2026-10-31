@@ -2,6 +2,7 @@ import {
   answered,
   comparePictures,
   dragElement,
+  FIELD,
   giveValue,
   hiddenAtWidth,
   pressFailure,
@@ -18,7 +19,7 @@ import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
 import { momentChanges, pageMomentInPage } from '../check/moments';
 import { awaitHydration } from '../hydration';
-import { parseSteps } from '../shotSteps';
+import { parseSteps, widthRangeText } from '../shotSteps';
 
 import type { BrowserPage } from '../../../browser';
 import type { PageMoment } from '../check/types';
@@ -175,6 +176,21 @@ export const interactionSteps = (
     : undefined;
 
 /**
+ * Runs in the page: the field a `type` step writes in — the element, or the first field inside it, as a form control
+ * draws its input — given the focus, and whether it took it. Self-contained — it is serialised.
+ */
+export const focusField = (node: Element, field: string): boolean => {
+  const target = node.matches(field) ? node : node.querySelector(field);
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  target.focus();
+
+  return document.activeElement === target;
+};
+
+/**
  * The keys a `type` step presses: what the field held selected first, as a person does — typed after it, a price field
  * kept its old amount too — then the text, or, with none (`fill rate ''`), the selection deleted: a run's tester read
  * a number field emptied that still held its 5, the step said as typed.
@@ -230,6 +246,8 @@ export const stepText = (step: ShotStep): string => {
       return `${step.render ? 'render' : 'action'} ${step.action}`;
     case 'as':
       return `as ${step.account}: ${stepText(step.step)}`;
+    case 'at':
+      return `at ${widthRangeText(step.width)} ${stepText(step.step)}`;
   }
 };
 
@@ -343,6 +361,15 @@ export const actStep = async (
     return done;
   }
 
+  // Played at the widths it names, passed over at the others — said, for whoever reads the steps one by one.
+  if (step.kind === 'at') {
+    const width = await page.evaluate(() => window.innerWidth, undefined);
+
+    return width >= step.width.min && width <= step.width.max
+      ? actStep(page, step.step, index, visitors)
+      : { answer: `not played at ${String(width)} px — at ${widthRangeText(step.width)} only` };
+  }
+
   if (step.kind === 'action') {
     const ran = await runAction(page, step.action, step.input, step.render === true);
 
@@ -444,9 +471,15 @@ export const actStep = async (
     // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
     const from = page.url();
     try {
-      await (step.kind === 'click'
-        ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000 })))
-        : pressOnce(page, () => element.click({ timeout: 3000 })));
+      // A field is typed into once it has the focus, as a journey fills it — never waiting for it to be still or
+      // uncovered, which a click does: a run's look timed out typing in a sheet still sliding in, where the task's
+      // check of the same steps passed.
+      const focused = step.kind === 'type' && (await shown.evaluate(focusField, FIELD));
+      if (!focused) {
+        await (step.kind === 'click'
+          ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000 })))
+          : pressOnce(page, () => element.click({ timeout: 3000 })));
+      }
     } catch (error) {
       // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
       // dev-1 read a plain locator timeout, with nothing of the navigation in it).
@@ -526,7 +559,7 @@ export const actStep = async (
         method: string;
         key: string;
         value: unknown;
-      }): 'no-inspector' | 'unheld' | { written: string } => {
+      }): 'no-inspector' | 'unheld' | { written: string } | { refused: string } => {
         const inspector: unknown = Reflect.get(window, '__plitzi');
         const write: unknown =
           typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, method) : undefined;
@@ -536,6 +569,11 @@ export const actStep = async (
 
         // setSource says the source it wrote, or false when no store holds it; setState writes whatever key it is given.
         const done: unknown = Reflect.apply(write, inspector, [key, value]);
+
+        // A write the page would not draw — an attribute a binding gives, a list row's item — refused, with why.
+        if (typeof done === 'object' && done !== null && typeof Reflect.get(done, 'refused') === 'string') {
+          return { refused: String(Reflect.get(done, 'refused')) };
+        }
 
         return done === false ? 'unheld' : { written: typeof done === 'string' ? done : (key.split('.')[0] ?? key) };
       },
@@ -549,6 +587,10 @@ export const actStep = async (
       return {
         problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : step.kind === 'attribute' ? '.setAttribute' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
       };
+    }
+
+    if (typeof written === 'object' && 'refused' in written) {
+      return { problem: `Step ${String(index + 1)}: ${written.refused}` };
     }
 
     const [name = step.key] = step.key.split('.');
@@ -667,9 +709,9 @@ export const endsActing = (steps: readonly ShotStep[]): boolean => {
 export const actingSteps = (
   script: string | undefined,
   command: string,
-  { others = true }: { others?: boolean } = {}
+  { others = true, widths }: { others?: boolean; widths?: readonly number[] } = {}
 ): ActingStep[] | { problem: string } => {
-  const read = playingSteps(script, command, { others, pictures: false });
+  const read = playingSteps(script, command, { others, pictures: false, ...(widths ? { widths } : {}) });
 
   return 'problem' in read ? read : read.filter((step): step is ActingStep => step.kind !== 'shot');
 };
@@ -681,17 +723,37 @@ export type PictureStep = Extract<ShotStep, { kind: 'shot' }>;
 export type PlayStep = ActingStep | PictureStep;
 
 /**
+ * The first step `at` widths none of `widths` falls in, said: played at no width the command reads, it would never be
+ * played, and nothing would say so.
+ */
+export const atNoWidthRead = (steps: readonly ShotStep[], widths: readonly number[]): string | undefined => {
+  const index = steps.findIndex(
+    step => step.kind === 'at' && !widths.some(width => width >= step.width.min && width <= step.width.max)
+  );
+
+  return index < 0
+    ? undefined
+    : `step ${String(index + 1)} (${stepText(steps[index])}) is played at none of the widths read — ${widths.join(', ')} px: read at a width it names (--width), or name one read`;
+};
+
+/**
  * The steps a command plays, `pictures` saying whether it takes a `shot` where one stands (`page play`, which agents
- * asked five runs running for `--shot`) — `frames`, what moves, stays `page shot`'s.
+ * asked five runs running for `--shot`) — `frames`, what moves, stays `page shot`'s. `widths`: those the command reads
+ * at, which every step `at` must name one of — left out where the command the steps are handed to checks them.
  */
 export const playingSteps = (
   script: string | undefined,
   command: string,
-  { others = true, pictures = true }: { others?: boolean; pictures?: boolean } = {}
+  { others = true, pictures = true, widths }: { others?: boolean; pictures?: boolean; widths?: readonly number[] } = {}
 ): PlayStep[] | { problem: string } => {
   const parsed = script === undefined ? [] : parseSteps(script, 500);
   if ('problem' in parsed) {
     return { problem: `--steps: ${parsed.problem}` };
+  }
+
+  const nowhere = widths ? atNoWidthRead(parsed, widths) : undefined;
+  if (nowhere) {
+    return { problem: `--steps: ${nowhere}` };
   }
 
   const pictured = parsed.find(step => step.kind === 'frames' || (!pictures && step.kind === 'shot'));

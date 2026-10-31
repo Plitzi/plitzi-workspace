@@ -2,14 +2,14 @@ import { use, useCallback } from 'react';
 
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema';
 
-import QaContext from '../../../../qa/QaContext';
+import PageContext from '../../../../PageContext';
 
 /**
  * Plays the page's declared motion again from the start — its arrivals, its loops — without loading the page again,
  * which would also lose whatever state the tester had brought it to.
  */
 const QaReplayButton = () => {
-  const { pageRef } = use(QaContext);
+  const pageRef = use(PageContext);
 
   const handleClick = useCallback(() => {
     pageRef.current

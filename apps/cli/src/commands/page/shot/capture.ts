@@ -253,16 +253,26 @@ const CANVAS_STILL_PERCENT = 2;
 
 /**
  * Runs in the page: the largest canvas in view worth waiting for — a map, a chart — by its place in the document, or
- * none. Self-contained — it is serialised.
+ * none; when one element is pictured (`within`, its selector), only what of a canvas falls in its box. A run's every
+ * picture of a panel waited 4 s for the globe beside it, never in the picture, and said it was still moving.
+ * Self-contained — it is serialised.
  */
-export const largestCanvas = (): { x: number; y: number; width: number; height: number } | undefined => {
+export const largestCanvas = (
+  within: string | null
+): { x: number; y: number; width: number; height: number } | undefined => {
+  const frame = within === null ? null : document.querySelector(within);
+  if (within !== null && !frame) {
+    return undefined;
+  }
+
+  const bounds = frame?.getBoundingClientRect();
   let found: { x: number; y: number; width: number; height: number } | undefined;
   for (const canvas of Array.from(document.querySelectorAll('canvas'))) {
     const box = canvas.getBoundingClientRect();
-    const left = Math.max(box.left, 0);
-    const top = Math.max(box.top, 0);
-    const width = Math.min(box.right, window.innerWidth) - left;
-    const height = Math.min(box.bottom, window.innerHeight) - top;
+    const left = Math.max(box.left, bounds?.left ?? 0, 0);
+    const top = Math.max(box.top, bounds?.top ?? 0, 0);
+    const width = Math.min(box.right, bounds?.right ?? Infinity, window.innerWidth) - left;
+    const height = Math.min(box.bottom, bounds?.bottom ?? Infinity, window.innerHeight) - top;
     if (width >= 120 && height >= 120 && (!found || width * height > found.width * found.height)) {
       found = { x: left + window.scrollX, y: top + window.scrollY, width, height };
     }
@@ -272,13 +282,13 @@ export const largestCanvas = (): { x: number; y: number; width: number; height: 
 };
 
 /**
- * Whether the page's canvas is drawn before it is pictured: looked at until two looks barely differ and it holds
- * something unlike its background — or not within `CANVAS_MS`, which is said. A run's look compared a globe the run
- * before had not drawn yet (a pale disc, "13.4% differs"), and pictured a page before its globe and panel were there;
- * another's said "nothing changed" of a canvas still blank — still, and not drawn.
+ * Whether the canvas of what is pictured is drawn before it is pictured: looked at until two looks barely differ and it
+ * holds something unlike its background — or not within `CANVAS_MS`, which is said. A run's look compared a globe the
+ * run before had not drawn yet (a pale disc, "13.4% differs"), and pictured a page before its globe and panel were
+ * there; another's said "nothing changed" of a canvas still blank — still, and not drawn.
  */
-export const canvasDrawn = async (page: BrowserPage): Promise<boolean> => {
-  const clip = await page.evaluate(largestCanvas, undefined);
+export const canvasDrawn = async (page: BrowserPage, how: Framing): Promise<boolean> => {
+  const clip = await page.evaluate(largestCanvas, how.kind === 'element' ? how.selector : null);
   if (!clip) {
     return true;
   }
@@ -606,7 +616,7 @@ export const pictureOf = async (
     await page.evaluate(endAnimations, undefined);
   }
 
-  const drawn = await canvasDrawn(page);
+  const drawn = await canvasDrawn(page, how);
   let png: Uint8Array;
   try {
     png = await capture(page, how);

@@ -1,9 +1,10 @@
 import { use, useEffect, useState } from 'react';
 
-import QaContext from '../QaContext';
 import QaBoxModel from './QaBoxModel';
 import QaMeasure from './QaMeasure';
 import QaTooltip from './QaTooltip';
+import PageContext from '../../PageContext';
+import QaContext from '../QaContext';
 
 /**
  * The inspector over the page: point at an element for its box and how it is set; click to keep it in the QA tab —
@@ -11,7 +12,8 @@ import QaTooltip from './QaTooltip';
  * distances between them. Escape puts it away.
  */
 const QaInspector = () => {
-  const { pageRef, pinned, setPinned, setSetting } = use(QaContext);
+  const { pinned, setPinned, setSetting } = use(QaContext);
+  const pageRef = use(PageContext);
   const [hovered, setHovered] = useState<Element | undefined>();
   const [measuring, setMeasuring] = useState(false);
   // Bumped when the page scrolls or resizes under the pointer, so the boxes are drawn where the elements went.

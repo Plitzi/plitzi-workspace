@@ -347,6 +347,26 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     );
   });
 
+  // A tester read `asserted: write EPIPE` as the mutant's failure: the check's own `| grep -q` closing the output early.
+  it('leaves out the check’s own pipe closing, and says the test’s assertion first', () => {
+    const output = [
+      'Error: write EPIPE',
+      '    at afterWriteDispatched (node:internal/stream_base_commons:161:15)',
+      "Emitted 'error' event on Socket instance at:",
+      ' FAIL  src/functions/tornadoes.test.ts > request budget > stays within 20 requests',
+      'AssertionError: expected 21 to be less than or equal to 20',
+      '    at src/functions/tornadoes.test.ts:433:31'
+    ];
+
+    expect(failureText(output, 2)).toBe(
+      [
+        '1 failed — src/functions/tornadoes.test.ts > request budget > stays within 20 requests',
+        'asserted: expected 21 to be less than or equal to 20',
+        '    at src/functions/tornadoes.test.ts:433:31'
+      ].join(' ⏎ ')
+    );
+  });
+
   it('is refused for a change that names no one place, and a file the copy has not', async () => {
     const plan = benchPlan();
     plan.tasks[3].acceptance = [{ said: 'About is there', check: 'test -f src/space/pages/about.ts' }];

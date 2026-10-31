@@ -20,7 +20,7 @@ import {
 import { framesOf } from './frames';
 import { matchesSection, shotFile, smallPicture, tilesOf, tilesText } from './output';
 import { otherPageAt } from './remote';
-import { clickThrough, interactionSteps, playSteps } from './steps';
+import { atNoWidthRead, clickThrough, interactionSteps, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
 import { dataUrl, projectOrigin, VIEW_HEIGHT } from '../../../browser';
@@ -43,6 +43,9 @@ import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
 
 /** How much of a clipped section differs before it is said to be lined up with something else: a section redone stays under. */
 const MISALIGNED_PERCENT = 90;
+
+/** The window a picture is taken at, when `--width` says none. */
+const SHOT_WIDTH = 1280;
 
 /**
  * The element `--within` names, as a region of the page — none when it is one of the page's sections already, a problem
@@ -172,6 +175,14 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
+  const nowhere = steps ? atNoWidthRead(steps, [options.width ?? SHOT_WIDTH]) : undefined;
+  if (nowhere) {
+    await browser.close();
+    fail(`--steps: ${nowhere}.`);
+
+    return;
+  }
+
   if (steps && (clicks.length > 0 || options.compare || (options.frames ?? 0) > 1)) {
     await browser.close();
     fail('`--steps` is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.');
@@ -255,7 +266,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   try {
     const pathname = route ?? '/';
     const view: View = {
-      width: options.width ?? 1280,
+      width: options.width ?? SHOT_WIDTH,
       height: options.height ?? VIEW_HEIGHT,
       ...(options.scale ? { scale: options.scale } : {}),
       ...(options.scheme ? { scheme: options.scheme } : {}),

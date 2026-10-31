@@ -1,3 +1,4 @@
+import { UNNAMED } from '../agents/identity';
 import { stoppedAgents } from '../agents/onDemand';
 
 /**
@@ -65,7 +66,7 @@ export const agentTimelines = (log: readonly Record<string, unknown>[], end: Dat
     ...new Set(
       log.flatMap(entry => [
         // `unnamed`: a call no agent's token named (a refusal of `identity`) — said with the refusals, it is no agent.
-        ...(typeof entry.by === 'string' && !['lead', 'plitzi', 'person', 'unnamed'].includes(entry.by)
+        ...(typeof entry.by === 'string' && !['lead', 'plitzi', 'person', UNNAMED].includes(entry.by)
           ? [entry.by]
           : []),
         ...(entry.action === 'launch' && typeof entry.agent === 'string' && entry.agent !== 'lead' ? [entry.agent] : [])

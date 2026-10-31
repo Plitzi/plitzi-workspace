@@ -198,6 +198,20 @@ describe('a call made again', () => {
     ]);
   });
 
+  // A run's dev-1 measured four widths after each of four edits, red until the last: "page measure was run again".
+  it('is no loop when a check of the page passes at last', () => {
+    const measure = 'plitzi page measure / strongest --width 390 --expect height<=100px';
+    const ran = (minute: number, code: number): UsageLine => ({ ...line(minute, measure), code });
+    expect(measured([ran(1, 1), ran(2.5, 1), ran(4, 1), ran(5.5, 0)])).toEqual([]);
+    expect(measured([ran(1, 1), ran(2.5, 1), ran(4, 1)])).toHaveLength(1);
+  });
+
+  it('names the program itself as it was run', () => {
+    expect(measured([1, 1.1, 1.2].map(minute => line(minute, 'plitzi --version', 's1')))).toEqual([
+      { by: 'test-1', name: 'plitzi --version', command: 'plitzi --version', times: 3, within: 0.2 }
+    ]);
+  });
+
   it('counts in one session, not across fresh ones', () => {
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', `s${String(minute)}`)))).toEqual([]);
     expect(measured([1, 2, 3].map(minute => line(minute, 'plitzi task context', 's1')))).toEqual([

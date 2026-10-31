@@ -5,7 +5,6 @@ import DevToolsPanel from '../DevToolsPanel';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { LogType } from '@plitzi/sdk-shared';
-import type { RefObject } from 'react';
 
 export type DevToolsOverlayProps = {
   className?: string;
@@ -17,8 +16,6 @@ export type DevToolsOverlayProps = {
   onCollapse: () => void;
   onTabSelect: (tabSelected: string) => void;
   onChangeOrientation: (orientation: Orientation) => void;
-  /** The page's own box, which the QA tools draw over and look in. */
-  pageRef: RefObject<HTMLElement | null>;
   /** Whether the QA tab and its layer are offered: only over a page — see `DevToolsContainer`. */
   qa: boolean;
   /** Whether the page's server previews a run, for the Run tab — see `DevToolsContainer`. */
@@ -39,7 +36,6 @@ const DevToolsOverlay = ({
   onCollapse,
   onTabSelect,
   onChangeOrientation,
-  pageRef,
   qa,
   run
 }: DevToolsOverlayProps) => {
@@ -66,7 +62,7 @@ const DevToolsOverlay = ({
   }
 
   return (
-    <QaProvider pageRef={pageRef} collapsed={collapsed}>
+    <QaProvider collapsed={collapsed}>
       <QaLayer />
       {shown}
     </QaProvider>

@@ -222,7 +222,8 @@ export const locateTarget = (page: E2ePage, target: string): E2eElement => {
   return copyOf(page.locator(markOf(copy ? copy[1] : target)), copy?.[2]);
 };
 
-const FIELD = ':is(input, textarea, select, [contenteditable=""], [contenteditable="true"])';
+/** What a `type` step writes in: a field a visitor types into. */
+export const FIELD = ':is(input, textarea, select, [contenteditable=""], [contenteditable="true"])';
 
 /**
  * The field a `type` step writes in: the element, when it is one — or the field inside it, as a form control draws its

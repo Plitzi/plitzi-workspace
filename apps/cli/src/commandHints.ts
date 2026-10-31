@@ -52,7 +52,9 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--element': 'the elements are its arguments: plitzi page measure <path> <element…>',
     // Two agents of a run reached for it to read a dialog's styles: what it measures is every property, always.
     '--css':
-      'page measure says every property it measures of each element, as it is; --expect "<property>=<value>" holds one'
+      'page measure says every property it measures of each element, as it is; --expect "<property>=<value>" holds one',
+    // page shot's and page check's flag, reached for beside them: here a field is typed into as a step.
+    '--fill': 'page measure types into a field as a step: --steps "type <element> <text>" — then measures'
   },
   'page play': {
     '--element': '--read <element…> says what elements show after the steps',

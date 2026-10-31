@@ -33,6 +33,9 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *                            before any page uses it (a development server: npm run start:dev)
  *   action <id> [json]       one of the space's actions run as the page's visitor, through its /_action — the
  *                            server's data put in the state a step needs: action crate-hide '{"crate":"c1"}'
+ *   at <width> <step>        the step played only at those widths — 390, <=767, >=768 — and passed over at the others:
+ *                            --width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x", the tab a
+ *                            phone opens first, where a wide screen shows the log already
  *   as <account> <step>      the step played by another account, signed in on a page of its own (the password in
  *                            PLITZI_CHECK_PASSWORD): as mika type dm-input hi; as mika press Enter — what another
  *                            person does, seen on this page
@@ -69,9 +72,16 @@ export type PageStep =
   | { kind: 'tick'; ms: number }
   | { kind: 'action'; action: string; input: Record<string, unknown>; render?: true };
 
+/** The widths a step `at` plays at, both ends included. */
+export interface WidthRange {
+  min: number;
+  max: number;
+}
+
 export type ShotStep =
   | PageStep
   | { kind: 'as'; account: string; step: PageStep }
+  | { kind: 'at'; width: WidthRange; step: PageStep }
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
@@ -99,6 +109,7 @@ const STEP_NAMES = [
   'action',
   'render',
   'as',
+  'at',
   'shot',
   'frames'
 ] as const;
@@ -138,6 +149,32 @@ export const instantMs = (text: string | undefined): number | undefined => {
 
   return Number.isNaN(ms) ? undefined : ms;
 };
+
+/** Widths as `at` writes them — `390`, `<=767`, `<768`, `>=768`, `>767` — or nothing when they are none. */
+export const widthRange = (text: string | undefined): WidthRange | undefined => {
+  const match = /^(<=|>=|<|>)?(\d+)$/.exec(text ?? '');
+  if (!match) {
+    return undefined;
+  }
+
+  const px = Number(match[2]);
+  switch (match[1]) {
+    case '<=':
+      return { min: 0, max: px };
+    case '<':
+      return { min: 0, max: px - 1 };
+    case '>=':
+      return { min: px, max: Number.POSITIVE_INFINITY };
+    case '>':
+      return { min: px + 1, max: Number.POSITIVE_INFINITY };
+    default:
+      return { min: px, max: px };
+  }
+};
+
+/** Widths as a step says them: `390`, `<=767`, `>=768`. */
+export const widthRangeText = ({ min, max }: WidthRange): string =>
+  min === max ? String(min) : min === 0 ? `<=${String(max)}` : `>=${String(min)}`;
 
 const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2');
 
@@ -226,7 +263,7 @@ const stepLines = (script: string): string[] => {
 
 /** Whether a step is one a visitor plays on its own page — no picture, and none played as another account. */
 export const isPageStep = (step: ShotStep): step is PageStep =>
-  step.kind !== 'as' && step.kind !== 'shot' && step.kind !== 'frames';
+  step.kind !== 'as' && step.kind !== 'at' && step.kind !== 'shot' && step.kind !== 'frames';
 
 /** A script, read into its steps — or what is wrong with it, said by its step. */
 export const parseSteps = (script: string, every: number): ShotStep[] | { problem: string } => {
@@ -430,6 +467,22 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         }
 
         steps.push({ kind: 'as', account, step: one });
+        break;
+      }
+      // A step that only one width needs — the tab a phone opens first — beside the others in one script: a run's
+      // lead wrote its stage with a script, the same checks twice, as 390's steps differed from 1440's.
+      case 'at': {
+        const [range, ...played] = rest;
+        const width = widthRange(range);
+        const step = width ? parseSteps(played.join(' '), every) : [];
+        const [one] = Array.isArray(step) ? step : [];
+        if (!width || width.min > width.max || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)) {
+          return {
+            problem: `${at}: at needs widths and one step played at them — at 390 click sheet-tab-log, at <=767 …, at >=768 … (no picture, no "as")${width && !Array.isArray(step) ? ` — ${step.problem}` : ''}`
+          };
+        }
+
+        steps.push({ kind: 'at', width, step: one });
         break;
       }
       case 'clock': {

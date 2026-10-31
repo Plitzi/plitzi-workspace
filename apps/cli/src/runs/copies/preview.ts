@@ -5,7 +5,7 @@ import path from 'node:path';
 import { parseEnv } from 'node:util';
 
 import { STATE_DIR_ENV } from '@plitzi/sdk-shared/project';
-import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
+import { RUN_REPORTS_ENV, RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
 import { answering, ownServer, serveCopy } from './acceptance';
 import {
@@ -19,6 +19,7 @@ import {
 } from './lingering';
 import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
+import { handReports, reportsDir } from './reports';
 import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
 import { SERVE_SCRIPTS } from '../../scaffold/paths';
 import {
@@ -231,7 +232,7 @@ const serve = async (
       ...(env ? parseEnv(env) : {}),
       PORT: String(port),
       ...(stateDir === undefined ? {} : { [STATE_DIR_ENV]: stateDir }),
-      ...(snapshot ? { [RUN_STATUS_ENV]: snapshotFile(loaded) } : {}),
+      ...(snapshot ? { [RUN_STATUS_ENV]: snapshotFile(loaded), [RUN_REPORTS_ENV]: reportsDir(loaded.paths) } : {}),
       PATH: `${path.join(ctx.root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
     }
   });
@@ -248,9 +249,14 @@ const serve = async (
       void (async () => {
         const record = await readRecord(loaded.paths).catch(() => undefined);
         const reason = record ? await ended() : 'the preview stopped: the run ended';
-        // What the page's dev tools show of the run; one not written this round is written the next.
+        // What the page's dev tools show of the run; one not written this round is written the next — and what its
+        // person reported from the page, handed to the lead.
         if (snapshot && record) {
           await writeSnapshot(ctx, loaded).catch(() => undefined);
+          // Each report's outcome is logged by itself; what fails here is the run's log, which is said where it can be.
+          await handReports(ctx, loaded, `http://127.0.0.1:${String(port)}`).catch((error: unknown) => {
+            console.error(`A report from the preview's page could not be logged in the run: ${String(error)}`);
+          });
         }
         if (reason !== undefined) {
           why ??= reason;

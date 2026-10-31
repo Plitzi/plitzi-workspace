@@ -59,11 +59,33 @@ export const signedOutOnly = async (dir: string, pages: readonly string[]): Prom
   return authored ? pages.filter(each => audienceAt(authored.schema, each) === 'guests') : [];
 };
 
+/**
+ * What a page command's `--json` answered: the last line of its output that reads as JSON — never merely its last line,
+ * nor all of it from the first brace. A child's output is its stdout and stderr as they came, and a line on stderr after
+ * the answer (a warning, a page's note) made a run's look read none: it showed the page before its steps as the picture
+ * after them.
+ */
+export const jsonAnswerOf = (output: string): unknown => {
+  for (const line of output.trim().split('\n').reverse()) {
+    const text = line.trim();
+    if (!text.startsWith('{') && !text.startsWith('[')) {
+      continue;
+    }
+
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      // Not the answer: a line that only starts like one.
+    }
+  }
+
+  return undefined;
+};
+
 /** The pages a page check's answer (`--json`) says sent the browser elsewhere — to the sign-in, for a guest. */
 export const redirectedPaths = (output: string): string[] => {
-  const line = output.trim().split('\n').at(-1) ?? '';
   try {
-    const read: unknown = JSON.parse(line);
+    const read = jsonAnswerOf(output);
 
     return Array.isArray(read)
       ? [
@@ -205,9 +227,8 @@ const dressOf = (decorations: readonly unknown[], listOf: (value: unknown) => st
 
 /** What `page shot --compare --json` answered: how much differs, by section, and where the pictures went. */
 export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' | 'scheme'> => {
-  const at = output.indexOf('{');
   try {
-    const answer: unknown = at === -1 ? undefined : JSON.parse(output.slice(at));
+    const answer = jsonAnswerOf(output);
     const compare = isRecord(answer) && isRecord(answer.compare) ? answer.compare : undefined;
     if (!compare) {
       return { sections: [], dress: [], problem: output.trim().split('\n').at(-1) ?? 'no comparison' };
@@ -322,14 +343,10 @@ export const checkWithInteraction = async (
 
 /** The pictures a `page shot --steps --json` took after the first: the hovered page, for a look. */
 export const picturesOf = (output: string): string[] => {
-  try {
-    const report: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
-    const pictures = isRecord(report) && Array.isArray(report.pictures) ? report.pictures : [];
+  const report = jsonAnswerOf(output);
+  const pictures = isRecord(report) && Array.isArray(report.pictures) ? report.pictures : [];
 
-    return pictures.flatMap(picture => (isRecord(picture) && typeof picture.out === 'string' ? [picture.out] : []));
-  } catch {
-    return [];
-  }
+  return pictures.flatMap(picture => (isRecord(picture) && typeof picture.out === 'string' ? [picture.out] : []));
 };
 
 /**
@@ -344,15 +361,11 @@ export const readablePictures = (output: string, out: string): string[] => {
     return [after];
   }
 
-  try {
-    const report: unknown = JSON.parse(output.trim().split('\n').at(-1) ?? '');
-    const tiles = isRecord(report) && Array.isArray(report.tiles) ? report.tiles : [];
-    const parts = tiles.filter((tile): tile is string => typeof tile === 'string');
+  const report = jsonAnswerOf(output);
+  const tiles = isRecord(report) && Array.isArray(report.tiles) ? report.tiles : [];
+  const parts = tiles.filter((tile): tile is string => typeof tile === 'string');
 
-    return parts.length > 0 ? parts : [out];
-  } catch {
-    return [out];
-  }
+  return parts.length > 0 ? parts : [out];
 };
 
 const WIDTHS = /^\d{3,4}(,\d{3,4})*$/;

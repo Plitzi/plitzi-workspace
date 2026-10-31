@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { activeRunFile, COPY_TASK_FILE, copyOf, RECORD_FILE, runPaths } from './paths';
-import { AGENT_TOKEN } from '../agents/identity';
+import { AGENT_TOKEN, UNNAMED } from '../agents/identity';
 import { sessionOfProcess } from '../agents/session';
 
 import type { CommandPath } from '../../commandPath';
@@ -192,7 +192,7 @@ const runOfFolder = (cwd: string): { runDir: string; by: string } | undefined =>
   const active = readJsonSync(activeRunFile(cwd));
 
   return isRecord(active) && typeof active.runId === 'string'
-    ? { runDir: runPaths(cwd, active.runId).dir, by: 'unnamed' }
+    ? { runDir: runPaths(cwd, active.runId).dir, by: UNNAMED }
     : undefined;
 };
 
@@ -205,7 +205,7 @@ const isInboxless = (args: readonly string[]): boolean => !['task', 'run'].inclu
  * "where do you stand?" fifteen times over, only at its next `task next`, its page commands between pointing at it).
  */
 export const handUnreadByName = (runDir: string, agent: string): { id: string; from: string; text: string }[] => {
-  if (agent === 'lead' || agent === 'unnamed') {
+  if (agent === 'lead' || agent === UNNAMED) {
     return [];
   }
 
@@ -363,21 +363,42 @@ const isUsageLine = (value: unknown): value is UsageLine =>
   (value.process === undefined || typeof value.process === 'string') &&
   (value.output === undefined || (Array.isArray(value.output) && value.output.every(line => typeof line === 'string')));
 
-/** A run's usage, as its commands kept it — a line cut by a crash mid-write left out. */
+/**
+ * A line nothing named — no token, no copy — given to the one agent whose named commands ran in its session: a run's
+ * lead measured at the project's root, and its 29 page commands were "unnamed" beside its own `task show`.
+ */
+export const namedBySession = (lines: readonly UsageLine[]): UsageLine[] => {
+  const owners = new Map<string, Set<string>>();
+  for (const line of lines) {
+    if (line.by !== UNNAMED && line.session) {
+      owners.set(line.session, (owners.get(line.session) ?? new Set<string>()).add(line.by));
+    }
+  }
+
+  return lines.map(line => {
+    const [owner, ...others] = line.by === UNNAMED && line.session ? [...(owners.get(line.session) ?? [])] : [];
+
+    return owner && others.length === 0 ? { ...line, by: owner } : line;
+  });
+};
+
+/** A run's usage, as its commands kept it — a line cut by a crash mid-write left out, one unnamed named by its session. */
 export const readUsage = (runDir: string): UsageLine[] => {
   try {
-    return readFileSync(path.join(runDir, USAGE_FILE), 'utf-8')
-      .split('\n')
-      .filter(Boolean)
-      .flatMap(text => {
-        try {
-          const parsed: unknown = JSON.parse(text);
+    return namedBySession(
+      readFileSync(path.join(runDir, USAGE_FILE), 'utf-8')
+        .split('\n')
+        .filter(Boolean)
+        .flatMap(text => {
+          try {
+            const parsed: unknown = JSON.parse(text);
 
-          return isUsageLine(parsed) ? [parsed] : [];
-        } catch {
-          return [];
-        }
-      });
+            return isUsageLine(parsed) ? [parsed] : [];
+          } catch {
+            return [];
+          }
+        })
+    );
   } catch {
     return [];
   }

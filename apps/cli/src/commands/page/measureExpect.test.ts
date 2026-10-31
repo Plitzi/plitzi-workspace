@@ -124,4 +124,17 @@ describe('page measure --expect, two elements', () => {
       '--expect "activity.bottom + 8 <= legend-area.top": legend-area at 1440 px has no box read — not drawn there, or hidden'
     ]);
   });
+
+  // A run's `padding-top=0px` beside `log-empty.top >= log-columns.bottom + 11` failed on log-columns' own padding.
+  it('holds a property to the elements asked, never to one read only for a relation', () => {
+    const padded = (id: string, padding: string, y: number) => ({
+      ...at(id, { x: 0, y, width: 300, height: 40 }),
+      here: { ...at(id, { x: 0, y, width: 300, height: 40 }).here, styles: { 'padding-top': padding } }
+    });
+    const expected = expectedOf('log-empty.top >= log-columns.bottom + 11', expectedOf('padding-top=0px'));
+    const readings = [padded('log-empty', '0px', 100), padded('log-columns', '6px', 40)];
+
+    expect(expectationsMissed(readings, expected, ['log-columns'])).toEqual([]);
+    expect(expectationsMissed(readings, expected)).toEqual(['--expect padding-top=0px: log-columns at 1440 px is 6px']);
+  });
 });

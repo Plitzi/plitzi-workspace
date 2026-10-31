@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import QaViewer from './QaViewer';
+import PageContext from '../../../../PageContext';
 import { QaProvider } from '../../../../qa/QaContext';
 import QaLayer from '../../../../qa/QaLayer';
 
@@ -28,7 +29,11 @@ const Harness = ({
     StoreProvider,
     { value: store },
     createElement('div', { ref: pageRef, 'data-testid': 'page' }, page),
-    createElement(QaProvider, { pageRef, collapsed }, createElement(QaLayer), createElement(QaViewer))
+    createElement(
+      PageContext,
+      { value: pageRef },
+      createElement(QaProvider, { collapsed }, createElement(QaLayer), createElement(QaViewer))
+    )
   );
 };
 

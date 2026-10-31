@@ -33,6 +33,9 @@ authoring and the elements learnt from the runs.
   first use. `mysqlJobSchemaUpgrades` is gone with what it listed; `mysqlJobSchemaStatements` still creates the tables.
 - **`specFromSpace` no longer reads `navbar` and `navbarItem`**, element types no builder writes: a document that still
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
+- **`window.__plitzi.setSource` and `setAttribute` may answer `{ refused: string }`** besides the name written or
+  `false`: a caller that read any truthy answer as written reads `refused` first.
+
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
 - **A space's `/robots.txt` ends naming its sitemap** (`Sitemap: <origin>/sitemap.xml`) unless its own text names one: a
@@ -1316,6 +1319,22 @@ context` gives signatures instead of bodies; a wait is logged once per reason.
   no answer too long. A task that writes its own tests gets no second agent's task for another module it touches: its
   test file is said as its own to add.
 
+- **The person hands a bug over from the preview as it is.** The Run tab's **Report what you see**: they point at the
+  element and say what is wrong, and the lead gets it as the person's message — the address, the window, the theme,
+  the element, what they did on the page since it loaded, and the `plitzi page shot …` that plays it again. A run's lead
+  got "with tornadoes selected Strongest breaks" and reproduced it by guessing the URL, the layers and the width.
+- **What a run's report counts is whose it was.** A command nothing named — the lead's page commands at the project's
+  root, no token — is counted as the agent whose named commands ran in its session (`namedBySession`): a run's lead
+  had 29 "unnamed" lines beside its own. A burst of `page measure --expect` that passed at last is a check run after
+  each edit, as `task run` and `task check` are, never "run again and again"; the program itself run again is named as
+  it was (`plitzi --version`), where the title said "ran  6 times". A file left in the project's `tmp/` is told to every
+  agent, and says so: "nobody can tell whose it is — if it is yours, move it; if not, nothing to do".
+- **`task look` reads its own answers.** It took a picture's path from the last line of what a page command printed,
+  stdout and stderr together, and a warning after the JSON made it show the picture before the steps; it reads the
+  last JSON answer now (`jsonAnswerOf`). Two pictures compared are taken once the page is at rest — two reads alike,
+  3 s at most (`drawnAtRest`) — never one mid-boot ("map → hud, a canvas against an h1"). `task prove --mutate` leaves
+  the check's own closed pipe (`EPIPE`) out of what failed, and says the test's assertion first.
+
 ## Plans (`@plitzi/cli`)
 
 - **`plitzi doctor` has a `plan` area:** for a project made from a space on a platform, signed in, what the project uses
@@ -1563,6 +1582,20 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   splits by spaces as by commas; `--read` says what a plugin's bindings gave it; `page shot` says its first picture as
   `before:` when steps follow. `task prove --mutate` leaves node's own stack frames out of what failed. A wrapper with
   no box of its own (`display: contents`) is hidden on purpose when everything inside it is (`probePage`).
+
+- **A step only some widths need** (`at <widths> <step>`: `at 390`, `at <=767`, `at >=768`): played where the window is
+  that wide and passed over, said, at the others — so one `page measure --width 1440,390` holds both where a phone
+  opens a tab first. A run's lead wrote its stage with a script, every check twice. `page measure` plays such steps
+  again at each width.
+- **A step that would do nothing is refused, not passed.** `source` of a list's row (`list_x.item.title`) and an
+  `attribute` a binding gives are drawn over at once: `--steps` and a journey's step refuse them, naming the source to
+  write — a run's agent wrote both and read its unchanged page as a bug. A `type` step focuses its field, as a journey
+  fills it, instead of clicking it: a search in a sheet still sliding in timed out at 3 s in `task look` where the
+  task's check passed. `page measure`'s hover, focus or press of an element not shown at that width says what hides it
+  and to open what holds it, never a 5 s timeout. A property of `--expect` is held to the elements asked, never to one
+  read only for a relation (`a.top >= b.bottom`). `page shot` waits for a canvas only in what it pictures: `--within` a
+  panel beside a globe always moving waited 4 s at every picture and said the panel's canvas was moving.
+  `page measure --fill` points to `--steps "type <element> <text>"`.
 
 ## Authoring (`@plitzi/sdk-authoring`)
 
@@ -1939,6 +1972,10 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - **A project's server holds no `kv` file** when its `serverOptions.action.kv` names a store, and keeps what it does
   hold in `PLITZI_STATE_DIR` when set (see the upgrade notes).
 
+- **A run's preview takes its person's reports** at `/__plitzi/run/report` (`runReportStage`, on the server whose
+  `PLITZI_RUN_REPORTS` names a folder — `plitzi run preview`'s): POST from the page itself, checked
+  (`runReportProblems`, every problem said at once, 400), kept as a file for the CLI to hand on, answered 202.
+
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
 
 - **The ring a played step draws stays on its element**: it follows it when the page moves it without a scroll — a
@@ -2020,6 +2057,15 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - The panel scrolls again.
 - **A refused server action is a `refused` step** in `window.__plitzi.flows()`, with the server's words and reason: the
   step ran and its flow went on to a `whenFailed` notice, so it read "success".
+
+- **Report what you see** in the Run tab, on a run's preview: point at an element, say what is wrong, send it to the
+  lead. What the person does on the page is kept from its load (each press of an element of the space, what each field
+  holds once typed — never a password, never the dev tools') and sent with it; nothing is sent until they press Send.
+
+- **`setSource` and `setAttribute` refuse what would be drawn over** and answer `{ refused }` naming why: a list row's
+  source (`list_x.item…`, what the list's binding gives) and an attribute a binding gives (`setSource` its source
+  instead).
+
 
 ## The workspace
 

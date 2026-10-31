@@ -214,10 +214,11 @@ describe('what an agent leaves in the project', () => {
     expect(left.map(item => item.file)).toEqual(['tmp/dev1/', 'tmp/lead2-preview.log']);
     expect(left[0].text).toContain('scratch');
 
-    // Whoever left it hears it with its next command — once — and is handed a folder of its own in the run.
+    // Every agent hears it with its next command — once, told nobody can tell whose it is — and is handed a folder of
+    // its own in the run.
     const next = await nextTask(bench.agent('agent-1'), 'es-launch');
     expect(next.messages.map(message => message.text)).toEqual([
-      expect.stringContaining('tools: tmp/dev1/, tmp/lead2-preview.log. The project')
+      expect.stringContaining('Told to every agent, as nobody can tell whose it is: tmp/dev1/, tmp/lead2-preview.log')
     ]);
     expect(next.scratch).toBe(path.join(bench.root, 'tmp/plitzi-runs/es-launch/scratch/agent-1'));
     expect((await fs.stat(next.scratch)).isDirectory()).toBe(true);

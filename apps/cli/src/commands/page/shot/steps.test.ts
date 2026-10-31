@@ -1,7 +1,19 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actingSteps, actStep, endsActing, interactionSteps, playedOn, sizeChange, stepText, typedKeys } from './steps';
+import { FIELD } from '@plitzi/sdk-authoring';
+
+import {
+  actingSteps,
+  actStep,
+  endsActing,
+  focusField,
+  interactionSteps,
+  playedOn,
+  sizeChange,
+  stepText,
+  typedKeys
+} from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -149,6 +161,36 @@ describe('a step another account plays, and an action', () => {
   });
 });
 
+// A run's lead wrote its stage with a script, every check twice, as 390's steps opened a tab 1440 does not have.
+describe('a step played at some widths', () => {
+  it('is played where the window is that wide, and said passed over where it is not', async () => {
+    const waited: number[] = [];
+    const at = (width: number) =>
+      // The fake answers what a step `at` and a wait ask of a page, and nothing else a page has.
+      ({
+        evaluate: () => Promise.resolve(width),
+        waitForTimeout: (ms: number) => Promise.resolve(void waited.push(ms))
+      }) as unknown as BrowserPage;
+    const step = { kind: 'at', width: { min: 0, max: 767 }, step: { kind: 'wait', ms: 5 } } as const;
+
+    expect(await actStep(at(390), step, 0)).toBeUndefined();
+    expect(waited).toEqual([5]);
+    expect(await actStep(at(1440), step, 1)).toEqual({ answer: 'not played at 1440 px — at <=767 only' });
+    expect(waited).toEqual([5]);
+    expect(stepText(step)).toBe('at <=767 wait 5 ms');
+  });
+
+  it('is refused when none of the widths read is one it names: it would be played nowhere, unsaid', () => {
+    expect(
+      actingSteps('at 390 click sheet-tab-log; type log-search x', 'page measure', { widths: [1440, 390] })
+    ).toEqual(steps('at 390 click sheet-tab-log; type log-search x'));
+    expect(actingSteps('at <=767 click sheet-tab-log', 'page measure', { widths: [1440, 1024] })).toEqual({
+      problem:
+        '--steps: step 1 (at <=767 click sheet-tab-log) is played at none of the widths read — 1440, 1024 px: read at a width it names (--width), or name one read'
+    });
+  });
+});
+
 // One vocabulary of steps for every command that reads a page: what each refuses is said, never played as nothing.
 describe('the steps a page is read after', () => {
   it('are a visitor’s own, played as page play plays them', () => {
@@ -225,6 +267,19 @@ describe('a field typed into', () => {
   it('replaces what it held — and an empty text empties it', () => {
     expect(typedKeys('8')).toEqual([{ press: 'ControlOrMeta+A' }, { type: '8' }]);
     expect(typedKeys('')).toEqual([{ press: 'ControlOrMeta+A' }, { press: 'Backspace' }]);
+  });
+
+  // A run's look timed out clicking a search field in a sheet still sliding in; the task's check, filling it, passed.
+  it('is focused as it is, or as the form control around it holds it — never clicked, and none is said', () => {
+    document.body.innerHTML =
+      '<input id="search"><div id="control"><label>Name</label><input id="inside"></div><div id="box"></div>';
+    const of = (id: string) => document.getElementById(id) ?? document.body;
+
+    expect(focusField(of('search'), FIELD)).toBe(true);
+    expect(document.activeElement?.id).toBe('search');
+    expect(focusField(of('control'), FIELD)).toBe(true);
+    expect(document.activeElement?.id).toBe('inside');
+    expect(focusField(of('box'), FIELD)).toBe(false);
   });
 });
 

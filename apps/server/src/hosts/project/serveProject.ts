@@ -26,11 +26,11 @@ import {
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
-import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
+import { RUN_REPORTS_ENV, RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
-import { runStatusStage, watchAgentRuns } from './agentRuns';
+import { runReportStage, runStatusStage, watchAgentRuns } from './agentRuns';
 import { watchLaterAsks } from './laterAsks';
 import { projectPlugins, watchProjectPlugins } from './plugins';
 import { createSpaceFailure } from './spaceFailure';
@@ -483,10 +483,11 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     },
     // The runtime's endpoints where the platform forwards a space's: after the auth chain and the cross-site guard.
     {
-      // A run's preview: its snapshot for the page's dev tools.
+      // A run's preview: its snapshot for the page's dev tools, and what its person reports from the page.
       preAuth: [
         spaceFailure.stage,
-        ...(developing && process.env[RUN_STATUS_ENV] ? [runStatusStage(process.env[RUN_STATUS_ENV])] : [])
+        ...(developing && process.env[RUN_STATUS_ENV] ? [runStatusStage(process.env[RUN_STATUS_ENV])] : []),
+        ...(developing && process.env[RUN_REPORTS_ENV] ? [runReportStage(process.env[RUN_REPORTS_ENV])] : [])
       ],
       data: runtime ? [runtime.stage] : []
     }

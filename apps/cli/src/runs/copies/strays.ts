@@ -42,6 +42,13 @@ export const leftInTmp = async (root: string, record: Pick<RunRecord, 'openedAt'
   return left.sort();
 };
 
+/**
+ * What every agent is told of files new in the project's `tmp/` — said as sent to all: nobody can tell whose a file is,
+ * and an agent told alone read it as blamed for a file another made.
+ */
+export const leftInTmpText = (files: readonly string[]): string =>
+  `Told to every agent, as nobody can tell whose it is: ${files.join(', ')} appeared in the project's tmp/, left by none of the CLI's tools. The project's tmp/ is the person's — what is yours beside the work goes in your copy's tmp/, or between tasks in your scratch (plitzi task next names it), both gone with the run. If it is yours, move it there; if not, nothing to do`;
+
 const toldFile = (loaded: LoadedRun): string => path.join(loaded.paths.dir, 'left-in-tmp.json');
 
 /**
@@ -64,7 +71,7 @@ export const tellLeftInTmp = async (ctx: RunContext, loaded: LoadedRun): Promise
   // file is most often written — holds none. The principal lead sees it among what needs it.
   const team = await readTeam(ctx.root);
   const agents = new Set([...(team ? startedAgents(team).map(each => each.agent) : []), ctx.agent]);
-  const text = `Left in the project's tmp/, by none of the CLI's tools: ${fresh.join(', ')}. The project's tmp/ is the person's — what is yours beside the work goes in your copy's tmp/, or between tasks in your scratch (plitzi task next names it), both gone with the run. If it is yours, move it there`;
+  const text = leftInTmpText(fresh);
   for (const agent of [...agents].filter(name => !isPrincipal(name)).sort()) {
     // The CLI's own word, not the lead's: nobody asked it, the run saw it.
     await sendMessage(ctx, loaded, { from: 'plitzi', to: agentAddress(agent), text });

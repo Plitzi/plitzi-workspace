@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseSteps } from './shotSteps';
+import { parseSteps, widthRange, widthRangeText } from './shotSteps';
 
 describe('page shot --steps', () => {
   it('reads a scroll to an element: the footer brought into view, as a reader would', () => {
@@ -97,7 +97,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, at, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -118,7 +118,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, at, shot, frames, separated by ";"'
     });
   });
 
@@ -251,5 +251,31 @@ describe('an attribute step', () => {
     expect(parseSteps('attribute map true', 500)).toMatchObject({
       problem: expect.stringContaining('<element>.<attribute>') as string
     });
+  });
+});
+
+// A run's lead wrote its stage with a script, every check twice, as 390's steps opened a tab 1440 does not have.
+describe('a step played at some widths', () => {
+  it('names the widths and the one step played at them', () => {
+    expect(parseSteps('at <=767 click sheet-tab-log; type log-search zzqqxx', 500)).toEqual([
+      { kind: 'at', width: { min: 0, max: 767 }, step: { kind: 'click', target: 'sheet-tab-log' } },
+      { kind: 'type', target: 'log-search', text: 'zzqqxx' }
+    ]);
+    expect(widthRange('390')).toEqual({ min: 390, max: 390 });
+    expect(widthRange('<768')).toEqual({ min: 0, max: 767 });
+    expect(widthRange('>767')).toEqual({ min: 768, max: Number.POSITIVE_INFINITY });
+    expect(widthRangeText({ min: 768, max: Number.POSITIVE_INFINITY })).toBe('>=768');
+  });
+
+  it('is refused without widths, or with anything but one step of the page', () => {
+    for (const script of [
+      'at click sheet-tab-log',
+      'at 390',
+      'at 390 shot',
+      'at 390 as mika click send',
+      'at <0 click x'
+    ]) {
+      expect(parseSteps(script, 500)).toEqual({ problem: expect.stringContaining('at needs widths') as unknown });
+    }
   });
 });

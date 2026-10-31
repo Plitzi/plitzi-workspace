@@ -11,6 +11,7 @@ import QaTabOrder from './overlays/QaTabOrder';
 import QaViewport from './overlays/QaViewport';
 import QaXrayTags from './overlays/QaXrayTags';
 import QaContext from './QaContext';
+import PageContext from '../PageContext';
 import { VISION_MATRIX, qaCss, visionFilterId } from './qaCss';
 import { QA_CHECKS, QA_FINDING_ATTRIBUTE, QA_PAGE_ATTRIBUTE, REDUCED_MOTION_CLASS, isQaActive } from './qaSettings';
 import usePageBox from './usePageBox';
@@ -40,7 +41,8 @@ const SLOW_MOTION_RATE = 0.25;
  * the size badge are drawn by React, beside the panel.
  */
 const QaLayer = () => {
-  const { settings, pageRef, round, setFindings, setXrayCounts } = use(QaContext);
+  const { settings, round, setFindings, setXrayCounts } = use(QaContext);
+  const pageRef = use(PageContext);
   const [[currentPageId, flat, components]] = useCommonStore([
     'navigation.currentPageId',
     'schema.flat',

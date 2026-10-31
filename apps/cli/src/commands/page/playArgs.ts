@@ -52,9 +52,11 @@ export const readTargets = (read: readonly string[] = []): string[] =>
   });
 
 /** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
-export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read' | 'journey'>): PlayStep[] | { problem: string } => {
+export const stepsOf = (
+  options: Pick<PlayOptions, 'steps' | 'read' | 'journey' | 'width'>
+): PlayStep[] | { problem: string } => {
   if ((options.steps ?? '').trim() !== '') {
-    const acting = playingSteps(options.steps, 'page play');
+    const acting = playingSteps(options.steps, 'page play', { widths: options.width ?? [1440] });
 
     return 'problem' in acting ? { problem: `${acting.problem}.` } : acting;
   }

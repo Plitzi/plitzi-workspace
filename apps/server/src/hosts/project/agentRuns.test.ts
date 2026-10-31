@@ -1,13 +1,13 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ACTIVE_RUN_FILE } from '@plitzi/sdk-shared/project';
-import { RUN_STATUS_PATH } from '@plitzi/sdk-shared/runs';
+import { RUN_REPORT_PATH, RUN_STATUS_PATH } from '@plitzi/sdk-shared/runs';
 
-import { runStatusStage, watchAgentRuns } from './agentRuns';
+import { runReportStage, runStatusStage, watchAgentRuns } from './agentRuns';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 import { unusedPort } from '../../core/unusedPort';
@@ -125,5 +125,69 @@ describe('runStatusStage', () => {
     expect(await page(bare)).not.toContain('runStatus');
     expect((await fetch(`${bare}${RUN_STATUS_PATH}`)).status).toBe(404);
     expect(await page(undebuggable)).not.toContain('runStatus');
+  });
+});
+
+// A run's lead got the person's words alone — "with tornadoes selected Strongest breaks" — and guessed the rest.
+describe('runReportStage', () => {
+  const folder = mkdtempSync(path.join(os.tmpdir(), 'agent-runs-reports-'));
+  const reports = path.join(folder, 'reports');
+  let server: SSRServer;
+  let origin: string;
+  const report = {
+    text: 'Strongest breaks with only tornadoes on',
+    path: '/?sample=active',
+    width: 1440,
+    height: 900,
+    scheme: 'dark',
+    element: 'strongest',
+    steps: [{ kind: 'click', element: 'layer-quakes' }],
+    at: '2026-10-31T10:00:00.000Z'
+  };
+  const send = (body: unknown, headers: Record<string, string> = {}) =>
+    fetch(`${origin}${RUN_REPORT_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body)
+    });
+
+  beforeAll(async () => {
+    const port = await unusedPort();
+    server = createServer(
+      { port, devMode: true, adapters: createJsonAdapters({ offlineData: offlineDataOf() }) },
+      { preAuth: [runReportStage(reports)] }
+    );
+    await server.listen(port, '127.0.0.1');
+    origin = `http://127.0.0.1:${String(port)}`;
+  });
+
+  afterAll(async () => {
+    await server.close();
+    rmSync(folder, { recursive: true, force: true });
+  });
+
+  it('keeps a report as a file of its own, for the CLI to hand to the lead', async () => {
+    const answer = await send(report);
+
+    expect(answer.status).toBe(202);
+    const [file] = readdirSync(reports);
+    expect(JSON.parse(readFileSync(path.join(reports, file), 'utf-8'))).toEqual(report);
+  });
+
+  it('says every problem of one that is not a report, and keeps nothing of it', async () => {
+    const before = readdirSync(reports).length;
+    const answer = await send({ ...report, text: ' ', width: 0 });
+
+    expect(answer.status).toBe(400);
+    expect(((await answer.json()) as { problems: string[] }).problems).toEqual([
+      'text: what is wrong, in words',
+      'width and height: the window, in whole pixels'
+    ]);
+    expect(readdirSync(reports)).toHaveLength(before);
+  });
+
+  it('takes a report from the preview’s own page only, and by POST', async () => {
+    expect((await send(report, { Origin: 'https://elsewhere.test', 'Sec-Fetch-Site': 'cross-site' })).status).toBe(403);
+    expect((await fetch(`${origin}${RUN_REPORT_PATH}`)).status).toBe(405);
   });
 });

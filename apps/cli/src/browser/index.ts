@@ -140,7 +140,7 @@ export interface BrowserPage {
     first(): PageElement;
     last(): PageElement;
     nth(index: number): PageElement;
-    filter(options: { visible: boolean }): { first(): PageElement };
+    filter(options: { visible: boolean }): { first(): PageElement; count(): Promise<number> };
   };
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;

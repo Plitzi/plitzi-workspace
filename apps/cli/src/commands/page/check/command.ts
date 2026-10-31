@@ -65,7 +65,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  const steps = actingSteps(options.steps, 'page check', { others: false });
+  const steps = actingSteps(options.steps, 'page check', { others: false, widths: options.width ?? [1440, 390] });
   if ('problem' in steps) {
     fail(`${steps.problem}.`);
 

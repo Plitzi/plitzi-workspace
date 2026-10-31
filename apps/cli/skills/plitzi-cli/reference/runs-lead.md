@@ -140,7 +140,7 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
 
 - **A check you write, you run once** on the run's work first: a 404 page is `page check … --status 404`, a guest
   sent to sign in `--redirects-to /sign-in`, a `page shot … --within` names an id the page has. One that cannot pass costs every try
-  of the task's: `run open <stage.json> --dry-run --lines` runs each line of a stage once and says what it is —
+  of the task's: `run open <stage.json> --dry-run --lines` runs each line once and says what it is —
   what the task changes, a part it builds, or a line that cannot pass.
 - **One look, one task**; its files are where its elements are built, and what reads what it changes (a fake's tests).
 - **A question first**: it holds an agent. `run watch` in the harness's background (never `&`), one at a time.
@@ -151,12 +151,12 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
   (`--same …`).
 - **The scope, before it ends**: each element measured whole (box, pseudo-elements, a hover) at 390 and 1440; a value
   grepped where it is written before a finding says "one class holds it"; a line fails for the value, never for a
-  selector that finds nothing — one per width.
+  selector that finds nothing — one per width, or steps `at 390 <step>`.
 - **The team the work is worth**: the dry run says when it is too big — the base runs while the run is open; one on
   demand when work waits, up to the entry's `count` — the run starts it; never prompts of your own. More, of any role,
   is the person's yes (`run team set` refuses your token).
 - **Your files** — a stage, a summary — in your scratch (`tmp/plitzi-runs/<run>/scratch/lead/`), never the project's
-  `tmp/`, where the agents are told of strays.
+  `tmp/`: every agent is told of it.
 - **The page's own type is the page's**: `<page> => body` measures the body's font and background — a line on an
   element of the page makes a task invent a wrapper to carry it.
 - **What two tasks share is the base task's, declared once**: a page's section styles and the space between sections,
@@ -164,7 +164,7 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
 - **What must hold at `complete` is an acceptance line** (`run amend`), never a message: a message has no hold on it.
 - **A line reads what a cold start holds**: the copy's seeded data, a state set by its own steps (`page play --steps
 "state …"`, `--clock`) — never what moves while it runs (the busiest room's track): `run finish` runs a failed line
-  once more, and live data fails it twice. `plitzi server reset` puts a copy back to its cold start.
+  once more, and live data fails it twice. `plitzi server reset` restores a copy's cold start.
 - **What a task builds on is in its `dependsOn`**, not only in its words: a finding naming another task's component is a
   dependency the dry run cannot see.
 - **A stage reads `run status`, not memory**: a task that merges a file one not done holds waits for it (`dependsOn`).

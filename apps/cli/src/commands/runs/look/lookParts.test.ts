@@ -55,6 +55,14 @@ describe('the pictures a look lists', () => {
         'lock.png'
       )
     ).toEqual(['lock-1.png']);
+    // A line on stderr after the report — a warning, a page's note: a run's look then pictured the log before its search
+    // was typed, as the picture after it.
+    expect(
+      readablePictures(
+        `${JSON.stringify({ out: 'log.png', pictures: [{ label: 'after', out: 'log-1.png' }] })}\n(node:7) Warning: a note on stderr`,
+        'log.png'
+      )
+    ).toEqual(['log-1.png']);
   });
 });
 

@@ -161,16 +161,37 @@ describe('a canvas pictured', () => {
 
   it('is waited for until two looks barely differ — never when the page draws none', async () => {
     const drawing = pageDrawing([40, 12, 1]);
-    expect(await canvasDrawn(drawing.page)).toBe(true);
+    expect(await canvasDrawn(drawing.page, { kind: 'page' })).toBe(true);
     expect(drawing.looks).toHaveLength(3);
 
     const none = pageDrawing([40], false);
-    expect(await canvasDrawn(none.page)).toBe(true);
+    expect(await canvasDrawn(none.page, { kind: 'page' })).toBe(true);
     expect(none.looks).toHaveLength(0);
+  });
+
+  // A run's every picture of a panel waited 4 s for the globe beside it, and said it was still moving.
+  it('is only the canvas in what is pictured, and only what of it falls there', () => {
+    const boxed = (element: Element, left: number, top: number, width: number, height: number) => {
+      element.getBoundingClientRect = () => DOMRect.fromRect({ x: left, y: top, width, height });
+    };
+    document.body.innerHTML = '<canvas id="globe"></canvas><section id="panel"></section><section id="map"></section>';
+    const [globe, panel, map] = ['globe', 'panel', 'map'].map(id => document.getElementById(id));
+    if (!globe || !panel || !map) {
+      throw new Error('the page was not written');
+    }
+
+    boxed(globe, 0, 0, 600, 600);
+    boxed(panel, 700, 0, 300, 600);
+    boxed(map, 300, 100, 600, 300);
+
+    expect(largestCanvas(null)).toEqual({ x: 0, y: 0, width: 600, height: 600 });
+    expect(largestCanvas('#panel')).toBeUndefined();
+    expect(largestCanvas('#map')).toEqual({ x: 300, y: 100, width: 300, height: 300 });
+    expect(largestCanvas('#gone')).toBeUndefined();
   });
 
   // A run's look said "nothing changed" of a globe not drawn yet: its canvas was still because it was blank.
   it('is not drawn while it is still and blank', async () => {
-    expect(await canvasDrawn(pageDrawing([0, 0, 0], true, false).page)).toBe(false);
+    expect(await canvasDrawn(pageDrawing([0, 0, 0], true, false).page, { kind: 'page' })).toBe(false);
   });
 });

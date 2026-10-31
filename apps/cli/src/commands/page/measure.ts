@@ -518,12 +518,10 @@ export const measure = async (route: string, elements: string[], options: Measur
 
   // The elements a relation names are measured with those asked: it reads their boxes.
   const named = elementsAsked(elements);
-  const pairs = [
-    ...named,
-    ...relationElements(options.expect ?? []).filter(
-      (element, index, all) => !named.includes(element) && all.indexOf(element) === index
-    )
-  ].map(pairOf);
+  const forRelations = relationElements(options.expect ?? []).filter(
+    (element, index, all) => !named.includes(element) && all.indexOf(element) === index
+  );
+  const pairs = [...named, ...forRelations].map(pairOf);
   if (options.there !== undefined) {
     if (pairs.length !== 1) {
       fail('--there names the other page’s element of one element asked: for several, write each as "ours => theirs"');
@@ -576,7 +574,7 @@ export const measure = async (route: string, elements: string[], options: Measur
     return;
   }
 
-  const steps = actingSteps(options.steps, 'page measure');
+  const steps = actingSteps(options.steps, 'page measure', { widths: options.width ?? [1440] });
   if ('problem' in steps) {
     fail(`${steps.problem}.`);
 
@@ -633,12 +631,14 @@ export const measure = async (route: string, elements: string[], options: Measur
       (options.width ?? [1440]).map(width => ({ width, scheme }))
     );
     // With steps, each scheme's page is played once and read at every width by resizing it: an action a step took is
-    // taken once — a report made twice was refused, and the measure stopped at its second width.
+    // taken once — a report made twice was refused, and the measure stopped at its second width. Steps that differ by
+    // width (`at 390 …`) are played at each.
     const playedPages = new Map<string, BrowserPage>();
+    const byWidth = steps.some(step => step.kind === 'at');
     for (const { width, scheme } of views) {
       const kept = playedPages.get(scheme ?? '');
       const played =
-        steps.length > 0
+        steps.length > 0 && !byWidth
           ? {
               ...(kept ? { page: kept } : {}),
               keep: (page: BrowserPage) => {
@@ -682,7 +682,11 @@ export const measure = async (route: string, elements: string[], options: Measur
       here: onlyOf(reading.here, only),
       ...(reading.there ? { there: onlyOf(reading.there, only) } : {})
     }));
-    const missed = expectationsMissed(readings, options.expect ?? []);
+    const missed = expectationsMissed(
+      readings,
+      options.expect ?? [],
+      forRelations.map(element => pairOf(element).here)
+    );
     const failed =
       missed.length > 0 ||
       readings.some(

@@ -161,7 +161,13 @@ review, so the lead looks at the pages before approving them; the run's preview 
 who has it and who reviews it, why each waits (`why`: the tasks a pending one starts after, the file a waiting one
 needs, what blocks one and who acts — `run status` and `run monitor` say it too), what needs someone; no other server
 answers it, so the tab asks only a page its server marked (`runStatus` in the payload, set by `runStatusStage` on each
-request it lets by) — asked everywhere, every page in debug mode logged a 404 every three seconds. A run that ends (finished, aborted)
+request it lets by) — asked everywhere, every page in debug mode logged a 404 every three seconds. The tab's **Report
+what you see** hands the person's bug to the lead as it is: they point at the element and say what is wrong; the dev
+tools keep what they did on the page from its load (`stepRecorder.ts`: each press of an element of the space, what each
+field holds once typed, never a password), and send it with the address, the window and the theme to `/__plitzi/run/report`
+(`RunReport`, `@plitzi/sdk-shared/runs`); the preview's server leaves it in the folder `RUN_REPORTS_ENV` names, and the
+preview's watch hands it to the lead as the person's message with the `page shot` that plays it again
+(`copies/reports.ts`). A lead that got words alone reproduced them by guessing the address, the layers and the width. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
 the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it reads the run (nothing marked read, nothing the lead is woken for touched) and

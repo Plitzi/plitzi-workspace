@@ -104,11 +104,16 @@ const valueText = (value: string): string =>
 
 /**
  * Each element read whose property is not the value expected, and each relation that does not hold at a width: a line
- * each, said where the command fails.
+ * each, said where the command fails. A property is held to the elements asked; one read only because a relation names
+ * it (`forRelations`) is there for its edges — a run's `padding-top=0px` beside `a.top >= b.bottom` failed on b's own.
  */
-export const expectationsMissed = (readings: readonly Reading[], expected: readonly Expected[]): string[] => [
+export const expectationsMissed = (
+  readings: readonly Reading[],
+  expected: readonly Expected[],
+  forRelations: readonly string[] = []
+): string[] => [
   ...readings.flatMap(({ here, pair, width, scheme }) => {
-    if ('problem' in here) {
+    if ('problem' in here || forRelations.includes(pair.here)) {
       return [];
     }
 

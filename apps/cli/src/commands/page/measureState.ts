@@ -1,5 +1,6 @@
 import { answered, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
 
+import { hiddenWhyInPage } from './measureOn';
 import { targetOn } from './shot/capture';
 
 import type { Asked, Pair } from './measure';
@@ -77,8 +78,21 @@ export const putIn = async (
       return { problem: `No element ${target} to ${kind} on ${page.url()}` };
     }
 
+    // Found and drawn nowhere — a fold closed at this width: said as it is, never a press timed out "on a slow page".
+    const all = page.locator(found.selector);
+    if ((await all.filter({ visible: true }).count()) === 0) {
+      const why = await all
+        .first()
+        .evaluate(hiddenWhyInPage, undefined)
+        .catch(() => 'not drawn');
+
+      return {
+        problem: `${target} is on ${page.url()} and not shown here (${why}): nothing to be ${DONE[kind]} — open what holds it first (--click its toggle) or measure at a width it shows at`
+      };
+    }
+
     try {
-      const element = page.locator(found.selector).filter({ visible: true }).first();
+      const element = all.filter({ visible: true }).first();
       // A click may ask the server: what it lit is read once that lands. A hover or a focus asks nothing.
       await (kind === 'click'
         ? answered(page, () => pressOnce(page, () => act(page, element, kind)))

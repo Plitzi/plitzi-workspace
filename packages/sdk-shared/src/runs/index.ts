@@ -1,5 +1,7 @@
 import { isRecord } from '../helpers';
 
+export * from './report';
+
 /**
  * A run of agents (`plitzi run`), as the page its preview serves can show it: `plitzi run preview` keeps a snapshot of
  * the run in a file and names it to the project's server (`RUN_STATUS_ENV`), which answers it at `RUN_STATUS_PATH`, and

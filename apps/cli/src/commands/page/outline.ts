@@ -381,7 +381,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     return;
   }
 
-  const steps = actingSteps(options.steps, 'page outline', { others: false });
+  const steps = actingSteps(options.steps, 'page outline', { others: false, widths: options.width ?? [1440] });
   if ('problem' in steps) {
     fail(`${steps.problem}.`);
 

@@ -1,4 +1,5 @@
 import { clock, evidenceOf, text } from './types';
+import { UNNAMED } from '../agents/identity';
 
 import type { Finding, LogEntry } from './types';
 import type { UsageLine } from '../core/usage';
@@ -153,7 +154,7 @@ const OVERLAP_MS = 5 * 60_000;
 export const twoSessions = (usage: readonly UsageLine[]): Finding[] => {
   const findings: Finding[] = [];
   for (const agent of new Set(usage.map(line => line.by))) {
-    if (agent === 'unnamed') {
+    if (agent === UNNAMED) {
       continue;
     }
 

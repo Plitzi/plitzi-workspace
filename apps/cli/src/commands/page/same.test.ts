@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 
-import { differenceText, drawing, firstDifference } from './same';
+import { differenceText, drawing, drawnAtRest, firstDifference } from './same';
+
+import type { BrowserPage } from '../../browser';
 
 // A look pictured nine pages a shared file reached, for two tokens added — what draws the same is not.
 describe('drawn the same on two servers', () => {
@@ -111,5 +113,31 @@ describe('drawn the same on two servers', () => {
       element: 'site-footer',
       changed: expect.arrayContaining([{ field: 'color', here: 'rgb(9, 9, 9)', there: 'rgb(1, 2, 3)' }]) as unknown
     });
+  });
+});
+
+// A run's look read one server mid-boot — a splash's h1 where the other drew the canvas — and said the page moved.
+describe('a page read at rest', () => {
+  const splash = [{ tag: 'h1', name: 'hud', depth: '3' }];
+  const booted = [{ tag: 'canvas', name: 'map', depth: '3' }];
+  const page = (readings: unknown[][]) => {
+    let read = 0;
+
+    return {
+      evaluate: () => Promise.resolve(readings[Math.min(read++, readings.length - 1)]),
+      waitForTimeout: () => Promise.resolve()
+    } as unknown as BrowserPage;
+  };
+
+  it('is read again until two readings in a row are the same', async () => {
+    expect(await drawnAtRest(page([splash, booted, booted]), [])).toEqual(booted);
+  });
+
+  it('is read as it is once the time is up, when it never holds still', async () => {
+    const moving = Array.from({ length: 40 }, (_, at) => [
+      { tag: 'div', name: 'pulse', depth: '1', transform: String(at) }
+    ]);
+
+    expect(await drawnAtRest(page(moving), [])).toEqual(moving[8]);
   });
 });

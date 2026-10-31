@@ -2,7 +2,7 @@ import { openVisit, visitorAsked } from './visit';
 import { launchBrowser } from '../../browser';
 
 import type { Visitor, VisitView } from './visit';
-import type { Browser, Scheme } from '../../browser';
+import type { Browser, BrowserPage, Scheme } from '../../browser';
 
 /**
  * Whether pages draw the same on two servers of the project — the run before a task and the task's copy — read, not
@@ -150,10 +150,35 @@ const readOn = async (
       throw new Error(problem ?? `nothing answers at ${origin}${path}`);
     }
 
-    return await page.evaluate(drawing, except);
+    return await drawnAtRest(page, except);
   } finally {
     await page.close();
   }
+};
+
+/** How often, and for how long at most, a page is read again until its drawing holds still. */
+const REST_EVERY_MS = 400;
+// Short: a page that never holds still (an element always moving) costs this once a read, then is read as it is.
+const REST_MOST_MS = 3000;
+
+/**
+ * A page's drawing once it holds still: read until two readings in a row are the same, or the time is up — then the last.
+ * Hydrated is not settled: a page that boots behind a splash (a wordmark over a canvas still loading) was read on one
+ * server mid-boot, and a run's look said "/ moved outside its parts" for a canvas set against the splash's h1.
+ */
+export const drawnAtRest = async (page: BrowserPage, except: readonly string[]): Promise<DrawnElement[]> => {
+  let last = await page.evaluate(drawing, except);
+  for (let waited = 0; waited < REST_MOST_MS; waited += REST_EVERY_MS) {
+    await page.waitForTimeout(REST_EVERY_MS);
+    const next = await page.evaluate(drawing, except);
+    if (JSON.stringify(next) === JSON.stringify(last)) {
+      return next;
+    }
+
+    last = next;
+  }
+
+  return last;
 };
 
 /** The first element two drawings differ by — one longer than the other differs where the shorter ends — or none. */

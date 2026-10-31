@@ -129,7 +129,9 @@ makes the page ready (its view, the browser's conditions, others' pictures stood
 of them took four different parts of the visitor). **One vocabulary of steps:** `--steps` is parsed and played by
 `actingSteps`/`playedOn` (`shot/steps.ts`); `page play` plays it step by step, `page shot` pictures it, `page check`,
 `measure` and `outline` play it before they read — no picture there, and another account's (`as …`) only where the
-command keeps other visitors' pages. The other side of `--compare` is one address rule (`otherPageAt`,
+command keeps other visitors' pages. A step `at <widths>` is played or passed over by the window's width as it is
+played (`actStep`), so `page measure` plays its steps again at each width when one is (it reads a page played once,
+resized, otherwise). The other side of `--compare` is one address rule (`otherPageAt`,
 `shot/remote.ts`).
 
 **A page for signed-in visitors is read as one.** A page that sends a guest away — to the sign-in — is read again

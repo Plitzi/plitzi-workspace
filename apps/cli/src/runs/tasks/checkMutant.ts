@@ -241,7 +241,10 @@ export const failureText = (output: readonly string[], last: number): string => 
   const names = failedNames(output);
   const asserted = assertionsOf(output);
   const tail = output
-    .filter(line => !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line) && !STACK_FRAME.test(line))
+    .filter(
+      line =>
+        !FAILED_TEST.test(line) && !ASSERTION_FIELD.test(line) && !STACK_FRAME.test(line) && !PIPE_CLOSED.test(line)
+    )
     .slice(-last);
 
   return [
@@ -274,16 +277,31 @@ const ASSERTIONS_SAID = 3;
 /** A matcher's own words (`expect(received).toEqual(expected)`): the same for every assert, telling none apart. */
 const MATCHER = /^expect\(/;
 
-const assertionsOf = (output: readonly string[]): string[] =>
-  [
-    ...new Set(
-      output.flatMap(line => {
-        const message = ASSERTION.exec(line)?.[1]?.trim();
+/**
+ * The command's own pipe breaking — `write EPIPE`, and node's `Emitted 'error' event on Socket` after it: a check that
+ * pipes into `grep -q` closes the output as soon as it has its answer, and the runner, still writing, says so. Nothing
+ * a test asserted, though it reads like one, and a tester took it for the mutant's failure.
+ */
+const PIPE_CLOSED = /\bEPIPE\b|Emitted 'error' event on Socket|Emitted error event on Socket/;
 
-        return message === undefined || MATCHER.test(message) ? [] : [message];
-      })
+/** An assertion's own error, before a bare `Error:` a library threw on the way: the line the test wrote comes first. */
+const ASSERTION_ERROR = /^\s*AssertionError/;
+
+const assertionsOf = (output: readonly string[]): string[] => {
+  const said = output.flatMap(line => {
+    const message = ASSERTION.exec(line)?.[1]?.trim();
+
+    return message === undefined || MATCHER.test(message) || PIPE_CLOSED.test(line)
+      ? []
+      : [{ message, asserted: ASSERTION_ERROR.test(line) }];
+  });
+
+  return [
+    ...new Set(
+      [...said.filter(each => each.asserted), ...said.filter(each => !each.asserted)].map(each => each.message)
     )
   ].slice(0, ASSERTIONS_SAID);
+};
 
 /**
  * What a line says of the mutant: it catches it, lets it pass, fails already on the copy, breaks — the mutant does not

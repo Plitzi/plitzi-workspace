@@ -1,3 +1,4 @@
+import { UNNAMED } from '../agents/identity';
 import { isApproval } from '../run';
 
 import type { CommandPath } from '../../commandPath';
@@ -191,6 +192,14 @@ const calledAgainByDesign = (line: CommandPath): boolean =>
 /** The commands an agent runs after each edit of what they check: its own tests, the project's checks. */
 const RUN_AFTER_EDITS: ReadonlySet<string> = new Set(['task run', 'task check']);
 
+/**
+ * A call that checks what an edit did: a command above, or one holding the page to what it expects (`page measure
+ * --expect`) — a run's dev-1 measured four widths after each of four edits, red until the last, and read "ran again
+ * and again".
+ */
+const checksAnEdit = (line: CommandPath): boolean =>
+  RUN_AFTER_EDITS.has(line.name) || line.options.includes('--expect');
+
 const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
   const groups = new Map<string, UsageLine[]>();
   // In one session: a fresh session runs its first commands again, as it should.
@@ -217,10 +226,12 @@ const repeatedCalls = (usage: readonly UsageLine[]): RepeatedCall[] => {
       // An agent's own tests and checks are run after each edit: a burst that passed at last settled what it asked —
       // a run's dev-1, red then green, read "ran task run 4 times". One that failed every time did not.
       const burst = lines.slice(best.start, best.start + best.times);
-      const settled = RUN_AFTER_EDITS.has(lines[0].name) && burst.some(line => line.code === 0);
+      const settled = checksAnEdit(lines[0]) && burst.some(line => line.code === 0);
+      // The program itself, no command of it (`plitzi --version`), is named as it was run.
+      const name = lines[0].name || lines[0].command;
 
       return best.times >= REPEATED && !settled
-        ? [{ by: lines[0].by, name: lines[0].name, command: lines[0].command, times: best.times, within: best.within }]
+        ? [{ by: lines[0].by, name, command: lines[0].command, times: best.times, within: best.within }]
         : [];
     })
     .sort((a, b) => b.times - a.times);
@@ -354,7 +365,7 @@ export const runMetrics = (input: {
       ...usage.map(line => line.by),
       ...Object.keys(input.harness)
     ])
-  ].filter(name => name !== 'plitzi' && name !== 'unnamed');
+  ].filter(name => name !== 'plitzi' && name !== UNNAMED);
   const allApproved = log.findLast(entry => entry.action === 'all-approved');
   const readyAfter = allApproved
     ? log.find(entry => entry.action === 'ready' && Date.parse(at(entry)) >= Date.parse(at(allApproved)))

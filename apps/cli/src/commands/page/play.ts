@@ -27,6 +27,7 @@ import { fail, unanswered, UNANSWERED_EXIT } from '../shared/terminal';
 import type { Pair } from './measure';
 import type { HeldRead } from './playHeld';
 import type { ElementState } from './playState';
+import type { PageStep } from './shotSteps';
 import type { BrowserPage, Scheme } from '../../browser';
 import type { ActingStep, PlayStep } from './shot/steps';
 import type { Visitors } from './shot/visitors';
@@ -113,8 +114,15 @@ interface Moved {
 const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, Math.abs(b) * 0.02);
 
 /** A step as one side plays it: its element that side's, from `"ours => theirs"`. */
-const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
+const pageSideOf = (step: PageStep, side: keyof Pair): PageStep =>
   'target' in step ? { ...step, target: pairOf(step.target)[side] } : step;
+
+const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
+  step.kind === 'at'
+    ? { ...step, step: pageSideOf(step.step, side) }
+    : step.kind === 'as'
+      ? step
+      : pageSideOf(step, side);
 
 /**
  * One page a play is played on: a page of this command's, or the other site's held warm in the kept browser
@@ -577,7 +585,9 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
   }
 
   // Another account's step and an action reach this project's server: the other site has neither of them.
-  const ours = steps.find(step => step.kind === 'as' || step.kind === 'action');
+  const ours = steps.find(
+    step => step.kind === 'as' || step.kind === 'action' || (step.kind === 'at' && step.step.kind === 'action')
+  );
   if (ours && options.compare) {
     fail(
       `${stepText(ours)}: a step another account plays, or an action, reaches this project's own server — play it without --compare`

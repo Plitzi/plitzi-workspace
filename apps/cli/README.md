@@ -414,7 +414,9 @@ and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment; 
 server's data is put in its state by `action <id> [json]` — one of the space's actions run as the page's visitor, through
 its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
 in (the password in `PLITZI_CHECK_PASSWORD`), opened where this one is: `as mika goto /messages/dax; as mika type
-dm-input hi`. Both reach the project's own server, never `--compare`'s site. The steps are one vocabulary: `page play`
+dm-input hi`. Both reach the project's own server, never `--compare`'s site. A step only some widths need is
+`at <widths> <step>` — `390`, `<=767`, `>=768` — passed over at the others, so one command reads every width:
+`--width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x"`, the tab a phone opens first. The steps are one vocabulary: `page play`
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
 they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
 
@@ -670,7 +672,7 @@ plitzi run notice "…" --plitzi no-way       # of Plitzi, as what it was — wr
 plitzi run reference                       # the plan's reference site kept as it is now: page shot --compare measures against it
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch              # ends the moment something needs the lead: run it in the background
-plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
+plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab — and its Report what you see, a bug handed to the lead with the command that plays it
 plitzi run preview --copy                  # the approved work as a folder of your scratch instead: research measures on it, apart
 plitzi run status --all                    # every run not yet written into the project, ready ones first
 plitzi run monitor                         # the run, live, in a terminal of your own beside the harness: simple (who is at what, what needs you) or advanced with m (its activity, flow, tasks, agents and spend; w follows an agent's own session under the sidebar's spend, the wheel over it scrolls it back; e widens the sidebar) — it only reads; p starts the preview, x stops it

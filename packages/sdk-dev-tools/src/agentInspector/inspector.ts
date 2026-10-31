@@ -12,19 +12,40 @@ export type AgentInspector = {
   state: (key?: string) => unknown;
   setState: (key: string, value: unknown) => void;
   sources: (name?: string) => unknown;
-  /** The source written — by its name, or the one an element's id names (`<type>_<id>`) — or false when none holds it. */
-  setSource: (path: string, value: unknown) => string | false;
+  /**
+   * The source written — by its name, or the one an element's id names (`<type>_<id>`) — false when none holds it, or why
+   * it was not written (`refused`): what is written there no element would draw.
+   */
+  setSource: (path: string, value: unknown) => string | false | Refused;
   /**
    * An element's attribute given a value, as a page binding it would (`<id>.<attribute>`): the element it was written
    * on, or false when the space has none by that id — a plugin's new attribute seen drawn before any page binds it.
    */
-  setAttribute: (path: string, value: unknown) => string | false;
+  setAttribute: (path: string, value: unknown) => string | false | Refused;
   element: (id: string) => ElementReport | undefined;
   flows: (limit?: number) => FlowRun[];
   /** Why each server element failed on the page server since the page loaded, by id — answered later or not. */
   serverFailures: () => Record<string, unknown>;
   watch: (on?: boolean) => string;
 };
+
+/** A write refused, and why: a value that would be written and drawn over, or written where nothing reads it. */
+export type Refused = { refused: string };
+
+/** The binding that gives an element's attribute, when one does: what it is drawn from, whatever is written on it. */
+const bindingOf = (element: Record<string, unknown>, attribute: string): string | undefined => {
+  const definition = isRecord(element.definition) ? element.definition : {};
+  const bindings = isRecord(definition.bindings) ? definition.bindings : {};
+  // `Array.isArray` narrows to `any[]`: read back as `unknown[]`, each binding is checked before it is used.
+  const found = Object.values(bindings)
+    .flatMap((each): unknown[] => (Array.isArray(each) ? (each as unknown[]) : []))
+    .find(binding => isRecord(binding) && binding.to === attribute && binding.enabled !== false);
+
+  return isRecord(found) && typeof found.source === 'string' ? found.source : undefined;
+};
+
+/** What a list's row reads as its own, from the list's items: never a value of the list's source to write. */
+const ROW_KEYS = new Set(['item', 'index']);
 
 export type AgentInspectorOptions = {
   /** The root store: the schema, `runtime.state`, every element's UI state. */
@@ -47,10 +68,12 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   setState(key, value) writes runtime.state.<key>, as a setState step would
   sources(name?)       every source's current value by name (apiContainer_site, list_products…), or one
   setAttribute(path, value)
-                       an element's attribute given a value (map.storms), as a page binding it would
+                       an element's attribute given a value (map.storms), as a page binding it would — refused, saying
+                       why, for one a binding gives (write its source)
   setSource(path, value)
                        writes a source, or a path in it (apiContainer_site.items — or by its element, site.items),
-                       where its provider keeps it — what the page shows filled; until the provider answers again
+                       where its provider keeps it — what the page shows filled; until the provider answers again.
+                       A list row's item is refused: it comes from the list's items
   element(id)          an element by its id, in a page or a component: type, attributes, what it reads and what each
                        binding gave it (resolved), its own state, the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
@@ -120,6 +143,18 @@ export const createAgentInspector = ({
       )
     ];
     const name = holderOf(asked) || byId.length !== 1 ? asked : (byId[0] ?? asked);
+    // A list's row is each row's own, made from the list's items: a run's designer wrote strongestPick.item and saw
+    // nothing change, and nothing said why.
+    const rowKey = rest.at(0);
+    if (name.startsWith('list_') && rowKey !== undefined && ROW_KEYS.has(rowKey)) {
+      const list = findElement(recordAt(root.getState(), 'schema'), name.slice('list_'.length)).element;
+      const items = isRecord(list) ? bindingOf(list, 'items') : undefined;
+
+      return {
+        refused: `${name}.${rest.join('.')} is each row's own — a list's ${rowKey} comes from its items${items ? `, bound from ${items}: write that source (setSource('${items}', …))` : `: write ${name}.items`}`
+      };
+    }
+
     const holder = holderOf(name);
     // A plain string: a template literal type is read through the store's own types, which know no source by name.
     const at: string = `runtime.sources.${[name, ...rest].join('.')}`;
@@ -132,6 +167,15 @@ export const createAgentInspector = ({
     const { element, inComponent } = findElement(recordAt(root.getState(), 'schema'), id);
     if (!isRecord(element) || name.length === 0) {
       return false;
+    }
+
+    // Given by a binding, a value written is drawn over at once: said, never written as if it had taken.
+    const [attribute = ''] = name;
+    const bound = bindingOf(element, attribute);
+    if (bound !== undefined) {
+      return {
+        refused: `${id}.${attribute} is given by its binding, from ${bound}: what is written on it is drawn over at once — write what it reads (setSource('${bound}', …))`
+      };
     }
 
     // A plain string: a template literal type is read through the store's own types, which know no element by id.

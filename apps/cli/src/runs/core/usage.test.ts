@@ -4,7 +4,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { errorLine, failureLines, handUnreadByName, runStillThere } from './usage';
+import { errorLine, failureLines, handUnreadByName, namedBySession, runStillThere } from './usage';
+
+import type { UsageLine } from './usage';
 
 let runDir: string;
 
@@ -116,5 +118,35 @@ describe('a run being removed', () => {
     await fs.rm(path.join(dir, 'run.json'));
     expect(runStillThere(dir)).toBe(false);
     await fs.rm(dir, { recursive: true, force: true });
+  });
+});
+
+// A run's lead measured at the project's root: its 29 page commands were "unnamed" beside its own task show.
+describe('a usage line nothing named', () => {
+  const line = (by: string, session?: string): UsageLine => ({
+    at: '2026-10-30T17:00:00.000Z',
+    by,
+    command: 'plitzi page measure / hud',
+    name: 'page measure',
+    options: [],
+    args: ['/', 'hud'],
+    chars: 100,
+    ms: 10,
+    code: 0,
+    ...(session === undefined ? {} : { session })
+  });
+
+  it('is the agent’s whose named commands ran in its session — and stays unnamed when no one, or two, did', () => {
+    const named = namedBySession([
+      line('lead', 'a'),
+      line('unnamed', 'a'),
+      line('unnamed', 'b'),
+      line('unnamed'),
+      line('dev-1', 'c'),
+      line('test-1', 'c'),
+      line('unnamed', 'c')
+    ]);
+
+    expect(named.map(each => each.by)).toEqual(['lead', 'lead', 'unnamed', 'unnamed', 'dev-1', 'test-1', 'unnamed']);
   });
 });
