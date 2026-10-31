@@ -22,10 +22,13 @@ Two things, depending on what the connection was granted:
 
 A connection with a space can do both.
 
-**The MCP or the CLI.** The MCP edits a space that lives on Plitzi — the one the builder, collaborators and publishing
-work on — and needs a signed-in account. A space that lives in code (`plitzi create --source local`) is written with
-`@plitzi/sdk-authoring` and the CLI, with no account and no MCP; `plitzi create --from <space>` turns the first into
-the second. The skills an agent is given say the same, so an MCP waiting for a sign-in never blocks a project in code.
+**The MCP or the CLI — what the person asks decides.** A change to a space that lives on Plitzi — the one the builder,
+collaborators and publishing work on — is the MCP's, made on the space with a signed-in account and no project. A space
+that lives in code (`plitzi create --source local`), self-hosted, is written with `@plitzi/sdk-authoring` and the CLI,
+with no account and no MCP; `plitzi create --from <space>` turns the first into the second, and `plitzi space push`
+sends it back. Not both at once: an MCP edit while the project is out moves the draft, and the push is refused
+(`409 DRAFT_MOVED`) until `space pull`. The skills, the server's instructions and a generated project's `AGENTS.md`
+say the same, so an MCP waiting for a sign-in never blocks a project in code.
 
 ## 2. Connecting an agent
 

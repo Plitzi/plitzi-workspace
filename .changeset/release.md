@@ -1597,6 +1597,16 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   panel beside a globe always moving waited 4 s at every picture and said the panel's canvas was moving.
   `page measure --fill` points to `--steps "type <element> <text>"`.
 
+- **Every step, in every help and doc.** The steps are one list in the CLI (`STEP_USAGE`): the parser's refusals, and
+  `page shot --help` and `page play --help`, are made from it — the help typed by hand had left out half of them. Its
+  README names each (a test holds it), and docs.plitzi.com's CLI reference is checked against the installed CLI's help.
+
+- **The MCP or the CLI, by what the person asks** — the skills (`plitzi-cli`'s description, `plitzi-authoring`), the
+  lead's planning reference and a generated project's `AGENTS.md` say the same: a change to a space on Plitzi itself
+  is the Plitzi MCP's, made there; the CLI works on a project — self-hosted, or a space taken out with `create --from`,
+  whose `space push` an MCP edit meanwhile makes refuse until `space pull` (`@plitzi/cli`, `@plitzi/sdk-authoring`).
+  The MCP's instructions say it from its side (`@plitzi/sdk-mcp`).
+
 ## Authoring (`@plitzi/sdk-authoring`)
 
 - **`server-query-unresolved`** refuses a `runtime: 'server'` provider whose `query` the page server cannot read —

@@ -409,7 +409,8 @@ printed beside UTC reads as one there — `--timezone` reads it as a visitor els
 What the demo data never has is set by the steps: `reload` (what the page kept, read back), `store <key> <value>` (its
 `localStorage`, as an earlier visit left it), `state <key> <json>` (the space's state, through the dev tools' `window.__plitzi`
 on a development page), `source <path> <json>` (a provider's answer, or a path in it, where the provider keeps it — a list
-seen filled, until the provider answers again), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
+seen filled, until the provider answers again; a list's row, `list_x.item…`, is refused: write the list's own source),
+`attribute <id>.<name> <json>` (an attribute no binding gives — one a binding gives is drawn over, and refused), and, with `--clock <instant>` holding the page's clock from its first script, `clock <instant>`
 and `tick <duration>` (`90s`, `5m`, `2h`) — a countdown read at every moment; `wait` takes a unit too (`wait 3s`). The
 server's data is put in its state by `action <id> [json]` — one of the space's actions run as the page's visitor, through
 its `/_action` — and what another person does by `as <account> <step>`, played on a page of that account's own, signed
@@ -418,7 +419,8 @@ dm-input hi`. Both reach the project's own server, never `--compare`'s site. A s
 `at <widths> <step>` — `390`, `<=767`, `>=768` — passed over at the others (one that names no width read is refused), so one command reads every width:
 `--width 1440,390 --steps "at <=767 click sheet-tab-log; type log-search x"`, the tab a phone opens first. The steps are one vocabulary: `page play`
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
-they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
+they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page). Every step, as `page shot --help`
+prints them: `click <el>`, `hover <el>`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy] [hold]`, `release`, `press <key>`, `wait <ms|3s>`, `wait-for <el> [time]`, `reload`, `goto <path>`, `back`, `store <key> <value>`, `state <key> <json>`, `source <path> <json>`, `attribute <id>.<name> <json>`, `clock <instant>`, `tick <duration>`, `action <id> [json]`, `render <id> [json]`, `as <account> <step>`, `at <widths> <step>`, `shot [label]`, `frames <n> [ms]` (`frames` is `page shot`'s alone).
 
 A look at a task reads the pages only a shared file of the task reaches on both servers — the task's copy and the run
 before it — every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not

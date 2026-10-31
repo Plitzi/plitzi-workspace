@@ -7,11 +7,10 @@ description: >-
   `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), follow
   what each save does (`space watch`) and what others do on the space (`space activity`), and write a report to Plitzi
   of what broke, misled or cost time (`feedback`). Use whenever the task is to start a Plitzi project, create or change
-  a plugin, pack, upload or install one, pull/push/try a space's functions, move a space to a server of its own and
-  back, work out which space the CLI is connected to — or when the person asks for a report, feedback or a list of what
+  a plugin, pack, upload or install one, pull/push/try a space's functions, work out which space the CLI is connected to — or when the person asks for a report, feedback or a list of what
   went wrong with Plitzi. Multi-agent mode — a team of agents, several or parallel agents, subagents at once, agent
   orchestration or a swarm, in any language ("con un equipo de agentes", "varios agentes en paralelo"): `run start`,
-  then `run`, `task` — only when the person asks for it.
+  then `run`, `task` — only when the person asks for it. Not for editing a space on Plitzi itself: the Plitzi MCP's.
 ---
 
 # The Plitzi CLI
@@ -74,8 +73,8 @@ feedback` (`--previous <link>` continues an earlier one). It reads the versions 
   what was asked; a page command's 2, that it could not read what it asked (nothing served, the other page's element
   missing). A refusal says what to change: change it — the same refusal twice says to stop and ask.
 
-**The MCP or this CLI.** A space written in code (`src/space/`) is this CLI's, with no account. One kept on Plitzi —
-edited in the builder — is the Plitzi MCP's. Never both on one space.
+**A project, not the space on Plitzi** — that is the MCP's. A space taken out (`create --from`) and edited through the
+MCP meanwhile refuses `space push` until `space pull`.
 
 ## What to read
 

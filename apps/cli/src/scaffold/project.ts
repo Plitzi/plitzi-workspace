@@ -452,7 +452,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const run = (script: string): string => code(runCommand(answers.packageManager, script));
   const local = answers.source === 'local';
   const where = local
-    ? `The space is ${code('src/space/')}, declared with ${code('@plitzi/sdk-authoring')}. Edit that; never the JSON it produces.`
+    ? `The space is ${code('src/space/')}, declared with ${code('@plitzi/sdk-authoring')}. Edit that; never the JSON it produces. A change asked of a space on Plitzi itself is made there, through the Plitzi MCP — not here.`
     : 'The space lives in Plitzi and is edited in the builder (or by an agent over MCP); this project serves it.';
   const commands = [
     `| ${code(installCommand(answers.packageManager))} | install |`,

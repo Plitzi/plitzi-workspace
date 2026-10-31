@@ -219,7 +219,7 @@ went up before it is said, and recorded):
 
 **Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,
 style, actions and connectors); the project records it, and a push names it as its `base`. A draft edited in the
-builder since is refused (`409 DRAFT_MOVED`): pull, and push again — or `--force` to replace it. A project that never
+builder or through the MCP since is refused (`409 DRAFT_MOVED`): pull, and push again — or `--force` to replace it. A project that never
 had the space sends no base, and is refused (`409 DRAFT_NOT_EMPTY`) unless the space is still the blank space it was
 created as, with no actions or connectors: a space made from a template, or edited once, is somebody's work, and takes
 `--force`. `--force` reaches the functions and the data too, whose own checks (the version the project last had) it

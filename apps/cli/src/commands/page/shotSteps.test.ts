@@ -1,6 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { parseSteps, widthRange, widthRangeText } from './shotSteps';
+import { parseSteps, STEP_USAGE, stepsUsage, widthRange, widthRangeText } from './shotSteps';
 
 describe('page shot --steps', () => {
   it('reads a scroll to an element: the footer brought into view, as a reader would', () => {
@@ -277,5 +280,20 @@ describe('a step played at some widths', () => {
     ]) {
       expect(parseSteps(script, 500)).toEqual({ problem: expect.stringContaining('at needs widths') as unknown });
     }
+  });
+});
+
+// The help of page shot and page play, typed by hand, had left out half the steps: both are made from the one list.
+describe('the steps the CLI teaches', () => {
+  it('are every step it parses, each as it is written — in the help, and in its README', () => {
+    const readme = fs.readFileSync(path.join(import.meta.dirname, '../../../README.md'), 'utf-8');
+    for (const [name, usage] of STEP_USAGE) {
+      expect(parseSteps(usage.replace(/<[^>]+>|\[[^\]]+\]/g, 'x'), 500)).not.toEqual({
+        problem: expect.stringContaining(`"${name}" is not a step`) as unknown
+      });
+      expect(readme).toContain(`\`${usage}\``);
+    }
+
+    expect(stepsUsage(['frames'])).not.toContain('frames');
   });
 });

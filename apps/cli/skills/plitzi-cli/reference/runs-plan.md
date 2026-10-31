@@ -8,6 +8,9 @@ an agent starts or a token is spent. The lead's half after it: [runs-lead.md](ru
 - Read what is open first: `plitzi run backlog`, the last run's `.plitzi/plitzi-reports/runs/<run>/report.md` (**What is left**).
 - Ask the goal as a choice — two to four options, yours recommended first, each with its size (tasks) and what it tests
   of the project. One open question is not asked when a choice would do.
+- **A change to their space on Plitzi itself is no run**: the Plitzi MCP makes it there, now or while one is open. A run
+  works the project; a space it came from (`create --from`), changed through the MCP meanwhile, refuses the project's
+  `space push` until `space pull` — say so when they ask for both.
 
 ## 2. Read before you write a task
 
@@ -47,7 +50,9 @@ In the person's language, short, from the plan — never a list to read in the J
 - **What you found** of Plitzi (step 2).
 - **Who applies the result** — the person (`run finish --apply`), unless they let you (`run open --lead-finishes`).
 - **How to open and follow it**: the open command — a run past 7 agents or 120 minutes is the person's to confirm in
-  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced).
+  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced). What they see wrong on it they report from its dev
+  tools' Run tab (**Report what you see**): it reaches you as their message, its `Play it: plitzi page shot …` the
+  first command you run.
 
 Opened by `run start`, its scope spike is this planning: only a scout starts while the run holds the spike alone, and
 the summary is said before the lead's `task review s-scope --approve` (with no scout, `task complete s-scope --found …

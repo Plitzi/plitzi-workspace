@@ -85,34 +85,45 @@ export type ShotStep =
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
-// `fill` is `type` by the name a Playwright user reaches for (a run's dev-1): typing replaces what a field held either way.
-const STEP_NAMES = [
-  'click',
-  'hover',
-  'scroll',
-  'type',
-  'fill',
-  'drag',
-  'release',
-  'press',
-  'wait',
-  'wait-for',
-  'reload',
-  'goto',
-  'back',
-  'store',
-  'state',
-  'source',
-  'attribute',
-  'clock',
-  'tick',
-  'action',
-  'render',
-  'as',
-  'at',
-  'shot',
-  'frames'
+/**
+ * Every step as a script writes it, in the order they are taught: the one list the parser, its refusals and every
+ * command's `--steps` help are made from — two help texts typed by hand had left out half of them.
+ */
+export const STEP_USAGE = [
+  ['click', 'click <el>'],
+  ['hover', 'hover <el>'],
+  ['scroll', 'scroll <el> [dx] [dy]'],
+  ['type', 'type <el> <text>'],
+  ['drag', 'drag <el> <dx> [dy] [hold]'],
+  ['release', 'release'],
+  ['press', 'press <key>'],
+  ['wait', 'wait <ms|3s>'],
+  ['wait-for', 'wait-for <el> [time]'],
+  ['reload', 'reload'],
+  ['goto', 'goto <path>'],
+  ['back', 'back'],
+  ['store', 'store <key> <value>'],
+  ['state', 'state <key> <json>'],
+  ['source', 'source <path> <json>'],
+  ['attribute', 'attribute <id>.<name> <json>'],
+  ['clock', 'clock <instant>'],
+  ['tick', 'tick <duration>'],
+  ['action', 'action <id> [json]'],
+  ['render', 'render <id> [json]'],
+  ['as', 'as <account> <step>'],
+  ['at', 'at <widths> <step>'],
+  ['shot', 'shot [label]'],
+  ['frames', 'frames <n> [ms]']
 ] as const;
+
+/** The steps as they are written, `; `-separated — but those a command does not play (`page play` takes no frames). */
+export const stepsUsage = (without: readonly string[] = []): string =>
+  STEP_USAGE.filter(([name]) => !without.includes(name))
+    .map(([, usage]) => usage)
+    .join('; ');
+
+// `fill` is `type` by the name a Playwright user reaches for (a run's dev-1): typing replaces what a field held either way.
+const STEP_NAMES = STEP_USAGE.flatMap(([name]) => (name === 'type' ? ['type', 'fill'] : [name]));
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;

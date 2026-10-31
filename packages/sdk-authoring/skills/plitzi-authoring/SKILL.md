@@ -24,7 +24,8 @@ export const space = {
 };
 ```
 
-A space on Plitzi — edited in the builder — is edited through the Plitzi MCP server instead, never both on one space.
+A change to a space on Plitzi itself — the builder's — is the Plitzi MCP server's instead. One taken out as a project
+(`plitzi create --from`) and changed through the MCP meanwhile refuses `space push` until `space pull`.
 
 ## How to work
 
