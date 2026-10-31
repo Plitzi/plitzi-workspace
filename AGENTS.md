@@ -76,7 +76,8 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
   them; never flip a global default "to save resources".
 - **Backend in UTC.** Every `Intl.DateTimeFormat`/`toLocale*` in server code passes `timeZone: 'UTC'` and says "UTC".
 - **Light and dark from the first commit.** Every colour token is declared for both themes; never theme-aware text on
-  a fixed background. Builder pairs: `border-gray-200 dark:border-zinc-700`, `text-gray-500 dark:text-zinc-400`
+  a fixed background. Builder pairs: `border-gray-300 dark:border-zinc-700` (gray-200 was too faint to read),
+  `text-gray-500 dark:text-zinc-400`
   (`grayviolet-*` has no dark variant). When fixing a panel, review all of its colour classes.
 - UI is product: check desktop **and** 390 px (`scrollWidth` vs `innerWidth`), grid tracks `minmax(0, 1fr)`, every
   control in an example actually works, and design from the point of view of someone who only has a browser.
@@ -477,8 +478,15 @@ After finishing any set of code changes, always run:
   when an op, resource or global source is missing from the guide.
 - **StyleInspector** (`packages/sdk-style`) is where users spend their time: a redesign changes presentation, never the
   surface — inventory every control per category before, and walk the inventory after.
-- The builder loads **Font Awesome 7** (FA6 names render empty); `Alert` from plitzi-ui is soft by default — use
-  `size="xs" solid={false}`, never `text-white` on it.
+- The builder loads **Font Awesome 7** (FA6 names render empty). A builder notice is `Notice`
+  (`modules/App/components`: one size, soft, `info`/`caution`/`danger`/`success`, announced) — never plitzi-ui's
+  `Alert` directly, and red only for what broke.
+- **A builder panel is built from the same pieces** (`modules/App/components`): `PanelToolbar` (its search — `PanelSearch`
+  — and its one primary action, top right: a "+" beside a search, its name alone), `ViewTabs` (every tab row: the
+  segmented theme, real tab buttons, room for a needs-a-look mark), `EmptyState` (`size="panel"` in the sidebar),
+  `ViewSection`/`ViewPage` in views that take the canvas' place. Labels in sentence case ("New variable"), no action
+  pinned at a panel's foot. `IconGroup` keeps only its direct `IconGroup.Icon` children: a group's icons are drawn
+  where the group is, never in components of their own.
 - Design tokens of Plitzi's own UI live in plitzi-ui's `theme.css`, **never** in `apps/sdk/src/assets/tailwind.css`
   (it ships on every customer page).
 - An editor that shows several documents takes `key={document}` (own undo history).

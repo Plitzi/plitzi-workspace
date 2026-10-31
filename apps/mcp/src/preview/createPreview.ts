@@ -96,13 +96,19 @@ export const createPreview = async (
     ));
   }
 
-  const reusable = body.mode === 'session';
+  const reusable = body.mode === 'session' || body.mode === 'tests';
+  const inspected = body.mode === 'tests';
   const ttlMs = reusable ? (config.preview?.sessionTtlMs ?? 900_000) : (config.preview?.ttlMs ?? 60_000);
 
   let token: string | undefined;
   if (config.draftStore) {
     token = randomUUID();
-    await config.draftStore.put(token, draftOffline, { ttlMs, reusable, spaceId: body.spaceId });
+    await config.draftStore.put(token, draftOffline, {
+      ttlMs,
+      reusable,
+      spaceId: body.spaceId,
+      ...(inspected ? { inspected } : {})
+    });
   }
 
   return {

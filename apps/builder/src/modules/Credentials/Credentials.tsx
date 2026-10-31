@@ -88,7 +88,7 @@ const Credentials = () => {
     async (identifier: string) => {
       const confirmed = await showDialog(
         <Modal.Header>
-          <h4>Remove Credential</h4>
+          <h4>Remove credential</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-3 py-2">
@@ -111,7 +111,7 @@ const Credentials = () => {
   const createButton = (
     <Button size="sm" onClick={handleCreate} iconPlacement="before">
       <Button.Icon icon="fa-solid fa-plus" />
-      New Credential
+      New credential
     </Button>
   );
 

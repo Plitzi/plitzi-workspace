@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Badge from '@plitzi/plitzi-ui/Badge';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
@@ -6,6 +5,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import ViewSection from '@pmodules/App/components/ViewSection';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
@@ -101,11 +101,7 @@ const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
           </Button>
         </div>
       )}
-      {problem && (
-        <Alert intent="error" size="xs" solid={false}>
-          {problem}
-        </Alert>
-      )}
+      {problem && <Notice tone="danger">{problem}</Notice>}
       {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
       {data.map(grant => (
         <div

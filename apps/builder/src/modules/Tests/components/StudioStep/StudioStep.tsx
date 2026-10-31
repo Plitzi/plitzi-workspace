@@ -1,7 +1,8 @@
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { use, useCallback } from 'react';
 
-import { sentenceOf } from '../../studio/sentences';
+import { checkTitleOf, sentenceOf } from '../../studio/sentences';
+import TestStudioContext from '../../studio/TestStudioContext';
 
 import type { StepPlay } from '../../studio/TestStudioContext';
 import type { E2eStep } from '@plitzi/sdk-shared';
@@ -69,6 +70,7 @@ const StudioStep = ({
   onMove,
   onRemove
 }: StudioStepProps) => {
+  const titleOf = checkTitleOf(use(TestStudioContext).tests.unit ?? []);
   const sentence = sentenceOf(step);
   const handleEnter = useCallback(() => onPoint(step), [onPoint, step]);
   const handleLeave = useCallback(() => onPoint(undefined), [onPoint]);
@@ -118,6 +120,14 @@ const StudioStep = ({
             ) : 'value' in part ? (
               <span key={at} className="max-w-full font-medium break-words text-zinc-900 dark:text-zinc-50">
                 “{part.value}”
+              </span>
+            ) : 'check' in part ? (
+              <span
+                key={at}
+                title={`Element check ${part.check}`}
+                className="max-w-full truncate rounded bg-emerald-100 px-1.5 text-xs leading-5 font-medium text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200"
+              >
+                {titleOf(part.check)}
               </span>
             ) : (
               <span key={at}>{part.text}</span>

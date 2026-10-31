@@ -1,5 +1,6 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import clsx from 'clsx';
+
+import Notice from '@pmodules/App/components/Notice';
 
 import type { ActionRunReport } from '@plitzi/sdk-shared';
 
@@ -37,11 +38,7 @@ const TryResult = ({ report, task }: TryResultProps) => {
           ))}
         </div>
       )}
-      {step?.error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {step.error}
-        </Alert>
-      )}
+      {step?.error && <Notice tone="danger">{step.error}</Notice>}
       {!step?.error && (
         <pre className="max-h-80 overflow-auto rounded-sm bg-gray-100 p-2 font-mono dark:bg-zinc-800">
           {JSON.stringify(report.output.value ?? null, null, 2)}

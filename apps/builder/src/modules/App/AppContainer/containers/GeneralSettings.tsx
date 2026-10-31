@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
@@ -7,6 +6,7 @@ import { useCallback, use, useState } from 'react';
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import Notice from '@pmodules/App/components/Notice';
 
 import ViewPage from '../../components/ViewPage';
 import ViewSection from '../../components/ViewSection';
@@ -194,10 +194,10 @@ const GeneralSettings = () => {
         </Select>
         {userProvider === 'basic' && (
           <>
-            <Alert intent="info" size="xs" solid={false}>
+            <Notice tone="info">
               Every field below accepts schema variables, so one <code>{'{{baseUrl}}/auth/login'}</code> follows the
               environment its variable is defined for.
-            </Alert>
+            </Notice>
             <Input
               size="sm"
               name="loginUrl"
@@ -282,10 +282,10 @@ const GeneralSettings = () => {
               onChange={handleChange('refreshExpirationTimePath')}
               label="API Refresh Expiration Time Object Path - Default: [refresh_expire_at]"
             />
-            <Alert intent="info" size="xs" solid={false}>
+            <Notice tone="info">
               Name a readable cookie your API sets beside its session cookie (value <code>expiry.refreshExpiry</code>,
               in seconds) and pages know whether anyone is signed in without asking — including when nobody is.
-            </Alert>
+            </Notice>
             <Input
               size="sm"
               name="sessionHintCookie"
@@ -331,9 +331,7 @@ const GeneralSettings = () => {
         </Select>
       </ViewSection>
       <ViewSection title="Style">
-        <Alert intent="info" size="xs" solid={false}>
-          Keep on mind that changing this can impact your style
-        </Alert>
+        <Notice tone="info">Keep on mind that changing this can impact your style</Notice>
         <Select
           size="sm"
           name="mode"
@@ -389,9 +387,9 @@ const GeneralSettings = () => {
           />
         )}
         {keepState && transientKeys.length > 0 && keptKeys.length > 0 && (
-          <Alert intent="warning" size="xs" solid={false}>
+          <Notice tone="caution">
             Say one of the two: the keys never kept, or the only keys kept — leave the other empty.
-          </Alert>
+          </Notice>
         )}
         {keepState && (
           <Input
@@ -410,32 +408,32 @@ const GeneralSettings = () => {
           </p>
         )}
         {keepState && dottedKeys.length > 0 && (
-          <Alert intent="warning" size="xs" solid={false}>
+          <Notice tone="caution">
             {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
             goes with it.
-          </Alert>
+          </Notice>
         )}
         {keepState && unkeptPainted.length > 0 && (
-          <Alert intent="warning" size="xs" solid={false}>
+          <Notice tone="caution">
             {unkeptPainted.join(', ')}: drawn on the server, but not among the keys kept — add{' '}
             {unkeptPainted.length === 1 ? 'it' : 'them'} there, or leave {unkeptPainted.length === 1 ? 'it' : 'them'}{' '}
             out.
-          </Alert>
+          </Notice>
         )}
         {keepState && bothKeys.length > 0 && (
-          <Alert intent="warning" size="xs" solid={false}>
+          <Notice tone="caution">
             {bothKeys.join(', ')}: in both lists. A key drawn on the server is kept; one never kept is not — remove it
             from one of them.
-          </Alert>
+          </Notice>
         )}
       </ViewSection>
       <NotificationsSettings />
       <ViewSection title="Debugging">
-        <Alert intent="warning" size="xs" solid={false}>
+        <Notice tone="caution">
           For sites served with SSR — usually your <code>*.plitzi.app</code> address, or a custom domain pointed at it.
           Anyone who opens the site can then open the dev tools (Shift+F12) and read its elements, state and
           interactions. Switch it off when you are done.
-        </Alert>
+        </Notice>
         <Checkbox
           size="sm"
           name="debugMode"

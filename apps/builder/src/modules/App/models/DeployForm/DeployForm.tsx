@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Icon from '@plitzi/plitzi-ui/Icon';
@@ -6,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import { formatFromNow } from '@plitzi/sdk-shared/dates';
+import Notice from '@pmodules/App/components/Notice';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import InputEnvironment from './InputEnvironment';
@@ -90,9 +90,7 @@ const DeployForm = ({
       <Form.Body>
         <InputEnvironment />
         {watchEnvironment !== 'main' && !latestRevision && (
-          <Alert intent="warning" size="sm" solid={false}>
-            This environment don&apos;t have any snapshot, please make a snapshot first
-          </Alert>
+          <Notice tone="caution">This environment don&apos;t have any snapshot, please make a snapshot first</Notice>
         )}
         {watchEnvironment !== 'main' && latestRevision && (
           <VersionContents

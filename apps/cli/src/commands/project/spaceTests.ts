@@ -45,10 +45,14 @@ export interface SpaceTestsPlayed {
 const chosen = <T extends { id: string }>(tests: readonly T[], ids: readonly string[], wanted: boolean): T[] =>
   wanted ? tests.filter(test => ids.length === 0 || ids.includes(test.id)) : [];
 
-/** Each e2e test played in a page of its own, at its width, against the project's server. */
+/**
+ * Each e2e test played in a page of its own, at its width, against the project's server — the element checks it holds
+ * read from the space as authored.
+ */
 const runE2e = async (
   root: string,
   origin: string,
+  space: Schema,
   tests: readonly E2eTest[]
 ): Promise<E2eResult[] | { problem: string }> => {
   const browser = await launchBrowser(root);
@@ -66,7 +70,7 @@ const runE2e = async (
         ...(test.scheme ? { scheme: test.scheme } : {})
       });
       try {
-        results.push(await runE2eTest(page, test, { origin }));
+        results.push(await runE2eTest(page, test, { origin, space }));
       } finally {
         await page.close();
       }
@@ -75,6 +79,22 @@ const runE2e = async (
     return results;
   } finally {
     await browser.close();
+  }
+};
+
+/** The project's space as it authors — the document its tests are kept in and read against — or why it does not. */
+export const authoredSpace = async (project: ExistingProject): Promise<{ schema: Schema } | { problem: string }> => {
+  const loaded = await loadProjectSpace(project.root);
+  if ('problem' in loaded) {
+    return { problem: `The space does not author, so its tests cannot run: ${loaded.problem}` };
+  }
+
+  try {
+    return { schema: authorSpace(loaded.space, loaded.authoring).schema };
+  } catch (error) {
+    return {
+      problem: `The space does not author, so its tests cannot run: ${error instanceof Error ? error.message : String(error)}`
+    };
   }
 };
 
@@ -89,19 +109,12 @@ export const playSpaceTests = async (
   ids: readonly string[],
   options: Omit<SpaceTestOptions, 'json'>
 ): Promise<SpaceTestsPlayed | { problem: string }> => {
-  const loaded = await loadProjectSpace(project.root);
-  if ('problem' in loaded) {
-    return { problem: `The space does not author, so its tests cannot run: ${loaded.problem}` };
+  const authored = await authoredSpace(project);
+  if ('problem' in authored) {
+    return authored;
   }
 
-  let schema: Schema;
-  try {
-    ({ schema } = authorSpace(loaded.space, loaded.authoring));
-  } catch (error) {
-    return {
-      problem: `The space does not author, so its tests cannot run: ${error instanceof Error ? error.message : String(error)}`
-    };
-  }
+  const { schema } = authored;
 
   const both = options.unit !== true && options.e2e !== true;
   const unit: UnitTest[] = chosen(schema.tests?.unit ?? [], ids, both || options.unit === true);
@@ -110,7 +123,8 @@ export const playSpaceTests = async (
   const problems = [
     ...unknown.map(id => `no test of the space is "${id}"`),
     ...unitTestProblems(schema, unit),
-    ...e2eTestProblems(schema, e2e)
+    // A journey may hold any element check of the space, run here or not.
+    ...e2eTestProblems(schema, e2e, schema.tests?.unit ?? [])
   ];
   const count = unit.length + e2e.length;
   if (problems.length > 0 || count === 0) {
@@ -131,7 +145,7 @@ export const playSpaceTests = async (
     return { problem: `${where.problem} — the e2e tests open its pages (plitzi test --unit runs the rest)` };
   }
 
-  const played = await runE2e(project.root, where.origin, e2e).finally(() => where.stop?.());
+  const played = await runE2e(project.root, where.origin, schema, e2e).finally(() => where.stop?.());
   if ('problem' in played) {
     return played;
   }

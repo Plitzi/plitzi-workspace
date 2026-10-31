@@ -45,3 +45,34 @@ export const maskFrameOf = (layout: HTMLElement): HTMLElement => {
 
   return layout.ownerDocument.documentElement;
 };
+
+/** Which sides of its page a shell draws something on — a header above, a footer below, a sidebar beside. */
+export type ChromeSides = { above: boolean; below: boolean; left: boolean; right: boolean };
+
+/**
+ * Where the shell draws something around its page — or only leaves room the page's own background fills: the empty end
+ * of a shell as tall as the screen, the gutters beside a centred page. Masked, that room read as a grey slab around
+ * every page; only what the shell draws is chrome.
+ */
+export const chromeSides = (layout: HTMLElement, body: Element, page: DOMRect): ChromeSides => {
+  const sides: ChromeSides = { above: false, below: false, left: false, right: false };
+  for (const node of layout.querySelectorAll('[data-plitzi-el]')) {
+    if (node.contains(body) || body.contains(node)) {
+      continue;
+    }
+
+    const box = node.getBoundingClientRect();
+    if (box.width <= 0 || box.height <= 0) {
+      continue;
+    }
+
+    // Beside the page is what shares its height; above and below, whatever is past its edge.
+    const level = box.top < page.bottom - 1 && box.bottom > page.top + 1;
+    sides.above ||= box.top < page.top - 1 && !level;
+    sides.below ||= box.bottom > page.bottom + 1 && !level;
+    sides.left ||= level && box.left < page.left - 1;
+    sides.right ||= level && box.right > page.right + 1;
+  }
+
+  return sides;
+};

@@ -26,7 +26,12 @@ const PlanBadge = () => {
 
   return (
     <div id="header-plan" className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-      <span title="This space's plan">{entitlements.tierLabel}</span>
+      <span
+        className="rounded-full border border-gray-300 px-2 py-0.5 whitespace-nowrap text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+        title="This space's plan"
+      >
+        {entitlements.tierLabel} plan
+      </span>
       {upgradeUrl && (
         <Button
           size="xs"

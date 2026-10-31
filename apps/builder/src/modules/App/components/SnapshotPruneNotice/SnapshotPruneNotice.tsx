@@ -1,5 +1,4 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
-
+import Notice from '@pmodules/App/components/Notice';
 import useNextPrune from '@pmodules/Space/hooks/useNextPrune';
 
 import { pruneSentence } from './helpers';
@@ -17,11 +16,7 @@ const SnapshotPruneNotice = ({ environment }: SnapshotPruneNoticeProps) => {
     return null;
   }
 
-  return (
-    <Alert intent="warning" size="sm" solid={false}>
-      {sentence}
-    </Alert>
-  );
+  return <Notice tone="caution">{sentence}</Notice>;
 };
 
 export default SnapshotPruneNotice;

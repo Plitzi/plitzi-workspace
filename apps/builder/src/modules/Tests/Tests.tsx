@@ -1,10 +1,10 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import ViewPage from '@pmodules/App/components/ViewPage';
+import ViewTabs from '@pmodules/App/components/ViewTabs';
 
 import E2eRunView from './components/E2eRunView';
 import TestsArea from './components/TestsArea';
@@ -12,6 +12,7 @@ import TestsSummary from './components/TestsSummary';
 import UnitTestForm from './components/UnitTestForm';
 import UnitTests from './components/UnitTests';
 import { elementOptions, newUnitTest, problemsOfKind, testsNeedingLook, withUnitTest } from './helpers';
+import useMayTest from './hooks/useMayTest';
 import useServerPlay from './hooks/useServerPlay';
 import useSpaceTests from './hooks/useSpaceTests';
 import useTestProblems from './hooks/useTestProblems';
@@ -38,6 +39,7 @@ const TABS: { id: Tab; label: string }[] = [
  */
 const Tests = ({ externalStyle = '' }: TestsProps) => {
   const { answer, isLoading, save, runE2e } = useSpaceTests();
+  const { mayTest } = useMayTest();
   const studio = use(TestStudioContext);
   // Read here, against the document being edited — as a snapshot reads them.
   const problems = useTestProblems(studio.tests, studio.flow);
@@ -81,7 +83,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
     journeys: testsNeedingLook(problems, 'e2e').length,
     checks: problemsOfKind(problems, 'unit').length + (answer?.unitFailed ?? 0)
   };
-  const handleTab = useCallback((next: Tab) => () => setTab(next), [setTab]);
+  const handleChecks = useCallback(() => setTab('checks'), [setTab]);
   const handleRunOnServer = useCallback(async () => {
     setServerRunning(true);
     try {
@@ -137,38 +139,30 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
 
   return (
     <div className="flex min-h-0 grow flex-col">
-      <div className="flex h-11 shrink-0 items-end gap-1 border-b border-gray-300 px-4 dark:border-zinc-700">
-        {TABS.map(each => (
-          <button
-            key={each.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === each.id}
-            className={clsx(
-              'focus-visible:outline-primary-500 -mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 pb-2.5 text-sm transition-colors duration-150 focus-visible:outline-2',
-              {
-                'border-primary-ui text-primary-text font-medium': tab === each.id,
-                'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100':
-                  tab !== each.id
-              }
-            )}
-            onClick={handleTab(each.id)}
-          >
-            {each.label}
-            {needsLook[each.id] > 0 && (
-              <i
-                role="img"
-                aria-label={`${String(needsLook[each.id])} to look at`}
-                title={
-                  needsLook[each.id] === 1
-                    ? '1 test here needs a look'
-                    : `${String(needsLook[each.id])} tests here need a look`
+      <div className="shrink-0 px-5 pt-4">
+        <ViewTabs
+          tabs={TABS.map(each => ({
+            ...each,
+            ...(needsLook[each.id] > 0
+              ? {
+                  mark: (
+                    <i
+                      role="img"
+                      aria-label={`${String(needsLook[each.id])} to look at`}
+                      title={
+                        needsLook[each.id] === 1
+                          ? '1 test here needs a look'
+                          : `${String(needsLook[each.id])} tests here need a look`
+                      }
+                      className="fa-solid fa-circle-exclamation text-xs text-amber-500"
+                    />
+                  )
                 }
-                className="fa-solid fa-circle-exclamation text-xs text-amber-500"
-              />
-            )}
-          </button>
-        ))}
+              : {})
+          }))}
+          selected={tab}
+          onSelect={setTab}
+        />
       </div>
       {tab === 'journeys' ? (
         <TestsArea
@@ -180,7 +174,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           serverPlay={serverPlay}
           onRunOnServer={handleRunOnServer}
           onViewServerRun={setViewing}
-          onChecks={handleTab('checks')}
+          onChecks={handleChecks}
         />
       ) : (
         <ViewPage
@@ -190,6 +184,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
           {answer && <TestsSummary answer={answer} problems={problems} />}
           <UnitTests
+            readOnly={!mayTest}
             tests={unit}
             results={answer?.unit ?? []}
             problems={problems}

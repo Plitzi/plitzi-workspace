@@ -1,3 +1,7 @@
+import { SPACE_SERVER_PLAYS_FIELDS } from '../../Queries/Space/SpaceTestsQuery';
+
+import type { TSpaceServerPlays } from '../../Queries/Space/SpaceTestsQuery';
+
 /** One step of an e2e test as it went. */
 export type TSpaceE2eStepResult = {
   said: string;
@@ -19,14 +23,22 @@ export type TSpaceE2eResult = {
   problem?: string;
 };
 
-/** The e2e tests played on the draft — or why none was run on this server. */
-export type TSpaceRunE2eTestsMutation = { results: TSpaceE2eResult[]; notRun: string | null };
+/**
+ * The e2e tests played on the draft — or why none was run on this server — and the month's plays once they were
+ * counted, said by a server that counts them.
+ */
+export type TSpaceRunE2eTestsMutation = {
+  results: TSpaceE2eResult[];
+  notRun: string | null;
+  serverPlays?: TSpaceServerPlays;
+};
 
 const SpaceRunE2eTestsMutation = /* GraphQL */ `
   mutation SpaceRunE2eTestsMutation($ids: [String!]) {
     SpaceRunE2eTests(ids: $ids) {
       results
       notRun
+      ${SPACE_SERVER_PLAYS_FIELDS}
     }
   }
 `;

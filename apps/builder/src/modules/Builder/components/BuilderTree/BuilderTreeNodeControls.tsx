@@ -95,7 +95,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
       e.stopPropagation();
       const response = await showDialog(
         <Modal.Header>
-          <h4>Remove Element</h4>
+          <h4>Remove element</h4>
         </Modal.Header>,
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>

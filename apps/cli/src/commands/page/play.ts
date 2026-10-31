@@ -6,11 +6,13 @@ import chalk from 'chalk';
 import { failedFlowText, pressFailure, readDevTools, settle } from '@plitzi/sdk-authoring';
 
 import { pairOf } from './measure';
+import { failedAtText, readTargets, sharedServerNote, stepsOf } from './playArgs';
 import { heldText, stateReadsOf, valueAt } from './playHeld';
+import { playJourneyFirst, playStart } from './playJourney';
 import { givenText, readState } from './playState';
 import { shotFile } from './shot/output';
 import { otherPageAt, pageAnswered } from './shot/remote';
-import { actStep, playingSteps, stepText } from './shot/steps';
+import { actStep, stepText } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
 import { VIEW_HEIGHT } from '../../browser';
@@ -34,9 +36,6 @@ import type { VisitorOptions } from '../register/options';
 /** How much of an element's text a line of `--read` shows; `--json` has it whole. */
 const TEXT_SHOWN = 80;
 
-/** The steps that act on a page — what may write on its server: a queue's share spent, a vote cast. */
-const ACTING = new Set(['click', 'press', 'type', 'drag', 'as', 'action']);
-
 /**
  * Where a `shot` step's pictures go: the project's tmp/shots — in a task's copy, the run's pictures of that task, as
  * `page shot` puts them: a reviewer's steps wrote into the copy of the task it reviewed.
@@ -47,30 +46,6 @@ export const stepShotsDir = (root: string): string => {
   return copy === undefined
     ? path.join(root, PROJECT_TMP, 'shots')
     : path.join(runPaths(copy.root, copy.run).shots, copy.task);
-};
-
-/**
- * What a play over several widths says when its steps act: each width is played on one server, so the next starts from
- * what the first changed there — a run's crate queue gave its real answer at 1440 alone, 390 meeting the share spent.
- */
-export const sharedServerNote = (widths: number, steps: readonly { kind: string }[]): string | undefined =>
-  widths > 1 && steps.some(step => ACTING.has(step.kind))
-    ? `Each width played on one server: what the first width’s steps changed there (a share spent, a vote cast) is what the next starts from${steps.some(step => step.kind === 'action') ? ' — its actions ran at the first width alone' : ''} — play each width alone, after plitzi server reset, to read each from a cold start.`
-    : undefined;
-
-/**
- * A play that failed at one width, and — past the first — that the widths before it played on the same server: a run's
- * tester dismissed a report at 390, read "not on the page" of it at 1440, and went on to try three more names.
- */
-export const failedAtText = (
-  width: number,
-  problem: string,
-  playedBefore: number,
-  steps: readonly { kind: string }[]
-): string => {
-  const shared = playedBefore > 0 ? sharedServerNote(playedBefore + 1, steps) : undefined;
-
-  return `At ${String(width)} px: ${problem}${shared ? `\n${shared}` : ''}`;
 };
 
 /**
@@ -86,6 +61,8 @@ export const failedAtText = (
 
 export interface PlayOptions extends VisitorOptions {
   steps?: string;
+  /** One of the space's journeys, by id: played first, its checks held, and the play goes on from where it leaves. */
+  journey?: string;
   /** The elements read after each step, `"ours => theirs"` with `--compare`. */
   read?: string[];
   compare?: string;
@@ -570,36 +547,7 @@ export const verdictOf = (
         ? [chalk.green(`✓ --same ${same.join(',')}: every step as ${other}'s`)]
         : unlike.map(line => chalk.red(`✗ --same: ${line}`));
 
-/** One thing `--read` names that is never a selector: an element's id, a list's row of one (`card:2`), a state key. */
-const READ_NAME = /^(?:[\w-]+(?::(?:\d+|last))?|state\.[\w.-]+)$/;
-
-/**
- * `--read a,b,c` as `--width 390,1440` takes them, and `--read 'a b c'` as its help says — by spaces or commas: a list of
- * names, each read; a selector's comma or space is kept (`.card, .row`, `.panel textarea`). A list holding a row
- * (`card:last`) or a state key (`state.roomRemoveAt`) is a list too: a run's scout read three as one, and a tester's
- * quoted list read as one name.
- */
-export const readTargets = (read: readonly string[] = []): string[] =>
-  read.flatMap(each => {
-    const parts = each.split(/[\s,]+/).filter(Boolean);
-
-    return parts.length > 1 && parts.every(part => READ_NAME.test(part)) ? parts : [each];
-  });
-
-/** The steps asked — none with `--read` alone: the page as it rests, the start read and nothing played. */
-export const stepsOf = (options: Pick<PlayOptions, 'steps' | 'read'>): PlayStep[] | { problem: string } => {
-  if ((options.steps ?? '').trim() !== '') {
-    const acting = playingSteps(options.steps, 'page play');
-
-    return 'problem' in acting ? { problem: `${acting.problem}.` } : acting;
-  }
-
-  return (options.read ?? []).length > 0
-    ? []
-    : { problem: 'page play needs --steps — or --read alone, to read the page as it rests.' };
-};
-
-export const play = async (route: string, options: PlayOptions): Promise<void> => {
+export const play = async (given: string | undefined, options: PlayOptions): Promise<void> => {
   const project = await projectHere('whose page to play');
   if (!project) {
     return;
@@ -611,6 +559,16 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
 
     return;
   }
+
+  // Where it starts: the page given — or the one a journey opens on, played first.
+  const start = await playStart(project, given, options);
+  if ('problem' in start) {
+    fail(start.problem);
+
+    return;
+  }
+
+  const { route, journey: fromJourney } = start;
   const same = (options.same ?? []).filter((each): each is PlaySame => (PLAY_SAME as readonly string[]).includes(each));
   if (options.same && same.length !== options.same.length) {
     fail(`--same takes ${PLAY_SAME.join(', ')}: what moved, what is shown, what takes a press.`);
@@ -663,6 +621,23 @@ export const play = async (route: string, options: PlayOptions): Promise<void> =
       });
       if (!ours.answered) {
         unanswered(ours.problem ?? `nothing answers at ${where.origin}${route}`);
+
+        return;
+      }
+
+      // The journey first, as the engine plays it — its steps pressed and its checks held — at this play's width: what
+      // follows starts where it leaves the page.
+      const unheld = fromJourney
+        ? await playJourneyFirst(ours.page, fromJourney, {
+            origin: where.origin,
+            width,
+            first: results.length === 0,
+            scheme: options.scheme
+          })
+        : undefined;
+      if (unheld !== undefined) {
+        await ours.page.close();
+        fail(unheld);
 
         return;
       }

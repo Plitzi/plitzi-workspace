@@ -1,8 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { SpaceRuntimeEnvironment, SpaceRuntimeSizeOption } from '@plitzi/sdk-shared';
@@ -81,11 +81,7 @@ const RuntimeSize = ({ environment, size, status, sizes, onChange }: RuntimeSize
           The processing power and memory this runtime may use. Applying a new size restarts it.
         </span>
       )}
-      {problem && (
-        <Alert intent="error" size="xs" solid={false}>
-          {problem}
-        </Alert>
-      )}
+      {problem && <Notice tone="danger">{problem}</Notice>}
     </div>
   );
 };

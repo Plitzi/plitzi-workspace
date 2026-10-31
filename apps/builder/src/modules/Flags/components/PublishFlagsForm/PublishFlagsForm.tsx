@@ -1,8 +1,9 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
+
+import Notice from '@pmodules/App/components/Notice';
 
 import type { MouseEvent } from 'react';
 
@@ -33,11 +34,11 @@ const PublishFlagsForm = ({ onClose, onSubmit }: PublishFlagsFormProps) => {
   return (
     <Form form={form} onSubmit={handleSubmit} className="gap-4">
       <Form.Body>
-        <Alert className="mb-4" intent="info" size="sm">
+        <Notice tone="info" className="mb-4">
           Sends the flags as the draft declares them now to the environment. Flags are kept apart from snapshots: no new
           snapshot is made, the pages the environment serves switch now, and nothing else you are editing goes with
           them.
-        </Alert>
+        </Notice>
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>
           <option value="staging">Staging</option>

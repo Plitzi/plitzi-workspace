@@ -246,7 +246,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                 {!bindingFormValues[fkey] && (
                   <Button onClick={handleClickAddBinding(fkey)} size="sm" className="w-full" iconPlacement="before">
                     <Button.Icon icon="fas fa-link" />
-                    Add Binding
+                    Add binding
                   </Button>
                 )}
               </ContainerCollapsable.Content>

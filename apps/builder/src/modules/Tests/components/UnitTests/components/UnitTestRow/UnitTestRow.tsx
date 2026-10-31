@@ -13,12 +13,14 @@ export type UnitTestRowProps = {
   result?: TSpaceUnitTestResult;
   /** What is wrong with it as written, each a sentence: marked, and said under it. */
   problems?: readonly string[];
+  /** Read, never written: a role that does not write the tests. */
+  readOnly?: boolean;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
 };
 
 /** One unit test: what it holds of which element, and how it went — what it missed, said, when it failed. */
-const UnitTestRow = ({ test, result, problems = [], onEdit, onRemove }: UnitTestRowProps) => {
+const UnitTestRow = ({ test, result, problems = [], readOnly = false, onEdit, onRemove }: UnitTestRowProps) => {
   const handleEdit = useCallback(() => onEdit(test.id), [onEdit, test.id]);
   const handleRemove = useCallback(() => onRemove(test.id), [onRemove, test.id]);
 
@@ -59,12 +61,16 @@ const UnitTestRow = ({ test, result, problems = [], onEdit, onRemove }: UnitTest
             Fails
           </Badge>
         )}
-        <Button size="sm" intent="secondary" onClick={handleEdit}>
-          Edit
-        </Button>
-        <Button size="sm" intent="danger" title="Remove" onClick={handleRemove}>
-          <i className="fa-solid fa-trash" />
-        </Button>
+        {!readOnly && (
+          <>
+            <Button size="sm" intent="secondary" onClick={handleEdit}>
+              Edit
+            </Button>
+            <Button size="sm" intent="danger" title="Remove" onClick={handleRemove}>
+              <i className="fa-solid fa-trash" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -113,6 +113,8 @@ export type AppProps = {
   forcedFlags?: Record<string, boolean>;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */
   runStatus?: boolean;
+  /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
+  inspector?: boolean;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };

@@ -130,7 +130,10 @@ const emptyConnection = (typename: string) => ({
   __typename: typename
 });
 
-/** The space's tests as the mocked backend keeps them: what the last save stored, every unit test passing. */
+/**
+ * The space's tests as the mocked backend keeps them: what the last save stored, every unit test passing — and two of
+ * a month's ten plays on the server used, which a page shows only where the server says a plan.
+ */
 const testsAnswer = (tests: { unit?: { id: string; title: string }[]; e2e?: { id: string }[] }) => ({
   tests,
   problems: [],
@@ -145,6 +148,7 @@ const testsAnswer = (tests: { unit?: { id: string; title: string }[]; e2e?: { id
     __typename: 'SpaceUnitTestResult'
   })),
   e2eNotRun: (tests.e2e ?? []).map(test => test.id),
+  serverPlays: { used: 2, limit: 10, resetsOn: '2026-11-01', __typename: 'SpaceServerPlays' },
   __typename: 'SpaceTests'
 });
 
@@ -241,6 +245,13 @@ const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string
           }))
         })),
         notRun: null,
+        // Each journey played counted against the month, past the two the tests' answer says were used.
+        serverPlays: {
+          used: 2 + (testsOf(space).e2e ?? []).length,
+          limit: 10,
+          resetsOn: '2026-11-01',
+          __typename: 'SpaceServerPlays'
+        },
         __typename: 'SpaceE2eRun'
       }
     }

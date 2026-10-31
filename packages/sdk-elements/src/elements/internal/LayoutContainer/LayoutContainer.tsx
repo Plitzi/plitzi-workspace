@@ -6,7 +6,7 @@ import { useCallback, useEffect } from 'react';
 
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
-import { boxOf, maskFrameOf } from './mask';
+import { boxOf, chromeSides, maskFrameOf } from './mask';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -69,18 +69,22 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
     const frame = maskFrameOf(parent);
     const frameRect = frame.getBoundingClientRect();
     const scale = frame.offsetWidth > 0 ? frameRect.width / frame.offsetWidth : 1;
-    const top = (childRect.top - frameRect.top) / scale - frame.clientTop;
-    const left = (childRect.left - frameRect.left) / scale - frame.clientLeft;
-    const right = left + childRect.width / scale;
-    const bottom = top + childRect.height / scale;
+    const y = (childRect.top - frameRect.top) / scale - frame.clientTop;
+    const x = (childRect.left - frameRect.left) / scale - frame.clientLeft;
+    // The hole runs to the shell's edge on every side the shell draws nothing on: that room is the page's.
+    const drawn = chromeSides(parent, child, childRect);
+    const top = drawn.above ? `${String(y)}px` : '0';
+    const left = drawn.left ? `${String(x)}px` : '0';
+    const right = drawn.right ? `${String(x + childRect.width / scale)}px` : '100%';
+    const bottom = drawn.below ? `${String(y + childRect.height / scale)}px` : '100%';
 
     const clip = `
       polygon(
         evenodd,
         /* outer rect */
         0 0, 100% 0, 100% 100%, 0% 100%, 0 0,
-        /* inner rect */ 
-        ${left}px ${top}px, ${right}px ${top}px, ${right}px ${bottom}px, ${left}px ${bottom}px, ${left}px ${top}px
+        /* inner rect */
+        ${left} ${top}, ${right} ${top}, ${right} ${bottom}, ${left} ${bottom}, ${left} ${top}
       )`;
 
     parent.style.setProperty('--child-clip', clip);

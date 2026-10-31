@@ -48,12 +48,12 @@ export const test = async (
       return { saved: false, problems: read.problems };
     }
 
-    if (!ctx.persisters.schema) {
+    if (!ctx.persisters.tests) {
       return { saved: false, problems: ['This connection cannot write the space'] };
     }
 
     const next: Schema = { ...schema, tests: read.tests };
-    await ctx.persisters.schema(next);
+    await ctx.persisters.tests(next);
 
     return { saved: true, ...standing(next) };
   }

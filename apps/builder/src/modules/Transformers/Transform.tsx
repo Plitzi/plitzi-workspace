@@ -1,5 +1,4 @@
 import Accordion from '@plitzi/plitzi-ui/Accordion';
-import Alert from '@plitzi/plitzi-ui/Alert';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
@@ -14,6 +13,7 @@ import { useNetwork } from '@plitzi/sdk-shared/hooks';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { useTheme } from '@plitzi/sdk-shared/theme';
+import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import TransformActions from './TransformActions';
@@ -185,7 +185,7 @@ const Transform = () => {
           <TransformPreview preview={preview} previewMode />
           {warning && !hideAlert && (
             <div className="absolute right-1 bottom-1 left-1">
-              <Alert intent="warning" solid={false} size="xs" closeable onClick={handleClickCloseAlert}>
+              <Notice tone="caution" onClose={handleClickCloseAlert}>
                 {mode === 'html-tailwind' && (
                   <p className="inline gap-1">
                     {'Tailwind uses a mobile-first breakpoint system, '}
@@ -199,7 +199,7 @@ const Transform = () => {
                     {' for more information or update your settings'}
                   </p>
                 )}
-              </Alert>
+              </Notice>
             </div>
           )}
         </div>

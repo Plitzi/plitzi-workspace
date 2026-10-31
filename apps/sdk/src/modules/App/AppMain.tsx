@@ -69,6 +69,8 @@ export type AppMainProps = {
   forcedFlags?: Record<string, boolean>;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
   runStatus?: boolean;
+  /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
+  inspector?: boolean;
   /** What the embedding application hands this space — see `PlitziSdkProps`. */
   hostData?: Record<string, unknown>;
   /** What it is willing to be asked to do — see `PlitziSdkProps`. */
@@ -101,6 +103,7 @@ const AppMain = ({
   overQuota = false,
   badge = false,
   runStatus = false,
+  inspector = false,
   analytics,
   onInitEventBridge,
   hostData,
@@ -216,6 +219,7 @@ const AppMain = ({
                         scroll="document"
                         qa
                         run={runStatus}
+                        inspector={inspector}
                         innerClassName={clsx({ flex: renderMode === 'iframe' })}
                       >
                         <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />

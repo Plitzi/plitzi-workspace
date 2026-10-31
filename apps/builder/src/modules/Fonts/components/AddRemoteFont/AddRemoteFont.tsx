@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useState } from 'react';
 
 import { FontValidationError, parseSpaceFont } from '@plitzi/sdk-shared/style';
+import Notice from '@pmodules/App/components/Notice';
 
 import type { SpaceFont } from '@plitzi/sdk-shared';
 
@@ -87,11 +87,7 @@ const AddRemoteFont = ({ onAdd }: AddRemoteFontProps) => {
           Add font
         </Button>
       </Flex>
-      {error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {error}
-        </Alert>
-      )}
+      {error && <Notice tone="danger">{error}</Notice>}
       <span className="text-[11px] text-gray-500 dark:text-zinc-400">
         Plitzi links this stylesheet as it is: it is fetched by the visitor from that origin, and never proxied or
         cached here.

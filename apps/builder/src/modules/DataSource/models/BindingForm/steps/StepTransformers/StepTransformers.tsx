@@ -153,7 +153,7 @@ const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) 
               );
             })}
             <Button size="xs" onClick={handleClickAdd}>
-              Add Transformer
+              Add transformer
             </Button>
           </div>
         </div>

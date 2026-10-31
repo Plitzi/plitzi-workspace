@@ -66,6 +66,11 @@ const capturing = (space: Space): { persisters: Persisters; saved: () => Space }
 
         return Promise.resolve();
       },
+      tests: schema => {
+        state.schema = schema;
+
+        return Promise.resolve();
+      },
       style: style => {
         state.style = style;
 

@@ -1,4 +1,4 @@
-import { useCallback, use, useEffect, useMemo, useRef } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -11,6 +11,12 @@ export type BuilderBreadcrumbProps = {
   limit?: number;
 };
 
+/** The start of a trail scrolled past, faded rather than cut: the eye reads that more of it is there. */
+const FADED_START = {
+  maskImage: 'linear-gradient(to right, transparent, black 3rem)',
+  WebkitMaskImage: 'linear-gradient(to right, transparent, black 3rem)'
+};
+
 const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
   const [[flat, elementHovered, setHovered, elementSelected, setSelected]] = useBuilderStore([
     'schema.flat',
@@ -20,17 +26,9 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
     'setSelected'
   ]);
   const ref = useRef<HTMLUListElement>(null);
+  // The trail is read from its end — the element selected — and what it scrolled past is faded in at the left, not cut.
+  const [cut, setCut] = useState(false);
   const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
-
-  useEffect(() => {
-    if (ref.current) {
-      const {
-        current: { scrollWidth, offsetWidth }
-      } = ref;
-
-      ref.current.scrollLeft = scrollWidth - offsetWidth;
-    }
-  }, []);
 
   const getPath = (id?: string): { id: string; label: string; type: string }[] => {
     if (!id) {
@@ -84,11 +82,23 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
     return path;
   }, [path, limit]);
 
+  useEffect(() => {
+    if (ref.current) {
+      const {
+        current: { scrollWidth, offsetWidth }
+      } = ref;
+
+      ref.current.scrollLeft = scrollWidth - offsetWidth;
+      setCut(scrollWidth > offsetWidth);
+    }
+  }, [subPath]);
+
   return (
     <ul
       ref={ref}
       tabIndex={-1}
       className="builder__breadcrumb flex gap-2 overflow-x-auto px-2"
+      style={cut ? FADED_START : undefined}
       onMouseLeave={handleMouseLeave}
     >
       {subPath.length < path.length && (

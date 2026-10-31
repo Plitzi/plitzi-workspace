@@ -1,8 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
 import { useTheme } from '@plitzi/sdk-shared/theme';
+import Notice from '@pmodules/App/components/Notice';
 
 import ExportLocked from './components/ExportLocked';
 import ExportToolbar from './components/ExportToolbar';
@@ -55,11 +55,7 @@ const ExportSpace = () => {
       />
       <p className="text-xs text-zinc-500 dark:text-zinc-400">{descriptionOf(session.format)}</p>
       {session.locked && <ExportLocked planName={session.planName} onPickJson={pickJson} />}
-      {!session.locked && session.error && (
-        <Alert intent="error" size="sm">
-          {session.error}
-        </Alert>
-      )}
+      {!session.locked && session.error && <Notice tone="danger">{session.error}</Notice>}
       {!session.locked && (
         <ExportViewer
           paths={session.paths}

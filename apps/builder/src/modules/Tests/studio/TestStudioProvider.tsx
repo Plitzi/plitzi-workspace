@@ -8,7 +8,7 @@ import AppContext from '@pmodules/App/AppContext';
 
 import { createCanvasPage } from './canvasPage';
 import { deviceOf, documentOf, needsServer, playOf, seconds, stateOf, toneOf } from './flowPlay';
-import { sentenceText, stepElementOf } from './sentences';
+import { checkTitleOf, sentenceText, stepElementOf } from './sentences';
 import { clearSpotlight, spotlight } from './spotlight';
 import { pauseBefore, STEP_DELAY_S, stepDelayOf } from './stepDelay';
 import TestStudioContext from './TestStudioContext';
@@ -33,6 +33,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const { setTheme } = useTheme(SPACE_THEME_AREA);
   const [[navigate, flat, definition]] = useBuilderStore(['navigation.navigate', 'schema.flat', 'schema.definition']);
   const [runtimeState, setRuntimeState] = useBuilderStore('runtime.state');
+  const [schema] = useBuilderStore('schema');
   const store = useSaveSpaceTests();
   // The person's own, kept as the builder keeps its other preferences.
   const [storedDelay, setStoredDelay] = useStorage<number>('builder-state.tests.stepDelay', STEP_DELAY_S);
@@ -74,6 +75,9 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   );
   const flatRef = useRef(flat);
   flatRef.current = flat;
+  // The document as edited, for the element checks a journey holds — read when it plays, not a reason to play again.
+  const schemaRef = useRef(schema);
+  schemaRef.current = schema;
 
   const setChosen = useCallback((next: E2eTest | undefined) => {
     flowRef.current = next;
@@ -155,6 +159,8 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
         origin: window.location.origin,
         expectMs: CHECK_MS,
         signal,
+        // Its element checks as they stand in the area, saved or not.
+        space: { ...schemaRef.current, tests: testsRef.current },
         open: async opened => {
           await opened.goto(new URL(played.page, window.location.origin).href, { waitUntil: 'domcontentloaded' });
         },
@@ -168,7 +174,11 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   /** A step played, as a line of the log. */
   const lineOf = useCallback(
     (played: E2eTest, index: number, step: { ok: boolean; read?: string }, started: number): PlayLogLine => {
-      const said = sentenceText(played.steps[index], target => elementNameOf(flatRef.current, target));
+      const said = sentenceText(
+        played.steps[index],
+        target => elementNameOf(flatRef.current, target),
+        checkTitleOf(testsRef.current.unit ?? [])
+      );
 
       return {
         at: Date.now() - started,

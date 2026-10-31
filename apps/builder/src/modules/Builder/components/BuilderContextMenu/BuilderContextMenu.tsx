@@ -275,13 +275,13 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
             <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
           )}
           {!!items && canSnippet && (
-            <BuilderContextMenuItem title="Save As Snippet" hint={REUSE.snippet.hint} onClick={handleClickAsSnippet}>
+            <BuilderContextMenuItem title="Save as snippet" hint={REUSE.snippet.hint} onClick={handleClickAsSnippet}>
               <i className={REUSE.snippet.icon} />
             </BuilderContextMenuItem>
           )}
           {canDelete && !!element?.definition.parentId && (
             <BuilderContextMenuItem
-              title="Save As Component"
+              title="Save as component"
               hint={REUSE.component.hint}
               onClick={handleClickAsComponent}
             >
@@ -292,7 +292,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
             <>
               <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
               <BuilderContextMenuItem
-                title="Delete Element"
+                title="Delete element"
                 intent="danger"
                 shortcut={deleteKey}
                 onClick={handleClickDelete}

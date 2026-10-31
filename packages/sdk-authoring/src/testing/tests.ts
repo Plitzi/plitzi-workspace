@@ -33,7 +33,8 @@ const STEP_FIELDS: Readonly<Record<E2eStep['kind'], Readonly<Record<string, 'str
   expectState: { key: 'string', value: 'any' },
   expectAttribute: { element: 'string', name: 'string', value: 'any' },
   expectStyle: { element: 'string', property: 'string', value: 'string' },
-  expectPosition: { relation: 'string' }
+  expectPosition: { relation: 'string' },
+  expectCheck: { check: 'string' }
 };
 
 const UNIT_FIELDS: Readonly<Record<UnitExpectation['kind'], Readonly<Record<string, 'string' | 'number' | 'any'>>>> = {
@@ -103,6 +104,9 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
     (isRecord(value.answers) && Object.values(value.answers).every(answer => isRecord(answer)))
       ? []
       : [`${at}.answers: what each action answers, by its id — an object each`]),
+    ...(value.given === undefined || (isRecord(value.given) && isRecord(value.given.state))
+      ? []
+      : [`${at}.given: { state: { <key>: <value> } } — the state it starts with`]),
     ...(Array.isArray(value.steps) ? [] : [`${at}.steps: a list of steps`])
   ];
   const steps = Array.isArray(value.steps) ? value.steps : [];

@@ -69,6 +69,11 @@ export type DevToolsContainerProps = {
    * server, never guessed — asked of a server with none, it answers 404 every few seconds in the page's console.
    */
   run?: boolean;
+  /**
+   * The page's state bridge alone (`window.__plitzi`) — no panel, no badge: a page a test runner plays, which reads and
+   * sets the space's state through it. Said by the server, for a session it minted for tests.
+   */
+  inspector?: boolean;
 };
 
 const DevToolsContainer = ({
@@ -81,6 +86,7 @@ const DevToolsContainer = ({
   scroll = 'container',
   qa = false,
   run = false,
+  inspector = false,
   devToolsStyle = '',
   devToolsStyleLink = '',
   devToolsIconsLink = ''
@@ -114,9 +120,9 @@ const DevToolsContainer = ({
   const dockedAt = hydrated ? orientation : DEFAULT_ORIENTATION;
   // Only the selected instance renders the (single) panel; all enabled instances still register in the dropdown.
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
-  useRegisterRootStore(enabled);
+  useRegisterRootStore(enabled || inspector);
   useRegisterQueriesStore(isSelected, effectiveInstanceId);
-  useAgentInspector(isSelected);
+  useAgentInspector(enabled ? isSelected : inspector);
 
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),

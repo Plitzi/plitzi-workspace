@@ -45,6 +45,11 @@ no browser.
   none — is the warning `test-unreadable` of `lintSpace` and `author`, wherever the space was changed: a `plitzi space
   lint`, an MCP batch ("This change leaves a test of the space unreadable…"), the builder. Fix the test, or the space.
 - **A journey may start on a wrong address** its space answers with its own not-found page (`slug: '*'`), to test it.
+- **Both kinds at once.** `e2e.expectCheck('<element check id>')` holds an element check where the journey has got to —
+  its element resolved for the page's state then, not the check's own `given.state`: write a rule once as a check, hold
+  it at each point a flow reaches. `given: { state: { … } }` starts a journey with a state, as the page opens: a case
+  reached without the steps to it. Both use the page's state bridge — the builder, `plitzi test` and the server's runner
+  all have it.
 - **A `type` step names the element** — a form control's id — and writes in the field inside it; a select is chosen
   from (its option's value or label), a date, a time or a range set whole.
 - **A press acts on the copy a visitor sees**: the first shown, or the one named (`row:3`, `row:last`). An element on

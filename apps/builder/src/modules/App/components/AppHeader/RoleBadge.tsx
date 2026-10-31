@@ -16,7 +16,7 @@ const RoleBadge = () => {
   return (
     <span
       id="header-role"
-      className="rounded-full border border-gray-200 px-2 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+      className="rounded-full border border-gray-300 px-2 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
       title="Your role on this space: what the builder offers you is what it allows"
     >
       {access.label}

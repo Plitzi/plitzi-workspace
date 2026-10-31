@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { sameValue } from '@plitzi/sdk-shared/history';
 
 import { answered, dragElement, giveValue, hiddenAtWidth, shownCopy } from './act';
@@ -5,10 +6,11 @@ import { awaitHydration, fieldsOf, pressFailure, pressOnce, settle, targetId, ta
 import { parseRelation, relationElements, relationHolds, sidePx } from './position';
 import { answerAction } from '../answerAction';
 import { openPage } from '../settle';
+import { runUnitTest } from '../unit/run';
 
 import type { E2ePage } from './page';
 import type { Box } from './position';
-import type { E2eAction, E2eExpectation, E2eStep, E2eTest } from '@plitzi/sdk-shared';
+import type { E2eAction, E2eExpectation, E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
 
 /**
  * An e2e test run in a browser: its page opened as a visitor's, each step played as the CLI learnt to play
@@ -65,6 +67,11 @@ export interface E2eRunOptions {
   beforeStep?: (step: E2eStep, index: number) => Promise<void>;
   /** Stops the run before its next step: the rest said as not run, the run as stopped. */
   signal?: AbortSignal;
+  /**
+   * The document the journey's element checks are read from (`expectCheck`): the builder's as edited, the server's
+   * draft, the project's space as authored. Without it, a step that holds one says so.
+   */
+  space?: Schema;
 }
 
 /** A step in words. */
@@ -108,6 +115,8 @@ export const stepText = (step: E2eStep): string => {
       return `${step.element} ${step.property} ${step.at ?? '='} ${step.value}`;
     case 'expectPosition':
       return step.relation;
+    case 'expectCheck':
+      return `element check ${step.check} holds`;
   }
 };
 
@@ -303,8 +312,43 @@ const act = async (page: E2ePage, step: E2eAction, origin: string, clockHeld: bo
   return undefined;
 };
 
+/**
+ * Why an element check of the space does not hold for the page as it is now — its element resolved for the page's state
+ * and sources, the sources the check names itself laid over them — or nothing when it does.
+ */
+const checkHeld = async (page: E2ePage, id: string, space: Schema | undefined): Promise<string | undefined> => {
+  const check = space?.tests?.unit?.find(each => each.id === id);
+  if (!space || !check) {
+    return space
+      ? `no element check of the space is "${id}"`
+      : 'this player was given no document to read the space’s element checks from';
+  }
+
+  const [state, sources] = await Promise.all([
+    bridge(page, { method: 'state', args: [] }),
+    bridge(page, { method: 'sources', args: [] })
+  ]);
+  if (state === 'none' || sources === 'none') {
+    return NO_BRIDGE;
+  }
+
+  const live = isRecord(sources.answer) ? sources.answer : {};
+  const result = runUnitTest(space, {
+    ...check,
+    given: {
+      state: isRecord(state.answer) ? state.answer : {},
+      sources: {
+        ...Object.fromEntries(Object.entries(live).filter(([name]) => name !== 'state')),
+        ...check.given?.sources
+      }
+    }
+  });
+
+  return result.ok ? undefined : (result.problem ?? result.misses.join('; '));
+};
+
 /** What an expectation read, when it does not hold — or nothing when it does. */
-const unheld = async (page: E2ePage, step: E2eExpectation): Promise<string | undefined> => {
+const unheld = async (page: E2ePage, step: E2eExpectation, space: Schema | undefined): Promise<string | undefined> => {
   switch (step.kind) {
     case 'expectShown':
     case 'expectHidden': {
@@ -363,6 +407,8 @@ const unheld = async (page: E2ePage, step: E2eExpectation): Promise<string | und
         ? undefined
         : `it is ${read.answer === undefined ? 'nothing' : JSON.stringify(read.answer)}`;
     }
+    case 'expectCheck':
+      return checkHeld(page, step.check, space);
     case 'expectPosition': {
       const relation = parseRelation(step.relation);
       if ('problem' in relation) {
@@ -392,12 +438,17 @@ const unheld = async (page: E2ePage, step: E2eExpectation): Promise<string | und
 };
 
 /** An expectation held for its time: read again until it holds, or the time is up and what it read is said. */
-const expectHeld = async (page: E2ePage, step: E2eExpectation, ms: number): Promise<string | undefined> => {
+const expectHeld = async (
+  page: E2ePage,
+  step: E2eExpectation,
+  ms: number,
+  space: Schema | undefined
+): Promise<string | undefined> => {
   const until = Date.now() + ms;
-  let read = await unheld(page, step);
+  let read = await unheld(page, step, space);
   while (read !== undefined && read !== NO_BRIDGE && Date.now() < until) {
     await page.waitForTimeout(100);
-    read = await unheld(page, step);
+    read = await unheld(page, step, space);
   }
 
   return read;
@@ -410,11 +461,28 @@ const EXPECTATIONS: ReadonlySet<E2eStep['kind']> = new Set([
   'expectState',
   'expectAttribute',
   'expectStyle',
-  'expectPosition'
+  'expectPosition',
+  'expectCheck'
 ]);
 
 /** Whether a step is something that must hold, not something done. */
 export const isExpectation = (step: E2eStep): step is E2eExpectation => EXPECTATIONS.has(step.kind);
+
+/** The state a journey starts with, set on the page before its first step — or why it could not be. */
+const startFrom = async (page: E2ePage, test: E2eTest): Promise<string | undefined> => {
+  const entries = Object.entries(test.given?.state ?? {});
+  for (const [key, value] of entries) {
+    if ((await bridge(page, { method: 'setState', args: [key, value] })) === 'none') {
+      return "it starts with a state, set through window.__plitzi — which the SDK's dev tools put on a page in debug mode, and this page has none";
+    }
+  }
+
+  if (entries.length > 0) {
+    await settle(page);
+  }
+
+  return undefined;
+};
 
 /** One e2e test run on a page: opened, its steps played and held in turn, the first that fails the last played. */
 export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOptions): Promise<E2eResult> => {
@@ -449,6 +517,11 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     return failed(late);
   }
 
+  const given = await startFrom(page, test);
+  if (given !== undefined) {
+    return failed(given);
+  }
+
   const steps: E2eStepResult[] = [];
   let stopped = false;
   let halted = false;
@@ -471,7 +544,7 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
     let read: string | undefined;
     try {
       read = isExpectation(step)
-        ? await expectHeld(page, step, expectMs)
+        ? await expectHeld(page, step, expectMs, options.space)
         : await act(page, step, origin, test.clock !== undefined);
     } catch (error) {
       read = `it could not be played: ${pressFailure(error)}`;

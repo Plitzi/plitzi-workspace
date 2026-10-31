@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { boxOf, maskFrameOf } from './mask';
+import { boxOf, chromeSides, maskFrameOf } from './mask';
 
 const boxed = (element: HTMLElement, left: number, top: number, width: number, height: number): HTMLElement => {
   element.getBoundingClientRect = () => new DOMRect(left, top, width, height);
@@ -36,5 +36,25 @@ describe('the layout mask', () => {
     layout.style.display = 'contents';
 
     expect(maskFrameOf(layout)).toBe(page);
+  });
+
+  it('says which sides of its page a shell draws on — and leaves the room it only holds open', () => {
+    const element = (id: string, left: number, top: number, width: number, height: number) => {
+      const node = boxed(document.createElement('div'), left, top, width, height);
+      node.dataset.plitziEl = id;
+
+      return node;
+    };
+    const layout = document.createElement('div');
+    const body = element('body', 200, 60, 800, 400);
+    body.append(element('card', 220, 80, 300, 100));
+    layout.append(element('header', 0, 0, 1200, 60), body);
+    const page = new DOMRect(200, 60, 800, 400);
+
+    expect(chromeSides(layout, body, page)).toEqual({ above: true, below: false, left: false, right: false });
+
+    layout.append(element('footer', 0, 460, 1200, 80), element('sidebar', 0, 60, 200, 400));
+
+    expect(chromeSides(layout, body, page)).toEqual({ above: true, below: true, left: true, right: false });
   });
 });

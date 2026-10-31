@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Badge from '@plitzi/plitzi-ui/Badge';
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import RuntimePower from '../RuntimePower';
@@ -94,11 +94,7 @@ const RuntimeEnvironments = ({ environments, sizes, idleMinutes, onChange }: Run
             sizes={sizes}
             onChange={onChange}
           />
-          {runtime.error && (
-            <Alert intent="error" size="xs" solid={false}>
-              {runtime.error}
-            </Alert>
-          )}
+          {runtime.error && <Notice tone="danger">{runtime.error}</Notice>}
           {runtime.status === 'ready' && (
             <span className="text-xs text-gray-500 dark:text-zinc-400">
               {runtime.tasks.length} tasks

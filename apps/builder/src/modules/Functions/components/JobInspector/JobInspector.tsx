@@ -1,4 +1,4 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
+import Notice from '@pmodules/App/components/Notice';
 
 import JobRun from './components/JobRun';
 import { durationLabel, watchLabel } from '../../helpers';
@@ -53,11 +53,7 @@ const JobInspector = ({ job }: JobInspectorProps) => {
         {job.watch && <span className="text-[11px] text-gray-500 dark:text-zinc-400">And whoever started it.</span>}
       </InspectorSection>
       <InspectorSection title="Runs" hint="This space’s, newest first — live while one moves.">
-        {error && (
-          <Alert intent="error" size="sm" solid={false}>
-            {error}
-          </Alert>
-        )}
+        {error && <Notice tone="danger">{error}</Notice>}
         {!job.saved && (
           <span className="text-xs text-gray-500 dark:text-zinc-400">Save the code, and the code can start it.</span>
         )}

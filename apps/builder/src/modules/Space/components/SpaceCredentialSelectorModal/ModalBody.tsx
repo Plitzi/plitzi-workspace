@@ -40,7 +40,7 @@ const ModalBody = ({
               : `${credentials.length} credentials configured`}
           </span>
           <Button size="xs" onClick={onClickAddCredential}>
-            Add Credential
+            New credential
           </Button>
         </div>
       )}
@@ -56,7 +56,7 @@ const ModalBody = ({
       {(!credentials || credentials.length === 0) && (
         <SpaceCredentialsEmpty>
           <Button size="xs" onClick={onClickAddCredential}>
-            Add Credential
+            New credential
           </Button>
         </SpaceCredentialsEmpty>
       )}

@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
@@ -6,6 +5,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useRef, useState } from 'react';
 
 import { FontValidationError, parseSpaceFont } from '@plitzi/sdk-shared/style';
+import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { FontStyle, SpaceFont } from '@plitzi/sdk-shared';
@@ -130,11 +130,7 @@ const AddHostedFont = ({ fonts, onAdd, onUpdate }: AddHostedFontProps) => {
       <Button size="xs" className="ml-auto" loading={busy} disabled={!family || busy} onClick={handleUpload}>
         Upload face
       </Button>
-      {error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {error}
-        </Alert>
-      )}
+      {error && <Notice tone="danger">{error}</Notice>}
       <span className="text-[11px] text-gray-500 dark:text-zinc-400">
         One file per weight and slant. You are responsible for holding a licence that allows this font to be served from
         your site.

@@ -1,4 +1,4 @@
-import { e2e, e2eResultText, runE2eTest } from '@plitzi/sdk-authoring';
+import { authorSpace, button, e2e, e2eResultText, runE2eTest, text, unit } from '@plitzi/sdk-authoring';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { HARNESS_ORIGIN, openHarness, renderSpace } from '../../helpers/harness';
@@ -140,5 +140,66 @@ describeTarget('harness', () => {
       '  ✓ said reads "l"'
     ]);
     expect(played.steps.at(-1)?.read).toContain('burger is on the page but hidden at this width');
+  });
+
+  // The hybrid: the journey drives the page, the space's own element checks hold its logic where the page got to.
+  test('starts with a state, and holds the space’s element checks for the state the journey reached', async ({
+    page
+  }) => {
+    const { schema } = authorSpace({
+      name: 'greeting',
+      permanentUrl: 'greeting',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            button({ id: 'go', content: 'Say hello' }),
+            text({ id: 'thanks', content: 'Thanks', visible: 'state.greeted' })
+          ]
+        }
+      ]
+    });
+    const space = {
+      ...schema,
+      tests: {
+        unit: [
+          unit.test({ id: 'thanks-waits', title: 'Thanks waits', element: 'thanks', expect: [unit.visible(false)] }),
+          unit.test({ id: 'thanks-shows', title: 'Thanks shows', element: 'thanks', expect: [unit.visible()] })
+        ]
+      }
+    };
+    // The page's state bridge, as the SDK's dev tools put it on a page in debug mode: a press writes the state.
+    const html = [
+      '<main data-hydrated><button data-plitzi-el="go"',
+      ' onclick="window.__plitzi.setState(\'greeted\', true)">Say hello</button></main>',
+      '<script>const kept = {}; window.__plitzi = { state: key => (key ? kept[key] : kept),',
+      ' sources: () => ({ state: kept }), setState: (key, value) => { kept[key] = value; return true; } };</script>'
+    ].join('');
+    const played = await runE2eTest(
+      page,
+      e2e.test({
+        id: 'greets',
+        title: 'A named visitor is thanked',
+        page: '/',
+        given: { state: { name: 'Ana' } },
+        steps: [
+          e2e.expectState('name', 'Ana'),
+          e2e.expectCheck('thanks-waits'),
+          e2e.click('go'),
+          e2e.expectCheck('thanks-shows'),
+          e2e.expectCheck('thanks-waits')
+        ]
+      }),
+      { origin: HARNESS_ORIGIN, open: () => page.setContent(html), expectMs: 1000, space }
+    );
+
+    expect(e2eResultText(played).slice(1)).toEqual([
+      '  ✓ state name is "Ana"',
+      '  ✓ element check thanks-waits holds',
+      '  ✓ click go',
+      '  ✓ element check thanks-shows holds',
+      '  ✗ element check thanks-waits holds — hidden expected, it is shown'
+    ]);
   });
 });

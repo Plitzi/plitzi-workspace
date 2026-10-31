@@ -5,8 +5,11 @@ import type { E2eStep, E2eTest, SpaceTests, UnitExpectation, UnitTest } from '@p
  * no browser, and e2e tests, a visitor's steps on a page — each edited as a list of rows whose fields its kind says.
  */
 
-/** What a field of a row holds: words, a number, any value (JSON when it reads as JSON), or an element of the space. */
-export type FieldKind = 'text' | 'number' | 'value' | 'element';
+/**
+ * What a field of a row holds: words, a number, any value (JSON when it reads as JSON), an element of the space, or one
+ * of its element checks.
+ */
+export type FieldKind = 'text' | 'number' | 'value' | 'element' | 'check';
 
 export type FieldSpec = { name: string; label: string; kind: FieldKind };
 
@@ -117,6 +120,10 @@ export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
   expectPosition: {
     label: 'Check where it sits',
     fields: [{ name: 'relation', label: 'Relation (a.bottom + 8 <= b.top)', kind: 'text' }]
+  },
+  expectCheck: {
+    label: 'Check an element check holds',
+    fields: [{ name: 'check', label: 'Element check', kind: 'check' }]
   }
 };
 
@@ -159,13 +166,24 @@ export const newE2eTest = (page: string, taken: readonly E2eTest[]): E2eTest => 
   steps: []
 });
 
-/** A row of a kind, its fields as the kind starts them: an element field the element given, the rest empty. */
-export const emptyOf = (kind: string, spec: KindSpec, elementId: string): Row => ({
+/**
+ * A row of a kind, its fields as the kind starts them: an element field the element given, an element check's the
+ * check given, the rest empty.
+ */
+export const emptyOf = (kind: string, spec: KindSpec, elementId: string, checkId = ''): Row => ({
   kind,
   ...Object.fromEntries(
     spec.fields.map(field => [
       field.name,
-      field.kind === 'element' ? elementId : field.kind === 'number' ? 0 : field.kind === 'value' ? true : ''
+      field.kind === 'element'
+        ? elementId
+        : field.kind === 'check'
+          ? checkId
+          : field.kind === 'number'
+            ? 0
+            : field.kind === 'value'
+              ? true
+              : ''
     ])
   )
 });
@@ -284,7 +302,8 @@ const EXPECTS = new Set<string>([
   'expectState',
   'expectAttribute',
   'expectStyle',
-  'expectPosition'
+  'expectPosition',
+  'expectCheck'
 ]);
 
 /**

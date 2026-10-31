@@ -18,8 +18,10 @@ import {
   stepKindOf,
   stepOf
 } from '../../helpers';
+import useMayTest from '../../hooks/useMayTest';
 import TestStudioContext from '../../studio/TestStudioContext';
 import FlowStrip from '../FlowStrip';
+import StartState from '../StartState';
 
 import type { E2eStep } from '@plitzi/sdk-shared';
 
@@ -63,7 +65,9 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
     [pageDefinitions, pageFolders]
   );
   const nameOf = useCallback((target: string) => elementNameOf(flat, target), [flat]);
-  const locked = mode !== 'idle';
+  const { mayTest } = useMayTest();
+  // Played by anyone; written only by whoever may write the tests — for the rest, every field reads as it is.
+  const locked = mode !== 'idle' || !mayTest;
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -75,6 +79,17 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
   const setSteps = useCallback((next: E2eStep[]) => flow && edit({ ...flow, steps: next }), [edit, flow]);
   const handleTitle = useCallback((title: string) => flow && edit({ ...flow, title }), [edit, flow]);
   const handlePage = useCallback((page: string) => flow && edit({ ...flow, page }), [edit, flow]);
+  const handleGiven = useCallback(
+    (state: Record<string, unknown> | undefined) => {
+      if (!flow) {
+        return;
+      }
+
+      const { given: _given, ...rest } = flow;
+      edit(state ? { ...rest, given: { state } } : rest);
+    },
+    [edit, flow]
+  );
   const handleWidth = useCallback((width: number) => () => flow && edit({ ...flow, width }), [edit, flow]);
   const handlePlay = useCallback(() => play(), [play]);
   const handleStepping = useCallback(() => play({ stepping: true }), [play]);
@@ -101,11 +116,11 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
     (kind: string) => {
       const spec = stepKindOf(kind);
       if (spec) {
-        setSteps([...steps, stepOf(emptyOf(kind, spec, elements[0]?.value ?? ''))]);
+        setSteps([...steps, stepOf(emptyOf(kind, spec, elements[0]?.value ?? '', studio.tests.unit?.[0]?.id))]);
         setEditing(steps.length);
       }
     },
-    [elements, setSteps, steps]
+    [elements, setSteps, steps, studio.tests.unit]
   );
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -312,7 +327,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             iconPlacement="before"
             size="xs"
             intent="secondary"
-            disabled={mode === 'playing'}
+            disabled={mode === 'playing' || !mayTest}
             title={mode === 'recording' ? 'Stop recording' : 'Add steps by using the page'}
             onClick={handleRecord}
           >
@@ -326,7 +341,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             iconPlacement="before"
             size="xs"
             intent={checking ? 'primary' : 'secondary'}
-            disabled={mode === 'playing'}
+            disabled={mode === 'playing' || !mayTest}
             title="Click something on the page that must show"
             onClick={handleCheck}
           >
@@ -445,6 +460,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                 Held here: the page above is as this step leaves it. Next step plays one more; Continue plays the rest.
               </div>
             )}
+            <StartState state={flow.given?.state} locked={locked} onChange={handleGiven} />
             {steps.length === 0 ? (
               <div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-gray-300 px-4 py-6 text-center dark:border-zinc-700">
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">No steps yet</span>
@@ -474,7 +490,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
         </div>
       ) : (
         <div className="flex grow items-center justify-center px-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Choose a flow to see it played on the page — or start a new one and write it by using the page.
+          Choose a journey to see it played on the page — or start a new one and write it by using the page.
         </div>
       )}
     </section>

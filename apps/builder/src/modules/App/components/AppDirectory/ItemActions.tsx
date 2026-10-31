@@ -151,7 +151,7 @@ const ItemActions = ({
           icon="fas fa-trash-alt"
           intent="danger"
           cursor="pointer"
-          title="Remove Page"
+          title="Remove page"
           onClick={handleClickRemove}
         />
       </Flex>

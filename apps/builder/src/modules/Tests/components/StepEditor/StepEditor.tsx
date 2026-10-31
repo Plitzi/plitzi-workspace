@@ -1,8 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback, useState } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import { emptyOf, STEP_KINDS, stepKindOf, stepOf } from '../../helpers';
+import TestStudioContext from '../../studio/TestStudioContext';
 import FieldInput from '../KindRow/components/FieldInput';
 
 import type { Row } from '../../helpers';
@@ -22,6 +23,7 @@ export type StepEditorProps = {
 const StepEditor = ({ index, step, elements, elementId, onDone, onRemove }: StepEditorProps) => {
   // An E2eStep is a row of its kind: a kind, and the fields that kind takes.
   const [row, setRow] = useState<Row>({ ...step });
+  const firstCheck = use(TestStudioContext).tests.unit?.[0]?.id;
   const spec = stepKindOf(row.kind);
 
   const handleKind = useCallback(
@@ -31,9 +33,9 @@ const StepEditor = ({ index, step, elements, elementId, onDone, onRemove }: Step
 
         const taken = stepKindOf(kind);
 
-        return taken ? { ...emptyOf(kind, taken, named), kind } : current;
+        return taken ? { ...emptyOf(kind, taken, named, firstCheck), kind } : current;
       }),
-    [elementId]
+    [elementId, firstCheck]
   );
   const handleField = useCallback(
     (name: string, value: unknown) => setRow(current => ({ ...current, [name]: value })),

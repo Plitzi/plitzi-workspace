@@ -7,6 +7,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
+import EmptyState from '@pmodules/App/components/EmptyState';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
@@ -168,9 +169,12 @@ const Fonts = () => {
     <div className="flex h-full w-full flex-col gap-2 p-2">
       <Flex direction="column" gap={1} className="max-h-[45%] min-h-0 overflow-y-auto">
         {fonts.length === 0 && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
-            This space declares no font of its own, so it renders in the stacks every machine already has.
-          </span>
+          <EmptyState
+            size="panel"
+            icon="fa-solid fa-font"
+            title="No fonts of its own yet"
+            description="The space renders in the stacks every machine already has. Add one below: from Google, hosted with the space, or from an address."
+          />
         )}
         {fonts.map(font => (
           <FontRow

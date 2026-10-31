@@ -1,7 +1,7 @@
-import { ContainerTabs } from '@plitzi/plitzi-ui';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback } from 'react';
+
+import ViewTabs from '../ViewTabs';
 
 import type { ReactNode } from 'react';
 
@@ -39,17 +39,12 @@ const PanelSections = ({ name, sections, variant = 'panel', notice, className }:
   const [openId, setOpenId] = useStorage<string>(`builder-state.panelSections.${name}`, sections[0].id);
   const open = sections.find(section => section.id === openId) ?? sections[0];
 
-  const handleSelect = useCallback(
-    (index: number) => setOpenId(sections.at(index)?.id ?? sections[0].id),
-    [sections, setOpenId]
-  );
-
   return (
     // `h-full` where it is a popup's body and `grow` where it is a flex item; the grid stretches the open section to the
     // height left under the tabs, whether or not the section's own root is a flex item.
     <div className={clsx('flex h-full min-h-0 w-full grow basis-0 flex-col', className)}>
       <div className={clsx('flex shrink-0 flex-col gap-3', HEADER_CLASS_NAME[variant])}>
-        <ContainerTabs.Tabs items={sections} tabSelected={sections.indexOf(open)} size="xs" onSelect={handleSelect} />
+        <ViewTabs tabs={sections} selected={open.id} onSelect={setOpenId} />
         {notice}
       </div>
       <div className="grid min-h-0 grow basis-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">

@@ -129,7 +129,7 @@ const fit = (sections: Section[], budget: number) => {
  * includes them, what it does not include — so an agent does not build a custom domain or a function the space cannot
  * ship, and tells the person which plan would. Capability names, not prose: the refusal carries the words.
  */
-const planOf = ({ tierLabel, capabilities }: TSpaceEntitlements) => {
+const planOf = ({ tierLabel, capabilities, journeysPerSpace, serverRunsPerMonth }: TSpaceEntitlements) => {
   const notIncluded: Record<string, string[]> = {};
   for (const [name, { included, requires }] of Object.entries(capabilities)) {
     if (!included && requires) {
@@ -137,7 +137,38 @@ const planOf = ({ tierLabel, capabilities }: TSpaceEntitlements) => {
     }
   }
 
-  return { name: tierLabel, ...(Object.keys(notIncluded).length > 0 ? { notIncluded } : {}) };
+  return {
+    name: tierLabel,
+    ...(Object.keys(notIncluded).length > 0 ? { notIncluded } : {}),
+    // What it keeps of the space's tests: a journey added past the first is refused — say so, never remove one.
+    ...(journeysPerSpace === null ? {} : { journeysPerSpace }),
+    ...(serverRunsPerMonth === null ? {} : { journeysPlayedOnTheServerAMonth: serverRunsPerMonth })
+  };
+};
+
+/** How many of each kind the primer names; past it, how many more — `plitzi_test` lists them whole. */
+const TESTS_NAMED = 40;
+
+/**
+ * The space's own tests, by id and title: what a change must leave passing before a snapshot — an element check names
+ * its element, a journey the page it starts on. Whole, and how they stand, from `plitzi_test { action: 'list' }`.
+ */
+const testsOf = (schema: Space['schema']) => {
+  const checks = schema.tests?.unit ?? [];
+  const journeys = schema.tests?.e2e ?? [];
+  if (checks.length + journeys.length === 0) {
+    return undefined;
+  }
+
+  const past = (kind: string, count: number) => (count > TESTS_NAMED ? { [`more${kind}`]: count - TESTS_NAMED } : {});
+
+  return {
+    elementChecks: checks.slice(0, TESTS_NAMED).map(({ id, title, element }) => ({ id, title, element })),
+    journeys: journeys.slice(0, TESTS_NAMED).map(({ id, title, page }) => ({ id, title, page })),
+    ...past('ElementChecks', checks.length),
+    ...past('Journeys', journeys.length),
+    read: "plitzi_test { action: 'list' }"
+  };
 };
 
 export const readPrimerResource = (space: Space, env: Env, uri: string): ResourceEnvelope<unknown> | undefined => {
@@ -146,6 +177,7 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
   }
 
   const interactionCatalog = buildInteractionCatalog(space.schema);
+  const tests = testsOf(space.schema);
   const dataSourceCatalog = buildDataSourceCatalog(space.schema);
 
   const { bundle, elided } = fit(
@@ -200,6 +232,7 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
   return envelope({
     guide: guideQuickstart,
     ...(space.entitlements ? { plan: planOf(space.entitlements) } : {}),
+    ...(tests ? { tests } : {}),
     cssProperties,
     cssShorthands,
     ...bundle,

@@ -3,12 +3,13 @@ import clsx from 'clsx';
 import { use } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import Notice from '@pmodules/App/components/Notice';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import { elementNameOf, problemsOfTest } from '../../helpers';
+import useMayTest from '../../hooks/useMayTest';
 import { sentenceText } from '../../studio/sentences';
 import TestStudioContext from '../../studio/TestStudioContext';
-import CalmNote from '../CalmNote';
 import NeedsLook from '../NeedsLook';
 
 import type { ServerPlay } from '../../hooks/useServerPlay';
@@ -116,6 +117,7 @@ const FlowList = ({
   // At the plan's number a new journey would be refused on saving: it is not offered. Those kept stay editable.
   const full = limit !== null && shown.length >= limit;
   const more = entitlements?.moreJourneys;
+  const { mayTest } = useMayTest();
 
   return (
     <section className="flex min-h-0 flex-col gap-2" aria-label="Journeys">
@@ -137,7 +139,7 @@ const FlowList = ({
           size="xs"
           intent="secondary"
           iconPlacement="before"
-          disabled={live || full}
+          disabled={live || full || !mayTest}
           title={full ? 'The plan keeps no more journeys in this space' : undefined}
           onClick={onCreate}
         >
@@ -146,11 +148,11 @@ const FlowList = ({
         </Button>
       </div>
       {full && entitlements && (
-        <CalmNote link={more ? { label: 'See the plans', href: more.upgradeUrl } : undefined}>
+        <Notice tone="caution" link={more ? { label: 'See the plans', href: more.upgradeUrl } : undefined}>
           The {entitlements.tierLabel} plan keeps {limit} {limit === 1 ? 'journey' : 'journeys'} per space — yours keep
           playing and can be changed.
           {more && ` ${more.requires} keeps ${more.allows === null ? 'as many as you like' : String(more.allows)}.`}
-        </CalmNote>
+        </Notice>
       )}
       <ol className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700">
         {shown.map((each, index) => {
@@ -213,7 +215,7 @@ const FlowList = ({
                 </Button>
               )}
               <Pill state={state} steps={current.steps.length} />
-              {!live && (
+              {!live && mayTest && (
                 <button
                   type="button"
                   title="Remove this journey"

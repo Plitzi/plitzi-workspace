@@ -50,7 +50,7 @@ const ContainerSitemap = () => {
       if (nodeType === 'page') {
         const response = await showModal(
           <Modal.Header>
-            <h4>Add Page</h4>
+            <h4>New page</h4>
           </Modal.Header>,
           ({ onSubmit, onClose }) => (
             <Modal.Body>
@@ -65,7 +65,7 @@ const ContainerSitemap = () => {
       } else {
         const response = await showModal(
           <Modal.Header>
-            <h4>Add Page Folder</h4>
+            <h4>New folder</h4>
           </Modal.Header>,
           ({ onSubmit, onClose }) => (
             <Modal.Body>

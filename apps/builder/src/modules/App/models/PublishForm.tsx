@@ -1,9 +1,9 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import Notice from '@pmodules/App/components/Notice';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
 import SnapshotPruneNotice from '../components/SnapshotPruneNotice';
@@ -50,14 +50,14 @@ const PublishForm = ({ environment, description = '', onClose, onSubmit }: Publi
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
-        <Alert className="mb-4" intent="info" size="sm">
+        <Notice tone="info" className="mb-4">
           Make a snapshot and save it into an environment to later publish it
-        </Alert>
+        </Notice>
         <VersionContents environment="main" title="This snapshot will freeze" />
-        <Alert intent="info" size="sm" solid={false}>
+        <Notice tone="info">
           Feature flags are kept apart from snapshots: this one sends the draft's flags to the environment and keeps a
           copy only as a fallback. Rolling back to an older snapshot later keeps the environment's flags as they are.
-        </Alert>
+        </Notice>
         <Form.Select name="environment" label="Environment" size="sm">
           {ENVIRONMENTS.map(({ value, label }) => {
             const requires = locked(value)?.requires;

@@ -95,7 +95,7 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
 
       const confirmed = await showDialog(
         <Modal.Header>
-          <h4>Remove Component</h4>
+          <h4>Remove component</h4>
         </Modal.Header>,
         <Modal.Body className="p-4">
           <h4>Remove {label}? Nothing places it.</h4>

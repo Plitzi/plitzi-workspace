@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Input from '@plitzi/plitzi-ui/Input';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useState } from 'react';
@@ -6,6 +5,7 @@ import { useCallback, use, useState } from 'react';
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import Notice from '@pmodules/App/components/Notice';
 
 import ViewPage from '../../components/ViewPage';
 import ViewSection from '../../components/ViewSection';
@@ -106,9 +106,9 @@ const SharingSettings = () => {
           value={identity.shareImage ?? ''}
           onChange={handleText('shareImage')}
         />
-        <Alert intent="info" size="xs" solid={false}>
+        <Notice tone="info">
           The picture a link shows when its page names none. Each page sets its own in its settings, under SEO.
-        </Alert>
+        </Notice>
       </ViewSection>
       <ViewSection title="The browser around it">
         <Input
@@ -137,13 +137,13 @@ const SharingSettings = () => {
         />
       </ViewSection>
       {problems.length > 0 && (
-        <Alert intent="warning" size="xs" solid={false}>
+        <Notice tone="caution">
           <ul className="flex flex-col gap-1">
             {problems.map(problem => (
               <li key={problem}>{problem}</li>
             ))}
           </ul>
-        </Alert>
+        </Notice>
       )}
       <ViewSection title="Search engines">
         <TextArea
@@ -155,9 +155,9 @@ const SharingSettings = () => {
           value={robotsTxt}
           onChange={handleRobots}
         />
-        <Alert intent="info" size="xs" solid={false}>
+        <Notice tone="info">
           Left empty, crawlers may read every page. A page kept out of search says so itself, with its robots under SEO.
-        </Alert>
+        </Notice>
       </ViewSection>
     </ViewPage>
   );

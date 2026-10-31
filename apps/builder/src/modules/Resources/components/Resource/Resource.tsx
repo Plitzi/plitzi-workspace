@@ -145,7 +145,7 @@ const Resource = ({
       const usage = plugin ? pluginUsage(getSchemaFlat(), plugin) : [];
       const response = await showDialog(
         <Modal.Header>
-          <h4>Remove Resource</h4>
+          <h4>Remove file</h4>
         </Modal.Header>,
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>

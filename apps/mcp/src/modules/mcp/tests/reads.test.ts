@@ -353,11 +353,36 @@ describe('MCP primer: the space’s plan', () => {
 
     expect(primer.plan).toEqual({
       name: 'Free',
-      notIncluded: { Site: ['customDomain'], App: ['functions'], 'App+': ['runtime'] }
+      notIncluded: { Site: ['customDomain'], App: ['functions'], 'App+': ['runtime'] },
+      journeysPerSpace: 1,
+      journeysPlayedOnTheServerAMonth: 10
     });
     expect(
       (readResource(buildSpace(), 'main', 'plitzi://primer/main')?.data as { plan?: unknown }).plan
     ).toBeUndefined();
+  });
+});
+
+describe('the space’s own tests in the primer', () => {
+  it('names each element check and journey by id and title — and says nothing for a space that keeps none', () => {
+    const space = buildSpace();
+    const tested: Space = {
+      ...space,
+      schema: {
+        ...space.schema,
+        tests: {
+          unit: [{ id: 'badge', title: 'The badge waits', element: 'b', expect: [{ kind: 'visible', value: false }] }],
+          e2e: [{ id: 'orders', title: 'A visitor orders', page: '/', steps: [{ kind: 'click', element: 'b' }] }]
+        }
+      }
+    };
+
+    expect((readResource(tested, 'main', 'plitzi://primer/main')?.data as { tests?: unknown }).tests).toEqual({
+      elementChecks: [{ id: 'badge', title: 'The badge waits', element: 'b' }],
+      journeys: [{ id: 'orders', title: 'A visitor orders', page: '/' }],
+      read: "plitzi_test { action: 'list' }"
+    });
+    expect((readResource(space, 'main', 'plitzi://primer/main')?.data as { tests?: unknown }).tests).toBeUndefined();
   });
 });
 

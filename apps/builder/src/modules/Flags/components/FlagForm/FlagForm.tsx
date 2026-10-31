@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useFieldArray, useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
 import { isFlagName } from '@plitzi/sdk-shared/flags';
+import Notice from '@pmodules/App/components/Notice';
 
 import FlagRule from './FlagRule';
 import { EMPTY_WHEN, isRuleGroup } from './ruleGroup';
@@ -81,9 +81,7 @@ const FlagForm = ({
         <Form.Input name="description" label="Description" placeholder="What it turns on" size="xs" />
         <Form.Switch name="value" label="On when no rule matches" size="xs" />
         {rules.length > 0 && (
-          <Alert intent="info" size="xs">
-            Rules are read top to bottom: the first one that matches decides
-          </Alert>
+          <Notice tone="info">Rules are read top to bottom: the first one that matches decides</Notice>
         )}
         {rules.map((rule, index) => (
           <FlagRule

@@ -6,7 +6,8 @@ import type { E2eStep } from '@plitzi/sdk-shared';
  * selector or an expectation is.
  */
 
-export type SentencePart = { text: string } | { element: string } | { value: string };
+/** A word, an element of the space (by id), a value — or an element check of the space (by id), said by its title. */
+export type SentencePart = { text: string } | { element: string } | { value: string } | { check: string };
 
 export type Sentence = { icon: string; check: boolean; parts: SentencePart[] };
 
@@ -86,14 +87,37 @@ export const sentenceOf = (step: E2eStep): Sentence => {
       ]);
     case 'expectPosition':
       return check([{ text: 'Check that' }, { value: step.relation }]);
+    case 'expectCheck':
+      return check([{ text: 'Check that' }, { check: step.check }, { text: 'holds' }]);
   }
 };
 
 /** The element a step is about, when it names one: what the canvas lights while it plays. */
 export const stepElementOf = (step: E2eStep): string | undefined => ('element' in step ? step.element : undefined);
 
-/** A step in plain words, its element by the name a person knows it by: a line of a play's log. */
-export const sentenceText = (step: E2eStep, nameOf: (target: string) => string): string =>
+/**
+ * A step in plain words, its element by the name a person knows it by and an element check by its title: a line of a
+ * play's log, a timeline's tooltip.
+ */
+export const sentenceText = (
+  step: E2eStep,
+  nameOf: (target: string) => string,
+  titleOf: (check: string) => string = check => check
+): string =>
   sentenceOf(step)
-    .parts.map(part => ('element' in part ? nameOf(part.element) : 'value' in part ? `“${part.value}”` : part.text))
+    .parts.map(part =>
+      'element' in part
+        ? nameOf(part.element)
+        : 'value' in part
+          ? `“${part.value}”`
+          : 'check' in part
+            ? `“${titleOf(part.check)}”`
+            : part.text
+    )
     .join(' ');
+
+/** An element check's title, as its author gave it — its id when it has none, or when no check is it. */
+export const checkTitleOf =
+  (checks: readonly { id: string; title: string }[]) =>
+  (id: string): string =>
+    checks.find(check => check.id === id)?.title || id;

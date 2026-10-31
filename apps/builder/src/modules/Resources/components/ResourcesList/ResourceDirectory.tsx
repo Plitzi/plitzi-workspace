@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
@@ -6,6 +5,7 @@ import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { mainPluginOf } from '../../helpers';
@@ -212,11 +212,11 @@ const ResourceDirectory = ({
           </div>
         )}
         {!isDefault && items.length === 0 && (
-          <Alert intent="warning" size="xs" solid={false}>
+          <Notice tone="caution">
             <span className="text-xs leading-3">
               No resources in this directory. Drag and drop resources here or this folder will be removed automatically
             </span>
-          </Alert>
+          </Notice>
         )}
       </ContainerCollapsable.Content>
     </ContainerCollapsable>

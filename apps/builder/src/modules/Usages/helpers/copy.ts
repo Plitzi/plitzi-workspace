@@ -13,8 +13,10 @@ type CategoryCopy = {
   label: string;
   /** What the search box searches. */
   search: string;
-  /** Said when the space declares none. */
+  /** Said when the space declares none: an empty list's title, with no full stop. */
   empty: string;
+  /** What the empty list shows beside it: a Font Awesome class. */
+  icon: string;
   /** Said of an item nothing uses, under its name. */
   unused: string;
   /** What the unused filter is called. */
@@ -25,21 +27,24 @@ export const CATEGORY_COPY: Record<UsageCategory, CategoryCopy> = {
   components: {
     label: 'Components',
     search: 'Search components',
-    empty: 'This space has no components.',
+    empty: 'This space has no components',
+    icon: 'fa-solid fa-cubes',
     unused: 'Placed nowhere: no page, layout or component has a reference to it.',
     unusedFilter: 'Unused only'
   },
   classes: {
     label: 'Classes',
     search: 'Search classes',
-    empty: 'This space declares no classes.',
+    empty: 'This space declares no classes',
+    icon: 'fa-solid fa-paintbrush',
     unused: 'Nothing in the space names it: no element, binding, flow, setting or other class.',
     unusedFilter: 'Unused only'
   },
   variables: {
     label: 'Tokens and variables',
     search: 'Search tokens and variables',
-    empty: 'This space declares no style tokens or variables.',
+    empty: 'This space declares no style tokens or variables',
+    icon: 'fa-solid fa-palette',
     unused:
       'Nothing in this space reads it: no `var(--…)` of it anywhere, and for a space variable no template either.',
     unusedFilter: 'Unused only'
@@ -47,7 +52,8 @@ export const CATEGORY_COPY: Record<UsageCategory, CategoryCopy> = {
   dataSources: {
     label: 'Data sources',
     search: 'Search data sources',
-    empty: 'Nothing in this space provides or reads data yet.',
+    empty: 'Nothing in this space provides or reads data yet',
+    icon: 'fa-solid fa-database',
     unused: 'Nothing binds to it or reads it in a template.',
     unusedFilter: 'Unread only'
   }

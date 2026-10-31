@@ -1,10 +1,10 @@
-import Button from '@plitzi/plitzi-ui/Button';
-import Flex from '@plitzi/plitzi-ui/Flex';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback } from 'react';
 
+import EmptyState from '@pmodules/App/components/EmptyState';
+import PanelToolbar from '@pmodules/App/components/PanelToolbar';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
@@ -31,7 +31,7 @@ const Resources = () => {
   const handleClickAddCdn = useCallback(async () => {
     const response = await showModal<ResourceCdnFormValues>(
       <Modal.Header>
-        <h4>Add CDN Provider</h4>
+        <h4>New CDN provider</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -64,12 +64,15 @@ const Resources = () => {
 
   return (
     <div className="flex w-full grow basis-0 flex-col gap-4 overflow-y-auto p-2">
-      <Flex gap={2} direction="column">
-        <Button size="sm" onClick={handleClickAddCdn} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          Add CDN Provider
-        </Button>
-      </Flex>
+      <PanelToolbar action={{ label: 'New CDN provider', onClick: () => void handleClickAddCdn() }} />
+      {!isLoading && (data?.SpaceCdns.edges.length ?? 0) === 0 && (
+        <EmptyState
+          size="panel"
+          icon="fa-solid fa-cloud-arrow-up"
+          title="No CDN providers yet"
+          description="Where the space's images, videos and files are kept: connect a bucket once, then upload to it from here."
+        />
+      )}
       {!isLoading && (
         <div className="flex flex-col gap-4">
           {data?.SpaceCdns.edges.map(cdn => (

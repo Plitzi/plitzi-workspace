@@ -20,7 +20,7 @@ const ConnectorList = ({ connectors, onSelect, onRemove, onCreate }: ConnectorLi
   const createButton = (
     <Button size="sm" onClick={onCreate} iconPlacement="before">
       <Button.Icon icon="fa-solid fa-plus" />
-      New Connector
+      New connector
     </Button>
   );
 

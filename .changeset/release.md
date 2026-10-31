@@ -35,6 +35,11 @@ authoring and the elements learnt from the runs.
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
+- **A `DraftStore` of a deployment's own keeps `inspected`** beside `reusable` — what it was given to `put` comes back
+  from `take` — or a test runner's session renders without the state bridge, and a journey that sets the state fails
+  on the server.
+- **`SchemaVariables` and `StyleVariables` no longer draw their own add button** (`@plitzi/sdk-variables/builder`):
+  whoever holds the action says `adding`, hears `onAddingEnd`, and may give `empty` — what shows with none.
 - **A page given to `runE2eTest` chooses a select's option**: `E2eElement` has `selectOption(value, { timeout })`, as
   Playwright's locator does — a page written by hand (not Playwright's) adds it.
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
@@ -356,6 +361,25 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   (`null`, no limit), and `moreJourneys` / `moreServerRuns` — the plan that gives more, and the way there
   (`TMoreOf`, `@plitzi/sdk-shared`). The builder offers no new journey at the plan's number and says so calmly, and says
   why a run on the server was not made (another one playing, the month's used).
+- **Journeys and element checks together**: `e2e.expectCheck('<id>')` holds one of the space's element checks for the
+  page's state where the journey has got to — not the check's own `given.state` — and `given: { state }` starts a
+  journey with a state set as the page opens. `runE2eTest` takes the document they are read from (`space`); each
+  player passes its own. In the builder: **Check an element check holds** (by its title) and **Start with a state**,
+  above the steps; each moment's steps are a bar over its own column, so a colour sits over the step it stands for
+  (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/plitzi-builder`).
+- **A draft session for tests**: a preview asked with `mode: 'tests'` is a session whose pages carry the space's state
+  bridge (`window.__plitzi`) with no panel or badge — `DraftPutOptions.inspected`, `DraftEntry.inspected`,
+  `ctx.inspectedDraft`, the SDK's and `DevToolsContainer`'s `inspector` — so a journey that sets or reads the state, or
+  holds an element check, plays on the server as in the builder (`@plitzi/sdk-server`, `@plitzi/sdk-mcp`,
+  `@plitzi/plitzi-sdk`, `@plitzi/sdk-dev-tools`). A deployment's own `DraftStore` keeps `inspected` as it keeps
+  `reusable`.
+- **A role that writes the tests alone**: a grant says `canTest` beside `canWrite` (`SSRGrant`, `@plitzi/sdk-shared`),
+  and the MCP saves the tests through a persister of their own (`Persisters.tests`) — `plitzi_test set` and `run` need
+  it, not the design — so a tester's agent writes them and nothing else (`@plitzi/sdk-mcp`). The builder's Tests area
+  reads and plays for anyone and writes for a role that may (`spaceTests`), saying calmly why not otherwise.
+- **What is used of the plan, in the builder**: the tests' answers carry `serverPlays` (journeys played on the server
+  this month, of how many, and the day it starts again — `TSpaceServerPlays`), and the Journeys area shows it beside
+  the journeys kept of the plan's number, with the plan that gives more.
 - **A test the space no longer answers is a warning of the space**: `test-unreadable`, raised by `lintSpace` (and so by
   `author`, `plitzi space lint`, the builder's issues and the publish gate) for an element check or a journey that names
   a page, an element or a relation the space no longer has (`@plitzi/sdk-authoring`).
@@ -377,12 +401,14 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   between two elements' sides are sdk-authoring's now (`pressOnce`, `pressFailure`, `awaitHydration`,
   `parseRelation`, `relationHolds`): `page play`, `check` and `measure --expect` use the same ones, and `page play` /
   `check --steps` press through the engine's own pieces — the copy shown, a value given, a range's thumb, the server's
-  answer — keeping their own grammar of targets and steps. **`plitzi verify`**
+  answer — keeping their own grammar of targets and steps. `page play --journey <id>` plays one of the space's journeys
+  first, its checks held, and reads — or plays on — from where it leaves the page. **`plitzi verify`**
   runs them as one of its checks, `space tests` — the element checks alone with `--no-pages` — through the same code
   as `plitzi test` (`playSpaceTests`).
 - **`plitzi_test`** (`@plitzi/sdk-mcp`): an agent lists a space's tests with the element checks' report, saves them,
   and runs the journeys on the draft through the server's runner (`runE2eTests`, a server adapter of
-  `@plitzi/sdk-shared`). A batch that leaves a test unreadable says so in its warnings ("This change leaves a test of
+  `@plitzi/sdk-shared`). The primer names the space's element checks and journeys by id and title, and the plan's
+  counts of them. A batch that leaves a test unreadable says so in its warnings ("This change leaves a test of
   the space unreadable…"), only for the tests it broke.
 
 ## Several agents on one project (`@plitzi/cli`)
@@ -1895,6 +1921,21 @@ is no room at this address.` — one line, no stack — where the log said "ende
   hold in `PLITZI_STATE_DIR` when set (see the upgrade notes).
 
 ## The builder (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-schema`)
+
+- **One way to build a panel.** Every sidebar panel and every view that takes the canvas' place is made of the same
+  pieces: the search and the primary action at the top right (a "+" beside a search, the action's name when alone —
+  no button pinned at a panel's foot any more), one tab row (`ViewTabs`: the segmented theme, as real tab buttons a
+  keyboard reaches and a reader names), the empty state (now in a compact size for the sidebar, in Variables, Files,
+  Fonts, Flags and Usages) and one notice (`Notice`: info, caution, danger, success — every `Alert` of the builder now
+  goes through it, at one size, and is announced). Labels are in sentence case — "New variable", "New page", "New
+  action", "Save as component" — and Variables' tabs are Space, Style and URL. Pages offers New page at its top, with
+  New layout and New folder named under it (they were icons that said their names only on hover). Advanced style
+  (spelt so now) and State Manager say what they are above the editor, with Format and Apply named.
+- **The header groups its controls by what they do** — history, how the canvas is drawn (outlines, grid, motion: now
+  one group), the device and its zoom, then the space's status — and says what its figures are: "88 elements", "Scale
+  plan". The selected element's trail fades at its start when it scrolled past it, instead of a cut word.
+- **The layout's mask dims only what the layout draws** (`@plitzi/sdk-elements`): the empty end of a layout as tall as
+  the screen, and the gutters beside a centred page, are the page's — under a short page they showed as a grey slab.
 
 - **Every repair the export names is said in words**: renamed element ids, custom CSS folded into its class, flows on
   events that never fire, steps nothing answers and parameters a step does not take showed their bare code.

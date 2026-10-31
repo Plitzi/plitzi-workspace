@@ -1,7 +1,7 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 
 import ActionsContext from './ActionsContext';
@@ -59,7 +59,7 @@ const Actions = () => {
     async (identifier: string) => {
       const confirmed = await showDialog(
         <Modal.Header>
-          <h4>Remove Action</h4>
+          <h4>Remove action</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-3 py-2">
@@ -80,9 +80,7 @@ const Actions = () => {
       {isLoading && <ViewPage description="Loading actions…" />}
       {!isLoading && error && (
         <ViewPage>
-          <Alert intent="error" size="sm" solid={false}>
-            {error}
-          </Alert>
+          <Notice tone="danger">{error}</Notice>
         </ViewPage>
       )}
       {!isLoading && !error && !isEditing && (

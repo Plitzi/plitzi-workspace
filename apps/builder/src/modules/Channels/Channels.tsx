@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import ViewSection from '@pmodules/App/components/ViewSection';
 import PlanNotice from '@pmodules/Space/components/PlanNotice';
@@ -116,11 +116,7 @@ const Channels = () => {
             Add channel
           </Button>
         </div>
-        {addProblem && (
-          <Alert intent="error" size="sm" solid={false}>
-            {addProblem}
-          </Alert>
-        )}
+        {addProblem && <Notice tone="danger">{addProblem}</Notice>}
       </ViewSection>
     </ViewPage>
   );

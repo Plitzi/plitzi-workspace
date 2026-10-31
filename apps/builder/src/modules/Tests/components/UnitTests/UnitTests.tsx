@@ -14,6 +14,8 @@ export type UnitTestsProps = {
   results: TSpaceUnitTestResult[];
   /** What the server said is wrong with the tests as written: a check it names is marked. */
   problems: readonly string[];
+  /** Read, never written: a role that does not write the tests. */
+  readOnly?: boolean;
   onAdd: () => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
@@ -23,11 +25,12 @@ export type UnitTestsProps = {
  * The space's unit tests: one element each, resolved for a state and its data with no browser — run against the saved
  * document on every save, as the issues are.
  */
-const UnitTests = ({ tests, results, problems, onAdd, onEdit, onRemove }: UnitTestsProps) => (
+const UnitTests = ({ tests, results, problems, readOnly = false, onAdd, onEdit, onRemove }: UnitTestsProps) => (
   <ViewSection
     title="Element checks — unit tests"
     actions={
-      tests.length > 0 && (
+      tests.length > 0 &&
+      !readOnly && (
         <Button size="sm" onClick={onAdd}>
           Add an element check
         </Button>
@@ -40,9 +43,11 @@ const UnitTests = ({ tests, results, problems, onAdd, onEdit, onRemove }: UnitTe
         title="No element checks yet"
         description="Say what an element must be in a given situation: shown or hidden, the words it reads, the look it wears. They are checked on every save, in an instant, and a snapshot waits for them."
         action={
-          <Button size="sm" onClick={onAdd}>
-            Add an element check
-          </Button>
+          readOnly ? undefined : (
+            <Button size="sm" onClick={onAdd}>
+              Add an element check
+            </Button>
+          )
         }
       />
     )}
@@ -52,6 +57,7 @@ const UnitTests = ({ tests, results, problems, onAdd, onEdit, onRemove }: UnitTe
         test={test}
         result={results.find(result => result.id === test.id)}
         problems={problemsOfTest(problems, 'unit', test.id)}
+        readOnly={readOnly}
         onEdit={onEdit}
         onRemove={onRemove}
       />

@@ -1,8 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import { useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Actions from '@pmodules/Actions/Actions';
+import Notice from '@pmodules/App/components/Notice';
 import Connectors from '@pmodules/Connectors/Connectors';
 import Credentials from '@pmodules/Credentials';
 import Data from '@pmodules/Data';
@@ -47,13 +47,13 @@ const ContainerServer = () => {
         variant="page"
         notice={
           !hasServerRendering && (
-            <Alert intent="warning" size="xs" solid={false}>
+            <Notice tone="caution">
               <span>
                 <b className="font-semibold">No server-rendered deployment.</b> What is here runs on a server or not at
                 all: an action reports itself inert and connectors resolve only in this preview. Deploy the space with a
                 Plitzi SSR credential to reach visitors.
               </span>
-            </Alert>
+            </Notice>
           )
         }
       />

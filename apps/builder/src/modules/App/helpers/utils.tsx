@@ -159,7 +159,7 @@ export const getPopups = ({
     }),
     panel('advanceStyle', 6, activeIds, {
       icon: 'fa-solid fa-file-code text-base',
-      title: 'Advance Style',
+      title: 'Advanced style',
       component: <StyleAdvanceEditor />,
       size: 'custom'
     }),

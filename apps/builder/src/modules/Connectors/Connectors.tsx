@@ -1,7 +1,7 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
@@ -50,7 +50,7 @@ const Connectors = () => {
       // pages — this is the one destructive action in the panel.
       const confirmed = await showDialog(
         <Modal.Header>
-          <h4>Remove Connector</h4>
+          <h4>Remove connector</h4>
         </Modal.Header>,
         <Modal.Body>
           <div className="px-3 py-2">
@@ -72,9 +72,7 @@ const Connectors = () => {
       {isLoading && <ViewPage description="Loading connectors…" />}
       {!isLoading && error && (
         <ViewPage>
-          <Alert intent="error" size="sm" solid={false}>
-            {error}
-          </Alert>
+          <Notice tone="danger">{error}</Notice>
         </ViewPage>
       )}
       {!isLoading && !error && !isEditing && (

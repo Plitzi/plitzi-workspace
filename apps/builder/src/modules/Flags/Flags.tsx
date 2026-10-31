@@ -1,6 +1,4 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
-import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
@@ -8,6 +6,10 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { withForcedFlag } from '@plitzi/sdk-shared/flags';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import EmptyState from '@pmodules/App/components/EmptyState';
+import Notice from '@pmodules/App/components/Notice';
+import PanelSearch from '@pmodules/App/components/PanelSearch';
+import PanelToolbar from '@pmodules/App/components/PanelToolbar';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
@@ -64,7 +66,7 @@ const Flags = () => {
     async (name: string) => {
       const confirmed = await showDialog(
         <Modal.Header>
-          <h4>Remove Feature Flag</h4>
+          <h4>Remove feature flag</h4>
         </Modal.Header>,
         <Modal.Body>
           <p>
@@ -94,7 +96,7 @@ const Flags = () => {
   const handlePublish = useCallback(async () => {
     const values = await showModal<PublishFlagsValues>(
       <Modal.Header>
-        <h4>Publish Flags</h4>
+        <h4>Publish flags</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -127,22 +129,31 @@ const Flags = () => {
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
       <PlanNotice capability="flagsPerEnvironment" meanwhile="Flags still go to an environment with each publish." />
-      <Alert intent="info" size="sm" solid={false}>
+      <PanelToolbar action={adding ? undefined : { label: 'New flag', onClick: handleAdd }}>
+        <PanelSearch placeholder="Search flags" value={filter} onChange={setFilter} />
+      </PanelToolbar>
+      <Notice>
         Flags are kept apart from the space's snapshots. Each environment has one set, used by every snapshot it serves:
         rolling a snapshot back keeps its flags, and Publish flags changes them without a new snapshot. A snapshot only
         keeps a copy, as a fallback for when the environment's flags cannot be read.
-      </Alert>
-      <div className="flex items-center gap-2">
-        <Input className="grow" placeholder="Search Flags" size="xs" value={filter} onChange={setFilter}>
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input>
-        <Button size="xs" title="Publish the draft's flags to an environment" onClick={handlePublish}>
-          <Button.Icon icon="fa-solid fa-rocket" />
-        </Button>
-      </div>
+      </Notice>
+      {adding && (
+        <FlagForm
+          isNewRecord
+          takenNames={Object.keys(declared ?? {})}
+          fields={fields}
+          onSubmit={handleSet}
+          onClose={handleCancelAdd}
+        />
+      )}
       <div className="flex min-h-0 grow basis-0 flex-col gap-1 overflow-y-auto">
         {names.length === 0 && !adding && (
-          <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-500">No feature flags yet</div>
+          <EmptyState
+            size="panel"
+            icon="fa-solid fa-flag"
+            title="No feature flags yet"
+            description="A switch the space reads to show a feature to some visitors, or none, without a new snapshot."
+          />
         )}
         {declared &&
           names.map(name => (
@@ -159,21 +170,10 @@ const Flags = () => {
             />
           ))}
       </div>
-      {adding && (
-        <FlagForm
-          isNewRecord
-          takenNames={Object.keys(declared ?? {})}
-          fields={fields}
-          onSubmit={handleSet}
-          onClose={handleCancelAdd}
-        />
-      )}
-      {!adding && (
-        <Button className="w-full" size="xs" onClick={handleAdd} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          Add Feature Flag
-        </Button>
-      )}
+      <Button size="sm" intent="secondary" iconPlacement="before" onClick={handlePublish}>
+        <Button.Icon icon="fa-solid fa-rocket" />
+        Publish flags
+      </Button>
     </div>
   );
 };

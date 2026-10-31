@@ -1,9 +1,9 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Input from '@plitzi/plitzi-ui/Input';
 import Text from '@plitzi/plitzi-ui/Text';
 import { useCallback, useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import PanelSearch from '@pmodules/App/components/PanelSearch';
 
 import { rootName, searchElements } from '../../../helpers/searchElements';
 import useRevealElement from '../../../hooks/useRevealElement';
@@ -51,9 +51,7 @@ const BuilderTreeSearch = ({ query, baseElementId, onQueryChange }: BuilderTreeS
   return (
     <Flex direction="column" gap={1} className="min-h-0 w-full">
       <div className="px-2 pt-2">
-        <Input placeholder="Find an element…" value={query} size="sm" onChange={onQueryChange}>
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input>
+        <PanelSearch placeholder="Search elements" value={query} onChange={onQueryChange} />
       </div>
       {query.trim() !== '' && (
         <div className="min-h-0 grow basis-0 overflow-y-auto px-1 pb-2">

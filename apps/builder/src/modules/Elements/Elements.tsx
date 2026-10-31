@@ -1,10 +1,10 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import PanelSearch from '@pmodules/App/components/PanelSearch';
 import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import Components from '@pmodules/Components';
 
@@ -40,9 +40,7 @@ const Elements = () => {
   return (
     <div className="flex grow basis-0 flex-col overflow-hidden">
       <div className="flex shrink-0 flex-col gap-2 border-b border-gray-200 p-2 dark:border-zinc-800">
-        <Input placeholder="Search elements" value={filter} size="sm" onChange={handleChange}>
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input>
+        <PanelSearch placeholder="Search elements" value={filter} onChange={handleChange} />
         {!searching && (
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Categories">
             {all.map(([id, list]) => (

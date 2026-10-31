@@ -3,7 +3,7 @@ import { parseRelation, relationElements } from './position';
 import { isExpectation } from './run';
 import { pageAt } from '../../schema/route';
 
-import type { E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
+import type { E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
 
 /** The element a step names, if it names one. */
 const named = (step: E2eStep): string | undefined => ('element' in step ? step.element : undefined);
@@ -13,7 +13,13 @@ const named = (step: E2eStep): string | undefined => ('element' in step ? step.e
  * fix — held before a browser opens: a page no address answers, an element the space has nowhere, a relation that is
  * none, a clock moved that the test does not hold.
  */
-export const e2eTestProblems = (document: Schema, tests: readonly E2eTest[] = document.tests?.e2e ?? []): string[] => {
+export const e2eTestProblems = (
+  document: Schema,
+  tests: readonly E2eTest[] = document.tests?.e2e ?? [],
+  /** The element checks a step may hold (`expectCheck`): the document's, unless the caller edits others. */
+  checks: readonly UnitTest[] = document.tests?.unit ?? []
+): string[] => {
+  const checkIds = new Set(checks.map(check => check.id));
   // Every element a page draws, a component's parts too: what a step may name.
   const elements = new Set([
     ...Object.keys(document.flat),
@@ -63,6 +69,12 @@ export const e2eTestProblems = (document: Schema, tests: readonly E2eTest[] = do
 
       if (step.kind === 'tick' && test.clock === undefined) {
         problems.push(`${where}: it moves the page's clock, which the test holds only with its own clock`);
+      }
+
+      if (step.kind === 'expectCheck' && !checkIds.has(step.check)) {
+        problems.push(
+          `${where}: no element check of the space is "${step.check}" — name one of its tests.unit by its id`
+        );
       }
 
       if (step.kind === 'expectPosition') {

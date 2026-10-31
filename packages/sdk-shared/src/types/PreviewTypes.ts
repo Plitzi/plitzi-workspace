@@ -17,6 +17,11 @@ export type DraftPutOptions = {
   reusable?: boolean;
   /** The space the draft was made from. It is only ever rendered for that space. */
   spaceId: number;
+  /**
+   * A session a test runner plays: its pages carry the space's state bridge (`window.__plitzi`) with no panel or
+   * badge — what a journey sets its starting state and reads the state through.
+   */
+  inspected?: boolean;
 };
 
 /** A stashed draft, and whether the read that resolved it left it there. */
@@ -25,6 +30,8 @@ export type DraftEntry = {
   reusable: boolean;
   /** The space the draft was made from — see {@link DraftPutOptions.spaceId}. */
   spaceId: number;
+  /** Its pages carry the state bridge — see {@link DraftPutOptions.inspected}. */
+  inspected?: boolean;
 };
 
 export type DraftStore = {

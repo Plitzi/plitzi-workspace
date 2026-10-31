@@ -73,7 +73,7 @@ const WorkflowHeader = ({ flows, flowId = '', flowSummaries = {}, setFlowId }: W
       )}
       <div className="flex justify-center gap-2">
         <Button intent="primary" size="xs" className="whitespace-nowrap" onClick={handleClickAddNode}>
-          New Flow
+          New flow
         </Button>
         {flowId && (
           <Button
@@ -82,7 +82,7 @@ const WorkflowHeader = ({ flows, flowId = '', flowSummaries = {}, setFlowId }: W
             border="none"
             className="text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
             onClick={handleClickRemove}
-            title="Remove Flow"
+            title="Remove flow"
           >
             <i className="fas fa-trash-alt" />
           </Button>

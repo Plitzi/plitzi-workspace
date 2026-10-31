@@ -4,6 +4,7 @@ import { e2e, e2eTestProblems, parseRelation, relationHolds, sidePx, stepText } 
 import { button, text } from '../../elements';
 import { authorSpace } from '../../schema';
 import { readSpaceTests } from '../tests';
+import { unit } from '../unit';
 
 const { schema } = authorSpace({
   name: 'Shop',
@@ -122,5 +123,41 @@ describe('a document’s tests read from outside', () => {
       ]
     });
     expect(readSpaceTests('none')).toEqual({ problems: ['tests: { unit?: [...], e2e?: [...] }'] });
+  });
+
+  it('reads a journey that starts with a state and holds an element check, and says either written wrong', () => {
+    const journey = {
+      id: 'e',
+      title: 'E',
+      page: '/',
+      given: { state: { count: 2 } },
+      steps: [{ kind: 'expectCheck', check: 'u' }]
+    };
+    expect(readSpaceTests({ e2e: [journey] })).toEqual({ tests: { unit: [], e2e: [journey] } });
+    expect(readSpaceTests({ e2e: [{ ...journey, given: { count: 2 }, steps: [{ kind: 'expectCheck' }] }] })).toEqual({
+      problems: [
+        'tests.e2e[0].given: { state: { <key>: <value> } } — the state it starts with',
+        'tests.e2e[0].steps[0].check: words'
+      ]
+    });
+  });
+});
+
+// The hybrid: a journey drives the page to a case, and an element check of the space holds its logic there.
+describe('an element check held inside a journey', () => {
+  it('names one of the space’s element checks — the document’s, or those the caller edits', () => {
+    const holds = e2e.test({
+      id: 'holds',
+      title: 'The count reads right once added',
+      page: '/menu',
+      steps: [e2e.click('add'), e2e.expectCheck('count-reads')]
+    });
+    const counted = unit.test({ id: 'count-reads', title: 'Count', element: 'cart-count', expect: [unit.visible()] });
+
+    expect(e2eTestProblems(schema, [holds])).toEqual([
+      'e2e test "holds", step 2 (expectCheck): no element check of the space is "count-reads" — name one of its tests.unit by its id'
+    ]);
+    expect(e2eTestProblems(schema, [holds], [counted])).toEqual([]);
+    expect(holds.steps.map(stepText)).toEqual(['click add', 'element check count-reads holds']);
   });
 });

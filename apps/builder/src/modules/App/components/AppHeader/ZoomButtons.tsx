@@ -29,7 +29,7 @@ const ZoomButtons = () => {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="inline text-xs font-bold">{Math.floor(width / zoom)} PX</div>
+      <div className="inline text-xs font-bold whitespace-nowrap">{Math.floor(width / zoom)} PX</div>
       <Select size="xs" className="w-20" value={zoom.toFixed(1)} onChange={handleChange}>
         {zooms.map(({ label, value }) => (
           <option key={value} value={value}>

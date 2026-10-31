@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ErrorMessage from '@plitzi/plitzi-ui/ErrorMessage';
@@ -8,6 +7,7 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
 import { useTheme } from '@plitzi/sdk-shared/theme';
+import Notice from '@pmodules/App/components/Notice';
 import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
@@ -83,11 +83,7 @@ const TransformerParam = ({
 
   return (
     <div className="flex w-full flex-col gap-2">
-      {description && (
-        <Alert intent="info" size="xs" solid={false}>
-          {description}
-        </Alert>
-      )}
+      {description && <Notice tone="info">{description}</Notice>}
       {type === 'text' && (
         <Input
           className="w-full"

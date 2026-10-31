@@ -208,6 +208,30 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
     const after = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
     expect(after.body).not.toContain('Session title');
   });
+
+  /** A test runner's session: the page it renders hands the SDK the state bridge alone — a person's session does not. */
+  it('renders a session minted for tests with the state bridge, and a person’s without it', async () => {
+    const mint = async (mode: 'session' | 'tests') =>
+      JSON.parse(
+        (
+          await httpRequest(
+            PORT,
+            'POST',
+            '/__preview',
+            { 'Content-Type': 'application/json', 'x-preview-secret': 'shh' },
+            JSON.stringify({ spaceId: 1, mode })
+          )
+        ).body
+      ) as { token: string; pagePath: string };
+    const [tests, person] = [await mint('tests'), await mint('session')];
+
+    expect((await httpRequest(PORT, 'GET', `${tests.pagePath}?__pt=${tests.token}`)).body).toContain(
+      '"inspector":true'
+    );
+    expect((await httpRequest(PORT, 'GET', `${person.pagePath}?__pt=${person.token}`)).body).not.toContain(
+      '"inspector":true'
+    );
+  });
 });
 
 /**

@@ -17,7 +17,7 @@ const contextOf = (document: Schema, saved: Schema[] = [], runE2eTests?: ToolCon
   ({
     space: { schema: document },
     env: 'main',
-    persisters: { schema: (next: Schema) => Promise.resolve(void saved.push(next)) },
+    persisters: { tests: (next: Schema) => Promise.resolve(void saved.push(next)) },
     ...(runE2eTests ? { runE2eTests } : {})
   }) as unknown as ToolContext;
 

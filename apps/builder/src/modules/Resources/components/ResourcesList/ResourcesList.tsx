@@ -54,7 +54,7 @@ const ResourcesList = ({
   const handleAddDirectory = useCallback(async () => {
     const response = await showModal<{ name: string }>(
       <Modal.Header>
-        <h4>Add Directory</h4>
+        <h4>New folder</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -100,7 +100,7 @@ const ResourcesList = ({
     <div className={clsx('flex w-full flex-col gap-4 overflow-y-auto', className)}>
       {visibility === 'public' && (
         <Button size="sm" onClick={handleAddDirectory}>
-          Add Directory
+          New folder
         </Button>
       )}
       <ResourcesListProvider>

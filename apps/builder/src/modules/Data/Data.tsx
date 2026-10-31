@@ -1,8 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTheme } from '@plitzi/sdk-shared/theme';
+import Notice from '@pmodules/App/components/Notice';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
 
 import DataEditor from './components/DataEditor';
@@ -141,16 +141,12 @@ const Data = () => {
       )}
       {error && (
         <div className="px-6 pt-3">
-          <Alert intent="error" size="sm" solid={false}>
-            {error}
-          </Alert>
+          <Notice tone="danger">{error}</Notice>
         </div>
       )}
       {refusal && (
         <div className="px-6 pt-3">
-          <Alert intent="warning" size="sm" solid={false}>
-            {refusal.error}
-          </Alert>
+          <Notice tone="caution">{refusal.error}</Notice>
         </div>
       )}
       {!isLoading && !hasFiles && !hasSaved && <DataWelcome onStart={handleStart} />}

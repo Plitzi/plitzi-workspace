@@ -1,4 +1,4 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
+import Notice from '@pmodules/App/components/Notice';
 
 import useSpaceEntitlements from '../../hooks/useSpaceEntitlements';
 
@@ -22,7 +22,7 @@ const PlanNotice = ({ capability, meanwhile }: PlanNoticeProps) => {
   }
 
   return (
-    <Alert intent="warning" size="sm" solid={false}>
+    <Notice tone="caution">
       {missing.label} {missing.requires ? `is included in the ${missing.requires} plan and above.` : 'is not included.'}
       {meanwhile ? ` ${meanwhile}` : ''}{' '}
       {missing.upgradeUrl && (
@@ -30,7 +30,7 @@ const PlanNotice = ({ capability, meanwhile }: PlanNoticeProps) => {
           See the plans
         </a>
       )}
-    </Alert>
+    </Notice>
   );
 };
 

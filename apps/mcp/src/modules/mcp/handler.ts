@@ -59,7 +59,8 @@ const messagesOf = (body: unknown): JsonRpcMessage[] =>
     (message): message is JsonRpcMessage => typeof message === 'object' && message !== null
   );
 
-const toolCallsIn = (body: unknown): number => messagesOf(body).filter(message => message.method === 'tools/call').length;
+const toolCallsIn = (body: unknown): number =>
+  messagesOf(body).filter(message => message.method === 'tools/call').length;
 
 /**
  * A refused request's answer: every call it made reads the refusal as its result (`isError`), which is what an agent

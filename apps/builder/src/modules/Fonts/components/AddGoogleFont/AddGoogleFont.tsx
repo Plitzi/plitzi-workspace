@@ -1,8 +1,9 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useMemo, useState } from 'react';
+
+import Notice from '@pmodules/App/components/Notice';
 
 import useFontCatalog from '../../hooks/useFontCatalog';
 
@@ -71,10 +72,10 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
 
   if (unavailable) {
     return (
-      <Alert intent="warning" size="xs" solid={false} className="self-start">
+      <Notice tone="caution" className="self-start">
         This server has no Google Fonts API key, so it cannot list what families exist. Add one with
         <b> GOOGLE_FONTS_API_KEY</b>, or declare a family by hand under <b>External</b>.
-      </Alert>
+      </Notice>
     );
   }
 
@@ -83,11 +84,7 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
       <Input size="xs" placeholder="Search Google Fonts" value={query} onChange={setQuery}>
         <Input.Icon icon="fa-solid fa-magnifying-glass" />
       </Input>
-      {error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {error}
-        </Alert>
-      )}
+      {error && <Notice tone="danger">{error}</Notice>}
       <Flex direction="column" gap={1} className="min-h-0 grow basis-0 overflow-y-auto">
         {loading && fonts.length === 0 && <span className="text-xs text-gray-500 dark:text-zinc-400">Searching…</span>}
         {fonts.map(entry => (

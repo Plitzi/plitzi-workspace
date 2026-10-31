@@ -283,6 +283,8 @@ export const prepareRender = async (
   const actionRuns = debugAuthorized && req.ctx.actionRuns?.length ? req.ctx.actionRuns : undefined;
   // A run of agents this server previews, for the dev tools' Run tab: asked for only where there is one.
   const runStatus = debugAuthorized && req.ctx.runStatus === true;
+  // A draft session a test runner plays: the state bridge alone, never the panel a capture would picture.
+  const inspector = req.ctx.inspectedDraft === true;
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
@@ -372,6 +374,7 @@ export const prepareRender = async (
       ...(badge ? { badge } : {}),
       ...(actionRuns ? { actionRuns } : {}),
       ...(runStatus ? { runStatus } : {}),
+      ...(inspector ? { inspector } : {}),
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {})
     },

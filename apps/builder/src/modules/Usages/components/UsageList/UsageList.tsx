@@ -1,8 +1,10 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import Input from '@plitzi/plitzi-ui/Input';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, useMemo, useState } from 'react';
+
+import EmptyState from '@pmodules/App/components/EmptyState';
+import PanelSearch from '@pmodules/App/components/PanelSearch';
 
 import { CATEGORY_COPY, UNUSED_NOTE } from '../../helpers/copy';
 import { isUnused } from '../../helpers/usageIndex';
@@ -67,22 +69,23 @@ const UsageList = ({ category, items }: UsageListProps) => {
 
   return (
     <div className="flex min-h-0 w-full grow basis-0 flex-col gap-2 p-2">
-      <Input placeholder={copy.search} size="xs" value={query} onChange={handleQuery}>
-        <Input.Icon icon="fa-solid fa-magnifying-glass" />
-      </Input>
-      <div className="flex items-center justify-between gap-2 px-1">
-        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-          {listed.length} of {items.length}
-        </span>
-        <Switch size="xs" label={copy.unusedFilter} checked={unusedOnly} onChange={handleUnusedOnly} />
-      </div>
-      {hasUnused && <p className="px-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">{UNUSED_NOTE}</p>}
+      {/* With nothing declared there is nothing to search or filter: the empty state alone says so. */}
+      {items.length > 0 && (
+        <>
+          <PanelSearch placeholder={copy.search} value={query} onChange={handleQuery} />
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {listed.length} of {items.length}
+            </span>
+            <Switch size="xs" label={copy.unusedFilter} checked={unusedOnly} onChange={handleUnusedOnly} />
+          </div>
+        </>
+      )}
+      {hasUnused && <p className="px-1 text-xs leading-snug text-zinc-500 dark:text-zinc-400">{UNUSED_NOTE}</p>}
       <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto">
-        {items.length === 0 && (
-          <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-500">{copy.empty}</div>
-        )}
+        {items.length === 0 && <EmptyState size="panel" icon={copy.icon} title={copy.empty} />}
         {items.length > 0 && listed.length === 0 && (
-          <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-500">Nothing matches.</div>
+          <EmptyState size="panel" icon="fa-solid fa-magnifying-glass" title="Nothing matches" />
         )}
         {listed.slice(0, limit).map(item => (
           <UsageRow

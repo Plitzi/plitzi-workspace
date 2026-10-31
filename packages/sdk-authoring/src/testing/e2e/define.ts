@@ -46,5 +46,6 @@ export const e2e = {
     value,
     ...(at ? { at } : {})
   }),
-  expectPosition: (relation: string): E2eExpectation => ({ kind: 'expectPosition', relation })
+  expectPosition: (relation: string): E2eExpectation => ({ kind: 'expectPosition', relation }),
+  expectCheck: (check: string): E2eExpectation => ({ kind: 'expectCheck', check })
 };

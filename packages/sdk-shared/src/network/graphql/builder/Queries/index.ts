@@ -45,7 +45,7 @@ import type { TSpaceVisitorsQuery } from './Space/SpaceVisitorsQuery';
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
 export type { TQuotaPlane, TSpaceQuota } from './Space/SpaceQuotaQuery';
 export type { TSpaceIssue, TSpaceIssues, TSpaceSuggestion } from './Space/SpaceIssuesQuery';
-export type { TSpaceTests, TSpaceUnitTestResult } from './Space/SpaceTestsQuery';
+export type { TSpaceServerPlays, TSpaceTests, TSpaceUnitTestResult } from './Space/SpaceTestsQuery';
 export type { TSnapshotMarker, TSpaceChanges } from './Space/SpaceChangesQuery';
 
 export type BuilderQueriesMap = {

@@ -29,6 +29,11 @@ export interface Persisters {
   saveFunctions?: (files: Record<string, string>, base: string) => Promise<FunctionsSaveResult>;
   /** Saves the data's files whole, against the version the batch read; answers what is wrong by file. */
   saveData?: (files: Record<string, string>, base: string) => Promise<DataSaveResult>;
+  /**
+   * Saves the document with its tests changed and nothing else — for a grant that may test (`canTest`) though it may
+   * not write: a tester's agent.
+   */
+  tests?: (schema: Schema) => Promise<void>;
 }
 
 export interface Conflict {

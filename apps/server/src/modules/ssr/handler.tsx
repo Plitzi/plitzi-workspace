@@ -71,6 +71,10 @@ export const renderSSR = async (
   const draft = await takeDraftOverride(req, config);
   const offlineDataOverride = draft?.data;
 
+  if (draft?.inspected) {
+    req.ctx.inspectedDraft = true;
+  }
+
   if (draft) {
     /**
      * Unsaved work, told not to travel.

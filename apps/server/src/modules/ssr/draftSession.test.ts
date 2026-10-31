@@ -175,6 +175,20 @@ describe('rendering a draft', () => {
     expect(headers['X-Robots-Tag']).toBe('noindex, nofollow');
   });
 
+  /** A test runner's session: its page gets the state bridge — told to the render, never guessed from the request. */
+  it('marks a session minted for tests, and only that one, as one whose page carries the state bridge', async () => {
+    const store = createMemoryDraftStore();
+    await store.put('tests', draft, { ttlMs: 900_000, spaceId: 42, reusable: true, inspected: true });
+    await store.put('person', draft, { ttlMs: 900_000, spaceId: 42, reusable: true });
+    const [tested, looked] = [request({ __pt: 'tests' }), request({ __pt: 'person' })];
+
+    await render(tested, response().res, configWith(store));
+    await render(looked, response().res, configWith(store));
+
+    expect(tested.ctx.inspectedDraft).toBe(true);
+    expect(looked.ctx.inspectedDraft).toBeUndefined();
+  });
+
   /** A one-shot token is spent by this very render, so a cookie holding it would send every later request looking
    *  for something that is already gone. */
   it('does not remember a one-shot token', async () => {

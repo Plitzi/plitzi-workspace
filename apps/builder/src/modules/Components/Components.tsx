@@ -48,7 +48,7 @@ const Components = ({ filter }: ComponentsProps) => {
   const handleAdd = useCallback(async () => {
     const declaration = await showModal<SpaceComponentDeclaration>(
       <Modal.Header>
-        <h4>New Component</h4>
+        <h4>New component</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>

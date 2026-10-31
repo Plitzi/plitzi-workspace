@@ -26,7 +26,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
       setState(JSON.parse(value) as Record<string, unknown>);
       setValue(JSON.stringify(JSON.parse(value), null, 2));
     } catch {
-      addToast('Json Malformed, Please fix it and try again', {
+      addToast('The state is not valid JSON — fix it and apply it again', {
         appeareance: 'error',
         autoDismiss: true,
         placement: 'top-right'
@@ -39,26 +39,25 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
   }, [state]);
 
   return (
-    <div className={clsx('relative flex h-full w-full flex-col', className)}>
+    <div className={clsx('flex h-full w-full flex-col gap-2 p-2', className)}>
+      <div className="flex flex-col items-end gap-2">
+        <p className="self-stretch text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+          The page's state as the canvas runs it now. Change it and apply it to see the page in that case — nothing of
+          the space is saved.
+        </p>
+        <Button size="xs" iconPlacement="before" onClick={handleClickSave}>
+          <Button.Icon icon="fa-solid fa-check" />
+          Apply
+        </Button>
+      </div>
       <CodeMirror
-        className="h-full"
+        className="min-h-0 grow overflow-hidden rounded-md border border-gray-300 dark:border-zinc-700"
         value={value}
         theme={resolvedTheme}
         lineWrapping
         onChange={handleChange}
         mode="json"
       />
-      <div className="absolute top-3 right-3 flex">
-        <Button
-          intent="custom"
-          size="custom"
-          className="mr-2 rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
-          onClick={handleClickSave}
-          title="Save State"
-        >
-          <i className="fa-solid fa-floppy-disk" />
-        </Button>
-      </div>
     </div>
   );
 };

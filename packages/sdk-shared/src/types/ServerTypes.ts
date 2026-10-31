@@ -249,6 +249,11 @@ export type SSRGrant = {
   /** For an `agent` grant, the application the member connected (`Claude`): what its writes are recorded and shown as. */
   client?: string;
   canWrite: boolean;
+  /**
+   * Whether it may write and play the space's tests — every role that writes may, and a tester's role (`Can test`) may
+   * with nothing else: the MCP saves the tests alone through it, never another change.
+   */
+  canTest?: boolean;
   /** Why `canWrite` is false, in the consumer's words, said to the agent in place of the MCP's own: a role that views
    *  or edits only the content never had the right to change the design — it did not lose it. */
   readOnlyReason?: string;
@@ -359,6 +364,11 @@ export type SSRContext = {
    * page that may debug, so its dev tools ask for the run — and no other page's ask a server that has none.
    */
   runStatus?: true;
+  /**
+   * This request renders a draft session minted for a test runner (`DraftEntry.inspected`): the page carries the
+   * space's state bridge, `window.__plitzi`, with no panel or badge.
+   */
+  inspectedDraft?: true;
   /**
    * What a refresh of server data asked for beside the page's own address (`/_rsc?location=…&q=…`): a provider's
    * `input`, a page window. What the provider asks for this time, so it wins over the `input` the element was saved

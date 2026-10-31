@@ -15,6 +15,12 @@ read them with the same functions of `@plitzi/sdk-authoring`. A snapshot and a p
 A journey is not an interaction's flow (`flows: [[onClick(), …]]`): a flow is what an element does, and a journey is what
 a visitor does across the page. An interaction's flow is tested end to end by a journey that clicks what runs it.
 
+**Both at once.** A journey holds an element check where it gets to — `e2e.expectCheck('badge-counts')`: the check's
+element resolved for the page's state and sources then, not the check's own `given.state` (the sources the check names
+itself, a list's row, are laid over them). A rule written once is held at every point a whole flow reaches it. A
+journey may also start with a state — `given: { state: { items: 3 } }`, set as the page opens — to reach a case
+without the steps that lead to it. Both read and write the page's state bridge, `window.__plitzi`.
+
 ```ts
 import { e2e, unit } from '@plitzi/sdk-authoring';
 
@@ -45,7 +51,9 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
   - `type` writes in the field inside the element (`locateField`); a select is chosen from, and a date, a time, a
     colour or a range set whole (`giveValue`);
   - a drag presses a range at its thumb (`dragElement`); a click waits for what it asked the server (`answered`);
-  - `beforeStep` and `signal` let a player pause, step and stop.
+  - `beforeStep` and `signal` let a player pause, step and stop;
+  - `space` is the document the journey's element checks are read from — each player passes its own: the builder's as
+    edited, the server's draft, the project's space as authored.
 - **Pressed the same way by the CLI.** `page play` and `page check --steps` keep their own grammar — a target is a
   name, a selector or a row, and steps such as `as`, `action`, `shot`, `frames`, `store`, `wait` and `release` are
   theirs alone — but each press goes through the engine's pieces above (`testing/e2e/act.ts`): what one learns, both
@@ -76,18 +84,33 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
   - `plitzi test [id…] [--unit|--e2e] [--url] [--json]`.
   - `plitzi verify` runs them as its check `space tests`; with `--no-pages`, the element checks only.
   - Both go through `playSpaceTests` (`apps/cli/src/commands/project/spaceTests.ts`).
+  - `plitzi page play --journey <id>` plays a journey first, its checks held, and reads or plays on from where it
+    leaves the page (`commands/page/playJourney.ts`).
 - **The MCP.**
   - `plitzi_test`: `list`, `set` (saved whole, refused as `SpaceSetTests` refuses), `run` (journeys on the draft
     through the server's runner).
   - A batch that leaves a test unreadable says so in its warnings (`tools/shared/lintDraft.ts`).
+  - The primer names the space's element checks and journeys by id and title, and the plan's counts.
 - **The server** (`plitzi-sdk-server`):
   - `SpaceTests`, `SpaceSetTests` and `SpaceRunE2eTests`.
   - A snapshot is refused with `SPACE_TESTS_FAILED` while an element check fails or a test is written wrong.
   - A publish plays the journeys first in Playwright's Chromium on the draft (`runE2eOnDraft`). A server with no
     browser says they were not run, and why.
+  - The page the runner plays is the draft's preview session minted for tests (`mode: 'tests'`, `DraftEntry.inspected`):
+    the SDK puts the state bridge on it with no panel or badge (`DevToolsContainer`'s `inspector`), so a starting state,
+    `setState` and `expectCheck` play there as in the builder. A person's preview session never carries it.
   - A play asked for — **Run on the server**, `plitzi_test run` — is told step by step on the space's channel
     (`SPACE_TESTS_PLAYING`: the run, the journey, how far, the page after the step): every builder open on the space
     shows it as it plays; the run's answer is still the report.
+
+## Who writes them
+
+Reading the tests and playing them in the builder is anyone's who opens the space. Writing them — and playing them on
+the server, which counts against the plan — is the permission `spaceTests`: every role from **Can edit content** up,
+and **Can test** (`spaceTester`), a QA's role that writes the tests and changes nothing of the space. Its agent saves
+the tests alone over the MCP (`SSRGrant.canTest`); the builder shows the rest of the space read-only, and the Tests
+area says, calmly, why a role that may only view cannot write them (`plitzi-sdk-server` `docs/workspaces-and-teams.md`
+§ Space roles).
 
 ## What a plan allows
 
@@ -102,7 +125,9 @@ plan counts two things (`plitzi-sdk-server`, `services/entitlements/catalog.ts`;
   asking. A publish's own play is not counted. One play at a time per space: a second while one plays is told to wait.
 
 Both are in the space's entitlements (`journeysPerSpace`, `serverRunsPerMonth`, and `moreJourneys` /
-`moreServerRuns`: the plan that gives more) and on the pricing page.
+`moreServerRuns`: the plan that gives more) and on the pricing page. What is used of the month comes with the tests'
+answers (`serverPlays`: used, of how many, the day it starts again), and the builder's Journeys area shows both beside
+the journeys, with the way to more.
 
 ## Left out
 

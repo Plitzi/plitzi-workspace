@@ -1,8 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback, useMemo, useState } from 'react';
 
 import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import ViewSection from '@pmodules/App/components/ViewSection';
 
@@ -324,7 +324,7 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
       </ViewSection>
 
       {started && report.errors.length > 0 && (
-        <Alert intent="error" size="sm" solid={false}>
+        <Notice tone="danger">
           <ul className="list-inside list-disc text-xs">
             {report.errors.map(issue => (
               <li key={`${issue.path}-${issue.message}`}>
@@ -333,10 +333,10 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
               </li>
             ))}
           </ul>
-        </Alert>
+        </Notice>
       )}
       {started && report.warnings.length > 0 && (
-        <Alert intent="warning" size="sm" solid={false}>
+        <Notice tone="caution">
           <ul className="list-inside list-disc text-xs">
             {report.warnings.map(issue => (
               <li key={`${issue.path}-${issue.message}`}>
@@ -345,7 +345,7 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
               </li>
             ))}
           </ul>
-        </Alert>
+        </Notice>
       )}
 
       {action && hasWebhook && <ActionWebhookUrl identifier={action.identifier} deployments={deployments} />}

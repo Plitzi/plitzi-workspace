@@ -1,9 +1,9 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
+import Notice from '@pmodules/App/components/Notice';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
 import PlanNotice from '@pmodules/Space/components/PlanNotice';
 
@@ -309,7 +309,7 @@ const Functions = () => {
   const handleRemoveAll = useCallback(async () => {
     const confirmed = await showDialog(
       <Modal.Header>
-        <h4>Remove Functions</h4>
+        <h4>Remove the functions</h4>
       </Modal.Header>,
       <Modal.Body>
         <div className="px-3 py-2">
@@ -344,16 +344,12 @@ const Functions = () => {
       )}
       {error && (
         <div className="px-6 pt-3">
-          <Alert intent="error" size="sm" solid={false}>
-            {error}
-          </Alert>
+          <Notice tone="danger">{error}</Notice>
         </div>
       )}
       {refusal && (
         <div className="px-6 pt-3">
-          <Alert intent="warning" size="sm" solid={false}>
-            {refusal.error}
-          </Alert>
+          <Notice tone="caution">{refusal.error}</Notice>
         </div>
       )}
       {!isLoading && !hasFiles && draft?.offer && (

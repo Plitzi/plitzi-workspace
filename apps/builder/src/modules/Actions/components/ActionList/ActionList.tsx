@@ -26,7 +26,7 @@ const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) 
   const createButton = (
     <Button size="sm" onClick={onCreate} iconPlacement="before">
       <Button.Icon icon="fa-solid fa-plus" />
-      New Action
+      New action
     </Button>
   );
 

@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useState } from 'react';
 
 import { FontValidationError, parseSpaceFont } from '@plitzi/sdk-shared/style';
+import Notice from '@pmodules/App/components/Notice';
 
 import type { SpaceFont } from '@plitzi/sdk-shared';
 
@@ -46,11 +46,7 @@ const AddSystemFont = ({ onAdd }: AddSystemFontProps) => {
       <Button size="xs" className="ml-auto" onClick={handleAdd} disabled={!family}>
         Add stack
       </Button>
-      {error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {error}
-        </Alert>
-      )}
+      {error && <Notice tone="danger">{error}</Notice>}
     </Flex>
   );
 };

@@ -225,13 +225,21 @@ describeTarget('builder', subject => {
       await openTests(page, subject.origin);
 
       const flows = page.getByRole('region', { name: 'Journeys' });
-      await expect(flows.getByText('Journeys · 3 of 3')).toBeVisible();
+      // Three or more, as the tests before it in this worker left the mocked space: at the plan's number either way.
+      await expect(flows.getByText(/^Journeys · \d+ of 3$/)).toBeVisible();
       await expect(page.getByRole('button', { name: 'New journey' })).toBeDisabled();
       await expect(flows.getByRole('status')).toContainText('The Free plan keeps 3 journeys per space');
       await expect(flows.getByRole('link', { name: 'See the plans' })).toHaveAttribute(
         'href',
         'https://plitzi.test/pricing?plan=site'
       );
+
+      // What the plan allows, and what is used of it: the journeys kept, the month's plays and when they come back.
+      const plan = page.getByRole('region', { name: 'What the plan allows' });
+      await expect(plan).toContainText('Free plan');
+      await expect(plan).toContainText(/Journeys kept\s*\d+ of 3/);
+      await expect(plan).toContainText('2 of 10');
+      await expect(plan).toContainText('8 left · they start again on 1 Nov');
     });
 
     test('plays the flows on the server and replays a run step by step', async ({ page, capture }) => {

@@ -22,11 +22,12 @@ const ICON: Record<QuotaLevel, string> = {
   over: 'fa-triangle-exclamation'
 };
 
-/** `588 / 1,000`, or `588 · ∞` on a plan that sets no ceiling for it. */
+/** `588 / 1,000 elements`, or `588 elements` on a plan that sets no ceiling for them: what it counts, said. */
 const figure = (entry: QuotaReading) => (
   <span className="font-medium">
     {format(entry.used)}
-    <span className="opacity-60">{entry.unlimited ? ' · ∞' : `/${format(entry.quota)}`}</span>
+    {!entry.unlimited && <span className="opacity-60">/{format(entry.quota)}</span>}
+    <span className="font-normal opacity-60"> elements</span>
   </span>
 );
 
@@ -108,9 +109,9 @@ const QuotaMeter = () => {
       id="header-quota"
       role="button"
       tabIndex={0}
-      title="Where this went"
+      title="Elements in this space — click to see where they went"
       className={clsx(
-        'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs select-none',
+        'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs whitespace-nowrap select-none',
         'transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800',
         TEXT[level]
       )}

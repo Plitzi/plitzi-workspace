@@ -13,11 +13,14 @@ export const DRAFT_STORE_METHODS: StoreMethods<DraftStore> = { put: true, take: 
 /** In-memory draft store — the default when the consumer injects none. Fine for a single replica; a multi-replica
  *  deployment must inject a shared store so a preview URL resolves on any replica. */
 export const createMemoryDraftStore = (): DraftStore => {
-  const store = new Map<string, { data: OfflineDataRaw; expiresAt: number; reusable: boolean; spaceId: number }>();
+  const store = new Map<
+    string,
+    { data: OfflineDataRaw; expiresAt: number; reusable: boolean; spaceId: number; inspected: boolean }
+  >();
 
   return {
-    put(token, data, { ttlMs, reusable = false, spaceId }) {
-      store.set(token, { data, expiresAt: Date.now() + ttlMs, reusable, spaceId });
+    put(token, data, { ttlMs, reusable = false, spaceId, inspected = false }) {
+      store.set(token, { data, expiresAt: Date.now() + ttlMs, reusable, spaceId, inspected });
     },
     take(token) {
       const hit = store.get(token);
@@ -31,7 +34,14 @@ export const createMemoryDraftStore = (): DraftStore => {
         store.delete(token);
       }
 
-      return hit.expiresAt > Date.now() ? { data: hit.data, reusable: hit.reusable, spaceId: hit.spaceId } : undefined;
+      return hit.expiresAt > Date.now()
+        ? {
+            data: hit.data,
+            reusable: hit.reusable,
+            spaceId: hit.spaceId,
+            ...(hit.inspected ? { inspected: true } : {})
+          }
+        : undefined;
     },
     drop(token) {
       store.delete(token);
@@ -45,6 +55,8 @@ export type DraftOverride = {
   token: string;
   /** Whether the token survived the read — which is what decides if the visit is worth remembering in a cookie. */
   reusable: boolean;
+  /** A session minted for a test runner: the page carries the state bridge. */
+  inspected: boolean;
 };
 
 /**
@@ -70,7 +82,7 @@ export const takeDraftOverride = async (
     return undefined;
   }
 
-  return { data: entry.data, reusable: entry.reusable, token };
+  return { data: entry.data, reusable: entry.reusable, inspected: entry.inspected === true, token };
 };
 
 /** The `Set-Cookie` that carries a draft session through the rest of the visit. */

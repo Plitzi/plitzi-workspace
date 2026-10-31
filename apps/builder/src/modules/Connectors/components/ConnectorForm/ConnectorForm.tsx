@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
 import { connectorPresets, emptyManifest } from '@plitzi/sdk-shared/connectors';
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 
 import { parseManifest } from '../../helpers/parseManifest';
@@ -148,7 +148,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
       {(errors.length > 0 || warnings.length > 0) && (
         <div className="flex flex-col gap-2 border-t border-gray-200 py-3 dark:border-zinc-800">
           {errors.length > 0 && (
-            <Alert intent="error" size="sm" solid={false}>
+            <Notice tone="danger">
               <div className="flex flex-col gap-1">
                 {errors.map(error => (
                   <span key={error} className="text-xs">
@@ -156,10 +156,10 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
                   </span>
                 ))}
               </div>
-            </Alert>
+            </Notice>
           )}
           {warnings.length > 0 && (
-            <Alert intent="warning" size="sm" solid={false}>
+            <Notice tone="caution">
               <div className="flex flex-col gap-1">
                 {warnings.map(warning => (
                   <span key={warning} className="text-xs">
@@ -167,7 +167,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
                   </span>
                 ))}
               </div>
-            </Alert>
+            </Notice>
           )}
         </div>
       )}

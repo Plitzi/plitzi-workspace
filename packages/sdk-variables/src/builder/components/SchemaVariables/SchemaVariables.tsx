@@ -1,11 +1,11 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import SchemaVariable from './SchemaVariable';
 import SchemaVariableForm from '../../models/SchemaVariableForm';
 
 import type { Environment, QueryParams, RouteParams, SchemaVariable as TSchemaVariable } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 export type SchemaVariablesProps = {
   className?: string;
@@ -16,20 +16,37 @@ export type SchemaVariablesProps = {
     hostname?: string;
     environment: Environment;
   };
+  /** A new variable's form is open: said by whoever holds the action that adds one — the builder's panel toolbar. */
+  adding?: boolean;
+  /** The new variable's form closed — added, or let go. */
+  onAddingEnd?: () => void;
+  /** What shows while there are none — the builder's empty state. */
+  empty?: ReactNode;
   onAdd?: (variable: TSchemaVariable) => void;
   onUpdate?: (variable: TSchemaVariable) => void;
   onRemove?: (name: string) => void;
 };
 
-const SchemaVariables = ({ className, variables, whenData, onAdd, onUpdate, onRemove }: SchemaVariablesProps) => {
-  const [newVariable, setNewVariable] = useState<TSchemaVariable>();
+/** What a new space variable's form starts from. */
+const NEW_VARIABLE: TSchemaVariable = { name: 'variable', type: 'text', category: '', value: '', subValues: [] };
 
+const SchemaVariables = ({
+  className,
+  variables,
+  whenData,
+  adding = false,
+  onAddingEnd,
+  empty,
+  onAdd,
+  onUpdate,
+  onRemove
+}: SchemaVariablesProps) => {
   const handleClickAddVariable = useCallback(
     (values: TSchemaVariable) => {
       onAdd?.(values);
-      setNewVariable(undefined);
+      onAddingEnd?.();
     },
-    [onAdd]
+    [onAdd, onAddingEnd]
   );
 
   const handleUpdate = useCallback(
@@ -39,14 +56,19 @@ const SchemaVariables = ({ className, variables, whenData, onAdd, onUpdate, onRe
 
   const handleClickRemove = useCallback((name: string) => onRemove?.(name), [onRemove]);
 
-  const handleClickAddNewVariable = useCallback(() => {
-    setNewVariable({ name: 'variable', type: 'text', category: '', value: '', subValues: [] });
-  }, []);
-
-  const handleClickCancel = useCallback(() => setNewVariable(undefined), []);
+  const handleClickCancel = useCallback(() => onAddingEnd?.(), [onAddingEnd]);
 
   return (
     <div className={clsx('flex w-full flex-col gap-3', className)}>
+      {adding && (
+        <SchemaVariableForm
+          {...NEW_VARIABLE}
+          isNewRecord
+          onSubmit={handleClickAddVariable}
+          onClose={handleClickCancel}
+        />
+      )}
+      {!adding && (variables ?? []).length === 0 && empty}
       <div className="flex min-h-0 grow basis-0 flex-col gap-1 overflow-y-auto">
         {variables?.map(segment => {
           const { name, type, value, category, subValues } = segment;
@@ -66,22 +88,6 @@ const SchemaVariables = ({ className, variables, whenData, onAdd, onUpdate, onRe
           );
         })}
       </div>
-      {!newVariable && (
-        <div className="flex w-full px-1">
-          <Button className="w-full" size="xs" onClick={handleClickAddNewVariable} iconPlacement="before">
-            <Button.Icon icon="fa-solid fa-plus" />
-            Add Space Variable
-          </Button>
-        </div>
-      )}
-      {newVariable && (
-        <SchemaVariableForm
-          {...newVariable}
-          isNewRecord
-          onSubmit={handleClickAddVariable}
-          onClose={handleClickCancel}
-        />
-      )}
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
@@ -75,55 +74,33 @@ const StyleAdvanceEditor = () => {
   }, [styleVariables]);
 
   return (
-    <div className="relative flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col gap-2 p-2">
+      <div className="flex flex-col items-end gap-2">
+        <p className="self-stretch text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+          CSS of your own for the whole space, past what the style inspector writes.{' '}
+          <span className="font-medium text-zinc-800 dark:text-zinc-200">Ctrl + Space</span> completes a token.{' '}
+          <a
+            href="https://developer.mozilla.org/docs/Web/CSS"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-text underline"
+          >
+            About CSS
+          </a>
+        </p>
+        <Button size="xs" intent="secondary" iconPlacement="before" disabled={networkLoading} onClick={handleFormat}>
+          <Button.Icon icon="fa-solid fa-wand-magic-sparkles" />
+          Format
+        </Button>
+      </div>
       <CodeMirror
-        className="h-full"
+        className="min-h-0 grow overflow-hidden rounded-md border border-gray-300 dark:border-zinc-700"
         value={customCss}
         autoComplete={variables}
         theme={resolvedTheme}
         lineWrapping
         onChange={handleChange}
       />
-      <div className="absolute top-3 right-3 flex">
-        <Button
-          intent="custom"
-          size="custom"
-          className="mr-2 rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
-          onClick={handleFormat}
-          title="Auto format"
-          disabled={networkLoading}
-        >
-          <i className="fa-solid fa-wand-magic-sparkles" />
-        </Button>
-        <ContainerFloating containerLeftOffset={-208} containerTopOffset={4}>
-          <ContainerFloating.Trigger>
-            <Button
-              intent="custom"
-              size="custom"
-              className="rounded-sm bg-white p-2 text-zinc-800 shadow dark:bg-zinc-700 dark:text-zinc-200"
-            >
-              <i className="fa-solid fa-circle-info" />
-            </Button>
-          </ContainerFloating.Trigger>
-          <ContainerFloating.Content>
-            <div className="flex w-60 flex-col items-center justify-center p-4 text-center text-zinc-700 dark:text-zinc-300">
-              <p>Add your own CSS code here to customize the appearance and layout of your site.</p>
-              <a
-                href="https://codex.wordpress.org/CSS"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 underline"
-              >
-                Learn more about CSS
-                <span className="text-sm"> (opens in a new tab)</span>
-              </a>
-              <p>
-                <span className="font-bold">Ctrl + Space</span> to autocomplete.
-              </p>
-            </div>
-          </ContainerFloating.Content>
-        </ContainerFloating>
-      </div>
     </div>
   );
 };

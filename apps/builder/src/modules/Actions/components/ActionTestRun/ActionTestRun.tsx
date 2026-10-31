@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Label from '@plitzi/plitzi-ui/Label';
@@ -8,6 +7,7 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo, useState } from 'react';
 
 import { actionTriggers, triggerInput } from '@plitzi/sdk-shared/actions';
+import Notice from '@pmodules/App/components/Notice';
 
 import type { ActionDocument, ActionRunReport, ActionTriggerType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
@@ -20,7 +20,7 @@ export type ActionTestRunProps = {
   onRun: (input: Record<string, unknown>, trigger: ActionTriggerType) => Promise<ActionRunReport | undefined>;
 };
 
-const statusIntent = (status: string) => (status === 'completed' ? 'success' : 'error');
+const statusTone = (status: string) => (status === 'completed' ? 'success' : 'danger');
 
 const TRIGGER_TITLES: Record<string, string> = {
   call: 'As a page calling it',
@@ -168,17 +168,17 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
         </div>
       )}
       {error && (
-        <Alert intent="error" size="sm">
+        <Notice tone="danger">
           <span className="text-xs">{error}</span>
-        </Alert>
+        </Notice>
       )}
       {report && (
         <div className="flex flex-col gap-2">
-          <Alert intent={statusIntent(report.status)} size="sm">
+          <Notice tone={statusTone(report.status)}>
             <span className="text-xs">
               {report.status} — {JSON.stringify(report.output)}
             </span>
-          </Alert>
+          </Notice>
           <div className="flex flex-col gap-1">
             {report.trace.map((step, index) => {
               const node = step.node as { title?: string; action?: string } | undefined;

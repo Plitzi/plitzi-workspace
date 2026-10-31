@@ -17,18 +17,16 @@ import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
-import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
-import GridButton from './GridButton';
 import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
-import MotionButton from './MotionButton';
 import PageHeader from './PageHeader';
 import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
 import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
+import ViewButtons from './ViewButtons';
 import ZoomButtons from './ZoomButtons';
 import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
 import DeployForm from '../../models/DeployForm';
@@ -121,7 +119,7 @@ const AppHeader = () => {
       cdnIdentifier?: string;
     }>(
       <Modal.Header>
-        <h4>Publish Snapshot</h4>
+        <h4>Publish a snapshot</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -179,10 +177,10 @@ const AppHeader = () => {
   return (
     <div
       className={clsx(
-        'py-3border-gray-200 flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'
+        'flex h-12 items-center justify-between gap-3 border-b border-gray-300 bg-white px-4 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'
       )}
     >
-      <div className="flex h-full items-center gap-4">
+      <div className="flex h-full items-center gap-3">
         <div
           className={clsx(
             'bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg pr-2 pl-3 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
@@ -197,15 +195,13 @@ const AppHeader = () => {
         <PageHeader />
         <BuilderSearchButton />
         <HistoryButtons />
-        <BorderButton />
-        <GridButton />
-        <MotionButton />
+        <ViewButtons />
       </div>
       <div className="flex h-full items-center gap-4">
         <DisplayModeButtons />
         <ZoomButtons />
       </div>
-      <div className="flex h-full items-center gap-6">
+      <div className="flex h-full items-center gap-3">
         <div className="flex items-center gap-1">
           {collaborators.map(collaborator => {
             const {
@@ -249,7 +245,7 @@ const AppHeader = () => {
             )}
           />
         </button>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <Button
             id="header-export"
             size="sm"

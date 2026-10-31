@@ -122,7 +122,7 @@ const Directory = ({
 
       const response = await showDialog(
         <Modal.Header>
-          <h4>Remove Page Folder</h4>
+          <h4>Remove folder</h4>
         </Modal.Header>,
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>
@@ -156,7 +156,7 @@ const Directory = ({
               icon="fas fa-trash-alt"
               cursor="pointer"
               intent="danger"
-              title="Remove Folder"
+              title="Remove folder"
               onClick={handleClickRemoveFolder}
             />
           </Flex>

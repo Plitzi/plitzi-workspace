@@ -1,8 +1,9 @@
 import clsx from 'clsx';
-import { Fragment } from 'react';
+import { Fragment, use } from 'react';
 
 import { momentsOf } from '../../helpers';
-import { sentenceOf } from '../../studio/sentences';
+import { checkTitleOf, sentenceOf, sentenceText } from '../../studio/sentences';
+import TestStudioContext from '../../studio/TestStudioContext';
 import StepEditor from '../StepEditor';
 import StudioStep from '../StudioStep';
 
@@ -47,14 +48,31 @@ const segmentClass = (step: E2eStep, play: StepPlay | undefined): string => {
 };
 
 /**
- * A flow as it is read: a timeline of its steps — each segment a step, filled as it is played, red where it failed,
- * pressed to play up to it — and, below, its moments side by side: the page as it opens, then each thing done with what
- * must hold once it is, joined by arrows. When this, then that.
+ * A flow as it is read: its moments side by side — the page as it opens, then each thing done with what must hold once
+ * it is, joined by arrows; when this, then that — each topped by a bar of its own steps, filled as they are played, red
+ * where one failed, pressed to play up to it: the colour sits over the steps it stands for.
  */
 const FlowStrip = (props: FlowStripProps) => {
   const { steps, plays, stepProblems, editing, locked, nameOf, elements } = props;
   const { onPoint, onPlayTo, onEdit, onMove, onRemove, onDone } = props;
+  const titleOf = checkTitleOf(use(TestStudioContext).tests.unit ?? []);
   const moments = momentsOf(steps);
+  // A step of the timeline: its kind as its colour, how it went as its fill — pressed, played up to it.
+  const segment = ({ step, index }: PlacedStep) => (
+    <button
+      key={index}
+      type="button"
+      title={`${String(index + 1)}. ${sentenceText(step, nameOf, titleOf)}${locked ? '' : ' — press to play up to it'}`}
+      disabled={locked}
+      className={clsx(
+        'h-full min-w-2 grow rounded-full transition-colors enabled:cursor-pointer',
+        segmentClass(step, plays[index])
+      )}
+      onClick={() => onPlayTo(index)}
+      onMouseEnter={() => onPoint(step)}
+      onMouseLeave={() => onPoint(undefined)}
+    />
+  );
   const card = ({ step, index }: PlacedStep) =>
     editing === index && !locked ? (
       <StepEditor
@@ -86,37 +104,23 @@ const FlowStrip = (props: FlowStripProps) => {
 
   return (
     <div className="flex min-h-0 flex-col gap-3">
-      <div className="flex h-2 shrink-0 gap-0.5" aria-label="The journey's steps, in order">
-        {steps.map((step, index) => (
-          <button
-            key={index}
-            type="button"
-            title={`${String(index + 1)}. ${sentenceOf(step)
-              .parts.map(part =>
-                'element' in part ? nameOf(part.element) : 'value' in part ? `“${part.value}”` : part.text
-              )
-              .join(' ')}${locked ? '' : ' — press to play up to it'}`}
-            disabled={locked}
-            className={clsx(
-              'h-full min-w-2 grow rounded-full transition-colors first:rounded-l-full enabled:cursor-pointer',
-              segmentClass(step, plays[index])
-            )}
-            onClick={() => onPlayTo(index)}
-            onMouseEnter={() => onPoint(step)}
-            onMouseLeave={() => onPoint(undefined)}
-          />
-        ))}
-      </div>
       <div className="flex min-h-0 items-start gap-2 overflow-x-auto pb-1">
         {moments.map((moment, at) => (
           <Fragment key={moment.action?.index ?? 'opens'}>
-            {at > 0 && <i className="fa-solid fa-arrow-right mt-3 shrink-0 text-xs text-zinc-400 dark:text-zinc-500" />}
+            {/* Level with the cards: under each column's bar and the gap below it, at the middle of a step's card. */}
+            {at > 0 && (
+              <i className="fa-solid fa-arrow-right mt-[21px] shrink-0 text-xs text-zinc-400 dark:text-zinc-500" />
+            )}
             <section
               className="flex w-88 shrink-0 flex-col gap-1.5"
               aria-label={
                 moment.action ? `Step ${String(moment.action.index + 1)} and its checks` : 'The page as it opens'
               }
             >
+              {/* The moment's own steps, in order, over the column that holds them: what the colour says is below it. */}
+              <div className="flex h-1.5 shrink-0 gap-0.5" aria-label="Its steps, as played">
+                {[...(moment.action ? [moment.action] : []), ...moment.checks].map(segment)}
+              </div>
               {moment.action ? (
                 <ol>{card(moment.action)}</ol>
               ) : (

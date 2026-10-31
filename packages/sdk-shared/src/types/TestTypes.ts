@@ -86,7 +86,13 @@ export type E2eExpectation =
   /** A computed property, as CSS names it — or at least (`>=`) or at most (`<=`) a number of it. */
   | { kind: 'expectStyle'; element: E2eTarget; property: string; value: string; at?: '>=' | '<=' }
   /** Where two elements stand: `activity.bottom + 8 <= legend.top`. */
-  | { kind: 'expectPosition'; relation: string };
+  | { kind: 'expectPosition'; relation: string }
+  /**
+   * An element check of the space (`tests.unit`, by id) holds for the page as the journey left it: its element resolved
+   * for the page's state and sources now — not the check's own `given.state` — with the sources the check names itself
+   * (a list's row) laid over them. One check of the logic, held at the moment a whole flow reaches it.
+   */
+  | { kind: 'expectCheck'; check: string };
 
 export type E2eStep = E2eAction | E2eExpectation;
 
@@ -105,5 +111,10 @@ export interface E2eTest {
   answers?: Record<string, Record<string, unknown>>;
   /** The page's clock, held from this instant (ISO, UTC): a page that writes the time reads the same every run. */
   clock?: string;
+  /**
+   * Where it starts: the page's state set as it opens, before the first step — a case reached without the steps that
+   * lead to it (a basket already full, a visitor already past the first screen).
+   */
+  given?: { state: Record<string, unknown> };
   steps: E2eStep[];
 }

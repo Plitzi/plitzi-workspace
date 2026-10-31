@@ -2,17 +2,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  failedAtText,
-  passedText,
-  playedText,
-  playOn,
-  readTargets,
-  sharedServerNote,
-  stepsOf,
-  unlikeIn,
-  verdictOf
-} from './play';
+import { passedText, playedText, playOn, unlikeIn, verdictOf } from './play';
+import { failedAtText, readTargets, sharedServerNote, stepsOf } from './playArgs';
 import { stateReadsOf, valueAt } from './playHeld';
 import { passedOf } from './visit';
 
@@ -279,7 +270,7 @@ describe('what page play is asked', () => {
     expect(stepsOf({ read: ['crate-count'] })).toEqual([]);
     expect(stepsOf({ steps: '  ', read: ['crate-count'] })).toEqual([]);
     expect(stepsOf({})).toEqual({
-      problem: 'page play needs --steps — or --read alone, to read the page as it rests.'
+      problem: 'page play needs --steps — or --read alone, to read the page as it rests, or --journey <id>.'
     });
     expect(stepsOf({ steps: 'click save-key' })).toHaveLength(1);
   });

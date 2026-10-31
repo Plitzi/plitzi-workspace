@@ -4,15 +4,17 @@ import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import Notice from '@pmodules/App/components/Notice';
 
 import { problemsOfKind, testsNeedingLook } from '../../helpers';
+import useMayTest from '../../hooks/useMayTest';
 import TestStudioContext from '../../studio/TestStudioContext';
 import AreaStats from '../AreaStats';
-import CalmNote from '../CalmNote';
 import CanvasPane from '../CanvasPane';
 import FlowList from '../FlowList';
 import FlowPanel from '../FlowPanel';
 import GateCard from '../GateCard';
+import PlanUsage from '../PlanUsage';
 import ServerPlayCard from '../ServerPlayCard';
 
 import type { ServerPlay } from '../../hooks/useServerPlay';
@@ -53,6 +55,7 @@ const TestsArea = ({
   onChecks
 }: TestsAreaProps) => {
   const studio = use(TestStudioContext);
+  const { mayTest, why } = useMayTest();
   const { tests, flow, dirty, mode, playingAll, paused, checking, plays, states, log, playedMs, outcome } = studio;
   const { select, create, remove, playAll, stop } = studio;
   const { showDialog } = useModal();
@@ -160,7 +163,7 @@ const TestsArea = ({
         <Button
           size="sm"
           intent="secondary"
-          disabled={serverRunning || onServer !== undefined || flows.length === 0}
+          disabled={serverRunning || onServer !== undefined || flows.length === 0 || !mayTest}
           onClick={onRunOnServer}
         >
           {serverRunning || onServer ? 'Playing on the server…' : 'Run on the server'}
@@ -225,8 +228,13 @@ const TestsArea = ({
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
           />
+          {why && <Notice tone="caution">{why}</Notice>}
           {onServer && <ServerPlayCard play={onServer} titleOf={titleOf} />}
-          {serverRun?.notRun && <CalmNote>{serverRun.notRun}</CalmNote>}
+          {serverRun?.notRun && <Notice tone="caution">{serverRun.notRun}</Notice>}
+          <PlanUsage
+            journeys={flow && !flows.some(each => each.id === flow.id) ? flows.length + 1 : flows.length}
+            plays={serverRun?.serverPlays ?? answer?.serverPlays}
+          />
           <GateCard
             ready={passing + (answer?.unitPassed ?? 0)}
             total={flows.length + unitTotal}

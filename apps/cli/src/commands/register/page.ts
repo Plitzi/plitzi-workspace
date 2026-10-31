@@ -192,13 +192,17 @@ export const registerPage = (pageGroup: Command): void => {
 
   const playCommand = pageGroup
     .command('play')
-    .argument('<path>', 'The page: /pricing', pagePath)
+    .argument('[path]', 'The page: /pricing — left out with --journey, which opens on its own', pagePath)
     .description(
       'An interaction played step by step — and after each step how far each element read moved, whether it is shown and takes a press; beside another site with --compare, held to it with --same'
     )
     .option(
       '--steps <script>',
       'The steps — left out with --read, the page as it rests — as page shot --steps writes them — click, hover, scroll <el> [dx] [dy] (into view — or its own content by so many pixels: scroll genres 200), type (or fill: what the field held replaced), drag, press, wait, wait-for <el> [time] (until it shows — 10 s, or the time said up to 60 s; a selector waits for a state: [data-state="stalled"]), reload, goto <path>, store, state, clock, tick, action <id> [json] (one of the space’s actions run as the page’s visitor — its answer whole with --json), render <id> [json] (one the page runs as it renders, a provider’s, played so — dev mode), as <account> <step> (played by another account on a page of its own), shot [label] (the page pictured where it stands, in tmp/shots — in a task’s copy, the run’s pictures of it) — a ";" inside quotes is the text’s — each element "ours => theirs" with --compare'
+    )
+    .option(
+      '--journey <id>',
+      'One of the space’s journeys (its spec’s tests.e2e) played first — its steps pressed and its checks held, as plitzi test plays it — and the play goes on from where it leaves the page: --read, --steps from there'
     )
     .option(
       '--read <element...>',
@@ -214,7 +218,7 @@ export const registerPage = (pageGroup: Command): void => {
     .addOption(widthsOption('The viewport widths, separated by commas: the steps played at each', [1440]))
     .addOption(schemeOption())
     .option('--json', 'One object, for a tool or an agent');
-  withVisitorOptions(playCommand).action((route: string, options: PlayOptions) => play(route, options));
+  withVisitorOptions(playCommand).action((route: string | undefined, options: PlayOptions) => play(route, options));
 
   withVisitorOptions(
     pageGroup

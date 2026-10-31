@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useState } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import ViewPage from '@pmodules/App/components/ViewPage';
 import ViewSection from '@pmodules/App/components/ViewSection';
 
@@ -82,11 +82,7 @@ const UnitTestForm = ({ test, elements, onSave, onBack }: UnitTestFormProps) => 
         </>
       }
     >
-      {problem && (
-        <Alert intent="error" size="xs" solid={false}>
-          {problem}
-        </Alert>
-      )}
+      {problem && <Notice tone="danger">{problem}</Notice>}
       <ViewSection title="What it tests">
         <Input
           size="sm"

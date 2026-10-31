@@ -1,10 +1,10 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth';
+import Notice from '@pmodules/App/components/Notice';
 import ViewSection from '@pmodules/App/components/ViewSection';
 
 import type { VisitorRoles as TVisitorRoles } from '@plitzi/sdk-shared/auth';
@@ -120,11 +120,7 @@ const VisitorRoles = ({ roles }: VisitorRolesProps) => {
           Add role
         </Button>
       </div>
-      {problem && (
-        <Alert intent="error" size="xs" solid={false}>
-          {problem}
-        </Alert>
-      )}
+      {problem && <Notice tone="danger">{problem}</Notice>}
     </ViewSection>
   );
 };

@@ -31,9 +31,10 @@ export type PreviewRequestBody = {
    * `once` — the default — is the capture path: the browser opens the URL, the render happens, the token is spent.
    * `session` is somebody iterating: the URL keeps working until it expires, the draft follows them from page to
    * page, and their refreshes are neither billed nor cached. Ask for a session only when a person is going to look
-   * at it, and end it with `DELETE` when they stop.
+   * at it, and end it with `DELETE` when they stop. `tests` is a session a test runner plays: the same, and its pages
+   * carry the space's state bridge (`window.__plitzi`) with no panel or badge, so a journey sets and reads the state.
    */
-  mode?: 'once' | 'session';
+  mode?: 'once' | 'session' | 'tests';
 };
 
 export type PreviewResult =

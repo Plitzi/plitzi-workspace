@@ -101,6 +101,16 @@ export const createMcpServer = async ({
     return id;
   };
 
+  // The space's tests are written by whoever may say what it must do: every role that writes, and a tester's alone.
+  const requireTestableSpaceId = (): number => {
+    const id = requireSpaceId();
+    if (!grant?.canWrite && !grant?.canTest) {
+      throw new ReadOnlyGrantError(grant?.readOnlyReason);
+    }
+
+    return id;
+  };
+
   const loadSpace = async (): Promise<Space> => {
     const id = requireSpaceId();
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
@@ -167,7 +177,8 @@ export const createMcpServer = async ({
     saveFunctions: saveFunctions
       ? (files, base) => saveFunctions(requireWritableSpaceId(), files, base, write)
       : undefined,
-    saveData: saveData ? (files, base) => saveData(requireWritableSpaceId(), files, base, write) : undefined
+    saveData: saveData ? (files, base) => saveData(requireWritableSpaceId(), files, base, write) : undefined,
+    tests: saveSchema ? schema => saveSchema(requireTestableSpaceId(), MCP_ENV, schema, write) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.
@@ -207,7 +218,7 @@ export const createMcpServer = async ({
     ...(tryFunction
       ? { tryFunction: (task, params) => tryFunction(requireWritableSpaceId(), task, params, write) }
       : {}),
-    ...(runE2eTests ? { runE2eTests: (ids: readonly string[]) => runE2eTests(requireSpaceId(), ids) } : {}),
+    ...(runE2eTests ? { runE2eTests: (ids: readonly string[]) => runE2eTests(requireTestableSpaceId(), ids) } : {}),
     // The agent's own writes are recorded as the MCP's, for the member it acts for (see `SSRWriteContext`).
     ...(getActivity
       ? {

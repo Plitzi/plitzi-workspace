@@ -1,5 +1,4 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
@@ -7,6 +6,7 @@ import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { documentIds, slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import PanelToolbar from '@pmodules/App/components/PanelToolbar';
 import LayoutForm from '@pmodules/App/models/LayoutForm';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
@@ -29,7 +29,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const handleClickAddPage = useCallback(async () => {
     const response = await showModal(
       <Modal.Header>
-        <h4>Add Page</h4>
+        <h4>New page</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -46,7 +46,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const handleClickAddLayout = useCallback(async () => {
     const response = await showModal<{ name: string; pageFolder?: string }>(
       <Modal.Header>
-        <h4>Add Layout</h4>
+        <h4>New layout</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -74,7 +74,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const handleClickAddPageFolder = useCallback(async () => {
     const response = await showModal(
       <Modal.Header>
-        <h4>Add Page Folder</h4>
+        <h4>New folder</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -96,55 +96,35 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const sitemapTitle = sitemapOpen ? 'Back to the canvas' : 'See the pages as a map';
 
   return (
-    <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3 dark:border-zinc-700">
-      <Button
-        intent="primary"
-        size="sm"
-        className="group h-8 grow basis-0"
-        iconPlacement="before"
-        onClick={handleClickAddPage}
-      >
-        <Button.Icon icon="fa-solid fa-file-circle-plus" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
-          New Page
-        </span>
-      </Button>
-      <Button
-        intent="primary"
-        size="sm"
-        className="group h-8 grow basis-0"
-        iconPlacement="before"
-        onClick={handleClickAddLayout}
-      >
-        <Button.Icon icon="fa-solid fa-border-all" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
-          New Layout
-        </span>
-      </Button>
-      <Button
-        intent="secondary"
-        size="sm"
-        className="group h-8 grow basis-0"
-        iconPlacement="before"
-        onClick={handleClickAddPageFolder}
-      >
-        <Button.Icon icon="fa-solid fa-folder-plus" size="md" className="text-base" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
-          New Folder
-        </span>
-      </Button>
-      {/* A way of looking at the pages, not something made: an icon apart from the three that create, which widen to
-          their label on hover — a fourth would push the row past the panel. */}
-      <Button
-        intent="secondary"
-        size="sm"
-        className="h-8 w-8 shrink-0"
-        title={sitemapTitle}
-        onClick={handleClickSitemap}
-      >
-        <Button.Icon icon={sitemapIcon} size="md" className="text-base" />
-      </Button>
-    </Flex>
+    <div className="flex flex-col gap-2 border-b border-gray-300 pb-3 dark:border-zinc-700">
+      <PanelToolbar action={{ label: 'New page', onClick: () => void handleClickAddPage() }} />
+      <div className="flex gap-2">
+        <Button
+          intent="secondary"
+          size="xs"
+          className="grow basis-0"
+          iconPlacement="before"
+          onClick={handleClickAddLayout}
+        >
+          <Button.Icon icon="fa-solid fa-border-all" />
+          New layout
+        </Button>
+        <Button
+          intent="secondary"
+          size="xs"
+          className="grow basis-0"
+          iconPlacement="before"
+          onClick={handleClickAddPageFolder}
+        >
+          <Button.Icon icon="fa-solid fa-folder-plus" />
+          New folder
+        </Button>
+        {/* A way of looking at the pages, not something made: an icon apart from what creates. */}
+        <Button intent="secondary" size="xs" title={sitemapTitle} onClick={handleClickSitemap}>
+          <Button.Icon icon={sitemapIcon} />
+        </Button>
+      </div>
+    </div>
   );
 };
 

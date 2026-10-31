@@ -1,7 +1,7 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback } from 'react';
 
+import Notice from '@pmodules/App/components/Notice';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 export type ActionCheckProps = {
@@ -39,16 +39,16 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
         </span>
       )}
       {data && issues.length === 0 && (
-        <Alert intent="success" size="sm">
+        <Notice tone="success">
           <span className="text-xs">
             Every task, credential, connector and schedule this flow names is available on this server. It can still
             fail on what only a real run reaches — a provider that is down, a statement that is wrong — but nothing
             about its configuration is missing.
           </span>
-        </Alert>
+        </Notice>
       )}
       {issues.map(issue => (
-        <Alert key={`${issue.path}-${issue.message}`} intent={issue.level === 'error' ? 'error' : 'warning'} size="sm">
+        <Notice key={`${issue.path}-${issue.message}`} tone={issue.level === 'error' ? 'danger' : 'caution'}>
           <div className="flex flex-col text-xs">
             <span>
               {stepOf(issue.path) && <b>{stepOf(issue.path)}: </b>}
@@ -56,7 +56,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
             </span>
             {issue.hint && <span className="opacity-80">{issue.hint}</span>}
           </div>
-        </Alert>
+        </Notice>
       ))}
       {errors.length > 0 && (
         <span className="text-xs text-gray-500 dark:text-zinc-400">

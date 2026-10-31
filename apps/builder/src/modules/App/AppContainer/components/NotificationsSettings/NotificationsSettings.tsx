@@ -1,4 +1,3 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useMemo, useState } from 'react';
 
@@ -10,6 +9,7 @@ import {
   splitNotificationsCss,
   withNotificationsCss
 } from '@plitzi/sdk-shared/style';
+import Notice from '@pmodules/App/components/Notice';
 
 import ViewSection from '../../../components/ViewSection';
 
@@ -107,11 +107,7 @@ const NotificationsSettings = () => {
           <NotificationField key={field} field={field} value={texts[field] ?? ''} onChange={handleChange} />
         ))}
       </div>
-      {problem && (
-        <Alert intent="warning" size="xs" solid={false}>
-          {problem}
-        </Alert>
-      )}
+      {problem && <Notice tone="caution">{problem}</Notice>}
     </ViewSection>
   );
 };

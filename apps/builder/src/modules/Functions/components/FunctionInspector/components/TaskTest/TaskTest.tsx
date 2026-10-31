@@ -1,7 +1,8 @@
-import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo, useState } from 'react';
+
+import Notice from '@pmodules/App/components/Notice';
 
 import { paramDefaults, readParams, runLabel, taskNameOf } from '../../../../helpers';
 import TryField from '../TryField';
@@ -110,11 +111,7 @@ const TaskTest = ({ task, needsSave, onRun }: TaskTestProps) => {
         <i className={isRunning ? 'fa-solid fa-circle-notch fa-spin' : 'fa-solid fa-play'} />
         {runLabel(isRunning, needsSave)}
       </Button>
-      {error && (
-        <Alert intent="error" size="xs" solid={false}>
-          {error}
-        </Alert>
-      )}
+      {error && <Notice tone="danger">{error}</Notice>}
       {report && <TryResult report={report} task={name} />}
     </div>
   );
