@@ -1,4 +1,5 @@
 import type { ElementFlagGate } from '@plitzi/sdk-shared';
+import type { SitemapExclusion } from '@plitzi/sdk-shared/navigation';
 
 /**
  * Who may open a page, as the page's `accessLevel` decides it: unset is anyone, `public` is only somebody signed out,
@@ -19,6 +20,8 @@ export type SitemapPage = {
   flag?: ElementFlagGate;
   /** Where somebody it refuses is sent, by page name. */
   redirectTo?: string;
+  /** Why the site's `/sitemap.xml` leaves it out — the server's own reason (`sitemapExclusion`) — or nothing: it lists it. */
+  notInSitemap?: SitemapExclusion;
 };
 
 export type SitemapFolder = {

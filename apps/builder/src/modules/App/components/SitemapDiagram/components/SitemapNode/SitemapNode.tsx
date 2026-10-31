@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
+import { SITEMAP_EXCLUSION_WORDS } from '@plitzi/sdk-shared/navigation';
+
 import { ACCESS_LEVELS } from '../../types';
 import SitemapChip, { SitemapAccessChip, SitemapFlagChip } from '../SitemapChip';
 import SitemapPath from '../SitemapPath';
@@ -134,6 +136,14 @@ const SitemapNode = ({ entry, selected, dropTarget, current, onOpen, onAddPage, 
               </SitemapChip>
             )}
             {entry.flag && <SitemapFlagChip gate={entry.flag} />}
+            {entry.notInSitemap && (
+              <SitemapChip
+                icon="fa-solid fa-eye-slash"
+                title={`Not in the site's sitemap.xml: ${SITEMAP_EXCLUSION_WORDS[entry.notInSitemap]}`}
+              >
+                Not in sitemap
+              </SitemapChip>
+            )}
           </>
         )}
         {entry.type === 'folder' && <span className="text-[11px] text-gray-500 dark:text-zinc-400">{itemsLabel}</span>}

@@ -1,4 +1,5 @@
-import { serverLog } from '../../helpers/serverLog';
+import { requestOrigin } from '../requestParser';
+import { servedSpace } from './servedSpace';
 
 import type { SSRContext, Stage } from '../http/types';
 
@@ -6,31 +7,51 @@ import type { SSRContext, Stage } from '../http/types';
 export const DEFAULT_ROBOTS_TXT = 'User-agent: *\nAllow: /\n';
 
 /**
- * `/robots.txt`, the space's own (`settings.robotsTxt`), or one that lets crawlers read everything: never the space's
- * page for an address it has none for — a crawler reads a 404 page as "no rules", and an HTML page as rules it cannot
- * parse. Read from the space a page at this address renders (no deployment: the server's one space); a space that
- * cannot be read answers the default, said in the server's log.
+ * The crawlers that gather pages to train AI models, by the user agent each reads `/robots.txt` as — what a space that
+ * says `blockAiCrawlers` keeps out. A search engine's own crawler is none of them: Googlebot reads on, Google-Extended
+ * (the one that trains) does not.
+ */
+export const AI_CRAWLERS = [
+  'GPTBot',
+  'ChatGPT-User',
+  'OAI-SearchBot',
+  'ClaudeBot',
+  'anthropic-ai',
+  'Google-Extended',
+  'Applebot-Extended',
+  'CCBot',
+  'PerplexityBot',
+  'Bytespider',
+  'Amazonbot',
+  'meta-externalagent'
+] as const;
+
+const SITEMAP_LINE = /^\s*sitemap\s*:/im;
+
+/**
+ * `/robots.txt`: the space's own (`settings.robotsTxt`) or one that lets crawlers read everything, then — when the space
+ * keeps them out (`settings.blockAiCrawlers`) — a `Disallow: /` for each AI crawler, and the address of its sitemap
+ * unless its own text names one. Never the space's page for an address it has none for: a crawler reads a 404 page as
+ * "no rules", and an HTML page as rules it cannot parse.
  */
 export const robotsTxtStage: Stage<SSRContext> = async ctx => {
-  const { config, req } = ctx;
+  const { req } = ctx;
   if (req.method !== 'GET' || req.path !== '/robots.txt') {
     return false;
   }
 
   ctx.operation = 'robots';
-  const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment ?? {};
-  const data =
-    spaceId === null
-      ? undefined
-      : await config.adapters.getOfflineData(spaceId, environment, revision).catch((error: unknown) => {
-          serverLog.warn('SSR', `/robots.txt answered the default: space ${String(spaceId)} could not be read`, error);
-
-          return undefined;
-        });
-  const own = data?.schema.settings.robotsTxt;
+  const settings = (await servedSpace(ctx, '/robots.txt'))?.schema.settings;
+  const own = settings?.robotsTxt?.trim() ? settings.robotsTxt.trim() : DEFAULT_ROBOTS_TXT.trim();
+  const origin = requestOrigin(req);
+  const sections = [
+    own,
+    ...(settings?.blockAiCrawlers ? AI_CRAWLERS.map(agent => `User-agent: ${agent}\nDisallow: /`) : []),
+    ...(origin && !SITEMAP_LINE.test(own) ? [`Sitemap: ${origin}/sitemap.xml`] : [])
+  ];
   ctx.res.setStatus(200);
   ctx.res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  ctx.res.send(own && own.trim() !== '' ? (own.endsWith('\n') ? own : `${own}\n`) : DEFAULT_ROBOTS_TXT);
+  ctx.res.send(`${sections.join('\n\n')}\n`);
 
   return true;
 };

@@ -1,3 +1,5 @@
+import { sitemapExclusion } from '@plitzi/sdk-shared/navigation';
+
 import type { AccessLevel, SitemapEntry } from '../types';
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
 
@@ -52,6 +54,7 @@ const schemaToSitemap = (pages: Element[], folders: PageFolder[], layouts: Recor
         }
 
         const { id, attributes, definition } = child.data;
+        const notInSitemap = sitemapExclusion(child.data);
         const redirect = text(attributes, 'unauthorizedPageRedirect');
         // `layout` is the layout; `layoutContainer` the slot inside it the page fills, which names nothing to an author.
         const layoutId = text(attributes, 'layout');
@@ -65,6 +68,7 @@ const schemaToSitemap = (pages: Element[], folders: PageFolder[], layouts: Recor
           isDefault: attributes.default === true,
           ...(layoutId ? { layout: layouts[layoutId] ?? layoutId } : {}),
           ...(definition.flag ? { flag: definition.flag } : {}),
+          ...(notInSitemap ? { notInSitemap } : {}),
           ...(text(attributes, 'unauthorizedBehaviour') === 'redirect' && redirect
             ? { redirectTo: pageNames.get(redirect) ?? redirect }
             : {})

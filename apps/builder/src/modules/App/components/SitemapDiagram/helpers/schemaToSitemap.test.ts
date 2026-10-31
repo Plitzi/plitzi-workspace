@@ -23,6 +23,19 @@ describe('schemaToSitemap', () => {
     expect(entries.map(entry => entry.type === 'page' && entry.access)).toEqual(['signedIn', 'guests', 'everyone']);
   });
 
+  it('marks the pages the site’s sitemap.xml leaves out, with the server’s own reason', () => {
+    const entries = schemaToSitemap(
+      [page('pricing', {}), page('account', { accessLevel: 'authenticated' }), page('post', { slug: ':slug' })],
+      []
+    );
+
+    expect(Object.fromEntries(entries.map(entry => [entry.id, entry.type === 'page' && entry.notInSitemap]))).toEqual({
+      account: 'signedIn',
+      post: 'parameters',
+      pricing: undefined
+    });
+  });
+
   it('nests pages in their folder under its address, and names their layout, flag and redirect', () => {
     const [shop] = schemaToSitemap(
       [

@@ -268,6 +268,12 @@ export type Schema = {
      */
     robotsTxt?: string;
     /**
+     * Keeps the crawlers that gather pages to train AI models (`AI_CRAWLERS`: GPTBot, ClaudeBot, Google-Extended…) out of
+     * the whole site: `/robots.txt` says `Disallow: /` to each, after whatever `robotsTxt` says. Search engines keep
+     * reading it. Left out, nobody is kept out.
+     */
+    blockAiCrawlers?: boolean;
+    /**
      * A move from page to page drawn as one view becoming the next (the browser's view transitions): the pages cross-fade,
      * and an element named the same on both by CSS — `view-transition-name: fighter-portrait` — moves from where it was
      * to where it lands. Where the browser has none, or the visitor asks for less motion, the page changes at once.

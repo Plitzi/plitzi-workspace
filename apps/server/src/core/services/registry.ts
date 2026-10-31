@@ -3,6 +3,7 @@ import { functionRoutesStage } from './functionRoutes';
 import { realtimeStage } from './realtime';
 import { robotsTxtStage } from './robotsTxt';
 import { rscStage } from './rsc';
+import { sitemapXmlStage } from './sitemapXml';
 import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
@@ -60,6 +61,7 @@ export const buildPagePipeline = (
   if (services.ssr) {
     stages.push(spaceDocumentStage);
     stages.push(robotsTxtStage);
+    stages.push(sitemapXmlStage);
   }
 
   stages.push(services.ssr ? ssrStage : notFoundStage);

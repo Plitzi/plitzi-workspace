@@ -1,3 +1,4 @@
+import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useState } from 'react';
@@ -11,6 +12,7 @@ import ViewPage from '../../components/ViewPage';
 import ViewSection from '../../components/ViewSection';
 
 import type { SpaceIdentity } from '@plitzi/sdk-shared/schema';
+import type { ChangeEvent } from 'react';
 
 /** The identity settings edited as one line of text each. */
 type TextSetting = 'siteName' | 'language' | 'favicon' | 'shareImage';
@@ -26,6 +28,7 @@ const SharingSettings = () => {
   const { eventBridge } = use(EventBridgeContext);
   const [identity, setIdentity] = useState<SpaceIdentity>(() => spaceIdentity(settings));
   const [robotsTxt, setRobotsTxt] = useState(settings.robotsTxt ?? '');
+  const [blockAiCrawlers, setBlockAiCrawlers] = useState(settings.blockAiCrawlers === true);
   const light =
     typeof identity.themeColor === 'object' ? (identity.themeColor.light ?? '') : (identity.themeColor ?? '');
   const dark = typeof identity.themeColor === 'object' ? (identity.themeColor.dark ?? '') : '';
@@ -75,6 +78,15 @@ const SharingSettings = () => {
     (value: string) => {
       setRobotsTxt(value);
       save('robotsTxt', value === '' ? undefined : value);
+    },
+    [save]
+  );
+
+  // Off is the setting left out — nobody kept out — never a `false` the document carries for nothing.
+  const handleAiCrawlers = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setBlockAiCrawlers(event.target.checked);
+      save('blockAiCrawlers', event.target.checked ? true : undefined);
     },
     [save]
   );
@@ -155,8 +167,18 @@ const SharingSettings = () => {
           value={robotsTxt}
           onChange={handleRobots}
         />
+        <Checkbox
+          size="sm"
+          name="blockAiCrawlers"
+          type="checkbox"
+          checked={blockAiCrawlers}
+          onChange={handleAiCrawlers}
+          label="Keep AI crawlers out (GPTBot, ClaudeBot, Google-Extended…) — search engines keep reading"
+        />
         <Notice tone="info">
           Left empty, crawlers may read every page. A page kept out of search says so itself, with its robots under SEO.
+          The site answers /sitemap.xml with its public pages — the map of pages marks the ones left out — and
+          robots.txt names it.
         </Notice>
       </ViewSection>
     </ViewPage>

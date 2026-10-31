@@ -35,6 +35,8 @@ authoring and the elements learnt from the runs.
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
 - **`sightOf` and `sightText` are imported from `@plitzi/sdk-shared/devTools/sight`,** not `…/devTools`: browser code
   a page check hands a browser, kept out of what a server built on `@plitzi/sdk-server` loads.
+- **A space's `/robots.txt` ends naming its sitemap** (`Sitemap: <origin>/sitemap.xml`) unless its own text names one: a
+  test or a tool that compared the file to `settings.robotsTxt` byte for byte compares it to that plus the line.
 - **`OverQuotaNotice` is `QuotaNotice`, and its classes `plitzi-quota-notice`** (`--near`, `--over`, `__text`,
   `__cta`) where they were `plitzi-over-quota…`: a page that styled the old ones restyles the new.
 - **A `DraftStore` of a deployment's own keeps `inspected`** beside `reusable` — what it was given to `put` comes back
@@ -1793,6 +1795,11 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
 
 ## Server (`@plitzi/sdk-server`)
 
+- **`/sitemap.xml`** for every space, at the address it is asked on: the pages a search engine may read
+  (`sitemapPaths`, `@plitzi/sdk-shared/navigation` — not those only signed-in visitors or a role open, with a param or
+  `*` in their slug, saying `noindex` or behind a flag), and **`settings.blockAiCrawlers`**: `/robots.txt` adds a
+  `Disallow: /` for each crawler that trains AI models (`AI_CRAWLERS`) after the space's own rules, search engines
+  reading on.
 - **Terms at sign-up** (`createAuth({ api: { terms: { version } } })`): a deployment that names the terms an account
   is opened under has `/auth/signup` refuse a sign-up without `acceptedTerms` (`true`, or a form's `"true"`) — 400,
   `field: 'acceptedTerms'` — and hands `createAccount` the version accepted and when (`termsAccepted`), to keep as the
@@ -1935,6 +1942,12 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - **The ring a played step draws stays on its element**: it follows it when the page moves it without a scroll — a
   list growing, the canvas resized — and goes when the element does, so a play that moves to another page no longer
   leaves it ringing whatever the new page drew there.
+- **A space setting can be removed again**: the settings mutation's `value` may be left out (it was `Json!`), so a box
+  unticked or a field emptied in the space's settings — "Keep AI crawlers out", robots.txt, the site's name — takes the
+  setting away instead of failing with "Variable "$value" … was not provided".
+- **The map of pages marks what search leaves out**: a page `/sitemap.xml` does not list carries "Not in sitemap", its
+  reason on hover (`sitemapExclusion`, the server's own). Sharing settings keep AI crawlers out with one box
+  (`blockAiCrawlers`) and say the sitemap is there.
 - **A journey's moments size to what they say.** Each column of the flow strip is as wide as its steps, between a
   minimum — narrower for a lone step than for one with its checks, wider for the one being edited — and a maximum, and
   they share the room there is: the strip scrolls only once their minimums do not fit, where every column used to take

@@ -279,7 +279,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. A type the deployment registers itself (`plugins`, named in `pluginNames`) is never looked for there: its own build is the one rendered. Set to `false` to manage plugin loading manually. |
 | `outbound` | `{ privateOrigins?: string[] }` | — | What the requests a space's documents write may reach from inside this server — a server provider's `query`, `http.request`, a connector, a function's `fetch`, a plugin's address. None reaches a private address (`localhost`, this server's network, the cloud's metadata) but the origins named in `privateOrigins` — the deployment's own storage, CDN or API on its network (`http://localhost:9000` for a local S3), each `scheme://host:port`, no path. |
-| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. **Everything in it is public:** served to anyone who asks, with no check. |
+| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `favicon.png`, a verification file). Files are checked before `static` prefix routes. **Everything in it is public:** served to anyone who asks, with no check. A `robots.txt` or `sitemap.xml` there shadows the space's own — see [Search engines](#search-engines). |
 | `dataDir` | `string` | — | The project's own data, never served: a provider resolved on the server (`runtime: 'server'`) whose `query` is `/data/<file>` reads `<dataDir>/<file>`, and a function reads it with `ctx.data(file)` — the space's `getData` when the deployment gives none. See [Project data](#project-data). |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `images` | `{ domains, cacheDir? }` | — | Pictures from other sites resized at `/_plitzi/img`, for an `image` to offer as a `srcset` (see [Images](#images)). |
@@ -579,7 +579,8 @@ with `resize: false` keeps its `src` as written. Resizing needs `sharp`
 
 ### Public directory
 
-Use `publicDir` to serve your own root-level files (e.g. `robots.txt`, `sitemap.xml`, `favicon.png`) without prefixes:
+Use `publicDir` to serve your own root-level files (e.g. `favicon.png`, a search console's verification file) without
+prefixes:
 
 ```ts
 createServer({
@@ -595,6 +596,20 @@ session, no permission, no check. Never put a secret, a key, an `.env`, a privat
 some visitors may read in it: that is served by a server action whose `access` checks who is asking.
 
 `/.well-known/` paths follow the same lookup order: served from `publicDir` if a matching file exists, otherwise `404 Not Found`. They are never handled by the SSR renderer.
+
+### Search engines
+
+Every space answers its own `/robots.txt` and `/sitemap.xml`, at the address it is asked on — its own domain or another:
+
+- `/robots.txt` is the space's `settings.robotsTxt` (`User-agent: *` / `Allow: /` when it says none), then — with
+  `settings.blockAiCrawlers: true` — a `Disallow: /` for each crawler that trains AI models (`AI_CRAWLERS`), then
+  `Sitemap: <origin>/sitemap.xml` unless its own text names a sitemap.
+- `/sitemap.xml` lists every page a search engine may read (`sitemapPaths` in `@plitzi/sdk-shared/navigation`): not a
+  page only signed-in visitors or a role may open, one whose slug takes a parameter or is `*`, one that says `noindex` or
+  one behind a feature flag.
+
+Both are read off the space, so they follow it as it changes. A `robots.txt` or `sitemap.xml` in `publicDir` is answered
+first and shadows them for every space this server serves: put none there unless that is the point.
 
 ### Project data
 
@@ -1099,7 +1114,10 @@ There is no third argument for the security-relevant parts, on purpose: password
 is rate-limited in memory, mailed links expire, and CSRF is on. Each of those used to be an option with no default —
 which meant the ordinary deployment went without, because nobody configures what they have not read about. Supply
 `api.hashPassword`/`verifyPassword` to keep an existing algorithm (a store of bcrypt hashes needs bcrypt), and
-`api.rateLimit` to put one counter behind a fleet.
+`api.rateLimit` to put one counter behind a fleet. Name the terms accounts are opened under — `api.terms: { version }`
+— and `/auth/signup` refuses a sign-up without `acceptedTerms: true` (400, `field: 'acceptedTerms'`) and hands
+`createAccount` the version accepted and when (`termsAccepted`), for the account store to keep; named none, sign-up asks
+for nothing more.
 
 `auth` on the server is the whole of the wiring: it mounts the `/auth` flows, answers the identity adapters a page
 server asks for, and carries the cookie naming with it — so there is no second place to keep in step. It also tells

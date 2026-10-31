@@ -101,8 +101,11 @@ the record is the answer instead: one page, as many addresses as records. Its `s
 indexed) and its `structuredData`, schema.org's JSON-LD — `{ '@context': 'https://schema.org', '@type': 'SportsEvent',
 name, startDate, location }`, one object or a list, each text a template as `seoTitle` may be (`name: '{{
 apiContainer_boxer.name }}'` on a detail page) — both written into the head the server sends. The space's
-`/robots.txt` is `settings.robotsTxt` (`'User-agent: *\nAllow: /\n'` when left out); keep a page out of search with its
-`robots`, not a `Disallow` — a crawler barred from a page never reads its `noindex`.
+`/robots.txt` is `settings.robotsTxt` (`'User-agent: *\nAllow: /\n'` when left out), then a `Disallow: /` for each AI
+crawler with `settings.blockAiCrawlers: true`, then the sitemap's address. `/sitemap.xml` lists every page a search
+engine may read — not one only signed-in visitors or a role open, with a param or `*` in its slug, saying `noindex` or
+behind a flag. Keep a page out of search with its `robots`, not a `Disallow` — a crawler barred from a page never reads
+its `noindex`.
 
 **Where a link to it is pasted** — a chat, a post: a page's `seoImage` is the picture its card shows (`'/og/home.png'` in
 `public/`, an address, or a template — `'{{ apiContainer_room.cover }}'`), about 1200×630, with `seoImageAlt`; its
