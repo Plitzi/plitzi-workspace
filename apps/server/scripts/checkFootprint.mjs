@@ -22,13 +22,16 @@ const BUDGET = {
   // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
   // 207: a provider's server `query` read from an external URL (`externalQueryReader`), and the page handler's error
   // page escaped by the one helper (`escapeHtml`).
-  '@plitzi/sdk-server': 207,
+  // 209: a space's `/sitemap.xml` (`sitemapXml`), and the space a request is served, read once for it and `robots.txt`
+  // (`servedSpace`).
+  '@plitzi/sdk-server': 209,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
   // 150: its server `query` (`serverQuery`) over the space's variables, resolved as the browser resolves them
   // (`dataSource/variables` — an entry of its own, so the computed values and their `deepEqual` stay the browser's).
-  '@plitzi/sdk-shared': 150,
+  // 151: which pages a sitemap lists (`navigation/sitemap`), the rule the builder's map of pages shows too.
+  '@plitzi/sdk-shared': 151,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,
