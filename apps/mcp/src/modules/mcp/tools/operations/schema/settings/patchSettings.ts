@@ -85,6 +85,7 @@ export const patchSettingsOp = z
       .union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() })])
       .optional(),
     robotsTxt: z.string().optional(),
+    blockAiCrawlers: z.boolean().optional().describe('robots.txt bars AI-training crawlers'),
     viewTransitions: z.boolean().optional(),
     withheldPage: z
       .string()

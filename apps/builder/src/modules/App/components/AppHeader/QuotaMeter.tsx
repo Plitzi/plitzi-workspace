@@ -52,8 +52,8 @@ const QuotaMeter = () => {
   const { addToast } = useToast();
   const { showModal } = useModal();
   const { webId } = useBuilderNetwork();
-  // Warn on the CROSSING, not on the state: the element count moves with every drag, and a toast per drag past 90%
-  // is noise that teaches people to dismiss the one that matters.
+  // Warn on the CROSSING, not on the state: the element count moves with every drag, and a toast per drag past
+  // the near line is noise that teaches people to dismiss the one that matters.
   const announced = useRef<Record<string, QuotaLevel>>({});
 
   useEffect(() => {

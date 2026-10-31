@@ -103,3 +103,9 @@ export type TSpaceAccess = {
  */
 export const mayDo = (access: TSpaceAccess | undefined, permission: string): boolean =>
   access === undefined || access.permissions.includes(permission);
+
+/**
+ * The share of an allowance past which it is nearly spent — what every surface warns at: the builder's meter, the
+ * dashboard's banner, and the line a site on the platform's shared domain shows its visitors. One number, so they agree.
+ */
+export const QUOTA_NEAR_RATIO = 0.8;

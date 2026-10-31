@@ -1800,6 +1800,8 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   `*` in their slug, saying `noindex` or behind a flag), and **`settings.blockAiCrawlers`**: `/robots.txt` adds a
   `Disallow: /` for each crawler that trains AI models (`AI_CRAWLERS`) after the space's own rules, search engines
   reading on.
+- **The MySQL account store keeps the terms accepted** (schema version 7: `terms_version`, `terms_accepted_at` on the
+  account table, added by `autoMigrate`; a deployment applying `schemaStatements` itself runs version 7's).
 - **Terms at sign-up** (`createAuth({ api: { terms: { version } } })`): a deployment that names the terms an account
   is opened under has `/auth/signup` refuse a sign-up without `acceptedTerms` (`true`, or a form's `"true"`) — 400,
   `field: 'acceptedTerms'` — and hands `createAccount` the version accepted and when (`termsAccepted`), to keep as the
@@ -1945,6 +1947,9 @@ is no room at this address.` — one line, no stack — where the log said "ende
 - **A space setting can be removed again**: the settings mutation's `value` may be left out (it was `Json!`), so a box
   unticked or a field emptied in the space's settings — "Keep AI crawlers out", robots.txt, the site's name — takes the
   setting away instead of failing with "Variable "$value" … was not provided".
+- **The quota meter warns at 80%** (`QUOTA_NEAR_RATIO`, `@plitzi/sdk-shared/network`), where it warned at 90%: one
+  line for the builder, the dashboard and the notice a site on the shared domain shows.
+- **An agent keeps AI crawlers out too**: the MCP's `patchSettings` takes `blockAiCrawlers`.
 - **The map of pages marks what search leaves out**: a page `/sitemap.xml` does not list carries "Not in sitemap", its
   reason on hover (`sitemapExclusion`, the server's own). Sharing settings keep AI crawlers out with one box
   (`blockAiCrawlers`) and say the sitemap is there.

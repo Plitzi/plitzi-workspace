@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { QUOTA_NEAR_RATIO } from '@plitzi/sdk-shared/network';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
@@ -32,8 +33,6 @@ export interface QuotaReading {
   level: QuotaLevel;
 }
 
-/** The share of a ceiling past which someone should be told before they hit it rather than after. */
-const NEAR_RATIO = 0.9;
 /** How often the server figures are re-read. Page views move with visitors, not with edits. */
 const REFRESH_MS = 5 * 60 * 1000;
 
@@ -42,7 +41,7 @@ const levelOf = (used: number, quota: number): QuotaLevel => {
     return 'over';
   }
 
-  return used >= quota * NEAR_RATIO ? 'near' : 'ok';
+  return used >= quota * QUOTA_NEAR_RATIO ? 'near' : 'ok';
 };
 
 const reading = (

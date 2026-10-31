@@ -24,6 +24,25 @@ const fakeDb = (answers: unknown[][] = []) => {
 
 const tables = resolveTables('plitzi_');
 
+describe('createAccount', () => {
+  it('keeps the terms an account was opened under, and when — and nothing for one opened without', async () => {
+    const at = new Date('2026-10-31T12:00:00Z');
+    const { db, calls } = fakeDb();
+    const store = createAccountStore(db, tables);
+    await store.createAccount?.({
+      username: 'ada',
+      email: 'ada@example.com',
+      passwordHash: 'h',
+      termsAccepted: { version: '2026-10-31', at }
+    });
+    await store.createAccount?.({ username: 'grace', email: 'grace@example.com', passwordHash: 'h' });
+
+    expect(calls[0].sql).toContain('terms_version, terms_accepted_at');
+    expect(calls[0].params.slice(3)).toEqual(['2026-10-31', at]);
+    expect(calls[1].params.slice(3)).toEqual([null, null]);
+  });
+});
+
 describe('clearSession', () => {
   it('clears by whichever half the caller holds', async () => {
     const { db, calls } = fakeDb();

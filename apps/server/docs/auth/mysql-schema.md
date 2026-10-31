@@ -63,6 +63,7 @@ console.log(mysqlSchemaStatements().join(';\n\n'));
 | `status` | ENUM active/inactive/blocked | Only `active` resolves to an actor — see below. |
 | `verified` | TINYINT(1) | Confirmed their address. Separate from `status`: an unverified account may still sign in; what it may *do* is RBAC's question. |
 | `reset_token`, `validation_token` | VARCHAR(191) NULL | Opaque, single-use. Deliberately VARCHAR: these are short strings this server generates, not JWTs. |
+| `terms_version`, `terms_accepted_at` | VARCHAR(32) NULL, DATETIME NULL | The terms the account was opened under and when they were accepted — written by `createAccount` when the deployment names its terms (`createAuth({ api: { terms: { version } } })`). Null for an account opened before that, or through another provider. |
 | `pending_email`, `pending_email_token` | VARCHAR(191) NULL | An address the account asked to move to, and what will confirm it. **Not** covered by the unique index on `email` and invisible to `findByEmail`: it is not a sign-in identifier until it is confirmed. |
 
 **A suspended account resolves to nothing.** `findAccountByToken` filters on `status = 'active'`, so deactivating

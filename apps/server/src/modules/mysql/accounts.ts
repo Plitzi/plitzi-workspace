@@ -312,12 +312,19 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       username: string;
       email: string;
       passwordHash: string;
+      termsAccepted?: { version: string; at: Date };
     }): Promise<AccountRecord> => {
-      const result = await execute(db, `INSERT INTO ${t.account} (username, email, password_hash) VALUES (?, ?, ?)`, [
-        account.username,
-        account.email,
-        account.passwordHash
-      ]);
+      const result = await execute(
+        db,
+        `INSERT INTO ${t.account} (username, email, password_hash, terms_version, terms_accepted_at) VALUES (?, ?, ?, ?, ?)`,
+        [
+          account.username,
+          account.email,
+          account.passwordHash,
+          account.termsAccepted?.version ?? null,
+          account.termsAccepted?.at ?? null
+        ]
+      );
 
       return {
         id: result.insertId,

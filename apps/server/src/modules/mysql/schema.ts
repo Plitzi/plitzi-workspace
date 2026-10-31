@@ -300,6 +300,20 @@ const step6 = (t: Tables): string[] => {
   ];
 };
 
+/**
+ * The terms an account was opened under, and when they were accepted (`AuthApiConfig.terms`, `termsAccepted` on
+ * `createAccount`): the record of what each person agreed to. Null for an account opened before a deployment named
+ * terms, or through another provider.
+ */
+const step7 = (t: Tables): string[] => {
+  const account = unquote(t.account);
+
+  return [
+    ...addColumn(account, 'terms_version', 'VARCHAR(32) NULL AFTER verified'),
+    ...addColumn(account, 'terms_accepted_at', 'DATETIME NULL AFTER terms_version')
+  ];
+};
+
 interface Step {
   version: number;
   statements: (tables: Tables) => string[];
@@ -312,7 +326,8 @@ const STEPS: Step[] = [
   { version: 3, statements: step3 },
   { version: 4, statements: step4 },
   { version: 5, statements: step5 },
-  { version: 6, statements: step6 }
+  { version: 6, statements: step6 },
+  { version: 7, statements: step7 }
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;

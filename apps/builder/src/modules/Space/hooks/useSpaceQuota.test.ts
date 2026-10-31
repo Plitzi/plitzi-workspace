@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { QUOTA_NEAR_RATIO } from '@plitzi/sdk-shared/network';
+
 import { readingsFor, refillsPeriodically } from './useSpaceQuota';
 
 import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared/network';
@@ -51,11 +53,12 @@ describe('useSpaceQuota — what the meter reads', () => {
     expect(find(readings, 'account:elements')).toMatchObject({ used: 1_100, quota: 5_000 });
   });
 
-  it('warns before the ceiling, and reports crossing it', () => {
-    const near = readingsFor(quota({ elements: 0, elementsQuota: 1_000 }), 900);
+  it('warns before the ceiling — at the line every surface warns at — and reports crossing it', () => {
+    const line = 1_000 * QUOTA_NEAR_RATIO;
+    const near = readingsFor(quota({ elements: 0, elementsQuota: 1_000 }), line);
     expect(find(near, 'space:elements')?.level).toBe('near');
 
-    const under = readingsFor(quota({ elements: 0, elementsQuota: 1_000 }), 899);
+    const under = readingsFor(quota({ elements: 0, elementsQuota: 1_000 }), line - 1);
     expect(find(under, 'space:elements')?.level).toBe('ok');
 
     const over = readingsFor(quota({ elements: 0, elementsQuota: 1_000 }), 1_001);
