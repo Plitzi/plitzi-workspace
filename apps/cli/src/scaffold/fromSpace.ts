@@ -15,6 +15,7 @@ import {
 } from './paths';
 import { EXAMPLE_PLUGIN_FILES } from './plugin';
 import { envExample, envFile, SDK_VERSION, withSigningSecret } from './project';
+import { EXAMPLE_DATA_FILES } from './space';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
@@ -53,7 +54,11 @@ export const isTextFile = (path: string): boolean => TEXT.test(path);
  * The example plugin and space `create` writes for a project of its own, which one made from a space replaces — every
  * file of the welcome space, so none is left beside the space's own for nothing to import.
  */
-const EXAMPLE = [...EXAMPLE_PLUGIN_FILES, ...Object.keys(blankTemplateFiles({ dir: SPACE_DIR }))];
+const EXAMPLE = [
+  ...EXAMPLE_PLUGIN_FILES,
+  ...EXAMPLE_DATA_FILES,
+  ...Object.keys(blankTemplateFiles({ dir: SPACE_DIR }))
+];
 
 const decode = (base64: string): string => Buffer.from(base64, 'base64').toString('utf-8');
 

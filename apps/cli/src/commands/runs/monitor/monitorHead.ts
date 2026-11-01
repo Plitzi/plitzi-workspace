@@ -37,7 +37,7 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'subtle'> =
  * The strip: the approved as one block, `✓ 12 approved`, then every task still to approve a block of its own, its id in
  * it when it fits — the run at a glance. A block each for the approved left the work under way a sliver at the right
  * once most of a run was done (Carlos: the monitor "termina siendo inútil"). More to approve than the width holds
- * blocks for are said by stage instead, each as wide as its share.
+ * whole ids for are said by stage instead, each wide enough for its count and as wide as its share beyond that.
  */
 const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number): void => {
   const { canvas, theme } = p;
@@ -92,7 +92,10 @@ const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number)
 
   const span = end - col;
   const each = Math.floor((span - (left.length - 1)) / left.length);
-  if (each >= 3) {
+  // A block for each only when each says which task it is: `◎…` blocks said nothing — 50 tasks drew a row of them
+  // (Carlos: "llegando al punto que es inútil").
+  const readable = left.every(task => textWidth(`${TASK_LOOK[task.status].glyph} ${task.id}`) + 1 <= each);
+  if (readable) {
     left.forEach((task, index) => {
       col = block(
         col,
@@ -105,12 +108,25 @@ const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number)
     return;
   }
 
-  // Too many to block: each stage as wide as its share, its count in it.
-  const stages = [...new Set(left.map(task => task.status))];
-  stages.forEach((status, index) => {
-    const count = left.filter(task => task.status === status).length;
-    const share = index === stages.length - 1 ? end - col : Math.max(1, Math.round((count / left.length) * span));
-    col = block(col, share, status, `${TASK_LOOK[status].glyph} ${String(count)} ${TASK_LOOK[status].label}`) - 1;
+  // Too many to name: a block for each stage, its count in it — each wide enough for its words, the rest of the row
+  // shared by how many tasks each holds. Narrower than every stage's words: its mark and count, its colour telling
+  // `ready` from `pending` — never a stage cut off the end of the row.
+  const counted = [...new Set(left.map(task => task.status))].map(status => ({
+    status,
+    count: left.filter(task => task.status === status).length
+  }));
+  const worded = (short: boolean) =>
+    counted.map(({ status, count }) => {
+      const text = `${TASK_LOOK[status].glyph} ${String(count)}${short ? '' : ` ${TASK_LOOK[status].label}`}`;
+
+      return { status, count, text, least: textWidth(text) + 2 };
+    });
+  const fits = (all: { least: number }[]) => all.reduce((sum, stage) => sum + stage.least, 0) + all.length - 1 <= span;
+  const stages = fits(worded(false)) ? worded(false) : worded(true);
+  const spare = Math.max(0, span - (stages.length - 1) - stages.reduce((sum, stage) => sum + stage.least, 0));
+  stages.forEach((stage, index) => {
+    const share = stage.least + Math.floor((stage.count / left.length) * spare);
+    col = block(col, index === stages.length - 1 ? Math.max(stage.least, end - col) : share, stage.status, stage.text);
   });
 };
 

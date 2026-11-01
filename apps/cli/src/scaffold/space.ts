@@ -164,6 +164,9 @@ const SAMPLE = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
 const VIEWS_ACTION = 'page-views';
 const VIEWS_FILE = `${ACTIONS_DIR}/views.ts`;
 
+/** The files of the welcome space's numbers — the action that counts them, the sample — which a space's own replace. */
+export const EXAMPLE_DATA_FILES: readonly string[] = [VIEWS_FILE, 'public/data/stats.json'];
+
 /**
  * The action a project with a server counts its page's views with: run by the server as it renders the page, once a
  * render, in the project's own `kv` — a number that is the project's from its first page, rather than one made up.

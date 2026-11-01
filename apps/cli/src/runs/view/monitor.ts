@@ -468,7 +468,9 @@ const agentsOf = async (
   };
   const leads: AgentLine[] = [leadLine()];
   const started = new Map((team ? startedAgents(team) : []).map(each => [each.agent, each] as const));
-  const names = [...new Set([...started.keys(), ...held.keys()])];
+  // The lead has a row of its own (`leadLine`, its review said there): a card it reviews holds it too, and listed again
+  // here it was a second "lead" row — an agent of no team entry, its model read as the harness's.
+  const names = [...new Set([...started.keys(), ...held.keys()])].filter(agent => agent !== LEAD);
   const paths = runPaths(ctx.root, view.runId);
   const present = new Map(await Promise.all(names.map(async agent => [agent, await presentAt(paths, agent)] as const)));
   // Between tasks and not said to have stopped: there while its follow marks it present, gone once it does not.

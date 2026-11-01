@@ -371,6 +371,13 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **`run monitor`'s strip names its tasks or counts them** (`@plitzi/cli`): a block for each task was drawn as long
+  as each was three columns wide, and fifty tasks drew a row of `◎…` that named none. A block each now only when every
+  block holds its task's whole id; otherwise a block a stage — `◎ 4 in review`, `○ 33 pending` — each wide enough for
+  its words, and its mark and count alone when even those do not fit, never a stage cut off the end.
+- **The lead is one row on `run monitor` while it reviews** (`@plitzi/cli`): a card the lead reviewed held it as a
+  writer's task holds its writer, so it was listed again among the agents — a second "lead" in the Agents panel, the
+  count of agents running and the row of who is at work, its model read as `harness`.
 - **A new project's card shows what the project counted** (`@plitzi/cli`, `@plitzi/sdk-authoring`): the `welcome`
   space of a self-hosted project wrote "Requests today 12480" on the element, a figure no reload ever changed. With a
   server it is now the page's views, counted by `src/actions/views.ts` (a `render` trigger and `kv.increment`) and fed
