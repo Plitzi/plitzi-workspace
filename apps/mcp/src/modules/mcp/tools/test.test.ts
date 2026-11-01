@@ -60,4 +60,27 @@ describe('plitzi_test', () => {
     );
     expect(played).toMatchObject({ e2e: { results: [{ id: 'opens', ok: true }] } });
   });
+
+  // A long list run a part at a time: the journeys of one area, by their tags.
+  it('runs only the journeys tagged as asked, and no element check, which has no tags', async () => {
+    const document: Schema = {
+      ...schema,
+      tests: {
+        unit: [unit.test({ id: 'shows', title: 'Shows', element: 'hello', expect: [unit.visible()] })],
+        e2e: [
+          e2e.test({ id: 'opens', title: 'Opens', page: '/', tags: ['home'], steps: [e2e.expectShown('hello')] }),
+          e2e.test({ id: 'phone', title: 'Phone', page: '/', tags: ['phone'], steps: [e2e.expectShown('hello')] })
+        ]
+      }
+    };
+
+    const played = await spaceTest(
+      { action: 'run', tags: ['phone'] },
+      contextOf(document, [], ids => Promise.resolve({ results: ids.map(id => ({ id, ok: true })) }))
+    );
+    expect(played).toEqual({
+      unit: { passed: 0, failed: 0, failing: [] },
+      e2e: { results: [{ id: 'phone', ok: true }] }
+    });
+  });
 });

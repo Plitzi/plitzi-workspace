@@ -25,6 +25,8 @@ export interface SpaceTestOptions {
   unit?: boolean;
   /** The e2e tests alone. */
   e2e?: boolean;
+  /** Only the journeys that carry one of these tags, comma-separated — no unit test, which has none. */
+  tag?: string;
   /** Where the project is served, when not by its own server. */
   url?: string;
   json?: boolean;
@@ -116,12 +118,20 @@ export const playSpaceTests = async (
 
   const { schema } = authored;
 
+  const tags = (options.tag ?? '')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(Boolean);
   const both = options.unit !== true && options.e2e !== true;
-  const unit: UnitTest[] = chosen(schema.tests?.unit ?? [], ids, both || options.unit === true);
-  const e2e: E2eTest[] = chosen(schema.tests?.e2e ?? [], ids, both || options.e2e === true);
+  const unit: UnitTest[] = chosen(schema.tests?.unit ?? [], ids, tags.length === 0 && (both || options.unit === true));
+  const e2e: E2eTest[] = chosen(schema.tests?.e2e ?? [], ids, both || options.e2e === true).filter(
+    test => tags.length === 0 || (test.tags ?? []).some(tag => tags.includes(tag))
+  );
   const unknown = ids.filter(id => ![...unit, ...e2e].some(test => test.id === id));
+  const untagged = tags.filter(tag => !(schema.tests?.e2e ?? []).some(test => test.tags?.includes(tag)));
   const problems = [
     ...unknown.map(id => `no test of the space is "${id}"`),
+    ...untagged.map(tag => `no journey of the space is tagged "${tag}"`),
     ...unitTestProblems(schema, unit),
     // A journey may hold any element check of the space, run here or not.
     ...e2eTestProblems(schema, e2e, schema.tests?.unit ?? [])

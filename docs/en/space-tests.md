@@ -21,6 +21,11 @@ itself, a list's row, are laid over them). A rule written once is held at every 
 journey may also start with a state — `given: { state: { items: 3 } }`, set as the page opens — to reach a case
 without the steps that lead to it. Both read and write the page's state bridge, `window.__plitzi`.
 
+**Tags.** A journey may carry `tags: ['sign-in', 'phone']` — lower case words, each once (`e2eTestProblems` says one
+that is not) — to tell a long list apart: the builder shows them as chips on each row, filters the list by one and
+plays only those shown; `plitzi test --tag sign-in,phone` and `plitzi_test run` with `tags` run only the journeys that
+carry one of them (no element check: they have no tags).
+
 **Signed in, as a test account.** A journey plays as a guest, or `as` one of the space's test accounts —
 `tests.accounts: [{ id, email?, roles? }]`, declared in the tests alone: no account of the platform's, no password,
 the same document in every tier. Its roles are the space's visitor roles (`settings.visitorRoles`), chosen from them in
@@ -118,7 +123,7 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
     goes to **Run on the server**, shown live as it plays: each journey's pill, and a card with the step and the page
     after it.
 - **The CLI.**
-  - `plitzi test [id…] [--unit|--e2e] [--url] [--json]`.
+  - `plitzi test [id…] [--unit|--e2e] [--tag <tags>] [--url] [--json]`.
   - `plitzi verify` runs them as its check `space tests`; with `--no-pages`, the element checks only.
   - Both go through `playSpaceTests` (`apps/cli/src/commands/project/spaceTests.ts`).
   - `plitzi page play --journey <id>` plays a journey first, its checks held, and reads or plays on from where it

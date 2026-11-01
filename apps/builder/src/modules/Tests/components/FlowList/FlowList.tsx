@@ -1,12 +1,12 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
-import { use } from 'react';
+import { use, useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Notice from '@pmodules/App/components/Notice';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
-import { elementNameOf, problemsOfTest } from '../../helpers';
+import { elementNameOf, problemsOfTest, tagsOf } from '../../helpers';
 import useMayTest from '../../hooks/useMayTest';
 import { sentenceText } from '../../studio/sentences';
 import TestStudioContext from '../../studio/TestStudioContext';
@@ -28,7 +28,12 @@ export type FlowListProps = {
   onCreate: () => void;
   onRemove: (id: string) => void;
   onViewServerRun: (id: string) => void;
+  /** The tag the list is filtered by — none: every journey. */
+  tag?: string;
+  onTag: (tag: string | undefined) => void;
 };
+
+const CHIP = 'flex shrink-0 cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium';
 
 const DEVICE = (width = 1440) => (width <= 480 ? 'Phone' : width <= 1024 ? 'Tablet' : 'Desktop');
 
@@ -103,19 +108,27 @@ const FlowList = ({
   onSelect,
   onCreate,
   onRemove,
-  onViewServerRun
+  onViewServerRun,
+  tag,
+  onTag
 }: FlowListProps) => {
   const { tests, flow, dirty, states, mode, playingAll } = use(TestStudioContext);
   const [flat] = useBuilderStore('schema.flat');
-  const flows = tests.e2e ?? [];
+  const flows = useMemo(() => tests.e2e ?? [], [tests]);
   // A flow not saved yet is in the list too, at its end: it is the one being written.
-  const shown = flow && !flows.some(each => each.id === flow.id) ? [...flows, flow] : flows;
+  const all = useMemo(
+    () => (flow && !flows.some(each => each.id === flow.id) ? [...flows, flow] : flows),
+    [flow, flows]
+  );
+  const tags = useMemo(() => tagsOf(all), [all]);
+  // Filtered by a tag, the one chosen stays in the list: it is the one being read and edited.
+  const shown = tag ? all.filter(each => each.id === flow?.id || each.tags?.includes(tag)) : all;
   const live = mode === 'playing';
   const nameOf = (target: string) => elementNameOf(flat, target);
   const { entitlements } = useSpaceEntitlements();
   const limit = entitlements?.journeysPerSpace ?? null;
   // At the plan's number a new journey would be refused on saving: it is not offered. Those kept stay editable.
-  const full = limit !== null && shown.length >= limit;
+  const full = limit !== null && all.length >= limit;
   const more = entitlements?.moreJourneys;
   const { mayTest } = useMayTest();
 
@@ -123,8 +136,14 @@ const FlowList = ({
     <section className="flex min-h-0 flex-col gap-2" aria-label="Journeys">
       <div className="flex items-center gap-3">
         <span className="grow text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-          Journeys · {shown.length}
-          {limit !== null && ` of ${String(limit)}`}
+          {tag ? (
+            `Journeys · ${String(shown.length)} shown of ${String(all.length)}`
+          ) : (
+            <>
+              Journeys · {all.length}
+              {limit !== null && ` of ${String(limit)}`}
+            </>
+          )}
         </span>
         <span
           className={clsx('flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase', {
@@ -154,8 +173,42 @@ const FlowList = ({
           {more && ` ${more.requires} keeps ${more.allows === null ? 'as many as you like' : String(more.allows)}.`}
         </Notice>
       )}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by tag">
+          <button
+            type="button"
+            aria-pressed={!tag}
+            className={clsx(CHIP, {
+              'border-primary-400 bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-200': !tag,
+              'border-gray-300 text-zinc-600 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800':
+                tag !== undefined
+            })}
+            onClick={() => onTag(undefined)}
+          >
+            All
+          </button>
+          {tags.map(each => (
+            <button
+              key={each.tag}
+              type="button"
+              aria-pressed={tag === each.tag}
+              className={clsx(CHIP, {
+                'border-primary-400 bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-200':
+                  tag === each.tag,
+                'border-gray-300 text-zinc-600 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800':
+                  tag !== each.tag
+              })}
+              onClick={() => onTag(tag === each.tag ? undefined : each.tag)}
+            >
+              {each.tag}
+              <span className="text-zinc-400 tabular-nums dark:text-zinc-500">{each.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <ol className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700">
-        {shown.map((each, index) => {
+        {shown.map(each => {
+          const index = all.indexOf(each);
           const chosen = flow?.id === each.id;
           const current = chosen ? flow : each;
           // While the server plays them, a journey it has not reached yet waits for it — not what the canvas last said.
@@ -199,6 +252,21 @@ const FlowList = ({
                   “{firstLineOf(current, nameOf)}” · {DEVICE(current.width)}
                   {current.as ? ` · as ${current.as}` : ''}
                 </span>
+                {current.tags && current.tags.length > 0 && (
+                  <span className="mt-1 flex min-w-0 flex-wrap gap-1">
+                    {current.tags.map(each => (
+                      <span
+                        key={each}
+                        className={clsx('rounded-full border px-1.5 text-[10px] leading-4', {
+                          'border-primary-400 text-primary-700 dark:text-primary-200': each === tag,
+                          'border-gray-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400': each !== tag
+                        })}
+                      >
+                        {each}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </div>
               {onServer && (
                 <Button
@@ -235,7 +303,7 @@ const FlowList = ({
             </li>
           );
         })}
-        {shown.length === 0 && (
+        {all.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
             No journeys yet. A journey is what a visitor does on the page, from start to end, and what must show as they
             go.

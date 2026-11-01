@@ -85,7 +85,8 @@ export type TestStudioValue = {
   check: (on: boolean) => void;
   /** Plays the chosen flow from its start: held before its first step when `stepping`, after step `until` when given. */
   play: (options?: { stepping?: boolean; until?: number }) => void;
-  playAll: () => void;
+  /** Plays every journey in turn — or only those of `only`, by id: the ones a filter shows. */
+  playAll: (only?: readonly string[]) => void;
   /** What the rows last said of the canvas's plays, forgotten: a run on the server speaks for them now. */
   forgetStates: () => void;
   pause: () => void;

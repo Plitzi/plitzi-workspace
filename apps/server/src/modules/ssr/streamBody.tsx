@@ -2,7 +2,7 @@ import { Writable } from 'node:stream';
 
 import { renderToPipeableStream } from 'react-dom/server';
 
-import { applySSRResult, isReusable, withNotFound, withRefusal } from './applySSRResult';
+import { applySSRResult, isReusable, renderParamsOf, withNotFound, withRefusal } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
@@ -100,7 +100,7 @@ export const streamBody = async (
         // Redirects/status are decided during the shell render — apply them before any byte is flushed.
         withNotFound(result, prep.notFound);
         withRefusal(result, prep.refused);
-        if (applySSRResult(res, result)) {
+        if (applySSRResult(res, result, renderParamsOf(req.query))) {
           abort();
           resolve();
 

@@ -391,6 +391,7 @@ export const buildProgram = (): Command => {
     )
     .option('--unit', 'The unit tests alone: no browser, no server')
     .option('--e2e', 'The e2e tests alone')
+    .option('--tag <tags>', 'Only the journeys that carry one of these tags, comma-separated: sign-in,phone')
     .option('--url <origin>', 'Where the project is served, when not by its own server')
     .option('--json', 'One object, for a tool or an agent')
     .action((ids: string[], options: SpaceTestOptions) => spaceTest(ids, options));

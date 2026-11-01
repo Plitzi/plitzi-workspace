@@ -112,6 +112,8 @@ export const e2eStepProblems = (value: unknown, at: string): string[] => {
   ];
 };
 
+const isNames = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
+
 const readE2e = (value: unknown, at: string): Read<E2eTest> => {
   if (!isRecord(value)) {
     return { problems: [`${at}: a test — { id, title, page, steps }`] };
@@ -125,6 +127,7 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
       : [`${at}.scheme: light or dark`]),
     ...(value.clock === undefined || isString(value.clock) ? [] : [`${at}.clock: an instant, 2026-10-30T09:00:00Z`]),
     ...(value.as === undefined || isString(value.as) ? [] : [`${at}.as: the id of a test account it plays as`]),
+    ...(value.tags === undefined || isNames(value.tags) ? [] : [`${at}.tags: a list of words — sign-in, onboarding`]),
     ...(value.answers === undefined ||
     (isRecord(value.answers) && Object.values(value.answers).every(answer => isRecord(answer)))
       ? []
@@ -142,8 +145,6 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
   // Every field of it read above, each as its kind says: what reaches here is the record.
   return problems.length > 0 ? { problems } : { value: value as unknown as E2eTest };
 };
-
-const isNames = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
 
 /** A test account as declared — `{ id, email?, roles? }` — or every way it is not one. */
 const readAccount = (value: unknown, at: string): Read<E2eAccount> => {

@@ -118,7 +118,10 @@ const widgetOperations = [
 //
 // Raised to 79k when patchSettings took `withheldPage`: the page a space draws where a page is withheld from its
 // visitor, its own 401/403 instead of the platform's words. Measured at 78.1k with ~0.9k of room.
-const TOOLS_BUDGET_BYTES = 79_000;
+//
+// Raised to 80k when plitzi_test run took `tags`: a long list of journeys run a part at a time, as the builder and the
+// CLI filter it. Measured at 79.1k with ~0.9k of room.
+const TOOLS_BUDGET_BYTES = 80_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

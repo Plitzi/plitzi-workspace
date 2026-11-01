@@ -17,11 +17,13 @@ import {
   flowProblemsOf,
   STEP_KINDS,
   stepKindOf,
-  stepOf
+  stepOf,
+  tagsOf
 } from '../../helpers';
 import useMayTest from '../../hooks/useMayTest';
 import TestStudioContext from '../../studio/TestStudioContext';
 import FlowStrip from '../FlowStrip';
+import JourneyTags from '../JourneyTags';
 import StartState from '../StartState';
 
 import type { E2eStep } from '@plitzi/sdk-shared';
@@ -101,6 +103,18 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
     },
     [edit, flow]
   );
+  const handleTags = useCallback(
+    (tags: string[] | undefined) => {
+      if (!flow) {
+        return;
+      }
+
+      const { tags: _tags, ...rest } = flow;
+      edit(tags ? { ...rest, tags } : rest);
+    },
+    [edit, flow]
+  );
+  const knownTags = useMemo(() => tagsOf(tests.e2e ?? []).map(each => each.tag), [tests]);
   const handleWidth = useCallback((width: number) => () => flow && edit({ ...flow, width }), [edit, flow]);
   // Who it plays as: a guest, or one of the space's test accounts (`as`).
   const handleAs = useCallback(
@@ -409,6 +423,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             </div>
           )}
           <span className="grow" />
+          <JourneyTags tags={flow.tags} known={knownTags} locked={locked} onChange={handleTags} />
           <Button size="xs" intent="secondary" disabled={!dirty || locked} onClick={discard}>
             Discard
           </Button>

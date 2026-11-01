@@ -11,6 +11,21 @@ import type { E2eAccount, E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk
 /** A test account's id: letters, digits, `-` and `_`. */
 const NAME = /^[A-Za-z0-9_-]+$/;
 
+/** A journey's tag: a word or two, lower case — one spelling, so `Sign-in` and `sign-in` are never two chips. */
+const TAG = /^[a-z0-9][a-z0-9_-]{0,31}$/;
+
+/** What is wrong with a journey's tags: one no tag may be, or one said twice. */
+const tagProblems = (at: string, tags: readonly string[]): string[] => [
+  ...tags
+    .filter(tag => !TAG.test(tag))
+    .map(
+      tag => `${at}: the tag "${tag}" is no word — lower case letters, digits, - and _, up to 32: sign-in, onboarding`
+    ),
+  ...[...new Set(tags.filter((tag, index) => tags.indexOf(tag) !== index))].map(
+    tag => `${at}: the tag "${tag}" is said twice — once is enough`
+  )
+];
+
 /** What is wrong with the test accounts as declared: an id no account may have, or one twice. */
 const accountProblems = (accounts: readonly E2eAccount[]): string[] => {
   const seen = new Set<string>();
@@ -129,6 +144,7 @@ export const e2eTestProblems = (
       );
     }
 
+    problems.push(...tagProblems(at, test.tags ?? []));
     if (test.width !== undefined && (test.width < 200 || test.width > 4000)) {
       problems.push(`${at}: a width of ${String(test.width)} px is no screen's — 390, 768 or 1440`);
     }

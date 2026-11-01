@@ -359,6 +359,16 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   start to end; not an interaction's flow) and **Element checks** (unit tests), each with how it stands; an element
   check written in its form (`@plitzi/plitzi-builder`). `readSpaceTests` reads a document's tests from outside, every
   way they are not tests said; `RoutingPage.route` answers anything, as Playwright's newer `Disposable` does.
+- **A journey carries tags** (`E2eTest.tags`, `@plitzi/sdk-shared`): lower case words, each once — `e2eTestProblems`
+  says one that is not, `readSpaceTests` a list that is not one. The builder shows them as chips on each row and beside
+  the journey's Save (typed, made one spelling, the space's others offered), filters the list by one — kept through a
+  reload — and **Play all** then plays the journeys shown (`playAll(only)`); `plitzi test --tag sign-in,phone` and
+  `plitzi_test run` with `tags` run only the journeys carrying one (`@plitzi/plitzi-builder`, `@plitzi/sdk-authoring`,
+  `@plitzi/cli`, `@plitzi/sdk-mcp`).
+- **A redirect within the site keeps the render's own parameters** (`@plitzi/sdk-server`): `access-token` and `__pt`,
+  when the request carried them, are kept on a redirect to a path of the site (`withRenderParams`) and never given to
+  another origin. A page that needs a session sent the server's journey runner to sign in without them — another
+  space, or the live one — so a journey played as a test account could not start on it.
 - **Journeys played beside the page.** The page live on the left, at the chosen journey's device; the journeys on the
   right, each with its letter, its first action and where it stands (Ready, Queued, Playing 3/5, Passes, Fails, On the
   server), and the rule they are kept for — before a snapshot or a publish, every journey and every element check must

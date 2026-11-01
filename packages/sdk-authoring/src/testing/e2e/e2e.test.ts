@@ -72,6 +72,19 @@ describe('the document’s e2e tests as written', () => {
     ]);
   });
 
+  // Tags sort a long list: one spelling each, so a chip is never two.
+  it('takes tags of a word or two, lower case, each once', () => {
+    expect(e2eTestProblems(schema, [{ ...adds, tags: ['menu', 'phone'] }])).toEqual([]);
+    expect(e2eTestProblems(schema, [{ ...adds, tags: ['Menu', 'phone', 'phone', 'a tag'] }])).toEqual([
+      'e2e test "adds": the tag "Menu" is no word — lower case letters, digits, - and _, up to 32: sign-in, onboarding',
+      'e2e test "adds": the tag "a tag" is no word — lower case letters, digits, - and _, up to 32: sign-in, onboarding',
+      'e2e test "adds": the tag "phone" is said twice — once is enough'
+    ]);
+    expect(readSpaceTests({ e2e: [{ id: 'e', title: 'E', page: '/', tags: 'menu', steps: [] }] })).toEqual({
+      problems: ['tests.e2e[0].tags: a list of words — sign-in, onboarding']
+    });
+  });
+
   it('says each step as a person reads it', () => {
     expect(adds.steps.map(e2eStepText)).toEqual([
       'click add',

@@ -1,4 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
@@ -6,7 +7,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Notice from '@pmodules/App/components/Notice';
 
-import { problemsOfKind, testsNeedingLook } from '../../helpers';
+import { problemsOfKind, tagsOf, testsNeedingLook } from '../../helpers';
 import useMayTest from '../../hooks/useMayTest';
 import TestStudioContext from '../../studio/TestStudioContext';
 import AreaStats from '../AreaStats';
@@ -69,6 +70,11 @@ const TestsArea = ({
   const spaceName = typeof definition.name === 'string' && definition.name ? definition.name : 'This space';
 
   const flows = useMemo(() => tests.e2e ?? [], [tests]);
+  // The tag the list is filtered by, kept through a reload — dropped once no journey carries it.
+  const [storedTag, setStoredTag] = useStorage<string>('builder-state.tests.tag', '');
+  const tag = tagsOf(flows).some(each => each.tag === storedTag) ? storedTag : undefined;
+  const tagged = useMemo(() => (tag ? flows.filter(each => each.tags?.includes(tag)) : flows), [flows, tag]);
+  const handleTag = useCallback((next: string | undefined) => setStoredTag(next ?? ''), [setStoredTag]);
   const passing = flows.filter(each => states[each.id]?.state === 'passed').length;
   const unitTotal = (answer?.unitPassed ?? 0) + (answer?.unitFailed ?? 0);
   const running = plays.findIndex(each => each?.state === 'running' || each?.state === 'next');
@@ -129,8 +135,8 @@ const TestsArea = ({
   const handlePlayAll = useCallback(() => {
     setView('run');
     onPlayAll();
-    playAll();
-  }, [onPlayAll, playAll]);
+    playAll(tag ? tagged.map(each => each.id) : undefined);
+  }, [onPlayAll, playAll, tag, tagged]);
 
   // What is happening, in a line: the builder's own way of saying what a terminal would print.
   const now = checking
@@ -187,7 +193,7 @@ const TestsArea = ({
             onClick={handlePlayAll}
           >
             <Button.Icon icon="fa-solid fa-play" />
-            Play all
+            {tag ? `Play ${String(tagged.length)} tagged ${tag}` : 'Play all'}
           </Button>
         )}
       </div>
@@ -232,6 +238,8 @@ const TestsArea = ({
             onCreate={handleCreate}
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
+            tag={tag}
+            onTag={handleTag}
           />
           <TestAccounts />
           {why && <Notice tone="caution">{why}</Notice>}

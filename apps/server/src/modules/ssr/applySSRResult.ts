@@ -1,8 +1,47 @@
+import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
+import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
+
 import type { SSRRenderResult, SSRResponseHelpers } from '@plitzi/sdk-shared';
+
+/**
+ * What names the render rather than the page: the space (`access-token`, on a host serving many) and the draft (`__pt`).
+ * A redirect within the site that dropped them landed on another space, or the live one, without its preview session —
+ * a space's journey on a page for signed-in visitors, opened by the server's runner, lost the space it was playing.
+ */
+const RENDER_PARAMS = [SPACE_TOKEN_PARAM, PREVIEW_TOKEN_PARAM] as const;
+
+/** The render's own parameters the request carried, to keep on a redirect within the site. */
+export const renderParamsOf = (query: Record<string, string>): [string, string][] =>
+  RENDER_PARAMS.flatMap((name): [string, string][] => (query[name] ? [[name, query[name]]] : []));
+
+/**
+ * `location` with the render's parameters, when it is on this site — a path. An address on another origin is never
+ * given them: a space token sent there is a credential handed to somebody else.
+ */
+export const withRenderParams = (location: string, params: readonly [string, string][]): string => {
+  if (params.length === 0 || !location.startsWith('/') || location.startsWith('//')) {
+    return location;
+  }
+
+  // Any base: only the path, query and hash are read back.
+  const url = new URL(location, 'http://site.invalid');
+  for (const [name, value] of params) {
+    if (!url.searchParams.has(name)) {
+      url.searchParams.set(name, value);
+    }
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
+};
 
 // Applies the result produced during the React SSR render onto the HTTP response. Returns true when the
 // response is complete (a redirect was emitted) and the caller must stop without sending an HTML body.
-export const applySSRResult = (res: SSRResponseHelpers, result: SSRRenderResult): boolean => {
+// `kept`: the request's render parameters (`renderParamsOf`), carried onto a redirect within the site.
+export const applySSRResult = (
+  res: SSRResponseHelpers,
+  result: SSRRenderResult,
+  kept: readonly [string, string][] = []
+): boolean => {
   if (result.headers) {
     for (const [name, value] of Object.entries(result.headers)) {
       res.setHeader(name, value);
@@ -11,7 +50,7 @@ export const applySSRResult = (res: SSRResponseHelpers, result: SSRRenderResult)
 
   if (result.redirect !== undefined) {
     res.setStatus(result.status ?? 302);
-    res.setHeader('Location', result.redirect);
+    res.setHeader('Location', withRenderParams(result.redirect, kept));
     res.send('');
 
     return true;

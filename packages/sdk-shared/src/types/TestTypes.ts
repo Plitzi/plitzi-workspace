@@ -138,6 +138,11 @@ export type E2eStep = E2eAction | E2eExpectation;
 export interface E2eTest {
   id: string;
   title: string;
+  /**
+   * What it is about, in a word or two each — `sign-in`, `onboarding`, `phone`: how a list of many is sorted and filtered
+   * (the builder's chips, `plitzi_test run`'s `tags`). Letters, digits, `-` and `_`, lower case; none twice.
+   */
+  tags?: string[];
   /** The path it opens: `/menu`, `/r/night-drive`. */
   page: string;
   /** The window's width, in px: 1440 when left out. */

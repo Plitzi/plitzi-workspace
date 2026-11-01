@@ -50,6 +50,8 @@ no browser.
   it at each point a flow reaches. `given: { state: { … } }` starts a journey with a state, as the page opens: a case
   reached without the steps to it. Both use the page's state bridge — the builder, `plitzi test` and the server's runner
   all have it.
+- **Tags** sort a long list: `tags: ['sign-in', 'phone']`, lower case words, each once. `plitzi test --tag sign-in` and
+  `plitzi_test run` with `tags` run only the journeys carrying one; the builder filters its list by them.
 - **Signed in: `as` a test account.** `tests.accounts: [e2e.account({ id: 'member', roles: ['author'] })]` and
   `e2e.test({ …, as: 'member' })`: the page shows that visitor signed in (its details; what its roles — the space's
   `settings.visitorRoles` — give; a page for signed-in visitors opens). A role the space removed since is warned. Declared in the tests alone — no real account, no password — so the API answers it as a

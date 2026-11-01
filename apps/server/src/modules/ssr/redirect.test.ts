@@ -95,6 +95,24 @@ describe('a page the visitor may not see', () => {
     expect(status()).toBe(307);
   });
 
+  // A journey played by the server opens its page with the space's token and the draft's session: a page for signed-in
+  // visitors sent its guest on without them, to another space's sign-in, or the live one.
+  it('keeps the render’s own parameters on a redirect within the site, and never gives them to another origin', async () => {
+    const carried = (to: string) => {
+      buildBody.mockResolvedValue(redirect(to));
+      const { res, headers } = response();
+
+      return render({ ...request(), query: { 'access-token': 'space-token', __pt: 'draft', page: '2' } }, res).then(
+        () => headers['Location']
+      );
+    };
+
+    expect(await carried('/?redirect=%2Fwelcome')).toBe('/?redirect=%2Fwelcome&access-token=space-token&__pt=draft');
+    expect(await carried('/sign-in?__pt=own#form')).toBe('/sign-in?__pt=own&access-token=space-token#form');
+    expect(await carried('https://auth.example/?redirect=x')).toBe('https://auth.example/?redirect=x');
+    expect(await carried('//auth.example/')).toBe('//auth.example/');
+  });
+
   // A redirect is an answer about THIS visitor. Cached, the next visitor with the same key would be bounced without
   // the page ever being asked again — and it is the page that knows whether they should be.
   it('is never cached', async () => {

@@ -9,6 +9,8 @@ import {
   problemInWords,
   problemsOfKind,
   moved,
+  tagOf,
+  tagsOf,
   nextId,
   testsNeedingLook,
   valueOf,
@@ -134,5 +136,22 @@ describe("a flow's problems, placed where each is fixed", () => {
     expect(placed.device).toEqual(["A width of 90 px is no screen's — 390, 768 or 1440."]);
     expect([...placed.steps.entries()]).toEqual([[1, ['No element "back" in the space — name one by its id.']]]);
     expect(placed.other).toEqual([]);
+  });
+});
+
+describe('the journeys’ tags', () => {
+  it('makes a tag as typed one spelling, and counts each across the journeys', () => {
+    expect(tagOf('  Sign in ')).toBe('sign-in');
+    expect(tagOf('-Phone!')).toBe('phone');
+    expect(
+      tagsOf([
+        { id: 'a', title: 'A', page: '/', tags: ['sign-in', 'phone'], steps: [] },
+        { id: 'b', title: 'B', page: '/', tags: ['sign-in'], steps: [] },
+        { id: 'c', title: 'C', page: '/', steps: [] }
+      ])
+    ).toEqual([
+      { tag: 'sign-in', count: 2 },
+      { tag: 'phone', count: 1 }
+    ]);
   });
 });

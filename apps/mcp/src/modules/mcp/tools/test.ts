@@ -22,7 +22,8 @@ export const testShape = {
     .record(z.string(), z.unknown())
     .optional()
     .describe('With set: `{ unit, e2e, accounts }`, every test of the space — what is left out is removed'),
-  ids: z.array(z.string()).optional().describe('With run: the tests to run, by id; all when none')
+  ids: z.array(z.string()).optional().describe('With run: the tests to run, by id; all when none'),
+  tags: z.array(z.string()).optional().describe('With run: only journeys with one of these tags')
 };
 
 /** The tests and how they stand against the document: those written wrong, every unit test run. */
@@ -47,7 +48,7 @@ const standing = (schema: Schema) => {
  * on the draft where the deployment plays them. What a snapshot and a publish hold the space to.
  */
 export const test = async (
-  input: { action: 'list' | 'set' | 'run'; tests?: Record<string, unknown>; ids?: string[] },
+  input: { action: 'list' | 'set' | 'run'; tests?: Record<string, unknown>; ids?: string[]; tags?: string[] },
   ctx: ToolContext
 ): Promise<unknown> => {
   const { schema } = ctx.space;
@@ -72,9 +73,13 @@ export const test = async (
   }
 
   const ids = input.ids ?? [];
-  const chosen = (schema.tests?.unit ?? []).filter(each => ids.length === 0 || ids.includes(each.id));
+  const tags = input.tags ?? [];
+  const named = (id: string) => ids.length === 0 || ids.includes(id);
+  const chosen = tags.length > 0 ? [] : (schema.tests?.unit ?? []).filter(each => named(each.id));
   const unit = runUnitTests(schema, chosen);
-  const e2e = (schema.tests?.e2e ?? []).filter(each => ids.length === 0 || ids.includes(each.id));
+  const e2e = (schema.tests?.e2e ?? []).filter(
+    each => named(each.id) && (tags.length === 0 || (each.tags ?? []).some(tag => tags.includes(tag)))
+  );
   const played =
     e2e.length === 0
       ? { results: [] }

@@ -405,104 +405,109 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const forgetStates = useCallback(() => setStates({}), []);
-  const playAll = useCallback(() => {
-    const chosen = flowRef.current;
-    // The flow chosen plays as it is being edited; the rest as saved.
-    const list = (testsRef.current.e2e ?? []).map(each => (chosen && each.id === savedId.current ? chosen : each));
-    const controller = new AbortController();
-    abort.current = controller;
-    hold.current = { paused: false };
-    setMode('playing');
-    setPlayingAll(true);
-    setChecking(false);
-    setOutcome(undefined);
-    setPlayedMs(undefined);
-    setLog([]);
-    setPlays([]);
-    setStates(
-      Object.fromEntries(
-        list.map((each): [string, FlowState] => {
-          const server = needsServer(each);
+  const playAll = useCallback(
+    (only?: readonly string[]) => {
+      const chosen = flowRef.current;
+      // The flow chosen plays as it is being edited; the rest as saved.
+      const list = (testsRef.current.e2e ?? [])
+        .map(each => (chosen && each.id === savedId.current ? chosen : each))
+        .filter(each => !only || only.includes(each.id));
+      const controller = new AbortController();
+      abort.current = controller;
+      hold.current = { paused: false };
+      setMode('playing');
+      setPlayingAll(true);
+      setChecking(false);
+      setOutcome(undefined);
+      setPlayedMs(undefined);
+      setLog([]);
+      setPlays([]);
+      setStates(
+        Object.fromEntries(
+          list.map((each): [string, FlowState] => {
+            const server = needsServer(each);
 
-          return [each.id, server ? { state: 'server', why: server } : { state: 'queued' }];
-        })
-      )
-    );
-    const started = Date.now();
-
-    const run = async () => {
-      let passed = 0;
-      let failed = 0;
-      for (const each of list) {
-        if (needsServer(each)) {
-          continue;
-        }
-
-        if (controller.signal.aborted) {
-          stateAt(each.id, { state: 'stopped' });
-          continue;
-        }
-
-        const isChosen = chosen?.id === each.id;
-        stateAt(each.id, { state: 'playing', played: 0 });
-        if (isChosen) {
-          setPlays(each.steps.map(() => undefined));
-        }
-
-        const result = await playOnCanvas(each, {
-          signal: controller.signal,
-          // No pause between steps: it is there to watch one journey work, and playing them all asks for the outcome.
-          beforeStep: (step, index) => {
-            spotlight(documentOf(canvas), stepElementOf(step), toneOf(step));
-            if (isChosen) {
-              playAt(index, { state: 'running' });
-            }
-
-            return Promise.resolve();
-          },
-          onStep: (_page, step, index) => {
-            stateAt(each.id, { state: 'playing', played: index + 1 });
-            if (isChosen) {
-              playAt(index, playOf(step));
-            }
-
-            logged(lineOf(each, index, step, started));
-
-            return Promise.resolve(undefined);
-          }
-        }).catch((error: unknown): E2eResult => ({
-          id: each.id,
-          title: each.title,
-          ok: false,
-          ms: 0,
-          steps: [],
-          problem: error instanceof Error ? error.message : String(error)
-        }));
-        stateAt(each.id, stateOf(result));
-        if (result.ok) {
-          passed += 1;
-        } else if (!result.stopped) {
-          failed += 1;
-        }
-      }
-
-      clearSpotlight(documentOf(canvas));
-      setPlayedMs(Date.now() - started);
-      setOutcome(
-        controller.signal.aborted
-          ? { ok: false, said: 'Stopped.' }
-          : failed === 0
-            ? { ok: true, said: `${String(passed)} ${passed === 1 ? 'journey' : 'journeys'}. All pass.` }
-            : { ok: false, said: `${String(failed)} of ${String(passed + failed)} journeys fail.` }
+            return [each.id, server ? { state: 'server', why: server } : { state: 'queued' }];
+          })
+        )
       );
-    };
+      const started = Date.now();
 
-    void run().finally(() => {
-      abort.current = undefined;
-      setPlayingAll(false);
-      setMode('idle');
-    });
-  }, [lineOf, logged, playAt, playOnCanvas, stateAt]);
+      const run = async () => {
+        let passed = 0;
+        let failed = 0;
+        for (const each of list) {
+          if (needsServer(each)) {
+            continue;
+          }
+
+          if (controller.signal.aborted) {
+            stateAt(each.id, { state: 'stopped' });
+            continue;
+          }
+
+          const isChosen = chosen?.id === each.id;
+          stateAt(each.id, { state: 'playing', played: 0 });
+          if (isChosen) {
+            setPlays(each.steps.map(() => undefined));
+          }
+
+          const result = await playOnCanvas(each, {
+            signal: controller.signal,
+            // No pause between steps: it is there to watch one journey work, and playing them all asks for the outcome.
+            beforeStep: (step, index) => {
+              spotlight(documentOf(canvas), stepElementOf(step), toneOf(step));
+              if (isChosen) {
+                playAt(index, { state: 'running' });
+              }
+
+              return Promise.resolve();
+            },
+            onStep: (_page, step, index) => {
+              stateAt(each.id, { state: 'playing', played: index + 1 });
+              if (isChosen) {
+                playAt(index, playOf(step));
+              }
+
+              logged(lineOf(each, index, step, started));
+
+              return Promise.resolve(undefined);
+            }
+          }).catch((error: unknown): E2eResult => ({
+            id: each.id,
+            title: each.title,
+            ok: false,
+            ms: 0,
+            steps: [],
+            problem: error instanceof Error ? error.message : String(error)
+          }));
+          stateAt(each.id, stateOf(result));
+          if (result.ok) {
+            passed += 1;
+          } else if (!result.stopped) {
+            failed += 1;
+          }
+        }
+
+        clearSpotlight(documentOf(canvas));
+        setPlayedMs(Date.now() - started);
+        setOutcome(
+          controller.signal.aborted
+            ? { ok: false, said: 'Stopped.' }
+            : failed === 0
+              ? { ok: true, said: `${String(passed)} ${passed === 1 ? 'journey' : 'journeys'}. All pass.` }
+              : { ok: false, said: `${String(failed)} of ${String(passed + failed)} journeys fail.` }
+        );
+      };
+
+      void run().finally(() => {
+        abort.current = undefined;
+        setPlayingAll(false);
+        setMode('idle');
+      });
+    },
+    [lineOf, logged, playAt, playOnCanvas, stateAt]
+  );
 
   const pause = useCallback(() => {
     hold.current.paused = true;

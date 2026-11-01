@@ -211,6 +211,28 @@ const replaced = <T extends { id: string }>(list: readonly T[], test: T | undefi
 };
 
 /** The tests with one unit test saved under `id`, or removed: what is saved whole. */
+/** A tag as typed, made one: lower case, spaces as `-`, nothing but letters, digits, `-` and `_` — `Sign in` is `sign-in`. */
+export const tagOf = (text: string): string =>
+  text
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9_-]/g, '')
+    .replace(/^[-_]+/, '')
+    .slice(0, 32);
+
+/** Every tag the journeys carry, with how many carry it — the most used first, then by name. */
+export const tagsOf = (journeys: readonly E2eTest[]): { tag: string; count: number }[] => {
+  const counts = new Map<string, number>();
+  for (const tag of journeys.flatMap(journey => journey.tags ?? [])) {
+    counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+
+  return [...counts]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+};
+
 export const withUnitTest = (tests: SpaceTests, test: UnitTest | undefined, id: string): SpaceTests => ({
   ...tests,
   unit: replaced(tests.unit ?? [], test, id)

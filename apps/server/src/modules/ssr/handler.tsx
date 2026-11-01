@@ -1,4 +1,4 @@
-import { applySSRResult, isReusable } from './applySSRResult';
+import { applySSRResult, isReusable, renderParamsOf } from './applySSRResult';
 import { buildBody } from './buildBody';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
@@ -185,7 +185,7 @@ export const renderSSR = async (
     metrics.log(`${req.method} ${req.path}`);
   }
 
-  if (applySSRResult(res, result)) {
+  if (applySSRResult(res, result, renderParamsOf(req.query))) {
     return;
   }
 
