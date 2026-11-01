@@ -12,6 +12,9 @@ import TestStudioContext from '../../studio/TestStudioContext';
 
 import type { E2eAccount } from '@plitzi/sdk-shared';
 
+const ABOUT =
+  'Who a journey plays as, signed in, with the space’s visitor roles. No real account: what the page asks the API, it asks as a guest.';
+
 /**
  * The space's test accounts: who a journey plays as, signed in, to see a page for signed-in visitors or a role's view —
  * declared here alone, no account of the platform's. Saved as they are written, with the rest of the tests.
@@ -73,7 +76,10 @@ const TestAccounts = () => {
       className="flex shrink-0 flex-col gap-1.5 rounded-lg border border-gray-300 px-3 py-2.5 dark:border-zinc-700"
     >
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+        <span
+          className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+          title={ABOUT}
+        >
           Test accounts
         </span>
         {!locked && editing === undefined && (
@@ -83,10 +89,10 @@ const TestAccounts = () => {
           </Button>
         )}
       </div>
-      <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-        Who a journey plays as, signed in, with the space’s visitor roles. No real account: what the page asks the API,
-        it asks as a guest.
-      </p>
+      {/* Said in full until there is one; then on the title, as the accounts say the rest. */}
+      {accounts.length === 0 && editing === undefined && (
+        <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{ABOUT}</p>
+      )}
       {accounts.length > 0 && (
         <ul className="divide-y divide-gray-200 dark:divide-zinc-700">
           {accounts.map(account => (

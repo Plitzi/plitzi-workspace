@@ -362,7 +362,10 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 - **A journey carries tags** (`E2eTest.tags`, `@plitzi/sdk-shared`): lower case words, each once — `e2eTestProblems`
   says one that is not, `readSpaceTests` a list that is not one. The builder shows them as chips on each row and beside
   the journey's Save (typed, made one spelling, the space's others offered), filters the list by one — kept through a
-  reload — and **Play all** then plays the journeys shown (`playAll(only)`); `plitzi test --tag sign-in,phone` and
+  reload — or by words searched for, and **Play all** then plays the journeys shown (`playAll(only)`). The journeys'
+  column is redrawn: a search and the "+" at its top, the tags in one row with the rest behind "+N", each row's title
+  on two lines with its device, account and first step beneath, and Remove in its pill's place on hover — no column
+  kept empty for it; `plitzi test --tag sign-in,phone` and
   `plitzi_test run` with `tags` run only the journeys carrying one (`@plitzi/plitzi-builder`, `@plitzi/sdk-authoring`,
   `@plitzi/cli`, `@plitzi/sdk-mcp`).
 - **A redirect within the site keeps the render's own parameters** (`@plitzi/sdk-server`): `access-token` and `__pt`,

@@ -1,17 +1,21 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { use, useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import EmptyState from '@pmodules/App/components/EmptyState';
 import Notice from '@pmodules/App/components/Notice';
+import PanelSearch from '@pmodules/App/components/PanelSearch';
+import PanelToolbar from '@pmodules/App/components/PanelToolbar';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
-import { elementNameOf, problemsOfTest, tagsOf } from '../../helpers';
+import FlowRow from './components/FlowRow';
+import TagFilter from './components/TagFilter';
+import { elementNameOf, journeyMatches, problemsOfTest, tagsOf } from '../../helpers';
 import useMayTest from '../../hooks/useMayTest';
 import { sentenceText } from '../../studio/sentences';
 import TestStudioContext from '../../studio/TestStudioContext';
-import NeedsLook from '../NeedsLook';
 
+import type { JourneyFilter } from '../../helpers';
 import type { ServerPlay } from '../../hooks/useServerPlay';
 import type { FlowState } from '../../studio/TestStudioContext';
 import type { E2eTest } from '@plitzi/sdk-shared';
@@ -24,70 +28,13 @@ export type FlowListProps = {
   serverPlay?: ServerPlay;
   /** What the server said is wrong with the tests as written: a flow it names is marked. */
   problems: readonly string[];
+  /** What the list is narrowed to — the words searched for and a tag; Play all plays the same. */
+  filter: JourneyFilter;
+  onFilter: (filter: JourneyFilter) => void;
   onSelect: (id: string) => void;
   onCreate: () => void;
   onRemove: (id: string) => void;
   onViewServerRun: (id: string) => void;
-  /** The tag the list is filtered by — none: every journey. */
-  tag?: string;
-  onTag: (tag: string | undefined) => void;
-};
-
-const CHIP = 'flex shrink-0 cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium';
-
-const DEVICE = (width = 1440) => (width <= 480 ? 'Phone' : width <= 1024 ? 'Tablet' : 'Desktop');
-
-const PILL =
-  'shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide whitespace-nowrap uppercase';
-
-/** Where a flow stands, as a pill: waiting, playing and how far, passing, failing, or one only the server plays. */
-const Pill = ({ state, steps }: { state: FlowState; steps: number }) => {
-  switch (state.state) {
-    case 'queued':
-      return (
-        <span className={clsx(PILL, 'border-dashed border-gray-300 text-zinc-500 dark:border-zinc-600')}>Queued</span>
-      );
-    case 'playing':
-      return (
-        <span className={clsx(PILL, 'border-primary-400 text-primary-700 dark:text-primary-200 border-dashed')}>
-          Playing {state.played}/{steps}
-        </span>
-      );
-    case 'passed':
-      return (
-        <span
-          className={clsx(
-            PILL,
-            'border-emerald-500 bg-emerald-500 text-white dark:border-emerald-400 dark:bg-emerald-400 dark:text-emerald-950'
-          )}
-        >
-          Passes
-        </span>
-      );
-    case 'failed':
-      return (
-        <span
-          className={clsx(
-            PILL,
-            'border-red-500 bg-red-500 text-white dark:border-red-400 dark:bg-red-400 dark:text-red-950'
-          )}
-        >
-          Fails
-        </span>
-      );
-    case 'stopped':
-      return <span className={clsx(PILL, 'border-gray-300 text-zinc-500 dark:border-zinc-600')}>Stopped</span>;
-    case 'server':
-      return (
-        <span className={clsx(PILL, 'border-amber-400 text-amber-700 dark:text-amber-300')} title={state.why}>
-          On the server
-        </span>
-      );
-    case 'idle':
-      return (
-        <span className={clsx(PILL, 'border-dashed border-gray-300 text-zinc-400 dark:border-zinc-700')}>Ready</span>
-      );
-  }
 };
 
 /** What a flow does first, in words: its first action — what a person reads a flow by. */
@@ -98,21 +45,22 @@ const firstLineOf = (flow: E2eTest, nameOf: (target: string) => string): string 
 };
 
 /**
- * The space's flows, each a row: its letter, what it is, what it does first and where it stands — the chosen one lit,
- * played on the page on the left when it is chosen.
+ * The space's journeys: how many, a search and the way to add one, the tags to narrow them by, and a row each — the
+ * chosen one lit, played on the page on the left when it is chosen. The list takes the room the column has; the tags
+ * keep to one row however many there are.
  */
 const FlowList = ({
   serverRun,
   serverPlay,
   problems,
+  filter,
+  onFilter,
   onSelect,
   onCreate,
   onRemove,
-  onViewServerRun,
-  tag,
-  onTag
+  onViewServerRun
 }: FlowListProps) => {
-  const { tests, flow, dirty, states, mode, playingAll } = use(TestStudioContext);
+  const { tests, flow, dirty, states, mode } = use(TestStudioContext);
   const [flat] = useBuilderStore('schema.flat');
   const flows = useMemo(() => tests.e2e ?? [], [tests]);
   // A flow not saved yet is in the list too, at its end: it is the one being written.
@@ -121,8 +69,9 @@ const FlowList = ({
     [flow, flows]
   );
   const tags = useMemo(() => tagsOf(all), [all]);
-  // Filtered by a tag, the one chosen stays in the list: it is the one being read and edited.
-  const shown = tag ? all.filter(each => each.id === flow?.id || each.tags?.includes(tag)) : all;
+  // Narrowed, the one chosen stays in the list: it is the one being read and edited.
+  const shown = all.filter(each => each.id === flow?.id || journeyMatches(each, filter));
+  const narrowed = filter.query.trim() !== '' || filter.tag !== undefined;
   const live = mode === 'playing';
   const nameOf = (target: string) => elementNameOf(flat, target);
   const { entitlements } = useSpaceEntitlements();
@@ -133,39 +82,37 @@ const FlowList = ({
   const { mayTest } = useMayTest();
 
   return (
-    <section className="flex min-h-0 flex-col gap-2" aria-label="Journeys">
-      <div className="flex items-center gap-3">
-        <span className="grow text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-          {tag ? (
-            `Journeys · ${String(shown.length)} shown of ${String(all.length)}`
-          ) : (
-            <>
-              Journeys · {all.length}
-              {limit !== null && ` of ${String(limit)}`}
-            </>
-          )}
+    <section className="flex min-h-56 grow flex-col gap-2" aria-label="Journeys">
+      <div className="flex items-center gap-2">
+        <h3 className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+          Journeys
+        </h3>
+        <span className="rounded-full bg-gray-100 px-1.5 text-[11px] font-semibold text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+          {narrowed ? `${String(shown.length)} of ${String(all.length)}` : all.length}
+          {!narrowed && limit !== null && ` / ${String(limit)}`}
         </span>
-        <span
-          className={clsx('flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase', {
-            'text-red-600 dark:text-red-400': live,
-            'text-zinc-400 dark:text-zinc-500': !live
-          })}
-        >
-          <span className={clsx('size-1.5 rounded-full', { 'animate-pulse bg-red-500': live, 'bg-zinc-400': !live })} />
-          {live ? 'Live' : 'Idle'}
-        </span>
-        <Button
-          size="xs"
-          intent="secondary"
-          iconPlacement="before"
-          disabled={live || full || !mayTest}
-          title={full ? 'The plan keeps no more journeys in this space' : undefined}
-          onClick={onCreate}
-        >
-          <Button.Icon icon="fa-solid fa-plus" />
-          New journey
-        </Button>
+        {live && (
+          <span className="ml-auto flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-red-600 uppercase dark:text-red-400">
+            <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
+            Live
+          </span>
+        )}
       </div>
+      <PanelToolbar
+        action={{
+          label: 'New journey',
+          onClick: onCreate,
+          disabled: live || full || !mayTest,
+          ...(full ? { title: 'The plan keeps no more journeys in this space' } : {})
+        }}
+      >
+        <PanelSearch
+          value={filter.query}
+          placeholder="Search journeys"
+          onChange={query => onFilter({ ...filter, query })}
+        />
+      </PanelToolbar>
+      {tags.length > 0 && <TagFilter tags={tags} tag={filter.tag} onTag={tag => onFilter({ ...filter, tag })} />}
       {full && entitlements && (
         <Notice tone="caution" link={more ? { label: 'See the plans', href: more.upgradeUrl } : undefined}>
           The {entitlements.tierLabel} plan keeps {limit} {limit === 1 ? 'journey' : 'journeys'} per space — yours keep
@@ -173,143 +120,56 @@ const FlowList = ({
           {more && ` ${more.requires} keeps ${more.allows === null ? 'as many as you like' : String(more.allows)}.`}
         </Notice>
       )}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by tag">
-          <button
-            type="button"
-            aria-pressed={!tag}
-            className={clsx(CHIP, {
-              'border-primary-400 bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-200': !tag,
-              'border-gray-300 text-zinc-600 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800':
-                tag !== undefined
-            })}
-            onClick={() => onTag(undefined)}
-          >
-            All
-          </button>
-          {tags.map(each => (
-            <button
-              key={each.tag}
-              type="button"
-              aria-pressed={tag === each.tag}
-              className={clsx(CHIP, {
-                'border-primary-400 bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-200':
-                  tag === each.tag,
-                'border-gray-300 text-zinc-600 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800':
-                  tag !== each.tag
-              })}
-              onClick={() => onTag(tag === each.tag ? undefined : each.tag)}
-            >
-              {each.tag}
-              <span className="text-zinc-400 tabular-nums dark:text-zinc-500">{each.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      <ol className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700">
-        {shown.map(each => {
-          const index = all.indexOf(each);
-          const chosen = flow?.id === each.id;
-          const current = chosen ? flow : each;
-          // While the server plays them, a journey it has not reached yet waits for it — not what the canvas last said.
-          const state: FlowState = serverPlay
-            ? (serverPlay.journeys[each.id] ?? { state: 'queued' })
-            : (states[each.id] ?? { state: 'idle' });
-          const onServer = serverRun?.results.find(result => result.id === each.id);
-          const playing = state.state === 'playing';
-
-          return (
-            <li
-              key={each.id}
-              className={clsx(
-                'group flex items-center gap-3 border-b border-gray-300 px-3 py-2.5 last:border-b-0 dark:border-zinc-700',
-                {
-                  'bg-primary-50 dark:bg-primary-400/10': chosen,
-                  'cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/70': !chosen && !(live && playingAll)
-                }
-              )}
-              onClick={chosen || live ? undefined : () => onSelect(each.id)}
-            >
-              <span
-                className={clsx(
-                  'flex size-8 shrink-0 items-center justify-center rounded-md border text-xs font-semibold',
-                  {
-                    'border-primary-ui bg-primary-500 text-white': playing,
-                    'border-primary-ui text-primary-700 dark:text-primary-200': chosen && !playing,
-                    'border-gray-300 text-zinc-600 dark:border-zinc-600 dark:text-zinc-300': !chosen && !playing
-                  }
-                )}
-              >
-                {String.fromCharCode(65 + (index % 26))}
-              </span>
-              <div className="flex min-w-0 grow flex-col">
-                <span className="flex min-w-0 items-center gap-1.5 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  <NeedsLook problems={problemsOfTest(problems, 'e2e', each.id)} />
-                  {current.title || 'A new journey'}
-                  {chosen && dirty && <span className="text-primary-text"> · not saved</span>}
-                </span>
-                <span className="truncate font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                  “{firstLineOf(current, nameOf)}” · {DEVICE(current.width)}
-                  {current.as ? ` · as ${current.as}` : ''}
-                </span>
-                {current.tags && current.tags.length > 0 && (
-                  <span className="mt-1 flex min-w-0 flex-wrap gap-1">
-                    {current.tags.map(each => (
-                      <span
-                        key={each}
-                        className={clsx('rounded-full border px-1.5 text-[10px] leading-4', {
-                          'border-primary-400 text-primary-700 dark:text-primary-200': each === tag,
-                          'border-gray-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400': each !== tag
-                        })}
-                      >
-                        {each}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </div>
-              {onServer && (
-                <Button
-                  size="xs"
-                  intent="secondary"
-                  title={onServer.ok ? 'Passed on the server: view the run' : 'Failed on the server: view the run'}
-                  onClick={event => {
-                    event.stopPropagation();
-                    onViewServerRun(each.id);
-                  }}
-                >
-                  <i
-                    className={clsx('fa-solid', {
-                      'fa-server text-emerald-600': onServer.ok,
-                      'fa-server text-red-600': !onServer.ok
-                    })}
-                  />
-                </Button>
-              )}
-              <Pill state={state} steps={current.steps.length} />
-              {!live && mayTest && (
-                <button
-                  type="button"
-                  title="Remove this journey"
-                  className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-[11px] text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-gray-200 hover:text-red-600 dark:hover:bg-zinc-700"
-                  onClick={event => {
-                    event.stopPropagation();
-                    onRemove(each.id);
-                  }}
-                >
-                  <i className="fa-solid fa-trash" />
-                </button>
-              )}
+      {all.length === 0 ? (
+        <EmptyState
+          size="panel"
+          icon="fa-solid fa-route"
+          title="No journeys yet"
+          description="A journey is what a visitor does on the page, from start to end, and what must show as they go."
+        />
+      ) : (
+        <ol
+          className={clsx(
+            'flex min-h-0 grow flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700',
+            { 'justify-center': shown.length === 0 }
+          )}
+        >
+          {shown.length === 0 && (
+            <li className="px-4 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              No journey matches — clear the search, or choose All.
             </li>
-          );
-        })}
-        {all.length === 0 && (
-          <li className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            No journeys yet. A journey is what a visitor does on the page, from start to end, and what must show as they
-            go.
-          </li>
-        )}
-      </ol>
+          )}
+          {shown.map(each => {
+            const chosen = flow?.id === each.id;
+            const current = chosen ? flow : each;
+            // While the server plays them, a journey it has not reached yet waits for it — not what the canvas last said.
+            const state: FlowState = serverPlay
+              ? (serverPlay.journeys[each.id] ?? { state: 'queued' })
+              : (states[each.id] ?? { state: 'idle' });
+            const onServer = serverRun?.results.find(result => result.id === each.id);
+
+            return (
+              <FlowRow
+                key={each.id}
+                journey={current}
+                letter={String.fromCharCode(65 + (all.indexOf(each) % 26))}
+                firstLine={firstLineOf(current, nameOf)}
+                state={state}
+                chosen={chosen}
+                unsaved={chosen && dirty}
+                tag={filter.tag}
+                problems={problemsOfTest(problems, 'e2e', each.id)}
+                {...(onServer ? { onServer } : {})}
+                selectable={!live}
+                removable={!live && mayTest}
+                onSelect={onSelect}
+                onRemove={onRemove}
+                onViewServerRun={onViewServerRun}
+              />
+            );
+          })}
+        </ol>
+      )}
     </section>
   );
 };

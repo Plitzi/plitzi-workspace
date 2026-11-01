@@ -47,7 +47,10 @@ const PlanUsage = ({ journeys, plays }: PlanUsageProps) => {
       aria-label="What the plan allows"
       className="flex shrink-0 flex-col gap-2 rounded-lg border border-gray-300 px-3 py-2.5 dark:border-zinc-700"
     >
-      <span className="flex items-center justify-between text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+      <span
+        className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+        title="Element checks, and journeys played here in the builder, count against nothing."
+      >
         {entitlements.tierLabel} plan
         {more && (
           <a
@@ -92,9 +95,6 @@ const PlanUsage = ({ journeys, plays }: PlanUsageProps) => {
           </span>
         )}
       </div>
-      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-        Element checks, and journeys played here in the builder, count against nothing.
-      </span>
     </section>
   );
 };

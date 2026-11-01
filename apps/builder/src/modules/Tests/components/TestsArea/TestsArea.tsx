@@ -7,7 +7,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Notice from '@pmodules/App/components/Notice';
 
-import { problemsOfKind, tagsOf, testsNeedingLook } from '../../helpers';
+import { journeyMatches, problemsOfKind, tagsOf, testsNeedingLook } from '../../helpers';
 import useMayTest from '../../hooks/useMayTest';
 import TestStudioContext from '../../studio/TestStudioContext';
 import AreaStats from '../AreaStats';
@@ -19,6 +19,7 @@ import PlanUsage from '../PlanUsage';
 import ServerPlayCard from '../ServerPlayCard';
 import TestAccounts from '../TestAccounts';
 
+import type { JourneyFilter } from '../../helpers';
 import type { ServerPlay } from '../../hooks/useServerPlay';
 import type { TSpaceRunE2eTestsMutation, TSpaceTests } from '@plitzi/sdk-shared/network';
 
@@ -70,11 +71,21 @@ const TestsArea = ({
   const spaceName = typeof definition.name === 'string' && definition.name ? definition.name : 'This space';
 
   const flows = useMemo(() => tests.e2e ?? [], [tests]);
-  // The tag the list is filtered by, kept through a reload — dropped once no journey carries it.
+  // What the list is narrowed to: the tag kept through a reload — dropped once no journey carries it — and the words
+  // searched for, this visit's. Play all plays the journeys it shows.
   const [storedTag, setStoredTag] = useStorage<string>('builder-state.tests.tag', '');
+  const [query, setQuery] = useState('');
   const tag = tagsOf(flows).some(each => each.tag === storedTag) ? storedTag : undefined;
-  const tagged = useMemo(() => (tag ? flows.filter(each => each.tags?.includes(tag)) : flows), [flows, tag]);
-  const handleTag = useCallback((next: string | undefined) => setStoredTag(next ?? ''), [setStoredTag]);
+  const filter = useMemo(() => ({ query, ...(tag ? { tag } : {}) }), [query, tag]);
+  const narrowed = query.trim() !== '' || tag !== undefined;
+  const shown = useMemo(() => flows.filter(each => journeyMatches(each, filter)), [filter, flows]);
+  const handleFilter = useCallback(
+    (next: JourneyFilter) => {
+      setQuery(next.query);
+      setStoredTag(next.tag ?? '');
+    },
+    [setStoredTag]
+  );
   const passing = flows.filter(each => states[each.id]?.state === 'passed').length;
   const unitTotal = (answer?.unitPassed ?? 0) + (answer?.unitFailed ?? 0);
   const running = plays.findIndex(each => each?.state === 'running' || each?.state === 'next');
@@ -135,8 +146,8 @@ const TestsArea = ({
   const handlePlayAll = useCallback(() => {
     setView('run');
     onPlayAll();
-    playAll(tag ? tagged.map(each => each.id) : undefined);
-  }, [onPlayAll, playAll, tag, tagged]);
+    playAll(narrowed ? shown.map(each => each.id) : undefined);
+  }, [narrowed, onPlayAll, playAll, shown]);
 
   // What is happening, in a line: the builder's own way of saying what a terminal would print.
   const now = checking
@@ -189,11 +200,11 @@ const TestsArea = ({
           <Button
             iconPlacement="before"
             size="sm"
-            disabled={mode !== 'idle' || flows.length === 0}
+            disabled={mode !== 'idle' || shown.length === 0}
             onClick={handlePlayAll}
           >
             <Button.Icon icon="fa-solid fa-play" />
-            {tag ? `Play ${String(tagged.length)} tagged ${tag}` : 'Play all'}
+            {narrowed ? `Play ${String(shown.length)} shown` : 'Play all'}
           </Button>
         )}
       </div>
@@ -229,7 +240,7 @@ const TestsArea = ({
           <CanvasPane externalStyle={externalStyle} />
           <FlowPanel problems={problems} view={view} onView={setView} onSaved={setProblem} />
         </div>
-        <div className="flex w-96 shrink-0 flex-col gap-4">
+        <div className="flex min-h-0 w-96 shrink-0 flex-col gap-3 overflow-y-auto">
           <FlowList
             serverRun={serverRun}
             serverPlay={onServer}
@@ -238,8 +249,8 @@ const TestsArea = ({
             onCreate={handleCreate}
             onRemove={handleRemove}
             onViewServerRun={onViewServerRun}
-            tag={tag}
-            onTag={handleTag}
+            filter={filter}
+            onFilter={handleFilter}
           />
           <TestAccounts />
           {why && <Notice tone="caution">{why}</Notice>}

@@ -233,6 +233,23 @@ export const tagsOf = (journeys: readonly E2eTest[]): { tag: string; count: numb
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 };
 
+/** What the list of journeys is narrowed to: words searched for, and a tag. */
+export type JourneyFilter = { query: string; tag?: string };
+
+/** Whether a journey is one the filter keeps: it carries the tag, and the words are in its title, id, page or a tag. */
+export const journeyMatches = (journey: E2eTest, { query, tag }: JourneyFilter): boolean => {
+  if (tag && !journey.tags?.includes(tag)) {
+    return false;
+  }
+
+  const words = query.trim().toLowerCase();
+
+  return (
+    !words ||
+    [journey.title, journey.id, journey.page, ...(journey.tags ?? [])].some(each => each.toLowerCase().includes(words))
+  );
+};
+
 export const withUnitTest = (tests: SpaceTests, test: UnitTest | undefined, id: string): SpaceTests => ({
   ...tests,
   unit: replaced(tests.unit ?? [], test, id)

@@ -18,7 +18,7 @@ import { unanswered } from '../shared/terminal';
 
 import type { ExistingProject } from './existingProject';
 import type { E2eResult, UnitReport } from '@plitzi/sdk-authoring';
-import type { E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
+import type { E2eTest, Schema, SpaceTests, UnitTest } from '@plitzi/sdk-shared';
 
 export interface SpaceTestOptions {
   /** The unit tests alone: no browser, no server. */
@@ -46,6 +46,43 @@ export interface SpaceTestsPlayed {
 /** The tests a run takes: those named by id, else all — of the kind asked, or both. */
 const chosen = <T extends { id: string }>(tests: readonly T[], ids: readonly string[], wanted: boolean): T[] =>
   wanted ? tests.filter(test => ids.length === 0 || ids.includes(test.id)) : [];
+
+/**
+ * The tests a run takes, and the names asked for that none answers: by id, by kind, and by `--tag` — the journeys that
+ * carry one of its tags, and no unit test, which has none.
+ */
+export const testsChosen = (
+  tests: SpaceTests | undefined,
+  ids: readonly string[],
+  options: Pick<SpaceTestOptions, 'unit' | 'e2e' | 'tag'>
+): { unit: UnitTest[]; e2e: E2eTest[]; unknown: string[] } => {
+  const tags = (options.tag ?? '')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(Boolean);
+  const both = options.unit !== true && options.e2e !== true;
+  const unit = chosen(tests?.unit ?? [], ids, tags.length === 0 && (both || options.unit === true));
+  const e2e = chosen(tests?.e2e ?? [], ids, both || options.e2e === true).filter(
+    test => tags.length === 0 || (test.tags ?? []).some(tag => tags.includes(tag))
+  );
+
+  return {
+    unit,
+    e2e,
+    unknown: [
+      ...ids
+        .filter(id => ![...unit, ...e2e].some(test => test.id === id))
+        .map(id =>
+          tags.length > 0 && (tests?.e2e ?? []).some(test => test.id === id)
+            ? `the journey "${id}" carries none of the tags asked: ${tags.join(', ')}`
+            : `no test of the space is "${id}"`
+        ),
+      ...tags
+        .filter(tag => !(tests?.e2e ?? []).some(test => test.tags?.includes(tag)))
+        .map(tag => `no journey of the space is tagged "${tag}"`)
+    ]
+  };
+};
 
 /**
  * Each e2e test played in a page of its own, at its width, against the project's server — the element checks it holds
@@ -118,20 +155,9 @@ export const playSpaceTests = async (
 
   const { schema } = authored;
 
-  const tags = (options.tag ?? '')
-    .split(',')
-    .map(tag => tag.trim())
-    .filter(Boolean);
-  const both = options.unit !== true && options.e2e !== true;
-  const unit: UnitTest[] = chosen(schema.tests?.unit ?? [], ids, tags.length === 0 && (both || options.unit === true));
-  const e2e: E2eTest[] = chosen(schema.tests?.e2e ?? [], ids, both || options.e2e === true).filter(
-    test => tags.length === 0 || (test.tags ?? []).some(tag => tags.includes(tag))
-  );
-  const unknown = ids.filter(id => ![...unit, ...e2e].some(test => test.id === id));
-  const untagged = tags.filter(tag => !(schema.tests?.e2e ?? []).some(test => test.tags?.includes(tag)));
+  const { unit, e2e, unknown } = testsChosen(schema.tests, ids, options);
   const problems = [
-    ...unknown.map(id => `no test of the space is "${id}"`),
-    ...untagged.map(tag => `no journey of the space is tagged "${tag}"`),
+    ...unknown,
     ...unitTestProblems(schema, unit),
     // A journey may hold any element check of the space, run here or not.
     ...e2eTestProblems(schema, e2e, schema.tests?.unit ?? [])

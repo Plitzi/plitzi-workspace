@@ -9,6 +9,7 @@ import {
   problemInWords,
   problemsOfKind,
   moved,
+  journeyMatches,
   tagOf,
   tagsOf,
   nextId,
@@ -140,6 +141,16 @@ describe("a flow's problems, placed where each is fixed", () => {
 });
 
 describe('the journeys’ tags', () => {
+  it('keeps the journeys of a tag whose title, id, page or tags hold the words searched for', () => {
+    const phone = { id: 'sign-in-phone', title: 'The sign-in on a phone', page: '/', tags: ['sign-in'], steps: [] };
+
+    expect(journeyMatches(phone, { query: '' })).toBe(true);
+    expect(journeyMatches(phone, { query: ' PHONE ', tag: 'sign-in' })).toBe(true);
+    expect(journeyMatches(phone, { query: 'sign-in' })).toBe(true);
+    expect(journeyMatches(phone, { query: '', tag: 'account' })).toBe(false);
+    expect(journeyMatches(phone, { query: 'basket' })).toBe(false);
+  });
+
   it('makes a tag as typed one spelling, and counts each across the journeys', () => {
     expect(tagOf('  Sign in ')).toBe('sign-in');
     expect(tagOf('-Phone!')).toBe('phone');

@@ -18,7 +18,7 @@ const GateCard = ({ ready, total, flowsNeedLook, checksNeedLook, onChecks, onSho
     aria-label="Before a snapshot or a publish"
     className="flex shrink-0 flex-col gap-1 rounded-lg border border-gray-300 px-3 py-2.5 dark:border-zinc-700"
   >
-    <span className="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+    <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
       Before a snapshot or a publish
     </span>
     <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
