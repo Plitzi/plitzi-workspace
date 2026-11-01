@@ -367,6 +367,9 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 - **`login-then-leaves` warns only of what races the page** (`@plitzi/sdk-authoring`): a step after `auth.login` that
   runs only when the login was refused — its `when` holding that the answer has no token, says `ok: false` or names a
   reason — is not warned: a refused login leaves nobody signed in, and the page stays.
+- **`inspectPage` leaves a staggered arrival to the scroll** (`@plitzi/sdk-authoring`): a `stagger` on view holds its
+  children at opacity 0 below the element that waits to be seen, and the child's opacity was read before that element —
+  a section's heading below the fold was said "transparent — an arrival that never played?".
 - **A visitor who signed out is not signed back in by the page's first answer** (`@plitzi/sdk-auth`): the auth
   settings are held while they say the same thing, so a query handed over anew no longer rebuilds the auth manager mid
   sign-in; and the server's answer about the first load stands only until the visitor signs in or out on the page — a

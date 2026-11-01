@@ -174,11 +174,13 @@ export function probePage(input: ProbeInput): ProbeFindings {
       return undefined;
     }
 
-    for (let at: Element | null = node; at && at !== document.body; at = at.parentElement) {
-      if (at.matches('[data-motion-on="view"]:not([data-motion-seen])')) {
-        return undefined;
-      }
+    // Waiting to be seen anywhere above it, before any opacity is read: a staggered arrival holds its CHILDREN at
+    // opacity 0, below the element that waits — read level by level, the child's opacity came first.
+    if (node.closest('[data-motion-on="view"]:not([data-motion-seen])')) {
+      return undefined;
+    }
 
+    for (let at: Element | null = node; at && at !== document.body; at = at.parentElement) {
       // An arrival on its way — its animation running, or waiting out its delay — shows in a moment: not this.
       // Read as a method a document may lack (a test's): the DOM's types declare it always there.
       const animationsOf: unknown = Reflect.get(at, 'getAnimations');

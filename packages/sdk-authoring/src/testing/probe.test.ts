@@ -524,6 +524,15 @@ describe('probePage / transparent', () => {
     expect(probePage(input(['later', 'play'])).hidden).toEqual([]);
   });
 
+  // A staggered arrival holds its children at opacity 0 below the element that waits to be seen.
+  it('leaves the children of a staggered arrival waiting to be seen to the scroll', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<div data-motion-on="view" data-motion-stagger="fade-up"><h2 data-plitzi-el="story" style="opacity: 0">Una cocina</h2></div>';
+
+    expect(probePage(input(['story'])).hidden).toEqual([]);
+  });
+
   // A carousel's arrow at its row's start, hidden as the original's is, read as an arrival never played.
   it('says a control put out of use — transparent, and disabled or passing the pointer on — apart, not hidden', () => {
     sized(100, 20);
