@@ -33,10 +33,10 @@ describeTarget('harness', () => {
     );
 
     expect(e2eResultText(result).slice(1)).toEqual([
-      '  ✓ kept-text reads "none"',
+      '  ✓ expect-text kept-text = none',
       '  ✓ click kept-keep',
-      '  ✓ kept-text reads "saved"',
-      '  ✓ kept-draft-text shown'
+      '  ✓ expect-text kept-text = saved',
+      '  ✓ expect-shown kept-draft-text'
     ]);
     expect(result.ok).toBe(true);
   });
@@ -60,7 +60,7 @@ describeTarget('harness', () => {
     expect(result.ok).toBe(false);
     expect(e2eResultText(result).slice(1)).toEqual([
       '  ✓ click kept-draft',
-      '  ✗ kept-draft-text reads "drafted" — it reads "typed"',
+      '  ✗ expect-text kept-draft-text = drafted — it reads "typed"',
       '  · click kept-keep — not run'
     ]);
   });
@@ -96,7 +96,7 @@ describeTarget('harness', () => {
     expect(e2eResultText(result).slice(1)).toEqual([
       '  stopped before its last step',
       '  ✓ click kept-keep',
-      '  · kept-text shows "saved" — not run',
+      '  · expect-text kept-text saved — not run',
       '  · click kept-draft — not run'
     ]);
   });
@@ -135,9 +135,9 @@ describeTarget('harness', () => {
 
     expect(e2eResultText(played).slice(1, 5)).toEqual([
       '  ✓ click go',
-      '  ✓ said reads "went"',
-      '  ✓ type "Large" in size',
-      '  ✓ said reads "l"'
+      '  ✓ expect-text said = went',
+      '  ✓ type size Large',
+      '  ✓ expect-text said = l'
     ]);
     expect(played.steps.at(-1)?.read).toContain('burger is on the page but hidden at this width');
   });
@@ -195,11 +195,11 @@ describeTarget('harness', () => {
     );
 
     expect(e2eResultText(played).slice(1)).toEqual([
-      '  ✓ state name is "Ana"',
-      '  ✓ element check thanks-waits holds',
+      '  ✓ expect-state name "Ana"',
+      '  ✓ expect-check thanks-waits',
       '  ✓ click go',
-      '  ✓ element check thanks-shows holds',
-      '  ✗ element check thanks-waits holds — hidden expected, it is shown'
+      '  ✓ expect-check thanks-shows',
+      '  ✗ expect-check thanks-waits — hidden expected, it is shown'
     ]);
   });
 });
