@@ -17,8 +17,8 @@ export {
 export type { E2eElement, E2eLocator, E2ePage } from './page';
 export { EDGES, parseRelation, relationElements, relationHolds, sidePx } from './position';
 export type { Box, Edge, Relation, RelationSide, RelationSign } from './position';
-export { e2eTestProblems, testAccountWarnings } from './problems';
-export { e2eResultText, runE2eTest } from './run';
+export { e2eTestProblems, journeyStartWarnings, testAccountWarnings } from './problems';
+export { e2eResultText, journeyAccount, runE2eTest } from './run';
 export { bridge, isExpectation, playE2eStep } from './play';
 export type { Located, StepPlay, StepPlayed } from './play';
 export {

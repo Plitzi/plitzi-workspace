@@ -225,6 +225,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `heading-level-skipped` | an `h4` right after an `h2` — the outline misses a level | the next level down; size it with its class |
 | `icon-font-replaced` | a class on a `fontAwesome` icon setting `font-family` — the icon's glyphs are Font Awesome's font, and another draws a fallback character in their place | the class's `font-family` on the text around the icon, never on the icon; its size and colour on the icon are fine |
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
+| `journey-start-access` | a journey starts on a page its visitor may not be on: one for signed-in visitors played as a guest (sent to sign in there), or one asking permissions its test account’s roles do not give (withheld from it) | the journey played as an account that may open the page — or started on a page its visitor opens; kept as it is when the door is what it checks |
 | `kept-state-without-keep-state` | `keptState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `keptState` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
 | `link-current-section` | `current: 'section'` on a link that is never current (an external one) or current everywhere (to `/`) | leave `current` out — `'section'` is for a link to a section's own page, `/automations/runs` |

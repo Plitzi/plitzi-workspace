@@ -50,4 +50,22 @@ describe('the space’s own tests, read with the rest of it', () => {
       expect.objectContaining({ message: expect.stringContaining('the space has no role "reviewer"') as unknown })
     ]);
   });
+
+  it('journey-start-access: a journey played as a guest on a page for signed-in visitors — warned, never refused', () => {
+    const { warnings } = authorSpace({
+      name: 'Console',
+      permanentUrl: 'console',
+      pages: [
+        { name: 'Home', slug: '', body: [text('Hi', { id: 'hi' })] },
+        { name: 'Account', slug: 'account', accessLevel: 'authenticated', body: [text('Yours', { id: 'yours' })] }
+      ],
+      tests: { e2e: [e2e.test({ id: 'yours', title: 'Yours', page: '/account', steps: [e2e.expectShown('yours')] })] }
+    });
+
+    expect(warnings.filter(issue => issue.code === 'journey-start-access')).toEqual([
+      expect.objectContaining({
+        message: expect.stringContaining('as a guest, and that page is for signed-in visitors') as unknown
+      })
+    ]);
+  });
 });

@@ -7,13 +7,25 @@ import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 
 import { createCanvasPage } from './canvasPage';
-import { canvasRun, deviceOf, documentOf, needsServer, playOf, seconds, stateOf, toneOf } from './flowPlay';
-import { checkTitleOf, sentenceText, stepElementOf } from './sentences';
+import {
+  accountOf,
+  canvasRun,
+  deviceOf,
+  documentOf,
+  logLineOf,
+  needsServer,
+  playOf,
+  seconds,
+  stateOf,
+  toneOf
+} from './flowPlay';
+import { stepElementOf } from './sentences';
 import { clearSpotlight, spotlight } from './spotlight';
 import { pauseBefore, STEP_DELAY_S, stepDelayOf } from './stepDelay';
 import TestStudioContext from './TestStudioContext';
 import usePlayJourney from './usePlayJourney';
-import { elementNameOf, newE2eTest, withE2eTest } from '../helpers';
+import useStudioCanvas from './useStudioCanvas';
+import { newE2eTest, withE2eTest } from '../helpers';
 import useSaveSpaceTests from '../hooks/useSaveSpaceTests';
 
 import type { PlayHooks } from './flowPlay';
@@ -21,9 +33,6 @@ import type { FlowState, PlayLogLine, StepPlay, StudioMode, TestStudioValue } fr
 import type { E2eResult } from '@plitzi/sdk-authoring';
 import type { E2eStep, E2eTest, SpaceTests } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
-
-/** How long the canvas may take to be drawn again before a play gives up on it. */
-const CANVAS_MS = 15_000;
 
 const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const { previewMode, setPreviewMode, displayMode, setDisplayMode } = use(AppContext);
@@ -56,15 +65,12 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const [log, setLog] = useState<PlayLogLine[]>([]);
   const [outcome, setOutcome] = useState<{ ok: boolean; said: string }>();
   const [playedMs, setPlayedMs] = useState<number>();
-  const [canvasKey, setCanvasKey] = useState(0);
 
   const flowRef = useRef<E2eTest | undefined>(undefined);
   const testsRef = useRef<SpaceTests>({});
   // The id the chosen flow is saved under: none for one not saved yet.
   const savedId = useRef<string | undefined>(undefined);
   const dirtyRef = useRef(false);
-  const canvas = useRef<HTMLIFrameElement | null>(null);
-  const awaitingCanvas = useRef<((iframe: HTMLIFrameElement) => void) | undefined>(undefined);
   const abort = useRef<AbortController | undefined>(undefined);
   const hold = useRef<{ paused: boolean; release?: () => void }>({ paused: false });
   // What the builder was before the area opened — the author's state, preview, device — put back when it closes.
@@ -76,7 +82,21 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   // The document as edited, for the element checks a journey holds — read when it plays, not a reason to play again.
   const schemaRef = useRef(schema);
   schemaRef.current = schema;
+  // The document as the area holds it: its tests as they stand here, saved or not — what a flow opens and plays against.
+  const spaceNow = useCallback(() => ({ ...schemaRef.current, tests: testsRef.current }), []);
+  const canvas = useRef<HTMLIFrameElement | null>(null);
+  const { canvasKey, freshCanvas, openOnCanvas, attach } = useStudioCanvas({
+    canvas,
+    navigate,
+    setDisplayMode,
+    space: spaceNow
+  });
 
+  // A flow the canvas could not show, said where its outcome is.
+  const sayOpened = useCallback(
+    (problem: string | undefined) => problem && setOutcome({ ok: false, said: problem }),
+    []
+  );
   const setChosen = useCallback((next: E2eTest | undefined) => {
     flowRef.current = next;
     setFlow(next);
@@ -105,42 +125,13 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   );
   const logged = useCallback((line: PlayLogLine) => setLog(current => [...current, line]), []);
 
-  /** Draws the canvas anew and answers it once it is mounted: the page a play starts on is fresh. */
-  const freshCanvas = useCallback(
-    () =>
-      new Promise<HTMLIFrameElement>((resolve, reject) => {
-        const late = setTimeout(() => {
-          awaitingCanvas.current = undefined;
-          reject(new Error('The page on the left did not show again in time: choose the journey again.'));
-        }, CANVAS_MS);
-        awaitingCanvas.current = iframe => {
-          clearTimeout(late);
-          resolve(iframe);
-        };
-        setRuntimeState({});
-        setCanvasKey(key => key + 1);
-      }),
-    [setRuntimeState]
-  );
-
-  /** A flow opened on its page and device, as a new visitor: what choosing it shows before anything is played. */
-  const openOnCanvas = useCallback(
-    (opened: E2eTest) => {
-      setDisplayMode(deviceOf(opened.width));
-      setRuntimeState({});
-      setCanvasKey(key => key + 1);
-      navigate(opened.page);
-    },
-    [navigate, setDisplayMode, setRuntimeState]
-  );
-
   /**
    * One flow played on a fresh canvas, as a new visitor: the state empty, the page drawn again — and none of the
-   * editor's session, as the server plays it (`playingJourney`): a guest, or the flow's own account (`as`).
+   * editor's session, as the server plays it (`journeyOnCanvas`): a guest, or the flow's own account (`as`).
    */
   const playOnCanvas = useCallback(
     (played: E2eTest, hooks: PlayHooks): Promise<E2eResult> =>
-      asJourney(async () => {
+      asJourney(accountOf(played, spaceNow()), async () => {
         // Its device first, then the page drawn anew in it: the canvas the run holds is the one it plays on.
         setDisplayMode(deviceOf(played.width));
         const iframe = await freshCanvas();
@@ -158,27 +149,15 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
         });
 
         // Its element checks as they stand in the area, saved or not.
-        return runE2eTest(page, played, canvasRun(played, hooks, { ...schemaRef.current, tests: testsRef.current }));
+        return runE2eTest(page, played, canvasRun(played, hooks, spaceNow()));
       }),
-    [asJourney, freshCanvas, navigate, setDisplayMode, setTheme]
+    [asJourney, freshCanvas, navigate, setDisplayMode, setTheme, spaceNow]
   );
 
   /** A step played, as a line of the log. */
   const lineOf = useCallback(
-    (played: E2eTest, index: number, step: { ok: boolean; read?: string }, started: number): PlayLogLine => {
-      const said = sentenceText(
-        played.steps[index],
-        target => elementNameOf(flatRef.current, target),
-        checkTitleOf(testsRef.current.unit ?? [])
-      );
-
-      return {
-        at: Date.now() - started,
-        flow: played.title || played.id,
-        text: step.ok ? said : `${said} — ${step.read ?? ''}`,
-        ok: step.ok
-      };
-    },
+    (played: E2eTest, index: number, step: { ok: boolean; read?: string }, started: number): PlayLogLine =>
+      logLineOf(played, index, step, started, flatRef.current, testsRef.current.unit ?? []),
     []
   );
 
@@ -200,15 +179,13 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       setChecking(false);
       setMode('idle');
       clearSpotlight(documentOf(canvas));
-      if (chosen) {
-        openOnCanvas(chosen);
-      }
+      void openOnCanvas(chosen).then(sayOpened);
 
       if (saved !== undefined) {
         setLastFlow(saved);
       }
     },
-    [openOnCanvas, setChanged, setChosen, setLastFlow, stop]
+    [openOnCanvas, sayOpened, setChanged, setChosen, setLastFlow, stop]
   );
 
   const enter = useCallback(
@@ -233,6 +210,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const leave = useCallback(() => {
     stop();
     clearSpotlight(documentOf(canvas));
+    void openOnCanvas(undefined).then(sayOpened);
     setActive(false);
     setChosen(undefined);
     setMode('idle');
@@ -244,7 +222,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       setPreviewMode(kept.preview);
       setDisplayMode(kept.device);
     }
-  }, [setChosen, setDisplayMode, setPreviewMode, setRuntimeState, stop]);
+  }, [openOnCanvas, sayOpened, setChosen, setDisplayMode, setPreviewMode, setRuntimeState, stop]);
 
   const load = useCallback(
     (loaded: SpaceTests) => {
@@ -281,11 +259,12 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       setChanged(true);
       setPlays([]);
       setOutcome(undefined);
-      if (was && (next.width !== was.width || next.page !== was.page)) {
-        openOnCanvas(next);
+      // Opened again where what it opens on changed: its page, its device, or who it plays as.
+      if (was && (next.width !== was.width || next.page !== was.page || next.as !== was.as)) {
+        void openOnCanvas(next).then(sayOpened);
       }
     },
-    [openOnCanvas, setChanged, setChosen]
+    [openOnCanvas, sayOpened, setChanged, setChosen]
   );
 
   const add = useCallback(
@@ -579,15 +558,6 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
     },
     [choose, setList, store]
   );
-
-  const attach = useCallback((iframe: HTMLIFrameElement | null) => {
-    canvas.current = iframe;
-    if (iframe && awaitingCanvas.current) {
-      const answer = awaitingCanvas.current;
-      awaitingCanvas.current = undefined;
-      answer(iframe);
-    }
-  }, []);
 
   const value = useMemo<TestStudioValue>(
     () => ({

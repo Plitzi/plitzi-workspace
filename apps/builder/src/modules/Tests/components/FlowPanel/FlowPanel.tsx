@@ -5,6 +5,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { journeyStartWarnings } from '@plitzi/sdk-authoring';
 import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
@@ -51,10 +52,11 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
   const { flow, dirty, mode, playingAll, paused, checking, plays, log, outcome, playedMs, tests } = studio;
   const { edit, play, pause, resume, next, stop, record, check, point, save, discard, stepDelay, setStepDelay } =
     studio;
-  const [[flat, pageDefinitions, pageFolders]] = useBuilderStore([
+  const [[flat, pageDefinitions, pageFolders, schema]] = useBuilderStore([
     'schema.flat',
     'pageDefinitions',
-    'schema.pageFolders'
+    'schema.pageFolders',
+    'schema'
   ]);
   const [editing, setEditing] = useState<number>();
   const [saving, setSaving] = useState(false);
@@ -76,6 +78,15 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
   const steps = useMemo(() => flow?.steps ?? [], [flow]);
   // What is wrong with the flow, each where it is fixed: where it starts, its device, a step — or the flow itself.
   const placed = useMemo(() => (flow ? flowProblemsOf(problems, flow.id) : undefined), [flow, problems]);
+  // Where it starts that its visitor may not be — a page for signed-in visitors as a guest, one its account's roles keep
+  // it out of: warned as it is chosen, never held against a snapshot (the door may be what it checks).
+  const startWarnings = useMemo(
+    () =>
+      flow
+        ? journeyStartWarnings({ ...schema, tests }, [flow]).map(said => said.replace(/^journey "[^"]*": /, ''))
+        : [],
+    [flow, schema, tests]
+  );
   const setSteps = useCallback((next: E2eStep[]) => flow && edit({ ...flow, steps: next }), [edit, flow]);
   const handleTitle = useCallback((title: string) => flow && edit({ ...flow, title }), [edit, flow]);
   const handlePage = useCallback((page: string) => flow && edit({ ...flow, page }), [edit, flow]);
@@ -233,7 +244,11 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
               size="sm"
               name="as"
               aria-label="Plays as"
-              title="Who it plays as: a guest, or a test account signed in"
+              className={clsx({
+                'rounded-md ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900':
+                  startWarnings.length > 0
+              })}
+              title={startWarnings.join(' ') || 'Who it plays as: a guest, or a test account signed in'}
               value={flow.as ?? ''}
               disabled={locked}
               onChange={handleAs}
@@ -477,6 +492,24 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                     <li key={said}>{said}</li>
                   ))}
                   <li className="text-amber-700 dark:text-amber-300">A snapshot waits until it is fixed.</li>
+                </ul>
+              </div>
+            )}
+            {startWarnings.length > 0 && (
+              <div
+                role="status"
+                className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100"
+              >
+                <i className="fa-solid fa-circle-exclamation mt-0.5 text-amber-500" />
+                <ul className="flex flex-col gap-0.5">
+                  {startWarnings.map(said => (
+                    <li key={said}>
+                      <b className="font-semibold">Plays as {flow.as ?? 'a guest'}:</b> {said}
+                    </li>
+                  ))}
+                  <li className="text-amber-700 dark:text-amber-300">
+                    It still plays, and a snapshot does not wait on it.
+                  </li>
                 </ul>
               </div>
             )}

@@ -1,4 +1,5 @@
 import { rolesGrant } from '@plitzi/sdk-shared/auth';
+import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import { targetId } from './page';
 import { isExpectation } from './play';
@@ -40,6 +41,45 @@ export const testAccountWarnings = (
         `test account "${account.id}": the space has no role "${role}" — removed from its visitor roles since, or never there; a journey plays it without it: choose one the space has`
     )
   );
+
+/**
+ * Where a journey starts that its visitor may not be (`journey-start-access`): a page for signed-in visitors played as a
+ * guest — who is sent to sign in there — or a page that asks permissions its account's roles do not give, withheld from
+ * it. Warned, never refused: a journey may mean to test the door itself.
+ */
+export const journeyStartWarnings = (
+  document: Schema,
+  tests: readonly E2eTest[] = document.tests?.e2e ?? []
+): string[] =>
+  tests.flatMap(test => {
+    const { action, pageId } = pageAt(document, test.page, { signedIn: true });
+    const attributes =
+      pageId === undefined || action !== 'normal' || !Object.hasOwn(document.flat, pageId)
+        ? undefined
+        : document.flat[pageId].attributes;
+    if (!attributes) {
+      return [];
+    }
+
+    const access = pageAccessOf(attributes);
+    if (test.as === undefined) {
+      return attributes.accessLevel === 'authenticated' || access
+        ? [
+            `journey "${test.id}": it starts on ${test.page} as a guest, and that page is for signed-in visitors — a guest is sent to sign in there: play it as one of the test accounts, or start on a page a guest opens (keep it if the door is what it checks)`
+          ]
+        : [];
+    }
+
+    const account = document.tests?.accounts?.find(each => each.id === test.as);
+    const given = account ? rolesGrant(document.settings.visitorRoles, account.roles ?? []).permissions : [];
+    const lacks = account && access ? access.permissions.filter(permission => !given.includes(permission)) : [];
+
+    return lacks.length > 0
+      ? [
+          `journey "${test.id}": it starts on ${test.page} as ${test.as}, whose roles do not give ${lacks.join(', ')} — the page asks every one of its permissions, and is withheld from it: give the account a role that grants them, or start where it may be`
+        ]
+      : [];
+  });
 
 /** The element a step names, if it names one. */
 const named = (step: E2eStep): string | undefined => ('element' in step ? step.element : undefined);

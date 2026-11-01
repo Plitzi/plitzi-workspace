@@ -6,14 +6,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthContext } from '@plitzi/sdk-auth';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import GuestWhilePlaying from './GuestWhilePlaying';
+import JourneyVisitor from './JourneyVisitor';
 
 import type { AuthContextValue } from '@plitzi/sdk-shared';
 
 vi.mock('@plitzi/sdk-shared/store', () => ({ useBuilderStore: vi.fn() }));
 
-const playing = (on: boolean) =>
-  vi.mocked(useBuilderStore).mockImplementation((() => [on]) as unknown as typeof useBuilderStore);
+/** A journey on the canvas or none — and the test account laid over the page, when there is one. */
+const onCanvas = (on: boolean, account?: { id: string }) =>
+  vi.mocked(useBuilderStore).mockImplementation((() => [[on, account]]) as unknown as typeof useBuilderStore);
 
 /** A session as the editor holds one, by its token. */
 const signedIn = (token: string): AuthContextValue =>
@@ -38,34 +39,47 @@ const Seen = () => {
 
 const page = (auth: AuthContextValue) => (
   <AuthContext value={auth}>
-    <GuestWhilePlaying>
+    <JourneyVisitor>
       <Seen />
-    </GuestWhilePlaying>
+    </JourneyVisitor>
   </AuthContext>
 );
 
 // A journey that met a guarded page passed on the server, which plays as a guest, and failed on the canvas.
-describe('the canvas while a journey plays', () => {
-  it('shows the page the editor’s session, until a play — then none, as the server plays it', () => {
-    playing(false);
+describe('the canvas while a journey is on it', () => {
+  it('shows the page the editor’s session, until a journey is on it — then none, as the server plays it', () => {
+    onCanvas(false);
     const { rerender } = render(page(signedIn('editor')));
     expect(screen.getByText('true authenticated editor true')).toBeTruthy();
 
-    playing(true);
+    onCanvas(true);
     rerender(page(signedIn('editor')));
     expect(screen.getByText('false guest none false')).toBeTruthy();
 
-    playing(false);
+    onCanvas(false);
     rerender(page(signedIn('editor')));
     expect(screen.getByText('true authenticated editor true')).toBeTruthy();
   });
 
   it('shows a session the journey signs in to as its own', () => {
-    playing(true);
+    onCanvas(true);
     const { rerender } = render(page(signedIn('editor')));
     expect(screen.getByText('false guest none false')).toBeTruthy();
 
     rerender(page(signedIn('journey')));
     expect(screen.getByText('true authenticated journey true')).toBeTruthy();
+  });
+
+  // A journey opened as its account showed the page as the editor until it was played.
+  it('shows the page its test account when one is laid over it — the editor’s session never', () => {
+    onCanvas(false);
+    const { rerender } = render(page(signedIn('editor')));
+    onCanvas(true, { id: 'member' });
+    rerender(page(signedIn('test:member')));
+    expect(screen.getByText('true authenticated test:member true')).toBeTruthy();
+
+    onCanvas(true);
+    rerender(page(signedIn('editor')));
+    expect(screen.getByText('false guest none false')).toBeTruthy();
   });
 });

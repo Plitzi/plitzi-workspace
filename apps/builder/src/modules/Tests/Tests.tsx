@@ -76,7 +76,11 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
       enter(answer.tests);
     }
   }, [answer, enter, load]);
-  useEffect(() => leave, [leave]);
+  // Left once, as the view closes — not each time `leave` is a new function: it changes with what it calls, and a flow
+  // chosen changed it, so the flow was taken back off the canvas as soon as it was shown.
+  const leaving = useRef(leave);
+  leaving.current = leave;
+  useEffect(() => () => leaving.current(), []);
 
   // What each tab holds that needs a look: the journeys' problems on Journeys, the element checks' and their misses on theirs.
   const needsLook: Record<Tab, number> = {

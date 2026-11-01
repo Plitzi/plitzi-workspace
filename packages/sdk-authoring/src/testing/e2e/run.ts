@@ -92,7 +92,7 @@ const startFrom = async (page: E2ePage, test: E2eTest): Promise<string | undefin
  * The test account a journey plays as, signed in — what its roles give in the space, as for a visitor (a role the space
  * no longer declares gives nothing) — none for a guest's, or why it has none: what every player signs the page in as.
  */
-const journeyAccount = (
+export const journeyAccount = (
   test: Pick<E2eTest, 'as'>,
   space: Schema | undefined
 ): { account?: SignedInTestAccount } | { problem: string } => {

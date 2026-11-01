@@ -1,28 +1,30 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
+import type { SignedInTestAccount } from '@plitzi/sdk-shared';
+
 /**
- * A journey's play, made as the server makes it — by a visitor with none of the editor's session, or as the journey's
- * own account (`playingJourney`, `GuestWhilePlaying`) — for as long as it lasts, however it ends.
+ * A journey's play, as its visitor from the first frame: its test account laid over the page before it is drawn — a
+ * guest when none — and, however it ends, the visitor of the journey opened on the canvas laid over it again
+ * (`JourneyVisitor`, `journeyOnCanvas`).
  */
-const usePlayJourney = (): (<T>(play: () => Promise<T>) => Promise<T>) => {
-  const [, setPlayingJourney] = useBuilderStore('playingJourney');
-  // The account a journey signed in as (`as`) is the journey's: none before it plays, none left after.
-  const [, setTestAccount] = useBuilderStore('runtime.testAccount');
+const usePlayJourney = (): (<T>(account: SignedInTestAccount | undefined, play: () => Promise<T>) => Promise<T>) => {
+  const [testAccount, setTestAccount] = useBuilderStore('runtime.testAccount');
+  const opened = useRef(testAccount);
+  opened.current = testAccount;
 
   return useCallback(
-    async <T>(play: () => Promise<T>): Promise<T> => {
-      setTestAccount(undefined);
-      setPlayingJourney(true);
+    async <T>(account: SignedInTestAccount | undefined, play: () => Promise<T>): Promise<T> => {
+      const before = opened.current;
+      setTestAccount(account);
       try {
         return await play();
       } finally {
-        setTestAccount(undefined);
-        setPlayingJourney(false);
+        setTestAccount(before);
       }
     },
-    [setPlayingJourney, setTestAccount]
+    [setTestAccount]
   );
 };
 

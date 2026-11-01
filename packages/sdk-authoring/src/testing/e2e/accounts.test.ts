@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { e2e, e2eTestProblems, runE2eTest, testAccountWarnings } from './index';
+import { e2e, e2eTestProblems, journeyStartWarnings, runE2eTest, testAccountWarnings } from './index';
 import { text } from '../../elements';
 import { authorSpace } from '../../schema';
 import { readSpaceTests } from '../tests';
@@ -46,6 +46,39 @@ describe('a journey played as a test account', () => {
   it('warns of a role the space no longer declares', () => {
     expect(testAccountWarnings(schema, [editor, { id: 'reviewer', roles: ['editor', 'reviewer'] }])).toEqual([
       'test account "reviewer": the space has no role "reviewer" — removed from its visitor roles since, or never there; a journey plays it without it: choose one the space has'
+    ]);
+  });
+
+  // A journey on a page its visitor may not open: as a guest where a session is asked, or as an account its roles keep out.
+  it('warns of a start its visitor may not be on', () => {
+    const { schema: kept } = authorSpace({
+      name: 'Console',
+      permanentUrl: 'console',
+      settings: { visitorRoles: { editor: ['spaceEdit'] } },
+      pages: [
+        { name: 'Sign in', slug: '', body: [text('Sign in', { id: 'sign-in' })] },
+        { name: 'Account', slug: 'account', accessLevel: 'authenticated', body: [text('Yours', { id: 'yours' })] },
+        {
+          name: 'Billing',
+          slug: 'billing',
+          access: { permissions: ['billingRead'] },
+          body: [text('Bills', { id: 'bills' })]
+        }
+      ]
+    });
+    const at = (id: string, page: string, as?: string) =>
+      e2e.test({ id, title: id, page, ...(as ? { as } : {}), steps: [e2e.expectShown('sign-in')] });
+
+    expect(
+      journeyStartWarnings({ ...kept, tests: { accounts: [editor] } }, [
+        at('guest-account', '/account'),
+        at('editor-account', '/account', 'editor'),
+        at('editor-billing', '/billing', 'editor'),
+        at('guest-home', '/')
+      ])
+    ).toEqual([
+      'journey "guest-account": it starts on /account as a guest, and that page is for signed-in visitors — a guest is sent to sign in there: play it as one of the test accounts, or start on a page a guest opens (keep it if the door is what it checks)',
+      'journey "editor-billing": it starts on /billing as editor, whose roles do not give billingRead — the page asks every one of its permissions, and is withheld from it: give the account a role that grants them, or start where it may be'
     ]);
   });
 

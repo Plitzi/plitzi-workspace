@@ -321,12 +321,12 @@ export type BuilderState = CommonState & {
    */
   urlTest?: { routeParams: RouteParams; queryParams: QueryParams; hostname: string };
   /**
-   * A journey is being played on the canvas, as the server plays it: by a visitor with no session of the editor's. The
-   * page reads none (the auth source empty, `can` false) and is held to its pages' access, which the canvas otherwise
-   * leaves open for editing — a journey that met a guarded page passed on the server and failed here. The journey's own
-   * account (`as`), or a session it signs in to, is read. Editor-only and never published.
+   * A journey is on the canvas — opened or played — and the page shows its visitor, as the server plays it: never the
+   * editor's session, but the journey's test account (`as`, `runtime.testAccount`), a session it signs in to, or a guest
+   * (the auth source empty, `can` false); its pages held to their access, which the canvas otherwise leaves open for
+   * editing — a journey that met a guarded page passed on the server and failed here. Editor-only and never published.
    */
-  playingJourney?: boolean;
+  journeyOnCanvas?: boolean;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

@@ -33,7 +33,10 @@ journey with an account reads and moves, and never writes as anybody. Each runne
 through the bridge (`signInAs`, then `navigate` to the journey's page — a guarded page opened first sent a guest to
 sign in), and again after every load (`goto`, `reload`, `back`); the SDK's `AuthContextProvider` lays the account
 over the session (`runtime.testAccount`, `testAccountAuth` in `@plitzi/sdk-auth`). `e2eTestProblems` says an `as`
-no account answers and an id declared twice.
+no account answers and an id declared twice. A journey that starts where its visitor may not be is warned
+(`journey-start-access`, `journeyStartWarnings`): a guest on a page for signed-in visitors is sent to sign in, and an
+account whose roles lack a permission the page asks is kept out — kept when the door is what it checks. The builder's
+canvas shows the visitor of the journey chosen before anything is played, its account signed in from the first frame.
 
 ```ts
 import { e2e, unit } from '@plitzi/sdk-authoring';
@@ -97,7 +100,8 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
     - **Play all** plays every journey in turn, with a log and a closing line.
   - Each play starts as a new visitor: the canvas is drawn again and the state emptied; the author's state comes back
     when the area closes.
-  - And with none of the editor's session, as the server plays it (`playingJourney`, `GuestWhilePlaying`): the page
+  - And with none of the editor's session, as the server plays it — from the moment the journey is chosen, not only
+    while it plays (`journeyOnCanvas`, `JourneyVisitor`): the page
     reads a guest (`guestAuth`: the auth source empty, `can` false), or the journey's own account, and its pages' access
     holds — the canvas otherwise leaves every page open for editing, and a journey that met a guarded page passed on
     the server and failed here. A session the journey signs in to is its own, and is read; the account is dropped when

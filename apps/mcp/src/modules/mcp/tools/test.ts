@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   e2eTestProblems,
+  journeyStartWarnings,
   readSpaceTests,
   runUnitTests,
   testAccountWarnings,
@@ -36,7 +37,7 @@ const standing = (schema: Schema) => {
     },
     problems: [...unitTestProblems(schema), ...e2eTestProblems(schema)],
     // A test account's role the space removed since: warned — the journey plays without it.
-    warnings: testAccountWarnings(schema),
+    warnings: [...testAccountWarnings(schema), ...journeyStartWarnings(schema)],
     unit: { passed: report.passed, failed: report.failed, failing: report.results.filter(result => !result.ok) }
   };
 };

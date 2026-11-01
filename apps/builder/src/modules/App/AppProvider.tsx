@@ -11,7 +11,7 @@ import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
 import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
 import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
-import GuestWhilePlaying from '@pmodules/Tests/studio/GuestWhilePlaying';
+import JourneyVisitor from '@pmodules/Tests/studio/JourneyVisitor';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
 import type { Environment, Server } from '@plitzi/sdk-shared';
@@ -65,9 +65,9 @@ const AppProvider = ({
                       <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                         <StyleContextProvider includeSubscriptions={includeSubscriptions}>
                           <AuthContextProvider server={server}>
-                            <GuestWhilePlaying>
+                            <JourneyVisitor>
                               <NavigationProvider>{children}</NavigationProvider>
-                            </GuestWhilePlaying>
+                            </JourneyVisitor>
                           </AuthContextProvider>
                         </StyleContextProvider>
                       </SchemaContextProvider>

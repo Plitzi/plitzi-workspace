@@ -361,7 +361,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 - **Journeys played beside the page.** The page live on the left, at the chosen journey's device; the journeys on the
   right, each with its letter, its first action and where it stands (Ready, Queued, Playing 3/5, Passes, Fails, On the
   server), and the rule they are kept for — before a snapshot or a publish, every journey and every element check must
-  pass; the journey chosen below, its steps in words. Choosing a journey opens it on its page as a new visitor; a
+  pass; the journey chosen below, its steps in words. Choosing a journey opens it on its page as its visitor; a
   step's ▶ plays the journey up to it and holds the page there; **Record** and **Add a check** write it by using the
   page; **Play all** plays every journey in turn with a log, then says what came of it in a line, and turns into
   **Stop** while it plays. Above, what is happening now and the numbers that count. A **pause between steps** (0.25 s
@@ -440,8 +440,10 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   never writes as anybody. Every runner signs the page in the same way, through the dev tools' bridge
   (`window.__plitzi.signInAs`, `navigate` — new in `@plitzi/sdk-dev-tools`), and again after each load.
   `e2eTestProblems` says an `as` no account answers and an id twice; `readSpaceTests`, the MCP's `plitzi_test` (with
-  its warnings) and the server's tests keep the accounts with the rest. In the builder, roles are chosen from the
-  space's, never typed (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`, `@plitzi/sdk-auth`, `@plitzi/sdk-dev-tools`,
+  its warnings) and the server's tests keep the accounts with the rest. **A journey that starts where its visitor may
+  not be is warned** (`journey-start-access`, `journeyStartWarnings`): as a guest on a page for signed-in visitors, or
+  as an account whose roles lack a permission the page asks — the builder rings its **As** and says why, the MCP's
+  `plitzi_test` lists it. In the builder, roles are chosen from the space's, never typed (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`, `@plitzi/sdk-auth`, `@plitzi/sdk-dev-tools`,
   `@plitzi/sdk-mcp`).
 
 ## Several agents on one project (`@plitzi/cli`)
@@ -1672,6 +1674,9 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   on it, in the builder's canvas as on a published page, where it happened only by how the router handed over its
   params (`@plitzi/sdk-elements`). **The builder moves to a page by its id as a published page does**
   (`navigationTarget`): a flow's `navigate` to a page with a slug went nowhere on the canvas (`@plitzi/plitzi-builder`).
+  **A journey chosen shows its visitor before anything is played**: the canvas is drawn with its test account signed
+  in from the first frame — a guest when it has none — and a play starts the same way: a journey as an account showed
+  the editor's page until played, and flickered its sign-in form on every play.
 - **A `--steps` script's pictures are the moment they are taken.** A part pictured (`--within`) is cut out of one picture
   of the screen, never its own picture waiting for its box to be still, and what changed between pictures is worked out
   once the steps are played: shots written 300 ms apart around a reticle over a turning globe came out 8 s apart. A
@@ -2067,8 +2072,8 @@ is no room at this address.` — one line, no stack — where the log said "ende
   list growing, the canvas resized — and goes when the element does, so a play that moves to another page no longer
   leaves it ringing whatever the new page drew there.
 - **A journey plays on the canvas as on the server: with none of the editor's session.** The page reads a guest, or the
-  journey's own test account, and its pages' access holds while it plays (`playingJourney`); a session the journey
-  signs in to is its own. A journey that met a guarded page — the account, sending a visitor with no session to sign
+  journey's own test account, and its pages' access holds while it is on the canvas (`journeyOnCanvas`); a session the
+  journey signs in to is its own. A journey that met a guarded page — the account, sending a visitor with no session to sign
   in — passed on the server and failed on the canvas, where every page is left open for editing. The Tests area has a
   **Test accounts** card, and each journey says who it plays as (**As a guest**, **As <account>**).
 - **A space setting can be removed again**: the settings mutation's `value` may be left out (it was `Json!`), so a box

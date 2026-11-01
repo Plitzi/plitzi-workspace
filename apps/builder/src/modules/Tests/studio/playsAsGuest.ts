@@ -1,6 +1,10 @@
 /**
- * Whether the page is shown as a guest while a journey plays: until the session changes from the one the editor had
- * when the play began — the journey's own account (`as`), or a session it signs in to, is then what it reads.
+ * Whether the page is shown as a guest while a journey is on the canvas: unless its test account is laid over it, or
+ * the session is no longer the editor's — one the journey signed in to, which is then what it reads.
  */
-export const playsAsGuest = (playing: boolean, token: string | undefined, startedWith: string | undefined): boolean =>
-  playing && token === startedWith;
+export const playsAsGuest = (
+  onCanvas: boolean,
+  accountLaid: boolean,
+  token: string | undefined,
+  editorToken: string | undefined
+): boolean => onCanvas && !accountLaid && token === editorToken;

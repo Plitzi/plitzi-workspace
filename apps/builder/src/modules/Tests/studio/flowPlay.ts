@@ -1,8 +1,11 @@
-import { isExpectation } from '@plitzi/sdk-authoring';
+import { isExpectation, journeyAccount } from '@plitzi/sdk-authoring';
 
-import type { FlowState, StepPlay } from './TestStudioContext';
+import { checkTitleOf, sentenceText } from './sentences';
+import { elementNameOf } from '../helpers';
+
+import type { FlowState, PlayLogLine, StepPlay } from './TestStudioContext';
 import type { E2eResult, E2eRunOptions } from '@plitzi/sdk-authoring';
-import type { E2eStep, E2eTest, Schema } from '@plitzi/sdk-shared';
+import type { E2eStep, E2eTest, Schema, SignedInTestAccount, UnitTest } from '@plitzi/sdk-shared';
 
 /** What a play in the Tests area is made of, without the area: devices, how a step and a flow stand, the lit tone. */
 
@@ -50,6 +53,32 @@ const CHECK_MS = 3000;
 
 /** What a play is handed by whoever runs it: its stop, and what it says before and after each step. */
 export type PlayHooks = Pick<E2eRunOptions, 'beforeStep' | 'onStep'> & { signal: AbortSignal };
+
+/** A step played, as a line of the log: in the words a person reads it, and what it read when it did not hold. */
+export const logLineOf = (
+  played: E2eTest,
+  index: number,
+  step: { ok: boolean; read?: string },
+  started: number,
+  flat: Parameters<typeof elementNameOf>[0],
+  checks: readonly UnitTest[]
+): PlayLogLine => {
+  const said = sentenceText(played.steps[index], target => elementNameOf(flat, target), checkTitleOf(checks));
+
+  return {
+    at: Date.now() - started,
+    flow: played.title || played.id,
+    text: step.ok ? said : `${said} — ${step.read ?? ''}`,
+    ok: step.ok
+  };
+};
+
+/** The test account a flow plays as, signed in to the space; none for a guest — or for an account it does not declare, which its run says. */
+export const accountOf = (played: E2eTest, space: Schema): SignedInTestAccount | undefined => {
+  const playsAs = journeyAccount(played, space);
+
+  return 'account' in playsAs ? playsAs.account : undefined;
+};
 
 /** What a flow played on the canvas runs with: the editor's page, its element checks as `space` holds them. */
 export const canvasRun = (
