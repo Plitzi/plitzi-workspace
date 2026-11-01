@@ -7,6 +7,7 @@ import chalk from 'chalk';
 
 import { listedTasks } from './monitorBoard';
 import { frameUpdate } from './monitorCanvas';
+import { runEmergency } from './monitorEmergency';
 import { onKey, onMouse, splitInput } from './monitorInput';
 import { initialUi, keptBack, LIVE_VERB } from './monitorModel';
 import { PREVIEW_LINES, previewControl } from './monitorPreview';
@@ -418,6 +419,18 @@ export const runMonitor = async (
               ...ui,
               flash: `${asked.name} not changed: ${error instanceof Error ? error.message : String(error)}`
             };
+            drawSoon();
+          });
+      } else if (last && asked.kind === 'emergency') {
+        // The person's own terminal, as the command would be: done, said, and the panel read again with it.
+        runEmergency(ctx, last.view.runId, asked.action)
+          .then(said => {
+            ui = { ...ui, flash: said };
+
+            return look();
+          })
+          .catch((error: unknown) => {
+            ui = { ...ui, flash: `not done: ${error instanceof Error ? error.message : String(error)}` };
             drawSoon();
           });
       } else if (last && asked.kind === 'start-preview') {

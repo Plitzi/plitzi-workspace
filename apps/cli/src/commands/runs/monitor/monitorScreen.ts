@@ -9,6 +9,7 @@ import {
   paletteFound,
   paletteItems
 } from './monitorDialogs';
+import { drawEmergencyDialog } from './monitorEmergency';
 import { drawHead, drawStatus, headRows } from './monitorHead';
 import { hhmm, toneOf } from './monitorModel';
 import { drawNeeds, keyHint, leadsOnly, needsRows, shownNeeds } from './monitorNeeds';
@@ -126,6 +127,8 @@ export const monitorScreen = (
     drawNeedsDialog(p, needs);
   } else if (dialog?.kind === 'team') {
     drawTeamDialog(p, data.team, dialog.at);
+  } else if (dialog?.kind === 'emergency') {
+    drawEmergencyDialog(p, data, dialog);
   } else if (dialog?.kind === 'palette') {
     drawPalette(p, paletteFound(paletteItems(p, data, needs), dialog.query), dialog.query, dialog.at);
   }

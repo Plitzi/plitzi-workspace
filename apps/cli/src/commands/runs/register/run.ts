@@ -55,6 +55,7 @@ import { PLITZI_HOW_MEANS, PLITZI_HOWS } from '../../../runs/findings/plitziClas
 import { groupHelp } from '../../register/helpGroups';
 import { fail } from '../../shared/terminal';
 import { runAgent } from '../run/agent';
+import { runAllow, runHold } from '../run/holds';
 import { runStart } from '../run/start';
 
 import type {
@@ -86,7 +87,7 @@ const RUN_HELP: readonly HelpGroup[] = [
   },
   {
     heading: "The lead's — the agent that plans, reviews and closes:",
-    commands: ['open', 'amend', 'reference', 'settle', 'show', 'stop', 'resume']
+    commands: ['open', 'amend', 'reference', 'settle', 'show', 'stop', 'resume', 'hold', 'allow']
   },
   {
     heading: 'Yours alone — what writes into the project, or throws work away:',
@@ -427,6 +428,28 @@ export const registerRunGroup = (program: Command): Command => {
       duration
     )
     .action((run: string | undefined, options: UpgradeRunOptions) => runUpgrade(run, options));
+
+  runGroup
+    .command('hold')
+    .description(
+      'Stop agents of the run and hold them — the lead’s or a person’s: their process ended, what they hold kept in their hands, never started again by the run until allowed'
+    )
+    .argument('[agents...]', 'The agents (dev-1, test-2) — every one of the team when none is named')
+    .option(...RUN_OPTION)
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((agents: string[], options: RunCommandOptions) => runHold(agents, options));
+
+  runGroup
+    .command('allow')
+    .description(
+      'Let agents the run holds start again — stopped by run hold, past their harness’s limit, or ending as they start (one more try)'
+    )
+    .argument('[agents...]', 'The agents — every one held when none is named')
+    .option(...RUN_OPTION)
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((agents: string[], options: RunCommandOptions) => runAllow(agents, options));
 
   runGroup
     .command('resume')

@@ -16,6 +16,7 @@ const RANK: Partial<Record<Attention['kind'], number>> = {
   'refused-again': 2,
   'no-signal': 3,
   'agents-needed': 3,
+  'start-held': 1,
   'changed-in-project': 4,
   overwrite: 4,
   'known-failure': 5,

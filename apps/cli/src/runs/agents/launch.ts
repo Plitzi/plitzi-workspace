@@ -24,6 +24,10 @@ export interface Launch {
   log: string;
   /** The harness's session (`claude --session-id`): what `--resume` continues. */
   session?: string;
+  /** How long its log was when it started: what the session wrote is what comes after (`startHold.ts`). */
+  logFrom?: number;
+  /** How many sessions of it before this one ended at their start, in a row (`quickEndsOf`). */
+  quickEnds?: number;
 }
 
 const launchFile = (paths: RunPaths, agent: string): string => path.join(agentScratch(paths, agent), 'agent.json');
@@ -34,7 +38,9 @@ const isLaunch = (value: unknown): value is Launch =>
   isHarness(value.harness) &&
   typeof value.startedAt === 'string' &&
   typeof value.log === 'string' &&
-  (value.session === undefined || typeof value.session === 'string');
+  (value.session === undefined || typeof value.session === 'string') &&
+  (value.logFrom === undefined || typeof value.logFrom === 'number') &&
+  (value.quickEnds === undefined || typeof value.quickEnds === 'number');
 
 /** The agent's last launch, as `run agent --launch` kept it — none when it was never launched, or the file is not one. */
 export const readLaunch = async (paths: RunPaths, agent: string): Promise<Launch | undefined> => {

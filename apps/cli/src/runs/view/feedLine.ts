@@ -243,6 +243,10 @@ const lineOf = (entry: Record<string, unknown>): FeedLine | undefined => {
       // started test-1" beside a lead the monitor said was away — and then "keeper", which named nobody they knew.
       return entry.asked === true ? { ...said, by: 'the run' } : said;
     }
+    case 'agent-held':
+      return line('run', `stopped ${textOf(entry.agent)} and held it — the run starts it no more until allowed`);
+    case 'starts-allowed':
+      return line('run', `let ${listOf(entry.agents)} start again`);
     case 'message':
       // Each message is in the feed by its own words, read from the messages.
       return undefined;

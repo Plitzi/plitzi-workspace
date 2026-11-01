@@ -249,7 +249,10 @@ monitor serves is sent SIGINT, its own Ctrl-C, and waited for until its record g
 it in the browser; each says so when there is nothing for it to do: its server's output is kept in the run's cache
 (`preview.log`) and its last lines shown under its address. It is served from the monitor's own process, so quitting
 stops a preview the monitor started: while it serves one, the first `q` says so and a second quits (`ctrl+c` at once) —
-one another process serves is left alone, unless `x`. Under a dialog the board is not reached: only the
+one another process serves is left alone, unless `x`. `!` opens the emergency panel (`monitorEmergency.ts`): where
+the run stands and who is held, why — then the run paused (`run stop`) or resumed (`run resume`), every held agent let
+start again, every agent stopped and held, and each agent stopped and held or allowed (`run hold`, `run allow`). What
+stops work takes a second ⏎ on the same row. Under a dialog the board is not reached: only the
 dialog's own keys, and `q`. The keys and the mouse are answered apart from the terminal (`monitorInput.ts`), each
 tested; with no run to draw, the panel says why in a frame of its own — none yet, or the one it showed is gone. The monitor watches the run's folder and draws again the
 moment the CLI writes to it, every second for its clock and faster while an agent is at work, in one synchronized frame.
@@ -551,6 +554,22 @@ whatever the lead is doing; `run open` names the base it starts, and `run agent 
 harness unless `--harness` names another; `run open`, `run resume`, `run attach` and the lead's `run watch` start it,
 one a run (`cache/keeper.json`, its log `cache/keeper.log`), and it ends with the run. Only the lead's watch started
 agents before, so while the lead reviewed or wrote a stage, ready tasks waited with no developer running.
+
+**A start held** (`startHold.ts`, `holdAgents.ts`): an agent whose harness ends as it starts is never started again in
+a loop — a run's keeper started its eight agents 4379 times in 40 minutes, Claude Code past its 5-hour limit. The lead's
+view leaves a held agent out of `agents-needed`, so neither the keeper nor the lead's watch starts it, and says it once
+(`start-held`) instead. Three things hold a start. **The harness's limit**, read off the line its last session ended on
+("You've hit your 5-hour limit · resets 8:40pm (Europe/Lisbon)"; its last line only — a limit line followed by work was
+another session's): every agent in that harness waits until the reset it names, in the zone it names, then starts by
+itself; a time just past is the harness rounding down (tried again in five minutes), one it cannot read is tried again
+in fifteen. The person's to know. **Ending as it starts** — within `QUICK_END_MS` of its start and no word to the run,
+`QUICK_ENDS_HELD` times in a row (counted on each launch, `Launch.quickEnds`; what the session wrote is the log past
+`Launch.logFrom`): held until allowed, with its last line and its log — the lead's to look at (a login gone, a harness
+broken), and `plitzi run allow <agent>` is one more try. **Stopped** — `plitzi run hold [agents…]`, the lead's or a
+person's: its process group sent SIGTERM, what it holds kept in its hands, its copy as it is, until `plitzi run allow
+[agents…]` (none named: every agent held). An allow is a line in the run's log (`starts-allowed`) and lifts what held
+the agent before it; one allowed under a harness's limit is started — the person said the harness can. The monitor
+shows a held agent `waiting`, with what holds it, never `restarting`.
 
 **A model one harness does not run** (`harnessRuns`): the team names a model once, for every harness — Claude Code
 runs a Claude one (`claude-…`, `sonnet`), Codex any other, opencode `provider/model`. One the harness does not run is

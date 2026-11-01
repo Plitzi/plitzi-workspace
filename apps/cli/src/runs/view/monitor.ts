@@ -369,6 +369,9 @@ const agentsOf = async (
 
     return 'restarting with a fresh context — the run starts it again for what comes';
   };
+  // Held, its harness ending as it starts (`startHold.ts`): waiting, never "restarting" while the run starts it not.
+  const heldOf = (agent: string): string | undefined =>
+    Object.hasOwn(view.held, agent) ? view.held[agent] : undefined;
   const teamMember = (agent: string) => (team ? startedAgents(team) : []).find(each => each.agent === agent);
   // Steps nobody took yet, by role: said on each agent of that role, which may be at a task of its own.
   const untaken = view.tasks.flatMap(task =>
@@ -519,14 +522,16 @@ const agentsOf = async (
     const away =
       holding === undefined
         ? undefined
-        : restartingOf(agent) !== undefined
-          ? { status: 'restarting' as const, doing: `${String(restartingOf(agent))} — then ${holding}` }
-          : view.gone.includes(agent)
-            ? {
-                status: 'stopped' as const,
-                doing: `holds ${holding} — its process ended: it is started again when the run asks (run watch)`
-              }
-            : undefined;
+        : heldOf(agent) !== undefined
+          ? { status: 'waiting' as const, doing: `${String(heldOf(agent))} — then ${holding}` }
+          : restartingOf(agent) !== undefined
+            ? { status: 'restarting' as const, doing: `${String(restartingOf(agent))} — then ${holding}` }
+            : view.gone.includes(agent)
+              ? {
+                  status: 'stopped' as const,
+                  doing: `holds ${holding} — its process ended: it is started again when the run asks (run watch)`
+                }
+              : undefined;
 
     // A tester at a review: at work on that card — never idle.
     const reviews = task ? undefined : reviewing.get(agent);
@@ -574,7 +579,7 @@ const agentsOf = async (
             doing: `every task approved — nothing is left for it${tail}`,
             ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
           }
-        : gone(agent) !== undefined
+        : gone(agent) !== undefined && heldOf(agent) === undefined
           ? // Its harness stopped it, or it hangs: nothing marked it present — said, never "waiting" for good.
             {
               agent,
@@ -585,6 +590,7 @@ const agentsOf = async (
               ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
             }
           : member?.onDemand &&
+              heldOf(agent) === undefined &&
               restartingOf(agent) === undefined &&
               (lastBy.get(agent) === undefined || stopped.has(agent) || view.gone.includes(agent))
             ? // On demand, and not running: nothing is wrong — it is started when work waits for it (run watch says).
@@ -612,15 +618,17 @@ const agentsOf = async (
                   kind: 'agent' as const,
                   // Between tasks: idle — a wait for work is no work, whatever its follow waits for (the line says what);
                   // stopped once it said so.
-                  status: restartingOf(agent)
-                    ? ('restarting' as const)
-                    : stopped.has(agent) || view.gone.includes(agent)
-                      ? ('stopped' as const)
-                      : ('idle' as const),
+                  status: heldOf(agent)
+                    ? ('waiting' as const)
+                    : restartingOf(agent)
+                      ? ('restarting' as const)
+                      : stopped.has(agent) || view.gone.includes(agent)
+                        ? ('stopped' as const)
+                        : ('idle' as const),
                   ...about,
                   // Running, before anything of it reached the run's log: what it ran says what it is at. Its process
                   // gone with no stop said: ended, its last word a wait (a run's designers read idle for good).
-                  doing: `${restartingOf(agent) ?? `${view.gone.includes(agent) && !stopped.has(agent) ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}`}${tail}`,
+                  doing: `${heldOf(agent) ?? restartingOf(agent) ?? `${view.gone.includes(agent) && !stopped.has(agent) ? 'its process ended — ' : ''}${lastBy.get(agent) === undefined && lastRun.has(agent) ? `getting started${lately(agent)}` : betweenTasks(agent, lastBy.get(agent))}`}${tail}`,
                   ...(typeof lastBy.get(agent)?.at === 'string' ? { signalAt: String(lastBy.get(agent)?.at) } : {})
                 };
   });

@@ -22,7 +22,7 @@ interface Frame {
 }
 
 /** A dialog's frame, centred: the board receding, a shadow under it, its title and how it closes. */
-const raise = (p: Paint, width: number, height: number, title: string, closes = 'esc close'): Frame => {
+export const raise = (p: Paint, width: number, height: number, title: string, closes = 'esc close'): Frame => {
   const { canvas, theme } = p;
   const frame = {
     width: Math.min(width, canvas.width - 4),
@@ -216,6 +216,7 @@ export const drawHelp = (p: Paint, mode: MonitorMode): void => {
     ['e', 'widens the sidebar — again, back as it was', false],
     ['t', 'light or dark', true],
     ['r', 'the team: ↑ ↓ an entry, → + one more of it, ← − one fewer — written to .plitzi/team.json', true],
+    ['!', 'emergency: pause or resume the run, stop and hold agents, let the held start again', true],
     ['ctrl+p', 'commands: every task, agent, view and fix', true],
     ['q', 'quits — twice while a preview runs from here: it stops too', true]
   ];
@@ -239,6 +240,7 @@ export type PaletteAction =
   | { kind: 'approved' }
   | { kind: 'theme' }
   | { kind: 'team' }
+  | { kind: 'emergency' }
   | { kind: 'quit' };
 
 export interface PaletteItem {
@@ -292,6 +294,12 @@ export const paletteItems = (p: Paint, data: Monitored, needs: readonly Need[]):
       action: { kind: 'theme' }
     },
     { group: 'Panel', label: 'The team: more or fewer of a role', hint: 'r', action: { kind: 'team' } },
+    {
+      group: 'Panel',
+      label: 'Emergency: pause or resume the run, stop and hold agents, let them start',
+      hint: '!',
+      action: { kind: 'emergency' }
+    },
     { group: 'Panel', label: 'Quit', hint: 'q', action: { kind: 'quit' } }
   ];
 };

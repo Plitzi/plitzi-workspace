@@ -7,6 +7,7 @@ import { longTaskAttention } from '../agents/longTask';
 import { agentsNeeded } from '../agents/onDemand';
 import { agentsNow } from '../agents/running';
 import { heldAhead, lockHolder, stalled } from '../agents/stalled';
+import { holdDoing, holdNotices, startHolds } from '../agents/startHold';
 import { readTeam, SCOUT, startedAgents, TESTER } from '../agents/team';
 import { isWorked } from '../agents/worked';
 import { previewPort } from '../copies/previewRecord';
@@ -135,6 +136,7 @@ export interface Attention {
     | 'slow-review'
     | 'idle-team'
     | 'agents-needed'
+    | 'start-held'
     | 'refused-again'
     | 'line-unanswered'
     | 'finding'
@@ -185,6 +187,8 @@ export interface RunView {
   reviewers: string[];
   /** The agents the CLI launched whose process has ended: not running, whatever the log's last word of them. */
   gone: string[];
+  /** The agents the run does not start again for now, and what each waits for (`startHold.ts`). */
+  held: Record<string, string>;
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
   previewPort?: number;
   /** The agents with a token on the run: started again by it, never by their name (`identity.ts`). */
@@ -374,6 +378,16 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   attention.push(...heldAhead(views, lockHolder(locks, record.runId)));
   // Agents on demand: told to the lead when work waits for one and none running is free.
   const identified = await identifiedAgents(loaded.paths);
+  // One whose harness ends as it starts is held instead (`startHold.ts`): said once, never started in a loop.
+  const holds = await startHolds(
+    loaded.paths,
+    {
+      notRunning: started.map(each => each.agent).filter(agent => !running.has(agent)),
+      harness: team?.options?.launch
+    },
+    log,
+    now.getTime()
+  );
   attention.push(
     ...agentsNeeded(views, started, running, {
       identified,
@@ -382,7 +396,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       open: record.status === 'open',
       launches: team?.options?.launch !== undefined,
       now: now.getTime()
-    })
+    }).filter(item => item.agent === undefined || !holds.has(item.agent)),
+    ...holdNotices(holds).map(notice => ({ kind: 'start-held' as const, ...notice }))
   );
   // What the run's records show going wrong now, said while the lead can still act (`findings/live.ts`).
   attention.push(
@@ -656,6 +671,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     approvedFiles: Object.keys(approved.files).length,
     reviewers: testers,
     gone: [...gone],
+    held: Object.fromEntries([...holds].map(([agent, hold]) => [agent, holdDoing(hold)])),
     ...(port === undefined ? {} : { previewPort: port }),
     identified,
     scratch: loaded.paths.scratch,

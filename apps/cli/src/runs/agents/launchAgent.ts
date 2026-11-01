@@ -14,6 +14,7 @@ import { RunRefusal } from '../core/refusal';
 import { harnessUsage } from '../harness';
 import { loadRun, logRun, readRunLog } from '../run';
 import { SESSION_ENV } from './session';
+import { quickEndsOf } from './startHold';
 import { withLock } from '../core/store';
 import { viewTask } from '../core/taskStore';
 import { opensOnResearch } from '../plan/spike';
@@ -304,6 +305,8 @@ const startHeld = async (
     effort
   } = harnessCommand(harness, { file: promptFile, text: said }, told, harness === 'claude' ? session : undefined);
   const log = path.join(scratch, 'agent.log');
+  const logFrom = (await fs.stat(log).catch(() => undefined))?.size ?? 0;
+  const quickEnds = await quickEndsOf(agent, last, runLog);
   const out = openSync(log, 'a');
   // Its own process group, outliving this command: the agent works until task next tells it to stop.
   const child = spawn(command, args, {
@@ -323,7 +326,9 @@ const startHeld = async (
     harness,
     startedAt: ctx.now().toISOString(),
     log,
-    ...(harness === 'claude' ? { session: session.id } : {})
+    ...(harness === 'claude' ? { session: session.id } : {}),
+    logFrom,
+    ...(quickEnds > 0 ? { quickEnds } : {})
   });
   // The board says who started whom. Started by the lead's own command, the lead is seen at it; asked by the run — its
   // keeper's start — it is no work of the lead's (a run's lead read "working" with nobody leading it).

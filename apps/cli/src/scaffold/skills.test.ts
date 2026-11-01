@@ -38,9 +38,10 @@ const budgetOf = (path: string): number | undefined => {
   }
 
   // The lead's half is read once a run, by the strongest model of it, and what it gets wrong — a scope measured short,
-  // a line nothing proves — is paid in every task's round (three of five rounds were the scope's).
+  // a line nothing proves — is paid in every task's round (three of five rounds were the scope's). Raised for agents held
+  // (Carlos: the lead looks and allows an agent its harness keeps ending — a run's keeper started eight 4379 times).
   if (path.endsWith('/runs-lead.md')) {
-    return 4500;
+    return 5000;
   }
 
   // A reference's rules are read whole and acted on: one cut to fit (an example, the case that goes wrong) is an

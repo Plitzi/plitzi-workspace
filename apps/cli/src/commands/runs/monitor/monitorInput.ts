@@ -1,10 +1,12 @@
 import { listedTasks } from './monitorBoard';
+import { inEmergency } from './monitorEmergency';
 import { VIEWS } from './monitorModel';
 import { SPEND_SORTS } from './monitorSpend';
 import { noneOfText } from '../../../runs/agents/team';
 
 import type { Need } from './monitorAttention';
 import type { PaletteAction, PaletteItem } from './monitorDialogs';
+import type { EmergencyAction } from './monitorEmergency';
 import type { Area, Dialog, Hit, MonitorUi } from './monitorModel';
 import type { PreviewState } from './monitorPreview';
 import type { Monitored } from '../../../runs/view/monitor';
@@ -29,7 +31,9 @@ export type Effect =
   | { kind: 'open-preview' }
   | { kind: 'theme' }
   /** An entry of the team set to this many (and its min no more than that): what `run team set --count` writes. */
-  | { kind: 'team-count'; name: string; count: number; min?: number };
+  | { kind: 'team-count'; name: string; count: number; min?: number }
+  /** What the emergency panel asked: the run paused or resumed, agents held or allowed (`monitorEmergency.ts`). */
+  | { kind: 'emergency'; action: EmergencyAction };
 
 export interface Step {
   ui: MonitorUi;
@@ -170,6 +174,8 @@ const act = (ui: MonitorUi, action: PaletteAction, shown: Shown): Step => {
       return (shown.data?.team.length ?? 0) > 0
         ? still({ ...closed, dialog: { kind: 'team', at: 0 } })
         : flashed(closed, 'the team names no agent — plitzi run team set <name> --roles … adds one');
+    case 'emergency':
+      return still({ ...closed, dialog: { kind: 'emergency', at: 0 } });
     case 'quit':
       return quitting(closed, shown);
   }
@@ -235,6 +241,11 @@ export const onKey = (
     return inPalette(ui, dialog, text, key, shown);
   }
 
+  // Its own ⏎ and esc: the panel acts on the row chosen, never closes on it.
+  if (dialog?.kind === 'emergency') {
+    return inEmergency(ui, dialog, key, shown);
+  }
+
   if (dialog !== undefined && (key?.name === 'escape' || key?.name === 'return' || text === '?')) {
     return still({ ...ui, dialog: undefined });
   }
@@ -263,6 +274,10 @@ export const onKey = (
 
   if (text === '?') {
     return still({ ...ui, dialog: { kind: 'help' } });
+  }
+
+  if (text === '!') {
+    return still({ ...ui, dialog: { kind: 'emergency', at: 0 } });
   }
 
   // A view is the advanced panel's: asked for from the simple one, the panel turns advanced to show it.

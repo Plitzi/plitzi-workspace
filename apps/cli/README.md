@@ -807,6 +807,11 @@ project|run|<file>`, then `run resolve <run>`, no file, goes on).
 - **Cuts:** a task with no signal (15 minutes without a write, a command or progress) can be reassigned; one taken again
   starts from its last reviewed version — what was written since is never resumed. `run attach` picks a run up after
   the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
+- **A start held:** an agent whose harness ends as it starts is never started again in a loop. Past its harness's limit,
+  every agent in it waits for the reset the harness names; one that ended as it started three times in a row waits for
+  the lead, who looks and allows it (`run allow <agent>`, one more try). `run hold [agents…]` stops agents and holds them,
+  what they hold kept in their hands, until `run allow`. In `run monitor`, `!` opens the emergency panel: pause or resume
+  the run, stop and hold agents, let them start again.
 - **Who calls is proved by a token**, never by a name typed: each agent's (`<run>.@<agent>.<secret>`) is made at its
   first command (`--agent <name>`, said once) and kept in `tmp/plitzi-runs/<run>/scratch/<agent>/token`; the lead's is
   printed by `run open`. Every command after passes it (`--token`), in a task's copy too — the copy says the task, not

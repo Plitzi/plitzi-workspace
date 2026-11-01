@@ -371,6 +371,16 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **A run never starts an agent again in a loop** (`@plitzi/cli`): past Claude Code's 5-hour limit, every agent ended as
+  it started, and a run's keeper started its eight agents 4379 times in 40 minutes — the monitor a wall of "started". A
+  start is held now, said once: past the harness's limit (read off the line its session ended on), every agent in it
+  waits for the reset the harness names, then starts by itself; one that ended as it started three times in a row waits
+  for the lead, told its last line and log, to allow it (`plitzi run allow <agent>`, one more try). `plitzi run hold
+  [agents…]` stops agents and holds them, what they hold kept in their hands; `plitzi run allow [agents…]` lets them
+  start again. The monitor shows a held agent waiting, with what holds it.
+- **`run monitor`'s emergency panel (`!`)** (`@plitzi/cli`): where the run stands and who is held, why — and the run
+  paused or resumed, every held agent let start again, every agent stopped and held, or each one stopped or allowed.
+  What stops work takes a second ⏎ on the same row.
 - **`run team set <name> --count 0` says both things it can mean** (`@plitzi/cli`): it was refused as "a whole number
   from 1", saying nothing of how to have none. A count is the most of an entry, at least one, so `0` now answers with
   each reading and its command — none at the start (`--min 0`, started when work waits for it) or none at all

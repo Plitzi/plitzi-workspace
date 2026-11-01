@@ -35,7 +35,9 @@ export type Dialog =
   | { kind: 'needs' }
   | { kind: 'palette'; query: string; at: number }
   /** The team, an entry a row: how many of each, raised and lowered from here (`r`) — the person's to set. */
-  | { kind: 'team'; at: number };
+  | { kind: 'team'; at: number }
+  /** The emergency panel (`!`): pause, resume, stop and hold agents, let them start — `armed`, the row asked to confirm. */
+  | { kind: 'emergency'; at: number; armed?: number };
 
 export interface MonitorUi {
   mode: MonitorMode;

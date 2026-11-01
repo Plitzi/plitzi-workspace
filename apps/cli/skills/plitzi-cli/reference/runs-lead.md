@@ -103,7 +103,11 @@ run open next.json` (with `--dry-run` first); say each to the person. **You mana
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take …`, then `plitzi run resolve <run>` (no file) goes on.
-   **The brake** stops a run whose completions keep failing; `run resume`. **Plitzi upgraded mid-run**
+   **The brake** stops a run whose completions keep failing; `run resume`. **An agent held** — it ended as it
+   started three times in a row (the notice gives its harness's last line and its log): find why with the person (a
+   login gone, the harness's plan), then `plitzi run allow <agent>` — one more try; held again if it ends so. A harness
+   past its limit holds every agent in it until the reset it names, then they start by themselves. `plitzi run hold
+   <agent>` stops one and holds it, its task kept in its hands, until you allow it. **Plitzi upgraded mid-run**
    (`version-mismatch`): the person runs `plitzi run attach <run>`. Upgrading on purpose is the person's (`plitzi run upgrade`): rebuild,
    then ask — never put a CLI in `node_modules` yourself.
 8. **Before you close, look at the whole once:** `plitzi run look` checks and pictures every page the run changed (1440

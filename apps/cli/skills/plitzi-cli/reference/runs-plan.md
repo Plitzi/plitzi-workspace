@@ -50,7 +50,7 @@ In the person's language, short, from the plan — never a list to read in the J
 - **What you found** of Plitzi (step 2).
 - **Who applies the result** — the person (`run finish --apply`), unless they let you (`run open --lead-finishes`).
 - **How to open and follow it**: the open command — a run past 7 agents or 120 minutes is the person's to confirm in
-  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced). What they see wrong on it they report from its dev
+  their terminal — `plitzi run monitor` (130 columns for its sidebar; its `p` serves the approved work on 8300 and `x` stops it, its output in the panel; `m` switches simple and advanced; `!` is its emergency panel — the run paused or resumed, agents stopped and held, let start again). What they see wrong on it they report from its dev
   tools' Run tab (**Report what you see**): it reaches you as their message, its `Play it: plitzi page shot …` the
   first command you run.
 

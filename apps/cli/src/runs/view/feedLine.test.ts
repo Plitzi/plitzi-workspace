@@ -96,6 +96,18 @@ describe('the activity, in words', () => {
     expect(feedOf(launch)).toMatchObject({ by: 'lead' });
   });
 
+  // A run's monitor read "agent-held", the log's own word, where the person had stopped dev-1.
+  it('says an agent held and agents let start again, in words', () => {
+    const at = '2026-11-01T21:35:00.000Z';
+
+    expect(feedOf({ at, by: 'person', action: 'agent-held', agent: 'dev-1' })?.text).toBe(
+      'stopped dev-1 and held it — the run starts it no more until allowed'
+    );
+    expect(feedOf({ at, by: 'lead', action: 'starts-allowed', agents: ['dev-1', 'test-2'] })?.text).toBe(
+      'let dev-1, test-2 start again'
+    );
+  });
+
   it('says what a kept count of tokens is', () => {
     expect(
       feedOf({ at: '2026-10-23T12:49:18.473Z', by: 'lead', action: 'tokens', agents: ['dev-1', 'design-1'] })?.text
