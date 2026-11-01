@@ -404,6 +404,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
     [lineOf, logged, playAt, playOnCanvas, stateAt]
   );
 
+  const forgetStates = useCallback(() => setStates({}), []);
   const playAll = useCallback(() => {
     const chosen = flowRef.current;
     // The flow chosen plays as it is being edited; the rest as saved.
@@ -450,13 +451,14 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
 
         const result = await playOnCanvas(each, {
           signal: controller.signal,
-          beforeStep: async (step, index) => {
+          // No pause between steps: it is there to watch one journey work, and playing them all asks for the outcome.
+          beforeStep: (step, index) => {
             spotlight(documentOf(canvas), stepElementOf(step), toneOf(step));
             if (isChosen) {
               playAt(index, { state: 'running' });
             }
 
-            await pauseBefore(delayRef, index);
+            return Promise.resolve();
           },
           onStep: (_page, step, index) => {
             stateAt(each.id, { state: 'playing', played: index + 1 });
@@ -595,6 +597,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       check,
       play,
       playAll,
+      forgetStates,
       pause,
       resume,
       next,
@@ -629,6 +632,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
       paused,
       play,
       playAll,
+      forgetStates,
       playedMs,
       playingAll,
       plays,

@@ -86,6 +86,8 @@ export type TestStudioValue = {
   /** Plays the chosen flow from its start: held before its first step when `stepping`, after step `until` when given. */
   play: (options?: { stepping?: boolean; until?: number }) => void;
   playAll: () => void;
+  /** What the rows last said of the canvas's plays, forgotten: a run on the server speaks for them now. */
+  forgetStates: () => void;
   pause: () => void;
   resume: () => void;
   next: () => void;
@@ -125,6 +127,7 @@ const TestStudioContext = createContext<TestStudioValue>({
   check: () => undefined,
   play: () => undefined,
   playAll: () => undefined,
+  forgetStates: () => undefined,
   pause: () => undefined,
   resume: () => undefined,
   next: () => undefined,

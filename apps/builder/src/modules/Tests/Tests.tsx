@@ -43,7 +43,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   const studio = use(TestStudioContext);
   // Read here, against the document being edited — as a snapshot reads them.
   const problems = useTestProblems(studio.tests, studio.flow);
-  const { enter, leave, load } = studio;
+  const { enter, leave, load, forgetStates } = studio;
   const { showDialog } = useModal();
   const [flat] = useBuilderStore('schema.flat');
   const [elementSelected] = useBuilderStore('elementSelected');
@@ -90,13 +90,17 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
   const handleChecks = useCallback(() => setTab('checks'), [setTab]);
   const handleRunOnServer = useCallback(async () => {
     setServerRunning(true);
+    // The last run's verdicts are not this one's — the server's or the canvas's: each row waits for what it says now.
+    setServerRun(undefined);
+    forgetStates();
     try {
       setServerRun(await runE2e());
     } finally {
       setServerRunning(false);
       settleServerPlay();
     }
-  }, [runE2e, settleServerPlay]);
+  }, [forgetStates, runE2e, settleServerPlay]);
+  const handlePlayAll = useCallback(() => setServerRun(undefined), []);
   const handleSaveUnit = useCallback(
     async (test: UnitTest) => {
       const result = await save(withUnitTest(studio.tests, test, editing?.id ?? test.id));
@@ -177,6 +181,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           serverRunning={serverRunning}
           serverPlay={serverPlay}
           onRunOnServer={handleRunOnServer}
+          onPlayAll={handlePlayAll}
           onViewServerRun={setViewing}
           onChecks={handleChecks}
         />

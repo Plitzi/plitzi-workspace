@@ -347,7 +347,11 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
           )}
           <label
             className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
-            title="How long a play waits between two steps, so each can be seen working on the page. 0 plays them at once."
+            title={
+              playingAll
+                ? 'Playing them all waits for no step: the pause is for watching one journey.'
+                : 'How long a play waits between two steps, so each can be seen working on the page. 0 plays them at once.'
+            }
           >
             <i className="fa-solid fa-stopwatch text-zinc-400" />
             Pause
@@ -359,6 +363,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                 aria-label="Pause between steps, in seconds"
                 min={0}
                 step={0.05}
+                disabled={playingAll}
                 value={String(stepDelay)}
                 onChange={handleDelay}
               />

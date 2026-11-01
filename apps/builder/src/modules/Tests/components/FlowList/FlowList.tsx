@@ -158,7 +158,10 @@ const FlowList = ({
         {shown.map((each, index) => {
           const chosen = flow?.id === each.id;
           const current = chosen ? flow : each;
-          const state = serverPlay?.journeys[each.id] ?? states[each.id] ?? { state: 'idle' };
+          // While the server plays them, a journey it has not reached yet waits for it — not what the canvas last said.
+          const state: FlowState = serverPlay
+            ? (serverPlay.journeys[each.id] ?? { state: 'queued' })
+            : (states[each.id] ?? { state: 'idle' });
           const onServer = serverRun?.results.find(result => result.id === each.id);
           const playing = state.state === 'playing';
 

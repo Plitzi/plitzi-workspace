@@ -31,6 +31,8 @@ export type TestsAreaProps = {
   /** The journeys the server is playing now, heard as they play — this person's run or anyone's. */
   serverPlay?: ServerPlay;
   onRunOnServer: () => void;
+  /** Playing them all on the canvas starts: the last run on the server is not what the rows say any more. */
+  onPlayAll: () => void;
   onViewServerRun: (id: string) => void;
   onChecks: () => void;
 };
@@ -52,6 +54,7 @@ const TestsArea = ({
   serverRunning,
   serverPlay,
   onRunOnServer,
+  onPlayAll,
   onViewServerRun,
   onChecks
 }: TestsAreaProps) => {
@@ -125,8 +128,9 @@ const TestsArea = ({
   );
   const handlePlayAll = useCallback(() => {
     setView('run');
+    onPlayAll();
     playAll();
-  }, [playAll]);
+  }, [onPlayAll, playAll]);
 
   // What is happening, in a line: the builder's own way of saying what a terminal would print.
   const now = checking

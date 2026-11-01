@@ -365,7 +365,8 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   step's ▶ plays the journey up to it and holds the page there; **Record** and **Add a check** write it by using the
   page; **Play all** plays every journey in turn with a log, then says what came of it in a line, and turns into
   **Stop** while it plays. Above, what is happening now and the numbers that count. A **pause between steps** (0.25 s
-  unless the person sets their own, 0 the least) lets each step be seen working on the page; it, the journey chosen
+  unless the person sets their own, 0 the least) lets each step of the journey played be seen working on the page —
+  **Play all** waits for none, and its field is off while it plays; it, the journey chosen
   and the tab open are kept through a reload. A journey reads as it runs: a timeline of its steps, filled as they play
   (red where one failed, pressed to play up to it), and its moments side by side — the page as it opens, then each
   thing done with what must hold after it. The page scrolls to the element each step is about, within itself, and its
@@ -374,7 +375,8 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   that no page answers on that field, a step on that step. It all runs on `runE2eTest`, the canvas given as its page;
   **Run on the server** plays them in the server's browser, shown as it plays — each journey's pill, and a card with
   its step and the page after it, from `SPACE_TESTS_PLAYING` on the space's channel (in every builder open on the
-  space, an agent's runs too) — and **View run** replays a run (`@plitzi/plitzi-builder`, `SpaceRunE2eTests` and
+  space, an agent's runs too; a journey it has not reached yet reads Queued) — and **View run** replays a run. A run
+  started, of either kind, clears what the last one said in the list (`@plitzi/plitzi-builder`, `SpaceRunE2eTests` and
   `SPACE_TESTS_PLAYING` in `@plitzi/sdk-shared`).
 - **What a plan allows of a space's tests** is in its entitlements: `journeysPerSpace` and `serverRunsPerMonth`
   (`null`, no limit), and `moreJourneys` / `moreServerRuns` — the plan that gives more, and the way there
