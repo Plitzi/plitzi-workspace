@@ -51,20 +51,28 @@ export const accountsFlows = ({
 
     // Which one is taken, for the form to mark its field (a run's sign-up said it under the form): no more than "a user
     // exists" already told, as that answered the same for an email tried with any username.
-    const taken = (await adapters.findByUsername?.(username))
-      ? 'username'
-      : (await adapters.findByEmail?.(email))
-        ? 'email'
+    const takenBy = async (): Promise<AuthOutcome | undefined> => {
+      const taken = (await adapters.findByUsername?.(username))
+        ? 'username'
+        : (await adapters.findByEmail?.(email))
+          ? 'email'
+          : undefined;
+
+      return taken
+        ? {
+            ok: false,
+            status: 400,
+            body: {
+              error:
+                taken === 'username' ? 'That username is already taken' : 'An account with that email already exists',
+              field: taken
+            }
+          }
         : undefined;
-    if (taken) {
-      return {
-        ok: false,
-        status: 400,
-        body: {
-          error: taken === 'username' ? 'That username is already taken' : 'An account with that email already exists',
-          field: taken
-        }
-      };
+    };
+    const takenBefore = await takenBy();
+    if (takenBefore) {
+      return takenBefore;
     }
 
     // Both are guaranteed by `capabilities.signup`; asserting it here keeps that guarantee where it is decided.
@@ -72,12 +80,28 @@ export const accountsFlows = ({
       return NOT_OFFERED;
     }
 
-    const account = await adapters.createAccount({
+    const createAccount = adapters.createAccount;
+    const passwordHash = await hashPassword(password);
+    /**
+     * Taken in the meantime, by a sign-up with the same name or address that got there first: what the store refused
+     * is said as the check above says it. Two at once (a double submit, two tabs) answered one of them a 500.
+     */
+    const account = await createAccount({
       username,
       email,
-      passwordHash: await hashPassword(password),
+      passwordHash,
       ...(terms ? { termsAccepted: { version: terms.version, at: new Date() } } : {})
+    }).catch(async (error: unknown) => {
+      const takenSince = await takenBy();
+      if (takenSince) {
+        return takenSince;
+      }
+
+      throw error;
     });
+    if ('ok' in account) {
+      return account;
+    }
 
     if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {
       const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);

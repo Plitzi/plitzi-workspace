@@ -422,6 +422,42 @@ describe('the terms an account is opened under', () => {
   });
 });
 
+/**
+ * Two sign-ups with one name at once — a double submit, two tabs — both pass the check, and the store takes one. The
+ * other was answered a 500: it is the same "already taken" the check says, since that is what happened.
+ */
+describe('a sign-up that loses the race for its name', () => {
+  const racing = (takenAfter: 'username' | 'email' | undefined) => {
+    let created = false;
+
+    return build(
+      {
+        findByUsername: () => Promise.resolve(created && takenAfter === 'username' ? ada : undefined),
+        findByEmail: () => Promise.resolve(created && takenAfter === 'email' ? ada : undefined),
+        createAccount: () => {
+          created = true;
+
+          return Promise.reject(new Error('Unique constraint failed'));
+        }
+      },
+      { hashPassword: (p: string) => Promise.resolve(`${p}-hashed`), verifyOnSignup: true }
+    ).signup({ username: 'grace', email: 'grace@example.com', password: 'correct horse battery' });
+  };
+
+  it('is told the name or the address is taken, as the check says it', async () => {
+    expect(await racing('username')).toMatchObject({
+      ok: false,
+      status: 400,
+      body: { error: 'That username is already taken', field: 'username' }
+    });
+    expect(await racing('email')).toMatchObject({ ok: false, status: 400, body: { field: 'email' } });
+  });
+
+  it('fails as it failed when nothing took them: the store’s own error is not hidden', async () => {
+    await expect(racing(undefined)).rejects.toThrow('Unique constraint failed');
+  });
+});
+
 describe('confirming an address', () => {
   type Mail = { to: string; template: string; data: Record<string, string> };
 

@@ -367,6 +367,10 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 - **`login-then-leaves` warns only of what races the page** (`@plitzi/sdk-authoring`): a step after `auth.login` that
   runs only when the login was refused — its `when` holding that the answer has no token, says `ok: false` or names a
   reason — is not warned: a refused login leaves nobody signed in, and the page stays.
+- **A sign-up that loses the race for its name is told it is taken** (`@plitzi/sdk-server`): two at once with one
+  username or address both passed the check, the store took one, and the other was answered a 500. When
+  `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
+  address is now taken; any other failure is the store's own, as before.
 - **`inspectPage` leaves a staggered arrival to the scroll** (`@plitzi/sdk-authoring`): a `stagger` on view holds its
   children at opacity 0 below the element that waits to be seen, and the child's opacity was read before that element —
   a section's heading below the fold was said "transparent — an arrival that never played?".
