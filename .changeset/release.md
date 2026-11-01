@@ -59,8 +59,9 @@ authoring and the elements learnt from the runs.
   whoever holds the action says `adding`, hears `onAddingEnd`, and may give `empty` — what shows with none.
 - **A page given to `runE2eTest` chooses a select's option**: `E2eElement` has `selectOption(value, { timeout })`, as
   Playwright's locator does — a page written by hand (not Playwright's) adds it. It also takes `position` in `click`
-  and `hover` (a point of the element), and has `evaluate(fn, arg)` run on the element, as a locator's: a journey's
-  wait and expectations read an element through it, so any selector that presses it reads it (`:has-text()`).
+  and `hover` (a point of the element), and has `evaluate(fn, arg)` run on the element, as a locator's — typed by the
+  function it runs (`evaluate<F>(fn: F, arg: Parameters<F>[1])`), so Playwright's `Page` still is one: a journey's wait
+  and expectations read an element through it, so any selector that presses it reads it (`:has-text()`).
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
   plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22

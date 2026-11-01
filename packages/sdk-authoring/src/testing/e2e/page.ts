@@ -16,9 +16,21 @@ export interface E2eElement {
   /** A select's option chosen by its value or its label. */
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
   boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>;
-  /** A function run in the page on the element itself — read, scrolled — as its driver finds it. */
-  evaluate<R, A>(fn: (node: Element, arg: A) => R, arg: A): Promise<R>;
+  /**
+   * A function run in the page on the element itself — read, scrolled — as its driver finds it. Generic over the
+   * function, not its argument: Playwright's locator hands the function `Unboxed<Arg>`, which TypeScript cannot equate
+   * with an argument type left open, so `<R, A>(fn: (node, arg: A) => R, arg: A)` refused its `Page`.
+   */
+  evaluate<F extends OnElement>(fn: F, arg: Parameters<F>[1]): Promise<ReturnType<F>>;
 }
+
+/**
+ * Any function run on an element, synchronous. `any` on purpose: it is a constraint, not a type a value has — the call
+ * takes its argument and result from the function given (`Parameters<F>[1]`, `ReturnType<F>`) — and `unknown` or
+ * `never` in either place refuses Playwright's locator again.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OnElement = (node: Element, arg: any) => any;
 
 /** The elements a selector finds: the first, the last or the nth. */
 export interface E2eLocator extends E2eElement {
