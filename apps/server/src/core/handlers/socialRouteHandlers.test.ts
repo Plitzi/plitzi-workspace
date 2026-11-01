@@ -4,6 +4,7 @@ import { createSocialAuthRouteHandlers, mountSocialAuthRoutes } from './socialRo
 import { createSessionCookies } from '../auth/session';
 
 import type { AuthedRequest, RedirectResponse, SocialRouteHandler } from './types';
+import type { Actor } from '../auth/identity';
 import type { SocialAuth } from '../auth/oauth';
 import type { SSRSession } from '@plitzi/sdk-shared';
 
@@ -15,6 +16,17 @@ import type { SSRSession } from '@plitzi/sdk-shared';
 const cookies = createSessionCookies({ name: 'test_session' });
 
 const session: SSRSession = { token: 'minted', expiresAt: Math.floor(Date.now() / 1000) + 3600 };
+
+const actor: Actor = {
+  id: 0,
+  username: 'ada',
+  email: 'ada@test.invalid',
+  verified: true,
+  roles: [],
+  permissions: [],
+  token: 'session-token',
+  expiresAt: Math.floor(Date.now() / 1000) + 3600
+};
 
 const socialStub = (overrides: Partial<SocialAuth> = {}): SocialAuth =>
   ({
@@ -307,6 +319,48 @@ describe('social auth route handlers', () => {
       'https://app.test/done'
     );
     expect(await go({ redirect: 'https://evil.test/' })).toBe('https://app.test/done');
+  });
+
+  /**
+   * The deployment's own step before the destination — the first-sign-in questions — asked for a signed-in person only,
+   * vetted like the destination, and never a dead end: one that throws is reported and the person goes straight on.
+   */
+  it('sends a signed-in person through the deployment’s step first, vetted, and straight on when it has none', async () => {
+    const onError = vi.fn();
+    const beforeContinue = vi.fn((user: Actor, destination: string) =>
+      user.id === 1
+        ? Promise.resolve(`https://app.test/welcome?redirect=${encodeURIComponent(destination)}`)
+        : user.id === 2
+          ? Promise.resolve('https://evil.test/')
+          : user.id === 3
+            ? Promise.reject(new Error('profile store down'))
+            : Promise.resolve(undefined)
+    );
+    const routes = createSocialAuthRouteHandlers({
+      social: socialStub({
+        sanitizeRedirect: (target: unknown) =>
+          typeof target === 'string' && target.startsWith('https://app.test/') ? target : 'https://app.test/'
+      }),
+      cookies,
+      issueSession: () => Promise.resolve(session),
+      onError,
+      beforeContinue
+    });
+    const go = async (id?: number) => {
+      const { res, state } = response();
+      const req = request('/continue', { redirect: 'https://app.test/spaces' });
+      await run(routes, '/continue', id === undefined ? req : { ...req, user: { ...actor, id } }, res);
+
+      return state.redirected;
+    };
+
+    expect(await go()).toBe('https://app.test/spaces');
+    expect(beforeContinue).not.toHaveBeenCalled();
+    expect(await go(1)).toBe('https://app.test/welcome?redirect=https%3A%2F%2Fapp.test%2Fspaces');
+    expect(await go(2)).toBe('https://app.test/');
+    expect(await go(3)).toBe('https://app.test/spaces');
+    expect(onError).toHaveBeenCalledWith(expect.any(Error), { method: 'GET', path: '/continue' });
+    expect(await go(4)).toBe('https://app.test/spaces');
   });
 
   it('hangs every route on a router as a GET', () => {

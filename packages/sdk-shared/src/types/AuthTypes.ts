@@ -102,4 +102,9 @@ export type AuthContextValue = {
     };
     accessToken?: string;
   };
+  /**
+   * The journey's test account this visitor is signed in as (`tests.accounts`, by id) — none for a real session. It holds
+   * no session the server knows, so nothing that asks the server who it is (a redirect off the site) is done for it.
+   */
+  testAccount?: string;
 };

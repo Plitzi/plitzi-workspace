@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { button, container } from '../../elements';
 import { onClick } from '../../elements/steps';
-import { authLogin, navigate } from '../../interactions/steps';
+import { addNotification, authLogin, navigate } from '../../interactions/steps';
+import { named, when } from '../flows';
 import { authorSpace } from '../space';
 
 /** A space with a sign-in page, and the steps its button's flow takes. */
@@ -21,7 +22,13 @@ const signIn = (accessLevel: 'public' | undefined, steps: ReturnType<typeof navi
           button({
             id: 'sign-in-submit',
             label: 'Sign in',
-            flows: [[onClick(), authLogin({ username: '{{ state.name }}', password: '{{ state.secret }}' }), ...steps]]
+            flows: [
+              [
+                onClick(),
+                named('login', authLogin({ username: '{{ state.name }}', password: '{{ state.secret }}' })),
+                ...steps
+              ]
+            ]
           })
         ]
       }
@@ -34,6 +41,31 @@ describe('a flow that goes on after the login, on a page for signed-out visitors
     expect(signIn('public', [navigate({ urlType: 'internal', url: '{{ navigation.queryParams.next }}' })])).toContain(
       'login-then-leaves'
     );
+  });
+
+  // A refused login leaves nobody signed in: the page stays, and what the refusal says races nothing.
+  it('is not for steps that run only when the login was refused', () => {
+    const refused = [
+      when({ field: 'login.accessToken', operator: 'empty', value: '' }, addNotification({ content: 'Not right' })),
+      when(
+        [
+          { field: 'login.accessToken', operator: 'empty', value: '' },
+          { field: 'login.reason', operator: '=', value: 'mfa' }
+        ],
+        navigate({ urlType: 'internal', url: '/' })
+      )
+    ];
+
+    expect(signIn('public', refused)).not.toContain('login-then-leaves');
+    expect(
+      signIn('public', [
+        ...refused,
+        when(
+          { field: 'login.accessToken', operator: 'notEmpty', value: '' },
+          navigate({ urlType: 'internal', url: '/' })
+        )
+      ])
+    ).toContain('login-then-leaves');
   });
 
   it('is not, ending at the login — nor on a page for everybody, which navigates itself', () => {

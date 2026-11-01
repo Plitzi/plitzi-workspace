@@ -157,18 +157,15 @@ export const asAccount = async (
   account: SignedInTestAccount,
   path: string
 ): Promise<string | undefined> => {
-  const signed = await bridge(page, { method: 'signInAs', args: [account] });
+  // Signed in and moved in one step, drawn as one: the page it was on is never drawn signed in — a page for signed-out
+  // visitors, where a page for signed-in ones sent a guest, sends whoever is signed in on, out of the space.
+  const signed = await bridge(page, { method: 'signInAs', args: [account, path] });
   if (signed === 'none') {
     return `it plays as ${account.id}, signed in through window.__plitzi — which the SDK's dev tools put on a page in debug mode, and this page has none`;
   }
 
   if (isRecord(signed.answer) && typeof signed.answer.refused === 'string') {
     return `it plays as ${account.id}: ${signed.answer.refused}`;
-  }
-
-  const moved = await bridge(page, { method: 'navigate', args: [path] });
-  if (moved === 'none' || moved.answer === false) {
-    return `it plays as ${account.id}, and the page could not be moved to ${path} once signed in`;
   }
 
   await settle(page);

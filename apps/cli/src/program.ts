@@ -2,6 +2,7 @@ import { Command, Option } from 'commander';
 
 import { commandHint } from './commandHints';
 import { login, logout, space, whoami } from './commands/account/account';
+import { browserInstall, browserStatus } from './commands/browser/browser';
 import addPlugin from './commands/plugin/addPlugin';
 import packPluginCommand from './commands/plugin/packPlugin';
 import uploadPluginCommand from './commands/plugin/uploadPlugin';
@@ -442,6 +443,19 @@ export const buildProgram = (): Command => {
     .option('--json', 'One object, for a tool or an agent')
     .action((options: DoctorOptions) => doctor(options));
 
+  const browserGroup = program
+    .command('browser')
+    .description(
+      'The browser the page commands open pages in: a Chromium downloaded once, else the Chrome installed here — no Playwright in the project'
+    )
+    .option('--json', 'One object, for a tool or an agent')
+    .action((options: { json?: boolean }) => browserStatus(options));
+
+  browserGroup
+    .command('install')
+    .description('Download Chromium for the page commands, once, into Playwright’s shared cache')
+    .action(() => browserInstall());
+
   program
     .command('cert')
     .description(
@@ -606,8 +620,9 @@ export const buildProgram = (): Command => {
       commands: ['create', 'space', 'page', 'element', 'plugin', 'data', 'explain', 'test', 'verify']
     },
     {
-      heading: 'Keep the project whole — its machinery, its servers, HTTPS on your network:',
-      commands: ['upgrade', 'doctor', 'server', 'cert']
+      heading:
+        'Keep the project whole — its machinery, its servers, the browser its pages open in, HTTPS on your network:',
+      commands: ['upgrade', 'doctor', 'server', 'browser', 'cert']
     },
     {
       heading: 'Its own code on Plitzi — functions, the runtime, the source kept beside them:',

@@ -29,6 +29,7 @@ export const testAccountAuth = (
     ...auth,
     authenticated: true,
     state: 'authenticated',
+    testAccount: account.id,
     can: permission => permissions.includes(permission),
     logout: () => Promise.resolve(signOut()),
     user: {

@@ -1,8 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import https from 'node:https';
-import { createRequire } from 'node:module';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -13,7 +11,7 @@ import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 import { applyConditions, heldOn } from './conditions';
 import { HEALTH_PATH } from './health';
 import { keepStatic, staticCacheDir } from './staticCache';
-import { projectAdd, projectExec, projectRun } from '../scaffold/packageManager';
+import { projectRun } from '../scaffold/packageManager';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { BrowserConditions } from './conditions';
@@ -21,12 +19,13 @@ import type { PlitziProject } from '../commands/project/existingProject';
 import type { SettlingEvent, SettlingRequest } from '@plitzi/sdk-authoring';
 
 /**
- * A browser on the project's own Playwright, and the project's own server to point it at — what `plitzi page check`,
+ * A browser on the CLI's own driver, and the project's own server to point it at — what `plitzi page check`,
  * `plitzi page shot` and `plitzi page import` look at a page with (`import` at a site of the person's, not the project's server).
  *
- * Playwright is the project's: `create` installs it for the visual tests, and a second copy in the CLI would be a
- * second set of browsers to download. It is described here by the little that is used of it, and checked to be that
- * when it loads, so the CLI depends on no driver.
+ * The driver is the CLI's (`playwright-core`, no browsers of its own): a project needs no Playwright for the CLI to open
+ * its pages. The browser is a Chromium downloaded once (`plitzi browser install`, into Playwright's shared cache, where a
+ * project's own Playwright finds it too), else the Chrome installed on the machine. It is described here by the little
+ * that is used of it, and checked to be that when it loads.
  */
 
 /** The viewport's height every page is read at, unless a command asks otherwise (`--height`): said with what it read. */
@@ -232,7 +231,7 @@ export interface Browser {
 }
 
 export interface Chromium {
-  launch(options?: { args?: string[] }): Promise<Browser>;
+  launch(options?: { args?: string[]; channel?: string }): Promise<Browser>;
 }
 
 const isChromium = (value: unknown): value is Chromium => isRecord(value) && typeof value.launch === 'function';
@@ -259,38 +258,62 @@ export const projectSettling = (
 /** The project each browser was launched for: where the pages it opens keep what other sites send them. */
 const launchedFor = new WeakMap<Browser, string>();
 
-/**
- * The project's `@playwright/test`'s Chromium, as its module exports it — or why there is none: what a browser is launched
- * by here, and the kept one (`keptBrowser.ts`) connected to.
- */
-export const chromiumOf = async (root: string): Promise<{ chromium: Chromium } | { problem: string }> => {
+/** The CLI's own driver, as its module exports it — or why it would not load (an install the CLI's package lost). */
+export const chromiumOf = async (): Promise<{ chromium: Chromium } | { problem: string }> => {
   let loaded: unknown;
   try {
-    const resolved = createRequire(path.join(root, 'package.json')).resolve('@playwright/test');
-    // Its core, where it has one beside it: the browser alone, not the test runner around it — 20 ms of each command
-    // that opens a page. Resolved from the runner's own place, as a package manager that hoists nothing keeps it.
-    const core = (() => {
-      try {
-        return createRequire(resolved).resolve('playwright-core');
-      } catch {
-        return resolved;
-      }
-    })();
-    loaded = await import(pathToFileURL(core).href);
-  } catch {
-    return { problem: `This project has no @playwright/test installed: ${projectAdd('-D @playwright/test')}` };
+    loaded = await import('playwright-core');
+  } catch (error) {
+    return {
+      problem: `The CLI's browser driver (playwright-core) did not load (${error instanceof Error ? error.message.split('\n')[0] : String(error)}): reinstall @plitzi/cli`
+    };
   }
 
-  // Resolved as `require` resolves it, Playwright is its CommonJS entry: its exports arrive on the default one, which
-  // is the `test` function — properties on a function, not a plain object.
-  const chromium = [propertyOf(loaded, 'chromium'), propertyOf(propertyOf(loaded, 'default'), 'chromium')].find(
-    isChromium
-  );
+  const chromium = propertyOf(loaded, 'chromium');
   if (!isChromium(chromium)) {
-    return { problem: 'The @playwright/test installed here has no Chromium to launch.' };
+    return { problem: "The CLI's browser driver (playwright-core) has no Chromium to launch: reinstall @plitzi/cli" };
   }
 
   return { chromium };
+};
+
+/**
+ * The browsers a page may be opened in, the first that starts: the Chromium `plitzi browser install` downloaded — the
+ * driver's own version, the same on every machine — else the machine's Chrome.
+ */
+export const BROWSERS = [
+  { said: 'Chromium, downloaded by plitzi browser install', channel: undefined },
+  { said: 'Chrome, installed on this machine', channel: 'chrome' }
+] as const;
+
+/** Why no browser started, and the two ways to have one. */
+const noBrowser = (tried: readonly string[]): string =>
+  `No browser to open pages with (${tried.join('; ')}): plitzi browser install downloads Chromium once, or install Chrome`;
+
+/** The first browser that starts, and which it was — or why none did. */
+export const startBrowser = async (): Promise<
+  { browser: Browser; said: (typeof BROWSERS)[number]['said'] } | { problem: string }
+> => {
+  const loaded = await chromiumOf();
+  if ('problem' in loaded) {
+    return loaded;
+  }
+
+  const tried: string[] = [];
+  for (const { said, channel } of BROWSERS) {
+    try {
+      const browser = await loaded.chromium.launch({
+        args: gpuArgs(process.platform),
+        ...(channel ? { channel } : {})
+      });
+
+      return { browser, said };
+    } catch (error) {
+      tried.push(`${said}: ${error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error)}`);
+    }
+  }
+
+  return { problem: noBrowser(tried) };
 };
 
 /**
@@ -301,23 +324,16 @@ export const chromiumOf = async (root: string): Promise<{ chromium: Chromium } |
  */
 export const gpuArgs = (platform: NodeJS.Platform): string[] => (platform === 'darwin' ? ['--enable-gpu'] : []);
 
-/** The project's `@playwright/test`'s Chromium, launched — or why there is none. */
+/** A browser for the project's pages (`startBrowser`) — or why there is none. */
 export const launchBrowser = async (root: string): Promise<Browser | { problem: string }> => {
-  const loaded = await chromiumOf(root);
-  if ('problem' in loaded) {
-    return loaded;
+  const started = await startBrowser();
+  if ('problem' in started) {
+    return started;
   }
 
-  try {
-    const browser = await loaded.chromium.launch({ args: gpuArgs(process.platform) });
-    launchedFor.set(browser, root);
+  launchedFor.set(started.browser, root);
 
-    return browser;
-  } catch (error) {
-    return {
-      problem: `Chromium did not start (${error instanceof Error ? error.message.split('\n')[0] : String(error)}): ${projectExec('playwright install chromium')}`
-    };
-  }
+  return started.browser;
 };
 
 /** What `npm start` wrote down when it took a port: the port, where it answers, and the name its `/health` answers with. */

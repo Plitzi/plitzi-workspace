@@ -30,9 +30,11 @@ export type AgentInspector = {
   watch: (on?: boolean) => string;
   /**
    * The page's visitor signed in as a journey's test account (`tests.accounts`): its details, roles and permissions,
-   * with no session the server knows — `null` signs it out. What it signed in as, or why not.
+   * with no session the server knows — `null` signs it out. What it signed in as, or why not. With `path`, the page is
+   * moved there in the same step: one render, signed in and there — never the page it was on, signed in, which a page
+   * for signed-out visitors would send on.
    */
-  signInAs: (account: unknown) => string | Refused;
+  signInAs: (account: unknown, path?: unknown) => string | Refused;
   /** The page moved to a path of the space as its links move it, without loading it again: the path, or false. */
   navigate: (path: string) => string | false;
 };
@@ -89,8 +91,8 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
   serverFailures()     why each server element failed on the page server since the page loaded, by id
   watch(on = true)     one console line per flow as it ends
-  signInAs(account)    the visitor signed in as a journey's test account ({ id, email?, roles?, permissions? }) —
-                       no session the server knows; signInAs(null) signs it out
+  signInAs(account, path?) the visitor signed in as a journey's test account ({ id, email?, roles?, permissions? }) —
+                       no session the server knows, moved to path in the same render; signInAs(null) signs it out
   navigate(path)       the page moved to a path of the space as a link moves it, without loading it again`;
 
 /** Whether a store's own value of a source is laid over one inherited from above: the merged value has keys it lacks. */
@@ -102,6 +104,18 @@ const NAME = /^[A-Za-z0-9_-]+$/;
 
 const isNames = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string' && NAME.test(each));
+
+/** The page moved to a path of the space as its links move it — or false, where the navigation has no way to move. */
+const moveTo = (root: AgentInspectorOptions['root'], path: string): boolean => {
+  const move: unknown = recordAt(root.getState(), 'navigation').navigate;
+  if (typeof move !== 'function') {
+    return false;
+  }
+
+  Reflect.apply(move, undefined, [path]);
+
+  return true;
+};
 
 /** A test account as a journey signs in as it — its roles' permissions worked out — or none: what `signInAs` takes. */
 const accountOf = (value: unknown): SignedInTestAccount | undefined =>
@@ -228,7 +242,7 @@ export const createAgentInspector = ({
 
     return on ? 'Each flow is said in the console as it ends.' : 'Flows are no longer said in the console.';
   },
-  signInAs: value => {
+  signInAs: (value, path) => {
     if (value === null || value === undefined) {
       writeTestAccount(undefined);
 
@@ -243,18 +257,17 @@ export const createAgentInspector = ({
       };
     }
 
-    writeTestAccount(account);
-
-    return `Signed in as ${account.id}: what the page shows that visitor — no session the server knows.`;
-  },
-  navigate: path => {
-    const move: unknown = recordAt(root.getState(), 'navigation').navigate;
-    if (typeof move !== 'function') {
-      return false;
+    if (path !== undefined && typeof path !== 'string') {
+      return { refused: 'A path is where the page is moved once signed in: /account' };
     }
 
-    Reflect.apply(move, undefined, [path]);
+    // Both written in one task, so they are drawn together: the account and the page, never one without the other.
+    writeTestAccount(account);
+    if (path !== undefined && !moveTo(root, path)) {
+      return { refused: `Signed in as ${account.id}, and the page could not be moved to ${path}` };
+    }
 
-    return path;
-  }
+    return `Signed in as ${account.id}${path === undefined ? '' : `, on ${path}`}: what the page shows that visitor — no session the server knows.`;
+  },
+  navigate: path => (moveTo(root, path) ? path : false)
 });

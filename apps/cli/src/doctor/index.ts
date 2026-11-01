@@ -5,6 +5,7 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { checkBrowser } from './browser';
 import { checkConfig } from './config';
 import { checkData } from './data';
 import { checkFunctions } from './functions';
@@ -121,7 +122,8 @@ const CHECKS: readonly [DoctorArea, Check][] = [
   ['records', checkRecords],
   ['skills', checkSkills],
   ['team', checkTeam],
-  ['plan', checkPlan]
+  ['plan', checkPlan],
+  ['browser', checkBrowser]
 ];
 
 /**

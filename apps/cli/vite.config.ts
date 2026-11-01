@@ -28,7 +28,7 @@ export default defineConfig({
     // `bin` turns the compile cache on before the CLI's code is read; `index` is the CLI.
     lib: { entry: { bin: './src/bin.ts', index: './src/index.ts' }, formats: ['es'] },
     rollupOptions: {
-      external: ['chalk', 'commander', 'esbuild', 'fflate', '@plitzi/sdk-authoring', /^node:/],
+      external: ['chalk', 'commander', 'esbuild', 'fflate', 'playwright-core', '@plitzi/sdk-authoring', /^node:/],
       output: { entryFileNames: '[name].js', banner: '#!/usr/bin/env node' }
     },
     minify: false,

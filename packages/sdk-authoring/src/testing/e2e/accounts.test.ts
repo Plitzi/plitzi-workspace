@@ -96,13 +96,12 @@ describe('a journey played as a test account', () => {
 
   // A page for signed-in visitors sends a guest to sign in on its first load: signed in, the page is moved back to it.
   it('is signed in as it before its first step, and moved to the page it starts on', async () => {
-    const calls: [string, unknown][] = [];
+    const calls: unknown[][] = [];
     // The dev tools' bridge, as the page's window holds it.
     vi.stubGlobal('window', {
       location: { pathname: '/', search: '' },
       __plitzi: {
-        signInAs: (account: unknown) => calls.push(['signInAs', account]) && 'Signed in',
-        navigate: (path: unknown) => calls.push(['navigate', path]) && path
+        signInAs: (account: unknown, path: unknown) => calls.push(['signInAs', account, path]) && 'Signed in'
       }
     });
     // The fake answers what a run asks of a page with no steps: its size, its scheme, the bridge — and settling, at once.
@@ -125,11 +124,26 @@ describe('a journey played as a test account', () => {
     );
 
     expect(played.problem).toBeUndefined();
-    // Signed in with what its roles give in the space.
-    expect(calls).toEqual([
-      ['signInAs', { ...editor, permissions: ['spaceEdit', 'spaceView'] }],
-      ['navigate', '/account']
-    ]);
+    // Signed in with what its roles give in the space, and moved in the same step: one render shows both.
+    expect(calls).toEqual([['signInAs', { ...editor, permissions: ['spaceEdit', 'spaceView'] }, '/account']]);
+  });
+
+  // A page that went elsewhere as the journey was set up: this journey fails, saying so — the run goes on.
+  it('fails, saying why, when the page goes elsewhere as it is set up', async () => {
+    const page = {
+      setViewportSize: () => Promise.resolve(),
+      emulateMedia: () => Promise.resolve(),
+      waitForSelector: () => Promise.resolve({}),
+      evaluate: () => Promise.reject(new Error('page.evaluate: Execution context was destroyed'))
+    } as unknown as E2ePage;
+
+    const played = await runE2eTest(
+      page,
+      e2e.test({ id: 'as-editor', title: 'The account', page: '/account', as: 'editor', steps: [] }),
+      { origin: 'http://127.0.0.1', open: () => Promise.resolve(), space: { ...schema, tests: { accounts: [editor] } } }
+    );
+
+    expect(played).toMatchObject({ ok: false, problem: expect.stringContaining('it could not start') as unknown });
   });
 
   it('says so when the space declares no such account', async () => {

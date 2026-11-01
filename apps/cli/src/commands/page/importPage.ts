@@ -152,7 +152,7 @@ export const importPage = async (address: string, options: ImportOptions): Promi
   if (options.dryRun) {
     sayDryRun(`plitzi page import ${url.href}`, [
       `${url.hostname} is yours: ${ownership.said}`,
-      `measure it at ${widths.join(', ')} px, light and dark, in the project's Playwright`,
+      `measure it at ${widths.join(', ')} px, light and dark, in the CLI's browser`,
       `${existing.length > 0 ? '~' : '+'} ${out}/ — tokens.ts, outline.ts, data/*.json, assets.json, screens/, IMPORT.md`,
       ...(existing.length > 0 ? [`  over ${String(existing.length)} files an earlier import left (--force)`] : [])
     ]);

@@ -169,6 +169,30 @@ describe('window.__plitzi', () => {
     expect(navigate).toHaveBeenCalledWith('/account');
   });
 
+  /**
+   * Signed in and moved in one step, so one render shows both: a journey on a page for signed-in visitors, opened on the
+   * sign-in, never drew the sign-in signed in — which a page for signed-out visitors sends on, out of the space.
+   */
+  it('signs in and moves the page in the same step, or says why it cannot', () => {
+    const order: string[] = [];
+    const routed = createAgentInspector({
+      root: createStore<Record<string, unknown>>(() => ({ navigation: { navigate: () => order.push('moved') } })),
+      writeState: vi.fn(),
+      writeTestAccount: () => order.push('signed in'),
+      stores: () => [],
+      runs: () => [],
+      setWatching: vi.fn(),
+      document
+    });
+
+    expect(routed.signInAs({ id: 'member' }, '/welcome')).toContain('on /welcome');
+    expect(order).toEqual(['signed in', 'moved']);
+    expect(routed.signInAs({ id: 'member' }, 3)).toEqual({ refused: expect.stringContaining('A path') as unknown });
+    expect(inspector.signInAs({ id: 'member' }, '/welcome')).toEqual({
+      refused: 'Signed in as member, and the page could not be moved to /welcome'
+    });
+  });
+
   it('reads and writes the state, as plain data', () => {
     expect(inspector.state()).toEqual({ count: 2 });
     expect(inspector.state('count')).toBe(2);

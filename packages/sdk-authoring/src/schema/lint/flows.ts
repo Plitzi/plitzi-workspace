@@ -686,6 +686,22 @@ const warnOverlaysNeverOpened = (ctx: LintContext): void => {
 
 /** Every flow of every element, page and layout. */
 /**
+ * A step that runs only when the login was refused — a `when` all of whose rules hold, one of them that the login's
+ * answer has no token, says `ok: false`, or names a reason. A refused login leaves nobody signed in, so the page stays
+ * and the step races nothing: what a refusal says, or the code screen it leads to.
+ */
+const onlyWhenRefused = (node: ElementInteraction, loginId: string): boolean =>
+  node.when?.combinator === 'and' &&
+  node.when.rules.some(
+    rule =>
+      'field' in rule &&
+      ((rule.field === `${loginId}.accessToken` && rule.operator === 'empty') ||
+        (rule.field === `${loginId}.ok` && rule.operator === '=' && rule.value === false) ||
+        (rule.field === `${loginId}.reason` &&
+          (rule.operator === 'notEmpty' || (rule.operator === '=' && rule.value !== ''))))
+  );
+
+/**
  * A flow that goes on after `auth.login` on a page only a signed-out visitor sees (`accessLevel: 'public'`, sending the
  * others on): the page leaves as the login succeeds — to `?redirect=`, else its `unauthorizedRedirect` — and what the
  * flow does next races it. encore-10's sign-in read `navigation.queryParams.next` after the login, from the page it
@@ -706,14 +722,14 @@ const warnStepsAfterLogin = (
   const login = flow.findIndex(
     node => node.type === 'globalCallback' && node.elementId === 'auth' && node.action === 'login'
   );
-  if (login === -1 || login === flow.length - 1) {
+  const racing = login === -1 ? [] : flow.slice(login + 1).filter(node => !onlyWhenRefused(node, flow[login].id));
+  if (racing.length === 0) {
     return;
   }
 
   ctx.warn(
     'login-then-leaves',
-    `${where}: its flow goes on after \`auth.login\` (${flow
-      .slice(login + 1)
+    `${where}: its flow goes on after \`auth.login\` (${racing
       .map(node => `"${node.action}"`)
       .join(
         ', '

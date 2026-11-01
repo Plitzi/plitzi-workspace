@@ -2605,6 +2605,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
     fflate: "npm:^0.8.3"
+    playwright-core: "npm:^1.64.1"
     prettier: "npm:^3.9.10"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.4"
@@ -11595,7 +11596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.64.1":
+"playwright-core@npm:1.64.1, playwright-core@npm:^1.64.1":
   version: 1.64.1
   resolution: "playwright-core@npm:1.64.1"
   bin:

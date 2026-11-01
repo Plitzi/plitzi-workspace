@@ -73,7 +73,7 @@ const NavigationCore = ({
   pageDefinitionsRef.current = pageDefinitions;
   const pageFoldersRef = useRef(pageFolders);
   pageFoldersRef.current = pageFolders;
-  const { authenticated, user } = use(AuthContext);
+  const { authenticated, user, testAccount } = use(AuthContext);
   const routerNavigate = router?.navigate;
   /**
    * The router's `navigate`, reached through a ref: it is a new function whenever the location changes, and the one
@@ -331,6 +331,12 @@ const NavigationCore = ({
     const variables = resolveVariables(schemaVariables, { queryParams, routeParams, hostname, environment });
     const resolved = action.path ? String(processTwig(action.path, { variables }, false, true)) : '';
     if (resolved && isAbsoluteUrl(resolved)) {
+      // A journey's test account holds no session the server knows: the site it would be sent to judges by that
+      // session, and would only send it back. The page stays, and the journey moves on from it.
+      if (testAccount !== undefined) {
+        return children;
+      }
+
       const target = offSiteTarget(resolved, location, authenticated);
       if (ssrResult) {
         ssrResult.redirect = target;

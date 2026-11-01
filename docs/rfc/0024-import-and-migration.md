@@ -36,7 +36,7 @@ runs no model for this.
 | The Transform panel | `apps/builder/src/modules/Transformers` | Paste, preview, insert into the selected element |
 | Fixtures | `naturalToSchema/fixtures`: 19 HTML+Tailwind, 8 Webflow, 7 JSON, 1 HTML | A starting corpus — asserted today as whole-schema equality (`naturalToSchema.test.ts`) |
 | Schema → authoring code | `POST /utils/transform-to-authoring`, `helpers/authoringExport.ts`; `specFromSpace` in `sdk-authoring/decompile` | The other half of `plitzi page import`: documents written out as `src/space/` TypeScript |
-| `plitzi page import <url>` | `apps/cli` (`importPage`) | A page of a site the person verified, measured in the project's Playwright at three widths: its tokens, an outline of its blocks per breakpoint, its repeated blocks as `data/*.json` — a place to start writing from, deliberately never its words nor a copy |
+| `plitzi page import <url>` | `apps/cli` (`importPage`) | A page of a site the person verified, measured in the CLI's browser at three widths: its tokens, an outline of its blocks per breakpoint, its repeated blocks as `data/*.json` — a place to start writing from, deliberately never its words nor a copy |
 | `compareSpaces` | `sdk-authoring/decompile/compareSpaces.ts` | Proof that a round trip changed nothing observable |
 | Authoring's linter and fixes | `authorSpace(...).warnings/suggestions`, `fixSpace`, `plitzi space fix` | What turns a literal import into an idiomatic one: `custom-css-class`, `custom-css-slot`, lists, `class-overrides-class` |
 | Components | `schema.components` (ex-RFC 0021) | Where a repeated block lands |

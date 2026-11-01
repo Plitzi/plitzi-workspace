@@ -139,26 +139,28 @@ export const runE2eTest = async (page: E2ePage, test: E2eTest, options: E2eRunOp
   }
 
   const signedInAs = playsAs.account;
-  if (options.open) {
-    await options.open(page);
-  } else if ((await openPage(page, new URL(test.page, origin).href)) === null) {
-    return failed(`nothing answers at ${new URL(test.page, origin).href}`);
-  }
+  // Where it starts, signed in as it plays: what stops it is said as the journey's own failure — a page that went
+  // elsewhere as it was set up is this journey's, never the end of every journey played after it.
+  const setUp = async (): Promise<string | undefined> => {
+    if (options.open) {
+      await options.open(page);
+    } else if ((await openPage(page, new URL(test.page, origin).href)) === null) {
+      return `nothing answers at ${new URL(test.page, origin).href}`;
+    }
 
-  const late = await awaitHydration(page);
-  if (late !== undefined) {
-    return failed(late);
-  }
+    const late = await awaitHydration(page);
+    if (late !== undefined) {
+      return late;
+    }
 
-  // Signed in as its test account before anything is played, moved to the page it starts on as a link moves it.
-  const signedIn = signedInAs ? await asAccount(page, signedInAs, test.page) : undefined;
-  if (signedIn !== undefined) {
-    return failed(signedIn);
-  }
+    // Signed in as its test account before anything is played, moved to the page it starts on as a link moves it.
+    const signedIn = signedInAs ? await asAccount(page, signedInAs, test.page) : undefined;
 
-  const given = await startFrom(page, test);
-  if (given !== undefined) {
-    return failed(given);
+    return signedIn ?? (await startFrom(page, test));
+  };
+  const notStarted = await setUp().catch((error: unknown) => `it could not start: ${pressFailure(error)}`);
+  if (notStarted !== undefined) {
+    return failed(notStarted);
   }
 
   const steps: E2eStepResult[] = [];

@@ -359,6 +359,26 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   start to end; not an interaction's flow) and **Element checks** (unit tests), each with how it stands; an element
   check written in its form (`@plitzi/plitzi-builder`). `readSpaceTests` reads a document's tests from outside, every
   way they are not tests said; `RoutingPage.route` answers anything, as Playwright's newer `Disposable` does.
+- **`/auth/continue` takes a step of the deployment's own first** (`@plitzi/sdk-server`): `beforeContinue(user,
+  destination)` on `mountSocialAuthRoutes` answers where a signed-in person goes before the destination — the
+  first-sign-in questions, terms to accept — vetted like it; one that throws is reported and the person goes straight
+  on. Every way out of every sign-in passes it, so a sign-in page may be a page for signed-out visitors that sends
+  whoever is signed in on before drawing anything.
+- **`login-then-leaves` warns only of what races the page** (`@plitzi/sdk-authoring`): a step after `auth.login` that
+  runs only when the login was refused — its `when` holding that the answer has no token, says `ok: false` or names a
+  reason — is not warned: a refused login leaves nobody signed in, and the page stays.
+- **A journey's test account is signed in and moved in one render** (`@plitzi/sdk-dev-tools`, `@plitzi/sdk-authoring`):
+  `window.__plitzi.signInAs(account, path)` moves the page in the same step, and the runner uses it — a journey on a
+  page for signed-in visitors, sent by the server to a sign-in for signed-out ones, never drew that sign-in signed in.
+  A journey whose page goes elsewhere as it is set up fails, saying why ("it could not start: …"); the journeys after
+  it are played.
+- **A test account is never sent off the site** (`@plitzi/plitzi-sdk`, `@plitzi/sdk-auth`, `@plitzi/sdk-shared`): the
+  auth context says `testAccount` (its id) for a journey's test account, and a page's redirect to another site is not
+  followed for it — that site judges by a session the server holds, and a test account holds none. The page stays.
+- **The CLI opens pages with a driver of its own** (`@plitzi/cli`): `playwright-core` is the CLI's dependency, so a
+  project needs no Playwright for `page check`, `page shot`, `test` or a run's checks. Pages open in the Chromium
+  `plitzi browser install` downloads once (into Playwright's shared cache), else the machine's Chrome; `plitzi browser`
+  says which, and `plitzi doctor` says it too (`browser-in-use`) or warns with the way to have one (`browser-none`).
 - **A journey carries tags** (`E2eTest.tags`, `@plitzi/sdk-shared`): lower case words, each once — `e2eTestProblems`
   says one that is not, `readSpaceTests` a list that is not one. The builder shows them as chips on each row and beside
   the journey's Save (typed, made one spelling, the space's others offered), filters the list by one — kept through a

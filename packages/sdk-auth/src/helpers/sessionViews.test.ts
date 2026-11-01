@@ -50,6 +50,8 @@ describe('the page’s session while a journey plays', () => {
       }
     });
     expect([editorOfSpace.can('spaceEdit'), editorOfSpace.can('adminManage')]).toEqual([true, false]);
+    // Said as a test account, so nothing that asks the server who it is is done for it.
+    expect(editorOfSpace.testAccount).toBe('editor-of-space');
     await editorOfSpace.logout();
     expect(signOut).toHaveBeenCalledOnce();
   });

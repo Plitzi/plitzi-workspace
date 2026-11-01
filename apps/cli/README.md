@@ -210,6 +210,17 @@ in `src/data/products.json` read on the server as a typed source (`public/data/p
 in client mode), a catalog filtered by category, and a page per product — a file per part under `src/space/`. Both go
 with `--source local`.
 
+## `browser`
+
+```bash
+plitzi browser                 # which browser the page commands open pages in
+plitzi browser install         # Chromium, downloaded once into Playwright's shared cache
+```
+
+The page commands — `page check`, `page shot`, `test`, a run's checks — open pages through the CLI's own driver
+(`playwright-core`): a project needs no Playwright for them. They open the Chromium `plitzi browser install` downloaded,
+else the Chrome installed on the machine; with neither they say so, and `plitzi doctor` warns (`browser-none`).
+
 ## `page check` and `page shot`
 
 ```bash

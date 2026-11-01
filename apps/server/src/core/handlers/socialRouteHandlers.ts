@@ -1,6 +1,7 @@
 import { serverLog } from '../../helpers/serverLog';
 
 import type { HttpRoute, RouterLike, SocialRouteHandler } from './types';
+import type { Actor } from '../auth/identity';
 import type { SocialAuth } from '../auth/oauth';
 import type { SessionCookies } from '../auth/session';
 import type { SSRSession } from '@plitzi/sdk-shared';
@@ -17,6 +18,13 @@ export interface SocialRouteHandlersOptions {
   issueSession: (userId: number) => Promise<SSRSession>;
   /** Reports a callback that threw. Without it the failure goes to the server log at `error`; the caller still gets a 500. */
   onError?: (error: unknown, context: { method: string; path: string }) => void;
+  /**
+   * A step of the deployment's own before the destination, for a signed-in person leaving through `/continue` — the
+   * first-sign-in questions, terms to accept: where to send them first (vetted like the destination, which it should
+   * carry on to), or none to go straight on. Asked of the server, so every way out of every sign-in passes it and no
+   * screen can skip it. One that throws is reported and the person goes straight on: a sign-in never dead-ends on it.
+   */
+  beforeContinue?: (user: Actor, destination: string) => Promise<string | undefined>;
 }
 
 /**
@@ -58,7 +66,8 @@ export const createSocialAuthRouteHandlers = ({
   social,
   cookies,
   issueSession,
-  onError
+  onError,
+  beforeContinue
 }: SocialRouteHandlersOptions): HttpRoute<SocialRouteHandler>[] => {
   const report = (error: unknown, context: { method: string; path: string }): void => {
     if (onError) {
@@ -98,15 +107,26 @@ export const createSocialAuthRouteHandlers = ({
        *
        * `?fallback=` is where to go instead when `redirect` is refused, vetted by the same judgement — a way BACK
        * from the screen, whose default ("you are signed in") is the wrong place for somebody who never signed in.
+       *
+       * A signed-in person may be sent somewhere first — `beforeContinue`, the deployment's own step — and that too is
+       * vetted: it is a deployment's answer, but it may carry the caller's destination on.
        */
       method: 'GET',
       path: '/continue',
-      handle: (req, res) => {
+      handle: async (req, res) => {
         const redirect: unknown = req.query?.redirect;
         const vetted = social.sanitizeRedirect(redirect);
-        res.redirect(vetted === redirect ? vetted : social.sanitizeRedirect(req.query?.fallback));
+        const destination = vetted === redirect ? vetted : social.sanitizeRedirect(req.query?.fallback);
+        let first: string | undefined;
+        if (req.user && beforeContinue) {
+          try {
+            first = await beforeContinue(req.user, destination);
+          } catch (error) {
+            report(error, { method: 'GET', path: '/continue' });
+          }
+        }
 
-        return Promise.resolve();
+        res.redirect(first ? social.sanitizeRedirect(first) : destination);
       }
     },
     {

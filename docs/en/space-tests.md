@@ -35,9 +35,12 @@ page shows that visitor: the auth source holds its details and a token no server
 by what its roles give, a page for signed-in visitors
 opens, and signing out drops it. The API does not know it — what the page asks the API it asks as a guest — so a
 journey with an account reads and moves, and never writes as anybody. Each runner signs the page in the same way,
-through the bridge (`signInAs`, then `navigate` to the journey's page — a guarded page opened first sent a guest to
-sign in), and again after every load (`goto`, `reload`, `back`); the SDK's `AuthContextProvider` lays the account
-over the session (`runtime.testAccount`, `testAccountAuth` in `@plitzi/sdk-auth`). `e2eTestProblems` says an `as`
+through the bridge (`signInAs(account, path)`: signed in and moved to the journey's page in one render — a guarded
+page opened first sent a guest to a sign-in, which is never drawn signed in), and again after every load (`goto`,
+`reload`, `back`); the SDK's `AuthContextProvider` lays the account over the session (`runtime.testAccount`,
+`testAccountAuth` in `@plitzi/sdk-auth`), and says it is one (`testAccount`): a redirect off the site is not followed
+for it, as that site would judge by a session the server holds. A journey whose page goes elsewhere as it is set up
+fails, saying why, and the run goes on. `e2eTestProblems` says an `as`
 no account answers and an id declared twice. A journey that starts where its visitor may not be is warned
 (`journey-start-access`, `journeyStartWarnings`): a guest on a page for signed-in visitors is sent to sign in, and an
 account whose roles lack a permission the page asks is kept out — kept when the door is what it checks. The builder's

@@ -15,6 +15,11 @@ import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/p
 import { NODE_ENGINES } from '../scaffold/project';
 import { WORKSPACE_ROOT } from '../tests/roots';
 
+// The doctor says which browser opens pages by starting one; these tests examine projects, not the machine's browsers.
+vi.mock('../commands/browser/browser', () => ({
+  browserInUse: () => Promise.resolve({ said: 'Chromium, downloaded by plitzi browser install' })
+}));
+
 import type { DoctorOptions, DoctorReport } from '.';
 
 /**
