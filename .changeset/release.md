@@ -1676,7 +1676,14 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   (`navigationTarget`): a flow's `navigate` to a page with a slug went nowhere on the canvas (`@plitzi/plitzi-builder`).
   **A journey chosen shows its visitor before anything is played**: the canvas is drawn with its test account signed
   in from the first frame — a guest when it has none — and a play starts the same way: a journey as an account showed
-  the editor's page until played, and flickered its sign-in form on every play.
+  the editor's page until played, and flickered its sign-in form on every play. The view draws no page until its
+  journeys are read: a reload drew the editor's page first, then the journey's visitor's. It shows a journey's page once it is
+  still — a page that sends its visitor on as it opens (a sign-in a signed-in visitor is moved off) is opened out of
+  sight, and a play is shown from its first step. **A redirect off the space is not followed on the canvas**
+  (`@plitzi/plitzi-builder`): its variables are resolved as the published page resolves them and the canvas says
+  where it goes — it went to the literal `{{authUrl}}/` path. **A signed-in visitor sent off a page for signed-out
+  visitors to another site takes where they were going** (`@plitzi/plitzi-sdk`): the `redirect` that page's address
+  carried, not the page's own URL, which sent them back to it.
 - **A `--steps` script's pictures are the moment they are taken.** A part pictured (`--within`) is cut out of one picture
   of the screen, never its own picture waiting for its box to be still, and what changed between pictures is worked out
   once the steps are played: shots written 300 ms apart around a reticle over a turning globe came out 8 s apart. A

@@ -47,3 +47,23 @@ export const returnTo = (location: Location): string | undefined => {
     return undefined;
   }
 };
+
+/**
+ * The off-site address a redirect goes to, told where the visitor was going: one sent to sign in, the page they asked
+ * for; one signed in and sent off a page for signed-out visitors, the `redirect` that page's address carried — never
+ * that page itself, which sent them back to it. A space's own `redirect` on the address is kept.
+ *
+ * The sign-in a platform shares sends a signed-in visitor on through a hop that vets the destination: given the
+ * sign-in's own URL, the app that sent them there was forgotten.
+ */
+export const offSiteTarget = (resolved: string, location: Location, authenticated: boolean): string => {
+  const target = new URL(resolved);
+  if (!target.searchParams.has('redirect')) {
+    const going = authenticated ? new URLSearchParams(location.search).get('redirect') : currentUrl(location);
+    if (going) {
+      target.searchParams.set('redirect', going);
+    }
+  }
+
+  return target.toString();
+};

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { returnTo, withRedirect } from './redirects';
+import { offSiteTarget, returnTo, withRedirect } from './redirects';
 
 const at = (href: string): Location => {
   const url = new URL(href);
@@ -28,5 +28,26 @@ describe('a visitor signed in on a page for signed-out visitors', () => {
     expect(returnTo(at('https://encore.plitzi.app/sign-in?redirect=https%3A%2F%2Fevil.example%2F'))).toBeUndefined();
     expect(returnTo(at('https://encore.plitzi.app/sign-in?redirect=%2F%2Fevil.example%2F'))).toBeUndefined();
     expect(returnTo(at('https://encore.plitzi.app/sign-in'))).toBeUndefined();
+  });
+});
+
+// A signed-in visitor sent by an app to the shared sign-in was sent on with the sign-in's own address: the app was lost.
+describe('an off-site redirect', () => {
+  const vet = 'https://api.plitzi.com/auth/continue?fallback=https%3A%2F%2Fauth.plitzi.com%2Faccount';
+
+  it('carries where a signed-in visitor was going, from the address of the page they are sent off', () => {
+    expect(offSiteTarget(vet, at('https://auth.plitzi.com/?redirect=https%3A%2F%2Fapp.plitzi.com%2F'), true)).toBe(
+      `${vet}&redirect=https%3A%2F%2Fapp.plitzi.com%2F`
+    );
+    expect(offSiteTarget(vet, at('https://auth.plitzi.com/'), true)).toBe(vet);
+  });
+
+  it('carries the page a visitor sent to sign in asked for, and keeps a redirect the space wrote', () => {
+    expect(offSiteTarget('https://auth.plitzi.com/', at('https://encore.plitzi.app/rooms?x=1'), false)).toBe(
+      'https://auth.plitzi.com/?redirect=https%3A%2F%2Fencore.plitzi.app%2Frooms%3Fx%3D1'
+    );
+    expect(
+      offSiteTarget('https://auth.plitzi.com/?redirect=%2Fhome', at('https://encore.plitzi.app/rooms'), false)
+    ).toBe('https://auth.plitzi.com/?redirect=%2Fhome');
   });
 });

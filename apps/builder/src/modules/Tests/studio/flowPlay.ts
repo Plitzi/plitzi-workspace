@@ -1,11 +1,11 @@
-import { isExpectation, journeyAccount } from '@plitzi/sdk-authoring';
+import { isExpectation } from '@plitzi/sdk-authoring';
 
 import { checkTitleOf, sentenceText } from './sentences';
 import { elementNameOf } from '../helpers';
 
 import type { FlowState, PlayLogLine, StepPlay } from './TestStudioContext';
 import type { E2eResult, E2eRunOptions } from '@plitzi/sdk-authoring';
-import type { E2eStep, E2eTest, Schema, SignedInTestAccount, UnitTest } from '@plitzi/sdk-shared';
+import type { E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';
 
 /** What a play in the Tests area is made of, without the area: devices, how a step and a flow stand, the lit tone. */
 
@@ -73,12 +73,14 @@ export const logLineOf = (
   };
 };
 
-/** The test account a flow plays as, signed in to the space; none for a guest — or for an account it does not declare, which its run says. */
-export const accountOf = (played: E2eTest, space: Schema): SignedInTestAccount | undefined => {
-  const playsAs = journeyAccount(played, space);
-
-  return 'account' in playsAs ? playsAs.account : undefined;
-};
+/** A play's hooks that show the canvas as its first step is reached (`settling`). */
+export const shownFromFirstStep = (hooks: PlayHooks, show: () => void): PlayHooks => ({
+  ...hooks,
+  beforeStep: async (step, index) => {
+    show();
+    await hooks.beforeStep?.(step, index);
+  }
+});
 
 /** What a flow played on the canvas runs with: the editor's page, its element checks as `space` holds them. */
 export const canvasRun = (

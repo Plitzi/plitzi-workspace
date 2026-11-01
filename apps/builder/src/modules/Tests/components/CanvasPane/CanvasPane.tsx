@@ -18,7 +18,7 @@ export type CanvasPaneProps = {
  * recorded there. Drawn anew for each play, as a new visitor's page.
  */
 const CanvasPane = ({ externalStyle }: CanvasPaneProps) => {
-  const { canvasKey, flow } = use(TestStudioContext);
+  const { active, settling, canvasKey, flow } = use(TestStudioContext);
   const { displayMode, debugMode } = use(AppContext);
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const [[storedCss, definition]] = useBuilderStore(['schema.settings.customCss', 'schema.definition']);
@@ -58,7 +58,13 @@ const CanvasPane = ({ externalStyle }: CanvasPaneProps) => {
         )}
         title={`${host}.plitzi.app${flow?.page && flow.page !== '/' ? flow.page : ''}`}
       >
-        {canvas}
+        {/* Drawn once the area has its journeys and the chosen one open: before, it drew the editor's page, then drew
+            it anew for the journey's visitor — a reload of the view showed the page signed in, out, and in again. */}
+        {active && (
+          // Out of sight while the page drawn for a journey is still sent on as it opens: the first thing shown is where
+          // it settles, not a sign-in page a signed-in visitor is moved off.
+          <div className={clsx('flex min-h-0 grow flex-col', { invisible: settling })}>{canvas}</div>
+        )}
       </div>
     </div>
   );

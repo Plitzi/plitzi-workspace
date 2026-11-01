@@ -4,7 +4,9 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthContext } from '@plitzi/sdk-auth';
 import { useNavigation, getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation';
-import { navigationTarget } from '@plitzi/sdk-shared/navigation';
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
 import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
@@ -16,13 +18,14 @@ export type NavigationProviderProps = {
 };
 
 const NavigationProvider = ({ children }: NavigationProviderProps) => {
-  const [[pageFolders, pageDefinitions, urlTest, journeyOnCanvas]] = useBuilderStore([
+  const [[pageFolders, pageDefinitions, urlTest, journeyOnCanvas, schemaVariables]] = useBuilderStore([
     'schema.pageFolders',
     'pageDefinitions',
     'urlTest',
-    'journeyOnCanvas'
+    'journeyOnCanvas',
+    'schema.variables'
   ]);
-  const { previewMode } = useRenderSettings();
+  const { previewMode, environment } = useRenderSettings();
   const { server } = useBuilderNetwork();
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, origin, location } = useNavigation({ server });
@@ -133,6 +136,26 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     { raw: true }
   );
 
+  /**
+   * Where a redirect goes, its variables resolved as the published page resolves them: a sign-in kept on another site
+   * (`{{authUrl}}/`), or a page for signed-out visitors that sends the signed-in through a hop of the API. The canvas
+   * cannot follow one off the space — it would leave the builder — and was sent to the literal `{{…}}` path instead.
+   */
+  const redirectTo = useMemo(() => {
+    if (action.type !== 'redirect' || !action.path) {
+      return undefined;
+    }
+
+    const variables = resolveVariables(schemaVariables, {
+      queryParams: testedQueryParams,
+      routeParams: testedRouteParams,
+      hostname: testedHostname,
+      environment
+    });
+
+    return String(processTwig(action.path, { variables }, false, true));
+  }, [action, environment, schemaVariables, testedHostname, testedQueryParams, testedRouteParams]);
+
   // The space's own "not found" page — a page whose slug is `*` — is a page like any other to edit.
   if (action.type === 'notFound' && !currentPageId) {
     return 'Not Found';
@@ -142,9 +165,13 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     return 'Access Denied';
   }
 
+  if (redirectTo && isAbsoluteUrl(redirectTo)) {
+    return `This page sends the visitor on to ${redirectTo} — another site, which the canvas does not open.`;
+  }
+
   return (
     <>
-      {action.type === 'redirect' && action.path && <Navigate to={action.path} replace />}
+      {redirectTo && <Navigate to={redirectTo} replace />}
       {children}
     </>
   );

@@ -40,6 +40,8 @@ export type StudioMode = 'idle' | 'recording' | 'playing';
 export type TestStudioValue = {
   /** Whether the Tests area is open: the canvas in it is the one played on. */
   active: boolean;
+  /** Whether the page just drawn for a flow is still being sent on as it opens — kept out of sight until it is still. */
+  settling: boolean;
   /** The space's tests, as last saved — the list the area shows. */
   tests: SpaceTests;
   /** The flow chosen, as edited so far. */
@@ -99,6 +101,7 @@ export type TestStudioValue = {
 
 const TestStudioContext = createContext<TestStudioValue>({
   active: false,
+  settling: false,
   tests: {},
   dirty: false,
   mode: 'idle',

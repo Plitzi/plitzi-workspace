@@ -8,7 +8,6 @@ import AppContext from '@pmodules/App/AppContext';
 
 import { createCanvasPage } from './canvasPage';
 import {
-  accountOf,
   canvasRun,
   deviceOf,
   documentOf,
@@ -16,6 +15,7 @@ import {
   needsServer,
   playOf,
   seconds,
+  shownFromFirstStep,
   stateOf,
   toneOf
 } from './flowPlay';
@@ -23,7 +23,6 @@ import { stepElementOf } from './sentences';
 import { clearSpotlight, spotlight } from './spotlight';
 import { pauseBefore, STEP_DELAY_S, stepDelayOf } from './stepDelay';
 import TestStudioContext from './TestStudioContext';
-import usePlayJourney from './usePlayJourney';
 import useStudioCanvas from './useStudioCanvas';
 import { newE2eTest, withE2eTest } from '../helpers';
 import useSaveSpaceTests from '../hooks/useSaveSpaceTests';
@@ -39,7 +38,6 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const { setTheme } = useTheme(SPACE_THEME_AREA);
   const [[navigate, flat, definition]] = useBuilderStore(['navigation.navigate', 'schema.flat', 'schema.definition']);
   const [runtimeState, setRuntimeState] = useBuilderStore('runtime.state');
-  const asJourney = usePlayJourney();
   const [schema] = useBuilderStore('schema');
   const store = useSaveSpaceTests();
   // The person's own, kept as the builder keeps its other preferences.
@@ -85,7 +83,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   // The document as the area holds it: its tests as they stand here, saved or not — what a flow opens and plays against.
   const spaceNow = useCallback(() => ({ ...schemaRef.current, tests: testsRef.current }), []);
   const canvas = useRef<HTMLIFrameElement | null>(null);
-  const { canvasKey, freshCanvas, openOnCanvas, attach } = useStudioCanvas({
+  const { canvasKey, settling, conceal, freshCanvas, showVisitor, openOnCanvas, attach } = useStudioCanvas({
     canvas,
     navigate,
     setDisplayMode,
@@ -130,28 +128,36 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
    * editor's session, as the server plays it (`journeyOnCanvas`): a guest, or the flow's own account (`as`).
    */
   const playOnCanvas = useCallback(
-    (played: E2eTest, hooks: PlayHooks): Promise<E2eResult> =>
-      asJourney(accountOf(played, spaceNow()), async () => {
-        // Its device first, then the page drawn anew in it: the canvas the run holds is the one it plays on.
-        setDisplayMode(deviceOf(played.width));
-        const iframe = await freshCanvas();
-        const page = createCanvasPage({
-          iframe,
-          navigate,
-          back: () => window.history.back(),
-          resize: width => setDisplayMode(deviceOf(width)),
-          // A flow that says nothing of the scheme plays on the canvas as it is: the person's choice is not overridden.
-          scheme: scheme => {
-            if (played.scheme) {
-              setTheme(scheme);
-            }
+    async (played: E2eTest, hooks: PlayHooks): Promise<E2eResult> => {
+      // Laid before the page is drawn, and left as the play leaves it: what the canvas shows after is where it ended.
+      showVisitor(played);
+      // Out of sight until its first step: what the page does as it opens is none of the journey's.
+      const shown = conceal();
+      // Its device first, then the page drawn anew in it: the canvas the run holds is the one it plays on.
+      setDisplayMode(deviceOf(played.width));
+      const iframe = await freshCanvas().catch((error: unknown) => {
+        shown.reveal();
+        throw error;
+      });
+      const page = createCanvasPage({
+        iframe,
+        navigate,
+        back: () => window.history.back(),
+        resize: width => setDisplayMode(deviceOf(width)),
+        // A flow that says nothing of the scheme plays on the canvas as it is: the person's choice is not overridden.
+        scheme: scheme => {
+          if (played.scheme) {
+            setTheme(scheme);
           }
-        });
+        }
+      });
 
-        // Its element checks as they stand in the area, saved or not.
-        return runE2eTest(page, played, canvasRun(played, hooks, spaceNow()));
-      }),
-    [asJourney, freshCanvas, navigate, setDisplayMode, setTheme, spaceNow]
+      // Its element checks as they stand in the area, saved or not.
+      return runE2eTest(page, played, canvasRun(played, shownFromFirstStep(hooks, shown.reveal), spaceNow())).finally(
+        shown.reveal
+      );
+    },
+    [conceal, freshCanvas, navigate, setDisplayMode, setTheme, showVisitor, spaceNow]
   );
 
   /** A step played, as a line of the log. */
@@ -562,6 +568,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo<TestStudioValue>(
     () => ({
       active,
+      settling,
       tests,
       flow,
       dirty,
@@ -600,6 +607,7 @@ const TestStudioProvider = ({ children }: { children: ReactNode }) => {
     }),
     [
       active,
+      settling,
       add,
       attach,
       canvasKey,

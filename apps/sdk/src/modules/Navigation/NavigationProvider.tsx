@@ -15,7 +15,7 @@ import { NetworkContext } from '@plitzi/sdk-shared/network';
 import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import { currentUrl, returnTo, withRedirect } from './redirects';
+import { currentUrl, offSiteTarget, returnTo, withRedirect } from './redirects';
 import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
@@ -331,18 +331,14 @@ const NavigationCore = ({
     const variables = resolveVariables(schemaVariables, { queryParams, routeParams, hostname, environment });
     const resolved = action.path ? String(processTwig(action.path, { variables }, false, true)) : '';
     if (resolved && isAbsoluteUrl(resolved)) {
-      const target = new URL(resolved);
-      if (!target.searchParams.has('redirect')) {
-        target.searchParams.set('redirect', currentUrl(location));
-      }
-
+      const target = offSiteTarget(resolved, location, authenticated);
       if (ssrResult) {
-        ssrResult.redirect = target.toString();
+        ssrResult.redirect = target;
 
         return null;
       }
 
-      window.location.assign(target.toString());
+      window.location.assign(target);
 
       return null;
     }
