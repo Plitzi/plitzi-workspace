@@ -152,6 +152,13 @@ describe('the team of a project’s runs', () => {
     expect(await setTeamAgent(root, 'dev', { roles: ['developer'] })).toMatchObject({ unchanged: true });
     expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The lead takes no roles');
     expect(await refusalOf(unsetTeamAgent(root, 'nobody'))).toContain('it has dev');
+    // `run team set scout --count 0`: none at the start or none at all — both said, neither guessed.
+    const none = await refusalOf(setTeamAgent(root, 'dev', { count: 0 }));
+    expect(none).toContain('plitzi run team set dev --min 0');
+    expect(none).toContain('plitzi run team unset dev');
+    await setTeamAgent(root, 'dev', { min: 0 });
+    expect(await refusalOf(setTeamAgent(root, 'dev', { count: 0 }))).not.toContain('--min 0');
+    expect(await refusalOf(setTeamAgent(root, 'scout', { count: 0 }))).toContain('"scout" is not in the team');
   });
 
   it('writes what its fields mean as this CLI says it, and brings an older one up — its agents as they are', async () => {

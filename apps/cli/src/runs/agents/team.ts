@@ -758,6 +758,28 @@ export const refreshTeamAbout = async (root: string, write: boolean): Promise<bo
 };
 
 /**
+ * What "none of an entry" can mean, each said with its command: none at the start (`--min 0`, started when work waits
+ * for it) or none at all (out of the team). A count is the most of it, at least one — which of the two was meant is the
+ * person's, never guessed. `min` is how many start now: once it is 0, only taking it out is left.
+ */
+export const noneOfText = (name: string, min: number): string =>
+  `${name}'s count is the most of it, at least one — ${min > 0 ? `none at the start, each started when work waits for it: plitzi run team set ${name} --min 0; ` : ''}out of the team: plitzi run team unset ${name}`;
+
+/** `--count 0`, refused saying both readings — before asking whose change it is: nobody may write it. */
+export const refuseNoneOf = (name: string, entry: TeamAgent | undefined, count: number | undefined): void => {
+  if (count !== 0) {
+    return;
+  }
+
+  throw new RunRefusal(
+    'invalid',
+    entry
+      ? `--count 0: ${noneOfText(name, entry.min ?? entry.count ?? 1)}`
+      : `--count 0: "${name}" is not in the team, and none of it adds nobody`
+  );
+};
+
+/**
  * `plitzi run team set <name>`: one agent of the team made or changed — `lead` the lead's model — and what it was before
  * said with what it is now. A new agent needs its roles; nothing else of the file is touched.
  */
@@ -797,6 +819,8 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
   }
 
   const before = team.agents.find(each => each.name === name);
+  refuseNoneOf(name, before, change.count);
+
   const roles = change.roles ?? before?.roles;
   if (roles === undefined) {
     throw new RunRefusal(

@@ -1,6 +1,7 @@
 import { listedTasks } from './monitorBoard';
 import { VIEWS } from './monitorModel';
 import { SPEND_SORTS } from './monitorSpend';
+import { noneOfText } from '../../../runs/agents/team';
 
 import type { Need } from './monitorAttention';
 import type { PaletteAction, PaletteItem } from './monitorDialogs';
@@ -371,7 +372,7 @@ const inTeam = (
 
   const count = entry.count + delta;
   if (count < 1) {
-    return flashed(ui, `${entry.name} is one already — plitzi run team unset ${entry.name} takes it out of the team`);
+    return flashed(ui, noneOfText(entry.name, entry.min));
   }
 
   return {

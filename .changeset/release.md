@@ -371,6 +371,11 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **`run team set <name> --count 0` says both things it can mean** (`@plitzi/cli`): it was refused as "a whole number
+  from 1", saying nothing of how to have none. A count is the most of an entry, at least one, so `0` now answers with
+  each reading and its command — none at the start (`--min 0`, started when work waits for it) or none at all
+  (`run team unset <name>`) — and only the second once its min is 0. The monitor's `←` at one says the same, and the
+  refusal comes before whose change it is, so an agent is not sent to ask the person for a command that would fail.
 - **`run monitor`'s strip names its tasks or counts them** (`@plitzi/cli`): a block for each task was drawn as long
   as each was three columns wide, and fifty tasks drew a row of `◎…` that named none. A block each now only when every
   block holds its task's whole id; otherwise a block a stage — `◎ 4 in review`, `○ 33 pending` — each wide enough for

@@ -5,6 +5,7 @@ import {
   leadText,
   ROLES,
   readTeam,
+  refuseNoneOf,
   SESSION_MODES,
   setTeamAgent,
   setTeamOptions,
@@ -98,6 +99,7 @@ export const runTeamSet = (name: string, options: TeamSetOptions): Promise<void>
     options,
     async ctx => {
       const entry = (await readTeam(ctx.root))?.agents.find(each => each.name === name);
+      refuseNoneOf(name, entry, options.count);
       const caller = await projectCaller(ctx, options);
       if (caller !== 'person' && movesBounds(entry, options)) {
         throw new RunRefusal(

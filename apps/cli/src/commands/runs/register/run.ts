@@ -152,7 +152,7 @@ export const registerRunGroup = (program: Command): Command => {
       'What it takes: developer, designer, reviewer, tester, writer… — several with commas',
       names
     )
-    .option('--count <n>', 'How many agents of it', positiveInteger)
+    .option('--count <n>', 'How many agents of it — taking it out of the team is plitzi run team unset', wholeNumber)
     .option(
       '--min <n>',
       'How many of them start with the run — 0 for every one on demand: the rest are started when work waits, stopped when none is left',

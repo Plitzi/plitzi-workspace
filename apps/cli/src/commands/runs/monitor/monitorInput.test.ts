@@ -382,7 +382,7 @@ describe("the monitor's team", () => {
     expect(tester.dialog).toEqual({ kind: 'team', at: 1 });
     const none = press(tester, '-', withTeam);
     expect(none.effects).toEqual([]);
-    expect(none.ui.flash).toContain('test is one already');
+    expect(none.ui.flash).toContain('plitzi run team unset test');
     expect(press(tester, 'escape', withTeam).ui.dialog).toBeUndefined();
   });
 
