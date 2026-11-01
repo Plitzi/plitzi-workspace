@@ -225,6 +225,31 @@ describe('a task’s acceptance run on a mutant of its copy', () => {
     ).toContain('has no "\'About\'"');
   });
 
+  // A run's comment-only mutant read "caught": every test failed on the mutant's folder, which had no tmp/ to write in.
+  it('says a line that fails in the mutant’s folder with the change undone proves nothing, and gives that folder a tmp/', async () => {
+    const plan = benchPlan();
+    plan.tasks[3].acceptance = [
+      { said: 'The title is Spanish', check: 'grep -q Acerca src/space/pages/about.ts' },
+      // Fails wherever it runs but the task's copy: the folder, never the change.
+      { said: 'Runs in its copy', check: 'pwd | grep -qv check-mutant' },
+      { said: 'Writes its own tmp', check: 'touch tmp/written' }
+    ];
+    const runId = await open(plan);
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', "export const about = { title: 'Acerca' };\n");
+    await completeTask(about.ctx, runId, 't-about');
+
+    const checked = await checkMutant(bench.agent('test-1'), runId, 't-about', [
+      { file: 'src/space/pages/about.ts', from: "'Acerca'", to: "'About'" }
+    ]);
+
+    expect(checked.lines.map(line => [line.said, caughtBy(line)])).toEqual([
+      ['The title is Spanish', 'catches'],
+      ['Runs in its copy', 'environment'],
+      ['Writes its own tmp', 'misses']
+    ]);
+  });
+
   // A tester's mutant of one of two places that held a behaviour read "nothing holds it": both changed, it fails.
   it('takes several changes at once — a behaviour the code holds in two places', async () => {
     const plan = benchPlan();

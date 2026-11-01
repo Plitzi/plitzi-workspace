@@ -105,7 +105,8 @@ describe('plitzi explain', () => {
 
     expect(said).toContain('"page-play" is no name Plitzi has — what the words describe:');
     expect(said).toContain('plitzi page play');
-    expect(process.exitCode).toBe(0);
+    // Answered, and still no name: an acceptance line `plitzi explain <plugin>` passed for one nobody registered.
+    expect(process.exitCode).toBe(1);
   });
 
   // `explain keepState` — a setting of the space — was "no name".

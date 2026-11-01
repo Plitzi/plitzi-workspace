@@ -369,11 +369,21 @@ export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskV
 
   const team = await reviewTeamOf(ctx.root);
   const role = stepRole(view, team);
+  const views = await viewsOf(loaded);
+  // A reviewer at a review reads others to judge it — a test that clashes with it — and takes none of them: a run's
+  // tester read another card, held two reviews, and was refused its own commands "name the task".
+  const atAnother =
+    ctx.agent !== LEAD &&
+    views.some(
+      other =>
+        other.task.id !== view.task.id && other.state.status === 'in-review' && other.state.review?.by === ctx.agent
+    );
   const mine =
     role !== undefined &&
+    !atAnother &&
     (ctx.agent === LEAD
-      ? stepReviewers(view, await viewsOf(loaded), role, team).includes(LEAD)
-      : maySayStep(view, await viewsOf(loaded), ctx.agent, team, ctx.now().getTime()));
+      ? stepReviewers(view, views, role, team).includes(LEAD)
+      : maySayStep(view, views, ctx.agent, team, ctx.now().getTime()));
 
   return mine ? (await takeStep(ctx, view)).taken : false;
 };

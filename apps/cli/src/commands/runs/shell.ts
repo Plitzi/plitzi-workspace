@@ -256,13 +256,20 @@ const prove = async (ctx: RunContext, runId: string, anyone = false): Promise<vo
     return;
   }
 
+  // A run applied is gone from tmp/ and kept in its report: who calls is proved against the identities the report keeps.
+  // The lead's own CLI kept past the run passes its token, which names its run, and every notice it added after the
+  // apply was refused against the folder the apply removed.
+  const live = runPaths(ctx.root, runId);
+  const over = (await readRecord(live)) === undefined ? await loadKeptRun(ctx.root, runId) : undefined;
   const identified =
     anyone && pending.claim.kind === 'none'
       ? { agent: UNNAMED }
-      : await identify(ctx.root, runPaths(ctx.root, runId), runId, pending.claim, ctx.now());
+      : await identify(ctx.root, over?.paths ?? live, runId, pending.claim, ctx.now());
   pending.prove(identified.agent);
   unproved.delete(ctx);
-  usageCaller(runPaths(ctx.root, runId).dir, identified.agent);
+  if (!over) {
+    usageCaller(live.dir, identified.agent);
+  }
   if (identified.issued) {
     process.stderr.write(`${chalk.bold(issuedText(runId, identified.agent, identified.issued))}\n`);
   }

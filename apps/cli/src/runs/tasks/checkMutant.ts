@@ -37,6 +37,12 @@ export interface LineMutated {
   check: string;
   copy: AcceptanceResult;
   mutant: AcceptanceResult;
+  /**
+   * Failed on the mutant: run again in the mutant's own folder with the change undone. Failing there too, it is the
+   * folder that fails, not what the line holds — a run's comment-only mutant read "caught", every test failing on a
+   * folder that had no tmp/ to write in.
+   */
+  control?: AcceptanceResult;
 }
 
 /**
@@ -147,6 +153,7 @@ export const checkMutant = async (
 
   // Each change on the text the ones before it left: two in one file are made one after the other.
   const texts = new Map<string, string>();
+  const originals = new Map<string, string>();
   const made: Mutation[] = [];
   for (const mutation of mutations) {
     const file = path.posix.normalize(mutation.file);
@@ -159,6 +166,10 @@ export const checkMutant = async (
         `${mutation.file} is no file of ${taskId}'s copy: name it by its project path (src/functions/shows.ts)`,
         { task: taskId }
       );
+    }
+
+    if (!originals.has(file)) {
+      originals.set(file, text);
     }
 
     texts.set(file, mutated(text, { ...mutation, file }));
@@ -180,6 +191,8 @@ export const checkMutant = async (
       dir,
       (await projectFiles(ctx.root)).filter(each => !kept.has(each) && !isCopied(each, kept))
     );
+    // A copy has its tmp/, git-ignored and so never among its files: a suite that writes there failed on the mutant alone.
+    await fs.mkdir(path.join(dir, 'tmp'), { recursive: true });
     for (const [file, text] of texts) {
       await fs.writeFile(under(dir, file), text);
     }
@@ -199,6 +212,29 @@ export const checkMutant = async (
       cache,
       ...sayLines(ctx.say, 'the mutant')
     });
+    // What failed on the mutant and passed on the copy, run again in the mutant's folder with the change undone: only a
+    // failure the change makes is a catch.
+    const checked = task.acceptance.filter(line => typeof line !== 'string');
+    const failedAt = mutant.flatMap((line, index) =>
+      copy.at(index)?.ok === true && !line.ok && line.unanswered !== true ? [index] : []
+    );
+    const control = new Map<number, AcceptanceResult>();
+    if (failedAt.length > 0) {
+      for (const [file, text] of originals) {
+        await fs.writeFile(under(dir, file), text);
+      }
+
+      const again = await checkAcceptance(
+        failedAt.flatMap(index => checked[index] ?? []),
+        { work: dir, root: ctx.root, cache, ...sayLines(ctx.say, 'the mutant’s folder, the change undone') }
+      );
+      failedAt.forEach((index, at) => {
+        const result = again.at(at);
+        if (result) {
+          control.set(index, result);
+        }
+      });
+    }
 
     return {
       task: taskId,
@@ -207,7 +243,8 @@ export const checkMutant = async (
         said: line.said,
         check: line.check,
         copy: line,
-        mutant: mutant[index] ?? { said: line.said, check: line.check, ok: false, output: ['not run'] }
+        mutant: mutant[index] ?? { said: line.said, check: line.check, ok: false, output: ['not run'] },
+        ...(control.has(index) ? { control: control.get(index) } : {})
       }))
     };
   } finally {
@@ -318,7 +355,9 @@ const assertionsOf = (output: readonly string[]): string[] => {
  * What a line says of the mutant: it catches it, lets it pass, fails already on the copy, breaks — the mutant does not
  * run — or could not answer.
  */
-export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'broken' | 'unanswered' =>
+export const caughtBy = (
+  line: LineMutated
+): 'catches' | 'misses' | 'fails' | 'broken' | 'unanswered' | 'environment' =>
   line.copy.unanswered === true ||
   line.mutant.unanswered === true ||
   portBusy(line.copy.output) ||
@@ -330,4 +369,6 @@ export const caughtBy = (line: LineMutated): 'catches' | 'misses' | 'fails' | 'b
         ? 'misses'
         : neverRan(line.mutant.output)
           ? 'broken'
-          : 'catches';
+          : line.control !== undefined && !line.control.ok
+            ? 'environment'
+            : 'catches';

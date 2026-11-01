@@ -14,7 +14,7 @@ import { shotFile } from './shot/output';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actStep, stepText } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
-import { openVisit, visitorBrowser, visitViewOf } from './visit';
+import { openVisit, playedNotes, visitorBrowser, visitViewOf } from './visit';
 import { VIEW_HEIGHT } from '../../browser';
 import { keptSession } from '../../browser/keptBrowser';
 import { loadTiming, loadTimingText } from '../../browser/loadTiming';
@@ -657,11 +657,9 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
         process.stderr.write(`${chalk.dim(passedText(route, ours.passed))}\n`);
       }
 
-      // Who it played as, once: a run's designer read a notice bound to the visitor stay hidden, a guest unawares.
-      if (ours.signedOut && results.length === 0 && options.guest !== true) {
-        process.stderr.write(
-          `${chalk.dim(`· ${route} played signed out — a page any visitor opens: --as <account> plays it signed in`)}\n`
-        );
+      // How it played and as whom, once, with its first page: never with each page of a --then.
+      if (results.length === 0) {
+        process.stderr.write(chalk.dim(playedNotes(route, ours.signedOut === true && options.guest !== true)));
       }
 
       // The other site played warm in the kept browser, its page held for this play alone: opened cold here, it was

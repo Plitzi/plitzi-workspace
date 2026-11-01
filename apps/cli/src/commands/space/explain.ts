@@ -389,6 +389,9 @@ export const explainCommand = async (
               )
             ].join('\n')
       );
+      // Answered, and still no name Plitzi has: the exit says so — a run's acceptance line `plitzi explain vzButton` passed
+      // for a plugin nobody registered, and was rewritten as a grep of the words.
+      process.exitCode = 1;
 
       return;
     }

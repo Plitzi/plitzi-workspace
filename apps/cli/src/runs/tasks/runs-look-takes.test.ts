@@ -75,4 +75,27 @@ describe('a look at a task in review', () => {
     expect(await takeOnLook(bench.agent('design-1'), loaded, view)).toBe(true);
     expect((await viewOf(runId)).view.state.review).toMatchObject({ step: 0, by: 'design-1' });
   });
+
+  // A run's tester read another card to judge the one it reviewed — a test that clashed with it — and was handed that
+  // review too: holding two, its own commands were refused "name the task".
+  it('takes no second review for a reviewer already at one', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task =>
+      task.id === 't-menu' || task.id === 't-about' ? { ...task, review: ['designer', 'lead'] } : task
+    );
+    const { runId } = (await openRun(lead(), await bench.writePlan(plan))).checked;
+    const menu = await take('dev-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+    const about = await take('dev-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const page = { title: "Sobre" };\n');
+    await completeTask(about.ctx, runId, 't-about');
+
+    const loaded = await loadRun(lead(), runId);
+    const designer = bench.agent('design-1');
+    expect(await takeOnLook(designer, loaded, await viewTask(loaded.paths, findTask(loaded, 't-menu')))).toBe(true);
+    expect(await takeOnLook(designer, loaded, await viewTask(loaded.paths, findTask(loaded, 't-about')))).toBe(false);
+  });
 });

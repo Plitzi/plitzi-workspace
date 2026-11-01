@@ -34,6 +34,13 @@ describe('what a refused command line meant', () => {
     expect(
       commandHint("error: unknown option '--fill'", ['page', 'measure', '/', 'log-empty', '--fill', 'log-search=x'])
     ).toContain('--steps "type <element> <text>"');
+    // A not-found page measured as task look checks it, and a picture asked of what moves.
+    expect(
+      commandHint("error: unknown option '--status'", ['page', 'measure', '/no-existe', 'nf', '--status'])
+    ).toContain('leave --status out');
+    expect(commandHint("error: unknown option '--motion'", ['page', 'play', '/', '--motion'])).toContain(
+      'page measure <path> <element> --motion'
+    );
   });
 
   it('names the command that answers one written by its plain name', () => {

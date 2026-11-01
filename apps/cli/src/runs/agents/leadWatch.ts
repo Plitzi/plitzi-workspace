@@ -9,6 +9,7 @@ import { readJson, writeJson } from '../core/files';
 import { runPaths } from '../core/paths';
 import { isRunRefusal } from '../core/refusal';
 import { runChanged } from '../core/runChanged';
+import { clock } from '../findings/types';
 import { loadRun } from '../run';
 import { LEAD, markRead, messagesOf } from '../talk/messages';
 import { QUIET_ADVICE } from '../view/bottlenecks';
@@ -120,8 +121,35 @@ export const leadItems = (view: RunView): LeadItem[] => [
 export const wakesLead = (item: LeadItem): boolean =>
   item.wakes === true || (item.message === undefined && item.quiet !== true);
 
-const isKeys = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every(each => typeof each === 'string');
+/** What the lead was woken for, each item's key and when it was shown. */
+const isSeen = (value: unknown): value is Record<string, string> =>
+  isRecord(value) && Object.values(value).every(each => typeof each === 'string');
+
+/** An earlier CLI kept the keys alone: each read as shown before any time, so what still stands is said once more. */
+const seenUpgrade = (value: unknown): unknown =>
+  Array.isArray(value) ? Object.fromEntries(value.map(key => [String(key), ''])) : value;
+
+/**
+ * What leaves someone waiting on the lead's decision — an escalation, a block, a request, a proposal, a line unanswered,
+ * a review only it may say: said again while it stands. A run's escalation was shown once by a watch whose output the
+ * lead never read, and waited 43 minutes until the person saw it on the monitor; advice and notes are said once.
+ */
+const STANDING: ReadonlySet<string> = new Set([
+  'blocked',
+  'request',
+  'proposal',
+  'spike-proposed',
+  'line-unanswered',
+  'reconciliation',
+  'review'
+]);
+
+/** How long a standing item, once shown, waits before it is said again. */
+export const STANDING_AGAIN_MS = 10 * 60_000;
+
+/** Whether an item shown at `at` is said again now: one that still leaves someone waiting, past its while. */
+export const standsAgain = (key: string, at: string | undefined, now: number): boolean =>
+  at !== undefined && STANDING.has(key.split(':')[0] ?? '') && now - (Date.parse(at) || 0) >= STANDING_AGAIN_MS;
 
 export const waitForLead = async (
   ctx: RunContext,
@@ -219,7 +247,7 @@ const waitWatched = async (
       throw error;
     }
 
-    const seen = new Set((await readJson(seenFile, isKeys, 'what the lead was woken for')) ?? []);
+    const seen = (await readJson(seenFile, isSeen, 'what the lead was woken for', seenUpgrade)) ?? {};
     const now = ctx.now().getTime();
     // By the agent asked for, whatever the words: they change as the work waiting does.
     const asked = new Map(
@@ -239,13 +267,27 @@ const waitWatched = async (
 
       return !launch && agent !== undefined && now - (needSince.get(agent) ?? now) < KEEPER_GRACE_MS;
     };
-    const fresh = [...failedLaunches, ...leadItems(view)].filter(item => !seen.has(item.key) && !keeperHasIt(item));
+    const fresh = [...failedLaunches, ...leadItems(view)]
+      .filter(
+        item => (!Object.hasOwn(seen, item.key) || standsAgain(item.key, seen[item.key], now)) && !keeperHasIt(item)
+      )
+      .map(item =>
+        Object.hasOwn(seen, item.key)
+          ? {
+              ...item,
+              text: `Still waiting on you${seen[item.key] ? ` since ${clock(seen[item.key] ?? '')}` : ''} — ${item.text}`
+            }
+          : item
+      );
     // What is only to know wakes nobody: it comes with what does, or as the watch ends — a run's lead was woken
     // three times for notes, each turn reading its whole context again.
     const over = Date.now() - started >= timeoutMs;
     // A standing answered is the lead's to decide on: a run's came as a note and waited for the watch's end.
     if (fresh.some(wakesLead) || (over && fresh.length > 0)) {
-      await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
+      await writeJson(seenFile, {
+        ...seen,
+        ...Object.fromEntries(fresh.map(item => [item.key, ctx.now().toISOString()]))
+      });
       // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
       // stays no longer).
       const known = view.attention.flatMap(item => (item.fyi && item.message ? [item.message] : []));

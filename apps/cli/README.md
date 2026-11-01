@@ -714,6 +714,7 @@ plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to 
 plitzi run report --summary summary.md     # the lead closes the run with its report (--full: the whole of it)
 plitzi run report --bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
+plitzi run finish --every-line             # every done task's line run, each failure said — never stopping at the first
 ```
 
 Several agents — subagents of one harness, or harnesses of different kinds — on one project at once, without stepping on

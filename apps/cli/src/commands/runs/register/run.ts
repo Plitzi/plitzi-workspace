@@ -37,6 +37,7 @@ import {
   runNotice,
   runReference
 } from '..';
+import { registerHolds } from './holds';
 import {
   AGENT_OPTION,
   EASE_OPTION,
@@ -55,7 +56,6 @@ import { PLITZI_HOW_MEANS, PLITZI_HOWS } from '../../../runs/findings/plitziClas
 import { groupHelp } from '../../register/helpGroups';
 import { fail } from '../../shared/terminal';
 import { runAgent } from '../run/agent';
-import { runAllow, runHold } from '../run/holds';
 import { runStart } from '../run/start';
 
 import type {
@@ -434,27 +434,7 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .action((run: string | undefined, options: UpgradeRunOptions) => runUpgrade(run, options));
 
-  runGroup
-    .command('hold')
-    .description(
-      'Stop agents of the run and hold them — the lead’s or a person’s: their process ended, what they hold kept in their hands, never started again by the run until allowed'
-    )
-    .argument('[agents...]', 'The agents (dev-1, test-2) — every one of the team when none is named')
-    .option(...RUN_OPTION)
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((agents: string[], options: RunCommandOptions) => runHold(agents, options));
-
-  runGroup
-    .command('allow')
-    .description(
-      'Let agents the run holds start again — stopped by run hold, past their harness’s limit, or ending as they start (one more try)'
-    )
-    .argument('[agents...]', 'The agents — every one held when none is named')
-    .option(...RUN_OPTION)
-    .option(...TOKEN_OPTION)
-    .option(...JSON_OPTION)
-    .action((agents: string[], options: RunCommandOptions) => runAllow(agents, options));
+  registerHolds(runGroup);
 
   runGroup
     .command('resume')
@@ -472,6 +452,10 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('[run]', 'The run')
     .option('--apply', 'Write it — a person, typing the run’s name')
     .option('--leave-pending', 'Finish without the tasks not done, said as such')
+    .option(
+      '--every-line',
+      'Run every done task’s acceptance line on the result and say each failure, never stopping at the first — slower; without --apply nothing is written'
+    )
     .option(
       '--keep-backup',
       'Keep the project’s files as they were before the merge, in tmp/plitzi-backups/ — off by default'

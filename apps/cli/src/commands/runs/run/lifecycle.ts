@@ -128,6 +128,7 @@ export interface FinishOptions extends RunCommandOptions {
   apply?: boolean;
   leavePending?: boolean;
   keepBackup?: boolean;
+  everyLine?: boolean;
 }
 
 export const runFinish = (runId: string | undefined, options: FinishOptions): Promise<void> =>
@@ -137,7 +138,8 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
       const finished = await finishRun(ctx, await runOf(ctx, options, runId), {
         apply: options.apply ?? false,
         leavePending: options.leavePending ?? false,
-        backup: options.keepBackup ?? false
+        backup: options.keepBackup ?? false,
+        everyLine: options.everyLine ?? false
       });
       // A server of the project still up serves it as it was and holds its state: the person's next `npm start` fails
       // on its lock (state/kv.json held by the lead's own server, stopped by port and not yet gone).

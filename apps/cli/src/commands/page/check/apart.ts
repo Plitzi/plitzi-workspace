@@ -38,10 +38,18 @@ export const keptToTask = async (root: string, reports: CheckReport[]): Promise<
   return reports.map(report => keptToParts(report, parts));
 };
 
-/** One report's findings kept to a task's parts: the ones on another task's elements set apart, its verdict again. */
+/**
+ * One report's findings kept to a task's parts: the ones on another task's elements set apart, its verdict again —
+ * never what the check was asked (`ASKED_CODES`): an `--expect` that failed on another task's element printed "✓ nothing
+ * wrong" (a run's design-1, on the home's title).
+ */
 export const keptToParts = (report: CheckReport, parts: Pick<TaskParts, 'ids' | 'all'>): CheckReport => {
   const theirs = report.issues.filter(
-    issue => issue.elementId !== undefined && parts.all.has(issue.elementId) && !parts.ids.has(issue.elementId)
+    issue =>
+      !ASKED_CODES.has(issue.code) &&
+      issue.elementId !== undefined &&
+      parts.all.has(issue.elementId) &&
+      !parts.ids.has(issue.elementId)
   );
   if (theirs.length === 0) {
     return report;

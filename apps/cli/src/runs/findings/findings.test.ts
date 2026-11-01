@@ -49,6 +49,19 @@ describe('how tasks and sessions were held', () => {
     expect(found.map(each => [each.title, each.evidence, each.live])).toEqual([
       ['dev-3 had two tasks in progress at once', ['t-other + t-settings, from 10:07 UTC'], true]
     ]);
+    // Sent back while it was at another, reworked and completed before that one: done, never at work again once the other
+    // completes (a run said dev-1 held its approved t-plugin-button beside eleven tasks after it).
+    expect(
+      twoTasks([
+        { at: T(1), by: 'dev-1', action: 'take', task: 't-button' },
+        { at: T(2), by: 'dev-1', action: 'complete', task: 't-button' },
+        { at: T(3), by: 'dev-1', action: 'take', task: 't-accordion' },
+        { at: T(4), by: 'test-1', action: 'review', task: 't-button', verdict: 'changes' },
+        { at: T(5), by: 'dev-1', action: 'complete', task: 't-button' },
+        { at: T(6), by: 'dev-1', action: 'complete', task: 't-accordion' },
+        { at: T(7), by: 'dev-1', action: 'take', task: 't-grid' }
+      ])
+    ).toEqual([]);
     // Taking another while one is in hand is two at once.
     expect(
       twoTasks([

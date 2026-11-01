@@ -3,6 +3,7 @@ import path from 'node:path';
 import chalk from 'chalk';
 
 import { differenceText } from '../../page/same';
+import { PICTURED_STILL } from '../../page/visit';
 import { list } from '../text';
 
 import type { lookAt } from '../review/review';
@@ -106,6 +107,7 @@ const besideSummary = (looked: Looked): string[] => {
 export const lookText = (looked: Looked): string =>
   [
     chalk.bold(`${looked.task}, as it went to review (served from its copy, cold, now stopped):`),
+    chalk.dim(`· ${PICTURED_STILL}`),
     ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
     ...(looked.signedInAs
       ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]

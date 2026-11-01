@@ -58,7 +58,10 @@ to every task in hand, or to an agent by name (`@dev-1`), which `task next` hand
 with the agent's next command, marked read as it is; a question with a reply leaves `run
 status`. `run watch` (`leadWatch.ts`) is what a lead waits with in the background: it ends with what is new
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
-`lead-seen.json`. A note only to know (`task tell`) wakes it for nothing: it comes with what does, or as the watch
+`lead-seen.json` with when it was shown. What leaves someone waiting on the lead's decision — a block or escalation, a
+request, a proposal, a line unanswered, a reconciliation, a review only it may say — is said again while it stands,
+`STANDING_AGAIN_MS` (10 min) after it was last shown, "Still waiting on you since …": a run's escalation was shown once
+by a watch whose output its lead never read, and waited 43 minutes until the person saw it on the monitor. A note only to know (`task tell`) wakes it for nothing: it comes with what does, or as the watch
 ends. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
 hands an agent the task it holds and can go on with — unblocked, or sent back with changes — before anything new
 (`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
@@ -443,7 +446,10 @@ check <task> --mutate <file> --from "…" --to "…"` (`checkMutant`) runs its a
 throwaway copy with the changes to the code, each found once, said again for each change more (a behaviour held in two
 places) — and says of each line whether it catches it (passes on
 the copy, fails on the mutant) or lets it pass: a run's tester changed the code under test with sed in a copy of
-`src/` to see whether a task of tests held it. A test file of the project a developer task's tests card takes is the
+`src/` to see whether a task of tests held it. The mutant's folder has its `tmp/`, as a copy does, and a line that
+fails on it is run again there with the change undone: failing then too, it is the folder that fails it, never the
+change (`environment`, it proves nothing) — a run's comment-only mutant read "caught", every test failing on a folder
+with no `tmp/` to write in. A test file of the project a developer task's tests card takes is the
 developer task's too (`touches`, `existingTests`): it fixes what its change breaks there before that card starts —
 a run's t-shows-coming went to review failing a test that lists every action, its file its tests card's. A page spec
 among them is also a line of its acceptance, run at its check against the copy served — the project's own check runs
@@ -479,6 +485,10 @@ kept (`lingering.ts`), its use marked while it is followed so its watchdog leave
 `page check` in one copy refuses the port another holds, and `task complete` counts a server on the port as its copy's
 only when `/health` names the copy. A copy's `start:dev` without `PORT` takes a free port from 8080 and holds it while it
 starts (`reservePort`, a lock per port): two copies started at once no longer meet on the same one.
+
+A reviewer's `task look` or `task show` of a card whose step it may say takes that step (`takeOnRead`, said as
+`task next` says it), so the board names what it is at — never a second one while it is at another review: a run's
+tester read a card to judge the one it reviewed, held two, and was refused its own commands "name the task".
 
 Which pages, and as whom: with none named, the pages its files are drawn at and those its acceptance checks, together
 (`pagesToLook`) — a page its acceptance checks with a status of its own (`--status 404`) apart, said with the command
@@ -1036,7 +1046,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   `plitzi test <journey-id> --url $PLITZI_URL` ([A space's own tests](./space-tests.md)). A line that fails runs once more after the others:
   one a busy server failed passes then and says it passed on its second run (`firstFailed`), one that fails twice is
   unmet. The finish fails fast instead (`failFast`): the Playwright suites first, a failed line run again at once, and the
-  first that fails twice stops it — what had not started is `notRun`, run at the next finish, what passed kept. What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
+  first that fails twice stops it — what had not started is `notRun`, run at the next finish, what passed kept; `run
+  finish --every-line` runs each, every failure said at once (a run met its stale lines one ten-minute finish at a time,
+  and its lead scripted them all). What each answered is kept in the state and shown by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
   review, **its files kept as they are now** (`submitted`, by fingerprint): what the review keeps and the approval
   merges, never the copy, which its agent may go on writing — `--note` tells the lead what to look at with it. A sign of
   life of a task in review is answered as one in review. `run open --dry-run` refuses a check it could not run: empty,

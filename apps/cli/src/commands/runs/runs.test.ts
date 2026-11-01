@@ -1,13 +1,8 @@
-import { execFile } from 'node:child_process';
-import { createRequire } from 'node:module';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { STARTER_TEAM } from '../../runs/agents/team';
 import { REFUSAL_EXIT_CODES } from '../../runs/core/refusal';
-import { SRC_ROOT } from '../../tests/roots';
+import { plitzi } from '../../tests/plitziProcess';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 
 import type { Bench } from '../../tests/runProject';
@@ -16,40 +11,6 @@ import type { Bench } from '../../tests/runProject';
  * The run's commands as a harness meets them: the CLI itself, one process per command, each answering JSON and leaving
  * the exit code its refusal names — so a harness that reads no output still knows what to do.
  */
-
-const CLI = path.join(SRC_ROOT, 'index.ts');
-const TSX = pathToFileURL(createRequire(import.meta.url).resolve('tsx')).href;
-
-interface Answer {
-  code: number;
-  json: Record<string, unknown>;
-}
-
-const plitzi = (
-  cwd: string,
-  args: string[],
-  env: Record<string, string> = {},
-  { input, json = true }: { input?: string; json?: boolean } = {}
-): Promise<Answer> =>
-  new Promise(resolve => {
-    const child = execFile(
-      process.execPath,
-      ['--import', TSX, CLI, ...args, ...(json ? ['--json'] : [])],
-      { cwd, env: { ...process.env, PLITZI_TOKEN: '', PLITZI_AGENT: '', PLITZI_JSON: '', ...env }, timeout: 60_000 },
-      (error, stdout) => {
-        const last = stdout.trim().split('\n').at(-1) ?? '{}';
-        let json: Record<string, unknown> = {};
-        try {
-          json = JSON.parse(last) as Record<string, unknown>;
-        } catch {
-          json = { stdout };
-        }
-
-        resolve({ code: error && typeof error.code === 'number' ? error.code : 0, json });
-      }
-    );
-    child.stdin?.end(input ?? '');
-  });
 
 let bench: Bench;
 

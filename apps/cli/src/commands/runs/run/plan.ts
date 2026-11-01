@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { issueToken } from '../../../runs/agents/identity';
 import { ensureKeeper, keeperText, leadStartText } from '../../../runs/agents/keeper';
 import { sessionOfProcess } from '../../../runs/agents/session';
@@ -293,6 +295,16 @@ const researchHeld = async (ctx: RunContext, runId: string | undefined): Promise
   return task && isResearch(task) ? taskId : undefined;
 };
 
+/** Whether a plan file says the run it is — `version` and `runId` — rather than a stage's tasks alone. */
+const namesItsRun = async (file: string): Promise<boolean> => {
+  const read: unknown = await fs
+    .readFile(file, 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read) && read.version !== undefined && typeof read.runId === 'string';
+};
+
 /** The run open in the project, when one is: what a plan written now is a stage of. */
 const openRunOf = async (ctx: RunContext): Promise<{ runId: string; record: RunRecord } | undefined> => {
   for (const runId of await activeRuns(ctx.root)) {
@@ -309,6 +321,16 @@ export const runRehearse = (file: string, options: PlanOptions & { review?: numb
   act(
     options,
     async ctx => {
+      // A stage — its tasks alone, as a scope proposes one — played alone would time it without the run it waits on: a
+      // run's lead added --rehearse to its scope's proposal and was told it was "not a plan".
+      const open = await openRunOf(ctx);
+      if (open && !(await namesItsRun(path.resolve(file)))) {
+        throw new RunRefusal(
+          'invalid',
+          `${file} is a stage of the open run "${open.runId}" — --rehearse plays a run's whole plan before it opens; a stage is seen, its time said, with plitzi run open ${file} --dry-run`
+        );
+      }
+
       const { checked, ownership, team } = await readCheckedPlan(ctx.root, path.resolve(file));
       const agents = teamSize(team);
       // An agent of the team that takes one role is held to it; one of several takes any of them, as a free one.

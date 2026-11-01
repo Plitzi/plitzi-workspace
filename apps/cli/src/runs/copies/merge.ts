@@ -38,6 +38,7 @@ import { notLookedAtYet, notLookedRefusal } from '../view/lookedAt';
 import { viewRun } from '../view/view';
 
 import type { CheckResult } from './checks';
+import type { FinishAsked } from './finishAsked';
 import type { Finding } from '../findings';
 import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from '../core/model';
@@ -330,7 +331,7 @@ const keepBackup = async (
 export const finishRun = async (
   ctx: RunContext,
   runId: string,
-  { apply, leavePending, backup = false }: { apply: boolean; leavePending: boolean; backup?: boolean }
+  { apply, leavePending, backup = false, everyLine = false }: FinishAsked
 ): Promise<Finished> => {
   if (apply) {
     requireNoTask(ctx, 'write a run into the project');
@@ -419,8 +420,9 @@ export const finishRun = async (
     )
   ).flat();
   // Fast: the first line that fails twice stops the finish — what fails is known as soon as it can be, and what passed
-  // is kept for the next one.
-  plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines, { failFast: true });
+  // is kept for the next one. Asked for every line, each runs: a run whose stages made lines stale on purpose met them
+  // one finish at a time, four finishes of ten minutes, and its lead wrote a script to run them all.
+  plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines, everyLine ? {} : { failFast: true });
   const broken = plan.acceptance.results.filter(each => !each.ok && each.notRun !== true);
   const notRun = plan.acceptance.results.filter(each => each.notRun === true).length;
   if (broken.length > 0) {

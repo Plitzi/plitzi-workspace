@@ -61,6 +61,24 @@ describe('a page checked in a task’s copy', () => {
     expect(own.ok).toBe(false);
     expect(page.ok).toBe(false);
   });
+
+  // design-1's `--expect 'home-hero-title~…'` failed on another task's title and printed "✓ nothing wrong".
+  it('fails on what it was asked to expect, whoever writes the element', () => {
+    const asked = keptToParts(
+      report([
+        {
+          code: 'expected-text',
+          message: 'home-video-main shows "Hola", not "Despliega"',
+          elementId: 'home-video-main',
+          width: 1440
+        }
+      ]),
+      parts
+    );
+
+    expect(asked.ok).toBe(false);
+    expect(asked.apart).toBeUndefined();
+  });
 });
 
 // A pulled Tremor's empty list and hidden texts failed `page check / --expect layer-quakes` on a line its task met: every

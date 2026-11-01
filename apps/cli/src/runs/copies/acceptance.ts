@@ -404,7 +404,7 @@ interface AcceptanceRun {
 /** What a fast finish left: the lines it had not started when one failed twice, said beside it — or nothing. */
 export const notRunText = (notRun: number): string =>
   notRun > 0
-    ? ` (the finish stopped there: ${String(notRun)} line${notRun === 1 ? '' : 's'} not run yet, at the next finish — what passed is kept)`
+    ? ` (the finish stopped there: ${String(notRun)} line${notRun === 1 ? '' : 's'} not run yet, at the next finish — what passed is kept; every line at once, each failure said: plitzi run finish --every-line)`
     : '';
 
 /**

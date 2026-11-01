@@ -147,9 +147,11 @@ export const checkMutantText = (
             ? `${chalk.yellow('✗')} ${line.said} — fails on ${task}'s copy already: it says nothing of the mutant`
             : caught === 'broken'
               ? `${chalk.yellow('?')} ${line.said} — the mutant does not run (an error of its own, not a test's): it proves nothing — change the code so it still runs`
-              : `${chalk.yellow('?')} ${line.said} — could not be answered on the ${line.copy.unanswered === true ? 'copy' : 'mutant'}: the line's or the machine's`;
+              : caught === 'environment'
+                ? `${chalk.yellow('?')} ${line.said} — fails in the mutant's folder with the change undone too: the folder fails it (what the line runs in), not the change — it proves nothing`
+                : `${chalk.yellow('?')} ${line.said} — could not be answered on the ${line.copy.unanswered === true ? 'copy' : 'mutant'}: the line's or the machine's`;
     const output =
-      caught === 'catches' || caught === 'broken'
+      caught === 'catches' || caught === 'broken' || caught === 'environment'
         ? line.mutant.output
         : caught === 'fails'
           ? line.copy.output

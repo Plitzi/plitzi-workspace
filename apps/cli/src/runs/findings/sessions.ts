@@ -44,7 +44,10 @@ export const twoTasks = (log: readonly LogEntry[]): Finding[] => {
       setOf(waiting, by).delete(task);
       setOf(working, by).add(task);
     } else if (entry.action === 'complete') {
+      // Out of waiting too: one sent back and reworked before the other was done is done — left waiting, it came back as
+      // at work the moment the other completed, and a run read dev-1 holding an approved task for fifteen minutes.
       setOf(working, by).delete(task);
+      setOf(waiting, by).delete(task);
       nextOwn(by);
     } else if (entry.action === 'block' || (entry.action === 'review' && entry.toLead === true)) {
       // Blocked, its agent is free for another: the block is no task at work.

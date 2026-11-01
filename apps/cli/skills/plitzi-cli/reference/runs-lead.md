@@ -124,7 +124,7 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
    no record says, how it felt, where next starts: `plitzi run report --summary summary.md --ease <1-5> --hardest "…"`
    (it combines the agents'; refused while anything waits for you: settle each — a finding by what you did,
    `run settle <finding> --note "…"`); then `plitzi run finish` (the
-   diff, checked). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
+   diff, checked; it stops at the first line that fails — `--every-line` says every failure at once). `--apply` is the person's, or yours if they allowed it — every server you started on the project stopped first, with `plitzi server stop` (one
    serves the project as it was and holds its `state/kv.json`). `run status --all`: what awaits it.
 
 ## The run's time is yours

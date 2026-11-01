@@ -46,7 +46,10 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--full': 'a page shot is the whole page already — --viewport pictures the first screen alone',
     // Nine runs reached for it: one element pictured is a part of the page, as every page command names one.
     '--element': 'one element pictured alone: plitzi page shot <path> --within <element>',
-    '--clip': 'one element pictured alone: plitzi page shot <path> --within <element>'
+    '--clip': 'one element pictured alone: plitzi page shot <path> --within <element>',
+    // A run's agents asked a picture of what moves: a shot is a visitor who asked for less motion.
+    '--motion':
+      'page shot pictures as a visitor who asked for less motion — page measure <path> <element> --motion reads it moving'
   },
   'page measure': {
     '--element': 'the elements are its arguments: plitzi page measure <path> <element…>',
@@ -54,14 +57,19 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     '--css':
       'page measure says every property it measures of each element, as it is; --expect "<property>=<value>" holds one',
     // page shot's and page check's flag, reached for beside them: here a field is typed into as a step.
-    '--fill': 'page measure types into a field as a step: --steps "type <element> <text>" — then measures'
+    '--fill': 'page measure types into a field as a step: --steps "type <element> <text>" — then measures',
+    // page check's and task look's flag, carried over to a not-found page: measure reads it as it is sent.
+    '--status':
+      'page measure reads any page as it is sent, a not-found one too — leave --status out (page check --status holds what it is sent with)'
   },
   'page play': {
     '--element': '--read <element…> says what elements show after the steps',
     // Asked five runs running: a picture is a step of its own.
     '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots',
     // Two runs, page shot's flag carried over: a play is a visitor who asked for less motion already.
-    '--reduced-motion': 'page play plays as a visitor who asked for less motion already — leave it out'
+    '--reduced-motion': 'page play plays as a visitor who asked for less motion already — leave it out',
+    '--motion':
+      'page play plays as a visitor who asked for less motion — page measure <path> <element> --motion reads it moving'
   },
   'task look': { '--clip': 'one part of each page pictured alone: plitzi task look <task> --within <element>' },
   // Eleven runs reached for it: a brief's whole files are --files, a task's whole notes and diffs task show's --full.

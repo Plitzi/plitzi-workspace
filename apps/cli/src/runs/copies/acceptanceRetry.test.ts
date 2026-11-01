@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { checkAcceptance } from './acceptance';
+import { checkAcceptance, notRunText } from './acceptance';
 
 const folders: string[] = [];
 
@@ -101,5 +101,8 @@ describe('the finish’s acceptance, failing fast', () => {
       { said: 'After it', check: 'exit 0', ok: false, notRun: true },
       { said: 'Last', check: 'exit 0', ok: false, notRun: true }
     ]);
+    // What it left is said with the way to run every line at once: a run met its stale lines one finish at a time.
+    expect(notRunText(2)).toContain('every line at once, each failure said: plitzi run finish --every-line');
+    expect(notRunText(0)).toBe('');
   });
 });

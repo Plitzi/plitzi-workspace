@@ -371,6 +371,25 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **From the run `nimbo-site`'s report** (`@plitzi/cli`):
+  - `page check --expect` fails on what it was asked, whoever writes the element: a failed expectation on another task's
+    element printed "✓ nothing wrong".
+  - The report no longer says an agent held two tasks after one sent back was reworked and completed before the other:
+    it read dev-1 holding an approved task beside eleven after it.
+  - `run watch` says again, every ten minutes, what still leaves someone waiting on the lead — a block, a request, a
+    proposal, a review only it may say: an escalation shown once by an unread watch waited 43 minutes.
+  - `run finish --every-line` runs every done task's acceptance line and says each failure at once; the fast finish
+    names it when it stopped with lines not run.
+  - The lead's own CLI kept past the run amends its report after the apply: its token is proved against the identities
+    the report keeps, not the run folder the apply removed.
+  - `task prove --mutate` gives the mutant's folder its `tmp/`, and runs a line that fails on the mutant again there
+    with the change undone: failing too, it says the folder fails it, never "caught".
+  - A reviewer's `task show` or `task look` of another card takes no second review while it is at one.
+  - `page play` and `task look` say they see the page as a visitor who asked for less motion, and how to read it
+    moving (`page measure --motion`); `page measure --status`, `page play --motion` and `page shot --motion` are
+    answered with what to write instead.
+  - `plitzi explain <name>` exits 1 for a name Plitzi does not have, still saying what its words describe.
+  - `run open <stage> --dry-run --rehearse` with a run open says a stage is seen with `--dry-run`, never "not a plan".
 - **A stage says what it reaches of the run before it is stacked** (`@plitzi/cli`): a change the person asked mid-run
   landed on approved tasks, tasks at work and their tests, and was met at `complete` or at the finish, the lead's to
   repair. `run open <stage>` — its `--dry-run` first — now names, for each of its tasks, every task of the run it reaches
