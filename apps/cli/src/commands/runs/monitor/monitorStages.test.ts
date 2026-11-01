@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { flowStages, nameOf } from './monitorFlow';
-import { initialUi } from './monitorModel';
+import { flowStages } from './monitorFlow';
+import { initialUi, roundOf } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
 import { runPaths } from '../../../runs/core/paths';
@@ -34,7 +34,7 @@ const { lead, open, take } = runSteps(() => bench);
 const cards = (tasks: readonly TaskLine[], key: string): string[] => {
   const stage = flowStages(tasks).find(each => each.key === key);
 
-  return stage ? stage.tasks.map(task => `${nameOf(task)} ${stage.who(task)}`.trim()) : [];
+  return stage ? stage.tasks.map(task => [task.id, roundOf(task), stage.who(task)].filter(Boolean).join(' ')) : [];
 };
 
 describe('the monitor, as a run read it', () => {
@@ -81,7 +81,8 @@ describe('the monitor, as a run read it', () => {
       { ...initialUi('advanced'), view: 'flow' },
       { width: 160, height: 48, now: bench.now(), theme: THEMES.dark, preview: { state: { kind: 'none' }, output: [] } }
     ).canvas;
-    const at = canvas.text().findIndex(line => line.includes('t-menu ↺1'));
+    // Its id, and its round at the card's right, beside the urgency mark.
+    const at = canvas.text().findIndex(line => /t-menu\s+↺1/.test(line));
     const line = canvas.ansi(3)[at] ?? '';
     const before = line.slice(0, line.indexOf('t-menu'));
     const edge = before.slice(0, before.lastIndexOf('▎'));

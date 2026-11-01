@@ -19,6 +19,7 @@ import {
   updateRecord,
   withInputs
 } from '../run';
+import { impactOnRun } from './runImpact';
 import { PLAN_FINDING } from './spike';
 import { requireLead } from '../agents/leads';
 import { acceptanceProblems } from '../copies/acceptanceProblems';
@@ -89,6 +90,10 @@ export interface Amended {
   reference?: string;
   /** The inventory changed: what the plan covers, and what it says waits. */
   inventory?: true;
+  /** What the tasks asked something new reach of the rest of the run, each with what to do (`stageImpact`). */
+  impact?: string[];
+  /** Seen, nothing written (`--dry-run`). */
+  dryRun?: true;
 }
 
 const SHAPE = ['files'] as const;
@@ -105,6 +110,8 @@ const ASK = [
   'touches',
   'closes'
 ] as const;
+/** What a task makes, of what it is asked: changed, what imports its files may meet the change (`impactOnRun`). */
+const MAKES: readonly string[] = ['title', 'acceptance', 'findings', 'touches'];
 /** The finding a plan gives a task, as its state keeps it beside what its spikes found (`startingState`). */
 const isPlanFinding = (finding: Finding): boolean => finding.by === LEAD && finding.question === PLAN_FINDING;
 // What a task waits for, and who it is for, change until it is taken: a lead clears a bottleneck by letting one start
@@ -170,7 +177,13 @@ const amendedTasks = (plan: RunPlan, next: RunPlan, removed: readonly RunTask[])
     .filter(task => !removed.some(each => each.id === task.id))
     .map(task => next.tasks.find(each => each.id === task.id) ?? task);
 
-export const amendRun = async (ctx: RunContext, runId: string, file: string): Promise<Amended> => {
+export const amendRun = async (
+  ctx: RunContext,
+  runId: string,
+  file: string,
+  /** Seen before it is written: what it changes and what that reaches, nothing told. */
+  { dryRun = false }: { dryRun?: boolean } = {}
+): Promise<Amended> => {
   requireNoTask(ctx, 'amend the plan');
   const loaded = await loadRun(ctx, runId);
   await requireLead(ctx, 'amend the plan');
@@ -390,6 +403,31 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     );
   }
 
+  // A task at work or to come asked something new will change what it makes: what reaches it of the rest of the run is
+  // said with the amendment — a done one amended was a line found wrong, and nobody changes its work.
+  const impact = await impactOnRun(
+    ctx,
+    loaded,
+    changes
+      .filter(change => change.done !== true && change.changed.some(field => MAKES.includes(field)))
+      .map(change => change.defined)
+  );
+  const amended: Amended = {
+    runId,
+    tasks: changes.map(({ task, changed, done }) => ({ task: task.id, changed, ...(done ? { done } : {}) })),
+    notes,
+    ...(goal === undefined ? {} : { goal }),
+    ...(primerChanged ? { primer: true as const } : {}),
+    ...(removed.length > 0 ? { removed: removed.map(task => task.id) } : {}),
+    ...(inventoryChanged ? { inventory: true as const } : {}),
+    ...(reference === undefined ? {} : { reference }),
+    ...(leftOut.length > 0 ? { leftOut } : {}),
+    ...(impact.length > 0 ? { impact } : {})
+  };
+  if (dryRun) {
+    return { ...amended, dryRun: true };
+  }
+
   for (const { task, defined, done } of changes) {
     // What the plan leaves out is dropped, not kept from before: the definition is the plan's, as amended.
     const {
@@ -535,18 +573,9 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     });
   }
 
-  const amended: Amended = {
-    runId,
-    tasks: changes.map(({ task, changed, done }) => ({ task: task.id, changed, ...(done ? { done } : {}) })),
-    notes,
-    ...(goal === undefined ? {} : { goal }),
-    ...(primerChanged ? { primer: true as const } : {}),
-    ...(removed.length > 0 ? { removed: removed.map(task => task.id) } : {}),
-    ...(inventoryChanged ? { inventory: true as const } : {}),
-    ...(reference === undefined ? {} : { reference }),
-    ...(leftOut.length > 0 ? { leftOut } : {})
-  };
-  await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
+  // The log keeps what changed; what it reached is said to the lead, and read again from the run when needed.
+  const { impact: _impact, ...logged } = amended;
+  await logRun(ctx, loaded.paths, { action: 'amend', ...logged });
   // The amendment and its primer are the run's now: removed with it, as the plan it opened with.
   const handed = await handedInputs(ctx, [file, primerFile(next, file)]);
   await updateRecord(ctx, loaded.paths, record => ({ ...record, inputs: withInputs(record.inputs, handed) }));

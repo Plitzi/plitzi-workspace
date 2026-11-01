@@ -1,6 +1,6 @@
 import { listedTasks, timeOf, withText, withTone } from './monitorBoard';
 import { clip, textWidth, wrap } from './monitorCanvas';
-import { AGENT_LOOK, momentKey, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { AGENT_LOOK, momentKey, roundOf, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { BARS, sparkline, spentInAll, tokensShort } from './monitorSpend';
 import { cachedShare, costInAll, costShort } from '../../../runs/report/spent';
 
@@ -111,6 +111,8 @@ export const drawSide = (
   const first = Math.min(Math.max(0, ui.selected - Math.floor(shown / 2)), Math.max(0, listed.length - shown));
   p.areas.push({ area: { kind: 'tasks' }, top: row, left: rect.left, width: rect.width, height: shown });
   const idWidth = Math.min(18, Math.max(6, ...listed.map(task => textWidth(task.id))));
+  // A column for the rounds only while a task listed has one: `↺2 `, beside the urgency mark.
+  const roundWidth = Math.max(0, ...listed.map(task => textWidth(roundOf(task)) + 1));
   listed.slice(first, first + shown).forEach((task, offset) => {
     const index = first + offset;
     const selected = index === ui.selected && ui.view === 'overview';
@@ -138,9 +140,15 @@ export const drawSide = (
 
     const time = timeOf(task, stories[task.id]);
     const timeAt = end - textWidth(time);
+    const round = roundOf(task);
+    if (round) {
+      canvas.put(row, rect.left + 7 + idWidth, round, { fg: toneOf(theme, TASK_LOOK['changes-requested'].tone) });
+    }
+
     const said = withText(task, view.tasks, stories[task.id]);
     const hue = task.agent === undefined ? undefined : p.hues.get(task.agent);
-    canvas.put(row, rect.left + 7 + idWidth, clip(said, Math.max(0, timeAt - rect.left - 9 - idWidth)), {
+    const saidAt = rect.left + 7 + idWidth + roundWidth;
+    canvas.put(row, saidAt, clip(said, Math.max(0, timeAt - saidAt - 2)), {
       fg: hue !== undefined && said.startsWith(task.agent ?? '\u0000') ? hue : toneOf(theme, withTone(task))
     });
     canvas.put(row, timeAt, time, { fg: theme.subtle });

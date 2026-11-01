@@ -200,8 +200,9 @@ waits for its review; one not started says so, one running before anything of it
 what each spent and the run with its preview; narrower, those are their own views.
 
 **Flow** is the run's kanban: each task a card in its stage from to-do to approved, with what holds an agent; a task a
-review sent back is at work again with its agent, its card marked with the round it is at (`t-boxer ↺2`), never a stage
-apart. An agent is at one task at a time — the one it last did something on itself (taken, its progress, a write:
+review sent back is at work again with its agent, never a stage apart. How many times its review sent a task back
+(`roundOf`, `↺2`) is drawn beside its urgency mark — at a card's right, in the sidebar's list before what it is with —
+never after its id or that text, which a long id cut off. An agent is at one task at a time — the one it last did something on itself (taken, its progress, a write:
 `TaskView.workedAt`, never a review that sent it back); the others it holds are held for it (`parkedFor`), so an agent
 is never on two cards at once. A lead is "reviewing" or "finds out" only at a review or a spike a card names it on. A
 pending task's card says what it waits for (`after t-boxer, t-lint`), and a stage with more cards than it shows is
@@ -387,7 +388,19 @@ open <stage> --dry-run --lines` — anyone's, a scout's too — runs each of the
 the finish's own `acceptanceOnResult`) and says what each is: passing already (it holds nothing yet), failing for its
 value (what the task changes), reading an element of ours not built yet, one of the other site's that is not there (the
 line is wrong), or one its command refuses — the lines to fix first; with no run open, a first plan's are run on the
-project as it is (`tryLinesOnProject`), the moment they matter most. `run
+project as it is (`tryLinesOnProject`), the moment they matter most. A stage — `--dry-run` and stacking alike — says what
+each of its tasks reaches of the run's own (`stageImpact.ts`), read off the run's approved state: what imports what
+(`Ownership.importedBy`, all the way back) and which tests (`testsImporting`). Each task of the run it reaches is said
+with what to do by where it stands — approved, its acceptance runs again at the finish (amend the lines it changes); at
+work, its agent told and its acceptance amended; not taken, amended or made to wait for the stage's task; in review,
+amended before its review says — and the tests that import what changes, not the stage's own, with whose they are: they
+run at each of the stage task's checks, where it cannot write them. `run amend` says the same of the tasks it asks
+something new (their title, acceptance, findings or touches — at work or to come; a done one amended was a line found
+wrong, and nobody changes its work), `--dry-run` and amending alike (`runImpact.ts`). The graph is parsed with
+TypeScript, so it is kept in the run's cache by a digest of the approved work's code (`runGraph.ts`,
+`cache/run-graph.json`): the dry run, the stacking after it and an amend read it once (224 ms parsed, ~20 ms kept, on
+a run's 213 files). A change the person asks mid-run was met at `complete`, or at the finish, and left to the lead to
+repair. `run
 open` with a run going says to stack on it. `run status --all` lists the project's runs not yet written into it — the ready
 ones first, each with the command that applies it; read off the project's own `tmp/plitzi-runs/`, so every terminal on
 it sees the same, and no other project's runs.
@@ -762,7 +775,8 @@ debt is not the task's.
 
 ## A plan amended (`amend.ts`)
 
-`run amend` reads the plan file again while the run is open and takes what it asks — titles, acceptance, priorities,
+`run amend` reads the plan file again while the run is open and takes what it asks (seen first with `--dry-run`, nothing
+written or told) — titles, acceptance, priorities,
 estimates, milestones, the goal, and notes more (sent to every task) — into `plan.json` and each task's `task.json`,
 telling each task changed what it now asks. A task nobody took leaves the run when the plan no longer has it — under
 the take's lock, refused for one taken, or one another task waits for — and the inventory may change, checked again

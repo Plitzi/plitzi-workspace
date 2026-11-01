@@ -238,6 +238,13 @@ export const LIVE_VERB: Partial<Record<AgentStatus, string>> = {
 export const urgencyOf = (task: Pick<TaskLine, 'urgency' | 'status'>): '‼' | '!' | '' =>
   task.status === 'done' ? '' : task.urgency === 'critical' ? '‼' : task.urgency === 'high' ? '!' : '';
 
+/**
+ * How many times its review sent it back — `↺2` — none before the first, or once approved: drawn beside the urgency
+ * mark, never after its id or what it is with, which a long id cut off (Carlos: "no se sabe qué round es").
+ */
+export const roundOf = (task: Pick<TaskLine, 'round' | 'status'>): string =>
+  task.status !== 'done' && task.round > 0 ? `↺${String(task.round)}` : '';
+
 /** Minutes in a few characters: 4m, 1h 12m. */
 export const minutesText = (minutes: number): string =>
   minutes < 60 ? `${String(minutes)}m` : `${String(Math.floor(minutes / 60))}h ${String(minutes % 60)}m`;

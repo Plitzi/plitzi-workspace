@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { listedTasks } from './monitorBoard';
 import { createCanvas } from './monitorCanvas';
-import { flowStages, nameOf } from './monitorFlow';
-import { initialUi } from './monitorModel';
+import { flowStages } from './monitorFlow';
+import { initialUi, roundOf } from './monitorModel';
 import { shimmer } from './monitorOverview';
 import { monitorScreen, waitingScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
@@ -60,7 +60,7 @@ const shown = (
 const cards = (tasks: readonly TaskLine[], key: string): string[] => {
   const stage = flowStages(tasks).find(each => each.key === key);
 
-  return stage ? stage.tasks.map(task => `${nameOf(task)} ${stage.who(task)}`.trim()) : [];
+  return stage ? stage.tasks.map(task => [task.id, roundOf(task), stage.who(task)].filter(Boolean).join(' ')) : [];
 };
 
 /** How many tasks each stage of the flow holds, by its key. */
@@ -375,7 +375,7 @@ describe('plitzi run monitor', () => {
       ).toBe(true);
     }
 
-    expect(board.some(line => line.includes('t-menu ↺1'))).toBe(true);
+    expect(board.some(line => /t-menu\s+↺1/.test(line))).toBe(true);
   });
 
   // The lead answered t-fights, and nothing on the board moved until dev-1 had completed it — an answer is

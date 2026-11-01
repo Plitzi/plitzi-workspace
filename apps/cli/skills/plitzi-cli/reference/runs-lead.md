@@ -98,7 +98,11 @@ task message t-home "…" --reply-to m3`; `all` or `@dev-1` in place of the task
    the plan in the run's `inputs/` (`run open` says which; the run's own `plan.json` is what amend compares it to,
    never edited) and `plitzi run amend` — acceptance, priorities, findings, notes, the inventory, what a task nobody took waits for (`dependsOn`), one
    removed; more work is a stage stacked on it, `plitzi
-run open next.json` (with `--dry-run` first); say each to the person. **You manage it** (§ The run's time): no agent idle while work
+run open next.json` (with `--dry-run` first); say each to the person. **A change the person asks** lands first: a task
+   not taken is amended; one at work, its agent told and its acceptance amended; approved work is never reopened — the
+   change is a new task, in a stage. Its `--dry-run` (`run amend --dry-run` too) names what that reaches of the run — approved tasks (amend the lines
+   it changes: the finish runs them again), tasks at work or to come, the tests that import it — each with what to do: do
+   each before you stack it, or its `complete` and the finish meet it. Tell the person what it changes and costs. **You manage it** (§ The run's time): no agent idle while work
    could move; chase a review that drags. Nothing waits for you? Wait.
 6. **Decide what reaches you**, reading only that: an escalation's `task show`, a spike's proposal.
 7. **A change after approval** puts the finish into

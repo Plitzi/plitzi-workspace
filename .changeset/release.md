@@ -371,6 +371,17 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **A stage says what it reaches of the run before it is stacked** (`@plitzi/cli`): a change the person asked mid-run
+  landed on approved tasks, tasks at work and their tests, and was met at `complete` or at the finish, the lead's to
+  repair. `run open <stage>` — its `--dry-run` first — now names, for each of its tasks, every task of the run it reaches
+  (through what imports what, on the run's approved work) with what to do by where it stands: approved, amend the
+  acceptance lines it changes, which the finish runs again; at work, tell its agent and amend; not taken, amend it or
+  make it wait; and the tests that import what changes, with whose they are. `run amend` says the same of the tasks it
+  asks something new, and takes `--dry-run`: what it would change and what that reaches, nothing written or told. The
+  run's import graph is kept in its cache by what its code is, so a dry run and what follows it read it once. The
+  lead's skill says how a change the person asks lands: amended, told, or a new task in a stage.
+- **`run monitor` says a task's round beside its urgency mark** (`@plitzi/cli`): `↺2` was written after the task's id
+  and who it is with, and a long id cut it off — in the sidebar's list and on the flow's cards alike.
 - **A run never starts an agent again in a loop** (`@plitzi/cli`): past Claude Code's 5-hour limit, every agent ended as
   it started, and a run's keeper started its eight agents 4379 times in 40 minutes — the monitor a wall of "started". A
   start is held now, said once: past the harness's limit (read off the line its session ended on), every agent in it

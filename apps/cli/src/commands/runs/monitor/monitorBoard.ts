@@ -78,10 +78,9 @@ export const withText = (task: TaskLine, tasks: readonly TaskLine[], story: Task
         : task.parkedFor
           ? `${task.agent ?? ''} at ${task.parkedFor} first`
           : `${task.agent ?? ''}${task.fraction === undefined ? '' : ` ${String(Math.round(task.fraction * 100))}%`}`;
+    // Its round is drawn beside its urgency mark (`roundOf`), never at the end of this, which a long id cut off.
     case 'changes-requested':
-      return task.parkedFor
-        ? `${task.agent ?? ''} at ${task.parkedFor} first · round ${String(task.round)}`
-        : `${task.agent ?? ''} · round ${String(task.round)}`;
+      return task.parkedFor ? `${task.agent ?? ''} at ${task.parkedFor} first` : (task.agent ?? '');
     case 'in-review':
       return task.proposed
         ? `the lead decides · ${task.proposed.by}'s`

@@ -60,3 +60,30 @@ describe('the strip at the head of run monitor', () => {
     expect(narrower.trim().split(/\s{2,}/)).toEqual(['✓ 1 approved', '◐ 1', '○ 1', '○ 1']);
   });
 });
+
+describe('a task sent back, in the sidebar', () => {
+  // A run's t-cell-observability read "t-cell-observabil…  ! designer review · not…": its round was cut off the end.
+  it('says its round beside its urgency mark, whatever the length of its id', async () => {
+    const runId = await open(benchPlan());
+    const data = await monitorRun(lead(), runId);
+    const long = 't-cell-observability-with-its-whole-name';
+    const sentBack = {
+      ...data,
+      view: {
+        ...data.view,
+        tasks: data.view.tasks.map((task, index) =>
+          index === 0 ? { ...task, id: long, status: 'changes-requested' as const, agent: 'agent-1', round: 2 } : task
+        )
+      }
+    };
+    const rows = monitorScreen(sentBack, initialUi('advanced'), {
+      width: 160,
+      height: 48,
+      now: bench.now(),
+      theme: THEMES.dark,
+      preview: { state: { kind: 'none' }, output: [] }
+    }).canvas.text();
+
+    expect(rows.find(row => row.includes('t-cell-observabil'))).toMatch(/t-cell-observabil\S*\s+(?:‼|!)?\s*↺2 agent-1/);
+  });
+});

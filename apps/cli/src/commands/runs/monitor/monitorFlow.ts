@@ -16,13 +16,6 @@ export interface FlowStage {
 }
 
 /**
- * A task as its card names it: a task sent back by a review is at work again with the agent that wrote it, marked by
- * the round it is at — `t-boxer ↺2` — rather than in a stage of its own: it goes round the same steps again.
- */
-export const nameOf = (task: TaskLine): string =>
-  task.status === 'changes-requested' ? `${task.id} ↺${String(task.round)}` : task.id;
-
-/**
  * Who a card is with: its agent, the lead at research of its own, the reviewer at the step of its review — what puts it at the top
  * of its stage, the ones nobody is on below (a stage's cards under its scroll were the ones being worked).
  */

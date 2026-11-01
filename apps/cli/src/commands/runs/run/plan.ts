@@ -516,21 +516,25 @@ export const keptPlan = async (ctx: Pick<RunContext, 'root'>, runId: string): Pr
   return path.join(inputs, plans[0] ?? '');
 };
 
-export const runAmend = (
-  runId: string | undefined,
-  file: string | undefined,
-  options: RunCommandOptions
-): Promise<void> =>
+export interface AmendOptions extends RunCommandOptions {
+  dryRun?: boolean;
+}
+
+export const runAmend = (runId: string | undefined, file: string | undefined, options: AmendOptions): Promise<void> =>
   act(
     options,
     async ctx => {
       const id = await runOf(ctx, options, runId);
 
-      return amendRun(ctx, id, file === undefined ? await keptPlan(ctx, id) : path.resolve(file));
+      return amendRun(ctx, id, file === undefined ? await keptPlan(ctx, id) : path.resolve(file), {
+        dryRun: options.dryRun === true
+      });
     },
     amended =>
       [
-        `Run "${amended.runId}" amended:`,
+        amended.dryRun
+          ? `Run "${amended.runId}" would be amended — nothing written:`
+          : `Run "${amended.runId}" amended:`,
         ...amended.tasks.map(each =>
           each.done
             ? `  ${each.task}, done: its acceptance — held again at the finish, on the whole result (nobody is at it to tell)`
@@ -546,6 +550,8 @@ export const runAmend = (
           ? [`  out of the run, as nobody had taken them: ${amended.removed.join(', ')} — say it to the person`]
           : []),
         ...(amended.inventory ? ['  the inventory: what the run covers and what waits, checked again'] : []),
-        ...(amended.leftOut ?? []).map(each => chalk.yellow(`  ⚠ not amended: ${each}`))
+        ...(amended.leftOut ?? []).map(each => chalk.yellow(`  ⚠ not amended: ${each}`)),
+        ...(amended.impact ?? []).map(each => chalk.yellow(`  ⚠ ${each}`)),
+        ...(amended.dryRun ? ['  Written when run without --dry-run.'] : [])
       ].join('\n')
   );

@@ -72,6 +72,7 @@ import type { PlitziHow } from '../../../runs/findings/plitziClass';
 import type { ExperienceFlags } from '../../../runs/report/experience';
 import type { HelpGroup } from '../../register/helpGroups';
 import type { AgentOptions } from '../run/agent';
+import type { AmendOptions } from '../run/plan';
 import type { StartOptions } from '../run/start';
 import type { TeamOptionsFlags, TeamSetOptions } from '../run/team';
 import type { Command } from 'commander';
@@ -340,9 +341,13 @@ export const registerRunGroup = (program: Command): Command => {
       '[file]',
       'The plan, edited — the run’s, or a stage’s as it was stacked: the same tasks, files and dependencies'
     )
+    .option(
+      '--dry-run',
+      'What it would change, and what that reaches of the rest of the run — tasks and tests — nothing written or told'
+    )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((first: string | undefined, file: string | undefined, options: RunCommandOptions) =>
+    .action((first: string | undefined, file: string | undefined, options: AmendOptions) =>
       file !== undefined
         ? runAmend(first, file, options)
         : first !== undefined && (first.endsWith('.json') || first.includes('/'))

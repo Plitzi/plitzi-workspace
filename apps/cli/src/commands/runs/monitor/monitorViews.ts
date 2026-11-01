@@ -1,7 +1,7 @@
 import { listedTasks, timeOf, withText } from './monitorBoard';
 import { clip, textWidth } from './monitorCanvas';
-import { flowStages, nameOf } from './monitorFlow';
-import { AGENT_LOOK, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
+import { flowStages } from './monitorFlow';
+import { AGENT_LOOK, roundOf, since, startsLook, TASK_LOOK, toneOf, urgencyOf } from './monitorModel';
 import { keyHint } from './monitorNeeds';
 import { agentAt, heldText, shortModel } from './monitorSide';
 import { BARS, SORT_WORDS, sparkline, spendTable, tokensShort } from './monitorSpend';
@@ -59,14 +59,24 @@ export const drawFlowView = (p: Paint, data: Monitored, ui: MonitorUi, rect: Rec
         canvas.put(row, left + 1, '▎', { fg: edge, bg: theme.elevated });
       }
 
+      // Its round and urgency at the card's right, the id clipped before them: a long id never hides the round.
       const mark = urgencyOf(task);
-      canvas.put(top + 1, left + 3, clip(nameOf(task), width - 8), { fg: theme.text, bold: true });
+      const round = roundOf(task);
+      let end = left + width - 3;
       if (mark) {
-        canvas.right(top + 1, left + width - 3, mark, {
+        canvas.right(top + 1, end, mark, {
           fg: task.urgency === 'critical' ? theme.danger : theme.warning,
           bold: true
         });
+        end -= textWidth(mark) + 1;
       }
+
+      if (round) {
+        canvas.right(top + 1, end, round, { fg: toneOf(theme, TASK_LOOK['changes-requested'].tone) });
+        end -= textWidth(round) + 1;
+      }
+
+      canvas.put(top + 1, left + 3, clip(task.id, Math.max(1, end - left - 3)), { fg: theme.text, bold: true });
 
       canvas.put(top + 2, left + 3, clip(task.title, width - 6), { fg: theme.muted });
       const who = stage.key === 'approved' ? (story?.writers.join(', ') ?? '') : stage.who(task);

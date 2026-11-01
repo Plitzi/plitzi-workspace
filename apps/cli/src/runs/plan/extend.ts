@@ -4,6 +4,10 @@ import path from 'node:path';
 import { coversOf } from './inventory';
 import { unmeasuredNotices } from './measuredValues';
 import { checkPlan, PlanRefusal } from './plan';
+import { runGraph } from './runGraph';
+import { tasksNow } from './runImpact';
+import { isResearch, startingState } from './spike';
+import { stageImpact } from './stageImpact';
 import { tryLines } from './tryLines';
 import { requireLead } from '../agents/leads';
 import { ensureTeam, teamSize } from '../agents/team';
@@ -13,6 +17,8 @@ import { fingerprint, readJson, writeAtomic, writeJson } from '../core/files';
 import { isBaseManifest } from '../core/model';
 import { lockFile, taskPaths, under } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
+import { keepFiles } from '../core/store';
+import { readStart, viewTask } from '../core/taskStore';
 import {
   assertStatus,
   handedInputs,
@@ -27,12 +33,10 @@ import {
   updateRecord,
   withInputs
 } from '../run';
-import { isResearch, startingState } from './spike';
-import { keepFiles } from '../core/store';
-import { readStart, viewTask } from '../core/taskStore';
 import { EVERYONE, LEAD, sendMessage } from '../talk/messages';
 
 import type { CheckedPlan } from './plan';
+import type { RunGraph } from './runGraph';
 import type { LoadedRun, RunContext } from '../run';
 import type { TriedLine } from './tryLines';
 import type { RunPlan, RunTask } from '../core/model';
@@ -110,6 +114,8 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
   const outside = (task: RunPlan['tasks'][number]): string[] =>
     task.dependsOn.filter(dependency => known.has(dependency));
   let checked: CheckedPlan | undefined;
+  // What imports what, and which tests, in the run's approved state: what the stage's work reaches (`stageImpact`).
+  let graph: RunGraph | undefined;
   const approved = (await readApproved(loaded.paths)).files;
   const work = await materialise(
     ctx,
@@ -138,6 +144,7 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
       work,
       loaded.tasks
     );
+    graph = await runGraph(loaded.paths.cache, work);
   } catch (error) {
     if (error instanceof PlanRefusal) {
       problems.push(...error.problems);
@@ -224,6 +231,19 @@ const seenStage = async (ctx: RunContext, runId: string, file: string): Promise<
 
   const states = new Map(views.map(view => [view.task.id, view.state.status]));
   const isReady = (task: RunTask): boolean => task.dependsOn.every(dependency => states.get(dependency) === 'done');
+
+  // Said by the dry run as by the stacking: what the stage's work reaches of the run's — approved, at work, to come, and
+  // the tests that import it — each with what to do by where it stands.
+  if (graph) {
+    checked.notices.push(
+      ...stageImpact({
+        stage: checked.tasks,
+        run: tasksNow(views),
+        importedBy: graph.importedBy,
+        testsOf: graph.tests
+      })
+    );
+  }
 
   // Said by the dry run as by the stacking: what the stage takes from a task at work.
   checked.notices.push(
