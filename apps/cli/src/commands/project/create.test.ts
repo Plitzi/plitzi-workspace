@@ -274,16 +274,31 @@ describe('the scaffold', () => {
     expect(files['src/space/index.ts']).toContain(
       "import statCardDeclaration from '../plugins/StatCard/declaration.ts';"
     );
-    expect(files['src/space/index.ts']).toContain("label: 'Requests today'");
+    expect(files['src/space/index.ts']).toContain("label: 'Page views'");
   });
 
-  // A client project serves `public/`, so its numbers come from a data file through a provider — never invented.
-  it('feeds the plugin from a data file the project serves, in client mode', () => {
+  // A number the page shows is the project's own from its first render: counted by its server, never written in.
+  it('feeds the plugin from a server action that counts the page, with a server', () => {
+    const files = scaffold(answers());
+
+    expect(files['src/actions/views.ts']).toContain("trigger: { type: 'render', access: 'public' }");
+    expect(files['src/actions/views.ts']).toContain("task: 'kv.increment'");
+    expect(files['src/space/index.ts']).toContain("runtime: 'server',");
+    expect(files['src/space/index.ts']).toContain("action: 'page-views',");
+    expect(files['src/space/index.ts']).toContain("bind: { value: 'views.views' }");
+    expect(files['public/data/stats.json']).toBeUndefined();
+  });
+
+  // A client project serves `public/`, so its numbers come from a data file through a provider — and say they are a
+  // sample, since nothing counted them.
+  it('feeds the plugin from a data file the project serves, said to be a sample, in client mode', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
     expect(JSON.parse(files['public/data/stats.json'])).toMatchObject({ value: 12480 });
     expect(files['src/space/index.ts']).toContain("query: '/data/stats.json'");
     expect(files['src/space/index.ts']).toContain("value: 'stats.data.value'");
+    expect(files['src/space/index.ts']).toContain("label: 'Sample — public/data/stats.json'");
+    expect(files['src/actions/views.ts']).toBeUndefined();
   });
 
   it('pictures and checks a page from the command line, with the CLI it installs', () => {

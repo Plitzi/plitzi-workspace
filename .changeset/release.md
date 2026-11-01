@@ -371,6 +371,11 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   username or address both passed the check, the store took one, and the other was answered a 500. When
   `createAccount` fails, the kernel asks again, and answers what the check would (400, `field`) when the name or the
   address is now taken; any other failure is the store's own, as before.
+- **A new project's card shows what the project counted** (`@plitzi/cli`, `@plitzi/sdk-authoring`): the `welcome`
+  space of a self-hosted project wrote "Requests today 12480" on the element, a figure no reload ever changed. With a
+  server it is now the page's views, counted by `src/actions/views.ts` (a `render` trigger and `kv.increment`) and fed
+  through `apiContainer({ runtime: 'server', action })`; with no server it is the sample in `public/data/stats.json`,
+  labelled as one. `blankTemplateFiles`' hosted plugin takes `data: { id, action, bind }` beside `{ id, query, bind }`.
 - **`inspectPage` leaves a staggered arrival to the scroll** (`@plitzi/sdk-authoring`): a `stagger` on view holds its
   children at opacity 0 below the element that waits to be seen, and the child's opacity was read before that element —
   a section's heading below the fold was said "transparent — an arrival that never played?".

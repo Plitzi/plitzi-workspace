@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { blankTemplateFiles, catalogTemplateFiles, emptyTemplateFiles } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, PLUGINS_DIR, SPACE_DIR } from './paths';
+import { ACTIONS_DIR, AUTHOR_FILE, KV_FILE, PLUGINS_DIR, SPACE_DIR } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -157,16 +157,43 @@ try {
 }
 `;
 
-/** The numbers the example shows: in a data file where one is served, on the element where none is. */
-const STATS = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
+/** The sample a project with no server shows, from the data file it serves: said on the card to be a sample. */
+const SAMPLE = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
+
+/** The server action that counts the page's views, in the file it is written to. */
+const VIEWS_ACTION = 'page-views';
+const VIEWS_FILE = `${ACTIONS_DIR}/views.ts`;
+
+/**
+ * The action a project with a server counts its page's views with: run by the server as it renders the page, once a
+ * render, in the project's own `kv` — a number that is the project's from its first page, rather than one made up.
+ */
+const viewsAction = (): string => `import { defineAction } from '@plitzi/sdk-authoring';
+
+/**
+ * Counts the server renders of the home page and answers the total: what the card on it shows.
+ *
+ * A \`render\` trigger is what a provider of the page may name (\`apiContainer({ runtime: 'server', action })\`), run as
+ * the server renders it. The count is kept in the project's \`kv\` (\`${KV_FILE}\` while developing): a reload is one
+ * more. \`cacheSeconds\` on the trigger would let a burst of visitors share one answer — and one increment.
+ */
+export const pageViews = defineAction({
+  id: '${VIEWS_ACTION}',
+  name: 'Page views',
+  description: 'Counts the server renders of the home page and answers the running total.',
+  trigger: { type: 'render', access: 'public' },
+  steps: [{ id: 'count', task: 'kv.increment', params: { key: 'home:views', amount: '1' } }],
+  output: '{ "views": {{ count.value }} }'
+});
+`;
 
 /**
  * The plugin the copy hosts, and what it is authored with.
  *
  * Asked for here rather than defaulted on in the package: the platform authors a new space from the same
  * declaration and hosts nobody's plugins, so the slot exists only where a project carries the component to fill
- * it. Its attributes are the component's props, by name. A client project serves `public/`, so there the numbers
- * come from a data file through a provider — the way a project with no backend shows data it did not invent.
+ * it. Its attributes are the component's props, by name. Its numbers are never written into the page: a project with
+ * a server counts them (\`${VIEWS_FILE}\`); one with no server shows a sample from a data file it serves, and says so.
  */
 const STAT_CARD = {
   type: 'statCard',
@@ -178,14 +205,18 @@ const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>
   mode === 'client'
     ? {
         ...STAT_CARD,
-        attributes: { label: 'Requests today', unit: 'reqs' },
+        attributes: { label: 'Sample — public/data/stats.json', unit: 'reqs' },
         data: {
           id: 'stats',
           query: '/data/stats.json',
           bind: { value: 'stats.data.value', series: 'stats.data.series' }
         }
       }
-    : { ...STAT_CARD, attributes: { label: 'Requests today', unit: 'reqs', ...STATS } };
+    : {
+        ...STAT_CARD,
+        attributes: { label: 'Page views', unit: 'views' },
+        data: { id: 'views', action: VIEWS_ACTION, bind: { value: 'views.views' } }
+      };
 
 export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   if (answers.source === 'cloud') {
@@ -214,8 +245,8 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
     // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
     ...(answers.mode === 'client'
       ? {
-          'public/data/stats.json': `{\n  "value": ${String(STATS.value)},\n  "series": ${JSON.stringify(STATS.series).replaceAll(',', ', ')}\n}\n`
+          'public/data/stats.json': `{\n  "value": ${String(SAMPLE.value)},\n  "series": ${JSON.stringify(SAMPLE.series).replaceAll(',', ', ')}\n}\n`
         }
-      : {})
+      : { [VIEWS_FILE]: viewsAction() })
   };
 };

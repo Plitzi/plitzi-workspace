@@ -92,11 +92,18 @@ export interface PluginHostOptions {
   /** Written on the element as attributes, which the component receives as props of the same names. */
   attributes: Record<string, unknown>;
   /**
-   * A provider around the plugin, and the props it feeds: `{ id: 'stats', query: '/data/stats.json', bind: { value:
-   * 'stats.data.value' } }`. What a project with no backend shows its data with — a JSON file it serves itself.
+   * A provider around the plugin, and the props it feeds. A `query` is fetched by the browser — `{ id: 'stats', query:
+   * '/data/stats.json', bind: { value: 'stats.data.value' } }`, what a project with no backend shows its data with, a
+   * JSON file it serves itself. An `action` is one of the project's server actions with a `render` trigger, run by the
+   * server as it renders the page — `{ id: 'views', action: 'page-views', bind: { value: 'views.views' } }`.
    */
-  data?: { id: string; query: string; bind: Record<string, string> };
+  data?: PluginHostData;
 }
+
+/** Where a hosted plugin's numbers come from: a file the browser fetches, or an action the server runs. */
+export type PluginHostData = { id: string; bind: Record<string, string> } & (
+  { query: string; action?: never } | { action: string; query?: never }
+);
 
 /** A value as TypeScript source, in this codebase's quotes: what a JSON dump would write, with single quotes. */
 /**
@@ -187,12 +194,16 @@ const hostSource = (plugin: PluginHostOptions, pad: string): string => {
       '})'
     ].join(`\n${inner}`);
 
+  const source =
+    plugin.data?.action !== undefined
+      ? ["  runtime: 'server',", `  action: '${plugin.data.action}',`]
+      : [`  query: '${plugin.data?.query ?? ''}',`, '  cache: true,'];
+
   return plugin.data
     ? [
         'apiContainer({',
         `  id: '${plugin.data.id}',`,
-        `  query: '${plugin.data.query}',`,
-        '  cache: true,',
+        ...source,
         '  children: [',
         `    ${host(`${pad}    `)}`,
         '  ]',
@@ -221,7 +232,8 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
     );
   }
 
-  const fed = plugins.flatMap(plugin => (plugin.data ? [plugin.data.query] : []));
+  const fed = plugins.flatMap(plugin => (plugin.data?.query !== undefined ? [plugin.data.query] : []));
+  const run = plugins.flatMap(plugin => (plugin.data?.action !== undefined ? [plugin.data.action] : []));
   // As deep as the anchor sits: the declaration's own indentation, so the copy reads as written rather than reflowed.
   const indent = /^\s*/.exec(source.split('\n').find(line => line.includes(PLUGIN_ANCHOR)) ?? '')?.[0] ?? '';
   const pad = `${indent}  `;
@@ -238,6 +250,13 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
           `Its numbers come from \`public${fed.join('`, `public')}\`, read by the provider around it like any API: data a`,
           'project with no backend serves itself, rather than figures written into the page.'
         ]
+      : []),
+    ...(run.length > 0
+      ? [
+          '',
+          `Its numbers come from \`${run.join('`, `')}\`, a server action in \`src/actions/\` the server runs as it renders`,
+          'the page: what the project counted, rather than figures written into the page.'
+        ]
       : [])
   ];
   const element = [
@@ -250,7 +269,7 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
     `${indent}]`
   ].join('\n');
 
-  const imports = [...(fed.length > 0 ? ['apiContainer'] : []), 'defineElement'].join(', ');
+  const imports = [...(fed.length + run.length > 0 ? ['apiContainer'] : []), 'defineElement'].join(', ');
 
   return `import { ${imports} } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
 };

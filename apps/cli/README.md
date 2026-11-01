@@ -142,7 +142,10 @@ when an install fails the CLI says which setting names it.
   `custom` element — the one thing about Plitzi a page of built-in elements cannot show. Every folder of
   `src/plugins` is registered by itself, under its name in camelCase, so `plitzi plugin add` is all a new one takes. Its props ARE the
   element's attributes, so a data source pointed at that element later reaches the component with no plumbing in
-  between. Server-rendered in server mode (`action: 'compile'`), part of the bundle in client mode.
+  between. Server-rendered in server mode (`action: 'compile'`), part of the bundle in client mode. Its number is never
+  written into the page: with a server it is the page's views, counted by a server action of the project's
+  (`src/actions/views.ts`, a `render` trigger and `kv.increment`) — a reload is one more; with no server, a sample
+  from `public/data/stats.json`, labelled as one.
 - **A visual test.** The `visual` script starts the project, opens the page and asserts that every element the space
   _names_ is visible — the strongest assertion available about a page nobody hand-wrote, and it needs no upkeep.
 - **Prettier and ESLint**, configured rather than mentioned: type-checked rules, with Prettier owning layout and

@@ -330,6 +330,22 @@ describe('the copy handed to a project', () => {
     expect(hosted).toMatch(/^import \{[^}]*\bapiContainer\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
   });
 
+  it('feeds the plugin from a server action when asked, run as the page renders', () => {
+    const hosted = blankEntry({
+      plugin: {
+        ...STAT_CARD,
+        attributes: { label: 'Page views' },
+        data: { id: 'views', action: 'page-views', bind: { value: 'views.views' } }
+      }
+    });
+
+    expect(hosted).toContain("runtime: 'server',");
+    expect(hosted).toContain("action: 'page-views',");
+    expect(hosted).not.toContain('query:');
+    expect(hosted).toContain('`page-views`, a server action in `src/actions/`');
+    expect(hosted).toMatch(/^import \{[^}]*\bapiContainer\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
+  });
+
   /** Prettier wraps a long import across lines; a rewrite that only reads one-liners would drop the names. */
   it('rewrites an import however it is wrapped', () => {
     const rewritten = toPortableSource(
