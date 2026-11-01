@@ -88,3 +88,18 @@ describe('the step a field changed records', () => {
     expect(changeStep(eventOn(pick(inner, 'input'), 'change'))).toBeUndefined();
   });
 });
+
+// A quake pressed on a map's canvas: played back on the element's centre, the press would land elsewhere.
+describe('a press on a canvas, recorded', () => {
+  it('keeps where in its element it landed, in percent of the element’s box', () => {
+    const inner = canvas('<div data-plitzi-el="map"><canvas></canvas></div>');
+    const map = pick(inner, '[data-plitzi-el="map"]');
+    map.getBoundingClientRect = () => new DOMRect(100, 50, 400, 200);
+    const event = eventOn(pick(inner, 'canvas'), 'click');
+    Object.defineProperty(event, 'clientX', { value: 220 });
+    Object.defineProperty(event, 'clientY', { value: 170 });
+
+    expect(clickStep(event, false)).toEqual({ kind: 'click', element: 'map', point: { x: 30, y: 60 } });
+    expect(clickStep(eventOn(map, 'click'), false)).toEqual({ kind: 'click', element: 'map' });
+  });
+});

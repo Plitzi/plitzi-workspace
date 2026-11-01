@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
+import { e2eStepProblems } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { problem } from './keeperServer';
@@ -81,56 +82,30 @@ const isOutlineAsk = (value: unknown): value is KeptOutlineAsk =>
   typeof value.limit === 'number' &&
   typeof value.words === 'number';
 
-/** A step as `--steps` parses one: its kind, and what that kind takes. */
+/**
+ * A step as `--steps` parses one: a page command's own, its kind and what that kind takes — or a journey's, read as
+ * authoring reads a journey's step wherever it comes from.
+ */
 const isStep = (value: unknown): value is ActingStep => {
   if (!isRecord(value) || typeof value.kind !== 'string') {
     return false;
   }
 
   switch (value.kind) {
-    case 'click':
-    case 'hover':
-      return (
-        typeof value.target === 'string' &&
-        (value.point === undefined ||
-          (isRecord(value.point) && typeof value.point.x === 'number' && typeof value.point.y === 'number'))
-      );
-    case 'scroll':
-      return typeof value.target === 'string';
-    case 'wait-for':
-      return typeof value.target === 'string' && (value.ms === undefined || typeof value.ms === 'number');
-    case 'type':
-      return typeof value.target === 'string' && typeof value.text === 'string';
-    case 'drag':
-      return (
-        typeof value.target === 'string' &&
-        typeof value.dx === 'number' &&
-        typeof value.dy === 'number' &&
-        (value.held === undefined || value.held === true)
-      );
+    case 'hold':
+      return typeof value.element === 'string' && typeof value.dx === 'number' && typeof value.dy === 'number';
     case 'release':
       return true;
-    case 'press':
-      return typeof value.key === 'string';
     case 'wait':
-    case 'tick':
       return typeof value.ms === 'number';
-    // Every step a play takes, the other site's page too: a `goto` there went unread as "not a step".
-    case 'reload':
-    case 'back':
-      return true;
-    case 'goto':
-      return typeof value.path === 'string';
     case 'store':
       return typeof value.key === 'string' && typeof value.value === 'string';
-    case 'state':
-    case 'source':
     case 'attribute':
       return typeof value.key === 'string' && 'value' in value;
     case 'clock':
       return typeof value.time === 'number';
     default:
-      return false;
+      return e2eStepProblems(value, 'step').length === 0;
   }
 };
 

@@ -78,16 +78,30 @@ export interface UnitTest {
  */
 export type E2eTarget = string;
 
+/**
+ * A point of an element's box, in percent from its top left — `{ x: 30, y: 60 }`: what a canvas draws (a quake on a map)
+ * has no element of its own to press.
+ */
+export interface E2ePoint {
+  x: number;
+  y: number;
+}
+
 /** What a visitor does, one step of an e2e test. */
 export type E2eAction =
-  | { kind: 'click'; element: E2eTarget }
-  | { kind: 'hover'; element: E2eTarget }
+  /** A press on its centre, or on a point of its box. */
+  | { kind: 'click'; element: E2eTarget; point?: E2ePoint }
+  /** The pointer put over it, and left there. */
+  | { kind: 'hover'; element: E2eTarget; point?: E2ePoint }
+  /** Typed into the field it is or holds, in place of what the field held — a select chosen, a date set. */
   | { kind: 'type'; element: E2eTarget; text: string }
   /** A key or a combination, as a keyboard names it: `Enter`, `Meta+k`. */
   | { kind: 'press'; key: string }
+  /** Brought into view, as a reader scrolling to it; with `dx`/`dy`, its own content scrolled by so many pixels. */
   | { kind: 'scroll'; element: E2eTarget; dx?: number; dy?: number }
+  /** Pressed, moved by so many pixels (negative: left, up) and let go — a slider's handle. */
   | { kind: 'drag'; element: E2eTarget; dx: number; dy: number }
-  /** Until the element shows — at most `ms` (5 s). */
+  /** Until the element shows — at most `ms` (10 s), up to 60 s. */
   | { kind: 'waitFor'; element: E2eTarget; ms?: number }
   /** A path of the space's own: `/menu`. */
   | { kind: 'goto'; path: string }

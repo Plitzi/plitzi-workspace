@@ -1,4 +1,4 @@
-import type { E2eStep } from '@plitzi/sdk-shared';
+import type { E2ePoint, E2eStep } from '@plitzi/sdk-shared';
 
 // The canvas is an iframe: its nodes are not instances of this window's `Element`, so they are told by their node type.
 const isElement = (target: EventTarget | null): target is Element =>
@@ -28,7 +28,30 @@ export const targetOfEvent = (event: Event): string | undefined => {
 export const shownTextOf = (event: Event): string =>
   (spaceElementOf(event)?.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
-/** The step a click is: a press — or, while checking, what the element shows. */
+/**
+ * Where in its element a press on a canvas landed, in percent of the element's box: what a canvas draws — a quake on a
+ * map — has no element of its own, and a press played on the centre would miss it. None for a press on anything else.
+ */
+const canvasPointOf = (event: Event): E2ePoint | undefined => {
+  const node = spaceElementOf(event);
+  if (!node || !isElement(event.target) || event.target.localName !== 'canvas' || !('clientX' in event)) {
+    return undefined;
+  }
+
+  const box = node.getBoundingClientRect();
+  const x: unknown = Reflect.get(event, 'clientX');
+  const y: unknown = Reflect.get(event, 'clientY');
+  if (typeof x !== 'number' || typeof y !== 'number' || box.width === 0 || box.height === 0) {
+    return undefined;
+  }
+
+  const percent = (at: number, from: number, size: number): number =>
+    Math.min(100, Math.max(0, Math.round(((at - from) / size) * 1000) / 10));
+
+  return { x: percent(x, box.left, box.width), y: percent(y, box.top, box.height) };
+};
+
+/** The step a click is: a press — on a canvas, at the point it landed — or, while checking, what the element shows. */
 export const clickStep = (event: Event, checking: boolean): E2eStep | undefined => {
   const element = targetOfEvent(event);
   if (element === undefined) {
@@ -36,7 +59,9 @@ export const clickStep = (event: Event, checking: boolean): E2eStep | undefined 
   }
 
   if (!checking) {
-    return { kind: 'click', element };
+    const point = canvasPointOf(event);
+
+    return { kind: 'click', element, ...(point ? { point } : {}) };
   }
 
   const text = shownTextOf(event);

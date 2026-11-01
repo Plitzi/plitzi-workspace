@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { FIELD } from '@plitzi/sdk-authoring';
-
-import {
-  actingSteps,
-  actStep,
-  endsActing,
-  focusField,
-  interactionSteps,
-  playedOn,
-  sizeChange,
-  stepText,
-  typedKeys
-} from './steps';
+import { actingSteps, actStep, endsActing, interactionSteps, playedOn, sizeChange, stepText } from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -214,72 +202,35 @@ describe('the steps a page is read after', () => {
   });
 });
 
-// A tester waited for a state three tries of ten seconds bring with chained fixed waits: a wait-for gave up at 10 s.
-describe('a wait-for step played', () => {
-  it('waits as long as it says, 10 s when it says nothing', async () => {
-    const waited: { selector: string; timeout: number | undefined }[] = [];
-    const fake = {
-      waitForSelector: (selector: string, options?: { timeout?: number }) => {
-        waited.push({ selector, timeout: options?.timeout });
-
-        return Promise.resolve();
-      }
-    };
-    // The fake answers what this step calls of a page, and nothing else a page has.
-    const page = fake as unknown as BrowserPage;
-
-    await actStep(page, { kind: 'wait-for', target: '[data-state="stalled"]', ms: 40_000 }, 0);
-    await actStep(page, { kind: 'wait-for', target: '[data-state="stalled"]' }, 1);
-
-    expect(waited.map(each => each.timeout)).toEqual([40_000, 10_000]);
-  });
-});
-
 // A designer approved a list it had only seen empty: nothing put a provider's answer on the page to see it filled.
 describe('a source step played', () => {
-  const pageRunning = { evaluate: <R, A>(fn: (input: A) => R, input: A) => Promise.resolve(fn(input)) };
-  // Only evaluate is reached by a source step.
+  const pageRunning = {
+    url: () => 'http://127.0.0.1:8080/',
+    evaluate: <R, A>(fn: (input: A) => R, input: A) => Promise.resolve(fn(input))
+  };
+  // Only its address and evaluate are reached by a source step.
   const page = pageRunning as unknown as BrowserPage;
-  const step: ActingStep = { kind: 'source', key: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] };
+  const step: ActingStep = { kind: 'setSource', path: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] };
 
   it('writes the provider’s answer through the dev tools, and says a source no provider holds, or no dev tools', async () => {
+    // jsdom runs no animation and has none to list: the page as settling reads it once the source is written.
+    document.getAnimations = () => [];
     const setSource = vi.fn((path: string) => path.startsWith('apiContainer_chart.'));
     Reflect.set(window, '__plitzi', { setSource });
     try {
       expect(await actStep(page, step, 0)).toBeUndefined();
       expect(setSource).toHaveBeenCalledWith('apiContainer_chart.clapped', [{ title: 'Night Drive' }]);
 
-      expect(await actStep(page, { kind: 'source', key: 'apiContainer_none.items', value: [] }, 1)).toEqual({
-        problem: expect.stringContaining('no provider on the page holds a source named apiContainer_none') as unknown
+      expect(await actStep(page, { kind: 'setSource', path: 'apiContainer_none.items', value: [] }, 1)).toEqual({
+        problem: expect.stringContaining('no source of the page is apiContainer_none.items') as unknown
       });
     } finally {
       Reflect.deleteProperty(window, '__plitzi');
     }
 
     expect(await actStep(page, step, 0)).toEqual({
-      problem: expect.stringContaining('no window.__plitzi.setSource') as unknown
+      problem: expect.stringContaining('the page has no window.__plitzi') as unknown
     });
-  });
-});
-
-// A tester's `fill room-rules-remove-at ''` left the number field at 5, said as typed: nothing was typed over it.
-describe('a field typed into', () => {
-  it('replaces what it held — and an empty text empties it', () => {
-    expect(typedKeys('8')).toEqual([{ press: 'ControlOrMeta+A' }, { type: '8' }]);
-    expect(typedKeys('')).toEqual([{ press: 'ControlOrMeta+A' }, { press: 'Backspace' }]);
-  });
-
-  // A run's look timed out clicking a search field in a sheet still sliding in; the task's check, filling it, passed.
-  it('is focused as it is, or as the form control around it holds it — never clicked, and none is said', () => {
-    document.body.innerHTML =
-      '<input id="search"><div id="control"><label>Name</label><input id="inside"></div><div id="box"></div>';
-    const of = (id: string) => document.getElementById(id) ?? document.body;
-
-    expect(focusField(of('search'), FIELD)).toBe(true);
-    expect(document.activeElement?.id).toBe('search');
-    expect(focusField(of('control'), FIELD)).toBe(true);
-    expect(document.activeElement?.id).toBe('inside');
-    expect(focusField(of('box'), FIELD)).toBe(false);
   });
 });
 
@@ -287,13 +238,20 @@ describe('a field typed into', () => {
 // then compared nothing.
 describe('a step that never answers, played before a page is read', () => {
   it('is a step that did not happen, said in a line', async () => {
+    // Its element found, and never read: the page's driver gave up on it.
+    const element = {
+      count: () => Promise.resolve(1),
+      boundingBox: () => Promise.resolve({ x: 0, y: 0, width: 10, height: 10 }),
+      evaluate: () => Promise.reject(new Error('Timeout 10000ms exceeded.\n  waiting for locator'))
+    };
     const fake = {
-      waitForSelector: () => Promise.reject(new Error('Timeout 10000ms exceeded.\n  waiting for locator'))
+      url: () => 'http://127.0.0.1:8080/',
+      locator: () => ({ ...element, first: () => element, nth: () => element })
     };
     // The fake answers what this step calls of a page, and nothing else a page has.
     const page = fake as unknown as BrowserPage;
 
-    expect(await playedOn(page, [{ kind: 'wait-for', target: '#size-wall' }])).toEqual({
+    expect(await playedOn(page, [{ kind: 'waitFor', element: '#size-wall' }])).toEqual({
       problem: 'Step 1 (wait-for #size-wall) did not happen: Timeout 10000ms exceeded.'
     });
   });
@@ -330,12 +288,10 @@ describe('a press on a page that has not hydrated', () => {
     };
 
     // The fake answers what a press asks of a page before it plays, and nothing else a page has.
-    const done = await actStep(page as unknown as BrowserPage, { kind: 'click', target: 'layer-quakes' }, 0);
+    const done = await actStep(page as unknown as BrowserPage, { kind: 'click', element: 'layer-quakes' }, 0);
 
     expect(done).toEqual({
-      problem: expect.stringContaining(
-        'Step 1 (click layer-quakes) was not played: the page had not hydrated'
-      ) as unknown
+      problem: expect.stringContaining('Step 1 (click layer-quakes): not played: the page had not hydrated') as unknown
     });
   });
 });
@@ -366,11 +322,11 @@ describe('a click on a name several copies carry', () => {
   };
 
   it('says which it pressed, and how to name another', async () => {
-    expect(await actStep(pageWith(3), { kind: 'click', target: 'section-header-root' }, 0)).toEqual({
+    expect(await actStep(pageWith(3), { kind: 'click', element: 'section-header-root' }, 0)).toEqual({
       answer:
         'section-header-root is on the page 3 times: this pressed the first a visitor sees — section-header-root:2 … section-header-root:last names another'
     });
-    expect(await actStep(pageWith(1), { kind: 'click', target: 'section-header-root' }, 0)).toBeUndefined();
+    expect(await actStep(pageWith(1), { kind: 'click', element: 'section-header-root' }, 0)).toBeUndefined();
   });
 });
 
@@ -413,13 +369,13 @@ describe('a drag held, and let go', () => {
 
   it('keeps the finger down until a release, and lets a plain drag go', async () => {
     const held = pageRecording();
-    await actStep(held.page, { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120, held: true }, 0);
+    await actStep(held.page, { kind: 'hold', element: 'sheet-handle', dx: 0, dy: -120 }, 0);
     expect(held.pointer).toEqual(['move', 'down', 'move']);
     await actStep(held.page, { kind: 'release' }, 1);
     expect(held.pointer.at(-1)).toBe('up');
 
     const plain = pageRecording();
-    await actStep(plain.page, { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120 }, 0);
+    await actStep(plain.page, { kind: 'drag', element: 'sheet-handle', dx: 0, dy: -120 }, 0);
     expect(plain.pointer).toEqual(['move', 'down', 'move', 'up']);
   });
 });

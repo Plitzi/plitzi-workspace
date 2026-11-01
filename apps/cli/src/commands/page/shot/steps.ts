@@ -1,10 +1,10 @@
 import {
-  answered,
+  bridge,
   comparePictures,
   dragElement,
-  FIELD,
-  giveValue,
+  e2eStepText,
   hiddenAtWidth,
+  playE2eStep,
   pressFailure,
   pressOnce,
   settle,
@@ -12,13 +12,12 @@ import {
 } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { awaited, capture, targetOn } from './capture';
+import { capture, targetOn } from './capture';
 import { notOnPageText } from './notOnPage';
 import { outsideClip, screenNow, shotNow, shotsCompared } from './scriptShots';
 import { dataUrl } from '../../../browser';
 import { clockHeld } from '../../../browser/conditions';
 import { projectRun } from '../../../scaffold/packageManager';
-import { awaitHydration } from '../hydration';
 import { hiddenWhyInPage } from '../measureOn';
 import { parseSteps, widthRangeText } from '../shotSteps';
 
@@ -27,6 +26,7 @@ import type { ShotStep } from '../shotSteps';
 import type { ScriptShot } from './scriptShots';
 import type { Framing, Moment, Taken } from './types';
 import type { Visitors } from './visitors';
+import type { Located } from '@plitzi/sdk-authoring';
 import type { ActionRunStatus } from '@plitzi/sdk-shared';
 
 /**
@@ -158,69 +158,21 @@ export const interactionSteps = (
       ].join('; ')
     : undefined;
 
-/**
- * Runs in the page: the field a `type` step writes in — the element, or the first field inside it, as a form control
- * draws its input — given the focus, and whether it took it. Self-contained — it is serialised.
- */
-export const focusField = (node: Element, field: string): boolean => {
-  const target = node.matches(field) ? node : node.querySelector(field);
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  target.focus();
-
-  return document.activeElement === target;
-};
-
-/**
- * The keys a `type` step presses: what the field held selected first, as a person does — typed after it, a price field
- * kept its old amount too — then the text, or, with none (`fill rate ''`), the selection deleted: a run's tester read
- * a number field emptied that still held its 5, the step said as typed.
- */
-export const typedKeys = (text: string): ({ press: string } | { type: string })[] => [
-  { press: 'ControlOrMeta+A' },
-  text === '' ? { press: 'Backspace' } : { type: text }
-];
-
-/** What a step is, as its label and `page play` say it. */
+/** What a step is, as its label and `page play` say it: a journey's in its words, a page command's own its way. */
 export const stepText = (step: ShotStep): string => {
   switch (step.kind) {
-    case 'click':
-    case 'hover':
-      return `${step.kind} ${step.target}${step.point ? ` ${String(step.point.x)}%,${String(step.point.y)}%` : ''}`;
-    case 'wait-for':
-      return `wait-for ${step.target}${step.ms === undefined ? '' : ` ${String(step.ms)} ms`}`;
-    case 'scroll':
-      return step.by ? `scroll ${step.target} ${String(step.by.dx)} ${String(step.by.dy)}` : `scroll ${step.target}`;
-    case 'type':
-      return `type ${step.target}`;
-    case 'drag':
-      return `drag ${step.target} ${String(step.dx)} ${String(step.dy)}${step.held ? ' hold' : ''}`;
+    case 'hold':
+      return `drag ${step.element} ${String(step.dx)} ${String(step.dy)} hold`;
     case 'release':
       return 'release';
-    case 'press':
-      return `press ${step.key}`;
     case 'wait':
       return `wait ${String(step.ms)} ms`;
-    case 'reload':
-      return 'reload';
-    case 'back':
-      return 'back';
-    case 'goto':
-      return `goto ${step.path}`;
     case 'store':
       return `store ${step.key}`;
-    case 'state':
-      return `state ${step.key}`;
-    case 'source':
-      return `source ${step.key}`;
     case 'attribute':
       return `attribute ${step.key}`;
     case 'clock':
       return `clock ${new Date(step.time).toISOString()}`;
-    case 'tick':
-      return `tick ${String(step.ms)} ms`;
     case 'shot':
       return step.label ?? 'shot';
     case 'frames':
@@ -231,10 +183,12 @@ export const stepText = (step: ShotStep): string => {
       return `as ${step.account}: ${stepText(step.step)}`;
     case 'at':
       return `at ${widthRangeText(step.width)} ${stepText(step.step)}`;
+    default:
+      return e2eStepText(step);
   }
 };
 
-/** A step that acts on the page — every one but a picture: a press, a hover, a key, a wait. */
+/** A step that acts on the page — every one but a picture: a press, a hover, a key, a wait, what must hold. */
 export type ActingStep = Exclude<ShotStep, { kind: 'shot' } | { kind: 'frames' }>;
 
 /** A run that did what it was asked: a skipped or aborted one put nothing in the state a play needs. */
@@ -301,23 +255,27 @@ const runAction = async (
   };
 };
 
-/** The steps a visitor plays with a press of theirs, which a page that has not hydrated drops. */
-const PRESSES: ReadonlySet<ActingStep['kind']> = new Set(['click', 'hover', 'scroll', 'type', 'drag', 'press']);
+/**
+ * Where a step's element is, as a journey's player reads it — a CSS selector and the copy — from what a page command
+ * names: an element's name, a tag, a selector, a row (`room-card:2`), a section (`section#plans`).
+ */
+const locateOn = async (page: BrowserPage, target: string): Promise<Located | { problem: string }> => {
+  const read = await targetOn(page, target);
+  if ('problem' in read) {
+    return read;
+  }
 
-/** A page a step loaded, hydrated before what follows reads or presses it — or the step said as not done. */
-const hydratedAfter = async (
-  page: BrowserPage,
-  step: ActingStep,
-  index: number
-): Promise<{ problem: string } | undefined> => {
-  const late = await awaitHydration(page);
+  const nth = /^(.*) >> nth=(-?\d+)$/.exec(read.selector);
 
-  return late === undefined ? undefined : { problem: `Step ${String(index + 1)} (${stepText(step)}): ${late}` };
+  return nth
+    ? { selector: nth[1], copy: Number(nth[2]) < 0 ? 'last' : Number(nth[2]) + 1 }
+    : { selector: read.selector, copy: undefined };
 };
 
 /**
  * One step played on a page — what `--steps` does between its pictures, and `page play` on each page it plays on — or
- * what kept it from happening, said by its step. `visitors` holds the other accounts' pages a step `as` one plays on.
+ * what kept it from happening, said by its step. A journey's step is played as `@plitzi/sdk-authoring` plays a journey;
+ * a page command's own here. `visitors` holds the other accounts' pages a step `as` one plays on.
  */
 export const actStep = async (
   page: BrowserPage,
@@ -325,300 +283,128 @@ export const actStep = async (
   index: number,
   visitors?: Visitors
 ): Promise<{ problem: string } | { answer: string; output?: unknown } | undefined> => {
-  if (step.kind === 'as') {
-    const theirs = visitors
-      ? await visitors.pageOf(step.account, `${new URL(page.url()).pathname}${new URL(page.url()).search}`)
-      : { problem: 'another account plays only against the project’s own server' };
-    if ('problem' in theirs) {
-      return { problem: `Step ${String(index + 1)}: ${theirs.problem}` };
-    }
-
-    const done = await actStep(theirs, step.step, index);
-    if (done !== undefined && 'problem' in done) {
-      return { problem: `${done.problem} (as ${step.account})` };
-    }
-
-    // What it did reaches this page through the server — a message, a count: given the moment it takes.
-    await settle(page);
-
-    return done;
-  }
-
-  // Played at the widths it names, passed over at the others — said, for whoever reads the steps one by one.
-  if (step.kind === 'at') {
-    const width = await page.evaluate(() => window.innerWidth, undefined);
-
-    return width >= step.width.min && width <= step.width.max
-      ? actStep(page, step.step, index, visitors)
-      : { answer: `not played at ${String(width)} px — at ${widthRangeText(step.width)} only` };
-  }
-
-  if (step.kind === 'action') {
-    const ran = await runAction(page, step.action, step.input, step.render === true);
-
-    return 'refused' in ran ? { problem: `Step ${String(index + 1)}: ${ran.refused}` } : ran;
-  }
-
-  // The finger a `drag … hold` kept down, let go where it is.
-  if (step.kind === 'release') {
-    await page.mouse.up();
-
-    return undefined;
-  }
-
-  if (PRESSES.has(step.kind)) {
-    const late = await awaitHydration(page);
-    if (late !== undefined) {
-      return { problem: `Step ${String(index + 1)} (${stepText(step)}) was not played: ${late}` };
-    }
-  }
-
-  if (
-    step.kind === 'click' ||
-    step.kind === 'hover' ||
-    step.kind === 'scroll' ||
-    step.kind === 'type' ||
-    step.kind === 'drag'
-  ) {
-    const read = await targetOn(page, step.target);
-    if ('problem' in read || !read.found) {
-      return {
-        problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — ${await notOnPageText(page, step.target, 'a step before it')}; a selector with spaces is written in quotes: type ".panel textarea" hola`}.`
-      };
-    }
-
-    // The copy a visitor sees — a page drawing a control per width hides the other; on the page and drawn nowhere at
-    // this width, said at its own step, where a run's dev-1 saw the step pass and the next one fail on what it should
-    // have opened. The engine's choice, as a journey's step makes it.
-    const found = await shownCopy(page, read.selector);
-    if (!('element' in found)) {
-      return {
-        problem: `Step ${String(index + 1)}: ${'hidden' in found ? hiddenAtWidth(step.target, step.kind) : `${step.target} is not on the page any more`}`
-      };
-    }
-
-    const { element, copies } = found;
-    // The same copy, for what only a browser driver does to it: brought into view, read in place.
-    const shown = page.locator(read.selector).nth(found.at);
-
-    // A select is chosen and a date set, not typed into: the element named, or the one inside it a `formControl` wraps.
-    if (step.kind === 'type' && (await giveValue(page, read.selector, step.text))) {
-      return undefined;
-    }
-
-    // A point of its box, in px from its top left as the driver takes it: inside the box, its far edge included.
-    const point = step.kind === 'click' || step.kind === 'hover' ? step.point : undefined;
-    const box = point ? await element.boundingBox() : null;
-    const position =
-      box && point
-        ? {
-            position: {
-              x: Math.min(Math.max(0, box.width - 1), (box.width * point.x) / 100),
-              y: Math.min(Math.max(0, box.height - 1), (box.height * point.y) / 100)
-            }
-          }
-        : {};
-
-    if (step.kind === 'hover') {
-      await pressOnce(page, () => element.hover({ timeout: 3000, ...position }));
-      return undefined;
-    }
-
-    // Brought into view as a reader scrolling to it would: a hover was how design-1 reached the footer.
-    if (step.kind === 'scroll' && !step.by) {
-      await shown.scrollIntoViewIfNeeded({ timeout: 3000 });
-      return undefined;
-    }
-
-    // Its own content scrolled by so much — a row across, a list within its box — and said when it did not move: a
-    // box whose content fits, or one that scrolls the other way.
-    if (step.kind === 'scroll' && step.by) {
-      await shown.scrollIntoViewIfNeeded({ timeout: 3000 });
-      const moved = await shown.evaluate((node, by: { dx: number; dy: number }) => {
-        const [left, top] = [node.scrollLeft, node.scrollTop];
-        node.scrollBy({ left: by.dx, top: by.dy, behavior: 'instant' });
-
-        return {
-          moved: node.scrollLeft !== left || node.scrollTop !== top,
-          across: node.scrollWidth - node.clientWidth,
-          down: node.scrollHeight - node.clientHeight
-        };
-      }, step.by);
-      if (!moved.moved) {
-        return {
-          problem: `Step ${String(index + 1)}: ${step.target} did not scroll — ${moved.across <= 0 && moved.down <= 0 ? 'its content fits its box, so nothing in it scrolls (the row that scrolls may be one inside it)' : `it scrolls ${String(Math.max(0, moved.across))} px across and ${String(Math.max(0, moved.down))} px down at most, and was at that end already`}`
-        };
+  const failed = (why: string): { problem: string } => ({ problem: `Step ${String(index + 1)}: ${why}` });
+  switch (step.kind) {
+    case 'as': {
+      const theirs = visitors
+        ? await visitors.pageOf(step.account, `${new URL(page.url()).pathname}${new URL(page.url()).search}`)
+        : { problem: 'another account plays only against the project’s own server' };
+      if ('problem' in theirs) {
+        return failed(theirs.problem);
       }
 
-      return undefined;
-    }
+      const done = await actStep(theirs, step.step, index);
+      if (done !== undefined && 'problem' in done) {
+        return { problem: `${done.problem} (as ${step.account})` };
+      }
 
-    // Held: the finger stays down for what follows to read the page mid-drag, until a `release` or the page closes.
-    if (step.kind === 'drag') {
-      const why = await dragElement(page, element, read.selector, {
-        dx: step.dx,
-        dy: step.dy,
-        held: step.held === true
+      // What it did reaches this page through the server — a message, a count: given the moment it takes.
+      await settle(page);
+
+      return done;
+    }
+    // Played at the widths it names, passed over at the others — said, for whoever reads the steps one by one.
+    case 'at': {
+      const width = await page.evaluate(() => window.innerWidth, undefined);
+
+      return width >= step.width.min && width <= step.width.max
+        ? actStep(page, step.step, index, visitors)
+        : { answer: `not played at ${String(width)} px — at ${widthRangeText(step.width)} only` };
+    }
+    case 'action': {
+      const ran = await runAction(page, step.action, step.input, step.render === true);
+
+      return 'refused' in ran ? failed(ran.refused) : ran;
+    }
+    // The finger a `drag … hold` kept down, let go where it is.
+    case 'release':
+      await page.mouse.up();
+
+      return undefined;
+    // Kept down, for what follows to read the page mid-drag, until a `release` or the page closes.
+    case 'hold': {
+      const where = await locateOn(page, step.element);
+      const found = 'problem' in where ? where : await shownCopy(page, where.selector, where.copy);
+      if ('problem' in found || 'absent' in found) {
+        return failed('problem' in found ? found.problem : `${step.element} is not on the page`);
+      }
+
+      if ('hidden' in found) {
+        return failed(hiddenAtWidth(step.element, 'drag'));
+      }
+
+      const why =
+        'problem' in where
+          ? undefined
+          : await dragElement(page, found.element, where.selector, { dx: step.dx, dy: step.dy, held: true });
+
+      return why === undefined ? undefined : failed(`${step.element}: ${why}`);
+    }
+    case 'wait':
+      await page.waitForTimeout(step.ms);
+
+      return undefined;
+    case 'store': {
+      const stored = await page.evaluate(
+        ({ key, value }: { key: string; value: string }) => {
+          try {
+            localStorage.setItem(key, value);
+
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { key: step.key, value: step.value }
+      );
+
+      return stored ? undefined : failed("the page's localStorage refused the value — its storage is blocked");
+    }
+    case 'attribute': {
+      const written = await bridge(page, { method: 'setAttribute', args: [step.key, step.value] });
+      if (written === 'none') {
+        return failed(
+          `the page has no window.__plitzi.setAttribute to write it with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
+        );
+      }
+
+      if (isRecord(written.answer) && typeof written.answer.refused === 'string') {
+        return failed(written.answer.refused);
+      }
+
+      return written.answer === false
+        ? failed(
+            `no element of the page is ${step.key.split('.')[0] ?? step.key} — an attribute is written by its element's id: map.storms`
+          )
+        : undefined;
+    }
+    case 'clock':
+      if (!clockHeld(page)) {
+        return failed(
+          "it sets the page's clock, and nothing holds it — give the command --clock <instant> (2026-10-25T20:00:00Z), the clock the page starts with"
+        );
+      }
+
+      await page.clock.setSystemTime(step.time);
+
+      return undefined;
+    default: {
+      // A journey's step, played as a journey plays it: its element named the way this command names one.
+      const done = await playE2eStep(page, step, {
+        origin: new URL(page.url()).origin,
+        clockHeld: clockHeld(page),
+        locate: target => locateOn(page, target),
+        notOnPage: async target =>
+          `${await notOnPageText(page, target, 'a step before it')}; a selector with spaces is written in quotes: type ".panel textarea" hola`
       });
 
-      return why === undefined ? undefined : { problem: `Step ${String(index + 1)}: ${step.target}: ${why}` };
+      return done === undefined
+        ? undefined
+        : 'problem' in done
+          ? { problem: `Step ${String(index + 1)} (${stepText(step)}): ${done.problem}` }
+          : { answer: done.note };
     }
-
-    // A click's answer from the server landed before what follows reads the page: a key lit by a vote's answer.
-    const from = page.url();
-    try {
-      // A field is typed into once it has the focus, as a journey fills it — never waiting for it to be still or
-      // uncovered, which a click does: a run's look timed out typing in a sheet still sliding in, where the task's
-      // check of the same steps passed.
-      const focused = step.kind === 'type' && (await shown.evaluate(focusField, FIELD));
-      if (!focused) {
-        await (step.kind === 'click'
-          ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000, ...position })))
-          : pressOnce(page, () => element.click({ timeout: 3000 })));
-      }
-    } catch (error) {
-      // A click that took the page elsewhere did what it was for — what follows reads the page it went to (a run's
-      // dev-1 read a plain locator timeout, with nothing of the navigation in it).
-      if (page.url() !== from) {
-        return undefined;
-      }
-
-      throw error;
-    }
-    // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
-    if (step.kind === 'type') {
-      const editable = await page.evaluate(() => {
-        const focused = document.activeElement;
-
-        return (
-          focused instanceof HTMLElement && (focused.isContentEditable || focused.matches('input, textarea, select'))
-        );
-      }, undefined);
-      if (!editable) {
-        return {
-          problem: `Step ${String(index + 1)}: clicking ${step.target} leaves no field focused, so the text would go to the page itself — name the field: type ".panel textarea" hola`
-        };
-      }
-
-      for (const key of typedKeys(step.text)) {
-        await ('press' in key ? page.keyboard.press(key.press) : page.keyboard.type(key.type));
-      }
-    }
-
-    if (copies > 1) {
-      return {
-        answer: `${step.target} is on the page ${String(copies)} times: this pressed the first a visitor sees — ${step.target}:2 … ${step.target}:last names another`
-      };
-    }
-  } else if (step.kind === 'press') {
-    await page.keyboard.press(step.key);
-  } else if (step.kind === 'wait') {
-    await page.waitForTimeout(step.ms);
-  } else if (step.kind === 'reload') {
-    await page.reload({ waitUntil: 'load' });
-
-    return hydratedAfter(page, step, index);
-  } else if (step.kind === 'back') {
-    await page.goBack({ waitUntil: 'load' });
-
-    return hydratedAfter(page, step, index);
-  } else if (step.kind === 'goto') {
-    // Its path on the page's own site: a play beside another site goes to that site's page of it.
-    await page.goto(new URL(step.path, page.url()).href, { waitUntil: 'load' });
-
-    return hydratedAfter(page, step, index);
-  } else if (step.kind === 'store') {
-    const stored = await page.evaluate(
-      ({ key, value }: { key: string; value: string }) => {
-        try {
-          localStorage.setItem(key, value);
-
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { key: step.key, value: step.value }
-    );
-    if (!stored) {
-      return {
-        problem: `Step ${String(index + 1)}: the page's localStorage refused the value — its storage is blocked`
-      };
-    }
-  } else if (step.kind === 'state' || step.kind === 'source' || step.kind === 'attribute') {
-    const written = await page.evaluate(
-      ({
-        method,
-        key,
-        value
-      }: {
-        method: string;
-        key: string;
-        value: unknown;
-      }): 'no-inspector' | 'unheld' | { written: string } | { refused: string } => {
-        const inspector: unknown = Reflect.get(window, '__plitzi');
-        const write: unknown =
-          typeof inspector === 'object' && inspector !== null ? Reflect.get(inspector, method) : undefined;
-        if (typeof write !== 'function') {
-          return 'no-inspector';
-        }
-
-        // setSource says the source it wrote, or false when no store holds it; setState writes whatever key it is given.
-        const done: unknown = Reflect.apply(write, inspector, [key, value]);
-
-        // A write the page would not draw — an attribute a binding gives, a list row's item — refused, with why.
-        if (typeof done === 'object' && done !== null && typeof Reflect.get(done, 'refused') === 'string') {
-          return { refused: String(Reflect.get(done, 'refused')) };
-        }
-
-        return done === false ? 'unheld' : { written: typeof done === 'string' ? done : (key.split('.')[0] ?? key) };
-      },
-      {
-        method: step.kind === 'state' ? 'setState' : step.kind === 'source' ? 'setSource' : 'setAttribute',
-        key: step.key,
-        value: step.value
-      }
-    );
-    if (written === 'no-inspector') {
-      return {
-        problem: `Step ${String(index + 1)}: the page has no window.__plitzi${step.kind === 'source' ? '.setSource' : step.kind === 'attribute' ? '.setAttribute' : ''} to write its ${step.kind} with — the SDK's dev tools put it there on a development page (${projectRun('start:dev')}, debug mode)`
-      };
-    }
-
-    if (typeof written === 'object' && 'refused' in written) {
-      return { problem: `Step ${String(index + 1)}: ${written.refused}` };
-    }
-
-    const [name = step.key] = step.key.split('.');
-    if (written === 'unheld' && step.kind === 'attribute') {
-      return {
-        problem: `Step ${String(index + 1)}: no element of the page is ${name} — its attribute is written on an element of the space by its id`
-      };
-    }
-
-    if (written === 'unheld') {
-      return {
-        problem: `Step ${String(index + 1)}: no provider on the page holds a source named ${name}, nor one of an element by that id — page check --state lists those it has`
-      };
-    }
-
-    // Written by its element's id: the source's own name said, as a binding reads it.
-    if (step.kind === 'source' && written.written !== name) {
-      return { answer: `${name} is the element: its source is ${written.written} — written there` };
-    }
-  } else if (step.kind === 'clock' || step.kind === 'tick') {
-    if (!clockHeld(page)) {
-      return {
-        problem: `Step ${String(index + 1)}: ${step.kind} moves the page's clock, and nothing holds it — give the command --clock <instant> (2026-10-25T20:00:00Z), the clock the page starts with`
-      };
-    }
-
-    await (step.kind === 'clock' ? page.clock.setSystemTime(step.time) : page.clock.runFor(step.ms));
-  } else {
-    await page.waitForSelector(awaited(step.target), { timeout: step.ms ?? 10_000 });
   }
-
-  return undefined;
 };
 
 /**

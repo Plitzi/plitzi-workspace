@@ -12,6 +12,7 @@ const pageAsked = () => {
   const routes: { matcher: (url: URL) => boolean; handler: (route: PageRoute) => Promise<void> }[] = [];
   const install = vi.fn(() => Promise.resolve());
   const fake = {
+    url: () => 'http://127.0.0.1:8080/',
     clock: { install, runFor: vi.fn(() => Promise.resolve()), setSystemTime: vi.fn(() => Promise.resolve()) },
     addInitScript: (script: () => void) => {
       scripts.push(script);
@@ -98,7 +99,7 @@ describe('the browser a page is read in', () => {
     const { page } = pageAsked();
 
     expect(await actStep(page, { kind: 'tick', ms: 60_000 }, 0)).toEqual({
-      problem: expect.stringContaining('give the command --clock <instant>') as unknown
+      problem: expect.stringContaining('--clock <instant>') as unknown
     });
   });
 });

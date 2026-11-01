@@ -55,23 +55,33 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
   problem as the warning `test-unreadable`, so a test the space no longer answers is said wherever the space was
   changed.
 - **Played**: `runE2eTest` takes the page structurally (`E2ePage`): Playwright's page, or the builder's canvas
-  (`CanvasPage`). It holds the CLI's lessons:
-  - a press waits for hydration and is made once (`pressOnce`);
+  (`CanvasPage`). Each step is played by `playE2eStep` (`testing/e2e/play.ts`), the one player of a journey's step
+  wherever it comes from, which holds the CLI's lessons:
+  - a press waits for hydration and is made once (`pressOnce`); a click that takes the page elsewhere did its work;
   - its failure is said from Playwright's log (`pressFailure`);
   - the page settles between actions;
-  - an expectation is retried for its time;
-  - a press acts on the copy a visitor sees (`shownCopy`): the first shown, or the one named (`id:2`, `id:last`); one
-    on the page and shown nowhere at this width is said so (`hiddenAtWidth`), apart from one not on the page;
-  - `type` writes in the field inside the element (`locateField`); a select is chosen from, and a date, a time, a
-    colour or a range set whole (`giveValue`);
+  - an expectation is retried for its time, and says what it read;
+  - a press acts on the copy a visitor sees (`shownCopy`): the first shown, or the one named (`id:2`, `id:last`), and
+    says when the name matched several; one on the page and shown nowhere at this width is said so (`hiddenAtWidth`),
+    apart from one not on the page;
+  - a click or a hover lands on the element's centre, or on `point` — percent of its box, a marker a canvas draws;
+  - `type` replaces what the field inside the element held (`fieldsOf`); a select is chosen from, and a date, a time,
+    a colour or a range set whole (`giveValue`);
+  - `scroll` brings the element into view, or with `dx`/`dy` scrolls its own content (and says when it did not move);
+    `waitFor` waits 10 s unless it says (up to 60 s);
   - a drag presses a range at its thumb (`dragElement`); a click waits for what it asked the server (`answered`);
   - `beforeStep` and `signal` let a player pause, step and stop;
   - `space` is the document the journey's element checks are read from — each player passes its own: the builder's as
     edited, the server's draft, the project's space as authored.
-- **Pressed the same way by the CLI.** `page play` and `page check --steps` keep their own grammar — a target is a
-  name, a selector or a row, and steps such as `as`, `action`, `shot`, `frames`, `store`, `wait` and `release` are
-  theirs alone — but each press goes through the engine's pieces above (`testing/e2e/act.ts`): what one learns, both
-  have.
+- **In words, the same for every surface.** `E2E_STEP_USAGE`, `parseE2eStep(s)` and `e2eStepText`
+  (`testing/e2e/stepText.ts`) write a journey's steps as text — `click map 30%,60%; expect-text cart-count = 1` — and
+  read them back as the same records. `plitzi test` and the builder's failures say a step in those words; the MCP and
+  the builder write the records themselves.
+- **The CLI's `--steps` are a journey's steps and its own.** `page play`, `shot`, `check`, `measure` and `outline` read
+  a journey's words with `parseE2eStep` and play them with `playE2eStep`, naming an element their own way (`locate`: a
+  name, a selector, a row, `ours => theirs`); a page command's own steps — `as`, `at`, `action`, `render`, `shot`,
+  `frames`, `store`, `attribute`, `clock`, `wait`, `drag … hold`, `release` — are the CLI's alone. A script's
+  `expect-*` step fails the command with what it read, as a journey's does.
 
 ## Who reads them
 

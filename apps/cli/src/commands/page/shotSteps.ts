@@ -1,37 +1,33 @@
+import {
+  durationMs,
+  E2E_STEP_USAGE,
+  isE2eStepWord,
+  leadingTarget,
+  parseE2eStep,
+  stepLines,
+  unquoted
+} from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import type { E2eStep } from '@plitzi/sdk-shared';
+
 /**
- * `page shot --steps`: what a person does to a page, one step after another, and the pictures taken along the way — a
- * queue that fills, a restart, an opening watched frame by frame. What `--click` cannot say: a wait between two
- * presses, a picture only where it is asked for, text typed into a field.
+ * `--steps`: what a person does to a page, one step after another, what must hold as it goes, and the pictures taken
+ * along the way — a queue that fills, a restart, an opening watched frame by frame.
  *
- *   click <element> [x%,y%]  a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too; at
- *                            a point of its box, from its top left, where its centre is not what is pressed — a quake
- *                            on a map's canvas: click map 30%,60%
- *   hover <element> [x%,y%]  the pointer put over it, and left there — what a hover shows, pictured by the next shot;
- *                            at a point of its box as a click takes one
- *   scroll <element> [dx] [dy]  brought into view, as a reader scrolling to it — the footer, a section below the fold;
- *                            with how far, in pixels, its own content scrolled instead — a row across: scroll genres 200
- *   type <element> <text>    text typed into a field, in place of what it held: type ".panel textarea" hi
- *   drag <element> <dx> [dy] pressed, moved by that many pixels (negative: left, up) and let go — a slider's handle;
- *                            `hold` after it keeps the finger down, so what follows reads the page mid-drag (a style
- *                            only a drag sets, the height a sheet follows): drag sheet-handle 0 -120 hold
+ * Its steps are a journey's, as `@plitzi/sdk-authoring` writes them in words (`E2E_STEP_USAGE`: click, type, wait-for,
+ * expect-text…) and plays them — a script that checks a page and a journey the space keeps say a step alike — and a
+ * page command's own:
+ *
+ *   drag <element> <dx> [dy] hold  pressed, moved and kept down, so what follows reads the page mid-drag (a style only
+ *                            a drag sets, the height a sheet follows): drag sheet-handle 0 -120 hold
  *   release                  the finger held by `drag … hold` let go where it is — a play that ends held lets go as
  *                            its page closes
- *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms|3s>             time passing
- *   wait-for <element> [time] until it is on the page and shown — 10 s at most, or the time said, up to 60 s: a CSS
- *                            selector waits for a state, wait-for '[data-state="stalled"]' 40s
- *   reload                   the page loaded again, as a visitor's reload: what it kept read back
- *   goto <path>              another page of the site opened in the same tab: what holds across pages
  *   store <key> <value>      a value put in the page's localStorage, as an earlier visit left it — then `reload`
- *   state <key> <json>       one key of the space's state written, as a setState step would (development pages)
- *   source <path> <json>     a provider's answer, or a path in it, written where it keeps it — a list seen filled:
- *                            source apiContainer_chart.clapped '[{"title":"x"}]' (development pages; until it answers again)
  *   attribute <id>.<name> <json>  an element's attribute given a value, as a page binding it would — a plugin's new
  *                            one no page binds yet seen drawn: attribute map.storms '[{"id":"ARNAB"}]' (development pages)
  *   clock <instant>          the page's clock set to an ISO instant (needs `--clock`): 2026-10-25T20:00:00Z
- *   tick <duration>          the page's clock moved on, its timers run (needs `--clock`): 90s, 5m, 2h, 1500
  *   render <id> [json]       a render action run the way a page's render runs it — its real fetch, hosts and limits —
  *                            before any page uses it (a development server: npm run start:dev)
  *   action <id> [json]       one of the space's actions run as the page's visitor, through its /_action — the
@@ -46,39 +42,20 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  *   frames <n> [ms]          n pictures, `--every` (or `ms`) apart
  *
  * Separated by `;` or a new line — one inside quotes is the text's: `type chat-input "late; still here"`; a line
- * starting with `#` is a note. An element is read whole up to a space outside
- * quotes and brackets — `[aria-label="Search the site"]` is one — or quoted. Every picture is labelled with its step and
- * the time since the first step.
+ * starting with `#` is a note. An element is its name, a tag or a CSS selector, read whole up to a space outside quotes
+ * and brackets — `[aria-label="Search the site"]` is one — or quoted; `ours => theirs` beside another site. Every picture
+ * is labelled with its step and the time since the first step.
  */
 
-/** A step one visitor plays on its own page: every step but a picture, or one played as another account. */
-/** A point of an element's box, in percent from its top left: `30%,60%`. */
-export interface BoxPoint {
-  x: number;
-  y: number;
-}
-
+/** A step one visitor plays on its own page: a journey's, or a page command's own — no picture, none another's. */
 export type PageStep =
-  | { kind: 'click'; target: string; point?: BoxPoint }
-  | { kind: 'hover'; target: string; point?: BoxPoint }
-  | { kind: 'scroll'; target: string; by?: { dx: number; dy: number } }
-  | { kind: 'type'; target: string; text: string }
-  | { kind: 'drag'; target: string; dx: number; dy: number; held?: true }
+  | E2eStep
+  | { kind: 'hold'; element: string; dx: number; dy: number }
   | { kind: 'release' }
-  | { kind: 'press'; key: string }
   | { kind: 'wait'; ms: number }
-  /** `ms`: how long it waits at most — 10 s when not said. */
-  | { kind: 'wait-for'; target: string; ms?: number }
-  | { kind: 'reload' }
-  | { kind: 'goto'; path: string }
-  /** Back where the visitor came from, as the browser's back does: a page's state left and come back to. */
-  | { kind: 'back' }
   | { kind: 'store'; key: string; value: string }
-  | { kind: 'state'; key: string; value: unknown }
-  | { kind: 'source'; key: string; value: unknown }
   | { kind: 'attribute'; key: string; value: unknown }
   | { kind: 'clock'; time: number }
-  | { kind: 'tick'; ms: number }
   | { kind: 'action'; action: string; input: Record<string, unknown>; render?: true };
 
 /** The widths a step `at` plays at, both ends included. */
@@ -94,29 +71,13 @@ export type ShotStep =
   | { kind: 'shot'; label?: string }
   | { kind: 'frames'; count: number; every: number };
 
-/**
- * Every step as a script writes it, in the order they are taught: the one list the parser, its refusals and every
- * command's `--steps` help are made from — two help texts typed by hand had left out half of them.
- */
-export const STEP_USAGE = [
-  ['click', 'click <el> [x%,y%]'],
-  ['hover', 'hover <el> [x%,y%]'],
-  ['scroll', 'scroll <el> [dx] [dy]'],
-  ['type', 'type <el> <text>'],
-  ['drag', 'drag <el> <dx> [dy] [hold]'],
+/** A page command's own steps, as a script writes them: what a journey has not. */
+const OWN_USAGE = [
   ['release', 'release'],
-  ['press', 'press <key>'],
   ['wait', 'wait <ms|3s>'],
-  ['wait-for', 'wait-for <el> [time]'],
-  ['reload', 'reload'],
-  ['goto', 'goto <path>'],
-  ['back', 'back'],
   ['store', 'store <key> <value>'],
-  ['state', 'state <key> <json>'],
-  ['source', 'source <path> <json>'],
   ['attribute', 'attribute <id>.<name> <json>'],
   ['clock', 'clock <instant>'],
-  ['tick', 'tick <duration>'],
   ['action', 'action <id> [json]'],
   ['render', 'render <id> [json]'],
   ['as', 'as <account> <step>'],
@@ -125,45 +86,27 @@ export const STEP_USAGE = [
   ['frames', 'frames <n> [ms]']
 ] as const;
 
+/**
+ * Every step as a script writes it, in the order they are taught — a journey's, then a page command's own: the one list
+ * the parser, its refusals and every command's `--steps` help are made from. A drag held is this command's.
+ */
+export const STEP_USAGE: readonly (readonly [string, string])[] = [
+  ...E2E_STEP_USAGE.map(([name, usage]): readonly [string, string] =>
+    name === 'drag' ? [name, 'drag <el> <dx> [dy] [hold]'] : [name, usage]
+  ),
+  ...OWN_USAGE
+];
+
 /** The steps as they are written, `; `-separated — but those a command does not play (`page play` takes no frames). */
 export const stepsUsage = (without: readonly string[] = []): string =>
   STEP_USAGE.filter(([name]) => !without.includes(name))
     .map(([, usage]) => usage)
     .join('; ');
 
-// `fill` is `type` by the name a Playwright user reaches for (a run's dev-1): typing replaces what a field held either way.
-const STEP_NAMES = STEP_USAGE.flatMap(([name]) => (name === 'type' ? ['type', 'fill'] : [name]));
-
-/** A point of a box, as a step writes it: `30%,60%`, from its top left. */
-const BOX_POINT = /^(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%$/;
-
-/** What reads as a point written some other way — in pixels, one number alone: refused with the way it is written. */
-const POINT_LIKE = /^-?[\d.]+%?,\s*-?[\d.]+%?$|^-?[\d.]+%$/;
+const STEP_NAMES = STEP_USAGE.map(([name]) => name);
 
 /** The longest a script may wait in one step: a page that needs more is waiting for something else. */
 const MAX_WAIT_MS = 30_000;
-
-/** How long a `wait-for` may wait, said: a state a few tries bring, past a fixed wait's 30 s. */
-const MAX_WAIT_FOR_MS = 60_000;
-
-/** The longest a clock is moved on in one step: a week. */
-const MAX_TICK_MS = 7 * 24 * 60 * 60 * 1000;
-
-const UNITS: Readonly<Record<string, number>> = { ms: 1, s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
-
-/** A duration as a step writes it — `90s`, `5m`, `2h`, `1d`, or milliseconds — in milliseconds. */
-export const durationMs = (text: string | undefined): number | undefined => {
-  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h|d)?$/.exec(text ?? '');
-  if (!match) {
-    return undefined;
-  }
-
-  // An optional group is undefined when absent, whatever its type says: a bare number is milliseconds.
-  const unit = match.at(2) ?? 'ms';
-  const ms = Math.round(Number(match[1]) * UNITS[unit]);
-
-  return ms > 0 ? ms : undefined;
-};
 
 /** An instant as written: ISO 8601 with its zone (`2026-10-25T20:00:00Z`), in epoch milliseconds. */
 export const instantMs = (text: string | undefined): number | undefined => {
@@ -202,53 +145,6 @@ export const widthRange = (text: string | undefined): WidthRange | undefined => 
 export const widthRangeText = ({ min, max }: WidthRange): string =>
   min === max ? String(min) : min === 0 ? `<=${String(max)}` : `>=${String(min)}`;
 
-const unquoted = (text: string): string => text.replace(/^(["'])(.*)\1$/s, '$2');
-
-/**
- * An element at the start of a step's words, and what follows it: up to a space outside quotes and brackets, or a
- * quoted one whole — `[aria-label="Search the site"] lamps` was cut at its first space into a selector that is none.
- */
-export const leadingTarget = (text: string): { target: string; rest: string } => {
-  // `ours => theirs`, as page play and --compare name one element on each page: the pair is the target, whole
-  // (`drag product-slides => .js-media-list -200 0` was refused until the pair was quoted).
-  const first = oneTarget(text);
-  const paired = /^=>\s*(.*)$/s.exec(first.rest);
-  if (paired) {
-    const second = oneTarget(paired[1]);
-
-    return { target: `${first.target} => ${second.target}`, rest: second.rest };
-  }
-
-  return first;
-};
-
-/** One element at the head of a step's text: quoted, or up to the first space outside brackets and quotes. */
-const oneTarget = (text: string): { target: string; rest: string } => {
-  const quoted = /^(["'])(.+?)\1(?:\s+|$)(.*)$/s.exec(text);
-  if (quoted) {
-    return { target: quoted[2], rest: quoted[3] };
-  }
-
-  let depth = 0;
-  let quote: string | undefined;
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text.charAt(index);
-    if (quote) {
-      quote = char === quote ? undefined : quote;
-    } else if (char === '"' || char === "'") {
-      quote = char;
-    } else if (char === '[' || char === '(') {
-      depth += 1;
-    } else if (char === ']' || char === ')') {
-      depth = Math.max(0, depth - 1);
-    } else if (/\s/.test(char) && depth === 0) {
-      return { target: text.slice(0, index), rest: text.slice(index).trim() };
-    }
-  }
-
-  return { target: text, rest: '' };
-};
-
 /** A whole number of pixels, either way. */
 const pixels = (value: string | undefined): number | undefined => {
   const parsed = Number(value);
@@ -264,306 +160,161 @@ const count = (value: string | undefined, at: string, max: number): number | { p
     : { problem: `${at}: "${value ?? ''}" is not a whole number from 1 to ${String(max)}` };
 };
 
-/**
- * A script's steps, apart: at each `;` or new line outside quotes — a run's chat line "late — still here; ok" was
- * cut at its `;`, and the message never sent.
- */
-const stepLines = (script: string): string[] => {
-  const lines: string[] = [];
-  let quote: string | undefined;
-  let from = 0;
-  for (let index = 0; index < script.length; index += 1) {
-    const char = script.charAt(index);
-    if (quote) {
-      quote = char === quote ? undefined : quote;
-    } else if (char === '"' || char === "'") {
-      quote = char;
-    } else if (char === ';' || char === '\n') {
-      lines.push(script.slice(from, index));
-      from = index + 1;
-    }
-  }
-
-  return [...lines, script.slice(from)];
-};
-
 /** Whether a step is one a visitor plays on its own page — no picture, and none played as another account. */
 export const isPageStep = (step: ShotStep): step is PageStep =>
   step.kind !== 'as' && step.kind !== 'at' && step.kind !== 'shot' && step.kind !== 'frames';
 
+/** A page command's own step, read — or why it is none; `undefined` for a word that is none of its own. */
+const ownStep = (
+  name: string,
+  rest: string[],
+  at: string,
+  every: number
+): ShotStep | { problem: string } | undefined => {
+  const argument = unquoted(rest.join(' '));
+  switch (name) {
+    case 'drag': {
+      const { target, rest: by } = leadingTarget(rest.join(' '), { pairs: true });
+      const words = by.split(/\s+/).filter(Boolean);
+      if (words.at(-1) !== 'hold') {
+        return undefined;
+      }
+
+      const [dx, dy = '0'] = words.slice(0, -1);
+      const [x, y] = [pixels(dx), pixels(dy)];
+
+      return !target || x === undefined || y === undefined || (x === 0 && y === 0)
+        ? {
+            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold`
+          }
+        : { kind: 'hold', element: unquoted(target), dx: x, dy: y };
+    }
+    case 'release':
+      return { kind: 'release' };
+    case 'wait': {
+      const ms = durationMs(rest[0]);
+
+      return ms === undefined || ms > MAX_WAIT_MS
+        ? {
+            problem: `${at}: "${rest[0] ?? ''}" is not a wait from 1 ms to 30 s — milliseconds, or with its unit: wait 300, wait 3s`
+          }
+        : { kind: 'wait', ms };
+    }
+    case 'store': {
+      const [key, ...value] = rest;
+
+      return !key || value.length === 0
+        ? { problem: `${at}: store needs a key and its value — store listen-choice on` }
+        : { kind: 'store', key, value: unquoted(value.join(' ')) };
+    }
+    case 'attribute': {
+      const [key = '', ...value] = rest;
+      // Wrapped in single quotes as a shell writes it — `attribute map.storms '[{"id":"x"}]'` — the JSON is inside.
+      const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(written);
+      } catch {
+        return {
+          problem: `${at}: attribute needs <element>.<attribute> and its value as JSON — got ${written === '' ? 'none' : written}: attribute map.storms '[{"id":"ARNAB"}]'`
+        };
+      }
+
+      return /^[^.]+\.[^.]+$/.test(key)
+        ? { kind: 'attribute', key, value: parsed }
+        : {
+            problem: `${at}: attribute needs <element>.<attribute> and its value as JSON — attribute map.showStorms true`
+          };
+    }
+    case 'action':
+    case 'render': {
+      const [action, ...value] = rest;
+      const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
+      let input: unknown = {};
+      try {
+        input = written === '' ? {} : JSON.parse(written);
+      } catch {
+        input = undefined;
+      }
+
+      return !action || !isRecord(input)
+        ? {
+            problem: `${at}: ${name} needs the action's id and, when it takes one, its input as a JSON object — ${name === 'render' ? `render tornadoes-feed '{}'` : `action dm-send '{"to":"juno","text":"hi"}'`}`
+          }
+        : { kind: 'action', action, input, ...(name === 'render' ? { render: true as const } : {}) };
+    }
+    case 'as': {
+      const [account, ...played] = rest;
+      const step = account ? parseSteps(played.join(' '), every) : [];
+      const [one] = Array.isArray(step) ? step : [];
+
+      return !account || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)
+        ? {
+            problem: `${at}: as needs an account and one step it plays — as mika click dm-send (no picture, no other "as": the pictures are this page's)${!Array.isArray(step) ? ` — ${step.problem}` : ''}`
+          }
+        : { kind: 'as', account, step: one };
+    }
+    // A step that only one width needs — the tab a phone opens first — beside the others in one script: a run's lead
+    // wrote its stage with a script, the same checks twice, as 390's steps differed from 1440's.
+    case 'at': {
+      const [range, ...played] = rest;
+      const width = widthRange(range);
+      const step = width ? parseSteps(played.join(' '), every) : [];
+      const [one] = Array.isArray(step) ? step : [];
+
+      return !width || width.min > width.max || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)
+        ? {
+            problem: `${at}: at needs widths and one step played at them — at 390 click sheet-tab-log, at <=767 …, at >=768 … (no picture, no "as")${width && !Array.isArray(step) ? ` — ${step.problem}` : ''}`
+          }
+        : { kind: 'at', width, step: one };
+    }
+    case 'clock': {
+      const time = instantMs(rest[0]);
+
+      return time === undefined
+        ? { problem: `${at}: clock needs an instant, ISO with its zone — clock 2026-10-25T20:00:00Z` }
+        : { kind: 'clock', time };
+    }
+    case 'shot':
+      return { kind: 'shot', ...(argument ? { label: argument } : {}) };
+    case 'frames': {
+      const frames = count(rest[0], at, 60);
+      if (typeof frames !== 'number') {
+        return frames;
+      }
+
+      const apart = rest.length < 2 ? every : count(rest[1], at, MAX_WAIT_MS);
+
+      return typeof apart === 'number' ? { kind: 'frames', count: frames, every: apart } : apart;
+    }
+    default:
+      return undefined;
+  }
+};
+
 /** A script, read into its steps — or what is wrong with it, said by its step. */
 export const parseSteps = (script: string, every: number): ShotStep[] | { problem: string } => {
-  const lines = stepLines(script)
-    .map(line => line.trim())
-    .filter(line => line !== '' && !line.startsWith('#'));
+  const lines = stepLines(script);
   if (lines.length === 0) {
-    return {
-      problem: `--steps has no step: ${STEP_NAMES.join(', ')}, separated by ";"`
-    };
+    return { problem: `--steps has no step: ${STEP_NAMES.join(', ')}, separated by ";"` };
   }
 
   const steps: ShotStep[] = [];
   for (const [index, line] of lines.entries()) {
     const at = `step ${String(index + 1)} ("${line}")`;
-    const [name, ...rest] = line.split(/\s+/);
-    const argument = unquoted(rest.join(' '));
-    switch (name) {
-      case 'click':
-      case 'hover':
-      case 'scroll':
-      case 'wait-for': {
-        if (!argument) {
-          return { problem: `${at}: ${name} needs an element — its name or a CSS selector` };
-        }
-
-        // Numbers after the element are no part of a selector: a run's `scroll <row> 200` reached Playwright whole and
-        // came back as its parse error. A scroll takes them as how far; a wait-for, how long it waits — a state three
-        // tries of ten seconds bring took a tester chained fixed waits; the others take none.
-        const { target, rest: after } = leadingTarget(rest.join(' '));
-        if (name === 'wait-for' && after !== '') {
-          const ms = durationMs(after);
-          if (ms === undefined || ms > MAX_WAIT_FOR_MS) {
-            return {
-              problem: `${at}: wait-for takes an element and how long it waits at most, up to 60 s — wait-for room-player 40s (a selector with spaces goes in quotes)`
-            };
-          }
-
-          steps.push({ kind: 'wait-for', target: unquoted(target), ms });
-          break;
-        }
-
-        // A point of its box: what a canvas draws has no element of its own to name — a run's tester wrote a probe of
-        // its own to press a quake on a map.
-        const point = BOX_POINT.exec(after);
-        if ((name === 'click' || name === 'hover') && (point || POINT_LIKE.test(after))) {
-          const [x, y] = point ? [Number(point[1]), Number(point[2])] : [Number.NaN, Number.NaN];
-          if (!(x >= 0 && x <= 100 && y >= 0 && y <= 100)) {
-            return {
-              problem: `${at}: ${name} takes an element and, to ${name === 'click' ? 'press' : 'point at'} a point of it, where in its box, in percent from its top left — ${name} map 30%,60% (a selector with spaces goes in quotes)`
-            };
-          }
-
-          steps.push({ kind: name, target: unquoted(target), point: { x, y } });
-          break;
-        }
-
-        const amounts = after === '' ? [] : after.split(/\s+/);
-        if (amounts.length > 0 && amounts.every(each => /^-?\d+$/.test(each))) {
-          const [dx = 0, dy = 0] = amounts.map(Number);
-          if (name !== 'scroll' || amounts.length > 2 || (dx === 0 && dy === 0)) {
-            return {
-              problem:
-                name === 'scroll'
-                  ? `${at}: scroll takes an element and how far its content goes, in whole pixels — scroll <element> <dx> [dy]: scroll genres 200`
-                  : `${at}: ${name} takes an element alone — ${after} is no part of one (a selector with spaces goes in quotes)`
-            };
-          }
-
-          steps.push({ kind: 'scroll', target: unquoted(target), by: { dx, dy } });
-          break;
-        }
-
-        steps.push({ kind: name, target: argument });
-        break;
-      }
-      case 'type':
-      case 'fill': {
-        // `fill email=ana@x.com` as `--fill` writes it, beside `fill email ana@x.com`: a run's agents wrote the flag's
-        // spelling in a step and were refused.
-        const said = rest.join(' ');
-        // A class or an id too: a run's `fill .chat__input=Great` was read as one selector.
-        const flagged = /^([.#]?[A-Za-z_][\w-]*)=([\s\S]*)$/.exec(said);
-        const { target, rest: text } = flagged ? { target: flagged[1], rest: flagged[2] } : leadingTarget(said);
-        if (!target || text === '') {
-          return {
-            problem: `${at}: ${name} needs an element and the text — ${name} <element> <text> or ${name} <element>=<text>, ${name} ".panel textarea" hi`
-          };
-        }
-
-        steps.push({ kind: 'type', target, text: unquoted(text) });
-        break;
-      }
-      case 'drag': {
-        const { target, rest: by } = leadingTarget(rest.join(' '));
-        const words = by.split(/\s+/).filter(Boolean);
-        const held = words.at(-1) === 'hold';
-        const [dx, dy = '0'] = held ? words.slice(0, -1) : words;
-        const x = pixels(dx);
-        const y = pixels(dy);
-        if (!target || x === undefined || y === undefined || (x === 0 && y === 0)) {
-          return {
-            problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold`
-          };
-        }
-
-        steps.push({ kind: 'drag', target, dx: x, dy: y, ...(held ? { held: true as const } : {}) });
-        break;
-      }
-      case 'release':
-        steps.push({ kind: 'release' });
-        break;
-      case 'press':
-        if (!argument) {
-          return { problem: `${at}: press needs a key — Enter, Escape, ArrowDown…` };
-        }
-
-        steps.push({ kind: 'press', key: argument });
-        break;
-      case 'wait': {
-        const ms = durationMs(rest[0]);
-        if (ms === undefined || ms > MAX_WAIT_MS) {
-          return {
-            problem: `${at}: "${rest[0] ?? ''}" is not a wait from 1 ms to 30 s — milliseconds, or with its unit: wait 300, wait 3s`
-          };
-        }
-
-        steps.push({ kind: 'wait', ms });
-        break;
-      }
-      case 'reload':
-        steps.push({ kind: 'reload' });
-        break;
-      case 'goto':
-        if (!argument.startsWith('/')) {
-          return { problem: `${at}: goto needs a path of the site — goto /rooms, goto /r/night-drive` };
-        }
-
-        steps.push({ kind: 'goto', path: argument });
-        break;
-      // A reviewer could not test a typing flag left on one page and come back to: no step went back.
-      case 'back':
-        steps.push({ kind: 'back' });
-        break;
-      case 'store': {
-        const [key, ...value] = rest;
-        if (!key || value.length === 0) {
-          return { problem: `${at}: store needs a key and its value — store listen-choice on` };
-        }
-
-        steps.push({ kind: 'store', key, value: unquoted(value.join(' ')) });
-        break;
-      }
-      case 'state':
-      case 'source':
-      case 'attribute': {
-        const [key, ...value] = rest;
-        // Wrapped in single quotes as a shell writes it — `state show '{"id":"x"}'` — the JSON is what is inside.
-        const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(written);
-        } catch {
-          return {
-            problem:
-              name === 'state'
-                ? `${at}: state needs a key and its value as JSON — got ${written === '' ? 'none' : written}: a text in double quotes (state dismissed "show-1"), true, 3, or an object (state show '{"title":"Late set"}')`
-                : name === 'attribute'
-                  ? `${at}: attribute needs <element>.<attribute> and its value as JSON — got ${written === '' ? 'none' : written}: attribute map.storms '[{"id":"ARNAB"}]'`
-                  : `${at}: source needs a source's path and its value as JSON — got ${written === '' ? 'none' : written}: source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`
-          };
-        }
-
-        if (!key || (name === 'attribute' && !/^[^.]+\.[^.]+$/.test(key))) {
-          return {
-            problem:
-              name === 'state'
-                ? `${at}: state needs a key and its value as JSON — state roomOpen true`
-                : name === 'attribute'
-                  ? `${at}: attribute needs <element>.<attribute> and its value as JSON — attribute map.showStorms true`
-                  : `${at}: source needs a source's path and its value as JSON — source apiContainer_chart.isEmpty false`
-          };
-        }
-
-        steps.push({ kind: name, key, value: parsed });
-        break;
-      }
-      case 'action':
-      case 'render': {
-        const [action, ...value] = rest;
-        const written = value.join(' ').replace(/^'([\s\S]*)'$/, '$1');
-        let input: unknown = {};
-        try {
-          input = written === '' ? {} : JSON.parse(written);
-        } catch {
-          input = undefined;
-        }
-
-        if (!action || !isRecord(input)) {
-          return {
-            problem: `${at}: ${name} needs the action's id and, when it takes one, its input as a JSON object — ${name === 'render' ? `render tornadoes-feed '{}'` : `action dm-send '{"to":"juno","text":"hi"}'`}`
-          };
-        }
-
-        steps.push({ kind: 'action', action, input, ...(name === 'render' ? { render: true as const } : {}) });
-        break;
-      }
-      case 'as': {
-        const [account, ...played] = rest;
-        const step = account ? parseSteps(played.join(' '), every) : [];
-        const [one] = Array.isArray(step) ? step : [];
-        if (!account || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)) {
-          return {
-            problem: `${at}: as needs an account and one step it plays — as mika click dm-send (no picture, no other "as": the pictures are this page's)${!Array.isArray(step) ? ` — ${step.problem}` : ''}`
-          };
-        }
-
-        steps.push({ kind: 'as', account, step: one });
-        break;
-      }
-      // A step that only one width needs — the tab a phone opens first — beside the others in one script: a run's
-      // lead wrote its stage with a script, the same checks twice, as 390's steps differed from 1440's.
-      case 'at': {
-        const [range, ...played] = rest;
-        const width = widthRange(range);
-        const step = width ? parseSteps(played.join(' '), every) : [];
-        const [one] = Array.isArray(step) ? step : [];
-        if (!width || width.min > width.max || !Array.isArray(step) || step.length !== 1 || !isPageStep(one)) {
-          return {
-            problem: `${at}: at needs widths and one step played at them — at 390 click sheet-tab-log, at <=767 …, at >=768 … (no picture, no "as")${width && !Array.isArray(step) ? ` — ${step.problem}` : ''}`
-          };
-        }
-
-        steps.push({ kind: 'at', width, step: one });
-        break;
-      }
-      case 'clock': {
-        const time = instantMs(rest[0]);
-        if (time === undefined) {
-          return { problem: `${at}: clock needs an instant, ISO with its zone — clock 2026-10-25T20:00:00Z` };
-        }
-
-        steps.push({ kind: 'clock', time });
-        break;
-      }
-      case 'tick': {
-        const ms = durationMs(rest[0]);
-        if (ms === undefined || ms > MAX_TICK_MS) {
-          return { problem: `${at}: tick needs how long, up to a week — tick 90s, tick 5m, tick 2h, tick 1500` };
-        }
-
-        steps.push({ kind: 'tick', ms });
-        break;
-      }
-      case 'shot':
-        steps.push({ kind: 'shot', ...(argument ? { label: argument } : {}) });
-        break;
-      case 'frames': {
-        const frames = count(rest[0], at, 60);
-        if (typeof frames !== 'number') {
-          return frames;
-        }
-
-        const apart = rest.length < 2 ? every : count(rest[1], at, MAX_WAIT_MS);
-        if (typeof apart !== 'number') {
-          return apart;
-        }
-
-        steps.push({ kind: 'frames', count: frames, every: apart });
-        break;
-      }
-      default:
-        return { problem: `${at}: "${name}" is not a step — the steps are ${STEP_NAMES.join(', ')}` };
+    const [name = '', ...rest] = line.split(/\s+/);
+    // A page command's own first — a drag held is one — then a journey's, as authoring reads it.
+    const own = ownStep(name, rest, at, every);
+    const step = own ?? (isE2eStepWord(name) ? parseE2eStep(line, { pairs: true }) : undefined);
+    if (step === undefined) {
+      return { problem: `${at}: "${name}" is not a step — the steps are ${STEP_NAMES.join(', ')}` };
     }
+
+    if ('problem' in step) {
+      return { problem: own ? step.problem : `${at}: ${step.problem}` };
+    }
+
+    steps.push(step);
   }
 
   return steps;

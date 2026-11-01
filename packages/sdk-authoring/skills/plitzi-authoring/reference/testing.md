@@ -54,8 +54,13 @@ no browser.
   `e2e.test({ …, as: 'member' })`: the page shows that visitor signed in (its details; what its roles — the space's
   `settings.visitorRoles` — give; a page for signed-in visitors opens). A role the space removed since is warned. Declared in the tests alone — no real account, no password — so the API answers it as a
   guest: a journey with an account reads and moves, never writes.
-- **A `type` step names the element** — a form control's id — and writes in the field inside it; a select is chosen
-  from (its option's value or label), a date, a time or a range set whole.
+- **A `type` step names the element** — a form control's id — and replaces what the field inside it held; a select is
+  chosen from (its option's value or label), a date, a time or a range set whole.
+- **A point of an element**: `e2e.click('map', { x: 30, y: 60 })` (and `hover`) lands at that percent of its box — a
+  marker a canvas draws has no element of its own. `e2e.scroll(id)` brings it into view; with `{ dx, dy }` its own
+  content scrolls.
+- **In words.** `parseE2eSteps('click add-flat-white; expect-text cart-count = 1')` reads steps as the CLI's
+  `--steps` write them; `e2eStepText` writes one back.
 - **A press acts on the copy a visitor sees**: the first shown, or the one named (`row:3`, `row:last`). An element on
   the page and shown nowhere at the test's width fails as "hidden at this width" — press what that width shows (the
   burger, then the item), or give the test the width that shows it.

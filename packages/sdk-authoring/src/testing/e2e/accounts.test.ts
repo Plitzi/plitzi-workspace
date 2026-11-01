@@ -84,7 +84,11 @@ describe('a journey played as a test account', () => {
     const played = await runE2eTest(
       page,
       e2e.test({ id: 'as-editor', title: 'The account', page: '/account', as: 'editor', steps: [] }),
-      { origin: 'http://127.0.0.1', open: () => Promise.resolve(), space: { ...schema, tests: { accounts: [editor] } } }
+      {
+        origin: 'http://127.0.0.1',
+        open: () => Promise.resolve(),
+        space: { ...schema, tests: { accounts: [editor] } }
+      }
     );
 
     expect(played.problem).toBeUndefined();

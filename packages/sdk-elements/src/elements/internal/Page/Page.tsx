@@ -2,6 +2,7 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
+import { AuthContext } from '@plitzi/sdk-auth';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
@@ -140,6 +141,8 @@ const Page = ({
    */
   const ownsDocument = ownsHead && renderMode !== 'widget';
   const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
+  const { authenticated, user } = use(AuthContext);
+  const visitor = authenticated ? `${String(user?.details?.id ?? '')}:${user?.details?.username ?? ''}` : '';
 
   const layoutChain = useLayoutChain(layout, layoutContainer);
   const links = useMemo(() => toLinks(layoutChain), [layoutChain]);
@@ -156,6 +159,10 @@ const Page = ({
    * announces itself to a manager that has not been told `actions.runServerAction` exists yet. The flow then ran,
    * found nothing registered and did nothing, on the first load only — which is the load an `onPageLoad` flow is
    * written for. A microtask lands after the whole effect flush, and on a navigation nothing has changed for it.
+   *
+   * Announced again when who visits changes — signing in, out, or as somebody else — as the visitor's own load of the
+   * page: a page that sends a signed-in visitor to their account on load does so for one who signs in on it. Who, not
+   * their token: a session renewed is the same visitor, and its page is not loaded again.
    */
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +177,7 @@ const Page = ({
     return () => {
       cancelled = true;
     };
-  }, [id, interactionsManager, queryParams, routeParams]);
+  }, [id, interactionsManager, queryParams, routeParams, visitor]);
 
   return (
     <RootElement

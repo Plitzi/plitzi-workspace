@@ -16,6 +16,8 @@ export interface E2eElement {
   /** A select's option chosen by its value or its label. */
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
   boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>;
+  /** A function run in the page on the element itself — read, scrolled — as its driver finds it. */
+  evaluate<R, A>(fn: (node: Element, arg: A) => R, arg: A): Promise<R>;
 }
 
 /** The elements a selector finds: the first, the last or the nth. */

@@ -14,6 +14,8 @@ const elementOf = (box: Box, done: string[], name: string): E2eElement => ({
   click: () => Promise.resolve(void done.push(`click ${name}`)),
   hover: () => Promise.resolve(void done.push(`hover ${name}`)),
   fill: text => Promise.resolve(void done.push(`fill ${name} ${text}`)),
+  // Nothing these steps read in the page: a fake's evaluate answers what each caller types.
+  evaluate: <R>() => Promise.resolve(undefined as R),
   selectOption: value => Promise.resolve(done.push(`select ${name} ${value}`)),
   boundingBox: () => Promise.resolve(box)
 });

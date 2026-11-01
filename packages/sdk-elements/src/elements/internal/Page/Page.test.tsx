@@ -3,6 +3,8 @@ import { render, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import { AuthContext } from '@plitzi/sdk-auth';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
 
 import { Page } from './Page';
 import ElementContext from '../../../Element/ElementContext';
@@ -273,5 +275,41 @@ describe('Page Tests', () => {
       expect(container.querySelector('style')).toBeNull();
       expect(getComputedStyle(document.documentElement).overflow).not.toBe('hidden');
     });
+  });
+});
+
+// A page that sends a signed-in visitor to their account on load did not, in the builder's canvas, for one who signed
+// in on it: its load was announced again only by chance of how a router hands over its params.
+describe('a page’s load', () => {
+  const trigger = vi.fn();
+  // One manager for every render, as a page has: a new one is a reason of its own to announce the load again.
+  const interactions = { useInteractions: () => ({}), interactionsManager: { interactionTrigger: trigger } } as never;
+  const played = (who: Record<string, unknown>) => (
+    <StoreProvider value={{ navigation }}>
+      <InteractionsContext value={interactions}>
+        <AuthContext value={who as never}>
+          <ElementContext value={skipHocEntry()}>
+            <Page />
+          </ElementContext>
+        </AuthContext>
+      </InteractionsContext>
+    </StoreProvider>
+  );
+
+  it('is announced again when who visits changes — never when their session is only renewed', async () => {
+    const guest = { authenticated: false };
+    const member = (token: string) => ({
+      authenticated: true,
+      user: { accessToken: token, details: { id: 0, username: 'member' } }
+    });
+    const { rerender } = render(played(guest));
+    await waitFor(() => expect(trigger).toHaveBeenCalledTimes(1));
+
+    rerender(played(member('test:member')));
+    await waitFor(() => expect(trigger).toHaveBeenCalledTimes(2));
+
+    rerender(played(member('renewed')));
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(trigger).toHaveBeenCalledTimes(2);
   });
 });

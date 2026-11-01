@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthContext } from '@plitzi/sdk-auth';
 import { useNavigation, getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation';
+import { navigationTarget } from '@plitzi/sdk-shared/navigation';
 import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
@@ -28,6 +29,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
+  const pageFoldersRef = useRef(pageFolders);
+  pageFoldersRef.current = pageFolders;
 
   // The canvas leaves every page open for editing; a journey played on it is held to their access, as on the server.
   const guarded = !previewMode || playingJourney === true;
@@ -90,36 +93,17 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
    */
   const testedOrigin = urlTest?.hostname ? `https://${urlTest.hostname}` : origin;
 
+  // A page by its id — as a flow's navigate names one — goes to its full path, as the published page's does: the
+  // builder's own reading sent a page with a slug to it relative, and a journey's move to `account` went nowhere.
   const handleNavigate = useCallback(
-    (url: string, { external = false }: NavigateHow = {}) => {
+    (url: string, { external = false, replace = false }: NavigateHow = {}) => {
       if (external && typeof window !== 'undefined') {
         window.location.href = url;
 
         return;
       }
 
-      const page = get(pageDefinitionsRef, `current.${url}`, undefined);
-      if (!page) {
-        void navigate(url);
-
-        return;
-      }
-
-      const slug = get(page, 'attributes.slug', '') as string;
-      if (slug || slug === '') {
-        void navigate(slug);
-
-        return;
-      }
-
-      const isHome = get(page, 'attributes.default', false) as boolean;
-      if (isHome) {
-        void navigate('/');
-
-        return;
-      }
-
-      void navigate(`/${url}`);
+      void navigate(navigationTarget(pageDefinitionsRef.current, pageFoldersRef.current, url), { replace });
     },
     [navigate]
   );

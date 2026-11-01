@@ -1,8 +1,8 @@
 import { rolesGrant } from '@plitzi/sdk-shared/auth';
 
 import { targetId } from './page';
+import { isExpectation } from './play';
 import { parseRelation, relationElements } from './position';
-import { isExpectation } from './run';
 import { pageAt } from '../../schema/route';
 
 import type { E2eAccount, E2eStep, E2eTest, Schema, UnitTest } from '@plitzi/sdk-shared';

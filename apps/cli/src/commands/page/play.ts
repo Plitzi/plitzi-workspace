@@ -115,7 +115,7 @@ const alike = (a: number, b: number): boolean => Math.abs(a - b) <= Math.max(2, 
 
 /** A step as one side plays it: its element that side's, from `"ours => theirs"`. */
 const pageSideOf = (step: PageStep, side: keyof Pair): PageStep =>
-  'target' in step ? { ...step, target: pairOf(step.target)[side] } : step;
+  'element' in step ? { ...step, element: pairOf(step.element)[side] } : step;
 
 const sideOf = (step: ActingStep, side: keyof Pair): ActingStep =>
   step.kind === 'at'
@@ -303,16 +303,16 @@ export const playOn = async (
     let reached = false;
     for (const name of names) {
       const at = acting(name);
-      if (!at || !['click', 'drag', 'type', 'hover'].includes(at.step.kind) || !('target' in at.step)) {
+      if (!at || !('element' in at.step) || !['click', 'drag', 'hold', 'type', 'hover'].includes(at.step.kind)) {
         continue;
       }
 
       // A press on a control out of use — hidden, disabled, passing the pointer on — does nothing, as a visitor's does:
       // played as such, never a failure; what it left is read as after any step.
-      const state = (await readSide(at.side, [at.step.target])).at(0);
+      const state = (await readSide(at.side, [at.step.element])).at(0);
       if (at.step.kind !== 'hover' && state && !('problem' in state) && (!state.shown || !state.enabled)) {
         idle[name] =
-          `${at.step.target} ${state.shown ? 'takes no press' : 'is not shown'}: the ${at.step.kind} did nothing`;
+          `${at.step.element} ${state.shown ? 'takes no press' : 'is not shown'}: the ${at.step.kind === 'hold' ? 'drag' : at.step.kind} did nothing`;
         continue;
       }
 
@@ -320,7 +320,7 @@ export const playOn = async (
       // play said a sticky preview "moved 315px down" after a click on a switch out of view.
       if (state && !('problem' in state) && state.inView !== 'whole') {
         // One that cannot be reached is said by the step itself, which finds it the same way.
-        await at.side.act({ kind: 'scroll', target: at.step.target }, index).catch(() => undefined);
+        await at.side.act({ kind: 'scroll', element: at.step.element }, index).catch(() => undefined);
         reached = true;
       }
     }

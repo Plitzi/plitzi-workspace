@@ -60,8 +60,8 @@ export const STEP_KINDS: Record<E2eStep['kind'], KindSpec> = {
     label: 'Scroll',
     fields: [
       element(),
-      { name: 'dx', label: 'Across (px)', kind: 'number' },
-      { name: 'dy', label: 'Down (px)', kind: 'number' }
+      { name: 'dx', label: 'Its content across (px — 0 both ways: into view)', kind: 'number' },
+      { name: 'dy', label: 'Its content down (px)', kind: 'number' }
     ]
   },
   drag: {

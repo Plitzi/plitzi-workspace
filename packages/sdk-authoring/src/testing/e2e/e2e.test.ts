@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { e2e, e2eTestProblems, parseRelation, relationHolds, sidePx, stepText } from './index';
+import { e2e, e2eStepText, e2eTestProblems, parseRelation, relationHolds, sidePx } from './index';
 import { button, text } from '../../elements';
 import { authorSpace } from '../../schema';
 import { readSpaceTests } from '../tests';
@@ -73,7 +73,11 @@ describe('the document’s e2e tests as written', () => {
   });
 
   it('says each step as a person reads it', () => {
-    expect(adds.steps.map(stepText)).toEqual(['click add', 'cart-count shows "1"', 'cart-count.bottom <= legend.top']);
+    expect(adds.steps.map(e2eStepText)).toEqual([
+      'click add',
+      'expect-text cart-count 1',
+      'expect-position "cart-count.bottom <= legend.top"'
+    ]);
   });
 });
 
@@ -158,6 +162,6 @@ describe('an element check held inside a journey', () => {
       'e2e test "holds", step 2 (expectCheck): no element check of the space is "count-reads" — name one of its tests.unit by its id'
     ]);
     expect(e2eTestProblems(schema, [holds], [counted])).toEqual([]);
-    expect(holds.steps.map(stepText)).toEqual(['click add', 'element check count-reads holds']);
+    expect(holds.steps.map(e2eStepText)).toEqual(['click add', 'expect-check count-reads']);
   });
 });

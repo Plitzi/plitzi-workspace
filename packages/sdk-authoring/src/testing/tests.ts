@@ -88,6 +88,30 @@ const readUnit = (value: unknown, at: string): Read<UnitTest> => {
   return problems.length > 0 ? { problems } : { value: value as unknown as UnitTest };
 };
 
+/** A point of a box, in percent from its top left. */
+const isPoint = (value: unknown): boolean =>
+  isRecord(value) &&
+  [value.x, value.y].every(each => isNumber(each) && each >= 0 && each <= 100) &&
+  Object.keys(value).every(key => key === 'x' || key === 'y');
+
+/**
+ * Every way a value is not one step of a journey, each said with where it is (`at`) — none for one that is: what the
+ * builder saves, an agent sends and a page command hands its kept browser is read the same.
+ */
+export const e2eStepProblems = (value: unknown, at: string): string[] => {
+  const kind = isRecord(value) ? kindOf(value, STEP_FIELDS) : undefined;
+  if (!isRecord(value) || kind === undefined) {
+    return [`${at}: a step — ${Object.keys(STEP_FIELDS).join(', ')}`];
+  }
+
+  return [
+    ...fieldsMissing(value, STEP_FIELDS[kind]).map(missing => `${at}.${missing}`),
+    ...((kind === 'click' || kind === 'hover') && value.point !== undefined && !isPoint(value.point)
+      ? [`${at}.point: { x, y }, each in percent of its box from its top left — 0 to 100`]
+      : [])
+  ];
+};
+
 const readE2e = (value: unknown, at: string): Read<E2eTest> => {
   if (!isRecord(value)) {
     return { problems: [`${at}: a test — { id, title, page, steps }`] };
@@ -112,15 +136,7 @@ const readE2e = (value: unknown, at: string): Read<E2eTest> => {
   ];
   const steps = Array.isArray(value.steps) ? value.steps : [];
   steps.forEach((each: unknown, index) => {
-    const where = `${at}.steps[${String(index)}]`;
-    const kind = isRecord(each) ? kindOf(each, STEP_FIELDS) : undefined;
-    if (!isRecord(each) || kind === undefined) {
-      problems.push(`${where}: a step — ${Object.keys(STEP_FIELDS).join(', ')}`);
-
-      return;
-    }
-
-    problems.push(...fieldsMissing(each, STEP_FIELDS[kind]).map(missing => `${where}.${missing}`));
+    problems.push(...e2eStepProblems(each, `${at}.steps[${String(index)}]`));
   });
 
   // Every field of it read above, each as its kind says: what reaches here is the record.

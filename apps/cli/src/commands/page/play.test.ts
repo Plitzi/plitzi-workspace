@@ -300,7 +300,7 @@ describe('page play, a target out of view', () => {
 
     const result = await playOn(
       { here: side },
-      [{ kind: 'click', target: 'switch' }],
+      [{ kind: 'click', element: 'switch' }],
       [{ here: 'preview', there: 'preview' }]
     );
     if (!('played' in result)) {
@@ -392,7 +392,7 @@ describe('a flow a step sets off that fails', () => {
     const failed: string[] = ['flow onLoad failed — Boot [setState]: there before'];
     const side: PlaySide = {
       act: step => {
-        if (step.kind === 'state') {
+        if (step.kind === 'setState') {
           failed.push('flow onLock on map failed — Focus [focusHazard]: no hazard ep222026');
         }
 
@@ -405,7 +405,7 @@ describe('a flow a step sets off that fails', () => {
       { here: side },
       [
         { kind: 'wait', ms: 10 },
-        { kind: 'state', key: 'selectedId', value: 'ep222026' }
+        { kind: 'setState', key: 'selectedId', value: 'ep222026' }
       ],
       []
     );
@@ -440,7 +440,7 @@ describe('a shot among the steps', () => {
     const result = await playOn(
       { here: side },
       [
-        { kind: 'click', target: 'open' },
+        { kind: 'click', element: 'open' },
         { kind: 'shot', label: 'opened' }
       ],
       [{ here: 'panel', there: 'panel' }]
@@ -488,8 +488,8 @@ describe('the page’s state in a play', () => {
     state: () => Promise.resolve({ value: states.shift() })
   });
   const steps = [
-    { kind: 'click' as const, target: 'crate-rock' },
-    { kind: 'click' as const, target: 'crate-jazz' }
+    { kind: 'click' as const, element: 'crate-rock' },
+    { kind: 'click' as const, element: 'crate-jazz' }
   ];
 
   it('reads state.<key> after each step, apart from the elements', async () => {
@@ -546,7 +546,7 @@ describe('the page’s state in a play', () => {
 
 // A tester dismissed a report at 390 and read "not on the page" of it at 1440: the widths share one server.
 describe('a play that fails at a later width', () => {
-  const steps = [{ kind: 'click' as const, target: 'moderation-dismiss' }];
+  const steps = [{ kind: 'click' as const, element: 'moderation-dismiss' }];
 
   it('says the widths before it played on the same server, and nothing of it at the first', () => {
     expect(failedAtText(1440, 'Step 1: moderation-dismiss is not on the page', 1, steps)).toContain(

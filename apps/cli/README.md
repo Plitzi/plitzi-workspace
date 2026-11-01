@@ -421,8 +421,21 @@ dm-input hi`. Both reach the project's own server, never `--compare`'s site. A s
 hover lands on its element's centre, or on a point of its box said in percent from its top left — what a canvas draws
 has no element of its own: `click map 30%,60%` presses a quake on a map. The steps are one vocabulary: `page play`
 plays them step by step, `page shot` pictures them, and `page check`, `page measure` and `page outline` play them before
-they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page). Every step, as `page shot --help`
-prints them: `click <el> [x%,y%]`, `hover <el> [x%,y%]`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy] [hold]`, `release`, `press <key>`, `wait <ms|3s>`, `wait-for <el> [time]`, `reload`, `goto <path>`, `back`, `store <key> <value>`, `state <key> <json>`, `source <path> <json>`, `attribute <id>.<name> <json>`, `clock <instant>`, `tick <duration>`, `action <id> [json]`, `render <id> [json]`, `as <account> <step>`, `at <widths> <step>`, `shot [label]`, `frames <n> [ms]` (`frames` is `page shot`'s alone).
+they read the page (a visitor's own steps; another account's are `play`'s and `measure`'s, which keep its page).
+
+A space's journeys are written in the same words, and played by the same player (`@plitzi/sdk-authoring`): what a
+`--steps` script says of a page, a journey kept in the space says alike, and what `plitzi test` prints of a journey's
+step is a step these commands take. A step that must hold — `expect-text cart-count = "1 item"`, `expect-shown
+sheet-log`, `expect-state sheetTab "log"`, `expect-position "activity.bottom + 8 <= legend.top"` — is held for its time
+and fails the command with what it read, where `--read … | grep` was the way. A journey's steps: `click <el> [x%,y%]`,
+`hover <el> [x%,y%]`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy]`, `press <key>`, `wait-for <el> [time]`,
+`reload`, `goto <path>`, `back`, `state <key> <json>`, `source <path> <json>`, `tick <duration>`,
+`expect-shown <el>`, `expect-hidden <el>`, `expect-text <el> [=] <text>`, `expect-state <key> <json>`,
+`expect-attribute <el> <name> <value>`, `expect-style <el> <property> [>=|<=] <value>`, `expect-position <relation>`,
+`expect-check <check>`. The page commands' own, as `page shot --help` prints them: `drag <el> <dx> [dy] [hold]`,
+`release`, `wait <ms|3s>`, `store <key> <value>`, `attribute <id>.<name> <json>`, `clock <instant>`, `action <id> [json]`,
+`render <id> [json]`, `as <account> <step>`, `at <widths> <step>`, `shot [label]`, `frames <n> [ms]`
+(`frames` is `page shot`'s alone).
 
 A look at a task reads the pages only a shared file of the task reaches on both servers — the task's copy and the run
 before it — every element on screen, its box, the style a reader sees and what its `::before`/`::after` draw, read, not

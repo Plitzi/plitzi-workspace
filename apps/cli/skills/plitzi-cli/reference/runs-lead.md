@@ -175,8 +175,8 @@ its `--dry-run`) list; a task of your plan that does one says so — `"closes": 
   page answers.
 - **Your look covers every state the task names** — signed in, open, empty, at 390: a `task look --click/--as` or a
   `page play` each before you approve; the state at rest misses the one the task is about.
-- **A control is used there and back, not pictured** (an arrow, a pager, a drawer): its line is a `page play <path>
-  --steps "…" --read <el…> --width 390,1440` (a copy's: `"ours => theirs" --compare <reference> --same
+- **A control is used there and back, not pictured** (an arrow, a pager, a drawer): its line, `page play <path>
+  --steps "…; expect-shown <el>" --width 390,1440` (copies: `"ours => theirs" --compare <reference> --same
   moved,shown,enabled`) — never a script of yours.
 - **The board is a kanban; keeping the team busy is yours**: a card ready beside each in review — stack the backlog
   (a stage, `run open <stage>`, of tasks that `closes`), split a card by what changes apart. `run watch` says an agent with nothing to

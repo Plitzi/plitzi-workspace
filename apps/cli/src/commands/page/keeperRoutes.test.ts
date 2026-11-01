@@ -123,7 +123,7 @@ describe('the kept browser’s routes', () => {
     const { ask, opened, routes } = bench();
     const session = sessionOf(await ask('/session/open', view));
 
-    expect(await ask('/session/act', { session, step: { kind: 'click', target: '#next' }, index: 0 })).toEqual({
+    expect(await ask('/session/act', { session, step: { kind: 'click', element: '#next' }, index: 0 })).toEqual({
       done: true
     });
     expect(await ask('/session/read', { session, targets: ['#row', 'hidden'] })).toEqual({
@@ -180,7 +180,7 @@ describe('the kept browser’s routes', () => {
     expect(await ask('/session/open', view)).toEqual({ problem: expect.stringContaining('held for plays') as unknown });
 
     // One busy with a step while the minute passes: the sweep leaves it, and closes the rest.
-    const stepping = ask('/session/act', { session: sessions[0], step: { kind: 'click', target: '#a' }, index: 0 });
+    const stepping = ask('/session/act', { session: sessions[0], step: { kind: 'click', element: '#a' }, index: 0 });
     later(SESSION_IDLE_MS + 1);
     await routes.sweep();
     expect(routes.sessions()).toBe(1);

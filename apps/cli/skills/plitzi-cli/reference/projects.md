@@ -31,7 +31,9 @@ What a project gives you, so you use it rather than rebuild it:
 it shows, whether it takes a press, what its bindings gave it (a plugin's attribute) — where a step took the page
 (`→ <path>`), what an action answered (`←`; whole in `--json`), a flow a step set off that failed (`✗`, failing the
 play), a list's row by `<el>:2` or `<el>:last`; a point of a canvas (a map's quake) by `click <el> 30%,60%` or `hover
-<el> 30%,60%`, percent of its box. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check`, `measure` and `page outline` play `--steps` before they read. `--journey <id>` plays one of the space's journeys first, its checks held, and reads from where it leaves the page — never its steps written again.
+<el> 30%,60%`, percent of its box; what must hold, `expect-text <el> [=] <text>`, `expect-shown <el>`, `expect-state
+<key> <json>`, `expect-position "<a.bottom <= b.top>"`, failing the play with what it read — the steps are a journey's,
+as the space keeps them (`plitzi test`), and the page commands' own. An action runs once, at the first `--width`; a public page plays signed out (`--as`). `check`, `measure` and `page outline` play `--steps` before they read. `--journey <id>` plays one of the space's journeys first, its checks held, and reads from where it leaves the page — never its steps written again.
 
 Every page command reads as one visitor: a page that sends a guest away as the project's account (`PLITZI_CHECK_USER`), said — `--as <user>` another, `--guest` a guest; `--timezone <IANA>` (its hours there), `--presence` (takes part in its channels), and a browser that refuses: `--clock <instant>`, `--block <text>` (fails), `--hold <text>` (never answered: a loading state, a held load), `--autoplay refused`, `--storage refused`; `--fresh` reads anew whatever an earlier call kept (the other site's page, the space authored).
 

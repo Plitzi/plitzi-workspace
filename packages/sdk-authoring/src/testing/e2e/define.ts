@@ -1,4 +1,4 @@
-import type { E2eAccount, E2eAction, E2eExpectation, E2eTarget, E2eTest } from '@plitzi/sdk-shared';
+import type { E2eAccount, E2eAction, E2eExpectation, E2ePoint, E2eTarget, E2eTest } from '@plitzi/sdk-shared';
 
 /**
  * E2e tests as code: `e2e.test({ page, steps: [e2e.click('add'), e2e.expectText('count', '1')] })` — the same records the
@@ -8,14 +8,17 @@ export const e2e = {
   test: (test: E2eTest): E2eTest => test,
   /** Somebody a journey plays as, signed in (`as`): declared in `tests.accounts` alone — no account of the platform's. */
   account: (account: E2eAccount): E2eAccount => account,
-  click: (element: E2eTarget): E2eAction => ({ kind: 'click', element }),
-  hover: (element: E2eTarget): E2eAction => ({ kind: 'hover', element }),
+  /** On its centre, or on a point of its box in percent from its top left — `e2e.click('map', { x: 30, y: 60 })`. */
+  click: (element: E2eTarget, point?: E2ePoint): E2eAction => ({ kind: 'click', element, ...(point ? { point } : {}) }),
+  hover: (element: E2eTarget, point?: E2ePoint): E2eAction => ({ kind: 'hover', element, ...(point ? { point } : {}) }),
   type: (element: E2eTarget, text: string): E2eAction => ({ kind: 'type', element, text }),
   press: (key: string): E2eAction => ({ kind: 'press', key }),
-  scroll: (element: E2eTarget, { dx, dy }: { dx?: number; dy?: number }): E2eAction => ({
+  /** Brought into view — or, given `dx`/`dy`, its own content scrolled by so many pixels. */
+  scroll: (element: E2eTarget, { dx, dy }: { dx?: number; dy?: number } = {}): E2eAction => ({
     kind: 'scroll',
     element,
-    ...(dx === undefined ? {} : { dx }),
+    // How far is its own content's, `dx` said whenever it moves — as the words `scroll <el> <dx> [dy]` read.
+    ...(dx === undefined && dy === undefined ? {} : { dx: dx ?? 0 }),
     ...(dy === undefined ? {} : { dy })
   }),
   drag: (element: E2eTarget, dx: number, dy: number): E2eAction => ({ kind: 'drag', element, dx, dy }),

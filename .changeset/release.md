@@ -33,6 +33,12 @@ authoring and the elements learnt from the runs.
   first use. `mysqlJobSchemaUpgrades` is gone with what it listed; `mysqlJobSchemaStatements` still creates the tables.
 - **`specFromSpace` no longer reads `navbar` and `navbarItem`**, element types no builder writes: a document that still
   holds one says so as `unknown-element-type`, and its correction code `legacy-element-type` is gone.
+- **A journey's step has one player and one way to be written** (`@plitzi/sdk-authoring`): `stepText` is
+  `e2eStepText`, and a run's `said` is the step in words (`expect-text cart-count = 1`, where it was `cart-count shows
+  "1"`). Played by the player the page commands use, a journey's `scroll` with `dx`/`dy` scrolls the element's own
+  content (it turned the wheel over it), and without them, or 0 both ways, brings it into view; `waitFor` waits 10 s
+  unless it says. The CLI's `type` replaces what a field held as a journey's does (`fill`), where it pressed the keys
+  one by one: a field that listens to each key alone reads the text whole.
 - **Two flows of one element may not give a step one name** (`step-duplicate`): they share one record, and the later
   step took the earlier's place with nothing said — a map's press selected nothing for it. A step left unnamed is named
   past every name the element's flows wrote (`setState-3` beside a hand-written `setState-1`), where it took a name
@@ -52,7 +58,9 @@ authoring and the elements learnt from the runs.
 - **`SchemaVariables` and `StyleVariables` no longer draw their own add button** (`@plitzi/sdk-variables/builder`):
   whoever holds the action says `adding`, hears `onAddingEnd`, and may give `empty` — what shows with none.
 - **A page given to `runE2eTest` chooses a select's option**: `E2eElement` has `selectOption(value, { timeout })`, as
-  Playwright's locator does — a page written by hand (not Playwright's) adds it.
+  Playwright's locator does — a page written by hand (not Playwright's) adds it. It also takes `position` in `click`
+  and `hover` (a point of the element), and has `evaluate(fn, arg)` run on the element, as a locator's: a journey's
+  wait and expectations read an element through it, so any selector that presses it reads it (`:has-text()`).
 - **The store's `navigation.navigate` takes how it goes as an object**: `navigate(url, { external: true })` where a
   plugin wrote `navigate(url, true)`; `{ replace: true }` takes the place of the address the visitor is on.
 - **Node 24.** Every package's `engines` is `^24.22.1 || >=26.12.1` (Node's security release of October 2026); Node 22
@@ -1644,6 +1652,26 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   selected nothing was called working. The point is in percent of the element's box, from its top left, in every
   command's steps; what covers it is said, as a press's is. `E2eElement`'s `click` and `hover` take Playwright's
   `position` (`@plitzi/sdk-authoring`).
+- **One player for a journey's steps, wherever they are written.** `playE2eStep` plays a step of a journey — the
+  builder's canvas, the server's runner, `plitzi test`, and every page command's `--steps` — with what the runs taught
+  each: a press after hydration and once, on the copy a visitor sees (and said when the name matched several), at a
+  point of the box, a click that navigated taken as done, an expectation held for its time and said by what it read.
+  `E2E_STEP_USAGE`, `parseE2eStep(s)` and `e2eStepText` write a journey's steps in words and read them back — the words
+  `--steps` takes — and `e2eStepProblems` reads one step from outside, as the builder's save, the MCP and the CLI's kept
+  browser each hand one. The page commands' `--steps` are a journey's steps and their own (`shot`, `frames`, `at`, `as`,
+  `action`, `render`, `store`, `attribute`, `clock`, `wait`, `drag … hold`, `release`); a script's
+  `expect-text`, `expect-shown`, `expect-hidden`, `expect-state`, `expect-attribute`, `expect-style`, `expect-position`
+  and `expect-check` fail the command with what they read, where an acceptance line grepped `--read`'s words. A journey
+  presses a point too (`e2e.click('map', { x: 30, y: 60 })`, `point` in the record) — for an element that renders a
+  canvas; one drawn as HTML at that point is said, with the selector that names it wherever it is — the builder's
+  canvas plays it where the other players do (on what is drawn there), and records a press on a canvas with the point
+  it landed on (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`,
+  `@plitzi/plitzi-builder`, `@plitzi/sdk-mcp`).
+- **A page's load is announced again when who visits changes** — signing in, out, or as somebody else — never when a
+  session is only renewed: a page that sends a signed-in visitor to their account on load does so for one who signs in
+  on it, in the builder's canvas as on a published page, where it happened only by how the router handed over its
+  params (`@plitzi/sdk-elements`). **The builder moves to a page by its id as a published page does**
+  (`navigationTarget`): a flow's `navigate` to a page with a slug went nowhere on the canvas (`@plitzi/plitzi-builder`).
 - **A `--steps` script's pictures are the moment they are taken.** A part pictured (`--within`) is cut out of one picture
   of the screen, never its own picture waiting for its box to be still, and what changed between pictures is worked out
   once the steps are played: shots written 300 ms apart around a reticle over a turning globe came out 8 s apart. A

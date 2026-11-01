@@ -1,4 +1,4 @@
-import type { E2eStep } from '@plitzi/sdk-shared';
+import type { E2ePoint, E2eStep } from '@plitzi/sdk-shared';
 
 /**
  * A step of an e2e test as a person reads it, not as it is stored: "Click [Add to basket]", "Check [Basket] shows
@@ -13,14 +13,18 @@ export type Sentence = { icon: string; check: boolean; parts: SentencePart[] };
 
 const json = (value: unknown): string => (typeof value === 'string' ? value : JSON.stringify(value));
 
+/** Where in the element a press lands, when it is not its centre: a point of a map's canvas. */
+const pointOf = (point: E2ePoint | undefined): SentencePart[] =>
+  point ? [{ text: 'at' }, { value: `${String(point.x)}% across, ${String(point.y)}% down` }] : [];
+
 export const sentenceOf = (step: E2eStep): Sentence => {
   const act = (icon: string, parts: SentencePart[]): Sentence => ({ icon, check: false, parts });
   const check = (parts: SentencePart[]): Sentence => ({ icon: 'fa-solid fa-circle-check', check: true, parts });
   switch (step.kind) {
     case 'click':
-      return act('fa-solid fa-arrow-pointer', [{ text: 'Click' }, { element: step.element }]);
+      return act('fa-solid fa-arrow-pointer', [{ text: 'Click' }, { element: step.element }, ...pointOf(step.point)]);
     case 'hover':
-      return act('fa-solid fa-hand-pointer', [{ text: 'Point at' }, { element: step.element }]);
+      return act('fa-solid fa-hand-pointer', [{ text: 'Point at' }, { element: step.element }, ...pointOf(step.point)]);
     case 'type':
       return act('fa-solid fa-keyboard', [
         { text: 'Type' },

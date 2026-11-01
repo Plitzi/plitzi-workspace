@@ -8,7 +8,7 @@ import { parseSteps, STEP_USAGE, stepsUsage, widthRange, widthRangeText } from '
 describe('page shot --steps', () => {
   it('reads a scroll to an element: the footer brought into view, as a reader would', () => {
     expect(parseSteps('scroll site-footer; shot footer', 500)).toEqual([
-      { kind: 'scroll', target: 'site-footer' },
+      { kind: 'scroll', element: 'site-footer' },
       { kind: 'shot', label: 'footer' }
     ]);
   });
@@ -24,13 +24,13 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
         500
       )
     ).toEqual([
-      { kind: 'click', target: '.gm__knob' },
+      { kind: 'click', element: '.gm__knob' },
       { kind: 'wait', ms: 300 },
       { kind: 'frames', count: 3, every: 150 },
-      { kind: 'hover', target: 'home-cta' },
-      { kind: 'type', target: 'title', text: 'Notes from the seed' },
+      { kind: 'hover', element: 'home-cta' },
+      { kind: 'type', element: 'title', text: 'Notes from the seed' },
       { kind: 'press', key: 'Enter' },
-      { kind: 'wait-for', target: '.gm__capsule' },
+      { kind: 'waitFor', element: '.gm__capsule' },
       { kind: 'shot', label: 'opened' },
       { kind: 'frames', count: 2, every: 500 }
     ]);
@@ -39,16 +39,16 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   /** Cut at its first space, `.composer textarea hola` typed "textarea hola" into `.composer`, and said nothing. */
   it('reads an element with a space in it whole when it is quoted', () => {
     expect(parseSteps('type ".oc-composer textarea" Café a las 9; type \'textarea\' "hola"', 500)).toEqual([
-      { kind: 'type', target: '.oc-composer textarea', text: 'Café a las 9' },
-      { kind: 'type', target: 'textarea', text: 'hola' }
+      { kind: 'type', element: '.oc-composer textarea', text: 'Café a las 9' },
+      { kind: 'type', element: 'textarea', text: 'hola' }
     ]);
   });
 
   // `fill email=ana@x.com`, as `--fill` writes it, was refused in a step.
   it('reads a field filled as --fill writes it, an element named before its =', () => {
     expect(parseSteps('fill room-request-message=Para ti, Sam; type q=lofi', 500)).toEqual([
-      { kind: 'type', target: 'room-request-message', text: 'Para ti, Sam' },
-      { kind: 'type', target: 'q', text: 'lofi' }
+      { kind: 'type', element: 'room-request-message', text: 'Para ti, Sam' },
+      { kind: 'type', element: 'q', text: 'lofi' }
     ]);
   });
 
@@ -56,13 +56,13 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   // A run: `scroll <row> 200` reached Playwright as one selector and came back as its parse error.
   it('reads a scroll by whole pixels as the element’s own content moved, and refuses a number after any other', () => {
     expect(parseSteps('scroll explore-genres 200; scroll "[data-plitzi-el=feed] ul" 0 -80', 500)).toEqual([
-      { kind: 'scroll', target: 'explore-genres', by: { dx: 200, dy: 0 } },
-      { kind: 'scroll', target: '[data-plitzi-el=feed] ul', by: { dx: 0, dy: -80 } }
+      { kind: 'scroll', element: 'explore-genres', dx: 200 },
+      { kind: 'scroll', element: '[data-plitzi-el=feed] ul', dx: 0, dy: -80 }
     ]);
-    expect(parseSteps('click .panel button', 500)).toEqual([{ kind: 'click', target: '.panel button' }]);
+    expect(parseSteps('click .panel button', 500)).toEqual([{ kind: 'click', element: '.panel button' }]);
     expect(parseSteps('click explore-genres 200', 500)).toEqual({
       problem:
-        'step 1 ("click explore-genres 200"): click takes an element alone — 200 is no part of one (a selector with spaces goes in quotes)'
+        'step 1 ("click explore-genres 200"): click takes an element alone — 200 is no part of one (a selector with spaces goes in quotes); a point of it is written in percent of its box: click map 30%,60%'
     });
     expect(parseSteps('scroll explore-genres 0', 500)).toEqual({
       problem:
@@ -72,27 +72,27 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
 
   it('reads a selector with a space inside its brackets or quotes whole, unquoted', () => {
     expect(parseSteps('type [aria-label="Precio hasta"] 650; click button:has-text("Ver más")', 500)).toEqual([
-      { kind: 'type', target: '[aria-label="Precio hasta"]', text: '650' },
-      { kind: 'click', target: 'button:has-text("Ver más")' }
+      { kind: 'type', element: '[aria-label="Precio hasta"]', text: '650' },
+      { kind: 'click', element: 'button:has-text("Ver más")' }
     ]);
   });
 
   // A range's handle could not be used — a click on it timed out, and no step moved it.
   it('reads a drag by whole pixels, either way, and refuses one that goes nowhere', () => {
     expect(parseSteps('drag price-max -120; drag [data-handle="low"] 40 8', 500)).toEqual([
-      { kind: 'drag', target: 'price-max', dx: -120, dy: 0 },
-      { kind: 'drag', target: '[data-handle="low"]', dx: 40, dy: 8 }
+      { kind: 'drag', element: 'price-max', dx: -120, dy: 0 },
+      { kind: 'drag', element: '[data-handle="low"]', dx: 40, dy: 8 }
     ]);
     expect(parseSteps('drag price-max', 500)).toEqual({
       problem:
-        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold'
+        'step 1 ("drag price-max"): drag needs an element and how far, in whole pixels — drag <element> <dx> [dy]: drag volume-handle -120'
     });
   });
 
   // A run's designer and tester each wrote a Playwright probe to read a sheet while the finger was still on it.
   it('reads a drag held down for what follows, and the release that lets it go', () => {
     expect(parseSteps('drag sheet-handle 0 -120 hold; release', 500)).toEqual([
-      { kind: 'drag', target: 'sheet-handle', dx: 0, dy: -120, held: true },
+      { kind: 'hold', element: 'sheet-handle', dx: 0, dy: -120 },
       { kind: 'release' }
     ]);
   });
@@ -100,7 +100,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem:
-        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, at, shot, frames'
+        'step 2 ("tap b"): "tap" is not a step — the steps are click, hover, scroll, type, drag, press, wait-for, reload, goto, back, state, source, tick, expect-shown, expect-hidden, expect-text, expect-state, expect-attribute, expect-style, expect-position, expect-check, release, wait, store, attribute, clock, action, render, as, at, shot, frames'
     });
     expect(parseSteps('wait soon', 500)).toEqual({
       problem:
@@ -121,15 +121,15 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:
-        '--steps has no step: click, hover, scroll, type, fill, drag, release, press, wait, wait-for, reload, goto, back, store, state, source, attribute, clock, tick, action, render, as, at, shot, frames, separated by ";"'
+        '--steps has no step: click, hover, scroll, type, drag, press, wait-for, reload, goto, back, state, source, tick, expect-shown, expect-hidden, expect-text, expect-state, expect-attribute, expect-style, expect-position, expect-check, release, wait, store, attribute, clock, action, render, as, at, shot, frames, separated by ";"'
     });
   });
 
   // `drag product-slides => .js-media-list -200 0` was refused until the pair was quoted.
   it('reads an element named on both pages — ours => theirs — as one, before what a drag or a type takes', () => {
     expect(parseSteps('drag product-slides => .js-media-list -200 0; type q => ".search input" hola', 500)).toEqual([
-      { kind: 'drag', target: 'product-slides => .js-media-list', dx: -200, dy: 0 },
-      { kind: 'type', target: 'q => .search input', text: 'hola' }
+      { kind: 'drag', element: 'product-slides => .js-media-list', dx: -200, dy: 0 },
+      { kind: 'type', element: 'q => .search input', text: 'hola' }
     ]);
   });
 });
@@ -145,8 +145,8 @@ describe('the steps that set what a page remembers and what time it is', () => {
     ).toEqual([
       { kind: 'store', key: 'listen-choice', value: 'on' },
       { kind: 'reload' },
-      { kind: 'state', key: 'roomOpen', value: true },
-      { kind: 'state', key: 'show', value: { title: 'Late set' } },
+      { kind: 'setState', key: 'roomOpen', value: true },
+      { kind: 'setState', key: 'show', value: { title: 'Late set' } },
       { kind: 'clock', time: Date.parse('2026-10-25T20:00:00Z') },
       { kind: 'tick', ms: 300_000 },
       { kind: 'tick', ms: 1500 }
@@ -156,7 +156,7 @@ describe('the steps that set what a page remembers and what time it is', () => {
   // A reviewer could not test a typing flag left on one page and come back to: no step went back.
   it('reads a way to another page of the session and back', () => {
     expect(parseSteps('type q hola; goto /rooms; back', 500)).toEqual([
-      { kind: 'type', target: 'q', text: 'hola' },
+      { kind: 'type', element: 'q', text: 'hola' },
       { kind: 'goto', path: '/rooms' },
       { kind: 'back' }
     ]);
@@ -165,7 +165,7 @@ describe('the steps that set what a page remembers and what time it is', () => {
   // A designer approved a list it had only seen empty: nothing put a provider's answer on the page.
   it('reads a provider’s answer written where it keeps it, and refuses one with no value', () => {
     expect(parseSteps(`source apiContainer_chart.clapped '[{"title":"Night Drive"}]'`, 500)).toEqual([
-      { kind: 'source', key: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] }
+      { kind: 'setSource', path: 'apiContainer_chart.clapped', value: [{ title: 'Night Drive' }] }
     ]);
     const problem = parseSteps('source apiContainer_chart.clapped', 500);
     expect('problem' in problem ? problem.problem : '').toContain("source needs a source's path");
@@ -192,9 +192,9 @@ describe('the steps that set what a page remembers and what time it is', () => {
         500
       )
     ).toEqual([
-      { kind: 'type', target: 'chat-input', text: 'late; still here' },
-      { kind: 'type', target: '.chat-input', text: 'Great' },
-      { kind: 'state', key: 'dismissed', value: 'show-1' },
+      { kind: 'type', element: 'chat-input', text: 'late; still here' },
+      { kind: 'type', element: '.chat-input', text: 'Great' },
+      { kind: 'setState', key: 'dismissed', value: 'show-1' },
       { kind: 'goto', path: '/rooms' }
     ]);
     const problem = parseSteps('state dismissed show-1', 500);
@@ -212,7 +212,7 @@ describe('the steps another account and the server play', () => {
     ).toEqual([
       { kind: 'action', action: 'crate-hide', input: { crate: 'c1' } },
       { kind: 'action', action: 'rooms-reset', input: {} },
-      { kind: 'as', account: 'mika', step: { kind: 'type', target: 'dm-input', text: 'hi there' } }
+      { kind: 'as', account: 'mika', step: { kind: 'type', element: 'dm-input', text: 'hi there' } }
     ]);
   });
 
@@ -236,9 +236,9 @@ describe('the steps another account and the server play', () => {
 describe('a wait-for with its time', () => {
   it('waits for a selector’s state as long as it says, up to 60 s — and is refused past it', () => {
     expect(parseSteps(`wait-for '[data-state="stalled"]' 40s`, 0)).toEqual([
-      { kind: 'wait-for', target: '[data-state="stalled"]', ms: 40_000 }
+      { kind: 'waitFor', element: '[data-state="stalled"]', ms: 40_000 }
     ]);
-    expect(parseSteps('wait-for room-player', 0)).toEqual([{ kind: 'wait-for', target: 'room-player' }]);
+    expect(parseSteps('wait-for room-player', 0)).toEqual([{ kind: 'waitFor', element: 'room-player' }]);
     expect(parseSteps('wait-for room-player 90s', 0)).toEqual({
       problem: expect.stringContaining('wait-for takes an element and how long it waits at most, up to 60 s') as unknown
     });
@@ -261,8 +261,8 @@ describe('an attribute step', () => {
 describe('a step played at some widths', () => {
   it('names the widths and the one step played at them', () => {
     expect(parseSteps('at <=767 click sheet-tab-log; type log-search zzqqxx', 500)).toEqual([
-      { kind: 'at', width: { min: 0, max: 767 }, step: { kind: 'click', target: 'sheet-tab-log' } },
-      { kind: 'type', target: 'log-search', text: 'zzqqxx' }
+      { kind: 'at', width: { min: 0, max: 767 }, step: { kind: 'click', element: 'sheet-tab-log' } },
+      { kind: 'type', element: 'log-search', text: 'zzqqxx' }
     ]);
     expect(widthRange('390')).toEqual({ min: 390, max: 390 });
     expect(widthRange('<768')).toEqual({ min: 0, max: 767 });
@@ -302,8 +302,8 @@ describe('the steps the CLI teaches', () => {
 describe('a point of an element pressed', () => {
   it('is read in percent of its box, from its top left', () => {
     expect(parseSteps('click map 30%,60%; hover "#globe canvas" 12.5%, 100%', 500)).toEqual([
-      { kind: 'click', target: 'map', point: { x: 30, y: 60 } },
-      { kind: 'hover', target: '#globe canvas', point: { x: 12.5, y: 100 } }
+      { kind: 'click', element: 'map', point: { x: 30, y: 60 } },
+      { kind: 'hover', element: '#globe canvas', point: { x: 12.5, y: 100 } }
     ]);
   });
 

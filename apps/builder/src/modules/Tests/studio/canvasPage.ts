@@ -37,14 +37,17 @@ const named = (node: Element): string => {
   return `<${node.localName}${id ? ` data-plitzi-el="${id}"` : ''}>`;
 };
 
-const center = (node: Element): { x: number; y: number } => {
+/** Where in the element a press lands: its centre, or `position` — px from its box's top left, as Playwright takes it. */
+const pointOn = (node: Element, position?: { x: number; y: number }): { x: number; y: number } => {
   const box = node.getBoundingClientRect();
 
-  return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  return position
+    ? { x: box.left + position.x, y: box.top + position.y }
+    : { x: box.left + box.width / 2, y: box.top + box.height / 2 };
 };
 
 /** Why a press cannot reach the element now, as Playwright's log says it — or nothing, when it can. */
-const blocked = (node: Element): string | undefined => {
+const blocked = (node: Element, position?: { x: number; y: number }): string | undefined => {
   if (!node.isConnected) {
     return 'element is not attached to the DOM';
   }
@@ -64,7 +67,7 @@ const blocked = (node: Element): string | undefined => {
 
   // In view before it is pressed, as a pointer would find it — within the page alone, the editor around it left still.
   reveal(node, 'instant');
-  const { x, y } = center(node);
+  const { x, y } = pointOn(node, position);
   const hit = node.ownerDocument.elementFromPoint(x, y);
   if (hit && hit !== node && !node.contains(hit)) {
     return `${named(hit)} intercepts pointer events`;
@@ -136,6 +139,20 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
     return window;
   };
   const doc = (): Document => view().document;
+  /**
+   * A function made again in the canvas' own window, as a browser driver sends it: what it reads — `document`,
+   * `innerHeight`, `getComputedStyle` — is the canvas', not the editor's around it.
+   */
+  const inCanvas = (fn: (...args: never[]) => unknown): ((...args: unknown[]) => unknown) => {
+    const evalIn: unknown = Reflect.get(view(), 'eval');
+    const made: unknown = typeof evalIn === 'function' ? Reflect.apply(evalIn, view(), [`(${fn.toString()})`]) : fn;
+    if (typeof made !== 'function') {
+      throw new Error('the canvas could not run a step of the test');
+    }
+
+    // A function, as `typeof` just said: called with what `fn` is called with.
+    return made as (...args: unknown[]) => unknown;
+  };
   let pointerAt = { x: 0, y: 0 };
 
   /** Waits for the element to take a press, then makes it — or throws what it waited on, as Playwright does. */
@@ -143,13 +160,14 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
     action: string,
     pick: () => Element | undefined,
     timeout: number,
-    press: (node: Element) => void
+    press: (node: Element) => void,
+    position?: { x: number; y: number }
   ): Promise<void> => {
     const until = Date.now() + timeout;
     let why = 'waiting for the element';
     for (;;) {
       const node = pick();
-      const reason = node ? blocked(node) : 'waiting for the element';
+      const reason = node ? blocked(node, position) : 'waiting for the element';
       if (node && reason === undefined) {
         press(node);
 
@@ -165,37 +183,53 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
     }
   };
 
-  const click = (node: Element): void => {
-    const { x, y } = center(node);
-    const window = view();
-    pointerAt = { x, y };
-    node.dispatchEvent(pointer('pointerdown', window, x, y));
-    node.dispatchEvent(mouse('mousedown', window, x, y));
-    callMethod(node, 'focus');
-    node.dispatchEvent(pointer('pointerup', window, x, y));
-    node.dispatchEvent(mouse('mouseup', window, x, y));
-    // The element's own click: the one that also does what a click does by default — follows a link, ticks a box,
-    // submits its form.
-    callMethod(node, 'click');
+  /**
+   * What a press at a point reaches: the element itself at its centre, as before; at a point of it, what is drawn there
+   * inside it — the canvas a map listens on, where its markers are drawn.
+   */
+  const reached = (node: Element, x: number, y: number, position?: { x: number; y: number }): Element => {
+    const hit = position ? doc().elementFromPoint(x, y) : null;
+
+    return hit && node.contains(hit) ? hit : node;
   };
 
-  const hover = (node: Element): void => {
-    const { x, y } = center(node);
+  const click = (node: Element, position?: { x: number; y: number }): void => {
+    const { x, y } = pointOn(node, position);
     const window = view();
+    const target = reached(node, x, y, position);
+    pointerAt = { x, y };
+    target.dispatchEvent(pointer('pointerdown', window, x, y));
+    target.dispatchEvent(mouse('mousedown', window, x, y));
+    callMethod(node, 'focus');
+    target.dispatchEvent(pointer('pointerup', window, x, y));
+    target.dispatchEvent(mouse('mouseup', window, x, y));
+    // The element's own click: the one that also does what a click does by default — follows a link, ticks a box,
+    // submits its form. At a point, the click a pointer there makes, with where it was.
+    if (target === node) {
+      callMethod(node, 'click');
+    } else {
+      target.dispatchEvent(mouse('click', window, x, y));
+    }
+  };
+
+  const hover = (node: Element, position?: { x: number; y: number }): void => {
+    const { x, y } = pointOn(node, position);
+    const window = view();
+    const target = reached(node, x, y, position);
     pointerAt = { x, y };
     for (const type of ['pointerover', 'pointerenter', 'pointermove']) {
-      node.dispatchEvent(pointer(type, window, x, y));
+      target.dispatchEvent(pointer(type, window, x, y));
     }
 
     for (const type of ['mouseover', 'mouseenter', 'mousemove']) {
-      node.dispatchEvent(mouse(type, window, x, y));
+      target.dispatchEvent(mouse(type, window, x, y));
     }
   };
 
   const element = (pick: () => Element | undefined): E2eElement => ({
     count: () => Promise.resolve(pick() ? 1 : 0),
-    click: ({ timeout }) => pressed('click', pick, timeout, click),
-    hover: ({ timeout }) => pressed('hover', pick, timeout, hover),
+    click: ({ timeout, position }) => pressed('click', pick, timeout, node => click(node, position), position),
+    hover: ({ timeout, position }) => pressed('hover', pick, timeout, node => hover(node, position), position),
     fill: (text, { timeout }) =>
       pressed('fill', pick, timeout, node => {
         callMethod(node, 'focus');
@@ -221,6 +255,15 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
         node.dispatchEvent(new Event('input', { bubbles: true }));
         node.dispatchEvent(new Event('change', { bubbles: true }));
       }),
+    evaluate: async <R, A>(fn: (node: Element, arg: A) => R, arg: A): Promise<R> => {
+      const node = pick();
+      if (!node) {
+        throw new Error('locator.evaluate: the element is not on the page');
+      }
+
+      // `fn` re-made in the canvas' window, on the node it was asked of: it answers what `fn` answers.
+      return (await Reflect.apply(inCanvas(fn), undefined, [node, arg])) as R;
+    },
     boundingBox: () => {
       const node = pick();
       if (!node) {
@@ -291,18 +334,9 @@ export const createCanvasPage = ({ iframe, navigate, back, resize, scheme }: Can
     },
     waitForSelector,
     locator,
-    evaluate: async <R, A>(fn: (arg: A) => R | Promise<R>, arg: A): Promise<R> => {
-      // Made again in the canvas' own window, as a browser driver sends it: what it reads — `document`, `innerHeight`,
-      // `getComputedStyle` — is the canvas', not the editor's around it.
-      const evalIn: unknown = Reflect.get(view(), 'eval');
-      const made: unknown = typeof evalIn === 'function' ? Reflect.apply(evalIn, view(), [`(${fn.toString()})`]) : fn;
-      if (typeof made !== 'function') {
-        throw new Error('the canvas could not run a step of the test');
-      }
-
+    evaluate: async <R, A>(fn: (arg: A) => R | Promise<R>, arg: A): Promise<R> =>
       // `made` is `fn` itself, re-made from its own source in the canvas' window: it answers what `fn` answers.
-      return (await Reflect.apply(made, undefined, [arg])) as R;
-    },
+      (await Reflect.apply(inCanvas(fn), undefined, [arg])) as R,
     keyboard: {
       press: key => {
         const document = doc();
