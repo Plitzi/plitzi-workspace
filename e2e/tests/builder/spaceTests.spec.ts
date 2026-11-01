@@ -226,7 +226,8 @@ describeTarget('builder', subject => {
 
       const flows = page.getByRole('region', { name: 'Journeys' });
       // Three or more, as the tests before it in this worker left the mocked space: at the plan's number either way.
-      await expect(flows.getByText(/^Journeys · \d+ of 3$/)).toBeVisible();
+      // The count beside the heading: the journeys kept, of the plan's number.
+      await expect(flows.getByText(/^\d+ \/ 3$/)).toBeVisible();
       await expect(page.getByRole('button', { name: 'New journey' })).toBeDisabled();
       await expect(flows.getByRole('status')).toContainText('The Free plan keeps 3 journeys per space');
       await expect(flows.getByRole('link', { name: 'See the plans' })).toHaveAttribute(

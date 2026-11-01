@@ -251,5 +251,7 @@ describe('workspace boundaries', () => {
       });
 
     expect(cycles).toEqual([]);
-  });
+    // Every module of every library package read from disk: half a second alone, past five while `yarn test` runs every
+    // package at once — the reading is slow then, not the rule broken.
+  }, 30_000);
 });

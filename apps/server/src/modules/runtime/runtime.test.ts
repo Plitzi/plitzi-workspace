@@ -329,9 +329,11 @@ describe('a space runtime', () => {
         rest += decoder.decode(value);
       }
 
-      // The first tick was here before the second was written: passed on as it came, not once it ended.
+      // The first tick was here before the second was written: passed on as it came, not once it ended. Held back, the
+      // two arrive together; written 150 ms apart, they arrive about that far apart — less the first one's own delay,
+      // which a machine busy with every package's tests stretched past 50 ms. A third of the wait still tells them apart.
       expect(decoder.decode(first.value)).toBe('tick 1 of 1\n');
-      expect(Date.now() - firstAt).toBeGreaterThanOrEqual(100);
+      expect(Date.now() - firstAt).toBeGreaterThanOrEqual(50);
       expect(rest).toBe('tick 2\n');
     } finally {
       await platform.close();

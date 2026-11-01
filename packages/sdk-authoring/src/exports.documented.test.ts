@@ -40,7 +40,9 @@ const unexplained = (): string[] => {
 // `plitzi explain defineAction` answered its signature alone — no doc, no example — and an agent read the
 // package's types 25 times to learn what an action takes. `explain` prints an export's doc: every one has something.
 describe('what the package exports', () => {
+  // Every source of the package read and parsed: half a second alone, past five while `yarn test` runs every package
+  // at once — the reading is slow then, not a value left unsaid.
   it('says what each value is: a doc comment of its own, or what explain answers for it', () => {
     expect(unexplained()).toEqual([]);
-  });
+  }, 30_000);
 });
