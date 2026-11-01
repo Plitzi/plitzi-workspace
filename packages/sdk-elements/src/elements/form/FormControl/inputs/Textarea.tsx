@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useCallback, useRef } from 'react';
 
 import useFocusWhenShown from './useFocusWhenShown';
+import useBlurValidation from '../helpers/useBlurValidation';
 
 import type { ChangeEvent, MouseEvent } from 'react';
 
@@ -49,7 +50,7 @@ const Textarea = ({
     e.stopPropagation();
   }, []);
 
-  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
+  const handleBlur = useBlurValidation(onValidate);
 
   return (
     <textarea

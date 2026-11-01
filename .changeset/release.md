@@ -367,6 +367,14 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
 - **`login-then-leaves` warns only of what races the page** (`@plitzi/sdk-authoring`): a step after `auth.login` that
   runs only when the login was refused — its `when` holding that the answer has no token, says `ok: false` or names a
   reason — is not warned: a refused login leaves nobody signed in, and the page stays.
+- **A visitor who signed out is not signed back in by the page's first answer** (`@plitzi/sdk-auth`): the auth
+  settings are held while they say the same thing, so a query handed over anew no longer rebuilds the auth manager mid
+  sign-in; and the server's answer about the first load stands only until the visitor signs in or out on the page — a
+  manager made after a sign-out took it again, and a sign-in for signed-out visitors sent them on as nobody the server
+  knew, aborting the sign-in they had just started.
+- **A field checked as it loses focus waits for the press that took it** (`@plitzi/sdk-elements`): its error, said
+  under it, moved what was below between a press and its release, and the click landed on whatever slid under the
+  pointer — a box ticked after a wrong confirmation stayed unticked. Left by the keyboard, it is checked at once.
 - **A journey's test account is signed in and moved in one render** (`@plitzi/sdk-dev-tools`, `@plitzi/sdk-authoring`):
   `window.__plitzi.signInAs(account, path)` moves the page in the same step, and the runner uses it — a journey on a
   page for signed-in visitors, sent by the server to a sign-in for signed-out ones, never drew that sign-in signed in.

@@ -40,8 +40,8 @@ const TEMPLATED = [
   'mfaUrl'
 ] as const;
 
-/** Same person, whoever handed them over: the fields a page binds to, compared by value. */
-const sameDetails = (a?: object, b?: object): boolean => {
+/** The same, whoever handed it over: compared key by key, by value — a person's details, the auth settings. */
+const sameByValue = (a?: object, b?: object): boolean => {
   if (a === b) {
     return true;
   }
@@ -115,11 +115,25 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     return { provider: resolved.provider, settings: { ...resolved.settings, spaceKey: webKey } };
   }, [templated, schemaSettings, webKey, server.auth]);
 
+  /**
+   * The settings, held while they say the same thing. A new object is a new auth manager, and they were rebuilt
+   * whenever anything they are templated from was handed over anew — the address's query, as a sign-in started — with
+   * nothing in them changed: the manager started over mid sign-in, and took the page's server answer for the session.
+   */
+  const settingsRef = useRef(settings);
+  const stableSettings = useMemo(() => {
+    if (!sameByValue(settingsRef.current, settings)) {
+      settingsRef.current = settings;
+    }
+
+    return settingsRef.current;
+  }, [settings]);
+
   const { manager, loading, authenticated, state, bootstrapUser, bootstrapToken, peekedUser, peekedToken } = useAuth({
     server,
     isHydrating,
     provider: userProvider,
-    settings
+    settings: stableSettings
   });
 
   /**
@@ -142,7 +156,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
   const user = useMemo(() => {
     const next = details ? { details, accessToken } : undefined;
     const current = userRef.current;
-    const same = current?.accessToken === next?.accessToken && sameDetails(current?.details, next?.details);
+    const same = current?.accessToken === next?.accessToken && sameByValue(current?.details, next?.details);
 
     if (!same) {
       userRef.current = next;

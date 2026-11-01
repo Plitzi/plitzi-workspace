@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AuthManager } from '../../AuthManager';
 
-import type { AuthEvent } from '../../AuthProvider';
+import type { AuthEvent, AuthStateReason } from '../../AuthProvider';
 import type { AuthProviderSettings } from '../../types';
 import type { AuthContextValue, AuthState, Server } from '@plitzi/sdk-shared';
 
@@ -22,6 +22,9 @@ export type UseAuthProps = {
 
 type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>;
 
+/** Why a state means the visitor changed on this page: a sign-in started, a sign-out — here, or in another tab. */
+const CHANGED_HERE: ReadonlySet<AuthStateReason> = new Set(['authenticating', 'signed-out', 'another-tab']);
+
 /**
  * `loading` is what a space's pages are held back by, so it is deliberately narrow: it means "this page cannot be
  * rendered yet", not "auth is doing something". A session restored from storage renders immediately and confirms
@@ -29,14 +32,31 @@ type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], und
  * round trip to be told what it already knew.
  */
 const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAuthProps) => {
-  const bootstrapUser = server?.authenticated ? server.user?.details : undefined;
+  /**
+   * Whether the visitor has changed who they are on this page — signed in, signed out, here or in another tab.
+   *
+   * The server's answer is about the page's FIRST load, and that makes it stale: a manager made later (its settings
+   * changed) took it again, and signed a visitor who had just signed out back in as whoever the page was first rendered
+   * for — a sign-in for signed-out visitors then sent them on, as nobody the server knew. A manager deciding with no
+   * provider yet changes nobody, and leaves the answer standing. A ref for the effect, which must not run again for
+   * it; state for the render.
+   */
+  const [decidedOnce, setDecidedOnce] = useState(false);
+  const decidedOnceRef = useRef(false);
+  const serverUser = server?.authenticated ? server.user?.details : undefined;
   // `Server` allows a promise here (a token resolved later); only a settled string is a credential this can hand on.
-  const bootstrapToken = typeof server?.user?.accessToken === 'string' ? server.user.accessToken : undefined;
+  const serverToken = typeof server?.user?.accessToken === 'string' ? server.user.accessToken : undefined;
+  const bootstrapUser = decidedOnce ? undefined : serverUser;
+  const bootstrapToken = decidedOnce ? undefined : serverToken;
   const [state, setState] = useState<AuthState>('init');
 
   const handleEvent = useCallback((event: AuthEvent) => {
     if (event.type === 'state') {
       setState(event.state);
+      if (event.reason !== undefined && CHANGED_HERE.has(event.reason)) {
+        decidedOnceRef.current = true;
+        setDecidedOnce(true);
+      }
     }
   }, []);
 
@@ -85,15 +105,16 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
     peeked?.state === 'guest';
 
   useEffect(() => {
+    const fresh = !decidedOnceRef.current;
     void manager.init({
-      user: bootstrapUser,
-      accessToken: bootstrapToken,
-      expiresAt: server?.user?.expiresAt,
+      user: fresh ? serverUser : undefined,
+      accessToken: fresh ? serverToken : undefined,
+      expiresAt: fresh ? server?.user?.expiresAt : undefined,
       skipAuth: server?.skipAuth
     });
 
     return () => manager.dispose();
-  }, [manager, bootstrapUser, bootstrapToken, server?.user?.expiresAt, server?.skipAuth]);
+  }, [manager, serverUser, serverToken, server?.user?.expiresAt, server?.skipAuth]);
 
   // A server-rendered page arrives with its answer already in hand, and the browser has nothing to wait for.
   const hookValue = useMemo(

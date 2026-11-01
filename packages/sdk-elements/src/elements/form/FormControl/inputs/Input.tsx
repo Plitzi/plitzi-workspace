@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 
 import useFocusWhenShown from './useFocusWhenShown';
+import useBlurValidation from '../helpers/useBlurValidation';
 
 export type InputProps = {
   /** The box the field is drawn in — the `input` slot. */
@@ -83,7 +84,7 @@ const Input = ({
     [inputRef, type]
   );
 
-  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
+  const handleBlur = useBlurValidation(onValidate);
 
   return (
     <div className={clsx('form-control__input-container', className)} onClick={handleClickContainer}>

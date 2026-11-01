@@ -1,5 +1,6 @@
 import clsx from 'clsx';
-import { useCallback } from 'react';
+
+import useBlurValidation from '../helpers/useBlurValidation';
 
 import type { ChangeEvent } from 'react';
 
@@ -36,7 +37,7 @@ const Checkbox = ({
   onValidate,
   errorId
 }: CheckboxProps) => {
-  const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
+  const handleBlur = useBlurValidation(onValidate);
 
   return (
     <input
