@@ -1,5 +1,19 @@
 # @plitzi/sdk-mcp
 
+## 0.39.1
+
+### Patch Changes
+
+- f174a61: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [f174a61]
+  - @plitzi/plitzi-sdk@0.39.1
+  - @plitzi/sdk-server@0.39.1
+  - @plitzi/sdk-authoring@0.39.1
+  - @plitzi/sdk-schema@0.39.1
+  - @plitzi/sdk-shared@0.39.1
+  - @plitzi/sdk-style@0.39.1
+
 ## 0.39.0
 
 ### Minor Changes
