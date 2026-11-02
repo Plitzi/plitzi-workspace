@@ -15,6 +15,7 @@ export const defaultElements = {
   blockJsx: elements.BlockJsx,
   page: elements.Page,
   container: elements.Container,
+  focusGroup: elements.FocusGroup,
   layoutContainer: elements.LayoutContainer,
   dialogContainer: elements.DialogContainer,
   modalContainer: elements.ModalContainer,

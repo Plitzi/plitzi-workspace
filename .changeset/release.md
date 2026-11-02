@@ -25,3 +25,9 @@
   waited for it to hold still and timed out.
 - The plugins reference says `RootElement`'s `tag` (`tag="span"`), and that a plugin's stylesheet is linked only on the
   pages that draw it.
+
+## Elements (`@plitzi/sdk-elements`)
+
+- A new element, `focusGroup`: the arrow keys move the focus between the controls inside it — ↑/↓ through them, ←/→ to
+  the first of the next or the previous list, Home/End to the ends; ↓ from a text field inside goes down into them and
+  ↑ from the first comes back. For a search palette's results, a menu, a set of options.

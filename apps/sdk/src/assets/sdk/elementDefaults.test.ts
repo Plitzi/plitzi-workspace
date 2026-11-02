@@ -140,6 +140,7 @@ const STYLESHEET: Record<string, SlotRules> = {
   }),
   dropdownPopup: root('.plitzi-component__dropdown-popup'),
   embed: root('.plitzi-component__embed'),
+  focusGroup: root('.plitzi-component__focus-group'),
   fontAwesome: () => ({
     base: ['.plitzi-component__fontawesome', '.plitzi-component__fontawesome:not(.fa-2x):not(.fa-3x):not(.fa-4x)']
   }),

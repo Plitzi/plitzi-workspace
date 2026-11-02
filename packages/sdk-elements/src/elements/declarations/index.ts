@@ -40,6 +40,7 @@ import CarouselTrackDeclaration from '../structure/Carousel/CarouselTrack/declar
 import CarouselDeclaration from '../structure/Carousel/declaration';
 import ContainerDeclaration from '../structure/Container/declaration';
 import DialogContainerDeclaration from '../structure/DialogContainer/declaration';
+import FocusGroupDeclaration from '../structure/FocusGroup/declaration';
 import ListDeclaration from '../structure/List/declaration';
 import ListItemDeclaration from '../structure/List/ListItem/declaration';
 import ModalContainerDeclaration from '../structure/ModalContainer/declaration';
@@ -60,6 +61,7 @@ export const elementDeclarations = {
   Container: ContainerDeclaration,
   Custom: CustomDeclaration,
   DialogContainer: DialogContainerDeclaration,
+  FocusGroup: FocusGroupDeclaration,
   Dropdown: DropdownDeclaration,
   DropdownPopup: DropdownPopupDeclaration,
   Embed: EmbedDeclaration,
@@ -107,6 +109,7 @@ export {
   ContainerDeclaration,
   CustomDeclaration,
   DialogContainerDeclaration,
+  FocusGroupDeclaration,
   DropdownDeclaration,
   DropdownPopupDeclaration,
   EmbedDeclaration,

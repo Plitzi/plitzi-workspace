@@ -44,6 +44,7 @@ export const custom = defineElement(elementDeclarations.Custom);
 export const dialogContainer = defineElement(elementDeclarations.DialogContainer);
 export const dropdown = defineElement(elementDeclarations.Dropdown);
 export const dropdownPopup = defineElement(elementDeclarations.DropdownPopup);
+export const focusGroup = defineElement(elementDeclarations.FocusGroup);
 export const embed = defineElement(elementDeclarations.Embed);
 export const fontAwesome = defineElement(elementDeclarations.FontAwesome);
 export const form = defineElement(elementDeclarations.Form);

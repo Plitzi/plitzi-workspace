@@ -88,6 +88,9 @@ row's panel is drawn as `<id>-<row>`, and the row's button points at its own. Wo
 A part that opens and closes on its own — a question and its answer, many open at once — needs no state at all:
 `container({ subType: 'details', children: [container({ subType: 'summary', children: [text('Question')] }), …] })`
 (`open: true` to start open), the browser's own disclosure, announced as one. The accordion recipe is for one-at-a-time.
+Results, a menu or a set of options someone goes through with the keyboard sit in `focusGroup({ label, children })`:
+↑/↓ move between the controls inside, ←/→ to the first of the next or previous list, and ↓ from a search field inside
+goes down into them — Tab alone took a stop per result.
 
 ## The page has an outline
 

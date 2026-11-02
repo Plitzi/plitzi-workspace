@@ -32,6 +32,7 @@ import CarouselTrack from './structure/Carousel/CarouselTrack/Settings';
 import Carousel from './structure/Carousel/Settings';
 import Container from './structure/Container/Settings';
 import DialogContainer from './structure/DialogContainer/Settings';
+import FocusGroup from './structure/FocusGroup/Settings';
 import ListItem from './structure/List/ListItem/Settings';
 import List from './structure/List/Settings';
 import ModalContainer from './structure/ModalContainer/Settings';
@@ -62,6 +63,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   loading: Loading,
   notFound: NotFound,
   container: Container,
+  focusGroup: FocusGroup,
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
   modalContainer: ModalContainer,

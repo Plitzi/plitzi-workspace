@@ -77,6 +77,7 @@ export const elementAttributeNames = {
   ],
   dropdownPopup: [],
   embed: ['allow', 'loading', 'referrerPolicy', 'sandbox', 'src', 'title'],
+  focusGroup: ['label', 'subType'],
   fontAwesome: ['icon', 'iconAnimation', 'label', 'size'],
   form: ['actionUrl', 'errors', 'managedByInteractions', 'method', 'noValidate', 'values'],
   formControl: [

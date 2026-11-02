@@ -36,6 +36,7 @@ import Channel from './provider/Channel';
 import Carousel from './structure/Carousel';
 import Container from './structure/Container';
 import DialogContainer from './structure/DialogContainer';
+import FocusGroup from './structure/FocusGroup';
 import List from './structure/List';
 import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
@@ -70,6 +71,7 @@ export * from './provider/ApiContainer';
 export * from './provider/Channel';
 export * from './structure/Container';
 export * from './structure/DialogContainer';
+export * from './structure/FocusGroup';
 export * from './structure/List';
 export * from './structure/ModalContainer';
 export * from './structure/Pagination';
@@ -87,6 +89,7 @@ export {
   BlockJsx,
   Page,
   Container,
+  FocusGroup,
   LayoutContainer,
   DialogContainer,
   ModalContainer,
