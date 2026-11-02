@@ -1,7 +1,7 @@
 # RFC 0022 — Sketch to page ("make it real")
 
 - **Status:** Proposal, revised — under review; no work started
-- **Author:** Carlos Rodriguez
+- **Author:** Plitzi
 - **Date:** 2026-10-01 (revised 2026-10-06)
 - **Scope:** the builder (`apps/builder`: the sketch, the review), the MCP (`apps/mcp`: what an agent reads and
   proposes with), the page server's preview and screenshots, and `plitzi-sdk-server` (where sketches and proposals are

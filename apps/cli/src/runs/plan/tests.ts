@@ -17,7 +17,7 @@ import type { TaskView } from '../core/taskStore';
 /**
  * A tester in the team: every developer task gets a task of its tests, after it — `<id>-tests`, a developer's that
  * worked none of what it tests (`testsOf`), a tester's when no developer may — so what a developer wrote is held by tests
- * somebody else wrote from its acceptance, not from its code; the tester reviews them, its QA (Carlos: the tester's Opus
+ * somebody else wrote from its acceptance, not from its code; the tester reviews them, its QA (the maintainer: the tester's Opus
  * is for judgment, the tests are a developer's work). Its files are
  * where this project's tests are: a page's in its Playwright folder (`visual/<page>.spec.ts`, against the copy served),
  * a module's beside it (`<file>.test.ts`, run by the project's runner — node's, vitest or jest). A task that says `tests: false`, writes nothing a test is written for, or

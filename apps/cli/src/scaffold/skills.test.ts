@@ -39,7 +39,7 @@ const budgetOf = (path: string): number | undefined => {
 
   // The lead's half is read once a run, by the strongest model of it, and what it gets wrong — a scope measured short,
   // a line nothing proves — is paid in every task's round (three of five rounds were the scope's). Raised for agents held
-  // (Carlos: the lead looks and allows an agent its harness keeps ending — a run's keeper started eight 4379 times).
+  // (the maintainer: the lead looks and allows an agent its harness keeps ending — a run's keeper started eight 4379 times).
   if (path.endsWith('/runs-lead.md')) {
     return 5000;
   }

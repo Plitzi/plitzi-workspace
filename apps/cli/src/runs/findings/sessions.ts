@@ -13,7 +13,7 @@ import type { UsageLine } from '../core/usage';
 
 /**
  * An agent with two tasks in progress at once: replayed take by take, each time it happened said once. A task blocked
- * frees its agent — sent back past its rounds too, the lead's to decide (a run said dev-1 held one the lead had); one sent back — or unblocked — while its agent is at another waits for it — Carlos's rule: never handed to a free one — and is its
+ * frees its agent — sent back past its rounds too, the lead's to decide (a run said dev-1 held one the lead had); one sent back — or unblocked — while its agent is at another waits for it — the maintainer's rule: never handed to a free one — and is its
  * agent's work again once the other is complete; counted then, never while it waits (a run said dev-1 held two).
  */
 export const twoTasks = (log: readonly LogEntry[]): Finding[] => {

@@ -26,7 +26,7 @@ describe('an agent’s prompt', () => {
     expect(prompt).toMatch(/`npm run typecheck`, `npm run lint`.*then `PLITZI task check` once/);
   });
 
-  // Carlos: the CLI works for any run, never one kind of it — a run copying nothing was told of an "original".
+  // The CLI works for any run, never one kind of it — a run copying nothing was told of an "original".
   it('holds the work to the site the run copies when it copies one, and speaks of none when it does not', () => {
     const copying = agentPrompt({
       ...base,

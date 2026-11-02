@@ -40,7 +40,7 @@ describe('a run long by its estimate, and short at its project’s pace', () => 
   });
 });
 
-// Carlos: a team has more kinds of agent now — scouts, designers, testers — and seven no longer needs the person.
+// A team has more kinds of agent now — scouts, designers, testers — and seven no longer needs the person.
 describe('a run’s agents at once', () => {
   const short = [task('t-a', 10), task('t-b', 10)];
 

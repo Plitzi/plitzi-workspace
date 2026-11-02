@@ -42,7 +42,7 @@ import type { RunPlan } from '../core/model';
 /**
  * One lead, the manager: testers review every task — the task's approval — a scout finds out the spikes, and the lead
  * decides what is proposed or escalated to it. The lead read 130 turns of ~110k each when it reviewed and scoped, 68% of
- * what a run spent: what reads much is the agents', in fresh contexts (Carlos).
+ * what a run spent: what reads much is the agents', in fresh contexts.
  */
 
 let bench: Bench;
@@ -64,7 +64,7 @@ const statusOf = async (runId: string, taskId: string): Promise<string | undefin
   (await viewRun(lead(), runId)).tasks.find(task => task.id === taskId)?.status;
 
 describe('the team a project starts with', () => {
-  // Carlos: one to two developers, and none to one tester, scout and designer — each on demand, on Opus.
+  // One to two developers, and none to one tester, scout and designer — each on demand, on Opus.
   it('starts one developer with the run, and the rest when work waits for them', () => {
     const started = startedAgents(STARTER_TEAM);
     expect(started.map(each => `${each.agent}${each.onDemand ? ' (on demand)' : ''}`)).toEqual([
@@ -359,8 +359,8 @@ describe('a spike, a scout’s', () => {
     expect(await statusOf(runId, 't-home')).toBe('ready');
   });
 
-  // Every spike is the lead's to approve: what is found mostly becomes the work it manages (Carlos).
-  // Carlos: the scout finds out the run's spikes alone — an agent's question is the lead's, and with no spike left the
+  // Every spike is the lead's to approve: what is found mostly becomes the work it manages.
+  // The scout finds out the run's spikes alone — an agent's question is the lead's, and with no spike left the
   // scout's part ends.
   it('leaves an agent’s question to the lead, and stops once no research is left', async () => {
     await bench.writeTeam(team({ ...SCOUT, min: 0 }));
@@ -475,7 +475,7 @@ describe('the lead’s look at the whole result', () => {
 });
 
 describe('the run’s tasks, the lead’s alone', () => {
-  // Carlos: adding or taking out tasks is the lead's — a scout's stage is a proposal it approves.
+  // Adding or taking out tasks is the lead's — a scout's stage is a proposal it approves.
   it('refuses a scout a stage stacked, and stacks it only as a proposal the lead approves', async () => {
     await bench.writeTeam(team(SCOUT));
     const { runId } = (await openRun(lead(), await bench.writePlan(benchPlan()))).checked;

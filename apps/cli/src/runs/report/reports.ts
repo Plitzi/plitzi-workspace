@@ -9,10 +9,11 @@ import { FULL_REPORT_FILE } from '../core/paths';
 
 /**
  * A run's reports, kept in the project as it ends (`.plitzi/plitzi-reports/runs/<run>/`) and committed with it: what its
- * team reads again, and the one folder a developer sends to Plitzi's team — so nothing in it may hold what is the
- * person's machine's, and everything a fix of Plitzi needs is in it, the run long gone.
+ * team reads again — so nothing in it may hold what is the person's machine's, and everything a fix of Plitzi needs is
+ * in it, the run long gone. Of it, `feedback.md` alone is what goes to Plitzi's team, with nothing of the person or the
+ * project (`feedback/privacy.ts`); the rest is the project's own.
  *
- * - `feedback.md` — what of the run is Plitzi's, to read first (`feedback.ts`).
+ * - `feedback.md` — what of the run is Plitzi's, to read first and to send (`feedback.ts`).
  * - `report.md` — the run's report, whole; `report.json` the same as data (`version`ed): what `run report --bench` and the
  *   estimates of the next plans read.
  * - `records/` — the run's own records, as it kept them: its plan, log, usage, messages, each task's definition, state,

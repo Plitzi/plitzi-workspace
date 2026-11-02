@@ -96,9 +96,9 @@ describe('the report page', () => {
       date: '2026-10-07',
       cli: '0.38.7',
       node: 'v24.0.0',
-      os: 'darwin',
+      os: '</script><script>alert(1)</script>',
       packages: { '@plitzi/sdk-server': '0.38.7' },
-      project: { name: '</script><script>alert(1)</script>', mode: 'server', source: 'local', runtime: false }
+      project: { mode: 'server', source: 'local', runtime: false }
     };
     const page = reportTemplate(facts, []);
 

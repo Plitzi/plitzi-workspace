@@ -11,7 +11,7 @@ import type { RunTaskNow } from './stageImpact';
 import type { Bench } from '../../tests/runProject';
 import type { TaskStatus } from '../core/model';
 
-// Carlos: a change the person asks mid-run lands on what the run has — the lead plans for it before, never at complete.
+// A change the person asks mid-run lands on what the run has — the lead plans for it before, never at complete.
 const task = (
   id: string,
   status: TaskStatus,

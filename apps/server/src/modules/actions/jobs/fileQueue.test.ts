@@ -49,7 +49,7 @@ const later = (dueAt: number): JobInput => ({
   maxAttempts: 3
 });
 
-// Carlos: "de qué manera se recupera si el servidor se reinicia" — a project server kept its queue in memory, and a
+// "de qué manera se recupera si el servidor se reinicia" — a project server kept its queue in memory, and a
 // restart dropped every `ctx.later` waiting: a run's shows would never have started.
 describe('a JSON file queue, across a restart', () => {
   it('runs a job that came due while the server was down, once it is back', async () => {

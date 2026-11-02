@@ -1,7 +1,7 @@
 # RFC 0024 — Import and migration: UI in, sites over
 
 - **Status:** Proposal — wanted, not scheduled; no work started
-- **Author:** Carlos Rodriguez
+- **Author:** Plitzi
 - **Date:** 2026-10-07
 - **Scope:** a new import engine in a workspace package (`packages/sdk-authoring`, or a package of its own), its four
   consumers — the builder's Transform panel (`apps/builder`), the CLI (`plitzi page import`), the MCP (`apps/mcp`) and the

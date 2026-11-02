@@ -31,7 +31,7 @@ const auth = {
   ready: true,
   isAuthenticated: true,
   expired: false,
-  user: { id: 1, username: 'carlos', email: 'carlos@plitzi.com' },
+  user: { id: 1, username: 'ana', email: 'ana@example.com' },
   request: vi.fn(),
   signIn: vi.fn(),
   logout,
@@ -100,7 +100,7 @@ describe('the desktop shell', () => {
     expect(screen.getByText('Field Guide')).toBeTruthy();
     expect(screen.getByText('Acme Site')).toBeTruthy();
     expect(screen.getByText('SHARED WITH ME')).toBeTruthy();
-    expect(screen.getByText('carlos@plitzi.com')).toBeTruthy();
+    expect(screen.getByText('ana@example.com')).toBeTruthy();
   });
 
   it('opens a space when its row is pressed', async () => {

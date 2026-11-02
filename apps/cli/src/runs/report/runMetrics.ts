@@ -119,7 +119,7 @@ export interface RunMetrics {
 
 /**
  * What one call of a command may take, in seconds — every second an agent spends in the CLI is multiplied by agents and
- * calls (Carlos: ~150 page measures at 18 s each). A command whose median is past its budget is said in
+ * calls (the maintainer: ~150 page measures at 18 s each). A command whose median is past its budget is said in
  * the report, and counted in the bench.
  */
 export const CLI_BUDGET_S: Record<string, number> = {

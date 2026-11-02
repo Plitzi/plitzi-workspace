@@ -76,17 +76,18 @@ describe('a round’s report, and the run’s', () => {
     expect(brief.length).toBeLessThan(reportText(report, undefined).length);
 
     // Combined with the lead's, said with its summary: what of Plitzi was in the way is one of its findings, as it was
-    // placed; a friction of the project's is said with the rest, and never handed to Plitzi.
+    // placed; a friction of the project's stays in the project's report, never handed to Plitzi — nor its tasks' names.
     const feedback = await feedbackOf(lead(), loaded);
+    const aboutTask = `task-${String(loaded.tasks.findIndex(task => task.id === 't-about') + 1)}`;
     expect(feedback.experience).toMatchObject({
-      ease: { median: 2, lowest: [{ agent: 'agent-1', task: 't-about', round: 1, ease: 2 }] },
+      ease: { median: 2, lowest: [{ agent: 'agent-1', task: aboutTask, round: 1, ease: 2 }] },
       plitzi: [
         {
           text: 'no-way: explain had no answer for a page’s share image',
-          by: [{ agent: 'agent-1', task: 't-about', round: 1 }]
+          by: [{ agent: 'agent-1', task: aboutTask, round: 1 }]
         }
       ],
-      frictions: [{ text: 'the brief named no share image for the page' }],
+      frictions: [],
       helped: [{ text: 'task check said each failing line' }],
       lead: LEAD_SAID
     });
@@ -95,11 +96,13 @@ describe('a round’s report, and the run’s', () => {
     ]);
     expect(JSON.stringify(feedback)).not.toContain(bench.root);
 
-    const file = await writeFeedback(lead(), loaded);
+    const { file } = await writeFeedback(lead(), loaded);
     expect(file).toBe(feedbackFile(bench.root, runId));
-    expect(await fs.readFile(file, 'utf-8')).toContain(
-      '- no-way: explain had no answer for a page’s share image — agent-1 at t-about'
-    );
+    // Its tasks by their place in the plan, never their names: a report to Plitzi says nothing of the project.
+    const written = await fs.readFile(file, 'utf-8');
+    expect(written).toContain('- no-way: explain had no answer for a page’s share image — agent-1 at task-');
+    expect(written).not.toContain('t-about');
+    expect(written).not.toContain('the brief named no share image for the page');
   });
 });
 

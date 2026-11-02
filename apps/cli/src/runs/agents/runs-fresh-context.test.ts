@@ -110,7 +110,7 @@ describe('a fresh context', () => {
     });
   });
 
-  // Carlos: never in a task, however far past it its context is — what it knows of the task and has not written is lost.
+  // Never in a task, however far past it its context is — what it knows of the task and has not written is lost.
   it('never stops an agent in a task: one it took since, or one blocked and given back to it', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await openRun(lead(), await bench.writePlan(plan()));
@@ -192,7 +192,7 @@ describe('a fresh context', () => {
 });
 
 describe('a task sent back to an agent at another', () => {
-  // Carlos: a task sent back waits for the agent that has its context, which takes it once it ends the one it is at.
+  // A task sent back waits for the agent that has its context, which takes it once it ends the one it is at.
   it('waits for it, said so, and never reads "no signal — reassign it" meanwhile', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2 });
     await openRun(lead(), await bench.writePlan(plan()));

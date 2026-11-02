@@ -30,7 +30,7 @@ const developer: Spent = {
 };
 
 describe("the monitor's spend", () => {
-  // Carlos: the spend said in, out and cached apart, and nowhere what the run cost in the harness — the sum.
+  // The spend said in, out and cached apart, and nowhere what the run cost in the harness — the sum.
   it('says tokens in, out and cached apart and their total, a context past a fresh start marked', () => {
     const { rows, all } = spendTable([tester, developer], new Map([['dev-1', 100_000]]), 'spent');
 
@@ -43,7 +43,7 @@ describe("the monitor's spend", () => {
     expect(spentInAll([tester, developer])).toBe(1_739_473);
   });
 
-  // Carlos: every agent of a run starts fresh after each piece, and the panel said "past 100k: started fresh next".
+  // Every agent of a run starts fresh after each piece, and the panel said "past 100k: started fresh next".
   it('marks no context of an agent that starts fresh after every piece, however large', () => {
     expect(spendTable([{ ...developer, context: 400_000 }], new Map(), 'spent').rows[0]?.pastFresh).toBe(false);
   });

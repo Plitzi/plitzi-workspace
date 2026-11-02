@@ -144,7 +144,7 @@ export const noticesOf = async (loaded: LoadedRun): Promise<Notice[]> => {
 /**
  * `plitzi run notice --withdraw <id> "why"`: a notice filed by mistake, or of another's — kept in the log as withdrawn,
  * with why, and out of the finish, the report and the feedback to Plitzi. The lead withdraws any; an agent its own. A
- * run's lead filed one of the experiment's own setup, Carlos said to leave it out, and nothing could.
+ * run's lead filed one of the experiment's own setup, the maintainer said to leave it out, and nothing could.
  */
 export const withdrawNotice = async (ctx: RunContext, loaded: LoadedRun, id: string, why: string): Promise<Notice> => {
   if (why.trim() === '') {

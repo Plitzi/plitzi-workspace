@@ -17,7 +17,7 @@ import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-sh
 
 const CLIENT = {
   clientId: 'cli',
-  clientName: 'Plitzi CLI on carlos-mbp',
+  clientName: 'Plitzi CLI on dev-laptop',
   softwareId: 'plitzi-cli',
   redirectUris: ['http://127.0.0.1:4567/callback']
 };
@@ -185,7 +185,7 @@ describe('who a credential is issued to', () => {
     await grant(config, undefined, 'account');
 
     expect(issueToken).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ value: 'account' }), {
-      client: { clientId: 'cli', name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' },
+      client: { clientId: 'cli', name: 'Plitzi CLI on dev-laptop', softwareId: 'plitzi-cli' },
       request: { userAgent: 'Mozilla/5.0 (Macintosh) Chrome/140', ip: '203.0.113.7' },
       redirectUri: 'http://127.0.0.1:4567/callback'
     });

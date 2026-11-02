@@ -208,11 +208,11 @@ describe('saveSession', () => {
   it('records the application holding it, when it is not a browser', async () => {
     const { db, calls } = fakeDb();
     await createAccountStore(db, tables).saveSession(1, session, {
-      client: { ip: '203.0.113.7', app: { name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' } }
+      client: { ip: '203.0.113.7', app: { name: 'Plitzi CLI on dev-laptop', softwareId: 'plitzi-cli' } }
     });
 
     expect(calls[0].sql).toContain('app_name, app_id, host');
-    expect(calls[0].params.slice(-4)).toEqual(['203.0.113.7', 'Plitzi CLI on carlos-mbp', 'plitzi-cli', null]);
+    expect(calls[0].params.slice(-4)).toEqual(['203.0.113.7', 'Plitzi CLI on dev-laptop', 'plitzi-cli', null]);
   });
 
   /** Where it was signed in: what a site's sign-out everywhere ends, and a device list says. */

@@ -112,7 +112,9 @@ whole project to what follows — and to what Node, the server and \`space push\
   your own (\`scripts/\`, \`tools/\`) goes in its \`include\`.
 - \`${REPORTS_DIR}/\` — what runs and agents said of the project and of Plitzi: each run's reports as it ended
   (\`runs/<run>/\`, its \`feedback.md\` first) and each agent's (\`plitzi feedback\`, \`agents/<date>/\`). Committed, and
-  nobody's to typecheck, lint or format; send a folder to Plitzi's team and Plitzi gets better from it.
+  nobody's to typecheck, lint or format. A run's \`feedback.md\` and an agent's report are what go to Plitzi's team —
+  nothing of you or the project in them (read a run's first section before sending it) — and Plitzi gets better from
+  them; the rest is the project's own.
 
 ${server ? 'What the server does besides serving the space is yours, in `src/config/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
 ${server ? `${FUNCTIONS}\n${RUNTIME}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;

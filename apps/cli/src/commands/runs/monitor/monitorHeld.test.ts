@@ -38,7 +38,7 @@ const shown = (data: Monitored, ui: Partial<MonitorUi> = {}): { screen: Screen; 
 };
 
 describe('the monitor, read on a run well under way', () => {
-  // Carlos: with most of a run approved, the strip left the work under way a sliver — and dev-1, at a new card, read
+  // With most of a run approved, the strip left the work under way a sliver — and dev-1, at a new card, read
   // as nobody's on the one sent back to it.
   it('folds the approved into one block, and says the card an agent holds besides the one it is at', async () => {
     const runId = await open();
@@ -55,7 +55,7 @@ describe('the monitor, read on a run well under way', () => {
     expect(text[at + 1]).toMatch(/holds ↺ t-about\s*$/);
   });
 
-  // Carlos: a long message, opened, was cut by "…" — read whole, it wraps.
+  // A long message, opened, was cut by "…" — read whole, it wraps.
   it('opens a long message whole, in lines, never cut short', async () => {
     const runId = await open();
     const long = `The CDN is slow ${'and every picture waits on it '.repeat(12)}until the end`;

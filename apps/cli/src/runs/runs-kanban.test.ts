@@ -37,7 +37,7 @@ const completed = async (name: string, taskId: string, file: string): Promise<vo
   await completeTask(bench.agent(name, { token: taken.token }), 'es-launch', taskId, {});
 };
 
-// Carlos: the flow is a kanban, and the lead keeps every agent busy — a run's agents waited their own verdicts with
+// The flow is a kanban, and the lead keeps every agent busy — a run's agents waited their own verdicts with
 // nothing to take, the designer beside two cards whose UI the lead had kept.
 describe('an agent with nothing to take', () => {
   it('is said to the lead with the work it can stack for it — and, with none left, that it waits for its reviews', async () => {

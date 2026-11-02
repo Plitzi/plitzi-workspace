@@ -55,7 +55,7 @@ const STRONGEST = 'claude-opus-5-5';
 /**
  * The model a role starts on when the team names none: the designer's eye Sonnet lacked (a run's UI came back
  * mediocre); the tester's — its review is the task's approval, what stops a bug or a regression getting through (the
- * tests themselves are a developer's work, on Sonnet); the scout's — what a spike finds is what every task after it is made of (Carlos). Any other role,
+ * tests themselves are a developer's work, on Sonnet); the scout's — what a spike finds is what every task after it is made of. Any other role,
  * the harness's own; the file's model, when it says one, always wins.
  */
 export const ROLE_MODELS: Readonly<Partial<Record<string, string>>> = {
@@ -174,7 +174,7 @@ export type SessionMode = 'task' | 'context' | 'keep';
 
 export const SESSION_MODES: readonly SessionMode[] = ['task', 'context', 'keep'];
 
-/** Every agent's session but the planning lead's, when its entry says none (Carlos: "por defecto es task"). */
+/** Every agent's session but the planning lead's, when its entry says none (the maintainer: "por defecto es task"). */
 export const DEFAULT_SESSION: SessionMode = 'task';
 
 const isSessionMode = (value: unknown): value is SessionMode =>
@@ -232,7 +232,7 @@ export interface TeamOptions {
   launch?: Harness;
   /**
    * The context, in tokens, past which an agent of `"session": "context"` is started again with a fresh one, between two
-   * pieces of work (`SessionMode`). `FRESH_CONTEXT_AT` when not said — 250k (Carlos: 100k fills in a task or two; an
+   * pieces of work (`SessionMode`). `FRESH_CONTEXT_AT` when not said — 250k (the maintainer: 100k fills in a task or two; an
    * agent's context starts at ~46k and a task adds 30–60k).
    */
   freshContextAt?: number;
@@ -533,7 +533,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
 };
 
 /**
- * The team a project starts with — one to two developers, and none to one tester, scout and designer (Carlos): only one
+ * The team a project starts with — one to two developers, and none to one tester, scout and designer: only one
  * developer with the run, every other started when work waits for it — few agents at once, the person growing it when
  * a job asks.
  */
@@ -543,7 +543,7 @@ export const STARTER_TEAM: Team = {
   about: TEAM_ABOUT,
   // The models are the file's, never the CLI's: the lead — who plans and decides — on the strongest, thinking hard; the
   // designer too, whose eye Sonnet lacked (a run's UI came back mediocre); the tester, whose approval is the task's, and
-  // the scout, whose findings every task is made of — on it too (Carlos); developers on Sonnet, which works a task as
+  // the scout, whose findings every task is made of — on it too; developers on Sonnet, which works a task as
   // well for less. One the file leaves out is the harness's own.
   lead: { model: STRONGEST, effort: 'high' },
   agents: [

@@ -21,8 +21,8 @@ export interface FeedbackFacts {
   os: string;
   /** Every `@plitzi` package the project has installed, by name: what it runs, which may not be what it asks for. */
   packages: Record<string, string>;
+  /** How the project runs — never its name: a report to Plitzi says nothing of the project (`privacy.ts`). */
   project?: {
-    name: string;
     mode: 'server' | 'client';
     source: 'local' | 'cloud';
     runtime: boolean;
@@ -63,16 +63,6 @@ const installedPackages = async (root: string): Promise<Record<string, string>> 
   }
 };
 
-const nameOf = async (root: string): Promise<string> => {
-  try {
-    const manifest: unknown = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8'));
-
-    return isRecord(manifest) && typeof manifest.name === 'string' ? manifest.name : path.basename(root);
-  } catch {
-    return path.basename(root);
-  }
-};
-
 /** The facts of the project `from` is in — what there is of them outside one: the CLI, Node and the machine. */
 export const feedbackFacts = async (from: string, now: Date = new Date()): Promise<FeedbackFacts> => {
   const base: FeedbackFacts = {
@@ -96,7 +86,7 @@ export const feedbackFacts = async (from: string, now: Date = new Date()): Promi
   const facts: FeedbackFacts = {
     ...base,
     packages,
-    project: { name: await nameOf(project.root), mode: plitzi.mode, source: plitzi.source, runtime: plitzi.runtime }
+    project: { mode: plitzi.mode, source: plitzi.source, runtime: plitzi.runtime }
   };
   const context = await projectContext(project);
   if ('problem' in context) {

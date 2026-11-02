@@ -24,7 +24,7 @@ import type { RunCommandOptions } from '../shell';
  * `plitzi run look`: the run's whole result, once, before it is finished — its approved work served as `run preview`
  * serves it, every page its changes are drawn at checked (`page check`) and pictured at the desktop in light and the
  * phone in dark (`page shot`). The lead reviews no task while testers do: this look is its one review, of what the
- * person will be handed (Carlos) — and `run finish` asks for it after the last approval.
+ * person will be handed — and `run finish` asks for it after the last approval.
  */
 
 export interface RunLooked {

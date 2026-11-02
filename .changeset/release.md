@@ -406,6 +406,19 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
     is never resumed; an `unused-file` a later task will place is said, not refused (nor counted by the brake); a copy
     whose `tmp/` was cleared knows its task again; a tests card gives up files its task deleted; a stopped preview is
     said to the person.
+- **A report to Plitzi holds nothing of the person or the project** (`@plitzi/cli`) — a run's `feedback.md` and
+  `plitzi feedback`'s page alike:
+  - A run's `feedback.md` writes over, in every text, emails, addresses not Plitzi's, IPs, the project's names (its
+    package, its space, its folder) and the person's (the machine's user, git's), the project's files past Plitzi's
+    layout (`src/space/pages/<name>.ts`), its tasks by their place (`task-3`) and the element ids it chose
+    (`<element>`); the frictions and what reviews asked — the project's alone — are left out, and a passage quoted
+    that may be the project's is listed at its top, "Before you send it", which the finish and `run report --plitzi`
+    count. It no longer says to send the folder: the rest of it — the plan, the messages, the agents' scripts — is the
+    project's own.
+  - `plitzi feedback`'s page carries the project's mode and source, never its name; its brief says what never goes in
+    a report and to ask the developer before anything of the project does, listed word for word in the report's
+    `shared` (shown on the page). `plitzi feedback --check <file>` names what a filled report still holds of the person
+    or the project, exit 1 while any is left.
 - **A reviewer looks at what no page places yet, and at what its approval will put in** (`@plitzi/cli`,
   `@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/sdk-server`) — from the run `nimbo-site`, where seven reviewers
   wrote probe pages in their scratch and two rebuilt a merge by hand:
@@ -2026,7 +2039,7 @@ a,b` says where each is (in sight, out of sight until a box is scrolled, why not
   a refusal still fails it. Found by a run's dev-1.
 - **A guest refused asks no renewal** (`@plitzi/sdk-auth`): a 401 to a visitor who never signed in — a server action
   kept for signed-in visitors — sent a `/auth/refresh` that could only fail (400). A refusal renews or ends a session
-  only when this browser holds one (a stored credential or the hint cookie). Found by Carlos on a run's Remind me.
+  only when this browser holds one (a stored credential or the hint cookie). Found by the maintainer on a run's Remind me.
 - **`authLogoutEverywhere('site' | 'all')`**, the auth source's `logoutEverywhere`: a visitor signs out of the space on
   every device, or out of their account everywhere. `basic` posts to the space's `revokeUrl` (the page server's sign-in
   names it); a provider that cannot is refused, never a sign-out here alone.

@@ -12,7 +12,7 @@ import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run/context';
 
 /**
- * A card's review, one kind for every card — the run is a kanban (Carlos): its reviews are the roles its card names, in
+ * A card's review, one kind for every card — the run is a kanban: its reviews are the roles its card names, in
  * order (`review: ["designer", "tester"]`), each a step said by an agent of that role. The rules are the same at every
  * step: nobody says a step of what it worked; a step taken is its reviewer's for a while, then another's; the one who
  * said it the round before is offered it first; a step nobody takes in time is the next step's reviewer's too; the

@@ -18,6 +18,8 @@ export interface LeftReport {
   records: { files: number; bytes: number };
   /** The agents' scripts kept, and those left out as too large. */
   scratch: { kept: string[]; tooLarge: string[] };
+  /** Words quoted in the feedback to Plitzi that may be the project's: for the person to read before sending it. */
+  toCheck: string[];
 }
 
 /**
@@ -45,10 +47,10 @@ export const leaveReport = async (ctx: RunContext, loaded: LoadedRun, closing: C
     path.join(dir, REPORT_FILES.data),
     clean(`${JSON.stringify({ version: REPORT_VERSION, bench, report, summary: summary ?? null, scratch }, null, 2)}\n`)
   );
-  await writeFeedback(ctx, loaded);
+  const { toCheck } = await writeFeedback(ctx, loaded);
   const records = await keepRecords(ctx.root, loaded.paths.dir, path.join(dir, REPORT_FILES.records));
   // This machine's pace too: what the next first run of any project scales its estimates by.
   await rememberPace(report.tasks);
 
-  return { dir, records, scratch };
+  return { dir, records, scratch, toCheck };
 };

@@ -512,7 +512,7 @@ describe('how many agents at once', () => {
   });
 });
 
-// Carlos: the lead sees lint and types clean before the agents begin — a failure there meets every task's check.
+// The lead sees lint and types clean before the agents begin — a failure there meets every task's check.
 describe('a run opened on a project that fails its own checks', () => {
   it('is refused, naming the checks — and opened despite them only said why, told to every task', async () => {
     await bench.write('src/space/pages/broken.ts', 'BROKEN\n');

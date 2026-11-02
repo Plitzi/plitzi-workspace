@@ -461,7 +461,7 @@ const agentsOf = async (
           : unanswered.length > 0
             ? `${String(unanswered.length)} question${unanswered.length === 1 ? '' : 's'} wait${unanswered.length === 1 ? 's' : ''} for you: ${unanswered.map(each => `${each.from}'s ${each.id}`).join(', ')}`
             : watching
-              ? // Watching is not waiting: a lead at something else with its watch open read "waiting" (Carlos, fixing
+              ? // Watching is not waiting: a lead at something else with its watch open read "waiting" (the maintainer, fixing
                 // Plitzi as the lead); its last act on the run says how long since it did anything of it.
                 `watches the run since ${clockOf(watching.at)} UTC — woken the moment something needs it · its last act ${lastActText(now - heard)}${lastLine ? `: ${lastLine}` : ''}`
               : `plans, answers, decides what is escalated${lastLine ? ` · last: ${lastLine}` : ''}${lately(LEAD)}`,
@@ -516,7 +516,7 @@ const agentsOf = async (
     };
 
     // What it holds is said with whether anything is at it: a card held by an agent whose process ended, or that is
-    // being started again, is no work going on — it read "working" until its signal ran out (Carlos: a person reads
+    // being started again, is no work going on — it read "working" until its signal ran out (the maintainer: a person reads
     // the status for what is happening).
     const holding = task?.id ?? reviewing.get(agent);
     const away =

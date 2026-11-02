@@ -6,7 +6,7 @@ import type { Attention } from '../view/view';
 
 /**
  * A card at work past its limit (`workLimitOf`: 10 min, the scope 30), and again at each limit more: past it something
- * is usually wrong, and the lead decides on where it stands (Carlos). The run asks its agent itself (`askStandings`, from
+ * is usually wrong, and the lead decides on where it stands. The run asks its agent itself (`askStandings`, from
  * the lead's watch and the keeper): a run's lead was woken for two long research cards and asked neither — the lead
  * is woken with the answer to decide on, or, with none in time, to decide without it.
  */

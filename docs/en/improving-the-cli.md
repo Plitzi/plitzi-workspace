@@ -11,6 +11,10 @@ run; it is not yet a task.
 
 ## What `feedback.md` hands you
 
+Nothing of the person or the project: its tasks are `task-3`, its files `src/space/pages/<name>.ts`, its elements
+`<element>` (`feedback/privacy.ts`) — a finding is read by what Plitzi did, and a person's report may hold more only by
+their choice (a `shared` list in `plitzi feedback`'s page).
+
 The run follows this page on its side too: whoever works says what of Plitzi was in the way **as what it was** — live,
 `run notice --plitzi <wrong|no-way|in-the-way>`; with a round or the lead's summary, `--plitzi-wrong`,
 `--plitzi-no-way`, `--plitzi-in-the-way` — and anything else that was in the way (the project, the plan) as a

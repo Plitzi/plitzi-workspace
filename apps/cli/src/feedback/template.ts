@@ -143,6 +143,7 @@ export const reportTemplate = (facts: FeedbackFacts, previous: readonly string[]
     <div class="ledger" id="ledger"></div>
   </section>
   <section id="worked-section"><h2 id="worked-h"></h2><ul class="good" id="worked"></ul></section>
+  <section id="shared-section"><h2 id="shared-h"></h2><ul id="shared"></ul></section>
   <footer id="footer"></footer>
 </div>
 <script>
@@ -176,6 +177,7 @@ const REPORT = {
     copyFailed: 'Could not copy: select the text by hand',
     of: 'of',
     worked: 'What worked well',
+    shared: 'Of the project, sent with the developer’s agreement',
     version: 'Version',
     project: 'Project',
     date: 'Date',
@@ -193,6 +195,10 @@ const REPORT = {
   issues: [],
   // What worked, each a sentence: as useful to Plitzi as what did not.
   worked: [],
+  // Nothing of the person or the project goes in a report. Something of it a finding cannot be understood without — a
+  // name, a text, a file — is listed here, word for word, only once the developer agreed to send it: each shown on the
+  // page, and accepted by plitzi feedback --check.
+  shared: [],
   footer: ''
 };
 
@@ -225,7 +231,7 @@ const metaItems = [
   [L.date, FACTS.date]
 ];
 if (FACTS.project) {
-  metaItems.splice(1, 0, [L.project, FACTS.project.name + ' · ' + FACTS.project.mode + ' · ' + FACTS.project.source]);
+  metaItems.splice(1, 0, [L.project, FACTS.project.mode + ' · ' + FACTS.project.source]);
 }
 metaItems.forEach(function (item) {
   const span = el('span');
@@ -394,6 +400,15 @@ if (location.hash) { openIssue(location.hash.slice(1)); }
 setText('worked-h', L.worked);
 REPORT.worked.forEach(function (text) { document.getElementById('worked').append(el('li', '', text)); });
 hideEmpty('worked-section', REPORT.worked);
+// What of the project the developer agreed to send, word for word: shown as text, never as markup.
+const shared = REPORT.shared || [];
+setText('shared-h', L.shared);
+shared.forEach(function (text) {
+  const item = el('li');
+  item.textContent = text;
+  document.getElementById('shared').append(item);
+});
+hideEmpty('shared-section', shared);
 setText('footer', REPORT.footer);
 </script>
 </body>

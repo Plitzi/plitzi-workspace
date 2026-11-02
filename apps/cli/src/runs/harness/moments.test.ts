@@ -68,7 +68,7 @@ const claudeLines = [
   line({ type: 'api-request-blob', message: { content: [{ type: 'text', text: '<system-reminder>' }] } })
 ];
 
-// Carlos, reading a headless agent: its own output is its last answer alone, the session the harness keeps is the rest.
+// The maintainer, reading a headless agent: its own output is its last answer alone, the session the harness keeps is the rest.
 describe('an agent’s session, read as it goes', () => {
   it('reads Claude Code’s turns — what it said, each tool on what, the answer’s first line — never its request copies', () => {
     expect(
@@ -83,7 +83,7 @@ describe('an agent’s session, read as it goes', () => {
     ]);
   });
 
-  // Carlos could not read a moment the sidebar cut: its whole is kept, opened under it.
+  // The maintainer could not read a moment the sidebar cut: its whole is kept, opened under it.
   it('keeps a moment’s whole when its line says less — a message’s lines, a command, an answer — and only then', () => {
     const lines = [
       line({
@@ -199,7 +199,7 @@ describe('an agent’s session, read as it goes', () => {
     ).toEqual({ problem: 'no Claude Code session of it on this machine yet' });
   });
 
-  // Carlos: a scout's stream came, then read "nothing said or done yet" — its last line a screenshot of a megabyte.
+  // A scout's stream came, then read "nothing said or done yet" — its last line a screenshot of a megabyte.
   it('reads further back when the session’s end is one line longer than a read — a screenshot answered', async () => {
     const folder = path.join(home, 'claude', 'projects', '-work-project');
     await fs.mkdir(folder, { recursive: true });

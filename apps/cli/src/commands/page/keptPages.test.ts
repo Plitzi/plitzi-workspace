@@ -68,7 +68,7 @@ const bench = (max = 10) => {
   return { pages, loads, reads, closed, settle };
 };
 
-// Carlos: the kept browser is shared by a run's agents at once — nothing one asks is pulled from under another.
+// The kept browser is shared by a run's agents at once — nothing one asks is pulled from under another.
 describe('the pages a kept browser holds', () => {
   it('loads a page once for every ask that comes while it loads, each reading the page it ends with', async () => {
     const { pages, loads, reads, settle } = bench();

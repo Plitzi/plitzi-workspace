@@ -18,7 +18,7 @@ import type { ReviewState, ReviewTeam } from './reviews';
 import type { RunTask, TaskState } from '../core/model';
 import type { TaskView } from '../core/taskStore';
 
-// Carlos: the run is a kanban — one review for every card, its steps the roles its card names, in order.
+// The run is a kanban — one review for every card, its steps the roles its card names, in order.
 
 const T0 = Date.parse('2026-10-27T10:00:00Z');
 const at = (minutes: number): string => new Date(T0 + minutes * 60_000).toISOString();

@@ -245,7 +245,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
     });
   });
 
-  // Carlos: the tests are a developer's work on Sonnet, the tester's Opus its reviews — never by who wrote the work.
+  // The tests are a developer's work on Sonnet, the tester's Opus its reviews — never by who wrote the work.
   it('are a developer’s that did not write what they test — the tester’s only when no developer may', async () => {
     await bench.write(
       'package.json',
@@ -292,7 +292,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
 });
 
 describe('who reviews a card', () => {
-  // Carlos: the card says which roles review it — a run's designer looked at no card it was not asked to.
+  // The card says which roles review it — a run's designer looked at no card it was not asked to.
   it('is the card’s to say: with a designer in the team, a card that changes a page with none is said', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await setTeamAgent(bench.root, 'design', { roles: ['designer'] });

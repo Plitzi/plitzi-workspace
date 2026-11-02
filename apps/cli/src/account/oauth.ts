@@ -22,7 +22,7 @@ const base64url = (buffer: Buffer): string => buffer.toString('base64url');
 
 /**
  * What the account's device list calls this sign-in: the CLI, and the machine it runs on — two laptops signed in are
- * two rows somebody has to tell apart. macOS names a machine `Carlos-MacBook-Pro.local`; the suffix says nothing.
+ * two rows somebody has to tell apart. macOS names a machine `Ana-MacBook-Pro.local`; the suffix says nothing.
  */
 export const clientName = (): string => {
   const host = os.hostname().replace(/\.local$/iu, '');

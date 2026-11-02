@@ -7,7 +7,7 @@ import type { LoadedRun } from '../run';
 
 /**
  * A task of tests a tester writes: one no developer of the team may — each worked what it tests (a team of one
- * developer). The tests are a developer's work, the tester's Opus its reviews (Carlos); written by whoever wrote the work,
+ * developer). The tests are a developer's work, the tester's Opus its reviews; written by whoever wrote the work,
  * they would test its code, not what was asked.
  */
 export const spareTests = async (

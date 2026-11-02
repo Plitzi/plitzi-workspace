@@ -95,7 +95,14 @@ is a single agent's. Each agent reports every round it completes, with what it w
 The lead adds its own report and experience (`run report --summary … --ease --hardest`). The run consolidates them as it
 finishes or is aborted, with what its records show was Plitzi's or the machine's (the findings, below). `run report --plitzi` writes it before that. It is
 `feedback.md` in the run's folder of reports (`.plitzi/plitzi-reports/runs/<run>/`, below), the file of it read first;
-its data is the report's (`report.json`). The person shares the folder with Plitzi's team; it is never sent by itself.
+its data is the report's (`report.json`). The person sends that file to Plitzi's team; it is never sent by itself.
+**It holds nothing of the person or the project** (`feedback/privacy.ts`, shared with `plitzi feedback`): every text is
+`scrubbed` — emails, addresses not Plitzi's, IPs, the project's names (package, space, folder), the person's (the
+machine's user, git's), the project's files past Plitzi's layout (`src/space/pages/<name>.ts`), its tasks by their place
+(`task-3`) and the element ids it chose (`<element>`) — the frictions and what reviews asked, the project's alone, are
+left out, and what it cannot tell by shape (a page's words, quoted) is listed at its top, "Before you send it", for the
+person to read (`leftToCheck`); the finish and `run report --plitzi` say how many. The rest of the folder — the plan,
+the messages, the agents' scripts — is the project's, and is never sent without reading it.
 A notice is named by its place (`n3`) and withdrawn by it, saying why (`run notice --withdraw n3 "…"`): kept in the log
 as withdrawn, out of the finish, the report and the feedback. After `--apply` the run is amended from its kept records
 (`records/`, its identities as digests prove its lead): `run notice … --run <run>` adds or withdraws, the feedback is
@@ -670,7 +677,7 @@ leaves the tester's steps to the lead.
 
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, after it: tests written from the
 task's acceptance, not its code, by an agent that did not write it. It is a developer's (`role: developer`,
-`testsOf: [<id>]`): the tester's Opus goes to its reviews, the tests are developer work on Sonnet (Carlos). Never
+`testsOf: [<id>]`): the tester's Opus goes to its reviews, the tests are developer work on Sonnet. Never
 written by an agent that worked what it tests (`writesTests`: `task next` offers it to none of them, `task next <task>` and
 `task reassign --to` refuse it); with no developer that may — a team of one — it is the tester's (`spareTests`). A task
 that writes its own tests gets none (`Untested.besides`): another module it touches is said as its own test file to
@@ -938,7 +945,7 @@ review with what it found (`stateFromEarlierCli`).
 
 **An agent whose task needs something found out** blocks it on the lead — `task tell "what" --blocked`, from its copy
 (a question to the lead is a block: one way to say it, `asksLead`) — its files and token its own; the agent takes other
-work meanwhile. It is the lead's to answer, as every block is — a scout finds out the run's research alone (Carlos):
+work meanwhile. It is the lead's to answer, as every block is — a scout finds out the run's research alone:
 `run watch` wakes the lead for it, `task next --role lead` hands it (`findOutFor`), and `task unblock <task> --answer
 "…"` lifts the block, kept as the task's finding (`unblockTask`). When the answer changes the work, the lead stacks the
 tasks it makes.
@@ -961,7 +968,7 @@ the run — then, with neither a watch nor a command of its own for `LEAD_AWAY_M
 much of the run waits for it; between the two it decides (`idle`).
 
 **A task that takes long** (`view.ts`, `talk.ts`, `limits.ts`): any card at work — research too — past
-the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — Carlos: past ten
+the time a piece of work takes (`WORK_LIMIT_MINUTES`, 10; the scope's `SCOPE_LIMIT_MINUTES`, 30 — the maintainer: past ten
 minutes something is usually wrong) — counted on the agent's own time, the CLI's checks apart (below) — is asked where
 it stands by the run itself, again at each limit more
 (`longTask.ts`, `askStandings.ts`: the lead's `run watch` and the keeper ask in the lead's voice, `task message
@@ -970,7 +977,7 @@ it stands by the run itself, again at each limit more
 holding none), refused when a part is missing — as the answer to that asking, its fraction kept as the task's
 progress; a `complete` answers it too (`asksStandingOnly`), and nothing asks while one of the CLI's checks runs. The standing wakes the lead (`decide`: a note only to know that is still the lead's to decide on) with what
 it may do: let it go on, tell it what to change, lift what holds it, narrow or split the task, or take it back
-(Carlos: the lead decides on the answer). None within `STANDING_GRACE_MS` (3 min) wakes the lead to decide without
+(the maintainer: the lead decides on the answer). None within `STANDING_GRACE_MS` (3 min) wakes the lead to decide without
 it (`long-task` `x<n>:unanswered`): the agent is at something long of its own. A message reaches an agent only with
 its next command — any of the CLI's: a page command hands what was said to the agent by name, whole, as it ends
 (`handUnreadByName`) — `task message` says when its agent has run none for minutes (`unheardOf`), and an agent's own
@@ -1036,7 +1043,7 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 - **A task sent back waits for its agent:** while that agent is at another task of its own, the one sent back is
   parked for it (`parkedFor`, "dev-1 at t-menu first") and handed to it by its next `task next`, before anything new —
   never to a free agent, and never read "no signal — reassign it" meanwhile: the agent that wrote it has the context
-  its review asks about (Carlos). It was handed to a free agent after 3 minutes before (a run's
+  its review asks about. It was handed to a free agent after 3 minutes before (a run's
   t-match-bars waited ten minutes with two developers free); a lead who wants that reassigns it (`task reassign`). A
   task's holder reads its own with `task show` (its token's task: another's is the lead's).
 - **Handed back, and why:** a task its own agent holds comes back with `task next` first, said as it is — changes
@@ -1145,7 +1152,7 @@ left and the run removed. Undoing the final merge is git's, or `--keep-backup`'s
 ## The report (`report.ts`, `taskReports.ts`, `findings/`)
 
 The run reports itself, so the lead keeps no list of problems by hand: a run's lead kept 65 in a journal, each found
-by reading the log. **Nothing is asked of the lead before a person applies it** (Carlos, after a run whose person
+by reading the log. **Nothing is asked of the lead before a person applies it** (the maintainer, after a run whose person
 asked the lead for an analysis first): the report starts with **Before you apply** (`reportApply.ts`) — the finish's dry
 run (`ready`: files, acceptance lines held), tasks approved over a known failure or with their UI approved by the lead,
 lines rewritten after approval, the notices going to the backlog, the lead's own problems — and once applied, the same

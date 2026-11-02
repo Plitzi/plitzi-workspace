@@ -89,7 +89,7 @@ describe('the scaffold', () => {
 
       expect(team).toMatchObject({
         version: 1,
-        // Carlos: one to two developers, and none to one tester, scout and designer — each on demand.
+        // One to two developers, and none to one tester, scout and designer — each on demand.
         agents: [
           { name: 'dev', roles: ['developer'], count: 2, min: 1 },
           { name: 'design', roles: ['designer'], min: 0 },
@@ -349,7 +349,7 @@ describe('the scaffold', () => {
     }
   });
 
-  // Carlos: a run's reports are committed with the project, for its team and to send to Plitzi — the agents' scripts in
+  // A run's reports are committed with the project, for its team and to send to Plitzi — the agents' scripts in
   // them are no code of the project's to typecheck, lint or format.
   it('keeps what runs and agents report committed, and out of its typecheck, lint and format', () => {
     for (const mode of ['server', 'client'] as const) {

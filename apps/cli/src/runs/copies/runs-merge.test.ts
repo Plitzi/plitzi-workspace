@@ -319,7 +319,7 @@ describe('the run’s report', () => {
     );
   });
 
-  // Carlos: one folder per run, committed and sent to Plitzi — everything a fix needs, the run long gone, and nothing of
+  // One folder per run, committed and sent to Plitzi — everything a fix needs, the run long gone, and nothing of
   // the person's machine or of the project's files.
   it('keeps the run’s records and its agents’ scripts with it, the machine left out, under an id of its own', async () => {
     await open(benchPlan(), { summary: false });

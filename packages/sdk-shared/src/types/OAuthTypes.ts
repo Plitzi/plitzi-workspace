@@ -92,7 +92,7 @@ export type OAuthAdapters = {
 export type OAuthIssueContext = {
   client: {
     clientId: string;
-    /** What the application registered as: `Plitzi CLI on carlos-mbp`, `Claude`. */
+    /** What the application registered as: `Plitzi CLI on dev-laptop`, `Claude`. */
     name: string;
     /** RFC 7591 `software_id`, when it sent one: a stable name for the SOFTWARE, the same on every machine. */
     softwareId?: string;

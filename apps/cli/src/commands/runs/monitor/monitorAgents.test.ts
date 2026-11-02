@@ -26,7 +26,7 @@ afterEach(async () => {
 
 const { lead, open, take } = runSteps(() => bench);
 
-// Carlos: a person reads an agent's status for what is happening — it is what it holds and whether anything is at it,
+// A person reads an agent's status for what is happening — it is what it holds and whether anything is at it,
 // never guessed from what it did lately.
 describe('each agent’s status in the monitor', () => {
   // A run: "working" for three minutes after the lead opened the run, its scout at the scope.
@@ -46,7 +46,7 @@ describe('each agent’s status in the monitor', () => {
     });
   });
 
-  // Carlos: every agent's status must be what is happening — a card read "working" while its agent's process had
+  // Every agent's status must be what is happening — a card read "working" while its agent's process had
   // ended, or while it was being started again with a fresh context.
   it('says a card’s agent stopped when its process ended, restarting when it is started again — never working', async () => {
     const runId = await open();

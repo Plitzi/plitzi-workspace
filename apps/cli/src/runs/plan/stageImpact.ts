@@ -3,7 +3,7 @@ import type { PlannedTask, TaskStatus } from '../core/model';
 /**
  * What a stage's new work reaches of the run's own, said before it is stacked (`run open <stage>`, `--dry-run` first): a
  * change the person asks mid-run lands on tasks already approved, at work or still to come, and on their tests — and
- * met only at `complete`, or at the finish, it was the lead's to repair (Carlos: "debe ser inteligente para determinar
+ * met only at `complete`, or at the finish, it was the lead's to repair (the maintainer: "debe ser inteligente para determinar
  * qué tareas pueden ser impactadas… sino al completar habrá problemas"). Each task reached is said with what to do by
  * where it stands: an approved one's acceptance runs again at the finish on the whole result; one at work has an agent to
  * tell; one not taken is amended; a test that imports what changes runs at every check of the stage's task.

@@ -49,7 +49,7 @@ export interface SessionClient {
   host?: string;
   /**
    * The application holding it, when it is not a browser: a native client names itself when it registers
-   * (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`). A user agent says which browser; this says which app.
+   * (`Plitzi CLI on dev-laptop`, software `plitzi-cli`). A user agent says which browser; this says which app.
    */
   app?: SessionApp;
 }

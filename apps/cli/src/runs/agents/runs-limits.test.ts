@@ -18,7 +18,7 @@ import type { Bench } from '../../tests/runProject';
 import type { TaskView } from '../core/taskStore';
 
 /**
- * The time a run's work takes, held to Carlos's rule: a piece past 10 minutes is likely wrong, a check takes minutes at
+ * The time a run's work takes, held to the maintainer's rule: a piece past 10 minutes is likely wrong, a check takes minutes at
  * most, one Playwright suite runs at a time on the machine, and an agent inside a long check is still there.
  */
 
@@ -106,7 +106,7 @@ describe('a task inside a long check', () => {
 });
 
 describe('a run whose every task is approved', () => {
-  // A run's watch said "Nothing new for the lead … (10 of 10 done)" and the close waited for Carlos.
+  // A run's watch said "Nothing new for the lead … (10 of 10 done)" and the close waited for the maintainer.
   it('wakes its lead to close it', async () => {
     const plan = benchPlan();
     plan.tasks = [plan.tasks[0]];

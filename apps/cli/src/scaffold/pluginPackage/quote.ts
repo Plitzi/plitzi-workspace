@@ -1,7 +1,7 @@
 /**
  * Free text somebody typed — a title, a description, an owner — written into generated source.
  *
- * Interpolated bare, one apostrophe ("Carlos's picker") ends the string it lands in and the generated project does not
+ * Interpolated bare, one apostrophe ("Ana's picker") ends the string it lands in and the generated project does not
  * parse; these write it the way each kind of file reads it back.
  */
 

@@ -57,7 +57,7 @@ const rules = (cli: string): string[] => [
   // Agents asked `task next` after each complete and review only to hear "you can stop": the answer that ends a piece
   // says it itself now.
   '- A wait that ends is not your end: run `task next` again until it says "You can stop". A complete, a review or a research card handed on says it itself when your session ends there: then stop, with no `task next` after.',
-  // Carlos: a task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
+  // A task that takes long wakes the lead, which asks; it decides on the answer — go on, change course, be helped.
   '- When the lead asks where you stand (its message says so), answer at once, whole: `PLITZI task tell --standing --fraction <0-1> --eta <minutes left> --done "…" --left "…" [--held-by "what holds you"] [--about <task>, holding none]` — then go on; what it decides comes with your next command.',
   // A person following the run read commands where an agent's row should say what it is at — a tester's and a scout's
   // read their card alone.
@@ -96,7 +96,7 @@ export const agentPrompt = ({
       `Read first, whole: ${skill(root, 'runs-plan.md')}, ${skill(root, 'runs-lead.md')}${team.tester ? '' : `, ${skill(root, 'runs-review.md')}`} and ${skill(root, 'runs.md')}.`,
       '',
       `- The CLI is ${cli} — your own: it says who you are on every command, so pass no --token nor --agent.`,
-      // The lead is the person's harness, never started again: what it reads stays read every turn after (Carlos).
+      // The lead is the person's harness, never started again: what it reads stays read every turn after.
       "- You are the manager: you plan with the person, review what research finds, answer, decide what is escalated to you and finish. What reads much — finding out, reviewing — is the agents', in fresh contexts: everything you read stays in yours for the rest of the run.",
       scoping
         ? team.scout

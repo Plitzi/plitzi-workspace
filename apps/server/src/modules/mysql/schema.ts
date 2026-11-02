@@ -267,7 +267,7 @@ const step3 = (t: Tables): string[] => {
 
 /**
  * What tells one device from another in the account's session list: the application holding it, when it is not a
- * browser (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`), and when it was last used — see `sessionActivity`.
+ * browser (`Plitzi CLI on dev-laptop`, software `plitzi-cli`), and when it was last used — see `sessionActivity`.
  */
 const step4 = (t: Tables): string[] => {
   const session = unquote(t.session);

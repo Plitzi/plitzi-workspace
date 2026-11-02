@@ -8,7 +8,7 @@ import type { RunContext } from '../run/context';
  * A run's one lead — the manager: it plans with the person, approves what a spike proposes, answers, decides what is
  * escalated to it and finishes. Who reviews a card is its review's (`reviews.ts`): the lead says a step only where it
  * is the lead's — named by the card, nobody else may, escalated, or past the review rounds' limit. It is the person's harness, never started again: every review it read stayed in its context — a run's
- * lead read 130 turns of ~110k each, 68% of what the run spent (Carlos).
+ * lead read 130 turns of ~110k each, 68% of what the run spent.
  */
 
 /** The `--role` the lead asks for its own with: `task next --role lead` — what is escalated to it, and what waits for it. */

@@ -70,7 +70,8 @@ export const TSCONFIG_BASE = `${CLI_DIR}/tsconfig.base.json`;
 
 /**
  * What runs and agents say of the project and of Plitzi, kept with the project and committed: a team reads its runs
- * again, and sends one folder to Plitzi's team to make Plitzi better. Each its own folder — a run that ended under
+ * again, and sends what of them is Plitzi's — a run's `feedback.md`, an agent's report, nothing of the person or the
+ * project in either — to Plitzi's team to make Plitzi better. Each its own folder — a run that ended under
  * `runs/<run>/`, one agent's report (`plitzi feedback`) under `agents/<date>/` — nobody's to typecheck, lint or format.
  */
 export const REPORTS_DIR = `${CLI_DIR}/plitzi-reports`;

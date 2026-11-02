@@ -22,7 +22,7 @@ through the **MCP** or as code with **sdk-authoring** + the **CLI**, and the **S
 server-side by **sdk-server**, which anyone can self-host. A space is a JSON document (`schema.flat`, `components`,
 style, variables, interactions/flows, data bindings) plus optional plugins, server actions, functions and a runtime.
 
-Five repositories, one product (all under `/Users/Carlos/htdocs/`):
+Five repositories, one product (siblings in one parent folder):
 
 | Repo                      | What it is                                                                                    | Relation                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -43,12 +43,14 @@ ops); the person-facing half in the builder.
 ## How we work
 
 The owner of these rules is this section; the other four repos restate them in a line each. Change them here and in
-the four `AGENTS.md` in the same change. The person you work with is Carlos (the maintainer).
+the four `AGENTS.md` in the same change. The person you work with is the maintainer.
 
 **Communication**
 
-- Talk to Carlos in **Spanish**, always — including the summary after a long English-only tool run. Code, comments,
+- Talk to the maintainer in **Spanish**, always — including the summary after a long English-only tool run. Code, comments,
   docs, RFCs and commit messages are in **English**.
+- **This repository is open source**: no person's name, email, machine path or other personal data in code, comments,
+  tests, docs or the changeset — a decision is "the maintainer's", an example is `ana@example.com`, `dev-laptop`.
 - Report what happened, not what you hoped: failing tests with their output, steps skipped, things not verified.
 - Before changing an API/interface, confirm it. Do not modify anything beyond the target of the change.
 
@@ -61,14 +63,14 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
   import it. No second copy, no parallel path that does the same thing.
 - **No legacy shims.** There is no production yet: when a contract changes, change it everywhere (types, presets,
   tests, docs) and say which stored records must be redone. No normalisers, silent migrators or dual reads unless
-  Carlos asks. Validating user input is not legacy and stays.
+  The maintainer asks. Validating user input is not legacy and stays.
 - **Nothing silent.** Errors, changes, no-ops, things not saved, things reached beyond what was asked: every write
   answers with what it actually did (read off before/after state), refuses what it cannot honour, and every message
   names the fix in the docs' terms. Agents (and small models) build on whatever they believe — a silent failure becomes
   a workaround. Write defensive code: validate at runtime against what the type declares.
 - **Platform ≠ use case.** Do not change the platform just to make a seed or example work. Fix the seed first; touch
   the platform only when the bug is general (reproducible by a platform test without the seed), and then present the
-  evidence to Carlos _before_ changing it. When fixing a report, find the general rule that produced it and fix that —
+  evidence to the maintainer _before_ changing it. When fixing a report, find the general rule that produced it and fix that —
   if it fits Plitzi's model.
 - **A run's finding is not yet a task.** Before changing the CLI from a run's `feedback.md`, decide whether it is
   Plitzi's and needs a change at all: [improving the CLI](docs/en/improving-the-cli.md).
@@ -82,7 +84,7 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
 - UI is product: check desktop **and** 390 px (`scrollWidth` vs `innerWidth`), grid tracks `minmax(0, 1fr)`, every
   control in an example actually works, and design from the point of view of someone who only has a browser.
 
-**Safety in a shared working tree** (Carlos and other sessions work in these repos at the same time)
+**Safety in a shared working tree** (the maintainer and other sessions work in these repos at the same time)
 
 - Never `git stash`, `git checkout -- <path>`, `git restore`, `git reset --hard` or `git clean` unless asked: they
   destroy uncommitted work that is not yours. To compare with the base, copy _your_ file aside
@@ -92,12 +94,12 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
 - **Confirm before deleting** anything not on the agreed list, even if it looks dead. A published package's export is
   never deleted just because no repo of ours imports it (barrels `export *`, and `"./*"` publishes every folder
   barrel). Grep a file's name as text, not only as an import — some code is referenced by path.
-- Commit, push, publish or release only when asked. Carlos publishes the packages himself.
+- Commit, push, publish or release only when asked. The maintainer publishes the packages.
 - Kill a server by port with `lsof -ti tcp:PORT -sTCP:LISTEN | xargs kill` — never without `-sTCP:LISTEN` (it kills
   every client of the port, other agents' sessions included).
 - One Playwright invocation at a time per repo (a second one empties the shared `outputDir`; the ENOENT on trace
   artifacts that follows looks like a flake and is not).
-- Do not spawn sub-agents / parallel agent workflows unless Carlos authorizes it (current instruction, 2026-10).
+- Do not spawn sub-agents / parallel agent workflows unless the maintainer authorizes it (current instruction, 2026-10).
 
 **Verifying**
 
@@ -431,7 +433,7 @@ After finishing any set of code changes, always run:
 4. Touched `apps/server` or `packages/sdk-shared`: `yarn build:dev` there, then `yarn check:server-footprint` — what the
    server loads at start, held to a budget; a module more fails, naming what imported it. One the server uses: raise
    `BUDGET` (`apps/server/scripts/checkFootprint.mjs`) in the same change; one a barrel dragged in: import from an entry
-   without it. Left for CI, it reached Carlos as somebody else's failure every time.
+   without it. Left for CI, it reached the maintainer as somebody else's failure every time.
 
 ## Platform rules that go wrong most
 
@@ -496,7 +498,7 @@ After finishing any set of code changes, always run:
 `@plitzi/plitzi-ui` and `@plitzi/nexus` come from npm. `resolutions` in the root `package.json` may point one at
 `portal:../plitzi-ui` or `portal:../nexus` while an unpublished change is being tried — **check, never assume**. With a
 portal: build the other repo (`yarn build:dev`), restart Vite with `--force` (optimizeDeps serves the old dist), and
-keep `resolve.dedupe` for react (+ `@codemirror/*`, `@lezer/*` for plitzi-ui) or you get two Reacts. When Carlos
+keep `resolve.dedupe` for react (+ `@codemirror/*`, `@lezer/*` for plitzi-ui) or you get two Reacts. When the maintainer
 publishes, raise the ranges, remove the portal and `yarn install`. `plitzi-sdk-server` may portal packages of this
 repo the same way: after changing a package it consumes, `yarn build:dev` (and `build-vendor:dev`) here.
 

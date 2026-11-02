@@ -287,7 +287,7 @@ describe("the monitor's keys and mouse", () => {
   });
 });
 
-// Carlos: a headless agent's stream, seen in the sidebar under the spend once an agent of the list is picked.
+// A headless agent's stream, seen in the sidebar under the spend once an agent of the list is picked.
 describe('the agent whose stream is followed', () => {
   it('is the next one at each w — none past the last — and the one clicked, a click on it again none', () => {
     const agents = ['dev-1', 'scout-1'];
@@ -302,7 +302,7 @@ describe('the agent whose stream is followed', () => {
     expect(picked && onMouse(picked, { button: 0, row: 9, col: 3 }, shown)?.agent).toBeUndefined();
   });
 
-  // Carlos: the stream could not be scrolled, and the sidebar was too narrow to read it — the newest at the top since,
+  // The stream could not be scrolled, and the sidebar was too narrow to read it — the newest at the top since,
   // as the activity reads, so the wheel down goes to earlier moments.
   it('is scrolled back by the wheel over it — never past its first moment, nor past the live end — and e widens the sidebar', () => {
     const over = nothing({ areas: [{ area: { kind: 'stream', most: 2 }, top: 10, left: 0, width: 40, height: 5 }] });

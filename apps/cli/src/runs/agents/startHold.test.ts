@@ -12,7 +12,7 @@ import type { Launch } from './launch';
 import type { RunPaths } from '../core/paths';
 
 // Claude Code past its 5-hour limit ended every agent as it started, and a run's keeper started its eight 4379 times in
-// 40 minutes (Carlos: "cuando el harness llega al límite, el monitor se vuelve loco").
+// 40 minutes (the maintainer: "cuando el harness llega al límite, el monitor se vuelve loco").
 const LIMIT = "You've hit your 5-hour limit · resets 8:40pm (Europe/Lisbon)";
 
 describe('a harness past its limit', () => {

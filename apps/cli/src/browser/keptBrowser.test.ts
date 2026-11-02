@@ -18,7 +18,7 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-// Carlos: the browser kept between measures never stays open once a run or its agent is done.
+// The browser kept between measures never stays open once a run or its agent is done.
 describe('the kept browser', () => {
   it('is stopped at a run’s end — its process ended, its record gone — and a record of a process gone is none', async () => {
     root = await mkdtemp(path.join(os.tmpdir(), 'plitzi-kept-'));

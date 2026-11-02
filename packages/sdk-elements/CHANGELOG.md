@@ -3882,7 +3882,7 @@ author`, `plitzi_validate`/`plitzi_apply`, `plitzi explain` and the builder's pr
   - **Devices are listed by device, not by session.** `GET /devices/sessions` groups sessions by what they were created
     from and answers this device apart; a browser that signed in forty times is one row saying "40 sessions". The list
     had shipped and drawn every session — 1,218 for one account a test suite signs in as — inside a box that scrolled.
-  - **Every device is named for what it is**: the application as it registered over OAuth (`Plitzi CLI on carlos-mbp`,
+  - **Every device is named for what it is**: the application as it registered over OAuth (`Plitzi CLI on dev-laptop`,
     `Plitzi Desktop on studio`), a browser and its system, an automated client (Playwright, headless Chrome) — never a
     raw user agent. Sessions record their address and **when they were last used** (at most every five minutes, on the
     lookup a request already makes). A sign-in deletes the account's dead sessions.

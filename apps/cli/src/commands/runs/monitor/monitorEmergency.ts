@@ -11,7 +11,7 @@ import type { Monitored } from '../../../runs/view/monitor';
 
 /**
  * The emergency panel (`!`): what the person reaches for when the run goes wrong — a harness past its limit, agents
- * ending as they start, one stuck — without leaving the monitor (Carlos: "un panel de emergencia… pausar todo o
+ * ending as they start, one stuck — without leaving the monitor (the maintainer: "un panel de emergencia… pausar todo o
  * reanudar todo, tumbar agentes"). Each action is the command's own: `run stop`, `run resume`, `run hold`, `run allow`.
  */
 

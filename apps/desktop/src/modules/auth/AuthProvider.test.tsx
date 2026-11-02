@@ -22,7 +22,7 @@ import type { ApiClient } from '@pmodules/network';
 const SESSION_KEY = 'plitzi-desktop.session';
 
 const stored = (overrides: Partial<StoredSession> = {}): StoredSession => ({
-  user: { id: 1, username: 'carlos', email: 'carlos@plitzi.com' },
+  user: { id: 1, username: 'ana', email: 'ana@example.com' },
   accessToken: 'stale-but-unexpired',
   // Hours of life left by this window's own reckoning, which is the point: nothing local can tell it is dead.
   expiresAt: Math.floor(Date.now() / 1000) + 7200,

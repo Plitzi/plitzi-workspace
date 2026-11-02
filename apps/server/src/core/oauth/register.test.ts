@@ -36,15 +36,15 @@ describe('registering a client', () => {
     const { config, res, answer } = setup();
 
     await handleRegister(config, res, {
-      client_name: 'Plitzi CLI on carlos-mbp',
+      client_name: 'Plitzi CLI on dev-laptop',
       software_id: 'plitzi-cli',
       redirect_uris: ['http://127.0.0.1:5000/callback']
     });
 
     const clientId = String(answer().client_id);
-    expect(answer()).toMatchObject({ client_name: 'Plitzi CLI on carlos-mbp', software_id: 'plitzi-cli' });
+    expect(answer()).toMatchObject({ client_name: 'Plitzi CLI on dev-laptop', software_id: 'plitzi-cli' });
     expect(await getClient(config.adapters.store, clientId)).toMatchObject({
-      clientName: 'Plitzi CLI on carlos-mbp',
+      clientName: 'Plitzi CLI on dev-laptop',
       softwareId: 'plitzi-cli'
     });
   });

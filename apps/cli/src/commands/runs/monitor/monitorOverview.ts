@@ -69,7 +69,7 @@ const drawEvent = (p: Paint, row: number, line: FeedLine, rect: Rect, opened: bo
 };
 
 /**
- * The activity, the newest first — as the simple panel's Latest, one order everywhere (Carlos read the two as opposite)
+ * The activity, the newest first — as the simple panel's Latest, one order everywhere (the maintainer read the two as opposite)
  * — scrolled `feedBack` events back: each event and what is opened under it, as many as the rows hold.
  */
 const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: Rect): void => {
@@ -78,7 +78,7 @@ const drawActivity = (p: Paint, feed: readonly FeedLine[], ui: MonitorUi, rect: 
   canvas.put(rect.top, rect.left + 2, 'Activity', { fg: theme.text, bold: true });
   const rows = rect.height - 2;
   // What is opened under an event, each part wrapped to the panel's width: a long message read whole, never cut by "…"
-  // (Carlos). Its time, when it has one, on its first line, the lines after it under its text.
+  //. Its time, when it has one, on its first line, the lines after it under its text.
   const textLeft = rect.left + 13;
   type Line = { first: boolean; at?: string; text: string; lead: number };
   const wrapped = (each: { at?: string; text: string }): Line[] => {

@@ -232,7 +232,7 @@ describe('agents on demand', () => {
     }
   );
 
-  // Carlos: the base agent first, and one on demand only when it is needed — the base being free, it takes the work.
+  // The base agent first, and one on demand only when it is needed — the base being free, it takes the work.
   it('hands ready work to a free base agent first: one on demand takes only what the base cannot', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], count: 2, min: 1 });
     await openRun(lead(), await bench.writePlan(benchPlan()));
@@ -464,7 +464,7 @@ describe('agents on demand', () => {
     }
   });
 
-  // Carlos: "los agentes base, deben estar siempre activos aunque esten idle". One of the base whose session of one task
+  // "los agentes base, deben estar siempre activos aunque esten idle". One of the base whose session of one task
   // ended is asked for though nothing waits — the lead may stack a stage — and not once the run is stopping.
   it('asks for a base agent that is not running while the run is open, whatever waits', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
@@ -487,7 +487,7 @@ describe('agents on demand', () => {
     expect(await asked()).toEqual([]);
   });
 
-  // Carlos: the person hears what will happen before anything starts — a run opened on its scope is the lead's alone.
+  // The person hears what will happen before anything starts — a run opened on its scope is the lead's alone.
   it('asks for no base agent while the run holds its scope alone, and for each once it has a task', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     const plan = benchPlan();
@@ -514,7 +514,7 @@ describe('agents on demand', () => {
   });
 
   // After t-player, next handed it t-shell, held from an earlier session — two tasks in one context.
-  // Carlos: never stopped in a task — one it holds at work is one, whatever its session mode says.
+  // Never stopped in a task — one it holds at work is one, whatever its session mode says.
   it('goes on with a task it holds at work rather than stop after the one it completed', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'], session: 'task' });
     await openRun(lead(), await bench.writePlan(benchPlan()));

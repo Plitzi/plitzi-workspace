@@ -27,7 +27,7 @@ export const SPEND_SORTS: readonly SpendSort[] = ['spent', 'session', 'task', 'c
 
 /**
  * Every token an agent's harness counted: what it took in new, what it wrote and its context read again — the whole of
- * what the run costs in the harness, which no other figure says (Carlos).
+ * what the run costs in the harness, which no other figure says.
  */
 const totalOf = (each: Spent): number => each.input + each.output + each.cached;
 

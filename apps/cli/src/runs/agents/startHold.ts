@@ -12,7 +12,7 @@ import type { RunPaths } from '../core/paths';
  *
  * - the harness's limit, read off the line its session ended on: every agent in that harness waits until it resets;
  * - an agent ending as it starts, again and again — a login gone, a harness broken: held until the lead, having looked,
- *   allows it (Carlos: "el lead debe revisar y permitir"), which is one more try;
+ *   allows it (the maintainer: "el lead debe revisar y permitir"), which is one more try;
  * - a person or the lead stopping it (`run hold`): held until allowed (`run allow`).
  */
 

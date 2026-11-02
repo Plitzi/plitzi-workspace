@@ -26,7 +26,7 @@
     "dirty": true
   },
   "portals": {
-    "@plitzi/nexus": "/Users/Carlos/htdocs/nexus"
+    "@plitzi/nexus": "../nexus"
   },
   "host": {
     "platform": "darwin-arm64",

@@ -79,7 +79,7 @@ somebody ends the session they are already holding rather than only their next s
 | `refresh_token` | TEXT, prefix-indexed | |
 | `refresh_expires_at` | BIGINT | Read on every renewal — see the traps. |
 | `user_agent`, `ip` | VARCHAR NULL | So a device list can name a device. Nothing decides anything on them. |
-| `app_name`, `app_id` | VARCHAR NULL | The application holding it when it is not a browser, as it registered over OAuth (`client_name`, `software_id`): `Plitzi CLI on carlos-mbp`, `plitzi-cli`. (Step 4.) |
+| `app_name`, `app_id` | VARCHAR NULL | The application holding it when it is not a browser, as it registered over OAuth (`client_name`, `software_id`): `Plitzi CLI on dev-laptop`, `plitzi-cli`. (Step 4.) |
 | `last_active_at` | BIGINT NULL | When it was last used, written on the token lookup at most every `SESSION_ACTIVITY_RESOLUTION_SECONDS` (five minutes) — never a write per request. (Step 4.) |
 
 **One row per device, not one per account.** A token pair on the account row is smaller and wrong in a way people

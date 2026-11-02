@@ -276,7 +276,7 @@ describe('a task held by its holder alone', () => {
   });
 });
 
-// The lead takes a task back from an agent at any time, says why, and decides where it goes (Carlos).
+// The lead takes a task back from an agent at any time, says why, and decides where it goes.
 describe('a task the lead takes back', () => {
   it('goes to the agent it is handed to — no other — or to the lead itself; its agent is told why', async () => {
     const plan = benchPlan();

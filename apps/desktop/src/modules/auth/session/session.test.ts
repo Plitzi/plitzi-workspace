@@ -7,7 +7,7 @@ import type { StoredSession } from './session';
 const NOW = 1_800_000_000;
 
 const session = (overrides: Partial<StoredSession> = {}): StoredSession => ({
-  user: { id: 7, username: 'carlos', email: 'carlos@plitzi.com' },
+  user: { id: 7, username: 'ana', email: 'ana@example.com' },
   accessToken: 'access',
   expiresAt: NOW + 3600,
   refreshToken: 'refresh',
@@ -22,7 +22,7 @@ describe('a desktop session', () => {
    */
   it('is built from what the browser flow granted, plus who it belongs to', () => {
     const granted = { clientId: 'client-1', accessToken: 'access', refreshToken: 'refresh', expiresIn: 3600 };
-    const user = { id: 7, username: 'carlos', email: 'carlos@plitzi.com' };
+    const user = { id: 7, username: 'ana', email: 'ana@example.com' };
 
     const built = toSession(granted, user);
 

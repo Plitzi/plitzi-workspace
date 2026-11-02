@@ -20,7 +20,7 @@ import type { RunPlan } from '../core/model';
 
 /**
  * A task that takes long wakes the lead, which asks where it stands; its agent answers whole — how far, how long still,
- * what is done, left and holding it — and the lead decides on it (Carlos).
+ * what is done, left and holding it — and the lead decides on it.
  */
 
 let bench: Bench;
@@ -44,7 +44,7 @@ describe('a task past the work limit', () => {
     const home = await take('agent-1', 't-home');
     await reportProgress(home.ctx, runId, 't-home', { step: 'the hero' });
 
-    // Past the 10 min a piece of work takes before something is usually wrong (Carlos), whatever it was estimated.
+    // Past the 10 min a piece of work takes before something is usually wrong, whatever it was estimated.
     bench.advance(11 * 60_000);
     const woken = async () => leadItems(await viewRun(lead(), runId)).filter(item => item.key.startsWith('long-task:'));
     expect((await woken()).map(item => item.key)).toEqual(['long-task:t-home:x1']);

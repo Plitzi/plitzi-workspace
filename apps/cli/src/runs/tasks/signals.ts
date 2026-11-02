@@ -116,7 +116,7 @@ export const unblockTask = async (
 ): Promise<TaskState> => {
   requireNoTask(ctx, 'unblock a task');
   const loaded = await loadRun(ctx, runId);
-  // Every block is the lead's to lift, an agent's question too: a scout finds out the run's spikes alone (Carlos).
+  // Every block is the lead's to lift, an agent's question too: a scout finds out the run's spikes alone.
   await requireLead(ctx, 'unblock a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);

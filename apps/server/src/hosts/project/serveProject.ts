@@ -106,7 +106,7 @@ export const isStartupReport = (error: unknown): error is Error => error instanc
 
 /**
  * A second server of the project, started while the first runs, said as what it is: the project already served, where,
- * since when, and how to stop it — where it said a state file was in use by a process, with a stack (Carlos: "debería
+ * since when, and how to stop it — where it said a state file was in use by a process, with a stack (the maintainer: "debería
  * ser más amigable"). Undefined for a holder that serves nothing, whose own report is said as it is.
  */
 export const alreadyServed = (error: Error): string | undefined => {

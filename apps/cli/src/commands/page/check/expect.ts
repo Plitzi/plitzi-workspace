@@ -495,7 +495,7 @@ export const missedExpectations = async (
 /**
  * Run in the page: each link or button drawn on its section's bottom edge — within a pixel of it — where that section
  * keeps no space below its content (padding-bottom 0): what sat against the next section with nothing between them.
- * Carlos saw a run's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
+ * The maintainer saw a run's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
  * the home's sections shared a class with no bottom padding. Self-contained — it is sent to the browser as it is.
  */
 export const flushEdgesInPage = (): { id: string; section: string }[] => {

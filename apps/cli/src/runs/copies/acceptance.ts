@@ -328,7 +328,7 @@ const ACCEPTANCE_AT_ONCE = 2;
  */
 export const SUITE_LOCK = path.join(os.tmpdir(), 'plitzi-playwright-suite.lock');
 
-/** A line past this runs more than a task's own checks: a whole suite where its specs would do (Carlos: minutes, not more). */
+/** A line past this runs more than a task's own checks: a whole suite where its specs would do (the maintainer: minutes, not more). */
 export const SLOW_LINE_MS = 2 * 60_000;
 
 /** The project's scripts that run a Playwright suite, by name: `npm run visual` is one when its script is `playwright test`. */

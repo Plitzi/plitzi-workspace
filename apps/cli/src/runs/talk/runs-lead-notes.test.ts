@@ -22,7 +22,7 @@ afterEach(async () => {
 const { lead, open, take } = runSteps(() => bench);
 
 describe('a note to the lead, only to know', () => {
-  // Carlos: what the lead looked at is gone from what needs it — a note only to know, shown whole, is read.
+  // What the lead looked at is gone from what needs it — a note only to know, shown whole, is read.
   it('shows a note only to know whole in the watch, and reads it: it needs the lead no more', async () => {
     await open();
     const home = await take('agent-1', 't-home');

@@ -74,7 +74,7 @@ describe('the harness an agent starts in', () => {
   });
 });
 
-// Carlos: a scout whose proposal came back was started on an empty context, and read the whole project again.
+// A scout whose proposal came back was started on an empty context, and read the whole project again.
 describe('an agent started again for a task sent back to it', () => {
   const config = process.env.CLAUDE_CONFIG_DIR;
 

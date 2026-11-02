@@ -36,9 +36,9 @@ describeTarget('action-server', subject => {
 
   /** The trigger's input contract, reached from the URL: the page wires nothing up for it. */
   test('the page context reaches the action as input', async ({ request }) => {
-    const html = await (await request.get(`${subject.origin}/?who=carlos`)).text();
+    const html = await (await request.get(`${subject.origin}/?who=ana`)).text();
 
-    expect(html).toMatch(new RegExp(`data-id="${ACTION_IDS.who}"[^>]*>carlos<`));
+    expect(html).toMatch(new RegExp(`data-id="${ACTION_IDS.who}"[^>]*>ana<`));
   });
 
   /**

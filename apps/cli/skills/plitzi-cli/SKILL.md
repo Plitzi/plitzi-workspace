@@ -66,9 +66,9 @@ author`; a page: `page check`. The project around them: `doctor`, before `space 
   people edit too, `space activity --follow --json` says their edits and the actions that fail as they happen.
 - **Signing in happens in the browser** (`login`, `space use`, a first `plugin upload`): a tab waits for the person.
 - **One space at a time** — the one `whoami --json` names; `plitzi space use` switches it.
-- **A report to Plitzi** — the person asks for a report, feedback, the bugs found or what cost time: `npx plitzi
-feedback` (`--previous <link>` continues an earlier one). It reads the versions and `doctor` and writes the page:
-  fill and publish it as its brief says.
+- **A report to Plitzi** — asked for a report, feedback, the bugs found or what cost time: `npx plitzi
+feedback` (`--previous <link>` continues one): fill the page as its brief says, `feedback --check <file>` (nothing
+  of the person or the project), then publish it.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one line); exit 1 means it did not do
   what was asked; a page command's 2, that it could not read what it asked (nothing served, the other page's element
   missing). A refusal says what to change: change it — the same refusal twice says to stop and ask.

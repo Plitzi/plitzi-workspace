@@ -179,7 +179,7 @@ describe('plitzi run monitor', () => {
     expect(text.some(line => /● lead → agent-2\s+t-home\s+“Use the formal voice”/.test(line))).toBe(true);
     // The sidebar: the tasks left, the approved said in a line, each agent where it stands.
     expect(text.some(line => line.includes('✓ 1 approved · a lists them'))).toBe(true);
-    // …marked as the team's base or on demand beside its name (◆, ◇): Carlos read no difference in a muted column.
+    // …marked as the team's base or on demand beside its name (◆, ◇): the maintainer read no difference in a muted column.
     expect(text.some(line => /● agent-2\s+◆ harness\s+on t-home/.test(line))).toBe(true);
     // Of the team, never started: not idle — nothing of it has run.
     expect(text.some(line => /· agent-3\s+◆ harness\s+not started/.test(line))).toBe(true);
@@ -209,7 +209,7 @@ describe('plitzi run monitor', () => {
     ).toEqual(['t-last', 't-first']);
   });
 
-  // Carlos read the advanced Activity and the simple Latest in opposite orders: the newest first in both.
+  // The maintainer read the advanced Activity and the simple Latest in opposite orders: the newest first in both.
   it('scrolls the activity back, the newest first, and says how far', async () => {
     const runId = await open();
     for (const text of Array.from({ length: 40 }, (_, index) => String(index + 1))) {
@@ -229,7 +229,7 @@ describe('plitzi run monitor', () => {
     expect(back.filter(line => line.includes('“Note'))[0]).toContain('“Note 30”');
   });
 
-  // Carlos: the activity's lines were cut at mid-screen, the terminal's other half empty.
+  // The activity's lines were cut at mid-screen, the terminal's other half empty.
   it('says a long line as far as its row reaches, not cut at a glance’s length', async () => {
     const data = await monitorRun(lead(), await open());
     const whole = `${'a refused command says why at length '.repeat(4)}and the end`;

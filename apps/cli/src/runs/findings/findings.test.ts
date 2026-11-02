@@ -33,7 +33,7 @@ const use = (minute: number, by: string, command: string, more: Partial<UsageLin
 });
 
 describe('how tasks and sessions were held', () => {
-  // Dev-1's sent-back task waited for it while it was at another — Carlos's rule — and read as two at once.
+  // Dev-1's sent-back task waited for it while it was at another — the maintainer's rule — and read as two at once.
   it('says an agent with two tasks in progress once a pair, never a sent-back one waiting for it', () => {
     const log: LogEntry[] = [
       { at: T(1), by: 'dev-1', action: 'take', task: 't-live' },

@@ -244,7 +244,7 @@ export const openRun = async (
   }
 
   // The project's own checks, before any agent works: a failure there meets every task's check in its copy, and spends
-  // its tries on what no task did (Carlos: the lead sees lint and types clean before the agents begin). Opened despite
+  // its tries on what no task did (the maintainer: the lead sees lint and types clean before the agents begin). Opened despite
   // them only said why — logged, and told to every task.
   const before = await ctx.checks(ctx.root, ctx.root);
   if (!before.ok && despiteChecks === undefined) {

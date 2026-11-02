@@ -36,7 +36,7 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'subtle'> =
 /**
  * The strip: the approved as one block, `✓ 12 approved`, then every task still to approve a block of its own, its id in
  * it when it fits — the run at a glance. A block each for the approved left the work under way a sliver at the right
- * once most of a run was done (Carlos: the monitor "termina siendo inútil"). More to approve than the width holds
+ * once most of a run was done (the maintainer: the monitor "termina siendo inútil"). More to approve than the width holds
  * whole ids for are said by stage instead, each wide enough for its count and as wide as its share beyond that.
  */
 const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number): void => {
@@ -93,7 +93,7 @@ const strip = (p: Paint, tasks: readonly TaskLine[], row: number, width: number)
   const span = end - col;
   const each = Math.floor((span - (left.length - 1)) / left.length);
   // A block for each only when each says which task it is: `◎…` blocks said nothing — 50 tasks drew a row of them
-  // (Carlos: "llegando al punto que es inútil").
+  // (the maintainer: "llegando al punto que es inútil").
   const readable = left.every(task => textWidth(`${TASK_LOOK[task.status].glyph} ${task.id}`) + 1 <= each);
   if (readable) {
     left.forEach((task, index) => {

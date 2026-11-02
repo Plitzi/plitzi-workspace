@@ -62,7 +62,7 @@ describe('run notice', () => {
     expect(text).toContain('- n2: The footer’s legal line wraps at 390 — lead');
   });
 
-  // A run's lead filed one of the experiment's own setup, Carlos said to leave it out, and nothing could withdraw it.
+  // A run's lead filed one of the experiment's own setup, the maintainer said to leave it out, and nothing could withdraw it.
   it('withdraws a notice by its name, saying why — the lead any, an agent its own — and leaves it out of the report', async () => {
     const runId = await open();
     const menu = await take('agent-1', 't-menu');
@@ -92,7 +92,7 @@ describe('run notice', () => {
   });
 });
 
-// Carlos: the lead listed what it found wrong with Plitzi in a journal of its own; the run writes it as feedback to share.
+// The lead listed what it found wrong with Plitzi in a journal of its own; the run writes it as feedback to share.
 describe('the run’s feedback to Plitzi', () => {
   it('keeps what is noticed of Plitzi out of the backlog, and writes it with the run’s measures as it ends', async () => {
     const runId = await open();
@@ -111,7 +111,9 @@ describe('the run’s feedback to Plitzi', () => {
     ]);
     expect((await openBacklog(bench.root)).map(item => item.text)).toEqual(['The footer’s legal line wraps at 390']);
     const feedback = await fs.readFile(feedbackFile(bench.root, runId), 'utf-8');
-    expect(feedback).toContain(`# Plitzi feedback — run ${runId}`);
+    // The run's id is the lead's name for the project's work: written over too, as everything of the project.
+    expect(feedback).toContain('# Plitzi feedback — run <project>');
+    expect(feedback).not.toContain(runId);
     expect(feedback).toContain('**page measure reads no position, and every agent wrote a script for it**');
     expect(feedback).not.toContain('The footer’s legal line');
     expect(feedback).not.toContain(bench.root);
@@ -198,7 +200,7 @@ describe('the run’s feedback to Plitzi', () => {
   });
 });
 
-// Carlos: what a run leaves is noted for the next — a run's lead had it nowhere the next run reads.
+// What a run leaves is noted for the next — a run's lead had it nowhere the next run reads.
 describe('the project’s backlog', () => {
   it('keeps what a run noticed past the run, once, for the next run — open until one says it is done', async () => {
     const runId = await open();
@@ -224,7 +226,7 @@ describe('the project’s backlog', () => {
     expect(await refusal(closeBacklogItem(lead(), 'b-1', 'lead'))).toMatchObject({ code: 'invalid' });
   });
 
-  // Carlos: the backlog kept through the CLI, read when a plan is written, so the lead takes it up.
+  // The backlog kept through the CLI, read when a plan is written, so the lead takes it up.
   it('takes an item with no run open, and closes it when a run whose task says it does it is applied', async () => {
     expect(await addBacklogItem(bench.person(true), { text: 'The cart says no total', by: 'person' })).toMatchObject({
       id: 'b-1',

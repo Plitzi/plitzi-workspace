@@ -16,7 +16,7 @@ import type { MonitorUi } from './monitorModel';
 import type { Monitored } from '../../../runs/view/monitor';
 import type { Bench } from '../../../tests/runProject';
 
-// Carlos: "en el monitor hay que tener un panel de emergencia… pausar todo o reanudar todo, tumbar agentes".
+// "en el monitor hay que tener un panel de emergencia… pausar todo o reanudar todo, tumbar agentes".
 let bench: Bench;
 
 beforeEach(async () => {

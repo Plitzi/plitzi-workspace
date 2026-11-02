@@ -15,7 +15,7 @@ import type { NextTask } from './next';
 import type { Message } from '../talk/messages';
 
 /**
- * What the lead finds out next, nobody else at it: an agent's question (`blocked`) — its answer lifts the block (Carlos:
+ * What the lead finds out next, nobody else at it: an agent's question (`blocked`) — its answer lifts the block (the maintainer:
  * the scout answers no block) — and, with no scout in the team, a research card ready.
  */
 export const findOutFor = (

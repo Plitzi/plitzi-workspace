@@ -24,7 +24,7 @@ afterEach(async () => {
 
 const { lead, take } = runSteps(() => bench);
 
-// Carlos: on the monitor a tester and a scout said only their card, where a developer said what it was at.
+// On the monitor a tester and a scout said only their card, where a developer said what it was at.
 describe('what a reviewer and a scout are at, on the monitor', () => {
   it('says the step a tester gave its review', async () => {
     await bench.writeTeam(team(TESTERS));

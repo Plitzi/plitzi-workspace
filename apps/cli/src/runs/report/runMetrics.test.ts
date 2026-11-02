@@ -154,7 +154,7 @@ describe('a run measured from its records', () => {
     });
   });
 
-  // Carlos: every second an agent spends inside the CLI is multiplied by agents and calls — measured, against a budget.
+  // Every second an agent spends inside the CLI is multiplied by agents and calls — measured, against a budget.
   it('says the time spent inside the CLI by command, the slowest first, and a median past its budget', () => {
     expect(metrics.cost.byCommand[0]).toMatchObject({ command: 'task look', seconds: 90, overBudget: 60 });
     expect(metrics.cost.cliMinutes).toBe(2);

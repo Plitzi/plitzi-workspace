@@ -117,12 +117,12 @@ describe('the plugin package', () => {
 
   it('writes what somebody typed as source that still parses', () => {
     const files = scaffoldPlugin(
-      answers({ elements: [{ name: 'seat-picker', title: "Carlos's picker", description: 'Say "hi" \\ bye' }] })
+      answers({ elements: [{ name: 'seat-picker', title: "Ana's picker", description: 'Say "hi" \\ bye' }] })
     );
 
-    expect(files['src/SeatPicker/declaration.ts']).toContain('label: "Carlos\'s picker"');
+    expect(files['src/SeatPicker/declaration.ts']).toContain('label: "Ana\'s picker"');
     expect(files['src/SeatPicker/declaration.ts']).toContain('description: \'Say "hi" \\\\ bye\'');
-    expect(files['index.html']).toContain("<title>Carlos's picker — preview</title>");
+    expect(files['index.html']).toContain("<title>Ana's picker — preview</title>");
   });
 });
 

@@ -476,7 +476,14 @@ export const buildProgram = (): Command => {
       collect,
       []
     )
-    .option('--json', 'One object: { file, facts, brief }, for a tool or an agent')
+    .option(
+      '--check <file>',
+      'A filled report, before it is published: what of the person or the project it still holds — names, emails, addresses, the project’s files, elements and texts; exit 1 while any is left'
+    )
+    .option(
+      '--json',
+      'One object: { file, facts, brief } — with --check, { file, found, shared } — for a tool or an agent'
+    )
     .action((options: FeedbackOptions) => feedback(options));
 
   spaceGroup

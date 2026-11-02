@@ -26,7 +26,7 @@ import type { LoadedRun, RunContext } from '../run';
 /**
  * A research card's two moves of its own: its result said at `complete` (`--found`, the tasks it makes with `--tasks`),
  * and the lead's approval stacking those tasks (`--leave` what it leaves out). It is taken, held, sent back and reviewed as
- * any card; every result is the lead's to approve, and adding tasks the lead's alone (Carlos).
+ * any card; every result is the lead's to approve, and adding tasks the lead's alone.
  */
 
 export interface Researched {

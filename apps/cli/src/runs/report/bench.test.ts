@@ -24,7 +24,7 @@ const line = (runId: string, overrides: Partial<BenchLine> = {}): BenchLine => (
   ...overrides
 });
 
-// Carlos: "dicho reporte también se podría usar de bench, para ir mejorando tiempos, reducir el % de errores".
+// "dicho reporte también se podría usar de bench, para ir mejorando tiempos, reducir el % de errores".
 describe('the bench of a project’s runs', () => {
   it('lists each run measured the same way, a row each, oldest first', () => {
     const text = benchText([

@@ -1,7 +1,7 @@
 # RFC 0025 — Agents on small models: fewer tokens, the same result
 
 - **Status:** Accepted — phases 1 to 7 done; the benchmark built, its first run pending (§8)
-- **Author:** Carlos Rodriguez
+- **Author:** Plitzi
 - **Date:** 2026-10-07
 - **Scope:** the MCP (`apps/mcp`: its tools, the primer, `look`), the CLI (`apps/cli`: `where`, `edit`, every
   command's output), `sdk-authoring` (where an element was written, the edits a fix makes, its published types), the

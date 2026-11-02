@@ -523,7 +523,7 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(
       '--plitzi',
-      'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team'
+      'What the run says of Plitzi itself, now (.plitzi/plitzi-reports/runs/<run>/feedback.md) — written by the finish too: its agents’ notices of Plitzi, the refusals, the crashes, the checks no one’s work failed — for Plitzi’s team, the person and the project’s names, files, tasks and elements written over'
     )
     .option(...TOKEN_OPTION)
     .option(...AGENT_OPTION)

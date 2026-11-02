@@ -485,10 +485,10 @@ export const runFeedback = (runId: string | undefined, options: RunCommandOption
     async ctx => {
       const id = await runOf(ctx, options, runId, { anyone: true });
 
-      return { file: await writeFeedback(ctx, await loadRun(ctx, id, { anyVersion: true })) };
+      return writeFeedback(ctx, await loadRun(ctx, id, { anyVersion: true }));
     },
-    ({ file }) =>
-      `What this run says of Plitzi itself — its agents' reports, the lead's and what its records show — for Plitzi's team: ${file}, nothing of the project's code in it. The finish writes it again with the run whole, its report and its records beside it`
+    ({ file, toCheck }) =>
+      `What this run says of Plitzi itself — its agents' reports, the lead's and what its records show — for Plitzi's team: ${file}, the person, the project's names, files, tasks and elements written over. ${toCheck.length > 0 ? `Before it is sent: ${String(toCheck.length)} passage${toCheck.length === 1 ? '' : 's'} quoted in it may be the project's (its first section lists them) — the person reads them and writes over what they would not share. ` : ''}The finish writes it again with the run whole`
   );
 
 /** `plitzi run backlog`: what is left to do — listed, or one item closed (`done <id>`). Kept by `run notice`. */

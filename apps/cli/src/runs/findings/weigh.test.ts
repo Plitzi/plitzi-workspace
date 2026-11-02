@@ -26,7 +26,7 @@ const finding = (title: string, more: Partial<Finding> = {}): Finding => ({
   ...more
 });
 
-// Carlos: the findings read the same whether met once on a command run twice, or on the one every agent runs.
+// The findings read the same whether met once on a command run twice, or on the one every agent runs.
 describe('how much a finding weighs', () => {
   it('names the command a finding is about — the one said first, the longest at one place', () => {
     const names = ['page', 'page check', 'page shot', 'page measure', 'task look'];

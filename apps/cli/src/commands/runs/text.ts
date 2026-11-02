@@ -91,7 +91,7 @@ export const pacedText = (paced: NonNullable<PlanEstimate['paced']>): string =>
 
 /**
  * An acceptance line past `SLOW_LINE_MS`, said beside it: a line that runs a whole suite where the task's own specs
- * would do — a check takes minutes at most (Carlos), and the finish runs the whole result once.
+ * would do — a check takes minutes at most, and the finish runs the whole result once.
  */
 export const slowLineText = (result: { ms?: number }): string =>
   result.ms !== undefined && result.ms > SLOW_LINE_MS

@@ -17,7 +17,7 @@ const finding = (title: string, more: Partial<Finding> = {}): Finding => ({
   ...more
 });
 
-// Carlos: a run's report read as twenty-three things to change, a refused flag beside a false success — each is taken
+// A run's report read as twenty-three things to change, a refused flag beside a false success — each is taken
 // up its own way, and what an agent said is triaged before anything changes.
 describe('Plitzi’s findings, by how each is taken up', () => {
   it('puts what Plitzi got wrong first, then where agents went round it, then where it stood in the way, then the rest', () => {

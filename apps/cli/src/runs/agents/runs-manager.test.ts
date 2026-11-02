@@ -81,7 +81,7 @@ describe('a review no tester may take', () => {
     });
   });
 
-  // Carlos: the lead reviews nothing by default — only what would hold the run, nobody else able to.
+  // The lead reviews nothing by default — only what would hold the run, nobody else able to.
   it('is the lead’s when nobody else may: every developer worked what its tests test', async () => {
     const members = {
       version: 1 as const,

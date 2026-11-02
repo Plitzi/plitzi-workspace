@@ -15,7 +15,7 @@ import { viewRun } from '../view/view';
 import type { StartAgent } from './keeper';
 import type { Bench } from '../../tests/runProject';
 
-// Carlos: the person — and the lead — stop agents and let them start again, and the run never starts one held.
+// The person — and the lead — stop agents and let them start again, and the run never starts one held.
 let bench: Bench;
 
 beforeEach(async () => {

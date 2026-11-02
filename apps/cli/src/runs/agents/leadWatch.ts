@@ -288,7 +288,7 @@ const waitWatched = async (
         ...seen,
         ...Object.fromEntries(fresh.map(item => [item.key, ctx.now().toISOString()]))
       });
-      // What is only to know, shown whole here, is read: it leaves what needs the lead (Carlos: what was looked at
+      // What is only to know, shown whole here, is read: it leaves what needs the lead (the maintainer: what was looked at
       // stays no longer).
       const known = view.attention.flatMap(item => (item.fyi && item.message ? [item.message] : []));
       if (known.length > 0) {

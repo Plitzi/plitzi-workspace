@@ -43,7 +43,7 @@ const until = async (condition: () => boolean): Promise<void> => {
   }
 };
 
-// Carlos: a kept browser stopped at a run's end never closes under an ask it took.
+// A kept browser stopped at a run's end never closes under an ask it took.
 describe('the kept browser’s door', () => {
   it('answers an ask with what was read, and refuses what is no ask', async () => {
     const door = keeperServer({

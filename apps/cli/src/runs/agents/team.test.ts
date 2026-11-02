@@ -52,7 +52,7 @@ describe('the team of a project’s runs', () => {
       file: TEAM_FILE
     });
     await setTeamAgent(root, 'design', { roles: ['designer', 'reviewer'], model: 'claude-opus-5-5' });
-    // A tester named with no model starts on the strongest: what its tests miss gets through (Carlos).
+    // A tester named with no model starts on the strongest: what its tests miss gets through.
     expect(await setTeamAgent(root, 'test', { roles: ['tester'] })).toMatchObject({
       after: { name: 'test', roles: ['tester'], model: 'claude-opus-5-5' }
     });

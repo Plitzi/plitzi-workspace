@@ -216,7 +216,7 @@ export const agentsNeeded = (
       }
 
       // Work waiting with none of its role free starts one on demand, up to the team's most: dividing the work is the
-      // run's speed (Carlos). A ratio held it back — a run's two research cards waited behind the scope, three
+      // run's speed. A ratio held it back — a run's two research cards waited behind the scope, three
       // scouts allowed and one running.
       asked.add(next.agent);
 
@@ -231,7 +231,7 @@ export const agentsNeeded = (
     })
   ];
   // The team's base runs while the run is open, idle when nothing is for it: one not running — stopped for a fresh
-  // context, or its harness gone — is started again whatever waits (Carlos: "los agentes base, deben estar siempre activos").
+  // context, or its harness gone — is started again whatever waits (the maintainer: "los agentes base, deben estar siempre activos").
   // Not before the run has a task for them: a run opened on its scope is the lead's spike, planned with the person,
   // and an agent started then would wait through all of it.
   const base =
@@ -252,7 +252,7 @@ export const agentsNeeded = (
 
 /**
  * The agents that start with the run, of `agent`'s roles, there and at nothing — what a task ready is theirs first:
- * an agent on demand is for the work the team's base cannot take, never before it (Carlos: "siempre comienza con el
+ * an agent on demand is for the work the team's base cannot take, never before it (the maintainer: "siempre comienza con el
  * agente base, y luego on-demand si es requerido, si este está libre"). A designer counts only for a designer.
  */
 export const freeBaseAgents = (

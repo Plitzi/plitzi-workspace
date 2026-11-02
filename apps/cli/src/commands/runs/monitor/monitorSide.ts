@@ -91,7 +91,7 @@ export const drawSide = (
   const runRows = 4 + Math.min(3, output.length);
   // An agent a line, and one more under one that holds cards besides the one it is at.
   const agentRows = 3 + agents.length + agents.filter(agent => heldBesides(agent, view.tasks).length > 0).length;
-  // Two lines an agent: its bar, and what the bar is — in, out and its context read again (Carlos asked where 1.7M came from).
+  // Two lines an agent: its bar, and what the bar is — in, out and its context read again (the maintainer asked where 1.7M came from).
   // Above them the run's: its last half hour a chart, and its tokens with how much of them was read again.
   const spendRows = 4 + (spend.length === 0 ? 0 : 3) + 2 * Math.min(4, Math.max(1, spend.length));
   // What the tasks may take once the rest has its rows: the spend given up first, the tasks never fewer than three.

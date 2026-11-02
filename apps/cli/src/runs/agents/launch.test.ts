@@ -88,7 +88,7 @@ describe('an agent started again after it died', () => {
     });
   });
 
-  // Carlos: a scout whose proposal came back started on an empty context and read the whole project again.
+  // A scout whose proposal came back started on an empty context and read the whole project again.
   it('reworks a task sent back in the session it was worked in — while that context is small enough to read again', async () => {
     const worked = 'b5c1f0de-0000-4000-8000-00000000000a';
     const after = 'b5c1f0de-0000-4000-8000-00000000000b';

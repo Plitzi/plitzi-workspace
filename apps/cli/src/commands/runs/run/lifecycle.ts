@@ -28,7 +28,12 @@ const reportLines = (left: LeftReport): string[] => [
   ...(left.scratch.tooLarge.length > 0
     ? [`  Scripts left out as too large to be an agent's: ${list(left.scratch.tooLarge)}`]
     : []),
-  "  No path of this machine and no token in them: commit them with the project, and send the folder to Plitzi's team to make Plitzi better"
+  "  No path of this machine and no token in them: commit them with the project. feedback.md is what goes to Plitzi's team — the person, the project's names, files, tasks and elements written over; the rest of the folder is the project's own (its plan, messages and code), never sent without reading it",
+  ...(left.toCheck.length > 0
+    ? [
+        `  Before sending feedback.md: ${String(left.toCheck.length)} passage${left.toCheck.length === 1 ? '' : 's'} quoted in it may be the project's (its first section lists them) — read and write over what you would not share`
+      ]
+    : [])
 ];
 
 /** How many of each whose come first in a finish's answer: the whole list is the report's. */

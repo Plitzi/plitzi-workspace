@@ -9,7 +9,7 @@ import type { RunTask } from '../core/model';
 
 /**
  * Past the limit a piece of work takes before something is usually wrong (`workLimitOf`): a task that size is several,
- * and a spike after the scope is small — what the agents find as they go (Carlos).
+ * and a spike after the scope is small — what the agents find as they go.
  */
 export const sizeNotices = (tasks: readonly RunTask[]): string[] => {
   const large = tasks.filter(task => task.kind === 'work' && task.estimateMinutes > workLimitOf(task.id));

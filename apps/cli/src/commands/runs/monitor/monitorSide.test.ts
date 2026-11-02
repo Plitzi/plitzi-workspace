@@ -64,7 +64,7 @@ describe("the sidebar's spend", () => {
     expect(text).toContain('in 60k · out 11k · cache 2.1M');
   });
 
-  // Carlos, beside the mockup: the chart, how much was cached and what it cost were missing.
+  // The maintainer, beside the mockup: the chart, how much was cached and what it cost were missing.
   it('charts the last half hour, says how much was read again, and what it cost when every model has a price', async () => {
     const data = await monitorRun(lead(), await open());
     const text = shown({
@@ -84,9 +84,9 @@ describe("the sidebar's spend", () => {
   });
 });
 
-// Carlos: a headless agent's output is its last answer alone — what it says and does, followed in the sidebar.
+// A headless agent's output is its last answer alone — what it says and does, followed in the sidebar.
 describe("the sidebar's stream of the agent followed", () => {
-  // Carlos: newest last, a whole opened near the end ran past the bottom and the scroll fought the moments coming.
+  // Newest last, a whole opened near the end ran past the bottom and the scroll fought the moments coming.
   it('says what the agent said and did, newest first, under the spend — and why there is none to read', async () => {
     const data = await monitorRun(lead(), await open());
     const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
@@ -112,7 +112,7 @@ describe("the sidebar's stream of the agent followed", () => {
     expect(shown(data)).not.toContain('Stream ·');
   });
 
-  // Carlos: a moment cut on its row could not be read — a click on it opens its whole under it.
+  // A moment cut on its row could not be read — a click on it opens its whole under it.
   it('opens a moment with more to say by a click on it, its whole under its line — and closes it again', async () => {
     const data = await monitorRun(lead(), await open());
     const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';
@@ -153,7 +153,7 @@ describe("the sidebar's stream of the agent followed", () => {
     expect(text.match(/Checking the charts/g)).toHaveLength(1);
   });
 
-  // Carlos: opening a call's arrow showed what it asked, never what it answered — two arrows to open for one call.
+  // Opening a call's arrow showed what it asked, never what it answered — two arrows to open for one call.
   // …and two arrows for one call: the answer's own arrow is gone, the call's opens both.
   it('opens a tool call with its answer by one arrow — paired by the call, another answering between them', async () => {
     const data = await monitorRun(lead(), await open());
@@ -211,7 +211,7 @@ describe("the sidebar's stream of the agent followed", () => {
     expect(text).not.toContain('export const b');
   });
 
-  // Carlos: the stream took the height left under many tasks, could not be scrolled, and the sidebar was narrow.
+  // The stream took the height left under many tasks, could not be scrolled, and the sidebar was narrow.
   it('takes the height down to the run, the tasks a third at most — scrolled back by the wheel — wider with e', async () => {
     const data = await monitorRun(lead(), await open());
     const agent = data.agents.find(each => each.kind === 'agent')?.agent ?? 'agent-1';

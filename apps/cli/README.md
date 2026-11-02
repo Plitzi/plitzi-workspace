@@ -803,7 +803,11 @@ project|run|<file>`, then `run resolve <run>`, no file, goes on).
   cuts) and what was written; `report.json` the same as data (`version`ed — what `run report --bench` and the next plans'
   estimates read); `records/` what the run kept — its plan, log, usage, messages, each task's definition, state, rounds
   and reviews, never the project's files — and `scratch/` the scripts its agents wrote for themselves. No path of the
-  machine and no token in any of them: send the folder to Plitzi's team, and Plitzi gets better from it. A run's id is
+  machine and no token in any of them. **`feedback.md` is what goes to Plitzi's team**, and Plitzi gets better from it:
+  the person and the project's names, emails, addresses, files, tasks (`task-3`) and elements written over, what was
+  said of the project alone (its frictions, what reviews asked) left out, and a passage quoted that may be the
+  project's listed at its top for the person to read before sending. The rest of the folder is the project's own — its
+  plan, messages and code — and is never sent without reading it. A run's id is
   its folder's: a second run of the same name is refused at `run open`. `run report` prints the run at a glance and each
   problem's title (`--full`: the whole, as `report.md` — past 24k characters, more than a harness shows of one
   answer, written to the run's `report-full.md` and named); its waits and minutes count to the last approval, its tokens are
@@ -1012,6 +1016,7 @@ its own (`tmp/visual/state`), so a test never writes into what your server keeps
 ```bash
 npx @plitzi/cli feedback                                   # a report to Plitzi, started
 npx @plitzi/cli feedback --previous https://claude.ai/artifact/…   # continuing an earlier one
+npx @plitzi/cli feedback --check .plitzi/plitzi-reports/agents/<date>/report.html   # before it is published: what of the person or the project it holds
 ```
 
 A report of what broke, misled or cost time, for a developer to send to Plitzi as a link. The CLI reads what a report
@@ -1021,10 +1026,15 @@ runs' (`.plitzi/plitzi-reports/agents/<date>/report.html`, committed):
 a tally by severity, what was built, what changed since the earlier reports, where to start, the findings filtered by
 severity and area and each copied as an issue, and what worked — in light and dark, on a phone. It prints how to fill
 it for the agent the developer works with: one `REPORT` object, each finding reproduced on the installed versions
-before it is written, with what happens, the evidence, the impact, the workaround and a fix; no secret, token or
-customer's data. The agent then publishes it as a private artifact and gives the developer its URL. `--previous` hands
-it the earlier reports: their numbering goes on, and what changed of each finding is said. `--json`: `{ file, facts,
-brief }`.
+before it is written, with what happens, the evidence, the impact, the workaround and a fix. **Nothing of the person or
+the project goes in it** — no name, email, address or IP, no secret or token, not the project's name, domain, copy,
+data, file paths past Plitzi's layout or the names it gave its pages and elements; a repro is rewritten with neutral
+names. `--check <file>` names what a filled report still holds of them (exit 1 while any is left); one a finding cannot
+be understood without is agreed with the developer first, and listed word for word in the report's `shared`, which the
+page shows and `--check` accepts. Then the agent publishes it as a private artifact and gives the developer its URL.
+The page carries the project's mode and source, never its name. `--previous` hands it the earlier reports: their
+numbering goes on, and what changed of each finding is said. `--json`: `{ file, facts, brief }` — with `--check`,
+`{ file, found, shared }`.
 
 ## `upgrade`
 

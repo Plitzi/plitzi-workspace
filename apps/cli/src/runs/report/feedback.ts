@@ -7,11 +7,13 @@ import { buildReport, readSummary } from './report';
 import { findingsText, ranOn, spendText, stepsSaidText } from './reportHead';
 import { REPORT_FILES, runReportDir, withoutMachine } from './reports';
 import { tokensText } from './runMetrics';
+import { leftToCheck, privateWords, scrubbed } from '../../feedback/privacy';
 
 import type { CombinedExperience } from './experience';
 import type { Finding, RunIndicators } from '../findings';
 import type { HarnessUsage } from '../harness';
 import type { RunReport } from './report';
+import type { PrivateWords } from '../../feedback/privacy';
 import type { Briefs } from '../plan/briefs';
 import type { LoadedRun, RunContext } from '../run';
 import type { AgentTimeline } from '../view/agentTimeline';
@@ -64,8 +66,6 @@ export interface RunFeedback {
   rereadMost: { what: string; reread: number }[];
   /** Plitzi's own files — skills, packages' types — read the most: the docs a fix starts from. */
   plitziReadMost: { file: string; times: number }[];
-  /** What each review asked when it sent a task back: the agent's mistake, or what Plitzi did not let it see. */
-  reviewsAsked: { task: string; round: number; by: string; asked: string }[];
   /** What the agents' briefs weighed, part by part: which part of `task context` an agent reads again the most. */
   briefs?: Briefs;
   /** What the run cost, by agent and by piece (`RunReport['spend']`). */
@@ -91,11 +91,14 @@ export const feedbackFile = (root: string, runId: string): string =>
 const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : [`## ${title}`, '', ...lines, ''];
 
-/** Every text in it with the person's machine left out — the agents' words and the lead's report too. */
-const sanitizedData = (root: string, data: RunFeedback): RunFeedback => {
+/**
+ * Every text in it with the person's machine, the person and the project left out (`scrubbed`) — the agents' words and
+ * the lead's report too.
+ */
+const sanitizedData = (root: string, words: PrivateWords, data: RunFeedback): RunFeedback => {
   const clean = (value: unknown): unknown =>
     typeof value === 'string'
-      ? withoutMachine(root, value)
+      ? scrubbed(withoutMachine(root, value), words)
       : Array.isArray(value)
         ? value.map(clean)
         : typeof value === 'object' && value !== null
@@ -153,7 +156,13 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
 
   const summary = (await readSummary(loaded))?.trim();
 
-  return sanitizedData(ctx.root, {
+  const words = await privateWords(ctx.root, {
+    tasks: loaded.tasks.map(task => task.id),
+    files: loaded.tasks.flatMap(task => task.files),
+    run: loaded.record.runId
+  });
+
+  return sanitizedData(ctx.root, words, {
     runId: loaded.record.runId,
     pinned: loaded.record.pinned,
     openedAt: report.openedAt,
@@ -167,7 +176,8 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
     agents: metrics.agents.map(agent => agent.agent),
     findings: report.findings.filter(finding => finding.owner === 'plitzi' || finding.owner === 'machine'),
     indicators: report.indicators,
-    experience: report.experience,
+    // What got in the way of the project or the plan is the project's, kept in its report alone.
+    experience: { ...report.experience, frictions: [] },
     lead: { ...(summary ? { report: summary } : {}), ...(report.lead ? { harness: report.lead } : {}) },
     checks: {
       run: metrics.checks.run,
@@ -191,7 +201,6 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
       .sort((a, b) => b[1] - a[1])
       .slice(0, 16)
       .map(([file, times]) => ({ file, times })),
-    reviewsAsked: report.tasks.flatMap(task => task.reviews.map(review => ({ task: task.id, ...review }))),
     ...(report.briefs ? { briefs: report.briefs } : {}),
     ...(report.spend ? { spend: report.spend } : {}),
     reviews: report.tasks.flatMap(task =>
@@ -209,18 +218,41 @@ export const feedbackOf = async (ctx: RunContext, loaded: LoadedRun): Promise<Ru
 };
 
 /** The feedback as a person reads it, from its data. */
-export const feedbackText = (data: RunFeedback): string =>
-  [
+export const feedbackText = (data: RunFeedback): string => {
+  const body = feedbackBody(data);
+  const toCheck = leftToCheck(body);
+
+  return [
     `# Plitzi feedback — run ${data.runId}`,
     '',
     `CLI ${data.pinned.cli} · ${data.openedAt.slice(0, 10)} · ${String(data.tasks.done)} of ${String(data.tasks.total)} tasks, ${String(data.agents.length)} agents · ${String(data.minutes)} min`,
     '',
     'What this run says of Plitzi itself — its agents’ reports of each task, the lead’s, and what the run’s records show —',
-    'consolidated by the CLI, nothing of the project’s code in it: the file of this folder to read first. Beside it, as the',
-    'run ends: `report.md` (the run whole), `report.json` (the same as data), `records/` (what the run kept — its plan, log,',
-    'usage, messages, each task’s rounds and reviews) and `scratch/` (the agents’ own scripts), no path of this machine and',
-    'no token in any. Send the folder to Plitzi’s team: it is how a run on any project makes Plitzi better.',
+    'consolidated by the CLI: this file is what goes to Plitzi’s team, and how a run on any project makes Plitzi better.',
+    'Nothing of the person or the project is meant to be in it: names, emails, addresses, IPs, the project’s files, its',
+    'tasks and its elements are written over (`<project>`, `<person>`, `<url>`, `src/space/pages/<name>.ts`, `task-3`,',
+    '`<element>`), and what was said of the project alone is left out. The rest of this folder is the project’s own —',
+    '`report.md`, `report.json`, `records/` (its plan, log and messages) and `scratch/` (the agents’ scripts, its code):',
+    'keep it with the project, and never send it to Plitzi without reading what it holds.',
     '',
+    ...(toCheck.length > 0
+      ? [
+          '## Before you send it',
+          '',
+          `Words quoted in it that may be the project’s — a page’s copy, a name — which the CLI cannot tell from Plitzi’s: read`,
+          'each, and write over what you would not share before sending this file.',
+          '',
+          ...toCheck.map(each => `- “${each}”`),
+          ''
+        ]
+      : []),
+    body
+  ].join('\n');
+};
+
+/** The feedback past its head: what is checked for words that may still be the project's. */
+const feedbackBody = (data: RunFeedback): string =>
+  [
     '## What the run shows was Plitzi’s',
     '',
     ...findingsText(data.findings, ['plitzi', 'machine']),
@@ -259,12 +291,6 @@ export const feedbackText = (data: RunFeedback): string =>
         : [])
     ]),
     ...section(
-      'What the reviews asked',
-      data.reviewsAsked.map(
-        each => `- ${each.task}, round ${String(each.round)}, ${each.by}: ${each.asked.replace(/\s+/g, ' ')}`
-      )
-    ),
-    ...section(
       'Refusals, by code',
       data.refusals.map(each => `- ${each.code} ×${String(each.times)}${each.command ? ` — e.g. ${each.command}` : ''}`)
     ),
@@ -281,10 +307,14 @@ export const feedbackText = (data: RunFeedback): string =>
  * The run's feedback, written in its folder of reports — which the project's formatter, lint and typecheck leave alone
  * (the scaffold's ignores, `plitzi upgrade`): where it is.
  */
-export const writeFeedback = async (ctx: RunContext, loaded: LoadedRun): Promise<string> => {
+export const writeFeedback = async (
+  ctx: RunContext,
+  loaded: LoadedRun
+): Promise<{ file: string; toCheck: string[] }> => {
   const file = feedbackFile(ctx.root, loaded.record.runId);
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, `${feedbackText(await feedbackOf(ctx, loaded)).trimEnd()}\n`);
+  const data = await feedbackOf(ctx, loaded);
+  await fs.writeFile(file, `${feedbackText(data).trimEnd()}\n`);
 
-  return file;
+  return { file, toCheck: leftToCheck(feedbackBody(data)) };
 };
