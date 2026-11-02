@@ -19,7 +19,7 @@ export const SPACE_CODES = {
   },
   'state-key-list': {
     kind: 'refused',
-    means: '`settings.transientState` / `paintedState` that is not a list of top-level state keys',
+    means: '`settings.transientState` / `paintedState` / `browserState` that is not a list of top-level state keys',
     fix: "`transientState: ['demoStep']` — a dotted path names its top key"
   },
   'state-painted-and-transient': {
@@ -37,6 +37,11 @@ export const SPACE_CODES = {
     means: 'a `paintedState` key that `keptState` does not keep — the server draws with what is kept',
     fix: 'add it to `keptState`, or leave it out of `paintedState`'
   },
+  'state-browser-not-kept': {
+    kind: 'refused',
+    means: 'a `browserState` key the space does not keep — transient, or not in `keptState`',
+    fix: 'keep it, or leave it out of `browserState`'
+  },
   'kept-state-without-keep-state': {
     kind: 'warned',
     means: '`keptState` without `keepState` — nothing is kept in the first place',
@@ -51,6 +56,11 @@ export const SPACE_CODES = {
     kind: 'warned',
     means: '`paintedState` without `keepState` — nothing is kept for the server to draw with',
     fix: '`settings.keepState: true`, or remove `paintedState`'
+  },
+  'browser-state-without-keep-state': {
+    kind: 'warned',
+    means: '`browserState` without `keepState` — nothing is kept in the first place',
+    fix: '`settings.keepState: true`, or remove `browserState`'
   },
   'visitor-roles': {
     kind: 'refused',

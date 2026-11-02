@@ -34,3 +34,15 @@ settings: { keepState: true, paintedState: ['shapesPick', 'name', 'color'], tran
 Only what the first paint shows, and small values: the cookie travels with every request and holds a few kilobytes
 (over that, the page falls back to the defaults and the dev tools say so). Never a secret — a key, a token — and never
 a key that is also in `transientState` (`authorSpace` refuses it).
+
+Filed under whoever is signed in, what was kept goes when somebody else signs in — the guest's, too, when they sign
+in. A choice made of the BROWSER rather than of the person — the cookie consent — is then asked again on every change
+of account. List those keys in `browserState`: kept in an entry of their own that signing in, out or as somebody else
+does not take away, and restored without waiting for auth. A key of the browser's is a kept one (`authorSpace` refuses
+one that is transient or not in `keptState`), and may be painted too:
+
+```ts
+settings: { keepState: true, paintedState: ['consent'], browserState: ['consent'] }
+```
+
+Never something that belongs to an account — a workspace, a name: the next person on the browser would be handed it.

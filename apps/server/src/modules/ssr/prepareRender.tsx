@@ -12,7 +12,7 @@ import {
   spaceIdentity,
   withholdPages
 } from '@plitzi/sdk-shared/schema';
-import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state';
+import { paintedStateFor } from '@plitzi/sdk-shared/state';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
@@ -322,16 +322,11 @@ export const prepareRender = async (
    * tool a toolbar shows, their name in an avatar — would reach the page only after hydration, and be swapped in over
    * the defaults the server drew. Read here, the server draws with it, and the page starts from the same values: it
    * travels as the SDK's `state`, the starting `runtime.state`, in the render and in the payload alike, or the client
-   * would hydrate other markup. Only the keys the space declares, only with `keepState` on, and not an entry another
-   * account wrote than the one this request proved.
+   * would hydrate other markup. Only the keys the space declares, only with `keepState` on, and of an entry another
+   * account wrote than the one this request proved, only the browser's (`browserState`).
    */
   const paintedState = schema?.settings.keepState
-    ? paintedStateFor(
-        req.headers.cookie,
-        ssrPaintedCookieName(requestAuthority(req)),
-        paintedKeys(schema.settings),
-        req.ctx.user?.id
-      )
+    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req)), schema.settings, req.ctx.user?.id)
     : undefined;
 
   /**

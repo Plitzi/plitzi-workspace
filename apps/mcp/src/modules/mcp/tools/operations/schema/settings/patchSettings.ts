@@ -49,6 +49,10 @@ export const patchSettingsOp = z
     transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
     keptState: z.array(z.string()).optional().describe('The only top-level state keys kept (not with transientState)'),
     paintedState: z.array(z.string()).optional().describe('Kept keys the first paint shows'),
+    browserState: z
+      .array(z.string())
+      .optional()
+      .describe('Kept keys that are the browser’s, not the account’s: no change of account takes them (the cookie consent)'),
     userProvider: userProvider
       .optional()
       .describe('Auth provider: "basic" for an HTTP+JSON backend, a registered name, or "" to disable auth'),

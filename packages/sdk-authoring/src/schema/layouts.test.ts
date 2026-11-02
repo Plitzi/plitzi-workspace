@@ -181,6 +181,24 @@ describe('authorSpace / kept state', () => {
     expect(warnings.map(warning => warning.code)).toEqual(['painted-state-without-keep-state']);
   });
 
+  // The cookie consent was asked again whenever somebody else signed in on the browser.
+  it('writes the browser’s keys, and refuses one the space does not keep', () => {
+    const { schema, warnings } = authorSpace(space({ keepState: true, browserState: ['consent'] }));
+    expect(schema.settings.browserState).toEqual(['consent']);
+    expect(warnings).toEqual([]);
+
+    expect(() =>
+      authorSpace(space({ keepState: true, browserState: ['consent'], transientState: ['consent'] }))
+    ).toThrow(/names "consent", which the space does not keep/u);
+    expect(() => authorSpace(space({ keepState: true, browserState: ['consent'], keptState: ['dismissed'] }))).toThrow(
+      /names "consent", which the space does not keep/u
+    );
+    expect(() => authorSpace(space({ keepState: true, browserState: ['cookie.consent'] }))).toThrow(/write "cookie"/u);
+    expect(authorSpace(space({ browserState: ['consent'] })).warnings.map(warning => warning.code)).toEqual([
+      'browser-state-without-keep-state'
+    ]);
+  });
+
   // Keeping one key — a dismissed notice — meant listing every other key the space writes as transient.
   it('writes the only keys kept, and refuses them beside transient keys or a painted key they do not keep', () => {
     const { schema, warnings } = authorSpace(space({ keepState: true, keptState: ['dismissed'] }));

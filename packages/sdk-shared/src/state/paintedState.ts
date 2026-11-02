@@ -15,10 +15,11 @@ import { isRecord } from '../helpers/isRecord';
  * every request, so it holds only what the first paint needs, and never more than {@link PAINTED_STATE_BUDGET}.
  *
  * The entry carries who wrote it, as the kept state in web storage does, and a page that finds it written by somebody
- * else discards what it rendered with. The server can tell only half of that — who the visitor is, for a space with its
- * own sign-in, is only settled in the browser — so it draws an entry unless the request proved an account and the entry
- * names another: the page's providers read the painted values before its auth settles, and a dashboard drawn from the
- * previous account's cookie asked for that account's workspace before the page could discard it.
+ * else discards what it rendered with — all but the browser's keys (`browserState`), which are nobody's. The server
+ * can tell only half of that — who the visitor is, for a space with its own sign-in, is only settled in the browser — so
+ * it draws an entry whole unless the request proved an account and the entry names another: the page's providers read
+ * the painted values before its auth settles, and a dashboard drawn from the previous account's cookie asked for that
+ * account's workspace before the page could discard it.
  */
 
 /** Bytes of the encoded value: well inside the 4096 a browser allows a cookie, name and attributes included. */
@@ -42,13 +43,19 @@ export const paintedStateCookieName = (webId: number, host: string | undefined):
   return port ? `plitzi_${webId}_painted_${port}` : `plitzi_${webId}_painted`;
 };
 
+const stateKeys = (keys: unknown): Set<string> =>
+  new Set(Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string' && key !== '') : []);
+
 /** The keys a space declared, as a set — an empty one when it declared none. */
 export const paintedKeys = (settings: { paintedState?: unknown } | undefined): Set<string> =>
-  new Set(
-    Array.isArray(settings?.paintedState)
-      ? settings.paintedState.filter((key): key is string => typeof key === 'string' && key !== '')
-      : []
-  );
+  stateKeys(settings?.paintedState);
+
+/**
+ * The kept keys a space says are the browser's rather than whoever is signed in (`settings.browserState`): a choice
+ * made of the browser itself — the cookie consent — that signing in, out, or as somebody else does not take away.
+ */
+export const browserKeys = (settings: { browserState?: unknown } | undefined): Set<string> =>
+  stateKeys(settings?.browserState);
 
 /** The declared keys' values out of `runtime.state` — a key with no value is left out, not written as `undefined`. */
 export const pickPainted = (state: unknown, keys: ReadonlySet<string>): Record<string, unknown> =>
@@ -79,25 +86,28 @@ export const paintedEntryFromCookies = (cookies: string | undefined, name: strin
 
 /**
  * What the server renders with: the entry's values for the keys the space declares — a key it no longer declares, or
- * one the visitor added, is not the server's to render — and nothing when `account`, the one the request proved, is not
- * the one that wrote it.
+ * one the visitor added, is not the server's to render — and, when `account`, the one the request proved, is not the
+ * one that wrote it, only the browser's keys.
  */
 export const paintedStateFor = (
   cookies: string | undefined,
   name: string,
-  keys: ReadonlySet<string>,
+  settings: { paintedState?: unknown; browserState?: unknown } | undefined,
   account?: number | string
 ): Record<string, unknown> | undefined => {
+  const keys = paintedKeys(settings);
   if (keys.size === 0) {
     return undefined;
   }
 
   const entry = paintedEntryFromCookies(cookies, name);
-  if (!entry || (account !== undefined && entry.owner.startsWith('user:') && entry.owner !== accountOwner(account))) {
+  if (!entry) {
     return undefined;
   }
 
-  const values = pickPainted(entry.values, keys);
+  const theirs = account !== undefined && entry.owner.startsWith('user:') && entry.owner !== accountOwner(account);
+  const browser = browserKeys(settings);
+  const values = pickPainted(entry.values, theirs ? new Set([...keys].filter(key => browser.has(key))) : keys);
 
   return Object.keys(values).length > 0 ? values : undefined;
 };

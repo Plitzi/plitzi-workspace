@@ -16,7 +16,7 @@ export const pageFieldHint = (key: string): string => {
     return ' A page’s title and description for search engines and shared links are `seoTitle` and `seoDescription`.';
   }
 
-  return ['keepState', 'transientState', 'keptState', 'paintedState', 'stateStorage'].includes(key)
+  return ['keepState', 'transientState', 'keptState', 'paintedState', 'browserState', 'stateStorage'].includes(key)
     ? ' Keeping state across visits is a setting of the whole space: `settings: { keepState: true }`, with `transientState` for the keys to leave out — or `keptState` for the only ones kept.'
     : '';
 };

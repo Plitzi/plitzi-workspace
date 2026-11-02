@@ -531,6 +531,17 @@ describe('prepareRender / the kept state the first paint shows', () => {
     });
   });
 
+  // The cookie consent was asked again whenever somebody else signed in.
+  it('draws the browser’s keys of an entry another account wrote', async () => {
+    const { componentProps } = await render('/', {
+      cookie: cookie({ toolPick: 'star', name: 'Ada' }, 'user:7'),
+      settings: { ...keeping, browserState: ['toolPick'] },
+      userId: 8
+    });
+
+    expect(componentProps.state).toEqual({ toolPick: 'star' });
+  });
+
   it('reads nothing for a space that does not keep state', async () => {
     const { componentProps, templateParams } = await render('/', {
       cookie: cookie({ toolPick: 'star' }),

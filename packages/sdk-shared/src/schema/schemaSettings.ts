@@ -11,6 +11,7 @@ export const SCHEMA_SETTINGS = [
   'transientState',
   'keptState',
   'paintedState',
+  'browserState',
   'robotsTxt',
   'blockAiCrawlers',
   'viewTransitions',

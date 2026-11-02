@@ -21,6 +21,7 @@ import {
   assertSpaceIdentity,
   assertKeptState,
   assertPaintedState,
+  assertBrowserState,
   assertSpaceShape,
   assertTransientState,
   assertVisitorRoles,
@@ -340,6 +341,7 @@ export class SpaceAuthor {
     assertTransientState(this);
     assertKeptState(this);
     assertPaintedState(this);
+    assertBrowserState(this);
     assertVisitorRoles(this);
     const pageFolders = buildPageFolders(this);
     const declared = collecting(this, () => components.map(component => addComponent(this, component)));

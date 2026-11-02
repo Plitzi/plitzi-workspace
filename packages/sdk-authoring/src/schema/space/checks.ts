@@ -277,13 +277,13 @@ export const assertChannels = (author: SpaceAuthor): void => {
 };
 
 /**
- * A setting that names `runtime.state` keys — `transientState`, `paintedState` — checked the same way: refused when it
+ * A setting that names `runtime.state` keys — `transientState`, `paintedState`, `browserState` — checked the same way: refused when it
  * could not work — not a list, an empty name, or a dotted one: the runtime compares top-level keys, so `demo.step`
  * would never match anything and the setting would do nothing at all. Answers the keys.
  */
 const stateKeyList = (
   author: SpaceAuthor,
-  setting: 'transientState' | 'paintedState' | 'keptState',
+  setting: 'transientState' | 'paintedState' | 'keptState' | 'browserState',
   example: string[],
   does: string
 ): string[] => {
@@ -391,6 +391,36 @@ export const assertPaintedState = (author: SpaceAuthor): void => {
       message:
         '`settings.paintedState` names kept keys for the server to draw with, but `settings.keepState` is not on — nothing is kept, so there is nothing to draw with. Turn `keepState` on, or remove `paintedState`.',
       details: { keys: painted }
+    });
+  }
+};
+
+/**
+ * The kept keys that are the browser's rather than whoever is signed in (see `browserKeys` in sdk-shared): kept in an
+ * entry of their own, which no change of account takes away.
+ *
+ * Refused as a painted key is when it could not be kept — transient, or left out of `keptState` — since the browser's
+ * or not, it would then be nobody's at all. Warned without `keepState`: nothing is kept.
+ */
+export const assertBrowserState = (author: SpaceAuthor): void => {
+  const browser = stateKeyList(author, 'browserState', ['consent'], 'the browser keeps whoever signs in');
+  const transient = new Set(author.spec.settings?.transientState ?? []);
+  const kept = author.spec.settings?.keptState ?? [];
+  const unkept = browser.filter(key => transient.has(key) || (kept.length > 0 && !kept.includes(key)));
+  if (unkept.length > 0) {
+    const them = unkept.length === 1 ? 'it' : 'them';
+    throw new AuthoringError(
+      'state-browser-not-kept',
+      `\`settings.browserState\` names ${unkept.map(key => `"${key}"`).join(', ')}, which the space does not keep (\`transientState\` leaves ${them} out, or \`keptState\` does not name ${them}) — a key of the browser's is a kept one that no change of account takes away. Keep ${them}, or leave ${them} out of \`browserState\`.`
+    );
+  }
+
+  if (browser.length > 0 && author.spec.settings?.keepState !== true) {
+    author.styleWarnings.push({
+      code: 'browser-state-without-keep-state',
+      message:
+        '`settings.browserState` names kept keys the browser keeps whoever signs in, but `settings.keepState` is not on — nothing is kept, so it does nothing. Turn `keepState` on, or remove `browserState`.',
+      details: { keys: browser }
     });
   }
 };

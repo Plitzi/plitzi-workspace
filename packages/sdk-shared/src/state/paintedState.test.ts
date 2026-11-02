@@ -48,32 +48,39 @@ describe('paintedEntryFromCookies', () => {
 });
 
 describe('paintedStateFor', () => {
-  const keys = new Set(['toolPick', 'name']);
+  const settings = { paintedState: ['toolPick', 'name'] };
 
   it('answers only the keys the space declares', () => {
     const cookies = header('p', { owner: 'user:7', values: { toolPick: 'star', admin: true } });
 
-    expect(paintedStateFor(cookies, 'p', keys)).toEqual({ toolPick: 'star' });
+    expect(paintedStateFor(cookies, 'p', settings)).toEqual({ toolPick: 'star' });
   });
 
   // The dashboard drawn from the previous account's cookie asked for its workspace before the page could discard it.
   it('answers nothing for an entry another account wrote than the one the request proved', () => {
     const cookies = header('p', { owner: 'user:7', values: { toolPick: 'star' } });
 
-    expect(paintedStateFor(cookies, 'p', keys, 8)).toBeUndefined();
-    expect(paintedStateFor(cookies, 'p', keys, 7)).toEqual({ toolPick: 'star' });
+    expect(paintedStateFor(cookies, 'p', settings, 8)).toBeUndefined();
+    expect(paintedStateFor(cookies, 'p', settings, 7)).toEqual({ toolPick: 'star' });
     // A guest's choice is the same person signing in; and with no account proved, only the browser can tell.
-    expect(paintedStateFor(header('p', { owner: 'guest', values: { toolPick: 'star' } }), 'p', keys, 8)).toEqual({
+    expect(paintedStateFor(header('p', { owner: 'guest', values: { toolPick: 'star' } }), 'p', settings, 8)).toEqual({
       toolPick: 'star'
     });
-    expect(paintedStateFor(cookies, 'p', keys)).toEqual({ toolPick: 'star' });
+    expect(paintedStateFor(cookies, 'p', settings)).toEqual({ toolPick: 'star' });
+  });
+
+  // The cookie consent was asked again whenever somebody else signed in.
+  it('answers the browser’s keys whoever wrote the entry', () => {
+    const cookies = header('p', { owner: 'user:7', values: { toolPick: 'star', name: 'Ada' } });
+
+    expect(paintedStateFor(cookies, 'p', { ...settings, browserState: ['toolPick'] }, 8)).toEqual({ toolPick: 'star' });
   });
 
   it('answers nothing for a space that declares no keys, or a cookie with none of them', () => {
     const cookies = header('p', { owner: '', values: { toolPick: 'star' } });
 
-    expect(paintedStateFor(cookies, 'p', new Set())).toBeUndefined();
-    expect(paintedStateFor(header('p', { owner: '', values: { other: 1 } }), 'p', keys)).toBeUndefined();
+    expect(paintedStateFor(cookies, 'p', {})).toBeUndefined();
+    expect(paintedStateFor(header('p', { owner: '', values: { other: 1 } }), 'p', settings)).toBeUndefined();
   });
 });
 

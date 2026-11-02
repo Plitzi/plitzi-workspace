@@ -2,6 +2,7 @@ import { persistMiddleware } from '@plitzi/nexus';
 
 import {
   accountOwner,
+  browserKeys,
   clearPaintedEntry,
   paintedKeys,
   paintedStateCookieName,
@@ -134,6 +135,14 @@ const keptKey = (
 const keysWhere = (from: unknown, keep: (key: string) => boolean): Record<string, unknown> =>
   isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keep(key))) : {};
 
+/** A kept key filed under whoever the state belongs to: any kept one but the browser's, which have an entry of their own. */
+const ownedKey = (settings: CommonState['schema']['settings'] | undefined): ((key: string) => boolean) => {
+  const kept = keptKey(settings);
+  const browser = browserKeys(settings);
+
+  return key => kept(key) && !browser.has(key);
+};
+
 const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
   try {
     return kind === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
@@ -178,11 +187,13 @@ const paintedSync = <TState extends CommonState>(
       checked = true;
       const entry = readPaintedEntry(name);
       if (entry && entry.owner !== owner) {
-        clearPaintedEntry(name);
-        if (isRecord(kept) && [...keys].some(key => key in kept)) {
+        // The browser's keys are nobody's: they stay, and the entry is written again under this owner with them alone.
+        const browser = browserKeys(settings);
+        const theirs = new Set([...keys].filter(key => !browser.has(key)));
+        if (isRecord(kept) && [...theirs].some(key => key in kept)) {
           // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
-          // Its commit comes back through here, and finds the entry gone.
-          api.setState('runtime.state' as PathOf<TState>, omitKeys(kept, keys) as never);
+          // Its commit comes back through here, and rewrites the entry.
+          api.setState('runtime.state' as PathOf<TState>, omitKeys(kept, theirs) as never);
 
           return;
         }
@@ -208,6 +219,90 @@ const paintedSync = <TState extends CommonState>(
       pConsole.warning(
         'store',
         `settings.paintedState holds more than a cookie can carry — the first paint uses the space's defaults for ${[...keys].join(', ')}. Declare only what the first paint shows.`,
+        { storeName: 'runtime', path: 'runtime.state', prev: undefined, next: values }
+      );
+    }
+  };
+};
+
+/** Where the browser's keys are kept: beside the space's entry, and never filed under an owner. */
+const browserEntryKey = (webId: number): string => `plitzi_${String(webId)}_state_browser`;
+
+const readBrowserEntry = (storage: Storage, key: string): unknown => {
+  try {
+    const raw = storage.getItem(key);
+
+    return raw === null ? undefined : JSON.parse(raw);
+  } catch {
+    // Not an entry of this module's at all: nothing is restored from it, and the next write replaces it.
+    return undefined;
+  }
+};
+
+/**
+ * Keeps the keys of `settings.browserState` in an entry of their own, which belongs to the browser rather than to
+ * whoever is signed in: the cookie consent was asked again every time somebody else signed in, because the guest's
+ * entry, and the previous account's, are forgotten by the next owner whole.
+ *
+ * Under the restore's gates but one — after hydration, with `keepState` on — and not waiting for auth, which does not
+ * decide whose these are: brought back once, over what the page holds; after that, a change to one rewrites the entry.
+ */
+const browserSync = <TState extends CommonState>(
+  api: { getState: () => TState; setState: (path: PathOf<TState>, value: never) => void },
+  webId: number
+): (() => void) => {
+  const key = browserEntryKey(webId);
+  let restored = false;
+  let written: string | undefined;
+
+  return () => {
+    const state = api.getState();
+    if (state.render?.isHydrating && !state.render.hydrated) {
+      return;
+    }
+
+    const settings = schemaSettings(state);
+    const keys = browserKeys(settings);
+    const storage = browserStorage(settings?.stateStorage === 'sessionStorage' ? 'session' : 'local');
+    if (!settings?.keepState || keys.size === 0 || !storage) {
+      return;
+    }
+
+    const held = state.runtime?.state;
+    const ofKeys = (from: unknown) => keysWhere(from, each => keys.has(each));
+    if (!restored) {
+      restored = true;
+      const values = ofKeys(readBrowserEntry(storage, key));
+      written = JSON.stringify(values);
+      if (
+        Object.keys(values).length > 0 &&
+        JSON.stringify({ ...ofKeys(held), ...values }) !== JSON.stringify(ofKeys(held))
+      ) {
+        // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+        // Its commit comes back through here, and finds the entry already says it.
+        api.setState('runtime.state' as PathOf<TState>, { ...(isRecord(held) ? held : {}), ...values } as never);
+
+        return;
+      }
+    }
+
+    const values = ofKeys(held);
+    const serialized = JSON.stringify(values);
+    if (serialized === written) {
+      return;
+    }
+
+    written = serialized;
+    try {
+      if (Object.keys(values).length === 0) {
+        storage.removeItem(key);
+      } else {
+        storage.setItem(key, serialized);
+      }
+    } catch {
+      pConsole.warning(
+        'store',
+        `settings.browserState could not be kept — the browser refused to store ${[...keys].join(', ')}, so the next visit starts without them.`,
         { storeName: 'runtime', path: 'runtime.state', prev: undefined, next: values }
       );
     }
@@ -244,7 +339,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
      * lands late (after hydration, once auth settles) and would otherwise put `runtime.state` back whole over them.
      */
     partializePath: (_path, value, state) => {
-      const kept = keptKey(schemaSettings(state));
+      const kept = ownedKey(schemaSettings(state));
 
       return isRecord(value) ? keysWhere(value, kept) : value;
     },
@@ -253,7 +348,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     // `onPageLoad`) was dropped whenever the visit had started on another page — its entry kept nothing of it yet — and
     // so was a key the space added to its start after the entry was kept.
     mergePath: (_path, persisted, current, state) => {
-      const kept = keptKey(schemaSettings(state));
+      const kept = ownedKey(schemaSettings(state));
 
       return isRecord(persisted) ? { ...keysWhere(current, () => true), ...keysWhere(persisted, kept) } : persisted;
     },
@@ -282,6 +377,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     const initial = api.getState().runtime?.state;
     let owner = stateOwner(api.getState());
     const painted = paintedSync(api, webId);
+    const browser = browserSync(api, webId);
 
     return {
       ...handlers,
@@ -307,14 +403,20 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
         }
 
         if (previous?.kind === 'account' && next !== undefined && ownerKey(next) !== ownerKey(previous)) {
-          // Without the painted keys: what the page STARTED with may have come from the previous account's cookie.
-          const fresh = isRecord(initial) ? omitKeys(initial, paintedKeys(schemaSettings(api.getState()))) : initial;
+          // Without the painted keys: what the page STARTED with may have come from the previous account's cookie. With
+          // the browser's as they are now: they were nobody's to take.
+          const settings = schemaSettings(api.getState());
+          const browserKept = keysWhere(api.getState().runtime?.state, key => browserKeys(settings).has(key));
+          const fresh = isRecord(initial) ? omitKeys(initial, paintedKeys(settings)) : initial;
+          const next =
+            Object.keys(browserKept).length > 0 ? { ...(isRecord(fresh) ? fresh : {}), ...browserKept } : fresh;
           // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
-          api.setState('runtime.state' as PathOf<TState>, fresh as never);
+          api.setState('runtime.state' as PathOf<TState>, next as never);
         }
 
         handlers?.onChange?.(change);
         painted();
+        browser();
       }
     };
   };

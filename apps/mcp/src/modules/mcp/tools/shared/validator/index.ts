@@ -461,7 +461,7 @@ export const validateOperations = (
       case 'patchSettings':
         // The runtime compares top-level keys, so a dotted or empty one would match nothing and the state it meant
         // would be kept regardless — with nothing anywhere saying so.
-        (['transientState', 'paintedState'] as const).forEach(setting => {
+        (['transientState', 'paintedState', 'browserState'] as const).forEach(setting => {
           (op[setting] ?? []).forEach((key, index) => {
             if (key.trim() === '' || key.includes('.')) {
               ctx.errors.push({
@@ -479,6 +479,15 @@ export const validateOperations = (
               path: `${base}.paintedState[${index}]`,
               message: `"${key}" is in both paintedState and transientState`,
               hint: 'A painted key is kept so the server can draw with it; a transient one never is — remove it from one'
+            });
+          }
+        });
+        (op.browserState ?? []).forEach((key, index) => {
+          if (op.transientState?.includes(key)) {
+            ctx.errors.push({
+              path: `${base}.browserState[${index}]`,
+              message: `"${key}" is in both browserState and transientState`,
+              hint: 'A key of the browser’s is a kept one that no change of account takes away; a transient one is never kept — remove it from one'
             });
           }
         });

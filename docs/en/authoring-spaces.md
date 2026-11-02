@@ -763,7 +763,19 @@ They are kept in a cookie as well. The server renders with them and hands the pa
 state, so nothing is swapped; the HTML cache is keyed by that cookie. Small values only — it travels with every
 request, and past a few kilobytes it is not written (the dev-tools say so). Never a secret, and never a key that is
 also transient. The cookie carries its owner like the kept state does: written by another account, the page drops
-what it rendered with it as soon as auth has settled.
+what it rendered with it as soon as auth has settled — and the server does not draw it when the request proved another
+account than the one that wrote it.
+
+Filed under an owner, what was kept goes whole when somebody else signs in, a guest's included. A choice made of the
+browser rather than of the person — the cookie consent — would be asked again on every change of account. List those
+keys in `browserState`: they are kept in an entry of their own (`plitzi_<webId>_state_browser`), restored once the page
+has hydrated without waiting for auth, kept when the account changes under a running page, and left in the painted
+cookie — and drawn by the server — whoever wrote it. A key of the browser's is a kept one; never one that belongs to an
+account, which the next person on the browser would be handed.
+
+```ts
+settings: { keepState: true, paintedState: ['consent'], browserState: ['consent'] }
+```
 
 ### Visitors who sign in, and what they may do
 

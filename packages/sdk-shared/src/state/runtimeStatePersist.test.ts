@@ -336,6 +336,88 @@ describe('runtimeStatePersist', () => {
    * page starts from those values (the SDK's `state`), so what matters here is that the cookie follows the state — and
    * that nothing somebody else wrote is ever left painted.
    */
+  /**
+   * The cookie consent was asked again whenever somebody else signed in: the guest's entry, and the previous account's,
+   * are forgotten whole by the next owner. A key the space says is the browser's has an entry of its own.
+   */
+  describe('the browser’s keys', () => {
+    const BROWSER_KEY = `${KEY}_browser`;
+
+    const browsers = (extra: Record<string, unknown> = {}) =>
+      ({ settings: { keepState: true, browserState: ['consent'], ...extra } }) as unknown as Schema;
+
+    beforeEach(() => {
+      localStorage.removeItem(KEY);
+    });
+
+    it('keeps them in their own entry, and out of the owner’s', () => {
+      const store = build({ schema: browsers(), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { consent: 'essential', workspace: 3 });
+
+      expect(JSON.parse(localStorage.getItem(BROWSER_KEY) ?? 'null')).toEqual({ consent: 'essential' });
+      expect(localStorage.getItem(KEY)).not.toContain('consent');
+    });
+
+    it('brings them back for whoever signs in next, and not the rest', () => {
+      localStorage.setItem(KEY, entry('user:7', { workspace: 3 }));
+      localStorage.setItem(BROWSER_KEY, JSON.stringify({ consent: 'all' }));
+      const store = build({
+        schema: browsers(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(9) } }
+      });
+      store.hydrate?.();
+      store.setState('schema', browsers());
+
+      expect(store.getState().runtime?.state).toEqual({ consent: 'all' });
+    });
+
+    it('brings them back without waiting for auth, which does not decide whose they are', () => {
+      localStorage.setItem(BROWSER_KEY, JSON.stringify({ consent: 'all' }));
+      const store = build({
+        schema: browsers(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: { status: 'init' } } }
+      });
+      store.hydrate?.();
+      store.setState('schema', browsers());
+
+      expect(store.getState().runtime?.state).toEqual({ consent: 'all' });
+    });
+
+    it('keeps them when the account changes under the running page', () => {
+      const store = build({
+        schema: browsers(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(7) }, state: { workspace: 1 } }
+      });
+      store.hydrate?.();
+      store.setState('runtime.state', { consent: 'all', workspace: 3 });
+
+      store.setState('runtime.sources.auth', signedIn(9));
+
+      // What the space starts with, and the browser's choice as it was.
+      expect(store.getState().runtime?.state).toEqual({ workspace: 1, consent: 'all' });
+    });
+
+    it('keeps a painted one when the cookie was somebody else’s, and writes it again under this owner', () => {
+      const NAME = paintedStateCookieName(42, window.location.host);
+      document.cookie = `${NAME}=${encodeURIComponent(JSON.stringify({ owner: 'user:7', values: { consent: 'all', toolPick: 'star' } }))};path=/`;
+      const store = build({
+        schema: browsers({ paintedState: ['consent', 'toolPick'] }),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(9) }, state: { consent: 'all', toolPick: 'star' } }
+      });
+      store.hydrate?.();
+      store.setState('schema', browsers({ paintedState: ['consent', 'toolPick'] }));
+
+      expect(store.getState().runtime?.state).toEqual({ consent: 'all' });
+      expect(paintedEntryFromCookies(document.cookie, NAME)).toEqual({ owner: 'user:9', values: { consent: 'all' } });
+      document.cookie = `${NAME}=;path=/;max-age=0`;
+    });
+  });
+
   describe('painted keys', () => {
     const NAME = paintedStateCookieName(42, window.location.host);
 

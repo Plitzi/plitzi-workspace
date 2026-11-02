@@ -300,6 +300,8 @@ export interface AISettings {
   keptState?: string[];
   /** Kept keys the first paint shows, kept in a cookie too so the server renders with them. Small values only. */
   paintedState?: string[];
+  /** Kept keys that are the browser's rather than the account's, which no change of account takes away. */
+  browserState?: string[];
   /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
   userProvider?: 'basic' | 'custom' | '' | (string & {});
   tokenStorage?: 'localStorage' | 'sessionStorage' | '';

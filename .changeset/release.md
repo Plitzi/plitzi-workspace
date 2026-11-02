@@ -60,5 +60,12 @@
 
 ## Kept state (`@plitzi/sdk-shared`)
 
+- New space setting **`browserState`**: kept keys that are the browser's rather than whoever is signed in — the cookie
+  consent. They are kept in an entry of their own (`plitzi_<webId>_state_browser`), restored without waiting for auth,
+  kept when the account changes under a running page, and left in the painted cookie — and drawn by the server —
+  whoever wrote it. Signing in as somebody else forgot them with the rest, and the banner asked again. `authorSpace`
+  refuses one the space does not keep (`state-browser-not-kept`) and warns without `keepState`
+  (`browser-state-without-keep-state`); the builder's State Settings and the MCP's `patchSettings` take it.
+
 - A kept key the page wrote before the restore landed stays when the kept entry holds none of it: a page's own default
   written on load was dropped whenever the visit had started on another page.

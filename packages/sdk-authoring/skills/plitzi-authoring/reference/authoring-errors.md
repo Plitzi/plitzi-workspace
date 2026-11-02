@@ -154,8 +154,9 @@ The space is not written until these are fixed.
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
 | `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
 | `space-identity-invalid` | the space's `siteName`, `language`, `favicon`, `shareImage` or `themeColor` written as nothing a head reads | `siteName: 'My site'`, `language: 'en'`, `favicon: '/favicon.svg'`, `shareImage: '/og.png'`, `themeColor: { light: '#fbf7f0', dark: '#0b0a10' }` |
+| `state-browser-not-kept` | a `browserState` key the space does not keep — transient, or not in `keptState` | keep it, or leave it out of `browserState` |
 | `state-kept-and-transient` | `keptState` (the only keys kept) and `transientState` (the keys left out) both said | one of the two: `keptState` when few keys are kept, `transientState` when few are not |
-| `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
+| `state-key-list` | `settings.transientState` / `paintedState` / `browserState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
 | `state-painted-not-kept` | a `paintedState` key that `keptState` does not keep — the server draws with what is kept | add it to `keptState`, or leave it out of `paintedState` |
 | `state-shape` | a state given a rule set's keys (`pseudos`, `variants`, `ancestors`…): a state holds plain CSS | a pseudo-element's state goes under the pseudo-element — `pseudos: { before: { states: { hover: { opacity: '1' } } } }`; an ancestor's, under `ancestors` |
@@ -205,6 +206,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | --- | --- | --- |
 | `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
 | `animation-name-unknown` | `animation-name` naming keyframes the space does not declare — nothing plays | declare them in the space's `keyframes`, or name one it has |
+| `browser-state-without-keep-state` | `browserState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `browserState` |
 | `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it | the flow on a `button` (it holds children) or a `link` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `condition-starts-visible` | a computed visibility that shows until its data answers | `visible: { source, template }` |

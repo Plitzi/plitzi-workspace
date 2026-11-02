@@ -33,7 +33,7 @@ const PROVIDER_SETTINGS = [
 ] as const;
 
 /** The settings that name `runtime.state` keys, each edited as a comma-separated field. */
-type StateKeySetting = 'transientState' | 'keptState' | 'paintedState';
+type StateKeySetting = 'transientState' | 'keptState' | 'paintedState' | 'browserState';
 
 /** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
 const parseStateKeys = (text: string): string[] =>
@@ -56,15 +56,21 @@ const GeneralSettings = () => {
   const [keyTexts, setKeyTexts] = useState<Record<StateKeySetting, string>>({
     transientState: (settingsProp.transientState ?? []).join(', '),
     keptState: (settingsProp.keptState ?? []).join(', '),
-    paintedState: (settingsProp.paintedState ?? []).join(', ')
+    paintedState: (settingsProp.paintedState ?? []).join(', '),
+    browserState: (settingsProp.browserState ?? []).join(', ')
   });
   const transientKeys = parseStateKeys(keyTexts.transientState);
   const keptKeys = parseStateKeys(keyTexts.keptState);
   const paintedKeys = parseStateKeys(keyTexts.paintedState);
-  const dottedKeys = [...transientKeys, ...keptKeys, ...paintedKeys].filter(key => key.includes('.'));
+  const browserKeys = parseStateKeys(keyTexts.browserState);
+  const dottedKeys = [...transientKeys, ...keptKeys, ...paintedKeys, ...browserKeys].filter(key => key.includes('.'));
   const bothKeys = paintedKeys.filter(key => transientKeys.includes(key));
   // A painted key is a kept one: with only some kept, one of those.
   const unkeptPainted = keptKeys.length > 0 ? paintedKeys.filter(key => !keptKeys.includes(key)) : [];
+  // So is one of the browser's.
+  const unkeptBrowser = browserKeys.filter(
+    key => transientKeys.includes(key) || (keptKeys.length > 0 && !keptKeys.includes(key))
+  );
   const {
     userProvider,
     keepState,
@@ -407,6 +413,22 @@ const GeneralSettings = () => {
             too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
           </p>
         )}
+        {keepState && (
+          <Input
+            size="sm"
+            name="browserState"
+            value={keyTexts.browserState}
+            onChange={handleChangeStateKeys('browserState')}
+            label="Keep these for the browser, whoever signs in"
+            placeholder="consent"
+          />
+        )}
+        {keepState && (
+          <p className="text-xs text-gray-500 dark:text-zinc-400">
+            For a choice made of the browser rather than of the person — the cookie consent. What else was kept is the
+            signed-in account's, and goes when somebody else signs in; these stay. Never what belongs to an account.
+          </p>
+        )}
         {keepState && dottedKeys.length > 0 && (
           <Notice tone="caution">
             {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
@@ -418,6 +440,12 @@ const GeneralSettings = () => {
             {unkeptPainted.join(', ')}: drawn on the server, but not among the keys kept — add{' '}
             {unkeptPainted.length === 1 ? 'it' : 'them'} there, or leave {unkeptPainted.length === 1 ? 'it' : 'them'}{' '}
             out.
+          </Notice>
+        )}
+        {keepState && unkeptBrowser.length > 0 && (
+          <Notice tone="caution">
+            {unkeptBrowser.join(', ')}: kept for the browser, but not among the keys kept — keep{' '}
+            {unkeptBrowser.length === 1 ? 'it' : 'them'}, or leave {unkeptBrowser.length === 1 ? 'it' : 'them'} out.
           </Notice>
         )}
         {keepState && bothKeys.length > 0 && (
