@@ -321,9 +321,11 @@ default, and `page shot` names the file by the theme it was painted in. The dev 
 full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
 waiting for the scroll shown as it ends, a sheet pinned over it whole — in `tmp/shots/` unless `--out` says where, named
 `<page>[-<part>]-<width>-<scheme>.png`; one taller than three screens is also written in parts (`-part-1.png`, …), each
-readable at its size. A part pictured alone (`--within`) is pictured without what is pinned over it (a sticky header). Any one picture (a part
+readable at its size. A part pictured alone (`--within`) is pictured without what is pinned over it (a sticky header), and with what it paints
+past its box (an outer shadow, an outline, a blur), the box grown by as much. Any one picture (a part
 with `--within`, the screen with `--scroll-to` or `--viewport`) shows its arrivals as they end too; `--frames`, `--click` and
-`--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …).
+`--steps` take the page as it plays, and each picture after the first is written beside it (`<name>-1.png`, …). Steps
+that scroll picture the screen where they scrolled to, not the whole page.
 
 Every page command — `check`, `measure`, `play`, `outline`, `shot` — and `task look` reads a page as one
 visitor, from the same flags, each meaning the same everywhere. A page is its path, one word from `/` — a visitor and options go outside it, and a path,
@@ -342,7 +344,8 @@ not by `npm start` here. `--click` in `page shot` takes an element's name, a tag
 (`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element is read up to a
 space outside its quotes and brackets (`[aria-label="Search the site"]` is one), or quoted whole — `type ".panel textarea" hola`;
 `type` replaces what the field held, and fails when the click leaves no field focused. `hover <element>` puts the
-pointer over it and leaves it there, for the next `shot`; `scroll <element>` brings it into view, and `scroll <element>
+pointer over it and leaves it there, for the next `shot` — one an endless animation keeps moving (a pulse ring) where it
+is now; `scroll <element>` brings it into view, and `scroll <element>
 <dx> [dy]` scrolls its own content by so many pixels — a row across — saying when it did not move (its content fits, or
 it was at that end); a number after any other step's element is refused, never read as part of a selector; `drag <element> <dx> [dy]` presses it — a range at its thumb —
 moves it that many pixels and lets go; `drag <element> <dx> [dy] hold` keeps the finger down, so the steps and reads after
@@ -386,8 +389,8 @@ before.
 page is made of as a visitor sees it — each shown element by a selector that finds it alone (its name on the project's
 page; its id, its tag and classes, or its place under an ancestor on another site), its box and its first words,
 indented by depth — the project's page, or with `--compare` the other site's: what to name after `=>` in `page measure`,
-an open drawer's too (`--click`: what the click opened, alone, unless `--within` names a part), with no HTML fetched and
-searched. `--find <word>` lists only the elements whose name, selector or words hold it, the whole page searched: an
+an open drawer's too (`--click`: what the click opened, alone, unless `--within` names a part — then, apart, what it
+opened outside the part: a sheet or a dialog drawn in a portal), with no HTML fetched and searched. `--find <word>` lists only the elements whose name, selector or words hold it, the whole page searched: an
 element found by a word you know (an id built in code).
 
 `page play <path> --steps "…" --read <el…> [--compare <url>] [--same moved,shown,enabled] [--width <px,px>]` plays an

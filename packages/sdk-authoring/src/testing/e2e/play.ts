@@ -2,7 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { sameValue } from '@plitzi/sdk-shared/history';
 
 import { answered, dragElement, giveValue, hiddenAtWidth, shownCopy } from './act';
-import { awaitHydration, fieldsOf, pressOnce, settle, targetOf } from './page';
+import { awaitHydration, fieldsOf, hoverElement, pressOnce, settle, targetOf } from './page';
 import { parseRelation, relationElements, relationHolds, sidePx } from './position';
 import { openPage } from '../settle';
 import { runUnitTest } from '../unit/run';
@@ -323,7 +323,7 @@ const act = async (page: E2ePage, step: E2eAction, ctx: StepPlay): Promise<StepP
           ? answered(page, () => pressOnce(page, () => element.click({ timeout: 3000, ...position })))
           : pressOnce(page, () =>
               step.kind === 'hover'
-                ? element.hover({ timeout: 3000, ...position })
+                ? hoverElement(element, { timeout: 3000, ...position })
                 : element.fill(step.text, { timeout: 3000 })
             ));
       } catch (error) {

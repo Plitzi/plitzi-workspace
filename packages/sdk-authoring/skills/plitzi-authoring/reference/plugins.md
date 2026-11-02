@@ -58,7 +58,8 @@ const NebulaRun = ({ shipColor = 'amber', best = 0, className }: NebulaRunProps)
 ```
 
 - **Render `RootElement`**, not a `div`: it carries the element's id, classes and `data-plitzi-el`, so the CSS
-  authored on the element applies, the builder can select it and a test can find it.
+  authored on the element applies, the builder can select it and a test can find it. It is a `div` unless `tag` says
+  otherwise — `tag="span"` for an effect inside a line of text, `tag="section"`, `tag="button"`.
 - **Render the same thing on the server and on the first client pass** — a plugin is drawn on the server first. A
   clock, a random number or anything read from `window` belongs in an effect; a hydration mismatch discards the whole
   tree, not the plugin. A preference per device (a tab, muted) is never read from `localStorage` while rendering: write
@@ -196,7 +197,9 @@ belongs to the editor.
 
 A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`): the space's classes and `customCss`
 win over it whatever their specificity. Write it as
-`.css` files the plugin imports (in the server's head, its tokens seen) — never a CSS string in TypeScript.
+`.css` files the plugin imports (in the server's head, its tokens seen) — never a CSS string in TypeScript. It comes
+with the plugin: linked on the pages that draw it, on no other. A stylesheet several plugins need — a design system's —
+is imported by each that uses it, never by one for the rest: those go unstyled on every page without that one.
 
 A file a library needs whole is imported as Vite imports it, and travels inside the bundle: `worker.js?raw` is its
 text (a worker, started from `URL.createObjectURL(new Blob([source]))`), `engine.wasm?inline` a data URI. Images and

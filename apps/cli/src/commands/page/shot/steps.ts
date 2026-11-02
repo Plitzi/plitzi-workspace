@@ -493,6 +493,12 @@ export const playSteps = async (
   return shotsCompared(page, { png: taken.png, ...(start ? { screen: start } : {}) }, shots);
 };
 
+/**
+ * Whether steps picture the screen rather than the whole page: those that scroll, whose pictures are what a visitor sees
+ * where they scrolled to — the whole page, 1440×10800, was the same picture at every scroll a run's tester played.
+ */
+export const picturesTheScreen = (steps: readonly ShotStep[]): boolean => steps.some(step => step.kind === 'scroll');
+
 /** Whether steps end on an action rather than a picture: what it leaves is then pictured once more. */
 export const endsActing = (steps: readonly ShotStep[]): boolean => {
   const last = steps.at(-1);

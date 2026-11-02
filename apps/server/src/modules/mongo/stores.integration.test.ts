@@ -4,6 +4,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { createMongoJobQueue } from './jobQueue';
 import { createMongoKv } from './kv';
 import { describeJobQueue, describeKv } from '../actions/jobs/tests/jobQueueContract';
+import { leftByGoneRun, runName } from '../tests/runNames';
 
 /**
  * The Mongo helpers against a real Mongo, through the same contract the in-process stores keep.
@@ -13,8 +14,9 @@ import { describeJobQueue, describeKv } from '../actions/jobs/tests/jobQueueCont
  */
 const URL = process.env.MONGO_TEST_URL ?? 'mongodb://127.0.0.1:27010';
 // This run's own: two runs at once (another session, the workspace's suite beside a package's) emptied each other's
-// collections mid-test. Dropped at the end.
-const DATABASE = `sdk_server_itest_${String(process.pid)}`;
+// collections mid-test. Dropped at the end — and one a run killed before its end left, at the start.
+const BASE = 'sdk_server_itest';
+const DATABASE = runName(BASE);
 
 const client = new MongoClient(URL, { serverSelectionTimeoutMS: 1_500 });
 const available = await client
@@ -22,6 +24,18 @@ const available = await client
   .then(() => true)
   .catch(() => false);
 const db = client.db(DATABASE);
+
+if (available) {
+  const { databases } = await client.db('admin').admin().listDatabases({ nameOnly: true });
+  const gone = databases.map(each => each.name).filter(name => leftByGoneRun(name, BASE));
+  for (const name of gone) {
+    await client.db(name).dropDatabase();
+  }
+
+  if (gone.length > 0) {
+    console.log(`[itest] dropped what runs killed before their end left: ${gone.join(', ')}`);
+  }
+}
 
 afterAll(async () => {
   if (available) {

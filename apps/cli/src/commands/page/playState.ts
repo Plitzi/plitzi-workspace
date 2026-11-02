@@ -104,8 +104,16 @@ export const stateOf = (node: Element): ElementState => {
     }
 
     const named = hit.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el');
+    // Of no element of the space's — a plugin's layer, a sheet in a portal: a selector that finds it, never the tag
+    // alone ("under div" took a run's designer four plays and an outline to place).
+    const id = hit.id !== '' && hit.id.length <= 32 ? `#${CSS.escape(hit.id)}` : '';
+    const classes = [...hit.classList]
+      .filter(name => /^[A-Za-z_][\w-]*$/.test(name))
+      .slice(0, 2)
+      .map(name => `.${name}`)
+      .join('');
 
-    return { inView, coveredBy: named ?? hit.tagName.toLowerCase() };
+    return { inView, coveredBy: named ?? `${hit.tagName.toLowerCase()}${id || classes}` };
   };
   const transformOf = (value: string): string | undefined => {
     const matrix = /^matrix\(([^)]+)\)$/.exec(value);

@@ -1,4 +1,4 @@
-import { answered, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
+import { answered, hoverElement, pressFailure, pressOnce, settle } from '@plitzi/sdk-authoring';
 
 import { hiddenWhyInPage } from './measureOn';
 import { targetOn } from './shot/capture';
@@ -40,14 +40,14 @@ export const stateText = (state: StateAsked, side: keyof Pair): string =>
  */
 const act = async (page: BrowserPage, element: PageElement, kind: StateAsked['kind']): Promise<void> => {
   if (kind === 'hover') {
-    await element.hover({ timeout: 5000 });
+    await hoverElement(element, { timeout: 5000 });
   } else if (kind === 'focus') {
     await page.keyboard.press('Shift');
     await element.focus({ timeout: 5000 });
   } else if (kind === 'press') {
     // Held, never let go: what the page draws on `:active` — a key pressed down — read while it is; a review of a latched
     // key could not measure whether pressing it pops it up.
-    await element.hover({ timeout: 5000 });
+    await hoverElement(element, { timeout: 5000 });
     await page.mouse.down();
   } else {
     await element.click({ timeout: 5000 });

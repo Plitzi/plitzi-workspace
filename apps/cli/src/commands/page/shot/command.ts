@@ -20,7 +20,7 @@ import {
 import { framesOf } from './frames';
 import { matchesSection, shotFile, smallPicture, tilesOf, tilesText } from './output';
 import { otherPageAt } from './remote';
-import { atNoWidthRead, clickThrough, interactionSteps, playSteps } from './steps';
+import { atNoWidthRead, clickThrough, interactionSteps, picturesTheScreen, playSteps } from './steps';
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
 import { dataUrl, projectOrigin, VIEW_HEIGHT } from '../../../browser';
@@ -285,7 +285,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(clip ? { clip, ...(clicks.length > 0 || steps !== undefined ? { clipLater: true } : {}) } : {}),
       ...(clip && options.showing && options.showing.length > 0 ? { showing: options.showing } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
-      ...(options.viewport ? { viewport: true } : {}),
+      ...(options.viewport || (!clip && picturesTheScreen(steps ?? [])) ? { viewport: true } : {}),
       ...visitViewOf(options),
       ...visitor,
       ...(fromLoad ? { fromLoad } : {}),

@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
-import { actingSteps, actStep, endsActing, interactionSteps, playedOn, sizeChange, stepText } from './steps';
+import {
+  actingSteps,
+  actStep,
+  endsActing,
+  interactionSteps,
+  picturesTheScreen,
+  playedOn,
+  sizeChange,
+  stepText
+} from './steps';
 import { parseSteps } from '../shotSteps';
 
 import type { ActingStep } from './steps';
@@ -391,5 +400,22 @@ describe('a drag held, and let go', () => {
     const plain = pageRecording();
     await actStep(plain.page, { kind: 'drag', element: 'sheet-handle', dx: 0, dy: -120 }, 0);
     expect(plain.pointer).toEqual(['move', 'down', 'move', 'up']);
+  });
+});
+
+// A run's tester scrolled the page and pictured it at each stop: every picture was the whole page, the same one.
+describe('steps that scroll', () => {
+  it('picture the screen, where the others picture the whole page', () => {
+    const parsed = (script: string) => {
+      const steps = parseSteps(script, 500);
+      if ('problem' in steps) {
+        throw new Error(steps.problem);
+      }
+
+      return steps;
+    };
+
+    expect(picturesTheScreen(parsed('scroll page 0 1500; shot middle'))).toBe(true);
+    expect(picturesTheScreen(parsed('click site-nav-cta; shot after'))).toBe(false);
   });
 });

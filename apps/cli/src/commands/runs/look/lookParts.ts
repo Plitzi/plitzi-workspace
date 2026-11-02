@@ -176,6 +176,11 @@ export interface BeforeAfter {
    */
   dress: string[];
   sideBySide?: string;
+  /**
+   * The sections that differ most, each cut apart side by side — what a tall page's whole picture, 780×12618, could not
+   * be read for (a run's tester).
+   */
+  cuts?: string[];
   problem?: string;
   /**
    * A canvas of the page — a map, a chart — still blank or changing when pictured: what it draws was not compared, and
@@ -249,6 +254,7 @@ export const comparedOf = (output: string): Omit<BeforeAfter, 'route' | 'width' 
       ),
       dress: dressOf(decorations, listOf),
       ...(typeof compare.sideBySide === 'string' ? { sideBySide: compare.sideBySide } : {}),
+      ...(listOf(compare.sections).length > 0 ? { cuts: listOf(compare.sections) } : {}),
       ...(isRecord(answer) && answer.canvasMoving === true ? { canvasMoving: true as const } : {})
     };
   } catch {

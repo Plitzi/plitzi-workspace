@@ -116,11 +116,13 @@ export const shownText = (
           )
         ]
       : []),
+    // The project's checks, every task's — never its acceptance above: "Checks: passed" under an acceptance line ✗
+    // read to a run's reviewer as the same thing said both ways.
     knownFailure
       ? chalk.yellow(
-          `Checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
+          `The project's checks: failing (${knownFailure.failing.join(', ')}) — ${knownFailure.why}${knownFailure.fixedBy ? `; ${knownFailure.fixedBy} fixes it` : ''}`
         )
-      : `Checks: ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
+      : `The project's checks (every task's, not its acceptance): ${shown.checks === 'passed' ? 'passed at complete' : 'not run yet'}`,
     ...(shown.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${warning}`)),
     ...(shown.agreements.length > 0
       ? ['Agreed — check it holds', ...shown.agreements.map(each => `  ⇄ ${each.from} → ${each.to}: ${each.change}`)]

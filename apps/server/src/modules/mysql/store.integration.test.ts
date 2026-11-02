@@ -4,6 +4,8 @@ import { resolveTables, tableNames } from './config';
 import { createMysqlStore } from './index';
 import { execute, selectRows } from './query';
 import { dropSchema, migrate } from './schema';
+import { dropTablesOfGoneRuns, dropTablesOfThisRun } from './tests/goneRuns';
+import { runName } from '../tests/runNames';
 
 import type { MysqlStore } from './index';
 import type { Pool } from 'mysql2/promise';
@@ -25,7 +27,16 @@ const CONFIG = {
 };
 
 const DATABASE = process.env.MYSQL_TEST_DATABASE ?? 'plitzi_example';
-const PREFIX = 'itest_';
+/**
+ * Every name this file makes is this run's (`runName`): two runs at once — another session, the workspace's suite
+ * beside a package's — dropped each other's schema mid-test. `BARE` stands for no prefix at all, as a database of its
+ * own would have it: `${BARE}role` is the unrelated `role` a customer's database already holds.
+ */
+const BASE = 'itest_auth';
+const BARE = `${runName(BASE)}_`;
+const PREFIX = `${BARE}store_`;
+const OTHER = `${BARE}other_`;
+const CLASH = `${BARE}clash_`;
 
 /**
  * Creates the database if it is not there, which is what makes this self-sufficient: a purge, a fresh checkout or
@@ -78,19 +89,14 @@ describe.skipIf(!available)('the MySQL store, against a real database', { timeou
       ensureDatabase: true,
       autoMigrate: false
     });
-    // A clean slate whatever the last run left, including a prefixed install from the sharing test below.
-    await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX, force: true });
-    await dropSchema(store.pool, resolveTables('other_'), { prefix: 'other_', force: true });
-    await execute(store.pool, 'DROP TABLE IF EXISTS `unrelated_role`');
-    await execute(store.pool, 'DROP TABLE IF EXISTS `itest_role`');
-    // The unprefixed `role` one test creates and a later one drops: a run stopped between the two left it behind.
-    await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
+    const gone = await dropTablesOfGoneRuns(store.pool, BASE);
+    if (gone.length > 0) {
+      console.log(`[itest] dropped what runs killed before their end left: ${gone.join(', ')}`);
+    }
   }, SCHEMA_TEST_TIMEOUT);
 
   afterAll(async () => {
-    await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX, force: true });
-    await execute(store.pool, 'DROP TABLE IF EXISTS `unrelated_role`');
-    await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
+    await dropTablesOfThisRun(store.pool, BASE);
     await store.close();
   }, SCHEMA_TEST_TIMEOUT);
 
@@ -135,54 +141,53 @@ describe.skipIf(!available)('the MySQL store, against a real database', { timeou
      */
     it('ignores an unrelated table whose name only collides without a prefix', async () => {
       await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX, force: true });
-      await execute(store.pool, 'CREATE TABLE `role` (`id` INT PRIMARY KEY, `unrelated` VARCHAR(10))');
+      await execute(store.pool, `CREATE TABLE \`${BARE}role\` (\`id\` INT PRIMARY KEY, \`unrelated\` VARCHAR(10))`);
 
       await migrate(store.pool, resolveTables(PREFIX), { prefix: PREFIX });
 
       const present = await allTables(store.pool);
-      expect(present).toContain('itest_role');
-      expect(present).toContain('role');
+      expect(present).toContain(`${PREFIX}role`);
+      expect(present).toContain(`${BARE}role`);
     });
 
     /** And a real collision — a prefixed name this schema did not create — is still refused, naming the fix. */
     it('refuses to adopt a prefixed table it did not create', async () => {
-      await dropSchema(store.pool, resolveTables('clash_'), { prefix: 'clash_', force: true });
-      await execute(store.pool, 'CREATE TABLE `clash_role` (`id` INT PRIMARY KEY)');
+      await execute(store.pool, `CREATE TABLE \`${CLASH}role\` (\`id\` INT PRIMARY KEY)`);
 
-      const tables = resolveTables('clash_');
-      await expect(migrate(store.pool, tables, { prefix: 'clash_' })).rejects.toThrow(/already has tables named/);
-      await expect(migrate(store.pool, tables, { prefix: 'clash_' })).rejects.toThrow(/tablePrefix/);
+      const tables = resolveTables(CLASH);
+      await expect(migrate(store.pool, tables, { prefix: CLASH })).rejects.toThrow(/already has tables named/);
+      await expect(migrate(store.pool, tables, { prefix: CLASH })).rejects.toThrow(/tablePrefix/);
 
-      await execute(store.pool, 'DROP TABLE `clash_role`');
+      await execute(store.pool, `DROP TABLE \`${CLASH}role\``);
     });
 
     it('installs under a second prefix beside the first, and leaves it alone on the way out', async () => {
-      const other = await createMysqlStore({ ...CONFIG, database: DATABASE, tablePrefix: 'other_' });
+      const other = await createMysqlStore({ ...CONFIG, database: DATABASE, tablePrefix: OTHER });
 
-      expect(await allTables(other.pool)).toContain('other_account');
-      expect(await allTables(other.pool)).toContain('itest_account');
+      expect(await allTables(other.pool)).toContain(`${OTHER}account`);
+      expect(await allTables(other.pool)).toContain(`${PREFIX}account`);
 
       const dropped = await other.uninstall();
 
-      expect(dropped.every(name => name.startsWith('other_'))).toBe(true);
-      expect(await allTables(other.pool)).toContain('itest_account');
-      expect(await allTables(other.pool)).toContain('role');
+      expect(dropped.every(name => name.startsWith(OTHER))).toBe(true);
+      expect(await allTables(other.pool)).toContain(`${PREFIX}account`);
+      expect(await allTables(other.pool)).toContain(`${BARE}role`);
 
       await other.close();
-      await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
+      await execute(store.pool, `DROP TABLE IF EXISTS \`${BARE}role\``);
     });
   });
 
   describe('uninstalling', () => {
     it('drops only its own tables, in an order the foreign keys allow', async () => {
       await migrate(store.pool, resolveTables(PREFIX), { prefix: PREFIX });
-      await execute(store.pool, 'CREATE TABLE `unrelated_role` (`id` INT PRIMARY KEY)');
+      await execute(store.pool, `CREATE TABLE \`${BARE}unrelated_role\` (\`id\` INT PRIMARY KEY)`);
 
       const dropped = await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX });
       const remaining = await allTables(store.pool);
 
       expect(dropped.sort()).toEqual(Object.values(tableNames(PREFIX)).sort());
-      expect(remaining).toContain('unrelated_role');
+      expect(remaining).toContain(`${BARE}unrelated_role`);
       for (const name of Object.values(tableNames(PREFIX))) {
         expect(remaining).not.toContain(name);
       }
@@ -194,13 +199,13 @@ describe.skipIf(!available)('the MySQL store, against a real database', { timeou
 
     /** Without this, a typo in `tablePrefix` turns uninstall into a tool that deletes somebody else's tables. */
     it('refuses tables that carry no schema_version of ours', async () => {
-      await execute(store.pool, 'CREATE TABLE `itest_account` (`id` INT PRIMARY KEY)');
+      await execute(store.pool, `CREATE TABLE \`${PREFIX}account\` (\`id\` INT PRIMARY KEY)`);
 
       await expect(dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX })).rejects.toThrow(
         /refusing to drop/
       );
 
-      await execute(store.pool, 'DROP TABLE `itest_account`');
+      await execute(store.pool, `DROP TABLE \`${PREFIX}account\``);
     });
   });
 

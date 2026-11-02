@@ -11,7 +11,8 @@ export interface E2eElement {
   count(): Promise<number>;
   /** `position`: the point pressed, in px from its box's top left — the centre when not said. */
   click(options: { timeout: number; position?: { x: number; y: number } }): Promise<void>;
-  hover(options: { timeout: number; position?: { x: number; y: number } }): Promise<void>;
+  /** `force`: pointed at where it is now, without Playwright's wait for it to hold still (`hoverElement`). */
+  hover(options: { timeout: number; position?: { x: number; y: number }; force?: boolean }): Promise<void>;
   fill(text: string, options: { timeout: number }): Promise<void>;
   /** A select's option chosen by its value or its label. */
   selectOption(value: string, options: { timeout: number }): Promise<unknown>;
@@ -177,6 +178,32 @@ export const pressFailure = (error: unknown): string => {
       ? `${first} — the page did not answer the press, even once still: wait for the element it loads first`
       : first
     : `${first} — ${why}`;
+};
+
+/** Run in the page: whether an animation that never ends moves the element — on it, inside it or around it. */
+export const endlesslyMovedInPage = (node: Element): boolean =>
+  document.getAnimations().some(animation => {
+    const target = animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
+
+    return (
+      animation.playState === 'running' &&
+      animation.effect?.getComputedTiming().iterations === Infinity &&
+      target !== null &&
+      (target === node || node.contains(target) || target.contains(node))
+    );
+  });
+
+/**
+ * The pointer put over an element, as a visitor's is. Playwright first waits for it to hold still, which one an endless
+ * animation moves — a pulse ring on it, a marquee it rides in — never does: a run's hover of a map's region timed out
+ * "still moving" every time. Such an element is pointed at where it is now; whatever else keeps a hover off it is said.
+ */
+export const hoverElement = async (
+  element: Pick<E2eElement, 'hover' | 'evaluate'>,
+  options: { timeout: number; position?: { x: number; y: number } }
+): Promise<void> => {
+  const moving = await element.evaluate(endlesslyMovedInPage, undefined).catch(() => false);
+  await element.hover(moving ? { ...options, force: true } : options);
 };
 
 /**

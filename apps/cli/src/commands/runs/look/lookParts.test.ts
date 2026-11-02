@@ -89,6 +89,26 @@ describe('the dress a comparison says changed', () => {
   });
 });
 
+// A tall page's look named the section that differed and handed its whole picture, 780×12618, unreadable when viewed.
+describe('a comparison of a tall page', () => {
+  it('hands each section that differs cut apart, side by side', () => {
+    const output = JSON.stringify({
+      compare: {
+        changed: 1,
+        regions: [{ name: 'home-cta', changed: 1 }],
+        decorations: [],
+        sideBySide: 'shots/home-390-dark-after-compare.png',
+        sections: ['shots/home-390-dark-after-compare-home-cta.png']
+      }
+    });
+
+    expect(comparedOf(output)).toMatchObject({
+      sections: ['home-cta 1%'],
+      cuts: ['shots/home-390-dark-after-compare-home-cta.png']
+    });
+  });
+});
+
 // A run's look said "at 390 dark: nothing changed" beside the run before it — its own picture had no globe drawn yet.
 describe('a comparison whose canvas was not drawn', () => {
   it('says so, rather than that nothing changed', () => {

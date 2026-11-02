@@ -69,8 +69,8 @@ export interface PageElement {
   /** Waits until it is in that state — a `timeout` that passes throws. */
   waitFor(options: { state: 'attached' | 'detached' | 'visible' | 'hidden'; timeout: number }): Promise<void>;
   click(options: { timeout: number }): Promise<void>;
-  /** The pointer put over it, and left there: what a hover shows. */
-  hover(options: { timeout: number }): Promise<void>;
+  /** The pointer put over it, and left there: what a hover shows — `force`, where it is now, held still or not. */
+  hover(options: { timeout: number; force?: boolean }): Promise<void>;
   /** Focus put on it, as a keyboard leaves it: what `:focus-visible` shows. */
   focus(options: { timeout: number }): Promise<void>;
   /** The elements inside it the selector finds. */

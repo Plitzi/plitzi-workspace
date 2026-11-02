@@ -2,9 +2,10 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { passedText, playedText, playOn, unlikeIn, verdictOf } from './play';
+import { playOn, unlikeIn, verdictOf } from './play';
 import { failedAtText, readTargets, sharedServerNote, stepsOf } from './playArgs';
 import { stateReadsOf, valueAt } from './playHeld';
+import { passedText, playedText } from './playText';
 import { passedOf } from './visit';
 
 import type { PlayedStep, PlaySide } from './play';

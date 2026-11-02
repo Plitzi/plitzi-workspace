@@ -1,4 +1,4 @@
-import { pressFailure, pressOnce } from '@plitzi/sdk-authoring';
+import { hoverElement, pressFailure, pressOnce } from '@plitzi/sdk-authoring';
 import { failedFlowText, readDevTools } from '@plitzi/sdk-authoring';
 
 import {
@@ -235,7 +235,7 @@ export const clickEffects = async (
   if (target) {
     const from = page.url();
     try {
-      await pressOnce(page, () => (hover ? target.hover({ timeout: 3000 }) : target.click({ timeout: 3000 })));
+      await pressOnce(page, () => (hover ? hoverElement(target, { timeout: 3000 }) : target.click({ timeout: 3000 })));
     } catch (error) {
       // A click that took the page elsewhere did its work: what changed is read on the page it went to.
       if (page.url() === from) {

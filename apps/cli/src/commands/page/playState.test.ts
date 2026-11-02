@@ -22,6 +22,41 @@ const scrolling = (node: HTMLElement, left: number): void => {
   node.style.overflowX = 'auto';
 };
 
+// "under div" named nothing a page command takes: a sheet's layer, drawn in a portal, took four plays and an outline.
+describe('what is drawn over an element', () => {
+  it('is named by the space, or by a selector that finds it — never its tag alone', () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 20,
+      top: 100,
+      right: 120,
+      bottom: 140,
+      width: 100,
+      height: 40
+    } as DOMRect);
+    document.body.innerHTML = `
+      <a data-plitzi-el="nav-sheet-docs">Docs</a>
+      <div class="vz-sheet-backdrop vz-glass extra"></div>
+      <section data-plitzi-el="site-header"><span>bar</span></section>`;
+    const link = document.querySelector('a');
+    const backdrop = document.querySelector('.vz-sheet-backdrop');
+    const bar = document.querySelector('section span');
+    if (!link || !backdrop || !bar) {
+      throw new Error('no page');
+    }
+
+    const on = (hit: Element) => {
+      document.elementFromPoint = () => hit;
+
+      return stateOf(link).coveredBy;
+    };
+
+    expect(on(backdrop)).toBe('div.vz-sheet-backdrop.vz-glass');
+    expect(on(bar)).toBe('site-header');
+    // jsdom's own again, for the tests after this one.
+    Reflect.deleteProperty(document, 'elementFromPoint');
+  });
+});
+
 // A carousel named by its track — whose own box never scrolls — read "moved nothing", and its scroller
 // could only be named by an inner class.
 describe('page play, in the page', () => {

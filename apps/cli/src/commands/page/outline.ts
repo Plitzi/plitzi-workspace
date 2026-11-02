@@ -64,6 +64,11 @@ export interface Outline {
   elements: OutlinedElement[];
   /** Seen under the depth or past the limit: not listed — narrowed with `--within`. */
   more: number;
+  /**
+   * With `--within` and `--click`: what the click opened outside the part — a dialog, a sheet or a menu drawn in a layer
+   * of the page's own (a portal) — which the part's outline cannot hold, and left a run's sheet listed as its button alone.
+   */
+  elsewhere?: OutlinedElement[];
 }
 
 const DEPTH = 4;
@@ -97,6 +102,8 @@ export const outlineIn = (input: {
    * depth 0 — and the rest walked through unlisted (the open menu came cut by --depth under the whole page).
    */
   opened?: string;
+  /** A part whose elements are not listed — its whole subtree skipped: what a click opened elsewhere is what is read. */
+  outside?: string;
   depth: number;
   limit: number;
   words: number;
@@ -183,11 +190,18 @@ export const outlineIn = (input: {
       (box.width <= 1 && box.height <= 1 && /hidden|clip/.test(`${style.overflowX} ${style.overflowY}`))
     );
   };
+  const isOutside = (node: Element): boolean => {
+    try {
+      return input.outside !== undefined && node.matches(input.outside);
+    } catch {
+      return false;
+    }
+  };
   const elements: OutlinedElement[] = [];
   let more = 0;
   const walk = (node: Element, depth: number): void => {
     for (const child of [...node.children]) {
-      if (skipped.has(child.tagName) || !shown(child)) {
+      if (skipped.has(child.tagName) || !shown(child) || isOutside(child)) {
         continue;
       }
 
@@ -254,11 +268,19 @@ export const outlineIn = (input: {
 /** The attribute marking what a page showed before a click, removed with the page. */
 const OPENED_MARK = 'data-plitzi-outline-before';
 
-/** Run in the page: every element shown now, marked — what a click shows next is what lacks the mark. */
+/**
+ * Run in the page: every element shown now, marked — what a click shows next is what lacks the mark. Shown as the
+ * outline reads it: a box, or a wrapper with none of its own around what it holds (`display: contents`), which unmarked
+ * was listed among what a click opened.
+ */
 export const markShown = (mark: string): void => {
   for (const node of document.querySelectorAll('body *')) {
     const box = node.getBoundingClientRect();
-    if (box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible') {
+    const style = getComputedStyle(node);
+    if (
+      (box.width > 0 && box.height > 0 && style.visibility === 'visible') ||
+      (style.display === 'contents' && node.childElementCount > 0)
+    ) {
       node.setAttribute(mark, '');
     }
   }
@@ -276,6 +298,17 @@ export const outlineText = (outline: Outline, within?: string, opened = false): 
   ),
   ...(outline.more > 0
     ? [chalk.dim(`· ${String(outline.more)} more under these, not listed — one part alone: --within <one of them>`)]
+    : []),
+  ...(outline.elsewhere && outline.elsewhere.length > 0
+    ? [
+        chalk.yellow(
+          `  What the click opened outside ${within ?? 'it'} — drawn in a layer of the page's own (a portal), not inside it:`
+        ),
+        ...outline.elsewhere.map(
+          each =>
+            `${'  '.repeat(each.depth + 1)}${each.element ?? each.selector}  ${chalk.dim(`${String(each.box.width)}×${String(each.box.height)} at ${String(each.box.x)},${String(each.box.y)}`)}${each.text === undefined ? '' : ` “${each.text}”`}`
+        )
+      ]
     : []),
   chalk.dim('Each is what page measure takes: plitzi page measure <path> "<ours> => <one of these>" --compare <url>')
 ];
@@ -307,10 +340,12 @@ export const outlineOnPage = async (
 ): Promise<
   { outline: Omit<Outline, 'url' | 'width'>; opened: boolean } | { problem: string; phase: 'click' | 'part' | 'read' }
 > => {
-  // What shows before the click is marked, so that what it opens is listed alone — unless a part is named.
-  const before = asked.clicks !== undefined && asked.within === undefined ? OPENED_MARK : undefined;
-  if (before !== undefined) {
-    await page.evaluate(markShown, before);
+  // What shows before the click is marked, so that what it opens is listed alone — unless a part is named, whose
+  // outline is all of it, and beside it what the click opened elsewhere.
+  const marked = asked.clicks === undefined ? undefined : OPENED_MARK;
+  const before = asked.within === undefined ? marked : undefined;
+  if (marked !== undefined) {
+    await page.evaluate(markShown, marked);
   }
 
   const clicked =
@@ -348,17 +383,38 @@ export const outlineOnPage = async (
   }
 
   try {
+    const root = part ? (part.found ? `[${OUTLINE_ROOT}]` : part.selector) : undefined;
     const read = await page.evaluate(outlineIn, {
-      ...(part ? { within: part.found ? `[${OUTLINE_ROOT}]` : part.selector } : {}),
+      ...(root === undefined ? {} : { within: root }),
       ...(before === undefined ? {} : { opened: before }),
       depth: asked.depth,
       limit: asked.limit,
       words: asked.words
     });
+    if ('problem' in read) {
+      return { problem: read.problem.replace(`[${OUTLINE_ROOT}]`, asked.within ?? ''), phase: 'read' };
+    }
 
-    return 'problem' in read
-      ? { problem: read.problem.replace(`[${OUTLINE_ROOT}]`, asked.within ?? ''), phase: 'read' }
-      : { outline: read, opened: before !== undefined };
+    const elsewhere =
+      root !== undefined && marked !== undefined
+        ? await page.evaluate(outlineIn, {
+            opened: marked,
+            outside: root,
+            depth: asked.depth,
+            limit: asked.limit,
+            words: asked.words
+          })
+        : undefined;
+
+    return {
+      outline: {
+        ...read,
+        ...(elsewhere && !('problem' in elsewhere) && elsewhere.elements.length > 0
+          ? { elsewhere: elsewhere.elements }
+          : {})
+      },
+      opened: before !== undefined
+    };
   } finally {
     await page.evaluate((mark: string) => {
       document.querySelector(`[${mark}]`)?.removeAttribute(mark);

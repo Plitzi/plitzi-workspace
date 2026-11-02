@@ -73,6 +73,32 @@ describe('page outline, in the page', () => {
     });
   });
 
+  // A run's bottom sheet drew its links in a layer of the page's own (a portal): outlined --within the sheet, its button
+  // alone was listed. What the click opened is read outside the part, and a wrapper with no box is no part of it.
+  it('reads what a click opened outside a part, and takes a wrapper with no box for what showed before', () => {
+    // A wrapper of `display: contents` has no box of its own, as in a browser.
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const none = this.closest('[hidden]') !== null || getComputedStyle(this).display === 'contents';
+
+      return { left: 0, top: 0, width: none ? 0 : 100, height: none ? 0 : 20 } as DOMRect;
+    });
+    document.body.innerHTML = `
+      <div data-plitzi-el="nav-sheet"><button data-plitzi-el="nav-menu-button">Menú</button></div>
+      <div data-plitzi-el="site-effects" style="display: contents"><span>glow</span></div>
+      <div class="sheet-root" hidden><a data-plitzi-el="nav-sheet-docs">Docs</a></div>`;
+    markShown('data-before');
+    document.querySelector('.sheet-root')?.removeAttribute('hidden');
+    const outside = '[data-plitzi-el="nav-sheet"]';
+
+    expect(outlineIn({ within: outside, depth: 4, limit: 50, words: 20 })).toMatchObject({
+      elements: [expect.objectContaining({ element: 'nav-menu-button' })]
+    });
+    expect(outlineIn({ opened: 'data-before', outside, depth: 4, limit: 50, words: 20 })).toEqual({
+      elements: [expect.objectContaining({ element: 'nav-sheet-docs', depth: 0, text: 'Docs' })],
+      more: 0
+    });
+  });
+
   // A page's first levels were five bare divs and "480 more under these", none of its parts named; and a part
   // asked by --within was its hidden copy, outlined empty.
   it('walks through bare wrappers to the parts, and outlines the copy of a part a visitor sees', () => {

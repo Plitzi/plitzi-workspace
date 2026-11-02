@@ -24,6 +24,11 @@ and the timing budgets and Vitest's own timeouts are multiplied by 5 (`PERF_MULT
 times out only there is load, not a bug: never raise one test's timeout for it. A test slow alone (a real build, a
 real server) says its own timeout, with why, beside it.
 
+A test against a real database (`*.integration.test.ts` in `apps/server`, skipped with no database) shares it with
+every other run on the machine: whatever it creates is named after its process (`runName(base)`, `<base>_<pid>`,
+`apps/server/src/modules/tests/runNames.ts`), dropped at its end, and what a run killed before its end left under the
+same base is dropped at the start (`leftByGoneRun`) — fixed names had two runs at once empty each other's tables.
+
 Cover edge cases, re-renders, leaks and performance — not just the happy path.
 
 ## End to end — Playwright

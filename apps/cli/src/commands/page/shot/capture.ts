@@ -402,20 +402,74 @@ export const showPinned = (attribute: string): void => {
 };
 
 /**
- * One element's picture, nothing pinned to the screen drawn over it — the one way an element is pictured: a part set
- * beside the run before was pictured another way, a site's sticky header over it (a run's looks at 390).
- */
-/**
  * How long an element is waited for, in sight and still, before its picture is given up: drawn and out of sight — a
  * phone's sheet pushed below the page at 1440 — it never comes into view, and Playwright's 30 s ended in a stack trace.
  */
 export const ELEMENT_SHOT_MS = 8000;
 
+/**
+ * Run in the page: how far past its box the element paints — an outer shadow, an outline, a blur — in px, the most of
+ * any side. Its box alone cut a 2px focus ring off, and the picture read as the page clipping it (a run's tester).
+ */
+export const inkAroundInPage = (node: Element): number => {
+  const style = getComputedStyle(node);
+  const px = (text: string): number[] => (text.match(/-?[\d.]+px/g) ?? []).map(Number.parseFloat);
+  let most = 0;
+  // One shadow from the next at the commas outside a colour's parentheses.
+  const shadows = style.boxShadow === 'none' ? [] : style.boxShadow.split(/,(?![^(]*\))/);
+  for (const shadow of shadows.filter(each => !/\binset\b/.test(each))) {
+    const [x = 0, y = 0, blur = 0, spread = 0] = px(shadow.replace(/[a-z]+\([^)]*\)/gi, ''));
+    most = Math.max(most, Math.max(Math.abs(x), Math.abs(y)) + blur + spread);
+  }
+
+  if (style.outlineStyle !== 'none') {
+    most = Math.max(most, Number.parseFloat(style.outlineWidth) + Math.max(0, Number.parseFloat(style.outlineOffset)));
+  }
+
+  for (const [, inner] of style.filter.matchAll(/(?:blur|drop-shadow)\(([^()]*(?:\([^)]*\)[^()]*)*)\)/g)) {
+    const lengths = px(inner.replace(/[a-z]+\([^)]*\)/gi, ''));
+    // A blur spreads its paint about twice its radius; a drop shadow by its offset and blur.
+    most = Math.max(most, lengths.length === 1 ? 2 * lengths[0] : Math.max(...lengths.map(Math.abs), 0) * 2);
+  }
+
+  return Math.ceil(most);
+};
+
+/**
+ * One element's picture, nothing pinned to the screen drawn over it — the one way an element is pictured: a part set
+ * beside the run before was pictured another way, a site's sticky header over it (a run's looks at 390). What it paints
+ * past its box is in it: the box grown by as much on every side.
+ */
 export const elementShot = async (page: BrowserPage, selector: string): Promise<Uint8Array> => {
   const element = page.locator(selector).first();
   await element.evaluate(hidePinned, HIDDEN_FOR_SHOT);
   try {
-    return await element.screenshot({ timeout: ELEMENT_SHOT_MS });
+    const ink = await element.evaluate(inkAroundInPage, undefined).catch(() => 0);
+    if (ink === 0) {
+      return await element.screenshot({ timeout: ELEMENT_SHOT_MS });
+    }
+
+    await element.scrollIntoViewIfNeeded({ timeout: ELEMENT_SHOT_MS });
+    const box = await element.evaluate(node => {
+      const placed = node.getBoundingClientRect();
+
+      return {
+        x: placed.left + window.scrollX,
+        y: placed.top + window.scrollY,
+        width: placed.width,
+        height: placed.height
+      };
+    }, undefined);
+
+    return await page.screenshot({
+      fullPage: true,
+      clip: {
+        x: Math.max(0, box.x - ink),
+        y: Math.max(0, box.y - ink),
+        width: box.width + 2 * ink,
+        height: box.height + 2 * ink
+      }
+    });
   } finally {
     await page.evaluate(showPinned, HIDDEN_FOR_SHOT);
   }

@@ -432,7 +432,8 @@ machine is compared as the project, its scheme chosen as a visitor's toggle choo
 project's, held to what the project changed: motion reduced, and every picture from another site stood in for on each
 side by a square of a colour its address gives it (`standIns`), so the same picture is the same on both and another one
 differs (a busy CDN's 429s made 21–31% "differs" at 390, and the same look said 7%, then 0%). The page's
-own picture of a comparison is `-after.png`, beside the run before in `-after-compare.png`. Its dress is compared detail
+own picture of a comparison is `-after.png`, beside the run before in `-after-compare.png` — on a page too tall to read
+whole, the sections that differ most cut apart side by side, and named instead. Its dress is compared detail
 by detail: what there are fewer of, by how many — a kind counted whole listed details still there as lost — and a look
 this page lacks is said on the element of ours where the other page wears it (`absentOn`: the named element drawn at
 that place of the section — "lacks box-shadow … — at ours: match-result"), here and in `--dress`'s failure. `--width`,

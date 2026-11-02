@@ -3,8 +3,10 @@ export type { Copy } from './act';
 export { e2e } from './define';
 export {
   awaitHydration,
+  endlesslyMovedInPage,
   FIELD,
   fieldsOf,
+  hoverElement,
   HYDRATION_MS,
   locateField,
   locateTarget,

@@ -218,7 +218,7 @@ export const lookText = (looked: Looked): string =>
           ...looked.compared.map(each =>
             each.problem
               ? chalk.yellow(`  ${each.route} at ${each.width} ${each.scheme}: ${each.problem}`)
-              : `  ${each.route} at ${each.width} ${each.scheme}: ${!differs(each) ? (each.canvasMoving ? 'nothing changed it could compare — its canvas (a map, a chart) was not drawn yet when pictured: look again' : 'nothing changed') : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : (each.changed ?? 0) > 0 ? ' — outside its sections (a canvas or a backdrop behind them): see it side by side' : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}${each.canvasMoving ? ' — its canvas was not drawn yet when pictured: look again' : ''}`}${each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
+              : `  ${each.route} at ${each.width} ${each.scheme}: ${!differs(each) ? (each.canvasMoving ? 'nothing changed it could compare — its canvas (a map, a chart) was not drawn yet when pictured: look again' : 'nothing changed') : `${String(each.changed ?? 0)}% differs${each.sections.length > 0 ? ` — ${fewOf(each.sections, ', ')}` : (each.changed ?? 0) > 0 ? ' — outside its sections (a canvas or a backdrop behind them): see it side by side' : ''}${each.dress.length > 0 ? ` · its dress: ${fewOf(each.dress, ' · ')}` : ''}${each.canvasMoving ? ' — its canvas was not drawn yet when pictured: look again' : ''}`}${each.cuts ? chalk.dim(` · each section side by side: ${each.cuts.join(', ')}`) : each.sideBySide ? chalk.dim(` · ${each.sideBySide}`) : ''}`
           )
         ]
       : []),

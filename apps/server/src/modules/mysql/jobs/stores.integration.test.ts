@@ -4,8 +4,10 @@ import { createMysqlJobQueue } from './jobQueue';
 import { createMysqlKv } from './kv';
 import { jobTables } from './schema';
 import { describeJobQueue, describeKv } from '../../actions/jobs/tests/jobQueueContract';
+import { runName } from '../../tests/runNames';
 import { createPool } from '../pool';
 import { execute } from '../query';
+import { dropTablesOfGoneRuns, dropTablesOfThisRun } from '../tests/goneRuns';
 
 import type { Pool } from 'mysql2/promise';
 
@@ -14,9 +16,11 @@ import type { Pool } from 'mysql2/promise';
  *
  * Same database and credentials as the account store's integration test, under a prefix of its own — this run's: two
  * runs at once (another session, the workspace's suite beside a package's) emptied and locked each other's rows, and
- * a test waiting on a lock timed out. Its tables are dropped at the end; skipped — not failed — with no MySQL.
+ * a test waiting on a lock timed out. Its tables are dropped at the end, and those of a run killed before its end at
+ * the start; skipped — not failed — with no MySQL.
  */
-const PREFIX = `itest_jobs_${String(process.pid)}_`;
+const BASE = 'itest_jobs';
+const PREFIX = `${runName(BASE)}_`;
 
 const open = async (): Promise<Pool | undefined> => {
   try {
@@ -37,12 +41,15 @@ const open = async (): Promise<Pool | undefined> => {
 };
 
 const pool = await open();
+// Outside `open`: a failure here is one, never taken for a machine with no MySQL.
+const gone = pool ? await dropTablesOfGoneRuns(pool, BASE) : [];
+if (gone.length > 0) {
+  console.log(`[itest] dropped what runs killed before their end left: ${gone.join(', ')}`);
+}
 
 afterAll(async () => {
   if (pool) {
-    for (const table of Object.values(jobTables(PREFIX))) {
-      await execute(pool, `DROP TABLE IF EXISTS ${table}`);
-    }
+    await dropTablesOfThisRun(pool, BASE);
   }
 
   await pool?.end();
