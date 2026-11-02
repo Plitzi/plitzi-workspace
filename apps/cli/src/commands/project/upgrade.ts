@@ -11,7 +11,7 @@ import { localPackages } from './localPackages';
 import { projectFormatter } from './projectFormatter';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { readOrigin } from './spaceOrigin';
-import { machineryPlan, readText, WRITES } from './upgradeFiles';
+import { machineryPlan, notesWith, readText, WRITES } from './upgradeFiles';
 import { unifiedDiff } from '../../fix/diff';
 import { MIGRATIONS, runMigrations } from '../../migrations';
 import { refreshTeamAbout, TEAM_FILE } from '../../runs/agents/team';
@@ -19,6 +19,7 @@ import { activeRuns } from '../../runs/run';
 import { detectManagerVersion, installCommand } from '../../scaffold';
 import { RETIRED_MACHINERY } from '../../scaffold/machinery';
 import { projectDlx, projectExec } from '../../scaffold/packageManager';
+import { PROJECT_NOTES } from '../../scaffold/paths';
 import { CLI_VERSION, packageJson } from '../../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../../scaffold/skills';
 import { fail, install, writeFiles } from '../shared/terminal';
@@ -122,14 +123,16 @@ const stringsOf = (value: unknown): Record<string, string> =>
 
 /**
  * `package.json` brought up to the CLI. `wrote` is what the CLI wrote of its scripts (the scaffold record): one the
- * project still has as written is the CLI's and takes today's command; one it changed is its own and is only said.
+ * project still has as written is the CLI's and takes today's command; one it changed is its own and is only said —
+ * replaced when `take` names it (`script:start`), as one an older CLI wrote before its scripts were recorded is.
  * `local` names the packages installed locally, whose range is the project's to change with what it installs.
  */
 export const planPackages = (
   text: string,
   answers: CreateAnswers,
   wrote: Record<string, string> = {},
-  local: ReadonlySet<string> = new Set()
+  local: ReadonlySet<string> = new Set(),
+  take: readonly string[] = []
 ): PackagesPlan => {
   const parsed: unknown = JSON.parse(text);
   const ours: unknown = JSON.parse(packageJson(answers));
@@ -142,7 +145,7 @@ export const planPackages = (
     if (!(name in scripts)) {
       plan.scripts.push({ name, command });
       scripts[name] = command;
-    } else if (scripts[name] !== command && wrote[name] === scripts[name]) {
+    } else if (scripts[name] !== command && (wrote[name] === scripts[name] || take.includes(`script:${name}`))) {
       plan.updatedScripts.push({ name, from: scripts[name], to: command });
       scripts[name] = command;
     } else if (scripts[name] !== command) {
@@ -298,7 +301,14 @@ interface UpgradeReport {
    * `seen`: a file of the project's own whose CLI version was shown beside it at the last `--write` and has not changed
    * since — its `diff` is the same as then, and the text says it in a line.
    */
-  files?: { file: string; status: FileStatus; diff?: string; seen?: true }[];
+  files?: {
+    file: string;
+    status: FileStatus;
+    diff?: string;
+    seen?: true;
+    /** Of the agents' file, the headings of the sections the project wrote: moved to NOTES.md when it is taken. */
+    toNotes?: string[];
+  }[];
   packages?: Omit<PackagesPlan, 'after' | 'recorded'> & {
     /** `skipped`: not run, a `@plitzi` package being installed locally (`local`), which it would replace. */
     install?: 'done' | 'failed' | 'needed' | 'skipped';
@@ -341,6 +351,16 @@ const reportText = (report: UpgradeReport, install: string): string => {
       }
 
       lines.push(statusLine[file.status](file.file));
+      if (file.toNotes) {
+        const sections = `${String(file.toNotes.length)} ${file.toNotes.length === 1 ? 'section' : 'sections'} of your own (${file.toNotes.join(', ')})`;
+        lines.push(
+          chalk.dim(
+            file.status === 'taken'
+              ? `    ${sections} ${report.write ? 'moved' : 'move'} to ${PROJECT_NOTES}, where the agents read the project's notes`
+              : `    ${sections}: --take ${file.file} moves them to ${PROJECT_NOTES}, where the agents read the project's notes`
+          )
+        );
+      }
       if (file.diff) {
         lines.push(chalk.dim(file.diff));
       }
@@ -365,7 +385,9 @@ const reportText = (report: UpgradeReport, install: string): string => {
       ...scripts.map(entry => chalk.green(`  + script ${entry.name}: ${entry.command}`)),
       ...updatedScripts.map(entry => chalk.green(`  ~ script ${entry.name}: ${entry.to}`)),
       ...ownScripts.map(entry =>
-        chalk.dim(`  = script ${entry.name} is yours ("${entry.yours}"; the CLI writes "${entry.ours}")`)
+        chalk.dim(
+          `  = script ${entry.name} is yours ("${entry.yours}"; the CLI writes "${entry.ours}") — --take script:${entry.name} to replace it`
+        )
       ),
       // One fact said once: a workspace links every package, and a line each says the same thing fifteen times.
       ...(local.length > 3
@@ -499,6 +521,13 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     });
     if (write) {
       const written = [...plans.filter(plan => WRITES.has(plan.status)), ...seeds];
+      // What the project wrote in the agents' file is kept in its notes before the CLI's replaces it.
+      const own = plans.flatMap(plan => (plan.status === 'taken' ? (plan.own ?? []) : []));
+      const notes = own.length > 0 ? notesWith(await readText(path.join(root, PROJECT_NOTES)), own) : undefined;
+      if (notes !== undefined) {
+        await fs.writeFile(path.join(root, PROJECT_NOTES), notes);
+      }
+
       await writeFiles(root, Object.fromEntries(written.map(plan => [plan.file, plan.ours])));
       for (const { file } of retired.filter(plan => plan.status === 'removed')) {
         await fs.rm(path.join(root, file), { force: true });
@@ -543,7 +572,8 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
           : {}),
         ...(plan.status === 'yours' && record?.shown?.[plan.file] === digestOf(plan.ours)
           ? { seen: true as const }
-          : {})
+          : {}),
+        ...(plan.own ? { toNotes: plan.own.map(section => section.heading) } : {})
       })),
       ...retired,
       ...spaces.map(file => ({ file, status: 'space' as const }))
@@ -555,7 +585,9 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     const wrote = record?.scripts;
     const local = await localPackages(root);
     const plan =
-      text === undefined ? undefined : planPackages(text, answers, wrote, new Set(local.map(entry => entry.name)));
+      text === undefined
+        ? undefined
+        : planPackages(text, answers, wrote, new Set(local.map(entry => entry.name)), options.take ?? []);
     if (plan) {
       const { after, recorded, ...rest } = plan;
       let installed: NonNullable<UpgradeReport['packages']>['install'];

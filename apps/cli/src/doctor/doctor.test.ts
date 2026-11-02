@@ -179,14 +179,14 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
         code: 'entry-not-typescript',
         file: 'src/plugins/Badge/index.js',
         repair:
-          'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and script naming it follows'
+          'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and package script naming it follows'
       },
       { severity: 'error', code: 'plugin-name-invalid', file: 'src/plugins/story-editor/', repair: undefined },
       {
         severity: 'error',
         code: 'folder-misplaced',
         file: 'src/plugin/',
-        repair: 'moves src/plugin/ → src/plugins/ — every import and script naming it follows'
+        repair: 'moves src/plugin/ → src/plugins/ — every import and package script naming it follows'
       },
       {
         severity: 'error',
@@ -207,8 +207,8 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     const fixed = await run({ fix: true });
 
     expect(fixed.repaired.repairs).toEqual([
-      'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and script naming it follows',
-      'moves src/plugin/ → src/plugins/ — every import and script naming it follows',
+      'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and package script naming it follows',
+      'moves src/plugin/ → src/plugins/ — every import and package script naming it follows',
       'moves src/.env → .env',
       // Read again once `.env` is at the root: its example has one reading now.
       'writes .env.example'
@@ -232,7 +232,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(await run(), 'folder-near-miss')).toMatchObject({
       severity: 'warning',
       file: 'src/Data/',
-      repair: 'moves src/Data/ → src/data/ — every import and script naming it follows'
+      repair: 'moves src/Data/ → src/data/ — every import and package script naming it follows'
     });
 
     await run({ fix: true });

@@ -22,7 +22,8 @@ export const LINT_RULES = {
   },
   'inline-records': {
     severity: 'warning',
-    means: 'a long list of records written inline in the space’s code',
+    means:
+      'a long list of records written inline in the space’s code and rendered by it — not a table a type is derived from, which is the code’s',
     docs: `${REFERENCE}/data-and-visibility.md`
   },
   'colour-not-token': {

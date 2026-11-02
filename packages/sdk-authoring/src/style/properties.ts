@@ -61,10 +61,17 @@ const UNITLESS = new Set([
 export const cssNumberValue = (property: string, value: number): string | number =>
   UNITLESS.has(property) || isCustomProperty(property) || value === 0 ? value : `${String(value)}px`;
 
-/** Properties CSS deprecated for another the vocabulary has: what to write instead, as the refusal says it. */
+/** The longhands of a mask, which the vocabulary has: an icon of one colour is a mask over `currentColor`. */
+const MASK_LONGHANDS =
+  "write its longhands: 'mask-image', 'mask-position', 'mask-size', 'mask-repeat' (and 'mask-composite')";
+
+/** Properties written another way than the vocabulary has them: what to write instead, as the refusal says it. */
 const REPLACED: Readonly<Record<string, string>> = {
   // The classic sr-only line writes `clip: rect(0 0 0 0)`.
-  clip: "deprecated: write 'clip-path': 'inset(50%)', or the `sr-only` utility for a line only screen readers read"
+  clip: "deprecated: write 'clip-path': 'inset(50%)', or the `sr-only` utility for a line only screen readers read",
+  // Sent to customCss for it, a run split an icon's class between its styles() and the global stylesheet.
+  mask: `a shorthand not expanded — ${MASK_LONGHANDS}`,
+  '-webkit-mask': `prefixed, and every browser reads the mask unprefixed — ${MASK_LONGHANDS}`
 };
 
 /** What to write in place of a deprecated property, or nothing when it is not one. */

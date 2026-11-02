@@ -19,8 +19,8 @@ export interface Moves {
 }
 
 /** The folders whose code may import one another — never what is installed, built or written for the project itself. */
-const CODE_FOLDERS = ['src', 'plitzi', 'visual', 'functions', 'scripts'];
-const CODE = /\.(?:[cm]?[jt]sx?)$/;
+export const CODE_FOLDERS = ['src', 'plitzi', 'visual', 'functions', 'scripts'];
+export const CODE = /\.(?:[cm]?[jt]sx?)$/;
 
 /** Where a path is after the moves: its own move, or its folder's. */
 export const movedTo = (moves: Moves, file: string): string => {

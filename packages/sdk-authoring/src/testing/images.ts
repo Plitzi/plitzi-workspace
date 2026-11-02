@@ -141,8 +141,15 @@ export const loadImages = async (budgetMs: number): Promise<LoadedImages> => {
  * `vh` would mean that height and a `100vh` hero would be thousands of pixels tall. Answers the document's height.
  */
 export const unrollPage = (): number => {
+  // What of the screen's height a column holds to be the page's own — here, not in the module: it is serialised.
+  const pageShare = 0.8;
+  // The page's own column holds most of the screen; a list scrolling inside a panel of a full-screen page holds a part
+  // of it, and unrolled it spilled its rows over everything under it — a picture of an overflow the page never has.
   const panes = Array.from(document.querySelectorAll<HTMLElement>('*')).filter(
-    element => element.scrollHeight > element.clientHeight + 1 && element.clientHeight > 0
+    element =>
+      element.scrollHeight > element.clientHeight + 1 &&
+      element.clientHeight > 0 &&
+      element.clientHeight >= window.innerHeight * pageShare
   );
   const scroller = panes.sort((a, b) => b.scrollHeight - a.scrollHeight).at(0);
   for (let element: HTMLElement | null = scroller ?? null; element; element = element.parentElement) {

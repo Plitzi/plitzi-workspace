@@ -6,6 +6,7 @@ import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
 import { explainCommand, searchAll } from './explain';
 import { LINT_RULES } from '../../lint/catalog';
+import { PAGE_CHECK_CODES } from '../page/check/codes';
 
 const printed = (run: () => void): string => {
   const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -68,6 +69,19 @@ describe('plitzi explain', () => {
     });
   });
 
+  // A run's page check said `flush-edge`, and explain answered that it was no name Plitzi had.
+  it('says a code of the page check, and where its fix is', () => {
+    const [answer] = JSON.parse(printed(() => explainCommand('flush-edge', { json: true }))) as unknown[];
+
+    expect(answer).toMatchObject({
+      kind: 'code',
+      name: 'flush-edge',
+      codeKind: 'error',
+      means: PAGE_CHECK_CODES['flush-edge'],
+      checkedBy: 'plitzi page check'
+    });
+  });
+
   it('lists every code of every check under codes, each once', () => {
     const listed = JSON.parse(printed(() => explainCommand(undefined, { list: 'codes', json: true }))) as {
       name: string;
@@ -76,7 +90,8 @@ describe('plitzi explain', () => {
     const owners = [
       explainList('code').map(entry => entry.name),
       Object.keys(LINT_RULES),
-      Object.keys(PROJECT_LAYOUT_CODES)
+      Object.keys(PROJECT_LAYOUT_CODES),
+      Object.keys(PAGE_CHECK_CODES)
     ];
 
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));

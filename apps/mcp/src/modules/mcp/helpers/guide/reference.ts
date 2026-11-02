@@ -161,7 +161,8 @@ space already had is not repeated on every batch — and none of them blocks any
 - \`repeated-shape\` — one structure written again with other words: a **component** with props
   (\`upsertComponent { fromRef }\` turns one copy into it), or, for sibling rows of data, one \`repeatElement\`/\`list\`.
   A few cards a person rewords by hand can stay cards; siblings that bind different data, keep different state, fill
-  from a template of their own or render on the server are controls written alike, and are not offered.
+  from a template of their own or render on the server are controls written alike, and are not offered. Copies apart
+  that read different sources are one component still: each instance binds its own to a \`json\` prop.
 - \`content-attribute\` — a \`button\` or \`link\` whose children are only a \`text\` and/or a \`fontAwesome\`: its words
   are its own \`content\` and the icon its \`icon\`. What the text's class adds (\`white-space: nowrap\`) moves to the
   box's class — never the class itself; the icon's class goes in the \`icon\` slot.

@@ -10,8 +10,8 @@ export const SUGGESTION_CODES = {
   'repeated-shape': {
     kind: 'suggested',
     means:
-      'the same structure written again and again with different words — cards, rows, tiles; copies that bind different data, read their own template or render on the server are controls, not repeats',
-    fix: 'a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards'
+      'the same structure written again and again with different words — cards, rows, tiles. Copies that read their data in a form of their own (their template) or render on the server are no repeats, and neither are copies side by side wired to different sources or state keys — controls written alike; copies apart that read different sources are one component, each instance handed its own',
+    fix: "a component with props (`components`, `component(id, { props })`) — a source a copy reads handed in as a bound `json` prop (`component(id, { bind: [{ to: 'items', source }] })`, read inside as `props.items`) — or one `list` when they are rows of data side by side; a few cards a person rewords on the canvas can stay cards"
   },
   'element-color-inherited': {
     kind: 'suggested',

@@ -494,16 +494,23 @@ export const missedExpectations = async (
 
 /**
  * Run in the page: each link or button drawn on its section's bottom edge — within a pixel of it — where that section
- * keeps no space below its content (padding-bottom 0): what sat against the next section with nothing between them.
+ * keeps no space below its content (padding-bottom 0) and the page goes on below it: what sat against the next section
+ * with nothing between them. A section that ends the page — a band at the foot of a full-screen one — touches nothing.
  * The maintainer saw a run's "Ver cartelera completa" on #combates' edge, and no check, look or comparison had said it:
  * the home's sections shared a class with no bottom padding. Self-contained — it is sent to the browser as it is.
  */
 export const flushEdgesInPage = (): { id: string; section: string }[] => {
   // Said once an element, of the innermost section it sits on — a section inside another comes later in the document.
   const found = new Map<string, { id: string; section: string }>();
+  // Where the page ends: a section reaching it has nothing below to touch — a band at the foot of a full-screen page.
+  const end = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
   for (const each of Array.from(document.querySelectorAll('section[data-plitzi-el]')).flatMap(section => {
     const box = section.getBoundingClientRect();
-    if (box.height < 40 || Number.parseFloat(getComputedStyle(section).paddingBottom) > 0) {
+    if (
+      box.height < 40 ||
+      Number.parseFloat(getComputedStyle(section).paddingBottom) > 0 ||
+      box.bottom + window.scrollY >= end - 1
+    ) {
       return [];
     }
 

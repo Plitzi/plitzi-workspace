@@ -23,6 +23,13 @@ const say = sayer('packages');
 
 const UPGRADE_PACKAGES = 'plitzi upgrade packages --write';
 
+/**
+ * What replaces a script with the CLI's, whoever wrote it: `upgrade` rewrites one the CLI recorded as written, and one
+ * the project changed — or an older CLI wrote, before its scripts were recorded — only when it is taken.
+ */
+const takeScript = (name: string): string =>
+  `plitzi upgrade packages --write --take script:${name} replaces it with the CLI's (without --write it shows both first).`;
+
 /** Without these the project does not start, author or build: missing, they are errors, any other a warning. */
 const ESSENTIAL_SCRIPTS: ReadonlySet<string> = new Set(['start', 'start:dev', 'build', 'start:prod', 'author']);
 
@@ -364,7 +371,7 @@ const scriptEnvChecks = ({ answers, manifest }: DoctorContext): Finding[] => {
           'The script start:prod does not set NODE_ENV=production: wherever it runs without it, the server is a development one — its dev tools on, and the trace of every action in what a visitor is answered.',
           {
             file: 'package.json',
-            fix: `NODE_ENV=production before node in start:prod — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+            fix: `NODE_ENV=production before node in start:prod — ${takeScript('start:prod')}`
           }
         )
       ];
@@ -382,7 +389,7 @@ const scriptEnvChecks = ({ answers, manifest }: DoctorContext): Finding[] => {
           `The script ${name} watches with Node's --env-file: Node then restarts it on any write in the project — the server's own tmp/ at boot, over and over.`,
           {
             file: 'package.json',
-            fix: `Preload it instead: node --import ${ENV_PRELOAD} in ${name}, in place of --env-file — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+            fix: `Preload it instead: node --import ${ENV_PRELOAD} in ${name}, in place of --env-file — ${takeScript(name)}`
           }
         )
       ];
@@ -396,7 +403,7 @@ const scriptEnvChecks = ({ answers, manifest }: DoctorContext): Finding[] => {
             `The script ${name} runs Node without reading .env: its settings are not in process.env.`,
             {
               file: 'package.json',
-              fix: `Add ${watched ? `--import ${ENV_PRELOAD}` : '--env-file-if-exists=.env'} after node in ${name} — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+              fix: `Add ${watched ? `--import ${ENV_PRELOAD}` : '--env-file-if-exists=.env'} after node in ${name} — ${takeScript(name)}`
             }
           )
         ];

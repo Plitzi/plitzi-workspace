@@ -4,11 +4,14 @@ import path from 'node:path';
 import { checkProjectLayout } from '@plitzi/sdk-shared/project';
 
 import { collisions, moveFiles } from './moves';
+import { pathsSaid, textPathsNaming } from './textPaths';
 import { sayer } from './types';
 import { legacyLayout } from '../commands/project/legacyLayout';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/project/scaffoldRecord';
+import { DATA_DIR, FUNCTIONS_DIR, PROJECT_STATE, STATE_DIR_ENV } from '../scaffold/paths';
 
 import type { Moved, Moves } from './moves';
+import type { TextPath } from './textPaths';
 import type { Check, DoctorContext, Finding, Repair } from './types';
 import type { LegacyPlace } from '../commands/project/legacyLayout';
 import type { LayoutAutofix, LayoutFinding } from '@plitzi/sdk-shared/project';
@@ -143,8 +146,29 @@ const move = async (root: string, from: string, to: string): Promise<void> => {
   await carryRecord(root, await moveFiles(root, movesOf(from, to)));
 };
 
+/**
+ * What a move of folders says it carries: the imports and the package's scripts that name them follow; a path the code
+ * writes as text does not, and is named — a server that built `data/store.json` from its root kept reading the old
+ * place after the move, and its keeper's data looked gone.
+ */
+const carried = (paths: readonly TextPath[], to: string): string =>
+  ` — every import and package script naming it follows${
+    paths.length > 0
+      ? `; ${String(paths.length)} ${paths.length === 1 ? 'path' : 'paths'} the code writes as text ${paths.length === 1 ? 'does' : 'do'} not, and ${paths.length === 1 ? 'is' : 'are'} said until ${paths.length === 1 ? 'it names' : 'they name'} ${to}: ${pathsSaid(paths)}`
+      : ''
+  }`;
+
+/**
+ * What the code writes to while it runs is the server's state, not data it reads: moved into the source, it would be
+ * committed, watched and mixed with what is written by hand. The doctor moves it nowhere and says where it belongs.
+ */
+const keptByCode = (from: string, paths: readonly TextPath[]): string =>
+  `${from} is written by the project's code as it runs (${pathsSaid(paths.filter(each => each.writes))}): that is what the server keeps, not data it reads, so it is not moved into ${DATA_DIR}/. Move it to ${PROJECT_STATE}/ — ignored by git, kept across restarts — and point that code at \`process.env.${STATE_DIR_ENV} ?? '${PROJECT_STATE}'\` (the visual suite gives the server a state of its own there); what the server only reads goes in ${DATA_DIR}/.`;
+
+type Fixed = { repair: Repair } | { blocked: string[] } | { kept: string };
+
 /** A layout fix as a repair `--fix` makes: said, and only when it writes over nothing — or what it would write over. */
-const repairOf = async (root: string, autofix: LayoutAutofix): Promise<{ repair: Repair } | { blocked: string[] }> => {
+const repairOf = async (root: string, autofix: LayoutAutofix): Promise<Fixed> => {
   if (autofix.action === 'write') {
     return {
       repair: {
@@ -165,15 +189,21 @@ const repairOf = async (root: string, autofix: LayoutAutofix): Promise<{ repair:
 
   const { from, to } = autofix;
   const taken = await takenBy(root, from, to);
+  if (taken.length > 0) {
+    return { blocked: taken };
+  }
 
-  return taken.length > 0
-    ? { blocked: taken }
-    : {
-        repair: {
-          says: `moves ${from} → ${to}${CODE_OR_FOLDER.test(from) ? ' — every import and script naming it follows' : ''}`,
-          run: () => move(root, from, to)
-        }
-      };
+  const paths = from.endsWith('/') ? await textPathsNaming(root, [bare(from)]) : [];
+  if (bare(to) === DATA_DIR && paths.some(each => each.writes)) {
+    return { kept: keptByCode(from, paths) };
+  }
+
+  return {
+    repair: {
+      says: `moves ${from} → ${to}${CODE_OR_FOLDER.test(from) ? carried(paths, to) : ''}`,
+      run: () => move(root, from, to)
+    }
+  };
 };
 
 /** What the server, the authoring and the CLI's checks say of the project's layout, said by the doctor with its fixes. */
@@ -189,10 +219,12 @@ const layoutFindings = async (
     findings.map(async (each: LayoutFinding): Promise<Finding> => {
       const fixed = each.autofix ? await repairOf(root, each.autofix) : undefined;
       const blocked = fixed && 'blocked' in fixed ? fixed.blocked : [];
-      const message =
-        blocked.length > 0
-          ? `${each.message} It cannot be moved by itself: ${blocked.join(', ')} ${blocked.length === 1 ? 'is' : 'are'} already there.`
-          : each.message;
+      let message = each.message;
+      if (blocked.length > 0) {
+        message = `${each.message} It cannot be moved by itself: ${blocked.join(', ')} ${blocked.length === 1 ? 'is' : 'are'} already there.`;
+      } else if (fixed && 'kept' in fixed) {
+        message = `${each.message} ${fixed.kept}`;
+      }
 
       return (each.level === 'error' ? say.error : say.warning)(each.code, message, {
         file: each.file,
@@ -216,10 +248,14 @@ export const checkLayout: Check = async ({ root, answers }) => {
   };
   const taken = moving.length > 0 ? await collisions(root, moves) : [];
   const dropped = places.filter(place => place.blocking && place.action === 'remove');
+  const paths = await textPathsNaming(
+    root,
+    moving.filter(place => place.found.endsWith('/')).map(place => bare(place.found))
+  );
   const layoutRepair: Repair | undefined =
     taken.length === 0 && moving.length + dropped.length > 0
       ? {
-          says: `moves ${moving.map(place => `${place.found} → ${place.now ?? ''}`).join(', ') || 'nothing'}${dropped.length > 0 ? `, deletes ${dropped.map(place => place.found).join(', ')}` : ''} — every import and script naming them follows`,
+          says: `moves ${moving.map(place => `${place.found} → ${place.now ?? ''}`).join(', ') || 'nothing'}${dropped.length > 0 ? `, deletes ${dropped.map(place => place.found).join(', ')}` : ''}${carried(paths, 'where each is now')}`,
           run: async () => {
             if (moving.length > 0) {
               await carryRecord(root, await moveFiles(root, moves));
@@ -276,5 +312,46 @@ export const checkLayout: Check = async ({ root, answers }) => {
   // Once the older layout is moved: read against it, a misplaced part would only be said twice.
   return places.some(place => place.blocking)
     ? findings
-    : [...findings, ...(await layoutFindings({ root, answers }, places))];
+    : [...findings, ...(await layoutFindings({ root, answers }, places)), ...(await pathsToMovedFolders(root))];
+};
+
+/** Folders an older layout kept at the root, and where they are now: a path the code writes to the old one is stale. */
+const MOVED_FOLDERS: readonly (readonly [string, string])[] = [
+  ['data', DATA_DIR],
+  ['functions', FUNCTIONS_DIR]
+];
+
+const isFolder = (root: string, folder: string): Promise<boolean> =>
+  fs.stat(path.join(root, folder)).then(
+    stat => stat.isDirectory(),
+    () => false
+  );
+
+/**
+ * A path the code writes as text to a folder that moved: the move said it would not follow; said again here until it
+ * names where the folder is — a server reading the old place starts with nothing there.
+ */
+const pathsToMovedFolders = async (root: string): Promise<Finding[]> => {
+  const moved = await Promise.all(
+    MOVED_FOLDERS.map(async ([was, now]) =>
+      !(await isFolder(root, was)) && (await isFolder(root, now)) ? [[was, now] as const] : []
+    )
+  );
+
+  return (
+    await Promise.all(
+      moved.flat().map(async ([was, now]) =>
+        (await textPathsNaming(root, [was])).map(each =>
+          say.warning(
+            'path-to-moved-folder',
+            `${each.file}:${String(each.line)} names '${each.text}', where an older layout kept ${was}/ — it is ${now}/ now, and nothing is at the old place.`,
+            {
+              file: each.file,
+              fix: `Name ${now}/ there: '${now}${each.text.replace(/^\.\//, '').slice(was.length)}'.`
+            }
+          )
+        )
+      )
+    )
+  ).flat();
 };

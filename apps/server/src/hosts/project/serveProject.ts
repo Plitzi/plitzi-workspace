@@ -81,6 +81,13 @@ export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
    * (`https://aiko.example.com:8080`, `process.env.OAUTH_CALLBACK_ORIGIN`).
    */
   functions?: Pick<FunctionsConfig, 'oauth'>;
+  /**
+   * Run once the server answers — `main.ts` is the CLI's, so this is where a project does something then: ask its home
+   * once, so the first visitor does not wait for its sources to answer cold. Not awaited: the server is already up, and
+   * what it does is said if it fails, never lost. Run by the process that speaks for the project, once — not by each of
+   * a fleet's workers.
+   */
+  onListening?: (served: { url: string; server: SSRServer }) => void | Promise<void>;
 };
 
 /** A space authored in the project — `authorProjectSpace` of `@plitzi/sdk-authoring/node` — and what it warned of. */
@@ -339,7 +346,8 @@ const spaceToServe = async (
 const NOTHING_AUTHORED: AuthoredDocuments = { schema: EMPTY_SCHEMA.schema, style: EMPTY_STYLE_SCHEMA };
 
 const startProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
-  const { actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
+  const { actions, connectors = new Map<string, ConnectorManifest>(), serverOptions: given = {} } = options;
+  const { onListening, ...serverOptions } = given;
   const root = projectRoot();
   const developing = process.env.NODE_ENV !== 'production';
   // Laid out where the server would read nothing — a plugin it cannot build, code in a misnamed folder, `.env` in
@@ -498,6 +506,15 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   // Said once the port answers: a tool that waits for "pages on" — or reads `tmp/dev-server.json` — asks right away.
   await server.listen(port, host);
   reserved?.release();
+  if (speaks && onListening) {
+    void Promise.resolve()
+      .then(() => onListening({ url: localUrl, server }))
+      .catch((error: unknown) => {
+        console.error(
+          `onListening (src/config/serverOptions.ts) failed, and the server goes on serving: ${error instanceof Error ? error.message : String(error)}`
+        );
+      });
+  }
   if (speaks) {
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
     // The visual suite's own server records itself apart (`SERVER_RECORD_ENV`): the record a person's server wrote stays.

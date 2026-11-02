@@ -1062,7 +1062,8 @@ the project's own CLI when that is this one. The generated
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
-today's command, one the project changed is left and said. A file the CLI no longer writes — `src/env.ts`, now that
+today's command, one the project changed — or an older CLI wrote before its scripts were recorded — is left and said,
+unless `--take script:<name>` names it (`--take script:start`). A file the CLI no longer writes — `src/env.ts`, now that
 Node reads `.env` — is removed the same way once the `main.ts` that read it is the CLI's; one the project changed is
 said and left, unless `--take` names it (`.plitzi/scaffold.json` records the files and the scripts, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from

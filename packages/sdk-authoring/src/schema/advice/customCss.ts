@@ -32,6 +32,9 @@ const TOAST_RULES = [
   /\.Toastify__progress-bar(?:--wrp)?\s*\{[^}]*?(?<![\w-])height\s*:/
 ];
 
+/** How many of the rules' targets the suggestion names before saying how many more there are. */
+const SHOWN_TARGETS = 8;
+
 export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => {
   const customCss = schema.settings.customCss;
   if (!customCss.trim()) {
@@ -62,10 +65,11 @@ export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => 
       saves: 0,
       message:
         `${String(folded.length)} rule${folded.length === 1 ? '' : 's'} in \`customCss\` ${folded.length === 1 ? 'is' : 'are'} ` +
-        `a class's own: ${targets.slice(0, 4).join(', ')}${targets.length > 4 ? ', …' : ''}. Write ${folded.length === 1 ? 'it' : 'them'} on ` +
+        `a class's own: ${targets.slice(0, SHOWN_TARGETS).join(', ')}${targets.length > SHOWN_TARGETS ? `, and ${String(targets.length - SHOWN_TARGETS)} more` : ''}. Write ${folded.length === 1 ? 'it' : 'them'} on ` +
         'the class — `states: { hover: { … } }`, `ancestors: { [card.name]: { states: { hover: { … } } } }`, ' +
         "`pseudos: { after: { content: '\"→\"' } }`, `conditions: { 'motion-reduce': { … } }` — where the style editor " +
-        'shows it and a breakpoint can change it.'
+        'shows it and a breakpoint can change it. A rule of several selectors is counted once each is a class of the ' +
+        "space's, and an `@media` once every rule inside it is: moving these may leave more to move."
     });
   }
 

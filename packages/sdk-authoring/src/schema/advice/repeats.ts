@@ -378,6 +378,12 @@ export const suggestRepeats = (
     }
 
     const type = flat[fresh[0]].definition.type;
+    // Apart and reading different sources: one component still, each instance handed the source it reads — the way to
+    // say it, since a run read "differ only in what they say" of two lists reading two feeds and found no way through.
+    const ownSources =
+      !siblings && new Set(fresh.map(id => signatures.get(id)?.wiring)).size > 1
+        ? " Each copy reads a source of its own: hand it in as a bound `json` prop — `component(id, { bind: [{ to: 'items', source: '<what it reads>' }] })` — read inside as `props.items`."
+        : '';
     // Said with both: what counts as a copy, so an author never guesses a shape under it, and the way to keep them.
     const counted =
       ` Counted from ${String(MIN_SHAPE_COPIES)} copies of ${String(MIN_SHAPE)} elements or more (2 of ` +
@@ -394,10 +400,12 @@ export const suggestRepeats = (
           'they were written from, rows that come and go; a few cards a person edits word by word on the canvas can ' +
           `stay as they are.${counted}`
         : `${String(fresh.length)} ${type}s of ${String(size)} elements share one structure (${named(fresh)}) and ` +
-          'differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it ' +
+          `${ownSources ? 'differ in what they say and what they read' : 'differ only in what they say'}. ` +
+          'Make it a component — `components: [{ id, props, root }]` — and place it ' +
           'with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy ' +
           "says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; " +
           'what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).' +
+          ownSources +
           counted
     });
     fresh.forEach(cover);

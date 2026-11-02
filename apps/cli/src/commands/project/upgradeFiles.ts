@@ -29,7 +29,48 @@ export interface FilePlan {
   ours: string;
   /** What the project has, when it has the file. */
   yours?: string;
+  /** Of the agents' file, the sections the project wrote: what taking the CLI's moves to the project's notes. */
+  own?: Section[];
 }
+
+/** A section of a Markdown file: its `## ` heading line and everything up to the next one. */
+export interface Section {
+  heading: string;
+  text: string;
+}
+
+/** The agents' file: the CLI's, and replaced whole — its project notes are NOTES.md, which nothing replaces. */
+const AGENTS_FILE = 'AGENTS.md';
+
+/** The `## ` sections of a Markdown text, in order. */
+const sectionsOf = (text: string): Section[] =>
+  text
+    .split(/^(?=## )/m)
+    .filter(part => part.startsWith('## '))
+    .map(part => ({ heading: part.split('\n')[0].trim(), text: part.trimEnd() }));
+
+/**
+ * The sections of the project's agents' file no version of the CLI's has — by heading: one the CLI wrote and the project
+ * edited is the CLI's still, and taking the CLI's brings it up; one it added is its own, kept in its notes.
+ */
+export const ownSections = (yours: string, ours: string): Section[] => {
+  const theirs = new Set(sectionsOf(ours).map(section => section.heading));
+
+  return sectionsOf(yours).filter(section => !theirs.has(section.heading));
+};
+
+/** The project's notes with the sections given added at their end — those already there by heading left out. */
+export const notesWith = (notes: string | undefined, sections: readonly Section[]): string | undefined => {
+  const there = new Set(sectionsOf(notes ?? '').map(section => section.heading));
+  const moving = sections.filter(section => !there.has(section.heading));
+  if (moving.length === 0) {
+    return undefined;
+  }
+
+  const moved = moving.map(section => section.text).join('\n\n');
+
+  return notes === undefined || notes.trim() === '' ? `${moved}\n` : `${notes.trimEnd()}\n\n${moved}\n`;
+};
 
 export const readText = async (file: string): Promise<string | undefined> => {
   try {
@@ -101,8 +142,9 @@ const planFiles = async (
         return { file, status: 'updated', ours, yours };
       }
 
+      const own = file === AGENTS_FILE ? ownSections(yours, ours) : [];
       if (take.includes('all') || take.includes(file)) {
-        return { file, status: 'taken', ours, yours };
+        return { file, status: 'taken', ours, yours, ...(own.length > 0 ? { own } : {}) };
       }
 
       if (LIST_FILES.has(file)) {
@@ -115,7 +157,7 @@ const planFiles = async (
           : { file, status: 'current', ours, yours };
       }
 
-      return { file, status: 'yours', ours, yours };
+      return { file, status: 'yours', ours, yours, ...(own.length > 0 ? { own } : {}) };
     })
   );
 

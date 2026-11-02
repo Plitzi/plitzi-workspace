@@ -109,6 +109,30 @@ const renderedNames = (ts: typeof TypeScript, files: readonly SpaceSourceFile[])
   return names;
 };
 
+/**
+ * The names a type is derived from anywhere in the space — `(typeof KINDS)[number]['key']`: a table whose keys the code
+ * reads as a type is the code's own, which a JSON file read by a provider could not give an import.
+ */
+const typedNames = (ts: typeof TypeScript, files: readonly SpaceSourceFile[]): Set<string> => {
+  const names = new Set<string>();
+  for (const source of files) {
+    eachNode(ts, source.sourceFile, node => {
+      if (ts.isTypeQueryNode(node) && ts.isIdentifier(node.exprName)) {
+        names.add(node.exprName.text);
+      }
+    });
+  }
+
+  return names;
+};
+
+/** The name a list is declared by — `const KINDS = [ … ] as const` — or none. */
+const declaredName = (ts: typeof TypeScript, node: TypeScript.ArrayLiteralExpression): string | undefined => {
+  const parent = outerOf(ts, node).parent;
+
+  return ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name) ? parent.name.text : undefined;
+};
+
 /** Whether the list is rendered: mapped where it is written, given as a list's `items`, or named by what is. */
 const isRendered = (ts: typeof TypeScript, node: TypeScript.ArrayLiteralExpression, rendered: Set<string>): boolean => {
   const outer = outerOf(ts, node);
@@ -128,6 +152,7 @@ const isRendered = (ts: typeof TypeScript, node: TypeScript.ArrayLiteralExpressi
 
 export const inlineRecords: Rule = ({ ts, files, dataDir }) => {
   const rendered = renderedNames(ts, files);
+  const typed = typedNames(ts, files);
 
   return files.flatMap(source => {
     const found: LintFinding[] = [];
@@ -145,6 +170,11 @@ export const inlineRecords: Rule = ({ ts, files, dataDir }) => {
       }
 
       if (enclosingNames(ts, node).some(name => CONFIGURATION.has(name))) {
+        return;
+      }
+
+      const name = declaredName(ts, node);
+      if (name !== undefined && typed.has(name)) {
         return;
       }
 

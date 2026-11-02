@@ -121,6 +121,13 @@ describe('css', () => {
   it('reports every unknown property at once', () => {
     expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "also-nope"/);
     // The classic sr-only line's `clip` was refused with no word of what replaced it.
+    // An icon of one colour is a mask: refused as a shorthand, a run wrote it in customCss and split its class.
+    expect(() => css({ mask: 'url(icon.svg) center / contain no-repeat' })).toThrow(/'mask-image', 'mask-position'/);
+    expect(() => css({ '-webkit-mask': 'url(icon.svg)' })).toThrow(/every browser reads the mask unprefixed/);
+    expect(css({ 'mask-image': 'url(icon.svg)', 'mask-size': 'contain' })).toEqual({
+      'mask-image': 'url(icon.svg)',
+      'mask-size': 'contain'
+    });
     expect(() => css({ clip: 'rect(0, 0, 0, 0)' })).toThrow(
       /"clip" \(deprecated: write 'clip-path': 'inset\(50%\)', or the `sr-only` utility/
     );

@@ -7,6 +7,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** How tall the page is, as a browser lays it out. */
+const pageOf = (height: number) => vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(height);
+
 /** Boxes by element name, as a browser lays them out: jsdom lays nothing out. */
 const laidOut = (boxes: Record<string, [number, number]>) =>
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
@@ -33,10 +36,21 @@ describe('a link on its section’s edge', () => {
       'home-faq': [900, 1300],
       'home-faq-more': [1150, 1188]
     });
+    pageOf(1300);
 
     expect(flushEdgesInPage()).toEqual([
       { id: 'home-fights-all', section: 'home-fights' },
       { id: 'home-podcast-latest', section: 'home-podcast' }
     ]);
+  });
+
+  // A full-screen page's band at its foot had nothing below it, and verify could never pass.
+  it('is not said of a section that ends the page: nothing follows it to touch', () => {
+    document.body.innerHTML = `
+      <section data-plitzi-el="monitor-band" style="padding-bottom: 0px"><button data-plitzi-el="monitor-entry">All</button></section>`;
+    laidOut({ 'monitor-band': [834, 900], 'monitor-entry': [866, 900] });
+    pageOf(900);
+
+    expect(flushEdgesInPage()).toEqual([]);
   });
 });

@@ -15,6 +15,7 @@ import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
 import { apiDeclarations, apiIndex, apiText, memberDeclarations } from './apiDeclarations';
 import { LINT_RULES } from '../../lint/catalog';
+import { PAGE_CHECK_CODES } from '../page/check/codes';
 import { findProject } from '../project/existingProject';
 import { actionText, projectActions } from '../project/projectActions';
 import { pluginText, projectPlugins } from '../project/projectPlugins';
@@ -130,8 +131,11 @@ export interface CheckCodeExplanation {
   codeKind: 'error' | 'warning';
   means: string;
   fix: string;
-  checkedBy: 'plitzi space lint' | 'the project layout';
+  checkedBy: 'plitzi space lint' | 'the project layout' | 'plitzi page check';
 }
+
+const PAGE_CHECK_FIX =
+  'what its message says, naming the element (plitzi element where <id> finds it in the source) — plitzi page check --json gives each with its code';
 
 const LAYOUT_FIX =
   'what its message says, naming the file — plitzi doctor says every one, and plitzi doctor --fix makes those with one reading';
@@ -152,6 +156,11 @@ const CHECK_CODES: ReadonlyMap<string, CheckCodeExplanation> = new Map([
   ...Object.entries(PROJECT_LAYOUT_CODES).map(([name, code]): [string, CheckCodeExplanation] => [
     name,
     { kind: 'code', name, codeKind: code.level, means: code.means, fix: LAYOUT_FIX, checkedBy: 'the project layout' }
+  ]),
+  // A page's problem fails its check: each is an error of `page check`, its fix in the finding, naming the element.
+  ...Object.entries(PAGE_CHECK_CODES).map(([name, means]): [string, CheckCodeExplanation] => [
+    name,
+    { kind: 'code', name, codeKind: 'error', means, fix: PAGE_CHECK_FIX, checkedBy: 'plitzi page check' }
   ])
 ]);
 

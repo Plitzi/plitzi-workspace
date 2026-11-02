@@ -342,6 +342,28 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     vi.unstubAllEnvs();
   });
 
+  // main.ts is the CLI's: a project that asked its home once at boot, so its first visitor waited for nothing, had no
+  // place left to do it.
+  it('runs what the project does once it answers, and says it when that fails — the server serving on', async () => {
+    const asked: string[] = [];
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const running = await serve({
+      space: () => titled('a'),
+      serverOptions: {
+        onListening: async ({ url }) => {
+          asked.push(String((await fetch(`${url}/`)).status));
+          throw new Error('the warm-up broke');
+        }
+      }
+    });
+
+    await vi.waitFor(() => {
+      expect(asked).toEqual(['200']);
+      expect(error.mock.calls.flat().join('')).toContain('onListening (src/config/serverOptions.ts) failed');
+    });
+    expect((await fetch(`${running.url}/health`)).status).toBe(200);
+  });
+
   it('holds no kv file of its own when the project names its kv', async () => {
     await serve({ space: () => titled('a'), serverOptions: { action: { kv: createMemoryKv() } } });
 

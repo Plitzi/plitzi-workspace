@@ -482,6 +482,55 @@ describe('plitzi upgrade', () => {
     expect(recorded, 'the project’s own script recorded as the CLI’s').not.toHaveProperty('lint');
   });
 
+  // Taking the CLI's AGENTS.md showed the project's own section as deleted, and nothing said NOTES.md was its place.
+  it('moves the sections of the project’s own in AGENTS.md to NOTES.md when the CLI’s is taken', async () => {
+    const ours = await read('AGENTS.md');
+    const own = '## The shop, specifically\n\nPrices are kept in cents; never round them on the page.';
+    await fs.writeFile(file('AGENTS.md'), `${ours.trimEnd()}\n\n${own}\n`);
+
+    const shown = await run(['files']);
+    const listed = (shown.files as { file: string; toNotes?: string[] }[]).find(entry => entry.file === 'AGENTS.md');
+
+    expect(listed?.toNotes).toEqual(['## The shop, specifically']);
+
+    await run(['files'], { write: true, take: ['AGENTS.md'] });
+
+    expect(await read('AGENTS.md')).toBe(ours);
+    expect(await read('NOTES.md')).toContain(own);
+
+    // Taken again with the section already in the notes: it is not written twice.
+    await fs.writeFile(file('AGENTS.md'), `${ours.trimEnd()}\n\n${own}\n`);
+    await run(['files'], { write: true, take: ['AGENTS.md'] });
+
+    expect((await read('NOTES.md')).split('## The shop, specifically')).toHaveLength(2);
+  });
+
+  // A 0.38 project's `start` ran without .env: the doctor said upgrade rewrites a script the CLI wrote, and upgrade, with
+  // no record of an older CLI's scripts, called it the project's and left it.
+  it('replaces a script of the project’s own with the CLI’s when it is taken', async () => {
+    const manifest: unknown = JSON.parse(await read('package.json'));
+    if (!isRecord(manifest) || !isRecord(manifest.scripts)) {
+      throw new Error('the scaffold wrote no scripts');
+    }
+
+    const scripts = { ...manifest.scripts, start: 'node src/main.ts' };
+    await fs.writeFile(file('package.json'), `${JSON.stringify({ ...manifest, scripts }, null, 2)}\n`);
+    await writeScaffoldRecord(root, '0.38.4', { scripts: {} });
+
+    expect((await run(['packages'])).packages).toMatchObject({
+      ownScripts: [{ name: 'start', yours: 'node src/main.ts' }]
+    });
+
+    const taken = await run(['packages'], { write: true, take: ['script:start'] });
+
+    expect(taken.packages).toMatchObject({
+      updatedScripts: [{ name: 'start', from: 'node src/main.ts', to: manifest.scripts.start }],
+      ownScripts: []
+    });
+    const written: unknown = JSON.parse(await read('package.json'));
+    expect(written).toMatchObject({ scripts: { start: manifest.scripts.start } });
+  });
+
   it('brings every Plitzi skill to the installed version, whole, and leaves the project’s own skills alone', async () => {
     const skill = (name: string, inside: string) => file(path.join('.claude/skills', name, inside));
     await fs.mkdir(path.dirname(skill('plitzi-authoring', 'reference/gone.md')), { recursive: true });

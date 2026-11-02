@@ -423,7 +423,7 @@ export const buildProgram = (): Command => {
       '--write',
       'Make the changes: files nobody changed replaced, package.json merged and installed, names renamed'
     )
-    .option('--take <files...>', 'Replace these files of your own too (`all` for every one), after reading their diff')
+    .option('--take <files...>', 'Replace these of your own too, after reading their diff (`all`, `script:<name>`)')
     .option('--no-install', 'Write package.json and leave the install to you')
     .option('--with-open-runs', 'Upgrade although runs of agents are open: a person attaches to each after')
     .option('--json', 'One object, for a tool or an agent')

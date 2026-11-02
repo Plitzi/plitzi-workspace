@@ -151,6 +151,20 @@ describe('inline-records', () => {
 
     expect(at(findings, 'inline-records')).toEqual([]);
   });
+
+  // A registry of kinds the server's tasks and a plugin import, its keys a type, was told to become JSON for a provider.
+  it('leaves alone a table a type is derived from: its keys are the code’s', async () => {
+    const findings = await lintOne(
+      'src/space/kinds.ts',
+      [
+        `export const KINDS = [\n${rows(12)}\n] as const;`,
+        "export type Kind = (typeof KINDS)[number]['id'];",
+        'KINDS.map(kind => kind.title);'
+      ].join('\n')
+    );
+
+    expect(at(findings, 'inline-records')).toEqual([]);
+  });
 });
 
 describe('special-case-in-map', () => {

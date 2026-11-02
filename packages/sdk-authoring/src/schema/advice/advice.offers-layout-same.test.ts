@@ -180,6 +180,21 @@ describe('suggestions', () => {
     expect(shape?.message).toContain('Counted from 3 copies of 4 elements or more (2 of 8 or more)');
     expect(shape?.message).toContain("`quiet: ['repeated-shape']`");
   });
+  // Two lists apart reading two feeds were told they "differ only in what they say", and the definition called them
+  // controls: they are one component still, each instance handed the source it reads.
+  it('says how copies apart that read different sources are one component: each handed its own', () => {
+    const { suggestions } = authorSpace(
+      dashboard(
+        figure('views', '{{ source|number }} views'),
+        figure('edits', '{{ source|number }} edits'),
+        figure('pages', '{{ source|number }} pages')
+      )
+    );
+    const shape = suggestions.find(suggestion => suggestion.code === 'repeated-shape');
+
+    expect(shape?.message).toContain('differ in what they say and what they read');
+    expect(shape?.message).toContain("hand it in as a bound `json` prop — `component(id, { bind: [{ to: 'items'");
+  });
   it('does not take figures that read their data in different forms for one component', () => {
     const unlike = dashboard(
       figure('views', '{{ source|number }} views'),
@@ -365,6 +380,27 @@ describe('suggestions', () => {
     expect(codesOf(spec)).toEqual(
       expect.arrayContaining(['custom-css-class', 'custom-css-sdk-default', 'custom-css-notifications'])
     );
+  });
+  // Named four of nine and said "…": a run moved those, and the rest appeared a round at a time.
+  it('says how many rules of a class are left unnamed, and that moving them may leave more', () => {
+    const names = Array.from({ length: 10 }, (_, index) => `c${String(index)}`);
+    const spec = space(
+      [
+        page(
+          'home',
+          names.map(name => container({ class: name }))
+        )
+      ],
+      {
+        classes: Object.fromEntries(names.map(name => [name, { color: 'blue' }])),
+        customCss: names.map(name => `.${name}:hover { color: red; }`).join('\n')
+      }
+    );
+    const suggestion = authorSpace(spec).suggestions.find(entry => entry.code === 'custom-css-class');
+
+    expect(suggestion?.message).toContain('10 rules in `customCss` are a class');
+    expect(suggestion?.message).toContain('`c7` (its `hover` state), and 2 more');
+    expect(suggestion?.message).toContain('moving these may leave more to move');
   });
   it('reads the toast’s parts dressed by hand as the notifications’ fields, and leaves what those cannot say', () => {
     const toasts = (customCss: string) =>

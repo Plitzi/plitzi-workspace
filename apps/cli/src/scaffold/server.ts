@@ -108,6 +108,8 @@ const serverOptionsModule = (
 ${local ? ACTION_OPTIONS_DOC : ''} * - \`rsc: { elementTimeoutMs }\` — how long a section resolved on the server is waited for: 5 s by default.
  * - \`devMode\` — the development build, the dev tools, a public action's trace: on unless \`NODE_ENV\` is \`production\`.
  *   \`devMode: false\` keeps them off wherever the server is started, \`NODE_ENV\` or not. \`livePages\` follows it.
+ * - \`onListening: async ({ url }) => { await fetch(url); }\` — run once the server answers: here, its home
+ *   asked once, so the first visitor does not wait for its sources cold. Not awaited; a failure is said.
  */
 export const serverOptions: ProjectServerOptions = {};
 `;
