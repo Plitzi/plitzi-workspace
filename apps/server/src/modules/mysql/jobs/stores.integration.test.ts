@@ -12,10 +12,11 @@ import type { Pool } from 'mysql2/promise';
 /**
  * The MySQL helpers against a real MySQL, through the same contract the in-process stores keep.
  *
- * Same database and credentials as the account store's integration test, under a prefix of its own; skipped — not
- * failed — on a machine with no MySQL.
+ * Same database and credentials as the account store's integration test, under a prefix of its own — this run's: two
+ * runs at once (another session, the workspace's suite beside a package's) emptied and locked each other's rows, and
+ * a test waiting on a lock timed out. Its tables are dropped at the end; skipped — not failed — with no MySQL.
  */
-const PREFIX = 'itest_jobs_';
+const PREFIX = `itest_jobs_${String(process.pid)}_`;
 
 const open = async (): Promise<Pool | undefined> => {
   try {
@@ -38,6 +39,12 @@ const open = async (): Promise<Pool | undefined> => {
 const pool = await open();
 
 afterAll(async () => {
+  if (pool) {
+    for (const table of Object.values(jobTables(PREFIX))) {
+      await execute(pool, `DROP TABLE IF EXISTS ${table}`);
+    }
+  }
+
   await pool?.end();
 });
 

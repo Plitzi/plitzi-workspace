@@ -9,10 +9,12 @@ import { describeJobQueue, describeKv } from '../actions/jobs/tests/jobQueueCont
  * The Mongo helpers against a real Mongo, through the same contract the in-process stores keep.
  *
  * Skipped — not failed — on a machine with no Mongo: `MONGO_TEST_URL` points it at one, and the default is the port the
- * repository's docker services publish. Its own database, emptied before every test.
+ * repository's docker services publish. A database of this run's own, emptied before every test.
  */
 const URL = process.env.MONGO_TEST_URL ?? 'mongodb://127.0.0.1:27010';
-const DATABASE = 'sdk_server_itest';
+// This run's own: two runs at once (another session, the workspace's suite beside a package's) emptied each other's
+// collections mid-test. Dropped at the end.
+const DATABASE = `sdk_server_itest_${String(process.pid)}`;
 
 const client = new MongoClient(URL, { serverSelectionTimeoutMS: 1_500 });
 const available = await client
@@ -22,6 +24,10 @@ const available = await client
 const db = client.db(DATABASE);
 
 afterAll(async () => {
+  if (available) {
+    await db.dropDatabase();
+  }
+
   await client.close();
 });
 
