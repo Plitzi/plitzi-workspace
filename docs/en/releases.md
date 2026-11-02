@@ -9,7 +9,10 @@ which sdk" a question nobody has to ask. Private workspaces (examples, e2e, the 
 
 Keep **one changeset per release** (`.changeset/release.md`), and add to it rather than creating another: list every
 public package in its front matter, so each package's `CHANGELOG.md` carries the notes and not just "updated
-dependencies", and group the notes under a heading per area.
+dependencies", and group the notes under a heading per area. **Keep it short:** it is copied into every package's
+`CHANGELOG.md`, so a change is one or two lines — what changed and, for a break, what to do (under "To do when you
+upgrade") — never its story or its edge cases, which the README and `docs/en` own. Fold a fix into the feature it
+belongs to rather than adding a bullet.
 
 ## A change a project's source has to follow
 
