@@ -764,7 +764,8 @@ command that died busy) — a run's tester's `task prove --before` waited twice 
 8 min ran out meanwhile, and another tester took the review it was still proving.
 
 **An element no page places yet is looked at alone** (`task look --alone <element> --with <json>…`): the look's server
-starts with `PREVIEW_FILE_ENV` naming a file of the task's cache, and `authorProjectSpace` adds a page for it at
+starts with `PREVIEW_FILE_ENV` naming a file of the task's cache, and `projectSpace` (sdk-authoring's, which the server's
+first authoring and its re-authoring on a save both read) adds a page for it at
 `PREVIEW_SLUG`, in no layout — a component's copies with their props, an element type's with their attributes, ids
 `previewCopyId` — refusing a name that is neither (`SpacePreviewError`, said alone by the server) and a space with a
 page there already. Five reviewers of plugin tasks, and two of a component, wrote probe pages in their scratch to see

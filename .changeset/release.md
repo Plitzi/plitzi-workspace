@@ -411,7 +411,7 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   wrote probe pages in their scratch and two rebuilt a merge by hand:
   - `task look <task> --alone <element> --with '{…}'` draws a component of the space (its props) or an element type —
     a plugin's, a built-in — (its attributes) alone, a copy for each `--with`, on a page the look's server authors for
-    it with no layout (`PREVIEW_FILE_ENV`, `PREVIEW_SLUG`, `previewCopyId`; `authorProjectSpace` adds it). A name that is
+    it with no layout (`PREVIEW_FILE_ENV`, `PREVIEW_SLUG`, `previewCopyId`; sdk-authoring's `projectSpace` adds it, so a save keeps it). A name that is
     neither is refused naming the components and the plugins' elements there are (`SpacePreviewError`, which a
     project's server says alone, with no stack).
   - A review taken says what fails when the task is put together with what the run approved since, by its lines —

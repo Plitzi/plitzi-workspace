@@ -184,7 +184,10 @@ await serveProject({ space: authorProjectSpace, actions, connectors, serverOptio
 `space` — `dist/space/index.js` when the server runs what `build` emitted (`projectModule` of
 `@plitzi/sdk-shared/project`, the rule the runtime is found by too) — and authors it with `projectAuthoring()`. A
 module that exports no `space` is refused saying what to export (`ProjectSpaceError`), and a space that does not author
-with every problem (`SpaceRefusedError`): each printed as the report it is, and the process exits with 1.
+with every problem (`SpaceRefusedError`): each printed as the report it is, and the process exits with 1. Started with
+`PLITZI_PREVIEW_FILE` (`PREVIEW_FILE_ENV`) naming an element to draw alone — what `plitzi task look --alone` sets for
+its own server — the space gets a page for it at `/plitzi-preview`; a name that is no component or element type is
+refused saying which there are (`SpacePreviewError`).
 
 The project is the working directory — where every script of its `package.json` runs it, and where a deployment runs
 `node dist/main.js` — never worked out from where a file is: `serveProject` and `authorProjectSpace` refuse to start

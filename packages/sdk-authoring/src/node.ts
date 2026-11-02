@@ -533,7 +533,19 @@ export const projectSpaceAt = async (root: string): Promise<ProjectSpaceSource> 
  * given as the space's files load is said like the rest — the message, not a stack. A module that exports no space is
  * refused, saying what to export (`ProjectSpaceError`).
  */
-export const projectSpace = async (): Promise<ProjectSpaceSource> => projectSpaceAt(projectRoot());
+export const projectSpace = async (): Promise<ProjectSpaceSource> => {
+  const { space, authoring } = await projectSpaceAt(projectRoot());
+  // An element drawn alone, when the process was started for it (`PREVIEW_FILE_ENV`): a page of its own beside the rest
+  // — here, so the server's first authoring and its re-authoring on a save (`.plitzi/author.ts`) both draw it.
+  const preview = previewOfProcess();
+
+  return {
+    space: preview
+      ? withPreview(space, preview, [...authoring.plugins.map(plugin => plugin.type), ...authoring.pluginTypes])
+      : space,
+    authoring
+  };
+};
 
 /**
  * The project's space, authored: what a project's server serves — `serveProject({ space: authorProjectSpace })` — and
@@ -541,15 +553,8 @@ export const projectSpace = async (): Promise<ProjectSpaceSource> => projectSpac
  */
 export const authorProjectSpace = async (): Promise<AuthoredSpace> => {
   const { space, authoring } = await projectSpace();
-  // An element drawn alone, when the process was started for it (`PREVIEW_FILE_ENV`): a page of its own beside the rest.
-  const preview = previewOfProcess();
 
-  return authorSpace(
-    preview
-      ? withPreview(space, preview, [...authoring.plugins.map(plugin => plugin.type), ...authoring.pluginTypes])
-      : space,
-    authoring
-  );
+  return authorSpace(space, authoring);
 };
 
 export { compactSvg } from './svg/compactSvg';

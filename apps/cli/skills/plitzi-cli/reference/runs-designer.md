@@ -12,7 +12,9 @@ too.
   nothing else did (`--no-before` leaves that out). `--click <id>` an open state, `--hover <id>` a hover, `--steps
   "state notice …"` what only a message or a flow shows, checked and pictured, `--element <id>` its attributes and styles. A page that sends a guest to sign in is read as the project's account
   by itself (`--as` another; a path its own: `"/moderation --as juno --status 403"`); a page the task adds is pictured alone. A page it says you did not look at reads a file
-  the task changed: look at it. **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
+  the task changed: look at it. A component or a plugin no page places yet: `--alone <element> --with '{…props}'` (a
+  copy for each `--with`, no layout); a shared file another approval changed since its copy: `--merged`, as it goes in.
+  **One look a round** (~8 s): it checks both schemes, pictures the task's parts beside the run before it and
   reads that nothing else moved — asked again with nothing changed, it says the same (`--fresh` looks anew). Then
   measure only what it, or the task's checks, show differs.
 - **Measure, never guess — in one call:** `plitzi page measure <path> "<ours> => <theirs>" … --compare <url> --width

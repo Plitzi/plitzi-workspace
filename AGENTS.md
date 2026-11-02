@@ -535,6 +535,11 @@ Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publis
   `page.evaluate` that declares a named function inside (`const load = () => …`): tsx wraps it in `__name`, which the
   page has not (`ReferenceError: __name is not defined`). Try anything a browser runs with the built CLI
   (`yarn build:dev`, `node apps/cli/dist/index.js …`).
+- A function handed to `page.evaluate` reads nothing of its module — no CLI helper (`projectRun`), no constant not
+  passed as its argument — and a `.catch(() => undefined)` around it swallows the `ReferenceError`: `spaceFailureOn`
+  never recognised the server's error page for that. A jsdom test that calls the function directly passes; remake it
+  from its text in a context of its own (`vm.runInNewContext`, `page/check/spaceFailure.test.ts`) and it fails as the
+  page does.
 - `apps/cli/src/commands/runs/runs.test.ts` starts the CLI as a process, which imports the other `@plitzi/*` packages from
   their `dist`: a new export of `sdk-shared` fails all of it (`does not provide an export named …`) until
   `yarn build:dev` there — vitest's own run reads the source and passes.
