@@ -17,6 +17,13 @@ yarn e2e           # the browser suite, for the whole monorepo
 Co-located with the code (`Component.test.tsx` beside `Component.tsx`), `@testing-library/react` for anything
 that renders. Run one package's suite with `yarn workspace @plitzi/<name> test`.
 
+The root `yarn test` runs every package at once (`--concurrency=20`), so a test waits for a core: it sets `TURBO_RUN`,
+and the timing budgets and Vitest's own timeouts are multiplied by 5 (`PERF_MULTIPLIER` overrides it, as CI does) —
+`packages/sdk-shared/testTimeouts.ts`, applied by `setupTests.ts` or, for a package with no browser stubs,
+`setupTimeouts.ts` in its `setupFiles`. A new package's test config names one of the two. A test that passes alone and
+times out only there is load, not a bug: never raise one test's timeout for it. A test slow alone (a real build, a
+real server) says its own timeout, with why, beside it.
+
 Cover edge cases, re-renders, leaks and performance — not just the happy path.
 
 ## End to end — Playwright

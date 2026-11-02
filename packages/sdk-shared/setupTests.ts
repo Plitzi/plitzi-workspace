@@ -1,9 +1,10 @@
 import { vi } from 'vitest';
 import createFetchMock from 'vitest-fetch-mock';
 
-(globalThis as Record<string, unknown>).PERF_MULTIPLIER = Number(
-  process.env.PERF_MULTIPLIER ?? (process.env.TURBO_RUN ? 5 : 1)
-);
+import { perfMultiplier, testTimeouts } from './testTimeouts';
+
+(globalThis as Record<string, unknown>).PERF_MULTIPLIER = perfMultiplier();
+vi.setConfig(testTimeouts());
 
 //  set globalThis.fetch and globalThis.fetchMock
 const fetchMocker = createFetchMock(vi);

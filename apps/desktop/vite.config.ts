@@ -83,7 +83,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: [resolve('setupTests.ts')],
+    setupFiles: [resolve('../../packages/sdk-shared/setupTimeouts.ts'), resolve('setupTests.ts')],
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'electron/**/*.test.ts'],
     environmentMatchGlobs: [['electron/**', 'node']],
     // Through Vite, so `resolve.dedupe` reaches them: loaded by Node, a portalled plitzi-ui — and the packages in its own

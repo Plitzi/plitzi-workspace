@@ -22,6 +22,8 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['src/**/*.test.ts'],
+    // Vitest's timeouts scaled under the workspace's suite, where every package runs at once.
+    setupFiles: ['../../packages/sdk-shared/setupTimeouts.ts'],
     // The functions' isolates: isolated-vm needs Node's startup snapshot off (see sandbox/isolate.ts).
     execArgv: ['--no-node-snapshot'],
     deps: {
