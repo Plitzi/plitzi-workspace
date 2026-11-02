@@ -60,6 +60,7 @@ const renderControl = (subType: FormControlProps['subType']) =>
           label="Secret"
           hideLabel={false}
           placeholder=""
+          accept=""
           autoComplete={false}
           autoFocus={false}
           disabled={false}

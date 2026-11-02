@@ -46,7 +46,8 @@ export type FormProps = {
 };
 
 export type Field = { id: string; name: string };
-export type FieldValue = string | boolean | number;
+/** A `file` control holds the `File` picked; every other control text, a number or a checkbox's state. */
+export type FieldValue = string | boolean | number | File;
 
 /** What a control says about the form's values as they stand: the sentence to show under it, or `''`. */
 export type FieldValidator = (values: Record<string, unknown>) => string;

@@ -81,6 +81,7 @@ export const elementAttributeNames = {
   fontAwesome: ['icon', 'iconAnimation', 'label', 'size'],
   form: ['actionUrl', 'errors', 'managedByInteractions', 'method', 'noValidate', 'values'],
   formControl: [
+    'accept',
     'autoComplete',
     'autoFocus',
     'defaultValue',

@@ -82,7 +82,7 @@ const FORM_CONTROL_INPUTS: Record<string, string> = {
 /** The field inside a form control's box, for the sub-types drawn as a box around one. */
 const FORM_CONTROL_FIELDS: Partial<Record<string, string>> = {
   ...Object.fromEntries(
-    ['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color'].map(subType => [
+    ['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color', 'file'].map(subType => [
       subType,
       '.input-container__input'
     ])

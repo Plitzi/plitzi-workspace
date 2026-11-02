@@ -225,7 +225,8 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       'select',
       'textarea',
       'hidden',
-      'color'
+      'color',
+      'file'
     ])
   },
   triggers: {
@@ -245,6 +246,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       label: 'Label',
       hideLabel: false,
       placeholder: '',
+      accept: '',
       defaultValue: '',
       autoComplete: true,
       autoFocus: false,
@@ -277,6 +279,8 @@ const declaration = elementDeclaration<FormControlAttributes>()({
         'input. Optional unless `required: true`, as an HTML field is: a `requiredMessage` alone requires nothing. ' +
         'A `number` field takes `min` and `max` (each said by its `minMessage`/`maxMessage` when broken) and `step`, ' +
         "written as numbers are — `'2'`; `''` for none. " +
+        'A `file` field holds the `File` picked; a `webHook` whose body holds it sends it as multipart, under its ' +
+        "`name`, and `accept` says what the picker offers — `'image/png,image/jpeg'`. " +
         'A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
         '`switch` is a checkbox announced and drawn as an on/off switch (`role="switch"`), for a setting that applies at ' +
         'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on. Its slots: `label`, ' +
@@ -317,6 +321,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
         date: typed('Form Control Date', defaultInputStyle, withField),
         time: typed('Form Control Time', defaultInputStyle, withField),
         color: typed('Form Control Color', defaultInputStyle, withField),
+        file: typed('Form Control File', defaultInputStyle, withField),
         // Its own box, with no `field` inside to inherit through: the browser's monospace would show otherwise.
         textarea: typed('Form Control Textarea', {
           ...defaultInputStyle,

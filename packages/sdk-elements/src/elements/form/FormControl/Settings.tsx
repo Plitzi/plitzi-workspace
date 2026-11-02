@@ -24,11 +24,13 @@ type SettingsProps = {
     | 'textarea'
     | 'hidden'
     | 'color'
-    | 'switch';
+    | 'switch'
+    | 'file';
   name?: string;
   label?: string;
   hideLabel?: boolean;
   placeholder?: string;
+  accept?: string;
   autoComplete?: boolean;
   autoFocus?: boolean;
   defaultValue?: string;
@@ -69,6 +71,7 @@ const Settings = ({
   hideLabel = false,
   defaultValue = '',
   placeholder = '',
+  accept = '',
   autoComplete = true,
   autoFocus = false,
   options,
@@ -106,6 +109,8 @@ const Settings = ({
   );
 
   const handleChangePlaceholder = useCallback((value: string) => onUpdate?.('placeholder', value), [onUpdate]);
+
+  const handleChangeAccept = useCallback((value: string) => onUpdate?.('accept', value), [onUpdate]);
 
   const handleChangeType = useCallback(
     (value: string) => {
@@ -226,8 +231,21 @@ const Settings = ({
         <option value="textarea">Long Text</option>
         <option value="hidden">Hidden</option>
         <option value="color">Color</option>
+        <option value="file">File</option>
       </Select>
-      <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
+      {subType === 'file' && (
+        <Input
+          value={accept}
+          label="Accepted Files"
+          placeholder="image/png, image/jpeg, .pdf"
+          onChange={handleChangeAccept}
+          size="xs"
+        />
+      )}
+      {/* A file is picked by the visitor; there is no file an author could type as its default. */}
+      {subType !== 'file' && (
+        <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
+      )}
       {subType === 'text' && (
         <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />
       )}

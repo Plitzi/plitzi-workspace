@@ -1,9 +1,13 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
 import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 
+import { sideAt } from './sideAt';
+
+import type { IndicatorSide } from './sideAt';
 import type { LogType } from '@plitzi/sdk-shared';
 
 export type DevToolsIndicatorProps = {
@@ -11,10 +15,22 @@ export type DevToolsIndicatorProps = {
   onOpen: (logType?: LogType) => void;
 };
 
+/** How far a press travels before it is a drag rather than a click. */
+const DRAG_THRESHOLD = 5;
+
 // Fixed to the viewport rather than docked: while the panel is collapsed this is the only thing the dev tools show,
 // and it has to stay reachable over a page that scrolls.
 const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
   const { logs } = use(DevToolsContext);
+  /**
+   * Which bottom corner, dragged there and remembered by this browser: whatever corner it sits in, some space has its
+   * own thing there — a sidebar's footer, a cookie banner — and the badge covered it on every page of that space.
+   */
+  const [side, setSide] = useStorage<IndicatorSide>('plitzi-sdk.dev-tools.badge-side', 'left');
+  /** Where a drag started and where the pointer is now, while one is under way. */
+  const [drag, setDrag] = useState<{ from: number; x: number }>();
+  const press = useRef<{ x: number; dragging: boolean }>(undefined);
+  const holderRef = useRef<HTMLDivElement>(null);
 
   const { errors, warnings } = useMemo(
     () =>
@@ -28,9 +44,42 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
     [logs]
   );
 
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    press.current = { x: event.clientX, dragging: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const pressed = press.current;
+    if (!pressed || (!pressed.dragging && Math.abs(event.clientX - pressed.x) < DRAG_THRESHOLD)) {
+      return;
+    }
+
+    pressed.dragging = true;
+    setDrag({ from: pressed.x, x: event.clientX });
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const container = holderRef.current?.offsetParent?.getBoundingClientRect();
+      if (press.current?.dragging && container) {
+        setSide(sideAt(event.clientX, container));
+      }
+
+      setDrag(undefined);
+    },
+    [setSide]
+  );
+
   // Opening straight into what the badge is complaining about: errors first, then warnings, and the plain log list
-  // when there is nothing wrong.
+  // when there is nothing wrong. A press that was a drag moved it, and opens nothing.
   const handleClick = useCallback(() => {
+    const dragged = press.current?.dragging === true;
+    press.current = undefined;
+    if (dragged) {
+      return;
+    }
+
     if (errors > 0) {
       onOpen('danger');
 
@@ -57,14 +106,23 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
      *
      * It still does not scroll away: the container is the viewport-sized box and the space scrolls in a child of it.
      */
-    <div className={clsx('absolute bottom-3 left-3 z-[1000000]', className)} {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}>
+    <div
+      ref={holderRef}
+      className={clsx('absolute bottom-3 z-[1000000]', side === 'right' ? 'right-3' : 'left-3', className)}
+      // Follows the pointer while dragged, from the corner it left; it lands in a corner when let go.
+      style={drag ? { translate: `${String(drag.x - drag.from)}px 0` } : undefined}
+      {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}
+    >
       <button
         className={clsx(
-          'flex cursor-pointer items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1.5 text-[12px]/[16px]',
+          'flex cursor-pointer touch-none items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1.5 text-[12px]/[16px]',
           'font-bold text-zinc-600 shadow-md transition-colors select-none hover:bg-zinc-50',
           'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
         )}
-        title="Plitzi dev tools"
+        title="Plitzi dev tools — drag to the other corner"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onClick={handleClick}
       >
         Plitzi

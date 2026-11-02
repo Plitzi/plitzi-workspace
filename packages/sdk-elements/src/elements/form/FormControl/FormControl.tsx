@@ -12,6 +12,7 @@ import declaration from './declaration';
 import { isChecked } from './helpers/isChecked';
 import withFieldValue from './hocs/withFieldValue';
 import Checkbox from './inputs/Checkbox';
+import FileInput from './inputs/FileInput';
 import Hidden from './inputs/Hidden';
 import Input from './inputs/Input';
 import Select from './inputs/Select';
@@ -45,7 +46,12 @@ export type FormControlProps = {
     | 'textarea'
     | 'hidden'
     /** The browser's own colour picker: its value is `#rrggbb`. */
-    | 'color';
+    | 'color'
+    /**
+     * A file picked from the device: its value is the `File`, which a `webHook` step sends as a multipart form, under
+     * the control's `name`.
+     */
+    | 'file';
   name: string;
   label: string;
   /**
@@ -55,6 +61,8 @@ export type FormControlProps = {
    */
   hideLabel: boolean;
   placeholder: string;
+  /** A `file` field's offer, as the browser reads `accept`: `image/png,image/jpeg`, `.pdf`. `''` for any file. */
+  accept: string;
   autoComplete: boolean;
   /**
    * Takes the focus as it appears — a search box opened by a shortcut is typed into at once. With the control's
@@ -91,7 +99,8 @@ export type FormControlProps = {
   matches: string;
   matchesMessage: string;
   readOnly: boolean;
-  value: string;
+  /** Text for every type but `file`, whose value is the `File` picked. */
+  value: string | File;
   error: string;
   /**
    * Supplied by `withFieldValue`, with or without a form around the control.
@@ -113,6 +122,7 @@ const FormControl = ({
   label = '',
   hideLabel = false,
   placeholder = '',
+  accept = '',
   autoComplete = true,
   autoFocus = false,
   disabled = false,
@@ -164,7 +174,8 @@ const FormControl = ({
       const { target } = e;
       // A switch is a checkbox too, announced as one that switches.
       const checkable = target instanceof HTMLInputElement && target.type === 'checkbox';
-      const value = checkable ? target.checked : target.value;
+      const picked = target instanceof HTMLInputElement && target.type === 'file' ? (target.files?.[0] ?? null) : undefined;
+      const value = picked !== undefined ? picked : checkable ? target.checked : target.value;
       void interactionsManager.interactionTrigger(id, 'onChange', { value, name });
     },
     [handleChange, previewMode, interactionsManager, id, name]
@@ -180,6 +191,7 @@ const FormControl = ({
   const focusWhenShown = autoFocus && previewMode && visible;
   const labelHidden = hideLabel && previewMode;
   const errorId = error && previewMode ? `${rootId}_${id}_error` : undefined;
+  const text = typeof value === 'string' ? value : '';
   const checkControl = isCheck && (
     <Checkbox
       variant={subType === 'switch' ? 'switch' : 'checkbox'}
@@ -247,7 +259,7 @@ const FormControl = ({
         <Input
           id={`${rootId}_${id}`}
           name={name}
-          value={value}
+          value={text}
           type={subType}
           className={styleSelectors.input}
           fieldClassName={styleSelectors.field}
@@ -271,7 +283,7 @@ const FormControl = ({
         <Hidden
           id={`${rootId}_${id}`}
           name={name}
-          value={value}
+          value={text}
           required={required}
           disabled={disabled}
           previewMode={previewMode}
@@ -284,7 +296,7 @@ const FormControl = ({
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
           errorId={errorId}
-          value={value}
+          value={text}
           className={styleSelectors.input}
           fieldClassName={styleSelectors.field}
           placeholder={placeholder}
@@ -298,7 +310,7 @@ const FormControl = ({
         <Textarea
           id={`${rootId}_${id}`}
           name={name}
-          value={value}
+          value={text}
           className={styleSelectors.input}
           placeholder={placeholder}
           autoFocus={focusWhenShown}
@@ -306,6 +318,22 @@ const FormControl = ({
           maxLength={maxLength}
           disabled={disabled}
           readOnly={readOnly}
+          onChange={handleChangeInteraction}
+          onValidate={handleValidate}
+          errorId={errorId}
+        />
+      )}
+      {subType === 'file' && (
+        <FileInput
+          id={`${rootId}_${id}`}
+          name={name}
+          accept={accept}
+          chosen={value instanceof File ? value : undefined}
+          className={styleSelectors.input}
+          fieldClassName={styleSelectors.field}
+          required={required}
+          disabled={disabled}
+          previewMode={previewMode}
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
           errorId={errorId}

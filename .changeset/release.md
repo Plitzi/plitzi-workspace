@@ -54,6 +54,9 @@
 
 ## Elements (`@plitzi/sdk-elements`)
 
+- `formControl` has a `file` subtype: it holds the `File` picked (`accept` says which kinds the picker offers), its
+  `onChange` hands the file as `value`, and a `webHook` whose body carries it sends it as a multipart form under the
+  control's `name`. The browser's own button takes the field's type and colour, in either theme.
 - A new element, `focusGroup`: the arrow keys move the focus between the controls inside it — ↑/↓ through them, ←/→ to
   the first of the next or the previous list, Home/End to the ends; ↓ from a text field inside goes down into them and
   ↑ from the first comes back. For a search palette's results, a menu, a set of options.
@@ -69,3 +72,8 @@
 
 - A kept key the page wrote before the restore landed stays when the kept entry holds none of it: a page's own default
   written on load was dropped whenever the visit had started on another page.
+
+## Dev tools (`@plitzi/sdk-dev-tools`)
+
+- The collapsed badge is dragged to the other bottom corner, and the browser remembers which: in the left one it
+  covered whatever a space puts there — a sidebar's footer, a cookie banner. A press that barely moves is still a click.

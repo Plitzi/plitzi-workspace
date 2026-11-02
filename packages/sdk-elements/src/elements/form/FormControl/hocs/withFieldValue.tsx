@@ -27,7 +27,8 @@ export type WithFieldValueProps<T> = {
     | 'checkbox'
     | 'textarea'
     | 'color'
-    | 'switch';
+    | 'switch'
+    | 'file';
   required: boolean;
   requiredMessage?: string;
   minLength?: number;
@@ -171,6 +172,16 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
     const handleChange = useCallback(
       (e: ChangeEvent<HTMLInputElement>) => {
         const checkable = e.target.type === 'radio' || e.target.type === 'checkbox';
+        if (e.target.type === 'file') {
+          // The file itself, not its fake path: `value` of a file input is `C:\fakepath\…`, and a send needs the bytes.
+          const picked = e.target.files?.[0] ?? null;
+          if (setFieldValue) {
+            setFieldValue(name, picked);
+          }
+
+          return;
+        }
+
         if (!setFieldValue) {
           setOwnValue(checkable ? String(e.target.checked) : e.target.value);
 

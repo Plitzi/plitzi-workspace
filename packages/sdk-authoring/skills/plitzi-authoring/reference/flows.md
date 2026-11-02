@@ -48,15 +48,15 @@ same flags, decided on the server. Use the step builders — they fill in where 
 
 Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{{ changed.<field> }}`:
 
-| Trigger                                                                                                | Payload                                                 |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `onChange` (formControl)                                                                               | `value` (a boolean for a checkbox or switch), `name`    |
-| `onSubmit` (form)                                                                                      | `values` (by control `name`), `actionUrl`, `method`     |
-| `onPageLoad` (page)                                                                                    | `pageId`, `routeParams`, `queryParams`                  |
-| `onApiSuccess` / `onApiError` (apiContainer)                                                           | `url`, `method`, `status`, `data`                       |
-| `onModalOpen` / `onModalClose`, `onDialogOpen` / `onDialogClose` / `onDialogAccept` / `onDialogReject` | `metadata` — what `openModal` / `openDialog` was handed |
-| `onPageChange` (pagination)                                                                            | `page`                                                  |
-| `onThemeChange` (themeToggle)                                                                          | `theme`                                                 |
+| Trigger                                                                                                | Payload                                                                     |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `onChange` (formControl)                                                                               | `value` (a boolean for a checkbox or switch, the `File` for a file), `name` |
+| `onSubmit` (form)                                                                                      | `values` (by control `name`), `actionUrl`, `method`                         |
+| `onPageLoad` (page)                                                                                    | `pageId`, `routeParams`, `queryParams`                                      |
+| `onApiSuccess` / `onApiError` (apiContainer)                                                           | `url`, `method`, `status`, `data`                                           |
+| `onModalOpen` / `onModalClose`, `onDialogOpen` / `onDialogClose` / `onDialogAccept` / `onDialogReject` | `metadata` — what `openModal` / `openDialog` was handed                     |
+| `onPageChange` (pagination)                                                                            | `page`                                                                      |
+| `onThemeChange` (themeToggle)                                                                          | `theme`                                                                     |
 
 ## Reading what came before
 

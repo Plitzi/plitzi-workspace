@@ -54,13 +54,14 @@ const Control = withFieldValue(FormControl);
 const control = (
   props: Pick<FormControlProps, 'name' | 'label'> &
     Partial<Omit<FormControlProps, 'subType'>> & {
-      subType: 'text' | 'password' | 'date' | 'email' | 'checkbox' | 'switch';
+      subType: 'text' | 'password' | 'date' | 'email' | 'checkbox' | 'switch' | 'file';
     }
 ) => ({
   ref: { current: document.createElement('div') },
   className: '',
   hideLabel: false,
   placeholder: '',
+  accept: '',
   autoComplete: false,
   autoFocus: false,
   disabled: false,
@@ -270,6 +271,41 @@ describe('Form / the rules its controls declare', () => {
 
     expect(submits()).toHaveLength(1);
     expect(submits()[0][2]).toMatchObject({ values: { date: '2026-10-16' } });
+  });
+
+  // A profile photo: the form holds the file itself, which a webHook step sends as a multipart form.
+  it('holds the file a file field picked, and submits the file itself', () => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('avatar')}>
+          <Control {...control({ name: 'avatar', subType: 'file', label: 'Photo', accept: 'image/png' })} />
+        </ElementContext>
+      </Harness>
+    );
+
+    expect(input('avatar').type).toBe('file');
+    expect(input('avatar').accept).toBe('image/png');
+
+    const photo = new File(['png'], 'me.png', { type: 'image/png' });
+    fireEvent.change(input('avatar'), { target: { files: [photo] } });
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()).toHaveLength(1);
+    expect(submits()[0][2]).toMatchObject({ values: { avatar: photo } });
+  });
+
+  it('refuses to submit a required file field with no file picked', () => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('avatar')}>
+          <Control {...control({ name: 'avatar', subType: 'file', label: 'Photo' })} />
+        </ElementContext>
+      </Harness>
+    );
+
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()).toHaveLength(0);
   });
 
   it('leaves the browser checks on unless the form is told otherwise', () => {
