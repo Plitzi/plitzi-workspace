@@ -11,6 +11,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { writeOrigin } from './spaceOrigin';
 import { pinnedParts, upgrade, UPGRADE_PARTS } from './upgrade';
+import { missingLines } from './upgradeFiles';
 import { detectManagerVersion, machineryFiles, scaffold } from '../../scaffold';
 import { CLI_VERSION } from '../../scaffold/project';
 import { install, writeFiles } from '../shared/terminal';
@@ -567,10 +568,68 @@ describe('plitzi upgrade', () => {
 
     await upgrade(['files'], { write: true });
 
-    expect(String(said.mock.calls.at(0)?.[0])).toContain('doctor --fix');
+    // No CLI of its own here: this version, fetched — never `@latest`, which may not be the one that said it.
+    expect(String(said.mock.calls.at(0)?.[0])).toContain(`npx -y @plitzi/cli@${CLI_VERSION} doctor --fix`);
     expect(await read('src/main.ts')).toBe(main);
     expect(process.exitCode).toBe(1);
+
+    // Its own CLI is this one: that, with nothing to download.
+    await writeFiles(root, {
+      'node_modules/@plitzi/cli/package.json': JSON.stringify({ name: '@plitzi/cli', version: CLI_VERSION })
+    });
+    await upgrade(['files'], {});
+
+    expect(String(said.mock.calls.at(1)?.[0])).toContain('Move it first — npx plitzi doctor --fix moves it');
     process.exitCode = undefined;
+  });
+
+  // A project's own .prettierignore was left without the folder `plitzi feedback` writes to, and its format check failed.
+  it("adds the CLI's lines a list of the project's own lacks, keeping every line of its own, once", async () => {
+    const ours = machineryFiles(ANSWERS)['.prettierignore'];
+    await fs.writeFile(file('.prettierignore'), 'node_modules\nsrc/legacy-of-ours\n');
+
+    const shown = await run(['files']);
+    expect(recordsIn(shown.files).find(entry => entry.file === '.prettierignore')).toMatchObject({
+      status: 'merged',
+      diff: expect.stringContaining('+.plitzi/plitzi-reports') as unknown
+    });
+    expect(await read('.prettierignore')).toBe('node_modules\nsrc/legacy-of-ours\n');
+
+    await run(['files'], { write: true });
+    const merged = await read('.prettierignore');
+    expect(merged.startsWith('node_modules\nsrc/legacy-of-ours\n')).toBe(true);
+    expect(missingLines(merged, ours)).toEqual([]);
+
+    // Its own still, and whole: nothing to add, and never replaced by the CLI's.
+    const again = await run(['files'], { write: true });
+    expect(recordsIn(again.files).find(entry => entry.file === '.prettierignore')).toMatchObject({ status: 'current' });
+    expect(await read('.prettierignore')).toBe(merged);
+
+    await run(['files'], { write: true, take: ['.prettierignore'] });
+    expect(await read('.prettierignore')).toBe(ours);
+  });
+
+  // The same diffs of the project's own files on every run hid what did change.
+  it("shows a file of the project's own beside the CLI's once, then in a line until the CLI's changes", async () => {
+    await fs.writeFile(file('playwright.config.ts'), '// tuned by hand\n');
+    const yours = (report: Record<string, unknown>) =>
+      recordsIn(report.files).find(entry => entry.file === 'playwright.config.ts');
+
+    const first = await run(['files'], { write: true });
+    expect(yours(first)).toMatchObject({ status: 'yours', diff: expect.any(String) as unknown });
+    expect(yours(first)).not.toHaveProperty('seen');
+
+    expect(yours(await run(['files'], { write: true }))).toMatchObject({ status: 'yours', seen: true });
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await upgrade(['files'], { install: false });
+    const text = String(said.mock.calls.at(-1)?.[0]);
+    expect(text).toContain("= playwright.config.ts — yours; the CLI's is as it was shown at the last --write");
+    expect(text).not.toContain('--- playwright.config.ts');
+
+    // A CLI whose version is another shows it again.
+    const record = await readScaffoldRecord(root);
+    await writeScaffoldRecord(root, CLI_VERSION, { shown: { ...record?.shown, 'playwright.config.ts': 'another' } });
+    expect(yours(await run(['files']))).not.toHaveProperty('seen');
   });
 
   it('refuses a part it does not know, naming the ones there are', async () => {

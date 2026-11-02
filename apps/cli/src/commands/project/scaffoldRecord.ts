@@ -30,6 +30,11 @@ export interface ScaffoldRecord {
    */
   scripts?: Record<string, string>;
   /**
+   * File → the sha256 of the CLI's version last shown beside a file the project made its own: `upgrade` shows the
+   * difference again only once the CLI's changes — the same diff on every run hid what did change.
+   */
+  shown?: Record<string, string>;
+  /**
    * The package manager the files were written for — what their commands say. A lockfile says it of a project that
    * installed; this says it of one that has not yet (`--no-install`), or whose lockfile is not kept.
    */
@@ -65,6 +70,7 @@ export const readScaffoldRecord = async (root: string): Promise<ScaffoldRecord |
     cli: parsed.cli,
     files: stringRecord(parsed.files),
     ...(isRecord(parsed.scripts) ? { scripts: stringRecord(parsed.scripts) } : {}),
+    ...(isRecord(parsed.shown) ? { shown: stringRecord(parsed.shown) } : {}),
     ...(isPackageManager(parsed.packageManager) ? { packageManager: parsed.packageManager } : {})
   };
 };
@@ -84,8 +90,9 @@ const sorted = (entries: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(entries).sort(([a], [b]) => a.localeCompare(b)));
 
 /**
- * What the CLI wrote, as `cli` wrote it: its files (file → digest, `digestOf`) and its scripts. A part not given keeps
- * what was recorded — `upgrade packages` alone leaves the files' record as it found it.
+ * What the CLI wrote, as `cli` wrote it: its files (file → digest, `digestOf`), its scripts, and what it showed beside
+ * the project's own files. A part not given keeps what was recorded — `upgrade packages` alone leaves the files' record
+ * as it found it.
  */
 export const writeScaffoldRecord = async (
   root: string,
@@ -93,17 +100,25 @@ export const writeScaffoldRecord = async (
   {
     files,
     scripts,
+    shown,
     packageManager
-  }: { files?: Record<string, string>; scripts?: Record<string, string>; packageManager?: PackageManager }
+  }: {
+    files?: Record<string, string>;
+    scripts?: Record<string, string>;
+    shown?: Record<string, string>;
+    packageManager?: PackageManager;
+  }
 ): Promise<void> => {
   const previous = await readScaffoldRecord(root);
   const keptScripts = scripts ?? previous?.scripts;
+  const keptShown = shown ?? previous?.shown;
   const keptManager = packageManager ?? previous?.packageManager;
   const record: ScaffoldRecord = {
     format: 1,
     cli,
     files: sorted(files ?? previous?.files ?? {}),
     ...(keptScripts ? { scripts: sorted(keptScripts) } : {}),
+    ...(keptShown && Object.keys(keptShown).length > 0 ? { shown: sorted(keptShown) } : {}),
     ...(keptManager ? { packageManager: keptManager } : {})
   };
   await fs.mkdir(path.join(root, '.plitzi'), { recursive: true });

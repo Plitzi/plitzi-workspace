@@ -1051,7 +1051,11 @@ the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill
 version it shipped in — rewritten with `--write` where the change has one right answer, a rename, and said otherwise:
 since 0.38.17, an import of one file of a package its install now imports by folder, with the folder to name instead). A
 `.gitkeep` is written only in a folder with nothing else in it. A file nobody changed since the CLI wrote it is replaced;
-one the project made its own is a diff, left unless `--take` names it (`all` for every one). The generated
+one the project made its own is a diff, left unless `--take` names it (`all` for every one) — shown until a `--write`,
+then a line until the CLI's version changes (`--json` keeps the diff). `.gitignore` and `.prettierignore` are lists:
+one the project made its own keeps every line of its own and takes the CLI's it lacks (`doctor` says it lacks them,
+`machinery-lines-missing`). A project still laid out as an older CLI left it is moved first, with the `doctor --fix` of
+the project's own CLI when that is this one. The generated
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes

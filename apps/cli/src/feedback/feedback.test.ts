@@ -87,6 +87,34 @@ describe('plitzi feedback', () => {
     expect(error.mock.calls.flat().join(' ')).toContain('is not one');
     expect(process.exitCode).toBe(1);
   });
+
+  // The page asks for a finding's earlier report in `changed[].url`; --check refused the link --previous wrote.
+  it('checks a report linking the earlier reports it continues, and no other address', async () => {
+    const url = 'https://claude.ai/artifact/earlier-report?sk=share';
+    const { file } = await answered({ previous: [url] });
+    const page = await fs.readFile(file, 'utf-8');
+    const filled = (address: string) =>
+      fs.writeFile(
+        file,
+        page.replace(
+          'changed: [],',
+          `changed: [{ point: 'PZ-1 · a finding', url: '${address}', status: 'fixed', how: 'Seen fixed.' }],`
+        )
+      );
+    await filled(url);
+    const checked = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await feedback({ check: file, json: true });
+    expect(JSON.parse(String(checked.mock.calls.at(-1)?.[0]))).toHaveProperty('found', []);
+    expect(process.exitCode).toBe(0);
+
+    await filled('https://shop.example.com/admin');
+    await feedback({ check: file, json: true });
+    expect(JSON.parse(String(checked.mock.calls.at(-1)?.[0]))).toHaveProperty('found', [
+      'an address: https://shop.example.com/admin'
+    ]);
+    expect(process.exitCode).toBe(1);
+  });
 });
 
 describe('the report page', () => {

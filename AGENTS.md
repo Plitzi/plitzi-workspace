@@ -505,8 +505,9 @@ repo the same way: after changing a package it consumes, `yarn build:dev` (and `
 ## Releases
 
 All public `@plitzi/*` packages release together at one version (`.changeset/config.json` `fixed`). Add notes to the
-single pending `.changeset/release.md` under the right `## <area>` heading — never a new changeset file per change; if
-it does not exist, create it with every public package in the front matter. Private workspaces (examples, e2e,
+pending `.changeset/release.md` (`@plitzi/cli` alone, every package's notes) under the right `## <area>` heading — never
+a new changeset file per change; `.changeset/release-packages.md` names the other packages and points at the CLI's
+`CHANGELOG.md`. After a release, create both again. Private workspaces (examples, e2e,
 desktop) are never versioned. See `docs/en/releases.md`.
 
 A release that changes something a project's own source counts on — a name, an import, a default — ships its migration

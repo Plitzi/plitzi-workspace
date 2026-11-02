@@ -1,6 +1,6 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
-import { machineryPlan } from '../commands/project/upgrade';
+import { machineryPlan } from '../commands/project/upgradeFiles';
 import { projectDlx } from '../scaffold/packageManager';
 import { AUTHOR_FILE, MAIN_FILE, TSCONFIG_BASE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
@@ -68,6 +68,14 @@ export const checkMachinery: Check = async ({ root, answers, origin, record }) =
           file: plan.file,
           fix: 'plitzi upgrade files --write'
         })
+      );
+    } else if (plan.status === 'merged') {
+      findings.push(
+        say.warning(
+          'machinery-lines-missing',
+          `${plan.file} is the project's own, and lacks lines this CLI's tools need it to have.`,
+          { file: plan.file, fix: 'plitzi upgrade files --write (adds them, keeping every line of its own)' }
+        )
       );
     } else if (plan.status === 'yours') {
       findings.push(

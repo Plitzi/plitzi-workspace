@@ -1,26 +1,37 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { doctor } from '.';
 import { nodeFindings } from './packages';
+import {
+  codes,
+  examine,
+  findingOf,
+  home,
+  install,
+  installed,
+  manifest,
+  project,
+  read,
+  run,
+  said,
+  doctorProjectEachTest,
+  write
+} from './tests/doctorProject';
 import create from '../commands/project/create';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/project/scaffoldRecord';
 import { NODE_ENGINES } from '../scaffold/project';
-import { WORKSPACE_ROOT } from '../tests/roots';
 
 // The doctor says which browser opens pages by starting one; these tests examine projects, not the machine's browsers.
 vi.mock('../commands/browser/browser', () => ({
   browserInUse: () => Promise.resolve({ said: 'Chromium, downloaded by plitzi browser install' })
 }));
-
-import type { DoctorOptions, DoctorReport } from '.';
 
 /**
  * `plitzi doctor` on a project `plitzi create` wrote, then changed the ways a developer changes one: each change that
@@ -28,122 +39,11 @@ import type { DoctorOptions, DoctorReport } from '.';
  * project as it was written is found healthy.
  */
 
-let home = '';
-let project = '';
-let said: string[] = [];
-
-const write = async (file: string, text: string): Promise<void> => {
-  await fs.mkdir(path.dirname(path.join(project, file)), { recursive: true });
-  await fs.writeFile(path.join(project, file), text);
-};
-
-const read = (file: string): Promise<string> => fs.readFile(path.join(project, file), 'utf-8');
-
-const manifest = async (): Promise<Record<string, unknown>> => {
-  const parsed: unknown = JSON.parse(await read('package.json'));
-
-  return isRecord(parsed) ? parsed : {};
-};
-
-const ranges = (value: unknown): Record<string, string> =>
-  isRecord(value)
-    ? Object.fromEntries(
-        Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
-      )
-    : {};
-
-/** A package as an install leaves it: its manifest, at the version given, and the modules given beside it. */
-const installed = async (name: string, version: string, modules: Record<string, string> = {}): Promise<void> => {
-  const dir = path.join(project, 'node_modules', name);
-  const exports = Object.fromEntries(
-    Object.keys(modules).map(subpath => [subpath, `./${subpath.slice(2) || 'index'}.js`])
-  );
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(
-    path.join(dir, 'package.json'),
-    JSON.stringify({ name, version, type: 'module', ...(Object.keys(exports).length > 0 ? { exports } : {}) })
-  );
-  for (const [subpath, code] of Object.entries(modules)) {
-    await fs.writeFile(path.join(dir, `${subpath.slice(2) || 'index'}.js`), code);
-  }
-};
-
-/**
- * Everything `package.json` declares, installed at the version its range starts at: the SDK's authoring as this
- * workspace builds it (the space imports it), and a server whose rules are the ones the checks ask it for.
- */
-const install = async (): Promise<void> => {
-  const { dependencies, devDependencies } = await manifest();
-  for (const [name, range] of Object.entries({ ...ranges(devDependencies), ...ranges(dependencies) })) {
-    const version = /\d+\.\d+\.\d+/.exec(range)?.[0] ?? '1.0.0';
-    if (name === '@plitzi/sdk-authoring') {
-      await fs.mkdir(path.join(project, 'node_modules', '@plitzi'), { recursive: true });
-      await fs.symlink(
-        path.join(WORKSPACE_ROOT, 'packages/sdk-authoring'),
-        path.join(project, 'node_modules', name),
-        'dir'
-      );
-    } else if (name === '@plitzi/sdk-server') {
-      await installed(name, version, {
-        './actions': 'export const MIN_SIGNING_SECRET_LENGTH = 32;\n',
-        './project': 'export const serveProject = () => undefined;\n',
-        './functions-runner':
-          'export const buildFunctions = async source => {\n' +
-          "  const at = Object.keys(source).find(file => source[file].includes('node:'));\n" +
-          "  if (at) { throw Object.assign(new Error('refused'), { problems: [{ file: at, line: 1, message: 'node: cannot be imported' }] }); }\n" +
-          "  return { code: '', bytes: 0 };\n};\n"
-      });
-    } else {
-      await installed(name, version);
-    }
-  }
-};
-
-const run = async (options: Omit<DoctorOptions, 'json'> = {}): Promise<DoctorReport> => {
-  said = [];
-  process.exitCode = undefined;
-  await doctor({ json: true, ...options });
-  const parsed: unknown = JSON.parse(said.at(-1) ?? '{}');
-
-  // The report is the doctor's own JSON, written just above: its shape is `DoctorReport`.
-  return parsed as DoctorReport;
-};
-
-const codes = (report: DoctorReport): string[] =>
-  report.findings.filter(finding => finding.severity !== 'info').map(finding => finding.code);
-
-const findingOf = (report: DoctorReport, code: string) => report.findings.find(finding => finding.code === code);
-
-beforeEach(async () => {
-  home = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-doctor-'));
-  vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
-  vi.spyOn(console, 'error').mockImplementation((line: unknown) => said.push(String(line)));
-  await create(path.join(home, 'site'), { mode: 'server', source: 'local', packageManager: 'npm', install: false });
-  project = path.join(home, 'site');
-  vi.spyOn(process, 'cwd').mockReturnValue(project);
-  await install();
-  await write('.env', `PLITZI_SIGNING_SECRET=${'a'.repeat(64)}\n`);
-});
-
-afterEach(async () => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-  await fs.rm(home, { recursive: true, force: true });
-});
+doctorProjectEachTest();
 
 // Each run is the whole doctor on a project on disk, some of them twice: far over the default 5 s on a machine running
 // every package's tests at once.
 describe('plitzi doctor', { timeout: 30_000 }, () => {
-  // Run as on a Node with its security release, whatever this machine runs: the machine's Node is no finding of the
-  // project's here — `nodeFindings` is held to each version below.
-  const machine = process.versions.node;
-  beforeEach(() => {
-    Object.defineProperty(process.versions, 'node', { value: '24.22.1', configurable: true });
-  });
-  afterEach(() => {
-    Object.defineProperty(process.versions, 'node', { value: machine, configurable: true });
-  });
-
   it('finds a project as plitzi create wrote it healthy', async () => {
     const report = await run({ strict: true });
 
@@ -219,8 +119,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(await run(), 'node-in-browser')).toBeUndefined();
 
     await create(path.join(home, 'web'), { mode: 'client', source: 'local', packageManager: 'npm', install: false });
-    project = path.join(home, 'web');
-    vi.spyOn(process, 'cwd').mockReturnValue(project);
+    examine(path.join(home, 'web'));
     await install();
     await write('src/space/pages.ts', pagesIn);
 
@@ -502,52 +401,6 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'script-env-unread')).toBeUndefined();
   });
 
-  /** `src/env.ts` read `.env` before Node did: an older CLI's, and nothing reads it beside today's `main.ts`. */
-  it('says machinery the CLI no longer writes, left over — and whether upgrade removes it or it is the project’s', async () => {
-    const older = "try {\n  process.loadEnvFile(new URL('../.env', import.meta.url));\n} catch {\n  // None.\n}\n";
-    await write('src/env.ts', older);
-    const record = await readScaffoldRecord(project);
-    await writeScaffoldRecord(project, record?.cli ?? '0.38.4', {
-      files: { ...record?.files, 'src/env.ts': digestOf(older) }
-    });
-
-    expect(findingOf(await run(), 'machinery-retired')).toMatchObject({
-      severity: 'warning',
-      file: 'src/env.ts',
-      fix: 'plitzi upgrade files --write'
-    });
-
-    await write('src/env.ts', `${older}// mine\n`);
-    const report = await run();
-    expect(findingOf(report, 'machinery-retired')).toBeUndefined();
-    expect(findingOf(report, 'machinery-retired-yours')).toMatchObject({ severity: 'info', file: 'src/env.ts' });
-  });
-
-  it('says the CLI’s files that are gone or behind, and the records it cannot read', async () => {
-    await fs.rm(path.join(project, '.plitzi/author.ts'));
-    await write('.plitzi/scaffold.json', '{ "format": 2 }');
-
-    const report = await run();
-
-    expect(findingOf(report, 'machinery-missing')).toMatchObject({ severity: 'error', file: '.plitzi/author.ts' });
-    expect(findingOf(report, 'record-unreadable')).toMatchObject({ file: '.plitzi/scaffold.json' });
-  });
-
-  // What AGENTS.md says ("nothing unused") and what upgrade writes agree: a `.gitkeep` keeps an EMPTY folder in git.
-  it('asks for a folder’s .gitkeep only while the folder is empty', async () => {
-    await fs.rm(path.join(project, 'src/functions/.gitkeep'), { force: true });
-    await write('src/functions/index.ts', 'export {};\n');
-
-    expect(
-      (await run()).findings.filter(
-        finding => finding.code === 'machinery-missing' && finding.file?.endsWith('.gitkeep')
-      )
-    ).toEqual([]);
-
-    await fs.rm(path.join(project, 'src/functions/index.ts'));
-    expect(findingOf(await run(), 'machinery-missing')).toMatchObject({ file: 'src/functions/.gitkeep' });
-  });
-
   it('fails on warnings only with --strict', async () => {
     await write('src/data/notes.txt', 'not data');
 
@@ -628,7 +481,8 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
   it('moves an older layout with --fix — every import and script following — and the project is whole again', async () => {
     await olderLayout();
-    await write('.gitignore', 'node_modules\n');
+    // The CLI's own but for `.env`, which the move adds: a list lacking more of the CLI's lines is said on its own.
+    await write('.gitignore', (await read('.gitignore')).replace(/^\.env\n/m, ''));
 
     const report = await run({ fix: true });
 
@@ -745,7 +599,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
   it('refuses a folder that is not a project plitzi create wrote', async () => {
     vi.spyOn(process, 'cwd').mockReturnValue(home);
     await fs.writeFile(path.join(home, 'package.json'), '{"name":"other"}');
-    said = [];
+    said.length = 0;
 
     await doctor({});
 

@@ -7,12 +7,19 @@ release bumps all of them to the same version — whichever packages a changeset
 other at `workspace:*` and are published as a set; one version number is what makes "which sdk-server goes with
 which sdk" a question nobody has to ask. Private workspaces (examples, e2e, the desktop app) are not versioned.
 
-Keep **one changeset per release** (`.changeset/release.md`), and add to it rather than creating another: list every
-public package in its front matter, so each package's `CHANGELOG.md` carries the notes and not just "updated
-dependencies", and group the notes under a heading per area. **Keep it short:** it is copied into every package's
-`CHANGELOG.md`, so a change is one or two lines — what changed and, for a break, what to do (under "To do when you
-upgrade") — never its story or its edge cases, which the README and `docs/en` own. Fold a fix into the feature it
-belongs to rather than adding a bullet.
+A release has **two changesets**, and every note goes in the first:
+
+- `.changeset/release.md` names `@plitzi/cli` alone and holds the notes of every package, under a heading per area.
+  Add to it rather than creating another changeset.
+- `.changeset/release-packages.md` names every other public package and says one thing: the notes are in
+  `@plitzi/cli`'s `CHANGELOG.md`. So each package's changelog says where to read, not just "updated dependencies" —
+  and the notes are one copy, where seventeen identical ones made whoever upgrades read the same text once per
+  package. A new public package goes into its front matter.
+
+The CLI holds them because a project has it installed, and `plitzi upgrade` is where an upgrade starts. **Keep them
+short:** a change is one or two lines — what changed and, for a break, what to do (under "To do when you upgrade") —
+never its story or its edge cases, which the README and `docs/en` own. Fold a fix into the feature it belongs to
+rather than adding a bullet.
 
 ## A change a project's source has to follow
 
@@ -47,7 +54,7 @@ changeset with what a project still on that version changes by hand.
    typechecked, their spaces authored — so a change that breaks or outdates one fails in this step, before anything is
    published.
 
-1. Create a changeset — or add to the pending `.changeset/release.md`:
+1. Add to the pending `.changeset/release.md` — or, after a release, create it and `.changeset/release-packages.md`:
 
    ```bash
    yarn changeset

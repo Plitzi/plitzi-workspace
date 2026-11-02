@@ -54,6 +54,31 @@ const reportFile = async (from: string, date: string): Promise<string> => {
   return path.join(reports, name, 'report.html');
 };
 
+const PREVIOUS_START = 'const PREVIOUS = ';
+
+/**
+ * The earlier reports a page continues, as `plitzi feedback --previous` wrote them into it: links to reports the person
+ * already published, which the page links again where a finding continues one (`changed[].url`) — Plitzi's to read.
+ */
+export const previousIn = (page: string): string[] => {
+  const start = page.indexOf(PREVIOUS_START);
+  const end = page.indexOf('];', start);
+  if (start < 0 || end < 0) {
+    return [];
+  }
+
+  let value: unknown;
+  try {
+    value = JSON.parse(page.slice(start + PREVIOUS_START.length, end + 1));
+  } catch {
+    return [];
+  }
+
+  return Array.isArray(value)
+    ? value.filter((each): each is string => typeof each === 'string' && ARTIFACT_URL.test(each))
+    : [];
+};
+
 const REPORT_START = 'const REPORT = ';
 const REPORT_END = '\nconst L = REPORT.labels;';
 
@@ -122,7 +147,7 @@ const checkReport = async (file: string, json: boolean): Promise<void> => {
   }
 
   const root = (await findProject(path.dirname(path.resolve(file))))?.root ?? process.cwd();
-  const found = privateIn(read.texts.join('\n'), await privateWords(root), read.shared);
+  const found = privateIn(read.texts.join('\n'), await privateWords(root), [...read.shared, ...previousIn(page)]);
   if (json) {
     console.log(JSON.stringify({ file, found, shared: read.shared }));
   } else if (found.length === 0) {
