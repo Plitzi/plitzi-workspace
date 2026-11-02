@@ -1,8 +1,9 @@
 import chalk from 'chalk';
 
 import { acceptanceText } from '../../../runs/core/model';
+import { RunRefusal } from '../../../runs/core/refusal';
 import { roleOf } from '../../../runs/plan/spike';
-import { FROM_TEXT, showTask, showTaskFile } from '../../../runs/view/show';
+import { FILE_FROM_TEXT, FROM_TEXT, showMergedFile, showTask, showTaskFile } from '../../../runs/view/show';
 import { takeOnRead } from '../review/takeOnRead';
 import { act, ownTask, runOf } from '../shell';
 import { list, messageLines, outsideLines, secondRunText } from '../text';
@@ -17,7 +18,7 @@ const BRIEF_CHARS = 600;
 const taskShowFiles = (
   taskId: string | undefined,
   files: readonly string[],
-  options: RunCommandOptions & { diff?: boolean }
+  options: RunCommandOptions & { diff?: boolean; merged?: boolean }
 ): Promise<void> =>
   act(
     options,
@@ -26,7 +27,11 @@ const taskShowFiles = (
       const task = taskId ?? (await ownTask(ctx, runId));
       const shown = [];
       for (const file of files) {
-        shown.push(await showTaskFile(ctx, runId, task, file));
+        shown.push(
+          options.merged === true
+            ? await showMergedFile(ctx, runId, task, file)
+            : await showTaskFile(ctx, runId, task, file)
+        );
       }
 
       // One file is one object, as --json always gave it; several, a list.
@@ -40,7 +45,7 @@ const taskShowFiles = (
             options.diff === true
               ? (each.diff ?? `${each.file} of ${each.task}: not text — no diff`)
               : each.text === undefined
-                ? `${each.file} of ${each.task} (${FROM_TEXT[each.from]}): ${each.binary ? 'not text — not shown' : 'removed by it'}`
+                ? `${each.file} of ${each.task} (${FILE_FROM_TEXT[each.from]}): ${each.binary ? 'not text — not shown' : 'removed by it'}`
                 : each.text;
 
           return shown.length > 1 ? `${chalk.bold(`── ${each.file}`)}\n${text}` : text;
@@ -208,10 +213,23 @@ const withheldLines = (task: string, files: readonly ShownFile[], full: boolean)
 export const taskShow = (
   first: string | undefined,
   rest: readonly string[],
-  options: RunCommandOptions & { full?: boolean; diff?: boolean }
+  options: RunCommandOptions & { full?: boolean; diff?: boolean; merged?: boolean }
 ): Promise<void> => {
   // A path first is a file of the task one holds or reviews: a task id has no slash.
   const [taskId, files] = first?.includes('/') === true ? [undefined, [first, ...rest]] : [first, rest];
+  if (files.length === 0 && options.merged === true) {
+    return act(
+      options,
+      (): Promise<never> =>
+        Promise.reject(
+          new RunRefusal(
+            'invalid',
+            `--merged reads files of the merge, each whole or --diff: name one — plitzi task show ${taskId ?? '<task>'} <file> --merged (the merged version served: plitzi task look ${taskId ?? '<task>'} --merged)`
+          )
+        ),
+      () => ''
+    );
+  }
 
   return files.length === 0 ? taskShowSummary(taskId, options) : taskShowFiles(taskId, files, options);
 };

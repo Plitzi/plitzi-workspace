@@ -152,3 +152,18 @@ export const SERVER_RECORD_ENV = 'PLITZI_SERVER_RECORD';
  * followed it unsaid — as dead beside a sqlite \`kv\`, and its suite ran the person's queued jobs.
  */
 export const STATE_DIR_ENV = 'PLITZI_STATE_DIR';
+
+/**
+ * A JSON file naming one element to draw alone — `{ "element": "planCard", "copies": [{ … }, { … }] }`, a component of
+ * the space or an element type, each copy with its props or attributes — for which the project's authored space gets a
+ * page of its own at `PREVIEW_SLUG`, with no layout. Set only for a server started for that (`plitzi task look
+ * --alone`): a plugin or a component no page places yet, looked at like any page — a run's reviewers wrote probe pages
+ * in their scratch to see one.
+ */
+export const PREVIEW_FILE_ENV = 'PLITZI_PREVIEW_FILE';
+
+/** Where the page of `PREVIEW_FILE_ENV` answers. */
+export const PREVIEW_SLUG = 'plitzi-preview';
+
+/** The id each copy on that page is drawn with — `plitzi-preview-1`, `-2`… — what a look or a measure names it by. */
+export const previewCopyId = (index: number): string => `${PREVIEW_SLUG}-${String(index + 1)}`;

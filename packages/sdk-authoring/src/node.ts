@@ -39,6 +39,7 @@ import {
 import { pageModulesIn } from '@plitzi/sdk-shared/project/pages';
 
 import { authorSpace } from './index';
+import { previewOfProcess, withPreview } from './preview';
 import { compactSvg } from './svg/compactSvg';
 
 import type { AuthoredSpace, PageSpec, PluginDeclarationData, SpaceSpec } from './schema/types';
@@ -540,8 +541,15 @@ export const projectSpace = async (): Promise<ProjectSpaceSource> => projectSpac
  */
 export const authorProjectSpace = async (): Promise<AuthoredSpace> => {
   const { space, authoring } = await projectSpace();
+  // An element drawn alone, when the process was started for it (`PREVIEW_FILE_ENV`): a page of its own beside the rest.
+  const preview = previewOfProcess();
 
-  return authorSpace(space, authoring);
+  return authorSpace(
+    preview
+      ? withPreview(space, preview, [...authoring.plugins.map(plugin => plugin.type), ...authoring.pluginTypes])
+      : space,
+    authoring
+  );
 };
 
 export { compactSvg } from './svg/compactSvg';

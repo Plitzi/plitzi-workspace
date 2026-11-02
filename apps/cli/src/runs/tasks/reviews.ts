@@ -37,6 +37,10 @@ export interface ReviewState {
   before?: string[];
   /** Taken as its reviewer's first review of the run: its time holds the reading it asks for first. */
   first?: true;
+  /** A command of its reviewer at it, running since then: its time does not run meanwhile (`holdWhileBusy`). */
+  busy?: string;
+  /** The time its reviewer's commands at it ran, in ms: given back to the step's time once each ended. */
+  credited?: number;
 }
 
 /** Who of the team reviews, by role — the agents the team starts, and its developers among them. */
@@ -157,13 +161,34 @@ export const REVIEW_QUEUE_MS = 5 * 60_000;
 export const stepTimeOf = (review: Pick<ReviewState, 'first'> | undefined): number =>
   REVIEW_TIMEOUT_MS + (review?.first === true ? FIRST_REVIEW_READING_MS : 0);
 
+/**
+ * The most of a step's time one command of its reviewer gives back: a command that died while busy, its mark left
+ * behind, holds the step this long and no longer.
+ */
+export const BUSY_MAX_MS = 30 * 60_000;
+
+/**
+ * How long a taken step has been its reviewer's own, in ms: from its taking, less the time its reviewer's commands at it
+ * ran — a run's tester's `task prove --before` waited twice for another agent's Playwright suite, the step's 8 min ran
+ * out meanwhile, and another tester took the review it was still proving.
+ */
+export const stepHeld = (review: ReviewState | undefined, now: number): number => {
+  if (review?.at === undefined) {
+    return 0;
+  }
+
+  const busy = review.busy === undefined ? 0 : Math.min(Math.max(now - Date.parse(review.busy), 0), BUSY_MAX_MS);
+
+  return now - Date.parse(review.at) - (review.credited ?? 0) - busy;
+};
+
 /** The minutes a taken step is past its time, if it is: none while it is in time, or untaken. */
 export const stepTimedOut = (review: ReviewState | undefined, now: number): number | undefined => {
   if (review?.by === undefined || review.at === undefined) {
     return undefined;
   }
 
-  const held = now - Date.parse(review.at);
+  const held = stepHeld(review, now);
 
   return held > stepTimeOf(review) ? Math.round(held / 60_000) : undefined;
 };
@@ -342,7 +367,8 @@ export const takeStep = async (
         ? {
             ...state,
             review: {
-              ...state.review,
+              // Its taker's time is its own: what an earlier taker's commands gave back is not carried to it.
+              ...withoutBusy(state.review),
               by: ctx.agent,
               at: ctx.now().toISOString(),
               ...(first ? { first: true as const } : {})
@@ -386,4 +412,42 @@ export const takeOnLook = async (ctx: RunContext, loaded: LoadedRun, view: TaskV
       : maySayStep(view, views, ctx.agent, team, ctx.now().getTime()));
 
   return mine ? (await takeStep(ctx, view)).taken : false;
+};
+
+const withoutBusy = ({ busy: _busy, credited: _credited, ...review }: ReviewState): ReviewState => review;
+
+/**
+ * `work`, a command of `ctx.agent` at a step it holds, run with the step's time stopped: marked busy while it runs and
+ * the time it took given back after — a reviewer proving, or waiting its turn on the machine to prove, is reviewing,
+ * not holding. Run as it is when the step is not its own.
+ */
+export const holdWhileBusy = async <T>(ctx: RunContext, view: TaskView, work: () => Promise<T>): Promise<T> => {
+  if (view.state.status !== 'in-review' || view.state.review?.by !== ctx.agent) {
+    return work();
+  }
+
+  const since = ctx.now();
+  const mine = (state: TaskState): boolean => state.status === 'in-review' && state.review?.by === ctx.agent;
+  await updateState(
+    view.paths,
+    state =>
+      mine(state) && state.review ? { ...state, review: { ...state.review, busy: since.toISOString() } } : state,
+    ctx.now
+  );
+  try {
+    return await work();
+  } finally {
+    const ran = Math.min(Math.max(ctx.now().getTime() - since.getTime(), 0), BUSY_MAX_MS);
+    await updateState(
+      view.paths,
+      state =>
+        mine(state) && state.review?.busy === since.toISOString()
+          ? {
+              ...state,
+              review: { ...withoutBusy(state.review), credited: (state.review.credited ?? 0) + ran }
+            }
+          : state,
+      ctx.now
+    );
+  }
 };

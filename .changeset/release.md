@@ -406,6 +406,23 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
     is never resumed; an `unused-file` a later task will place is said, not refused (nor counted by the brake); a copy
     whose `tmp/` was cleared knows its task again; a tests card gives up files its task deleted; a stopped preview is
     said to the person.
+- **A reviewer looks at what no page places yet, and at what its approval will put in** (`@plitzi/cli`,
+  `@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/sdk-server`) — from the run `nimbo-site`, where seven reviewers
+  wrote probe pages in their scratch and two rebuilt a merge by hand:
+  - `task look <task> --alone <element> --with '{…}'` draws a component of the space (its props) or an element type —
+    a plugin's, a built-in — (its attributes) alone, a copy for each `--with`, on a page the look's server authors for
+    it with no layout (`PREVIEW_FILE_ENV`, `PREVIEW_SLUG`, `previewCopyId`; `authorProjectSpace` adds it). A name that is
+    neither is refused naming the components and the plugins' elements there are (`SpacePreviewError`, which a
+    project's server says alone, with no stack).
+  - A review taken says what fails when the task is put together with what the run approved since, by its lines —
+    never "it fails typecheck" alone, nor "which its copy alone passed" of a copy failing too — and so does the
+    approval's refusal. `task show <task> <file> --merged [--diff]` reads a file of the merge, diffed from the run's
+    version now; `task look <task> --merged` serves the merge and looks at it in place of the copy.
+  - A step's time stops while its reviewer's look or proof at it runs: a tester's `task prove --before` waited for
+    another agent's suite, its 8 minutes ran out, and another tester took the review it was still proving.
+  - `page check` of the server's error page for a space that does not author says that, with what the server said —
+    the page was read as a 503 not-found page with nothing of the space on it; what reads it ran a CLI function in the
+    page, which threw there.
 - **A plugin whose folder is removed under a dev server is no longer built** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`):
   `PluginRegistry.unregister`, relayed to every worker — a run's preview logged "build failed" for a deleted plugin.
 - **Notifications show for a visitor who asked for less motion** (`@plitzi/plitzi-sdk`): the reduced-motion rule cut

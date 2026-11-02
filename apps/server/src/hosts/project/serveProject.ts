@@ -96,6 +96,8 @@ const REPORTS: ReadonlySet<string> = new Set([
   'ProjectLayoutError',
   'ProjectSpaceError',
   'SpaceRefusedError',
+  // An element asked to be drawn alone (`PREVIEW_FILE_ENV`) that cannot be: what there is to draw instead.
+  'SpacePreviewError',
   // A state file another server of the folder holds: who, and how to stop it.
   'FileInUseError'
 ]);

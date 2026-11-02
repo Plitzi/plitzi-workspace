@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { runInNewContext } from 'node:vm';
+
 import { describe, expect, it } from 'vitest';
 
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
@@ -8,12 +10,23 @@ import { spaceFailureOn } from '../visit';
 
 import type { BrowserPage } from '../../../browser';
 
-/** A stand-in of a page: what `spaceFailureOn` asks of one — the page's own document, read in it. */
+/**
+ * A stand-in of a page: what `spaceFailureOn` asks of one — the page's own document, read in it, by a function made
+ * again from its source as a browser makes it: one that reads anything of this process throws, as it threw in the page
+ * (the server's error page went unrecognised for it).
+ */
 const pageOf = (html: string) => {
   document.documentElement.innerHTML = html;
 
   return {
-    evaluate: <A, R>(read: (arg: A) => R, arg: A) => Promise.resolve(read(arg))
+    evaluate: <A, R>(read: (arg: A) => R, arg: A) =>
+      Promise.resolve().then(() => {
+        // The function as its text, in a context with the page's document and nothing of this module: what Playwright
+        // sends the page. What it gives back is that function, typed as the one it was made from.
+        const remade = runInNewContext(`(${read.toString()})`, { document }) as (arg: A) => R;
+
+        return remade(arg);
+      })
   } as unknown as BrowserPage;
 };
 

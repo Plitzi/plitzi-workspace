@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { caughtBy, checkBefore, checkMutant, failureText, noTestBefore, provedBy } from '../../../runs/tasks';
 import { act, either } from '../shell';
+import { whileReviewing } from './takeOnRead';
 
 import type { LineBeforeAfter, LineMutated, Mutation } from '../../../runs/tasks';
 import type { RunCommandOptions } from '../shell';
@@ -47,7 +48,7 @@ const taskProveBefore = (named: string | undefined, options: ProveOptions): Prom
 
       const { runId, taskId } = await either(ctx, options, named);
 
-      return checkBefore(ctx, runId, taskId, linesAsked(options));
+      return whileReviewing(ctx, runId, taskId, () => checkBefore(ctx, runId, taskId, linesAsked(options)));
     },
     ({ task, lines, without, afterAsCompleted }) => checkBeforeText(task, lines, without, afterAsCompleted === true)
   );
@@ -117,13 +118,15 @@ const taskProveMutant = (named: string | undefined, options: ProveOptions): Prom
 
       const { runId, taskId } = await either(ctx, options, named);
 
-      return checkMutant(
-        ctx,
-        runId,
-        taskId,
-        files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' })),
-        linesAsked(options),
-        { tests: options.tests === true }
+      return whileReviewing(ctx, runId, taskId, () =>
+        checkMutant(
+          ctx,
+          runId,
+          taskId,
+          files.map((file, index) => ({ file, from: from[index] ?? '', to: to[index] ?? '' })),
+          linesAsked(options),
+          { tests: options.tests === true }
+        )
       );
     },
     ({ task, mutations, lines }) => checkMutantText(task, mutations, lines),

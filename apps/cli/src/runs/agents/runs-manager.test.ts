@@ -10,7 +10,7 @@ import { researchSteps } from '../../tests/research';
 import { reviewerSteps, SCOUT, team, TESTERS } from '../../tests/reviewerSteps';
 import { benchPlan, designed, makeBench, proven, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { copyRunWork } from '../copies/preview';
+import { copyRunWork } from '../copies/runCopy';
 import { viewTask } from '../core/taskStore';
 import { extendRun } from '../plan/extend';
 import { checkPlanFile, loadRun, logRun, openRun, readRunLog } from '../run';

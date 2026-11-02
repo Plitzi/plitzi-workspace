@@ -20,26 +20,20 @@ import {
 import { alive, isPreview, previewEndedFile, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { handReports, reportsDir } from './reports';
+import { approvedCopy } from './runCopy';
 import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
 import { SERVE_SCRIPTS } from '../../scaffold/paths';
-import {
-  cloneFiles,
-  fingerprint,
-  isCopied,
-  projectFiles,
-  readJson,
-  readOptional,
-  writeAtomic,
-  writeJson
-} from '../core/files';
-import { agentScratch, RUN_COPY_MARK, taskPaths, under } from '../core/paths';
+import { fingerprint, readJson, readOptional, writeAtomic, writeJson } from '../core/files';
+import { taskPaths, under } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
 import { placeVersion } from '../core/store';
 import { viewTask } from '../core/taskStore';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from '../run';
 import { digestsOf } from '../tasks/approve';
+import { materialiseMerged, mergedVersion } from '../tasks/mergedVersion';
 import { monitorRun } from '../view/monitor';
 
+import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 import type { Monitored } from '../view/monitor';
 import type { TaskLine } from '../view/view';
@@ -203,10 +197,13 @@ const serve = async (
     quiet = false,
     snapshot = false,
     log,
-    stateDir
+    stateDir,
+    env: extra = {}
   }: {
     quiet?: boolean;
     snapshot?: boolean;
+    /** Set for the server besides the project's `.env`, which it wins over. */
+    env?: Record<string, string>;
     /** Where a quiet server's output goes: what says why, when it stops under a look (silent). */
     log?: string;
     /** What the server keeps, apart from the folder's own (`PLITZI_STATE_DIR`): a cold start, beside any other. */
@@ -230,6 +227,7 @@ const serve = async (
     env: {
       ...process.env,
       ...(env ? parseEnv(env) : {}),
+      ...extra,
       PORT: String(port),
       ...(stateDir === undefined ? {} : { [STATE_DIR_ENV]: stateDir }),
       ...(snapshot ? { [RUN_STATUS_ENV]: snapshotFile(loaded), [RUN_REPORTS_ENV]: reportsDir(loaded.paths) } : {}),
@@ -371,53 +369,6 @@ export const startPreview = async (
   return { ...served, dir, ...(log === undefined ? {} : { log }) };
 };
 
-/** The project with the run's approved work in it, made at `dir` afresh: what `run preview` serves. */
-export const approvedCopy = async (ctx: RunContext, loaded: LoadedRun, dir: string): Promise<void> => {
-  await fs.rm(dir, { recursive: true, force: true });
-  const approved = (await readApproved(loaded.paths)).files;
-  const keep = new Set(Object.keys(approved));
-  await cloneFiles(
-    ctx.root,
-    dir,
-    (await projectFiles(ctx.root)).filter(file => isCopied(file, keep))
-  );
-  for (const [file, entry] of Object.entries(approved)) {
-    await placeVersion(loaded.paths, under(dir, file), entry.digest, dir);
-  }
-
-  // What a project needs to run that the run never copies: its public files (served as they are) and its settings.
-  for (const file of (await projectFiles(ctx.root)).filter(each => !isCopied(each, keep))) {
-    await fs.mkdir(path.dirname(under(dir, file)), { recursive: true });
-    await fs.copyFile(under(ctx.root, file), under(dir, file), fs.constants.COPYFILE_FICLONE);
-  }
-};
-
-/**
- * The run's approved work as a folder of the caller's, made afresh — under its scratch unless named, inside the project
- * where its packages resolve, its state its own. A run's scout, told to measure on the run's work, rebuilt it by hand
- * from approved.json and the blobs to keep its suite off the project's state.
- */
-export const copyRunWork = async (
-  ctx: RunContext,
-  runId: string,
-  asked?: string
-): Promise<{ dir: string; files: number }> => {
-  const loaded = await loadRun(ctx, runId, { anyMachine: true });
-  const dir = path.resolve(ctx.root, asked ?? path.join(agentScratch(loaded.paths, ctx.agent), 'run-copy'));
-  const inside = path.relative(ctx.root, dir);
-  if (inside === '' || inside.startsWith('..') || path.isAbsolute(inside)) {
-    throw new RunRefusal(
-      'invalid',
-      `${dir} is not inside the project: the copy's packages would not resolve there — leave it out (your scratch) or name a folder under ${ctx.root}`
-    );
-  }
-
-  await approvedCopy(ctx, loaded, dir);
-  await fs.writeFile(path.join(dir, RUN_COPY_MARK), `${JSON.stringify({ run: runId, at: ctx.now().toISOString() })}\n`);
-
-  return { dir, files: Object.keys((await readApproved(loaded.paths)).files).length };
-};
-
 /**
  * The run as it is without `taskId` — its approved work — served on `port` for a look that compares the task's copy
  * with what it changes: what a designer built by hand, a folder copied and two servers started, to say what the task
@@ -520,7 +471,17 @@ export const startTaskPreview = async (
    * runs beside one: a look set beside the run before it compares like with like — the run before is served cold, and
    * a run's looks read a task's copy, warm with its agent's state, as having "moved" where its data had.
    */
-  options: { quiet?: boolean; cold?: boolean } = {}
+  options: {
+    quiet?: boolean;
+    cold?: boolean;
+    /**
+     * The task as its approval would put it in, merged with what the run approved since its copy was made, served from
+     * a folder of its own (cold): a run's reviews read a copy older than shared approvals as missing their styles.
+     */
+    merged?: boolean;
+    /** What the server is started with besides the project's `.env`: a cold start, never one already serving. */
+    env?: Record<string, string>;
+  } = {}
 ): Promise<Preview> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
@@ -538,7 +499,8 @@ export const startTaskPreview = async (
   }
 
   const { cache } = taskPaths(loaded.paths, taskId);
-  const { cold = false, ...serving } = options;
+  const { merged = false, env, ...serving } = options;
+  const cold = options.cold === true || merged || env !== undefined;
   // Its agent's own server, left running: it holds the copy's state (its kv lock), so a second one would not start —
   // looked at where it is, and left as it was. A cold look starts its own, apart.
   const running = cold ? undefined : await ownServer(view.paths.work);
@@ -563,10 +525,11 @@ export const startTaskPreview = async (
     };
   }
 
+  const dir = merged ? await mergedDir(ctx, loaded, view) : view.paths.work;
   const served = await serve(
     ctx,
     loaded,
-    view.paths.work,
+    dir,
     port,
     async () => {
       const now = (await viewTask(loaded.paths, task)).state.status;
@@ -576,12 +539,34 @@ export const startTaskPreview = async (
     {
       ...serving,
       log: previewServerLog(cache),
-      ...(cold ? { stateDir: await coldState(cache) } : {})
+      ...(cold ? { stateDir: await coldState(cache) } : {}),
+      ...(env === undefined ? {} : { env })
     }
   );
+  if (dir !== view.paths.work || env !== undefined) {
+    return { ...served, dir };
+  }
+
   // Said where a picture in the copy asks for its server: it uses this one, never starts a second.
   await markPreviewed(cache, port);
   void served.done.then(() => unmarkPreviewed(cache)).catch(() => undefined);
 
-  return { ...served, dir: view.paths.work };
+  return { ...served, dir };
+};
+
+/** The task's merge as a folder, or the reason it is not one: the same refusal its approval would give. */
+const mergedDir = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<string> => {
+  const merged = await mergedVersion(ctx, loaded, view);
+  if (!merged) {
+    throw new RunRefusal('invalid', `${view.task.id} has no copy to merge`, { task: view.task.id });
+  }
+
+  if ('conflict' in merged) {
+    throw new RunRefusal('conflict', `${view.task.id} does not merge with the run's work: ${merged.conflict}`, {
+      task: view.task.id,
+      next: `send it back to redo it on the run's version: plitzi task review ${view.task.id} --changes "…"`
+    });
+  }
+
+  return materialiseMerged(ctx, loaded, view, merged);
 };

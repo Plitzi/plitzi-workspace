@@ -34,7 +34,8 @@ import { elementStyles } from './styles';
 import { faintTexts, textGrounds } from './themes';
 import { LONG_TASKS, projectSettling } from '../../../browser';
 import { playedOn } from '../shot/steps';
-import { prepareVisit } from '../visit';
+import { prepareVisit, spaceFailureOn } from '../visit';
+import { notAuthoredReport } from './notAuthored';
 
 import type { Account } from './account';
 import type { VisitView } from '../visit';
@@ -286,6 +287,11 @@ const inspectHere = async (
     throttled: () => ReadonlySet<string>;
   }
 ): Promise<CheckReport> => {
+  const notAuthored = await spaceFailureOn(page);
+  if (notAuthored !== undefined) {
+    return notAuthoredReport(pathname, width, notAuthored);
+  }
+
   const handles = authored?.handles;
   const pageId = authored ? pageFor(authored, pathname) : undefined;
   // A page withheld from this visitor was sent without its own elements: only its layout's are owed, and the page the

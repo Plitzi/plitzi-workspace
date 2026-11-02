@@ -625,7 +625,9 @@ const isReviewState = (value: unknown): value is ReviewState =>
   optional(value.by, isString) &&
   optional(value.at, isString) &&
   optional(value.before, isStrings) &&
-  optional(value.first, (flag: unknown) => flag === true);
+  optional(value.first, (flag: unknown) => flag === true) &&
+  optional(value.busy, isString) &&
+  optional(value.credited, isNumber);
 
 const isNoteKind = (value: unknown): value is NoteKind => NOTE_KINDS.some(kind => kind === value);
 

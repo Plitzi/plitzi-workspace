@@ -1,7 +1,7 @@
 import { isPrincipal } from '../../../runs/agents/leads';
 import { viewTask } from '../../../runs/core/taskStore';
 import { loadRun, logRun } from '../../../runs/run';
-import { takeOnLook } from '../../../runs/tasks/reviews';
+import { holdWhileBusy, takeOnLook } from '../../../runs/tasks/reviews';
 
 import type { RunContext } from '../../../runs/run';
 
@@ -21,4 +21,20 @@ export const takeOnRead = async (ctx: RunContext, runId: string, taskId: string)
       review: isPrincipal(ctx.agent) ? 'lead' : 'QA'
     });
   }
+};
+
+/**
+ * `work`, a reviewer's command at `taskId` — a look, a proof — run with its step's time stopped while it runs
+ * (`holdWhileBusy`): what it waits for on the machine is not the reviewer's holding.
+ */
+export const whileReviewing = async <T>(
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  work: () => Promise<T>
+): Promise<T> => {
+  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const task = loaded.tasks.find(each => each.id === taskId);
+
+  return task ? holdWhileBusy(ctx, await viewTask(loaded.paths, task), work) : work();
 };

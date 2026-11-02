@@ -8,6 +8,7 @@ import {
   reviewRolesOf,
   reviewSteps,
   reviewTeamOfAgents,
+  stepHeld,
   stepQueued,
   stepReviewers,
   stepRole,
@@ -156,7 +157,7 @@ export const bottlenecks = (
       review?.by !== undefined && review.at !== undefined && review.by !== LEAD
         ? { by: review.by, at: review.at, what: `${stepRole(view, reviewTeam) ?? 'its'} review` }
         : undefined;
-    const held = taken ? now.getTime() - Date.parse(taken.at) : 0;
+    const held = taken ? stepHeld(review, now.getTime()) : 0;
     const time = stepTimeOf(review);
     // Past the review's time, and only then: halfway, with others free, woke a run's lead at 4 min of every long
     // review — free agents that could not have taken it, nothing else to give them.

@@ -20,6 +20,11 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   that code fails it: `plitzi task prove t-home-tests --mutate src/functions/shows.ts --from "slice(0, 6)" --to
   "slice(0, 7)"` runs its acceptance on its copy and on that mutant, and says which line catches it — a behaviour held
   in two places takes both changed (`--mutate … --from … --to …` again); never a copy of `src/` changed by hand. A task that changes no page has no look: that is its review.
+  A plugin or a component no page places yet is drawn alone, a copy for each `--with` (its props, or its attributes):
+  `plitzi task look t-plan-card --alone plan-card --with '{"item":{"name":"Pro","featured":true}}' --with '{}'` — on a
+  page of its own with no layout, `plitzi-preview-1`, `-2`… (`--click`, `--steps`, `--width` as for a page); never a
+  probe page of yours. A look or a proof of yours at your step stops its time while it runs, a wait for another
+  agent's suite included.
 - **What the data does not show, you test:** a case the acceptance asks for that no page reaches — a module's function,
   its edge cases (the project's `test` script runs every `*.test.ts` at complete), `node -e` in the copy; a probe (two calls at once) is a `node --test` file in your scratch importing
   the copy's code by its absolute path, never a file in the copy, run with `plitzi task run "…"` — or send it back for
@@ -35,8 +40,9 @@ lead's half is [runs-lead.md](runs-lead.md), the agents' [runs.md](runs.md).
   it is the lead's: approve as it is, answer, or ask the person. **What you cannot decide** — what was asked reads two
   ways, a change past the task, a disagreement with its developer — is the lead's: `--escalate "…"` instead of a verdict. A `task complete --known-failure` says why and which task fixes it —
   weigh that. The approval merges what went to review, not the copy as it is — with what the run approved since: your
-  review says, as you take it, whether that passes the project's checks; a failure the run's work already has the same
-  way is not the task's, and goes in told to the lead. `task prove` reads its copy's side as its complete measured it
+  review says, as you take it, whether that passes the project's checks — what fails, by its lines; a failure the run's
+  work already has the same way is not the task's, and goes in told to the lead. The merge itself: `plitzi task show
+  t-home <file> --merged [--diff]` (diffed from the run's version now), `plitzi task look t-home --merged` (served). `task prove` reads its copy's side as its complete measured it
   while the copy is unchanged. Two in review that read each other's
   files: `--approve --with <the other>` puts both in as one change.
 - **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when the

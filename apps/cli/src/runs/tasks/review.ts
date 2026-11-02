@@ -1,13 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { buildMergeIntoRun, buildRequestsMerge, changeApproved } from './approve';
+import { buildMergeIntoRun, buildRequestsMerge, changeApproved, checkDirs } from './approve';
 import { closeApproved } from './closeApproved';
 import { at, broughtText, findTask, refreshCopy } from './common';
 import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
 import { approveResearch, dropProposal } from './research';
 import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from './reviews';
 import { isPrincipal } from '../agents/leads';
+import { failingLines } from '../copies/checks';
 import { writeJson } from '../core/files';
 import { taskPaths } from '../core/paths';
 import { RunRefusal } from '../core/refusal';
@@ -484,11 +485,15 @@ const decide = async (
       ).catch(onConflict);
   if (into && 'failed' in into) {
     const failing = into.failed.steps.filter(step => !step.ok);
+    // What failed, by its lines: the step's name alone sent a run's reviewer to put the merge together by hand.
+    const printed = failingLines(failing, [checkDirs(loaded.paths.cache)])
+      .map(line => `\n  ${line}`)
+      .join('');
     throw new RunRefusal(
       'conflict',
       asked.length > 0
-        ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version`
-        : `Task "${taskId}"'s change${partner ? ` beside ${partner.view.task.id}'s` : ''}, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version${await besideHint(loaded, taskId, partner)}`,
+        ? `Task "${taskId}"'s files fail the project's checks (${failing.map(step => step.name).join(', ')}) without what it asked of ${asked.map(request => request.file).join(', ')}, and with it: nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version${printed}`
+        : `Task "${taskId}"'s change${partner ? ` beside ${partner.view.task.id}'s` : ''}, put together with the run's newer version, fails the project's checks (${failing.map(step => step.name).join(', ')}): nothing was merged — send it back (plitzi task review ${taskId} --changes "…") to redo it on the run's version${await besideHint(loaded, taskId, partner)}${printed}`,
       { task: taskId, steps: failing }
     );
   }

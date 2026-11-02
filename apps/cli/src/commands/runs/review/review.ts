@@ -32,6 +32,7 @@ import { drawnSame } from '../../page/same';
 import { actingSteps } from '../../page/shot/steps';
 import { visitViewOf, zoneNote } from '../../page/visit';
 import { visitorArgs } from '../../register/options';
+import { alonePreview } from '../look/alone';
 import {
   checkWithInteraction,
   clipArgs,
@@ -118,7 +119,17 @@ export const lookAt = (
     taskPaths(runPaths(ctx.root, runId), taskId).lookLock,
     async () => {
       const mark = phases();
-      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), { quiet: true, cold: true });
+      // An element drawn alone: the look's server authors a page for it, and only that page is looked at.
+      const alone =
+        options.alone === undefined
+          ? undefined
+          : await alonePreview(taskPaths(runPaths(ctx.root, runId), taskId).cache, options.alone, options.with);
+      const preview = await startTaskPreview(ctx, runId, taskId, await freePort(), {
+        quiet: true,
+        cold: true,
+        merged: options.merged === true,
+        ...(alone ? { env: alone.env } : {})
+      });
       // The run before it, once started: stopped with the copy's server whatever ends the look.
       const stops: (() => void)[] = [];
       try {
@@ -562,7 +573,9 @@ export const lookAt = (
           ...(notLooked.length > 0 ? { notLooked } : {}),
           pages: routes,
           ...(ownStatus.length > 0 ? { ownStatus } : {}),
-          ...(notReviewed.length > 0 ? { notReviewed } : {})
+          ...(notReviewed.length > 0 ? { notReviewed } : {}),
+          ...(options.merged === true ? { merged: true as const } : {}),
+          ...(alone && options.alone !== undefined ? { alone: { element: options.alone, copies: alone.copies } } : {})
         };
       } finally {
         stops.forEach(stop => {

@@ -8,6 +8,7 @@ import {
   reviewAtComplete,
   reviewFor,
   reviewSteps,
+  BUSY_MAX_MS,
   stepReviewers,
   stepTimedOut,
   stepTimeOf
@@ -121,6 +122,18 @@ describe('a step’s time and order', () => {
     expect(stepTimedOut(review, T0 + stepTimeOf(review) - 1)).toBeUndefined();
     expect(stepTimedOut(review, T0 + stepTimeOf(review) + 60_000)).toBe(9);
     expect(stepTimeOf({ first: true })).toBeGreaterThan(stepTimeOf(undefined));
+  });
+
+  it('does not run its time while a command of its reviewer at it runs, nor for what those commands took', () => {
+    // A run's tester proved its review, waited for another agent's suite, and lost the step meanwhile.
+    const proving: ReviewState = { round: 0, step: 0, since: at(0), by: 'test-2', at: at(0), busy: at(2) };
+    expect(stepTimedOut(proving, T0 + 20 * 60_000)).toBeUndefined();
+    const proved: ReviewState = { round: 0, step: 0, since: at(0), by: 'test-2', at: at(0), credited: 15 * 60_000 };
+    expect(stepTimedOut(proved, T0 + 20 * 60_000)).toBeUndefined();
+    expect(stepTimedOut(proved, T0 + 24 * 60_000)).toBe(9);
+    // A command that died busy holds it no longer than its most.
+    const gone: ReviewState = { ...proving, busy: at(0) };
+    expect(stepTimedOut(gone, T0 + BUSY_MAX_MS + stepTimeOf(gone) + 60_000)).toBe(9);
   });
 
   it('goes to the next step once approved, and is approved after its last — who said each kept for the next round', () => {

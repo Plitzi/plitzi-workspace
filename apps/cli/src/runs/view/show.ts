@@ -12,6 +12,7 @@ import { proposalsOf } from '../talk/agreements';
 import { LEAD, markRead, messagesOf } from '../talk/messages';
 import { notReviewedIn } from '../tasks';
 import { requestsShown } from '../tasks/context';
+import { mergedFile, mergedVersion } from '../tasks/mergedVersion';
 
 import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from '../core/model';
 import type { Finding } from '../plan/spike';
@@ -161,6 +162,12 @@ export const FROM_TEXT: Record<TaskShown['from'], string> = {
   copy: 'its copy',
   run: 'as approved',
   none: 'nothing yet'
+};
+
+/** How each source of one file is said: `--merged` too. */
+export const FILE_FROM_TEXT: Record<TaskFileShown['from'], string> = {
+  ...FROM_TEXT,
+  merged: 'as its approval would put it in'
 };
 
 /**
@@ -365,7 +372,8 @@ export const showTask = async (
 export interface TaskFileShown {
   task: string;
   file: string;
-  from: TaskShown['from'];
+  /** Where it was read — or `merged`: as its approval would put it in, diffed from the run's version now. */
+  from: TaskShown['from'] | 'merged';
   change: ShownFile['change'];
   /** The file whole, as the task holds it; none for one it removes, or one that is not text. */
   text?: string;
@@ -422,6 +430,70 @@ export const showTaskFile = async (
     file: named,
     from,
     change,
+    ...(text === undefined ? {} : { text }),
+    ...(was !== undefined && now !== undefined ? { diff: unifiedDiff(named, was, now) } : {}),
+    ...(after !== undefined && text === undefined ? { binary: true } : {})
+  };
+};
+
+/**
+ * One file of a task as its approval would put it in — its change merged with what the run approved since its copy was
+ * made — and its diff from the run's version now: what goes in, where `showTaskFile` reads the task's own change. A
+ * run's review said the merge failed typecheck, and its tester rebuilt the merge by hand to read the file.
+ */
+export const showMergedFile = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  file: string
+): Promise<TaskFileShown> => {
+  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const task = loaded.tasks.find(each => each.id === taskId);
+  if (!task) {
+    throw new RunRefusal('not-found', `Run "${runId}" has no task "${taskId}"`, { task: taskId });
+  }
+
+  const merged = await mergedVersion(ctx, loaded, await viewTask(loaded.paths, task));
+  if (!merged) {
+    throw new RunRefusal(
+      'invalid',
+      `${taskId} has no copy to merge: a task is merged while it is worked or in review — what is approved is the run's (plitzi task show ${taskId} ${file})`,
+      { task: taskId }
+    );
+  }
+
+  if ('conflict' in merged) {
+    throw new RunRefusal('conflict', `${taskId} does not merge with the run's work: ${merged.conflict}`, {
+      task: taskId
+    });
+  }
+
+  const named = file.replace(/^\.\//, '');
+  const moved = Object.keys(merged.next.files).filter(
+    each =>
+      !Object.hasOwn(merged.approved.files, each) ||
+      merged.next.files[each].digest !== merged.approved.files[each].digest
+  );
+  if (!moved.includes(named)) {
+    throw new RunRefusal(
+      'not-found',
+      moved.length === 0
+        ? `${taskId}'s merge changes no file of the run's work`
+        : `${taskId}'s merge leaves ${named} as the run holds it: it changes ${moved.join(', ')}`,
+      { task: taskId }
+    );
+  }
+
+  const { run, merged: after } = await mergedFile(loaded, merged, named);
+  const text = textOf(after);
+  const was = textOf(run) ?? (run === undefined ? '' : undefined);
+  const now = text ?? (after === undefined ? '' : undefined);
+
+  return {
+    task: taskId,
+    file: named,
+    from: 'merged',
+    change: run === undefined && after !== undefined ? 'added' : after === undefined ? 'removed' : 'changed',
     ...(text === undefined ? {} : { text }),
     ...(was !== undefined && now !== undefined ? { diff: unifiedDiff(named, was, now) } : {}),
     ...(after !== undefined && text === undefined ? { binary: true } : {})

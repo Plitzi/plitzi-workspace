@@ -716,6 +716,9 @@ plitzi run monitor                         # the run, live, in a terminal of you
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi task show t-home src/space/pages/home/hero.ts   # one file whole, as it went to review (no task: the one you hold or review)
 plitzi task show t-home --full             # as many diffs whole as one answer holds (12k characters), the rest a file at a time
+plitzi task show t-home src/space/theme.ts --merged --diff   # a file as its approval would put it in, with what the run approved since — diffed from the run's version now
+plitzi task look t-home --merged           # its merge served and looked at, in place of its copy
+plitzi task look t-plan-card --alone plan-card --with '{"item":{"name":"Pro"}}' --with '{}'   # a component or a plugin no page places yet, drawn alone: a copy for each --with
 plitzi run settle after-stop:dev-2 --note "…"   # a finding the run raised to the lead, settled by what it did — the close waits on it
 plitzi run report --summary summary.md     # the lead closes the run with its report (--full: the whole of it)
 plitzi run report --bench                           # every run measured the same way: minutes a task, rounds, checks failed, cost
@@ -747,7 +750,8 @@ inbox`. A block lifted carries its answer (`task unblock --answer`), and `task n
   holds first — a task sent back while its agent is at another waits for that agent, never handed to a free one.
 - **Every card on one board, reviewed alike:** a card's `review` names the roles that review it, in order (`["designer",
 "tester"]`; none: the tester, the lead with no tester). Each step is taken by one agent of its role that worked neither
-  the card nor what it tests — 8 minutes its (15, its first review, which holds its reading), then another's — and its
+  the card nor what it tests — 8 minutes its (15, its first review, which holds its reading; a look or a proof of its at
+  the step stops that time while it runs), then another's — and its
   approval hands the card, with its notes, to the next step; the last approves it. Changes start the round again from the
   first step, offered first to who said each step before. A step nobody took in 5 minutes is the next step's reviewer's
   too, and the lead says any step.

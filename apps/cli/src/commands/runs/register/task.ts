@@ -434,6 +434,19 @@ export const registerTaskGroup = (program: Command): Command => {
         '--scheme <schemes>',
         'light, dark, or light,dark: each width in each (light at 1440, dark at 390 when left out)'
       )
+      .option(
+        '--merged',
+        'Its merge served in place of its copy: as its approval would put it in, with what the run approved since its copy was made'
+      )
+      .option(
+        '--alone <element>',
+        'One element drawn alone, on a page of its own with no layout — a component, a plugin’s element or a built-in: what no page places yet, looked at'
+      )
+      .option(
+        '--with <json>',
+        'With --alone: one copy’s props (a component) or attributes (an element), as JSON — again for each copy more: --with \'{"status":"banana"}\' --with \'{}\'',
+        (json: string, before: string[] = []) => [...before, json]
+      )
       .option(...RUN_OPTION)
       .option(...JSON_OPTION),
     { url: false }
@@ -468,12 +481,19 @@ export const registerTaskGroup = (program: Command): Command => {
       '--diff',
       'With files: each one’s whole diff from where the task started — the task’s own change, never another’s approved since'
     )
+    .option(
+      '--merged',
+      'With files: each as its approval would put it in — merged with what the run approved since its copy was made; --diff from the run’s version now'
+    )
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (task: string | undefined, files: string[], options: RunCommandOptions & { full?: boolean; diff?: boolean }) =>
-        taskShow(task, files, options)
+      (
+        task: string | undefined,
+        files: string[],
+        options: RunCommandOptions & { full?: boolean; diff?: boolean; merged?: boolean }
+      ) => taskShow(task, files, options)
     );
 
   taskGroup

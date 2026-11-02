@@ -192,3 +192,41 @@ export const ownFailing = (mine: CheckResult, without: CheckResult, dirs: readon
 
     return ![...linesOf(step, dirs)].every(line => known.has(line));
   });
+
+/**
+ * Each step `mine` fails of its own, with only the lines `without` does not print: what a reviewer reads to know why a
+ * merge fails — a run's review said "it fails typecheck" and named no error, and the tester rebuilt the merge by hand.
+ */
+export const ownFailingLines = (
+  mine: CheckResult,
+  without: CheckResult,
+  dirs: readonly (string | RegExp)[]
+): CheckStep[] =>
+  ownFailing(mine, without, dirs).map(step => {
+    const before = without.steps.find(each => each.name === step.name && !each.ok);
+    const known = before ? linesOf(before, dirs) : new Set<string>();
+
+    return { ...step, said: [...linesOf(step, dirs)].filter(line => !known.has(line)) };
+  });
+
+/** The most lines of one failing step said where a merge is refused or warned of: the first errors, then a count. */
+const LINES_SAID = 4;
+
+/**
+ * Failing steps as lines to read — `typecheck: src/…/cell.ts(2,15): Duplicate identifier 'ElementSpec'` — the first
+ * few of each, the rest counted; `dirs` taken out of each, so a path reads as the project's.
+ */
+export const failingLines = (steps: readonly CheckStep[], dirs: readonly (string | RegExp)[] = []): string[] =>
+  steps.flatMap(step => {
+    const said = [...linesOf(step, dirs)];
+    if (said.length === 0) {
+      return [`${step.name}: failed, printing nothing`];
+    }
+
+    const more = said.length - LINES_SAID;
+
+    return [
+      ...said.slice(0, LINES_SAID).map(line => `${step.name}: ${line}`),
+      ...(more > 0 ? [`${step.name}: and ${String(more)} more line${more === 1 ? '' : 's'}`] : [])
+    ];
+  });

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { completeTask, findTask } from '.';
-import { takeOnLook } from './reviews';
+import { holdWhileBusy, stepTimedOut, stepTimeOf, takeOnLook } from './reviews';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { setTeamAgent } from '../agents/team';
@@ -97,5 +97,29 @@ describe('a look at a task in review', () => {
     const designer = bench.agent('design-1');
     expect(await takeOnLook(designer, loaded, await viewTask(loaded.paths, findTask(loaded, 't-menu')))).toBe(true);
     expect(await takeOnLook(designer, loaded, await viewTask(loaded.paths, findTask(loaded, 't-about')))).toBe(false);
+  });
+
+  // A run's tester's `task prove --before` waited for another agent's suite past the step's 8 min, and another tester
+  // took the review it was still proving.
+  it('stops its step’s time while its reviewer’s command at it runs, and gives that time back after', async () => {
+    const runId = await inReview(false);
+    const first = await viewOf(runId);
+    await takeOnLook(lead(), first.loaded, first.view);
+    const taken = await viewOf(runId);
+
+    const during = await holdWhileBusy(lead(), taken.view, async () => {
+      bench.advance(20 * 60_000);
+
+      return (await viewOf(runId)).view.state.review;
+    });
+    expect(during?.busy).toBeDefined();
+    expect(stepTimedOut(during, bench.now().getTime())).toBeUndefined();
+
+    const after = (await viewOf(runId)).view.state.review;
+    expect(after).toMatchObject({ by: 'lead', credited: 20 * 60_000 });
+    expect(after?.busy).toBeUndefined();
+    expect(stepTimedOut(after, bench.now().getTime())).toBeUndefined();
+    bench.advance(stepTimeOf(after) + 60_000);
+    expect(stepTimedOut(after, bench.now().getTime())).toBe(9);
   });
 });

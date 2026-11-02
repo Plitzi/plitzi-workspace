@@ -757,7 +757,18 @@ run (`FIRST_REVIEW_READING_MS`, `ReviewState.first`), which reads the references
 hands it to another of its reviewers — the first told on its next command (`review-timed-out` in the log), and its
 verdict after refused as `claimed`, saying to keep what it found for the next run (`run notice`) — and `run watch` tells
 the lead, idle team or not, to decide it (`slow-review`). A step nobody takes for `REVIEW_QUEUE_MS` (5 min) may be said
-by the next step's reviewers too (`stepQueued`), and `run watch` says it (`review-waits`).
+by the next step's reviewers too (`stepQueued`), and `run watch` says it (`review-waits`). The time runs only while its reviewer
+holds the step idle: a look or a proof of its at the step (`task look`, `task prove`) marks it busy while it runs and
+gives that time back after (`holdWhileBusy`, `ReviewState.busy`/`credited`, at most `BUSY_MAX_MS` — 30 min — for one
+command that died busy) — a run's tester's `task prove --before` waited twice for another agent's Playwright suite, the
+8 min ran out meanwhile, and another tester took the review it was still proving.
+
+**An element no page places yet is looked at alone** (`task look --alone <element> --with <json>…`): the look's server
+starts with `PREVIEW_FILE_ENV` naming a file of the task's cache, and `authorProjectSpace` adds a page for it at
+`PREVIEW_SLUG`, in no layout — a component's copies with their props, an element type's with their attributes, ids
+`previewCopyId` — refusing a name that is neither (`SpacePreviewError`, said alone by the server) and a space with a
+page there already. Five reviewers of plugin tasks, and two of a component, wrote probe pages in their scratch to see
+one; what the layout brings (a stylesheet another plugin imports) is not there, as a page without it would not have it.
 
 **A round sent back goes first to who said each step the one before** (`ReviewState.before`) — a run's t-match-bars
 had design-2's first round and design-1's second, which brought asks of its own and cost a round. Another reviewer
@@ -1081,8 +1092,11 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   version over the change at the finish — recorded as an override, said in `run status`, the finish and the report, and
   the other version kept — or `--changes` sends it back to take the project's version and redo. Approved, it lets its
   files go to whoever waits, makes ready what depended on it, and makes the integration tasks due. A review taken says,
-  as it starts, whether the task put together with what the run approved since passes the checks (`mergedNow`), and a
-  pass is kept for the approval. An approval whose merge fails the checks only the way the run's approved work already
+  as it starts, whether the task put together with what the run approved since passes the checks (`mergedNow`) — a
+  failure by its lines, those the run's work without it does not print (`ownFailingLines`), as the approval's refusal
+  says them too — and a pass is kept for the approval. The merge is one (`mergedVersion`), read by file (`task show
+  <file> --merged`, diffed from the run's version now) and served (`task look --merged`, a folder of the task's cache):
+  a run's review said only "it fails typecheck", and its tester rebuilt the merge by hand to find the error. An approval whose merge fails the checks only the way the run's approved work already
   fails without it goes in, told to the lead (`runFails`): finished tasks were held in review behind another's breakage.
 - **Waiting** on a file or an answer is a state; `--follow` (`task claim --wait`, `task propose --wait`, `task tell --ask`) stays until it comes,
   giving the task's sign of life meanwhile.

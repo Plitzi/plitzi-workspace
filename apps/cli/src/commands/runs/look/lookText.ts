@@ -2,6 +2,9 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { previewCopyId } from '@plitzi/sdk-shared/project';
+
+import { ALONE_PATH } from './alone';
 import { differenceText } from '../../page/same';
 import { PICTURED_STILL } from '../../page/visit';
 import { list } from '../text';
@@ -103,11 +106,24 @@ const besideSummary = (looked: Looked): string[] => {
   ];
 };
 
+/** The ids an element drawn alone has, copy by copy: what --element, --click or --within name it by. */
+const aloneIdsText = (copies: number): string =>
+  copies === 1
+    ? `its one copy is ${previewCopyId(0)}`
+    : `${String(copies)} copies, ${previewCopyId(0)} to ${previewCopyId(copies - 1)}, one under the other`;
+
 /** What a look says. */
 export const lookText = (looked: Looked): string =>
   [
-    chalk.bold(`${looked.task}, as it went to review (served from its copy, cold, now stopped):`),
+    chalk.bold(
+      looked.merged === true
+        ? `${looked.task}, as its approval would put it in (its merge with what the run approved since its copy was made, served cold, now stopped):`
+        : `${looked.task}, as it went to review (served from its copy, cold, now stopped):`
+    ),
     chalk.dim(`· ${PICTURED_STILL}`),
+    ...(looked.alone
+      ? [`${looked.alone.element} drawn alone at ${ALONE_PATH}, in no layout: ${aloneIdsText(looked.alone.copies)}`]
+      : []),
     ...(looked.stoppedUnder ?? []).map(line => chalk.yellow(`⚠ ${line}`)),
     ...(looked.signedInAs
       ? [`Read signed in as ${looked.signedInAs}, as its acceptance checks it (--as another to read it otherwise)`]

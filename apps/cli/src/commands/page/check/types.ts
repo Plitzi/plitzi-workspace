@@ -74,7 +74,8 @@ export interface CheckIssue {
     | 'flush-edge'
     | 'form-held-back'
     | 'server-logged'
-    | 'state-unheld';
+    | 'state-unheld'
+    | 'space-not-authored';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;

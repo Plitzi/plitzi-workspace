@@ -132,8 +132,10 @@ export const prepareVisit = async (
 };
 
 /** Why the page is the server's own rather than the space's — the space does not author — or nothing. */
-export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefined> =>
-  page
+export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefined> => {
+  // Read in the page, self-contained; said here — what runs the project's scripts is not in the page (it was, and the
+  // page threw, and the server's error page was read as a page of the space).
+  const said = await page
     .evaluate(meta => {
       if (!document.querySelector(`meta[name="${meta}"]`)) {
         return undefined;
@@ -144,11 +146,15 @@ export const spaceFailureOn = async (page: BrowserPage): Promise<string | undefi
         .split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
-      const said = `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
 
-      return `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: ${projectRun('author')} says why`;
+      return `${lines.slice(0, 6).join(' · ')}${lines.length > 6 ? ' …' : ''}`;
     }, SPACE_FAILURE_META)
     .catch(() => undefined);
+
+  return said === undefined
+    ? undefined
+    : `the space does not author, so the page is the server's error page${said ? ` — ${said}` : ''}: ${projectRun('author')} says why`;
+};
 
 const PASSED_KEY = '__plitzi_passed';
 

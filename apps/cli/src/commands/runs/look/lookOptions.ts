@@ -31,4 +31,16 @@ export interface LookOptions extends RunCommandOptions, Omit<VisitorOptions, 'ur
   scheme?: string;
   /** One part alone — an element's name, a tag or a selector, as `page outline --within`: pictured and set beside it. */
   within?: string;
+  /**
+   * The task as its approval would put it in — merged with what the run approved since its copy was made — served in
+   * place of its copy: a shared file another approval changed read as it will be, not as the copy's base had it.
+   */
+  merged?: boolean;
+  /**
+   * One element of the space drawn alone — a component, a plugin's element, a built-in — on a page the look's server
+   * authors for it: what a plugin or a component no page places yet is looked at on.
+   */
+  alone?: string;
+  /** With `alone`: each copy's props or attributes, as JSON — one copy as declared when left out. */
+  with?: string[];
 }

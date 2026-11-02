@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 
+import { ALONE_PATH } from './alone';
 import { keepLook, keptLook, lookKey, pagesLooked } from './lookParts';
 import { pathGroups } from './lookPaths';
 import { lookTextWithin } from './lookText';
@@ -12,7 +13,7 @@ import { loadRun } from '../../../runs/run';
 import { findTask } from '../../../runs/tasks';
 import { actingSteps } from '../../page/shot/steps';
 import { lookAt } from '../review/review';
-import { takeOnRead } from '../review/takeOnRead';
+import { takeOnRead, whileReviewing } from '../review/takeOnRead';
 import { act, runOf } from '../shell';
 import { list } from '../text';
 
@@ -34,6 +35,21 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         );
       }
 
+      if (options.with !== undefined && options.alone === undefined) {
+        throw new RunRefusal(
+          'invalid',
+          `--with gives the copies of an element drawn alone: name it — plitzi task look ${taskId} --alone <element> --with '{…}'`
+        );
+      }
+
+      // Drawn alone, on the page its server authors for it: no page of the space, and nothing before it to compare with.
+      if (options.alone !== undefined && paths.length > 0) {
+        throw new RunRefusal(
+          'invalid',
+          `--alone draws ${options.alone} on a page of its own (${ALONE_PATH}): leave out ${paths.join(', ')} — or look at those pages without --alone`
+        );
+      }
+
       // A visitor's steps, read and pictured after: a picture among them is page shot's, the look takes its own.
       const steps = actingSteps(options.steps, 'task look');
       if ('problem' in steps) {
@@ -42,7 +58,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
 
       // A task that changes no page — a test's fix — has nothing to picture: said, with what reviews it, never the home
       // page pictured in its place (a run: 19 pictures of a page the change could not touch).
-      if (paths.length === 0) {
+      if (paths.length === 0 && options.alone === undefined) {
         const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
         const task = findTask(loaded, taskId);
         const view = await viewTask(loaded.paths, task);
@@ -70,22 +86,30 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
       // A look a visitor: the paths each say theirs, the next told what the ones before covered.
       const state = await lookKey(ctx, runId, taskId, {});
       const covered = await pagesLooked(cache, state, ctx.now());
-      const groups = paths.length === 0 ? [{ paths: [], visitor: {} }] : pathGroups(paths);
+      const groups =
+        options.alone !== undefined
+          ? [{ paths: [ALONE_PATH], visitor: {} }]
+          : paths.length === 0
+            ? [{ paths: [], visitor: {} }]
+            : pathGroups(paths);
       const looks: { said: string | undefined; text: string }[] = [];
       for (const group of groups) {
         const { as, guest, status } = group.visitor;
-        const looked = await lookAt(
-          ctx,
-          runId,
-          taskId,
-          group.paths,
-          {
-            ...options,
-            ...(as === undefined ? {} : { as, guest: false }),
-            ...(guest === true ? { as: undefined, guest: true } : {}),
-            ...(status === undefined ? {} : { status })
-          },
-          covered
+        const looked = await whileReviewing(ctx, runId, taskId, () =>
+          lookAt(
+            ctx,
+            runId,
+            taskId,
+            group.paths,
+            {
+              ...options,
+              ...(options.alone === undefined ? {} : { before: false }),
+              ...(as === undefined ? {} : { as, guest: false }),
+              ...(guest === true ? { as: undefined, guest: true } : {}),
+              ...(status === undefined ? {} : { status })
+            },
+            covered
+          )
         );
         covered.push(...looked.pages);
         looks.push({
@@ -103,7 +127,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     },
     answer =>
       answer.kind === 'no-page'
-        ? `${taskId} changes no page: ${list(answer.files)} ${answer.files.length === 1 ? 'is' : 'are'} drawn by none, and its acceptance checks none — nothing to picture. What reviews it is its acceptance: plitzi task prove ${taskId} --before runs each line before the task and with it, and says what it proves. To picture a page all the same, name it: plitzi task look ${taskId} /`
+        ? `${taskId} changes no page: ${list(answer.files)} ${answer.files.length === 1 ? 'is' : 'are'} drawn by none, and its acceptance checks none — nothing to picture. What reviews it is its acceptance: plitzi task prove ${taskId} --before runs each line before the task and with it, and says what it proves. To picture a page all the same, name it: plitzi task look ${taskId} / — or an element of it that no page places yet, drawn alone: plitzi task look ${taskId} --alone <element> [--with '{…}']`
         : answer.kind === 'again'
           ? [
               chalk.dim(

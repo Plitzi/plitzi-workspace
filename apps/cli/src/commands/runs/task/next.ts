@@ -7,6 +7,7 @@ import { shownText } from './show';
 import { FOLLOW_MS } from '../../../options';
 import { isPrincipal } from '../../../runs/agents/leads';
 import { DESIGN_LOOK, DESIGNER } from '../../../runs/agents/team';
+import { failingLines } from '../../../runs/copies/checks';
 import { acceptanceText } from '../../../runs/core/model';
 import { copyOf } from '../../../runs/core/paths';
 import { answerParts } from '../../../runs/core/usage';
@@ -197,10 +198,13 @@ const mergedText = (review: NonNullable<NextTask['review']>): string[] => {
   }
 
   if (merged.failing) {
+    // What fails there and not on the run's work without it, said by its lines: "it fails typecheck" alone sent a
+    // run's tester to build the merge by hand — and "which its copy alone passed" was false of a copy failing too.
     return [
       chalk.yellow(
-        `  ⚠ ${together}, it fails the project's checks (${merged.failing.join(', ')}), which its copy alone passed — its approval is refused for it: send it back now (plitzi task review ${review.task.id} --changes "…") naming what fails, or review its copy knowing it`
-      )
+        `  ⚠ ${together}, it fails the project's checks (${merged.failing.map(step => step.name).join(', ')}) where the run's work without it does not — its approval is refused for it: send it back now (plitzi task review ${review.task.id} --changes "…") naming what fails, or review it knowing it. What fails, and not without it (the merged version itself: plitzi task look ${review.task.id} --merged, a file of it: plitzi task show ${review.task.id} <file> --merged):`
+      ),
+      ...failingLines(merged.failing).map(line => chalk.yellow(`    ${line}`))
     ];
   }
 

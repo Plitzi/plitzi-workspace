@@ -21,6 +21,7 @@ import {
 } from '../tasks';
 import { findTask } from '../tasks/common';
 import { mergedNow } from '../tasks/mergedNow';
+import { showMergedFile } from '../view/show';
 import { viewRun } from '../view/view';
 
 import type { Bench } from '../../tests/runProject';
@@ -197,12 +198,22 @@ export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price
     const loadedNow = await loadRun(lead(), 'es-launch');
     expect(await mergedNow(lead(), loadedNow, await viewTask(loadedNow.paths, findTask(loadedNow, 't-menu')))).toEqual({
       since: ['t-home'],
-      failing: ['author']
+      failing: [{ name: 'author', ok: false, said: ['src/space/pages/menu.ts: BROKEN'] }]
     });
+    // The merge itself read by its file, as it would go in: the run's tester rebuilt it by hand to read it.
+    const shownMerged = await showMergedFile(lead(), 'es-launch', 't-menu', 'src/space/pages/menu.ts');
+    expect(shownMerged).toMatchObject({ from: 'merged', change: 'added' });
+    expect(shownMerged.diff).toContain(
+      "+export const menu = { id: 'menu', title: 'Carta', price: theme }; // NEEDS:price"
+    );
+    expect((await refusal(showMergedFile(lead(), 'es-launch', 't-menu', 'src/space/tokens.ts'))).message).toContain(
+      'leaves src/space/tokens.ts as the run holds it: it changes src/space/pages/menu.ts'
+    );
 
     const refused = await refusal(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []));
     expect(refused.code).toBe('conflict');
     expect(refused.message).toContain("fail the project's checks (author) without what it asked of src/space/theme.ts");
+    expect(refused.message).toContain('author: src/space/pages/menu.ts: BROKEN');
     const approved = await readApproved((await loadRun(lead(), 'es-launch')).paths);
     expect(Object.keys(approved.files)).not.toContain('src/space/pages/menu.ts');
   });
