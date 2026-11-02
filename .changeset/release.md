@@ -48,9 +48,17 @@
 
 - `serverOptions.onListening({ url, server })` runs once the project's server answers — a warm-up of its home, now that
   `main.ts` is the CLI's; not awaited, and a failure is said.
+- A page's `settings.paintedState` is not drawn from an entry another account wrote than the one the request proved:
+  the next account on a browser was drawn the previous one's values, and its providers read them before the page
+  could discard them.
 
 ## Elements (`@plitzi/sdk-elements`)
 
 - A new element, `focusGroup`: the arrow keys move the focus between the controls inside it — ↑/↓ through them, ←/→ to
   the first of the next or the previous list, Home/End to the ends; ↓ from a text field inside goes down into them and
   ↑ from the first comes back. For a search palette's results, a menu, a set of options.
+
+## Kept state (`@plitzi/sdk-shared`)
+
+- A kept key the page wrote before the restore landed stays when the kept entry holds none of it: a page's own default
+  written on load was dropped whenever the visit had started on another page.

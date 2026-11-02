@@ -56,6 +56,19 @@ describe('paintedStateFor', () => {
     expect(paintedStateFor(cookies, 'p', keys)).toEqual({ toolPick: 'star' });
   });
 
+  // The dashboard drawn from the previous account's cookie asked for its workspace before the page could discard it.
+  it('answers nothing for an entry another account wrote than the one the request proved', () => {
+    const cookies = header('p', { owner: 'user:7', values: { toolPick: 'star' } });
+
+    expect(paintedStateFor(cookies, 'p', keys, 8)).toBeUndefined();
+    expect(paintedStateFor(cookies, 'p', keys, 7)).toEqual({ toolPick: 'star' });
+    // A guest's choice is the same person signing in; and with no account proved, only the browser can tell.
+    expect(paintedStateFor(header('p', { owner: 'guest', values: { toolPick: 'star' } }), 'p', keys, 8)).toEqual({
+      toolPick: 'star'
+    });
+    expect(paintedStateFor(cookies, 'p', keys)).toEqual({ toolPick: 'star' });
+  });
+
   it('answers nothing for a space that declares no keys, or a cookie with none of them', () => {
     const cookies = header('p', { owner: '', values: { toolPick: 'star' } });
 

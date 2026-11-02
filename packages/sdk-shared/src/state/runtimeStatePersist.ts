@@ -1,6 +1,7 @@
 import { persistMiddleware } from '@plitzi/nexus';
 
 import {
+  accountOwner,
   clearPaintedEntry,
   paintedKeys,
   paintedStateCookieName,
@@ -60,7 +61,7 @@ export const stateOwner = (state: CommonState): StateOwner | undefined => {
 const ownerKey = (owner: StateOwner): string => {
   switch (owner.kind) {
     case 'account':
-      return `user:${owner.id}`;
+      return accountOwner(owner.id);
     case 'guest':
       return 'guest';
     case 'browser':
@@ -247,12 +248,14 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
 
       return isRecord(value) ? keysWhere(value, kept) : value;
     },
+    // What was kept wins where it holds a key; what the page holds before the restore landed stays where it holds
+    // none. Read as "the kept keys come from storage alone", a page's own default written on load (the runs filter, by
+    // `onPageLoad`) was dropped whenever the visit had started on another page — its entry kept nothing of it yet — and
+    // so was a key the space added to its start after the entry was kept.
     mergePath: (_path, persisted, current, state) => {
       const kept = keptKey(schemaSettings(state));
 
-      return isRecord(persisted)
-        ? { ...keysWhere(persisted, kept), ...keysWhere(current, key => !kept(key)) }
-        : persisted;
+      return isRecord(persisted) ? { ...keysWhere(current, () => true), ...keysWhere(persisted, kept) } : persisted;
     },
     storage: (state: CommonState) => {
       const { render } = state;

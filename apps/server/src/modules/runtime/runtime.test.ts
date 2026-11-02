@@ -261,7 +261,17 @@ describe('a space runtime', () => {
       maxAttempts: 3
     });
     await worker.poll();
-    await new Promise(resolve => setTimeout(resolve, 120));
+    // Paused once it has saved two epochs, not after a fixed wait: a process started under the whole workspace's tests
+    // had saved one in 120 ms, and the pause it was paused at proved nothing of going on from what it saved.
+    for (let round = 0; round < 200; round += 1) {
+      const running = await queue.getJob([3], 'job:3:train');
+      if (((running?.state as { epoch?: number } | undefined)?.epoch ?? 0) >= 2) {
+        break;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+
     expect(await queue.pause([3], 'job:3:train')).toBe(true);
     await worker.beat();
     const settledOf = async (status: string) => {

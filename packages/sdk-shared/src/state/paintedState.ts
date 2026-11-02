@@ -15,8 +15,10 @@ import { isRecord } from '../helpers/isRecord';
  * every request, so it holds only what the first paint needs, and never more than {@link PAINTED_STATE_BUDGET}.
  *
  * The entry carries who wrote it, as the kept state in web storage does, and a page that finds it written by somebody
- * else discards what it rendered with. The server cannot tell — who the visitor is, for a space with its own sign-in,
- * is only settled in the browser.
+ * else discards what it rendered with. The server can tell only half of that — who the visitor is, for a space with its
+ * own sign-in, is only settled in the browser — so it draws an entry unless the request proved an account and the entry
+ * names another: the page's providers read the painted values before its auth settles, and a dashboard drawn from the
+ * previous account's cookie asked for that account's workspace before the page could discard it.
  */
 
 /** Bytes of the encoded value: well inside the 4096 a browser allows a cookie, name and attributes included. */
@@ -26,6 +28,9 @@ export const PAINTED_STATE_BUDGET = 3072;
 const MAX_AGE = 60 * 60 * 24 * 365;
 
 export type PaintedEntry = { owner: string; values: Record<string, unknown> };
+
+/** How an account is written as the owner of an entry — here and on the kept state in web storage alike. */
+export const accountOwner = (id: number | string): string => `user:${String(id)}`;
 
 /**
  * Per space, as the web storage key is (`plitzi_<webId>_state`) — and per port, because a cookie's scope is the host
@@ -74,19 +79,21 @@ export const paintedEntryFromCookies = (cookies: string | undefined, name: strin
 
 /**
  * What the server renders with: the entry's values for the keys the space declares — a key it no longer declares, or
- * one the visitor added, is not the server's to render.
+ * one the visitor added, is not the server's to render — and nothing when `account`, the one the request proved, is not
+ * the one that wrote it.
  */
 export const paintedStateFor = (
   cookies: string | undefined,
   name: string,
-  keys: ReadonlySet<string>
+  keys: ReadonlySet<string>,
+  account?: number | string
 ): Record<string, unknown> | undefined => {
   if (keys.size === 0) {
     return undefined;
   }
 
   const entry = paintedEntryFromCookies(cookies, name);
-  if (!entry) {
+  if (!entry || (account !== undefined && entry.owner.startsWith('user:') && entry.owner !== accountOwner(account))) {
     return undefined;
   }
 

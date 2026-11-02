@@ -6,6 +6,7 @@ import { createServer } from './createServer';
 import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { createActionsModule } from '../modules/actions';
+import { DEFAULT_FUNCTION_CEILINGS } from '../modules/functions/config';
 import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
 import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
@@ -148,7 +149,9 @@ beforeAll(async () => {
     throw new Error(prepared.problems.map(problem => problem.message).join('\n'));
   }
 
-  const functions: SpaceFunctions = functionsInHand(prepared.functions);
+  // The deployment's ceiling, not the default 100 ms of CPU: a first, cold run under the whole workspace's tests spent
+  // more and was stopped — this file is about the connection, not what a route may spend.
+  const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: DEFAULT_FUNCTION_CEILINGS };
   server = createServer({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() }),

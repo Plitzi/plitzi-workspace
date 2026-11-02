@@ -266,6 +266,23 @@ describe('runtimeStatePersist', () => {
       expect(store.getState().runtime?.state).toEqual({ ...kept, demo: 'teal' });
     });
 
+    // The runs page wrote its default filter on load; a visit that had started on another page restored an entry
+    // holding nothing of it, and the filter was gone.
+    it('keeps a kept key written before the restore that the entry does not hold, and restores the ones it does', () => {
+      localStorage.setItem(KEY, entry('', { ...kept, logs: { days: '7' } }));
+      const store = transient(true);
+      store.setState('runtime.state', { automations: { runStatus: 'problems' }, logs: { days: '' } });
+      store.hydrate?.();
+
+      store.setState('render.hydrated', true);
+
+      expect(store.getState().runtime?.state).toEqual({
+        ...kept,
+        automations: { runStatus: 'problems' },
+        logs: { days: '7' }
+      });
+    });
+
     it('keeps everything else as before', () => {
       localStorage.setItem(KEY, entry('', { ...kept, other: 1 }));
       const store = transient();

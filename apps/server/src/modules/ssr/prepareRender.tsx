@@ -322,10 +322,16 @@ export const prepareRender = async (
    * tool a toolbar shows, their name in an avatar — would reach the page only after hydration, and be swapped in over
    * the defaults the server drew. Read here, the server draws with it, and the page starts from the same values: it
    * travels as the SDK's `state`, the starting `runtime.state`, in the render and in the payload alike, or the client
-   * would hydrate other markup. Only the keys the space declares, and only with `keepState` on.
+   * would hydrate other markup. Only the keys the space declares, only with `keepState` on, and not an entry another
+   * account wrote than the one this request proved.
    */
   const paintedState = schema?.settings.keepState
-    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req)), paintedKeys(schema.settings))
+    ? paintedStateFor(
+        req.headers.cookie,
+        ssrPaintedCookieName(requestAuthority(req)),
+        paintedKeys(schema.settings),
+        req.ctx.user?.id
+      )
     : undefined;
 
   /**

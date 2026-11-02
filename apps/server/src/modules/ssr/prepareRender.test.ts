@@ -109,6 +109,8 @@ type Options = {
   defaultTheme?: 'dark' | 'light' | 'system';
   /** The space's own settings, over the fixture's. */
   settings?: Record<string, unknown>;
+  /** The account the request proved. */
+  userId?: number;
 };
 
 const render = async (
@@ -126,7 +128,8 @@ const render = async (
     fonts,
     fontsConfig,
     defaultTheme,
-    settings
+    settings,
+    userId
   }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
@@ -151,6 +154,11 @@ const render = async (
   const req = request(path, query, cookie);
   if (degrade !== undefined) {
     (req.ctx as { meter?: { degrade: boolean } }).meter = { degrade };
+  }
+
+  if (userId !== undefined) {
+    // The render reads the account's id alone; the rest of an actor is the auth chain's.
+    (req.ctx as { user?: { id: number } }).user = { id: userId };
   }
 
   const { componentProps, templateParams } = await prepareRender(
@@ -511,6 +519,16 @@ describe('prepareRender / the kept state the first paint shows', () => {
     });
 
     expect(componentProps.state).toEqual({ toolPick: 'star' });
+  });
+
+  // The next account on the browser was drawn the previous one's dashboard, and asked for its workspace.
+  it('draws nothing another account wrote than the one the request proved', async () => {
+    const theirs = cookie({ toolPick: 'star' }, 'user:7');
+
+    expect((await render('/', { cookie: theirs, settings: keeping, userId: 8 })).componentProps.state).toBeUndefined();
+    expect((await render('/', { cookie: theirs, settings: keeping, userId: 7 })).componentProps.state).toEqual({
+      toolPick: 'star'
+    });
   });
 
   it('reads nothing for a space that does not keep state', async () => {
