@@ -44,6 +44,11 @@
   apart that read different sources are one component, each instance handed its own as a bound `json` prop — the
   suggestion says how, and no longer that they "differ only in what they say".
 
+- A journey's `type` step in a file field picks the file its text names — `type photo me.png` — a small real file of
+  that kind (png, jpg, gif, webp, pdf, txt, csv, json) built in the page, so a server reading its first bytes answers
+  as it would a visitor's. A name of another kind is refused with the kinds there are. `plitzi page play --steps` plays
+  it the same way.
+
 ## Server (`@plitzi/sdk-server`)
 
 - `serverOptions.onListening({ url, server })` runs once the project's server answers — a warm-up of its home, now that

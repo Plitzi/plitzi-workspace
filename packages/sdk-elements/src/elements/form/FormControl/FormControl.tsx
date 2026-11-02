@@ -17,10 +17,12 @@ import Hidden from './inputs/Hidden';
 import Input from './inputs/Input';
 import Select from './inputs/Select';
 import Textarea from './inputs/Textarea';
+import { CHECK_SUBTYPES, INPUT_SUBTYPES } from './subTypes';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { FormControlSubType } from './subTypes';
 import type { FormContextValue } from '../Form';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ChangeEvent, RefObject } from 'react';
@@ -28,30 +30,7 @@ import type { ChangeEvent, RefObject } from 'react';
 export type FormControlProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  subType:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'password'
-    /** A search box: the browser draws its clear button, and a phone shows its search key. */
-    | 'search'
-    | 'url'
-    /** A phone number: a phone shows its dial pad. */
-    | 'tel'
-    | 'date'
-    | 'time'
-    | 'checkbox'
-    | 'switch'
-    | 'select'
-    | 'textarea'
-    | 'hidden'
-    /** The browser's own colour picker: its value is `#rrggbb`. */
-    | 'color'
-    /**
-     * A file picked from the device: its value is the `File`, which a `webHook` step sends as a multipart form, under
-     * the control's `name`.
-     */
-    | 'file';
+  subType: FormControlSubType;
   name: string;
   label: string;
   /**
@@ -174,7 +153,8 @@ const FormControl = ({
       const { target } = e;
       // A switch is a checkbox too, announced as one that switches.
       const checkable = target instanceof HTMLInputElement && target.type === 'checkbox';
-      const picked = target instanceof HTMLInputElement && target.type === 'file' ? (target.files?.[0] ?? null) : undefined;
+      const picked =
+        target instanceof HTMLInputElement && target.type === 'file' ? (target.files?.[0] ?? null) : undefined;
       const value = picked !== undefined ? picked : checkable ? target.checked : target.value;
       void interactionsManager.interactionTrigger(id, 'onChange', { value, name });
     },
@@ -182,7 +162,7 @@ const FormControl = ({
   );
   const registerField = form?.registerField;
   const unregisterField = form?.unregisterField;
-  const isCheck = ['checkbox', 'switch'].includes(subType);
+  const isCheck = CHECK_SUBTYPES.includes(subType);
   // A hidden input has nothing to label, and the default label is a word rather than an empty string — so
   // authoring one without remembering to blank it puts "Label" and a box on the page above a field nobody can
   // see. The control itself is `display: none` in a real render; only the builder shows a placeholder for it.
@@ -255,7 +235,7 @@ const FormControl = ({
         </Label>
       )}
       {isCheck && !label && checkControl}
-      {['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color'].includes(subType) && (
+      {INPUT_SUBTYPES.includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}

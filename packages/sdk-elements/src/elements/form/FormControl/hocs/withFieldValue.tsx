@@ -9,26 +9,14 @@ import { validateField } from '../helpers/validateField';
 
 import type { FormContextValue } from '../../Form/Form';
 import type { FieldRules } from '../helpers/validateField';
+import type { FormControlSubType } from '../subTypes';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
 export type WithFieldValueProps<T> = {
   ref: RefObject<HTMLElement>;
   name: string;
   defaultValue?: string;
-  subType:
-    | 'hidden'
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'password'
-    | 'date'
-    | 'time'
-    | 'select'
-    | 'checkbox'
-    | 'textarea'
-    | 'color'
-    | 'switch'
-    | 'file';
+  subType: FormControlSubType;
   required: boolean;
   requiredMessage?: string;
   minLength?: number;

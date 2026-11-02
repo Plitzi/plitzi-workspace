@@ -1,5 +1,7 @@
 /** Static declaration for FormControl: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring';
+import { elementDeclaration } from '@plitzi/sdk-shared/authoring';
+
+import { FORM_CONTROL_SUBTYPES } from './subTypes';
 
 import type { FormControlProps } from './FormControl';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
@@ -210,24 +212,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
     'matchesMessage'
   ],
   attributeValues: {
-    subType: valuesOf<NonNullable<FormControlProps['subType']>>()([
-      'text',
-      'number',
-      'email',
-      'password',
-      'search',
-      'url',
-      'tel',
-      'date',
-      'time',
-      'checkbox',
-      'switch',
-      'select',
-      'textarea',
-      'hidden',
-      'color',
-      'file'
-    ])
+    subType: FORM_CONTROL_SUBTYPES
   },
   triggers: {
     onChange: {

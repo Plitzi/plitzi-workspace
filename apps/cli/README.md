@@ -451,7 +451,7 @@ A space's journeys are written in the same words, and played by the same player 
 step is a step these commands take. A step that must hold — `expect-text cart-count = "1 item"`, `expect-shown
 sheet-log`, `expect-state sheetTab "log"`, `expect-position "activity.bottom + 8 <= legend.top"` — is held for its time
 and fails the command with what it read, where `--read … | grep` was the way. A journey's steps: `click <el> [x%,y%]`,
-`hover <el> [x%,y%]`, `scroll <el|page> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy]`, `press <key>`, `wait-for <el> [time]`,
+`hover <el> [x%,y%]`, `scroll <el|page> [dx] [dy]`, `type <el> <text>` (in a file field the text names the file picked: `type photo me.png`), `drag <el> <dx> [dy]`, `press <key>`, `wait-for <el> [time]`,
 `reload`, `goto <path>`, `back`, `state <key> <json>`, `source <path> <json>`, `tick <duration>`,
 `expect-shown <el>`, `expect-hidden <el>`, `expect-text <el> [=] <text>`, `expect-state <key> <json>`,
 `expect-attribute <el> <name> <value>`, `expect-style <el> <property> [>=|<=] <value>`, `expect-position <relation>`,

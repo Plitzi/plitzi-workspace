@@ -326,7 +326,12 @@ export const prepareRender = async (
    * account wrote than the one this request proved, only the browser's (`browserState`).
    */
   const paintedState = schema?.settings.keepState
-    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req)), schema.settings, req.ctx.user?.id)
+    ? paintedStateFor(
+        req.headers.cookie,
+        ssrPaintedCookieName(requestAuthority(req)),
+        schema.settings,
+        req.ctx.user?.id
+      )
     : undefined;
 
   /**

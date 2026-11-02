@@ -38,8 +38,7 @@ export const space: SpaceSpec = {
 };
 ```
 
-A journey is held by an e2e test; an element check holds what one element makes of a state. `plitzi test --unit` runs
-no browser.
+`plitzi test --unit` runs the element checks alone, no browser.
 
 - **Read with the space.** A test the space no longer answers — a page renamed, an element removed, a relation that is
   none — is the warning `test-unreadable` of `lintSpace` and `author`, wherever the space was changed: a `plitzi space
@@ -55,7 +54,8 @@ no browser.
   `settings.visitorRoles` — give; a page for signed-in visitors opens). A role the space removed since is warned. Declared in the tests alone — no real account, no password — so the API answers it as a
   guest: a journey with an account reads and moves, never writes.
 - **A `type` step names the element** — a form control's id — and replaces what the field inside it held; a select is
-  chosen from (its option's value or label), a date, a time or a range set whole.
+  chosen from (its option's value or label), a date, a time or a range set whole, a file field given a real file of the
+  kind it names: `e2e.type('photo', 'me.png')`.
 - **A point of an element**: `e2e.click('map', { x: 30, y: 60 })` (and `hover`) lands at that percent of its box — a
   marker a canvas draws has no element of its own. `e2e.scroll(id)` brings it into view; with `{ dx, dy }` its own
   content scrolls.

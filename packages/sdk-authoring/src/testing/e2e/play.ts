@@ -266,8 +266,14 @@ const act = async (page: E2ePage, step: E2eAction, ctx: StepPlay): Promise<StepP
         return where;
       }
 
-      // A select is chosen and a date set, not typed into: the element named, or the one inside it a control wraps.
-      if (step.kind === 'type' && (await giveValue(page, where.selector, step.text, where.copy))) {
+      // A select is chosen, a date set and a file picked, not typed into: the element named, or the one inside it a
+      // control wraps.
+      const given = step.kind === 'type' ? await giveValue(page, where.selector, step.text, where.copy) : undefined;
+      if (given && 'problem' in given) {
+        return given;
+      }
+
+      if (given) {
         break;
       }
 

@@ -77,7 +77,8 @@ The seed `corner-bakery` (in `plitzi-sdk-server`) carries seven element checks a
     apart from one not on the page;
   - a click or a hover lands on the element's centre, or on `point` — percent of its box, a marker a canvas draws;
   - `type` replaces what the field inside the element held (`fieldsOf`); a select is chosen from, and a date, a time,
-    a colour or a range set whole (`giveValue`);
+    a colour or a range set whole (`giveValue`); a file field picks the file its text names — a small real file of that
+    kind, built in the page (`sampleFile`, `pickFile`), so a server reading its first bytes answers as for a visitor's;
   - `scroll` brings the element into view, or with `dx`/`dy` scrolls its own content (and says when it did not move);
     `waitFor` waits 10 s unless it says (up to 60 s);
   - a drag presses a range at its thumb (`dragElement`); a click waits for what it asked the server (`answered`);

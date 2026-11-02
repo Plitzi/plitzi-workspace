@@ -5,27 +5,13 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
 import { hasFormat } from './helpers/validateField';
+import { SUBTYPE_LABELS, TYPED_SUBTYPES } from './subTypes';
 
+import type { FormControlSubType } from './subTypes';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
-  subType?:
-    | 'text'
-    | 'number'
-    | 'date'
-    | 'time'
-    | 'email'
-    | 'password'
-    | 'search'
-    | 'url'
-    | 'tel'
-    | 'select'
-    | 'checkbox'
-    | 'textarea'
-    | 'hidden'
-    | 'color'
-    | 'switch'
-    | 'file';
+  subType?: FormControlSubType;
   name?: string;
   label?: string;
   hideLabel?: boolean;
@@ -97,7 +83,7 @@ const Settings = ({
   onUpdate
 }: SettingsProps) => {
   // The subtypes that hold typed text, which are the ones a length, a pattern or a confirmation can mean anything for.
-  const isTyped = ['text', 'textarea', 'number', 'email', 'password', 'search', 'url', 'tel'].includes(subType);
+  const isTyped = TYPED_SUBTYPES.includes(subType);
 
   const handleChangeName = useCallback((value: string) => onUpdate?.('name', value), [onUpdate]);
 
@@ -216,22 +202,11 @@ const Settings = ({
       />
       <Input value={placeholder} label="Placeholder" onChange={handleChangePlaceholder} size="xs" />
       <Select value={subType} onChange={handleChangeType} label="Input Type" size="xs">
-        <option value="text">Text</option>
-        <option value="number">Number</option>
-        <option value="date">Date</option>
-        <option value="time">Time</option>
-        <option value="email">Email</option>
-        <option value="search">Search</option>
-        <option value="url">URL</option>
-        <option value="tel">Phone</option>
-        <option value="password">Password</option>
-        <option value="select">Select</option>
-        <option value="checkbox">Checkbox</option>
-        <option value="switch">Switch</option>
-        <option value="textarea">Long Text</option>
-        <option value="hidden">Hidden</option>
-        <option value="color">Color</option>
-        <option value="file">File</option>
+        {Object.entries(SUBTYPE_LABELS).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
       </Select>
       {subType === 'file' && (
         <Input

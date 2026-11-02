@@ -1,3 +1,5 @@
+import { pickFile, sampleFile } from './sampleFiles';
+
 import type { E2eElement, E2eLocator, E2ePage } from './page';
 import type { SettlingPage, SettlingRequest } from '../settle';
 
@@ -54,9 +56,10 @@ export const hiddenAtWidth = (target: string, kind: string): string =>
 
 /**
  * Runs in the page: the field a value is given to rather than typed in — a select, chosen; a date, a time, a colour or a
- * range, set — the element itself or the one field of that kind inside it (a form control wraps its own). Serialised.
+ * range, set; a file field, given a file — the element itself or the one field of that kind inside it (a form control
+ * wraps its own). Serialised.
  */
-export const valueFieldIn = (selector: string): { selector: string; how: 'select' | 'value' } | undefined => {
+export const valueFieldIn = (selector: string): { selector: string; how: 'select' | 'value' | 'file' } | undefined => {
   let node: Element | null;
   try {
     node = document.querySelector(selector);
@@ -71,6 +74,7 @@ export const valueFieldIn = (selector: string): { selector: string; how: 'select
 
   const kinds = [
     { how: 'select', matches: 'select' },
+    { how: 'file', matches: 'input[type="file"]' },
     {
       how: 'value',
       matches: ['date', 'time', 'datetime-local', 'month', 'week', 'color', 'range']
@@ -99,25 +103,37 @@ export const valueFieldIn = (selector: string): { selector: string; how: 'select
 };
 
 /**
- * Gives `text` to a field that is not typed into — a select's option chosen, a date or a range set — and says it did;
- * `false` for a field a visitor types in, left to the caller.
+ * Gives `text` to a field that is not typed into — a select's option chosen, a date or a range set, a file field the
+ * file `text` names (`sampleFile`) — and says it did: `given`, or why it could not; `undefined` for a field a visitor
+ * types in, left to the caller.
  */
 export const giveValue = async (
   page: Pick<E2ePage, 'evaluate' | 'locator'>,
   selector: string,
   text: string,
   copy: Copy = undefined
-): Promise<boolean> => {
-  const given = await page.evaluate(valueFieldIn, selector);
-  if (given === undefined) {
-    return false;
+): Promise<{ given: true } | { problem: string } | undefined> => {
+  const found = await page.evaluate(valueFieldIn, selector);
+  if (found === undefined) {
+    return undefined;
   }
 
-  const all = page.locator(given.selector);
+  const all = page.locator(found.selector);
   const field = copy === undefined ? all.first() : copy === 'last' ? all.last() : all.nth(copy - 1);
-  await (given.how === 'select' ? field.selectOption(text, { timeout: 3000 }) : field.fill(text, { timeout: 3000 }));
+  if (found.how === 'file') {
+    const file = sampleFile(text);
+    if ('problem' in file) {
+      return file;
+    }
 
-  return true;
+    return (await field.evaluate(pickFile, file))
+      ? { given: true }
+      : { problem: `${selector} holds no file field to pick ${text} in` };
+  }
+
+  await (found.how === 'select' ? field.selectOption(text, { timeout: 3000 }) : field.fill(text, { timeout: 3000 }));
+
+  return { given: true };
 };
 
 /** Runs in the page: where along a range its value puts the thumb — its middle for any other element. Serialised. */

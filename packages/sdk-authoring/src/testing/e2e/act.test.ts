@@ -107,9 +107,9 @@ describe('a value given, not typed', () => {
         Promise.resolve(answers[String(selector)] as R)
     };
 
-    expect(await giveValue(page, '#size', 'Large')).toBe(true);
-    expect(await giveValue(page, '#when', '2026-10-30')).toBe(true);
-    expect(await giveValue(page, '#name', 'Ana')).toBe(false);
+    expect(await giveValue(page, '#size', 'Large')).toEqual({ given: true });
+    expect(await giveValue(page, '#when', '2026-10-30')).toEqual({ given: true });
+    expect(await giveValue(page, '#name', 'Ana')).toBeUndefined();
     expect(done).toEqual(['select #size select#1 Large', 'fill #when#1 2026-10-30']);
   });
 });
