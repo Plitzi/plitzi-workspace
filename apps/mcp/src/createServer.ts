@@ -9,6 +9,7 @@ import type { PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-sha
 // MCP servers host no plugins and no HTML cache; an inert registry keeps the SSRServer shape uniform.
 const noPlugins: PluginRegistry = {
   register: () => undefined,
+  unregister: () => undefined,
   invalidate: () => Promise.resolve()
 };
 

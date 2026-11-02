@@ -106,3 +106,31 @@ describe('the finish’s acceptance, failing fast', () => {
     expect(notRunText(0)).toBe('');
   });
 });
+
+// A dry run's progress named another task's line for each after the first command two tasks shared.
+describe('lines that share a command, run once', () => {
+  it('are each said by their place among the lines given', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'acceptance-once-'));
+    folders.push(work);
+    const said: [number, number, string][] = [];
+
+    await checkAcceptance(
+      [
+        { said: 'A plugin is there', check: 'exit 0' },
+        { said: 'The same, for the page', check: 'exit 0' },
+        { said: 'Types hold', check: 'true' }
+      ],
+      {
+        work,
+        root: work,
+        cache: path.join(work, 'cache'),
+        onLine: (index, total, line) => said.push([index, total, line])
+      }
+    );
+
+    expect(said).toEqual([
+      [0, 3, 'A plugin is there'],
+      [2, 3, 'Types hold']
+    ]);
+  });
+});

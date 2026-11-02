@@ -1,4 +1,5 @@
 import { drawnOn } from './drawn';
+import { askedOn } from './measureAsked';
 import { INHERITED, MEASURED, PSEUDO_MEASURED, PSEUDOS } from './measureValues';
 import { targetOn } from './shot/capture';
 import { notOnPageText } from './shot/notOnPage';
@@ -210,6 +211,10 @@ export const measureOn = async (
         const placed = node.getBoundingClientRect();
         styles.x = `${String(Math.round(placed.left))}px`;
         styles.y = `${String(Math.round(placed.top + window.scrollY))}px`;
+        // The box x and y are the edges of, beside a CSS width that leaves its border and padding out: a run's centre,
+        // worked out from x and a 9px width, was off by the dot's 2px border on each side.
+        styles['box-width'] = `${String(Math.round(placed.width))}px`;
+        styles['box-height'] = `${String(Math.round(placed.height))}px`;
         // The transform that applies: `translate`, `rotate` and `scale` — what Tailwind 4 writes `rotate-45` as — then
         // `transform`, as CSS composes them. Read alone, the original's diamond was "transform: none" beside ours.
         const [moved, turned, sized] = ['translate', 'rotate', 'scale'].map(property =>
@@ -277,7 +282,23 @@ export const measureOn = async (
         return {
           tag,
           ...(root ? { spaceRoot: root.getAttribute('data-plitzi-el') ?? '' } : {}),
-          text: node.textContent.replace(/\s+/g, ' ').trim().slice(0, 60),
+          // What a person reads of it: never a `<style>` or `<script>` inside — a run's marquee was named by its
+          // `@keyframes`, a map by the CSS of its SVG.
+          text: (() => {
+            // No function handed to the walker: what runs in the page carries no helper of the bundler's.
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+            let read = '';
+            while (walker.nextNode()) {
+              if (!walker.currentNode.parentElement?.closest('style, script, noscript, template')) {
+                read += walker.currentNode.textContent ?? '';
+              }
+            }
+
+            return read;
+          })()
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 60),
           // In numbers, the page's: what a line compares — a run's lead parsed "2445px" with jq to tell an overlap.
           box: {
             x: Math.round(placed.left),
@@ -316,7 +337,8 @@ export const measureOn = async (
     styles: {
       ...read.styles,
       ...(drawn.length > 0 && !shown.hidden ? await pseudoPlaces(page, found.selector, drawn) : {}),
-      ...(extra?.drawn && !shown.hidden ? await drawnOn(page, found.selector) : {})
+      ...(extra?.drawn && !shown.hidden ? await drawnOn(page, found.selector) : {}),
+      ...(extra?.asked ? await askedOn(page, found.selector, extra.asked) : {})
     }
   };
 };

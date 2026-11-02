@@ -11,6 +11,8 @@ import { fail, UNANSWERED_EXIT } from '../../shared/terminal';
 import type { ShotOptions, ShotReport } from './types';
 import type { Scheme } from '../../../browser';
 
+/** What the browser answers for a picture past what it can draw at once. */
+const TOO_LARGE = /Unable to capture screenshot|Clipped area is either empty or outside/;
 /**
  * `plitzi page shot / /about --width 1440,390`: a picture of each page at each width, one after another — `--out` named
  * by what differs (`home.png` becomes `home-1440.png`, `home-390.png`; with pages, `home-about-1440.png`) so one never
@@ -75,14 +77,29 @@ export const shotEach = async (routes: readonly string[], options: ShotEachOptio
             })
           : rest.out;
       process.exitCode = undefined;
-      await shot(each.route, {
-        ...rest,
-        width: each.width,
-        ...(each.scheme ? { scheme: each.scheme } : {}),
-        ...(out ? { out } : {}),
-        ...(served ? { url: served.origin } : {}),
-        ...(collect ? { collect } : {})
-      });
+      try {
+        await shot(each.route, {
+          ...rest,
+          width: each.width,
+          ...(each.scheme ? { scheme: each.scheme } : {}),
+          ...(out ? { out } : {}),
+          ...(served ? { url: served.origin } : {}),
+          ...(collect ? { collect } : {})
+        });
+      } catch (error) {
+        // A picture larger than the browser draws: said as what it is — a run's tester read Node's stack for a page
+        // 10,800 px tall pictured at --scale 3 — never a crash.
+        if (!(error instanceof Error) || !TOO_LARGE.test(error.message)) {
+          throw error;
+        }
+
+        fail(
+          `${each.route} at ${String(each.width)} px is too large a picture for the browser to take${rest.scale !== undefined && rest.scale > 1 ? ` at --scale ${String(rest.scale)}` : ''}: a lower --scale, --viewport (its first screen), or --within <element> (one part)`
+        );
+        process.exitCode = UNANSWERED_EXIT;
+
+        return;
+      }
       // A picture that differs at one width says nothing of the next: every picture is taken, and the command fails at
       // the end (a --dress failing at 1440 left 390 untaken, and the lead ran it again). One that cannot be taken
       // at all stops it.

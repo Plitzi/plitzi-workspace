@@ -22,7 +22,9 @@ export const contestedStylesInPage = ({
   selector: string;
   classes: string[];
 }): Omit<ElementStyles, 'wornBy' | 'partOf'> | null => {
-  const node = document.querySelector(selector);
+  // `… >> nth=N` is Playwright's way to name a copy after the first: read as the Nth match, never handed to CSS.
+  const [css, nth = '0'] = selector.split(' >> nth=');
+  const node = Array.from(document.querySelectorAll(css)).at(Number(nth));
   if (!(node instanceof HTMLElement)) {
     return null;
   }

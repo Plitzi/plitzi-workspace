@@ -385,9 +385,35 @@ amend` reads the stage a research card's approval keeps as it is, and amends wha
   - `task prove --mutate` gives the mutant's folder its `tmp/`, and runs a line that fails on the mutant again there
     with the change undone: failing too, it says the folder fails it, never "caught".
   - A reviewer's `task show` or `task look` of another card takes no second review while it is at one.
-  - `page play` and `task look` say they see the page as a visitor who asked for less motion, and how to read it
-    moving (`page measure --motion`); `page measure --status`, `page play --motion` and `page shot --motion` are
-    answered with what to write instead.
+  - `page play --motion` plays what animates by itself moving — a cycling word, a counter — and a play says, once,
+    whether it held motion still or not; `task look` says its pictures move, as `page shot`'s, and may catch a counter
+    mid-count. `page measure --status` and `page shot --motion` are answered with what to write instead.
+  - `page measure --only` reads past CSS: `attr:<name>`, `accessible-name`, `scroll-width`/`client-width` (a text cut by
+    its box), a custom property (`--only=--vz-accent`); `--only box` says `box-width`/`box-height`, the box `x` is the
+    edge of, beside a CSS width that leaves the border out. An element is named by its visible words, never its
+    `<style>`'s; `--each` says "3 of its 4 copies hidden", never all; `drawn-*` reads an element below the fold.
+  - `page play` reads what is drawn: a label hidden by opacity, a closed panel's text, are not read as shown.
+  - Steps: `scroll 1500` and `scroll page|window <dx> <dy>` scroll the page, `scroll <el> right 400` a direction in
+    words, a box scrolled is brought into view first; `drag <el> hold` is a press held where it is; `type` with no field
+    says `type :focus <text>`. `page shot --hover '[data-x="y"]'` keeps the selector's quotes, `--hover` with `--frames`
+    pictures while hovered, and a picture too large for the browser is said, never a stack trace.
+  - `task look` reads a part of a component's list (`… >> nth=N`) as that copy, never a selector error; what a task's
+    elements hold through a shared helper is its own, not "another task's".
+  - `run look` checks a page its acceptance holds to another status — the not-found page's 404 — with that status.
+  - `run open --dry-run --lines` names each line's own task in its progress; the scope's "deadlock" notices leave out
+    a task that makes the page it checks.
+  - Run machinery: `task discard` withdraws the task's request on that file; a session that ended "Prompt is too long"
+    is never resumed; an `unused-file` a later task will place is said, not refused (nor counted by the brake); a copy
+    whose `tmp/` was cleared knows its task again; a tests card gives up files its task deleted; a stopped preview is
+    said to the person.
+- **A plugin whose folder is removed under a dev server is no longer built** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`):
+  `PluginRegistry.unregister`, relayed to every worker — a run's preview logged "build failed" for a deleted plugin.
+- **Notifications show for a visitor who asked for less motion** (`@plitzi/plitzi-sdk`): the reduced-motion rule cut
+  a toast's progress bar to 0.01ms, and a toast closes when that bar ends — every `addNotification` closed as it opened.
+- **sdk-authoring** (`@plitzi/sdk-authoring`): `visible` written as an expression is refused (`visible-expression`),
+  naming the `{ source, template }` that holds it; a plugin no page places is suggested (`unused-plugin`); the tokens a
+  plugin's imported stylesheet reads (`import '@vizzele/css'`) count as read; `plugin-attribute-reserved` names the
+  rename of each reserved attribute (`from` → `start`); journey steps take `scroll page`, `scroll 1500` and directions.
   - `plitzi explain <name>` exits 1 for a name Plitzi does not have, still saying what its words describe.
   - `run open <stage> --dry-run --rehearse` with a run open says a stage is seen with `--dry-run`, never "not a plan".
 - **A stage says what it reaches of the run before it is stacked** (`@plitzi/cli`): a change the person asked mid-run

@@ -222,6 +222,22 @@ const warnVariantsSet = (author: SpaceAuthor, element: Element, spec: ElementSpe
   }
 };
 
+/** A name for a plugin's attribute that is not one of the element's own, by the one it was: what the warning suggests. */
+const RENAMED: Readonly<Partial<Record<string, string>>> = {
+  variant: 'kind',
+  class: 'tone',
+  from: 'start',
+  as: 'tag',
+  row: 'item',
+  bind: 'value',
+  visible: 'shown',
+  selector: 'target',
+  anchor: 'href',
+  motion: 'animation',
+  flag: 'feature',
+  meta: 'info'
+};
+
 /**
  * What an element is written with that reaches nothing, said: a variant no class and no type style declares — the
  * element looks the same with it or without — and, once per plugin, an attribute it declares under one of the
@@ -234,7 +250,8 @@ const warnUnreachable = (author: SpaceAuthor, element: Element, spec: ElementSpe
     author.reservedWarned.add(key);
     author.styleWarnings.push({
       code: 'plugin-attribute-reserved',
-      message: `${where} is a "${key}", whose plugin declares ${reserved.map(name => `\`${name}\``).join(', ')} — ${reserved.length === 1 ? 'a name' : 'names'} authoring reads as the element's own (\`variant\` is its style variant, \`class\` its classes), so the plugin is never handed ${reserved.length === 1 ? 'it' : 'them'}. Rename ${reserved.length === 1 ? 'it' : 'them'} in the plugin: \`variant\` → \`kind\`.`,
+      // Each named as the one it is: a run's plugins declared `from`, and were told to rename `variant` → `kind`.
+      message: `${where} is a "${key}", whose plugin declares ${reserved.map(name => `\`${name}\``).join(', ')} — ${reserved.length === 1 ? 'a name' : 'names'} authoring reads as the element's own (\`variant\` is its style variant, \`class\` its classes, \`from\` where its rows come from), so the plugin is never handed ${reserved.length === 1 ? 'it' : 'them'}. Rename ${reserved.length === 1 ? 'it' : 'them'} in the plugin: ${reserved.map(name => `\`${name}\` → \`${RENAMED[name] ?? `${name}Value`}\``).join(', ')}.`,
       elementId: element.id
     });
   }

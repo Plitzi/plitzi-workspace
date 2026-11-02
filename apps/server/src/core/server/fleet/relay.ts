@@ -100,6 +100,8 @@ export const relayPlugins = (
       if (source) {
         plugins.register(payload.name, source);
       }
+    } else if (payload.op === 'unregister' && typeof payload.name === 'string') {
+      plugins.unregister(payload.name);
     } else if (payload.op === 'forget') {
       forget(optionalString(payload.name), optionalString(payload.version));
     }
@@ -119,6 +121,10 @@ export const relayPlugins = (
       }
 
       broadcast(channel, { op: 'register', name, source });
+    },
+    unregister: name => {
+      plugins.unregister(name);
+      broadcast(channel, { op: 'unregister', name });
     },
     invalidate: async (name, version) => {
       await plugins.invalidate(name, version);

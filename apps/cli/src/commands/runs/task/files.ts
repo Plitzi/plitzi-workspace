@@ -171,11 +171,15 @@ export const taskDiscard = (files: string[], options: RunCommandOptions): Promis
       const { runId, taskId } = await holder(ctx, options);
       const brought = new Map<string, Brought>();
       const done: string[] = [];
+      const withdrawn: string[] = [];
       for (const file of files) {
         try {
-          for (const each of await discardFile(ctx, runId, taskId, file)) {
+          const discarded = await discardFile(ctx, runId, taskId, file);
+          for (const each of discarded.brought) {
             brought.set(each.file, each);
           }
+
+          withdrawn.push(...discarded.withdrawn);
         } catch (error) {
           // What went back before it stays back: said with the refusal, never a list read as all or nothing.
           throw isRunRefusal(error) && done.length > 0
@@ -190,10 +194,10 @@ export const taskDiscard = (files: string[], options: RunCommandOptions): Promis
         done.push(file);
       }
 
-      return { files, brought: [...brought.values()].filter(each => !files.includes(each.file)) };
+      return { files, brought: [...brought.values()].filter(each => !files.includes(each.file)), withdrawn };
     },
     discarded =>
-      `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.brought.length > 0 ? ` Also brought in, ${broughtText(discarded.brought)}` : ''}`
+      `${list(discarded.files)} in your copy ${discarded.files.length === 1 ? 'is' : 'are'} the run's version now, and your copy starts from ${discarded.files.length === 1 ? 'it' : 'them'}.${discarded.withdrawn.length > 0 ? ` Your request on ${list(discarded.withdrawn)} is withdrawn: it asks for nothing now.` : ''}${discarded.brought.length > 0 ? ` Also brought in, ${broughtText(discarded.brought)}` : ''}`
   );
 
 /** `plitzi task propose --file <file> --change "…"`: a change asked of a shared file — one integration task applies them all. */

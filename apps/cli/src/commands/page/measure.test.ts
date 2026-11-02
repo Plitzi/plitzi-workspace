@@ -5,8 +5,9 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { measure, onlyProperties, pairOf, readingKey, readsBoxesOnly, saidOnce, sameProperties } from './measure';
+import { measure, pairOf, readingKey, readsBoxesOnly, saidOnce } from './measure';
 import { measureOn, pseudoBoxes } from './measureOn';
+import { onlyProperties, sameProperties } from './measureOnly';
 import { copiesOf, ROWS_MOST } from './measureState';
 import { comparedText, measuredText, readingText } from './measureText';
 import { differences, extraOf, MEASURED, PSEUDO_MEASURED } from './measureValues';
@@ -195,8 +196,28 @@ describe('page measure', () => {
 
   // A fit asked for an element's box, and its 30 properties were grepped for it.
   it('prints only what is asked, its box a word — and refuses what is not measured, naming the flag', () => {
-    expect(onlyProperties('box')).toEqual(['x', 'y', 'width', 'height', 'padding', 'margin']);
+    // The box x and y are the edges of, its border in — a run's centre from x and a 9px CSS width was 2px off.
+    expect(onlyProperties('box')).toEqual([
+      'x',
+      'y',
+      'width',
+      'height',
+      'box-width',
+      'box-height',
+      'padding',
+      'margin'
+    ]);
     expect(onlyProperties('box,font-size')).toContain('font-size');
+    // A run's agents read a gauge's label in a vendor's .d.ts, a token's value off the served HTML, and estimated by hand
+    // whether a log line was cut: an attribute, a custom property, the accessible name and the sizes are read too.
+    expect(
+      onlyProperties('attr:role,attr:aria-label,--vz-text-muted,accessible-name,scroll-width,client-width')
+    ).toEqual(['attr:role', 'attr:aria-label', '--vz-text-muted', 'accessible-name', 'scroll-width', 'client-width']);
+    expect(extraOf(['attr:role', 'accessible-name', 'scroll-width', '--vz-text-muted'])).toEqual({
+      properties: ['--vz-text-muted'],
+      pseudo: [],
+      asked: { attributes: ['role'], metrics: ['scroll-width'], accessibleName: true }
+    });
     // A run's designer: a fixed bar's distance from the viewport's edge, --only right refused.
     expect(onlyProperties('right,bottom,top,left')).toEqual(['right', 'bottom', 'top', 'left']);
     // A run's designer sharing a row's rules: --only refused flex-direction, min-width and flex-grow.

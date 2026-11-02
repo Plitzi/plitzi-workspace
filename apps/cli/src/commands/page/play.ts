@@ -62,6 +62,8 @@ export const stepShotsDir = (root: string): string => {
 
 export interface PlayOptions extends VisitorOptions {
   steps?: string;
+  /** Played with motion: what animates by itself moves between the steps — held still by default. */
+  motion?: boolean;
   /** One of the space's journeys, by id: played first, its checks held, and the play goes on from where it leaves. */
   journey?: string;
   /** The elements read after each step, `"ours => theirs"` with `--compare`. */
@@ -627,7 +629,8 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
         width,
         ...visitViewOf(options),
         ...visitor,
-        ...(options.scheme ? { scheme: options.scheme } : {})
+        ...(options.scheme ? { scheme: options.scheme } : {}),
+        ...(options.motion === true ? { reducedMotion: false } : {})
       });
       if (!ours.answered) {
         unanswered(ours.problem ?? `nothing answers at ${where.origin}${route}`);
@@ -659,7 +662,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
 
       // How it played and as whom, once, with its first page: never with each page of a --then.
       if (results.length === 0) {
-        process.stderr.write(chalk.dim(playedNotes(route, ours.signedOut === true && options.guest !== true)));
+        process.stderr.write(chalk.dim(playedNotes(route, ours.signedOut === true && !options.guest, options.motion)));
       }
 
       // The other site played warm in the kept browser, its page held for this play alone: opened cold here, it was

@@ -359,6 +359,32 @@ describe('what an element is written with that reaches nothing', () => {
       { code: 'unknown-variant', elementId: 'hero-wave' }
     ]);
     expect(warnings[1].message).toContain('the plugin’s own `variant`');
+    expect(warnings[0].message).toContain('`variant` → `kind`');
+  });
+
+  // A run's border light lost its only placement to another task, and author, lint, doctor and every check said nothing.
+  it('suggests a plugin no page places, and none once it is placed', () => {
+    const light = { type: 'vzBorderLight', content: { attributes: { tone: 'blue' } } };
+    const orbit = { type: 'vzOrbit', content: { attributes: {} } };
+    const { suggestions } = authoring.authorSpace(
+      space([authoring.custom({ id: 'home-orbit', renderType: 'vzOrbit' })]),
+      { plugins: [light, orbit] }
+    );
+
+    expect(suggestions.filter(each => each.code === 'unused-plugin').map(each => each.subjects)).toEqual([
+      ['vzBorderLight']
+    ]);
+  });
+
+  // A run's counter declared `from`, and was told to rename `variant` → `kind`.
+  it('names the rename of each reserved attribute the plugin declares', () => {
+    const counter = { type: 'vzCounter', content: { attributes: { from: 0, to: 100 } } };
+    const { warnings } = authoring.authorSpace(space([authoring.custom({ id: 'stat', renderType: 'vzCounter' })]), {
+      plugins: [counter]
+    });
+
+    expect(warnings[0]?.message).toContain('`from` → `start`');
+    expect(warnings[0]?.message).not.toContain('`variant` → `kind`');
   });
 
   it('says so of a list row that is not an `<li>` — the list with items is a `<ul>` — and not of one that is', () => {

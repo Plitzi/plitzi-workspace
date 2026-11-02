@@ -239,6 +239,10 @@ export const requestId = (file: string): string => file.replace(/[^a-zA-Z0-9]+/g
 export const writeRequest = (task: TaskPaths, request: SharedRequest): Promise<void> =>
   writeJson(path.join(task.requests, `${request.id}.json`), request);
 
+/** A request taken back: the change it asked for is no longer the task's. */
+export const removeRequest = (task: TaskPaths, request: Pick<SharedRequest, 'id'>): Promise<void> =>
+  fs.rm(path.join(task.requests, `${request.id}.json`), { force: true });
+
 /**
  * The last sign of life of whoever holds a task — its commands, its progress and heartbeats, its writes in its copy —
  * and, apart, the last of its own doing alone (`workedAt`).

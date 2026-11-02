@@ -6,6 +6,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isHarness } from './agentPrompt';
+import { lastSessionLine } from './sessionEnd';
 import { agentScratch } from '../core/paths';
 import { DEFAULTS } from '../core/taskStore';
 
@@ -105,6 +106,9 @@ export const claudeSessionFile = (root: string, session: string): string =>
     `${session}.jsonl`
   );
 
+/** What Claude Code says of a session whose context no longer fits: never resumed again. */
+const TOO_LONG = /\bprompt is too long\b/i;
+
 /** Why an agent started again is on a fresh session, not its own — or nothing, when it resumes. */
 export type NoResume = 'not-asked' | 'harness' | 'no-session' | 'not-mid-task' | 'gone' | 'too-large';
 
@@ -137,6 +141,12 @@ export const resumable = async (
   const stat = await fs.stat(claudeSessionFile(root, launch.session)).catch(() => undefined);
   if (!stat) {
     return { not: 'gone' };
+  }
+
+  // Its harness said it no longer fits: resumed, it ends the same way — a run's dev-3 was resumed 161 times on "Prompt is
+  // too long · automatic compaction failed", under the size in bytes, its task held until the lead reassigned it.
+  if (TOO_LONG.test((await lastSessionLine(launch)) ?? '')) {
+    return { not: 'too-large', bytes: stat.size };
   }
 
   return stat.size > DEFAULTS.resumeMaxBytes ? { not: 'too-large', bytes: stat.size } : { session: launch.session };

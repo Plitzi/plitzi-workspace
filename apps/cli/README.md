@@ -256,6 +256,8 @@ plitzi page shot /design --within brand-mark --scale 3   # a small drawing up cl
 plitzi page measure /r/demo chat-line --steps 'type chat-input "hi; there"; press Enter' --only box   # what only a visitor's steps make
 plitzi page outline /sign-in --find wordmark   # the elements a word names, the whole page searched
 plitzi page play / --steps "click genre-chip; goto /rooms" --read site-header   # where each step took the page, said
+plitzi page play / --steps "wait 2600; wait 2600" --read hero-title --motion   # what animates by itself, read as it moves
+plitzi page play / --steps "drag confirm hold; wait 2000; release; scroll 1500" --read banner   # a press held, the page scrolled
 plitzi page play /messages/dax --steps "as mika type dm-input hi; as mika press Enter; wait 1s" --read dm-well   # another person's message, seen here
 ```
 
@@ -408,7 +410,11 @@ printed (`--all` prints every property, `--only box,font` a few — and any CSS 
 as `after:<property>`: `--only overflow-x,scroll-snap-type`, one the browser knows no property by refused before
 anything is read, a pseudo-element it does not draw said; `--only drawn` reads what it paints rather than its box —
 `drawn-x`, `drawn-y`, `drawn-width`, `drawn-height`, the bounds of its pixels unlike its background, pictured alone: a
-canvas's globe, a chart's plot; `--expect` holds a number at least or at most one, `--expect drawn-width>=340px`), a data URI by its kind and size, and how many elements
+canvas's globe, a chart's plot; `--expect` holds a number at least or at most one, `--expect drawn-width>=340px`;
+`--only box` its `x`, `y` and `box-width`, `box-height` — the box they are the edges of, its border and padding in,
+beside a CSS `width` that leaves them out; past CSS, `attr:<name>` an attribute (`attr:role`, `attr:aria-label`),
+`accessible-name`, `scroll-width`/`client-width` (and heights: a text cut by its box), and a custom property after `=`:
+`--only=--vz-accent`), a data URI by its kind and size, and how many elements
 its selector finds when it measured the first shown (`--each` measures every copy — a component’s instances, a list’s rows). Four sides alike are one line (`border`, `inset`), a layer drawn again
 says how many times (`×4`). It reads `animation`, `position`, `max-width`, `grid-area`, `text-decoration`,
 `align-items`, and a pseudo-element's `position`/`top`/`left`, `display`, `vertical-align` and its `x`/`y` (off
@@ -442,7 +448,7 @@ A space's journeys are written in the same words, and played by the same player 
 step is a step these commands take. A step that must hold — `expect-text cart-count = "1 item"`, `expect-shown
 sheet-log`, `expect-state sheetTab "log"`, `expect-position "activity.bottom + 8 <= legend.top"` — is held for its time
 and fails the command with what it read, where `--read … | grep` was the way. A journey's steps: `click <el> [x%,y%]`,
-`hover <el> [x%,y%]`, `scroll <el> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy]`, `press <key>`, `wait-for <el> [time]`,
+`hover <el> [x%,y%]`, `scroll <el|page> [dx] [dy]`, `type <el> <text>`, `drag <el> <dx> [dy]`, `press <key>`, `wait-for <el> [time]`,
 `reload`, `goto <path>`, `back`, `state <key> <json>`, `source <path> <json>`, `tick <duration>`,
 `expect-shown <el>`, `expect-hidden <el>`, `expect-text <el> [=] <text>`, `expect-state <key> <json>`,
 `expect-attribute <el> <name> <value>`, `expect-style <el> <property> [>=|<=] <value>`, `expect-position <relation>`,

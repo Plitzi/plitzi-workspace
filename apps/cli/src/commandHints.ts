@@ -47,9 +47,8 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     // Nine runs reached for it: one element pictured is a part of the page, as every page command names one.
     '--element': 'one element pictured alone: plitzi page shot <path> --within <element>',
     '--clip': 'one element pictured alone: plitzi page shot <path> --within <element>',
-    // A run's agents asked a picture of what moves: a shot is a visitor who asked for less motion.
-    '--motion':
-      'page shot pictures as a visitor who asked for less motion — page measure <path> <element> --motion reads it moving'
+    // A run's agents asked a picture of what moves: a shot pictures it moving already.
+    '--motion': 'page shot pictures motion already — --frames <n> shows it over time, --reduced-motion holds it still'
   },
   'page measure': {
     '--element': 'the elements are its arguments: plitzi page measure <path> <element…>',
@@ -67,9 +66,7 @@ const COUNTERPARTS: Readonly<Partial<Record<string, Readonly<Partial<Record<stri
     // Asked five runs running: a picture is a step of its own.
     '--shot': 'a shot step pictures the page where it stands: --steps "click open; shot opened" — in tmp/shots',
     // Two runs, page shot's flag carried over: a play is a visitor who asked for less motion already.
-    '--reduced-motion': 'page play plays as a visitor who asked for less motion already — leave it out',
-    '--motion':
-      'page play plays as a visitor who asked for less motion — page measure <path> <element> --motion reads it moving'
+    '--reduced-motion': 'page play plays as a visitor who asked for less motion already — leave it out'
   },
   'task look': { '--clip': 'one part of each page pictured alone: plitzi task look <task> --within <element>' },
   // Eleven runs reached for it: a brief's whole files are --files, a task's whole notes and diffs task show's --full.

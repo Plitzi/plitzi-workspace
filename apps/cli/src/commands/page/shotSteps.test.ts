@@ -95,6 +95,13 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
       { kind: 'hold', element: 'sheet-handle', dx: 0, dy: -120 },
       { kind: 'release' }
     ]);
+    // A press held where it is — a button held to confirm: refused as no distance, a run went round it by a pixel.
+    expect(parseSteps('drag confirm hold; wait 2000; release', 500)).toEqual([
+      { kind: 'hold', element: 'confirm', dx: 0, dy: 0 },
+      { kind: 'wait', ms: 2000 },
+      { kind: 'release' }
+    ]);
+    expect(parseSteps('drag confirm 0 0 hold', 500)).toEqual([{ kind: 'hold', element: 'confirm', dx: 0, dy: 0 }]);
   });
 
   it('says which step is wrong, and what the steps are', () => {
@@ -117,7 +124,7 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
     expect(parseSteps('type title', 500)).toEqual({
       problem:
-        'step 1 ("type title"): type needs an element and the text — type <element> <text> or type <element>=<text>, type ".panel textarea" hi'
+        'step 1 ("type title"): type needs an element and the text — type <element> <text> or type <element>=<text>, type ".panel textarea" hi; the field that has the focus: type :focus <text>'
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem:

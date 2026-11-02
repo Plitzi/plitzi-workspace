@@ -421,7 +421,17 @@ export const checkAcceptance = async (
     return checkEach(checked, run);
   }
 
-  const answered = await checkEach(once, run);
+  // Each said by its place in the lines given, not among those run once: a dry run's progress named another task's line
+  // for each one after the first command two tasks shared ("10/74 t-home-skeleton: vzButton is an element…").
+  const answered = await checkEach(once, {
+    ...run,
+    ...(run.onLine
+      ? {
+          onLine: (index: number, _total: number, said: string, again: boolean) =>
+            run.onLine?.(checked.indexOf(once[index] ?? checked[0]), checked.length, said, again)
+        }
+      : {})
+  });
 
   return checked.map(line => {
     const result = answered[once.findIndex(each => each.check === line.check)];

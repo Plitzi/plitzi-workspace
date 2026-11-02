@@ -96,6 +96,42 @@ describe('acceptance, checks and what is left behind', () => {
     ]);
   });
 
+  // A run's plugin tasks each wrote an element file a page task imported later: ten were refused "unused-file", each a
+  // failure on the brake.
+  it('says a file nothing imports yet while a task after it is to come — refused once none is', async () => {
+    const lint: CheckRunner = async dir => {
+      const warnings: string[] = [];
+      for (const file of ['src/space/elements/badge.ts', 'src/space/elements/seal.ts']) {
+        if (await fs.stat(path.join(dir, file)).catch(() => undefined)) {
+          warnings.push(`${file}:1 unused-file`);
+        }
+      }
+
+      return { ok: true, steps: [{ name: 'lint:space', ok: true, ...(warnings.length > 0 ? { warnings } : {}) }] };
+    };
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task =>
+      task.id === 't-menu'
+        ? { ...task, files: [...task.files, 'src/space/elements/badge.ts'] }
+        : task.id === 't-about'
+          ? { ...task, files: [...task.files, 'src/space/elements/seal.ts'] }
+          : task
+    );
+    const runId = await open(plan);
+    // t-book waits for t-menu: what t-menu makes, a page of it places.
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/elements/badge.ts', 'export const badge = {};\n');
+    const completed = await completeTask({ ...menu.ctx, checks: lint }, runId, 't-menu');
+    expect(completed.awaitingUse).toEqual({ warnings: ['src/space/elements/badge.ts:1 unused-file'], by: ['t-book'] });
+
+    // Nothing waits for t-about: nobody will place it.
+    const about = await take('agent-2', 't-about');
+    await writeInCopy(about.work, 'src/space/elements/seal.ts', 'export const seal = {};\n');
+    expect((await refusal(completeTask({ ...about.ctx, checks: lint }, runId, 't-about'))).message).toContain(
+      'src/space/elements/seal.ts:1 unused-file'
+    );
+  });
+
   // A run's dev-2 ran two checks of one copy at once: the second met the first's server, was told to stop "a server of
   // your own", and broke the first. They run one after another, the second saying it waits.
   it('runs two checks of one copy one after the other, the second saying it waits', async () => {

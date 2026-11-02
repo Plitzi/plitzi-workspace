@@ -134,7 +134,8 @@ The lead reviews only three kinds of task:
 
 `run watch` wakes it for nothing else (`leadItems`). Before it finishes, the lead looks once at the whole result:
 `run look` (`commands/runs/look/runLook.ts`) serves the approved work as `run preview` does, checks every page the run
-changed, and pictures each at 1440 and 390, in light and dark. Its pages (`runPages`) are those the approved files are
+changed, and pictures each at 1440 and 390, in light and dark — a page its acceptance holds to another status (the
+not-found page's `--status 404`, `acceptanceStatuses`) checked with that status, apart. Its pages (`runPages`) are those the approved files are
 drawn at — a file's page owner, the pages that reach a shared one, and the pages that import it at any depth (a
 plugin's code through its element's declaration and the sections placing it) — and every page the tasks' acceptance
 checks; a file of the space or a plugin no page reaches by its imports — a component placed by name, the tokens — is
@@ -172,7 +173,11 @@ field holds once typed, never a password), and send it with the address, the win
 preview's watch hands it to the lead as the person's message with the `page shot` that plays it again
 (`copies/reports.ts`). A lead that got words alone reproduced them by guessing the address, the layers and the width. A run that ends (finished, aborted)
 stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
-the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
+the folder once it stopped — never a server left watching a folder removed under it. A preview that stopped while the
+run is open — its server ended (`preview-ended.json`, with why, said in `preview.log`) or its process gone with its
+record left — is said to the person (`preview-stopped`) until one serves again: a run's lead ran 140 lines against one
+that had stopped. Its server lets go of a plugin whose folder a task removed (`PluginRegistry.unregister`), never
+building it again. `run monitor` is the same run, live, for
 a person in a terminal of their own: it reads the run (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch` — the one thing it starts is the run's preview (`p`,
 below). It opens **simple** — only what a person acts on: who is at what now, each agent at work a row with its task's
@@ -640,7 +645,8 @@ stop, read the old completion as its own and stopped. Then, when the team asks i
 `run team set dev --resume-session`), it resumes that session (`--resume`). That needs four things: the agent died
 with a task in progress, its last word in the log is not a stop, Claude Code still keeps the session
 (`<CLAUDE_CONFIG_DIR>/projects/<the folder, dashed>/<id>.jsonl`), and the session is no larger than
-`DEFAULTS.resumeMaxBytes` (8 MB). Past that size, reading it again costs more than a fresh session that reads its task
+`DEFAULTS.resumeMaxBytes` (8 MB) — and its last session did not end on Claude Code's "Prompt is too long", which no
+resume gets past (a run's dev-3 was resumed 161 times on it). Past that size, reading it again costs more than a fresh session that reads its task
 anew. Otherwise the agent starts fresh, and the launch says why. A run's machine went down with four agents mid-task.
 Each started again on a fresh session took its task back from its copy within two minutes, and lost only what it knew
 and had not written yet, which is what resuming keeps.
@@ -678,7 +684,9 @@ read off its dependencies) — and its acceptance runs them against the copy ser
 `playwright test`, is run with the copy served: the two written into the check (any shell, `cmd.exe` included) and
 `PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
 Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
-false`, writes nothing a test is written for, or that a task of the plan already tests (`testsOf`), gets none. A test
+false`, writes nothing a test is written for, or that a task of the plan already tests (`testsOf`), gets none. A
+developer task approved having deleted files its tests card holds — a plugin removed, its tests with it — has that
+card, not taken yet, give them up and the lines that ran only them, said to the lead (`testsOfDeleted.ts`). A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it. A
 module's tests are checked by every test of its folder (`node --test '<dir>/**/*.test.ts'`, `vitest run <dir>`): a run's test-1 held a
 task's acceptance in a third file of the folder, which a check naming the task's own files never ran.
@@ -995,7 +1003,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   project's files as they were fails on a change it never made. A task may remove the `.gitkeep` of a folder it writes into. Packages resolve from
   the copy by walking up to the project's `node_modules`; a command run inside the copy works on the project it belongs
   to, and as its task: `take` writes the run, task, token and agent into the copy's `tmp/plitzi-task.json`, read when no
-  token is said (a token said wins — the lead reviewing from inside a copy is the lead).
+  token is said (a token said wins — the lead reviewing from inside a copy is the lead); a copy whose `tmp/` was cleared
+  has it written again from the task's `owner.json`, said on stderr. `task discard` of a file the task asked a request on
+  withdraws that request too (`request-withdrawn`): the file is the run's again, and a request left on its card merged
+  at approval into a duplicate import.
 - **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
   commands, the files too long — and changes none of its work (the copy is brought up first, as for `complete`): no
   review, no brake. `--fix` first runs the project's own linter and formatter on the files the task changed alone
@@ -1029,7 +1040,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
   read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails
   only the finish's, on the whole result (`CheckOptions.final`). A warning of the space's lint the task **adds** to a
-  file it changed refuses `complete` (`checks-failed`); one written so on purpose says it with `quiet`. One the file had
+  file it changed refuses `complete` (`checks-failed`); one written so on purpose says it with `quiet`. An `unused-file`
+  of its own while a task waiting on it is still to come — an element a page task places later — is said, never
+  refused (`awaitingUse`): a run's ten plugin tasks were refused it, each a failure on the brake. One the file had
   in the run's work before the task — counted by file and rule (`olderWarnings.ts`) — is the run's, not the task's: kept
   as a run notice, the project's backlog once the run ends, and said in `complete`'s answer. Refused for warnings older
   than them, a run's tasks renamed ids an acceptance line read (the line then passed on nothing) and handed back a

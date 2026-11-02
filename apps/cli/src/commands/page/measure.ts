@@ -3,15 +3,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
-import { InvalidArgumentError } from 'commander';
 
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { expectationsMissed, expectedText, PROPERTY_NAME, relationElements } from './measureExpected';
+import { expectationsMissed, expectedText, relationElements } from './measureExpected';
 import { measureOn } from './measureOn';
+import { onlyProperties } from './measureOnly';
 import { putIn, copiesOf, ROWS_MOST, stateText } from './measureState';
 import { comparedText, hiddenCopiesJoined, keptText, matchesNote, readingText, WHOLE_SAID } from './measureText';
-import { asksExtra, differences, DRAWN, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED } from './measureValues';
+import { asksExtra, differences, extraOf, MEASURED, onlyOf, PSEUDO_MEASURED } from './measureValues';
 import { otherPageAt, pageAnswered } from './shot/remote';
 import { actingSteps, playedOn } from './shot/steps';
 import { visitorsOn } from './shot/visitors';
@@ -115,39 +115,6 @@ export const pairOf = (asked: string): Pair => {
   return { here, there: there === '' ? here : there };
 };
 
-/** Shorthands `--same` takes for the properties they stand for: a border is its four sides, a type its six. */
-const GROUPS: Record<string, readonly string[]> = {
-  border: ['border-top', 'border-right', 'border-bottom', 'border-left'],
-  font: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform'],
-  size: ['width', 'height'],
-  // Where it is and how big, its spacing with it: what a fit is checked by — a run's agents grepped it out of 30.
-  box: ['x', 'y', 'width', 'height', 'padding', 'margin'],
-  // What it draws, off its picture: a canvas's globe, a chart's plot (`DRAWN`).
-  drawn: [...DRAWN]
-};
-
-/**
- * `--same`'s and `--only`'s list: each a property always measured, a pseudo-element's (`before:background-image`), a
- * shorthand of them — or any other CSS property by its name, read as well (`overflow-x`, `after:scroll-snap-align`):
- * whether the browser knows it is asked of the browser, once, before anything is read (`unknownProperties`).
- */
-const measuredProperties =
-  (flag: string) =>
-  (value: string): string[] => {
-    const asked = value
-      .split(',')
-      .map(each => each.trim())
-      .filter(Boolean);
-    const unknown = asked.filter(each => !Object.hasOwn(GROUPS, each) && !PROPERTY_NAME.test(each));
-    if (unknown.length > 0 || asked.length === 0) {
-      throw new InvalidArgumentError(
-        `${flag} takes CSS properties by name, comma-separated — any the browser knows (overflow-x, scroll-snap-type), a pseudo-element's as before:<property> or after:<property> — or ${Object.keys(GROUPS).join(', ')}${unknown.length > 0 ? `: not ${unknown.join(', ')}` : ''}`
-      );
-    }
-
-    return [...new Set(asked.flatMap(each => GROUPS[each] ?? [each]))];
-  };
-
 /** What a measure reads besides what always is: the properties `--only`, `--same` and `--expect` name beyond those. */
 const extraAsked = (options: Pick<MeasureOptions, 'only' | 'same' | 'expect'>): MeasuredExtra =>
   extraOf([
@@ -172,12 +139,6 @@ const unknownProperties = async (browser: Browser, extra: MeasuredExtra): Promis
     await page.close();
   }
 };
-
-/** `--same`'s list: what must be as the other page's. */
-export const sameProperties = measuredProperties('--same');
-
-/** `--only`'s list: what is printed of each element — a fit asks for its box, not thirty properties. */
-export const onlyProperties = measuredProperties('--only');
 
 /** Past this many elements in one measure, with nothing named of them, each is said by its box alone. */
 const BOXES_PAST = 3;

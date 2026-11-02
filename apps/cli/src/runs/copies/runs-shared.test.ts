@@ -6,10 +6,19 @@ import { finishRun } from './merge';
 import { makeBench, readInCopy, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { taskPaths } from '../core/paths';
-import { viewTask } from '../core/taskStore';
+import { readRequests, viewTask } from '../core/taskStore';
 import { loadRun, readApproved } from '../run';
 import { messagesOf } from '../talk/messages';
-import { checkTask, claimFile, completeTask, requestShared, reviewTask, taskContext, waitForFile } from '../tasks';
+import {
+  checkTask,
+  claimFile,
+  completeTask,
+  discardFile,
+  requestShared,
+  reviewTask,
+  taskContext,
+  waitForFile
+} from '../tasks';
 import { findTask } from '../tasks/common';
 import { mergedNow } from '../tasks/mergedNow';
 import { viewRun } from '../view/view';
@@ -67,6 +76,24 @@ export const theme = { card: { color: tokens.ink, lang: 'es' } };
     const refused = await refusal(waitForFile(menu.ctx, 'es-launch', 't-menu', 'src/space/pages/home/hero.ts'));
     expect(refused.code).toBe('invalid');
     expect(refused.message).toContain('t-menu waits for t-home waits for t-menu');
+  });
+
+  // A run's request outlived its discard: merged at approval into a duplicate import, its lead removed it by hand.
+  it('withdraws a task’s request on a shared file it puts back, and says so', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await requestShared(home.ctx, 'es-launch', 't-home', 'src/space/theme.ts', {
+      summary: 'A badge for the language',
+      usedIn: ['src/space/pages/home/index.ts'],
+      blocking: false
+    });
+    await writeInCopy(home.work, 'src/space/theme.ts', 'export const theme = { badge: {} };\n');
+    expect((await readRequests(taskPaths((await loadRun(home.ctx, 'es-launch')).paths, 't-home'))).length).toBe(1);
+
+    const discarded = await discardFile(home.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
+
+    expect(discarded.withdrawn).toEqual(['src/space/theme.ts']);
+    expect(await readRequests(taskPaths((await loadRun(home.ctx, 'es-launch')).paths, 't-home'))).toEqual([]);
   });
 
   it('the first to complete takes a free shared file by turns; the same lines changed by another make an integration task', async () => {

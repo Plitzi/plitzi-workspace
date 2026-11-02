@@ -284,6 +284,9 @@ const assertOneVariantBinding = (bindings: readonly BindingSpec[]): void => {
   }
 };
 
+/** A source as a binding names one: a path of names, and a list's index — never an expression. */
+const SOURCE_PATH = /^[A-Za-z_$][\w$-]*(?:\.[\w$-]+|\[\d+\])*$/;
+
 /**
  * An element's bindings with its `visible` condition among them — how an authored element is hidden: a source, a
  * template or a condition, and `false` for one that starts hidden with nothing bound.
@@ -310,6 +313,14 @@ export const withVisibility = (spec: {
   // attribute — in this surface the attribute keeps a name it shares with anything else.
   const negated = spec.visible.startsWith('!');
   const source = negated ? spec.visible.slice(1).trim() : spec.visible;
+  // An expression read as a source names nothing, and the element never shows: refused, with the form that holds it — a
+  // run's toggle was written `visible: "state.billing == 'yearly'"`, authored with no warning, and never shown.
+  if (!SOURCE_PATH.test(source)) {
+    throw new AuthoringError(
+      'visible-expression',
+      `visible: "${spec.visible}" is an expression, and visible takes a source — read as one, it names nothing and the element never shows. Write the condition as a template: visible: { source: '${source.match(/[A-Za-z_$][\w$]*(?:\.[\w$-]+)*/)?.[0] ?? 'state.key'}', template: "{{ ${source} }}" } — or a source alone, 'state.open', '!state.open'.`
+    );
+  }
 
   return [...(bound ?? []), negated ? hiddenWhen(source) : visibleWhen(source)];
 };

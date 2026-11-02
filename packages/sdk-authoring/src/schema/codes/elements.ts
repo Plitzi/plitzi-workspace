@@ -20,7 +20,7 @@ export const ELEMENT_CODES = {
   'plugin-attribute-reserved': {
     kind: 'warned',
     means: 'a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin',
-    fix: 'rename it in the plugin (`variant` → `kind`)'
+    fix: 'rename it in the plugin, as the warning names it (`variant` → `kind`, `from` → `start`)'
   },
   'unknown-variant': {
     kind: 'warned',

@@ -1,3 +1,7 @@
+import { ACCESSIBLE_NAME, ATTRIBUTE_ASKED, METRICS } from './measureAsked';
+
+import type { Asked } from './measureAsked';
+
 /**
  * What `page measure` reads of an element, and how two readings are told apart: one colour in one notation, a number
  * to two decimals, a transition held still alike to any — what a browser writes two ways for one look is no
@@ -70,7 +74,10 @@ export const MEASURED = [
   // wrote a browser script of its own to read it) — and from the top of the page, an arrow at a column's foot
   // (a run's design-1 judged it from a picture: `--same y` was refused).
   'x',
-  'y'
+  'y',
+  // The size of the box x and y are the edges of, its border and padding in: a CSS width leaves them out.
+  'box-width',
+  'box-height'
 ] as const;
 
 /** The sides of a box's spacing `--same` takes alone — `margin-bottom` — each read off its shorthand as measured. */
@@ -150,6 +157,8 @@ export const DRAWN = ['drawn-x', 'drawn-y', 'drawn-width', 'drawn-height'] as co
  */
 export interface MeasuredExtra {
   properties: string[];
+  /** Read off the element itself, not its style (`measureAsked.ts`): its attributes, its sizes, its accessible name. */
+  asked?: Asked;
   /** Read of each pseudo-element drawn, as `before:<property>`. */
   pseudo: string[];
   /** Whether what it draws is read (`DRAWN`): a picture of it taken and looked through, asked only by name. */
@@ -163,7 +172,13 @@ export const extraOf = (asked: readonly string[]): MeasuredExtra => {
   const always = new Set<string>([...MEASURED, ...Object.keys(SIDE_LONGHANDS)]);
   const pseudoAlways = new Set<string>(PSEUDO_MEASURED);
   const drawn = new Set<string>(DRAWN);
-  const properties = asked.filter(each => !each.includes(':') && !always.has(each) && !drawn.has(each));
+  const own = new Set<string>([...METRICS, ACCESSIBLE_NAME]);
+  const properties = asked.filter(
+    each => !each.includes(':') && !always.has(each) && !drawn.has(each) && !own.has(each)
+  );
+  const attributes = asked.flatMap(each => ATTRIBUTE_ASKED.exec(each)?.[1] ?? []);
+  const metrics = asked.filter(each => (METRICS as readonly string[]).includes(each));
+  const accessibleName = asked.includes(ACCESSIBLE_NAME);
   const pseudo = asked.flatMap(each => {
     const property = PSEUDO_ASKED.exec(each)?.[1];
 
@@ -173,13 +188,16 @@ export const extraOf = (asked: readonly string[]): MeasuredExtra => {
   return {
     properties: [...new Set(properties)],
     pseudo: [...new Set(pseudo)],
-    ...(asked.some(each => drawn.has(each)) ? { drawn: true as const } : {})
+    ...(asked.some(each => drawn.has(each)) ? { drawn: true as const } : {}),
+    ...(attributes.length > 0 || metrics.length > 0 || accessibleName
+      ? { asked: { attributes: [...new Set(attributes)], metrics: [...new Set(metrics)], accessibleName } }
+      : {})
   };
 };
 
 /** Whether anything is asked beyond what is always read. */
 export const asksExtra = (extra: MeasuredExtra): boolean =>
-  extra.properties.length > 0 || extra.pseudo.length > 0 || extra.drawn === true;
+  extra.properties.length > 0 || extra.pseudo.length > 0 || extra.drawn === true || extra.asked !== undefined;
 
 /** What an element takes from its parent unless it says its own: what differs on every element of a page alike. */
 export const INHERITED = new Set<string>([

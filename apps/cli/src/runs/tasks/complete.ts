@@ -7,7 +7,7 @@ import { textOf } from './context';
 import { keepAlive, oneCheckAtATime } from './keepAlive';
 import { activeHolder, allLocks, sharedFiles, untakenNow } from './locks';
 import { againstRunWork, tellUnanswered } from './notOwn';
-import { keepOlderWarnings, warningsAgainstRun } from './olderWarnings';
+import { awaitingUse, keepOlderWarnings, warningsAgainstRun } from './olderWarnings';
 import { othersHeld } from './othersHeld';
 import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from './reviews';
 import { isNotice } from '../../commands/project/verify';
@@ -27,6 +27,7 @@ import {
   appendLog,
   lockedFiles,
   readRequests,
+  removeRequest,
   readStart,
   requestId,
   updateState,
@@ -146,6 +147,8 @@ export interface CompletedTask {
   report: { round: number; experience?: true };
   /** The space lint's warnings its files had before it: not its own, kept as the run's notices for the backlog. */
   olderWarnings?: string[];
+  /** A file of its own nothing imports yet, which a task after it will (`unused-file`): said, never refused. */
+  awaitingUse?: { warnings: string[]; by: string[] };
 }
 
 /**
@@ -538,8 +541,13 @@ export const completeTask = async (
   const warned = (checks.steps.find(step => step.name === 'lint:space')?.warnings ?? []).filter(warning =>
     changed.some(file => warning.startsWith(`${file}:`) || warning.startsWith(`${file} `))
   );
-  const { own: ownWarnings, before: warnedBefore } =
+  const { own: added, before: warnedBefore } =
     warned.length > 0 ? await warningsAgainstRun(ctx, loaded, warned) : { own: [], before: [] };
+  // A file nothing imports yet is what a task after it will place: a run's plugin tasks each wrote an element file a
+  // page task imported later, and ten were refused "unused-file", each a failure on the brake. The finish lints the
+  // whole result, so one nobody places is still said.
+  const { awaiting, by: after } = await awaitingUse(loaded, taskId, added);
+  const ownWarnings = added.filter(warning => !awaiting.includes(warning));
   if (ownWarnings.length > 0 && !knownFailure) {
     await recordBrake(ctx, loaded, 'checks-failed', taskId);
     throw new RunRefusal(
@@ -674,6 +682,7 @@ export const completeTask = async (
     ...(kept ? { checkedAt: kept.at } : {}),
     report: { round: report.round, ...(report.experience ? { experience: true as const } : {}) },
     ...(keptWarnings.length > 0 ? { olderWarnings: keptWarnings } : {}),
+    ...(awaiting.length > 0 ? { awaitingUse: { warnings: awaiting, by: after } } : {}),
     messages: await handOver(ctx, loaded, taskId, ctx.agent)
   };
 };
@@ -682,12 +691,26 @@ export const completeTask = async (
  * `plitzi task discard`: a file of the copy put back to the run's version now — and the copy starts from it — with
  * whatever else the run approved since the copy was made and the task did not touch. Answers what it brought.
  */
-export const discardFile = async (ctx: RunContext, runId: string, taskId: string, file: string): Promise<Brought[]> => {
+export const discardFile = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  file: string
+): Promise<{ brought: Brought[]; withdrawn: string[] }> => {
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
+  const clean = cleanPath(ctx.root, file);
+  const brought = await refreshCopy(ctx, loaded, view, clean);
+  // The file put back is the run's: a request the task made on it asks for nothing now. Left on its card, a run's request
+  // outlived its discard, was merged at approval into a duplicate import, and its lead removed it by hand.
+  const withdrawn = (await readRequests(view.paths)).filter(request => request.file === clean);
+  for (const request of withdrawn) {
+    await removeRequest(view.paths, request);
+    await logRun(ctx, loaded.paths, { action: 'request-withdrawn', task: taskId, file: clean });
+  }
 
-  return refreshCopy(ctx, loaded, view, cleanPath(ctx.root, file));
+  return { brought, withdrawn: withdrawn.map(request => request.file) };
 };
 
 /**

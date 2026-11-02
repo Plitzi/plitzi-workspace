@@ -69,6 +69,10 @@ export const createPageServer = (
       const normalized = normalizePluginSource(source);
       pluginManager.register(`${name}@${normalized.version}`, normalized);
     },
+    unregister: name => {
+      pluginManager.unregister(name);
+      invalidatePluginComponentCache();
+    },
     // Clears every loaded component, not just this plugin's: the caches are keyed by filePath and the manager
     // maps name@version → path internally. Re-importing an already-built file is cheap; serving a stale one is not.
     invalidate: async (name?, version?) => {

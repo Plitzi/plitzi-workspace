@@ -46,4 +46,19 @@ describe('copies of one element, every one hidden', () => {
   it('are read each when one is shown', () => {
     expect(hiddenCopiesJoined([copy(0, 'display: none'), copy(1)])).toHaveLength(2);
   });
+
+  // A run's tester was told "all 3 copies — a visitor sees none" of a badge, then shown the one it does see.
+  it('says how many of all its copies are hidden, never all, when one is shown', () => {
+    const joined = hiddenCopiesJoined([
+      copy(0, 'display: none'),
+      copy(1),
+      copy(2, 'display: none'),
+      copy(3, 'display: none')
+    ]);
+
+    expect(joined[0]).toEqual({
+      said: '[data-plitzi-el="contact-meta"]: 3 of its 4 copies hidden — display: none; their place and size are not on the page, so not said — the one shown read below'
+    });
+    expect(joined).toHaveLength(2);
+  });
 });

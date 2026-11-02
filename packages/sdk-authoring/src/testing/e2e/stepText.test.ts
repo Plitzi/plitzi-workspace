@@ -53,6 +53,23 @@ describe('a journey’s steps as words', () => {
     });
   });
 
+  // A run's agents wrote `scroll 1500`, `scroll window 0 1500` and `scroll <el> right 400` — the last a raw selector error.
+  it('scroll the page by an amount, and say a direction in words', () => {
+    expect(parseE2eStep('scroll 1500')).toEqual({ kind: 'scroll', element: 'page', dy: 1500 });
+    expect(parseE2eStep('scroll 200 600')).toEqual({ kind: 'scroll', element: 'page', dx: 200, dy: 600 });
+    expect(parseE2eStep('scroll window 0 1500')).toEqual({ kind: 'scroll', element: 'window', dx: 0, dy: 1500 });
+    expect(parseE2eStep('scroll status-regions right 400')).toEqual({
+      kind: 'scroll',
+      element: 'status-regions',
+      dx: 400
+    });
+    expect(parseE2eStep('scroll log up 80')).toEqual({ kind: 'scroll', element: 'log', dx: 0, dy: -80 });
+    // Typing with no field named says how to type into the one focused.
+    expect(parseE2eStep('type "madrid"')).toEqual({
+      problem: expect.stringContaining('type :focus <text>') as unknown
+    });
+  });
+
   it('are cut at each ; or line outside quotes, notes and blanks left out', () => {
     expect(stepLines('type chat "a; b"\n# a note\n\nclick send')).toEqual(['type chat "a; b"', 'click send']);
   });

@@ -31,6 +31,32 @@ export const previewPort = async (loaded: LoadedRun): Promise<number | undefined
   return running && alive(running.pid) ? running.port : undefined;
 };
 
+/** Where a run's preview says it stopped, and why: what the lead and the person are told until one serves again. */
+export const previewEndedFile = (paths: RunPaths): string => path.join(paths.cache, 'preview-ended.json');
+
+const isEnded = (value: unknown): value is { at: string; port: number; why: string } =>
+  isRecord(value) && typeof value.at === 'string' && typeof value.port === 'number' && typeof value.why === 'string';
+
+/**
+ * The run's preview that stopped and was not started again: as it said it ended, or its process gone with its record left
+ * — a run's preview stopped during the close, saying nothing, and a pass of 140 lines was run against nothing.
+ */
+export const previewEnded = async (
+  loaded: LoadedRun
+): Promise<{ at?: string; port: number; why: string } | undefined> => {
+  const running = await readJson(previewRecord(loaded.paths), isPreview, 'a run’s preview').catch(() => undefined);
+  if (running) {
+    return alive(running.pid)
+      ? undefined
+      : {
+          port: running.port,
+          why: 'its process ended without a word — the terminal or the command that ran it is gone'
+        };
+  }
+
+  return readJson(previewEndedFile(loaded.paths), isEnded, 'a run’s preview, stopped').catch(() => undefined);
+};
+
 /** How long a run's removal waits for its preview to stop: it looks for its run every two seconds. */
 const PREVIEW_STOP_MS = 10_000;
 

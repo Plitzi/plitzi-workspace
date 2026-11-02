@@ -80,6 +80,11 @@ export const SUGGESTION_CODES = {
       'a space with no page of its own for an address no other page answers — a plain one was added, in the home page’s layout, sent with status 404',
     fix: "a page whose slug is `'*'`: `{ id: 'not-found', name: 'Not found', slug: '*', layout: …, body: [...] }`"
   },
+  'unused-plugin': {
+    kind: 'suggested',
+    means: 'a plugin the project declares that no page, layout or component places — built and shipped, drawn nowhere',
+    fix: 'place it where it was meant to go, or remove its folder from `src/plugins/`'
+  },
   'unused-component': {
     kind: 'suggested',
     means: 'a component no page, layout or other component places',

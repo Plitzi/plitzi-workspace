@@ -4,7 +4,7 @@ import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
 import { suggestElementColours } from './elementColors';
 import { suggestMotion } from './motion';
-import { suggestPluginHosts } from './pluginHosts';
+import { suggestPluginHosts, suggestUnusedPlugins } from './pluginHosts';
 import { suggestRepeats } from './repeats';
 
 import type { Suggestion } from './types';
@@ -65,6 +65,7 @@ export const suggestSpace = (
     ...suggestMotion(schema, style),
     ...suggestDeclarations(schema, style, stylesheets),
     ...suggestPluginHosts(schema, pluginTypes),
+    ...suggestUnusedPlugins(schema, pluginTypes),
     ...suggestElementColours(style)
   ]).sort((a, b) => b.saves - a.saves);
 

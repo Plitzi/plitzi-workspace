@@ -4,9 +4,10 @@ import { API_OPTION, DRY_RUN_OPTION, schemeOption, schemesOption, widthsOption, 
 import { expectation, fill, pagePath, pagePathList, positiveInteger, scale, statusCode, widths } from '../../options';
 import { check } from '../page/check';
 import { importPage } from '../page/importPage';
-import { measure, onlyProperties, sameProperties } from '../page/measure';
+import { measure } from '../page/measure';
 import { expectedOf } from '../page/measureExpected';
 import { keepBrowser } from '../page/measureKeeper';
+import { onlyProperties, sameProperties } from '../page/measureOnly';
 import { outline } from '../page/outline';
 import { play } from '../page/play';
 import { shotEach, SHOT_MOMENTS } from '../page/shot';
@@ -218,6 +219,10 @@ export const registerPage = (pageGroup: Command): void => {
     )
     .addOption(widthsOption('The viewport widths, separated by commas: the steps played at each', [1440]))
     .addOption(schemeOption())
+    .option(
+      '--motion',
+      'Play as a visitor who asked for no less motion: what animates by itself moves between the steps, and a wait shows it — held still by default'
+    )
     .option('--json', 'One object, for a tool or an agent');
   withVisitorOptions(playCommand).action((route: string | undefined, options: PlayOptions) => play(route, options));
 

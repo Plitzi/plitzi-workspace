@@ -31,12 +31,26 @@ describe('the steps a --fill, --click and --hover are played as', () => {
   // Design-1 asked `page shot --click site-avatar --hover <item>` and was refused an option shot did not have.
   it('clicks, then hovers and pictures the page so — and pictures each click when nothing is hovered after', () => {
     expect(interactionSteps(undefined, ['site-avatar'], 'site-menu-item')).toBe(
-      'click "site-avatar"; wait 600; hover "site-menu-item"; wait 400; shot site-menu-item hovered'
+      'click site-avatar; wait 600; hover site-menu-item; wait 400; shot site-menu-item hovered'
     );
     expect(interactionSteps(['type "name" Ana'], ['send'], undefined)).toBe(
-      'shot before; type "name" Ana; click "send"; wait 600; shot after send'
+      'shot before; type "name" Ana; click send; wait 600; shot after send'
     );
     expect(interactionSteps(undefined, ['send'], undefined)).toBeUndefined();
+  });
+
+  // `--hover '[data-holo="on"]'` became `[data-holo=\"on\"]` through JSON, and was "not on the page".
+  it('writes a selector as given, quoted only when a space outside its brackets would cut it', () => {
+    expect(interactionSteps(undefined, [], '[data-holo="on"]')).toBe(
+      'hover [data-holo="on"]; wait 400; shot [data-holo="on"] hovered'
+    );
+    // Frames beside a hover are taken while it is held: a run's designer was refused them, told of a --steps it never wrote.
+    expect(interactionSteps(undefined, [], 'pro-card', { count: 3, every: 800 })).toBe(
+      'hover pro-card; wait 400; frames 3 800'
+    );
+    expect(interactionSteps(undefined, [], '.plan-card .cta')).toBe(
+      "hover '.plan-card .cta'; wait 400; shot .plan-card .cta hovered"
+    );
   });
 });
 

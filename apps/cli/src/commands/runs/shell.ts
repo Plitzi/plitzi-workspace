@@ -16,9 +16,10 @@ import { sessionOfProcess } from '../../runs/agents/session';
 import { isQuality } from '../../runs/agents/team';
 import { projectChecks } from '../../runs/copies/checks';
 import { writtenByAnother } from '../../runs/core/compat';
-import { COPY_TASK_FILE, copyOf, runPaths, scratchOf } from '../../runs/core/paths';
+import { writeJson } from '../../runs/core/files';
+import { COPY_TASK_FILE, copyOf, runPaths, scratchOf, taskPaths } from '../../runs/core/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/core/refusal';
-import { viewTask } from '../../runs/core/taskStore';
+import { readOwner, viewTask } from '../../runs/core/taskStore';
 import { ranCommand, USAGE_OFF, usageCaller } from '../../runs/core/usage';
 import { contextNow, spentIn } from '../../runs/harness';
 import { activeRuns, loadKeptRun, loadRun, readRecord } from '../../runs/run';
@@ -75,6 +76,33 @@ const copyTask = async (work: string): Promise<Where['copy']> => {
     : undefined;
 };
 
+/**
+ * Who a copy is, written again from the run when its `tmp/` was cleared — the task's owner keeps its token: a run's agent
+ * ran `rm -rf tmp` in its copy to clear test bundles, and every command there lost who it was. Said, never silent.
+ */
+const copyTaskAgain = async (
+  work: string,
+  inCopy: { root: string; run: string; task: string }
+): Promise<Where['copy']> => {
+  const owner = await readOwner(taskPaths(runPaths(inCopy.root, inCopy.run), inCopy.task)).catch(() => undefined);
+  if (!owner?.token) {
+    return undefined;
+  }
+
+  await fs.mkdir(path.join(work, 'tmp'), { recursive: true });
+  await writeJson(path.join(work, COPY_TASK_FILE), {
+    run: inCopy.run,
+    task: inCopy.task,
+    token: owner.token,
+    agent: owner.agent
+  });
+  process.stderr.write(
+    `${chalk.dim(`${COPY_TASK_FILE} was gone from this copy (its tmp/ cleared): written again from the run — leave it be`)}\n`
+  );
+
+  return { token: owner.token, agent: owner.agent };
+};
+
 /** The shell's folder — refused, saying why, when it is gone: a task's copy, removed once the task was approved. */
 const currentFolder = (): string => {
   try {
@@ -99,7 +127,7 @@ const whereAmI = async (): Promise<Where> => {
     return { root: scratchOf(project.root)?.root ?? project.root, here };
   }
 
-  const copy = await copyTask(project.root);
+  const copy = (await copyTask(project.root)) ?? (await copyTaskAgain(project.root, inCopy));
 
   return { root: inCopy.root, here, ...(copy ? { copy } : {}) };
 };

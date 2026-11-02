@@ -192,6 +192,7 @@ The space is not written until these are fixed.
 | `utility-module` | a utility sent to a module — a utility takes none | drop the `on` |
 | `variant-bound-twice` | two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins | one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`; two things that change apart (a size, a lit state) are two classes, each with its own `variantFrom` |
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
+| `visible-expression` | `visible` written as an expression (`"state.plan == 'pro'"`, `"a && !b"`) — it takes a source, read as one, which resolves to nothing | `visible: { source: 'state.plan', template: "{{ state.plan == 'pro' }}" }` — or a source alone, `'state.open'`, `'!state.open'` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |
 | `withheld-page-invalid` | `settings.withheldPage` naming no page of the space, or one with an `access` of its own | the id or slug of a page every visitor may see: `withheldPage: 'no-access'` |
@@ -239,7 +240,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `page-path-unknown` | a link or `navigate` to a path no page of the space answers — a page not made yet, or a typo | a path a page answers (its folder and slug), the page's id, or `mode: 'external'` for one the server answers itself |
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |
 | `path-not-in-data` | a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have | the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans` |
-| `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
+| `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin, as the warning names it (`variant` → `kind`, `from` → `start`) |
 | `popup-position-set` | a class on a `dropdownPopup` setting where it is drawn — `position`, `top`, `left`, `right`, `bottom`, `inset` or `transform` — over the place its dropdown puts it at, at the space's root | its look on the class, its place on the dropdown: `popupPlacement`, `containerTopOffset`, `containerLeftOffset`, and `popupWidth: "trigger"` for its width |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
 | `required-message-unused` | a `requiredMessage` on a field nothing requires — fields are optional unless `required: true`, so it is never shown and an empty answer is sent | `required: true` on the field, or no message |
@@ -283,6 +284,7 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 | `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles; copies that bind different data, read their own template or render on the server are controls, not repeats | a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards |
 | `unused-class` | a class declared in `classes` that no element, binding, flow or other class names | remove it from `classes` — or wear it where it was meant to go |
 | `unused-component` | a component no page, layout or other component places | remove it from `components`, or place it where it was meant to go |
+| `unused-plugin` | a plugin the project declares that no page, layout or component places — built and shipped, drawn nowhere | place it where it was meant to go, or remove its folder from `src/plugins/` |
 | `unused-token` | a token of `variables` no `var(--…)` reads — not a class, an element, `customCss` nor another token | remove it, or write it where its colour is written out |
 
 ## UPPER_CASE codes

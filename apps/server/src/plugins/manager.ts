@@ -136,6 +136,19 @@ export class PluginManager {
     return this.resolveKey(name) !== null;
   }
 
+  /**
+   * A plugin no longer there — its folder removed under a dev server: never built again, nothing of it remembered. A run's
+   * preview logged "build failed … Could not resolve" for a plugin a task had deleted, build after build.
+   */
+  unregister(name: string): void {
+    const base = name.replace(/@[^@]*$/, '');
+    for (const key of Object.keys(this.plugins).filter(each => each.replace(/@[^@]*$/, '') === base)) {
+      Reflect.deleteProperty(this.plugins, key);
+    }
+
+    this.forget(base);
+  }
+
   register(name: string, source: PluginSource): void {
     this.plugins[name] = source;
     this.mem.delete(name);

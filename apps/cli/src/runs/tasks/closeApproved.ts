@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
+import { trimTestsOfDeleted } from './testsOfDeleted';
 import { syncPreview } from '../copies/preview';
 import { isWithin } from '../core/paths';
 import { withLock } from '../core/store';
@@ -72,6 +73,7 @@ export const closeApproved = async (
   }
 
   const refreshed = await loadRun(ctx, runId);
+  await trimTestsOfDeleted(ctx, refreshed, taskId);
   const granted = await grantWaiters(ctx, refreshed, released);
   const settled = await settleRequests(ctx, refreshed, released);
   const ready = await readyWhatWaited(ctx, refreshed);

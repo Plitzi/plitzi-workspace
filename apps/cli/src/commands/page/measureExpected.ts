@@ -13,7 +13,11 @@ import type { Relation } from '@plitzi/sdk-authoring';
  */
 
 /** A CSS property's name, as `getComputedStyle` takes it: `overflow-x`, `-webkit-line-clamp`, a pseudo's `after:margin-left`. */
-export const PROPERTY_NAME = new RegExp(`^(?:(?:${PSEUDOS.join('|')}):)?-?[a-z][a-z0-9-]*$`);
+// A CSS property — a pseudo-element's too — a custom property (`--vz-text-muted`), or an attribute (`attr:role`).
+export const PROPERTY_NAME = new RegExp(
+  `^(?:(?:(?:${PSEUDOS.join('|')}):)?-?[a-z][a-z0-9-]*|--[\\w-]+|attr:[a-z][\\w:-]*)$`,
+  'i'
+);
 
 /**
  * One `--expect`: a property, and the value it must compute to — or, with `at`, the least (`>=`) or most (`<=`) a

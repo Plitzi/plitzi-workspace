@@ -1,5 +1,6 @@
 import { digestsOf } from './approve';
 import { checkVersions } from '../copies/materialise';
+import { viewTask } from '../core/taskStore';
 import { readApproved, readRunLog } from '../run';
 import { logNotice, noticesIn } from '../talk/notices';
 
@@ -62,4 +63,42 @@ export const keepOlderWarnings = async (
   }
 
   return [...warnings];
+};
+
+/** The space lint's warning of a file nothing imports. */
+const UNUSED_FILE = /\bunused-file\b/;
+
+/** The tasks not done yet that wait for `taskId`, all the way along: one of them is what uses what it makes. */
+const openDependents = async (loaded: LoadedRun, taskId: string): Promise<string[]> => {
+  const after = new Set<string>();
+  let grown = true;
+  while (grown) {
+    grown = false;
+    for (const task of loaded.tasks) {
+      if (!after.has(task.id) && task.dependsOn.some(id => id === taskId || after.has(id))) {
+        after.add(task.id);
+        grown = true;
+      }
+    }
+  }
+
+  const open = await Promise.all(
+    loaded.tasks
+      .filter(task => after.has(task.id))
+      .map(async task => ((await viewTask(loaded.paths, task)).state.status === 'done' ? [] : [task.id]))
+  );
+
+  return open.flat();
+};
+
+/** Of the warnings a task adds, the files nothing imports yet while a task after it is still to come — and those tasks. */
+export const awaitingUse = async (
+  loaded: LoadedRun,
+  taskId: string,
+  added: readonly string[]
+): Promise<{ awaiting: string[]; by: string[] }> => {
+  const unused = added.filter(warning => UNUSED_FILE.test(warning));
+  const by = unused.length > 0 ? await openDependents(loaded, taskId) : [];
+
+  return { awaiting: by.length > 0 ? unused : [], by };
 };

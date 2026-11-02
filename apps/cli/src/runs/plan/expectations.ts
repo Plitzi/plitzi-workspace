@@ -207,6 +207,25 @@ export const fallsToNotFound = (authored: { schema: Schema; handles: SpaceHandle
   );
 };
 
+/** Whether `files` write the page at `path`: its first part, a folder or a module in one of the project's page folders. */
+export const makesPageAt = (files: readonly string[], path: string, pageFolders: readonly string[]): boolean => {
+  const slug = path.replace(/^\//, '').split(/[/?#]/)[0] ?? '';
+  if (slug === '') {
+    return false;
+  }
+
+  return pageFolders.some(folder => {
+    const page = `${folder}/${slug}`;
+
+    return files.some(
+      file =>
+        file === page ||
+        file.startsWith(`${page}/`) ||
+        (file.startsWith(page) && /^\.[cm]?[jt]sx?$/.test(file.slice(page.length)))
+    );
+  });
+};
+
 /**
  * The tasks after `task` — waiting on it, however far — that check `path` too: one of them likely makes the page, and
  * `task`'s check on it cannot pass before that one (t-card measured its card on the collection page that
@@ -237,7 +256,12 @@ export const checkedAfter = (
  * 404 — and says no `--status`: it fails on the status, whatever the page shows (a run's lead wrote one, and
  * dev-3 asked why the acceptance could not pass). A notice: the task may make the page.
  */
-export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[]): Promise<string[]> => {
+export const notFoundNotices = async (
+  root: string,
+  tasks: readonly PlannedTask[],
+  /** The folders the project loads its pages from (`Ownership.pageFolders`): a task writing one there makes that page. */
+  pageFolders: readonly string[] = []
+): Promise<string[]> => {
   const asked = tasks.flatMap(task =>
     task.acceptance.flatMap(each =>
       typeof each === 'string'
@@ -257,8 +281,13 @@ export const notFoundNotices = async (root: string, tasks: readonly PlannedTask[
     return [];
   }
 
+  // A task that writes the page itself checks what it makes: no notice — a run's scope printed eleven "deadlocks" for
+  // lines on /pricing and /status in the very tasks whose folders made them.
+  const byId = new Map(tasks.map(task => [task.id, task]));
+
   return asked
     .filter(({ path }) => fallsToNotFound(authored, path))
+    .filter(({ task, path }) => !makesPageAt(byId.get(task)?.files ?? [], path, pageFolders))
     .map(({ task, said, path }) => {
       const later = checkedAfter(tasks, asked, task, path);
 

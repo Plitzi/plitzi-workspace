@@ -2,6 +2,12 @@ import type { AuthoringCodeEntry } from './entry';
 
 /** Bindings and templates. */
 export const BINDING_CODES = {
+  'visible-expression': {
+    kind: 'refused',
+    means:
+      '`visible` written as an expression (`"state.plan == \'pro\'"`, `"a && !b"`) — it takes a source, read as one, which resolves to nothing',
+    fix: "`visible: { source: 'state.plan', template: \"{{ state.plan == 'pro' }}\" }` — or a source alone, `'state.open'`, `'!state.open'`"
+  },
   'from-without-attribute': {
     kind: 'refused',
     means: '`from` on a type with no one attribute that shows its data (a container, a form)',

@@ -295,10 +295,18 @@ export const hiddenCopiesJoined = (readings: readonly Reading[]): (Reading | { s
       ? `${COPY.exec(reading.pair.here)?.[1] ?? ''}|${reading.here.hidden}`
       : undefined;
   const counts = new Map<string, number>();
+  // Every copy read of each element, shown or not: three of four hidden are never "all three" — a run's tester was told
+  // a visitor saw none of a badge, then shown the one it does see.
+  const copies = new Map<string, number>();
   readings.forEach(reading => {
     const base = baseOf(reading);
     if (base !== undefined && !base.startsWith('|')) {
       counts.set(base, (counts.get(base) ?? 0) + 1);
+    }
+
+    const element = COPY.exec(reading.pair.here)?.[1];
+    if (element !== undefined) {
+      copies.set(element, (copies.get(element) ?? 0) + 1);
     }
   });
   const said = new Set<string>();
@@ -317,6 +325,15 @@ export const hiddenCopiesJoined = (readings: readonly Reading[]): (Reading | { s
     said.add(base);
     const [element] = base.split('|');
 
-    return [{ said: `${element}: all ${String(count)} copies — ${hiddenText(reading.here.hidden ?? '')}` }];
+    const total = copies.get(element) ?? count;
+
+    return [
+      {
+        said:
+          total > count
+            ? `${element}: ${String(count)} of its ${String(total)} copies hidden — ${reading.here.hidden ?? ''}; their place and size are not on the page, so not said — the ${total - count === 1 ? 'one' : 'ones'} shown read below`
+            : `${element}: all ${String(count)} copies — ${hiddenText(reading.here.hidden ?? '')}`
+      }
+    ];
   });
 };

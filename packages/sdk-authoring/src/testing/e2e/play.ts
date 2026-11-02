@@ -80,6 +80,9 @@ function readNodeInPage(
   };
 }
 
+/** What a scroll step names to move the page itself, not an element of it. */
+export const PAGE_SCROLLER: ReadonlySet<string> = new Set(['page', 'window']);
+
 /** Runs in the page, on the element: brought into view, or its own content scrolled by so much — and whether it moved. */
 function scrollNodeInPage(
   node: Element,
@@ -91,6 +94,8 @@ function scrollNodeInPage(
     return { moved: true, across: 0, down: 0 };
   }
 
+  // In view first: a picture after it shows the box it scrolled, never the page's top a run's step left it at.
+  node.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   const [left, top] = [node.scrollLeft, node.scrollTop];
   node.scrollBy({ left: by.dx, top: by.dy, behavior: 'instant' });
 
@@ -227,6 +232,24 @@ const positionOf = (
 
 /** One action played, or why it could not be — and, of a press on one of several copies, which one. */
 const act = async (page: E2ePage, step: E2eAction, ctx: StepPlay): Promise<StepPlayed> => {
+  // The page itself scrolled, as a visitor's wheel does: a scroll-driven piece read at each place of it (a run's agents
+  // wrote `scroll 1500` and `scroll window 0 1500`, and guessed `scroll html` at last).
+  if (step.kind === 'scroll' && PAGE_SCROLLER.has(step.element)) {
+    const moved = await page.evaluate(
+      ({ dx, dy }) => {
+        const [left, top] = [window.scrollX, window.scrollY];
+        window.scrollBy({ left: dx, top: dy, behavior: 'instant' });
+
+        return window.scrollX !== left || window.scrollY !== top;
+      },
+      { dx: step.dx ?? 0, dy: step.dy ?? 0 }
+    );
+
+    return moved
+      ? undefined
+      : { problem: 'the page did not scroll — it fits the screen that way, or was at that end already' };
+  }
+
   switch (step.kind) {
     case 'click':
     case 'hover':

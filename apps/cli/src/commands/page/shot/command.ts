@@ -153,7 +153,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  const asSteps = interactionSteps(filled, options.click ?? [], hover);
+  // Frames beside a hover are taken while it is held: a run's designer asked them of a card that moves when hovered.
+  const hoverFrames =
+    hover !== undefined && (options.frames ?? 0) > 1
+      ? { count: options.frames ?? 2, every: options.every ?? 500 }
+      : undefined;
+  const asSteps = interactionSteps(filled, options.click ?? [], hover, hoverFrames);
   const clicks = asSteps === undefined ? (options.click ?? []) : [];
   const script =
     asSteps ??
@@ -183,9 +188,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  if (steps && (clicks.length > 0 || options.compare || (options.frames ?? 0) > 1)) {
+  if (steps && (clicks.length > 0 || options.compare || ((options.frames ?? 0) > 1 && hoverFrames === undefined))) {
     await browser.close();
-    fail('`--steps` is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.');
+    // Named by what was given: a `--fill` is played as steps too, and a run's designer was told of a --steps it never wrote.
+    const given = options.steps !== undefined ? '`--steps`' : '`--fill`, played as steps,';
+    fail(`${given} is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.`);
 
     return;
   }

@@ -88,23 +88,26 @@ export const standInPictures = (page: BrowserPage, origin: string): Promise<unkn
  * (`page check`) opens the address itself after this.
  */
 /**
- * How a play and a look see the page, said once with their answer: as a visitor who asked for less motion. What honours
- * it is held still and reads "as before"; what a script animates regardless moves on, and a picture may catch it mid-way —
- * a run's agents read a cycling word, a ticker and a split-flap board as broken, and a counter mid-count as wrong data.
+ * How a play and a look see the page, said once with their answer. A play is a visitor who asked for less motion — what
+ * honours it reads "as before", unless `--motion`; a look's pictures move, as `page shot`'s, and may catch a counter
+ * mid-count. A run's agents read a cycling word and a split-flap board as broken, and a counter mid-count as wrong data.
  */
 export const HELD_STILL =
-  'played as a visitor who asked for less motion: what animates by itself is held still and reads "as before" — page measure --motion reads it moving';
+  'played as a visitor who asked for less motion: what animates by itself is held still and reads "as before" — --motion plays it moving';
+export const PLAYED_MOVING =
+  'played with motion (--motion): what animates by itself moves between the steps — a wait shows it, and a read catches it where it is';
 export const PICTURED_STILL =
-  'pictured as a visitor who asked for less motion: CSS motion held still, what a script animates possibly caught mid-way — page measure --motion reads it moving';
+  'pictured with motion, as page shot pictures — a counter or an entrance may be caught mid-way; its check reads the page held still, and --before sets it beside the run with motion held still too';
 
 /**
  * What a play says once of how it played: as a visitor who asked for less motion — a run's agents read a cycling word, a
  * ticker and a split-flap board as broken, sixteen times, never told — and, signed out, as whom: a run's designer read a
  * notice bound to the visitor stay hidden, a guest unawares.
  */
-export const playedNotes = (route: string, signedOut: boolean): string =>
+/** `moving`: played with `--motion` — a cycling word, a ticker, a counter read as they go, never "as before". */
+export const playedNotes = (route: string, signedOut: boolean, moving = false): string =>
   [
-    `· ${HELD_STILL}`,
+    `· ${moving ? PLAYED_MOVING : HELD_STILL}`,
     ...(signedOut ? [`· ${route} played signed out — a page any visitor opens: --as <account> plays it signed in`] : [])
   ]
     .map(line => `${line}\n`)

@@ -271,6 +271,8 @@ const watchPluginsFolder = (
       fromFolders.delete(name);
       names.splice(names.indexOf(name), 1);
       server.functions.setPlugin(name, undefined);
+      server.plugins.unregister(name);
+      console.log(`[plugins] ${name}: its folder is gone — no longer served`);
     }
 
     if (added.length > 0 || removed.length > 0) {

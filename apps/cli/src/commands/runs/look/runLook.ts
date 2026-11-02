@@ -7,7 +7,13 @@ import { previewDir, startPreview } from '../../../runs/copies/preview';
 import { previewPort } from '../../../runs/copies/previewRecord';
 import { RunRefusal } from '../../../runs/core/refusal';
 import { LARGE_OUTPUT } from '../../../runs/findings/cost';
-import { acceptanceAddresses, drawnAtNoPage, examplePaths, runPages } from '../../../runs/plan/pagesOf';
+import {
+  acceptanceAddresses,
+  acceptanceStatuses,
+  drawnAtNoPage,
+  examplePaths,
+  runPages
+} from '../../../runs/plan/pagesOf';
 import { assertStatus, loadRun, logRun, readApproved } from '../../../runs/run';
 import { checkAccount, sessionCookie } from '../../page/check/account';
 import { act, runOf } from '../shell';
@@ -138,8 +144,39 @@ export const runLook = (runId: string | undefined, options: RunCommandOptions): 
         );
         const looked = reached.length > 0 ? reached : ['/'];
         const shots = path.join(loaded.paths.shots, 'run-look');
+        // An address its acceptance holds to another status — the not-found page's 404 — is checked with it, apart.
+        const statuses = new Map(
+          acceptanceStatuses(loaded.tasks.flatMap(task => task.acceptance)).map(each => [each.page, each.status])
+        );
+        const plain = looked.filter(each => !statuses.has(each));
+        const byStatus = [...new Set(looked.filter(each => statuses.has(each)).map(each => statuses.get(each)))];
         // From the folder served, which holds the run's pages: from the project, a page the run made is not there yet.
-        const check = await ownCli(dir, ['page', 'check', ...looked, '--url', url, '--width', '1440,390']);
+        const checks: { code: number; out: string }[] = [];
+        if (plain.length > 0) {
+          checks.push(await ownCli(dir, ['page', 'check', ...plain, '--url', url, '--width', '1440,390']));
+        }
+
+        for (const status of byStatus) {
+          const held = looked.filter(each => statuses.get(each) === status);
+          checks.push(
+            await ownCli(dir, [
+              'page',
+              'check',
+              ...held,
+              '--status',
+              String(status),
+              '--url',
+              url,
+              '--width',
+              '1440,390'
+            ])
+          );
+        }
+
+        const check = {
+          code: checks.find(each => each.code !== 0)?.code ?? 0,
+          out: checks.map(each => each.out).join('\n')
+        };
         await ownCli(dir, [
           'page',
           'shot',

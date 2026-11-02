@@ -179,9 +179,11 @@ export const drawnOn = async (page: BrowserPage, selector: string): Promise<Reco
       box && box.width >= 1 && box.height >= 1
         ? drawnBounds(
             pixelsOf(
+              // In the page's own px, the whole page pictured: one below the fold was clipped outside the screen and
+              // the measure crashed ("Clipped area is either empty or outside the resulting image").
               await page.screenshot({
-                fullPage: false,
-                clip: { x: box.x, y: box.y, width: box.width, height: box.height },
+                fullPage: true,
+                clip: { x: box.x, y: box.y + box.scrolled, width: box.width, height: box.height },
                 scale: 'css'
               })
             )

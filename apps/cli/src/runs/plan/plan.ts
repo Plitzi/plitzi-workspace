@@ -541,7 +541,10 @@ export const checkPlan = async (
       )
     );
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
-  notices.push(...(await expectationNotices(spaceRoot, plan.tasks)), ...(await notFoundNotices(spaceRoot, plan.tasks)));
+  notices.push(
+    ...(await expectationNotices(spaceRoot, plan.tasks)),
+    ...(await notFoundNotices(spaceRoot, plan.tasks, ownership.pageFolders))
+  );
   notices.push(
     ...sharedLookNotices(plan.tasks),
     ...unmeasuredNotices(plan.tasks, plan.reference),

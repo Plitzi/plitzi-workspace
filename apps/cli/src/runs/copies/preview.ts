@@ -17,7 +17,7 @@ import {
   touchKept,
   unmarkPreviewed
 } from './lingering';
-import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
+import { alive, isPreview, previewEndedFile, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { handReports, reportsDir } from './reports';
 import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
@@ -343,8 +343,30 @@ export const startPreview = async (
     snapshot: true,
     ...(log === undefined ? {} : { quiet: true, log })
   });
+  await fs.rm(previewEndedFile(loaded.paths), { force: true });
   await writeJson(previewRecord(loaded.paths), { pid: process.pid, port });
-  void served.done.then(() => fs.rm(previewRecord(loaded.paths), { force: true })).catch(() => undefined);
+  // How it ended is kept, and said in its log: a run's preview stopped during the close with no word anywhere.
+  void served.done
+    .then(async ({ code, why }) => {
+      await fs.rm(previewRecord(loaded.paths), { force: true });
+      if (
+        await loadRun(ctx, runId, { anyVersion: true })
+          .then(() => true)
+          .catch(() => false)
+      ) {
+        await writeJson(previewEndedFile(loaded.paths), {
+          at: ctx.now().toISOString(),
+          port,
+          why: `${why} (exit ${String(code)})`
+        });
+        if (log !== undefined) {
+          await fs.appendFile(log, `\n[plitzi] the preview stopped: ${why} (exit ${String(code)})\n`);
+        }
+      }
+    })
+    .catch((error: unknown) => {
+      console.error(`the preview's end was not kept: ${error instanceof Error ? error.message : String(error)}`);
+    });
 
   return { ...served, dir, ...(log === undefined ? {} : { log }) };
 };

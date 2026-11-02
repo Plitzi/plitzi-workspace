@@ -320,3 +320,26 @@ describe('PluginManager — bundles removed while it runs', () => {
     });
   });
 });
+
+// A run's preview kept building a plugin a task had deleted, logging "build failed" build after build.
+describe('PluginManager unregister', () => {
+  it('forgets a plugin by its name, every version of it, and builds it no more', async () => {
+    const { entry, cache } = await workspace();
+    const manager = new PluginManager(
+      {
+        'widget@1.0.0': { js: entry, action: 'compile', version: '1.0.0' },
+        'other@1.0.0': { js: entry, action: 'compile', version: '1.0.0' }
+      },
+      cache,
+      60_000,
+      true
+    );
+    expect(manager.hasPlugin('widget')).toBe(true);
+
+    manager.unregister('widget');
+
+    expect(manager.hasPlugin('widget')).toBe(false);
+    expect(manager.hasPlugin('other')).toBe(true);
+    expect(await manager.prepare('widget')).toBeNull();
+  });
+});

@@ -39,3 +39,37 @@ export const suggestPluginHosts = (schema: Schema, pluginTypes: readonly string[
       ];
     });
 };
+
+/**
+ * Each plugin the project declares that no page, layout or component places: built, shipped, and drawn nowhere. A run's
+ * border light lost its only placement to another task, and author, lint, doctor and every check said nothing.
+ */
+export const suggestUnusedPlugins = (schema: Schema, pluginTypes: readonly string[]): Suggestion[] => {
+  const declared = pluginTypes.flatMap(type =>
+    type.startsWith(`${CUSTOM_TYPE}:`) ? [type.slice(CUSTOM_TYPE.length + 1)] : []
+  );
+  if (declared.length === 0) {
+    return [];
+  }
+
+  const placed = new Set(
+    [schema.flat, ...Object.values(schema.components).map(component => component.flat)]
+      .flatMap(flat => Object.values(flat))
+      .map(element =>
+        element.definition.type === CUSTOM_TYPE ? textOf(element.attributes.renderType) : element.definition.type
+      )
+  );
+  const unused = declared.filter(type => !placed.has(type)).sort();
+
+  return unused.length === 0
+    ? []
+    : [
+        {
+          code: 'unused-plugin' as const,
+          message: `${String(unused.length)} ${unused.length === 1 ? 'plugin is' : 'plugins are'} declared and placed on no page, layout or component: ${unused.join(', ')} — built and shipped, drawn nowhere. Place ${unused.length === 1 ? 'it' : 'them'} where ${unused.length === 1 ? 'it was' : 'they were'} meant to go, or remove ${unused.length === 1 ? 'its folder' : 'their folders'} from src/plugins/.`,
+          elementIds: [],
+          subjects: unused,
+          saves: 0
+        }
+      ];
+};

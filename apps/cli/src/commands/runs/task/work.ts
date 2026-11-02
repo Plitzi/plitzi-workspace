@@ -280,6 +280,11 @@ export const taskComplete = (
         ...completed.accepted.map(
           each => `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}`
         ),
+        ...(completed.awaitingUse
+          ? [
+              `  Nothing imports these yet — what ${list(completed.awaitingUse.by.slice(0, 3))}${completed.awaitingUse.by.length > 3 ? ' and the rest after it' : ''} will place, so not yours now: ${completed.awaitingUse.warnings.join('; ')}`
+            ]
+          : []),
         ...(completed.olderWarnings
           ? [
               chalk.dim(

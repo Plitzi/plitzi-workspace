@@ -86,6 +86,17 @@ describe('withVisibility', () => {
     expect(withVisibility({ bind: { href: 'posts.url' } })).toEqual([{ to: 'href', source: 'posts.url' }]);
     expect(withVisibility({})).toBeUndefined();
   });
+
+  // A run's toggle was written `visible: "state.billing == 'yearly'"`: authored with no warning, and never shown.
+  it('refuses an expression read as a source, with the template that holds it', () => {
+    expect(() => withVisibility({ visible: "state.billing == 'yearly'" })).toThrow(
+      `visible: { source: 'state.billing', template: "{{ state.billing == 'yearly' }}" }`
+    );
+    expect(() => withVisibility({ visible: 'a && !b' })).toThrow('is an expression');
+    // A path of names, an element's id with hyphens, a list's index: sources.
+    expect(withVisibility({ visible: 'home-feed.data.items[0]' })).toHaveLength(1);
+    expect(withVisibility({ visible: '!list_posts.item.draft' })).toHaveLength(1);
+  });
 });
 
 describe('an element whose visibility is a condition', () => {

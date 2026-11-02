@@ -10,6 +10,7 @@ import type { PluginRegistry, SSRServerConfig } from '@plitzi/sdk-shared';
 
 const noPlugins: PluginRegistry = {
   register: () => undefined,
+  unregister: () => undefined,
   invalidate: () => Promise.resolve()
 };
 
@@ -100,7 +101,11 @@ describe('createHttpServer lifecycle', () => {
  */
 describe('createHttpServer as a single server', () => {
   const cache = { invalidate: () => 0, clear: () => undefined, size: 0 };
-  const plugins: PluginRegistry = { register: () => undefined, invalidate: () => Promise.resolve() };
+  const plugins: PluginRegistry = {
+    register: () => undefined,
+    unregister: () => undefined,
+    invalidate: () => Promise.resolve()
+  };
   const single = (workers: SSRServerConfig['workers']) =>
     createHttpServer({ httpVersion: 1, workers, adapters: {} }, () => handler, {
       label: 'TEST',

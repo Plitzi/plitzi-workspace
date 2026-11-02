@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findingsOf, lookClips } from './taskParts';
+import { findingsOf, heldWithin, lookClips } from './taskParts';
 
 describe('a task’s part of a page', () => {
   it('keeps the findings on its own elements and sets apart the ones only of other tasks’ parts', () => {
@@ -36,5 +36,26 @@ describe('the parts a look pictures', () => {
     expect(lookClips(parts(['a', 'b', 'c', 'd']), 'b')).toEqual({ clips: ['b'], many: false });
     expect(lookClips(parts(['page-root'], true))).toEqual({ clips: [], many: false });
     expect(lookClips(undefined)).toEqual({ clips: [], many: false });
+  });
+});
+
+// A run's mobile menu was told its own sheet links — drawn through a shared helper — were "another task's".
+describe('what a task’s elements hold', () => {
+  const located = [
+    { elementId: 'nav', children: ['nav-sheet'], position: { file: 'src/space/layout/nav.ts' } },
+    {
+      elementId: 'nav-sheet',
+      children: ['nav-sheet-link', 'nav-cta'],
+      position: { file: 'src/space/shared/sheet.ts' }
+    },
+    { elementId: 'nav-sheet-link', children: [], position: { file: 'src/space/shared/sheet.ts' } },
+    { elementId: 'nav-cta', children: [], position: { file: 'src/space/elements/cta.ts' } }
+  ];
+
+  it('is its own, written through a shared file — but what another task’s file writes', () => {
+    const mine = new Set(['nav']);
+    heldWithin(located, mine, new Set(['src/space/elements/cta.ts']), file => file);
+
+    expect([...mine].sort()).toEqual(['nav', 'nav-sheet', 'nav-sheet-link']);
   });
 });

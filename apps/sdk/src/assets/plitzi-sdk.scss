@@ -10,7 +10,10 @@
     scroll-behavior: auto;
   }
 
-  #{$root} *,
+  // A toast's progress bar is its timer, not a motion: the toast closes when its animation ends, and cut to 0.01ms every
+  // notification closed as it opened — a visitor who asked for less motion saw none (a run's `addNotification` step
+  // ran, and nothing showed).
+  #{$root} *:not(.Toastify__progress-bar),
   #{$root} ::before,
   #{$root} ::after {
     transition-duration: 0.01ms !important;

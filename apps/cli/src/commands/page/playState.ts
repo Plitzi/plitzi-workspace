@@ -146,8 +146,22 @@ export const stateOf = (node: Element): ElementState => {
       (rect.width <= 1 && rect.height <= 1 && /hidden|clip/.test(`${own.overflowX} ${own.overflowY}`))
     );
   };
+  // Nothing of it drawn: transparent, or a box of no height or width that cuts what overflows it — a label a button swaps
+  // by opacity read "Copiar Copiado" before and after its click, an accordion's closed panel read as shown.
+  const undrawn = (element: Element): boolean => {
+    const own = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+
+    return (
+      own.opacity === '0' ||
+      ((rect.height < 1 || rect.width < 1) && /hidden|clip/.test(`${own.overflowX} ${own.overflowY}`))
+    );
+  };
   const unseen = (element: Element): boolean =>
-    element.hasAttribute('hidden') || getComputedStyle(element).display === 'none' || forScreenReaders(element);
+    element.hasAttribute('hidden') ||
+    getComputedStyle(element).display === 'none' ||
+    forScreenReaders(element) ||
+    undrawn(element);
   const seenText = (element: Element): string =>
     [...element.childNodes]
       .map(child => {

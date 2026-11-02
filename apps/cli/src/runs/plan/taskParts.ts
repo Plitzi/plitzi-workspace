@@ -18,7 +18,35 @@ export interface TaskParts {
   ownsRoot: boolean;
 }
 
-export const taskParts = async (copy: string, files: readonly string[]): Promise<TaskParts | undefined> => {
+/**
+ * What a task's elements hold, added to them: written through a helper of a shared file, or a plugin's parts — its own
+ * too, unless another task's file writes it. A run's mobile menu was told its own sheet links were "another task's".
+ */
+export const heldWithin = (
+  located: readonly { elementId: string; children: readonly string[]; position?: { file: string } }[],
+  mine: Set<string>,
+  theirs: ReadonlySet<string>,
+  fileOf: (file: string) => string
+): void => {
+  const byId = new Map(located.map(element => [element.elementId, element] as const));
+  const hold = (id: string): void => {
+    for (const child of byId.get(id)?.children ?? []) {
+      const file = byId.get(child)?.position?.file;
+      if (!mine.has(child) && (file === undefined || !theirs.has(fileOf(file)))) {
+        mine.add(child);
+        hold(child);
+      }
+    }
+  };
+  [...mine].forEach(hold);
+};
+
+export const taskParts = async (
+  copy: string,
+  files: readonly string[],
+  /** The other tasks' files: what is written there is theirs, even inside this task's elements. */
+  others: readonly string[] = []
+): Promise<TaskParts | undefined> => {
   const located = await locatedSpace(copy);
   if ('problem' in located) {
     return undefined;
@@ -36,6 +64,7 @@ export const taskParts = async (copy: string, files: readonly string[]): Promise
     located.flatMap(element => element.children.map(child => [child, element.elementId] as const))
   );
   const byId = new Map(located.map(element => [element.elementId, element] as const));
+  heldWithin(located, mine, new Set(others), fileOf);
   // A provider with no tag, a channel, a plugin's that draws nothing: no box of its own — a picture is clipped to what
   // it holds, and one that holds nothing is not pictured (a run's look tried a task's two channels on 14 pages).
   const drawn = (id: string): string[] => {

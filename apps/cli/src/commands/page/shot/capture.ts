@@ -260,7 +260,10 @@ const CANVAS_STILL_PERCENT = 2;
 export const largestCanvas = (
   within: string | null
 ): { x: number; y: number; width: number; height: number } | undefined => {
-  const frame = within === null ? null : document.querySelector(within);
+  // A copy after the first shown is named `… >> nth=N`, Playwright's: read here as the Nth match, never as CSS — a run's
+  // look of a list's component failed every picture on querySelector's SyntaxError.
+  const [withinCss, withinNth = '0'] = (within ?? '').split(' >> nth=');
+  const frame = within === null ? undefined : Array.from(document.querySelectorAll(withinCss)).at(Number(withinNth));
   if (within !== null && !frame) {
     return undefined;
   }

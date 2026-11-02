@@ -137,21 +137,44 @@ export const clickThrough = async (
  * click — pictured after each, unless a hover ends them — and the hover, pictured so. None of `--fill` and `--hover`:
  * none, the clicks played as clicks alone.
  */
+/**
+ * An element written into a step as the steps read one: whole up to a space outside brackets, so a selector is written
+ * as given — never through JSON, whose escaped quotes a step does not read back: `--hover '[data-holo="on"]'` became
+ * `[data-holo=\"on\"]` and was "not on the page". Quoted only when a space outside brackets would cut it.
+ */
+const asStepElement = (element: string): string => {
+  let depth = 0;
+  let cut = false;
+  for (let at = 0; at < element.length && !cut; at += 1) {
+    const char = element.charAt(at);
+    depth += char === '[' || char === '(' ? 1 : char === ']' || char === ')' ? -1 : 0;
+    cut = depth === 0 && /\s/.test(char);
+  }
+
+  return !cut ? element : element.includes("'") ? JSON.stringify(element) : `'${element}'`;
+};
+
 export const interactionSteps = (
   filled: readonly string[] | undefined,
   clicks: readonly string[],
-  hover: string | undefined
+  hover: string | undefined,
+  /** `--frames` beside a hover: the pictures taken while it is held — what a hovered card's motion is. */
+  frames?: { count: number; every: number }
 ): string | undefined =>
   filled || hover !== undefined
     ? [
         ...(filled ? ['shot before', ...filled] : []),
         ...clicks.flatMap(click => [
-          `click ${JSON.stringify(click)}`,
+          `click ${asStepElement(click)}`,
           'wait 600',
           ...(hover === undefined ? [`shot after ${click}`] : [])
         ]),
         ...(hover !== undefined
-          ? [`hover ${JSON.stringify(hover)}`, 'wait 400', `shot ${hover} hovered`]
+          ? [
+              `hover ${asStepElement(hover)}`,
+              'wait 400',
+              frames === undefined ? `shot ${hover} hovered` : `frames ${String(frames.count)} ${String(frames.every)}`
+            ]
           : clicks.length > 0
             ? []
             : ['wait 600', 'shot filled'])

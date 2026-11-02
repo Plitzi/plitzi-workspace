@@ -20,7 +20,8 @@ import type { E2eStep } from '@plitzi/sdk-shared';
  * page command's own:
  *
  *   drag <element> <dx> [dy] hold  pressed, moved and kept down, so what follows reads the page mid-drag (a style only
- *                            a drag sets, the height a sheet follows): drag sheet-handle 0 -120 hold
+ *                            a drag sets, the height a sheet follows): drag sheet-handle 0 -120 hold — with no
+ *                            distance, a press held where it is: drag confirm-button hold; wait 2000; release
  *   release                  the finger held by `drag … hold` let go where it is — a play that ends held lets go as
  *                            its page closes
  *   wait <ms|3s>             time passing
@@ -180,10 +181,12 @@ const ownStep = (
         return undefined;
       }
 
-      const [dx, dy = '0'] = words.slice(0, -1);
+      // No distance is a press kept down where it is — a button held to confirm: a run's agents went round it with a
+      // drag of one pixel, `drag <el> 0 0 hold` refused as no distance.
+      const [dx = '0', dy = '0'] = words.slice(0, -1);
       const [x, y] = [pixels(dx), pixels(dy)];
 
-      return !target || x === undefined || y === undefined || (x === 0 && y === 0)
+      return !target || x === undefined || y === undefined
         ? {
             problem: `${at}: drag needs an element and how far, in whole pixels — drag <element> <dx> [dy] [hold]: drag volume-handle -120, drag sheet-handle 0 -120 hold`
           }

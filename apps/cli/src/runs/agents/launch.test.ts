@@ -76,6 +76,18 @@ describe('an agent started again after it died', () => {
     expect(await resumable(root, launch(), ask)).toEqual({ not: 'too-large', bytes: DEFAULTS.resumeMaxBytes + 1 });
   });
 
+  // A run's dev-3 was resumed 161 times on "Prompt is too long", its session under the size in bytes.
+  it('starts fresh once its harness said its session no longer fits, whatever its size', async () => {
+    await keep(launch().session ?? '', 1024);
+    const log = path.join(config, 'agent.log');
+    await fs.writeFile(log, 'working…\nPrompt is too long · automatic compaction failed\n');
+
+    expect(await resumable(root, launch({ log }), { asked: true, harness: 'claude', midTask: true })).toEqual({
+      not: 'too-large',
+      bytes: 1024
+    });
+  });
+
   // Carlos: a scout whose proposal came back started on an empty context and read the whole project again.
   it('reworks a task sent back in the session it was worked in — while that context is small enough to read again', async () => {
     const worked = 'b5c1f0de-0000-4000-8000-00000000000a';

@@ -33,6 +33,7 @@ const fakeCache = () => {
 
 const fakePlugins = () => ({
   register: vi.fn<PluginRegistry['register']>(),
+  unregister: vi.fn<PluginRegistry['unregister']>(),
   invalidate: vi.fn<PluginRegistry['invalidate']>(() => Promise.resolve())
 });
 
@@ -153,6 +154,22 @@ describe('relayPlugins', () => {
     expect(forget).toHaveBeenNthCalledWith(1, 'chart', undefined);
     expect(forget).toHaveBeenNthCalledWith(2, undefined, undefined);
     expect(plugins.invalidate).not.toHaveBeenCalled();
+    expect(fleet.sent).toEqual([]);
+  });
+
+  // A plugin folder removed under a dev server: gone from every worker, never built again — a run's preview logged
+  // "build failed" for a deleted plugin, build after build.
+  it('unregisters here and has the others unregister it too', () => {
+    const plugins = fakePlugins();
+    const relayed = relayPlugins(plugins, vi.fn(), 'SSR#0.plugins', 'SSR');
+
+    relayed.unregister('vzDotGrid');
+    expect(plugins.unregister).toHaveBeenCalledWith('vzDotGrid');
+    expect(fleet.sent).toEqual([['SSR#0.plugins', { op: 'unregister', name: 'vzDotGrid' }]]);
+
+    fleet.sent.length = 0;
+    fleet.hear('SSR#0.plugins', { op: 'unregister', name: 'chart' });
+    expect(plugins.unregister).toHaveBeenLastCalledWith('chart');
     expect(fleet.sent).toEqual([]);
   });
 

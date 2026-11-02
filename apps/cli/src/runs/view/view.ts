@@ -10,7 +10,7 @@ import { heldAhead, lockHolder, stalled } from '../agents/stalled';
 import { holdDoing, holdNotices, startHolds } from '../agents/startHold';
 import { readTeam, SCOUT, startedAgents, TESTER } from '../agents/team';
 import { isWorked } from '../agents/worked';
-import { previewPort } from '../copies/previewRecord';
+import { previewEnded, previewPort } from '../copies/previewRecord';
 import { leftInTmp } from '../copies/strays';
 import { fingerprint } from '../core/files';
 import { asksLead } from '../core/model';
@@ -137,6 +137,7 @@ export interface Attention {
     | 'idle-team'
     | 'agents-needed'
     | 'start-held'
+    | 'preview-stopped'
     | 'refused-again'
     | 'line-unanswered'
     | 'finding'
@@ -624,6 +625,16 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const left = Math.max(0, ...chains.values()) * (pace?.ratio ?? 1);
 
   const port = await previewPort(loaded);
+  // A preview that stopped is said while the run is open and none serves: whoever reads the approved work there reads
+  // nothing — a run's lead ran 140 lines against a preview that had stopped, unsaid.
+  const ended = port === undefined && record.status === 'open' ? await previewEnded(loaded) : undefined;
+  if (ended) {
+    attention.push({
+      kind: 'preview-stopped',
+      text: `The run's preview on :${String(ended.port)} stopped${ended.at ? ` at ${ended.at.slice(11, 16)} UTC` : ''}: ${ended.why} — nothing answers there; plitzi run preview starts it again`,
+      who: 'person'
+    });
+  }
 
   return {
     runId: record.runId,

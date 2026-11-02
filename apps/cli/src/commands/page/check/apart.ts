@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { copyOf, runPaths, taskPaths } from '../../../runs/core/paths';
+import { readTasks } from '../../../runs/core/taskStore';
 import { labelsWrappedInReference, wrapsAsReference } from '../../../runs/plan/reference';
 import { taskParts } from '../../../runs/plan/taskParts';
 
@@ -30,7 +31,10 @@ export const keptToTask = async (root: string, reports: CheckReport[]): Promise<
     isRecord(definition) && Array.isArray(definition.files)
       ? definition.files.filter((file): file is string => typeof file === 'string')
       : [];
-  const parts = files.length > 0 ? await taskParts(root, files) : undefined;
+  const others = (await readTasks(runPaths(copy.root, copy.run)))
+    .filter(each => each.id !== copy.task)
+    .flatMap(each => each.files);
+  const parts = files.length > 0 ? await taskParts(root, files, others) : undefined;
   if (!parts || parts.ownsRoot) {
     return reports;
   }

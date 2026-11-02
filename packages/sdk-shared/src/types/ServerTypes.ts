@@ -329,6 +329,8 @@ export type ServerServices = {
 
 export type PluginRegistry = {
   register: (name: string, source: PluginSource) => void;
+  /** A plugin no longer there — its folder removed under a dev server: never built or served again. */
+  unregister: (name: string) => void;
   invalidate: (name?: string, version?: string) => Promise<void>;
 };
 

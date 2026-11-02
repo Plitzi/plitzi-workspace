@@ -74,7 +74,9 @@ export const looksInPage = ({
   properties: readonly string[];
   ancestors?: number;
 }): Looks => {
-  const root = document.querySelector(selector);
+  // `… >> nth=N` is Playwright's way to name a copy after the first: read as the Nth match, never handed to CSS.
+  const [css, nth = '0'] = selector.split(' >> nth=');
+  const root = Array.from(document.querySelectorAll(css)).at(Number(nth));
   if (!root) {
     return {};
   }

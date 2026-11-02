@@ -17,6 +17,7 @@
  * ```
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -290,14 +291,69 @@ const builtPluginTypes = (folder: string): string[] =>
  * The stylesheets of the plugins under `folder` — every `.css` in a plugin's folder, at any depth — as their text, for
  * `authorSpace`'s `stylesheets`: the tokens a plugin's own CSS reads are tokens the space uses.
  */
-const pluginStylesheets = (folder: string): string[] =>
-  existsSync(folder)
-    ? readdirSync(folder, { recursive: true, withFileTypes: true })
-        .filter(entry => entry.isFile() && entry.name.endsWith('.css'))
-        .map(entry => path.join(entry.parentPath, entry.name))
-        .sort()
-        .map(file => readFileSync(file, 'utf-8'))
-    : [];
+export const pluginStylesheets = (folder: string): string[] => {
+  if (!existsSync(folder)) {
+    return [];
+  }
+
+  const files = readdirSync(folder, { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile())
+    .map(entry => path.join(entry.parentPath, entry.name))
+    .sort();
+  const own = files.filter(file => file.endsWith('.css'));
+  // And the stylesheets its code imports from elsewhere — a package's (`import '@vizzele/css'`), a shared one: what the
+  // page loads with the plugin. A run's 26 tokens a package stylesheet read were "unused", and its finish refused.
+  const imported = files
+    .filter(file => /\.[cm]?[jt]sx?$/.test(file) && !/\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file))
+    .flatMap(file => importedStylesheets(file))
+    .filter(file => !own.includes(file));
+
+  return [...new Set([...own, ...imported])].map(file => readFileSync(file, 'utf-8'));
+};
+
+/** A side-effect import's specifier: `import '@vizzele/css'`, `import '../styles/bridge.css'`. */
+const SIDE_EFFECT_IMPORT = /^\s*import\s+['"]([^'"]+)['"]\s*;?/gm;
+
+/**
+ * The stylesheets `file` imports for their effect, resolved as Node resolves them from it: a `.css` it names, or a
+ * package's — its `style` field, when what it exports is no stylesheet. One that does not resolve is not read.
+ */
+const importedStylesheets = (file: string): string[] => {
+  const from = createRequire(file);
+  const text = readFileSync(file, 'utf-8');
+
+  return [...text.matchAll(SIDE_EFFECT_IMPORT)].flatMap(([, specifier = '']) => {
+    const resolved = (() => {
+      try {
+        return from.resolve(specifier);
+      } catch {
+        return undefined;
+      }
+    })();
+    if (resolved?.endsWith('.css')) {
+      return [resolved];
+    }
+
+    if (specifier.startsWith('.') || specifier.startsWith('/')) {
+      return [];
+    }
+
+    // A package named whole: its stylesheet as its own `package.json` says it.
+    const name = specifier.startsWith('@')
+      ? specifier.split('/').slice(0, 2).join('/')
+      : (specifier.split('/')[0] ?? '');
+    try {
+      const manifest = from.resolve(`${name}/package.json`);
+      const declared: unknown = JSON.parse(readFileSync(manifest, 'utf-8'));
+      const style = isRecord(declared) && typeof declared.style === 'string' ? declared.style : undefined;
+      const sheet = style === undefined ? undefined : path.join(path.dirname(manifest), style);
+
+      return sheet !== undefined && existsSync(sheet) ? [sheet] : [];
+    } catch {
+      return [];
+    }
+  });
+};
 
 /** What a project `@plitzi/cli` writes checks its space against: the part of `authorSpace`'s options its files say. */
 export type ProjectAuthoring = {

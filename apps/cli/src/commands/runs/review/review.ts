@@ -80,6 +80,8 @@ const viewTaskOf = async (
   named: string[];
   acceptanceAs?: string;
   byStatus: { page: string; status: number }[];
+  /** The other tasks' files: what is written there is theirs, inside this one's elements too. */
+  others: string[];
 }> => {
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = findTask(loaded, taskId);
@@ -95,6 +97,7 @@ const viewTaskOf = async (
     acceptanceAt: acceptancePages(task.acceptance),
     named: acceptanceAddresses(task.acceptance),
     byStatus: acceptanceStatuses(task.acceptance),
+    others: loaded.tasks.filter(each => each.id !== taskId).flatMap(each => each.files),
     ...(acceptanceAccount(task.acceptance) === undefined ? {} : { acceptanceAs: acceptanceAccount(task.acceptance) })
   };
 };
@@ -152,7 +155,8 @@ export const lookAt = (
           acceptanceAt: checked,
           named: addressed,
           acceptanceAs,
-          byStatus
+          byStatus,
+          others
         } = await viewTaskOf(ctx, runId, taskId);
         // A page its acceptance checks with a status of its own is looked at with it, apart — said below the look.
         const ownStatus = options.status === undefined ? byStatus : [];
@@ -168,7 +172,7 @@ export const lookAt = (
           page => !lookedAmong(page, [...paths, ...earlier])
         );
         // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
-        const parts = await taskParts(preview.dir, changed);
+        const parts = await taskParts(preview.dir, changed, others);
         const { clips, many } = lookClips(parts, options.within);
         // A part drawn more than once — a component's instances — pictured where the most of the task's elements show:
         // A run's look pictured a playing room card for a task that changed the idle one.

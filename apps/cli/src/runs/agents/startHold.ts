@@ -1,6 +1,5 @@
-import fs from 'node:fs/promises';
-
 import { readLaunch } from './launch';
+import { lastLineOf, sessionOf } from './sessionEnd';
 
 import type { Harness } from './agentPrompt';
 import type { Launch } from './launch';
@@ -30,15 +29,6 @@ const LIMIT_UNREAD_MS = 15 * 60_000;
 const ROUNDED_MS = 60 * 60_000;
 const JUST_RESET_MS = 5 * 60_000;
 
-/** What of a session's output is read: its end, where a harness says why it ended. */
-const TAIL_BYTES = 8192;
-
-const lastLineOf = (text: string): string | undefined =>
-  text
-    .split('\n')
-    .map(line => line.trim())
-    .findLast(line => line !== '');
-
 /** What holds a start: the harness's limit, the agent ending as it starts, or someone stopping it. */
 export type HoldWhy = 'limit' | 'quick-ends' | 'stopped';
 
@@ -60,25 +50,6 @@ export interface StartHold {
   /** Since when: the stop, or the session that ended on the limit. */
   since?: string;
 }
-
-/** What a launch's session wrote, and when it last wrote: when its process ended, since nothing writes after. */
-const sessionOf = async (launch: Launch): Promise<{ text: string; endedAt: number } | undefined> => {
-  const stat = await fs.stat(launch.log).catch(() => undefined);
-  if (!stat) {
-    return undefined;
-  }
-
-  const from = Math.max(launch.logFrom ?? 0, stat.size - TAIL_BYTES);
-  const file = await fs.open(launch.log, 'r');
-  try {
-    const buffer = Buffer.alloc(Math.max(0, stat.size - from));
-    await file.read(buffer, 0, buffer.length, from);
-
-    return { text: buffer.toString('utf-8'), endedAt: stat.mtimeMs };
-  } finally {
-    await file.close();
-  }
-};
 
 /**
  * A harness's own line saying it is past its limit — Claude Code's "You've hit your 5-hour limit · resets 8:40pm

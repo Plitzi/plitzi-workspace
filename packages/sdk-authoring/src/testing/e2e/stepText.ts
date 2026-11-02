@@ -11,7 +11,7 @@ import type { E2eStep } from '@plitzi/sdk-shared';
 export const E2E_STEP_USAGE = [
   ['click', 'click <el> [x%,y%]'],
   ['hover', 'hover <el> [x%,y%]'],
-  ['scroll', 'scroll <el> [dx] [dy]'],
+  ['scroll', 'scroll <el|page> [dx] [dy]'],
   ['type', 'type <el> <text>'],
   ['drag', 'drag <el> <dx> [dy]'],
   ['press', 'press <key>'],
@@ -201,7 +201,30 @@ export const parseE2eStep = (
     }
     case 'scroll': {
       if (!element) {
-        return { problem: 'scroll needs an element — its name or a CSS selector' };
+        return { problem: 'scroll needs an element — its name or a CSS selector — or the page: scroll page 0 600' };
+      }
+
+      // The page by so much, as a wheel does: `scroll 1500` is down, `scroll 200 600` across and down.
+      if (/^-?\d+$/.test(element)) {
+        const numbers = rest.split(/\s+/).filter(Boolean);
+        if (numbers.length <= 2 && numbers.every(each => /^-?\d+$/.test(each))) {
+          const [first, second] = numbers.map(Number);
+
+          return numbers.length === 1
+            ? { kind: 'scroll', element: 'page', dy: first }
+            : { kind: 'scroll', element: 'page', dx: first, dy: second };
+        }
+      }
+
+      // A direction said in words — `scroll genres right 400` — is that many pixels that way.
+      const toward = /^(left|right|up|down)\s+(\d+)$/i.exec(after);
+      if (toward) {
+        const amount = Number(toward[2]);
+        const way = toward[1].toLowerCase();
+
+        return way === 'left' || way === 'right'
+          ? { kind: 'scroll', element, dx: way === 'left' ? -amount : amount }
+          : { kind: 'scroll', element, dx: 0, dy: way === 'up' ? -amount : amount };
       }
 
       const amounts = after === '' ? [] : after.split(/\s+/);
@@ -226,7 +249,7 @@ export const parseE2eStep = (
       const field = flagged ? { target: flagged[1], rest: flagged[2] } : { target: element, rest: after };
       if (!field.target || field.rest === '') {
         return {
-          problem: `${name} needs an element and the text — ${name} <element> <text> or ${name} <element>=<text>, ${name} ".panel textarea" hi`
+          problem: `${name} needs an element and the text — ${name} <element> <text> or ${name} <element>=<text>, ${name} ".panel textarea" hi; the field that has the focus: ${name} :focus <text>`
         };
       }
 

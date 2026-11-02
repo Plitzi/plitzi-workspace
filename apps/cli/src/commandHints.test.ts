@@ -38,8 +38,9 @@ describe('what a refused command line meant', () => {
     expect(
       commandHint("error: unknown option '--status'", ['page', 'measure', '/no-existe', 'nf', '--status'])
     ).toContain('leave --status out');
-    expect(commandHint("error: unknown option '--motion'", ['page', 'play', '/', '--motion'])).toContain(
-      'page measure <path> <element> --motion'
+    // A picture asked of what moves: a shot pictures motion already, and says how to see it over time.
+    expect(commandHint("error: unknown option '--motion'", ['page', 'shot', '/', '--motion'])).toContain(
+      'page shot pictures motion already'
     );
   });
 
