@@ -153,6 +153,32 @@ describe('lintSpace', () => {
       expect(codes()).not.toContain('server-query-unresolved');
     });
 
+    /**
+     * A painted key is the state the page starts from, which the page server reads off the cookie: a server query may
+     * name it — as a token the browser follows, which asks again when the visitor picks another value.
+     */
+    it('server-query-unresolved, for state the space does not paint or reads inside an expression', () => {
+      const { schema, style } = story();
+      const { attributes } = schema.flat['post-data'];
+      const codes = () => lintSpace({ schema, style }).errors.map(error => error.code);
+      delete attributes.action;
+      attributes.query = 'https://api.example.com/workspaces/{{ state.workspace.id }}';
+
+      expect(codes(), 'a key the space does not paint').toContain('server-query-unresolved');
+
+      schema.settings = { ...schema.settings, keepState: true, paintedState: ['workspace'] };
+      expect(codes(), 'a painted key, as a token').not.toContain('server-query-unresolved');
+
+      attributes.query = "{{ state.workspace.id ? 'https://api.example.com/w/' ~ state.workspace.id : '' }}";
+      expect(codes(), 'a painted key inside an expression the browser does not follow').toContain(
+        'server-query-unresolved'
+      );
+
+      schema.settings = { ...schema.settings, keepState: false };
+      attributes.query = 'https://api.example.com/workspaces/{{ state.workspace.id }}';
+      expect(codes(), 'painted, but with nothing kept').toContain('server-query-unresolved');
+    });
+
     /** The page server holds a `when` it knows all of; one on what the browser alone holds it resolves regardless. */
     it('server-when-unknown, for a server provider waiting on a state', () => {
       const { schema, style } = story();

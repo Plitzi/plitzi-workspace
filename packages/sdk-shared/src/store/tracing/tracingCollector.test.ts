@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { previewValue } from './preview';
 import tracingCollector from './tracingCollector';
 import tracingStore, { MAX_COMMITS, MAX_TREE_NODES } from './tracingStore';
 
@@ -179,20 +180,76 @@ describe('the collector over instances that come and go', () => {
   });
 });
 
+describe('the phase of a render', () => {
+  /**
+   * React reports a mount inside an update scheduled during another commit as `nested-update`; with no render before it,
+   * its changed inputs are none, and it read as an update with nothing changed — a wasted render that never happened.
+   */
+  it('is a mount the first time an instance reports, whatever React calls the commit', () => {
+    const mark = tracingCollector.lastCommitId();
+    tracingCollector.linkParent('row', undefined, 'row');
+    tracingCollector.recordInputs('row', { visible: true });
+    tracingCollector.onRender('row', 'nested-update', 0.1, 0.1, 0, 1);
+    tracingCollector.recordInputs('row', { visible: true });
+    tracingCollector.onRender('row', 'nested-update', 0.1, 0.1, 0, 2);
+
+    expect(tracingCollector.commitsSince(mark).map(commit => commit.elements[0].phase)).toEqual([
+      'mount',
+      'nested-update'
+    ]);
+  });
+});
+
+describe('what changed for a render', () => {
+  const changedIn = (mark: number) =>
+    tracingCollector.commitsSince(mark).map(commit => commit.elements[0].changedProps?.map(change => change.key));
+
+  it('is what changed since the render that was committed, never since one React threw away', () => {
+    const mark = tracingCollector.lastCommitId();
+    tracingCollector.linkParent('link', undefined, 'link');
+    tracingCollector.recordInputs('link', { visible: false });
+    tracingCollector.onRender('link', 'mount', 0.1, 0.1, 0, 1);
+    // Rendered with its section shown, and discarded — an interrupted transition: no `onRender` follows.
+    tracingCollector.recordInputs('link', { visible: true });
+    tracingCollector.recordInputs('link', { visible: true });
+    tracingCollector.onRender('link', 'update', 0.1, 0.1, 0, 2);
+
+    expect(changedIn(mark)).toEqual([[], ['visible']]);
+  });
+
+  it('is nothing for a render with the inputs it had, the wasted-render signal', () => {
+    const mark = tracingCollector.lastCommitId();
+    const attributes = { label: 'Runs' };
+    tracingCollector.linkParent('item', undefined, 'item');
+    tracingCollector.recordInputs('item', { attributes });
+    tracingCollector.onRender('item', 'mount', 0.1, 0.1, 0, 1);
+    tracingCollector.recordInputs('item', { attributes });
+    tracingCollector.onRender('item', 'update', 0.1, 0.1, 0, 2);
+    // Only a descendant drew: React reports the element's Profiler, and the element itself recorded nothing.
+    tracingCollector.onRender('item', 'update', 0.1, 0.1, 0, 3);
+
+    expect(changedIn(mark)).toEqual([[], [], undefined]);
+  });
+});
+
 describe('the collector read by a test', () => {
   /** A test marks, acts, and asks: the renders its action caused, even before the frame that flushes them. */
   it('answers the commits since a mark, flushed or not', async () => {
     render('before', undefined, 'before', 1);
+    tracingCollector.recordInputs('button', { attributes: 'a' });
+    render('button', undefined, 'button', 2);
     await flush();
     const mark = tracingCollector.lastCommitId();
 
-    tracingCollector.recordProps('button', [{ key: 'attributes', prev: 'a', next: 'b' }]);
-    render('button', undefined, 'button', 2);
+    tracingCollector.recordInputs('button', { attributes: 'b' });
+    render('button', undefined, 'button', 3);
 
     const since = tracingCollector.commitsSince(mark);
     expect(since).toHaveLength(1);
     expect(since[0].elements.map(element => element.elementId)).toEqual(['button']);
-    expect(since[0].elements[0].changedProps).toEqual([{ key: 'attributes', prev: 'a', next: 'b' }]);
+    expect(since[0].elements[0].changedProps).toEqual([
+      { key: 'attributes', prev: previewValue('a'), next: previewValue('b'), ref: false }
+    ]);
 
     await flush();
 

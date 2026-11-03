@@ -6,7 +6,7 @@ import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { emptyObject, evaluateRuleGroup, ruleValuesOf } from '@plitzi/sdk-shared/helpers';
+import { emptyObject, evaluateRuleGroup, replaceEqualDeep, ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
 import { browserServerInput, isEmptyAnswer, rscFailureOf, whenOf, whenPaths } from '@plitzi/sdk-shared/schema';
@@ -276,7 +276,7 @@ const ApiContainer = ({
   const queryShaped = serverMode && !connector && !action;
 
   // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
-  const data = useMemo<Record<string, unknown>>(() => {
+  const answer = useMemo<Record<string, unknown>>(() => {
     if (!serverMode) {
       return apiData ?? emptyObject;
     }
@@ -291,6 +291,18 @@ const ApiContainer = ({
 
     return serverMock(mockData, queryShaped);
   }, [serverMode, apiData, elementData, rscResolved, mockData, queryShaped]);
+  /**
+   * The answer, with what is equal to the last one kept as it was (`replaceEqualDeep`): every answer is a new object,
+   * the same data or not — a refresh, the page's payload published again — and whatever is drawn from it drew again for
+   * each, a list's every row with it. A part that did not change is the same object, so only what did draws again.
+   */
+  const lastAnswer = useRef(answer);
+  const data = useMemo(() => {
+    const kept = replaceEqualDeep(lastAnswer.current, answer);
+    lastAnswer.current = kept;
+
+    return kept;
+  }, [answer]);
 
   /**
    * A server provider is never "loading" in the client sense — it does not fetch — but between a route change and

@@ -73,6 +73,62 @@ const renderList = (items: Item[]) =>
     </StoreProvider>
   );
 
+/**
+ * A source publishes a new array of new objects each time, the same rows or not. The template is handed once, as the
+ * list's children: a row whose record did not change must not draw it again.
+ */
+describe('ListControlled — rows that did not change', () => {
+  const drawn: string[] = [];
+  const CountedRow = () => {
+    const dataSource = useElementDataSource({ sources: ['list_my-list'] });
+    const row = (dataSource['list_my-list'] as { item?: Item } | undefined)?.item;
+    drawn.push(row?.id ?? '?');
+
+    return <div data-testid={`row-${row?.id ?? '?'}`}>{row?.name}</div>;
+  };
+  const template = <CountedRow />;
+  const tree = (items: Item[]) => (
+    <StoreProvider value={{}}>
+      <ListControlled className="" items={items} itemKey="id">
+        {template}
+      </ListControlled>
+    </StoreProvider>
+  );
+
+  it('draws only the row whose record changed when the same rows arrive as new objects', () => {
+    drawn.length = 0;
+    const view = render(
+      tree([
+        { id: 'a', name: 'Alpha' },
+        { id: 'b', name: 'Beta' }
+      ])
+    );
+    expect([...new Set(drawn)].toSorted()).toEqual(['a', 'b']);
+
+    drawn.length = 0;
+    view.rerender(
+      tree([
+        { id: 'a', name: 'Alpha' },
+        { id: 'b', name: 'Beta' }
+      ])
+    );
+    expect(drawn, 'an answer equal to the last one draws no row').toEqual([]);
+
+    // A row that did change is drawn with its new record. (The others are drawn too, for now: a row reads its source
+    // merged over the list's own `items`, which a change of any row changes.)
+    view.rerender(
+      tree([
+        { id: 'a', name: 'Alpha' },
+        { id: 'b', name: 'Bee' }
+      ])
+    );
+    expect(drawn).toContain('b');
+    expect(view.getByTestId('row-b').textContent).toBe('Bee');
+    expect(view.getByTestId('row-a').textContent).toBe('Alpha');
+    view.unmount();
+  });
+});
+
 describe('ListControlled', () => {
   it('renders the template once per record, each with its own context data', () => {
     const { getByTestId } = renderList([

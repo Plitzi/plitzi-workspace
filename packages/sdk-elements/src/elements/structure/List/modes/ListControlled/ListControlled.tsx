@@ -1,10 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
+import { getPathsFromObject, replaceEqualDeep } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import ListControlledItem from './ListControlledItem';
@@ -30,6 +30,9 @@ export type ListControlledProps<T = unknown> = {
   label?: string;
 };
 
+/** One empty list for every list with no rows, so an empty one stays the same array. */
+const NO_ITEMS: unknown[] = [];
+
 const ListControlled = ({
   ref,
   className = '',
@@ -47,12 +50,17 @@ const ListControlled = ({
   const {
     settings: { previewMode }
   } = usePlitzi();
+  /**
+   * The rows, each the same object as last time while it is equal to it (`replaceEqualDeep`): bound to any source, a
+   * list is handed a new array of new objects whenever that source publishes, the same data or not, and every row —
+   * everything drawn in it — drew again for each. A row that did not change keeps its record, and draws nothing.
+   */
+  const lastItems = useRef<unknown[]>(NO_ITEMS);
   const finalItems = useMemo(() => {
-    if (Array.isArray(items)) {
-      return items;
-    }
+    const kept = replaceEqualDeep(lastItems.current, Array.isArray(items) ? items : NO_ITEMS);
+    lastItems.current = kept;
 
-    return [];
+    return kept;
   }, [items]);
 
   const keys = useMemo(() => rowKeys(finalItems, itemKey), [finalItems, itemKey]);

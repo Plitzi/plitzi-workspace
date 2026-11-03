@@ -4,7 +4,7 @@ import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 import { useEventBridge } from '@plitzi/sdk-event-bridge';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
+import { tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
 import ElementParentContext from '../ElementParentContext';
@@ -42,13 +42,11 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     props: WithElementProps<T>,
     {
       ref,
-      prevInputsRef,
       traceId,
       parentElement,
       parentVisible
     }: {
       ref: RefObject<HTMLElement | undefined>;
-      prevInputsRef: RefObject<Record<string, unknown> | undefined>;
       traceId: string;
       parentElement: ElementParentContextValue | undefined;
       parentVisible: boolean;
@@ -138,9 +136,12 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       // itself vs only a descendant did is derived later from self time, not flagged here.
       tracingCollector.linkParent(traceId, parentElement?.traceId, id);
 
-      // Snapshot the inputs that feed this element (its resolved data + the props handed to the wrapped component) and
-      // diff against the previous render, so the panel can attribute "which prop changed" to each re-render.
+      // Snapshot the inputs that feed this element (its resolved data + the props handed to the wrapped component); the
+      // collector diffs them against the last COMMITTED render's, so the panel can attribute "which prop changed".
+      // `visible` is the parent's too: a section shown once its data arrives draws every element in it again, and that
+      // is a change to each of them, not a render for nothing.
       const inputs: Record<string, unknown> = {
+        visible,
         attributes,
         definition,
         style,
@@ -151,8 +152,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         ...props.extraProps,
         ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
       };
-      tracingCollector.recordProps(traceId, diffProps(prevInputsRef.current, inputs));
-      prevInputsRef.current = inputs;
+      tracingCollector.recordInputs(traceId, inputs);
 
       return (
         <Profiler id={traceId} onRender={tracingCollector.onRender}>
@@ -166,9 +166,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
   const WithElementComponent = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
-    // Previous render's input snapshot, diffed under `debugMode` so the tracing panel can show which prop/data changed.
-    // Declared unconditionally (hooks rules) even though only the debug branch reads it.
-    const prevInputsRef = useRef<Record<string, unknown> | undefined>(undefined);
     const { id, rootId } = props.internalProps;
     // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
     // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
@@ -215,7 +212,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     // `plitziJsxSkipHOC` is invariant for a mounted element, so this call is made on every render of it or on none: the
     // hook order never changes. A component of its own would add a level to the React tree for every element.
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useResolvedElement(props, { ref, prevInputsRef, traceId, parentElement, parentVisible });
+    return useResolvedElement(props, { ref, traceId, parentElement, parentVisible });
   };
 
   WithElementComponent.displayName = `withElement(${name})`;

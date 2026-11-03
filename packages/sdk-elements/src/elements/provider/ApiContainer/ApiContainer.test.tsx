@@ -8,6 +8,7 @@ import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 
 import { ApiContainer } from './ApiContainer';
 import ElementContext from '../../../Element/ElementContext';
+import useElementDataSource from '../../../Element/hooks/useElementDataSource';
 import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { CommonState } from '@plitzi/sdk-shared';
@@ -157,6 +158,37 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect((fetchMock.mock.calls[0] as [string])[0]).toContain('ids=orders');
+    view.unmount();
+  });
+
+  // A refresh answers a new object whether the data changed or not: what is drawn from the parts that did not change
+  // must be handed the same objects, or every row of a list under the provider draws again for nothing.
+  it('keeps what did not change of an answer as the same objects across a refresh', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ serverData: { orders: { records: [1] } } })
+    });
+    const seen: unknown[] = [];
+    const Reader = () => {
+      const dataSource = useElementDataSource({ sources: ['apiContainer_orders'] });
+      seen.push((dataSource.apiContainer_orders as { records?: unknown } | undefined)?.records);
+
+      return null;
+    };
+    const { view } = renderProvider(true, 0, <Reader />);
+    const before = seen.at(-1);
+
+    await act(() => invalidateAfterWrite({ mode: 'elements', fallback: 'all', elements: 'orders' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(before).toEqual([1]);
+    expect(
+      seen.every(records => records === before),
+      'every read of the records was the same array'
+    ).toBe(true);
     view.unmount();
   });
 

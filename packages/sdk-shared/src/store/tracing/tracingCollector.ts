@@ -1,6 +1,6 @@
 import { createRecorder } from '@plitzi/nexus';
 
-import { previewValue } from './preview';
+import { diffProps, previewValue } from './preview';
 import tracingStore, { MAX_CAUSES, MAX_COMMITS, MAX_TREE_NODES } from './tracingStore';
 
 import type { CommitCause, CommitElementRender, CommitEntry, PropChange, TracingTree } from '../../types';
@@ -47,11 +47,17 @@ const unmountedAt = new Map<string, number>();
 // render" at the data level.
 let claimedSeq = 0;
 
-// Per-element changed-input diffs reported by `withElement` during the render phase, keyed by element id. Each commit's
-// `onRender` (which fires afterwards, in the commit phase) claims its element's entry, so the viewer can answer "which
-// prop changed" per element. Set every render in `debugMode`; an empty array means the element re-rendered with none of
-// its tracked inputs changed (i.e. driven by an ancestor/context) — the unnecessary-re-render signal.
-const pendingPropsById = new Map<string, PropChange[]>();
+// The inputs `withElement` rendered with (under `debugMode`), per instance: stashed during the render phase, and claimed
+// by that instance's `onRender` in the commit phase, which diffs them against the inputs of the last render that was
+// COMMITTED — so the viewer can answer "which prop changed". An empty diff means the element re-rendered with none of
+// its tracked inputs changed (driven by an ancestor or a context): the unnecessary-re-render signal.
+//
+// The previous inputs are taken at commit, never at render: React renders and throws away under concurrency (a
+// transition interrupted, a hydration retried), and a render kept as "the previous one" that never reached the page
+// made the next real change read as nothing — a section shown once its data arrived drew each of its elements again
+// with `visible` changed, and the panel called them wasted.
+const pendingInputsById = new Map<string, Record<string, unknown>>();
+const committedInputsById = new Map<string, Record<string, unknown>>();
 
 let enabled = false;
 let viewing = false;
@@ -112,6 +118,7 @@ const setHydrated = () => {
 };
 
 const forget = (id: string) => {
+  committedInputsById.delete(id);
   parentOf.delete(id);
   elementOf.delete(id);
   baseOf.delete(id);
@@ -204,13 +211,25 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
   const isNew = !baseOf.has(id);
   baseOf.set(id, baseDuration);
 
-  const changedProps = pendingPropsById.get(id);
-  pendingPropsById.delete(id);
+  const inputs = pendingInputsById.get(id);
+  pendingInputsById.delete(id);
+  let changedProps: PropChange[] | undefined;
+  if (inputs) {
+    changedProps = diffProps(committedInputsById.get(id), inputs);
+    committedInputsById.set(id, inputs);
+  }
+
   const render: CommitElementRender = {
     id,
     elementId: elementOf.get(id) ?? id,
     parentId: parentOf.get(id),
-    phase,
+    /**
+     * An instance's first report is its mount, whatever React calls the commit: one that mounts in an update scheduled
+     * while another commit ran (a list's rows, drawn once its data arrived) is reported `nested-update`, and with no
+     * previous render to diff against its changed inputs are none — so every such row read as a render with nothing
+     * changed, the "wasted" signal, in the panel and in the suite that holds a page to its budget.
+     */
+    phase: isNew ? 'mount' : phase,
     actualDuration,
     baseDuration,
     changedProps
@@ -277,10 +296,11 @@ const markUnmounted = (id: string) => {
   }
 };
 
-// Called by `withElement` during render (under `debugMode`) with the element's changed inputs vs its previous render.
-// Stashed until this element's `onRender` fires in the commit phase and claims it.
-const recordProps = (id: string, changes: PropChange[]) => {
-  pendingPropsById.set(id, changes);
+// Called by `withElement` during render (under `debugMode`) with the inputs it renders with. Stashed until this
+// element's `onRender` fires in the commit phase and claims it; a render that is never committed is overwritten by the
+// next one, and counts for nothing.
+const recordInputs = (id: string, inputs: Record<string, unknown>) => {
+  pendingInputsById.set(id, inputs);
 };
 
 // Called by `tracingMiddleware` with each committed store write; buffered in the recorder the next commit drains.
@@ -305,7 +325,7 @@ const clear = () => {
   pendingByCommit.clear();
   // Skip past everything recorded so far, so the next commit's causes start fresh from the cleared point.
   claimedSeq = recorder.lastSeq();
-  pendingPropsById.clear();
+  pendingInputsById.clear();
   commitSeq = 0;
   // The live part of the tree is kept, so the next commit still nests correctly; what already left goes with the
   // commits that drew it. The numbering starts over, so every instance still here counts as present from the start.
@@ -356,7 +376,7 @@ const tracingCollector = {
   linkParent,
   markMounted,
   markUnmounted,
-  recordProps,
+  recordInputs,
   recordStoreChange,
   setHydrated,
   start,
