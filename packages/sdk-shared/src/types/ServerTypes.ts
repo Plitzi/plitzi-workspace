@@ -154,6 +154,11 @@ export type SSRTemplateProps = {
    * page preloads it, and the bootstrap reads it before hydrating.
    */
   spaceDocumentPath?: string;
+  /**
+   * The space's compiled stylesheet, when the page links it rather than carrying it (`style.cacheHref`): a template
+   * puts it in the head, where it is applied from the page's first frame.
+   */
+  styleSheetPath?: string;
   builderJsPath?: string;
   builderCssPath?: string;
   plugins?: PluginEntry[];

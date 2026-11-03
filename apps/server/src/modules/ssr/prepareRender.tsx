@@ -350,19 +350,28 @@ export const prepareRender = async (
    * Not for a draft, which no other process could produce when the fetch reaches it, and not for a deployment's own
    * template, which was written for the space inline; a page with no script needs no space at all.
    */
-  const publishedDocument =
-    offlineData !== undefined &&
-    offlineDataOverride === undefined &&
-    config.templateFn === undefined &&
-    config.ssrOnly !== true
-      ? publishSpaceDocument(spaceId, environment, spaceDocument(offlineData), withholding?.kept ?? [])
-      : undefined;
   /**
    * A page that named its space with a token in its address (`?access-token=`, how a host serving many spaces is asked
    * for one) has its document asked for the same way: fetched bare, the host's own space answered it — another space's
    * document, hydrated over this one's page.
    */
   const spaceToken = req.query[SPACE_TOKEN_PARAM];
+  /**
+   * The compiled stylesheet as a file the page's head links, rather than in the page (`styleSheetOf`) — except where no
+   * other request could answer for that file: a draft's unsaved styles, and a space named by a token, whose file would
+   * be asked for by the host and answered with the host's own space; and under a deployment's own template, which does
+   * not know to link it.
+   */
+  const linkStyle = offlineDataOverride === undefined && !spaceToken && config.templateFn === undefined;
+  // Rendered from the document the page is sent, so the server draws the `<link>` the browser hydrates.
+  const document = offlineData !== undefined ? spaceDocument(offlineData, { linkStyle }) : undefined;
+  const publishedDocument =
+    document !== undefined &&
+    offlineDataOverride === undefined &&
+    config.templateFn === undefined &&
+    config.ssrOnly !== true
+      ? publishSpaceDocument(spaceId, environment, document, withholding?.kept ?? [])
+      : undefined;
   const spaceDocumentPath =
     publishedDocument && spaceToken
       ? `${publishedDocument}?${SPACE_TOKEN_PARAM}=${encodeURIComponent(spaceToken)}`
@@ -389,7 +398,7 @@ export const prepareRender = async (
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {})
     },
-    { apart: spaceDocumentPath !== undefined }
+    { apart: spaceDocumentPath !== undefined, linkStyle }
   );
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
@@ -483,7 +492,7 @@ export const prepareRender = async (
   return {
     componentProps: {
       plugins: Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined,
-      offlineData,
+      offlineData: document?.data,
       server,
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode: debugRendered,
@@ -504,6 +513,7 @@ export const prepareRender = async (
       cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
       iconsCssPath: sdkIconsStylePath,
       spaceDocumentPath,
+      styleSheetPath: document?.data.style.cacheHref,
       react: vendorJs,
       reactJsx: vendorJs,
       reactDom: vendorJs,

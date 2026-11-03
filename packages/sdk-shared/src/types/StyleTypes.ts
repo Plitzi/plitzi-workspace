@@ -173,7 +173,13 @@ export type Style = {
    *  because nothing else in the system loads a face. Optional because a document written before the manifest
    *  existed has none, and that is a real state every reader has to survive rather than a bug. */
   fonts?: SpaceFont[];
+  /** The compiled stylesheet. Empty on a server-rendered page that links it as `cacheHref` instead. */
   cache: string;
+  /**
+   * Where a server-rendered page's stylesheet is served (`/_plitzi/style/<hash>.css`), when it links the compiled
+   * stylesheet rather than carrying it: `cache` is then empty, and the page draws a `<link>` to this.
+   */
+  cacheHref?: string;
 };
 
 export type StyleContextValue = {

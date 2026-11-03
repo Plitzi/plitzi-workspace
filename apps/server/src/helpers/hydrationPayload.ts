@@ -1,15 +1,48 @@
 import { createHash } from 'node:crypto';
 
-import { styleCacheTravelsInDocument } from '@plitzi/sdk-shared/style';
+import { styleSheetCss, styleSheetHref, styleSheetLinkable } from '@plitzi/sdk-shared/style';
 
 import { escapeJson } from './escapeJson';
 
-import type { OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { CompressedBodies, OfflineDataRaw, Style } from '@plitzi/sdk-shared';
 
-/** The space as a page reads it, and the name of exactly that text. */
-export type SpaceDocument = { json: string; hash: string };
+/** The space as a page reads it, the name of exactly that text, and the space it was written from. */
+export type SpaceDocument = { json: string; hash: string; data: OfflineDataRaw };
 
-const documents = new WeakMap<OfflineDataRaw, SpaceDocument>();
+/** A space's compiled stylesheet as a file of its own: its text, its name, and the compressed forms sent of it. */
+export type StyleSheet = { css: string; hash: string; href: string; compressed: CompressedBodies };
+
+const digest = (text: string): string => createHash('sha256').update(text).digest('base64url').slice(0, 22);
+
+const sheets = new WeakMap<Style, StyleSheet | null>();
+
+/**
+ * The space's stylesheet as a file — made once per style object, which the adapters hand every render until the
+ * space changes, and which a page's withheld copy of the space shares — or `undefined` when it stays in the page
+ * (`styleSheetLinkable`).
+ */
+export const styleSheetOf = (offlineData: OfflineDataRaw): StyleSheet | undefined => {
+  const known = sheets.get(offlineData.style);
+  if (known !== undefined) {
+    return known ?? undefined;
+  }
+
+  if (!styleSheetLinkable(offlineData.style.cache)) {
+    sheets.set(offlineData.style, null);
+
+    return undefined;
+  }
+
+  const css = styleSheetCss(offlineData.style.cache);
+  const hash = digest(css);
+  const sheet = { css, hash, href: styleSheetHref(hash), compressed: {} };
+  sheets.set(offlineData.style, sheet);
+
+  return sheet;
+};
+
+const linked = new WeakMap<OfflineDataRaw, SpaceDocument>();
+const carried = new WeakMap<OfflineDataRaw, SpaceDocument>();
 
 /**
  * The space as the page reads it — escaped JSON, safe inside a `<script>` — made once per space object rather than
@@ -19,23 +52,25 @@ const documents = new WeakMap<OfflineDataRaw, SpaceDocument>();
  * it into JSON on each render was a tenth of a render's CPU spent producing the same string. Keyed weakly: a space the
  * adapters let go of takes its string with it.
  *
- * The compiled stylesheet is left out when the page's own runtime stylesheet carries it in a form the browser reads
- * back exactly (`styleCacheTravelsInDocument`): it is the largest part of the style document, and the page would
- * otherwise ship it twice. A fact of the space alone, so the document is the same wherever it is asked for.
+ * `linkStyle`, the compiled stylesheet is a file the page links (`styleSheetOf`): the document names it as
+ * `style.cacheHref` and carries none of it. Without, the page carries it — a page no other request could answer the
+ * file for: a draft, a space named by a token.
  *
  * The hash names the text, so a page can be told where to fetch it and the answer can be kept forever.
  */
-export const spaceDocument = (offlineData: OfflineDataRaw): SpaceDocument => {
+export const spaceDocument = (offlineData: OfflineDataRaw, { linkStyle = true }: { linkStyle?: boolean } = {}) => {
+  const documents = linkStyle ? linked : carried;
   const known = documents.get(offlineData);
   if (known) {
     return known;
   }
 
-  const space = styleCacheTravelsInDocument(offlineData.style.cache)
-    ? { ...offlineData, style: { ...offlineData.style, cache: '' } }
+  const sheet = linkStyle ? styleSheetOf(offlineData) : undefined;
+  const data = sheet
+    ? { ...offlineData, style: { ...offlineData.style, cache: '', cacheHref: sheet.href } }
     : offlineData;
-  const json = escapeJson(JSON.stringify(space));
-  const document = { json, hash: createHash('sha256').update(json).digest('base64url').slice(0, 22) };
+  const json = escapeJson(JSON.stringify(data));
+  const document: SpaceDocument = { json, hash: digest(json), data };
   documents.set(offlineData, document);
 
   return document;
@@ -47,20 +82,19 @@ export const spaceDocument = (offlineData: OfflineDataRaw): SpaceDocument => {
  * the same as escaping the whole.
  *
  * `apart`, the space is not in it: the page fetches it (`spaceDocumentPath`), and only what is this request's travels
- * inline. `styleCacheInDocument` tells the bootstrap the stylesheet is in the page either way.
+ * inline.
  */
 export const hydrationPayload = (
   offlineData: OfflineDataRaw | undefined,
   rest: Record<string, unknown>,
-  { apart = false }: { apart?: boolean } = {}
+  { apart = false, linkStyle = true }: { apart?: boolean; linkStyle?: boolean } = {}
 ): string => {
-  const inDocument = offlineData !== undefined && styleCacheTravelsInDocument(offlineData.style.cache);
-  const serializedRest = escapeJson(JSON.stringify(inDocument ? { ...rest, styleCacheInDocument: true } : rest));
+  const serializedRest = escapeJson(JSON.stringify(rest));
   if (offlineData === undefined || apart) {
     return serializedRest;
   }
 
   const separator = serializedRest === '{}' ? '' : ',';
 
-  return `{"offlineData":${spaceDocument(offlineData).json}${separator}${serializedRest.slice(1)}`;
+  return `{"offlineData":${spaceDocument(offlineData, { linkStyle }).json}${separator}${serializedRest.slice(1)}`;
 };

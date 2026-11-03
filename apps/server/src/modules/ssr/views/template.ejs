@@ -112,6 +112,11 @@
     <% if (locals.iconsCssPath) { %>
     <link href="<%= locals.iconsCssPath %>" rel="stylesheet" />
     <% } %>
+    <%# The space's compiled stylesheet, when the page links it rather than carrying it (STYLE_SHEET_ID): in the head,
+        so the page is painted with it from its first frame. %>
+    <% if (locals.styleSheetPath) { %>
+    <link id="plitzi-style" href="<%= locals.styleSheetPath %>" rel="stylesheet" />
+    <% } %>
     <% if (locals.builderCssPath) { %>
     <link href="<%= locals.builderCssPath %>" rel="preload" as="style" />
     <link href="<%= locals.builderCssPath %>" rel="stylesheet" />

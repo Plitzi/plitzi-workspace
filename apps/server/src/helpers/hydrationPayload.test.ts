@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { escapeJson } from './escapeJson';
-import { hydrationPayload } from './hydrationPayload';
+import { hydrationPayload, spaceDocument, styleSheetOf } from './hydrationPayload';
 
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
@@ -16,24 +16,24 @@ const serializedWhole = (offlineData: OfflineDataRaw | undefined, rest: Record<s
   escapeJson(JSON.stringify({ offlineData, ...rest }));
 
 describe('hydrationPayload', () => {
+  // Carrying its stylesheet, the space is serialized as it is: what these are about is the escaping.
+  const carried = { linkStyle: false };
+
   it('is byte for byte what serializing the whole payload gives', () => {
     const rest = { offlineMode: true, environment: 'main', server: { note: `</script>${LINE_SEPARATOR}` } };
 
-    expect(hydrationPayload(space('<b>home</b>'), rest)).toBe(serializedWhole(space('<b>home</b>'), rest));
+    expect(hydrationPayload(space('<b>home</b>'), rest, carried)).toBe(serializedWhole(space('<b>home</b>'), rest));
   });
 
   it('matches with nothing beside the space, and with no space at all', () => {
-    expect(hydrationPayload(space('a'), {})).toBe(serializedWhole(space('a'), {}));
+    expect(hydrationPayload(space('a'), {}, carried)).toBe(serializedWhole(space('a'), {}));
     expect(hydrationPayload(undefined, { offlineMode: true })).toBe(serializedWhole(undefined, { offlineMode: true }));
   });
 
-  it('leaves the space out when it travels apart, and says the stylesheet is still in the page', () => {
+  it('leaves the space out when it travels apart', () => {
     const styled = { schema: {}, style: { cache: '.a{color:red}' } } as unknown as OfflineDataRaw;
 
-    expect(JSON.parse(hydrationPayload(styled, { offlineMode: true }, { apart: true }))).toEqual({
-      offlineMode: true,
-      styleCacheInDocument: true
-    });
+    expect(JSON.parse(hydrationPayload(styled, { offlineMode: true }, { apart: true }))).toEqual({ offlineMode: true });
   });
 
   it('serializes a space once, and a new space object anew', () => {
@@ -45,32 +45,50 @@ describe('hydrationPayload', () => {
     expect(hydrationPayload(replaced, {})).toContain('second');
   });
 
-  describe('the stylesheet the page already carries', () => {
+  describe('the stylesheet the page links', () => {
     const styled = (cache: string) =>
       ({ schema: { settings: {} }, style: { cache, variables: {} } }) as unknown as OfflineDataRaw;
     const parsed = (payload: string) =>
-      JSON.parse(payload) as { offlineData: { style: { cache: string } }; styleCacheInDocument?: boolean };
+      JSON.parse(payload) as { offlineData: { style: { cache: string; cacheHref?: string } } };
 
-    it('is left out, and the bootstrap told to read it from the page', () => {
-      const payload = parsed(hydrationPayload(styled('.a{color:red}'), { offlineMode: true }));
+    // The dashboard's was 429 KB of a 496 KB page, compressed again on every response and parsed again on every load.
+    it('is named instead of carried', () => {
+      const space = styled('.a{color:red}');
+      const { style } = parsed(hydrationPayload(space, { offlineMode: true })).offlineData;
 
-      expect(payload.offlineData.style.cache).toBe('');
-      expect(payload.styleCacheInDocument).toBe(true);
+      expect(style.cache).toBe('');
+      expect(style.cacheHref).toBe(styleSheetOf(space)?.href);
+      expect(styleSheetOf(space)?.css).toContain('.a{color:red}');
     });
 
-    it('is sent when the page would not give it back as it is', () => {
-      for (const cache of ['.a{color:{{ brand }}}', '.a{content:"<"}', '.a{}\r\n', '']) {
-        const payload = parsed(hydrationPayload(styled(cache), {}));
+    it('is carried when a token in it is replaced per request, or there is none', () => {
+      for (const cache of ['.a{color:{{ brand }}}', '']) {
+        const { style } = parsed(hydrationPayload(styled(cache), {})).offlineData;
 
-        expect(payload.offlineData.style.cache).toBe(cache);
-        expect(payload.styleCacheInDocument).toBeUndefined();
+        expect(style.cache).toBe(cache);
+        expect(style.cacheHref).toBeUndefined();
       }
     });
 
-    it('is serialized once per space, like the whole one', () => {
+    it('is carried by a page no other request could answer its file for', () => {
+      const { style } = parsed(hydrationPayload(styled('.a{color:red}'), {}, { linkStyle: false })).offlineData;
+
+      expect(style.cache).toBe('.a{color:red}');
+    });
+
+    it('is named by its text: the same sheet for a copy of the space, another for another stylesheet', () => {
+      const space = styled('.a{color:red}');
+      const withheld = { ...space, schema: { settings: {} } } as unknown as OfflineDataRaw;
+
+      expect(styleSheetOf(withheld)).toBe(styleSheetOf(space));
+      expect(styleSheetOf(styled('.a{color:blue}'))?.hash).not.toBe(styleSheetOf(space)?.hash);
+    });
+
+    it('is serialized once per space, in each form', () => {
       const space = styled('.a{color:red}');
 
-      expect(hydrationPayload(space, {})).toBe(hydrationPayload(space, {}));
+      expect(spaceDocument(space)).toBe(spaceDocument(space));
+      expect(spaceDocument(space, { linkStyle: false })).not.toBe(spaceDocument(space));
     });
   });
 });

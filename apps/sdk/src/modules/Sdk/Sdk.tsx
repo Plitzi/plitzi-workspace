@@ -1,5 +1,5 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
-import { use, useMemo, useRef, useCallback } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useResolvedVariables } from '@plitzi/sdk-elements/dataSource';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
@@ -9,9 +9,9 @@ import {
   fontLinkAssets,
   fontsToHead,
   fontUrlResolver,
-  markStyleCache,
   PLUGIN_CSS_LAYER,
-  RUNTIME_CSS_LAYER
+  RUNTIME_CSS_LAYER,
+  STYLE_SHEET_ID
 } from '@plitzi/sdk-shared/style';
 import { useTheme } from '@plitzi/sdk-shared/theme';
 import { processCssTokens } from '@plitzi/sdk-style/helpers';
@@ -40,9 +40,10 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, currentPageId, fonts = NO_FONTS]] = useSdkStore([
+  const [[schemaSettings, styleCache, styleCacheHref, currentPageId, fonts = NO_FONTS]] = useSdkStore([
     'schema.settings',
     'style.cache',
+    'style.cacheHref',
     'navigation.currentPageId',
     'style.fonts'
   ]);
@@ -67,16 +68,32 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
     [fonts, server?.fontsBaseUrl]
   );
 
+  /**
+   * The compiled stylesheet as the file a server-rendered page links in its head (`style.cacheHref`), instead of
+   * drawing it: the document carries none of it. Only a page drawn raw at the top of the document — a space enclosed in
+   * another scopes its rules to itself, and the other modes draw into a document of their own.
+   */
+  const linked = Boolean(styleCacheHref) && styleCache === '' && !enclosed && renderMode === 'raw';
+
   const css = useMemo(() => {
-    const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssTokens(styleCache, variables);
-    // Marked so a server-rendered page can leave the cache out of its payload and read it back from here.
-    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${markStyleCache(cacheParsed)}\n${schemaSettings.customCss}\n${externalStyle}`;
+    const cssVariables = `.plitzi-sdk{${schemaVariablesToCss(variables)}}`;
+    const own = `${schemaSettings.customCss}\n${externalStyle}`;
+    const body = linked
+      ? `${cssVariables}\n${own}`
+      : `${cssVariables}\n${processCssTokens(styleCache, variables)}\n${own}`;
 
     // The order said again before the block, for a page that loads no `plitzi-sdk.css` to say it first: a plugin's
     // stylesheet arriving later would otherwise land in a layer of its own above the space's.
-    return `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${enclosed ? scopeSpaceCss(cssParsed) : cssParsed}}`;
-  }, [variables, styleCache, schemaSettings.customCss, externalStyle, enclosed]);
+    return `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${enclosed ? scopeSpaceCss(body) : body}}`;
+  }, [variables, styleCache, schemaSettings.customCss, externalStyle, enclosed, linked]);
+
+  // Drawn in the page from here on — new documents in the browser, the builder taking the page over: the head's
+  // linked copy goes, or rules the space no longer has would still apply under the new ones.
+  useEffect(() => {
+    if (!linked) {
+      document.getElementById(STYLE_SHEET_ID)?.remove();
+    }
+  }, [linked]);
 
   // The canvas renders into an iframe, whose head only the rail can reach.
   const iframeAssets = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);

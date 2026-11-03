@@ -13,6 +13,8 @@ space while it hydrates.
   `createRedisPageStore` for the store — or each serves what a write made untrue until its copy expires; the server
   says at boot which it has. A process that writes spaces without serving them says the invalidation with
   `createCacheInvalidator({ bus, store })`.
+- **A custom template** (`templateFn`) or code reading the page's runtime `<style>` for the space's rules: they are in
+  the linked `/_plitzi/style/<hash>.css` now (`style.cacheHref`).
 - **`X-Cache`** answers `STALE` too: a page served past its TTL while it is rendered again.
 - **A link's analytics parameters** (`utm_*`, `fbclid`, `gclid`…) are no longer seen by a published page's server
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
@@ -39,6 +41,17 @@ space while it hydrates.
   warm. A store that cannot answer is a miss, said in the log.
 - The query string is keyed in one order, without the parameters `cache.ignoredQueryParams` names.
 - The RSC answers and the schema data are bounded by bytes too.
+
+## The space's stylesheet
+
+- A server-rendered page links the space's compiled stylesheet as `/_plitzi/style/<hash>.css` instead of carrying it:
+  the Plitzi dashboard's HTML went from 496 KB to 111 KB, and its render served ~60% more requests a second. The space
+  document names it (`style.cacheHref`, an empty `cache`) and the template links it in the head (`styleSheetPath`); any
+  replica answers it, kept for good under its name. A draft preview, a space named by `?access-token`, a deployment's
+  own `templateFn` and a stylesheet with `{{ tokens }}` still carry it in the page; a client-side render receives it as
+  before.
+- `styleCacheInDocument`, `markStyleCache`, `styleCacheFromDocument` and `styleCacheTravelsInDocument` are gone: the
+  page no longer carries the stylesheet for the bootstrap to read back.
 
 ## Elements (`@plitzi/sdk-elements`)
 

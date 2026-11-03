@@ -1,5 +1,6 @@
 import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 
+import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { spaceDocument } from '../../helpers/hydrationPayload';
 
@@ -114,7 +115,10 @@ export const handleSpaceDocument = async (
 
     // As this visitor may be sent it: the pages they may not see, emptied — whatever the document asked for held.
     const { schema, withheld, kept } = withholdPages(offlineData.schema, req.ctx.user);
-    const document = spaceDocument(withheld.length > 0 ? { ...offlineData, schema } : offlineData);
+    // In the form the page was given it: a page that named its space by a token carries its stylesheet (`prepareRender`).
+    const document = spaceDocument(withheld.length > 0 ? { ...offlineData, schema } : offlineData, {
+      linkStyle: !req.query[SPACE_TOKEN_PARAM]
+    });
     publishSpaceDocument(spaceId, environment, document, kept);
     json = document.json;
     current = document.hash === hash;

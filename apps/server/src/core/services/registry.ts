@@ -6,6 +6,7 @@ import { rscStage } from './rsc';
 import { sitemapXmlStage } from './sitemapXml';
 import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
+import { styleSheetStage } from './styleSheet';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { crossSiteWritesStage } from '../http/stages/crossSiteWrites';
 import { fontAssetsStage } from '../http/stages/fontAssets';
@@ -60,6 +61,7 @@ export const buildPagePipeline = (
 
   if (services.ssr) {
     stages.push(spaceDocumentStage);
+    stages.push(styleSheetStage);
     stages.push(robotsTxtStage);
     stages.push(sitemapXmlStage);
   }

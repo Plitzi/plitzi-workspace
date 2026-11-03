@@ -377,7 +377,8 @@ are built in and a fourth is `(req) => …` of your own, which is how a deployme
 its proxy sets or by a table nobody else has still gets everything below.
 
 **A space is chosen by host or credential, never by the page's path or query.** `getSpaceDeployment` is asked on every
-request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_action`, `/fn/…`, `/_realtime` — carries
+request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_plitzi/style/<hash>.css`, `/_action`,
+`/fn/…`, `/_realtime` — carries
 nothing of the page's address but its host: a space chosen by `?space=` or `/s/<id>/` renders its first page and then
 loses everything it asks for. Many spaces on one server are a sub-domain each (`wildcardSubdomain`).
 
@@ -705,6 +706,24 @@ Schema data (`getOfflineData`) is also cached under the same TTL, keyed by `(spa
 
 Responses say `X-Cache: HIT`, `STALE` (served past its TTL while rendered again) or `MISS`. The cache is cleared and its
 sweep timer is stopped when `server.close()` is called.
+
+### The space's stylesheet, linked
+
+A space's compiled stylesheet (`style.cache`) holds every page's rules — on a large space most of the page: the
+Plitzi dashboard's was 429 KB of a 496 KB document, compressed again on every response. A server-rendered page links it
+instead, as `/_plitzi/style/<hash>.css`, and carries only what is this request's — the variables, the custom CSS — in
+the page. The file is compressed once, kept by the browser for good under its name, and answered by any replica from
+the space as the request resolves it, as the space document is: a name that is no longer the stylesheet's (the space
+changed since the page was drawn) answers the current one, `no-store`. Taking it out of the page made the dashboard's
+render ~60% cheaper in requests a second.
+
+The template links it in the head (`styleSheetPath`), so the page is painted with it from its first frame — linked
+from the body, the content before the link and the styles after it were painted without it, and a theme flashed. The
+document the page reads names it (`style.cacheHref`) with an empty `cache`, and the SDK draws only the rest. It stays
+in the page where no other request could answer for it — a draft preview, a space named by `?access-token` — under a
+deployment's own `templateFn`, which does not know to link it, and when a `{{ token }}` in it is replaced by the
+variables as each request resolves them. A client-side render (no SSR) receives the stylesheet as it always did, and
+draws it; a page whose stylesheet the browser comes to draw itself (new documents in place) drops the linked copy.
 
 ### Several replicas
 
