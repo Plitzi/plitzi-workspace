@@ -69,7 +69,9 @@ yarn e2e --project=server tests/server/auth
 used to wait for the sum of every boot — fifty seconds for twenty-six servers. The config gives it one instead,
 `launch.ts`, which starts the selected servers together and says it is ready once all of them listen: the wait is
 the slowest boot alone. Each server's stdout is dropped unless `E2E_SERVER_LOGS=1`; its stderr is kept, prefixed
-with its id.
+with its id. Each runs as one process (`SDK_SERVER_WORKERS=1`) unless its own config asks for more — `workers-server`
+does — and one that stops while the run needs it is said, with its exit code or signal and what it said last: its
+specs alone only see a refused port.
 
 **A port already taken is reused only when it is this repository's.** A server left running from an earlier run, or
 your own dev server, is used as it is. One running from another folder is refused before any spec runs, with its

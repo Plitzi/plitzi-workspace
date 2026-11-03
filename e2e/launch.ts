@@ -76,7 +76,14 @@ const listenerFolder = (port: number): { pid: string; folder?: string } | undefi
 
 const children: ChildProcess[] = [];
 
+/** Set once the run is over: a server stopping then is this process taking it down, not one that died. */
+let stopping = false;
+
+/** What a server said last on stderr, kept to what explains a crash. */
+const SAID_KEPT = 4000;
+
 const stopAll = (): void => {
+  stopping = true;
   for (const child of children) {
     if (child.pid && child.exitCode === null) {
       try {
@@ -111,19 +118,33 @@ const bring = async (candidate: Target): Promise<'started' | 'reused'> => {
   const child = spawn(candidate.command ?? `yarn workspace ${candidate.workspace} start`, {
     shell: true,
     detached: true,
-    stdio: ['ignore', showServerLogs ? 'inherit' : 'ignore', 'pipe']
+    stdio: ['ignore', showServerLogs ? 'inherit' : 'ignore', 'pipe'],
+    /**
+     * One process each unless a target's own config says otherwise (`workers-server`'s `workers: 2`, which wins over
+     * the environment). A server started with `NODE_ENV=production` forks one per core: on a four-core runner the
+     * suite's dozen servers were some forty processes, and one of them gone mid-run left its specs a refused port.
+     */
+    env: { ...process.env, SDK_SERVER_WORKERS: process.env.SDK_SERVER_WORKERS ?? '1' }
   });
   children.push(child);
-  const said: string[] = [];
+  let said = '';
   child.stderr.on('data', (chunk: Buffer) => {
-    said.push(chunk.toString());
+    said = `${said}${chunk.toString()}`.slice(-SAID_KEPT);
     process.stderr.write(`[${candidate.id}] ${chunk.toString()}`);
+  });
+  // A server that stops while the run still needs it says so, with why: its specs only see a refused port.
+  child.once('exit', (code, signal) => {
+    if (!stopping) {
+      console.error(
+        `[e2e] ${candidate.id} stopped while the run needed it (${signal ? `signal ${signal}` : `exit code ${String(code)}`}) — every spec on ${candidate.origin} fails from here. What it said last:\n${said || '(nothing on stderr)'}`
+      );
+    }
   });
 
   const deadline = Date.now() + BOOT_TIMEOUT_MS;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) {
-      throw new Error(`${candidate.id} exited while starting:\n${said.join('').slice(-2000)}`);
+      throw new Error(`${candidate.id} exited while starting:\n${said}`);
     }
 
     if (await answers(port)) {
