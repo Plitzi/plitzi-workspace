@@ -2,11 +2,12 @@ import type { ActionEmailConfig, ActionLimits, ActionRejectRecord, ActionRunReco
 import type { Environment, ServerAuth } from './CommonTypes';
 import type { JobQueue } from './JobTypes';
 import type { DraftStore, SSRPreviewConfig } from './PreviewTypes';
-import type { SSRRealtimeConfig } from './RealtimeTypes';
+import type { PubSubAdapter, SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { SSRAdapters, SSRPageAdapters, SpaceRevision } from './ServerAdapterTypes';
 import type { LogLevel, ServerLogger } from './ServerLogTypes';
 import type {
+  CacheFilter,
   PluginSource,
   SSRAuthCookie,
   SSRFontsConfig,
@@ -251,6 +252,62 @@ export type SSRCompressionConfig = {
   gzipLevel?: number;
 };
 
+/**
+ * A rendered page as a store shared by every replica keeps it: one encoding of its body, and when it was rendered — so
+ * a replica that reads it knows how fresh it is, not when it read it.
+ */
+export type SharedPage = { encoding: 'br' | 'gzip' | 'identity'; body: Buffer; renderedAt: number };
+
+/** Where a shared page is filed: what `server.cache.invalidate` filters it by. */
+export type SharedPageFacts = { spaceId: number; environment: string; hostname: string };
+
+/**
+ * The pages every replica of a deployment shares, beside the copy each process keeps: a replica that never rendered a
+ * page serves it from here, and a new one (a scale-up, a restart) starts with the pages warm. `createRedisPageStore`
+ * is one; only pages rendered for nobody in particular are put here, never a signed-in visitor's.
+ */
+export type SharedPageStore = {
+  get: (key: string) => Promise<SharedPage | undefined>;
+  /** Kept for `ttlMs`, under `facts`, which an invalidation matches. */
+  set: (key: string, page: SharedPage, facts: SharedPageFacts, ttlMs: number) => Promise<void>;
+  /** Drops what `filter` matches (everything without one) and says how many pages that was. */
+  invalidate: (filter?: CacheFilter) => Promise<number>;
+};
+
+/**
+ * How the pages this server renders are kept. The TTL is `cacheTtlMs`; this is what is kept, for how long past it,
+ * and how a deployment of several replicas keeps them in step.
+ */
+export type SSRCacheConfig = {
+  /**
+   * What one process keeps of rendered pages at most, in bytes, the least recently served dropped first. Default
+   * 64 MB. A page is kept compressed — 60–120 KB for a 1 MB page — so that is some 600 large pages.
+   */
+  maxBytes?: number;
+  /**
+   * How long past its TTL a page is still served while one request renders it again behind it — the visitor after
+   * the TTL gets the page as fast as the one before, not a render. Default 60 000; `0` renders on the request that
+   * finds it expired. An invalidation drops a page outright: this never serves one a write made untrue.
+   */
+  staleMs?: number;
+  /**
+   * Query parameters a page is rendered as if absent, and cached as if absent: the ones a link carries for analytics
+   * (`utm_*`, `fbclid`, `gclid`…), which a page has no business drawing differently. The browser still has them —
+   * what reads them after the page loads reads them. Each `prefix*` matches by prefix. Default the
+   * analytics ones a link is given by the common tools (sdk-server's `DEFAULT_IGNORED_QUERY_PARAMS`); `[]` keys every
+   * parameter.
+   */
+  ignoredQueryParams?: string[];
+  /**
+   * How an invalidation reaches every replica: each process subscribes, and `server.cache.invalidate` publishes. The
+   * realtime adapter does (`createRedisPubSub`). Without one, an invalidation reaches this process and its workers —
+   * a deployment of several replicas serves a page a write made untrue until its TTL runs out, and says so at boot.
+   */
+  bus?: PubSubAdapter;
+  /** The pages every replica shares. Without one, each process keeps its own. */
+  store?: SharedPageStore;
+};
+
 export type SSRRscConfig = {
   /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
   enabled?: boolean;
@@ -332,7 +389,10 @@ export type SSRServerConfig = {
    * A function when one server renders several spaces and they do not share their flags: it is asked per render.
    */
   flags?: Record<string, boolean> | ((space: { spaceId: number; environment: Environment }) => Record<string, boolean>);
+  /** How long a rendered page, its schema data and a basic-auth check are kept, in ms. Default 300 000; `0` keeps none. */
   cacheTtlMs?: number;
+  /** What is kept of rendered pages, and how several replicas keep them in step — see {@link SSRCacheConfig}. */
+  cache?: SSRCacheConfig;
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
   logoutPath?: string | false;

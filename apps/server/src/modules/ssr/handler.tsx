@@ -1,12 +1,17 @@
 import { applySSRResult, isReusable, renderParamsOf } from './applySSRResult';
 import { buildBody } from './buildBody';
+import { claimRender, pageSlot, readPage, renderingNow } from './pageCache';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
-import { buildHtmlCacheKey } from '../../helpers/cache';
+import { buildHtmlCacheKey, ignoredQueryParamsOf, pageHtml, renderedQuery } from '../../helpers/cache';
+import { resolveCompression } from '../../helpers/compress';
 import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
+import { serverLog } from '../../helpers/serverLog';
 
-import type { ServerCaches } from '../../helpers/cache';
+import type { BuildBodyResult } from './buildBody';
+import type { RenderClaim } from './pageCache';
+import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
@@ -95,62 +100,27 @@ export const renderSSR = async (
 
   // Cache is disabled for the main environment (development) and for any draft-override render.
   const htmlCache = environment !== 'main' && !offlineDataOverride ? caches.html : undefined;
-  const cacheKey = htmlCache ? buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req) : undefined;
-
-  if (htmlCache && cacheKey) {
-    const cached = htmlCache.get(cacheKey);
-    if (cached) {
-      res.setHeader('X-Cache', 'HIT');
-      if (devMode) {
-        res.setHeader('Server-Timing', 'html;desc="cache-hit";dur=0');
-      }
-
-      // A cached page is still a page served, so it is still counted — a space that stopped being metered the
-      // moment it got popular enough to hit the cache would be metered backwards. What the meter is told is that
-      // this one was cheap to serve, the same fact `X-Cache` puts on the wire.
-      const decision = await meterPage(req, config, spaceId as number, environment, revision, true);
-      if (decision?.unavailable !== undefined) {
-        sendUnavailable(res, decision.unavailable);
-
-        return;
-      }
-
-      if (decision?.noindex) {
-        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-      }
-
-      res.send(cached.html, { compressed: cached.compressed });
-
-      return;
-    }
+  const ignored = ignoredQueryParamsOf(config);
+  // Rendered as it is keyed: a page kept without the analytics parameters of a link must not have been drawn with them.
+  if (htmlCache) {
+    req.query = renderedQuery(req.query, ignored);
   }
 
-  // A draft preview is not a visit: it is the author looking at their own unsaved edits, and it is never cached.
-  if (!offlineDataOverride) {
-    req.ctx.meter = await meterPage(req, config, spaceId as number, environment, revision, false);
-    if (req.ctx.meter?.unavailable !== undefined) {
-      sendUnavailable(res, req.ctx.meter.unavailable);
+  const compression = resolveCompression(config.compression);
+  const slot = htmlCache
+    ? pageSlot(
+        config,
+        caches,
+        buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req, ignored),
+        { spaceId: spaceId as number, environment, hostname: req.hostname },
+        req.ctx.user === undefined,
+        compression
+      )
+    : undefined;
 
-      return;
-    }
-
-    // An address the deployment does not host sites on, said to crawlers whatever the page's own robots say.
-    if (req.ctx.meter?.noindex) {
-      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    }
-  }
-
-  // Allocate metrics after the cache-hit early return — never wasted on hits.
-  const metrics = devMode ? new RequestMetrics() : undefined;
-
-  if (cacheKey) {
-    res.setHeader('X-Cache', 'MISS');
-  }
-
-  if (config.streaming) {
-    await streamBody(
+  const renderPage = (metrics?: RequestMetrics) => () =>
+    buildBody(
       req,
-      res,
       config,
       spaceId as number,
       environment,
@@ -158,44 +128,140 @@ export const renderSSR = async (
       renderFn,
       pluginManager,
       caches.offlineData,
-      htmlCache,
-      cacheKey,
       metrics,
       offlineDataOverride
     );
+  const keepable = ({ body, result, cacheable }: BuildBodyResult): string | undefined =>
+    body !== undefined && cacheable && isReusable(result) ? body : undefined;
 
-    return;
+  /**
+   * A kept page, served — and counted: a space that stopped being metered the moment it got popular enough to hit the
+   * cache would be metered backwards. What the meter is told is that this one was cheap to serve, the same fact
+   * `X-Cache` puts on the wire.
+   */
+  const serveKept = async (page: CachedPage, cacheState: 'HIT' | 'STALE'): Promise<SSRMeterDecision | undefined> => {
+    res.setHeader('X-Cache', cacheState);
+    if (devMode) {
+      res.setHeader('Server-Timing', `html;desc="cache-${cacheState.toLowerCase()}";dur=0`);
+    }
+
+    const decision = await meterPage(req, config, spaceId as number, environment, revision, true);
+    if (decision?.unavailable !== undefined) {
+      sendUnavailable(res, decision.unavailable);
+
+      return decision;
+    }
+
+    if (decision?.noindex) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    // A copy of the compressed forms: one made for a client that takes another encoding is not added to the kept page
+    // behind the cache's back, where its bytes would go uncounted.
+    res.send(() => pageHtml(page), { compressed: { ...page.compressed } });
+
+    return decision;
+  };
+
+  /** The page rendered for this request — kept for the others when `claim` says this render is the one they wait on. */
+  const renderFresh = async (claim: RenderClaim | undefined): Promise<void> => {
+    // A draft preview is not a visit: it is the author looking at their own unsaved edits, and it is never cached.
+    if (!offlineDataOverride) {
+      req.ctx.meter = await meterPage(req, config, spaceId as number, environment, revision, false);
+      if (req.ctx.meter?.unavailable !== undefined) {
+        sendUnavailable(res, req.ctx.meter.unavailable);
+
+        return;
+      }
+
+      // An address the deployment does not host sites on, said to crawlers whatever the page's own robots say.
+      if (req.ctx.meter?.noindex) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      }
+    }
+
+    // Allocate metrics after the cache-hit early return — never wasted on hits.
+    const metrics = devMode ? new RequestMetrics() : undefined;
+
+    if (slot) {
+      res.setHeader('X-Cache', 'MISS');
+    }
+
+    if (config.streaming) {
+      await streamBody(
+        req,
+        res,
+        config,
+        spaceId as number,
+        environment,
+        revision,
+        renderFn,
+        pluginManager,
+        caches.offlineData,
+        claim ? html => claim.keep(html) : undefined,
+        metrics,
+        offlineDataOverride
+      );
+
+      return;
+    }
+
+    const rendered = await renderPage(metrics)();
+    const page = claim?.keep(keepable(rendered));
+
+    if (metrics) {
+      res.setHeader('Server-Timing', metrics.toServerTimingHeader());
+      metrics.log(`${req.method} ${req.path}`);
+    }
+
+    if (applySSRResult(res, rendered.result, renderParamsOf(req.query))) {
+      return;
+    }
+
+    res.send(rendered.body ?? '', page ? { compressed: { ...page.compressed } } : undefined);
+  };
+
+  if (slot) {
+    const kept = await readPage(slot);
+    if (kept) {
+      const decision = await serveKept(kept.page, kept.stale ? 'STALE' : 'HIT');
+      // Served as it was, and rendered again behind it for whoever asks next — once, however many ask meanwhile.
+      if (kept.stale && decision?.unavailable === undefined && !renderingNow(slot)) {
+        const claim = claimRender(slot);
+        req.ctx.meter = decision;
+        renderPage()()
+          .then(rendered => {
+            if (!claim.keep(keepable(rendered))) {
+              caches.html?.delete(slot.key);
+            }
+          })
+          .catch((error: unknown) => {
+            caches.html?.delete(slot.key);
+            serverLog.warn('SSR cache', `${req.path} could not be rendered again; the next request renders it`, error);
+          })
+          .finally(claim.release);
+      }
+
+      return;
+    }
+
+    // Another request is rendering this very page: this one is served what that render keeps.
+    const waiting = renderingNow(slot);
+    if (waiting) {
+      const waited = await waiting;
+      if (waited) {
+        await serveKept(waited, 'HIT');
+
+        return;
+      }
+    }
   }
 
-  const { body, result, cacheable } = await buildBody(
-    req,
-    config,
-    spaceId as number,
-    environment,
-    revision,
-    renderFn,
-    pluginManager,
-    caches.offlineData,
-    metrics,
-    offlineDataOverride
-  );
-
-  if (metrics) {
-    res.setHeader('Server-Timing', metrics.toServerTimingHeader());
-    metrics.log(`${req.method} ${req.path}`);
+  // Taken in this same turn as the look above: an `await` between the two let every request of a burst render.
+  const claim = slot && !renderingNow(slot) ? claimRender(slot) : undefined;
+  try {
+    await renderFresh(claim);
+  } finally {
+    claim?.release();
   }
-
-  if (applySSRResult(res, result, renderParamsOf(req.query))) {
-    return;
-  }
-
-  if (htmlCache && cacheKey && body !== undefined && cacheable && isReusable(result)) {
-    const page = { html: body, compressed: {} };
-    htmlCache.set(cacheKey, page);
-    res.send(body, { compressed: page.compressed });
-
-    return;
-  }
-
-  res.send(body ?? '');
 };

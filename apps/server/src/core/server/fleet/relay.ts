@@ -1,9 +1,10 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { broadcast, onBroadcast } from './link';
+import { cacheFilterOf } from '../../../helpers/cache';
 import { serverLog } from '../../../helpers/serverLog';
 
-import type { CacheFilter, CacheManager, PluginAction, PluginRegistry, PluginSourceFile } from '@plitzi/sdk-shared';
+import type { CacheManager, PluginAction, PluginRegistry, PluginSourceFile } from '@plitzi/sdk-shared';
 
 /**
  * `server.cache` and `server.plugins` in a fleet, whose workers each keep their own: what one process is told, every
@@ -18,19 +19,6 @@ import type { CacheFilter, CacheManager, PluginAction, PluginRegistry, PluginSou
 const PLUGIN_ACTIONS: readonly PluginAction[] = ['copy', 'compile', 'download', 'cdn'];
 const isPluginAction = (value: unknown): value is PluginAction => PLUGIN_ACTIONS.some(action => action === value);
 
-const cacheFilterOf = (value: unknown): CacheFilter => {
-  if (!isRecord(value)) {
-    return {};
-  }
-
-  return {
-    ...(typeof value.spaceId === 'number' ? { spaceId: value.spaceId } : {}),
-    ...(typeof value.environment === 'string' ? { environment: value.environment } : {}),
-    ...(typeof value.hostname === 'string' ? { hostname: value.hostname } : {})
-  };
-};
-
-/** `invalidate` answers, and `size` counts, this process's entries: the others answer nothing back. */
 export const relayCache = (cache: CacheManager, channel: string): CacheManager => {
   onBroadcast(channel, payload => {
     if (!isRecord(payload)) {

@@ -46,15 +46,25 @@ const useInternalItems = ({
   /** This element's resolved visibility — its own `visibility` state AND every ancestor's. */
   visible?: boolean;
 }) => {
+  const { items } = definition;
+  /**
+   * Each item's element, read by its own path — never the whole `schema.flat`.
+   *
+   * Inside a component instance the store is a scope over the page's, and a read of `schema.flat` there merges the
+   * component's elements over every element of the space: one copy of a two-thousand-key object per instance, which was
+   * the largest single cost of hydrating a landing page. An item's path resolves where the element is — the
+   * component's own, else the page's — and merges nothing.
+   */
+  const itemPaths = useMemo(() => (items ?? []).map(itemId => `schema.flat.${itemId}` as const), [items]);
+  const [itemElements] = useCommonStore(itemPaths, { mode: 'mount' });
   // `rsc.enabled`, not `schema.rsc.enabled`: the schema flag alone is also true on a client-only render, where there
   // is no server HTML to freeze a server element against and it would be dropped altogether.
-  const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'rsc.enabled'], { mode: 'mount' });
+  const [rscEnabled] = useCommonStore('rsc.enabled', { mode: 'mount' });
   // Live, unlike the two above: a tester flips a flag on a page that is already drawn, and the items it gates have to
   // come and go with it. Published stable, so a container re-renders only when a flag actually changed.
   const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags');
   const { components, componentDefinitions } = use(ComponentContext);
   const { plugins } = use(PluginsContext);
-  const { items } = definition;
   // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
   const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
   /**
@@ -118,8 +128,10 @@ const useInternalItems = ({
 
     // Process items
     const itemsParsed: ReactNode[] = (items ?? [])
-      .filter(itemId => {
-        const el = flat[itemId] as Element | undefined;
+      // An item may name an element that is gone (deleted under it, a component since changed): the path reads nothing.
+      .map((itemId, index): { itemId: string; el: Element | undefined } => ({ itemId, el: itemElements[index] }))
+      .filter((entry): entry is { itemId: string; el: Element } => {
+        const { el } = entry;
         if (!el) {
           return false;
         }
@@ -141,8 +153,8 @@ const useInternalItems = ({
 
         return true;
       })
-      .map(itemId => {
-        const { rootId, type, runtime } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
+      .map(({ itemId, el }) => {
+        const { rootId, type, runtime } = el.definition;
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);
 
         /**
@@ -217,7 +229,7 @@ const useInternalItems = ({
     flags,
     plitziElementLayout,
     children,
-    flat,
+    itemElements,
     previewMode,
     rscEnabled,
     mounted,

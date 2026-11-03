@@ -272,6 +272,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `livePages` | `boolean` | `false` | Every page this server renders listens for what changes under it: new documents for the space it shows, swapped where it stands with its state, scroll and focus kept (`server.updatePages(documents, { draft? })` — a draft's pages hear their own alone), or everything loaded again (`server.reloadPages()`); and it loads again when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. What `serveProject` uses while developing, and `createAuthoringHost` always. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
+| `cache` | `SSRCacheConfig` | — | What is kept of rendered pages (`maxBytes`, `staleMs`, `ignoredQueryParams`) and how several replicas keep them in step (`bus`, `store`). See [Render cache](#render-cache). |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
 | `logoutPath` | `string \| false` | `'/auth/logout'` | Path for the built-in logout endpoint. Set to `false` to disable it entirely. |
@@ -669,24 +670,67 @@ shape a BREACH-style attack needs.
 
 ## Render cache
 
-SSR output is cached in-memory per `(spaceId, environment, revision, hostname, path, search)`. The cache uses a 5-minute TTL by default. The `main` environment is always excluded from caching — it is the development environment and its schema changes frequently.
+A published page is kept once rendered, per `(spaceId, environment, revision, hostname, path, query)` and what of the
+visitor changes the document (their session, theme, painted state, forced flags). The `main` environment is never
+kept — it is the development environment and its schema changes all the time — nor a draft preview.
 
 ```ts
 createServer({
-  cacheTtlMs: 60_000,  // 1 minute
-  adapters: { ... }
-});
-
-// Disable caching entirely
-createServer({
-  cacheTtlMs: 0,
+  cacheTtlMs: 60_000, // how long a page is kept: 5 minutes by default, `0` keeps none
+  cache: {
+    maxBytes: 128 * 1024 * 1024, // what one process keeps of pages: 64 MB by default
+    staleMs: 30_000, // served this long past its TTL while it is rendered again: 60 s by default
+    ignoredQueryParams: ['utm_*', 'ref'] // rendered and kept without these: the analytics ones by default
+  },
   adapters: { ... }
 });
 ```
 
+- **Kept compressed, by bytes.** A page is kept in the encoding the server prefers (`compression`), a 1 MB page as the
+  ~90 KB a browser is sent, and the cache is bounded by `cache.maxBytes`, the page served least recently dropped first.
+- **Rendered once.** The requests for a page that arrive while it renders wait for that render instead of starting
+  their own — a page a publish invalidated is not rendered once per visitor who asked for it in the meantime.
+- **Served while rendered again.** A page past its TTL is still served for `cache.staleMs`, and rendered again behind
+  that request for whoever asks next. An invalidation drops a page outright: a page a write made untrue is never served.
+- **One page whatever the link carried.** The parameters a link carries for analytics (`utm_*`, `fbclid`, `gclid`…,
+  `DEFAULT_IGNORED_QUERY_PARAMS`) are left out of the key and of what the page is rendered with — the browser still has
+  them — and the others are keyed in one order, so `?b=2&a=1` is the page `?a=1&b=2` is. `[]` keys every parameter.
+
 Schema data (`getOfflineData`) is also cached under the same TTL, keyed by `(spaceId, environment, revision)`. This avoids repeated adapter calls on consecutive HTML cache misses for the same space version.
 
-Responses include an `X-Cache: HIT` or `X-Cache: MISS` header for observability. The cache is cleared and its sweep timer is stopped when `server.close()` is called.
+Responses say `X-Cache: HIT`, `STALE` (served past its TTL while rendered again) or `MISS`. The cache is cleared and its
+sweep timer is stopped when `server.close()` is called.
+
+### Several replicas
+
+A process keeps its own pages, and its workers hear what it is told (`workers`). Replicas share nothing unless the
+server is given what they share — and says at boot which it has:
+
+```ts
+import { createRedisPageStore, createRedisPubSub } from '@plitzi/sdk-server';
+
+createServer({
+  cache: {
+    // How an invalidation reaches every replica: each subscribes, `server.cache.invalidate` publishes.
+    bus: createRedisPubSub({ publisher: redis, subscriber: redis.duplicate(), prefix: 'myapp:cache:' }),
+    // The pages they share: one a replica never rendered — a new one, after a scale-up or a restart — is served warm.
+    store: createRedisPageStore(redis)
+  },
+  adapters: { ... }
+});
+```
+
+Only a page rendered for nobody in particular goes to the store, under a digest of its key — a signed-in visitor's
+stays in the process that drew it. A store that cannot answer is a miss, said in the log: the page is rendered, not
+refused. Without a bus, an invalidation reaches the host it was made on, and a deployment of several replicas serves a
+page a write made untrue until each copy expires.
+
+A process that writes a space without serving its pages (an API beside the page servers) says the invalidation with
+`createCacheInvalidator({ bus, store }).invalidate({ spaceId, environment })`.
+
+`createRedisPageStore(client, { prefix })` takes ioredis's `getBuffer` and `eval`. Its default prefix carries a hash tag
+(`plitzi:{pages}:`), so on a Redis Cluster the store's keys share a node; give a client without a `keyPrefix` of its
+own, and put any prefix in `prefix` instead.
 
 ### Cache manager
 
@@ -711,7 +755,7 @@ server.cache?.clear();
 console.log(server.cache?.size);
 ```
 
-`server.cache` is `null` when nothing is cached (`cacheTtlMs: 0` and `rsc.cacheTtlMs: 0`). `size` counts the entries of all three caches.
+`server.cache` is `null` when nothing is cached (`cacheTtlMs: 0` and `rsc.cacheTtlMs: 0`). `size` counts the entries of all three caches. Given `cache.bus` or `cache.store`, an invalidation reaches every replica and the store they share.
 
 #### `CacheFilter`
 

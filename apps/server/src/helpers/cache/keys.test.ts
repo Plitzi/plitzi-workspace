@@ -15,7 +15,7 @@ const req = (path: string, search = '', hostname = 'site.example.com', cookie?: 
  */
 describe('buildHtmlCacheKey', () => {
   const html = (cookie?: string) =>
-    buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.example.com', cookie));
+    buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.example.com', cookie), []);
 
   it('separates a visitor who chose dark from one who chose light', () => {
     expect(html('theme=dark')).not.toBe(html('theme=light'));
@@ -41,7 +41,7 @@ describe('buildHtmlCacheKey', () => {
 
   it('reads the dev tools cookie named for the port the page is served on', () => {
     const onPort = (cookie: string) =>
-      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4013'));
+      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4013'), []);
 
     expect(onPort('plitzi_debug_4013=false')).not.toBe(onPort('plitzi_debug=false'));
   });
@@ -49,12 +49,19 @@ describe('buildHtmlCacheKey', () => {
   // HTTP/2 sends no Host header: the port is in `:authority`, and the cookie named for it must still be read.
   it('reads the dev tools cookie named for the port of a request made over HTTP/2', () => {
     const overHttp2 = (cookie: string) =>
-      buildHtmlCacheKey(undefined, 1, 'production', 3, {
-        hostname: 'site.test',
-        path: '/',
-        search: '',
-        headers: { cookie, ':authority': 'site.test:4013' }
-      });
+      buildHtmlCacheKey(
+        undefined,
+        1,
+        'production',
+        3,
+        {
+          hostname: 'site.test',
+          path: '/',
+          search: '',
+          headers: { cookie, ':authority': 'site.test:4013' }
+        },
+        []
+      );
 
     expect(overHttp2('plitzi_debug_4013=false')).not.toBe(overHttp2('plitzi_debug_4013=true'));
   });
@@ -75,10 +82,17 @@ describe('buildHtmlCacheKey', () => {
   /** A flag turned in production changes the page while the revision stays — the deployment says what they are at. */
   it('separates two versions of the flags at one revision', () => {
     const at = (flagsVersion?: string) =>
-      buildHtmlCacheKey(undefined, 1, 'production', 3, {
-        ...req('/'),
-        ...(flagsVersion ? { ctx: { spaceDeployment: { flagsVersion } } } : {})
-      });
+      buildHtmlCacheKey(
+        undefined,
+        1,
+        'production',
+        3,
+        {
+          ...req('/'),
+          ...(flagsVersion ? { ctx: { spaceDeployment: { flagsVersion } } } : {})
+        },
+        []
+      );
 
     expect(at('aaa')).not.toBe(at('bbb'));
     expect(at('aaa')).toBe(at('aaa'));
@@ -92,7 +106,7 @@ describe('buildHtmlCacheKey', () => {
 
   it('reads the painted state cookie named for the port the page is served on', () => {
     const onPort = (cookie: string) =>
-      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4016'));
+      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4016'), []);
 
     expect(onPort('plitzi_0_painted_4016=x')).not.toBe(onPort('plitzi_0_painted=x'));
   });

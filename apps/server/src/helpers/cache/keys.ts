@@ -5,6 +5,7 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 import { requestAuthority } from '../../core/requestParser';
 import { ssrPaintedCookieName } from '../paintedCookie';
 import { readCookie } from '../readCookie';
+import { canonicalSearch } from './queryParams';
 
 /** What a cache key reads off a request: where it is, and — from the resolved deployment — what the flags are at. */
 type CacheKeyRequest = {
@@ -58,14 +59,17 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * apart from its revisions: a flag turned in production must reach the next visitor, while the revision is the same.
  *
  * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those
- * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries.
+ * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries. The
+ * query string is keyed as the page is rendered from it (`canonicalSearch`): without the parameters it is rendered
+ * without, and in one order.
  */
 export const buildHtmlCacheKey = (
   accessToken: string | undefined = 'anonymous',
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: CacheKeyRequest & { headers: { cookie?: string; host?: string; ':authority'?: string } }
+  req: CacheKeyRequest & { headers: { cookie?: string; host?: string; ':authority'?: string } },
+  ignoredQueryParams: readonly string[]
 ): string => {
   const fields: HtmlCacheKeyFields = {
     accessToken,
@@ -79,7 +83,7 @@ export const buildHtmlCacheKey = (
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
     hostname: req.hostname,
     path: req.path,
-    search: req.search
+    search: canonicalSearch(req.search, ignoredQueryParams)
   };
 
   return HTML_KEY_FIELDS.map(field => fields[field]).join('\0');

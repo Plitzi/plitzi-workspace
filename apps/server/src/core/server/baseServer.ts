@@ -43,6 +43,8 @@ export interface HttpServerParts {
   // Names the server in logs and errors (e.g. SSR, MCP) — this module is service-agnostic.
   label: string;
   cache: CacheManager | null;
+  /** The cache reaches every process already (a bus each of them hears): nothing to relay between the workers. */
+  cacheRelayed?: boolean;
   plugins: PluginRegistry;
   /** Started once the transport is bound: background work that should not run in a server nobody listened on. */
   onListen?: () => void;
@@ -94,7 +96,8 @@ export const createHttpServer = (
   const plan = resolveWorkers(config.workers);
   const role = fleetRole(plan);
   const channel = role === 'single' ? undefined : channelName(label);
-  const cache = channel && parts.cache ? relayCache(parts.cache, `${channel}.cache`) : parts.cache;
+  const cache =
+    channel && parts.cache && !parts.cacheRelayed ? relayCache(parts.cache, `${channel}.cache`) : parts.cache;
   const plugins =
     channel && parts.forgetPlugins
       ? relayPlugins(parts.plugins, parts.forgetPlugins, `${channel}.plugins`, label)

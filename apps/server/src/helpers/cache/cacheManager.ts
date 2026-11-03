@@ -5,7 +5,10 @@ import type { ServerCaches } from './serverCaches';
 import type { TtlCache } from './TtlCache';
 import type { CacheFilter, CacheManager } from '@plitzi/sdk-shared';
 
-type ReadableCache = { store: TtlCache<unknown>; read: (key: string) => CacheKeyFacts };
+/** What the manager does to a cache, whatever it holds. */
+type ManagedCache = Pick<TtlCache<never>, 'invalidateWhere' | 'clear' | 'size'>;
+
+type ReadableCache = { store: ManagedCache; read: (key: string) => CacheKeyFacts };
 
 /**
  * Whether an entry is one the filter names. An entry that is not any one host's (the space as read for a render) is
@@ -17,7 +20,7 @@ const matches = (facts: CacheKeyFacts, filter: CacheFilter): boolean =>
   (filter.environment === undefined || facts.environment === filter.environment) &&
   (filter.hostname === undefined || facts.hostname === undefined || facts.hostname === filter.hostname);
 
-const clearCounted = (store: TtlCache<unknown>): number => {
+const clearCounted = (store: ManagedCache): number => {
   const count = store.size;
   store.clear();
 

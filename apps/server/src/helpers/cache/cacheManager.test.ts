@@ -26,10 +26,10 @@ const page = (
   environment: string,
   hostname: string,
   { token, cookie }: { token?: string; cookie?: string } = {}
-): string => buildHtmlCacheKey(token, spaceId, environment, 3, request(hostname, cookie));
+): string => buildHtmlCacheKey(token, spaceId, environment, 3, request(hostname, cookie), []);
 
 const pagesOf = (keys: string[]) => {
-  const caches = createServerCaches(60_000, 60_000);
+  const caches = createServerCaches({ htmlTtlMs: 60_000, rscTtlMs: 60_000 });
   made.push(caches);
   keys.forEach(key => caches.html?.set(key, { html: '<html></html>', compressed: {} }));
 

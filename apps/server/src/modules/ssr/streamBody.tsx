@@ -6,7 +6,7 @@ import { applySSRResult, isReusable, renderParamsOf, withNotFound, withRefusal }
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
-import type { CachedPage, TtlCache } from '../../helpers/cache';
+import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
 import type {
@@ -32,8 +32,8 @@ export const streamBody = async (
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<string>,
-  htmlCache?: TtlCache<CachedPage>,
-  cacheKey?: string,
+  /** Keeps the page once it is all out — given only when it may be kept. */
+  keep?: (html: string) => void,
   metrics?: RequestMetrics,
   offlineDataOverride?: OfflineDataRaw
 ): Promise<void> => {
@@ -64,7 +64,7 @@ export const streamBody = async (
   await new Promise<void>((resolve, reject) => {
     // Only accumulate chunks when caching is active — avoids holding the full
     // React HTML in memory on uncached paths. A render carrying this request's own runs is never cached.
-    const chunks: Buffer[] | null = cacheKey && htmlCache && prep.cacheable ? [] : null;
+    const chunks: Buffer[] | null = keep && prep.cacheable ? [] : null;
 
     const writable = new Writable({
       write(chunk: Buffer, _enc, cb) {
@@ -77,8 +77,8 @@ export const streamBody = async (
         res.write(tailBuf);
         res.end();
 
-        if (chunks && cacheKey && htmlCache && isReusable(result)) {
-          htmlCache.set(cacheKey, { html: head + Buffer.concat(chunks).toString('utf-8') + tail, compressed: {} });
+        if (chunks && keep && isReusable(result)) {
+          keep(head + Buffer.concat(chunks).toString('utf-8') + tail);
         }
 
         resolve();

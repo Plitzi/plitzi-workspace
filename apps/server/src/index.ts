@@ -27,6 +27,10 @@ export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview
 export { createAuthoringHost } from './hosts/authoringHost';
 export { createMemoryPubSub } from './modules/realtime/memoryPubSub';
 export { createRedisPubSub } from './modules/realtime/redisPubSub';
+// The pages several replicas keep in step: the bus an invalidation travels on is the realtime one (`createRedisPubSub`);
+// these are the store they share and what a process that serves no pages says an invalidation with.
+export { createRedisPageStore } from './modules/ssr/redisPageStore';
+export { createCacheInvalidator, DEFAULT_IGNORED_QUERY_PARAMS } from './helpers/cache';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 export { resolveRscData } from './modules/rsc/resolveRscData';
 export {
@@ -37,6 +41,8 @@ export {
 } from './modules/connectors';
 
 export type { CloudAdaptersConfig, CloudSpaceCache } from './adapters/cloudAdapters';
+export type { RedisPageStoreClient, RedisPageStoreOptions } from './modules/ssr/redisPageStore';
+export type { CacheSharing } from './helpers/cache';
 export type { JsonAdaptersConfig, OfflineDataSource } from './adapters/jsonAdapters';
 export type { AuthAdapters, AuthAdaptersConfig } from './adapters/authAdapters';
 export type {

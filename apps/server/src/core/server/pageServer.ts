@@ -1,7 +1,14 @@
 import { createHttpServer } from './baseServer';
 import { fleetStore } from './fleet/link';
-import { runsFleetJobs } from './fleet/role';
-import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
+import { fleetRole, resolveWorkers, runsFleetJobs } from './fleet/role';
+import { reportCacheSharing } from './reportCacheSharing';
+import {
+  buildCacheManager,
+  createServerCaches,
+  DEFAULT_TTL_MS,
+  destroyServerCaches,
+  shareCache
+} from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
 import { reportReactBuild } from '../../helpers/reportReactBuild';
 import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
@@ -53,8 +60,20 @@ export const createPageServer = (
     config.draftStore = fleetStore<DraftStore>('ssr.drafts', DRAFT_STORE_METHODS) ?? createMemoryDraftStore();
   }
 
-  const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
-  const cache: CacheManager | null = caches.html || caches.rsc ? buildCacheManager(caches) : null;
+  const caches = createServerCaches({
+    htmlTtlMs,
+    rscTtlMs: config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc,
+    htmlBytes: config.cache?.maxBytes,
+    staleMs: config.cache?.staleMs
+  });
+  const local: CacheManager | null = caches.html || caches.rsc ? buildCacheManager(caches) : null;
+  const { bus, store } = config.cache ?? {};
+  const shared = local && (bus || store) ? shareCache(local, { bus, store }) : undefined;
+  const cache = shared?.cache ?? local;
+  const role = fleetRole(resolveWorkers(config.workers));
+  if (role !== 'worker' && caches.html) {
+    reportCacheSharing(config, { ttlMs: htmlTtlMs, bus: Boolean(bus), store: Boolean(store) });
+  }
   const renderFn = config.templateFn ?? compileTemplate();
 
   const pluginManager = new PluginManager(
@@ -130,6 +149,9 @@ export const createPageServer = (
   return createHttpServer(config, makeHandlerForPort, {
     label: 'SSR',
     cache,
+    // Every process hears the bus itself, the workers of this host among them: relaying between them too would only
+    // say each invalidation twice.
+    cacheRelayed: Boolean(bus),
     plugins,
     // Only once the transport is bound: a server that was built and never listened on must not be claiming jobs
     // another replica could be running. With workers, only the one that carries the fleet's jobs starts them.
@@ -167,6 +189,7 @@ export const createPageServer = (
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared
       // queue, for whichever replica is running next.
       await actions?.jobs?.stop();
+      await shared?.close();
       destroyServerCaches(caches);
       pluginManager.destroy();
     }

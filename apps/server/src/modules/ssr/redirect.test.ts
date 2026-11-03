@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderSSR } from './handler';
 import { TtlCache } from '../../helpers/cache';
 
-import type { ServerCaches } from '../../helpers/cache';
+import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
 import type { SSRPageServerConfig, SSRRenderResult, SSRRequest, SSRResponseHelpers, SSRUser } from '@plitzi/sdk-shared';
 
@@ -54,16 +54,21 @@ const response = () => {
       setStatus: (code: number) => {
         status = code;
       },
-      send: (body: string) => sent.push(body)
+      send: (body: string | (() => string)) => sent.push(typeof body === 'function' ? body() : body)
     } as unknown as SSRResponseHelpers
   };
 };
 
 const config = { adapters: {}, devMode: false } as unknown as SSRPageServerConfig;
 
-const caches = (html?: TtlCache<string>) => ({ html, offlineData: undefined }) as unknown as ServerCaches;
+const caches = (html?: TtlCache<CachedPage>): ServerCaches => ({
+  html,
+  rsc: undefined,
+  offlineData: undefined,
+  rendering: new Map()
+});
 
-const render = (req: SSRRequest, res: SSRResponseHelpers, html?: TtlCache<string>) =>
+const render = (req: SSRRequest, res: SSRResponseHelpers, html?: TtlCache<CachedPage>) =>
   renderSSR(req, res, config, () => '', {} as PluginManager, caches(html));
 
 const page = (body: string): Rendered => ({ body, result: {}, cacheable: true });
@@ -116,7 +121,7 @@ describe('a page the visitor may not see', () => {
   // A redirect is an answer about THIS visitor. Cached, the next visitor with the same key would be bounced without
   // the page ever being asked again — and it is the page that knows whether they should be.
   it('is never cached', async () => {
-    const cache = new TtlCache<string>(60_000, 10);
+    const cache = new TtlCache<CachedPage>(60_000, 10);
     buildBody
       .mockResolvedValueOnce(redirect('/analytics/dashboard'))
       .mockResolvedValueOnce(page('<html>sign in</html>'));
@@ -136,7 +141,7 @@ describe('a page the visitor may not see', () => {
  */
 describe('one address, two visitors', () => {
   it('does not serve a guest’s cached page to a signed-in visitor', async () => {
-    const cache = new TtlCache<string>(60_000, 10);
+    const cache = new TtlCache<CachedPage>(60_000, 10);
     buildBody
       .mockResolvedValueOnce(page('<html>landing</html>'))
       .mockResolvedValueOnce(redirect('/analytics/dashboard'));
@@ -151,7 +156,7 @@ describe('one address, two visitors', () => {
   });
 
   it('does not serve a signed-in visitor’s cached page to a guest', async () => {
-    const cache = new TtlCache<string>(60_000, 10);
+    const cache = new TtlCache<CachedPage>(60_000, 10);
     buildBody.mockResolvedValueOnce(page('<html>home</html>')).mockResolvedValueOnce(page('<html>landing</html>'));
 
     await render(request(signedIn), response().res, cache);
