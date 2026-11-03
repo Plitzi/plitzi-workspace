@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
@@ -86,6 +86,7 @@ import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme';
 import type { ReactNode } from 'react';
+import type { Root } from 'react-dom/client';
 
 let stateManager: RuntimeStateInstance;
 let eventBridge: EventBridgeContextValue;
@@ -101,6 +102,28 @@ let eventBridge: EventBridgeContextValue;
  * to report to and must not acquire one by default. And nothing is derived when the host passed a config of
  * its own — a deployment that says where to report is not overridden by a guess.
  */
+
+/**
+ * The page the server sent, hydrated as a transition: React does the work in slices and gives the main thread back
+ * between them, instead of one task as long as the whole tree — a phone spent half a second and more unable to answer a
+ * tap while a large page hydrated (the long tasks Lighthouse sums as Total Blocking Time).
+ *
+ * What makes it safe is the interactions manager keeping a trigger fired at an element whose flows are not wired yet:
+ * a transition's effects run a while after its commit, and a tap in between was lost (`InteractionsManager.park`).
+ */
+const hydrateAsTransition = (container: HTMLElement, element: ReactNode): Root => {
+  let root: Root | undefined;
+  // `startTransition` runs its callback before it returns: the root is there once it does.
+  startTransition(() => {
+    root = hydrateRoot(container, element);
+  });
+  if (!root) {
+    throw new Error('hydrateRoot did not run inside startTransition');
+  }
+
+  return root;
+};
+
 const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
   if (params.analytics || params.offlineMode || !params.webKey) {
     return params;
@@ -259,7 +282,7 @@ export function render(
     return undefined;
   }
 
-  const root = ssrMode ? hydrateRoot(rootDOM, <Widget isHydrating />) : createRoot(rootDOM);
+  const root = ssrMode ? hydrateAsTransition(rootDOM, <Widget isHydrating />) : createRoot(rootDOM);
   if (!ssrMode) {
     root.render(<Widget />);
   }

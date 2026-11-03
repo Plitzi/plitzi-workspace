@@ -109,10 +109,19 @@ space while it hydrates.
   were new objects right after hydration — the host's `<PlitziSdk.Plugin>` children read again, an empty plugin list
   replacing an empty one — and every container redraws from them. On a published page a container now follows only
   whether its own items' types are registered, so a plugin that arrives later redraws the container that draws it. The
-  website's landing page on a slow phone (CPU 4×, mobile): 1838 element renders once instead of three times, its Total
-  Blocking Time from 1.1 s to 0.48 s; the signed-in dashboard from 0.57 s to 0.34 s.
+  website's landing page on a slow phone (CPU 4×, mobile): 1838 element renders once instead of three times.
 - Hydration no longer draws every container again when it ends: only an element with a `runtime: 'client'` or
   `'server'` item follows the switch from the server's markup to the browser's.
+- **A server-rendered page hydrates as a transition**: React gives the main thread back between slices instead of one
+  task as long as the page. The landing page's Total Blocking Time on a slow phone went to ~0.2 s, the dashboard's to
+  ~0.2–0.27 s.
+- **A tap between a page's hydration and its effects is no longer lost**: the interactions manager keeps a trigger fired
+  at an element whose flows are not wired yet, and runs it once they are (a few seconds, a few per element; said in the
+  dev tools when nothing takes it up). With hydration as a transition that window was long enough for the cookie bar
+  to ignore a click.
+- **A published page's containers follow the registries through `ElementRegistryContext`** (`@plitzi/sdk-shared/
+  plugins/react`), whose value never changes: a plugin arriving, the host's components handed over, redraw the
+  containers whose items they concern instead of every container of the page.
 - The page's context carries only what holds for the life of the page (see above), and the plugins' stylesheets their
   own context: an element registering its styles as it mounts drew every container again.
 

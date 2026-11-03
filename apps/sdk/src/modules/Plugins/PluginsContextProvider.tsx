@@ -2,10 +2,16 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { get, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState } from 'react';
 
+import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 import { getStyle } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
-import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import {
+  createElementRegistry,
+  ElementRegistryContext,
+  PluginAssetsContext,
+  PluginsContext
+} from '@plitzi/sdk-shared/plugins/react';
 import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { Asset, ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
@@ -33,7 +39,13 @@ const PluginsContextProvider = ({
 
     return internalData.plugins;
   }, [pluginsProp, internalData]);
-  const { components } = use(ComponentContext);
+  const { components, componentDefinitions } = use(ComponentContext);
+  // The registries as one object for the life of the page, which a published page's containers follow instead of the two
+  // contexts: each arrival told to the ones whose items it concerns, not to every container.
+  const [elementRegistry] = useState(() => createElementRegistry({ components, componentDefinitions, plugins }));
+  useIsomorphicLayoutEffect(() => {
+    elementRegistry.set({ components, componentDefinitions, plugins });
+  }, [elementRegistry, components, componentDefinitions, plugins]);
 
   // plugins
 
@@ -151,7 +163,9 @@ const PluginsContextProvider = ({
     <>
       <Helmet>{(renderMode === 'raw' || renderMode === 'widget') && helmetAssets}</Helmet>
       <PluginsContext value={pluginsContextValue}>
-        <PluginAssetsContext value={pluginAssetsContextValue}>{children}</PluginAssetsContext>
+        <PluginAssetsContext value={pluginAssetsContextValue}>
+          <ElementRegistryContext value={elementRegistry}>{children}</ElementRegistryContext>
+        </PluginAssetsContext>
       </PluginsContext>
     </>
   );

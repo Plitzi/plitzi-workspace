@@ -3,7 +3,7 @@ import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } 
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { passesFlagGate } from '@plitzi/sdk-shared/flags';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import { ElementRegistryContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
@@ -11,6 +11,7 @@ import { useLayoutBody } from '../LayoutBody';
 import ServerStaticShell from '../ServerStaticShell';
 
 import type { ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
+import type { ElementRegistry, ElementRegistrySnapshot } from '@plitzi/sdk-shared/plugins/react';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
@@ -29,6 +30,24 @@ const storeSubscriber = () => () => {};
 // type turns every later reading of it into a condition the compiler believes it already knows the answer to.
 const snapshot = (): boolean => true;
 const serverSnapshot = (): boolean => false;
+
+/** Which of the item types (`a|b|…`) the registry holds — as a component (`c`), a plugin (`p`) — one string to compare. */
+const typesHeldIn = (itemTypesKey: string, { components, plugins }: ElementRegistrySnapshot): string =>
+  itemTypesKey
+    .split('|')
+    .map(type => (type === '' ? '' : `${type in components.current ? 'c' : ''}${type in plugins ? 'p' : ''}`))
+    .join('|');
+
+/** The registries as `registry` keeps them, or — where none is followed — as the two contexts, whose changes draw again. */
+const useRegistries = (registry: ElementRegistry | undefined): ElementRegistrySnapshot => {
+  if (registry) {
+    return registry.get();
+  }
+
+  const { components, componentDefinitions } = use(ComponentContext);
+
+  return { components, componentDefinitions, plugins: use(PluginsContext).plugins };
+};
 
 const useInternalItems = ({
   id,
@@ -63,8 +82,18 @@ const useInternalItems = ({
   // Live, unlike the two above: a tester flips a flag on a page that is already drawn, and the items it gates have to
   // come and go with it. Published stable, so a container re-renders only when a flag actually changed.
   const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags');
-  const { components, componentDefinitions } = use(ComponentContext);
-  const { plugins } = use(PluginsContext);
+  /**
+   * The component and plugin registries — on a published page the SDK keeps, followed through `ElementRegistryContext`,
+   * whose value never changes, by what of them these items draw (`itemTypesHeld` below); anywhere else (the builder,
+   * where a plugin's settings change under the same type) read as the two contexts, every change drawing this again.
+   */
+  const kept = use(ElementRegistryContext);
+  const registry = previewMode === true ? kept : undefined;
+  const followsRegistry = registry !== undefined;
+  const itemTypesKey = itemElements.map((el: Element | undefined) => el?.definition.type ?? '').join('|');
+  const heldNow = () => (registry ? typesHeldIn(itemTypesKey, registry.get()) : '');
+  const itemTypesHeld = useSyncExternalStore(registry ? registry.subscribe : storeSubscriber, heldNow, heldNow);
+  const { components, componentDefinitions, plugins } = useRegistries(registry);
   // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
   const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
   /**
@@ -134,27 +163,12 @@ const useInternalItems = ({
   const isSlot = plitziElementLayout?.slots.includes(id) ?? false;
   const layoutBody = useLayoutBody(isSlot ? id : undefined);
 
-  /**
-   * What of the component and plugin registries these items are drawn from: which of their types each one holds.
-   *
-   * Both registries are new objects whenever anything joins them — a plugin the page loads after it hydrated, the host's
-   * own components handed over — and every container read them whole, so each arrival drew the whole page again. On a
-   * published page a container draws again only when one of ITS items' types arrived. The builder follows the objects
-   * themselves: a plugin's settings change there under the same type.
-   */
+  // What of the registries these items draw from: on a published page, which of their types each holds; in the builder,
+  // the registries themselves.
   const registryRef = useRef({ components, plugins });
   registryRef.current = { components, plugins };
-  const itemTypesHeld = previewMode
-    ? itemElements
-        .map((el: Element | undefined) => {
-          const type = el?.definition.type;
-
-          return type === undefined ? '' : `${type in components.current ? 'c' : ''}${type in plugins ? 'p' : ''}`;
-        })
-        .join('|')
-    : undefined;
-  const componentsDependency = itemTypesHeld ?? components;
-  const pluginsDependency = itemTypesHeld ?? plugins;
+  const componentsDependency = followsRegistry ? itemTypesHeld : components;
+  const pluginsDependency = followsRegistry ? itemTypesHeld : plugins;
 
   return useMemo<ReactNode | undefined>(() => {
     if (!hasItems || !mountItems) {

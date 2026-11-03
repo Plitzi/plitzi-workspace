@@ -3,6 +3,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { INTERVAL_TRIGGER, intervalOf, KEY_TRIGGER } from '@plitzi/sdk-shared/helpers';
 
 import { flowTrigger } from './InteractionsHelper';
@@ -43,6 +44,17 @@ const answersFiring = (node: ElementInteraction, payload: Record<string, unknown
   return true;
 };
 
+/** How long, and how many per element, a trigger waits for an element that has not subscribed yet. */
+const PARKED_MS = 5000;
+const PARKED_PER_ELEMENT = 20;
+
+type ParkedTrigger = {
+  eventName: string;
+  params: Record<string, unknown>;
+  at: number;
+  settle: (answer: unknown[]) => void;
+};
+
 class InteractionsManager implements InteractionsManagerApi {
   eventBridge: InstanceType<typeof EventBridge>;
   parentManager?: InteractionsManager;
@@ -61,6 +73,14 @@ class InteractionsManager implements InteractionsManagerApi {
   private latestRuns = new Map<string, AbortController>();
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
+  /**
+   * Triggers fired at an element that has not subscribed yet, by element: fired once it wires its flows (`update`).
+   *
+   * An element's handlers are React's from the commit, its flows are wired from an effect React runs after it: a tap in
+   * between — on a page that has just hydrated, before its effects have run — fired a trigger no flow answered, and
+   * the tap did nothing, with nothing said. Kept a few seconds, a few per element.
+   */
+  private parked = new Map<string, ParkedTrigger[]>();
 
   constructor(currentPageId = '', routeParams: RouteParams = {}, queryParams: QueryParams = {}) {
     this.eventBridge = new EventBridge();
@@ -216,6 +236,7 @@ class InteractionsManager implements InteractionsManagerApi {
     subscription.getAdditionalParams = getAdditionalParams;
     this.wire(id, interactions, triggers, callbacks);
     this.touch();
+    this.replayParked(id);
 
     return true;
   }
@@ -274,6 +295,7 @@ class InteractionsManager implements InteractionsManagerApi {
 
     this.eventBridge.off('interaction', id as EventBridgeEvent);
     delete this.subscriptors[id];
+    this.dropParked(id);
     if (this.callbacksAvailables[id] as Record<string, InteractionCallback> | undefined) {
       delete this.callbacksAvailables[id];
     }
@@ -359,7 +381,80 @@ class InteractionsManager implements InteractionsManagerApi {
       return undefined;
     }
 
+    if (!(this.subscriptors[subscriptorId] as Subscriptor | undefined)) {
+      return this.park(subscriptorId, eventName, params);
+    }
+
     return this.eventBridge.emit('interaction', subscriptorId as EventBridgeEvent, subscriptorId, eventName, params);
+  }
+
+  private park(id: string, eventName: string, params: Record<string, unknown>): Promise<unknown[]> {
+    const now = Date.now();
+    const waiting = (this.parked.get(id) ?? []).filter(trigger => {
+      if (now - trigger.at <= PARKED_MS) {
+        return true;
+      }
+
+      this.settleUnanswered(id, trigger);
+
+      return false;
+    });
+    if (waiting.length >= PARKED_PER_ELEMENT) {
+      const oldest = waiting.shift();
+      if (oldest) {
+        this.settleUnanswered(id, oldest);
+      }
+    }
+
+    return new Promise<unknown[]>(resolve => {
+      waiting.push({ eventName, params, at: now, settle: resolve });
+      this.parked.set(id, waiting);
+    });
+  }
+
+  private replayParked(id: string): void {
+    const waiting = this.parked.get(id);
+    if (!waiting) {
+      return;
+    }
+
+    this.parked.delete(id);
+    const now = Date.now();
+    waiting.forEach(trigger => {
+      if (now - trigger.at > PARKED_MS) {
+        this.settleUnanswered(id, trigger);
+
+        return;
+      }
+
+      this.eventBridge
+        .emit('interaction', id as EventBridgeEvent, id, trigger.eventName, trigger.params)
+        .then(trigger.settle, (error: unknown) => {
+          pConsole.danger('interactions', `${trigger.eventName} on "${id}" failed once its flows were wired`, {
+            id,
+            eventName: trigger.eventName,
+            error
+          });
+          trigger.settle([]);
+        });
+    });
+  }
+
+  private dropParked(id: string): void {
+    this.parked.get(id)?.forEach(trigger => {
+      this.settleUnanswered(id, trigger);
+    });
+    this.parked.delete(id);
+  }
+
+  /** A trigger no element took up: said, so a tap that did nothing is not silent. */
+  private settleUnanswered(id: string, trigger: ParkedTrigger): void {
+    pConsole.warning(
+      'interactions',
+      `${trigger.eventName} on "${id}" was not run: the element never wired its flows (unmounted, or not on this page)`,
+      { id, eventName: trigger.eventName }
+    );
+    trigger.settle([]);
   }
 
   // Child managers
