@@ -1,14 +1,24 @@
 import { DEFAULT_TTL_MS } from './defaults';
 
-type Entry<T> = { value: T; storedAt: number; bytes: number };
+type Entry<T> = { value: T; storedAt: number; bytes: number; group: string };
+
+/** One group's entries, least recently used first (a Map keeps the order of insertion; a use re-inserts). */
+type Group = { keys: Map<string, true>; bytes: number };
 
 export type TtlCacheOptions<T> = {
   /**
-   * What the cache holds at most, in bytes as `sizeOf` measures them: the least recently used goes first. Without one,
-   * only the entry count bounds it — which is no bound at all on entries of a megabyte each.
+   * What the cache holds at most, in bytes as `sizeOf` measures them. Without one, only the entry count bounds it —
+   * which is no bound at all on entries of a megabyte each.
    */
   maxBytes?: number;
   sizeOf?: (value: T) => number;
+  /**
+   * What an entry is shared out by — the space a page is of, on a server that renders many. When the cache is full it
+   * is the group holding the most that gives way, its least recently used entry first: a space that fills the cache
+   * (a burst of traffic, a crawler walking every query string) takes room the others are not using, and gives it back
+   * the moment they need it. With one group — a server of one space, or no `groupOf` — it is plain LRU.
+   */
+  groupOf?: (key: string) => string;
   /** How long past its TTL an entry is still handed out by {@link TtlCache.read}, marked stale. */
   staleMs?: number;
   sweepIntervalMs?: number;
@@ -18,15 +28,17 @@ export type TtlCacheOptions<T> = {
 export type CacheRead<T> = { value: T; stale: boolean; storedAt: number };
 
 /**
- * A map whose entries expire, bounded by count and by bytes, the least recently used dropped first.
+ * A map whose entries expire, bounded by count and by bytes, shared out fairly between groups.
  *
  * Least recently USED, not least recently stored: the first version dropped the oldest entry whatever it was, so the
  * site's home page — stored first and served on every visit — was the one evicted when the cache filled.
  */
 export class TtlCache<T> {
   private readonly store = new Map<string, Entry<T>>();
+  private readonly groups = new Map<string, Group>();
   private readonly maxBytes: number;
   private readonly sizeOf: ((value: T) => number) | undefined;
+  private readonly groupOf: ((key: string) => string) | undefined;
   private readonly staleMs: number;
   private bytesHeld = 0;
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
@@ -34,10 +46,11 @@ export class TtlCache<T> {
   constructor(
     private readonly ttlMs: number = DEFAULT_TTL_MS.html,
     private readonly maxSize = 500,
-    { maxBytes = Infinity, sizeOf, staleMs = 0, sweepIntervalMs = ttlMs }: TtlCacheOptions<T> = {}
+    { maxBytes = Infinity, sizeOf, groupOf, staleMs = 0, sweepIntervalMs = ttlMs }: TtlCacheOptions<T> = {}
   ) {
     this.maxBytes = maxBytes;
     this.sizeOf = sizeOf;
+    this.groupOf = groupOf;
     this.staleMs = staleMs;
     this.sweepTimer = setInterval(() => this.sweep(), sweepIntervalMs);
     (this.sweepTimer as unknown as { unref?: () => void }).unref?.();
@@ -64,9 +77,9 @@ export class TtlCache<T> {
       return undefined;
     }
 
-    // Moved to the end: the Map's order is the order of use, and eviction takes from the front.
-    this.store.delete(key);
-    this.store.set(key, entry);
+    const group = this.groups.get(entry.group);
+    group?.keys.delete(key);
+    group?.keys.set(key, true);
 
     return { value: entry.value, stale: age > this.ttlMs, storedAt: entry.storedAt };
   }
@@ -84,15 +97,19 @@ export class TtlCache<T> {
       return;
     }
 
-    this.store.set(key, { value, storedAt, bytes });
+    const name = this.groupOf?.(key) ?? '';
+    const group = this.groups.get(name) ?? { keys: new Map<string, true>(), bytes: 0 };
+    this.groups.set(name, group);
+    group.keys.set(key, true);
+    group.bytes += bytes;
+    this.store.set(key, { value, storedAt, bytes, group: name });
     this.bytesHeld += bytes;
 
-    for (const [oldest, entry] of this.store) {
-      if (this.store.size <= this.maxSize && this.bytesHeld <= this.maxBytes) {
+    while (this.store.size > this.maxSize || this.bytesHeld > this.maxBytes) {
+      const evicted = this.evictFromLargest(this.store.size > this.maxSize, key);
+      if (!evicted) {
         break;
       }
-
-      this.remove(oldest, entry);
     }
   }
 
@@ -117,6 +134,7 @@ export class TtlCache<T> {
 
   clear(): void {
     this.store.clear();
+    this.groups.clear();
     this.bytesHeld = 0;
   }
 
@@ -133,9 +151,52 @@ export class TtlCache<T> {
     return this.bytesHeld;
   }
 
+  /** What one group holds, in bytes. */
+  bytesOf(group: string): number {
+    return this.groups.get(group)?.bytes ?? 0;
+  }
+
+  /**
+   * Drops the least recently used entry of the group that holds the most — by entries when that is what is over. Never
+   * `kept`, the entry just stored: a group whose only entry it is gives way to the next.
+   */
+  private evictFromLargest(byCount: boolean, kept: string): boolean {
+    let largest: Group | undefined;
+    for (const group of this.groups.values()) {
+      if (group.keys.size === 1 && group.keys.has(kept)) {
+        continue;
+      }
+
+      const measure = byCount ? group.keys.size : group.bytes;
+      if (!largest || measure > (byCount ? largest.keys.size : largest.bytes)) {
+        largest = group;
+      }
+    }
+
+    const oldest = largest?.keys.keys().next();
+    const entry = oldest && !oldest.done ? this.store.get(oldest.value) : undefined;
+    if (!oldest || oldest.done || !entry) {
+      return false;
+    }
+
+    this.remove(oldest.value, entry);
+
+    return true;
+  }
+
   private remove(key: string, entry: Entry<T>): void {
     this.store.delete(key);
     this.bytesHeld -= entry.bytes;
+    const group = this.groups.get(entry.group);
+    if (!group) {
+      return;
+    }
+
+    group.keys.delete(key);
+    group.bytes -= entry.bytes;
+    if (group.keys.size === 0) {
+      this.groups.delete(entry.group);
+    }
   }
 
   private sweep(): void {

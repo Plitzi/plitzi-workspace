@@ -21,7 +21,7 @@ export const reportCacheSharing = (
 
   const kept =
     `Pages are kept ${seconds(ttlMs)} (served ${seconds(config.cache?.staleMs ?? DEFAULT_TTL_MS.stale)} more while ` +
-    `rendered again), up to ${megabytes(config.cache?.maxBytes ?? DEFAULT_CACHE_BYTES.html)} a process`;
+    `rendered again), up to ${megabytes(config.cache?.maxBytes ?? DEFAULT_CACHE_BYTES.html)} a process shared out by space`;
   const where = store ? ', and shared by every replica (cache.store)' : ', each process its own';
   const reach = bus
     ? 'an invalidation reaches every replica (cache.bus).'

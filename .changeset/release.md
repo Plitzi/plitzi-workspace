@@ -23,6 +23,10 @@ space while it hydrates.
 - The render cache keeps a page in the encoding the server prefers — a 1 MB page as the ~90 KB a browser is sent — and
   is bounded by `cache.maxBytes` (64 MB a process), the page served least recently dropped first. It dropped the one
   stored first, the site's home page among them, and held up to 500 pages of any size.
+- A server that renders many spaces by host shares its caches out by space: when one is full, the space holding the
+  most gives way, so one space's burst — or a crawler walking its query strings — no longer pushes every other space's
+  pages out. A server of one space is plain LRU, as before. The Redis store keeps the same rule under its own budget
+  (`createRedisPageStore(client, { maxBytes })`, 64 MB), never Redis's eviction, which would reach the job queues.
 - The requests for a page that arrive while it renders wait for that render: a page a publish invalidated was rendered
   once per visitor who asked for it in the meantime.
 - A page past its TTL is served for `cache.staleMs` (60 s) while one request renders it again behind it.

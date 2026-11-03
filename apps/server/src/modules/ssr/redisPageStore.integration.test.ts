@@ -99,6 +99,22 @@ describe.skipIf(!available)('the Redis page store', () => {
     expect(Number(await redis.get(`${PREFIX}bytes`))).toBeLessThanOrEqual(100);
   });
 
+  // One server renders many spaces: one that fills the store is the one that gives way, not the space beside it.
+  it('takes the room it needs from the space that holds the most', async () => {
+    const small = createRedisPageStore(redis, { prefix: PREFIX, maxBytes: 150 });
+    const at = (spaceId: number) => ({ spaceId, environment: 'production', hostname: `${spaceId}.test` });
+    await small.set('quiet', page('x'.repeat(30)), at(2), 60_000);
+    for (const key of ['busy-1', 'busy-2', 'busy-3']) {
+      await small.set(key, page('x'.repeat(30)), at(1), 60_000);
+    }
+
+    await small.set('busy-4', page('x'.repeat(30)), at(1), 60_000);
+
+    expect(await small.get('quiet')).toBeDefined();
+    expect(await small.get('busy-1')).toBeUndefined();
+    expect(await small.get('busy-4')).toBeDefined();
+  });
+
   it('counts a page stored again once, and gives its bytes back when it is invalidated', async () => {
     const facts = { spaceId: 1, environment: 'production', hostname: 'a.test' };
     await store.set('home', page('home'), facts, 60_000);
@@ -109,7 +125,8 @@ describe.skipIf(!available)('the Redis page store', () => {
     expect(Number(await redis.get(`${PREFIX}bytes`))).toBe(once);
     await store.invalidate({ spaceId: 1 });
     expect(Number(await redis.get(`${PREFIX}bytes`))).toBe(0);
-    expect(await redis.zcard(`${PREFIX}order`)).toBe(0);
+    expect(await redis.zcard(`${PREFIX}order:1`)).toBe(0);
+    expect(await redis.zcard(`${PREFIX}held`)).toBe(0);
   });
 
   it('gives back the bytes of the pages past their TTL as it stores more', async () => {
@@ -118,7 +135,7 @@ describe.skipIf(!available)('the Redis page store', () => {
     await new Promise(resolve => setTimeout(resolve, 120));
     await store.set('next', page('next'), facts, 50);
 
-    expect(await redis.zcard(`${PREFIX}order`)).toBe(1);
+    expect(await redis.zcard(`${PREFIX}order:1`)).toBe(1);
   });
 
   it('keeps nothing of a page larger than all it may hold', async () => {

@@ -26,8 +26,9 @@ export type RedisPageStoreOptions = {
 /**
  * The pages, kept in Lua so a page and its accounting never come apart:
  * - `page:<key>`, the page, with its TTL;
- * - `space:<spaceId>`, a space's pages — `<environment>\n<host>\n<key>` — which an invalidation reads;
- * - `spaces`, the spaces indexed; `order`, every page by when it was stored; `sizes`, each page's bytes; `bytes`, their sum.
+ * - `space:<spaceId>`, a space's pages — `<environment>\n<host>\n<key>` — which an invalidation reads, and `spaces`;
+ * - `order:<spaceId>`, a space's pages by when they were stored; `sizes`, each page's bytes;
+ * - `bytes`, what all of them hold, and `held`, what each space holds — who gives way when the budget is spent.
  */
 const EVICT = `
 local function evict(prefix, entry)
@@ -35,35 +36,54 @@ local function evict(prefix, entry)
   local key = string.match(member, '\\n[^\\n]*\\n(.*)$')
   redis.call('DEL', prefix .. 'page:' .. key)
   redis.call('SREM', prefix .. 'space:' .. space, member)
-  redis.call('ZREM', prefix .. 'order', entry)
-  local size = redis.call('HGET', prefix .. 'sizes', entry)
+  redis.call('ZREM', prefix .. 'order:' .. space, entry)
+  local size = tonumber(redis.call('HGET', prefix .. 'sizes', entry) or '0')
   redis.call('HDEL', prefix .. 'sizes', entry)
-  return redis.call('DECRBY', prefix .. 'bytes', tonumber(size or '0'))
+  if tonumber(redis.call('ZINCRBY', prefix .. 'held', -size, space)) <= 0 then
+    redis.call('ZREM', prefix .. 'held', space)
+  end
+  return redis.call('DECRBY', prefix .. 'bytes', size)
 end
 `;
 
-// A page stored, and then — oldest first — the pages past their TTL, and as many more as the budget needs.
-// KEYS[1] is the prefix: every key the script touches is built from it, and naming it routes the script to the node
-// of a Redis Cluster that holds them (its hash tag).
+/**
+ * A page stored; then this space's pages past their TTL; then, while the budget is spent, the oldest page of the space
+ * that holds the most. On a server of many spaces one that fills the store — a burst, a crawler walking every query
+ * string — takes room the others are not using, and gives it back first; on a server of one it is oldest first.
+ * KEYS[1] is the prefix: every key the script touches is built from it, and naming it routes the script to the node of
+ * a Redis Cluster that holds them (its hash tag).
+ */
 const SET = `${EVICT}
 local prefix, body, ttl, member, space, now, budget = KEYS[1], ARGV[1], tonumber(ARGV[2]), ARGV[3], ARGV[4], tonumber(ARGV[5]), tonumber(ARGV[6])
 local entry = space .. '\\n' .. member
-local previous = redis.call('HGET', prefix .. 'sizes', entry)
-if previous then
-  redis.call('DECRBY', prefix .. 'bytes', tonumber(previous))
+if redis.call('HEXISTS', prefix .. 'sizes', entry) == 1 then
+  evict(prefix, entry)
 end
 local key = string.match(member, '\\n[^\\n]*\\n(.*)$')
+local size = string.len(body)
 redis.call('SET', prefix .. 'page:' .. key, body, 'PX', ttl)
 redis.call('SADD', prefix .. 'space:' .. space, member)
 redis.call('SADD', prefix .. 'spaces', space)
-redis.call('ZADD', prefix .. 'order', now, entry)
-redis.call('HSET', prefix .. 'sizes', entry, string.len(body))
-local total = redis.call('INCRBY', prefix .. 'bytes', string.len(body))
+redis.call('ZADD', prefix .. 'order:' .. space, now, entry)
+redis.call('HSET', prefix .. 'sizes', entry, size)
+redis.call('ZINCRBY', prefix .. 'held', size, space)
+local total = redis.call('INCRBY', prefix .. 'bytes', size)
 while true do
-  local oldest = redis.call('ZRANGE', prefix .. 'order', 0, 0, 'WITHSCORES')
-  if #oldest == 0 or oldest[1] == entry then break end
-  if tonumber(oldest[2]) > now - ttl and total <= budget then break end
+  local oldest = redis.call('ZRANGE', prefix .. 'order:' .. space, 0, 0, 'WITHSCORES')
+  if #oldest == 0 or oldest[1] == entry or tonumber(oldest[2]) > now - ttl then break end
   total = evict(prefix, oldest[1])
+end
+while total > budget do
+  local victim
+  for _, largest in ipairs(redis.call('ZREVRANGE', prefix .. 'held', 0, 1)) do
+    local first = redis.call('ZRANGE', prefix .. 'order:' .. largest, 0, 0)[1]
+    if first and first ~= entry then
+      victim = first
+      break
+    end
+  end
+  if not victim then break end
+  total = evict(prefix, victim)
 end
 return total
 `;

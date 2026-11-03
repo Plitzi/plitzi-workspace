@@ -42,6 +42,33 @@ describe('TtlCache', () => {
     expect(pages.get('b')).toBeUndefined();
   });
 
+  // A server of many spaces: the one filling the cache gives its own pages back, not the quiet space's.
+  it('makes room from the group that holds the most, its least recently used first', () => {
+    const pages = cache(60_000, 100, {
+      maxBytes: 12,
+      sizeOf: value => value.length,
+      groupOf: key => key.split(':')[0]
+    });
+    pages.set('quiet:home', '1234');
+    pages.set('busy:a', '1234');
+    pages.set('busy:b', '1234');
+    pages.set('busy:c', '1234');
+
+    expect(pages.get('quiet:home')).toBe('1234');
+    expect(pages.get('busy:a')).toBeUndefined();
+    expect(pages.bytesOf('busy')).toBe(8);
+  });
+
+  it('never drops the entry it was just given to make room for it', () => {
+    const pages = cache(60_000, 100, { maxBytes: 8, sizeOf: value => value.length, groupOf: key => key.split(':')[0] });
+    pages.set('a:1', '1234');
+    pages.set('a:2', '1234');
+    pages.set('b:1', '1234');
+
+    expect(pages.get('b:1')).toBe('1234');
+    expect(pages.bytes).toBe(8);
+  });
+
   it('keeps nothing of an entry larger than all it may hold, and drops nothing for it', () => {
     const pages = cache(60_000, 100, { maxBytes: 10, sizeOf: value => value.length });
     pages.set('a', '1234');

@@ -686,8 +686,12 @@ createServer({
 });
 ```
 
-- **Kept compressed, by bytes.** A page is kept in the encoding the server prefers (`compression`), a 1 MB page as the
-  ~90 KB a browser is sent, and the cache is bounded by `cache.maxBytes`, the page served least recently dropped first.
+- **Kept compressed, by bytes, shared out by space.** A page is kept in the encoding the server prefers
+  (`compression`), a 1 MB page as the ~90 KB a browser is sent, and the cache is bounded by `cache.maxBytes`. When it is
+  full, the space holding the most gives way, its page served least recently first: on a server that renders many
+  spaces by host, one that fills the cache — a burst of traffic, a crawler walking every query string — takes room the
+  others are not using and gives it back the moment they need it. A server of one space is plain LRU. The schema data
+  and the RSC answers are shared out the same way.
 - **Rendered once.** The requests for a page that arrive while it renders wait for that render instead of starting
   their own — a page a publish invalidated is not rendered once per visitor who asked for it in the meantime.
 - **Served while rendered again.** A page past its TTL is still served for `cache.staleMs`, and rendered again behind
@@ -721,7 +725,9 @@ createServer({
 ```
 
 Only a page rendered for nobody in particular goes to the store, under a digest of its key — a signed-in visitor's
-stays in the process that drew it. A store that cannot answer is a miss, said in the log: the page is rendered, not
+stays in the process that drew it. The store keeps itself under its own budget (`createRedisPageStore(client,
+{ maxBytes })`, 64 MB), shared out by space as the process's is, rather than leave it to Redis's eviction: the Redis a
+deployment runs holds job queues and sessions beside it. A store that cannot answer is a miss, said in the log: the page is rendered, not
 refused. Without a bus, an invalidation reaches the host it was made on, and a deployment of several replicas serves a
 page a write made untrue until each copy expires.
 

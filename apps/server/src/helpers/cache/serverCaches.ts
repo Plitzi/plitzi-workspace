@@ -1,4 +1,5 @@
 import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from './defaults';
+import { readHtmlCacheKey, readOfflineDataCacheKey, readRscCacheKey } from './keys';
 import { sizeOfPage } from './pages';
 import { TtlCache } from './TtlCache';
 
@@ -28,6 +29,11 @@ export type ServerCachesOptions = {
 
 const sizeOfString = (value: string): number => value.length;
 
+// Shared out by space: a server that renders many keeps one from pushing the others' pages out (`TtlCache.groupOf`).
+const htmlSpace = (key: string): string => readHtmlCacheKey(key).spaceId;
+const rscSpace = (key: string): string => readRscCacheKey(key).spaceId;
+const offlineDataSpace = (key: string): string => readOfflineDataCacheKey(key).spaceId;
+
 export const createServerCaches = ({
   htmlTtlMs = DEFAULT_TTL_MS.html,
   rscTtlMs = DEFAULT_TTL_MS.rsc,
@@ -36,15 +42,28 @@ export const createServerCaches = ({
 }: ServerCachesOptions = {}): ServerCaches => ({
   html:
     htmlTtlMs > 0
-      ? new TtlCache<CachedPage>(htmlTtlMs, 5000, { maxBytes: htmlBytes, sizeOf: sizeOfPage, staleMs })
+      ? new TtlCache<CachedPage>(htmlTtlMs, 5000, {
+          maxBytes: htmlBytes,
+          sizeOf: sizeOfPage,
+          groupOf: htmlSpace,
+          staleMs
+        })
       : undefined,
   rsc:
     rscTtlMs > 0
-      ? new TtlCache<string>(rscTtlMs, 5000, { maxBytes: DEFAULT_CACHE_BYTES.rsc, sizeOf: sizeOfString })
+      ? new TtlCache<string>(rscTtlMs, 5000, {
+          maxBytes: DEFAULT_CACHE_BYTES.rsc,
+          sizeOf: sizeOfString,
+          groupOf: rscSpace
+        })
       : undefined,
   offlineData:
     htmlTtlMs > 0
-      ? new TtlCache<string>(htmlTtlMs, 500, { maxBytes: DEFAULT_CACHE_BYTES.offlineData, sizeOf: sizeOfString })
+      ? new TtlCache<string>(htmlTtlMs, 500, {
+          maxBytes: DEFAULT_CACHE_BYTES.offlineData,
+          sizeOf: sizeOfString,
+          groupOf: offlineDataSpace
+        })
       : undefined,
   rendering: new Map()
 });
