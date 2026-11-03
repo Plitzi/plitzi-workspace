@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createSpaceAdapters } from './index';
-import { authoringPreview, verifiedDomain, wildcardSubdomain } from './resolvers';
+import { authoringPreview, renderGrant, verifiedDomain, wildcardSubdomain } from './resolvers';
 import { createMemoryCache, refuse } from './types';
 
 import type { SpaceResolver } from './types';
@@ -283,14 +283,35 @@ describe('authoringPreview', () => {
     expect(await resolver(request('app.test'))).toBeUndefined();
   });
 
-  it('marks a good credential as authoring, so metering skips it', async () => {
-    const resolver = authoringPreview({ ...options, resolveGrant: granted(42) });
+  it('marks a secret credential as authoring, so metering skips it', async () => {
+    const resolver = authoringPreview({
+      ...options,
+      resolveGrant: () => Promise.resolve({ ok: true, grant: { spaceId: 42, scope: 'agent', origins: [] } })
+    });
 
     expect(await resolver(request('app.test', { query: { 'access-token': 'tok' } }))).toMatchObject({
       spaceId: 42,
       authoring: true,
       revision: 0
     });
+  });
+
+  /**
+   * The public key is in every published page: alone it still names the space — a thumbnail's page opens with it — but
+   * as a visit, or a copied key would serve anyone the space unmetered from a host of this deployment.
+   */
+  it('names the space for the public key alone, as a metered visit, and as authoring only for an author', async () => {
+    const asked = request('app.test', { query: { 'access-token': 'tok' } });
+    const visit = await authoringPreview({ ...options, resolveGrant: granted(42) })(asked);
+    const isAuthor = vi.fn(() => Promise.resolve(true));
+    const author = await authoringPreview({ ...options, resolveGrant: granted(42), isAuthor })(asked);
+
+    expect(visit).toEqual({ spaceId: 42, revision: 0 });
+    expect(author).toEqual({ spaceId: 42, revision: 0, authoring: true });
+    expect(isAuthor).toHaveBeenCalledWith(asked, { spaceId: 42, scope: 'render', origins: [] });
+    expect(
+      await authoringPreview({ ...options, resolveGrant: granted(42), isAuthor: () => Promise.resolve(false) })(asked)
+    ).toEqual({ spaceId: 42, revision: 0 });
   });
 
   it('refuses a bad credential rather than letting it fall through', async () => {
@@ -319,5 +340,72 @@ describe('authoringPreview', () => {
     expect(await resolver(request('app.test', { query: { 'access-token': 'tok' } }))).toEqual({
       refuse: { code: 404, message: 'Space not found' }
     });
+  });
+});
+
+/**
+ * A page that renders the space itself, asking for it with the space's public credential: a visit, of the environment and
+ * revision it names — the live one when it names none, which is what a published site asks for.
+ */
+describe('renderGrant', () => {
+  const find = (spaceId: number) => Promise.resolve({ spaceId });
+  const fetched = (query: Record<string, string> = {}) =>
+    request('ssr.test', { headers: { authorization: 'Bearer tok', origin: 'https://acme.com' }, query });
+  const grantedFor =
+    (origins: string[], scope: 'render' | 'agent' = 'render') =>
+    (): Promise<GrantResult> =>
+      Promise.resolve({ ok: true, grant: { spaceId: 5, scope, origins } });
+
+  it('resolves the space its credential names, as a visit of the live revision of the environment asked for', async () => {
+    const resolver = renderGrant({ resolveGrant: grantedFor(['https://acme.com']), find });
+
+    const answer = await resolver(fetched({ environment: 'production' }));
+
+    expect(answer).toEqual({ spaceId: 5, environment: 'production', revision: 0, grantOrigins: ['https://acme.com'] });
+    expect(answer).not.toHaveProperty('authoring');
+  });
+
+  it('reads the revision asked for, and the space’s environment when none is', async () => {
+    const resolver = renderGrant({ resolveGrant: grantedFor([]), find });
+
+    expect(await resolver(fetched({ revision: '12' }))).toMatchObject({ environment: 'main', revision: 12 });
+    expect(await resolver(fetched({ revision: 'latest' }))).toMatchObject({ revision: 0 });
+  });
+
+  it('refuses an environment there is none of, naming the ones there are', async () => {
+    const resolver = renderGrant({ resolveGrant: grantedFor([]), find });
+
+    expect(await resolver(fetched({ environment: 'prod' }))).toEqual({
+      refuse: {
+        code: 400,
+        message:
+          'No environment "prod": ask for one of main, production, staging, development, or none for the live one'
+      }
+    });
+  });
+
+  // An address token is a page opened by a tool — a screenshot, a journey — and an author's grant is a preview: neither is
+  // this one's to turn into a counted visit.
+  it('leaves a token in the address, a bad credential and an author’s to the resolvers after it', async () => {
+    expect(
+      await renderGrant({ resolveGrant: grantedFor([]), find })(
+        request('ssr.test', { query: { 'access-token': 'tok' } })
+      )
+    ).toBeUndefined();
+    expect(await renderGrant({ resolveGrant: denied(), find })(fetched())).toBeUndefined();
+    expect(await renderGrant({ resolveGrant: grantedFor([], 'agent'), find })(fetched())).toBeUndefined();
+  });
+
+  it('checks the credential against the host it was presented on, and the page’s origin', async () => {
+    const resolveGrant = vi.fn(grantedFor([]));
+    await renderGrant({ resolveGrant, find })(fetched());
+
+    expect(resolveGrant).toHaveBeenCalledWith(expect.objectContaining({ hostname: 'ssr.test' }), { host: 'ssr.test' });
+  });
+
+  it('404s when the credential names a space that is gone', async () => {
+    const resolver = renderGrant({ resolveGrant: grantedFor([]), find: () => Promise.resolve(undefined) });
+
+    expect(await resolver(fetched())).toEqual({ refuse: { code: 404, message: 'Space not found' } });
   });
 });

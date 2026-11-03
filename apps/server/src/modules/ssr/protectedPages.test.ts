@@ -62,7 +62,7 @@ const userOf = (req: SSRRequest): SSRUser | undefined => {
 
 let server: SSRServer;
 
-const documentPath = (html: string): string => /<link id="plitzi-space" href="([^"]+)"/.exec(html)?.[1] ?? '';
+const documentPath = (html: string): string => /const __plitziSpaceUrl = "([^"]+)"/.exec(html)?.[1] ?? '';
 
 const as = (permissions?: string): RequestInit =>
   permissions === undefined ? {} : { headers: { 'x-test-permissions': permissions } };

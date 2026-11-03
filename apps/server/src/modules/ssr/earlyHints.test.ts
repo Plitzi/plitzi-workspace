@@ -57,7 +57,6 @@ describe('modules/ssr/earlyHints', () => {
     expect(status).toBe(200);
     expect(hints).toHaveLength(1);
     expect(hints[0].link).toContain('rel=preload; as=style');
-    expect(hints[0].link).toContain('/sdk-assets/plitzi-sdk.js');
     expect(headers.link).toBe(hints[0].link);
     // And Chromium is asked for the machine's scheme, which a `system` theme is drawn by from the next request on.
     expect(headers['accept-ch']).toBe('Sec-CH-Prefers-Color-Scheme');
@@ -69,9 +68,9 @@ describe('modules/ssr/earlyHints', () => {
     expect(compressed.headers.vary?.split(', ')).toEqual(['Sec-CH-Prefers-Color-Scheme', 'Accept-Encoding']);
   });
 
-  // A module is fetched in CORS mode: a hint without `crossorigin` is a second request for the same file.
-  it('hints the SDK as the module the page imports, and nothing of it to a page with no script', () => {
-    expect(pageLinks({}).find(link => link.includes('plitzi-sdk.js'))).toMatch(/rel=preload; as=script; crossorigin$/);
-    expect(pageLinks({ ssrOnly: true }).some(link => link.includes('plitzi-sdk.js'))).toBe(false);
+  // The SDK is asked once the page has painted: a hint for it shared a phone's network with the stylesheets.
+  it('hints only what the first paint waits for: the stylesheets, never the SDK', () => {
+    expect(pageLinks({}).every(link => link.endsWith('rel=preload; as=style'))).toBe(true);
+    expect(pageLinks({}).some(link => link.includes('plitzi-sdk.js'))).toBe(false);
   });
 });

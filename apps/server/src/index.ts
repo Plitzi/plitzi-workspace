@@ -17,6 +17,7 @@ export {
   fixedSpace,
   presentsCredential,
   refuse,
+  renderGrant,
   verifiedDomain,
   wildcardSubdomain
 } from './adapters/space';
@@ -49,6 +50,7 @@ export type {
   AuthoringPreviewOptions,
   DeploymentRow,
   FrameAncestorsConfig,
+  RenderGrantOptions,
   SpaceAdapters,
   SpaceAdaptersConfig,
   SpaceCache,

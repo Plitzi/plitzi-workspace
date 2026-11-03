@@ -132,11 +132,13 @@ describe('the SSR document / bootstrap', () => {
 
   it('hands the plugins to the same render call, and none when there are none', () => {
     expect(bootstrap('{}')).toMatch(/render\('plitzi', __plitziParams, __plitziPlugins/);
-    expect(
-      bootstrap('{}', [
-        { name: 'chart', keyName: 'chart', varName: 'chart', js: '/sdk-plugins/chart/index.js', props: {} }
-      ])
-    ).toContain("import { default as chart } from '/sdk-plugins/chart/index.js'");
+    const html = bootstrap('{}', [
+      { name: 'chart', keyName: 'chart', varName: 'chart', js: '/sdk-plugins/chart/index.js', props: {} }
+    ]);
+    // Imported beside the SDK once the page has painted, and named for the render call.
+    expect(html).toContain("import('/sdk-plugins/chart/index.js')");
+    expect(html).toMatch(/const \[\{ render \}, \{ default: chart \}\] = await Promise\.all/);
+    expect(html).not.toContain('import { default as chart }');
   });
 
   it('sends a plugin the page does not draw as its declaration, its code and stylesheet loaded when drawn', () => {
@@ -168,6 +170,29 @@ describe('the SSR document / bootstrap', () => {
       `'editor': {load: () => import('/sdk-plugins/editor/index.js'), css: "/e.css", declaration: {"version":"2.0.0","plugins":{"editorToolbar":{}}}`
     );
     expect(html).not.toContain('"</script>"');
+  });
+
+  /**
+   * The page paints before React listens (the SDK is asked once it has): a tap, a form sent and what was typed in that
+   * time are kept from the start, and handed back only as the SDK is handed the page. What the browser does with them
+   * — kept or made again, once hydrated — is played in a browser by the visual suite (auth.spec.ts).
+   */
+  it('keeps what the visitor does before React listens, from before the wait to the render call', () => {
+    const html = bootstrap('{}');
+    const at = (needle: string) => html.indexOf(needle);
+    const paint = at('requestAnimationFrame(() => setTimeout(resolve))');
+
+    for (const kept of [
+      "addEventListener('click', __plitziKeepTap, true)",
+      "addEventListener('submit', __plitziHoldSend, true)",
+      "addEventListener('input', __plitziKeepTyped, true)"
+    ]) {
+      expect(at(kept)).toBeGreaterThan(-1);
+      expect(at(kept)).toBeLessThan(paint);
+    }
+
+    expect(at('__plitziListening();')).toBeGreaterThan(paint);
+    expect(at('__plitziListening();')).toBeLessThan(at("render('plitzi'"));
   });
 
   it('ships no bootstrap for a page that renders on the server only', () => {

@@ -16,7 +16,7 @@
  *   which a nonce cannot cover without the SDK knowing there is one.
  * - `img-src` / `font-src` are open over https because a space's pictures and faces are the author's, hosted
  *   wherever they host them, and `data:` / `blob:` because the SDK builds some of them itself.
- * - `connect-src` is the API, the GraphQL server and its sockets.
+ * - `connect-src` is the API, the GraphQL server and its sockets, and the page server the SDK asks for the space.
  * - `frame-src` for the SDK's iframe render mode, and for a space that embeds something.
  * - `object-src 'none'` and `base-uri 'self'` — nothing here needs either, and both are worth refusing.
  *

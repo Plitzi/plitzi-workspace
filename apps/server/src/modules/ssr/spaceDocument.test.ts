@@ -19,7 +19,7 @@ const offlineData = offlineDataOf();
 
 let server: SSRServer;
 
-const documentPath = (html: string): string | undefined => /<link id="plitzi-space" href="([^"]+)"/.exec(html)?.[1];
+const documentPath = (html: string): string | undefined => /const __plitziSpaceUrl = "([^"]+)"/.exec(html)?.[1];
 
 const payloadOf = (html: string): Record<string, unknown> =>
   JSON.parse(/id="plitzi-ssr-data">([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '{}') as Record<string, unknown>;
@@ -43,7 +43,24 @@ describe('modules/ssr/spaceDocument', () => {
 
     expect(documentPath(html)).toMatch(/^\/_plitzi\/space\/[\w-]+\.json$/);
     expect(payloadOf(html)).not.toHaveProperty('offlineData');
-    expect(html).toContain('as="fetch" crossorigin="anonymous"');
+  });
+
+  /**
+   * Hydrating needs the space and the SDK, and painting does not: asked as the page is parsed, they shared a phone's
+   * network with the stylesheets the first paint waits for, and the page painted half a second later.
+   */
+  it('is asked, with the SDK, once the page has painted — nothing in the head preloads either', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    const head = html.slice(0, html.indexOf('</head>'));
+    const painted = html.indexOf('requestAnimationFrame(() => setTimeout(resolve))');
+
+    expect(head).not.toContain('modulepreload');
+    expect(head).not.toContain('rel="preload" as="fetch"');
+    expect(painted).toBeGreaterThan(head.length);
+    expect(html.indexOf('fetch(__plitziSpaceUrl)')).toBeGreaterThan(painted);
+    expect(html.indexOf("import('/sdk-assets/plitzi-sdk.js")).toBeGreaterThan(painted);
+    // Nothing of the SDK is imported before the wait — a static import is fetched as the script is parsed.
+    expect(html.slice(head.length, painted)).not.toMatch(/import\s*\{|import\(/);
   });
 
   it('answers the name with the space, to be kept for good', async () => {

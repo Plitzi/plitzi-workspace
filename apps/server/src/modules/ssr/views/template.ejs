@@ -80,6 +80,31 @@
     <% } %>
     <% } %>
 
+    <%#
+      What the first paint waits for, and nothing else: the head asks for the stylesheets alone. The scripts and the
+      space's document — which hydrating needs, and painting does not — are asked by the bootstrap once the page has
+      painted (see it at the end of the body).
+    %>
+    <link href="<%= locals.cssPath || '' %>" rel="stylesheet" />
+    <%# The space's compiled stylesheet, when the page links it rather than carrying it (STYLE_SHEET_ID): in the head,
+        so the page is painted with it from its first frame. %>
+    <% if (locals.styleSheetPath) { %>
+    <link id="plitzi-style" href="<%= locals.styleSheetPath %>" rel="stylesheet" />
+    <% } %>
+    <% if (locals.builderCssPath) { %>
+    <link href="<%= locals.builderCssPath %>" rel="stylesheet" />
+    <% } %>
+    <% if (locals.plugins && locals.plugins.length > 0) { %>
+    <%# A deferred plugin's stylesheet is loaded with its code, by the page that draws it. %>
+    <% for (const plugin of locals.plugins) { if (plugin.css && !plugin.deferred) { %>
+    <link href="<%= plugin.css %>" rel="stylesheet" data-plitzi-plugin="<%= plugin.keyName %>" />
+    <% } } %>
+    <% } %>
+    <%# The icons are a sheet of their own, after the page's own: their fonts are files fetched only for a style a page uses. %>
+    <% if (locals.iconsCssPath) { %>
+    <link href="<%= locals.iconsCssPath %>" rel="stylesheet" />
+    <% } %>
+
     <% if (!locals.ssrOnly) { %>
     <%#
       The import map before anything that loads a module: a browser that fetched one already (a modulepreload counts)
@@ -98,40 +123,6 @@
       }
     </script>
 
-    <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />
-    <link rel="modulepreload" href="<%= locals.reactDom || '' %>" crossorigin />
-    <%# The SDK itself: imported only by the bootstrap at the end of the body, where the browser found it last — it
-        arrived ~700 ms after React on a phone's network, and the page hydrated that much later. %>
-    <% if (locals.jsPath) { %>
-    <link rel="modulepreload" href="<%= locals.jsPath %>" crossorigin />
-    <% } %>
-    <% } %>
-
-    <%# The space, fetched beside the page while the scripts load, rather than carried in it. %>
-    <% if (locals.spaceDocumentPath) { %>
-    <link id="plitzi-space" href="<%= locals.spaceDocumentPath %>" rel="preload" as="fetch" crossorigin="anonymous" />
-    <% } %>
-    <link href="<%= locals.cssPath || '' %>" rel="preload" as="style" />
-    <link href="<%= locals.cssPath || '' %>" rel="stylesheet" />
-    <%# The icons are a sheet of their own, after the SDK's: their fonts are files fetched only for a style a page uses. %>
-    <% if (locals.iconsCssPath) { %>
-    <link href="<%= locals.iconsCssPath %>" rel="stylesheet" />
-    <% } %>
-    <%# The space's compiled stylesheet, when the page links it rather than carrying it (STYLE_SHEET_ID): in the head,
-        so the page is painted with it from its first frame. %>
-    <% if (locals.styleSheetPath) { %>
-    <link id="plitzi-style" href="<%= locals.styleSheetPath %>" rel="stylesheet" />
-    <% } %>
-    <% if (locals.builderCssPath) { %>
-    <link href="<%= locals.builderCssPath %>" rel="preload" as="style" />
-    <link href="<%= locals.builderCssPath %>" rel="stylesheet" />
-    <% } %>
-    <% if (locals.plugins && locals.plugins.length > 0) { %>
-    <%# A deferred plugin's stylesheet is loaded with its code, by the page that draws it. %>
-    <% for (const plugin of locals.plugins) { if (plugin.css && !plugin.deferred) { %>
-    <link href="<%= plugin.css %>" rel="preload" as="style" />
-    <link href="<%= plugin.css %>" rel="stylesheet" data-plitzi-plugin="<%= plugin.keyName %>" />
-    <% } } %>
     <% } %>
   </head>
 
@@ -195,13 +186,131 @@
     <%# The payload is data, so it travels as JSON: parsing it as a JavaScript literal cost the browser several times
         what JSON.parse does, on megabytes of it. Escaped by the server — no `<` reaches this block. %>
     <script type="application/json" id="plitzi-ssr-data"><%- locals.offlineData || '{}' %></script>
+    <%#
+      The SDK, the plugins the page draws and the space's document are asked once the page has PAINTED, not as the
+      browser parses it. Hydrating needs them and painting does not, and on a phone's network they are most of what the
+      page loads: asked beside the stylesheets, they shared the line with them, and the page painted only when the
+      stylesheets got through (the dashboard's space page: 1.58 s, against 1.03 s with nothing beside them). They take
+      as long to arrive either way — the network is what they wait for — so the page hydrates when it did, and paints
+      half a second sooner. A frame and the task after it is "painted"; a tab nobody sees paints nothing, and starts at
+      once. React's vendor file is imported beside the SDK rather than found inside it, a round trip later.
+    %>
     <script type="module">
-      import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
+      <% const drawnPlugins = activePlugins.filter(p => !p.deferred); %>
       <% const json = value => JSON.stringify(value ?? null).replace(/</g, '\\u003c'); %>
-      <% for (const plugin of activePlugins) { if (!plugin.deferred) { %>
-      import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
-      <% } } %>
+      <%#
+        A tap before React listens is kept, and made again once the page has hydrated: until the SDK's `render` call
+        nothing on the page answers one, and the page has painted by then — a visitor sees a button and taps it. React
+        replays what lands between its listening and its hydrating; what lands before, it never hears. Only a tap the
+        browser did nothing with by itself is made again: a link followed, a field focused, a box ticked already
+        happened, and once more would undo or repeat it. A form sent is held instead — sent by the browser itself, it
+        posted what was typed, a password included, to the page's own address — and sent again, through the page, once
+        it has hydrated. And what was typed or ticked is put back: hydrating, React sets every field it controls to its
+        state, which starts empty, and the visitor's text was gone.
+      %>
+      const __plitziTyped = new Map();
+      const __plitziKeepTyped = event => {
+        const field = event.target;
+        if (event.isTrusted && (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+          __plitziTyped.set(field, field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio') ? { checked: field.checked } : { value: field.value });
+        }
+      };
+      document.addEventListener('input', __plitziKeepTyped, true);
+      document.addEventListener('change', __plitziKeepTyped, true);
+      const __plitziTaps = [];
+      const __plitziSends = [];
+      const __plitziHoldSend = event => {
+        if (event.isTrusted && event.target instanceof HTMLFormElement) {
+          event.preventDefault();
+          __plitziSends.push({ form: event.target, submitter: event.submitter });
+        }
+      };
+      document.addEventListener('submit', __plitziHoldSend, true);
+      const __plitziKeepTap = event => {
+        if (event.isTrusted && event.target instanceof Element) {
+          __plitziTaps.push(event.target);
+        }
+      };
+      document.addEventListener('click', __plitziKeepTap, true);
+      const __plitziActedAlone = target => {
+        const native = target.closest('a[href], input, select, textarea, label, summary, [contenteditable], button');
+
+        return native !== null && !(native instanceof HTMLButtonElement && (native.type === 'button' || native.form === null));
+      };
+      const __plitziListening = () => {
+        document.removeEventListener('click', __plitziKeepTap, true);
+        document.removeEventListener('submit', __plitziHoldSend, true);
+        document.removeEventListener('input', __plitziKeepTyped, true);
+        document.removeEventListener('change', __plitziKeepTyped, true);
+        const root = document.getElementById('plitzi');
+        if ((__plitziTaps.length === 0 && __plitziSends.length === 0 && __plitziTyped.size === 0) || !root) {
+          return;
+        }
+
+        const tapAgain = () => {
+          // Told to React even when the field still shows it: React hydrating takes what the field shows as the value it
+          // knows, while its state is empty, and an event on a value it knows is no change. So the field is set to
+          // something else through React's own tracker first, then to the visitor's through the element's setter, which
+          // the tracker does not see — and the event is then the change it is.
+          for (const [field, kept] of __plitziTyped) {
+            if (!field.isConnected) {
+              continue;
+            }
+
+            if ('checked' in kept) {
+              field.checked = !kept.checked;
+              field.click();
+            } else {
+              field.value = kept.value === '' ? ' ' : '';
+              Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')?.set?.call(field, kept.value);
+              field.dispatchEvent(new Event(field instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true }));
+            }
+          }
+
+          __plitziTyped.clear();
+          for (const target of __plitziTaps.splice(0)) {
+            if (target.isConnected && !__plitziActedAlone(target)) {
+              target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
+            }
+          }
+
+          for (const { form, submitter } of __plitziSends.splice(0)) {
+            if (form.isConnected) {
+              form.requestSubmit(submitter?.isConnected && submitter.form === form ? submitter : undefined);
+            }
+          }
+        };
+        // A frame after the page says it hydrated: the effects of that commit, which wire the flows, have run by then.
+        const later = () => requestAnimationFrame(() => setTimeout(tapAgain));
+        const hydrated = () => root.querySelector('[data-hydrated]') !== null;
+        if (hydrated()) {
+          later();
+
+          return;
+        }
+
+        const watch = new MutationObserver(() => {
+          if (hydrated()) {
+            watch.disconnect();
+            later();
+          }
+        });
+        watch.observe(root, { attributes: true, attributeFilter: ['data-hydrated'], subtree: true });
+      };
+      if (document.visibilityState !== 'hidden') {
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)));
+      }
+
+      const __plitziSpaceUrl = <%- json(locals.spaceDocumentPath) %>;
+      const __plitziSpaceAsked = __plitziSpaceUrl ? fetch(__plitziSpaceUrl) : undefined;
+      const [{ render }<%- drawnPlugins.map(p => `, { default: ${p.varName} }`).join('') %>] = await Promise.all([
+        import('<%= locals.jsPath || '' %>'),
+        <% for (const plugin of drawnPlugins) { %>
+        import('<%= plugin.js %>'),
+        <% } %>
+        ...<%- json([...new Set([locals.react, locals.reactDom].filter(Boolean))]) %>.map(module => import(module))
+      ]);
       <%# What the page draws, imported before it hydrates; the rest declared, and imported when a page draws it. %>
       const __plitziPlugins = { <%- activePlugins.map(p => p.deferred
         ? `'${p.keyName}': {load: () => import('${p.js}'), css: ${json(p.css)}, declaration: ${json(p.deferred)}, props: ${json(p.props)}, clientOnly: ${p.ssr === false}}`
@@ -210,9 +319,8 @@
       const __plitziParams = JSON.parse(__plitziData.textContent);
       // Read once: the page would otherwise hold the space twice, as this text and as what it was parsed into.
       __plitziData.remove();
-      const __plitziSpace = document.getElementById('plitzi-space');
-      if (__plitziSpace) {
-        const response = await fetch(__plitziSpace.href);
+      if (__plitziSpaceAsked) {
+        const response = await __plitziSpaceAsked;
         if (!response.ok) {
           throw new Error(`[plitzi] The space could not be loaded (${response.status}): the page stays as the server drew it.`);
         }
@@ -220,6 +328,7 @@
         __plitziParams.offlineData = await response.json();
       }
       <% if (locals.livePages) { %>
+      __plitziListening();
       const __plitziApp = render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true, { hotPlugins: <%= locals.hotPlugins ? true : false %> });
       // New documents for the space this page shows: swapped where it stands, its state kept. A page that cannot take
       // them in place (one with elements the server draws) loads again.
@@ -248,6 +357,7 @@
         }
       });
       <% } else { %>
+      __plitziListening();
       render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
       <% } %>
     </script>

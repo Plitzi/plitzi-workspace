@@ -273,7 +273,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `cache` | `SSRCacheConfig` | — | What is kept of rendered pages (`maxBytes`, `staleMs`, `ignoredQueryParams`) and how several replicas keep them in step (`bus`, `store`). See [Render cache](#render-cache). |
-| `earlyHints` | `boolean` | `true` | Says what every page loads — the SDK's stylesheets and its module — in a `103 Early Hints` before the page is rendered, and again as the page's `Link` header (for a CDN that turns it into one). `false` sends neither. |
+| `earlyHints` | `boolean` | `true` | Says what every page paints with — the SDK's stylesheets — in a `103 Early Hints` before the page is rendered, and again as the page's `Link` header (for a CDN that turns it into one). Not the SDK's module: it is asked once the page has painted. `false` sends neither. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
 | `logoutPath` | `string \| false` | `'/auth/logout'` | Path for the built-in logout endpoint. Set to `false` to disable it entirely. |
@@ -355,10 +355,11 @@ more than one space, and getting any of them wrong is a real failure. `createSpa
 asks you only for the lookups.
 
 ```ts
-import { authoringPreview, createSpaceAdapters, verifiedDomain, wildcardSubdomain } from '@plitzi/sdk-server';
+import { authoringPreview, createSpaceAdapters, renderGrant, verifiedDomain, wildcardSubdomain } from '@plitzi/sdk-server';
 
 const spaces = createSpaceAdapters({
   resolvers: [
+    renderGrant({ resolveGrant: auth.identity.resolveGrant, find: findSpace }),
     authoringPreview({ hosts: platformHosts, resolveGrant: auth.identity.resolveGrant, find: findSpace }),
     wildcardSubdomain({ suffix: 'example.app', find: findSpaceBySlug }),
     verifiedDomain(findDeploymentByDomain)
@@ -385,7 +386,8 @@ loses everything it asks for. Many spaces on one server are a sub-domain each (`
 
 | Built in | What it is |
 |---|---|
-| `authoringPreview` | An author looking at their own space through a builder, on a host you own. Marks the render `authoring` so metering skips it. Put it first. |
+| `renderGrant` | A page that renders the space itself — a site published as files, an embed, a desktop app — asking with the space's public `render` key in `Authorization`, from an origin the key allows. The key names the space; `?environment=` and `?revision=` the version (the live one when none). A visit: metered. Only the header — a key in the address (`?access-token`) is a tool's page and goes on. Put it first. |
+| `authoringPreview` | A credential presented on a host you own: a builder's preview, a tool's page (a thumbnail, a journey). A secret one (`agent`, `host`) is an author's, and the render `authoring` — metering skips it; the space's public key is an author's only when `isAuthor(req, grant)` says so (a session with a role on the space), and otherwise a visit, metered as one — it is in every published page. After `renderGrant`. |
 | `wildcardSubdomain` | `<slug>.example.app`, with no per-space row to configure. Refuses to read a deeper sub-domain as a slug. |
 | `verifiedDomain` | A custom domain, through a row that says it was proven. |
 | `fixedSpace` | Always this one — a single-space deployment, or a catch-all last in the chain. |
@@ -523,7 +525,7 @@ What it used to make every deployment declare, each of which it can answer itsel
 | **The audience** | `tokens.audience` defaults to the issuer, which is right for a deployment that is its own audience |
 | **The space** | `createJsonAdapters({ offlineData })` alone resolves to space 1, `main`, revision 0 |
 | **The visitor's scheme** | A `system` theme is drawn as the machine asks — `{{ theme.resolved }}` in a picture's address, a label — from the `Sec-CH-Prefers-Color-Scheme` client hint the page asks Chromium for (`Accept-CH`), or the `theme-scheme` cookie the SDK keeps it in; `light` on a first visit without either. The page cache is keyed by it where the theme defers to the machine |
-| **What a page loads, early** | The SDK's module is preloaded from the page's head (`modulepreload`) and, with its stylesheets, said in a `103 Early Hints` while the page is still being rendered — the browser has them by the time the HTML arrives. `earlyHints: false` turns the hints off |
+| **What a page paints with, first** | The SDK's stylesheets are said in a `103 Early Hints` while the page is still being rendered — the browser has them by the time the HTML arrives — and the head asks for nothing else; the SDK, the plugins and the space's document are asked once the page has painted, so they do not share a phone's network with what the paint waits for. `earlyHints: false` turns the hints off |
 
 A page server therefore needs `port`, `adapters`, and nothing else.
 
@@ -727,6 +729,21 @@ in the page where no other request could answer for it — a draft preview, a sp
 deployment's own `templateFn`, which does not know to link it, and when a `{{ token }}` in it is replaced by the
 variables as each request resolves them. A client-side render (no SSR) receives the stylesheet as it always did, and
 draws it; a page whose stylesheet the browser comes to draw itself (new documents in place) drops the linked copy.
+
+### A page that renders the space itself
+
+`GET /_plitzi/space.json` answers the space as it is now to a page the server did not draw — a site published as
+files, an embed, a desktop app, a page of the space's own host: `{ space, visit }`, the same document a drawn page
+fetches and the decision about this visit (`overQuota`, `quotaNear`, `badge`) that a drawn page is handed in its
+bootstrap. The SDK asks it when it is given no `offlineData`. The space is the one the request resolves to — the host
+(a custom domain, the space's address: no key needed, and no other environment than the host's, which is a `400`
+naming the fix) or the space's `render` key (`renderGrant`), which names the environment and revision with it. Chosen
+by the key, it is answered to the page's origin (CORS, with credentials; the preflight is answered to any origin, the
+request that follows is what is checked) and carries its stylesheet — linked, it would be asked for of the host and
+answered with the host's own space; so does one asked with `?style=carried`, for a space drawn where the page's
+stylesheet does not reach. Every load is a visit, metered as a drawn page is (`adapters.meter`, `page_view`; the cheaper
+one when the space came from the server's copy) and held back as one is (`503`). Kept by the browser and asked again:
+`private, no-cache` with an `ETag`, `304` when nothing changed.
 
 ### Several replicas
 
@@ -1738,8 +1755,17 @@ The function is called once per render (cache misses only). The built-in `templa
 What the built-in template does that a custom one has to decide for itself:
 
 - **The space travels beside the page.** The built-in template leaves it out of the payload, names it with
-  `spaceDocumentPath` (`<link id="plitzi-space" rel="preload" as="fetch">`) and its bootstrap fetches it before it
-  hydrates. A custom template is handed the space inline in `offlineData`, as before.
+  `spaceDocumentPath` and its bootstrap fetches it before it hydrates. A custom template is handed the space inline in
+  `offlineData`, as before.
+- **The page paints before anything it does not need to paint.** The head asks for the stylesheets alone, and the
+  `Link` header and the `103 Early Hints` for the SDK's; the bootstrap asks for the SDK, the plugins the page draws,
+  React and the space's document once the page has painted (a frame, and the task after it — at once in a tab nobody
+  sees). On a phone's network they shared the line with the stylesheets and the page painted when all had arrived: the
+  dashboard's space page painted at 1.06 s instead of 1.58 s, and hydrated when it did.
+- **What a visitor does before React listens is kept.** Until the SDK's `render` call nothing answers on the page, which
+  has painted: a tap is made again once the page has hydrated (unless the browser acted on it itself — a link, a
+  field, a box), a form sent is held and sent through the page (by the browser it posted the fields, passwords
+  included, to the page's own address), and what was typed or ticked is put back over what React set the fields to.
 - **Only the plugins the page draws are imported up front.** An entry with `deferred` is handed to `render()` as
   `{ load: () => import(js), css, declaration }`: the SDK registers it at once and loads its code and stylesheet the
   first time one of its elements is drawn. A template that imports every entry statically still works; it only loads
@@ -1770,7 +1796,7 @@ return {
 | `jsPath` | `string` | URL for the SDK JS module. Defaults to `/sdk-assets/plitzi-sdk.js`. |
 | `cssPath` | `string` | URL for the SDK stylesheet. Defaults to `/sdk-assets/plitzi-sdk.css`. |
 | `iconsCssPath` | `string` | URL for Font Awesome's stylesheet, linked after `cssPath`; its fonts are files beside it. Defaults to `/sdk-assets/plitzi-sdk-icons.css`. |
-| `spaceDocumentPath` | `string` | Where the page fetches the space from (`/_plitzi/space/<hash>.json`), preloaded in the head and read by the bootstrap before it hydrates. Set by the built-in template's render; absent for a draft preview and for a custom `templateFn`, which receive the space inline in `offlineData`. |
+| `spaceDocumentPath` | `string` | Where the page fetches the space from (`/_plitzi/space/<hash>.json`), read by the bootstrap — once the page has painted — before it hydrates. Set by the built-in template's render; absent for a draft preview and for a custom `templateFn`, which receive the space inline in `offlineData`. |
 | `builderJsPath` | `string` | URL for the builder JS module. Omitted by default. |
 | `builderCssPath` | `string` | URL for the builder stylesheet. Omitted by default. |
 | `plugins` | `PluginEntry[]` | Plugin entries to inject. Normally set automatically via `pluginNames`. An entry with `deferred` is one the page draws none of: its declaration, for the browser to load its code when a page that draws it is opened. |

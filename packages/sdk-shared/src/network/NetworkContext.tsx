@@ -3,10 +3,20 @@ import { sharedContext } from '../helpers/sharedContext';
 import type { Environment, Server } from '../types';
 import type { FetchPolicy } from '@apollo/client/core';
 
-type NetworkContextValueBase<
+type NetworkContextValueBase = {
+  webKey: string;
+  server: Server;
+  userKey: string;
+  webId: number;
+  environment: Environment;
+};
+
+export type NetworkContextValueBuilder<
   Q extends Record<string, unknown> = Record<string, unknown>,
-  M extends Record<string, unknown> = Record<string, unknown>
-> = {
+  M extends Record<string, unknown> = Record<string, unknown>,
+  S extends Record<string, unknown> = Record<string, unknown>
+> = NetworkContextValueBase & {
+  /** The builder's GraphQL: the SDK sends none, and asks the page server for the space instead. */
   mutate: <T extends keyof M>(
     mutationKey: T,
     variables: Record<string, unknown>,
@@ -20,18 +30,6 @@ type NetworkContextValueBase<
     fetchPolicy?: FetchPolicy,
     silentError?: boolean
   ) => Promise<{ success: boolean; result?: Q[T]; error?: string | Error }>;
-  webKey: string;
-  server: Server;
-  userKey: string;
-  webId: number;
-  environment: Environment;
-};
-
-export type NetworkContextValueBuilder<
-  Q extends Record<string, unknown> = Record<string, unknown>,
-  M extends Record<string, unknown> = Record<string, unknown>,
-  S extends Record<string, unknown> = Record<string, unknown>
-> = NetworkContextValueBase<Q, M> & {
   instanceId: string;
   // Registering interest in an event, not opening a subscription: the whole space arrives on one stream, so `S` is
   // the map of event names to the payload each one carries.
@@ -49,7 +47,7 @@ export type NetworkContextValue<
   M extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>,
   T extends 'builder' | 'sdk' = 'sdk'
-> = T extends 'builder' ? NetworkContextValueBuilder<Q, M, S> : NetworkContextValueBase<Q, M>;
+> = T extends 'builder' ? NetworkContextValueBuilder<Q, M, S> : NetworkContextValueBase;
 
 export type BuilderNetworkContextValue<
   Q extends Record<string, unknown> = Record<string, unknown>,

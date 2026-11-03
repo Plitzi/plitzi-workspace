@@ -224,8 +224,15 @@ export const createSpaceAdapters = (config: SpaceAdaptersConfig) => {
 
 export type SpaceAdapters = ReturnType<typeof createSpaceAdapters>;
 
-export { authoringPreview, fixedSpace, presentsCredential, verifiedDomain, wildcardSubdomain } from './resolvers';
+export {
+  authoringPreview,
+  fixedSpace,
+  presentsCredential,
+  renderGrant,
+  verifiedDomain,
+  wildcardSubdomain
+} from './resolvers';
 export { createMemoryCache, refuse } from './types';
 
-export type { AuthoringPreviewOptions, DeploymentRow, WildcardSubdomainOptions } from './resolvers';
+export type { AuthoringPreviewOptions, DeploymentRow, RenderGrantOptions, WildcardSubdomainOptions } from './resolvers';
 export type { SpaceCache, SpaceRefusal, SpaceResolution, SpaceResolver } from './types';

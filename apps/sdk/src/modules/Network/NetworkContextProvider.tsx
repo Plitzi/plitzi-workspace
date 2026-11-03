@@ -1,22 +1,14 @@
-import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
-import { useEffect, useMemo, useRef, useState, useCallback, use } from 'react';
+import { useEffect, useMemo, useRef, useState, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
-import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
-import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
-import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';
+import { askSpace } from './askSpace';
 
 import type { OfflineDataRaw, Server, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
-import type {
-  SdkQueriesMap,
-  SdkMutationsMap,
-  NetworkInternalContextValue,
-  NetworkContextValue
-} from '@plitzi/sdk-shared/network';
+import type { NetworkInternalContextValue, NetworkContextValue } from '@plitzi/sdk-shared/network';
 import type { ReactNode, RefObject } from 'react';
 
 export type NetworkContextProviderProps = {
@@ -30,22 +22,6 @@ export type NetworkContextProviderProps = {
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
-};
-
-const initFailureMessage = (error: string | Error): string => {
-  if (!(error instanceof GraphqlRequestError)) {
-    return typeof error === 'string' ? error : error.message;
-  }
-
-  if (error.statusCode === 401) {
-    return 'Access not authorized';
-  }
-
-  if (error.failure === 'network') {
-    return 'Service not available';
-  }
-
-  return error.message;
 };
 
 /** The plugins `data` names that no component on the page registered, read from their definitions. */
@@ -72,10 +48,9 @@ const NetworkContextProvider = ({
   offlineData,
   offlineDataType = 'json'
 }: NetworkContextProviderProps) => {
-  const { environment, debugMode } = useRenderSettings();
+  const { environment, debugMode, enclosed, renderMode } = useRenderSettings();
   const setSdkStore = useSdkStoreSetter();
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
-  const client = useMemo(() => createGraphqlClient(server.serverUrl, webKey), [server.serverUrl, webKey]);
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
   const { components } = use(ComponentContext);
@@ -87,102 +62,33 @@ const NetworkContextProvider = ({
     return { plugins: {} } as NetworkInternalContextValue;
   });
 
-  const query = useCallback(
-    async <T extends keyof SdkQueriesMap>(
-      queryKey: T,
-      variables?: Record<string, unknown>
-    ): Promise<{ success: boolean; result?: SdkQueriesMap[T]; error?: string | Error }> => {
-      try {
-        const result = await client.request<SdkQueriesMap[T]>(SdkQueries[queryKey], { environment, ...variables });
-
-        return { success: true, result };
-      } catch (e: unknown) {
-        return { success: false, result: undefined, error: e instanceof Error ? e : String(e) };
-      }
-    },
-    [client, environment]
-  );
-
-  const mutate = useCallback(
-    async <T extends keyof SdkMutationsMap>(
-      mutationKey: T,
-      variables?: Record<string, unknown>,
-      includeEnvironment = true
-    ): Promise<{ success: boolean; result?: SdkMutationsMap[T]; error?: string | Error }> => {
-      const document: string | undefined = SdkMutations[mutationKey];
-      if (!document) {
-        return { success: false, result: undefined, error: 'Mutation Not Found' };
-      }
-
-      try {
-        const result = await client.request<SdkMutationsMap[T]>(
-          document,
-          includeEnvironment ? { environment, ...variables } : variables
-        );
-
-        // No unwrapping by mutation key: the SDK exposes no mutations of its own any more (writes go through the
-        // server's /_action endpoint), so the raw payload is the result.
-        return { success: true, result };
-      } catch (e: unknown) {
-        return { success: false, result: undefined, error: e instanceof Error ? e : String(e) };
-      }
-    },
-    [client, environment]
-  );
-
-  const initQuery = async () => {
-    let revisionAux: number | undefined = revision;
-    if (typeof revision !== 'number' || revision === 0) {
-      revisionAux = undefined;
-    }
-
-    const response = await query('Init', { environment, revision: revisionAux });
-    if (response.error) {
+  /**
+   * The space as it is now, from the page server (`askSpace`): the document a page drawn there is handed, and the
+   * decision about this visit beside it — which a page drawn there is handed in its bootstrap, and a page that renders
+   * here hears from nowhere else. Written from the answer every time, so a space paid up since the last load stops
+   * saying it is over.
+   */
+  const initFromServer = async () => {
+    const answer = await askSpace({
+      ssrServer: server.ssrServer,
+      webKey,
+      environment,
+      revision,
+      // A space drawn into a document of its own, or scoped inside another page, cannot use the page's stylesheet.
+      carryStyle: enclosed || renderMode !== 'raw'
+    });
+    if (!answer.ok) {
+      setError(answer.message);
       setLoading(false);
-      setError(initFailureMessage(response.error));
 
       return;
     }
 
-    if (response.success && response.result) {
-      const data = cloneDeep(response.result);
-      const { Space } = data;
-      if (!Space) {
-        setError(
-          <span>
-            Space not found, publish to <b>{environment}</b> environment
-          </span>
-        );
-        setLoading(false);
-
-        return;
-      }
-
-      let plugins = {};
-      if (Space.plugins.length > 0) {
-        plugins = await pluginParseDefinition(
-          Space.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
-        );
-      }
-
-      /**
-       * The one thing this response says that the schema does not.
-       *
-       * A server-rendered page is handed the paywall decision in its bootstrap; a page that renders here was handed
-       * nothing, and this fetch is the only moment its server got to speak. Written from the answer every time, so a
-       * space that has been paid up since the last load stops saying it is over.
-       */
-      setSdkStore('render.overQuota', Space.render?.overQuota ?? false);
-      setSdkStore('render.quotaNear', Space.render?.quotaNear ?? false);
-      setSdkStore('render.badge', Space.render?.badge ?? false);
-
-      setInternalData({
-        schema: { ...EMPTY_SCHEMA.schema, ...schemaFromWire(Space.schema) },
-        plugins,
-        style: Space.style
-      });
-    }
-
+    const { space, visit } = answer;
+    setSdkStore('render.overQuota', visit.overQuota ?? false);
+    setSdkStore('render.quotaNear', visit.quotaNear ?? false);
+    setSdkStore('render.badge', visit.badge ?? false);
+    setInternalData({ ...space, plugins: await parseOfflinePlugins(space, components) });
     setLoading(false);
   };
 
@@ -235,16 +141,16 @@ const NetworkContextProvider = ({
 
         return state;
       });
-      void initQuery();
+      void initFromServer();
     } else if (offlineDataAvailable) {
       void initOfflineData(offlineData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
-  const networkValue = useMemo<NetworkContextValue<SdkQueriesMap, SdkMutationsMap>>(
-    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey }),
-    [query, mutate, webKey, webId, server, environment, instanceId, userKey]
+  const networkValue = useMemo<NetworkContextValue>(
+    () => ({ webKey, webId, server, environment, instanceId, userKey }),
+    [webKey, webId, server, environment, instanceId, userKey]
   );
 
   if (error) {

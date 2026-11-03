@@ -1,5 +1,5 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
+import { memo, Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 
 import { useEventBridge } from '@plitzi/sdk-event-bridge';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
@@ -26,10 +26,9 @@ export type WithElementProps<T> = {
   extraProps?: Record<string, unknown>;
 } & T;
 
-// Single component on purpose: under `plitziJsxSkipHOC` it returns the lightweight identity-only branch before the
-// heavy resolution (`useResolvedElement`). Safe because `plitziJsxSkipHOC` is invariant for a given mounted element, so
-// hook order never changes across its re-renders; splitting the branches into components would only add a level to the
-// React tree for every element.
+// Two levels per element: a light reader of the parent's visibility — which, under `plitziJsxSkipHOC`, is the whole of
+// what the element does — and the resolution (`ResolvedElement`), memoized, so a change of that context draws only the
+// elements whose own visibility it changed.
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const name = WrappedComponent.displayName || WrappedComponent.name;
 
@@ -43,12 +42,12 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     {
       ref,
       traceId,
-      parentElement,
+      parentTraceId,
       parentVisible
     }: {
       ref: RefObject<HTMLElement | undefined>;
       traceId: string;
-      parentElement: ElementParentContextValue | undefined;
+      parentTraceId: string | undefined;
       parentVisible: boolean;
     }
   ): ReactNode => {
@@ -134,13 +133,16 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas, and which
       // element this instance is — React hands `onRender` nothing but the Profiler's id. Whether the element rendered
       // itself vs only a descendant did is derived later from self time, not flagged here.
-      tracingCollector.linkParent(traceId, parentElement?.traceId, id);
+      tracingCollector.linkParent(traceId, parentTraceId, id);
 
       // Snapshot the inputs that feed this element (its resolved data + the props handed to the wrapped component); the
       // collector diffs them against the last COMMITTED render's, so the panel can attribute "which prop changed".
       // `visible` is the parent's too: a section shown once its data arrives draws every element in it again, and that
-      // is a change to each of them, not a render for nothing.
+      // is a change to each of them, not a render for nothing. `internalProps` is what the parent handed it: a new one
+      // with the same id is the parent drawing the element again rather than keeping it — a change of reference only,
+      // the parent's to fix — where none is a context or the store moving the element by itself.
       const inputs: Record<string, unknown> = {
+        internalProps: props.internalProps,
         visible,
         attributes,
         definition,
@@ -164,8 +166,32 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     return tree;
   };
 
+  /**
+   * The element resolved, apart from the context it is told its parent's visibility by: a context's change draws every
+   * reader below it, and an element that stays hidden as its section is shown — a closed group's links as the sidebar
+   * opens — has nothing new to draw. The reader above (`WithElementComponent`) is drawn, and hands this the parent's
+   * visibility; this draws only when that, or what its own parent gave it, changed.
+   */
+  const ResolvedElement = memo(
+    ({
+      element,
+      traceId,
+      parentTraceId,
+      parentVisible
+    }: {
+      element: WithElementProps<T>;
+      traceId: string;
+      parentTraceId: string | undefined;
+      parentVisible: boolean;
+    }) => {
+      const ref = useRef<HTMLElement>(undefined);
+
+      return useResolvedElement(element, { ref, traceId, parentTraceId, parentVisible });
+    }
+  );
+  ResolvedElement.displayName = `withElement(${name}).resolved`;
+
   const WithElementComponent = (props: WithElementProps<T>) => {
-    const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
     // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
     // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
@@ -209,10 +235,14 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       );
     }
 
-    // `plitziJsxSkipHOC` is invariant for a mounted element, so this call is made on every render of it or on none: the
-    // hook order never changes. A component of its own would add a level to the React tree for every element.
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useResolvedElement(props, { ref, traceId, parentElement, parentVisible });
+    return (
+      <ResolvedElement
+        element={props}
+        traceId={traceId}
+        parentTraceId={parentElement?.traceId}
+        parentVisible={parentVisible}
+      />
+    );
   };
 
   WithElementComponent.displayName = `withElement(${name})`;

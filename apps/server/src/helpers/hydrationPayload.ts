@@ -12,7 +12,7 @@ export type SpaceDocument = { json: string; hash: string; data: OfflineDataRaw }
 /** A space's compiled stylesheet as a file of its own: its text, its name, and the compressed forms sent of it. */
 export type StyleSheet = { css: string; hash: string; href: string; compressed: CompressedBodies };
 
-const digest = (text: string): string => createHash('sha256').update(text).digest('base64url').slice(0, 22);
+export const digest = (text: string): string => createHash('sha256').update(text).digest('base64url').slice(0, 22);
 
 const sheets = new WeakMap<Style, StyleSheet | null>();
 

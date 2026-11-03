@@ -18,6 +18,8 @@ export interface SpaceResolution {
    * `authoringPreview` sets it; nothing infers it, because only the resolver can tell the two apart.
    */
   authoring?: boolean;
+  /** The origins of the credential that chose the space, when one did — `renderGrant` sets it. */
+  grantOrigins?: string[];
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;

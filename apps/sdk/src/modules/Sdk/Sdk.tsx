@@ -87,11 +87,30 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
 
   // Drawn in the page from here on — new documents in the browser, the builder taking the page over: the head's
   // linked copy goes, or rules the space no longer has would still apply under the new ones.
+  // Linked by the page that renders by itself too: its document names the stylesheet, and nothing in its head does —
+  // and by a page whose space changed under it, which names another.
   useEffect(() => {
-    if (!linked) {
-      document.getElementById(STYLE_SHEET_ID)?.remove();
+    const present = document.getElementById(STYLE_SHEET_ID);
+    if (!linked || !styleCacheHref) {
+      present?.remove();
+
+      return;
     }
-  }, [linked]);
+
+    if (present instanceof HTMLLinkElement) {
+      if (present.href !== new URL(styleCacheHref, document.baseURI).href) {
+        present.href = styleCacheHref;
+      }
+
+      return;
+    }
+
+    const link = document.createElement('link');
+    link.id = STYLE_SHEET_ID;
+    link.rel = 'stylesheet';
+    link.href = styleCacheHref;
+    document.head.append(link);
+  }, [linked, styleCacheHref]);
 
   // The canvas renders into an iframe, whose head only the rail can reach.
   const iframeAssets = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);

@@ -9,11 +9,11 @@ import { worthRetrying, writeFailed } from '../helpers';
 
 import type { QueuedChange } from '../QueueContext';
 import type { Element, Schema } from '@plitzi/sdk-shared';
-import type { BuilderMutationsMap, BuilderQueriesMap, NetworkContextValue } from '@plitzi/sdk-shared/network';
+import type { BuilderMutationsMap, BuilderNetworkContextValue, BuilderQueriesMap } from '@plitzi/sdk-shared/network';
 
 export type UseQueueManagerProps = {
   delay?: number;
-  mutate: NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>['mutate'];
+  mutate: BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>['mutate'];
   maxRetries?: number;
   retryTimeout?: number;
   disabled?: boolean;

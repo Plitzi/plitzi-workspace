@@ -50,6 +50,11 @@ export type SSRSpaceDeployment = {
    * which is why it says so here.
    */
   authoring?: boolean;
+  /**
+   * The origins of the credential that chose this space — set only when one did rather than the host (`renderGrant`):
+   * a page of one of them renders the space itself and is answered its document across origins.
+   */
+  grantOrigins?: string[];
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;

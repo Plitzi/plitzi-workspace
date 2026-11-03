@@ -1,7 +1,7 @@
 import { refuse } from './types';
 
 import type { SpaceResolution, SpaceResolver } from './types';
-import type { GrantOptions, GrantResult } from '../../core/auth/identity';
+import type { Grant, GrantOptions, GrantResult } from '../../core/auth/identity';
 import type { Environment, SSRCredential, SSRRequest } from '@plitzi/sdk-shared';
 
 /**
@@ -97,6 +97,11 @@ export interface AuthoringPreviewOptions {
   find: (spaceId: number) => Promise<{ spaceId: number; environment?: Environment } | undefined>;
   /** Overrides what counts as "tried to present a credential". Defaults to {@link presentsCredential}. */
   presented?: (req: SSRRequest) => boolean;
+  /**
+   * Whether the person behind a request presenting the space's PUBLIC key is one of its authors — a session with a role
+   * on the space, say. Without it, only a secret credential (`agent`, `host`) is an author's.
+   */
+  isAuthor?: (req: SSRRequest, grant: Grant) => Promise<boolean>;
 }
 
 /**
@@ -108,12 +113,18 @@ export interface AuthoringPreviewOptions {
  *
  * `skipOrigin` is deliberate: a preview is loaded as a document, and a top-level navigation carries no `Origin`.
  * It does not skip the domain binding, which is the part that matters.
+ *
+ * The space's PUBLIC key (`render`) is in every published page: presented alone it names the space — a tool's page (a
+ * thumbnail, a journey) opens with it, and a draft it carries is what makes it a preview — but it is a visit, metered as
+ * one. An author's render is the one `isAuthor` vouches for: held as `authoring`, a copied key would serve anyone the
+ * space unmetered from a host of this deployment.
  */
 export const authoringPreview = ({
   hosts,
   resolveGrant,
   find,
-  presented = presentsCredential
+  presented = presentsCredential,
+  isAuthor
 }: AuthoringPreviewOptions): SpaceResolver => {
   return async (req: SSRRequest) => {
     if (!hosts.includes(req.hostname) || !presented(req)) {
@@ -133,7 +144,66 @@ export const authoringPreview = ({
     // `authoring` is what keeps metering off an author editing their own work. It cannot be inferred downstream:
     // a space's free preview sub-domain serves the same live environment to the public, so "which environment"
     // cannot tell an author from a visitor. Only the resolver knows, which is why it says so.
-    return { ...space, revision: 0, authoring: true } satisfies SpaceResolution;
+    const authoring = result.grant.scope !== 'render' || ((await isAuthor?.(req, result.grant)) ?? false);
+
+    return { ...space, revision: 0, ...(authoring ? { authoring: true } : {}) } satisfies SpaceResolution;
+  };
+};
+
+const ENVIRONMENTS: readonly Environment[] = ['main', 'production', 'staging', 'development'];
+
+const isEnvironment = (value: string | undefined): value is Environment =>
+  value !== undefined && (ENVIRONMENTS as readonly string[]).includes(value);
+
+export interface RenderGrantOptions {
+  /** Usually `auth.identity.resolveGrant`. */
+  resolveGrant: (req: SSRRequest, options: GrantOptions) => Promise<GrantResult>;
+  /** Confirms the space exists. Return nothing and the request is a 404. */
+  find: (spaceId: number) => Promise<{ spaceId: number; environment?: Environment } | undefined>;
+}
+
+/**
+ * A page that renders the space itself — a site published as files, an embed, the desktop app — asking for it with the
+ * space's public `render` credential, from wherever it is served.
+ *
+ * Put this BEFORE `authoringPreview`: an author's credential is not this one's, and goes on to it. Only the
+ * credential in `Authorization`, which a page's `fetch` sends: one in the address (`?access-token`) is a page opened
+ * by a tool — a screenshot, a journey — and stays what it was. The grant is checked with the page's `Origin` and the
+ * host it was presented on, as every browser credential is; it names the space, and the request the environment and
+ * revision — the live one when it names none, which is what a published site asks for.
+ */
+export const renderGrant = ({ resolveGrant, find }: RenderGrantOptions): SpaceResolver => {
+  return async (req: SSRRequest) => {
+    if (!req.headers.authorization) {
+      return undefined;
+    }
+
+    const result = await resolveGrant(req, { host: req.hostname });
+    if (!result.ok || result.grant.scope !== 'render') {
+      return undefined;
+    }
+
+    const space = await find(result.grant.spaceId);
+    if (!space) {
+      return refuse(404, 'Space not found');
+    }
+
+    const asked = req.query.environment;
+    if (asked && !isEnvironment(asked)) {
+      return refuse(
+        400,
+        `No environment "${asked}": ask for one of ${ENVIRONMENTS.join(', ')}, or none for the live one`
+      );
+    }
+
+    const revision = Number(req.query.revision);
+
+    return {
+      spaceId: space.spaceId,
+      environment: isEnvironment(asked) ? asked : (space.environment ?? 'main'),
+      revision: Number.isInteger(revision) && revision > 0 ? revision : 0,
+      grantOrigins: result.grant.origins
+    } satisfies SpaceResolution;
   };
 };
 
