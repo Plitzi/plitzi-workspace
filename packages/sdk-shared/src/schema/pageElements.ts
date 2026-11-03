@@ -4,17 +4,7 @@ import type { Element, Schema, SpaceComponent } from '../types';
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-/**
- * The element types a page can draw — what decides which plugins a page has to have before it hydrates, and which can
- * wait until a page that draws them is opened.
- *
- * Generous on purpose, because the two mistakes do not cost the same: a type counted that is never drawn only loads a
- * plugin early, while one missed hydrates a page without the component the server drew. So it walks the page and
- * every shell around it, into every component an instance names and every element a reference copies, and it counts
- * what a flag or a visibility binding might hide: those are decided as the page renders, and may change while it is
- * open. A `custom` element counts as the plugin it names (`renderType`), which is what it renders.
- */
-export const pageElementTypes = (schema: Schema, pageId: string): Set<string> => {
+const elementTypesOf = (schema: Schema, pageId: string): Set<string> => {
   const types = new Set<string>();
   const page = schema.flat[pageId] as Element | undefined;
   if (!page) {
@@ -66,6 +56,34 @@ export const pageElementTypes = (schema: Schema, pageId: string): Set<string> =>
       pending.push(...items.map(item => ({ flat, id: item })));
     }
   }
+
+  return types;
+};
+
+const typesOf = new WeakMap<Schema, Map<string, ReadonlySet<string>>>();
+
+/**
+ * The element types a page can draw — what decides which plugins a page has to have before it hydrates, and which can
+ * wait until a page that draws them is opened.
+ *
+ * Generous on purpose, because the two mistakes do not cost the same: a type counted that is never drawn only loads a
+ * plugin early, while one missed hydrates a page without the component the server drew. So it walks the page and
+ * every shell around it, into every component an instance names and every element a reference copies, and it counts
+ * what a flag or a visibility binding might hide: those are decided as the page renders, and may change while it is
+ * open. A `custom` element counts as the plugin it names (`renderType`), which is what it renders.
+ *
+ * Kept per schema object and page: the server asks it on every render of the same space.
+ */
+export const pageElementTypes = (schema: Schema, pageId: string): ReadonlySet<string> => {
+  const pages = typesOf.get(schema) ?? new Map<string, ReadonlySet<string>>();
+  typesOf.set(schema, pages);
+  const known = pages.get(pageId);
+  if (known) {
+    return known;
+  }
+
+  const types = elementTypesOf(schema, pageId);
+  pages.set(pageId, types);
 
   return types;
 };

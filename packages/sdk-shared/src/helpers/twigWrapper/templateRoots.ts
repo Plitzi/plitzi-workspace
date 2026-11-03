@@ -38,16 +38,33 @@ const collectPaths = (value: unknown, paths: Set<string>): void => {
  * reads some computed value. Names the template binds itself — a loop variable, a `set`, an arrow's parameter —
  * come back too: they resolve to no source, and asking for a path that is not there costs nothing.
  */
-export const templatePaths = (template: string): string[] => {
-  const entry = resolveTokens(template);
-  if (!entry) {
-    return [];
+const PATHS_LIMIT = 5000;
+const pathsOf = new Map<string, readonly string[]>();
+
+/**
+ * The paths a template reads, read once per template: every element asks it of its own on every render — the
+ * server's and the browser's — and the same few hundred templates walked their syntax tree again each time.
+ */
+export const templatePaths = (template: string): readonly string[] => {
+  const known = pathsOf.get(template);
+  if (known) {
+    return known;
   }
 
+  const entry = resolveTokens(template);
   const paths = new Set<string>();
-  collectPaths(entry.nodes ?? entry.nodesWithSource, paths);
+  if (entry) {
+    collectPaths(entry.nodes ?? entry.nodesWithSource, paths);
+  }
 
-  return [...paths];
+  const found = [...paths];
+  pathsOf.set(template, found);
+  if (pathsOf.size > PATHS_LIMIT) {
+    const [oldest] = pathsOf.keys();
+    pathsOf.delete(oldest);
+  }
+
+  return found;
 };
 
 /**

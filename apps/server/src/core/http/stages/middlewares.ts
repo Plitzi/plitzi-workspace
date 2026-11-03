@@ -16,7 +16,7 @@ import type { SSRMiddleware } from '@plitzi/sdk-shared';
 // cache behind that its timer kept alive for good (about a kilobyte a request, until the process ran out of memory),
 // and the credential cache it was meant to be started empty every time.
 export const createMiddlewaresStage = (): Stage<SSRContext> => {
-  let built: { config: SSRContext['config']; chain: SSRMiddleware[] } | undefined;
+  let built: { config: SSRContext['config']; chain: SSRMiddleware[]; names: string[] } | undefined;
 
   return async ctx => {
     const { config, req, res } = ctx;
@@ -28,11 +28,28 @@ export const createMiddlewaresStage = (): Stage<SSRContext> => {
           basicAuthMiddleware({ cacheTtlMs: config.cacheTtlMs }),
           authMiddleware(config.adapters),
           ...(config.middlewares || [])
+        ],
+        // As `Server-Timing` names them: the deployment's own by their function's name, else their place.
+        names: [
+          'deployment',
+          'basicAuth',
+          'auth',
+          ...(config.middlewares ?? []).map((middleware, index) => middleware.name || `middleware${String(index + 1)}`)
         ]
       };
     }
 
-    const stopped = await runMiddlewares(built.chain, req, res);
+    const { names } = built;
+    const stopped = await runMiddlewares(
+      built.chain,
+      req,
+      res,
+      config.devMode
+        ? (index, ms) => {
+            req.ctx.timings = [...(req.ctx.timings ?? []), { name: names[index], dur: Math.round(ms) }];
+          }
+        : undefined
+    );
 
     return stopped || res.status !== 200;
   };

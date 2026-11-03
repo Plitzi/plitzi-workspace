@@ -14,7 +14,7 @@ describe('templateRootNames', () => {
       '{% if state.open %}{{ user.name | default(fallback.name) }}{% endif %}{{ "theme.resolved" }}{{ a ? b.c : d }}'
     );
 
-    expect(names.sort()).toEqual(['a', 'b', 'd', 'fallback', 'state', 'user']);
+    expect(names.toSorted()).toEqual(['a', 'b', 'd', 'fallback', 'state', 'user']);
   });
 
   it('answers nothing for a template with no names in it', () => {
@@ -24,7 +24,7 @@ describe('templateRootNames', () => {
 
 describe('templatePaths', () => {
   it('gives each path as far as it is written', () => {
-    expect(templatePaths('{{ computed.tool == "pen" ? state.brush.size : theme.resolved }}').sort()).toEqual([
+    expect(templatePaths('{{ computed.tool == "pen" ? state.brush.size : theme.resolved }}').toSorted()).toEqual([
       'computed.tool',
       'state.brush.size',
       'theme.resolved'
@@ -32,7 +32,7 @@ describe('templatePaths', () => {
   });
 
   it('ends a path at a bracket whose key is only known when it runs, and reads the key too', () => {
-    expect(templatePaths('{{ state.owned[source.id] }}').sort()).toEqual(['source.id', 'state.owned']);
+    expect(templatePaths('{{ state.owned[source.id] }}').toSorted()).toEqual(['source.id', 'state.owned']);
   });
 
   it('keeps a literal index as part of the path', () => {
@@ -40,7 +40,7 @@ describe('templatePaths', () => {
   });
 
   it('reads paths inside filters, loops and arrows', () => {
-    expect(templatePaths('{% for row in list.rows|filter(r => r.open) %}{{ row.id }}{% endfor %}').sort()).toEqual([
+    expect(templatePaths('{% for row in list.rows|filter(r => r.open) %}{{ row.id }}{% endfor %}').toSorted()).toEqual([
       'list.rows',
       'r.open',
       'row.id'

@@ -15,6 +15,8 @@ space while it hydrates.
   `createCacheInvalidator({ bus, store })`.
 - **A custom template** (`templateFn`) or code reading the page's runtime `<style>` for the space's rules: they are in
   the linked `/_plitzi/style/<hash>.css` now (`style.cacheHref`).
+- **`templatePaths`** answers a `readonly string[]` and **`pageElementTypes`** a `ReadonlySet`: they are shared now;
+  copy one before changing it.
 - **`X-Cache`** answers `STALE` too: a page served past its TTL while it is rendered again.
 - **A link's analytics parameters** (`utm_*`, `fbclid`, `gclid`…) are no longer seen by a published page's server
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
@@ -52,6 +54,15 @@ space while it hydrates.
   before.
 - `styleCacheInDocument`, `markStyleCache`, `styleCacheFromDocument` and `styleCacheTravelsInDocument` are gone: the
   page no longer carries the stylesheet for the bootstrap to read back.
+
+## Rendering, per request
+
+- A development server's `Server-Timing` names what a page spent before it was rendered — each middleware
+  (`deployment`, `auth`, the deployment's own by name) and the metering (`meter`) — beside the render's own phases.
+- The route a page is matched by is compiled once (`matchPath`), the paths a template reads are read once per template
+  (`templatePaths`, now `readonly string[]`), and a page's element types once per schema and page
+  (`pageElementTypes`, now a `ReadonlySet`); every render — the server's and the browser's — did all three again.
+- The plugins a space's elements render are found once per version of the space, not on every render.
 
 ## Elements (`@plitzi/sdk-elements`)
 

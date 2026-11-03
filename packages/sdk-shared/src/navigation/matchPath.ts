@@ -18,7 +18,7 @@ type CompiledParam = { paramName: string; isOptional: boolean };
 // module dependency-free: it runs on the request path, where pulling react-router — and with it the client
 // router — would cost boot weight and rule out non-Node runtimes. Parity is pinned by a test in sdk-navigation,
 // which still has react-router available; that test is what catches an upstream semantics change.
-const compilePath = (path: string, caseSensitive: boolean, end: boolean): [RegExp, CompiledParam[]] => {
+const compile = (path: string, caseSensitive: boolean, end: boolean): [RegExp, CompiledParam[]] => {
   const params: CompiledParam[] = [];
   let regexpSource = `^${path
     .replace(/\/*\*?$/, '')
@@ -54,6 +54,30 @@ const compilePath = (path: string, caseSensitive: boolean, end: boolean): [RegEx
   }
 
   return [new RegExp(regexpSource, caseSensitive ? undefined : 'i'), params];
+};
+
+const COMPILED_LIMIT = 2000;
+const compiled = new Map<string, [RegExp, CompiledParam[]]>();
+
+/**
+ * A pattern's matcher, compiled once: a page is found by trying every page's route, so each navigation and each server
+ * render compiled every route of the space again. Without the `g` flag the matcher keeps no state between matches.
+ */
+const compilePath = (path: string, caseSensitive: boolean, end: boolean): [RegExp, CompiledParam[]] => {
+  const key = `${caseSensitive ? 'c' : 'i'}${end ? 'e' : 'p'}${path}`;
+  const known = compiled.get(key);
+  if (known) {
+    return known;
+  }
+
+  const made = compile(path, caseSensitive, end);
+  compiled.set(key, made);
+  if (compiled.size > COMPILED_LIMIT) {
+    const [oldest] = compiled.keys();
+    compiled.delete(oldest);
+  }
+
+  return made;
 };
 
 export const matchPath = (pattern: PathPattern | string, pathname: string): PathMatch | null => {

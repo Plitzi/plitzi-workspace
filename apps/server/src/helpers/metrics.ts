@@ -4,8 +4,10 @@ export class RequestMetrics {
   private readonly start: number;
   private readonly phases: Array<{ name: string; dur: number }> = [];
 
-  constructor() {
+  /** `before`: what the request spent before the render began — its middlewares, the metering (`ctx.timings`). */
+  constructor(before: { name: string; dur: number }[] = []) {
     this.start = performance.now();
+    this.phases.push(...before);
   }
 
   async measure<T>(name: string, fn: () => T | Promise<T>): Promise<T> {

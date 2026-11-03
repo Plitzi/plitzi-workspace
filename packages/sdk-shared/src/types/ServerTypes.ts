@@ -382,6 +382,11 @@ export type SSRContext = {
    * with — the query string of the page does not.
    */
   rscParams?: Record<string, string>;
+  /**
+   * What this request spent before the page was rendered — each middleware, the metering — in ms, kept only by a
+   * development server: it goes out in the page's `Server-Timing` beside the render's own phases.
+   */
+  timings?: { name: string; dur: number }[];
 };
 
 export type SSRServer = {

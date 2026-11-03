@@ -38,10 +38,15 @@ const meterPage = async (
     return undefined;
   }
 
+  const started = config.devMode ? performance.now() : 0;
   try {
     return await config.adapters.meter({ kind: 'page_view', cached, req, spaceId, environment, revision });
   } catch {
     return undefined;
+  } finally {
+    if (config.devMode) {
+      req.ctx.timings = [...(req.ctx.timings ?? []), { name: 'meter', dur: Math.round(performance.now() - started) }];
+    }
   }
 };
 
@@ -181,7 +186,7 @@ export const renderSSR = async (
     }
 
     // Allocate metrics after the cache-hit early return — never wasted on hits.
-    const metrics = devMode ? new RequestMetrics() : undefined;
+    const metrics = devMode ? new RequestMetrics(req.ctx.timings) : undefined;
 
     if (slot) {
       res.setHeader('X-Cache', 'MISS');
