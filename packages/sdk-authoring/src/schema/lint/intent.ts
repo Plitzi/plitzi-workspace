@@ -1,6 +1,7 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { serverQueryOf, serverQueryProblem, whenOf, whenUnknownToServer } from '@plitzi/sdk-shared/schema';
+import { paintedKeys } from '@plitzi/sdk-shared/state';
 
 import { didYouMean } from '../suggest';
 import { stringsIn } from './context';
@@ -12,7 +13,14 @@ import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
 
 /** No visit at all: what a query written without a template comes to does not depend on one. */
-const NO_VISIT = { variables: {}, routeParams: {}, queryParams: {}, origin: '' };
+const NO_VISIT = {
+  variables: {},
+  routeParams: {},
+  queryParams: {},
+  origin: '',
+  paintedKeys: new Set<string>(),
+  state: {}
+};
 
 /**
  * Why the address a query is written as is none the page server reads — known before a visit only when it is written
@@ -231,7 +239,11 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
   // since the browser never asks a server provider.
   const unreadable =
     type === 'apiContainer' && element.definition.runtime === 'server' && !serverOnly
-      ? (serverQueryProblem(element, ctx.variables) ?? literalQueryProblem(element))
+      ? (serverQueryProblem(
+          element,
+          ctx.variables,
+          ctx.schema.settings.keepState ? paintedKeys(ctx.schema.settings) : new Set()
+        ) ?? literalQueryProblem(element))
       : undefined;
   if (unreadable !== undefined) {
     ctx.error(

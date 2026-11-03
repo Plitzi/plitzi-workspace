@@ -3,6 +3,23 @@ import { compressBody, DEFAULT_COMPRESSION, selectEncoding } from './compress';
 import type { ContentEncoding, ResolvedCompression } from './compress';
 import type { CompressedBodies, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
+/**
+ * Adds `name` to what the response varies by, beside what a stage already said (a page varies by its scheme hint too):
+ * set whole, the encoding's `Vary` put the page's out.
+ */
+const varyOn = (raw: RawResponse, name: string): void => {
+  // A header nobody set is absent from the record, whatever its type says.
+  const headers: Partial<ReturnType<RawResponse['getHeaders']>> = raw.getHeaders();
+  const said = headers.vary;
+  const names = (Array.isArray(said) ? said.join(',') : String(said ?? ''))
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean);
+  if (!names.some(part => part.toLowerCase() === name.toLowerCase())) {
+    raw.setHeader('Vary', [...names, name].join(', '));
+  }
+};
+
 export type RawResponse = {
   headersSent: boolean;
   /** The status actually written to the wire — the access log reads it once the response is out. */
@@ -77,7 +94,7 @@ export const buildResponseHelpers = (
   const writeBody = (payload: string | Buffer, encoded: boolean) => {
     if (encoded) {
       raw.setHeader('Content-Encoding', encoding);
-      raw.setHeader('Vary', 'Accept-Encoding');
+      varyOn(raw, 'Accept-Encoding');
     }
     raw.setHeader('Content-Length', Buffer.byteLength(payload).toString());
     if (!raw.headersSent) {

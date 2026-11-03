@@ -21,6 +21,12 @@ space while it hydrates.
 - **A `runtime: 'server'` provider with `credentials: 'include'`** is no longer refused by authoring: it is asked with
   the visitor's cookies where the server names that API (`rsc.visitorCredentials`), and is the provider's error, naming
   the setting, anywhere else. `ServerQuery`'s `url` kind carries `asVisitor`.
+- **`ServerTemplateData`** carries `paintedKeys` and `state`, and `serverQueryProblem` takes the painted keys: a resolver
+  that builds one passes both (`requestPaintedState`).
+- **`usePlitzi().settings`** no longer carries `isHydrating` nor `theme`: read `useRenderSettings().isHydrating` and
+  `useTheme().resolvedTheme`. Every element reads that context, so a value that changed there drew every element again.
+- **The plugins' stylesheets** are in a context of their own: `use(PluginAssetsContext).assets`, not
+  `use(PluginsContext).assets`.
 - **A page's Google families** are asked of the page server's own origin (`/_plitzi/fonts/google/…`): a proxy or CDN in
   front of it passes that path through as it does `/_plitzi/style/`. `fonts: { google: false }` links Google itself.
   `fontsToHead` takes the mirror's address as a third argument, and `googleCss2Url` a base.
@@ -87,6 +93,28 @@ space while it hydrates.
 - A page's uploaded fonts are addressed in the browser as the server addressed them (`Server.fontsBaseUrl` is set
   now): a deployment with `fonts.baseUrl` on a CDN had the SDK write them again under `/fonts`.
 - `@plitzi/sdk-mcp`'s screenshots take `format: 'webp'` and `quality`: a thumbnail is an eighth of its PNG.
+- **A `system` theme drawn as the machine asks** on the server: the page asks Chromium for `Sec-CH-Prefers-Color-Scheme`
+  (`Accept-CH`), the SDK keeps the scheme in a `<theme cookie>-scheme` cookie, and `{{ theme.resolved }}` — a picture's
+  address — is the same before and after hydration instead of the light one swapped for the dark. `ThemeProvider` and
+  the SDK take `scheme`; the page cache is keyed by it where the theme defers to the machine.
+- **A server provider reads the state the space paints**: `{{ state.workspace.id }}` in a `runtime: 'server'` provider's
+  `query`, for a key of `settings.paintedState`, is the value the page starts from — and the provider asks `/_rsc` again
+  when the browser comes to write its address differently. A signed-in dashboard's workspace parts arrive drawn.
+- A painted key another account kept is dropped only while it still holds that account's value: what this account wrote
+  before the check — a server provider's first answer — is its own.
+
+## A page that answers sooner on a phone
+
+- A server-rendered page is drawn once as it hydrates, not three times: the component registry and the plugin registry
+  were new objects right after hydration — the host's `<PlitziSdk.Plugin>` children read again, an empty plugin list
+  replacing an empty one — and every container redraws from them. On a published page a container now follows only
+  whether its own items' types are registered, so a plugin that arrives later redraws the container that draws it. The
+  website's landing page on a slow phone (CPU 4×, mobile): 1838 element renders once instead of three times, its Total
+  Blocking Time from 1.1 s to 0.48 s; the signed-in dashboard from 0.57 s to 0.34 s.
+- Hydration no longer draws every container again when it ends: only an element with a `runtime: 'client'` or
+  `'server'` item follows the switch from the server's markup to the browser's.
+- The page's context carries only what holds for the life of the page (see above), and the plugins' stylesheets their
+  own context: an element registering its styles as it mounts drew every container again.
 
 ## Elements (`@plitzi/sdk-elements`)
 

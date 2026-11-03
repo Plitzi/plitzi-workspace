@@ -1,6 +1,6 @@
 import { cookieFromHeader } from '../../helpers/cookies';
 
-import type { Theme } from '../../types';
+import type { ColorScheme, Theme } from '../../types';
 
 /** The name the choice is kept under, and the one a server reads it back with. */
 export const THEME_COOKIE_NAME = 'theme';
@@ -65,3 +65,52 @@ export const writeThemeCookie = (mode: Theme, name = THEME_COOKIE_NAME): void =>
     /* see above */
   }
 };
+
+/**
+ * The scheme the visitor's machine asks for, kept beside the choice — under the choice's name with `-scheme` — so a
+ * server can resolve `system` as the browser will: a picture whose address names the scheme is asked for once, in the
+ * right one, rather than the light one swapped for the dark as the page hydrates. Not a choice: a fact about the
+ * machine the browser had, written whenever it is learnt and read only for a surface that defers to it.
+ */
+export const schemeCookieName = (themeCookieName = THEME_COOKIE_NAME): string => `${themeCookieName}-scheme`;
+
+const isScheme = (value: unknown): value is ColorScheme => value === 'light' || value === 'dark';
+
+export const schemeFromCookies = (cookies: string | undefined, name = schemeCookieName()): ColorScheme | undefined => {
+  const value = cookieFromHeader(cookies, name);
+
+  return isScheme(value) ? value : undefined;
+};
+
+/**
+ * The scheme a Chromium browser says in its `Sec-CH-Prefers-Color-Scheme` client hint, once a page asked for it
+ * (`Accept-CH`). A structured-field string: `"dark"`, quoted.
+ */
+export const schemeFromClientHint = (header: string | undefined): ColorScheme | undefined => {
+  const value = header?.trim().replace(/^"|"$/g, '');
+
+  return isScheme(value) ? value : undefined;
+};
+
+export const readSchemeCookie = (name = schemeCookieName()): ColorScheme | undefined => {
+  try {
+    return schemeFromCookies(document.cookie, name);
+  } catch {
+    return undefined;
+  }
+};
+
+export const writeSchemeCookie = (scheme: ColorScheme, name = schemeCookieName()): void => {
+  try {
+    document.cookie = `${name}=${scheme};path=/;max-age=${MAX_AGE};SameSite=Lax`;
+  } catch {
+    /* see `readThemeCookie` */
+  }
+};
+
+/**
+ * What a server knows of the visitor's machine: the client hint it said on this request, else the scheme the browser
+ * kept from its last visit. `undefined` on a first visit from a browser without the hint.
+ */
+export const requestScheme = (cookies: string | undefined, hint: string | undefined): ColorScheme | undefined =>
+  schemeFromClientHint(hint) ?? schemeFromCookies(cookies);

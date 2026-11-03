@@ -5,7 +5,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { getStyle } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { Asset, ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
@@ -127,16 +127,17 @@ const PluginsContextProvider = ({
     };
   }, [pluginCustomStyleAssets, pluginStyleAssets, temporalCustomStyles, renderMode, sdkStylePath, sdkIconsPath]);
 
+  // Apart from the assets, which change as the page mounts: every container reads this one (`PluginAssetsContext`).
   const pluginsContextValue = useMemo(
     () => ({
-      assets: assetsState,
       getSettings: getPluginSettings,
       plugins,
       registerCustomAssets,
       unregisterCustomAssets
     }),
-    [assetsState, getPluginSettings, plugins, registerCustomAssets, unregisterCustomAssets]
+    [getPluginSettings, plugins, registerCustomAssets, unregisterCustomAssets]
   );
+  const pluginAssetsContextValue = useMemo(() => ({ assets: assetsState }), [assetsState]);
 
   const helmetAssets = useMemo(
     () =>
@@ -149,7 +150,9 @@ const PluginsContextProvider = ({
   return (
     <>
       <Helmet>{(renderMode === 'raw' || renderMode === 'widget') && helmetAssets}</Helmet>
-      <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>
+      <PluginsContext value={pluginsContextValue}>
+        <PluginAssetsContext value={pluginAssetsContextValue}>{children}</PluginAssetsContext>
+      </PluginsContext>
     </>
   );
 };

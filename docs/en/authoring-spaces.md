@@ -766,6 +766,11 @@ also transient. The cookie carries its owner like the kept state does: written b
 what it rendered with it as soon as auth has settled — and the server does not draw it when the request proved another
 account than the one that wrote it.
 
+A painted key is also what a server provider may ask with: `query: "{{ state.workspace.id ? apiUrl ~ '/workspaces/' ~
+state.workspace.id : '' }}"` on a `runtime: 'server'` provider is read with the value the page starts from, and asked
+again by the browser — through `/_rsc`, with the cookie it was just written to — the moment the visitor picks another.
+A key that is not painted stays the browser's (`server-query-unresolved` names it).
+
 Filed under an owner, what was kept goes whole when somebody else signs in, a guest's included. A choice made of the
 browser rather than of the person — the cookie consent — would be asked again on every change of account. List those
 keys in `browserState`: they are kept in an entry of their own (`plitzi_<webId>_state_browser`), restored once the page

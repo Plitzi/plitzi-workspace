@@ -95,8 +95,11 @@ export type Plugin = {
   type: string;
 };
 
+/**
+ * What draws a space's plugins: the plugins, and how to register styles. Stable while a page mounts — every container
+ * reads it — so the styles registered are in `PluginAssetsContextValue`, a context of their own.
+ */
 export type PluginsContextValue = {
-  assets: Record<string, Asset>;
   plugins: Record<string, ComponentDefinition>;
   dispatchPlugins?: unknown;
   add?: (pluginType: string, resource?: string) => Promise<boolean>;
@@ -111,6 +114,11 @@ export type PluginsContextValue = {
   registerCustomAssets: (assets: Asset[]) => void;
   unregisterCustomAssets: (assets: string[]) => void;
   pluginSettingsStyles?: Record<string, string[]>;
+};
+
+/** The stylesheets registered by the space's plugins and elements, for what paints them. */
+export type PluginAssetsContextValue = {
+  assets: Record<string, Asset>;
 };
 
 // Raw

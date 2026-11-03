@@ -123,6 +123,43 @@ describe('ApiContainer — a server provider refreshed by a write', () => {
     view.unmount();
   });
 
+  // Its template read what the visitor has just changed — a painted key, another workspace — so the server is asked
+  // for the new address; the page as it hydrates, with the address it was drawn with, asks nothing.
+  it('asks the server again when the address it is written to comes to another, and not before', async () => {
+    const store = createStore<CommonState>({
+      schema: { pages: ['home'], flat: { home: element('home', ['orders']), orders: element('orders', [], 'server') } },
+      navigation: { currentPageId: 'home', routeParams: {}, queryParams: {} },
+      rsc: { enabled: true, endpoint: '/_rsc', loaded: true, location: '/', data: { orders: { records: [1] } } }
+    } as unknown as CommonState);
+    const tree = (query: string) => (
+      <StoreProvider store={store}>
+        <ElementContext
+          value={elementEntry('orders', {
+            rootId: 'home',
+            definition: {
+              rootId: 'home',
+              label: 'Orders',
+              type: 'apiContainer',
+              styleSelectors: { base: '' },
+              runtime: 'server'
+            }
+          })}
+        >
+          <ApiContainer query={query} />
+        </ElementContext>
+      </StoreProvider>
+    );
+    const view = render(tree('https://api.example.test/orders?workspace=1'));
+    view.rerender(tree('https://api.example.test/orders?workspace=1'));
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    view.rerender(tree('https://api.example.test/orders?workspace=2'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect((fetchMock.mock.calls[0] as [string])[0]).toContain('ids=orders');
+    view.unmount();
+  });
+
   // A provider whose action had no render trigger said only "could not be reached"; the page server, while
   // developing, says why where the provider reads it.
   it('says why the page server could not resolve it, when it said', () => {

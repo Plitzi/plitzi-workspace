@@ -2,7 +2,7 @@ import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useResolvedVariables } from '@plitzi/sdk-elements/dataSource';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import { PluginAssetsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useActionsSync, useImagesSync, useRealtimeSync, useRscSync } from '@plitzi/sdk-shared/server';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import {
@@ -13,7 +13,6 @@ import {
   RUNTIME_CSS_LAYER,
   STYLE_SHEET_ID
 } from '@plitzi/sdk-shared/style';
-import { useTheme } from '@plitzi/sdk-shared/theme';
 import { processCssTokens } from '@plitzi/sdk-style/helpers';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables';
 
@@ -36,8 +35,7 @@ export type SdkProps = {
 const NO_FONTS: SpaceFont[] = [];
 
 const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
-  const { resolvedTheme } = useTheme();
-  const { assets } = use(PluginsContext);
+  const { assets } = use(PluginAssetsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
   const [[schemaSettings, styleCache, styleCacheHref, currentPageId, fonts = NO_FONTS]] = useSdkStore([
@@ -50,7 +48,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   // Resolved here, not read from `runtime.sources.variables`: that is published below this, while the page renders,
   // and the server would write this sheet without the variables that the browser hydrates it with.
   const variables = useResolvedVariables();
-  const { renderMode, previewMode, debugMode, environment, isHydrating, enclosed } = useRenderSettings();
+  const { renderMode, previewMode, debugMode, environment, enclosed } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
   useRealtimeSync(server?.ssr);
@@ -120,13 +118,11 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const plitziContextValue = useMemo(
     () => ({
       settings: {
-        isHydrating,
         previewMode,
         debugMode,
         renderMode,
         environment,
-        ...schemaSettings,
-        theme: resolvedTheme
+        ...schemaSettings
       },
       root: {
         baseElementId
@@ -137,18 +133,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
         rootRef
       }
     }),
-    [
-      isHydrating,
-      previewMode,
-      debugMode,
-      baseElementId,
-      renderMode,
-      environment,
-      schemaSettings,
-      resolvedTheme,
-      getWindow,
-      rootRef
-    ]
+    [previewMode, debugMode, baseElementId, renderMode, environment, schemaSettings, getWindow, rootRef]
   );
 
   return (

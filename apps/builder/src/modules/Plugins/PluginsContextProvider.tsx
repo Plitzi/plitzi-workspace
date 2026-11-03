@@ -4,7 +4,7 @@ import { useCallback, use, useEffect, useMemo, useRef, useState, useReducer } fr
 import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import PluginsReducer from './PluginsReducer';
@@ -297,9 +297,9 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
     return style;
   }, [plugins]);
 
+  // Apart from the assets, which change as a page mounts: every container reads this one (`PluginAssetsContext`).
   const pluginsContextValue = useMemo(
     () => ({
-      assets: assetsState,
       plugins,
       dispatchPlugins,
       add,
@@ -312,7 +312,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       pluginSettingsStyles
     }),
     [
-      assetsState,
       plugins,
       dispatchPlugins,
       add,
@@ -326,7 +325,13 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
     ]
   );
 
-  return <PluginsContext value={pluginsContextValue}>{children}</PluginsContext>;
+  const pluginAssetsContextValue = useMemo(() => ({ assets: assetsState }), [assetsState]);
+
+  return (
+    <PluginsContext value={pluginsContextValue}>
+      <PluginAssetsContext value={pluginAssetsContextValue}>{children}</PluginAssetsContext>
+    </PluginsContext>
+  );
 };
 
 export default PluginsContextProvider;

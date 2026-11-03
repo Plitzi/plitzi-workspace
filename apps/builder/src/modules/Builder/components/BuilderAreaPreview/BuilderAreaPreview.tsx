@@ -71,11 +71,11 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
 
   const plitziContextValue = useMemo(
     () => ({
-      settings: { ...settings, previewMode, theme: resolvedTheme },
+      settings: { ...settings, previewMode },
       root: { baseElementId: id },
       utils: { getWindow, rootRef }
     }),
-    [previewMode, settings, resolvedTheme, id, getWindow, rootRef]
+    [previewMode, settings, id, getWindow, rootRef]
   );
 
   const whenData = useMemo(

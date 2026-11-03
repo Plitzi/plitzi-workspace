@@ -80,6 +80,27 @@ describe('the Google Fonts mirror', () => {
     });
   });
 
+  // Built on request by Google, for the families it keeps no static subsets of: kept by the three that name it.
+  it('serves a file Google builds on request, as the type it answered, and nothing else under that path', async () => {
+    const { asked, fetch } = google();
+    const mirror = createGoogleFontsMirror({ fetch });
+    const dynamic = {
+      path: `${GOOGLE_FONTS_PATH}/l/font`,
+      query: {},
+      search: '?kit=Yq64-LOTXCb04q32&skey=85bdc4c30fbe73fc&v=v12'
+    };
+
+    const answer = await mirror(dynamic);
+    await mirror(dynamic);
+
+    expect(answer).toMatchObject({ status: 200, headers: { 'Content-Type': 'font/woff2' }, body: FILE });
+    expect(asked.map(({ url }) => url)).toEqual([
+      'https://fonts.gstatic.com/l/font?kit=Yq64-LOTXCb04q32&skey=85bdc4c30fbe73fc&v=v12'
+    ]);
+    expect((await mirror({ ...dynamic, search: `${dynamic.search}&extra=1` })).status).toBe(404);
+    expect((await mirror({ ...dynamic, search: '?kit=a&skey=nothex!&v=v1' })).status).toBe(404);
+  });
+
   // An open proxy to Google would be a way to fetch anything of it through this server: only what a page asks for.
   it('refuses what no page asks for: a text subset, another parameter, a file that is not one of Google’s', async () => {
     const { fetch } = google();

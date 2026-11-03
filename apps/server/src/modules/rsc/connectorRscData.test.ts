@@ -155,7 +155,7 @@ describe('connectorRscData', () => {
     expect(await read({ query: 'https://api.example.com/{{ state.id }}' })).toEqual({
       gallery: {
         [RSC_FAILURE]:
-          "the page server cannot read its query: its template reads `state`, which the browser alone holds — the page server knows the space's variables and `navigation` (a route param is `navigation.routeParams.x`)"
+          "the page server cannot read its query: its template reads `state.id`, which the browser alone holds — the page server knows the space's variables, `navigation` (a route param is `navigation.routeParams.x`) and the state the space paints (`settings.paintedState`, as `state.<key>`)"
       }
     });
     expect(await read({ query: '/hours.json' })).toEqual({

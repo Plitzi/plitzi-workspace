@@ -188,9 +188,19 @@ const paintedSync = <TState extends CommonState>(
       const entry = readPaintedEntry(name);
       if (entry && entry.owner !== owner) {
         // The browser's keys are nobody's: they stay, and the entry is written again under this owner with them alone.
+        // Of the rest, only a value that is still the entry's goes: what this account wrote since the page hydrated —
+        // a workspace its own provider's first answer picked, as early as a server provider answers — is its own.
         const browser = browserKeys(settings);
-        const theirs = new Set([...keys].filter(key => !browser.has(key)));
-        if (isRecord(kept) && [...theirs].some(key => key in kept)) {
+        const theirs = new Set(
+          [...keys].filter(
+            key =>
+              !browser.has(key) &&
+              isRecord(kept) &&
+              key in kept &&
+              JSON.stringify(kept[key]) === JSON.stringify(entry.values[key])
+          )
+        );
+        if (isRecord(kept) && theirs.size > 0) {
           // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
           // Its commit comes back through here, and rewrites the entry.
           api.setState('runtime.state' as PathOf<TState>, omitKeys(kept, theirs) as never);

@@ -271,8 +271,10 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads `<source>.data.<field>` whichever
    runtime the provider has, so moving one to the server changes no path. Which of them reads a `query` is one rule,
    `serverQueryOf` (`sdk-shared/schema`): its template is filled in with what the page server knows of the visit —
-   the space's variables resolved for this host (`resolveVariables`, as the browser resolves them) and `navigation` —
-   into `RscResolveContext.templateData`; another site's address is asked with GET and the headers the provider
+   the space's variables resolved for this host (`resolveVariables`, as the browser resolves them), `navigation` and the
+   state the page starts from for the keys the space paints (`state.<key>`, `requestPaintedState`) — into
+   `RscResolveContext.templateData`; when the browser comes to write the address differently (a painted key changed), the
+   provider asks `/_rsc` again; another site's address is asked with GET and the headers the provider
    declares, through `fetchOutbound` (no private network but the deployment's `outbound.privateOrigins`, every
    redirect judged), held to 5 MB, without the visitor's cookies; an answer that is no success or no JSON is the
    provider's error. A query only the browser can ask

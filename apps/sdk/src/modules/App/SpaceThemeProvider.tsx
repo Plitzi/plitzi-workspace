@@ -2,13 +2,15 @@ import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import { ThemeProvider, useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 
 import type { ThemeScope } from '@plitzi/sdk-shared/theme';
-import type { Theme } from '@plitzi/sdk-shared/types';
+import type { ColorScheme, Theme } from '@plitzi/sdk-shared/types';
 import type { ReactNode } from 'react';
 
 export type SpaceThemeProviderProps = {
   scope: ThemeScope;
   /** A theme the host already settled — the cookie a server read — which wins over everything here. */
   theme?: Theme;
+  /** The scheme the visitor's machine asks for, as the host read it — see `ThemeProvider`'s. */
+  scheme?: ColorScheme;
   children?: ReactNode;
 };
 
@@ -20,7 +22,7 @@ export type SpaceThemeProviderProps = {
  * from the store because a space fetched after mount arrives there late — the provider re-applies its default when
  * it does, and a visitor's own choice (the cookie) still wins.
  */
-const SpaceThemeProvider = ({ scope, theme, children }: SpaceThemeProviderProps) => {
+const SpaceThemeProvider = ({ scope, theme, scheme, children }: SpaceThemeProviderProps) => {
   // Absent until the space is in the store — and in a style document written before themes existed.
   const [[spaceDefault = 'system']] = useSdkStore(['style.theme.default']);
   const { enclosed } = useRenderSettings();
@@ -31,7 +33,7 @@ const SpaceThemeProvider = ({ scope, theme, children }: SpaceThemeProviderProps)
   const startingTheme = enclosed && spaceDefault === 'system' ? outerTheme : spaceDefault;
 
   return (
-    <ThemeProvider defaultTheme={startingTheme} scope={scope} theme={theme}>
+    <ThemeProvider defaultTheme={startingTheme} scope={scope} theme={theme} scheme={scheme}>
       {children}
     </ThemeProvider>
   );

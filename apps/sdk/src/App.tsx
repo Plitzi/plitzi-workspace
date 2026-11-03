@@ -37,6 +37,7 @@ import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
   AnalyticsConfig,
+  ColorScheme,
   Theme,
   ComponentPlugin,
   ComponentPluginFC,
@@ -100,6 +101,11 @@ export type AppProps = {
   themeScope?: ThemeScope;
   /** The theme the host already settled — from the cookie a server read before it rendered the document. */
   theme?: Theme;
+  /**
+   * The scheme the visitor's machine asks for, as a server read it (the client hint, or the cookie the SDK keeps it in):
+   * what a `system` theme resolves to from the first render, so `{{ theme.resolved }}` is drawn as the browser will.
+   */
+  scheme?: ColorScheme;
   state?: Record<string, unknown>;
   /**
    * The feature flags this embedding decides, by name: `{ newCheckout: true }`. Above whatever the space and the server
@@ -146,6 +152,7 @@ const App = ({
   debugMode: debugModeProp = false,
   themeScope: themeScopeProp,
   theme,
+  scheme,
   state,
   forcedFlags,
   ...sdkProps
@@ -264,6 +271,14 @@ const App = ({
     }
   }, [sdkProps.isHydrating]);
 
+  /**
+   * The host's own plugins (`<PlitziSdk.Plugin>`), by type — the same object for as long as they are the same.
+   *
+   * Read off `children`, which is a new array on every render of the host — the bootstrap's own renders once hydration
+   * is done among them — and a new object here is a new component registry every container redraws from: the whole page
+   * drawn again, in one task, right after it hydrated.
+   */
+  const previousCustomComponents = useRef<Record<string, ComponentPlugin>>({});
   const localCustomComponents = useMemo(() => {
     const components: Record<string, ComponentPlugin> = {};
     Children.forEach(children, child => {
@@ -286,6 +301,14 @@ const App = ({
       component.extraProps = extraProps;
       components[renderType] = component;
     });
+
+    const previous = previousCustomComponents.current;
+    const types = Object.keys(components);
+    if (types.length === Object.keys(previous).length && types.every(type => previous[type] === components[type])) {
+      return previous;
+    }
+
+    previousCustomComponents.current = components;
 
     return components;
   }, [children]);
@@ -335,7 +358,7 @@ const App = ({
             : [])
         ]}
       >
-        <SpaceThemeProvider scope={themeScope} theme={theme}>
+        <SpaceThemeProvider scope={themeScope} theme={theme} scheme={scheme}>
           {/* plitzi-ui's provider stamps `dark` on `<html>` by default — and takes it off, being `light` — so it would
             repaint the page around an embedded space. The theme is `SpaceThemeProvider`'s alone. */}
           <Provider components={components} applyColorModeClass={false}>

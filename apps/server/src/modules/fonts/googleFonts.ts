@@ -19,6 +19,53 @@ const FILE_PATH = /^\/s\/[a-z0-9]+\/v\d+\/[A-Za-z0-9_-]+\.(woff2|woff|ttf)$/;
 
 const FILE_TYPES: Record<string, string> = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' };
 
+/**
+ * A family Google serves only built on request is named at `/l/font?kit=…&skey=…&v=v<n>` — the same file for the same
+ * three, and so kept like the others. Its type is the one Google answers it with.
+ */
+const DYNAMIC_PATH = '/l/font';
+const DYNAMIC_PARAMS: Record<string, RegExp> = {
+  kit: /^[A-Za-z0-9_-]{1,512}$/,
+  skey: /^[a-f0-9]{1,64}$/,
+  v: /^v\d{1,4}$/
+};
+
+/** A file of Google's this mirror serves: where it is asked, under what it is kept, and its type when the path says. */
+const fileOf = (rest: string, search: string): { upstream: string; key: string; type?: string } | undefined => {
+  const format = FILE_PATH.exec(rest)?.[1];
+  if (format !== undefined) {
+    return { upstream: `${GOOGLE_FILE_ORIGIN}${rest}`, key: rest, type: FILE_TYPES[format] };
+  }
+
+  if (rest !== DYNAMIC_PATH) {
+    return undefined;
+  }
+
+  const params = new URLSearchParams(search);
+  const names = [...params.keys()];
+  if (
+    names.length !== Object.keys(DYNAMIC_PARAMS).length ||
+    Object.entries(DYNAMIC_PARAMS).some(
+      ([name, valid]) => params.getAll(name).length !== 1 || !valid.test(params.get(name) ?? '')
+    )
+  ) {
+    return undefined;
+  }
+
+  const query = Object.keys(DYNAMIC_PARAMS)
+    .map(name => `${name}=${params.get(name) ?? ''}`)
+    .join('&');
+
+  return { upstream: `${GOOGLE_FILE_ORIGIN}${DYNAMIC_PATH}?${query}`, key: `${DYNAMIC_PATH}?${query}` };
+};
+
+/** What Google said a file is, when it said a font: anything else is served as the WOFF2 it asks for. */
+const fontTypeOf = (response: Response): string => {
+  const said = response.headers.get('content-type')?.split(';')[0]?.trim() ?? '';
+
+  return said.startsWith('font/') ? said : 'font/woff2';
+};
+
 /** What one request may name: the page's families (a manifest has a handful), and the one `display` css2 takes. */
 const MAX_FAMILIES = 24;
 const MAX_FAMILY_LENGTH = 200;
@@ -119,13 +166,13 @@ export const createGoogleFontsMirror = ({
     sizeOf: css => Buffer.byteLength(css),
     sweepIntervalMs: SWEEP_MS
   });
-  const files = new TtlCache<Buffer>(FILE_TTL_MS, 5000, {
+  const files = new TtlCache<{ bytes: Buffer; type: string }>(FILE_TTL_MS, 5000, {
     maxBytes,
-    sizeOf: file => file.byteLength,
+    sizeOf: file => file.bytes.byteLength,
     sweepIntervalMs: SWEEP_MS
   });
   const askingCss = singleFlight<string>();
-  const askingFile = singleFlight<Buffer>();
+  const askingFile = singleFlight<{ bytes: Buffer; type: string }>();
 
   const fetched = async (url: string, maxSize: number): Promise<Response> => {
     const response = await base(url, { headers: { 'User-Agent': MODERN_BROWSER }, redirect: 'error' });
@@ -181,36 +228,38 @@ export const createGoogleFontsMirror = ({
       }
     }
 
-    const format = FILE_PATH.exec(rest)?.[1];
-    if (format === undefined) {
+    const asked = fileOf(rest, search);
+    if (asked === undefined) {
       return { status: 404, headers: {}, body: 'Not found' };
     }
 
-    const upstream = `${GOOGLE_FILE_ORIGIN}${rest}`;
+    const { upstream, key } = asked;
     try {
       const file =
-        files.get(rest) ??
-        (await askingFile(rest, async () => {
-          const bytes = Buffer.from(await (await fetched(upstream, MAX_FILE_BYTES)).arrayBuffer());
+        files.get(key) ??
+        (await askingFile(key, async () => {
+          const response = await fetched(upstream, MAX_FILE_BYTES);
+          const bytes = Buffer.from(await response.arrayBuffer());
           if (bytes.byteLength > MAX_FILE_BYTES) {
             throw new Error(`${upstream} is larger than ${String(MAX_FILE_BYTES)} bytes`);
           }
 
-          files.set(rest, bytes);
+          const kept = { bytes, type: asked.type ?? fontTypeOf(response) };
+          files.set(key, kept);
 
-          return bytes;
+          return kept;
         }));
 
       return {
         status: 200,
         headers: {
-          'Content-Type': FILE_TYPES[format] ?? 'application/octet-stream',
+          'Content-Type': file.type,
           'Cache-Control': FILE_CACHE_CONTROL,
           // A font is fetched in CORS mode whatever its origin: a space enclosed in another site's page uses it too.
           'Access-Control-Allow-Origin': '*',
           'Cross-Origin-Resource-Policy': 'cross-origin'
         },
-        body: file
+        body: file.bytes
       };
     } catch (error) {
       return sentToGoogle(upstream, error);

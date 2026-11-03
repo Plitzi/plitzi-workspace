@@ -114,18 +114,55 @@ const useInternalItems = ({
     ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.slots.join(',')}`
     : '';
 
-  // useSyncExternalStore with getServerSnapshot: React uses the server snapshot during
-  // hydration (false → client elements excluded, matching server HTML), then transitions
-  // to the client snapshot (true) synchronously before the browser paints — no flicker.
-  const mounted = useSyncExternalStore(storeSubscriber, snapshot, serverSnapshot);
+  /**
+   * Whether hydration is over, for the items that draw differently once it is: a `runtime: 'client'` one the server
+   * left out, a `runtime: 'server'` one frozen against the server's markup until then.
+   *
+   * `useSyncExternalStore` with a server snapshot unlike the client's: React draws the server's during hydration, then
+   * draws the element again — synchronously, before the browser paints. Asked of every element with items, that was
+   * every container of the page drawn a second time in one task right after hydrating: the largest long task of a
+   * landing page on a phone. Only an element with such an item asks; the rest read the server's answer throughout.
+   */
+  const switchesOnMount =
+    previewMode === true &&
+    rscEnabled === true &&
+    // An item naming an element that is gone reads nothing, whatever the path's type says.
+    itemElements.some(
+      (el: Element | undefined) => el?.definition.runtime === 'client' || el?.definition.runtime === 'server'
+    );
+  const mounted = useSyncExternalStore(storeSubscriber, switchesOnMount ? snapshot : serverSnapshot, serverSnapshot);
   const isSlot = plitziElementLayout?.slots.includes(id) ?? false;
   const layoutBody = useLayoutBody(isSlot ? id : undefined);
+
+  /**
+   * What of the component and plugin registries these items are drawn from: which of their types each one holds.
+   *
+   * Both registries are new objects whenever anything joins them — a plugin the page loads after it hydrated, the host's
+   * own components handed over — and every container read them whole, so each arrival drew the whole page again. On a
+   * published page a container draws again only when one of ITS items' types arrived. The builder follows the objects
+   * themselves: a plugin's settings change there under the same type.
+   */
+  const registryRef = useRef({ components, plugins });
+  registryRef.current = { components, plugins };
+  const itemTypesHeld = previewMode
+    ? itemElements
+        .map((el: Element | undefined) => {
+          const type = el?.definition.type;
+
+          return type === undefined ? '' : `${type in components.current ? 'c' : ''}${type in plugins ? 'p' : ''}`;
+        })
+        .join('|')
+    : undefined;
+  const componentsDependency = itemTypesHeld ?? components;
+  const pluginsDependency = itemTypesHeld ?? plugins;
 
   return useMemo<ReactNode | undefined>(() => {
     if (!hasItems || !mountItems) {
       return undefined;
     }
 
+    // The registries as they are now: what of them these items depend on is in the dependencies below.
+    const { components: registered, plugins: installed } = registryRef.current;
     // Process items
     const itemsParsed: ReactNode[] = (items ?? [])
       // An item may name an element that is gone (deleted under it, a component since changed): the path reads nothing.
@@ -165,15 +202,15 @@ const useInternalItems = ({
          * element stays frozen for the life of the page or only until hydration is over.
          */
         // The registry's type promises a component for every key; only asking it what it HOLDS tells the truth.
-        const renderable = type in components.current || !!getRemoteSettings({ type, plugins });
+        const renderable = type in registered.current || !!getRemoteSettings({ type, plugins: installed });
 
         const item = pluginSelector({
           key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
           plitziElementLayout,
           type,
           internalProps: { id: itemId, rootId: finalRootId },
-          components: components.current,
-          plugins
+          components: registered.current,
+          plugins: installed
         });
 
         /**
@@ -222,6 +259,8 @@ const useInternalItems = ({
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
+    // The registries are read through `registryRef`; what of them these items depend on is `*Dependency`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasItems,
     mountItems,
@@ -234,8 +273,8 @@ const useInternalItems = ({
     rscEnabled,
     mounted,
     layoutKeyIdentifier,
-    components,
-    plugins,
+    componentsDependency,
+    pluginsDependency,
     isSlot,
     layoutBody
   ]);

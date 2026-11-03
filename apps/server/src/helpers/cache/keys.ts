@@ -5,6 +5,7 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 import { requestAuthority } from '../../core/requestParser';
 import { ssrPaintedCookieName } from '../paintedCookie';
 import { readCookie } from '../readCookie';
+import { visitorScheme } from '../visitorScheme';
 import { canonicalSearch } from './queryParams';
 
 /** What a cache key reads off a request: where it is, and — from the resolved deployment — what the flags are at. */
@@ -25,6 +26,7 @@ const HTML_KEY_FIELDS = [
   'revision',
   'flags',
   'theme',
+  'scheme',
   'painted',
   'debugHidden',
   'forcedFlags',
@@ -68,7 +70,14 @@ export const buildHtmlCacheKey = (
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: CacheKeyRequest & { headers: { cookie?: string; host?: string; ':authority'?: string } },
+  req: CacheKeyRequest & {
+    headers: {
+      cookie?: string;
+      host?: string;
+      ':authority'?: string;
+      'sec-ch-prefers-color-scheme'?: string | string[];
+    };
+  },
   ignoredQueryParams: readonly string[]
 ): string => {
   const fields: HtmlCacheKeyFields = {
@@ -78,6 +87,9 @@ export const buildHtmlCacheKey = (
     revision: String(revision),
     flags: flagsVersionOf(req),
     theme: themeFromCookies(req.headers.cookie) ?? '',
+    // What a `system` theme was drawn as (`theme.resolved`): only a visitor who chose a theme is drawn the same whatever
+    // their machine says.
+    scheme: [undefined, 'system'].includes(themeFromCookies(req.headers.cookie)) ? (visitorScheme(req) ?? '') : '',
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req))) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',

@@ -8,6 +8,7 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 import { createServer } from './createServer';
 import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
+import { ssrPaintedCookieName } from '../helpers/paintedCookie';
 
 import type { Element, Schema, SSRServer } from '@plitzi/sdk-shared';
 import type { Server } from 'node:http';
@@ -38,24 +39,36 @@ const node = (id: string, type: string, items: string[] = [], parentId?: string)
 const schema: Schema = {
   ...EMPTY_SCHEMA.schema,
   flat: {
-    home: { ...node('home', 'page', ['me']), attributes: { name: 'Home', slug: '', folder: '', default: true } },
+    home: { ...node('home', 'page', ['me', 'ws']), attributes: { name: 'Home', slug: '', folder: '', default: true } },
     me: {
       ...node('me', 'apiContainer', [], 'home'),
       attributes: { query: `${API}/me`, credentials: 'include' },
       definition: { ...node('me', 'apiContainer', [], 'home').definition, runtime: 'server' }
+    },
+    // The workspace the page starts on, from the state the space paints (`settings.paintedState`).
+    ws: {
+      ...node('ws', 'apiContainer', [], 'home'),
+      attributes: { query: `${API}/workspaces/{{ state.workspace.id }}`, credentials: 'include' },
+      definition: { ...node('ws', 'apiContainer', [], 'home').definition, runtime: 'server' }
     }
   },
   pages: ['home'],
+  settings: { ...EMPTY_SCHEMA.schema.settings, keepState: true, paintedState: ['workspace'] },
   rsc: { enabled: true }
 };
 
 let api: Server;
 let server: SSRServer;
-const asked: { cookie?: string; host?: string; proto?: string | string[] }[] = [];
+const asked: { url?: string; cookie?: string; host?: string; proto?: string | string[] }[] = [];
 
 beforeAll(async () => {
   api = createHttpServer((req, res) => {
-    asked.push({ cookie: req.headers.cookie, host: req.headers.host, proto: req.headers['x-forwarded-proto'] });
+    asked.push({
+      url: req.url,
+      cookie: req.headers.cookie,
+      host: req.headers.host,
+      proto: req.headers['x-forwarded-proto']
+    });
     const session = /session=([^;]+)/.exec(req.headers.cookie ?? '')?.[1];
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ name: session ? `ana-${session}` : 'stranger' }));
@@ -95,7 +108,18 @@ describe('a server provider asking as the visitor', () => {
     const page = await fetch(`${BASE}/`, { headers: { cookie: 'session=s1; theme=dark' } });
 
     expect(await page.text()).toContain('ana-s1');
-    expect(asked).toEqual([{ cookie: 'session=s1', host: 'api.example.test', proto: 'https' }]);
+    // No workspace painted yet: that provider asks nothing, as the browser does not until one is picked.
+    expect(asked).toEqual([{ url: '/me', cookie: 'session=s1', host: 'api.example.test', proto: 'https' }]);
+  });
+
+  it('asks for the workspace the page starts on, as the state the space paints holds it', async () => {
+    asked.length = 0;
+    const painted = encodeURIComponent(JSON.stringify({ owner: '', values: { workspace: { id: 7 } } }));
+    await fetch(`${BASE}/`, {
+      headers: { cookie: `session=s4; ${ssrPaintedCookieName(`127.0.0.1:${String(PORT)}`)}=${painted}` }
+    });
+
+    expect(asked.map(({ url }) => url).toSorted()).toEqual(['/me', '/workspaces/7']);
   });
 
   it('keeps the page for nobody: the next visitor, and the same one a moment later, are read again', async () => {

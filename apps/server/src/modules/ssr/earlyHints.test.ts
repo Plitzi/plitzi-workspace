@@ -20,10 +20,10 @@ const PORT = await unusedPort();
 let server: SSRServer;
 
 /** The interim responses and the final one of a GET of `path`. */
-const get = (path: string) =>
+const get = (path: string, headers: Record<string, string> = {}) =>
   new Promise<{ hints: IncomingHttpHeaders[]; status: number; headers: IncomingHttpHeaders }>((resolve, reject) => {
     const hints: IncomingHttpHeaders[] = [];
-    const req = request({ host: '127.0.0.1', port: PORT, path }, res => {
+    const req = request({ host: '127.0.0.1', port: PORT, path, headers }, res => {
       res.resume();
       res.on('end', () => {
         resolve({ hints, status: res.statusCode ?? 0, headers: res.headers });
@@ -59,6 +59,14 @@ describe('modules/ssr/earlyHints', () => {
     expect(hints[0].link).toContain('rel=preload; as=style');
     expect(hints[0].link).toContain('/sdk-assets/plitzi-sdk.js');
     expect(headers.link).toBe(hints[0].link);
+    // And Chromium is asked for the machine's scheme, which a `system` theme is drawn by from the next request on.
+    expect(headers['accept-ch']).toBe('Sec-CH-Prefers-Color-Scheme');
+    expect(headers.vary).toContain('Sec-CH-Prefers-Color-Scheme');
+
+    // Compressed, it varies by the encoding as well — said beside the hint, not over it.
+    const compressed = await get('/', { 'accept-encoding': 'br' });
+    expect(compressed.headers['content-encoding']).toBe('br');
+    expect(compressed.headers.vary?.split(', ')).toEqual(['Sec-CH-Prefers-Color-Scheme', 'Accept-Encoding']);
   });
 
   // A module is fetched in CORS mode: a hint without `crossorigin` is a second request for the same file.

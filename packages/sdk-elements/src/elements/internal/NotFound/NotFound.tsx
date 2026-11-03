@@ -2,6 +2,7 @@
 import clsx from 'clsx';
 
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -19,8 +20,9 @@ const NotFound = ({ ref, className = '' }: NotFoundProps) => {
     definition: { label }
   } = useElement();
   const {
-    settings: { isHydrating, previewMode }
+    settings: { previewMode }
   } = usePlitzi();
+  const { isHydrating } = useRenderSettings();
   if (typeof window === 'undefined' || previewMode || isHydrating) {
     return undefined;
   }

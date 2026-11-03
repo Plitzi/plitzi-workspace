@@ -5,11 +5,15 @@ import type { ColorScheme, Theme, ThemeState } from '../types';
 export const createThemeState = (): ThemeState => ({ mode: 'system', scheme: 'light', areas: {} });
 
 /**
- * The state a surface starts in, before anything could ask the machine: the mode it opens with, and `light` for what a
- * `system` mode resolves to until the browser answers — the one guess a server has to make, and the one the
- * stylesheet's media queries correct without a class.
+ * The state a surface starts in, before anything could ask the machine: the mode it opens with, and what a `system`
+ * mode resolves to until the browser answers — the scheme the host read (a server, from the client hint or the cookie
+ * the browser kept it in), or `light`, the one guess left, which the stylesheet's media queries correct without a class.
  */
-export const startingThemeState = (mode: Theme): ThemeState => ({ ...createThemeState(), mode });
+export const startingThemeState = (mode: Theme, scheme?: ColorScheme): ThemeState => ({
+  ...createThemeState(),
+  mode,
+  ...(scheme ? { scheme } : {})
+});
 
 /**
  * The theme, as a store rather than a context.

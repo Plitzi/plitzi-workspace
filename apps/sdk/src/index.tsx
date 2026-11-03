@@ -78,6 +78,7 @@ import type {
   Server,
   RuntimeStateInstance,
   Theme,
+  ColorScheme,
   RealtimeMessage
 } from '@plitzi/sdk-shared';
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
@@ -394,6 +395,11 @@ export type PlitziSdkProps = {
   themeScope?: ThemeScope;
   /** The theme the host already settled — from the cookie a server read before it rendered the document. */
   theme?: Theme;
+  /**
+   * The scheme the visitor's machine asks for, as a server read it (the client hint, or the cookie the SDK keeps it in):
+   * what a `system` theme resolves to from the first render, so `{{ theme.resolved }}` is drawn as the browser will.
+   */
+  scheme?: ColorScheme;
 };
 
 const PlitziSdk = ({

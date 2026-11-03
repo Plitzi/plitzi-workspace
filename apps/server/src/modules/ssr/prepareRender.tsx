@@ -12,7 +12,6 @@ import {
   spaceIdentity,
   withholdPages
 } from '@plitzi/sdk-shared/schema';
-import { paintedStateFor } from '@plitzi/sdk-shared/state';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
@@ -35,9 +34,10 @@ import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { hydrationPayload, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { privateOriginsOf } from '../../helpers/outboundGuard';
-import { ssrPaintedCookieName } from '../../helpers/paintedCookie';
+import { requestPaintedState } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
+import { visitorScheme } from '../../helpers/visitorScheme';
 import { realtimeModuleFor } from '../realtime';
 import { matchRscPage } from '../rsc/matchRscPage';
 
@@ -318,6 +318,12 @@ export const prepareRender = async (
    * right for a space that did not pick.
    */
   const theme = themeFromCookies(req.headers.cookie) ?? declaredTheme(offlineData?.style);
+  /**
+   * And what a `system` theme resolves to, as the browser will resolve it: the machine's scheme, from the client hint
+   * (Chromium, once asked — `Accept-CH`) or the cookie the SDK keeps it in. Without it the server drew `light`, and a
+   * picture whose address names the scheme was asked for in light and again in dark as the page hydrated.
+   */
+  const scheme = visitorScheme(req);
 
   /**
    * The kept state the first paint depends on, from the cookie the SDK writes the space's `settings.paintedState` to.
@@ -329,14 +335,7 @@ export const prepareRender = async (
    * would hydrate other markup. Only the keys the space declares, only with `keepState` on, and of an entry another
    * account wrote than the one this request proved, only the browser's (`browserState`).
    */
-  const paintedState = schema?.settings.keepState
-    ? paintedStateFor(
-        req.headers.cookie,
-        ssrPaintedCookieName(requestAuthority(req)),
-        schema.settings,
-        req.ctx.user?.id
-      )
-    : undefined;
+  const paintedState = requestPaintedState(req, schema?.settings, req.ctx.user?.id).state;
 
   /**
    * The two layers of the space's flags this server answers for. Its own (`config.flags`), asked per space when it
@@ -389,6 +388,7 @@ export const prepareRender = async (
       sdkDevToolsStylePath,
       sdkIconsStylePath,
       ...(theme ? { theme } : {}),
+      ...(scheme ? { scheme } : {}),
       ...(paintedState ? { state: paintedState } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
       ...(overQuota ? { overQuota } : {}),
@@ -504,6 +504,7 @@ export const prepareRender = async (
       quotaNear,
       badge,
       theme,
+      ...(scheme ? { scheme } : {}),
       ...(paintedState ? { state: paintedState } : {}),
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {})

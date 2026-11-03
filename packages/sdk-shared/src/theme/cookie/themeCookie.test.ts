@@ -2,6 +2,9 @@ import { describe, expect, it, beforeEach } from 'vitest';
 
 import {
   applyThemeClass,
+  requestScheme,
+  schemeFromClientHint,
+  schemeFromCookies,
   isTheme,
   readThemeCookie,
   THEME_CLASSES,
@@ -85,5 +88,22 @@ describe('applyThemeClass', () => {
 
   it('agrees with the stylesheet about which classes exist', () => {
     expect(THEME_CLASSES).toEqual(['dark', 'light']);
+  });
+});
+
+describe('the machine’s scheme, as a server reads it', () => {
+  it('reads the client hint as Chromium writes it, quoted, and the cookie the SDK keeps it in', () => {
+    expect(schemeFromClientHint('"dark"')).toBe('dark');
+    expect(schemeFromClientHint('light')).toBe('light');
+    expect(schemeFromClientHint('"sepia"')).toBeUndefined();
+    expect(schemeFromCookies('theme-scheme=dark; theme=system')).toBe('dark');
+    expect(schemeFromCookies('builder-theme-scheme=dark', 'builder-theme-scheme')).toBe('dark');
+  });
+
+  // The hint is what the machine says on this very request; the cookie is what it said on the last visit.
+  it('prefers the hint of this request to what the browser kept', () => {
+    expect(requestScheme('theme-scheme=light', '"dark"')).toBe('dark');
+    expect(requestScheme('theme-scheme=light', undefined)).toBe('light');
+    expect(requestScheme(undefined, undefined)).toBeUndefined();
   });
 });

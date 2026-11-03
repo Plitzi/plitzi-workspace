@@ -1,8 +1,16 @@
-import { use, useEffect, useId, useRef, useState } from 'react';
+import { use, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { StoreContext, useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
-import { applyThemeClass, readThemeCookie, THEME_COOKIE_NAME, writeThemeCookie } from './cookie';
+import {
+  applyThemeClass,
+  readSchemeCookie,
+  readThemeCookie,
+  schemeCookieName,
+  THEME_COOKIE_NAME,
+  writeSchemeCookie,
+  writeThemeCookie
+} from './cookie';
 import ThemeScopeContext, { ThemeStartContext, useThemeState } from './ThemeScope';
 import defaultThemeStore, { createThemeStore, resolveScheme, setMachineScheme, setThemeMode } from './themeStore';
 import { useCommonStoreSync } from '../store';
@@ -38,6 +46,12 @@ export type ThemeProviderProps = {
    */
   theme?: Theme;
   scope?: ThemeScope;
+  /**
+   * The scheme the visitor's machine asks for, as the host already knows it — a server, from the client hint or the
+   * cookie this provider keeps it in — so a `system` surface renders resolved as the browser will, from its first
+   * render. Left out, `light` until the browser answers.
+   */
+  scheme?: ColorScheme;
   /** The cookie the choice lives in. Named per surface where two share an origin — the builder and a space do. */
   cookieName?: string;
   children?: ReactNode;
@@ -76,6 +90,7 @@ const ThemeMirror = ({ store }: { store: ThemeStoreInstance }) => {
 const ThemeProvider = ({
   defaultTheme = 'system',
   theme,
+  scheme,
   scope = 'document',
   cookieName = THEME_COOKIE_NAME,
   children
@@ -125,20 +140,29 @@ const ThemeProvider = ({
   }, [defaultTheme, theme, cookieName, scoped, store]);
 
   // The mode this surface starts in, for the renders before the effect above: the server's and the hydration's.
-  const start = theme ?? defaultTheme;
+  const startMode = theme ?? defaultTheme;
+  const start = useMemo(() => ({ mode: startMode, ...(scheme ? { scheme } : {}) }), [startMode, scheme]);
   // A host application can mount this with no Plitzi store anywhere above it — the desktop window does, to own the
   // theme of its own chrome — and there is nothing to mirror into there. A component rather than an `enabled` flag
   // because the sync hook resolves its store before it reads any option, so not calling it is the only way out.
   const hasAppStore = use(StoreContext) !== undefined;
 
+  // What the machine asks for is kept for the server as it is learnt — by the surface that owns the origin, not one
+  // embedded in another's page.
   useEffect(() => {
     const query = window.matchMedia(DARK_QUERY);
-    const onChange = () => setMachineScheme(query.matches ? 'dark' : 'light', store);
+    const onChange = () => {
+      const now: ColorScheme = query.matches ? 'dark' : 'light';
+      setMachineScheme(now, store);
+      if (!scoped && readSchemeCookie(schemeCookieName(cookieName)) !== now) {
+        writeSchemeCookie(now, schemeCookieName(cookieName));
+      }
+    };
     query.addEventListener('change', onChange);
     onChange();
 
     return () => query.removeEventListener('change', onChange);
-  }, [store]);
+  }, [store, scoped, cookieName]);
 
   /**
    * The choice, written down and put on the document — the two halves of the same event.

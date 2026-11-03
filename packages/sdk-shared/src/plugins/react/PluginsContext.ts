@@ -2,7 +2,12 @@ import { sharedContext } from '../../helpers/sharedContext';
 
 import type { PluginsContextValue } from '../../types';
 
-const pluginsContextDefaultValue = { assets: {} } as PluginsContextValue;
+// Only a render with no provider above it reads this: it draws no plugin, and registers no style.
+const pluginsContextDefaultValue: PluginsContextValue = {
+  plugins: {},
+  registerCustomAssets: () => undefined,
+  unregisterCustomAssets: () => undefined
+};
 
 const PluginsContext = sharedContext('PluginsContext', pluginsContextDefaultValue);
 

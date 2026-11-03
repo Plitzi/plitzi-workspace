@@ -70,6 +70,34 @@ describe('ThemeProvider scope', () => {
     expect(themeStore.getState().mode).toBe('system');
   });
 
+  // A `system` page drawn as the machine asks: the server read the scheme (the hint, the cookie) and says it here.
+  it('renders a system theme on the server in the scheme its host read, and keeps the scheme it learns', () => {
+    const Printed = () => {
+      const { theme, resolvedTheme } = useTheme();
+
+      return <i>{`${theme}/${resolvedTheme}`}</i>;
+    };
+    const html = renderToString(
+      <StoreProvider value={{}}>
+        <ThemeProvider cookieName="test-theme" theme="system" scheme="dark">
+          <Printed />
+        </ThemeProvider>
+      </StoreProvider>
+    );
+
+    expect(html).toContain('system/dark');
+
+    document.cookie = 'test-theme-scheme=dark;path=/';
+    mount('document', null);
+    // jsdom's machine answers light: what it learnt is kept, over what the cookie said.
+    expect(document.cookie).toContain('test-theme-scheme=light');
+
+    // An embedded surface keeps nothing of the origin's: the page around it owns the cookie.
+    document.cookie = 'test-theme-scheme=dark;path=/';
+    mount('container', null);
+    expect(document.cookie).toContain('test-theme-scheme=dark');
+  });
+
   it('stamps the document when the surface is the page', () => {
     mount('document', null);
 

@@ -188,7 +188,11 @@ const NetworkContextProvider = ({
 
   const initOfflineData = async (data: OfflineDataRaw) => {
     const plugins = await parseOfflinePlugins(data, components);
-    setInternalData(state => ({ ...state, plugins }));
+    // No plugin to add is no new registry: an empty one replacing the empty one drew every container of the page again,
+    // right after it hydrated, for nothing.
+    setInternalData(state =>
+      Object.keys(plugins).length === 0 && Object.keys(state.plugins).length === 0 ? state : { ...state, plugins }
+    );
     setLoading(false);
   };
 

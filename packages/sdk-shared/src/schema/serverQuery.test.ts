@@ -21,7 +21,9 @@ const visit: ServerTemplateData = {
   variables: { apiUrl: 'https://api.example.com', cdnUrl: 'https://cdn.example.com' },
   routeParams: { id: '42' },
   queryParams: { page: '2' },
-  origin: 'https://shop.example.com'
+  origin: 'https://shop.example.com',
+  paintedKeys: new Set(['workspace']),
+  state: { workspace: { id: 5 } }
 };
 
 describe("a server provider's query, as the page server reads it", () => {
@@ -68,6 +70,36 @@ describe("a server provider's query, as the page server reads it", () => {
     expect(why({ query: '{{ apiUrl }}/me', accessToken: '{{ auth.accessToken }}' })).toContain('reads `auth`');
     expect(why({ query: 'https://api.example.com/', method: 'post' })).toContain('POST');
     expect(why({ query: '{{ apiUrl }}/items/{{ navigation.routeParams.id }}' })).toBeUndefined();
+  });
+
+  it('asks nothing for a template that comes to nothing, as the browser does not', () => {
+    expect(
+      serverQueryOf(provider({ query: "{{ navigation.queryParams.q ? apiUrl : '' }}" }), { ...visit, queryParams: {} })
+    ).toBeUndefined();
+  });
+
+  // The browser keeps the token for later and asks once the key holds a value; the server, the same.
+  it('asks nothing while a painted key it reads holds no value yet', () => {
+    const query = '{{ apiUrl }}/workspaces/{{ state.workspace.id }}/stats';
+    expect(serverQueryOf(provider({ query }), { ...visit, state: {} })).toBeUndefined();
+    expect(serverQueryOf(provider({ query }), { ...visit, state: { workspace: { id: '' } } })).toBeUndefined();
+    expect(serverQueryOf(provider({ query }), visit)?.kind).toBe('url');
+  });
+
+  // What the page starts from, the server knows for the keys the space paints — as the cookie holds them.
+  it('reads the state the space paints, and says why for any other key of it', () => {
+    const read = serverQueryOf(provider({ query: '{{ apiUrl }}/workspaces/{{ state.workspace.id }}/stats' }), visit);
+    expect(read?.kind === 'url' && read.url.href).toBe('https://api.example.com/workspaces/5/stats');
+
+    const why = (query: string) => serverQueryProblem(provider({ query }), new Set(['apiUrl']), new Set(['workspace']));
+    expect(why('{{ apiUrl }}/x/{{ state.workspace.id }}')).toBeUndefined();
+    expect(why('{{ apiUrl }}/x/{{ state.filter }}')).toContain('`state.filter`');
+    expect(why('{{ apiUrl }}/x/{{ state.filter }}')).toContain('settings.paintedState');
+    expect(serverQueryProblem(provider({ query: '{{ state.workspace.id }}' }), new Set())).toContain(
+      '`state.workspace`'
+    );
+    // Followed by the server, never by the browser: it would not ask again when another workspace is picked.
+    expect(why("{{ state.workspace.id ? apiUrl ~ '/x/' ~ state.workspace.id : '' }}")).toContain('token of its own');
   });
 
   // Whether the cookies may go where it comes to is the deployment's to say, on the visit (`rsc.visitorCredentials`).

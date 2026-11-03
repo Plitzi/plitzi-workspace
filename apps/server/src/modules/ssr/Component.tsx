@@ -7,7 +7,8 @@ import type {
   Server,
   SSRPlugin,
   SSRRenderResult,
-  Theme
+  Theme,
+  ColorScheme
 } from '@plitzi/sdk-shared';
 
 export type ComponentProps = {
@@ -29,6 +30,8 @@ export type ComponentProps = {
   badge?: boolean;
   /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
   theme?: Theme;
+  /** The scheme the visitor's machine asks for, as this request said it — what a `system` theme is drawn as. */
+  scheme?: ColorScheme;
   /** The kept state the first paint depends on (`settings.paintedState`), from the visitor's cookie. */
   state?: Record<string, unknown>;
   /** The flags this deployment decides (`config.flags`). */
@@ -52,6 +55,7 @@ const Component = ({
   quotaNear,
   badge,
   theme,
+  scheme,
   state,
   serverFlags,
   forcedFlags
@@ -75,6 +79,7 @@ const Component = ({
       {...(quotaNear === undefined ? {} : { quotaNear })}
       {...(badge === undefined ? {} : { badge })}
       {...(theme === undefined ? {} : { theme })}
+      {...(scheme === undefined ? {} : { scheme })}
       {...(state === undefined ? {} : { state })}
       {...(serverFlags === undefined ? {} : { serverFlags })}
       {...(forcedFlags === undefined ? {} : { forcedFlags })}

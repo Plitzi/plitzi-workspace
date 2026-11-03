@@ -498,6 +498,21 @@ describe('runtimeStatePersist', () => {
       expect(cookie()).toBeUndefined();
     });
 
+    // A server provider answers with the page, so its success flow writes before this ever checks the cookie.
+    it('keeps what this account wrote before it knew the cookie was somebody else’s', () => {
+      writeCookie('user:7', { toolPick: 'star', name: 'Ada' });
+      const store = build({
+        schema: painted(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(9) }, state: { toolPick: 'star', name: 'Grace' } }
+      });
+      store.hydrate?.();
+      store.setState('schema', painted());
+
+      expect(store.getState().runtime?.state).toEqual({ name: 'Grace' });
+      expect(cookie()).toEqual({ owner: 'user:9', values: { name: 'Grace' } });
+    });
+
     it('does not bring the previous account’s painted values back when the account changes', () => {
       writeCookie('user:7', { toolPick: 'star' });
       const store = build({

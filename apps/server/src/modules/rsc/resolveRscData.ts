@@ -21,6 +21,7 @@ import {
 import { matchRscPage } from './matchRscPage';
 import { requestOrigin } from '../../core/requestParser';
 import { onAbort } from '../../helpers/onAbort';
+import { requestPaintedState } from '../../helpers/paintedCookie';
 import { serverLog } from '../../helpers/serverLog';
 
 import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
@@ -179,6 +180,7 @@ export const resolveRscData = async ({
     return { serverData: {} };
   }
 
+  const painted = requestPaintedState(req, schema.settings, user?.id);
   // Resolved once for the page, as the browser resolves them for it: the variables for this host and this address.
   const templateData: ServerTemplateData = {
     variables: resolveVariables(schema.variables, {
@@ -189,7 +191,10 @@ export const resolveRscData = async ({
     }),
     routeParams,
     queryParams: req.query,
-    origin: requestOrigin(req) || `${req.protocol}://${req.hostname}`
+    origin: requestOrigin(req) || `${req.protocol}://${req.hostname}`,
+    // The state the page starts from, as the render reads it: a provider asks with what the page is drawn with.
+    paintedKeys: painted.keys,
+    state: painted.state ?? {}
   };
   const byId = new Map(all.map(element => [element.id, element] as const));
   const serverIds = new Set(byId.keys());

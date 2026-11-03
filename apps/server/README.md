@@ -522,6 +522,7 @@ What it used to make every deployment declare, each of which it can answer itsel
 | **The transport** | `httpVersion` defaults to HTTP/2 with `tls` and HTTP/1.1 without. No browser speaks cleartext h2, so the old default of `2` meant every local run had to say otherwise |
 | **The audience** | `tokens.audience` defaults to the issuer, which is right for a deployment that is its own audience |
 | **The space** | `createJsonAdapters({ offlineData })` alone resolves to space 1, `main`, revision 0 |
+| **The visitor's scheme** | A `system` theme is drawn as the machine asks — `{{ theme.resolved }}` in a picture's address, a label — from the `Sec-CH-Prefers-Color-Scheme` client hint the page asks Chromium for (`Accept-CH`), or the `theme-scheme` cookie the SDK keeps it in; `light` on a first visit without either. The page cache is keyed by it where the theme defers to the machine |
 | **What a page loads, early** | The SDK's module is preloaded from the page's head (`modulepreload`) and, with its stylesheets, said in a `103 Early Hints` while the page is still being rendered — the browser has them by the time the HTML arrives. `earlyHints: false` turns the hints off |
 
 A page server therefore needs `port`, `adapters`, and nothing else.

@@ -9,6 +9,7 @@ import { resolveCompression } from '../../helpers/compress';
 import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
 import { serverLog } from '../../helpers/serverLog';
+import { SCHEME_HINT_HEADER } from '../../helpers/visitorScheme';
 
 import type { BuildBodyResult } from './buildBody';
 import type { RenderClaim } from './pageCache';
@@ -77,6 +78,9 @@ export const renderSSR = async (
   const devMode = config.devMode ?? false;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // A `system` theme is drawn as the machine asks (`theme.resolved`): Chromium says which from its next request on.
+  res.setHeader('Accept-CH', SCHEME_HINT_HEADER);
+  res.setHeader('Vary', SCHEME_HINT_HEADER);
   // Before anything is read: what follows is the wait the browser can spend fetching the SDK.
   sendEarlyHints(config, res);
 

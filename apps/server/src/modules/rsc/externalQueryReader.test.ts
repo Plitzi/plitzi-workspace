@@ -12,7 +12,9 @@ const visit: ServerTemplateData = {
   variables: {},
   routeParams: {},
   queryParams: {},
-  origin: 'https://shop.example.com'
+  origin: 'https://shop.example.com',
+  paintedKeys: new Set(['workspace']),
+  state: { workspace: { id: 5 } }
 };
 
 /** The address a provider's query comes to, as `connectorRscData` hands it over. */

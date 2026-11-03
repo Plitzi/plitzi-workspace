@@ -34,6 +34,13 @@ describe('buildHtmlCacheKey', () => {
     expect(html('theme=purple')).toBe(html());
   });
 
+  // A `system` page is drawn as the machine asks (`theme.resolved`); a chosen theme is drawn the same whatever it says.
+  it('separates the machine’s schemes only where the theme defers to the machine', () => {
+    expect(html('theme-scheme=dark')).not.toBe(html('theme-scheme=light'));
+    expect(html('theme=system; theme-scheme=dark')).not.toBe(html('theme=system'));
+    expect(html('theme=dark; theme-scheme=dark')).toBe(html('theme=dark; theme-scheme=light'));
+  });
+
   /** On a page that authorizes dev tools, the visitor who hid them is rendered without the panel. */
   it('separates a visitor who hid the dev tools from one who did not', () => {
     expect(html('plitzi_debug=false')).not.toBe(html());

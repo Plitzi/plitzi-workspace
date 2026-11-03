@@ -453,6 +453,15 @@ describe('prepareRender / the theme the visitor already chose', () => {
     expect(templateParams.offlineData).toContain('"theme":"light"');
   });
 
+  // What `system` resolves to, as the browser kept it: drawn so, and handed over so, with no class on the document.
+  it('renders a system theme in the scheme the browser kept, and hands it over', async () => {
+    const { templateParams, componentProps } = await render('/', { cookie: 'theme=system; theme-scheme=dark' });
+
+    expect(componentProps.scheme).toBe('dark');
+    expect(templateParams.offlineData).toContain('"scheme":"dark"');
+    expect(templateParams.themeClass).toBeUndefined();
+  });
+
   /**
    * `system` and "never chose" both write nothing — the absence is what lets the media queries answer.
    *

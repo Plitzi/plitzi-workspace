@@ -355,6 +355,28 @@ const ApiContainer = ({
   });
 
   /**
+   * A server provider whose address the browser now writes differently is asked again: its template reads what the
+   * visitor changed since — a painted key (`{{ state.workspace.id }}`, another workspace picked) — and the page server
+   * answered the address it came to then. The change is already in the cookie the refresh carries, so the server
+   * reads it as the browser does. While a request is in flight it waits for it, and asks once it is done.
+   */
+  const askedAt = useRef(query);
+  useEffect(() => {
+    if (!serverMode || !rscResolved) {
+      askedAt.current = query;
+
+      return;
+    }
+
+    if (askedAt.current === query || rscPending) {
+      return;
+    }
+
+    askedAt.current = query;
+    void refetch();
+  }, [serverMode, rscResolved, rscPending, query, refetch]);
+
+  /**
    * A server provider whose `when` came to hold here — the visitor signed in, another provider answered — is asked
    * then: the page server left it out while it did not hold, and nobody asked again.
    */
