@@ -404,9 +404,15 @@ describe('prepareRender / the fonts the document asks for', () => {
     expect(templateParams.fonts).toEqual({ preconnect: [], links: [], faces: '', origins: [] });
   });
 
+  // Asked of this server's own mirror, on the page's connection — or of Google, when the deployment turned it off.
   it("puts the space's google families in the document, which is the only place they load in time", async () => {
     const { templateParams } = await render('/', { fonts: [lato] });
     expect(templateParams.fonts?.links).toEqual([
+      { href: '/_plitzi/fonts/google/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }
+    ]);
+
+    const direct = await render('/', { fonts: [lato], fontsConfig: { google: false } });
+    expect(direct.templateParams.fonts?.links).toEqual([
       { href: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }
     ]);
   });

@@ -22,10 +22,11 @@ import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { publishSpaceDocument } from './spaceDocument';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
+import { googleFontsUrlOf } from '../../core/http/stages/googleFonts';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';
 import { requestAuthority, requestOrigin } from '../../core/requestParser';
-import { sdkAssetVersion } from '../../core/sdkAssets';
+import { pageAssets } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
@@ -93,7 +94,10 @@ export type RenderPrep = {
   componentProps: ComponentProps;
   entries: PluginEntry[];
   templateParams: SSRTemplateProps & { offlineData: string };
-  /** False for a render that must not be served to anybody else from a cache: it carries this request's own runs. */
+  /**
+   * False for a render that must not be served from a cache: it carries this request's own runs, a tester's flags, or
+   * what a provider read with the visitor's own cookies.
+   */
   cacheable: boolean;
   /** A server provider of the page said its address shows nothing (`notFound`): sent with status 404. */
   notFound: boolean;
@@ -248,11 +252,9 @@ export const prepareRender = async (
     offlineDataCache?.set(offlineCacheKey, rawOfflineData);
   }
 
-  // Falls back to the bundle's own mtime, so the cache-buster is right without anybody supplying one.
-  const version = config.assetVersion ?? sdkAssetVersion();
-  const v = version ? `?v=${version}` : '';
-  const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
-  const sdkIconsStylePath = `/sdk-assets/plitzi-sdk-icons.css${v}`;
+  const assets = pageAssets(config.assetVersion);
+  const sdkDevToolsStylePath = assets.devToolsCssPath;
+  const sdkIconsStylePath = assets.iconsCssPath;
 
   /**
    * Two facts, and they have to leave this server separately.
@@ -468,7 +470,7 @@ export const prepareRender = async (
   // React's development build — its warnings and readable errors — for the page that draws the dev tools, which is what
   // the visitor chose (shift+F12) within what the deployment allows: the production build otherwise, authorized or not.
   // A page already running keeps its React; the choice shows on the next load.
-  const vendorJs = (debugRendered ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
+  const vendorJs = debugRendered ? assets.devVendorJsPath : assets.vendorJsPath;
 
   // What a link preview reads of the page — its words as the deployment and the page say them, its picture, its own
   // address — and the space's icon and language: written into the head, which a preview reads without running the page.
@@ -509,8 +511,8 @@ export const prepareRender = async (
     entries,
     templateParams: {
       title: DEFAULT_TITLE,
-      jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
-      cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
+      jsPath: assets.jsPath,
+      cssPath: assets.cssPath,
       iconsCssPath: sdkIconsStylePath,
       spaceDocumentPath,
       styleSheetPath: document?.data.style.cacheHref,
@@ -534,7 +536,11 @@ export const prepareRender = async (
        * space's style document, and a page whose text is laid out in a face the browser has not been asked for is
        * a page that renders in a fallback and then reflows.
        */
-      fonts: fontsToHead(offlineData?.style.fonts ?? [], fontUrlResolver(config.fonts?.baseUrl)),
+      fonts: fontsToHead(
+        offlineData?.style.fonts ?? [],
+        fontUrlResolver(config.fonts?.baseUrl),
+        googleFontsUrlOf(config)
+      ),
       ...req.ctx.spaceDeployment?.templateProps,
       // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for
@@ -553,8 +559,9 @@ export const prepareRender = async (
       ...(config.livePages === true && offlineDataOverride !== undefined ? { liveDraft: readDraftToken(req) } : {}),
       offlineData: offlineDataStr
     },
-    // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.
-    cacheable: actionRuns === undefined && forcedFlags === undefined,
+    // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page;
+    // one read with the visitor's cookies is not even theirs a minute later.
+    cacheable: actionRuns === undefined && forcedFlags === undefined && req.ctx.readAsVisitor !== true,
     notFound,
     ...(refused ? { refused } : {})
   };

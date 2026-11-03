@@ -52,3 +52,29 @@ export const sdkAssetVersion = (): string => {
 
   return cachedVersion;
 };
+
+/** The SDK's files a rendered page loads, at the version this server serves: one place for the page and its hints. */
+export type PageAssets = {
+  jsPath: string;
+  cssPath: string;
+  iconsCssPath: string;
+  devToolsCssPath: string;
+  /** React and its kin: the production build, and the development one a page drawing the dev tools loads instead. */
+  vendorJsPath: string;
+  devVendorJsPath: string;
+};
+
+export const pageAssets = (assetVersion: string | undefined): PageAssets => {
+  // Falls back to the bundle's own mtime, so the cache-buster is right without anybody supplying one.
+  const version = assetVersion ?? sdkAssetVersion();
+  const v = version ? `?v=${version}` : '';
+
+  return {
+    jsPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk.js${v}`,
+    cssPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk.css${v}`,
+    iconsCssPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk-icons.css${v}`,
+    devToolsCssPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk-devtools.css${v}`,
+    vendorJsPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk-vendor.js${v}`,
+    devVendorJsPath: `${SDK_ASSETS_PREFIX}/plitzi-sdk-dev-vendor.js${v}`
+  };
+};

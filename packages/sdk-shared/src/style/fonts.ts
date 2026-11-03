@@ -169,7 +169,8 @@ const ordinal = (a: string, b: string): number => {
   return a < b ? -1 : 1;
 };
 
-export const googleCss2Url = (fonts: GoogleFont[]): string => {
+/** `base` is where the stylesheet is asked: Google, or a mirror that answers in its layout (`Server.googleFontsUrl`). */
+export const googleCss2Url = (fonts: GoogleFont[], base = GOOGLE_CSS_ORIGIN): string => {
   const families = [...fonts]
     .sort((a, b) => ordinal(a.family, b.family))
     .map(font => {
@@ -189,7 +190,7 @@ export const googleCss2Url = (fonts: GoogleFont[]): string => {
   // that keeps text visible, which is the one worth defaulting to anyway.
   const display = displays.length === 1 ? displays[0] : 'swap';
 
-  return `${GOOGLE_CSS_ORIGIN}/css2?${families.join('&')}&display=${display}`;
+  return `${base.replace(/\/+$/, '')}/css2?${families.join('&')}&display=${display}`;
 };
 
 /**
@@ -297,9 +298,10 @@ const faceBlock = (font: RemoteFont | HostedFont, face: ResolvedFace): string =>
  * Pure on purpose: SSR writes it into a template, the client writes it into `document.head`, the
  * builder canvas writes it into its iframe and the static export bakes it in. They disagree about
  * where a hosted file lives and about nothing else, which is what `resolveUrl` is for — a
- * store-relative path becomes a CDN URL, a local `/fonts/*` URL, or whatever the export needs.
+ * store-relative path becomes a CDN URL, a local `/fonts/*` URL, or whatever the export needs. `googleUrl` is where the
+ * Google families are asked: the page server's own mirror (`Server.googleFontsUrl`), or Google when there is none.
  */
-export const fontsToHead = (fonts: SpaceFont[], resolveUrl: (path: string) => string): FontHead => {
+export const fontsToHead = (fonts: SpaceFont[], resolveUrl: (path: string) => string, googleUrl?: string): FontHead => {
   const links: FontHead['links'] = [];
   const preloads: FontHead['links'] = [];
   const faces: string[] = [];
@@ -317,12 +319,17 @@ export const fontsToHead = (fonts: SpaceFont[], resolveUrl: (path: string) => st
 
   const googleFonts = fonts.filter((font): font is GoogleFont => font.source === 'google');
   if (googleFonts.length > 0) {
-    const href = googleCss2Url(googleFonts);
-    reach(GOOGLE_CSS_ORIGIN, false);
-    // The stylesheet and the files it names are two different origins, and the second one is where
-    // the bytes are: without its own preconnect that connection is opened only once the CSS has
-    // already been fetched and parsed.
-    reach(GOOGLE_FILE_ORIGIN, true);
+    const href = googleCss2Url(googleFonts, googleUrl);
+    if (googleUrl === undefined) {
+      reach(GOOGLE_CSS_ORIGIN, false);
+      // The stylesheet and the files it names are two different origins, and the second one is where
+      // the bytes are: without its own preconnect that connection is opened only once the CSS has
+      // already been fetched and parsed.
+      reach(GOOGLE_FILE_ORIGIN, true);
+    } else {
+      // A mirror on another origin is reached like any; one on the page's own (a path) needs nothing.
+      reach(originOf(href), true);
+    }
     // A linked stylesheet hides the file URLs from us, so `preload` can only be honoured one level
     // up — fetching the CSS at the highest priority instead of the face it names.
     if (googleFonts.some(font => font.preload)) {

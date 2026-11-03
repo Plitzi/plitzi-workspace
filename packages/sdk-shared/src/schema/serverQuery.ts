@@ -7,12 +7,13 @@ import type { Element } from '../types';
  * for authoring, which refuses what it cannot read.
  *
  * - `path`: a file of the server's own or the project's data (`/data/…`), read from where it is kept.
- * - `url`: another site's address, asked with GET by the page server, with the headers the provider declares.
+ * - `url`: another site's address, asked with GET by the page server, with the headers the provider declares —
+ *   `asVisitor` when it says `credentials: 'include'`: with the visitor's cookies, where the deployment allows it.
  * - `unresolved`: what only the browser can ask — said with why, never left to resolve to nothing.
  */
 export type ServerQuery =
   | { kind: 'path'; path: string }
-  | { kind: 'url'; url: URL; headers: Record<string, string> }
+  | { kind: 'url'; url: URL; headers: Record<string, string>; asVisitor: boolean }
   | { kind: 'unresolved'; why: string };
 
 /**
@@ -43,15 +44,17 @@ const headersOf = (headers: unknown): Record<string, string> =>
 
 /**
  * Why the page server cannot ask a provider's `query` — from what is written alone, so authoring says it before a
- * visit: bound, templated over what the browser alone holds, the visitor's cookies, another method. `undefined` when it
- * can; whether the address it comes to is one it reads is decided once the template is filled in (`serverQueryOf`).
+ * visit: bound, templated over what the browser alone holds, another method. `undefined` when it can; whether the
+ * address it comes to is one it reads is decided once the template is filled in (`serverQueryOf`) — and whether it may
+ * carry the visitor's cookies there (`credentials: 'include'`) by the deployment, which names the APIs and the spaces
+ * that may (`rsc.visitorCredentials`).
  *
  * A template may read the space's variables and `navigation` — what the page server knows of a visit. A route or
  * query param is read as `navigation.routeParams.x`: written bare (`{{ x }}`) it cannot be told from a state or a
  * provider's name before the visit.
  */
 export const serverQueryProblem = (element: Provider, variableNames: ReadonlySet<string>): string | undefined => {
-  const { query, method, credentials } = element.attributes;
+  const { query, method } = element.attributes;
   if (typeof query !== 'string' || query === '') {
     return undefined;
   }
@@ -78,16 +81,11 @@ export const serverQueryProblem = (element: Provider, variableNames: ReadonlySet
     return `it asks with ${method.toUpperCase()}, and the page server reads with GET alone`;
   }
 
-  // The page server never sends the visitor's cookies: asked there, the visitor's own data would answer as a stranger's.
-  if (credentials === 'include') {
-    return "it asks with the visitor's cookies (`credentials: 'include'`), which the page server never sends";
-  }
-
   return undefined;
 };
 
 /** What an address the template came to is: a path of the space, another site's address, or neither. */
-const queryAt = (query: string, headers: Record<string, string>): ServerQuery => {
+const queryAt = (query: string, headers: Record<string, string>, asVisitor: boolean): ServerQuery => {
   if (query.startsWith('//')) {
     return { kind: 'unresolved', why: `"${query}" names no protocol — write https:` };
   }
@@ -110,7 +108,7 @@ const queryAt = (query: string, headers: Record<string, string>): ServerQuery =>
     };
   }
 
-  return { kind: 'url', url, headers };
+  return { kind: 'url', url, headers, asVisitor };
 };
 
 /**
@@ -118,7 +116,7 @@ const queryAt = (query: string, headers: Record<string, string>): ServerQuery =>
  * it, as the browser would have filled it in; `undefined` for a provider with no query at all.
  */
 export const serverQueryOf = (element: Provider, data: ServerTemplateData): ServerQuery | undefined => {
-  const { query, headers, accessToken } = element.attributes;
+  const { query, headers, accessToken, credentials } = element.attributes;
   if (typeof query !== 'string' || query === '') {
     return undefined;
   }
@@ -144,5 +142,5 @@ export const serverQueryOf = (element: Provider, data: ServerTemplateData): Serv
     asked.Authorization = `Bearer ${filled(accessToken)}`;
   }
 
-  return queryAt(filled(query), asked);
+  return queryAt(filled(query), asked, credentials === 'include');
 };

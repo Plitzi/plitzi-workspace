@@ -273,6 +273,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `cache` | `SSRCacheConfig` | — | What is kept of rendered pages (`maxBytes`, `staleMs`, `ignoredQueryParams`) and how several replicas keep them in step (`bus`, `store`). See [Render cache](#render-cache). |
+| `earlyHints` | `boolean` | `true` | Says what every page loads — the SDK's stylesheets and its module — in a `103 Early Hints` before the page is rendered, and again as the page's `Link` header (for a CDN that turns it into one). `false` sends neither. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
 | `logoutPath` | `string \| false` | `'/auth/logout'` | Path for the built-in logout endpoint. Set to `false` to disable it entirely. |
@@ -290,7 +291,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
-| `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
+| `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration — and `visitorCredentials`, the deployment's own APIs a server provider may ask as the visitor (see [RSC](#react-server-components-rsc) and [Asked as the visitor](#asked-as-the-visitor)). |
 | `realtime` | `{ pubsub?, path?, transport?, allowedOrigins? } \| false` | in memory, at `/_realtime`, `sse` | Realtime channels the space declares. `transport` is what pages connect with: `sse` (a stream, publishes over `POST`) or `websocket` (one socket both ways, HTTP/1.1 only; pages fall back to the stream where a socket cannot open). `allowedOrigins` lists the other origins whose pages may open a socket. `pubsub` is how messages reach other processes — `createMemoryPubSub()` (the default, across workers) or `createRedisPubSub({ publisher, subscriber })` for several replicas. `false` serves no endpoint. See [`docs/en/realtime.md`](../../docs/en/realtime.md). |
 | `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
 | `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
@@ -309,7 +310,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `exchangePath` | `string \| false` | `'/auth/exchange'` | Where a browser-obtained credential is handed over; served only with the `exchangeCredential` adapter. |
 | `debugMode` | `boolean` | `devMode`, or the space's `devTools` | Authorizes debugging on the pages this server renders. Set, it decides for every space: `false` is a refusal no space turns around. A page loads React's development build only while its visitor has the dev tools on. |
 | `frameOptions` | `'DENY' \| 'SAMEORIGIN' \| string[] \| false` | `'DENY'` | Who may embed the pages in a frame (CSP `frame-ancestors`, and `X-Frame-Options`); `false` omits both headers. A space adapter's `frameAncestors` derives it per space — see [Space adapters](#space-adapters-a-space-per-domain). |
-| `fonts` | `{ baseUrl?, dir? }` | `baseUrl: '/fonts'` | Where the font files a space uploaded are addressed, and with `dir` served from this server under `/fonts/*`. See `docs/en/fonts.md` in the workspace. |
+| `fonts` | `{ baseUrl?, dir?, google? }` | `baseUrl: '/fonts'`, `google` on | Where the font files a space uploaded are addressed, and with `dir` served from this server under `/fonts/*`. `google`: a page's Google families served from this server's own origin (`/_plitzi/fonts/google/…`, asked of Google once and kept within `maxBytes`, 32 MB) — `false` links Google itself. See `docs/en/fonts.md` in the workspace. |
 | `environment` | `'production' \| 'staging' \| 'development' \| 'local'` | `'production'` | The Plitzi tier whose endpoints the rendered pages are handed. |
 | `services` | `{ ssr?, rsc? }` | `ssr` on, `rsc` with `getRscData` | Which request-handling services are mounted. |
 | `preview` / `draftStore` | `SSRPreviewConfig` / `DraftStore` | off / in memory | The draft-preview endpoint (`enabled`, `path` `/__preview`, `secret`, `ttlMs`) and the store behind its tokens — share one across replicas. The rest of draft preview is `@plitzi/sdk-mcp`'s: see its [Draft preview](../mcp/README.md#draft-preview). |
@@ -513,7 +514,7 @@ A deployment running the auth kernel needs none of this: `createServer({ auth })
 
 ## What the server does without being asked
 
-Four things it used to make every deployment declare, each of which it can answer itself:
+What it used to make every deployment declare, each of which it can answer itself:
 
 | | |
 |---|---|
@@ -521,6 +522,7 @@ Four things it used to make every deployment declare, each of which it can answe
 | **The transport** | `httpVersion` defaults to HTTP/2 with `tls` and HTTP/1.1 without. No browser speaks cleartext h2, so the old default of `2` meant every local run had to say otherwise |
 | **The audience** | `tokens.audience` defaults to the issuer, which is right for a deployment that is its own audience |
 | **The space** | `createJsonAdapters({ offlineData })` alone resolves to space 1, `main`, revision 0 |
+| **What a page loads, early** | The SDK's module is preloaded from the page's head (`modulepreload`) and, with its stylesheets, said in a `103 Early Hints` while the page is still being rendered — the browser has them by the time the HTML arrives. `earlyHints: false` turns the hints off |
 
 A page server therefore needs `port`, `adapters`, and nothing else.
 
@@ -1095,6 +1097,32 @@ Return `{}` (empty object) when there is no server data for the current request.
 **One request per question, the newest winning.** The client (`refreshRsc`) joins a refresh already in flight for the same URL, and aborts one a newer refresh would overwrite — a whole payload asked again, an element asked again — so answers never land out of order. `cancelRsc(store, ids)` (an `apiContainer`'s `cancelQuery`) aborts on purpose. The server hears it: `SSRRscContext.signal` aborts when the browser hangs up, and the default `getRscData` stops every element still resolving — an action's render run included, unless another visitor's identical render is still waiting on the same run. A custom adapter does the same with the signal it is handed.
 
 What a refresh asks for besides the location (`/_rsc?location=…&country=fr`) is `req.ctx.rscParams`; the action resolver hands it to the action over the `input` the element was saved with.
+
+### Asked as the visitor
+
+A server provider whose `query` is an API's address is asked without the visitor's cookies. One that says
+`credentials: 'include'` is asked WITH them — its page arrives with that visitor's own data (an account's dashboard)
+instead of drawing empty until the browser has run and asked — where the deployment says so, and nowhere else:
+
+```ts
+createServer({
+  rsc: {
+    visitorCredentials: {
+      origins: ['https://api.example.com'], // as the provider's template comes to them
+      via: { 'https://api.example.com': 'http://api.internal:8888' }, // where this server reaches it
+      cookies: ['session'], // the ones carried; every cookie of the page request without it
+      spaces: ({ spaceId }) => ownSpaces.has(spaceId) // a server serving its customers' spaces too: its own alone
+    }
+  }
+});
+```
+
+The browser sends cookies to an API only when that API's CORS allows the page's site; the page server would send them
+wherever a document said — so the API and the spaces trusted to ask it are named by whoever runs the server. A provider
+asking an origin not named, or from a space not trusted, is its error, naming the setting — never asked as a stranger,
+whose answer is not the one the page was written for. A redirect away from the origin drops the cookies, as the Fetch
+standard does. A page or a `/_rsc` refresh read so is kept by no cache — not even the same visitor's next visit, which
+would show what a write a moment ago made untrue (`req.ctx.readAsVisitor`, `Cache-Control: no-store`).
 
 ### `/_rsc` endpoint
 

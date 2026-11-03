@@ -1,5 +1,6 @@
 import { applySSRResult, isReusable, renderParamsOf } from './applySSRResult';
 import { buildBody } from './buildBody';
+import { sendEarlyHints } from './earlyHints';
 import { claimRender, pageSlot, readPage, renderingNow } from './pageCache';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
@@ -76,6 +77,8 @@ export const renderSSR = async (
   const devMode = config.devMode ?? false;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // Before anything is read: what follows is the wait the browser can spend fetching the SDK.
+  sendEarlyHints(config, res);
 
   // A preview token renders unsaved draft edits (never persisted); such a render is never cached.
   const draft = await takeDraftOverride(req, config);

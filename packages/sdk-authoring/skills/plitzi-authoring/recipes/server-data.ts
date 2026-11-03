@@ -9,6 +9,8 @@
  * - The page server resolves what a page and its layouts hold, never inside a component: the provider stays on the page
  *   and each row reaches the card component as a prop.
  * - `mockData` is what the builder shows while editing; the running page always reads the file.
+ * - An API's answer for the signed-in visitor (`credentials: 'include'`) is asked with their cookies only where the
+ *   server names that API and trusts the space (`rsc.visitorCredentials`); anywhere else the provider's error says so.
  */
 import { apiContainer, heading, list, listItem, styles, text } from '@plitzi/sdk-authoring';
 

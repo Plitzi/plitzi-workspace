@@ -118,6 +118,7 @@ export const withPageLocation = (req: SSRRequest): SSRRequest => {
  * - Authenticated requests: Cache-Control: private, max-age=<ttl>
  * - Unauthenticated requests: Cache-Control: public, max-age=<ttl>
  * - A request carrying `Cache-Control: no-cache` is resolved again, and its answer replaces the one cached.
+ * - An answer a provider read with the visitor's cookies (`ctx.readAsVisitor`): no-store, and never kept.
  */
 export const handleRsc = async (
   req: SSRRequest,
@@ -256,12 +257,14 @@ export const handleRsc = async (
   };
 
   const payloadStr = JSON.stringify(payload);
-  if (cacheKey && !actionRuns?.length) {
+  // Read with the visitor's cookies: what a write a moment ago changed must not come back from a cache, theirs neither.
+  const readAsVisitor = req.ctx.readAsVisitor === true;
+  if (cacheKey && !actionRuns?.length && !readAsVisitor) {
     cache?.set(cacheKey, payloadStr);
   }
 
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('Cache-Control', readAsVisitor ? 'no-store' : cacheControl);
   res.setHeader('X-Cache', 'MISS');
   res.send(payloadStr);
 };

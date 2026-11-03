@@ -119,6 +119,19 @@ describe('fontsToHead', () => {
     ]);
   });
 
+  // The page server's mirror: the same request in Google's layout, on the page's own connection.
+  it('asks a mirror for the google families instead, opening no connection to Google', () => {
+    const head = fontsToHead([lato, system], cdn, '/_plitzi/fonts/google');
+    expect(head.links).toEqual([{ href: googleCss2Url([lato], '/_plitzi/fonts/google'), rel: 'stylesheet' }]);
+    expect(head.links[0].href).toMatch(/^\/_plitzi\/fonts\/google\/css2\?family=Lato/);
+    expect(head.preconnect).toEqual([]);
+    expect(head.origins).toEqual([]);
+
+    expect(fontsToHead([lato], cdn, 'https://fonts.example.test').preconnect).toEqual([
+      { href: 'https://fonts.example.test', crossorigin: true }
+    ]);
+  });
+
   it('preloads the google stylesheet, since a linked sheet hides the file URLs', () => {
     const head = fontsToHead([{ ...lato, preload: true }], cdn);
     expect(head.links[0]).toEqual({ href: googleCss2Url([lato]), rel: 'preload', as: 'style' });

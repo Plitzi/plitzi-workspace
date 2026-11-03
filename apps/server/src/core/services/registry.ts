@@ -10,6 +10,7 @@ import { styleSheetStage } from './styleSheet';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { crossSiteWritesStage } from '../http/stages/crossSiteWrites';
 import { fontAssetsStage } from '../http/stages/fontAssets';
+import { googleFontsStage } from '../http/stages/googleFonts';
 import { healthStage } from '../http/stages/health';
 import { imagesStage } from '../http/stages/images';
 import { createMiddlewaresStage } from '../http/stages/middlewares';
@@ -32,6 +33,7 @@ export const buildPagePipeline = (
     wellKnownStage,
     pluginAssetsStage,
     fontAssetsStage,
+    googleFontsStage,
     imagesStage,
     ...authRoutesStages,
     configStaticStage,

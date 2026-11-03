@@ -64,8 +64,8 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
    * rail is not applied at all — showed every space in its fallback.
    */
   const fontHead = useMemo(
-    () => fontsToHead(fonts, fontUrlResolver(server?.fontsBaseUrl)),
-    [fonts, server?.fontsBaseUrl]
+    () => fontsToHead(fonts, fontUrlResolver(server?.fontsBaseUrl), server?.googleFontsUrl),
+    [fonts, server?.fontsBaseUrl, server?.googleFontsUrl]
   );
 
   /**

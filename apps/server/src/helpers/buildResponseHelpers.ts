@@ -20,6 +20,8 @@ export type RawResponse = {
    */
   once?(event: 'close', listener: () => void): unknown;
   writableFinished?: boolean;
+  /** A `103 Early Hints` — node's, over HTTP/1.1 and HTTP/2 alike. Optional: a host without it sends none. */
+  writeEarlyHints?(hints: Record<string, string | string[]>): void;
 };
 
 /**
@@ -133,6 +135,13 @@ export const buildResponseHelpers = (
         raw.writeHead(statusCode);
       }
       raw.end();
+    },
+    earlyHints(links) {
+      if (links.length === 0 || raw.headersSent || !raw.writeEarlyHints) {
+        return;
+      }
+
+      raw.writeEarlyHints({ link: links });
     }
   };
 };

@@ -4,7 +4,7 @@ import { handleRsc, withPageLocation } from './handler';
 import { TtlCache } from '../../helpers/cache/TtlCache';
 
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRRscContext } from '@plitzi/sdk-shared';
 
 const request = (query: Record<string, string>): SSRRequest => ({
   method: 'GET',
@@ -111,5 +111,26 @@ describe('handleRsc', () => {
     expect(JSON.parse(fresh.body)).toMatchObject({ serverData: { list: 2 } });
     expect(after.headers['X-Cache']).toBe('HIT');
     expect(JSON.parse(after.body)).toMatchObject({ serverData: { list: 2 } });
+  });
+
+  // The visitor's own data, read with their cookies: a refresh after their write must never answer from before it.
+  it('keeps nothing a provider read as the visitor, and says so to the browser', async () => {
+    const { cache } = setup();
+    const getRscData = vi.fn(({ req }: SSRRscContext) => {
+      req.ctx.readAsVisitor = true;
+
+      return Promise.resolve({ serverData: { list: 1 } });
+    });
+    // As `setup`'s: only the adapters `/_rsc` calls.
+    const config = {
+      adapters: { getRscData, getOfflineData: () => Promise.resolve(undefined) }
+    } as unknown as SSRPageServerConfig;
+
+    const first = await answer(live(), config, cache);
+    const second = await answer(live(), config, cache);
+
+    expect(getRscData).toHaveBeenCalledTimes(2);
+    expect(first.headers['Cache-Control']).toBe('no-store');
+    expect(second.headers['X-Cache']).toBe('MISS');
   });
 });

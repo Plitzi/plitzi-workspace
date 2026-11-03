@@ -53,11 +53,12 @@ describe("a server provider's query, as the page server reads it", () => {
     expect(serverQueryOf(provider({ query: '{{ navigation.origin }}/data/menu.json' }), visit)).toEqual({
       kind: 'url',
       url: new URL('https://shop.example.com/data/menu.json'),
-      headers: {}
+      headers: {},
+      asVisitor: false
     });
   });
 
-  it('says why when the browser alone can ask it: bound, a template over the browser’s sources, cookies, a method', () => {
+  it('says why when the browser alone can ask it: bound, a template over the browser’s sources, a method', () => {
     const variables = new Set(['apiUrl']);
     const why = (attributes: Record<string, unknown>, bound: string[] = []) =>
       serverQueryProblem(provider(attributes, bound), variables);
@@ -66,8 +67,23 @@ describe("a server provider's query, as the page server reads it", () => {
     expect(why({ query: '{{ apiUrl }}/spaces/{{ spaceId }}' })).toContain('reads `spaceId`');
     expect(why({ query: '{{ apiUrl }}/me', accessToken: '{{ auth.accessToken }}' })).toContain('reads `auth`');
     expect(why({ query: 'https://api.example.com/', method: 'post' })).toContain('POST');
-    expect(why({ query: '{{ apiUrl }}/me', credentials: 'include' })).toContain("visitor's cookies");
     expect(why({ query: '{{ apiUrl }}/items/{{ navigation.routeParams.id }}' })).toBeUndefined();
+  });
+
+  // Whether the cookies may go where it comes to is the deployment's to say, on the visit (`rsc.visitorCredentials`).
+  it('reads a query asked with the visitor’s cookies as one, and every other as a stranger’s', () => {
+    const asVisitor = (credentials?: string) => {
+      const read = serverQueryOf(
+        provider({ query: '{{ apiUrl }}/me', ...(credentials ? { credentials } : {}) }),
+        visit
+      );
+
+      return read?.kind === 'url' ? read.asVisitor : read?.kind;
+    };
+
+    expect(asVisitor('include')).toBe(true);
+    expect(asVisitor('same-origin')).toBe(false);
+    expect(asVisitor()).toBe(false);
   });
 
   it('says why when the address it comes to is no address: no protocol, neither a URL nor a path', () => {

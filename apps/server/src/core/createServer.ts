@@ -121,7 +121,8 @@ const withConnectorRsc = <
     data: actions?.lookups.getData ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
     elementTimeoutMs: config.rsc?.elementTimeoutMs,
     sayFailures: config.devMode === true,
-    outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) }
+    outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
+    visitorCredentials: config.rsc?.visitorCredentials
   });
 
   return resolved;

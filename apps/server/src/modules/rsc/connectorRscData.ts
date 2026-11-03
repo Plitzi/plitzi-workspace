@@ -2,7 +2,7 @@ import { serverQueryOf } from '@plitzi/sdk-shared/schema';
 
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
-import { externalQueryReader } from './externalQueryReader';
+import { externalQueryReader, visitorCredentialsOf } from './externalQueryReader';
 import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
@@ -12,7 +12,7 @@ import type { RscElementResolver } from './resolveRscData';
 import type { ProjectDataLookup } from '../actions/runtime/projectData';
 import type { ActionLookups } from '../actions/types';
 import type { ConnectorLookups } from '../connectors/resolver';
-import type { SSRAdapters } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRVisitorCredentialsConfig } from '@plitzi/sdk-shared';
 
 /**
  * `getRscData`, built from the producers the server was already given — connectors, actions, its own static files.
@@ -36,7 +36,8 @@ export const connectorRscData = ({
   data,
   elementTimeoutMs,
   sayFailures = false,
-  outbound
+  outbound,
+  visitorCredentials
 }: {
   connectors?: ConnectorLookups;
   actions?: { lookups: ActionLookups; module: ActionsModule };
@@ -53,12 +54,14 @@ export const connectorRscData = ({
   sayFailures?: boolean;
   /** The deployment's own origins a connector or a query may reach on its network (`outbound.privateOrigins`). */
   outbound?: OutboundOptions;
+  /** The deployment's own APIs a provider may ask as the visitor, and from which spaces (`rsc.visitorCredentials`). */
+  visitorCredentials?: SSRVisitorCredentialsConfig;
 }): NonNullable<SSRAdapters['getRscData']> => {
   const resolveConnector = connectors ? createConnectorResolver(connectors, outbound) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
   const resolveDataFile = data ? dataLookupResolver(data) : undefined;
-  const readExternal = externalQueryReader({ outbound });
+  const readExternal = externalQueryReader({ outbound, visitor: visitorCredentialsOf(visitorCredentials) });
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
@@ -90,7 +93,7 @@ export const connectorRscData = ({
     }
 
     if (query.kind === 'url') {
-      return readExternal(query, context.signal);
+      return readExternal(query, context.signal, context);
     }
 
     // A file is read at the path its template came to, as the browser would have asked for it.

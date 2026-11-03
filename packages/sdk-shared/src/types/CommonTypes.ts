@@ -23,6 +23,11 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
    * on the wrong origin. Absent means `/fonts` on whatever origin is rendering.
    */
   fontsBaseUrl?: string;
+  /**
+   * Where this deployment serves the space's Google families from, in Google's own layout (`<url>/css2?family=…`):
+   * the page server's mirror. Absent means Google itself — a page the SDK renders with no page server behind it.
+   */
+  googleFontsUrl?: string;
   websocketServer: string;
   subscriptionServer: string;
   location?: Location;

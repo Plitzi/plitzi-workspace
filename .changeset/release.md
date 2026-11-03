@@ -18,6 +18,12 @@ space while it hydrates.
 - **`templatePaths`** answers a `readonly string[]` and **`pageElementTypes`** a `ReadonlySet`: they are shared now;
   copy one before changing it.
 - **`X-Cache`** answers `STALE` too: a page served past its TTL while it is rendered again.
+- **A `runtime: 'server'` provider with `credentials: 'include'`** is no longer refused by authoring: it is asked with
+  the visitor's cookies where the server names that API (`rsc.visitorCredentials`), and is the provider's error, naming
+  the setting, anywhere else. `ServerQuery`'s `url` kind carries `asVisitor`.
+- **A page's Google families** are asked of the page server's own origin (`/_plitzi/fonts/google/…`): a proxy or CDN in
+  front of it passes that path through as it does `/_plitzi/style/`. `fonts: { google: false }` links Google itself.
+  `fontsToHead` takes the mirror's address as a third argument, and `googleCss2Url` a base.
 - **A link's analytics parameters** (`utm_*`, `fbclid`, `gclid`…) are no longer seen by a published page's server
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
   behaviour.
@@ -63,6 +69,24 @@ space while it hydrates.
   (`templatePaths`, now `readonly string[]`), and a page's element types once per schema and page
   (`pageElementTypes`, now a `ReadonlySet`); every render — the server's and the browser's — did all three again.
 - The plugins a space's elements render are found once per version of the space, not on every render.
+
+## What a page loads, sooner
+
+- The SDK's module is preloaded from the head (`modulepreload`), and with the SDK's stylesheets is said in a
+  `103 Early Hints` before the page is rendered and again as its `Link` header (`earlyHints: false` turns both off): the
+  browser had to parse the whole HTML to find the script.
+- **Server providers asked as the visitor** (`rsc.visitorCredentials`: the deployment's own API origins, where it
+  reaches them, the cookies carried, the spaces trusted to ask). A signed-in page — an account's dashboard — arrives
+  drawn with its visitor's data instead of empty until the browser has run and asked: the Plitzi dashboard's space page
+  went from a dozen requests after hydration to two, and its largest paint on a 4G phone from 3.9 s to 1.3 s with the
+  thumbnail below. A page or a `/_rsc` refresh read so is kept by no cache.
+- **Google Fonts from the page's own server**: the stylesheet and its files ride the page's connection — no lookup,
+  handshake and connection to two more origins before the text is drawn — kept in the process (32 MB,
+  `fonts.google.maxBytes`), and the visitor's address is not handed to Google. A server that cannot reach Google sends
+  the browser there, and says so.
+- A page's uploaded fonts are addressed in the browser as the server addressed them (`Server.fontsBaseUrl` is set
+  now): a deployment with `fonts.baseUrl` on a CDN had the SDK write them again under `/fonts`.
+- `@plitzi/sdk-mcp`'s screenshots take `format: 'webp'` and `quality`: a thumbnail is an eighth of its PNG.
 
 ## Elements (`@plitzi/sdk-elements`)
 

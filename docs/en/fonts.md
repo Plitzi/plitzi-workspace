@@ -34,7 +34,7 @@ have. It is simply now *visible*: the Fonts panel lists it, and an agent reading
 | Source | Where the bytes come from | What you give it |
 |---|---|---|
 | `system` | The visitor's machine. Nothing is downloaded. | A family name and a fallback |
-| `google` | Google Fonts, one aggregated `css2` request for every Google family in the space | Family, weights, styles |
+| `google` | Google Fonts, one aggregated `css2` request for every Google family in the space — served from the page server's own origin (§ 4) | Family, weights, styles |
 | `remote` | Someone else's https origin — Adobe Fonts, Bunny, Fontshare, your own CDN | A stylesheet URL, or the files |
 | `hosted` | This deployment's own store | An uploaded `.woff2` per weight and slant |
 
@@ -59,7 +59,9 @@ fallback. What they should say instead is a design decision, not a side effect o
 
 ### Hosting a Google family yourself
 
-The download button on a Google row copies its files into this deployment's store and re-declares the family as
+A page a Plitzi server renders already asks for its Google families on that server (§ 4); this is for the rest — a
+deployment that turned the mirror off, a static export, a page with no server behind it — and for a family that
+should never depend on Google at all. The download button on a Google row copies its files into this deployment's store and re-declares the family as
 `hosted`. Three things it buys, all the same thing said differently: the visitor's browser stops telling Google
 which pages they read (the German rulings on exactly that are why customers ask), the files stop depending on a
 third party being up, and a self-hosted deployment with no route to the internet renders correctly.
@@ -82,6 +84,15 @@ One resolver decides — `fontsToHead(style.fonts, resolveUrl)` in `@plitzi/sdk-
 | Screenshots | Captured after `document.fonts.ready`, so a thumbnail is not a picture of the fallback |
 
 **Never write a font URL anywhere else.** That function is the only thing that knows how to build one.
+
+**A server-rendered page asks its own server for its Google families.** sdk-server answers Google's layout at
+`/_plitzi/fonts/google/css2?family=…` and the files it names under `/_plitzi/fonts/google/s/…`: asked of Google
+once each, kept in the process (32 MB by default, `fonts.google.maxBytes`), served immutable. The stylesheet and its
+files ride the connection the page came on — no lookup, handshake and connection to two more origins before the
+text is drawn in its face — and the visitor's address is not handed to Google for a typeface. The server puts the
+address in the page (`Server.googleFontsUrl`), so the SDK writes the same head once it runs. A server that cannot
+reach Google sends the browser there instead, and says so in its log; `fonts: { google: false }` links Google
+itself. The builder canvas and a page with no Plitzi server behind it ask Google, as before.
 
 ---
 

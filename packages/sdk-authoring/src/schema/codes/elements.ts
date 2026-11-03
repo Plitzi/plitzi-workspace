@@ -199,7 +199,7 @@ export const ELEMENT_CODES = {
   'server-query-unresolved': {
     kind: 'refused',
     means:
-      "a `runtime: 'server'` provider whose `query` the page server cannot read — bound, a template reading what the browser alone holds (anything but the space's variables and `navigation`), the visitor's cookies (`credentials: 'include'`), another method than GET, or neither an address (`https://…`) nor a path (`/…`) — so it draws empty",
+      "a `runtime: 'server'` provider whose `query` the page server cannot read — bound, a template reading what the browser alone holds (anything but the space's variables and `navigation`), another method than GET, or neither an address (`https://…`) nor a path (`/…`) — so it draws empty",
     fix: "write it over the space's variables and `navigation` (`'{{ apiUrl }}/posts/{{ navigation.routeParams.id }}'`); an `action` for what the browser holds; or no `runtime: 'server'`, and the browser asks it"
   },
   'server-when-unknown': {

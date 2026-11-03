@@ -274,10 +274,17 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    the space's variables resolved for this host (`resolveVariables`, as the browser resolves them) and `navigation` —
    into `RscResolveContext.templateData`; another site's address is asked with GET and the headers the provider
    declares, through `fetchOutbound` (no private network but the deployment's `outbound.privateOrigins`, every
-   redirect judged), held to 5 MB, never with the visitor's cookies; an answer that is no success or no JSON is the
+   redirect judged), held to 5 MB, without the visitor's cookies; an answer that is no success or no JSON is the
    provider's error. A query only the browser can ask
-   — bound, a template over what the browser alone holds (a state, auth, another provider), the visitor's cookies, another method — is refused by authoring (`server-query-unresolved`) and, in a document written
+   — bound, a template over what the browser alone holds (a state, auth, another provider), another method — is refused by authoring (`server-query-unresolved`) and, in a document written
    before, said where the page reads it while developing; so is a path no file answers.
+   **Asked as the visitor.** A provider that says `credentials: 'include'` is asked with the visitor's cookies — the
+   page arrives with their own data (an account's dashboard) instead of drawing empty until the browser has asked —
+   only where the deployment says so in `rsc.visitorCredentials`: the API origins it names (`origins`), where it
+   reaches each on its own network (`via`), the cookies carried (`cookies`, the session's) and the spaces trusted to
+   ask (`spaces` — on a server that serves its customers' spaces too, its own alone). Anywhere else it is the
+   provider's error, naming that setting; never asked as a stranger. A redirect away from the origin drops the
+   cookies, and a page or a `/_rsc` refresh read that way is kept by no cache (`ctx.readAsVisitor`).
 4. **Only a page's tree and its layouts are resolved.** `collectServerElements` never walks into a component's tree,
    so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`). Server data is on
    unless the schema says `rsc: { enabled: false }` — the page render and `connectorRscData` read it the same way, so a

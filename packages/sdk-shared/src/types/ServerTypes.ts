@@ -62,6 +62,11 @@ export type SSRResponseHelpers = {
   send: (body: string | Buffer | (() => string), options?: { compressed?: CompressedBodies }) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
+  /**
+   * A `103 Early Hints` with these `Link` values, before the response itself: what the page will ask for, fetched while
+   * it is still being rendered. Nothing on a transport that cannot send one, or once the response has begun.
+   */
+  earlyHints?: (links: string[]) => void;
 };
 
 // Mutable channel written during the React SSR render and read back by the server to shape the HTTP
@@ -231,6 +236,13 @@ export type SSRFontsConfig = {
    * cloud deployment leaves it out and points `baseUrl` at its CDN instead.
    */
   dir?: string;
+  /**
+   * A page's Google families, served from this server's own origin (`/_plitzi/fonts/google/…`) rather than Google's:
+   * the stylesheet and the files it names ride the page's connection, and the visitor's address is not handed to a
+   * third party for a typeface. Asked of Google once each and kept in this process, within `maxBytes` (32 MB by
+   * default). On unless `false`, which links Google itself. A page whose server cannot reach Google is sent there.
+   */
+  google?: false | { maxBytes?: number };
 };
 
 export type SSRPlugin = {
@@ -387,6 +399,11 @@ export type SSRContext = {
    * development server: it goes out in the page's `Server-Timing` beside the render's own phases.
    */
   timings?: { name: string; dur: number }[];
+  /**
+   * A server provider read this response's data with the visitor's own cookies (`rsc.visitorCredentials`): it is kept
+   * for nobody, the page nor its refresh — a later visit would show what a write since made untrue.
+   */
+  readAsVisitor?: boolean;
 };
 
 export type SSRServer = {

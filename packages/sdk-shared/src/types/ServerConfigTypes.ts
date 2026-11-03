@@ -328,6 +328,40 @@ export type SSRRscConfig = {
    * at the cost of showing more empty sections when a provider is having a bad day.
    */
   elementTimeoutMs?: number;
+  /**
+   * The deployment's own APIs a server provider may ask AS THE VISITOR (`credentials: 'include'`) — off unless named.
+   * The page then arrives with the visitor's own data instead of drawing empty and asking once the browser has run.
+   */
+  visitorCredentials?: SSRVisitorCredentialsConfig;
+};
+
+/**
+ * Who a server provider may carry the visitor's cookies to, as the browser would have carried them.
+ *
+ * The browser sends them to an API only when that API's CORS allows the page's site; the page server would send them
+ * wherever a document said. So the API is named here, by whoever runs the server, and so are the spaces trusted to
+ * ask it: on a server that serves its customers' spaces beside its own, a customer's page must never read a visitor's
+ * account through that visitor's session. A page read this way is kept for nobody — not even that visitor's next
+ * visit, which would show what a write a moment ago made untrue.
+ */
+export type SSRVisitorCredentialsConfig = {
+  /**
+   * The origins a provider's `query` may name (`https://api.example.com`), as its template comes to them on the visit.
+   * Any other is the provider's error, saying so — never asked without the cookies it expected.
+   */
+  origins: string[];
+  /**
+   * Where this server reaches each of those origins on its own network — `{ 'https://api.example.com':
+   * 'http://api.internal:8888' }` — rather than through the public edge. One not named is asked at its own address.
+   */
+  via?: Record<string, string>;
+  /** The cookies carried, by name — the session's. Without it, every cookie the page request came with. */
+  cookies?: string[];
+  /**
+   * Which spaces may ask as their visitor. Without it, every space this server serves — the answer for a server of one
+   * space, and never for a platform that serves its customers' too.
+   */
+  spaces?: (space: { spaceId: number; environment: Environment }) => boolean | Promise<boolean>;
 };
 
 /**
@@ -394,6 +428,11 @@ export type SSRServerConfig = {
   cacheTtlMs?: number;
   /** What is kept of rendered pages, and how several replicas keep them in step — see {@link SSRCacheConfig}. */
   cache?: SSRCacheConfig;
+  /**
+   * A page says what it will load before it is rendered: a `103 Early Hints`, and a `Link` header a CDN keeps to send
+   * its own. On by default; `false` for a proxy in front that mishandles a 103.
+   */
+  earlyHints?: boolean;
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
   logoutPath?: string | false;

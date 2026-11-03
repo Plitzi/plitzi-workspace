@@ -159,7 +159,9 @@ export const createLocalScreenshotClient = async ({
       viewports,
       fullPage = true,
       colorScheme,
-      views = ['image']
+      views = ['image'],
+      format = 'png',
+      quality = 80
     }: ScreenshotInput): Promise<ScreenshotResult> {
       const url = new URL(pagePath, renderBaseUrl);
       if (token) {
@@ -203,8 +205,14 @@ export const createLocalScreenshotClient = async ({
           }
 
           if (views.includes('image')) {
-            const shot = await page.screenshot({ type: 'png', fullPage });
-            images.push({ label: viewport.label, mimeType: 'image/png', data: Buffer.from(shot).toString('base64') });
+            const shot = await page.screenshot(
+              format === 'webp' ? { type: 'webp', quality, fullPage } : { type: 'png', fullPage }
+            );
+            images.push({
+              label: viewport.label,
+              mimeType: format === 'webp' ? 'image/webp' : 'image/png',
+              data: Buffer.from(shot).toString('base64')
+            });
           }
 
           const outline = views.includes('accessibility') ? await readOutline(page) : undefined;

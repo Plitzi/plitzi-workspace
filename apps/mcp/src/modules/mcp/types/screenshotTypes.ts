@@ -32,6 +32,14 @@ export type ScreenshotInput = {
    * `accessibility`, and the caller says so rather than failing.
    */
   views?: CaptureView[];
+  /**
+   * How the picture is encoded: `png` when left out — what a check that compares pixels needs — or `webp`, for a picture
+   * a person is shown, at a tenth of the size (a full-page thumbnail was 2 MB of PNG). A browser service that cannot
+   * answers PNG, and the image's `mimeType` says which it got.
+   */
+  format?: 'png' | 'webp';
+  /** WebP's quality, 1–100. Default 80. */
+  quality?: number;
 };
 
 /** How a look reaches the headless-browser service. The consumer injects an implementation (an HTTP

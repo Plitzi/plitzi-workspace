@@ -100,6 +100,11 @@
 
     <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />
     <link rel="modulepreload" href="<%= locals.reactDom || '' %>" crossorigin />
+    <%# The SDK itself: imported only by the bootstrap at the end of the body, where the browser found it last — it
+        arrived ~700 ms after React on a phone's network, and the page hydrated that much later. %>
+    <% if (locals.jsPath) { %>
+    <link rel="modulepreload" href="<%= locals.jsPath %>" crossorigin />
+    <% } %>
     <% } %>
 
     <%# The space, fetched beside the page while the scripts load, rather than carried in it. %>
