@@ -1,15 +1,16 @@
 import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from './defaults';
-import { readHtmlCacheKey, readOfflineDataCacheKey, readRscCacheKey } from './keys';
 import { sizeOfPage } from './pages';
 import { TtlCache } from './TtlCache';
+import { spaceDocument } from '../hydrationPayload';
 
 import type { CachedPage } from './pages';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export type ServerCaches = {
   html: TtlCache<CachedPage> | undefined;
   rsc: TtlCache<string> | undefined;
-  /** JSON-serialized OfflineDataRaw — keyed by spaceId|env|revision, same TTL as html. */
-  offlineData: TtlCache<string> | undefined;
+  /** The space as read for a render, shared and never written to — keyed by spaceId|env|revision, the html's TTL. */
+  offlineData: TtlCache<OfflineDataRaw> | undefined;
   /**
    * The pages being rendered right now, by key: a request for one of them waits for that render instead of starting
    * its own. Without it a page invalidated by a publish, or expired, was rendered once per visitor who asked for it
@@ -29,11 +30,6 @@ export type ServerCachesOptions = {
 
 const sizeOfString = (value: string): number => value.length;
 
-// Shared out by space: a server that renders many keeps one from pushing the others' pages out (`TtlCache.groupOf`).
-const htmlSpace = (key: string): string => readHtmlCacheKey(key).spaceId;
-const rscSpace = (key: string): string => readRscCacheKey(key).spaceId;
-const offlineDataSpace = (key: string): string => readOfflineDataCacheKey(key).spaceId;
-
 export const createServerCaches = ({
   htmlTtlMs = DEFAULT_TTL_MS.html,
   rscTtlMs = DEFAULT_TTL_MS.rsc,
@@ -45,7 +41,6 @@ export const createServerCaches = ({
       ? new TtlCache<CachedPage>(htmlTtlMs, 5000, {
           maxBytes: htmlBytes,
           sizeOf: sizeOfPage,
-          groupOf: htmlSpace,
           staleMs
         })
       : undefined,
@@ -53,16 +48,15 @@ export const createServerCaches = ({
     rscTtlMs > 0
       ? new TtlCache<string>(rscTtlMs, 5000, {
           maxBytes: DEFAULT_CACHE_BYTES.rsc,
-          sizeOf: sizeOfString,
-          groupOf: rscSpace
+          sizeOf: sizeOfString
         })
       : undefined,
   offlineData:
     htmlTtlMs > 0
-      ? new TtlCache<string>(htmlTtlMs, 500, {
+      ? new TtlCache<OfflineDataRaw>(htmlTtlMs, 500, {
           maxBytes: DEFAULT_CACHE_BYTES.offlineData,
-          sizeOf: sizeOfString,
-          groupOf: offlineDataSpace
+          // Measured as the text it is sent as, made once per space object and kept for the page's payload anyway.
+          sizeOf: offlineData => spaceDocument(offlineData).json.length
         })
       : undefined,
   rendering: new Map()

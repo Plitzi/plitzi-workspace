@@ -4,6 +4,7 @@ import { fleetRole, resolveWorkers, runsFleetJobs } from './fleet/role';
 import { reportCacheSharing } from './reportCacheSharing';
 import {
   buildCacheManager,
+  cacheLimitsOf,
   createServerCaches,
   DEFAULT_TTL_MS,
   destroyServerCaches,
@@ -60,14 +61,17 @@ export const createPageServer = (
     config.draftStore = fleetStore<DraftStore>('ssr.drafts', DRAFT_STORE_METHODS) ?? createMemoryDraftStore();
   }
 
+  // Resolved once — the config, else the environment, else the default — and set on the config, where the render and
+  // the boot report read it.
+  config.cache = { ...config.cache, ...cacheLimitsOf(config) };
   const caches = createServerCaches({
     htmlTtlMs,
     rscTtlMs: config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc,
-    htmlBytes: config.cache?.maxBytes,
-    staleMs: config.cache?.staleMs
+    htmlBytes: config.cache.maxBytes,
+    staleMs: config.cache.staleMs
   });
   const local: CacheManager | null = caches.html || caches.rsc ? buildCacheManager(caches) : null;
-  const { bus, store } = config.cache ?? {};
+  const { bus, store } = config.cache;
   const shared = local && (bus || store) ? shareCache(local, { bus, store }) : undefined;
   const cache = shared?.cache ?? local;
   const role = fleetRole(resolveWorkers(config.workers));

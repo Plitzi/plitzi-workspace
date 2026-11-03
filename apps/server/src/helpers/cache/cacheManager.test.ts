@@ -5,12 +5,16 @@ import { buildHtmlCacheKey, buildOfflineDataCacheKey, buildRscCacheKey } from '.
 import { createServerCaches, destroyServerCaches } from './serverCaches';
 
 import type { ServerCaches } from './serverCaches';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
  * `server.cache` over keys written the way a render writes them. The filter read the key by positions of its own, and
  * when the key grew fields in front of the space id every invalidation by space, environment or host matched nothing
  * — a publish webhook that cleared no page, and no error anywhere.
  */
+
+// The space as a render reads it: what is kept is the object, not its text.
+const space = { schema: {}, style: { cache: '' } } as unknown as OfflineDataRaw;
 
 const made: ServerCaches[] = [];
 
@@ -84,8 +88,8 @@ describe('buildCacheManager', () => {
    */
   it('drops the space a page is rendered from and its RSC answers with the page', () => {
     const { caches, manager } = pagesOf([page(42, 'production', 'a.example'), page(7, 'production', 'a.example')]);
-    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), '{}');
-    caches.offlineData?.set(buildOfflineDataCacheKey(7, 'production', 0, 'flags'), '{}');
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), space);
+    caches.offlineData?.set(buildOfflineDataCacheKey(7, 'production', 0, 'flags'), space);
     caches.rsc?.set(buildRscCacheKey(42, 'production', 0, undefined, undefined, request('a.example')), '{}');
 
     expect(manager.invalidate({ spaceId: 42, environment: 'production' })).toBe(3);
@@ -96,7 +100,7 @@ describe('buildCacheManager', () => {
 
   it('drops the space a host is rendered from when the host is invalidated, and the other host’s pages stay', () => {
     const { caches, manager } = pagesOf([page(42, 'production', 'a.example'), page(42, 'production', 'b.example')]);
-    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), '{}');
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), space);
 
     expect(manager.invalidate({ hostname: 'a.example' })).toBe(2);
     expect(caches.html?.size).toBe(1);
@@ -105,7 +109,7 @@ describe('buildCacheManager', () => {
 
   it('clears and counts all three', () => {
     const { caches, manager } = pagesOf([page(42, 'production', 'a.example')]);
-    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, ''), '{}');
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, ''), space);
     caches.rsc?.set(buildRscCacheKey(42, 'production', 0, 5, 'el1', request('a.example')), '{}');
 
     expect(manager.size).toBe(3);

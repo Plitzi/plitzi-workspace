@@ -1,3 +1,6 @@
+import { bytesFromEnvironment, CACHE_ENV, DEFAULT_CACHE_BYTES } from '../../helpers/cache';
+import { serverLog } from '../../helpers/serverLog';
+
 import type { CacheFilter, SharedPage, SharedPageStore } from '@plitzi/sdk-shared';
 
 /**
@@ -16,95 +19,134 @@ export type RedisPageStoreOptions = {
    */
   prefix?: string;
   /**
-   * What the pages may take of the Redis, in bytes: past it, the oldest stored are dropped. Default 64 MB. Bounded here
-   * rather than by Redis's own eviction, because the Redis a deployment already runs holds what must never be evicted
-   * beside it — job queues, sessions — and a cache with no budget there grows until the server is out of memory.
+   * What the pages may take of the Redis, in bytes. Default `SDK_SERVER_CACHE_STORE_MAX_BYTES` (`512MB`, `2GB`), else
+   * 128 MB. Bounded here rather than by Redis's own eviction, because the Redis a deployment already runs holds what
+   * must never be evicted beside it — job queues, sessions — and a cache with no budget there grows until the server is
+   * out of memory.
    */
   maxBytes?: number;
 };
 
 /**
- * The pages, kept in Lua so a page and its accounting never come apart:
- * - `page:<key>`, the page, with its TTL;
- * - `space:<spaceId>`, a space's pages — `<environment>\n<host>\n<key>` — which an invalidation reads, and `spaces`;
- * - `order:<spaceId>`, a space's pages by when they were stored; `sizes`, each page's bytes;
- * - `bytes`, what all of them hold, and `held`, what each space holds — who gives way when the budget is spent.
+ * The pages, kept in Lua so a page and its accounting never come apart — a segmented LRU, as each process's own
+ * (`TtlCache`): a page starts on probation and is protected once it is used again (read by a replica, or stored again by
+ * one); probation gives way first, and protected pages past 80% of the budget go back to it.
+ * - `page:<key>`, the page, with its TTL; `where`, each page's `<spaceId>\n<environment>\n<host>`; `sizes`, its bytes;
+ * - `space:<spaceId>`, a space's pages, which an invalidation reads, and `spaces`, the spaces that have any;
+ * - `probation` and `protected`, the pages by when they were last used, and `bytes:<lane>`, what each holds.
+ * KEYS[1] is the prefix: every key a script touches is built from it, and naming it routes the script to the node of a
+ * Redis Cluster that holds them (its hash tag).
  */
-const EVICT = `
-local function evict(prefix, entry)
-  local space, member = string.match(entry, '^([^\\n]*)\\n(.*)$')
-  local key = string.match(member, '\\n[^\\n]*\\n(.*)$')
-  redis.call('DEL', prefix .. 'page:' .. key)
-  redis.call('SREM', prefix .. 'space:' .. space, member)
-  redis.call('ZREM', prefix .. 'order:' .. space, entry)
-  local size = tonumber(redis.call('HGET', prefix .. 'sizes', entry) or '0')
-  redis.call('HDEL', prefix .. 'sizes', entry)
-  if tonumber(redis.call('ZINCRBY', prefix .. 'held', -size, space)) <= 0 then
-    redis.call('ZREM', prefix .. 'held', space)
-  end
-  return redis.call('DECRBY', prefix .. 'bytes', size)
-end
-`;
+const LANES = `
+local LANES = { 'probation', 'protected' }
 
-/**
- * A page stored; then this space's pages past their TTL; then, while the budget is spent, the oldest page of the space
- * that holds the most. On a server of many spaces one that fills the store — a burst, a crawler walking every query
- * string — takes room the others are not using, and gives it back first; on a server of one it is oldest first.
- * KEYS[1] is the prefix: every key the script touches is built from it, and naming it routes the script to the node of
- * a Redis Cluster that holds them (its hash tag).
- */
-const SET = `${EVICT}
-local prefix, body, ttl, member, space, now, budget = KEYS[1], ARGV[1], tonumber(ARGV[2]), ARGV[3], ARGV[4], tonumber(ARGV[5]), tonumber(ARGV[6])
-local entry = space .. '\\n' .. member
-if redis.call('HEXISTS', prefix .. 'sizes', entry) == 1 then
-  evict(prefix, entry)
-end
-local key = string.match(member, '\\n[^\\n]*\\n(.*)$')
-local size = string.len(body)
-redis.call('SET', prefix .. 'page:' .. key, body, 'PX', ttl)
-redis.call('SADD', prefix .. 'space:' .. space, member)
-redis.call('SADD', prefix .. 'spaces', space)
-redis.call('ZADD', prefix .. 'order:' .. space, now, entry)
-redis.call('HSET', prefix .. 'sizes', entry, size)
-redis.call('ZINCRBY', prefix .. 'held', size, space)
-local total = redis.call('INCRBY', prefix .. 'bytes', size)
-while true do
-  local oldest = redis.call('ZRANGE', prefix .. 'order:' .. space, 0, 0, 'WITHSCORES')
-  if #oldest == 0 or oldest[1] == entry or tonumber(oldest[2]) > now - ttl then break end
-  total = evict(prefix, oldest[1])
-end
-while total > budget do
-  local victim
-  for _, largest in ipairs(redis.call('ZREVRANGE', prefix .. 'held', 0, 1)) do
-    local first = redis.call('ZRANGE', prefix .. 'order:' .. largest, 0, 0)[1]
-    if first and first ~= entry then
-      victim = first
-      break
+local function evict(prefix, key)
+  local where = redis.call('HGET', prefix .. 'where', key)
+  if where then
+    local space = string.match(where, '^([^\\n]*)\\n')
+    redis.call('SREM', prefix .. 'space:' .. space, key)
+    if redis.call('SCARD', prefix .. 'space:' .. space) == 0 then
+      redis.call('SREM', prefix .. 'spaces', space)
     end
   end
-  if not victim then break end
-  total = evict(prefix, victim)
+  local size = tonumber(redis.call('HGET', prefix .. 'sizes', key) or '0')
+  for _, lane in ipairs(LANES) do
+    if redis.call('ZREM', prefix .. lane, key) == 1 then
+      redis.call('DECRBY', prefix .. 'bytes:' .. lane, size)
+    end
+  end
+  redis.call('HDEL', prefix .. 'where', key)
+  redis.call('HDEL', prefix .. 'sizes', key)
+  return redis.call('DEL', prefix .. 'page:' .. key)
 end
-return total
+
+local function place(prefix, key, lane, now)
+  local size = tonumber(redis.call('HGET', prefix .. 'sizes', key) or '0')
+  for _, other in ipairs(LANES) do
+    if other ~= lane and redis.call('ZREM', prefix .. other, key) == 1 then
+      redis.call('DECRBY', prefix .. 'bytes:' .. other, size)
+    end
+  end
+  if redis.call('ZADD', prefix .. lane, now, key) == 1 then
+    redis.call('INCRBY', prefix .. 'bytes:' .. lane, size)
+  end
+end
+
+local function held(prefix, lane)
+  return tonumber(redis.call('GET', prefix .. 'bytes:' .. lane) or '0')
+end
+
+local function balance(prefix, kept, now, budget)
+  while held(prefix, 'protected') > budget * 0.8 do
+    local oldest = redis.call('ZRANGE', prefix .. 'protected', 0, 0)[1]
+    if not oldest or oldest == kept then break end
+    place(prefix, oldest, 'probation', now)
+  end
+  while held(prefix, 'probation') + held(prefix, 'protected') > budget do
+    local victim
+    for _, lane in ipairs(LANES) do
+      for _, key in ipairs(redis.call('ZRANGE', prefix .. lane, 0, 1)) do
+        if key ~= kept then
+          victim = key
+          break
+        end
+      end
+      if victim then break end
+    end
+    if not victim then break end
+    evict(prefix, victim)
+  end
+end
 `;
 
-// The pages of the spaces named (every indexed one when none is), kept to those of an environment and a host when the
-// filter names them. A space whose pages are all gone is dropped from the spaces indexed.
-const INVALIDATE = `${EVICT}
+// A page stored — protected when it was there already, the sign it is wanted — then the pages nobody used for a TTL
+// (theirs has run out), and then as many more as the budget needs.
+const SET = `${LANES}
+local prefix, key, body, ttl, where, now, budget = KEYS[1], ARGV[1], ARGV[2], tonumber(ARGV[3]), ARGV[4], tonumber(ARGV[5]), tonumber(ARGV[6])
+local lane = 'probation'
+if redis.call('HEXISTS', prefix .. 'sizes', key) == 1 then
+  lane = 'protected'
+  evict(prefix, key)
+end
+local space = string.match(where, '^([^\\n]*)\\n')
+redis.call('SET', prefix .. 'page:' .. key, body, 'PX', ttl)
+redis.call('HSET', prefix .. 'where', key, where)
+redis.call('HSET', prefix .. 'sizes', key, string.len(body))
+redis.call('SADD', prefix .. 'space:' .. space, key)
+redis.call('SADD', prefix .. 'spaces', space)
+place(prefix, key, lane, now)
+for _, other in ipairs(LANES) do
+  for _, gone in ipairs(redis.call('ZRANGEBYSCORE', prefix .. other, '-inf', now - ttl, 'LIMIT', 0, 32)) do
+    evict(prefix, gone)
+  end
+end
+balance(prefix, key, now, budget)
+return 1
+`;
+
+// A page a replica read: used again, so protected.
+const TOUCH = `${LANES}
+local prefix, key, now, budget = KEYS[1], ARGV[1], tonumber(ARGV[2]), tonumber(ARGV[3])
+if redis.call('HEXISTS', prefix .. 'sizes', key) == 1 then
+  place(prefix, key, 'protected', now)
+  balance(prefix, key, now, budget)
+end
+return 1
+`;
+
+// The pages of the spaces named (every one with pages when none is), kept to those of an environment and a host when the
+// filter names them.
+const INVALIDATE = `${LANES}
 local prefix, space, environment, host = KEYS[1], ARGV[1], ARGV[2], ARGV[3]
 local spaces
 if space ~= '' then spaces = { space } else spaces = redis.call('SMEMBERS', prefix .. 'spaces') end
 local count = 0
 for _, id in ipairs(spaces) do
-  for _, member in ipairs(redis.call('SMEMBERS', prefix .. 'space:' .. id)) do
-    local env, at = string.match(member, '^([^\\n]*)\\n([^\\n]*)\\n')
+  for _, key in ipairs(redis.call('SMEMBERS', prefix .. 'space:' .. id)) do
+    local env, at = string.match(redis.call('HGET', prefix .. 'where', key) or '', '^[^\\n]*\\n([^\\n]*)\\n(.*)$')
     if (environment == '' or env == environment) and (host == '' or at == host) then
-      count = count + redis.call('EXISTS', prefix .. 'page:' .. string.match(member, '\\n[^\\n]*\\n(.*)$'))
-      evict(prefix, id .. '\\n' .. member)
+      count = count + evict(prefix, key)
     end
-  end
-  if redis.call('SCARD', prefix .. 'space:' .. id) == 0 then
-    redis.call('SREM', prefix .. 'spaces', id)
   end
 end
 return count
@@ -139,12 +181,22 @@ const unwrap = (value: Buffer): SharedPage | undefined => {
  */
 export const createRedisPageStore = (
   client: RedisPageStoreClient,
-  { prefix = 'plitzi:{pages}:', maxBytes = 64 * 1024 * 1024 }: RedisPageStoreOptions = {}
+  {
+    prefix = 'plitzi:{pages}:',
+    maxBytes = bytesFromEnvironment(CACHE_ENV.storeMaxBytes) ?? DEFAULT_CACHE_BYTES.store
+  }: RedisPageStoreOptions = {}
 ): SharedPageStore => ({
   get: async key => {
     const value = await client.getBuffer(`${prefix}page:${key}`);
+    const page = value ? unwrap(value) : undefined;
+    if (page) {
+      // Not waited for: the page is served whether or not its standing was written down.
+      client.eval(TOUCH, 1, prefix, key, Date.now(), maxBytes).catch((error: unknown) => {
+        serverLog.debug('SSR cache', 'A shared page was read but not marked as used', error);
+      });
+    }
 
-    return value ? unwrap(value) : undefined;
+    return page;
   },
   set: async (key, page, { spaceId, environment, hostname }, ttlMs) => {
     const body = envelope(page);
@@ -157,10 +209,10 @@ export const createRedisPageStore = (
       SET,
       1,
       prefix,
+      key,
       body,
       Math.max(1, Math.round(ttlMs)),
-      `${environment}\n${hostname}\n${key}`,
-      String(spaceId),
+      `${String(spaceId)}\n${environment}\n${hostname}`,
       Date.now(),
       maxBytes
     );

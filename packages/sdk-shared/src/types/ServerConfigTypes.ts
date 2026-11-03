@@ -280,8 +280,9 @@ export type SharedPageStore = {
  */
 export type SSRCacheConfig = {
   /**
-   * What one process keeps of rendered pages at most, in bytes, the least recently served dropped first. Default
-   * 64 MB. A page is kept compressed — 60–120 KB for a 1 MB page — so that is some 600 large pages.
+   * What one process keeps of rendered pages at most, in bytes. Default `SDK_SERVER_CACHE_MAX_BYTES` (`512MB`, `2GB`),
+   * else 128 MB. A page is kept compressed — 60–120 KB for a 1 MB page — so that is some 1 200 large pages; what was
+   * served once gives way before what is served again.
    */
   maxBytes?: number;
   /**

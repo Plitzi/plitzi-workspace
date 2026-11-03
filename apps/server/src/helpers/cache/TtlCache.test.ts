@@ -42,31 +42,52 @@ describe('TtlCache', () => {
     expect(pages.get('b')).toBeUndefined();
   });
 
-  // A server of many spaces: the one filling the cache gives its own pages back, not the quiet space's.
-  it('makes room from the group that holds the most, its least recently used first', () => {
-    const pages = cache(60_000, 100, {
-      maxBytes: 12,
-      sizeOf: value => value.length,
-      groupOf: key => key.split(':')[0]
-    });
-    pages.set('quiet:home', '1234');
-    pages.set('busy:a', '1234');
-    pages.set('busy:b', '1234');
-    pages.set('busy:c', '1234');
+  // Space 5 was visited once; space 10 just got busy: its pages take the room of the one nobody asks for again.
+  it('gives way first with what was asked for once, whichever space it is of', () => {
+    const pages = cache(60_000, 100, { maxBytes: 12, sizeOf: value => value.length });
+    pages.set('10:home', '1234');
+    pages.get('10:home');
+    pages.set('5:once', '1234');
+    pages.set('10:a', '1234');
+    pages.set('10:b', '1234');
 
-    expect(pages.get('quiet:home')).toBe('1234');
-    expect(pages.get('busy:a')).toBeUndefined();
-    expect(pages.bytesOf('busy')).toBe(8);
+    expect(pages.get('10:home')).toBe('1234');
+    expect(pages.get('5:once')).toBeUndefined();
+    expect(pages.isProtected('10:home')).toBe(true);
   });
 
-  it('never drops the entry it was just given to make room for it', () => {
-    const pages = cache(60_000, 100, { maxBytes: 8, sizeOf: value => value.length, groupOf: key => key.split(':')[0] });
-    pages.set('a:1', '1234');
-    pages.set('a:2', '1234');
-    pages.set('b:1', '1234');
+  // A crawler walking every query string makes pages nobody asks for twice: they push out only each other.
+  it('keeps what is asked for all the time through a burst of pages asked for once', () => {
+    const pages = cache(60_000, 100, { maxBytes: 40, sizeOf: value => value.length });
+    pages.set('home', '1234');
+    pages.get('home');
+    for (let i = 0; i < 50; i++) {
+      pages.set(`?x=${String(i)}`, '1234');
+    }
 
-    expect(pages.get('b:1')).toBe('1234');
-    expect(pages.bytes).toBe(8);
+    expect(pages.get('home')).toBe('1234');
+    expect(pages.bytes).toBeLessThanOrEqual(40);
+  });
+
+  // Two entries of 4 bytes are 8, past the 80% of 9 that the protected ones may hold.
+  it('sends the protected entries past their share back to probation, the one used longest ago first', () => {
+    const pages = cache(60_000, 100, { maxBytes: 9, sizeOf: value => value.length });
+    pages.set('a', '1234');
+    pages.get('a');
+    pages.set('b', '1234');
+    pages.get('b');
+
+    expect(pages.isProtected('b')).toBe(true);
+    expect(pages.isProtected('a')).toBe(false);
+  });
+
+  it('keeps the standing of an entry stored again', () => {
+    const pages = cache(60_000, 100);
+    pages.set('home', 'old');
+    pages.get('home');
+    pages.set('home', 'new');
+
+    expect(pages.isProtected('home')).toBe(true);
   });
 
   it('keeps nothing of an entry larger than all it may hold, and drops nothing for it', () => {

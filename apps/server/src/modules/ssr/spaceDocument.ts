@@ -78,7 +78,7 @@ export const handleSpaceDocument = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
   config: SSRPageServerConfig,
-  offlineDataCache?: TtlCache<string>
+  offlineDataCache?: TtlCache<OfflineDataRaw>
 ): Promise<void> => {
   const hash = DOCUMENT_PATH.exec(req.path)?.[1];
   // The page's own defaults (`renderSSR`), so a page that was drawn has a space to fetch.
@@ -98,9 +98,7 @@ export const handleSpaceDocument = async (
     const cacheKey =
       environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision, flagsVersion) : undefined;
     const cached = cacheKey ? offlineDataCache?.get(cacheKey) : undefined;
-    const offlineData = cached
-      ? (JSON.parse(cached) as OfflineDataRaw | undefined)
-      : await config.adapters.getOfflineData(spaceId, environment, revision);
+    const offlineData = cached ?? (await config.adapters.getOfflineData(spaceId, environment, revision));
     if (!offlineData) {
       res.setStatus(404);
       res.setHeader('Content-Type', 'application/json; charset=utf-8');

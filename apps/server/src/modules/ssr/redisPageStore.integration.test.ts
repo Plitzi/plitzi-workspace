@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createRedisPageStore } from './redisPageStore';
 
@@ -85,57 +85,72 @@ describe.skipIf(!available)('the Redis page store', () => {
     expect(await store.get('brief')).toBeUndefined();
   });
 
+  const held = async (): Promise<number> =>
+    Number((await redis.get(`${PREFIX}bytes:probation`)) ?? 0) +
+    Number((await redis.get(`${PREFIX}bytes:protected`)) ?? 0);
+  const at = (spaceId: number) => ({ spaceId, environment: 'production', hostname: `${String(spaceId)}.test` });
+  // A read marks its page as used without the caller waiting for it: the next step waits for it to be written.
+  const read = async (pages: ReturnType<typeof createRedisPageStore>, key: string) => {
+    const found = await pages.get(key);
+    await vi.waitFor(async () => {
+      expect(await redis.zscore(`${PREFIX}protected`, key)).not.toBeNull();
+    });
+
+    return found;
+  };
+
   // The Redis a deployment runs holds job queues and sessions too: a cache without a budget there fills it.
   it('drops the oldest pages to stay within the bytes it may hold', async () => {
     const small = createRedisPageStore(redis, { prefix: PREFIX, maxBytes: 100 });
-    const facts = { spaceId: 1, environment: 'production', hostname: 'a.test' };
     for (const key of ['first', 'second', 'third']) {
-      await small.set(key, page('x'.repeat(30)), facts, 60_000);
-    }
-
-    expect(await small.get('first')).toBeUndefined();
-    expect(await small.get('second')).toBeDefined();
-    expect(await small.get('third')).toBeDefined();
-    expect(Number(await redis.get(`${PREFIX}bytes`))).toBeLessThanOrEqual(100);
-  });
-
-  // One server renders many spaces: one that fills the store is the one that gives way, not the space beside it.
-  it('takes the room it needs from the space that holds the most', async () => {
-    const small = createRedisPageStore(redis, { prefix: PREFIX, maxBytes: 150 });
-    const at = (spaceId: number) => ({ spaceId, environment: 'production', hostname: `${spaceId}.test` });
-    await small.set('quiet', page('x'.repeat(30)), at(2), 60_000);
-    for (const key of ['busy-1', 'busy-2', 'busy-3']) {
       await small.set(key, page('x'.repeat(30)), at(1), 60_000);
     }
 
-    await small.set('busy-4', page('x'.repeat(30)), at(1), 60_000);
+    expect(await redis.exists(`${PREFIX}page:first`)).toBe(0);
+    expect(await redis.exists(`${PREFIX}page:third`)).toBe(1);
+    expect(await held()).toBeLessThanOrEqual(100);
+  });
 
-    expect(await small.get('quiet')).toBeDefined();
-    expect(await small.get('busy-1')).toBeUndefined();
-    expect(await small.get('busy-4')).toBeDefined();
+  // Space 5 was visited once; space 10 just got busy: its pages take the room of the one nobody asks for again.
+  it('gives way first with the pages nobody asked for again, whichever space they are of', async () => {
+    const small = createRedisPageStore(redis, { prefix: PREFIX, maxBytes: 150 });
+    await small.set('busy-home', page('x'.repeat(30)), at(10), 60_000);
+    await read(small, 'busy-home');
+    await small.set('once', page('x'.repeat(30)), at(5), 60_000);
+    for (const key of ['busy-a', 'busy-b', 'busy-c']) {
+      await small.set(key, page('x'.repeat(30)), at(10), 60_000);
+    }
+
+    expect(await redis.exists(`${PREFIX}page:busy-home`)).toBe(1);
+    expect(await redis.exists(`${PREFIX}page:once`)).toBe(0);
+  });
+
+  it('protects a page stored again, the sign that it is wanted', async () => {
+    await store.set('home', page('home'), at(1), 60_000);
+    await store.set('home', page('home'), at(1), 60_000);
+
+    expect(await redis.zscore(`${PREFIX}protected`, 'home')).not.toBeNull();
+    expect(await redis.zscore(`${PREFIX}probation`, 'home')).toBeNull();
   });
 
   it('counts a page stored again once, and gives its bytes back when it is invalidated', async () => {
-    const facts = { spaceId: 1, environment: 'production', hostname: 'a.test' };
-    await store.set('home', page('home'), facts, 60_000);
-    const once = Number(await redis.get(`${PREFIX}bytes`));
-    await store.set('home', page('home'), facts, 60_000);
+    await store.set('home', page('home'), at(1), 60_000);
+    const once = await held();
+    await store.set('home', page('home'), at(1), 60_000);
 
     expect(once).toBeGreaterThan(0);
-    expect(Number(await redis.get(`${PREFIX}bytes`))).toBe(once);
+    expect(await held()).toBe(once);
     await store.invalidate({ spaceId: 1 });
-    expect(Number(await redis.get(`${PREFIX}bytes`))).toBe(0);
-    expect(await redis.zcard(`${PREFIX}order:1`)).toBe(0);
-    expect(await redis.zcard(`${PREFIX}held`)).toBe(0);
+    expect(await held()).toBe(0);
+    expect(await redis.hlen(`${PREFIX}sizes`)).toBe(0);
   });
 
   it('gives back the bytes of the pages past their TTL as it stores more', async () => {
-    const facts = { spaceId: 1, environment: 'production', hostname: 'a.test' };
-    await store.set('brief', page('brief'), facts, 50);
+    await store.set('brief', page('brief'), at(1), 50);
     await new Promise(resolve => setTimeout(resolve, 120));
-    await store.set('next', page('next'), facts, 50);
+    await store.set('next', page('next'), at(1), 50);
 
-    expect(await redis.zcard(`${PREFIX}order:1`)).toBe(1);
+    expect(await redis.zcard(`${PREFIX}probation`)).toBe(1);
   });
 
   it('keeps nothing of a page larger than all it may hold', async () => {

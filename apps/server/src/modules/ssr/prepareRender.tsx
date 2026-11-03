@@ -108,7 +108,7 @@ export const prepareRender = async (
   environment: Environment,
   revision: number,
   pluginManager: PluginManager,
-  offlineDataCache?: TtlCache<string>,
+  offlineDataCache?: TtlCache<OfflineDataRaw>,
   metrics?: RequestMetrics,
   offlineDataOverride?: OfflineDataRaw
 ): Promise<RenderPrep> => {
@@ -121,7 +121,9 @@ export const prepareRender = async (
       : undefined;
   // A draft override (an unsaved preview) never touches the adapters or the shared offline-data cache — it is a
   // one-shot render of in-memory edits, so it must not read from nor pollute the persisted-state cache.
-  const cachedOfflineStr =
+  // The object itself, shared and never written to: parsed again per render, each one also serialised and hashed the
+  // space again (`spaceDocument` keeps its text per object) — megabytes of work for the space that had not changed.
+  const cachedOfflineData =
     offlineDataOverride === undefined && offlineCacheKey ? offlineDataCache?.get(offlineCacheKey) : undefined;
 
   // Shared with the RSC read that runs alongside this one, so the space is fetched once however many of them ask.
@@ -130,8 +132,8 @@ export const prepareRender = async (
       return Promise.resolve<OfflineDataRaw | undefined>(offlineDataOverride);
     }
 
-    if (cachedOfflineStr) {
-      return Promise.resolve(JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined);
+    if (cachedOfflineData) {
+      return Promise.resolve<OfflineDataRaw | undefined>(cachedOfflineData);
     }
 
     return m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision));
@@ -242,8 +244,8 @@ export const prepareRender = async (
     imagePath: imagesPathOf(config)
   });
 
-  if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && rawOfflineData !== undefined) {
-    offlineDataCache?.set(offlineCacheKey, JSON.stringify(rawOfflineData));
+  if (offlineDataOverride === undefined && !cachedOfflineData && offlineCacheKey && rawOfflineData !== undefined) {
+    offlineDataCache?.set(offlineCacheKey, rawOfflineData);
   }
 
   // Falls back to the bundle's own mtime, so the cache-buster is right without anybody supplying one.

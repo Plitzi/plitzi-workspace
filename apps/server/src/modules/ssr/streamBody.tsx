@@ -31,7 +31,7 @@ export const streamBody = async (
   revision: number,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
-  offlineDataCache?: TtlCache<string>,
+  offlineDataCache?: TtlCache<OfflineDataRaw>,
   /** Keeps the page once it is all out — given only when it may be kept. */
   keep?: (html: string) => void,
   metrics?: RequestMetrics,

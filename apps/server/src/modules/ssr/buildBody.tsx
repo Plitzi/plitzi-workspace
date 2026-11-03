@@ -27,7 +27,7 @@ export const buildBody = async (
   revision: number,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
-  offlineDataCache?: TtlCache<string>,
+  offlineDataCache?: TtlCache<OfflineDataRaw>,
   metrics?: RequestMetrics,
   offlineDataOverride?: OfflineDataRaw
 ): Promise<BuildBodyResult> => {

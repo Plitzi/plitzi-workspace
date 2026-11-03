@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { prepareRender } from './prepareRender';
+import { TtlCache } from '../../helpers/cache';
 import { RequestMetrics } from '../../helpers/metrics';
 
 import type { PluginManager } from '../../plugins/manager';
@@ -559,5 +560,31 @@ describe('prepareRender / the kept state the first paint shows', () => {
     });
 
     expect(componentProps.state).toBeUndefined();
+  });
+});
+
+/**
+ * A published space is kept as the object it was read as. Kept as its text, every render parsed it into a new one —
+ * and the text a page is sent (`spaceDocument`), kept per object, was made and hashed again from it: megabytes of work
+ * per render for a space that had not changed.
+ */
+describe('prepareRender / the space it renders from', () => {
+  it('renders a published space from the object it kept, read from the adapters once', async () => {
+    const kept = new TtlCache<OfflineDataRaw>(60_000);
+    const getOfflineData = vi.fn(() => Promise.resolve(offlineData()));
+    const config = {
+      environment: 'production',
+      assetVersion: '1',
+      autoLoadSchemaPlugins: false,
+      adapters: { getOfflineData, getSpaceDeployment: () => Promise.resolve(undefined) }
+    } as unknown as SSRPageServerConfig;
+    const renderWith = () => prepareRender(request('/'), config, 42, 'production', 0, pluginManager(), kept);
+
+    const first = await renderWith();
+    const second = await renderWith();
+
+    expect(getOfflineData).toHaveBeenCalledOnce();
+    expect(second.componentProps.offlineData).toBe(first.componentProps.offlineData);
+    kept.destroy();
   });
 });

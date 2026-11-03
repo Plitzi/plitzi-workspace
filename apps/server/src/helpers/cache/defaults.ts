@@ -11,7 +11,9 @@ export const DEFAULT_TTL_MS = {
  * landing page's documents are a megabyte, a blog post's answer a few KB — 500 entries was 5 MB or 500 MB.
  */
 export const DEFAULT_CACHE_BYTES = {
-  html: 64 * 1024 * 1024,
+  html: 128 * 1024 * 1024,
+  /** The pages every replica shares (`createRedisPageStore`). */
+  store: 128 * 1024 * 1024,
   rsc: 16 * 1024 * 1024,
   offlineData: 32 * 1024 * 1024
 };

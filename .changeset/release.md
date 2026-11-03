@@ -21,12 +21,16 @@ space while it hydrates.
 ## The server (`@plitzi/sdk-server`)
 
 - The render cache keeps a page in the encoding the server prefers — a 1 MB page as the ~90 KB a browser is sent — and
-  is bounded by `cache.maxBytes` (64 MB a process), the page served least recently dropped first. It dropped the one
-  stored first, the site's home page among them, and held up to 500 pages of any size.
-- A server that renders many spaces by host shares its caches out by space: when one is full, the space holding the
-  most gives way, so one space's burst — or a crawler walking its query strings — no longer pushes every other space's
-  pages out. A server of one space is plain LRU, as before. The Redis store keeps the same rule under its own budget
-  (`createRedisPageStore(client, { maxBytes })`, 64 MB), never Redis's eviction, which would reach the job queues.
+  is bounded by bytes. It dropped the page stored first, the site's home page among them, and held up to 500 pages of
+  any size.
+- The caches are a segmented LRU: a page starts on probation and is protected once it is served again, and probation
+  gives way first. A page of a space barely visited, or every URL a crawler makes up, no longer pushes out the pages
+  asked for all the time — on a server of many spaces, one that just got busy takes the room of the ones gone quiet.
+- `cache.maxBytes` defaults to `SDK_SERVER_CACHE_MAX_BYTES`, else 128 MB a process; the Redis store to
+  `SDK_SERVER_CACHE_STORE_MAX_BYTES`, else 128 MB, under its own budget — never Redis's eviction, which would reach the
+  job queues beside it.
+- A published space is kept as the object it was read as: kept as text, every render parsed it again, and serialised and
+  hashed it again for the page's payload.
 - The requests for a page that arrive while it renders wait for that render: a page a publish invalidated was rendered
   once per visitor who asked for it in the meantime.
 - A page past its TTL is served for `cache.staleMs` (60 s) while one request renders it again behind it.

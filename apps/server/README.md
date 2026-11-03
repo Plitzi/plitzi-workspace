@@ -678,7 +678,7 @@ kept — it is the development environment and its schema changes all the time �
 createServer({
   cacheTtlMs: 60_000, // how long a page is kept: 5 minutes by default, `0` keeps none
   cache: {
-    maxBytes: 128 * 1024 * 1024, // what one process keeps of pages: 64 MB by default
+    maxBytes: 256 * 1024 * 1024, // what one process keeps of pages: SDK_SERVER_CACHE_MAX_BYTES, else 128 MB
     staleMs: 30_000, // served this long past its TTL while it is rendered again: 60 s by default
     ignoredQueryParams: ['utm_*', 'ref'] // rendered and kept without these: the analytics ones by default
   },
@@ -686,12 +686,13 @@ createServer({
 });
 ```
 
-- **Kept compressed, by bytes, shared out by space.** A page is kept in the encoding the server prefers
-  (`compression`), a 1 MB page as the ~90 KB a browser is sent, and the cache is bounded by `cache.maxBytes`. When it is
-  full, the space holding the most gives way, its page served least recently first: on a server that renders many
-  spaces by host, one that fills the cache — a burst of traffic, a crawler walking every query string — takes room the
-  others are not using and gives it back the moment they need it. A server of one space is plain LRU. The schema data
-  and the RSC answers are shared out the same way.
+- **Kept compressed, by bytes, by use.** A page is kept in the encoding the server prefers (`compression`), a 1 MB page
+  as the ~90 KB a browser is sent, and the cache is bounded by `cache.maxBytes` — else `SDK_SERVER_CACHE_MAX_BYTES`
+  (`512MB`, `2GB`), else 128 MB a process. It is a segmented LRU: a page starts on probation and is protected once it
+  is served again, and when room is needed probation gives way first. What was asked for once — a page of a space
+  barely visited, every URL a crawler made up — never pushes out what is asked for all the time, whichever space it is
+  of: on a server that renders many spaces by host, one that just got busy earns its room from the ones that went
+  quiet. The schema data and the RSC answers are kept the same way.
 - **Rendered once.** The requests for a page that arrive while it renders wait for that render instead of starting
   their own — a page a publish invalidated is not rendered once per visitor who asked for it in the meantime.
 - **Served while rendered again.** A page past its TTL is still served for `cache.staleMs`, and rendered again behind
@@ -725,9 +726,9 @@ createServer({
 ```
 
 Only a page rendered for nobody in particular goes to the store, under a digest of its key — a signed-in visitor's
-stays in the process that drew it. The store keeps itself under its own budget (`createRedisPageStore(client,
-{ maxBytes })`, 64 MB), shared out by space as the process's is, rather than leave it to Redis's eviction: the Redis a
-deployment runs holds job queues and sessions beside it. A store that cannot answer is a miss, said in the log: the page is rendered, not
+stays in the process that drew it. The store keeps itself under its own budget — `createRedisPageStore(client,
+{ maxBytes })`, else `SDK_SERVER_CACHE_STORE_MAX_BYTES`, else 128 MB — by the same rule as the process's, rather than
+leave it to Redis's eviction: the Redis a deployment runs holds job queues and sessions beside it. A store that cannot answer is a miss, said in the log: the page is rendered, not
 refused. Without a bus, an invalidation reaches the host it was made on, and a deployment of several replicas serves a
 page a write made untrue until each copy expires.
 

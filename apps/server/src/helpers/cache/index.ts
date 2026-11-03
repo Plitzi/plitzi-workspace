@@ -10,3 +10,4 @@ export type { ServerCaches, ServerCachesOptions } from './serverCaches';
 export { createServerCaches, destroyServerCaches } from './serverCaches';
 export { CACHE_TOPIC, cacheFilterOf, createCacheInvalidator, shareCache } from './sharedCache';
 export type { CacheSharing } from './sharedCache';
+export { bytesFromEnvironment, CACHE_ENV, cacheLimitsOf } from './limits';

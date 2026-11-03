@@ -1,9 +1,11 @@
 import { DEFAULT_TTL_MS } from './defaults';
 
-type Entry<T> = { value: T; storedAt: number; bytes: number; group: string };
+type Segment = 'probation' | 'protected';
 
-/** One group's entries, least recently used first (a Map keeps the order of insertion; a use re-inserts). */
-type Group = { keys: Map<string, true>; bytes: number };
+type Entry<T> = { value: T; storedAt: number; bytes: number; segment: Segment };
+
+/** A segment's entries, least recently used first (a Map keeps the order of insertion; a use re-inserts). */
+type Lane = { keys: Map<string, true>; bytes: number };
 
 export type TtlCacheOptions<T> = {
   /**
@@ -12,13 +14,6 @@ export type TtlCacheOptions<T> = {
    */
   maxBytes?: number;
   sizeOf?: (value: T) => number;
-  /**
-   * What an entry is shared out by — the space a page is of, on a server that renders many. When the cache is full it
-   * is the group holding the most that gives way, its least recently used entry first: a space that fills the cache
-   * (a burst of traffic, a crawler walking every query string) takes room the others are not using, and gives it back
-   * the moment they need it. With one group — a server of one space, or no `groupOf` — it is plain LRU.
-   */
-  groupOf?: (key: string) => string;
   /** How long past its TTL an entry is still handed out by {@link TtlCache.read}, marked stale. */
   staleMs?: number;
   sweepIntervalMs?: number;
@@ -27,30 +22,39 @@ export type TtlCacheOptions<T> = {
 /** An entry, and whether its TTL has passed — a stale one is still within the window `staleMs` keeps it for. */
 export type CacheRead<T> = { value: T; stale: boolean; storedAt: number };
 
+/** What of the cache the entries used more than once may hold: the rest is where new ones prove themselves. */
+const PROTECTED_SHARE = 0.8;
+
 /**
- * A map whose entries expire, bounded by count and by bytes, shared out fairly between groups.
+ * A map whose entries expire, bounded by count and by bytes — a segmented LRU.
+ *
+ * An entry starts on probation and is protected once it is used again. When the cache is full, probation gives way
+ * first, its least recently used entry first, and only then the protected entry used longest ago; protected entries
+ * past their share go back to probation. So what was asked for once — a page of a space barely visited, every URL a
+ * crawler made up — never pushes out what is asked for all the time, whichever space it is of: a space that just got
+ * busy earns its room from the ones that went quiet, and a burst of one-off pages only displaces itself.
  *
  * Least recently USED, not least recently stored: the first version dropped the oldest entry whatever it was, so the
  * site's home page — stored first and served on every visit — was the one evicted when the cache filled.
  */
 export class TtlCache<T> {
   private readonly store = new Map<string, Entry<T>>();
-  private readonly groups = new Map<string, Group>();
+  private readonly lanes: Record<Segment, Lane> = {
+    probation: { keys: new Map(), bytes: 0 },
+    protected: { keys: new Map(), bytes: 0 }
+  };
   private readonly maxBytes: number;
   private readonly sizeOf: ((value: T) => number) | undefined;
-  private readonly groupOf: ((key: string) => string) | undefined;
   private readonly staleMs: number;
-  private bytesHeld = 0;
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
     private readonly ttlMs: number = DEFAULT_TTL_MS.html,
     private readonly maxSize = 500,
-    { maxBytes = Infinity, sizeOf, groupOf, staleMs = 0, sweepIntervalMs = ttlMs }: TtlCacheOptions<T> = {}
+    { maxBytes = Infinity, sizeOf, staleMs = 0, sweepIntervalMs = ttlMs }: TtlCacheOptions<T> = {}
   ) {
     this.maxBytes = maxBytes;
     this.sizeOf = sizeOf;
-    this.groupOf = groupOf;
     this.staleMs = staleMs;
     this.sweepTimer = setInterval(() => this.sweep(), sweepIntervalMs);
     (this.sweepTimer as unknown as { unref?: () => void }).unref?.();
@@ -63,7 +67,7 @@ export class TtlCache<T> {
     return read && !read.stale ? read.value : undefined;
   }
 
-  /** The entry while its TTL lasts, and after it for `staleMs`, saying which. */
+  /** The entry while its TTL lasts, and after it for `staleMs`, saying which. A read is a use: see the class. */
   read(key: string): CacheRead<T> | undefined {
     const entry = this.store.get(key);
     if (!entry) {
@@ -77,14 +81,16 @@ export class TtlCache<T> {
       return undefined;
     }
 
-    const group = this.groups.get(entry.group);
-    group?.keys.delete(key);
-    group?.keys.set(key, true);
+    this.place(key, entry, 'protected');
+    this.keepProtectedToShare(key);
 
     return { value: entry.value, stale: age > this.ttlMs, storedAt: entry.storedAt };
   }
 
-  /** `storedAt` for an entry that was made before it reached this cache — read from a store several processes share. */
+  /**
+   * `storedAt` for an entry that was made before it reached this cache — read from a store several processes share.
+   * An entry stored again (rendered again once it expired) keeps the standing it had.
+   */
   set(key: string, value: T, storedAt = Date.now()): void {
     const previous = this.store.get(key);
     if (previous) {
@@ -97,17 +103,13 @@ export class TtlCache<T> {
       return;
     }
 
-    const name = this.groupOf?.(key) ?? '';
-    const group = this.groups.get(name) ?? { keys: new Map<string, true>(), bytes: 0 };
-    this.groups.set(name, group);
-    group.keys.set(key, true);
-    group.bytes += bytes;
-    this.store.set(key, { value, storedAt, bytes, group: name });
-    this.bytesHeld += bytes;
+    const entry: Entry<T> = { value, storedAt, bytes, segment: previous?.segment ?? 'probation' };
+    this.store.set(key, entry);
+    this.place(key, entry, entry.segment);
+    this.keepProtectedToShare(key);
 
-    while (this.store.size > this.maxSize || this.bytesHeld > this.maxBytes) {
-      const evicted = this.evictFromLargest(this.store.size > this.maxSize, key);
-      if (!evicted) {
+    while (this.store.size > this.maxSize || this.bytes > this.maxBytes) {
+      if (!this.evictOne(key)) {
         break;
       }
     }
@@ -134,8 +136,10 @@ export class TtlCache<T> {
 
   clear(): void {
     this.store.clear();
-    this.groups.clear();
-    this.bytesHeld = 0;
+    for (const lane of Object.values(this.lanes)) {
+      lane.keys.clear();
+      lane.bytes = 0;
+    }
   }
 
   destroy(): void {
@@ -148,54 +152,65 @@ export class TtlCache<T> {
   }
 
   get bytes(): number {
-    return this.bytesHeld;
+    return this.lanes.probation.bytes + this.lanes.protected.bytes;
   }
 
-  /** What one group holds, in bytes. */
-  bytesOf(group: string): number {
-    return this.groups.get(group)?.bytes ?? 0;
+  /** Whether an entry has been used since it was stored — what keeps it when the cache needs room. */
+  isProtected(key: string): boolean {
+    return this.store.get(key)?.segment === 'protected';
   }
 
-  /**
-   * Drops the least recently used entry of the group that holds the most — by entries when that is what is over. Never
-   * `kept`, the entry just stored: a group whose only entry it is gives way to the next.
-   */
-  private evictFromLargest(byCount: boolean, kept: string): boolean {
-    let largest: Group | undefined;
-    for (const group of this.groups.values()) {
-      if (group.keys.size === 1 && group.keys.has(kept)) {
-        continue;
+  /** Moves an entry to the most recently used end of a segment. */
+  private place(key: string, entry: Entry<T>, segment: Segment): void {
+    const from = this.lanes[entry.segment];
+    if (from.keys.delete(key)) {
+      from.bytes -= entry.bytes;
+    }
+
+    entry.segment = segment;
+    const to = this.lanes[segment];
+    to.keys.set(key, true);
+    to.bytes += entry.bytes;
+  }
+
+  /** Protected entries past their share go back to probation, the one used longest ago first — never `kept`. */
+  private keepProtectedToShare(kept: string): void {
+    const lane = this.lanes.protected;
+    while (
+      lane.keys.size > 1 &&
+      (lane.bytes > this.maxBytes * PROTECTED_SHARE || lane.keys.size > this.maxSize * PROTECTED_SHARE)
+    ) {
+      const [oldest] = lane.keys.keys();
+      const entry = this.store.get(oldest);
+      if (oldest === kept || !entry) {
+        break;
       }
 
-      const measure = byCount ? group.keys.size : group.bytes;
-      if (!largest || measure > (byCount ? largest.keys.size : largest.bytes)) {
-        largest = group;
+      this.place(oldest, entry, 'probation');
+    }
+  }
+
+  /** Drops one entry to make room — probation's least recently used, else the protected one used longest ago. */
+  private evictOne(kept: string): boolean {
+    for (const lane of [this.lanes.probation, this.lanes.protected]) {
+      for (const key of lane.keys.keys()) {
+        const entry = this.store.get(key);
+        if (key !== kept && entry) {
+          this.remove(key, entry);
+
+          return true;
+        }
       }
     }
 
-    const oldest = largest?.keys.keys().next();
-    const entry = oldest && !oldest.done ? this.store.get(oldest.value) : undefined;
-    if (!oldest || oldest.done || !entry) {
-      return false;
-    }
-
-    this.remove(oldest.value, entry);
-
-    return true;
+    return false;
   }
 
   private remove(key: string, entry: Entry<T>): void {
     this.store.delete(key);
-    this.bytesHeld -= entry.bytes;
-    const group = this.groups.get(entry.group);
-    if (!group) {
-      return;
-    }
-
-    group.keys.delete(key);
-    group.bytes -= entry.bytes;
-    if (group.keys.size === 0) {
-      this.groups.delete(entry.group);
+    const lane = this.lanes[entry.segment];
+    if (lane.keys.delete(key)) {
+      lane.bytes -= entry.bytes;
     }
   }
 
