@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="<%= (locals.head && locals.head.lang) || 'en' %>"<% if (locals.themeClass) { %> class="<%= locals.themeClass %>"<% } %>>
+<html lang="<%= (locals.head && locals.head.lang) || 'en' %>"<% if (locals.themeClass) { %> class="<%= locals.themeClass %>"<% } %><% if (locals.scriptPolicy) { %> data-plitzi-script-policy="<%= locals.scriptPolicy %>"<% } %>>
   <head>
     <meta charset="utf-8" />
     <title><%= locals.title || '' %></title>

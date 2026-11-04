@@ -56,6 +56,13 @@ const DisplayElements = ({ value = 'block', onChange }: DisplayElementsProps) =>
         active: value === 'inline'
       },
       {
+        value: 'contents',
+        icon: 'fa-solid fa-object-ungroup',
+        description:
+          "Contents draws no box of its own: its children are laid out as its parent's — a wrapper that only groups them.",
+        active: value === 'contents'
+      },
+      {
         value: 'none',
         icon: 'fa-solid fa-eye-slash',
         description: 'None hides elements.',

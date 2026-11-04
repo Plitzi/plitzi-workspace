@@ -14,6 +14,7 @@ import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { MOTION_SEEN_CSS } from '@plitzi/sdk-shared/schema';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 import { processCssTokens } from '@plitzi/sdk-style/helpers';
@@ -127,6 +128,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
 
   return (
     <ContainerFrame
+      trustedHtml={ownHtml}
       className={clsx('builder-area flex', className)}
       css={css}
       assets={assets}

@@ -135,6 +135,8 @@ describe('the head a link preview reads', () => {
 
       expect(policy).toContain("'strict-dynamic'");
       expect(html).toContain(`<script type="module" nonce="${nonce}">`);
+      // Said on the document too, for the copies of the SDK's code it does not start itself (the builder's).
+      expect(html).toMatch(/<html[^>]* data-plitzi-script-policy="report-only"/);
 
       return nonce;
     };

@@ -17,6 +17,7 @@ import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { startMarkupPolicies } from '@plitzi/sdk-shared/security';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
 
@@ -26,6 +27,10 @@ import packageSettings from '../package.json';
 import type { AppProps } from './App';
 import type { ComponentPlugin, RenderMode, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
+
+// The builder carries its own copy of the SDK's shared code, its store and its schemas: it holds them to the page's script
+// policy, as its server said it on the document, the way the SDK holds its own — no `eval`, author markup cleaned.
+startMarkupPolicies();
 
 export function render(
   widgetContainer: string,

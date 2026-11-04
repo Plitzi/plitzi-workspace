@@ -34,6 +34,7 @@ describe('markup an author or the data wrote', () => {
   it('is cleaned of what runs where the page’s policy is enforced, its markup kept', async () => {
     withTrustedTypes();
     const { authorHtml } = await imported('enforce');
+    // The stub's TrustedHTML is a record of what the policy was handed: read back as the stub made it.
     const { html } = authorHtml(written) as unknown as { html: string };
 
     expect(html).toContain('<p>Hi <img src="x"><a>me</a></p>');

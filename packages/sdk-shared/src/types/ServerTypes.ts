@@ -144,6 +144,11 @@ export type PluginEntry = {
 export type SSRTemplateProps = {
   /** The render's script nonce, written on each of the template's own scripts (`SSRServerConfig.scriptPolicy`). */
   nonce?: string;
+  /**
+   * The page's script policy, said on `<html data-plitzi-script-policy>`: what every copy of the SDK's shared code a page
+   * loads — the builder's, a plugin's own — reads to hold itself to it (`startMarkupPolicies`).
+   */
+  scriptPolicy?: 'report-only' | 'enforce';
   title?: string;
   /** Meta description for the document, and the share-preview text derived from it. */
   description?: string;

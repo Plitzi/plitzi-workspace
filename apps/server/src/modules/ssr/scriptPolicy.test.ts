@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { newScriptNonce, pagePolicies, scriptPolicyMode, sendScriptPolicy } from './scriptPolicy';
+import { newScriptNonce, pagePolicies, scriptPolicyMode, scriptTemplateParams, sendScriptPolicy } from './scriptPolicy';
 
 describe('a page’s policies', () => {
   it('report the script policy and Trusted Types, and enforce who may frame the page', () => {
@@ -61,5 +61,16 @@ describe('a page’s policies', () => {
 
     expect(headers['Content-Security-Policy']).toContain("frame-ancestors 'none'; script-src 'nonce-abc'");
     expect(headers['Content-Security-Policy-Report-Only']).toContain('require-trusted-types-for');
+  });
+
+  it('give the template its nonce and the policy to say on the document, and nothing with no policy', () => {
+    expect(scriptTemplateParams({}, undefined)).toMatchObject({
+      scriptPolicy: 'report-only',
+      nonce: expect.any(String) as string
+    });
+    expect(scriptTemplateParams({}, { security: { scriptPolicy: 'enforce' } })).toMatchObject({
+      scriptPolicy: 'enforce'
+    });
+    expect(scriptTemplateParams({ scriptPolicy: false }, undefined)).toEqual({});
   });
 });

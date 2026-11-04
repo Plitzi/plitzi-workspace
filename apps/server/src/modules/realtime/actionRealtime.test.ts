@@ -4,7 +4,8 @@ import { createActionRealtime } from './index';
 
 import type { OfflineDataRaw, PubSubAdapter } from '@plitzi/sdk-shared';
 
-/** A space that declares one channel, as its schema says it. */
+/** A space that declares one channel, as its schema says it. Only its channels are read: the rest of a space is no part
+ *  of what is checked, so the document is cast from what the test writes of it. */
 const offlineData = {
   schema: { settings: { channels: { 'monitor:{id}': { publish: 'server' } } }, elements: {} },
   style: {}

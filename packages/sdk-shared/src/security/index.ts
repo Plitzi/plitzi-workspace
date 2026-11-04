@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { setCodegenEnabled } from '@plitzi/nexus';
 
 /**
@@ -8,8 +10,8 @@ import { setCodegenEnabled } from '@plitzi/nexus';
  * - `plitzi-author-html`: markup an author or the data wrote — a raw HTML block, rich text, an SVG — cleaned when the
  *   page's script policy is enforced (sdk-elements, beside the cleaner).
  * - `default`: what a library writes without asking for a policy, and only what cannot run: text (the head's JSON-LD,
- *   which Helmet writes as `innerHTML`), the empty script React makes one from, JSON as a script, and a worker the
- *   page made itself (a map's, from a `blob:` of its own origin).
+ *   which Helmet writes as `innerHTML`), the empty script React makes one from, JSON as a script, and a worker from the
+ *   page's own origin (a map's, from a `blob:` it made; the builder's, from its assets).
  * - `dompurify`: the cleaner's own, which it makes to read the markup it is handed before it cleans it.
  */
 export const TRUSTED_TYPES_POLICIES = ['plitzi-html', 'plitzi-author-html', 'default', 'dompurify'] as const;
@@ -25,6 +27,8 @@ export type TrustedTypesRules = {
 export type TrustedTypesPolicy = { createHTML: (input: string) => TrustedHTML };
 type TrustedTypesFactory = {
   createPolicy: (name: TrustedTypesPolicyName, rules: TrustedTypesRules) => TrustedTypesPolicy;
+  /** The page's `default` policy, once something made it. */
+  defaultPolicy?: TrustedTypesPolicy | null;
 };
 
 /** The browser's factory, where there is one: none on the server, nor in a browser without Trusted Types. */
@@ -55,9 +59,25 @@ const REACT_SCRIPT_SHELL = '<script></script>';
  */
 const isText = (input: string): boolean => !input.includes('<');
 
-/** A `blob:` the page made: only a script already running on its origin can have made it. */
-const isOwnBlob = (input: string): boolean =>
-  typeof location !== 'undefined' && input.startsWith(`blob:${location.origin}/`);
+/**
+ * A script of the page's own origin — a `blob:` it made, or a file it serves: only a script already running there can
+ * have asked for it, and what it names is the origin's own.
+ */
+const isOwnScript = (input: string): boolean => {
+  if (typeof location === 'undefined') {
+    return false;
+  }
+
+  if (input.startsWith(`blob:${location.origin}/`)) {
+    return true;
+  }
+
+  try {
+    return new URL(input, location.href).origin === location.origin;
+  } catch {
+    return false;
+  }
+};
 
 let ownPolicy: TrustedTypesPolicy | null | undefined;
 
@@ -76,15 +96,18 @@ const own = (): TrustedTypesPolicy | null => {
 
   ownPolicy = factory.createPolicy('plitzi-html', { createHTML: input => input });
   // Anything else written without a policy is refused, and reported: that is how a sink nobody named is found. One per
-  // page: a second copy of this module (a plugin that brought its own) finds it made, which the browser says by throwing.
-  try {
-    factory.createPolicy('default', {
-      createHTML: input => (input === REACT_SCRIPT_SHELL || isText(input) ? input : null),
-      createScript: input => (isJson(input) ? input : null),
-      createScriptURL: input => (isOwnBlob(input) ? input : null)
-    });
-  } catch {
-    // Made already, by the first copy: the page has its default.
+  // page: a second copy of this module (the builder's, a plugin's own) finds it made, and leaves it — making it again is
+  // itself a violation the page reports.
+  if (!factory.defaultPolicy) {
+    try {
+      factory.createPolicy('default', {
+        createHTML: input => (input === REACT_SCRIPT_SHELL || isText(input) ? input : null),
+        createScript: input => (isJson(input) ? input : null),
+        createScriptURL: input => (isOwnScript(input) ? input : null)
+      });
+    } catch {
+      // Made between the check and here, by another copy: the page has its default.
+    }
   }
 
   return ownPolicy;
@@ -119,6 +142,21 @@ export const ownHtml = (html: string): string | TrustedHTML => {
 };
 
 /**
+ * The page's script policy as its server said it on `<html data-plitzi-script-policy>`: what a copy of this module the
+ * SDK does not start — the builder's own, a plugin's that bundles its own — holds itself to. Nothing on the server, nor
+ * on a page with no policy.
+ */
+export const pageScriptPolicy = (): 'report-only' | 'enforce' | undefined => {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+
+  const said = document.documentElement.dataset.plitziScriptPolicy;
+
+  return said === 'report-only' || said === 'enforce' ? said : undefined;
+};
+
+/**
  * The page's policies, made as the SDK starts — before anything writes markup: the head's JSON-LD and React's first
  * script go through `default` from the first commit — with the page's script policy as its server sent it
  * (`Server.scriptPolicy`). What the policies clean depends on it: enforced, what an author wrote is cleaned; reported,
@@ -126,18 +164,26 @@ export const ownHtml = (html: string): string | TrustedHTML => {
  * refuse yet).
  *
  * A page held to a policy, reported or enforced, never asks for `eval`: the store writes without its compiled writers
- * (nexus's `new Function`). Reported, their probe is two reports on every page a visitor opens, which would bury the
- * reports worth reading; enforced, it is refused anyway. It costs about 5 µs a write, and loading the dashboard writes
- * about a hundred times.
+ * (nexus's `new Function`), and zod parses without compiling. Reported, their probes are reports on every page a visitor
+ * opens, which would bury the reports worth reading; enforced, they are refused anyway. It costs about 5 µs a store
+ * write, and loading the dashboard writes about a hundred times.
+ *
+ * Called with nothing, it reads the policy off the document (`pageScriptPolicy`): how a copy of this module the SDK did
+ * not start — the builder's — learns it.
  *
  * Nothing on the server: what is decided here is one page's, and a server renders many at once.
  */
-export const startMarkupPolicies = (next: 'report-only' | 'enforce' | undefined): void => {
+export const startMarkupPolicies = (next: 'report-only' | 'enforce' | undefined = pageScriptPolicy()): void => {
   if (typeof window === 'undefined') {
     return;
   }
 
   mode = next;
   setCodegenEnabled(next ? false : undefined);
+  // zod compiles a schema it parses often with `new Function`, and probes for it first: the same refusal, the same report.
+  if (next) {
+    z.config({ jitless: true });
+  }
+
   own();
 };

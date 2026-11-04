@@ -4,6 +4,7 @@ import { memo, useMemo } from 'react';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import PlitziBadge from '../components/PlitziBadge';
@@ -25,7 +26,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
 
   return (
-    <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="w-full grow">
+    <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="w-full grow" trustedHtml={ownHtml}>
       <SpaceContainer>
         <PlitziProvider value={plitziContextValue}>
           {/* No key on the page: a key here remounts the WHOLE tree on every navigation, and the layout shell

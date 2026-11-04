@@ -2,11 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { TrustedTypesRules } from '.';
 
-/** A browser's `trustedTypes`, recording what each policy was made with. */
+/** A browser's `trustedTypes`, recording what each policy was made with, and how many times each name was asked for. */
 const browserWithTrustedTypes = () => {
   const made = new Map<string, TrustedTypesRules>();
+  const asked = new Map<string, number>();
   vi.stubGlobal('trustedTypes', {
     createPolicy: (name: string, rules: TrustedTypesRules) => {
+      asked.set(name, (asked.get(name) ?? 0) + 1);
       if (name === 'default' && made.has('default')) {
         throw new TypeError('Policy with name "default" already exists');
       }
@@ -14,10 +16,13 @@ const browserWithTrustedTypes = () => {
       made.set(name, rules);
 
       return { createHTML: (input: string) => ({ html: rules.createHTML?.(input) }) };
+    },
+    get defaultPolicy() {
+      return made.has('default') ? {} : null;
     }
   });
 
-  return made;
+  return Object.assign(made, { asked });
 };
 
 afterEach(() => {
@@ -62,6 +67,11 @@ describe('the SDK’s markup policies', () => {
     expect(fallback?.createScriptURL?.(`blob:${location.origin}/1c9a`)).toBe(`blob:${location.origin}/1c9a`);
     expect(fallback?.createScriptURL?.('blob:https://elsewhere.example/1c9a')).toBeNull();
     expect(fallback?.createScriptURL?.('https://cdn.example/worker.js')).toBeNull();
+    // A file the page's own origin serves — the builder's worker — is the origin's own too.
+    expect(fallback?.createScriptURL?.('/builder-assets/functions-worker.js')).toBe(
+      '/builder-assets/functions-worker.js'
+    );
+    expect(fallback?.createScriptURL?.(`${location.origin}/w.js`)).toBe(`${location.origin}/w.js`);
   });
 
   // A page held to a policy never asks for `eval`: nexus's compiled writers would be refused, or reported on every visit.
@@ -75,5 +85,35 @@ describe('the SDK’s markup policies', () => {
     startMarkupPolicies(undefined);
 
     expect(setCodegenEnabled.mock.calls).toEqual([[false], [false], [undefined]]);
+  });
+
+  // A copy of this module the SDK does not start (the builder's) reads the page's policy off the document.
+  it('read the page’s policy off the document when none is handed, and hold zod to it', async () => {
+    const setCodegenEnabled = vi.fn();
+    vi.doMock('@plitzi/nexus', () => ({ setCodegenEnabled }));
+    document.documentElement.dataset.plitziScriptPolicy = 'enforce';
+    const { pageScriptPolicy, scriptPolicyEnforced, startMarkupPolicies } = await import('.');
+    const { z } = await import('zod');
+
+    expect(pageScriptPolicy()).toBe('enforce');
+    startMarkupPolicies();
+    expect(scriptPolicyEnforced()).toBe(true);
+    expect(setCodegenEnabled).toHaveBeenCalledWith(false);
+    expect(z.config().jitless).toBe(true);
+
+    delete document.documentElement.dataset.plitziScriptPolicy;
+    z.config({ jitless: false });
+    expect(pageScriptPolicy()).toBeUndefined();
+  });
+
+  // Making `default` a second time is itself a violation a page reports: a second copy (the builder's) leaves it.
+  it('make the page’s default policy once, whatever copies of this module the page loads', async () => {
+    const made = browserWithTrustedTypes();
+    (await import('.')).startMarkupPolicies('report-only');
+    vi.resetModules();
+    (await import('.')).startMarkupPolicies('report-only');
+
+    expect(made.asked.get('default')).toBe(1);
+    expect(made.asked.get('plitzi-html')).toBe(2);
   });
 });

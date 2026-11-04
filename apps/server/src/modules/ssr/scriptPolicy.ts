@@ -21,6 +21,16 @@ export const CSP_REPORT_PATH = '/_plitzi/csp-report';
  */
 export const newScriptNonce = (): string => randomBytes(16).toString('base64');
 
+/** What a page's template is given of its script policy: the render's nonce, and the policy said on `<html>`. */
+export const scriptTemplateParams = (
+  config: Pick<SSRServerConfig, 'scriptPolicy'>,
+  deployment?: Pick<SSRSpaceDeployment, 'security'>
+): { nonce?: string; scriptPolicy?: 'report-only' | 'enforce' } => {
+  const mode = scriptPolicyMode(config, deployment);
+
+  return mode ? { nonce: newScriptNonce(), scriptPolicy: mode } : {};
+};
+
 /** The page's script policy on a host: the deployment's for its domain, else the server's — none for `off`. */
 export const scriptPolicyMode = (
   config: Pick<SSRServerConfig, 'scriptPolicy'>,

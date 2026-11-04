@@ -9,6 +9,7 @@ import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { PluginAssetsContext } from '@plitzi/sdk-shared/plugins/react';
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
@@ -193,6 +194,16 @@ const BuilderArea = ({
   );
 
   const baseElementValueMemo = useMemo(() => ({ id: baseElementId, rootId: baseElementId }), [baseElementId]);
+  /**
+   * A layout edited on its own, drawn in the box of the page it is edited from — as a visitor sees it, where the page
+   * holds the layout. One that leaves its box to the page (`display: contents`, the page a column) otherwise laid its
+   * parts along the canvas's own row: the footer beside the bar.
+   */
+  const [page = undefined] = useBuilderStore(`schema.flat.${currentPageId}`);
+  const pageBox =
+    Plugin && baseElementData.definition.type === 'layoutContainer' && page?.definition.type === 'page'
+      ? clsx('plitzi-component__page', 'plitzi__page', page.definition.styleSelectors.base)
+      : undefined;
 
   return (
     <div
@@ -234,6 +245,7 @@ const BuilderArea = ({
         >
           <ContainerFrame
             ref={ref}
+            trustedHtml={ownHtml}
             id={`i-builder-${baseElementId}`}
             css={frameCss}
             assets={canvasAssets}
@@ -259,7 +271,13 @@ const BuilderArea = ({
                             same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
                             switching to a root of a different KIND still changes the component type and remounts;
                             page to page keeps the shell and swaps only the body. */}
-                        <Plugin internalProps={baseElementValueMemo} />
+                        {pageBox ? (
+                          <div className={pageBox}>
+                            <Plugin internalProps={baseElementValueMemo} />
+                          </div>
+                        ) : (
+                          <Plugin internalProps={baseElementValueMemo} />
+                        )}
                       </PlitziProvider>
                     </EnclosingSpaceContext>
                   </SpaceContainer>
