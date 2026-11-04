@@ -1,3 +1,5 @@
+import { DEFAULT_FAVICON } from '@plitzi/sdk-shared/schema';
+
 import { DOCS, GUIDES, PATHS } from './content.ts';
 import { notFound } from './notFound.ts';
 import {
@@ -129,7 +131,8 @@ const topBar = container({
       class: navLink,
       children: [
         // The name beside it already says what the mark is: read out, it would say "Plitzi" twice.
-        image({ src: 'https://cdn.plitzi.com/resources/img/favicon.svg', decorative: true, class: brandMark }),
+        // Plitzi's icon from the page's own origin, as the tab's: from Plitzi's CDN, another site, it carried its cookies.
+        image({ src: DEFAULT_FAVICON, decorative: true, class: brandMark }),
         text({ content: 'Plitzi', css: { color: 'var(--foreground)', 'font-size': '16px', 'font-weight': '700' } })
       ]
     }),

@@ -21,7 +21,7 @@ import type {
  */
 
 vi.mock('./buildBody', () => ({
-  buildBody: () => Promise.resolve({ body: '<html>draft</html>', result: {} })
+  buildBody: () => Promise.resolve({ body: '<html>draft</html>', result: {}, nonce: '' })
 }));
 
 const draft = { schema: { flat: {} }, style: {} } as unknown as OfflineDataRaw;

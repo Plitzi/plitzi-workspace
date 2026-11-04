@@ -129,7 +129,7 @@ const runPipeline = async <C extends BaseContext>(
       return;
     }
 
-    applySecurityHeaders(res, ctx.config, ctx.port);
+    applySecurityHeaders(req, res, ctx.config, ctx.port);
 
     for (const stage of stages) {
       if (await stage(ctx)) {

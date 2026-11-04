@@ -35,7 +35,7 @@ const page = (
 const pagesOf = (keys: string[]) => {
   const caches = createServerCaches({ htmlTtlMs: 60_000, rscTtlMs: 60_000 });
   made.push(caches);
-  keys.forEach(key => caches.html?.set(key, { html: '<html></html>', compressed: {} }));
+  keys.forEach(key => caches.html?.set(key, { html: '<html></html>', compressed: {}, nonce: '' }));
 
   return { caches, manager: buildCacheManager(caches) };
 };

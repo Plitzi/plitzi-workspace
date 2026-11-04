@@ -8,7 +8,7 @@ const large = `<html><body>${'<p>A paragraph the page repeats.</p>'.repeat(2_000
 describe('a kept page', () => {
   // A 1 MB page held as a string beside its compressed forms was most of what the cache spent.
   it('is kept compressed alone, and its HTML made from it again', () => {
-    const page = keepPage(large, DEFAULT_COMPRESSION);
+    const page = keepPage(large, DEFAULT_COMPRESSION, '');
 
     expect(page.html).toBeUndefined();
     expect(page.compressed.br).toBeInstanceOf(Buffer);
@@ -17,23 +17,29 @@ describe('a kept page', () => {
   });
 
   it('is kept in the encoding the server prefers first', () => {
-    const page = keepPage(large, resolveCompression({ encodings: ['gzip'] }));
+    const page = keepPage(large, resolveCompression({ encodings: ['gzip'] }), '');
 
     expect(page.compressed.gzip).toBeInstanceOf(Buffer);
     expect(pageHtml(page)).toBe(large);
   });
 
   it('is kept as it is when there is nothing to compress it to', () => {
-    expect(keepPage(large, resolveCompression(false))).toEqual({ html: large, compressed: {} });
-    expect(keepPage('<html></html>', DEFAULT_COMPRESSION)).toEqual({ html: '<html></html>', compressed: {} });
+    expect(keepPage(large, resolveCompression(false), '')).toEqual({ html: large, compressed: {}, nonce: '' });
+    expect(keepPage('<html></html>', DEFAULT_COMPRESSION, '')).toEqual({
+      html: '<html></html>',
+      compressed: {},
+      nonce: ''
+    });
   });
 
   it('travels to a shared store and back as the same page', () => {
-    const page = keepPage(large, DEFAULT_COMPRESSION);
-    const shared = toSharedPage(page, 1_000);
+    const page = keepPage(large, DEFAULT_COMPRESSION, '');
+    const shared = toSharedPage({ ...page, nonce: 'n0nce+/=' }, 1_000);
 
     expect(shared).toMatchObject({ encoding: 'br', renderedAt: 1_000 });
     expect(pageHtml(fromSharedPage(shared))).toBe(large);
-    expect(pageHtml(fromSharedPage(toSharedPage({ html: '<p>x</p>', compressed: {} }, 1)))).toBe('<p>x</p>');
+    // The page's script nonce goes with it: a replica that never rendered it sends the same script policy.
+    expect(fromSharedPage(shared).nonce).toBe('n0nce+/=');
+    expect(pageHtml(fromSharedPage(toSharedPage({ html: '<p>x</p>', compressed: {}, nonce: '' }, 1)))).toBe('<p>x</p>');
   });
 });

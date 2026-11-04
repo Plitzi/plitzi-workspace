@@ -9,6 +9,8 @@ import { notFoundStage, ssrStage } from './ssr';
 import { styleSheetStage } from './styleSheet';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { crossSiteWritesStage } from '../http/stages/crossSiteWrites';
+import { cspReportStage } from '../http/stages/cspReport';
+import { defaultFaviconStage } from '../http/stages/defaultFavicon';
 import { fontAssetsStage } from '../http/stages/fontAssets';
 import { googleFontsStage } from '../http/stages/googleFonts';
 import { healthStage } from '../http/stages/health';
@@ -30,6 +32,8 @@ export const buildPagePipeline = (
   const stages: Stage<SSRContext>[] = [
     healthStage,
     publicDirStage,
+    defaultFaviconStage,
+    cspReportStage,
     wellKnownStage,
     pluginAssetsStage,
     fontAssetsStage,

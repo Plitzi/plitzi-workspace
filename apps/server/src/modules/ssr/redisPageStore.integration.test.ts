@@ -33,7 +33,9 @@ afterAll(async () => {
 const page = (text: string, renderedAt = 1_000) => ({
   encoding: 'br' as const,
   body: Buffer.from([0, 255, 10, 58, ...Buffer.from(text)]),
-  renderedAt
+  renderedAt,
+  // A nonce is base64, which has no `:` — the envelope's separator, also in the body above, which it must not confuse.
+  nonce: 'n0nce+/='
 });
 
 describe.skipIf(!available)('the Redis page store', () => {

@@ -114,6 +114,52 @@ describe('the head a link preview reads', () => {
     expect(html).not.toContain('cdn.plitzi.com/resources/img/favicon.svg');
   });
 
+  // A space that names no icon is given Plitzi's from its own origin: asked of Plitzi's CDN, another site, the browser
+  // sent that site's cookies along (Lighthouse's "Uses third-party cookies").
+  it('serves Plitzi’s icon from the page’s own origin, as an SVG', async () => {
+    const icon = await fetch(`${BASE}/_plitzi/favicon.svg`);
+
+    expect(icon.status).toBe(200);
+    expect(icon.headers.get('content-type')).toBe('image/svg+xml');
+    expect(await icon.text()).toMatch(/^<svg [^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    expect((await fetch(`${BASE}/_plitzi/favicon.svg`, { method: 'POST' })).status).toBe(405);
+  });
+
+  // Lighthouse's "Ensure CSP is effective against XSS", reported for now: the template's scripts carry the render's nonce.
+  it('says its script policy, naming the nonce its own scripts carry, new on every render', async () => {
+    const nonceOf = async () => {
+      const response = await fetch(`${BASE}/r/jazz?u=${String(Math.random())}`);
+      const policy = response.headers.get('content-security-policy-report-only') ?? '';
+      const html = await response.text();
+      const nonce = /'nonce-([^']+)'/.exec(policy)?.[1] ?? '';
+
+      expect(policy).toContain("'strict-dynamic'");
+      expect(html).toContain(`<script type="module" nonce="${nonce}">`);
+
+      return nonce;
+    };
+
+    expect(await nonceOf()).not.toBe(await nonceOf());
+  });
+
+  it('takes the reports a browser sends of what the policy would refuse', async () => {
+    const report = {
+      'csp-report': {
+        'document-uri': `${BASE}/r/jazz`,
+        'effective-directive': 'script-src-elem',
+        'blocked-uri': 'https://ads.example/tag.js'
+      }
+    };
+    const sent = await fetch(`${BASE}/_plitzi/csp-report`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/csp-report' },
+      body: JSON.stringify(report)
+    });
+
+    expect(sent.status).toBe(204);
+    expect((await fetch(`${BASE}/_plitzi/csp-report`, { method: 'POST', body: 'not json' })).status).toBe(400);
+  });
+
   it('falls back to the space’s picture on a page that names none', async () => {
     const html = await (await fetch(`${BASE}/`)).text();
 

@@ -14,8 +14,11 @@ const GOOGLE_FILE_ORIGIN = 'https://fonts.gstatic.com';
 const MODERN_BROWSER =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
-/** A file of Google's, as its stylesheet names it: `/s/<family>/v<n>/<name>.woff2`, versioned and so never changing. */
-const FILE_PATH = /^\/s\/[a-z0-9]+\/v\d+\/[A-Za-z0-9_-]+\.(woff2|woff|ttf)$/;
+/**
+ * A file of Google's, as its stylesheet names it: `/s/<family>/v<n>/<name>.woff2`, versioned and so never changing — and
+ * `<name>.<subset>.woff2` for a family split into numbered subsets, as every Japanese, Chinese and Korean one is.
+ */
+const FILE_PATH = /^\/s\/[a-z0-9]+\/v\d+\/[A-Za-z0-9_-]+(?:\.\d{1,4})?\.(woff2|woff|ttf)$/;
 
 const FILE_TYPES: Record<string, string> = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' };
 

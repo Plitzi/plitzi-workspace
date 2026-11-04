@@ -50,7 +50,8 @@ describe('the React a page loads', () => {
   // `import "react"` of the SDK then fails: a page that never hydrates, on Chrome before 133.
   it('is mapped before anything loads a module', async () => {
     const html = await (await fetch(`http://${HOST}/`)).text();
-    const map = html.indexOf('<script type="importmap">');
+    // By the tag's start: its script nonce follows the type.
+    const map = html.indexOf('<script type="importmap"');
     const firstModule = Math.min(
       ...['<link rel="modulepreload"', '<script type="module"'].map(tag => html.indexOf(tag)).filter(at => at >= 0)
     );

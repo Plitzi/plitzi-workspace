@@ -256,7 +256,13 @@ export type SSRCompressionConfig = {
  * A rendered page as a store shared by every replica keeps it: one encoding of its body, and when it was rendered — so
  * a replica that reads it knows how fresh it is, not when it read it.
  */
-export type SharedPage = { encoding: 'br' | 'gzip' | 'identity'; body: Buffer; renderedAt: number };
+export type SharedPage = {
+  encoding: 'br' | 'gzip' | 'identity';
+  body: Buffer;
+  renderedAt: number;
+  /** The nonce the page was rendered with, which its script policy names (`scriptPolicy`); empty without one. */
+  nonce: string;
+};
 
 /** Where a shared page is filed: what `server.cache.invalidate` filters it by. */
 export type SharedPageFacts = { spaceId: number; environment: string; hostname: string };
@@ -488,6 +494,28 @@ export type SSRServerConfig = {
    *  string[] — explicit list of allowed origins, e.g. ['https://app.example.com', 'https://preview.example.com'].
    *  false — no restriction; headers are omitted. */
   frameOptions?: 'DENY' | 'SAMEORIGIN' | string[] | false;
+  /**
+   * `Strict-Transport-Security` on every response over https: browsers then refuse the site over plain http, and ask it
+   * over https from the first request. A year, with every sub-domain, by default; `preload` only once the domain is
+   * submitted to the browsers' list. Never on this machine nor on a domain no public CA certifies (`.local`, `.test`,
+   * `.localhost`): a browser told so would refuse a development certificate with no way past it. `false` sends none.
+   */
+  hsts?: false | { maxAge?: number; includeSubDomains?: boolean; preload?: boolean };
+  /**
+   * `Cross-Origin-Opener-Policy`: a page opened from another site, or that opens one, is put in a browsing context of
+   * its own — the other cannot reach it through `window.opener`. `same-origin-allow-popups` by default, which keeps what
+   * a page opens (a payment, a sign-in with another provider) able to answer it; `same-origin` isolates those too.
+   * `false` sends none.
+   */
+  crossOriginOpenerPolicy?: false | 'same-origin' | 'same-origin-allow-popups' | 'unsafe-none';
+  /**
+   * A page's script policy, against cross-site scripting: only the scripts its template writes run — by the render's
+   * nonce — and what they load (`'strict-dynamic'`); no plugin objects, no `<base>`. `'report-only'`, the default,
+   * enforces nothing yet: the browser reports to `/_plitzi/csp-report` what it would have refused, and the server says
+   * it in its log, so a space's own scripts (a raw HTML block's, a tag the space added) are seen before anything is
+   * refused. A cached page keeps its render's nonce while it is kept. `false` sends none, and writes no nonce.
+   */
+  scriptPolicy?: false | 'report-only';
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */

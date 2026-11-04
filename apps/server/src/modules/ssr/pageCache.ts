@@ -77,8 +77,11 @@ export const readPage = async ({ caches, key, shared, ttlMs, staleMs }: PageSlot
 };
 
 /** Keeps a page just rendered, here and in the shared store, and hands back what was kept. */
-export const storePage = ({ caches, key, shared, ttlMs, staleMs, compression }: PageSlot, html: string): CachedPage => {
-  const page = keepPage(html, compression);
+export const storePage = (
+  { caches, key, shared, ttlMs, staleMs, compression }: PageSlot,
+  { html, nonce }: RenderedPage
+): CachedPage => {
+  const page = keepPage(html, compression, nonce);
   const renderedAt = Date.now();
   caches.html?.set(key, page, renderedAt);
 
@@ -93,10 +96,13 @@ export const storePage = ({ caches, key, shared, ttlMs, staleMs, compression }: 
   return page;
 };
 
+/** A page just rendered: its document, and the nonce its scripts were rendered with (`newScriptNonce`). */
+export type RenderedPage = { html: string; nonce: string };
+
 /** A render this request took on: what the requests for the same page wait on instead of rendering it too. */
 export type RenderClaim = {
   /** Keeps the page this render made, or — with nothing to keep — lets the waiting requests render their own. */
-  keep: (html: string | undefined) => CachedPage | undefined;
+  keep: (rendered: RenderedPage | undefined) => CachedPage | undefined;
   /** Done, kept or not: a render that failed or was refused must not hold the requests waiting on it. */
   release: () => void;
 };
@@ -114,8 +120,8 @@ export const claimRender = (slot: PageSlot): RenderClaim => {
   rendering.set(slot.key, promise);
 
   return {
-    keep: html => {
-      const page = html === undefined ? undefined : storePage(slot, html);
+    keep: rendered => {
+      const page = rendered === undefined ? undefined : storePage(slot, rendered);
       settle(page);
 
       return page;

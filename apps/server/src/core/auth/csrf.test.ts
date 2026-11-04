@@ -328,7 +328,7 @@ describe('the cookie it is handed over in', () => {
     csrf.write({ hostname: 'acme.test' }, res, csrf.issue());
 
     expect(cookies()[0]).toContain('Domain=.acme.test');
-    expect(cookies()[0]).toContain('SameSite=None');
+    expect(cookies()[0]).toContain('SameSite=Lax');
     expect(cookies()[0]).toContain('Secure');
   });
 

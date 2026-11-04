@@ -139,6 +139,11 @@ describe('the Google Fonts mirror', () => {
     expect(cjk.status).toBe(200);
     expect(String(cjk.body)).toContain(`${GOOGLE_FONTS_PATH}/s/zen/v1/0.woff2`);
     expect(tooLarge.status).toBe(307);
+
+    // And the files it names: a subset is numbered in its name (`….117.woff2`), and is served as any other.
+    const { fetch } = google();
+    const subset = await createGoogleFontsMirror({ fetch })(file('/s/zenkakugothicnew/v19/gNMVW2drQpDw0Gjz.117.woff2'));
+    expect(subset.status).toBe(200);
   });
 
   it('sends the browser to Google itself when Google cannot be reached from here, and says so', async () => {

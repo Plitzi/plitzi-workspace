@@ -37,18 +37,6 @@
 
     <%
       /*
-        Plitzi's icon's origin, reached when the space names no icon of its own. Named here so the space's own fonts
-        can skip it rather than ask for it twice. A font host is preconnected only when the space uses one.
-      */
-      const icon = ((locals.head && locals.head.links) || []).find(function (link) { return link.rel === 'icon'; });
-      const staticOrigins = icon && icon.href.indexOf('https://cdn.plitzi.com/') === 0 ? ['https://cdn.plitzi.com'] : [];
-    %>
-    <% for (const origin of staticOrigins) { %>
-    <link rel="preconnect" href="<%= origin %>" crossorigin />
-    <% } %>
-
-    <%
-      /*
         The space's web fonts, in the document rather than fetched by the SDK once it mounts.
 
         A page paints long before its JavaScript exists. A face asked for at hydration arrives after the text it
@@ -60,7 +48,7 @@
       */
     %>
     <% if (locals.fonts) { %>
-    <% for (const origin of locals.fonts.preconnect.filter(item => !staticOrigins.includes(item.href))) { %>
+    <% for (const origin of locals.fonts.preconnect) { %>
     <link rel="preconnect" href="<%= origin.href %>" <%- origin.crossorigin ? 'crossorigin' : '' %> />
     <% } %>
     <% for (const link of locals.fonts.links) { %>
@@ -110,7 +98,7 @@
       The import map before anything that loads a module: a browser that fetched one already (a modulepreload counts)
       ignores a map that comes after it, and the SDK's `import "react"` then resolves to nothing.
     %>
-    <script type="importmap">
+    <script type="importmap"<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
       {
         "imports": {
           "react": "<%= locals.react || '' %>",
@@ -130,7 +118,7 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
     <%# Seen as soon as it is parsed: views/inline/motionSeen.js says why. %>
-    <script>
+    <script<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
 <%- inline('motionSeen.js') %>
     </script>
     <% if (!locals.ssrOnly) { %>
@@ -146,7 +134,7 @@
       half a second sooner. A frame and the task after it is "painted"; a tab nobody sees paints nothing, and starts at
       once. React's vendor file is imported beside the SDK rather than found inside it, a round trip later.
     %>
-    <script type="module">
+    <script type="module"<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
       <% const drawnPlugins = activePlugins.filter(p => !p.deferred); %>
       <% const json = value => JSON.stringify(value ?? null).replace(/</g, '\\u003c'); %>
@@ -220,7 +208,7 @@
     <%# Only with `livePages`: the server says what changed under the page — everything (`reloadPages`), and the page
         loads again, as does a page that reconnects to a server that restarted (a different `boot`): its code changed
         under it. A draft listens for its own changes alone, by its token. %>
-    <script>
+    <script<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
       (() => {
         const events = new EventSource(<%- JSON.stringify(locals.liveDraft ? `/__plitzi/live?__pt=${encodeURIComponent(locals.liveDraft)}` : '/__plitzi/live').replace(/</g, '\\u003c') %>);
         // The page's module script listens here too, for its space (`space`) and a plugin built again (`plugin`).

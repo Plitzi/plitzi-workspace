@@ -154,14 +154,18 @@ return count
 
 const ENCODINGS: readonly SharedPage['encoding'][] = ['br', 'gzip', 'identity'];
 
-/** `<encoding>:<renderedAt>:` and the body's bytes, as they are: one value, no base64 on a page of a hundred KB. */
-const envelope = ({ encoding, body, renderedAt }: SharedPage): Buffer =>
-  Buffer.concat([Buffer.from(`${encoding}:${renderedAt}:`, 'utf-8'), body]);
+/**
+ * `<encoding>:<renderedAt>:<script nonce>:` and the body's bytes, as they are: one value, no base64 on a page of a
+ * hundred KB. The nonce is base64, which has no `:` in it.
+ */
+const envelope = ({ encoding, body, renderedAt, nonce }: SharedPage): Buffer =>
+  Buffer.concat([Buffer.from(`${encoding}:${renderedAt}:${nonce}:`, 'utf-8'), body]);
 
 const unwrap = (value: Buffer): SharedPage | undefined => {
   const first = value.indexOf(':');
   const second = first < 0 ? -1 : value.indexOf(':', first + 1);
-  if (second < 0) {
+  const third = second < 0 ? -1 : value.indexOf(':', second + 1);
+  if (third < 0) {
     return undefined;
   }
 
@@ -171,7 +175,9 @@ const unwrap = (value: Buffer): SharedPage | undefined => {
     return undefined;
   }
 
-  return { encoding, renderedAt, body: value.subarray(second + 1) };
+  const nonce = value.subarray(second + 1, third).toString('utf-8');
+
+  return { encoding, renderedAt, nonce, body: value.subarray(third + 1) };
 };
 
 /**

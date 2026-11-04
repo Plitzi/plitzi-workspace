@@ -26,7 +26,7 @@ const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1'];
 
 /**
  * Whether the host is a loopback name or a `.localhost` sibling. Local hosts get no Domain on their cookies (browsers
- * refuse one on a single-label host) and lax SameSite, because Secure + SameSite=None over plain http is dropped.
+ * refuse one on a single-label host) and no Secure over plain http.
  */
 export const isLocalHost = (hostname: string): boolean =>
   LOCAL_HOSTS.includes(hostname) || hostname.endsWith('.localhost');
@@ -89,10 +89,13 @@ const resolve = <T>(value: T | ((hostname: string) => T) | undefined, hostname: 
 
 /**
  * Everything about how a session cookie is written, derived from the request host unless the deployment says
- * otherwise. The defaults are the ones a server on a real domain needs: a cookie shared across sub-domains, and
- * SameSite=None + Secure so it survives the app and the API being different hosts. A local server — this machine, or
- * this machine as its network reaches it — gets the opposite, because Secure + SameSite=None over plain http is
- * dropped by every browser.
+ * otherwise. The defaults are the ones a server on a real domain needs: a cookie shared across sub-domains — an app and
+ * the API it talks to are rarely the same host — Secure, and `SameSite=Lax`. Sub-domains of one site are the same site,
+ * so `Lax` reaches all of them; what it keeps the cookie from is a request another site's page makes, which carried it
+ * as a third-party cookie (Lighthouse: "Uses third-party cookies"), to the API and to every other host of the domain,
+ * a CDN's included. A deployment whose pages need the session inside another site's page — a space in an iframe there,
+ * an app on another site than its API — says `sameSite: 'none'`. A local server — this machine, or this machine as its
+ * network reaches it — is not Secure, which plain http would drop.
  */
 export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}): SessionCookieParams => {
   const local = isLocalHost(hostname) || isPrivateNetworkHost(hostname);
@@ -101,7 +104,7 @@ export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}
     name: resolve(config.name, hostname, 'plitzi_session'),
     domain: resolve(config.domain, hostname, registrableDomain(hostname)),
     secure: config.secure ?? !local,
-    sameSite: config.sameSite ?? (local ? 'lax' : 'none'),
+    sameSite: config.sameSite ?? 'lax',
     refreshPath: config.refreshPath ?? '/auth',
     hintSuffix: config.hintSuffix ?? '_hint'
   };

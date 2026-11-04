@@ -142,8 +142,11 @@ const iconType = (href: string): string | undefined => {
   return { svg: 'image/svg+xml', png: 'image/png', ico: 'image/x-icon', webp: 'image/webp' }[extension];
 };
 
-/** Plitzi's own icon: the tab of a space that names none. */
-export const DEFAULT_FAVICON = 'https://cdn.plitzi.com/resources/img/favicon.svg';
+/**
+ * Plitzi's own icon: the tab of a space that names none — on the page's own origin, where its server answers it
+ * (sdk-server's `defaultFaviconStage`): asked of another site, the browser sent that site's cookies with it.
+ */
+export const DEFAULT_FAVICON = '/_plitzi/favicon.svg';
 
 /**
  * Every tag a page's head carries besides its title and its JSON-LD: its description, its robots, its Open Graph and

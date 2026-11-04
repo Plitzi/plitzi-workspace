@@ -16,7 +16,7 @@ import type {
   SSRUser
 } from '@plitzi/sdk-shared';
 
-type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean };
+type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string };
 
 const buildBody = vi.fn<(req: SSRRequest) => Promise<Rendered>>();
 
@@ -54,7 +54,7 @@ const response = () => {
   };
 };
 
-const page = (body: string): Rendered => ({ body, result: {}, cacheable: true });
+const page = (body: string): Rendered => ({ body, result: {}, cacheable: true, nonce: '' });
 
 const made: ServerCaches[] = [];
 const caches = (staleMs = 60_000): ServerCaches => {
@@ -169,7 +169,7 @@ describe('the page cache', () => {
     await vi.waitFor(() => {
       expect(buildBody).toHaveBeenCalledOnce();
     });
-    finish({ body: '<html>runs</html>', result: {}, cacheable: false });
+    finish({ body: '<html>runs</html>', result: {}, cacheable: false, nonce: '' });
     await both;
 
     expect(buildBody).toHaveBeenCalledTimes(2);
@@ -295,7 +295,7 @@ describe('the page store every replica shares', () => {
 
   it('serves a page the store kept from an older render as stale', async () => {
     const store = shared();
-    const kept = keepPage('<html>kept</html>', DEFAULT_COMPRESSION);
+    const kept = keepPage('<html>kept</html>', DEFAULT_COMPRESSION, '');
     buildBody.mockResolvedValueOnce(page('<html>new</html>'));
     vi.spyOn(store, 'get').mockResolvedValue(toSharedPage(kept, Date.now() - 1_500));
     const res = response();

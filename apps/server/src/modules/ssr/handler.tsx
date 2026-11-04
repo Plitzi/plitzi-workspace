@@ -5,6 +5,7 @@ import { meterPage } from './meterPage';
 import { claimRender, pageSlot, readPage, renderingNow } from './pageCache';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { DEFAULT_RENDER_WAIT_MS, renderLimitFor } from './renderTurns';
+import { sendScriptPolicy } from './scriptPolicy';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey, ignoredQueryParamsOf, keepsVersion, pageHtml, renderedQuery } from '../../helpers/cache';
 import { resolveCompression } from '../../helpers/compress';
@@ -14,7 +15,7 @@ import { serverLog } from '../../helpers/serverLog';
 import { SCHEME_HINT_HEADER } from '../../helpers/visitorScheme';
 
 import type { BuildBodyResult } from './buildBody';
-import type { RenderClaim } from './pageCache';
+import type { RenderClaim, RenderedPage } from './pageCache';
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
 import type {
@@ -125,8 +126,8 @@ export const renderSSR = async (
       metrics,
       offlineDataOverride
     );
-  const keepable = ({ body, result, cacheable }: BuildBodyResult): string | undefined =>
-    body !== undefined && cacheable && isReusable(result) ? body : undefined;
+  const keepable = ({ body, result, cacheable, nonce }: BuildBodyResult): RenderedPage | undefined =>
+    body !== undefined && cacheable && isReusable(result) ? { html: body, nonce } : undefined;
 
   /**
    * A kept page, served — and counted: a space that stopped being metered the moment it got popular enough to hit the
@@ -150,6 +151,7 @@ export const renderSSR = async (
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     }
 
+    sendScriptPolicy(res, config, page.nonce);
     // A copy of the compressed forms: one made for a client that takes another encoding is not added to the kept page
     // behind the cache's back, where its bytes would go uncounted.
     res.send(() => pageHtml(page), { compressed: { ...page.compressed } });
@@ -192,7 +194,7 @@ export const renderSSR = async (
         renderFn,
         pluginManager,
         caches.offlineData,
-        claim ? html => claim.keep(html) : undefined,
+        claim ? page => claim.keep(page) : undefined,
         metrics,
         offlineDataOverride
       );
@@ -212,6 +214,7 @@ export const renderSSR = async (
       return;
     }
 
+    sendScriptPolicy(res, config, rendered.nonce);
     res.send(rendered.body ?? '', page ? { compressed: { ...page.compressed } } : undefined);
   };
 

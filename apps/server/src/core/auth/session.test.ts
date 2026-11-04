@@ -46,15 +46,23 @@ const session: SSRSession = {
 
 describe('session cookie defaults', () => {
   // An app and the API it talks to are rarely the same host, so the default has to survive that: shared across
-  // sub-domains, and SameSite=None so it is sent at all.
-  it('shares the cookie across sub-domains of a real host', () => {
+  // sub-domains — which are one site, so `Lax` reaches them all, and another site's page never carries it.
+  it('shares the cookie across sub-domains of a real host, and keeps it off other sites', () => {
     const params = sessionCookieParams('app.example.com');
 
-    expect(params).toMatchObject({ domain: '.example.com', secure: true, sameSite: 'none' });
+    expect(params).toMatchObject({ domain: '.example.com', secure: true, sameSite: 'lax' });
   });
 
-  // Secure + SameSite=None over plain http is dropped by every browser, so localhost gets the opposite — and no
-  // Domain at all, which browsers refuse on a single-label host.
+  // A space shown in an iframe on another site, with its visitor's session inside: the deployment says so.
+  it('sends it from other sites only when the deployment asks', () => {
+    expect(sessionCookieParams('app.example.com', { sameSite: 'none' })).toMatchObject({
+      secure: true,
+      sameSite: 'none'
+    });
+  });
+
+  // Secure over plain http is dropped by every browser, so localhost is not — and gets no Domain at all, which browsers
+  // refuse on a single-label host.
   it('gives a local server cookies a browser will actually keep', () => {
     const params = sessionCookieParams('localhost');
 
@@ -78,7 +86,7 @@ describe('session cookie defaults', () => {
 
   // A public address, and a deployment's own `.local` sub-domains — siblings sharing a session over https — keep it.
   it.each(['203.0.113.9', '172.32.0.1', 'app.example.local'])('keeps the strict profile for %s', hostname => {
-    expect(sessionCookieParams(hostname)).toMatchObject({ secure: true, sameSite: 'none' });
+    expect(sessionCookieParams(hostname)).toMatchObject({ secure: true, sameSite: 'lax' });
   });
 
   it('lets a deployment name its cookie per host, which is the part only it knows', () => {
@@ -315,18 +323,18 @@ describe('a plitzi deployment', () => {
     ['localhost', 'plitzi_auth_local', undefined, false, 'lax'],
     ['127.0.0.1', 'plitzi_auth_local', undefined, false, 'lax'],
     ['::1', 'plitzi_auth_local', undefined, false, 'lax'],
-    ['app.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
-    ['server.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
-    ['ssr.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
-    ['mcp.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
-    ['plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
+    ['app.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['server.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['ssr.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['mcp.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
     // The -stg. / -dev. naming matches hosts like app.plitzi-stg.com, not a bare stg.plitzi.com label.
-    ['stg.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
-    ['dev.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
-    ['api.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
-    ['app.plitzi-stg.com', 'plitzi_auth_stg', '.plitzi-stg.com', true, 'none'],
-    ['app.plitzi-dev.com', 'plitzi_auth_dev', '.plitzi-dev.com', true, 'none'],
-    ['website.plitzi.app', 'plitzi_auth', '.plitzi.app', true, 'none'],
+    ['stg.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['dev.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['api.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['app.plitzi-stg.com', 'plitzi_auth_stg', '.plitzi-stg.com', true, 'lax'],
+    ['app.plitzi-dev.com', 'plitzi_auth_dev', '.plitzi-dev.com', true, 'lax'],
+    ['website.plitzi.app', 'plitzi_auth', '.plitzi.app', true, 'lax'],
     ['192.168.1.5', 'plitzi_auth', undefined, false, 'lax']
   ];
 
@@ -348,7 +356,7 @@ describe('a plitzi deployment', () => {
 
     expect(cookies()[0]).toContain('plitzi_auth_local=access');
     expect(cookies()[0]).toContain('Domain=.plitzi.local');
-    expect(cookies()[0]).toContain('SameSite=None');
+    expect(cookies()[0]).toContain('SameSite=Lax');
     expect(cookies()[0]).toContain('Secure');
 
     const jar = cookies()

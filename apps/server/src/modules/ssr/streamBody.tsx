@@ -5,7 +5,9 @@ import { renderToPipeableStream } from 'react-dom/server';
 import { applySSRResult, isReusable, renderParamsOf, withNotFound, withRefusal } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
+import { sendScriptPolicy } from './scriptPolicy';
 
+import type { RenderedPage } from './pageCache';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
@@ -33,7 +35,7 @@ export const streamBody = async (
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<OfflineDataRaw>,
   /** Keeps the page once it is all out — given only when it may be kept. */
-  keep?: (html: string) => void,
+  keep?: (page: RenderedPage) => void,
   metrics?: RequestMetrics,
   offlineDataOverride?: OfflineDataRaw
 ): Promise<void> => {
@@ -60,6 +62,7 @@ export const streamBody = async (
   const tail = sentinelIdx >= 0 ? fullTemplate.slice(sentinelIdx + SSR_SENTINEL.length) : '';
 
   const result: SSRRenderResult = {};
+  const nonce = prep.templateParams.nonce ?? '';
 
   await new Promise<void>((resolve, reject) => {
     // Only accumulate chunks when caching is active — avoids holding the full
@@ -78,7 +81,7 @@ export const streamBody = async (
         res.end();
 
         if (chunks && keep && isReusable(result)) {
-          keep(head + Buffer.concat(chunks).toString('utf-8') + tail);
+          keep({ html: head + Buffer.concat(chunks).toString('utf-8') + tail, nonce });
         }
 
         resolve();
@@ -107,6 +110,7 @@ export const streamBody = async (
           return;
         }
 
+        sendScriptPolicy(res, config, nonce);
         res.write(Buffer.from(head, 'utf-8'));
         pipe(writable);
       },

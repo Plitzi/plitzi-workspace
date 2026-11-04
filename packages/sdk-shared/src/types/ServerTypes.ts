@@ -142,6 +142,8 @@ export type PluginEntry = {
 };
 
 export type SSRTemplateProps = {
+  /** The render's script nonce, written on each of the template's own scripts (`SSRServerConfig.scriptPolicy`). */
+  nonce?: string;
   title?: string;
   /** Meta description for the document, and the share-preview text derived from it. */
   description?: string;

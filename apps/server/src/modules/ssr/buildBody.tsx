@@ -17,7 +17,13 @@ import type {
 } from '@plitzi/sdk-shared';
 
 /** `cacheable` is false for a body that must not be served to anybody else: it carries this request's own runs. */
-export type BuildBodyResult = { body?: string; result: SSRRenderResult; cacheable: boolean };
+export type BuildBodyResult = {
+  body?: string;
+  result: SSRRenderResult;
+  cacheable: boolean;
+  /** The nonce the page's own scripts were rendered with — what its script policy names; empty without one. */
+  nonce: string;
+};
 
 export const buildBody = async (
   req: SSRRequest,
@@ -52,12 +58,12 @@ export const buildBody = async (
   withRefusal(result, prep.refused);
 
   if (result.redirect !== undefined) {
-    return { result, cacheable: prep.cacheable };
+    return { result, cacheable: prep.cacheable, nonce: '' };
   }
 
   const templateStart = metrics ? performance.now() : 0;
   const body = renderFn({ ...prep.templateParams, html });
   metrics?.record('template', Math.round(performance.now() - templateStart));
 
-  return { body, result, cacheable: prep.cacheable };
+  return { body, result, cacheable: prep.cacheable, nonce: prep.templateParams.nonce ?? '' };
 };

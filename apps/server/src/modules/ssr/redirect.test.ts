@@ -16,7 +16,7 @@ import type { SSRPageServerConfig, SSRRenderResult, SSRRequest, SSRResponseHelpe
  * that result: these are about the response it becomes, and about the cache never handing one visitor's answer to
  * another.
  */
-type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean };
+type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string };
 
 const buildBody = vi.fn<() => Promise<Rendered>>();
 
@@ -73,9 +73,13 @@ const caches = (html?: TtlCache<CachedPage>): ServerCaches => ({
 const render = (req: SSRRequest, res: SSRResponseHelpers, html?: TtlCache<CachedPage>) =>
   renderSSR(req, res, config, () => '', {} as PluginManager, caches(html));
 
-const page = (body: string): Rendered => ({ body, result: {}, cacheable: true });
+const page = (body: string): Rendered => ({ body, result: {}, cacheable: true, nonce: '' });
 
-const redirect = (to: string, status?: number): Rendered => ({ result: { redirect: to, status }, cacheable: true });
+const redirect = (to: string, status?: number): Rendered => ({
+  result: { redirect: to, status },
+  cacheable: true,
+  nonce: ''
+});
 
 beforeEach(() => {
   buildBody.mockReset();

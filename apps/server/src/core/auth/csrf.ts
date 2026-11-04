@@ -12,9 +12,10 @@ import type { SSRAuthCookie } from '@plitzi/sdk-shared';
  * ends up either refusing legitimate sign-ins or leaving login CSRF wide open.
  *
  * 1. **An action taken as somebody.** A cookie is attached by the browser to every request to its origin,
- *    including ones another site caused. Not hypothetical here: `sessionCookieParams` defaults `SameSite` to
- *    `None` off localhost, because a Plitzi space is embedded in an iframe on somebody else's domain — which is
- *    exactly what `Lax` exists to prevent. Answered by a token, demanded whenever a session cookie is present.
+ *    including ones another site caused. `SameSite=Lax`, the default, keeps the cookie off another site's writes; a
+ *    deployment that sets `None` — a space embedded in an iframe on somebody else's domain, which is exactly what `Lax`
+ *    exists to prevent — has it on all of them. Answered by a token, demanded whenever a session cookie is present,
+ *    whichever it is.
  * 2. **Login CSRF.** Another site signs the visitor into an account IT controls, so what they do next is recorded
  *    against it. There is no cookie yet to look for, so the first answer does not apply at all. Answered by
  *    `foreign` below: where the request came from, which is what separates it from a legitimate sign-in.

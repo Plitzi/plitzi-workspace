@@ -320,6 +320,9 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `exchangePath` | `string \| false` | `'/auth/exchange'` | Where a browser-obtained credential is handed over; served only with the `exchangeCredential` adapter. |
 | `debugMode` | `boolean` | `devMode`, or the space's `devTools` | Authorizes debugging on the pages this server renders. Set, it decides for every space: `false` is a refusal no space turns around. A page loads React's development build only while its visitor has the dev tools on. |
 | `frameOptions` | `'DENY' \| 'SAMEORIGIN' \| string[] \| false` | `'DENY'` | Who may embed the pages in a frame (CSP `frame-ancestors`, and `X-Frame-Options`); `false` omits both headers. A space adapter's `frameAncestors` derives it per space — see [Space adapters](#space-adapters-a-space-per-domain). |
+| `hsts` | `false \| { maxAge?, includeSubDomains?, preload? }` | a year, `includeSubDomains` | `Strict-Transport-Security` on every response over https. Never on this machine nor on a domain no public CA certifies (`.local`, `.test`, `.localhost`, `.internal`), where it would lock a development certificate out; `preload` only once the domain is submitted to the browsers' list. |
+| `crossOriginOpenerPolicy` | `'same-origin' \| 'same-origin-allow-popups' \| 'unsafe-none' \| false` | `'same-origin-allow-popups'` | `Cross-Origin-Opener-Policy`: a window of another site cannot reach the page through `window.opener`; what the page opens (a payment, another provider's sign-in) still answers it. |
+| `scriptPolicy` | `'report-only' \| false` | `'report-only'` | A script policy against cross-site scripting, sent as `Content-Security-Policy-Report-Only`: the template's own scripts carry the render's nonce, and what they load runs (`'strict-dynamic'`); no plugin objects, no `<base>`. The browser reports what it would refuse to `/_plitzi/csp-report`, and the server says it in its log (`CSP`) — a space's own scripts (a raw HTML block's) are seen before anything is enforced. A cached page keeps its render's nonce while it is kept. |
 | `fonts` | `{ baseUrl?, dir?, google? }` | `baseUrl: '/fonts'`, `google` on | Where the font files a space uploaded are addressed, and with `dir` served from this server under `/fonts/*`. `google`: a page's Google families served from this server's own origin (`/_plitzi/fonts/google/…`, asked of Google once and kept within `maxBytes`, 32 MB) — `false` links Google itself. See `docs/en/fonts.md` in the workspace. |
 | `environment` | `'production' \| 'staging' \| 'development' \| 'local'` | `'production'` | The Plitzi tier whose endpoints the rendered pages are handed. |
 | `services` | `{ ssr?, rsc? }` | `ssr` on, `rsc` with `getRscData` | Which request-handling services are mounted. |
@@ -1415,7 +1418,7 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 
 | Config | Effect |
 |---|---|
-| `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host: this machine — loopback, a `.localhost` name, a private network address, its mDNS name (`studio.local`), as a phone on the Wi-Fi opens it over http — gets `SameSite=Lax` with no `Secure` and no `Domain`; any other host `SameSite=None; Secure`, shared across its sub-domains |
+| `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host: this machine — loopback, a `.localhost` name, a private network address, its mDNS name (`studio.local`), as a phone on the Wi-Fi opens it over http — gets `SameSite=Lax` with no `Secure` and no `Domain`; any other host `SameSite=Lax; Secure`, shared across its sub-domains — which are one site, so `Lax` reaches them all. `sameSite: 'none'` for a deployment whose pages need the session inside another site's page (a space in an iframe there) |
 | `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
 | `api.rateLimit` | May this attempt proceed? **Defaults to an in-memory sliding window**, so no deployment is unthrottled by omission; supply one to put a single counter behind a whole fleet. Called before the password is checked, so a throttled attempt costs no hash |
 | `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
@@ -1434,9 +1437,9 @@ write, `04-mysql` over one you do not.
 
 ### Cross-site request forgery
 
-**On by default.** The session cookie defaults to `SameSite=None` off this machine and its network — a space is embedded in an iframe
-on somebody else's domain — so the browser attaches it to requests another site caused. That is the attack, and
-`Lax` is what would otherwise prevent it.
+**On by default.** The session cookie defaults to `SameSite=Lax`, which keeps it off the writes another site causes;
+a deployment that sets `sameSite: 'none'` — a space embedded in an iframe on somebody else's domain — has the browser
+attach it to them. That is the attack, and the token answers it whichever the deployment chose.
 
 Two requests can never be forged into whatever they are reaching, and neither is ever asked for a token:
 
