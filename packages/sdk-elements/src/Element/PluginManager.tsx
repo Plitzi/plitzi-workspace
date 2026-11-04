@@ -20,7 +20,6 @@ const PluginManager = ({ plitziElementLayout = undefined, type = '', internalPro
   return pluginSelector({
     type,
     internalProps: { ...internalProps, plitziElementLayout },
-    plitziElementLayout,
     components: components.current,
     plugins
   });

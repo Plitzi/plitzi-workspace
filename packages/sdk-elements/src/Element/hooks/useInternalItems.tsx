@@ -11,7 +11,7 @@ import { useLayoutBody } from '../LayoutBody';
 import ServerStaticShell from '../ServerStaticShell';
 
 import type { StoreApi } from '@plitzi/nexus';
-import type { CommonState, ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
+import type { CommonState, ComponentDefinition, Element, ElementLayout, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ElementRegistry, ElementRegistrySnapshot } from '@plitzi/sdk-shared/plugins/react';
 import type { ReactNode } from 'react';
 
@@ -108,6 +108,30 @@ const layoutKeyOf = (plitziElementLayout: ElementLayout | undefined): string =>
     ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.slots.join(',')}`
     : '';
 
+/**
+ * What an item is handed, one object per element of the schema for as long as it sits where it does: built again each
+ * time its parent drew, every element under a parent that drew again — the section shown once hydration was over, the
+ * sidebar's group opened — was handed a new object, and drew again with nothing new to draw.
+ */
+const itemProps = new WeakMap<Element, InternalPropsSTG1>();
+
+const itemPropsOf = (
+  el: Element,
+  id: string,
+  rootId: string | undefined,
+  plitziElementLayout: ElementLayout | undefined
+): InternalPropsSTG1 => {
+  const known = itemProps.get(el);
+  if (known && known.id === id && known.rootId === rootId && known.plitziElementLayout === plitziElementLayout) {
+    return known;
+  }
+
+  const made: InternalPropsSTG1 = { id, rootId, plitziElementLayout };
+  itemProps.set(el, made);
+
+  return made;
+};
+
 type ItemsDrawn = {
   items: string[] | undefined;
   itemElements: readonly (Element | undefined)[];
@@ -184,9 +208,8 @@ const drawItems = ({
 
       const item = pluginSelector({
         key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
-        plitziElementLayout,
         type,
-        internalProps: { id: itemId, rootId: finalRootId },
+        internalProps: itemPropsOf(el, itemId, finalRootId, plitziElementLayout),
         components: registered.current,
         plugins: installed
       });

@@ -51,6 +51,34 @@ describe('collectServerElements', () => {
   it('terminates on a schema whose items cycle', () => {
     expect(collectServerElements(schema, 'loop')).toEqual([]);
   });
+
+  // The walk is kept per schema and read again for each request's flags: a gate anywhere above an element is one on it.
+  it('skips what a flag gates off, by the gate on it or on any ancestor, read anew for each set of flags', () => {
+    const gated = (item: Element, name: string): Element => ({
+      ...item,
+      definition: { ...item.definition, flag: { name, is: true } }
+    });
+    const flagged = {
+      flat: {
+        page: element('page', ['beta', 'plainApi']),
+        beta: gated(element('beta', ['betaBox']), 'beta'),
+        betaBox: element('betaBox', ['betaApi']),
+        betaApi: element('betaApi', [], 'server'),
+        plainApi: gated(element('plainApi', [], 'server'), 'plain')
+      },
+      pages: ['page']
+    } as unknown as Schema;
+    const ids = (flags?: Record<string, boolean>) =>
+      collectServerElements(flagged, 'page', undefined, flags)
+        .map(each => each.id)
+        .sort();
+
+    expect(ids()).toEqual(['betaApi', 'plainApi']);
+    expect(ids({ beta: true, plain: true })).toEqual(['betaApi', 'plainApi']);
+    expect(ids({ beta: false, plain: true })).toEqual(['plainApi']);
+    expect(ids({})).toEqual([]);
+    expect(ids({ beta: true })).toEqual(['betaApi']);
+  });
 });
 
 describe('collectServerElements with layouts', () => {

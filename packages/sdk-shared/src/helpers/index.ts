@@ -9,7 +9,6 @@ export * from './interval';
 export * from './isRecord';
 export * from './generateFacade';
 export * from './reducerOrigin';
-export * from './replaceEqualDeep';
 export * from './ruleEvaluator';
 export * from './syntaxHighlight';
 export * from './twigWrapper';

@@ -91,6 +91,12 @@ export type AuthContextValue = {
   provider: string;
   state: AuthState;
   authenticated: boolean;
+  /**
+   * The visitor ended their session on this page themselves (`logout`, `logoutEverywhere`), and has not signed in since.
+   * A page for signed-in visitors sends them to sign in with nothing to come back to: the page they left is the one they
+   * chose to leave, and sent back to it they were only ever sent to sign in again.
+   */
+  signedOutHere?: boolean;
   user?: {
     details?: {
       id: number;

@@ -49,17 +49,26 @@ export const returnTo = (location: Location): string | undefined => {
 };
 
 /**
+ * Why a visitor reaches a redirect: signed in, signed out — or signed out here, by their own hand, on the page that now
+ * sends them off (`signedOutHere`).
+ */
+export type RedirectedAs = 'signedIn' | 'signedOut' | 'signedOutHere';
+
+/**
  * The off-site address a redirect goes to, told where the visitor was going: one sent to sign in, the page they asked
  * for; one signed in and sent off a page for signed-out visitors, the `redirect` that page's address carried — never
  * that page itself, which sent them back to it. A space's own `redirect` on the address is kept.
  *
+ * One who signed out on the page is told nowhere: that page is the one they left, and sent back to it after the sign-in
+ * they did not want, it only sent them to sign in again.
+ *
  * The sign-in a platform shares sends a signed-in visitor on through a hop that vets the destination: given the
  * sign-in's own URL, the app that sent them there was forgotten.
  */
-export const offSiteTarget = (resolved: string, location: Location, authenticated: boolean): string => {
+export const offSiteTarget = (resolved: string, location: Location, as: RedirectedAs): string => {
   const target = new URL(resolved);
-  if (!target.searchParams.has('redirect')) {
-    const going = authenticated ? new URLSearchParams(location.search).get('redirect') : currentUrl(location);
+  if (!target.searchParams.has('redirect') && as !== 'signedOutHere') {
+    const going = as === 'signedIn' ? new URLSearchParams(location.search).get('redirect') : currentUrl(location);
     if (going) {
       target.searchParams.set('redirect', going);
     }

@@ -1,7 +1,16 @@
 import type { AuthoringCodeEntry } from './entry';
 
-/** Suggestions: nothing is wrong, and the same page can be written with fewer elements or less CSS. */
+/**
+ * Suggestions: nothing is wrong, and the same page can be written with fewer elements or less CSS — or read better by
+ * assistive technology and search engines (its headings' outline).
+ */
 export const SUGGESTION_CODES = {
+  'heading-level-skipped': {
+    kind: 'suggested',
+    means:
+      'an `h4` right after an `h2` on a page as it is drawn — inside its layouts, with the headings a `markdown` writes, and without those that start hidden (`visible: false`): the outline misses a level (Lighthouse: "not in a sequentially-descending order")',
+    fix: 'the next level down; size it with its class'
+  },
   'repeated-on-pages': {
     kind: 'suggested',
     means: 'the same block — a header, a footer, a side panel — written into several pages',

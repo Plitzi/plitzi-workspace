@@ -95,7 +95,6 @@ and a publish is not blocked.
 | `control-without-name` | A button or link with no words: only an icon, a picture without `alt`, or nothing. Also a field with no `label` (or, for a typed field, no `placeholder`) | `title` on the button, `label` on the link, `label` + `hideLabel` on the field |
 | `image-without-alt` | An image with no `alt` that is not `decorative` | Say what it shows, or `decorative: true` |
 | `click-on-static-element` | A click flow on a `container`, `text`, `heading`, `paragraph`, `image`, icon or list item that holds something. An empty backdrop that closes a panel is left alone | Move the flow to a `button` (it holds children) or a `link` |
-| `heading-level-skipped` | A heading more than one level below the one before it on the page | Step down one level; size it with its class |
 | `label-ignored` | A `label` on a container whose tag takes its name from what it holds (`li`, the headings) | Put the words inside, or use a landmark tag |
 | `dropdown-without-control` | A dropdown opened from a box or an icon: nothing a keyboard reaches opens it | Make what opens it a `button` |
 | `control-in-decorative` | A button, link or field inside a `decorative` container: Tab reaches it and nothing announces it | Move it out of the illustration |
@@ -103,6 +102,12 @@ and a publish is not blocked.
 | `embed-without-title` | An `embed` with no `title`: a frame a screen reader cannot describe | Say what it shows in `title` |
 
 Nothing inside a `decorative` container is held to the other rules: assistive technology is told to skip it.
+
+The outline of a page's headings is offered as a suggestion instead (`heading-level-skipped`, in `suggestions`): nothing
+is misused when a heading skips a level, and the page reads better with the level it skipped. It is read as the page
+is drawn — inside its layouts, with the headings a `markdown` writes — and once more without the headings that start
+hidden (`visible: false`), which are not there for whoever reads the page before they show. What Lighthouse reports as
+"Heading elements are not in a sequentially-descending order" is this.
 
 A child the linter cannot read into (a plugin, `custom`, raw HTML or JSX) is taken to have words. The linter never
 reports something it cannot prove.

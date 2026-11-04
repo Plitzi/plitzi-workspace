@@ -36,18 +36,28 @@ describe('an off-site redirect', () => {
   const vet = 'https://api.plitzi.com/auth/continue?fallback=https%3A%2F%2Fauth.plitzi.com%2Faccount';
 
   it('carries where a signed-in visitor was going, from the address of the page they are sent off', () => {
-    expect(offSiteTarget(vet, at('https://auth.plitzi.com/?redirect=https%3A%2F%2Fapp.plitzi.com%2F'), true)).toBe(
-      `${vet}&redirect=https%3A%2F%2Fapp.plitzi.com%2F`
-    );
-    expect(offSiteTarget(vet, at('https://auth.plitzi.com/'), true)).toBe(vet);
+    expect(
+      offSiteTarget(vet, at('https://auth.plitzi.com/?redirect=https%3A%2F%2Fapp.plitzi.com%2F'), 'signedIn')
+    ).toBe(`${vet}&redirect=https%3A%2F%2Fapp.plitzi.com%2F`);
+    expect(offSiteTarget(vet, at('https://auth.plitzi.com/'), 'signedIn')).toBe(vet);
   });
 
   it('carries the page a visitor sent to sign in asked for, and keeps a redirect the space wrote', () => {
-    expect(offSiteTarget('https://auth.plitzi.com/', at('https://encore.plitzi.app/rooms?x=1'), false)).toBe(
+    expect(offSiteTarget('https://auth.plitzi.com/', at('https://encore.plitzi.app/rooms?x=1'), 'signedOut')).toBe(
       'https://auth.plitzi.com/?redirect=https%3A%2F%2Fencore.plitzi.app%2Frooms%3Fx%3D1'
     );
     expect(
-      offSiteTarget('https://auth.plitzi.com/?redirect=%2Fhome', at('https://encore.plitzi.app/rooms'), false)
+      offSiteTarget('https://auth.plitzi.com/?redirect=%2Fhome', at('https://encore.plitzi.app/rooms'), 'signedOut')
+    ).toBe('https://auth.plitzi.com/?redirect=%2Fhome');
+  });
+
+  // Signed out on the page by their own hand: sent back to it, they were only sent to sign in again, without end.
+  it('carries nowhere for a visitor who signed out on the page, and keeps a redirect the space wrote', () => {
+    expect(offSiteTarget('https://auth.plitzi.com/', at('https://encore.plitzi.app/rooms?x=1'), 'signedOutHere')).toBe(
+      'https://auth.plitzi.com/'
+    );
+    expect(
+      offSiteTarget('https://auth.plitzi.com/?redirect=%2Fhome', at('https://encore.plitzi.app/rooms'), 'signedOutHere')
     ).toBe('https://auth.plitzi.com/?redirect=%2Fhome');
   });
 });

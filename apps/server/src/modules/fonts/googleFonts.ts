@@ -79,7 +79,12 @@ const FILE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 const SWEEP_MS = 60 * 60 * 1000;
 
-const MAX_CSS_BYTES = 256 * 1024;
+/**
+ * Google splits a family in subsets, one `@font-face` each, and a Japanese or Chinese family is a hundred subsets per
+ * weight: three weights of one are over 300 KB, and a page with a CJK family beside two others asked for 460 KB — over
+ * the 256 KB this was, which sent every visitor of it to Google. Two megabytes hold several CJK families at once.
+ */
+const MAX_CSS_BYTES = 2 * 1024 * 1024;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 /** The faces every space of this server uses, kept in this process — a dozen families' subsets fit many times over. */
 export const DEFAULT_GOOGLE_FONTS_MAX_BYTES = 32 * 1024 * 1024;
@@ -162,7 +167,8 @@ export const createGoogleFontsMirror = ({
   // A stylesheet is a few kilobytes; what fills the budget is the files. Swept hourly: a timer as long as a file's TTL
   // is past what `setInterval` holds, and would fire at once, forever.
   const stylesheets = new TtlCache<string>(CSS_TTL_MS, 500, {
-    maxBytes: Math.max(MAX_CSS_BYTES, Math.floor(maxBytes / 16)),
+    // A few of the largest a page asks for, at least: kept one at a time, each would push out the last.
+    maxBytes: Math.max(4 * MAX_CSS_BYTES, Math.floor(maxBytes / 16)),
     sizeOf: css => Buffer.byteLength(css),
     sweepIntervalMs: SWEEP_MS
   });

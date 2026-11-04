@@ -24,7 +24,9 @@ const BUDGET = {
   // page escaped by the one helper (`escapeHtml`).
   // 209: a space's `/sitemap.xml` (`sitemapXml`), and the space a request is served, read once for it and `robots.txt`
   // (`servedSpace`).
-  '@plitzi/sdk-server': 209,
+  // 31: its `dist` in chunks (`vite.config.ts`, `chunkFileNames`), a module for each and not for every file of the source.
+  // A module more is a chunk more: what loads only for some (the project's bundle, `./bundle`) stays out of these.
+  '@plitzi/sdk-server': 31,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
@@ -39,8 +41,6 @@ const BUDGET = {
   react: 6,
   // 63: `dateConverter`, a transformer a provider's input may be bound through (`format`, `parse`, three locales).
   'date-fns': 63,
-  // `getBindingsDetails` writes what it resolves on a draft of the element, as in the browser.
-  immer: 1,
   ejs: 2,
   scheduler: 2,
   esbuild: 1

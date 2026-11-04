@@ -505,19 +505,6 @@ describe('lintSpace', () => {
 
       expect(warningsOf(documents)).toContain('dropdown-without-control');
     });
-
-    it('heading-level-skipped', () => {
-      const documents = withChange(({ schema }) => {
-        addElement(schema, { id: 'title', type: 'heading', attributes: { subType: 'h1', content: 'Plans' } });
-        addElement(schema, { id: 'fine-print', type: 'heading', attributes: { subType: 'h3', content: 'Terms' } });
-        addElement(schema, { id: 'faq', type: 'heading', attributes: { subType: 'h2', content: 'FAQ' } });
-      });
-      const flagged = lintSpace(documents)
-        .warnings.filter(issue => issue.code === 'heading-level-skipped')
-        .map(issue => issue.elementId);
-
-      expect(flagged).toEqual(['fine-print']);
-    });
   });
   describe('controls', () => {
     const faq = (controls: string) =>

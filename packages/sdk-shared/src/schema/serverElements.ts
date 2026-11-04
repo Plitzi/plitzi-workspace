@@ -5,7 +5,7 @@ import { passesFlagGate } from '../flags/resolveFlags';
 import { isRecord } from '../helpers/isRecord';
 import { processTwigValue } from '../helpers/twigWrapper';
 
-import type { Element, Schema } from '../types';
+import type { Element, ElementFlagGate, Schema } from '../types';
 
 /**
  * Which elements of a page want data from the server — the one definition of it, because both sides of RSC have to
@@ -31,18 +31,23 @@ import type { Element, Schema } from '../types';
  * Given the flags as they resolved, an element gated off by one is skipped with its whole subtree — it will not be
  * rendered, so nothing in it wants data, and resolving it would put a feature that is off into the payload anyway.
  */
-export const collectServerElements = (
-  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>,
-  pageId: string | undefined,
-  ids?: string[],
-  flags?: Record<string, boolean>
-): Element[] => {
-  if (pageId === undefined) {
-    return [];
-  }
+/** A server element of a page, with the flag gates on its way from the page: its own and every ancestor's. */
+type Walked = { element: Element; gates: ElementFlagGate[] };
 
-  const requested = ids ? new Set(ids) : undefined;
-  const collected: Element[] = [];
+type WalkedPage = { pages: Schema['pages'] | undefined; settings: Schema['settings'] | undefined; found: Walked[] };
+
+/**
+ * Each page's walk, kept per `flat` — the schema's objects are replaced, never changed — and per the list of pages and
+ * settings it read: the page server asked it three times for every request (the render, the providers' data, the
+ * head), and each walked every element of the page and its shells.
+ */
+const walks = new WeakMap<Schema['flat'], Map<string, WalkedPage>>();
+
+const walkPage = (
+  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>,
+  pageId: string
+): Walked[] => {
+  const found: Walked[] = [];
   const seen = new Set<string>();
   const page = schema.flat[pageId] as Element | undefined;
   const text = (value: unknown): string => (typeof value === 'string' ? value : '');
@@ -54,30 +59,71 @@ export const collectServerElements = (
       ).map(link => link.layout)
     : [];
   const instead = pageWithheldOf(page?.attributes) ? withheldPageOf(schema) : undefined;
-  const pending = [pageId, ...shells, ...(instead === undefined ? [] : [instead])];
+  const pending: { id: string; gates: ElementFlagGate[] }[] = [
+    pageId,
+    ...shells,
+    ...(instead === undefined ? [] : [instead])
+  ].map(id => ({ id, gates: [] }));
   while (pending.length > 0) {
-    const id = pending.pop();
-    if (id === undefined || seen.has(id)) {
+    const next = pending.pop();
+    if (next === undefined || seen.has(next.id)) {
       continue;
     }
 
-    seen.add(id);
-    const element = schema.flat[id] as Element | undefined;
-    if (!element || (flags && !passesFlagGate(element.definition.flag, flags))) {
+    seen.add(next.id);
+    const element = schema.flat[next.id] as Element | undefined;
+    if (!element) {
       continue;
     }
 
-    if (element.definition.runtime === 'server' && (!requested || requested.has(element.id))) {
-      collected.push(element);
+    const { flag, items, runtime } = element.definition;
+    const gates = flag ? [...next.gates, flag] : next.gates;
+    if (runtime === 'server') {
+      found.push({ element, gates });
     }
 
-    const { items } = element.definition;
     if (items) {
-      pending.push(...items);
+      pending.push(...items.map(id => ({ id, gates })));
     }
   }
 
-  return collected;
+  return found;
+};
+
+const walkedPage = (
+  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>,
+  pageId: string
+): Walked[] => {
+  const byPage = walks.get(schema.flat) ?? new Map<string, WalkedPage>();
+  walks.set(schema.flat, byPage);
+  const known = byPage.get(pageId);
+  if (known && known.pages === schema.pages && known.settings === schema.settings) {
+    return known.found;
+  }
+
+  const found = walkPage(schema, pageId);
+  byPage.set(pageId, { pages: schema.pages, settings: schema.settings, found });
+
+  return found;
+};
+
+export const collectServerElements = (
+  schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'pages' | 'settings'>>,
+  pageId: string | undefined,
+  ids?: string[],
+  flags?: Record<string, boolean>
+): Element[] => {
+  if (pageId === undefined) {
+    return [];
+  }
+
+  const requested = ids ? new Set(ids) : undefined;
+
+  // An element sits under one parent, so the gates on its one way from the page are every gate it is behind.
+  return walkedPage(schema, pageId)
+    .filter(({ element }) => !requested || requested.has(element.id))
+    .filter(({ gates }) => !flags || gates.every(gate => passesFlagGate(gate, flags)))
+    .map(({ element }) => element);
 };
 
 /** Whether anything on this page consumes server data at all — the question both RSC gates actually ask. */

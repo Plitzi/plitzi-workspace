@@ -106,24 +106,18 @@ const templatedKeysOf = (attributes: Element['attributes'], type: string): strin
 
 /**
  * A definition as an element draws with it when nothing at render time changes it — no binding rewrote it and its state
- * names no selectors: its classes laid over its selectors, its initial state's over those. Kept per definition object on
- * the server, which draws the same schema on every request; one a binding made is drawn once and dropped with it.
- *
- * Not in the browser, yet: there an element drawn again by its parent was handed a new definition each time, which the
- * render tracing reads as a change of value (it compares a prop's fields by reference, and `styleSelectors` was new too).
- * Kept, those renders show for what they are — the same inputs — and `screens.spec`'s budgets of renders that changed
- * nothing rose with them (docs 0 → 12, the dashboard 7 → 33): renders that were always there, to be removed before the
- * browser keeps the definition too.
+ * names no selectors: its classes laid over its selectors, its initial state's over those. Kept per definition object:
+ * the page server draws the same schema on every request, and in the browser an element drawn again is handed the
+ * definition it had, rather than a new one equal to it. One a binding made is drawn once and dropped with it.
  */
 const drawnDefinitions = new WeakMap<Element['definition'], Element['definition']>();
-const keepsDrawnDefinitions = typeof window === 'undefined';
 
 const drawnDefinition = (
   definition: Element['definition'],
   stateSelectors: Element['definition']['styleSelectors'] | undefined,
   kept: boolean
 ): Element['definition'] => {
-  const reusable = keepsDrawnDefinitions && kept && stateSelectors === undefined;
+  const reusable = kept && stateSelectors === undefined;
   const known = reusable ? drawnDefinitions.get(definition) : undefined;
   if (known) {
     return known;

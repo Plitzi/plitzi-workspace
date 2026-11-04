@@ -4,7 +4,8 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { getPathsFromObject, replaceEqualDeep } from '@plitzi/sdk-shared/helpers';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
+import { replaceEqualDeep } from '@plitzi/sdk-shared/helpers/replaceEqualDeep';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import ListControlledItem from './ListControlledItem';

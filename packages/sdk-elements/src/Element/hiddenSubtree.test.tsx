@@ -113,7 +113,7 @@ describe('a section that is shown, and what stays hidden inside it', () => {
       .map(render => `${render.elementId}:${(render.changedProps ?? []).map(change => change.key).join(',')}`);
 
     // The section and what shows with it; and the group, which has to learn its section's visibility to know it stays
-    // hidden — once, and nothing below it.
-    expect(drawn.sort()).toEqual(['group:', 'shown:visible', 'wrap:visible,attributes,definition,style,elementState']);
+    // hidden — once, and nothing below it. The section's definition is the one it had: showing it changes no selector.
+    expect(drawn.sort()).toEqual(['group:', 'shown:visible', 'wrap:visible,attributes,style,elementState']);
   });
 });

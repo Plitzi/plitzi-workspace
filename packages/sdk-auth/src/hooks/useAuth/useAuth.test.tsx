@@ -233,6 +233,29 @@ describe('a page the server already resolved the visitor for', () => {
     expect(result.current.bootstrapUser).toBeUndefined();
   });
 
+  // Signed out by their own hand: a page for signed-in visitors sends them to sign in with nowhere to come back to.
+  it('says the visitor signed out on the page, and not one who arrived without a session', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(() => Promise.resolve(new Response('{}', { status: 200 })))
+    );
+    const signedIn = {
+      authenticated: true,
+      user: { details: { id: 1, username: 'ada' }, accessToken: 'from-ssr', expiresAt: inSeconds(3600) }
+    } as unknown as Server;
+    const { result } = renderHook(() =>
+      useAuth({ server: signedIn, isHydrating: true, provider: 'basic', settings: basicSettings })
+    );
+    await settle();
+    expect(result.current.signedOutHere).toBe(false);
+
+    await act(() => result.current.manager.logout());
+
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.signedOutHere).toBe(true);
+    expect((await authOn(guestRender, true)).signedOutHere).toBe(false);
+  });
+
   // A guest is an answer too, but only about credentials the server can see — a token in storage is not one of
   // them, so the browser still gets to decide. What it must not do is treat "guest" as "ask again anyway".
   it('leaves a guest page to the browser rather than inventing a session for it', async () => {

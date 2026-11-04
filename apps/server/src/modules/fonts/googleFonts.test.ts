@@ -114,6 +114,33 @@ describe('the Google Fonts mirror', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  // A Japanese family is a hundred subsets per weight: three weights of it, beside two other families, were 460 KB.
+  it('serves the stylesheet of a CJK family whole, and sends to Google only one past what a page could ask for', async () => {
+    const face = (index: number) =>
+      `@font-face { font-family: 'Zen Kaku Gothic New'; font-weight: 400; src: url(https://fonts.gstatic.com/s/zen/v1/${String(index)}.woff2) format('woff2'); unicode-range: U+${index.toString(16)}00-${index.toString(16)}ff; }\n`;
+    const sheetOf = (bytes: number) => {
+      let text = '';
+      for (let index = 0; Buffer.byteLength(text) < bytes; index++) {
+        text += face(index);
+      }
+
+      return text;
+    };
+    const answering = (css: string) =>
+      vi.fn((): Promise<Response> => Promise.resolve(new Response(css, { headers: { 'content-type': 'text/css' } })));
+
+    const cjk = await createGoogleFontsMirror({ fetch: answering(sheetOf(460 * 1024)) })(
+      css2('?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap')
+    );
+    const tooLarge = await createGoogleFontsMirror({ fetch: answering(sheetOf(2 * 1024 * 1024 + 1)) })(
+      css2('?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap')
+    );
+
+    expect(cjk.status).toBe(200);
+    expect(String(cjk.body)).toContain(`${GOOGLE_FONTS_PATH}/s/zen/v1/0.woff2`);
+    expect(tooLarge.status).toBe(307);
+  });
+
   it('sends the browser to Google itself when Google cannot be reached from here, and says so', async () => {
     const { fetch, goDown } = google();
     goDown();

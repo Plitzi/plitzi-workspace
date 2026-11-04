@@ -129,7 +129,17 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     return settingsRef.current;
   }, [settings]);
 
-  const { manager, loading, authenticated, state, bootstrapUser, bootstrapToken, peekedUser, peekedToken } = useAuth({
+  const {
+    manager,
+    loading,
+    authenticated,
+    signedOutHere,
+    state,
+    bootstrapUser,
+    bootstrapToken,
+    peekedUser,
+    peekedToken
+  } = useAuth({
     server,
     isHydrating,
     provider: userProvider,
@@ -179,6 +189,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
       provider: manager.getProviderType(),
       state,
       authenticated: authenticated || !previewMode,
+      signedOutHere: signedOutHere && previewMode,
       /**
        * The provider's session once it has one, and until then the best thing already known about this visitor.
        *
@@ -190,7 +201,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
        */
       user
     }),
-    [manager, state, authenticated, previewMode, user]
+    [manager, state, authenticated, signedOutHere, previewMode, user]
   );
 
   // A journey's test account, set through the dev tools' inspector: the page shows that visitor, signed in.

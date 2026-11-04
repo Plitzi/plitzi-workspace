@@ -63,7 +63,8 @@ A page's `accessLevel`: `'authenticated'` (signed in), `'public'` (signed OUT on
 (everybody). A lone `public` page vanishes the moment anyone signs in, so leave it out unless the page has a signed-in
 twin on the same slug. `unauthorizedRedirect` names where a visitor the page is not for goes — a page's id or slug
 (`''` is the home page), or a URL; without it they are answered 403. A visitor not signed in is sent with the address
-they asked for as `?redirect=`. A `public` sign-in with `unauthorizedRedirect` sends whoever signs in on it there
+they asked for as `?redirect=` — except one who just signed out on that page, who is sent with none: the page they left
+is not where to return. A `public` sign-in with `unauthorizedRedirect` sends whoever signs in on it there
 itself — back to `?redirect=` when it is on this site, else to its `unauthorizedRedirect` — the moment `authLogin`
 succeeds, so steps after the login race the page leaving: end the flow at the login (`login-then-leaves` says so). A
 sign-in for everybody sends them back itself: `navigate({ urlType: 'external', url: "{{ navigation.queryParams.redirect | default('/') }}" })`.

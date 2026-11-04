@@ -3,6 +3,7 @@ import { suggestCustomCss } from './customCss';
 import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
 import { suggestElementColours } from './elementColors';
+import { suggestHeadingOrder } from './headingOrder';
 import { suggestMotion } from './motion';
 import { suggestPluginHosts, suggestUnusedPlugins } from './pluginHosts';
 import { suggestRepeats } from './repeats';
@@ -29,7 +30,7 @@ const quietCodes = (schema: Schema): Map<string, string[]> =>
 
 /**
  * A shorter way to the same page: what a space's documents could say with fewer elements or less CSS — or, for its
- * animations, a lighter one.
+ * animations, a lighter one, and for its headings, an outline a screen reader reads whole.
  *
  * Not the linter. `lintSpace` reports what renders something other than what was written, and a space is refused or
  * warned for it; nothing here is wrong — the page renders exactly as written. These are the platform's own ways to say
@@ -66,7 +67,8 @@ export const suggestSpace = (
     ...suggestDeclarations(schema, style, stylesheets),
     ...suggestPluginHosts(schema, pluginTypes),
     ...suggestUnusedPlugins(schema, pluginTypes),
-    ...suggestElementColours(style)
+    ...suggestElementColours(style),
+    ...suggestHeadingOrder(schema)
   ]).sort((a, b) => b.saves - a.saves);
 
 /** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */

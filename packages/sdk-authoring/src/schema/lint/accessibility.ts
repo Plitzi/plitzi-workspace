@@ -73,8 +73,6 @@ const STATIC_TYPES = new Set([
   'listItem'
 ]);
 
-const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
-
 /**
  * The fields a browser names by their placeholder when nothing else does: the ones typed into. A swatch, a date or a
  * checkbox is never named by one.
@@ -328,58 +326,6 @@ const warnDropdownWithoutControl = (ctx: LintContext, element: Element, where: s
   );
 };
 
-/** The heading level an element renders, if it renders one. */
-const headingLevel = (ctx: LintContext, element: Element): number | undefined => {
-  const { type } = element.definition;
-  if (type !== 'heading' && type !== 'container') {
-    return undefined;
-  }
-
-  const tag = textOf(attributeValue(ctx, element, 'subType'), type === 'heading' ? 'h1' : 'div');
-
-  return HEADING_TAGS.has(tag) ? Number(tag.slice(1)) : undefined;
-};
-
-/**
- * Headings that skip a level on a page — an `h2` straight to an `h4`. Screen readers and browser agents read a page's
- * outline from its headings and jump between them by level; a skipped one reads as a missing section.
- *
- * Read per page, in the order the page renders; the layout's headings are the layout's to check, once, not on every
- * page it wraps.
- */
-const warnSkippedHeadings = (ctx: LintContext): void => {
-  for (const pageId of ctx.pageIds) {
-    let previous: number | undefined;
-    const walk = (id: string): void => {
-      const element = ctx.element(id);
-      if (!element) {
-        return;
-      }
-
-      if (element.definition.type === 'container' && isDecorative(element)) {
-        return;
-      }
-
-      const level = headingLevel(ctx, element);
-      if (level !== undefined) {
-        if (previous !== undefined && level > previous + 1) {
-          ctx.warn(
-            'heading-level-skipped',
-            `${ctx.describe(id)} is an h${level} right after an h${previous}, so the page's outline skips a level — a screen reader or a browser agent reading it by headings finds a section missing. Make it an h${previous + 1}, and size it with its class rather than its level.`,
-            id,
-            { level, previous }
-          );
-        }
-
-        previous = level;
-      }
-
-      (element.definition.items ?? []).forEach(walk);
-    };
-    walk(pageId);
-  }
-};
-
 export const lintAccessibility = (ctx: LintContext): void => {
   for (const element of Object.values(ctx.flat)) {
     if (ctx.pageIds.has(element.id) || ctx.layoutIds.has(element.id)) {
@@ -400,6 +346,4 @@ export const lintAccessibility = (ctx: LintContext): void => {
     warnIgnoredRegionName(ctx, element, where);
     warnDropdownWithoutControl(ctx, element, where);
   }
-
-  warnSkippedHeadings(ctx);
 };

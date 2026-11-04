@@ -49,10 +49,24 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
   const bootstrapUser = decidedOnce ? undefined : serverUser;
   const bootstrapToken = decidedOnce ? undefined : serverToken;
   const [state, setState] = useState<AuthState>('init');
+  /**
+   * Whether the visitor ended their session on this page themselves — `logout`, `logoutEverywhere` — rather than
+   * arriving without one or having it expire. Until they sign in again: a page for signed-in visitors then sends them to
+   * sign in with nowhere to come back to, since the page they left is the one they chose to leave.
+   */
+  const [signedOutHere, setSignedOutHere] = useState(false);
 
   const handleEvent = useCallback((event: AuthEvent) => {
+    if (event.type === 'logout') {
+      setSignedOutHere(true);
+    }
+
     if (event.type === 'state') {
       setState(event.state);
+      if (event.state === 'authenticated') {
+        setSignedOutHere(false);
+      }
+
       if (event.reason !== undefined && CHANGED_HERE.has(event.reason)) {
         decidedOnceRef.current = true;
         setDecidedOnce(true);
@@ -142,9 +156,10 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
        * than the HTML it was hydrating.
        */
       authenticated:
-        state === 'authenticated' || (state === 'init' && (!!bootstrapUser || peeked?.state === 'authenticated'))
+        state === 'authenticated' || (state === 'init' && (!!bootstrapUser || peeked?.state === 'authenticated')),
+      signedOutHere
     }),
-    [manager, state, bootstrapUser, bootstrapToken, decided, peeked]
+    [manager, state, bootstrapUser, bootstrapToken, decided, peeked, signedOutHere]
   );
 
   return hookValue;

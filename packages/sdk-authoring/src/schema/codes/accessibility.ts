@@ -22,11 +22,6 @@ export const ACCESSIBILITY_CODES = {
     means: 'a click flow on a container, text, heading, image or list item — no keyboard reaches it',
     fix: 'the flow on a `button` (it holds children) or a `link`'
   },
-  'heading-level-skipped': {
-    kind: 'warned',
-    means: 'an `h4` right after an `h2` — the outline misses a level',
-    fix: 'the next level down; size it with its class'
-  },
   'label-ignored': {
     kind: 'warned',
     means: 'a `label` on a container whose tag is named by what it holds (`li`, a heading)',

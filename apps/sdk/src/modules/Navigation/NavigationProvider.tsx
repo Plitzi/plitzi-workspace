@@ -20,6 +20,7 @@ import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
 
+import type { RedirectedAs } from './redirects';
 import type { CommonState, Element, NavigateHow, NavigationStatus, PageFolder, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { Location, NavigateFunction, NavigationType, PathMatch } from 'react-router-dom';
@@ -107,7 +108,7 @@ const NavigationCore = ({
   pageDefinitionsRef.current = pageDefinitions;
   const pageFoldersRef = useRef(pageFolders);
   pageFoldersRef.current = pageFolders;
-  const { authenticated, user, testAccount } = use(AuthContext);
+  const { authenticated, signedOutHere, user, testAccount } = use(AuthContext);
   const routerNavigate = router?.navigate;
   /**
    * The router's `navigate`, reached through a ref: it is a new function whenever the location changes, and the one
@@ -362,6 +363,7 @@ const NavigationCore = ({
      * deciding to redirect is deciding not to render the page. Reading the published map here therefore always saw
      * an empty object, and the redirect went to the literal `{{authUrl}}/`.
      */
+    const redirectedAs: RedirectedAs = authenticated ? 'signedIn' : signedOutHere ? 'signedOutHere' : 'signedOut';
     const variables = resolveVariables(schemaVariables, { queryParams, routeParams, hostname, environment });
     const resolved = action.path ? String(processTwig(action.path, { variables }, false, true)) : '';
     if (resolved && isAbsoluteUrl(resolved)) {
@@ -371,7 +373,7 @@ const NavigationCore = ({
         return children;
       }
 
-      const target = offSiteTarget(resolved, location, authenticated);
+      const target = offSiteTarget(resolved, location, redirectedAs);
       if (ssrResult) {
         ssrResult.redirect = target;
 
@@ -385,9 +387,10 @@ const NavigationCore = ({
 
     // A sign-in of this space is told where the visitor was going too, the whole address as one elsewhere is: a run's
     // guest sent to `/sign-in` was signed in on the home page. A signed-in visitor sent off a signed-out page goes
-    // back where that address says, when it says — signing in on the sign-in is what sends them off it.
+    // back where that address says, when it says — signing in on the sign-in is what sends them off it. One who signed
+    // out on the page is told nowhere, as off the site.
     const onSite =
-      action.path && !authenticated
+      action.path && redirectedAs === 'signedOut'
         ? withRedirect(action.path, currentUrl(location))
         : ((authenticated ? returnTo(location) : undefined) ?? action.path ?? '');
     if (ssrResult) {

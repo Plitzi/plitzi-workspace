@@ -70,6 +70,16 @@ const useElementEventsInBrowser = (
   useEventBridge('element', eventCallbacks);
 };
 
+/** The same keys, each the same value. */
+const sameProps = (previous: object, next: object): boolean => {
+  const keys = Object.keys(next);
+
+  return (
+    keys.length === Object.keys(previous).length &&
+    keys.every(key => Object.hasOwn(previous, key) && Object.is(Reflect.get(previous, key), Reflect.get(next, key)))
+  );
+};
+
 /** Nothing on the server: no effect runs there, and nothing is listening. */
 const useElementEventsOnServer = (): void => undefined;
 
@@ -225,7 +235,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     return useResolvedElement(element, { ref, traceId, parentTraceId, parentVisible });
   };
 
-  const ResolvedElement = memo(ResolvedElementBody);
+  /**
+   * The element's own props compared one by one: they arrive as a new object each time its parent draws, and compared
+   * whole, the memo never kept anything — an element under a parent that drew again drew again too. What it reads of
+   * the store and of its contexts draws it as before.
+   */
+  const sameElement = (previous: ResolvedElementProps, next: ResolvedElementProps): boolean =>
+    previous.traceId === next.traceId &&
+    previous.parentTraceId === next.parentTraceId &&
+    previous.parentVisible === next.parentVisible &&
+    sameProps(previous.element, next.element);
+
+  const ResolvedElement = memo(ResolvedElementBody, sameElement);
   ResolvedElement.displayName = `withElement(${name}).resolved`;
 
   /**

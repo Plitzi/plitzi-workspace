@@ -4,8 +4,8 @@ A screen reader and a browser agent (Claude in Chrome) read a page the same way.
 tree** the browser builds from the markup, where every control is a role and a name. If a control has no name, or a
 click sits on a box that is not a control, those readers can't find it, even though the page looks fine. The linter
 warns about each case below (`control-without-name`, `image-without-alt`, `click-on-static-element`,
-`dropdown-without-control`, `heading-level-skipped`, `label-ignored`, `control-in-decorative`, `embed-without-title`,
-`controls-no-anchor`). Fix them the same way you fix any other warning.
+`dropdown-without-control`, `label-ignored`, `control-in-decorative`, `embed-without-title`, `controls-no-anchor`). Fix
+them the same way you fix any other warning. A page's heading outline is a suggestion instead (`heading-level-skipped`).
 
 ## Controls have words
 
@@ -95,6 +95,10 @@ goes down into them — Tab alone took a stop per result.
 ## The page has an outline
 
 - Headings go down one level at a time: h1, then h2, then h3. The class sets the size, so an `h2` can look small.
+  The outline is the page as it is drawn: a layout's `h1` is the page's too, so a page inside it opens at `h2`. A
+  heading that starts hidden (`visible: false`) is not there until it shows, so the levels around it must not need
+  it. `heading-level-skipped` (a suggestion) points out each skip — Lighthouse's "not in a sequentially-descending
+  order".
 - Landmarks are containers with a tag: `header`, `nav`, `main`, `aside`, `footer`. When a page has two of one kind,
   give each a `label`: `container({ subType: 'nav', label: 'Docs sections' })`. A `section` with a `label` becomes a
   region an assistant can jump to.

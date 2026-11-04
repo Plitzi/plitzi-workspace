@@ -2,20 +2,17 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 
 import PluginRemote from '../PluginRemote';
 
-import type {
-  ComponentDefinition,
-  ComponentPluginWithHOC,
-  ElementLayout,
-  InternalPropsSTG0,
-  InternalPropsSTG1
-} from '@plitzi/sdk-shared';
+import type { ComponentDefinition, ComponentPluginWithHOC, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type pluginSelectorProps = {
   // Component Props
   key?: string;
-  plitziElementLayout?: ElementLayout;
   type: string;
-  internalProps: InternalPropsSTG0;
+  /**
+   * What the element is handed, as it is: kept by whoever draws it (`useInternalItems` keeps one per element), so an
+   * element whose parent draws again is handed the same object and has nothing new to draw.
+   */
+  internalProps: InternalPropsSTG1;
   // Extra Props
   components: Partial<Record<string, ComponentPluginWithHOC>>;
   plugins: Record<string, ComponentDefinition>;
@@ -43,15 +40,7 @@ export const getRemoteSettings = ({
   };
 };
 
-const pluginSelector = ({
-  key,
-  plitziElementLayout,
-  type,
-  internalProps: internalPropsProp,
-  components,
-  plugins
-}: pluginSelectorProps) => {
-  const internalProps = { ...internalPropsProp, plitziElementLayout } satisfies InternalPropsSTG1;
+const pluginSelector = ({ key, type, internalProps, components, plugins }: pluginSelectorProps) => {
   const PluginNotFound = components.notFound ? (
     <components.notFound key={key} internalProps={internalProps} />
   ) : undefined;

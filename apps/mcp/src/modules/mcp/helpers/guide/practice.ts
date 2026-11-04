@@ -61,8 +61,9 @@ tree names nothing is invisible to both, however it looks. So build every page t
   as real elements — a list, a table — with a button for every action; one hidden until focused cannot be clicked by an
   agent that clicks by position, so offer a visible "list view".
 The linter warns about these (\`control-without-name\`, \`image-without-alt\`, \`click-on-static-element\`,
-\`dropdown-without-control\`, \`heading-level-skipped\`, \`label-ignored\`, \`control-in-decorative\`) on every element
-you touch; fix them in the same batch. Then look:
+\`dropdown-without-control\`, \`label-ignored\`, \`control-in-decorative\`) on every element you touch; fix them in the
+same batch. A heading that skips a level, on the page as it is drawn, is a suggestion (\`heading-level-skipped\`): give
+it the level it skipped. Then look:
 \`plitzi_look\` shows the page as those readers get it, and lists what has no name.
 
 ## Semantics
