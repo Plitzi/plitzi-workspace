@@ -20,23 +20,22 @@ const PACKAGE = require('./package.json') as {
 const baseUrl = new URL('.', import.meta.url);
 const root = baseUrl.pathname;
 
-const copyAssets = (): import('vite').Plugin => ({
-  name: 'copy-assets',
+/** Where the template module lands in the build: a chunk of its own, so its `views` can be copied beside it. */
+const TEMPLATE_MODULE = 'src/modules/ssr/template.ts';
+
+/**
+ * The template and its scripts, copied beside the template's chunk (`dist/chunks/views`) — it reads them beside itself —
+ * with the page's inline scripts minified: readable and commented in the source, a few hundred bytes on every page
+ * instead of several KB. Top-level names are kept — the template's module script calls what one of them declares.
+ */
+const copyViews = (): import('vite').Plugin => ({
+  name: 'copy-views',
+  apply: 'build',
   closeBundle() {
-    const copies: [string, string, ((src: string) => boolean)?][] = [
-      [path.resolve(root, 'src/ssr/views'), path.resolve(root, 'dist/ssr/views')],
-      [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')]
-    ];
-    for (const [src, dest, filter] of copies) {
-      if (fs.existsSync(src)) {
-        fs.cpSync(src, dest, { recursive: true, filter });
-      }
-    }
-    // The page's inline scripts, minified where they are served from: readable and commented in the source, a few
-    // hundred bytes on every page instead of several KB (`modules/ssr/template.ts`). Top-level names are kept — the
-    // template's module script calls what one of them declares.
-    const inline = path.resolve(root, 'dist/modules/ssr/views/inline');
-    for (const name of fs.existsSync(inline) ? fs.readdirSync(inline).filter(file => file.endsWith('.js')) : []) {
+    const views = path.resolve(root, 'dist/chunks/views');
+    fs.cpSync(path.resolve(root, 'src/modules/ssr/views'), views, { recursive: true });
+    const inline = path.join(views, 'inline');
+    for (const name of fs.readdirSync(inline).filter(file => file.endsWith('.js'))) {
       const file = path.join(inline, name);
       const { code } = transformSync(fs.readFileSync(file, 'utf-8'), {
         minify: true,
@@ -80,7 +79,7 @@ export default defineConfig(({ mode }) => {
         compilerOptions: { customConditions: [] },
         beforeWriteFile: skipUnchangedDts
       }),
-      copyAssets()
+      copyViews()
     ],
     define: {
       // No `process.env.NODE_ENV`: a server reads it from the process it runs in. Baked in, the published build always
@@ -150,11 +149,14 @@ export default defineConfig(({ mode }) => {
 
           return false;
         },
+        // One file per entry and the code they share in a few chunks, rather than a file per module: Node resolves,
+        // loads and links each module it imports, and the page server's 225 files of this package were most of its
+        // start — measured, the whole server bundled started in a quarter of the time.
         output: {
-          preserveModules: true,
-          preserveModulesRoot: 'src',
           format: 'es',
-          entryFileNames: '[name].js'
+          entryFileNames: '[name].js',
+          chunkFileNames: 'chunks/[name]-[hash].js',
+          manualChunks: id => (id.endsWith(TEMPLATE_MODULE) ? 'template' : undefined)
         }
       },
       target: 'node20',

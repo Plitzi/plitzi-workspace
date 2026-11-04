@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { escapeJson } from './escapeJson';
-import { hydrationPayload, spaceDocument, styleSheetOf } from './hydrationPayload';
+import { hydrationPayload, offlineDataWith, spaceDocument, styleSheetOf } from './hydrationPayload';
 
-import type { OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Schema } from '@plitzi/sdk-shared';
 
 // Escaped by the payload because JavaScript once treated it as a line break inside a string literal.
 const LINE_SEPARATOR = String.fromCharCode(0x2028);
@@ -43,6 +43,19 @@ describe('hydrationPayload', () => {
 
     expect(hydrationPayload(first, {})).toBe(payload);
     expect(hydrationPayload(replaced, {})).toContain('second');
+  });
+
+  // A space with one protected page: a new copy per render wrote, escaped and hashed its document for every visit.
+  it('sends the same copy of the space to every visitor sent the same schema, and its document with it', () => {
+    const offlineData = space('a');
+    const withheld = { settings: { title: 'a' }, flat: {} } as unknown as Schema;
+    const copy = offlineDataWith(offlineData, withheld);
+
+    expect(copy.schema).toBe(withheld);
+    expect(copy.style).toBe(offlineData.style);
+    expect(offlineDataWith(offlineData, withheld)).toBe(copy);
+    expect(spaceDocument(offlineDataWith(offlineData, withheld))).toBe(spaceDocument(copy));
+    expect(offlineDataWith(offlineData, offlineData.schema)).toBe(offlineData);
   });
 
   describe('the stylesheet the page links', () => {

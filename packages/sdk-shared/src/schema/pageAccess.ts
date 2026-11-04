@@ -103,6 +103,29 @@ export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSch
     return { schema, withheld: [], kept };
   }
 
+  return { schema: emptiedSchema(schema, refusals), withheld: [...refusals.keys()], kept };
+};
+
+/**
+ * The emptied schemas made from one schema, by which pages were withheld and why. Visitors fall into a few such groups —
+ * signed out, signed in without a permission — and making one walks every element: made once per group and handed out
+ * again, the same object each time, which is what lets whatever is kept by the object (the document the page is sent)
+ * be kept for it. Held as long as the schema is.
+ */
+const emptied = new WeakMap<Schema, Map<string, Schema>>();
+
+/** Past this many groups for one schema, the oldest is made again when it is next asked for. */
+const EMPTIED_PER_SCHEMA = 16;
+
+const emptiedSchema = (schema: Schema, refusals: ReadonlyMap<string, PageWithheld>): Schema => {
+  const signature = [...refusals].map(([pageId, refusal]) => `${pageId}:${refusal}`).join('\n');
+  const made = emptied.get(schema) ?? new Map<string, Schema>();
+  emptied.set(schema, made);
+  const known = made.get(signature);
+  if (known) {
+    return known;
+  }
+
   const flat: Schema['flat'] = {};
   for (const [id, element] of Object.entries(schema.flat)) {
     const refusal = refusals.get(id);
@@ -123,7 +146,14 @@ export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSch
     flat[id] = element;
   }
 
-  return { schema: { ...schema, flat }, withheld: [...refusals.keys()], kept };
+  const sent: Schema = { ...schema, flat };
+  if (made.size >= EMPTIED_PER_SCHEMA) {
+    made.delete(made.keys().next().value ?? '');
+  }
+
+  made.set(signature, sent);
+
+  return sent;
 };
 
 /** Whether a visitor may be handed a space that holds these protected pages whole: they may see every one of them. */

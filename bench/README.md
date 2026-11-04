@@ -60,7 +60,7 @@ output.
 | `micro-128`  | 0.125 | 128 MB | `--single-threaded --max-semi-space-size=2 --max-old-space-size=48`                     |
 | `edge-64`    | 0.25  | 64 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=24` — the floor         |
 | `edge-96`    | 0.25  | 96 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=32`                     |
-| `edge-128`   | 0.25  | 128 MB | `--single-threaded --max-semi-space-size=2 --max-old-space-size=48`                     |
+| `edge-128`   | 0.25  | 128 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=48`                     |
 | `edge-256`   | 0.25  | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
 | `small`      | 0.5   | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
 | `standard`   | 1     | 512 MB | `--max-old-space-size=384`                                                              |
@@ -75,6 +75,9 @@ this bench:
 - **The heap has to fit beside what lives outside it.** A page server holds ~45 MB off the V8 heap. V8 sizes its heap
   from the machine rather than the container, and under load grows it to its limit even when the live set is a third
   of that — so without a limit the container is killed before V8 collects.
+- **A young generation of 4 MB at a quarter core and 128 MB.** At 2 MB one cold start in four rendered half the
+  pages a second; at 4 MB none did, for ~7 MB more at its peak. At 64 and 96 MB there is no room for it, and an eighth
+  of a core (`micro-128`) has not been measured with it.
 - **Below one core, `--single-threaded`.** V8's background GC and compiler threads bring no parallelism under a
   fraction of a core, only contention for the same quota, and each keeps a malloc arena of its own. At a quarter core
   it rendered ~45% more pages in ~25 MB less.

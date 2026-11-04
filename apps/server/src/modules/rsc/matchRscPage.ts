@@ -15,7 +15,23 @@ export type RscPageMatch = {
  * whether there is anything on this page worth asking an adapter for. `undefined` when the URL matches no page,
  * which is also nothing to resolve.
  */
-export const matchRscPage = (schema: Schema, path: string, user: SSRUser | undefined): RscPageMatch | undefined => {
+type RoutePaths = ReturnType<typeof getPaths>;
+
+/**
+ * The schema's routes, for a visitor signed out and one signed in — made once per schema object, which the adapters
+ * hand every render until the space changes (and a visitor's withheld copy is one per group): every page's route was
+ * worked out again on every render to match one address against them.
+ */
+const routes = new WeakMap<Schema, { signedOut?: RoutePaths; signedIn?: RoutePaths }>();
+
+const routesOf = (schema: Schema, signedIn: boolean): RoutePaths => {
+  const known = routes.get(schema) ?? {};
+  routes.set(schema, known);
+  const kept = signedIn ? known.signedIn : known.signedOut;
+  if (kept) {
+    return kept;
+  }
+
   const pages = schema.pages.reduce<Record<string, Element>>((acum, pageId) => {
     const page = schema.flat[pageId] as Element | undefined;
     if (page) {
@@ -24,9 +40,18 @@ export const matchRscPage = (schema: Schema, path: string, user: SSRUser | undef
 
     return acum;
   }, {});
+  const made = getPaths(pages, schema.pageFolders, signedIn);
+  if (signedIn) {
+    known.signedIn = made;
+  } else {
+    known.signedOut = made;
+  }
 
-  const paths = getPaths(pages, schema.pageFolders, !!user);
-  const { pageId, pathMatch } = matchRoutePath(paths, path, !!user);
+  return made;
+};
+
+export const matchRscPage = (schema: Schema, path: string, user: SSRUser | undefined): RscPageMatch | undefined => {
+  const { pageId, pathMatch } = matchRoutePath(routesOf(schema, !!user), path, !!user);
   if (!pageId) {
     return undefined;
   }

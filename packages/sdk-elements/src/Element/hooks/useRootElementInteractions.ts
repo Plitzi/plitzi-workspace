@@ -226,4 +226,34 @@ const useRootElementInteractions = ({
   return { className: clsx(classNameInternalProp, classNameInternal), events, nodeRef };
 };
 
-export default useRootElementInteractions;
+/**
+ * The same on the server, where nothing an interaction needs can happen: no event reaches a page being drawn as text,
+ * and no effect runs — every trigger, callback and listener above is wired in one. What reaches the HTML is the class,
+ * and that is all this draws: the rest was a fourteenth of the landing page's render, measured, for handlers nobody would call. The
+ * browser hydrates with the whole hook; the two draw the same markup, which is all hydrating compares.
+ */
+const useServerRootElementInteractions = ({
+  elementContext: { id, className: classNameInternalProp, definition, plitziElementLayout, elementState },
+  previewMode,
+  baseElementId,
+  className,
+  ref
+}: UseRootElementInteractionsProps): RootElementInteractions => {
+  const ownRef = useRef<HTMLElement | null>(null);
+  const classNameInternal = useInternalClassName({
+    id,
+    className,
+    previewMode,
+    baseElementId,
+    definition,
+    elementState,
+    plitziElementLayout
+  });
+
+  return { className: clsx(classNameInternalProp, classNameInternal), events: emptyObject, nodeRef: ref ?? ownRef };
+};
+
+// Chosen once, as the module loads: a page is drawn on the server or in a browser for the whole life of the process.
+export { useServerRootElementInteractions };
+
+export default typeof window === 'undefined' ? useServerRootElementInteractions : useRootElementInteractions;

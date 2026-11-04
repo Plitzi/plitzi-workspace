@@ -70,6 +70,20 @@ describe('the space a visitor is sent', () => {
     expect(pageWithheldOf(withholdPages(schema(), undefined).schema.flat.staff.attributes)).toBe('unauthenticated');
   });
 
+  // Made once per group of visitors and handed out again: what is kept by the schema object is kept for all of them.
+  it('hands every visitor withheld the same pages the same space, and another group another one', () => {
+    const original = schema();
+    const signedOut = withholdPages(original, undefined).schema;
+
+    expect(withholdPages(original, undefined).schema).toBe(signedOut);
+    expect(withholdPages(original, { permissions: [] }).schema).not.toBe(signedOut);
+    expect(withholdPages(original, { permissions: [] }).schema).toBe(
+      withholdPages(original, { permissions: ['x'] }).schema
+    );
+    // Another space object is another space, whatever it holds.
+    expect(withholdPages(schema(), undefined).schema).not.toBe(signedOut);
+  });
+
   it('is the space as it came for a visitor who may see everything, and says what it holds', () => {
     const original = schema();
     const { schema: sent, withheld, kept } = withholdPages(original, { permissions: ['adminManage'] });

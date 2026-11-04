@@ -37,6 +37,52 @@ describe('getBindingsDetails', () => {
     expect(result.definition).toBe(element.definition);
   });
 
+  // The schema's element is shared by every render: written through copies, never in place — a frozen one too.
+  it('leaves the element as it was, copies only what it writes through, and shares the rest', () => {
+    const deepFreeze = <T>(value: T): T => {
+      if (typeof value === 'object' && value !== null) {
+        Object.values(value).forEach(deepFreeze);
+        Object.freeze(value);
+      }
+
+      return value;
+    };
+    const element = deepFreeze(
+      makeElement(
+        {
+          attributes: [binding({ source: 'row.title', to: 'card.title' })],
+          initialState: [binding({ id: 'b2', source: 'row.open', to: 'open' })]
+        },
+        { card: { title: 'before', tags: ['a'] }, other: { kept: true } }
+      )
+    );
+    const result = getBindingsDetails({ row: { title: 'after', open: true } }, element);
+
+    expect(result.attributes.card).toEqual({ title: 'after', tags: ['a'] });
+    expect(result.definition.initialState).toEqual({ open: true });
+    expect(element.attributes.card).toEqual({ title: 'before', tags: ['a'] });
+    expect(element.definition.initialState).toBeUndefined();
+    expect(result.attributes.other).toBe(element.attributes.other);
+    expect((result.attributes.card as { tags: unknown }).tags).toBe(
+      (element.attributes.card as { tags: unknown }).tags
+    );
+    expect(result.definition.styleSelectors).toBe(element.definition.styleSelectors);
+  });
+
+  // A binding that writes what is already there is no change: the element's own objects come back, as with no binding.
+  it('hands back the element’s own objects when a binding writes the value they already hold', () => {
+    const element = makeElement(
+      { attributes: [binding({ source: 'row.title', to: 'card.title' })] },
+      {
+        card: { title: 'same' }
+      }
+    );
+    const result = getBindingsDetails({ row: { title: 'same' } }, element);
+
+    expect(result.attributes).toBe(element.attributes);
+    expect(result.definition).toBe(element.definition);
+  });
+
   it('writes an attribute binding from source path into the target attribute', () => {
     const element = makeElement({ attributes: [binding({ source: 'variables.title', to: 'text' })] });
     const result = getBindingsDetails({ variables: { title: 'Hello' } }, element);

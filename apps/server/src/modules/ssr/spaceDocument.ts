@@ -3,7 +3,7 @@ import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 import { meterPage } from './meterPage';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
-import { digest, spaceDocument } from '../../helpers/hydrationPayload';
+import { digest, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { SpaceDocument } from '../../helpers/hydrationPayload';
@@ -107,8 +107,8 @@ const documentNow = async (
     offlineDataCache?.set(cacheKey, offlineData);
   }
 
-  const { schema, withheld, kept } = withholdPages(offlineData.schema, req.ctx.user);
-  const document = spaceDocument(withheld.length > 0 ? { ...offlineData, schema } : offlineData, { linkStyle });
+  const { schema, kept } = withholdPages(offlineData.schema, req.ctx.user);
+  const document = spaceDocument(offlineDataWith(offlineData, schema), { linkStyle });
   publishSpaceDocument(spaceId, environment, document, kept);
 
   return { document, cached: held !== undefined };

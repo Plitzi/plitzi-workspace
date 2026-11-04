@@ -6,8 +6,11 @@ import ejs from 'ejs';
 
 import type { SSRTemplateFn } from '@plitzi/sdk-shared';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VIEWS = path.resolve(__dirname, 'views');
+/**
+ * Beside this module wherever it runs: in the source, and in the build, where it is a chunk of its own with `views`
+ * copied beside it (`vite.config.ts`, `template` and `copyViews`) — the scripts there minified.
+ */
+const VIEWS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'views');
 const DEFAULT_TEMPLATE_PATH = path.join(VIEWS, 'template.ejs');
 
 /** Where the template takes a script of `views/inline/`: `<%- inline('name.js') %>`, on a line of its own. */
@@ -15,9 +18,9 @@ const INLINE = /^<%- inline\('([\w.-]+\.js)'\) %>$/gmu;
 
 /**
  * The template with its scripts of `views/inline/` written into it, once, before it is compiled: a page carries them
- * as it is parsed, and every page carries them. Kept apart so the build minifies them (`vite.config.ts`) — in the
- * source they are readable and commented, and the template's own comments never reach a page. A script that is not
- * there, or that holds a template tag of its own, stops the server at boot rather than leaving a page without it.
+ * as it is parsed, and every page carries them. Kept apart so the build minifies them — in the source they are readable
+ * and commented, and the template's own comments never reach a page. A script that is not there, or that holds a
+ * template tag of its own, stops the server at boot rather than leaving a page without it.
  */
 export const templateSource = (): string => {
   const source = fs.readFileSync(DEFAULT_TEMPLATE_PATH, 'utf-8').replace(INLINE, (_, name: string) => {

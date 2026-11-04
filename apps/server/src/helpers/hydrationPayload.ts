@@ -4,7 +4,7 @@ import { styleSheetCss, styleSheetHref, styleSheetLinkable } from '@plitzi/sdk-s
 
 import { escapeJson } from './escapeJson';
 
-import type { CompressedBodies, OfflineDataRaw, Style } from '@plitzi/sdk-shared';
+import type { CompressedBodies, OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The space as a page reads it, the name of exactly that text, and the space it was written from. */
 export type SpaceDocument = { json: string; hash: string; data: OfflineDataRaw };
@@ -13,6 +13,33 @@ export type SpaceDocument = { json: string; hash: string; data: OfflineDataRaw }
 export type StyleSheet = { css: string; hash: string; href: string; compressed: CompressedBodies };
 
 export const digest = (text: string): string => createHash('sha256').update(text).digest('base64url').slice(0, 22);
+
+const sent = new WeakMap<OfflineDataRaw, WeakMap<Schema, OfflineDataRaw>>();
+
+/**
+ * The space with `schema` — the one a visitor is sent, some pages withheld (`withholdPages`) — as the same object for
+ * every visitor sent that schema. Everything kept by the object is kept for them too: a new one each render made the
+ * page's document be written, escaped and hashed again for every visit to a space with one protected page (a quarter
+ * of what the docs' pages cost, measured). `schema` is the space's own when nothing is withheld, and the space is
+ * answered as it came.
+ */
+export const offlineDataWith = (offlineData: OfflineDataRaw, schema: Schema): OfflineDataRaw => {
+  if (schema === offlineData.schema) {
+    return offlineData;
+  }
+
+  const copies = sent.get(offlineData) ?? new WeakMap<Schema, OfflineDataRaw>();
+  sent.set(offlineData, copies);
+  const known = copies.get(schema);
+  if (known) {
+    return known;
+  }
+
+  const copy = { ...offlineData, schema };
+  copies.set(schema, copy);
+
+  return copy;
+};
 
 const sheets = new WeakMap<Style, StyleSheet | null>();
 

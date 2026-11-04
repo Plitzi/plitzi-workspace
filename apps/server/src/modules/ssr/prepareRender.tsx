@@ -31,7 +31,7 @@ import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { requestFlagOverrides } from '../../helpers/flagOverrides';
-import { hydrationPayload, spaceDocument } from '../../helpers/hydrationPayload';
+import { hydrationPayload, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { privateOriginsOf } from '../../helpers/outboundGuard';
 import { requestPaintedState } from '../../helpers/paintedCookie';
@@ -154,9 +154,7 @@ export const prepareRender = async (
    */
   const withholding = rawOfflineData ? withholdPages(rawOfflineData.schema, req.ctx.user) : undefined;
   const offlineData =
-    rawOfflineData && withholding && withholding.withheld.length > 0
-      ? { ...rawOfflineData, schema: withholding.schema }
-      : rawOfflineData;
+    rawOfflineData && withholding ? offlineDataWith(rawOfflineData, withholding.schema) : rawOfflineData;
 
   // The adapter is asked only when this page has somewhere to put the answer. A space is normally a mix — one page
   // backed by a CMS, the next one static — and resolving is what costs: the providers of THIS page's server

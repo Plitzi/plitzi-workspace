@@ -54,7 +54,7 @@ export const PROFILES: Profile[] = [
     description: 'Quarter of a core, 128 MB',
     cpus: 0.25,
     memoryMb: 128,
-    nodeOptions: ['--single-threaded', '--max-semi-space-size=2', '--max-old-space-size=48']
+    nodeOptions: ['--single-threaded', '--max-semi-space-size=4', '--max-old-space-size=48']
   },
   {
     name: 'edge-256',

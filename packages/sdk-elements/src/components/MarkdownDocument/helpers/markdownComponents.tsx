@@ -1,10 +1,9 @@
 import { omit } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { createElement } from 'react';
-import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
 
 import { hastText } from './hastText';
-import { SyntaxHighlighter } from './syntaxHighlighter';
+import { highlightedCode } from './syntaxHighlighter';
 import CodeBlock from '../components/CodeBlock';
 
 import type { MarkdownClassNames, MarkdownPart } from './markdownParts';
@@ -109,16 +108,12 @@ export const markdownComponents = (options: MarkdownComponentsOptions): Componen
     const match = LANGUAGE.exec(className || '');
     // The block's own attributes stay with the `pre` around it: the highlighter draws only its text.
     if (match) {
-      return (
-        <SyntaxHighlighter
-          PreTag="div"
-          language={match[1]}
-          style={vscDarkPlus}
-          wrapLines={wrapLines}
-          showLineNumbers={showLineNumbers}
-          children={typeof children === 'string' ? children.replace(/\n$/, '') : ''}
-        />
-      );
+      return highlightedCode({
+        code: typeof children === 'string' ? children.replace(/\n$/, '') : '',
+        language: match[1],
+        wrapLines,
+        showLineNumbers
+      });
     }
 
     return (

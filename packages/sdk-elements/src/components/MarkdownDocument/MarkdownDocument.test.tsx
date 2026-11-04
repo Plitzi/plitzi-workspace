@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { StrictMode } from 'react';
+import { renderToString } from 'react-dom/server';
 import { describe, it, expect, vi } from 'vitest';
 
 import { MARKDOWN_PARTS } from './helpers/markdownParts';
@@ -19,6 +20,18 @@ describe('MarkdownDocument', () => {
 
     expect(container.textContent).toContain('const a = 1;');
     expect(container.querySelector('[node]')).toBeNull();
+  });
+
+  // Kept by its source: the same document for every render of it, and a page's change drawn at once.
+  it('draws a source the same on every render, and an edited one as it now reads', () => {
+    const source = '# Title\n\nSome *text*.\n\n```js\nconst a = 1;\n```';
+    const first = renderToString(<MarkdownDocument>{source}</MarkdownDocument>);
+
+    expect(renderToString(<MarkdownDocument>{source}</MarkdownDocument>)).toBe(first);
+    expect(renderToString(<MarkdownDocument>{`${source}\n\nMore.`}</MarkdownDocument>)).toContain('More.');
+    expect(renderToString(<MarkdownDocument classNames={{ paragraph: 'p' }}>{source}</MarkdownDocument>)).toContain(
+      'class="p"'
+    );
   });
 
   describe('headings', () => {
