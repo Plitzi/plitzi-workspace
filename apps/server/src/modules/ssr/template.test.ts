@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compileTemplate } from './template';
+import { compileTemplate, templateSource } from './template';
 
 import type { FontHead, PluginEntry } from '@plitzi/sdk-shared';
 
@@ -193,6 +193,14 @@ describe('the SSR document / bootstrap', () => {
 
     expect(at('__plitziListening();')).toBeGreaterThan(paint);
     expect(at('__plitziListening();')).toBeLessThan(at("render('plitzi'"));
+  });
+
+  it('writes the scripts of views/inline into the template, and leaves no inline(…) for a render to call', () => {
+    const source = templateSource();
+
+    expect(source).not.toContain('inline(');
+    expect(source).toContain('querySelectorAll(\'[data-motion-on="view"]:not([data-motion-seen])\')');
+    expect(source).toContain('const __plitziListening = () =>');
   });
 
   it('ships no bootstrap for a page that renders on the server only', () => {

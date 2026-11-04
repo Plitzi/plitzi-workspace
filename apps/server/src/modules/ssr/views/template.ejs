@@ -129,58 +129,9 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
-    <%# An arrival that waits to be seen (`motion: { on: 'view' }`) is held at its start until the SDK sees it — after
-        its scripts, the space and hydration. One on screen as the page arrives would be content nobody can see until
-        then: seen here instead, as soon as it is parsed. Named by where it is rather than by `data-id`, which every
-        instance of a component shares; and in a sheet of its own rather than the element's `data-motion-seen`, which
-        React would hydrate as markup the server never drew. The sheet goes once the SDK has seen what it showed. %>
+    <%# Seen as soon as it is parsed: views/inline/motionSeen.js says why. %>
     <script>
-      (() => {
-        const root = document.getElementById('plitzi');
-        const held = root.querySelectorAll('[data-motion-on="view"]:not([data-motion-seen])');
-        if (held.length === 0 || typeof IntersectionObserver !== 'function') {
-          return;
-        }
-
-        const sheet = document.head.appendChild(document.createElement('style'));
-        const shown = [];
-        const pathOf = element => {
-          const steps = [];
-          for (let node = element; node !== root; node = node.parentElement) {
-            steps.unshift(`:nth-child(${[...node.parentElement.children].indexOf(node) + 1})`);
-          }
-
-          return `#plitzi > ${steps.join(' > ')}:not([data-motion-seen])`;
-        };
-        const seen = new IntersectionObserver(entries => {
-          for (const { isIntersecting, target } of entries) {
-            if (isIntersecting) {
-              seen.unobserve(target);
-              shown.push(target);
-              const at = pathOf(target);
-              sheet.append(`${at}[data-motion-enter], ${at}[data-motion-stagger] > * { animation-play-state: running, paused; }\n`);
-            }
-          }
-        });
-        held.forEach(element => seen.observe(element));
-        const offScreen = element => {
-          const { top, bottom } = element.getBoundingClientRect();
-
-          return bottom <= 0 || top >= innerHeight;
-        };
-        const live = new MutationObserver(() => {
-          if (!root.querySelector('[data-hydrated]')) {
-            return;
-          }
-
-          seen.disconnect();
-          if (shown.every(element => !element.isConnected || element.hasAttribute('data-motion-seen') || offScreen(element))) {
-            sheet.remove();
-            live.disconnect();
-          }
-        });
-        live.observe(root, { attributes: true, subtree: true, attributeFilter: ['data-hydrated', 'data-motion-seen'] });
-      })();
+<%- inline('motionSeen.js') %>
     </script>
     <% if (!locals.ssrOnly) { %>
     <%# The payload is data, so it travels as JSON: parsing it as a JavaScript literal cost the browser several times
@@ -199,105 +150,8 @@
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
       <% const drawnPlugins = activePlugins.filter(p => !p.deferred); %>
       <% const json = value => JSON.stringify(value ?? null).replace(/</g, '\\u003c'); %>
-      <%#
-        A tap before React listens is kept, and made again once the page has hydrated: until the SDK's `render` call
-        nothing on the page answers one, and the page has painted by then — a visitor sees a button and taps it. React
-        replays what lands between its listening and its hydrating; what lands before, it never hears. Only a tap the
-        browser did nothing with by itself is made again: a link followed, a field focused, a box ticked already
-        happened, and once more would undo or repeat it. A form sent is held instead — sent by the browser itself, it
-        posted what was typed, a password included, to the page's own address — and sent again, through the page, once
-        it has hydrated. And what was typed or ticked is put back: hydrating, React sets every field it controls to its
-        state, which starts empty, and the visitor's text was gone.
-      %>
-      const __plitziTyped = new Map();
-      const __plitziKeepTyped = event => {
-        const field = event.target;
-        if (event.isTrusted && (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
-          __plitziTyped.set(field, field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio') ? { checked: field.checked } : { value: field.value });
-        }
-      };
-      document.addEventListener('input', __plitziKeepTyped, true);
-      document.addEventListener('change', __plitziKeepTyped, true);
-      const __plitziTaps = [];
-      const __plitziSends = [];
-      const __plitziHoldSend = event => {
-        if (event.isTrusted && event.target instanceof HTMLFormElement) {
-          event.preventDefault();
-          __plitziSends.push({ form: event.target, submitter: event.submitter });
-        }
-      };
-      document.addEventListener('submit', __plitziHoldSend, true);
-      const __plitziKeepTap = event => {
-        if (event.isTrusted && event.target instanceof Element) {
-          __plitziTaps.push(event.target);
-        }
-      };
-      document.addEventListener('click', __plitziKeepTap, true);
-      const __plitziActedAlone = target => {
-        const native = target.closest('a[href], input, select, textarea, label, summary, [contenteditable], button');
-
-        return native !== null && !(native instanceof HTMLButtonElement && (native.type === 'button' || native.form === null));
-      };
-      const __plitziListening = () => {
-        document.removeEventListener('click', __plitziKeepTap, true);
-        document.removeEventListener('submit', __plitziHoldSend, true);
-        document.removeEventListener('input', __plitziKeepTyped, true);
-        document.removeEventListener('change', __plitziKeepTyped, true);
-        const root = document.getElementById('plitzi');
-        if ((__plitziTaps.length === 0 && __plitziSends.length === 0 && __plitziTyped.size === 0) || !root) {
-          return;
-        }
-
-        const tapAgain = () => {
-          // Told to React even when the field still shows it: React hydrating takes what the field shows as the value it
-          // knows, while its state is empty, and an event on a value it knows is no change. So the field is set to
-          // something else through React's own tracker first, then to the visitor's through the element's setter, which
-          // the tracker does not see — and the event is then the change it is.
-          for (const [field, kept] of __plitziTyped) {
-            if (!field.isConnected) {
-              continue;
-            }
-
-            if ('checked' in kept) {
-              field.checked = !kept.checked;
-              field.click();
-            } else {
-              field.value = kept.value === '' ? ' ' : '';
-              Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')?.set?.call(field, kept.value);
-              field.dispatchEvent(new Event(field instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true }));
-            }
-          }
-
-          __plitziTyped.clear();
-          for (const target of __plitziTaps.splice(0)) {
-            if (target.isConnected && !__plitziActedAlone(target)) {
-              target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
-            }
-          }
-
-          for (const { form, submitter } of __plitziSends.splice(0)) {
-            if (form.isConnected) {
-              form.requestSubmit(submitter?.isConnected && submitter.form === form ? submitter : undefined);
-            }
-          }
-        };
-        // A frame after the page says it hydrated: the effects of that commit, which wire the flows, have run by then.
-        const later = () => requestAnimationFrame(() => setTimeout(tapAgain));
-        const hydrated = () => root.querySelector('[data-hydrated]') !== null;
-        if (hydrated()) {
-          later();
-
-          return;
-        }
-
-        const watch = new MutationObserver(() => {
-          if (hydrated()) {
-            watch.disconnect();
-            later();
-          }
-        });
-        watch.observe(root, { attributes: true, attributeFilter: ['data-hydrated'], subtree: true });
-      };
+      <%# Taps, sends and typing before React listens, kept and made again: views/inline/keepTaps.js says how. %>
+<%- inline('keepTaps.js') %>
       if (document.visibilityState !== 'hidden') {
         await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve)));
       }

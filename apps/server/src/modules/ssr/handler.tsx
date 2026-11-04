@@ -1,6 +1,6 @@
 import { applySSRResult, isReusable, renderParamsOf } from './applySSRResult';
 import { buildBody } from './buildBody';
-import { sendEarlyHints } from './earlyHints';
+import { pageHints } from './earlyHints';
 import { meterPage } from './meterPage';
 import { claimRender, pageSlot, readPage, renderingNow } from './pageCache';
 import { draftSessionCookie, takeDraftOverride } from './preview';
@@ -62,8 +62,8 @@ export const renderSSR = async (
   // A `system` theme is drawn as the machine asks (`theme.resolved`): Chromium says which from its next request on.
   res.setHeader('Accept-CH', SCHEME_HINT_HEADER);
   res.setHeader('Vary', SCHEME_HINT_HEADER);
-  // Before anything is read: what follows is the wait the browser can spend fetching the SDK.
-  sendEarlyHints(config, res);
+  // Sent once the page is known to be rendered: that wait is what the browser spends fetching the stylesheets.
+  const hint = pageHints(config, res);
 
   // A preview token renders unsaved draft edits (never persisted); such a render is never cached.
   const draft = await takeDraftOverride(req, config);
@@ -252,6 +252,7 @@ export const renderSSR = async (
     // Another request is rendering this very page: this one is served what that render keeps.
     const waiting = renderingNow(slot);
     if (waiting) {
+      hint();
       const waited = await waiting;
       if (waited) {
         await serveKept(waited, 'HIT');
@@ -264,6 +265,8 @@ export const renderSSR = async (
   // Taken in this same turn as the look above: an `await` between the two let every request of a burst render.
   // Claimed before the turn is waited for: whoever asks for this same page meanwhile waits on this one render.
   const claim = slot && !renderingNow(slot) ? claimRender(slot) : undefined;
+  // Rendered here, after a turn that may be waited for: both are the wait a hint lets the browser spend.
+  hint();
   try {
     const turn =
       limit === undefined

@@ -15,17 +15,26 @@ export const pageLinks = (config: Pick<SSRPageServerConfig, 'assetVersion'>): st
 };
 
 /**
- * Says what the page will load before it is rendered: a `103 Early Hints` where the connection can carry one, and the
- * same `Link` on the response, which is what a CDN in front (Cloudflare) keeps to answer the next request's hints
- * itself. The browser fetches them while the server is still reading the space and rendering it — the time a page that
- * is not in the cache costs, which on a small server is most of what the visitor waits.
+ * Says what the page will load: the same `Link` on every response, which is what a CDN in front (Cloudflare) keeps to
+ * answer the next request's hints itself — and a `103 Early Hints` where the connection can carry one, sent by the
+ * function this returns, called only when the page is to be rendered. The browser fetches the hinted files while the
+ * server reads the space and renders it, which on a small server is most of what the visitor waits; a kept page is
+ * answered in under a millisecond, and a 103 before it was one more write on the socket for every page served: the
+ * bench served cached pages up to a quarter slower with it.
  */
-export const sendEarlyHints = (config: SSRPageServerConfig, res: SSRResponseHelpers): void => {
+export const pageHints = (config: SSRPageServerConfig, res: SSRResponseHelpers): (() => void) => {
   if (config.earlyHints === false) {
-    return;
+    return () => undefined;
   }
 
   const links = pageLinks(config);
   res.setHeader('Link', links.join(', '));
-  res.earlyHints?.(links);
+  let sent = false;
+
+  return () => {
+    if (!sent) {
+      sent = true;
+      res.earlyHints?.(links);
+    }
+  };
 };

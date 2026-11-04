@@ -90,7 +90,12 @@ afterEach(() => {
 describe('the page cache for the draft', () => {
   const draft = (draftVersion?: string): SSRRequest => {
     const req = request();
-    req.ctx.spaceDeployment = { spaceId: 42, environment: 'main', revision: 0, ...(draftVersion ? { draftVersion } : {}) };
+    req.ctx.spaceDeployment = {
+      spaceId: 42,
+      environment: 'main',
+      revision: 0,
+      ...(draftVersion ? { draftVersion } : {})
+    };
 
     return req;
   };

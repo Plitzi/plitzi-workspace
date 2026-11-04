@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
+import { transformSync } from 'esbuild';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
@@ -30,6 +31,20 @@ const copyAssets = (): import('vite').Plugin => ({
       if (fs.existsSync(src)) {
         fs.cpSync(src, dest, { recursive: true, filter });
       }
+    }
+    // The page's inline scripts, minified where they are served from: readable and commented in the source, a few
+    // hundred bytes on every page instead of several KB (`modules/ssr/template.ts`). Top-level names are kept — the
+    // template's module script calls what one of them declares.
+    const inline = path.resolve(root, 'dist/modules/ssr/views/inline');
+    for (const name of fs.existsSync(inline) ? fs.readdirSync(inline).filter(file => file.endsWith('.js')) : []) {
+      const file = path.join(inline, name);
+      const { code } = transformSync(fs.readFileSync(file, 'utf-8'), {
+        minify: true,
+        legalComments: 'none',
+        target: 'esnext',
+        charset: 'utf8'
+      });
+      fs.writeFileSync(file, code);
     }
   }
 });
@@ -58,7 +73,8 @@ export default defineConfig(({ mode }) => {
       dts({
         include: ['src', 'package.json'],
         entryRoot: 'src',
-        exclude: ['**/*.(test|bench).(ts|tsx)', '**/tests/**'],
+        // `views/inline` holds scripts written into the page as text: nothing imports them, and they have no types.
+        exclude: ['**/*.(test|bench).(ts|tsx)', '**/tests/**', 'src/modules/ssr/views/inline/**'],
         tsconfigPath: './tsconfig.app.json',
         // The declarations are written against the other packages' declarations, as a consumer reads them.
         compilerOptions: { customConditions: [] },

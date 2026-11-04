@@ -17,13 +17,16 @@ import type { IncomingHttpHeaders } from 'node:http';
  */
 
 const PORT = await unusedPort();
+// A published revision beside the draft: its pages are kept, and a kept page is answered without a render.
+const PUBLISHED_PORT = await unusedPort();
 let server: SSRServer;
+let published: SSRServer;
 
 /** The interim responses and the final one of a GET of `path`. */
-const get = (path: string, headers: Record<string, string> = {}) =>
+const get = (path: string, headers: Record<string, string> = {}, port = PORT) =>
   new Promise<{ hints: IncomingHttpHeaders[]; status: number; headers: IncomingHttpHeaders }>((resolve, reject) => {
     const hints: IncomingHttpHeaders[] = [];
-    const req = request({ host: '127.0.0.1', port: PORT, path, headers }, res => {
+    const req = request({ host: '127.0.0.1', port, path, headers }, res => {
       res.resume();
       res.on('end', () => {
         resolve({ hints, status: res.statusCode ?? 0, headers: res.headers });
@@ -40,14 +43,21 @@ const get = (path: string, headers: Record<string, string> = {}) =>
 
 beforeAll(async () => {
   server = createServer({ port: PORT, devMode: true, adapters: createJsonAdapters({ offlineData: offlineDataOf() }) });
-  await server.listen(PORT, '127.0.0.1');
+  published = createServer({
+    port: PUBLISHED_PORT,
+    adapters: createJsonAdapters({
+      offlineData: offlineDataOf(),
+      deployment: { spaceId: 1, environment: 'production', revision: 1 }
+    })
+  });
+  await Promise.all([server.listen(PORT, '127.0.0.1'), published.listen(PUBLISHED_PORT, '127.0.0.1')]);
   await vi.waitFor(async () => {
     expect((await get('/')).status).toBe(200);
   });
 });
 
 afterAll(async () => {
-  await server.close();
+  await Promise.all([server.close(), published.close()]);
 });
 
 describe('modules/ssr/earlyHints', () => {
@@ -66,6 +76,18 @@ describe('modules/ssr/earlyHints', () => {
     const compressed = await get('/', { 'accept-encoding': 'br' });
     expect(compressed.headers['content-encoding']).toBe('br');
     expect(compressed.headers.vary?.split(', ')).toEqual(['Sec-CH-Prefers-Color-Scheme', 'Accept-Encoding']);
+  });
+
+  // Answered at once, a kept page has no wait to spend: a 103 before it was one more write for every page served.
+  it('sends no 103 before a kept page, and keeps the Link a CDN answers hints from', async () => {
+    const rendered = await get('/?hints=kept', {}, PUBLISHED_PORT);
+    expect(rendered.headers['x-cache']).toBe('MISS');
+    expect(rendered.hints).toHaveLength(1);
+
+    const kept = await get('/?hints=kept', {}, PUBLISHED_PORT);
+    expect(kept.headers['x-cache']).toBe('HIT');
+    expect(kept.hints).toEqual([]);
+    expect(kept.headers.link).toBe(rendered.hints[0].link);
   });
 
   // The SDK is asked once the page has painted: a hint for it shared a phone's network with the stylesheets.
