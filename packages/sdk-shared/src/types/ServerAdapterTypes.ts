@@ -23,12 +23,31 @@ import type { ActivityReader, SpaceActivityPage, SpaceActivityQuery } from '../a
 import type { FlagOverrides } from '../flags/resolveFlags';
 import type { TSpaceEntitlements } from '../network/entitlements';
 
+/**
+ * A domain's own security, where its owner chose it.
+ *
+ * - `hsts`: `'host'` — browsers keep to https on this host alone; `'subdomains'` — on every sub-domain of it too, which
+ *   on a domain of the owner's own reaches hosts this server does not serve, so it is theirs to ask for; `'off'` —
+ *   nothing.
+ * - `scriptPolicy`: the page's script policy here (`SSRServerConfig.scriptPolicy`), `'off'` for none.
+ * - `frameAncestors`: the sites that may put this domain's pages in an iframe (`https://shop.example`), beside those the
+ *   space allows everywhere (`SSRSpaceDeployment.frameAncestors`). A domain with any writes its cookies
+ *   `SameSite=None`, so a visitor signed in on it is signed in inside those sites' pages too.
+ */
+export type SSRDeploymentSecurity = {
+  hsts?: 'off' | 'host' | 'subdomains';
+  scriptPolicy?: 'off' | 'report-only' | 'enforce';
+  frameAncestors?: string[];
+};
+
 export type SSRSpaceDeployment = {
   /** Who may put this space in an iframe, as CSP `frame-ancestors` sources (e.g. `'self'`, `https://acme.com`,
    *  or `*`). Resolved per space by the consumer, because only it knows the domains that space declares — a
    *  published space must not be framable from a site its owner never allowed. Omitted → the server's own
    *  `frameOptions` default stands. */
   frameAncestors?: string[];
+  /** What this host's pages are held to, for a deployment that lets each domain say: absent, the server's own. */
+  security?: SSRDeploymentSecurity;
   environment?: Environment;
   credential?: SSRCredential;
   spaceId?: number | null;
@@ -277,6 +296,31 @@ export type SSRAdapters = {
    * not take a site down, so failures should degrade to "served, uncounted".
    */
   meter?: (event: SSRMeterEvent) => Promise<SSRMeterDecision | undefined>;
+  /**
+   * What a page's script policy refused, or would have refused while it only reports — for the space the report's host
+   * serves, never one the report names (anyone may post one). Said once per space and violation in a while, not on
+   * every page a visitor opens (`cspReportStage`). Where a deployment keeps them to show the space's owner what turning
+   * the policy on would stop; it says nothing back, and a failure here loses that report alone.
+   */
+  recordScriptPolicyReport?: (report: SSRScriptPolicyReport) => Promise<void>;
+};
+
+/** One thing a page's script policy refused, or would refuse, as the browser reported it. */
+export type SSRScriptPolicyReport = {
+  spaceId: number;
+  environment: Environment;
+  /** The page it was on, without its query. */
+  page: string;
+  /** What was refused: a URL, `inline`, `eval`, `trusted-types-sink`… as the browser names it. */
+  blocked: string;
+  /** The directive that refused it: `script-src-elem`, `require-trusted-types-for`… */
+  directive: string;
+  /** Where it was written, `file:line`, when the browser says. */
+  source: string;
+  /** The first characters of an inline script or a sink's value, when the browser says. */
+  sample: string;
+  /** `report` while the policy only reports; `enforce` once it refused it. */
+  disposition: 'report' | 'enforce';
 };
 
 /**

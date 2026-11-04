@@ -10,17 +10,25 @@ export const DEFAULT_LIMITS: ResolvedActionLimits = {
   maxResponseBytes: 5_000_000
 };
 
-const tightest = (deployment: number, document: number | undefined): number =>
-  document === undefined || document <= 0 ? deployment : Math.min(deployment, document);
+const tightest = (deployment: number, ...others: (number | undefined)[]): number =>
+  others.reduce<number>(
+    (least, other) => (other === undefined || other <= 0 ? least : Math.min(least, other)),
+    deployment
+  );
 
 /**
- * Merges a document's limits over the deployment's.
+ * Merges a document's limits, and its space's, over the deployment's.
  *
- * A per-action value may only ever TIGHTEN: the deployment is the party paying for the connection, the slot and
- * the outbound traffic, and an authored document is customer input. Letting it widen would make every ceiling
- * advisory — which is the same as not having one.
+ * Each may only ever TIGHTEN: the deployment is the party paying for the connection, the slot and the outbound
+ * traffic. The space's are what its plan sells (`ActionsConfig.limitsFor`) — up to the deployment's, never past them —
+ * and an authored document is customer input. Letting either widen would make every ceiling advisory — which is the
+ * same as not having one.
  */
-export const resolveLimits = (deployment: ActionLimits = {}, document: ActionLimits = {}): ResolvedActionLimits => {
+export const resolveLimits = (
+  deployment: ActionLimits = {},
+  document: ActionLimits = {},
+  space: ActionLimits = {}
+): ResolvedActionLimits => {
   const base: ResolvedActionLimits = {
     timeoutMs: deployment.timeoutMs ?? DEFAULT_LIMITS.timeoutMs,
     streamTimeoutMs: deployment.streamTimeoutMs ?? DEFAULT_LIMITS.streamTimeoutMs,
@@ -30,10 +38,10 @@ export const resolveLimits = (deployment: ActionLimits = {}, document: ActionLim
   };
 
   return {
-    timeoutMs: tightest(base.timeoutMs, document.timeoutMs),
-    streamTimeoutMs: tightest(base.streamTimeoutMs, document.streamTimeoutMs),
-    maxNodes: tightest(base.maxNodes, document.maxNodes),
-    maxRequests: tightest(base.maxRequests, document.maxRequests),
-    maxResponseBytes: tightest(base.maxResponseBytes, document.maxResponseBytes)
+    timeoutMs: tightest(base.timeoutMs, space.timeoutMs, document.timeoutMs),
+    streamTimeoutMs: tightest(base.streamTimeoutMs, space.streamTimeoutMs, document.streamTimeoutMs),
+    maxNodes: tightest(base.maxNodes, space.maxNodes, document.maxNodes),
+    maxRequests: tightest(base.maxRequests, space.maxRequests, document.maxRequests),
+    maxResponseBytes: tightest(base.maxResponseBytes, space.maxResponseBytes, document.maxResponseBytes)
   };
 };

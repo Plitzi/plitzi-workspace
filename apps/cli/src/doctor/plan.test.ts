@@ -78,4 +78,46 @@ describe('the doctor’s plan check', () => {
       expect.objectContaining({ severity: 'info', code: 'plan-not-checked' })
     ]);
   });
+
+  // What the project's own server is told that the server hosting its space does not do: said with the value there.
+  it('names what serverOptions asks that the hosting server does not give, and what it serves with its own', async () => {
+    await fs.mkdir(path.join(root, 'src/config'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'src/config/serverOptions.ts'),
+      'export const serverOptions = { rsc: { elementTimeoutMs: 9000 }, action: { limits: { maxRequests: 150, timeoutMs: 8000 } }, devMode: true };\n'
+    );
+    const runs = {
+      action: { timeoutMs: 10000, maxRequests: 20 },
+      functions: { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 1048576, calls: 500 },
+      sectionMs: 5000
+    };
+    authorizedRequest.mockResolvedValue({
+      ok: true,
+      value: { reply: { status: 200, data: { entitlements: { ...site, capabilities: {}, runs } } } }
+    });
+
+    const findings = await checkPlan(context());
+
+    expect(
+      findings.filter(finding => finding.code === 'server-option-above-host').map(finding => finding.message)
+    ).toEqual([
+      'src/config/serverOptions.ts sets rsc.elementTimeoutMs to 9000 ms, and the server hosting Café Lumen gives 5000: a section whose provider takes longer arrives empty there — read it from what a schedule keeps (`kv`).',
+      'src/config/serverOptions.ts sets action.limits.maxRequests to 150 requests, and the server hosting Café Lumen gives 20: the request past it is refused there.'
+    ]);
+    expect(findings.find(finding => finding.code === 'server-options-own-only')?.message).toContain('`devMode`');
+  });
+
+  it('says nothing of serverOptions to a server that does not say what a run may spend', async () => {
+    await fs.mkdir(path.join(root, 'src/config'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'src/config/serverOptions.ts'),
+      'export const serverOptions = { devMode: true };\n'
+    );
+    authorizedRequest.mockResolvedValue({
+      ok: true,
+      value: { reply: { status: 200, data: { entitlements: { ...site, capabilities: {}, runs: { sectionMs: 'x' } } } } }
+    });
+
+    expect((await checkPlan(context())).filter(finding => finding.code.startsWith('server-option'))).toEqual([]);
+  });
 });

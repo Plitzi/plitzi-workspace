@@ -6,6 +6,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
+import { authorHtml } from '../../../Element/security/authorHtml';
 
 import type { RefObject } from 'react';
 
@@ -98,7 +99,7 @@ const BlockHtml = ({ ref, content = '', className = '' }: BlockHtmlProps) => {
       className={clsx('plitzi-component__block-html', className, {
         'block-html--empty': content === '' || !content
       })}
-      dangerouslySetInnerHTML={{ __html: content }}
+      dangerouslySetInnerHTML={{ __html: authorHtml(content) }}
     />
   );
 };

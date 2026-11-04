@@ -15,8 +15,8 @@ import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
 import type { JobLookup } from './jobs';
 import type { RealtimePresenceMember } from './presence';
-import type { ActionKvAdapter } from '../actions/types';
-import type { FunctionJobView, RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { ActionKvAdapter, ActionRealtime } from '../actions/types';
+import type { FunctionJobView, PubSubAdapter, RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { createMemoryPubSub } from './memoryPubSub';
 export { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
@@ -83,33 +83,39 @@ const modules = new WeakMap<object, RealtimeModule>();
  * The server's realtime channels, built once per config — or `undefined` when they are off or cannot be: without the
  * space's documents (`getOfflineData`) there is nothing to say which channels a space declares, so none is opened.
  */
-export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | undefined => {
-  const getOfflineData = config.adapters.getOfflineData;
-  if (config.realtime === false || !getOfflineData) {
-    return undefined;
-  }
+/**
+ * What a server's realtime channels are made of — the hub over `pubsub`, the grants, presence and what a `retain`
+ * channel keeps in `kv` — given what it needs alone, so a process that is no page server (a deployment's own actions
+ * runner, `createActionsModule`) publishes on the same channels as the pages: hand it the same `pubsub` and `kv` the
+ * page servers have, or what it says is heard by nobody. `realtimeModuleFor` makes a page server's with this.
+ */
+export type RealtimeModuleOptions = {
+  /** The space's documents, where its `channels` are declared. */
+  getOfflineData: NonNullable<SSRServerConfig['adapters']['getOfflineData']>;
+  /** What carries a message to every replica (`createRedisPubSub`). Absent, this process alone. */
+  pubsub?: PubSubAdapter;
+  /** Where grants, presence and retained messages are kept, shared by every replica. Absent, this process alone. */
+  kv?: ActionKvAdapter;
+  path?: string;
+  transport?: RealtimeTransport;
+  allowedOrigins?: readonly string[];
+  admitSpace?: (spaceId: number) => Promise<string | undefined>;
+};
 
-  const existing = modules.get(config);
-  if (existing) {
-    return existing;
-  }
-
-  // Where the actions keep their `kv`, so a grant one replica issues opens the topic on another — and what a
-  // `retain: true` channel keeps reaches a page joining on another; the fleet's shared copy, or this process's own,
-  // where the deployment gave none — the same fallbacks the actions take.
-  const kv = config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.kv', KV_METHODS) ?? createMemoryKv();
+export const createRealtimeModule = (options: RealtimeModuleOptions): RealtimeModule => {
+  const kv = options.kv ?? createMemoryKv();
   const retained = createRealtimeRetained(kv);
   const presence = createRealtimePresence(kv);
-  const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub(), retained, presence);
-  const resolveChannels = createChannelResolver(getOfflineData);
+  const hub = createRealtimeHub(options.pubsub ?? createMemoryPubSub(), retained, presence);
+  const resolveChannels = createChannelResolver(options.getOfflineData);
   const grants = createRealtimeGrants(kv);
   let jobLookup: JobLookup | undefined;
   const module: RealtimeModule = {
     hub,
-    path: config.realtime?.path ?? '/_realtime',
-    transport: config.realtime?.transport ?? 'sse',
-    allowedOrigins: config.realtime?.allowedOrigins ?? [],
-    ...(config.realtime?.admitSpace ? { admitSpace: config.realtime.admitSpace } : {}),
+    path: options.path ?? '/_realtime',
+    transport: options.transport ?? 'sse',
+    allowedOrigins: options.allowedOrigins ?? [],
+    ...(options.admitSpace ? { admitSpace: options.admitSpace } : {}),
     resolveChannels,
     grants,
     close: () => hub.closeAll(),
@@ -186,6 +192,40 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
     },
     jobs: () => jobLookup
   };
+
+  return module;
+};
+
+/**
+ * The channels an actions runner that serves no pages publishes on (`createActionsModule({ realtime })`): a job's
+ * `ctx.publish`, a flow's `realtime.publish`, a function job's `$job:<id>`. Without them a job that publishes fails on
+ * that runner — handed the same `pubsub` and `kv` as the page servers, it reaches every page they hold open.
+ */
+export const createActionRealtime = (options: RealtimeModuleOptions): ActionRealtime => createRealtimeModule(options);
+
+export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | undefined => {
+  const getOfflineData = config.adapters.getOfflineData;
+  if (config.realtime === false || !getOfflineData) {
+    return undefined;
+  }
+
+  const existing = modules.get(config);
+  if (existing) {
+    return existing;
+  }
+
+  const module = createRealtimeModule({
+    getOfflineData,
+    ...(config.realtime?.pubsub ? { pubsub: config.realtime.pubsub } : {}),
+    // Where the actions keep their `kv`, so a grant one replica issues opens the topic on another — and what a
+    // `retain: true` channel keeps reaches a page joining on another; the fleet's shared copy, or this process's own,
+    // where the deployment gave none — the same fallbacks the actions take.
+    kv: config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.kv', KV_METHODS) ?? createMemoryKv(),
+    ...(config.realtime?.path ? { path: config.realtime.path } : {}),
+    ...(config.realtime?.transport ? { transport: config.realtime.transport } : {}),
+    ...(config.realtime?.allowedOrigins ? { allowedOrigins: config.realtime.allowedOrigins } : {}),
+    ...(config.realtime?.admitSpace ? { admitSpace: config.realtime.admitSpace } : {})
+  });
   modules.set(config, module);
 
   return module;

@@ -350,6 +350,20 @@ createServer({ /* … */, realtime: false });                             // no 
 Each process holds one adapter subscription per topic, however many pages share it; topics are namespaced by space and
 environment before they reach the adapter.
 
+**An actions runner that serves no pages** — one a deployment makes with `createActionsModule` (`@plitzi/sdk-server/actions`):
+a queue consumer, an API process answering test runs — has no channels of its own, and a job it takes that publishes
+(`ctx.publish`, `realtime.publish`) fails there on every attempt. Give it the page servers' own: the same `pubsub` and
+`kv`, so what it says reaches every page they hold open.
+
+```ts
+import { createActionRealtime, createActionsModule } from '@plitzi/sdk-server/actions';
+
+createActionsModule({ /* … */, kv, realtime: createActionRealtime({ getOfflineData, pubsub, kv }) });
+```
+
+A runner that takes jobs without it says so as it starts, naming both ways out — this one, or `jobs: { workers: 0 }` to
+leave the jobs to the page servers.
+
 **Behind a balancer.** A WebSocket needs nothing more: a page's publishes are frames on its own socket, whichever
 replica holds it. The Server-Sent Events transport needs **affinity** on the realtime path: a stream's publishes are
 `POST`s carrying the stream's token, which only the replica holding the stream knows — sent to another replica, they

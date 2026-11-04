@@ -1,4 +1,5 @@
 import { refusedCrossSite } from './crossSiteWrites';
+import { knowHostDeployment } from './hostDeployment';
 import { writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
 
@@ -75,6 +76,7 @@ export const exchangeStage: Stage = async ctx => {
     return true;
   }
 
+  await knowHostDeployment({ req, config });
   writeSessionCookies(req, res, result.session, config.authCookie);
   res.setStatus(200);
   res.setHeader('Content-Type', 'application/json');

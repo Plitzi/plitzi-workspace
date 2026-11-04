@@ -1,5 +1,6 @@
 import { refusedCrossSite } from './crossSiteWrites';
 import { exchangeStage } from './exchangeRoute';
+import { knowHostDeployment } from './hostDeployment';
 import { signInStage } from './signInRoute';
 import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
@@ -52,6 +53,7 @@ export const loginStage: Stage = async ctx => {
   // bring its own user database without also reimplementing how a session travels.
   const session = await config.adapters.authenticate?.(parseCredentials(req), req);
   if (session) {
+    await knowHostDeployment(ctx);
     writeSessionCookies(req, res, session, config.authCookie);
   }
 

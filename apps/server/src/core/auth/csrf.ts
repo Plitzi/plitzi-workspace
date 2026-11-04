@@ -2,7 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import { appendCookies, sessionCookieParams } from './session';
 
-import type { CookieSink } from './session';
+import type { CookieRequest, CookieSink } from './session';
 import type { SSRAuthCookie } from '@plitzi/sdk-shared';
 
 /**
@@ -242,7 +242,7 @@ export const createCsrf = (config: CsrfConfig) => {
   const foreign = (carrier: CsrfCarrier, alsoAllowed: readonly string[] = []): boolean =>
     crossSiteRequest(carrier, origin => permitted(origin) || alsoAllowed.includes(origin));
 
-  const nameFor = (hostname: string): string => `${sessionCookieParams(hostname, cookie).name}_csrf`;
+  const nameFor = (hostname: string): string => `${sessionCookieParams({ hostname }, cookie).name}_csrf`;
 
   const sign = (nonce: string, expiry: number, binding: string): string =>
     createHmac('sha256', secret).update(`${nonce}.${expiry}.${binding}`).digest('base64url');
@@ -269,11 +269,11 @@ export const createCsrf = (config: CsrfConfig) => {
   };
 
   /** One place the cookie's attributes are decided, so writing it and dropping it cannot disagree about them. */
-  const serialize = (hostname: string, value: string, maxAge: number): string => {
-    const params = sessionCookieParams(hostname, cookie);
+  const serialize = (req: CookieRequest, value: string, maxAge: number): string => {
+    const params = sessionCookieParams(req, cookie);
 
     return [
-      `${nameFor(hostname)}=${value}`,
+      `${nameFor(req.hostname)}=${value}`,
       'Path=/',
       `SameSite=${params.sameSite === 'none' ? 'None' : 'Lax'}`,
       `Max-Age=${maxAge}`,
@@ -323,8 +323,8 @@ export const createCsrf = (config: CsrfConfig) => {
     headerName: HEADER_NAME,
 
     /** Readable on purpose: `httpOnly` would make it impossible for a page to echo it back. It is not a credential. */
-    write: (req: { hostname: string }, res: CookieSink, token: string): void => {
-      appendCookies(res, [serialize(req.hostname, encodeURIComponent(token), TOKEN_LIFETIME)]);
+    write: (req: CookieRequest, res: CookieSink, token: string): void => {
+      appendCookies(res, [serialize(req, encodeURIComponent(token), TOKEN_LIFETIME)]);
     },
 
     /**
@@ -336,8 +336,8 @@ export const createCsrf = (config: CsrfConfig) => {
      * session cookie is present. But a logout that leaves a cookie behind is one somebody has to reason about to
      * dismiss, and on a shared browser "signed out" should mean nothing of the session is still sitting there.
      */
-    clear: (req: { hostname: string }, res: CookieSink): void => {
-      appendCookies(res, [serialize(req.hostname, '', 0)]);
+    clear: (req: CookieRequest, res: CookieSink): void => {
+      appendCookies(res, [serialize(req, '', 0)]);
     },
 
     read: (carrier: CsrfCarrier): string | undefined => readCookieHeader(carrier, nameFor(carrier.hostname)),
@@ -374,7 +374,7 @@ export const createCsrf = (config: CsrfConfig) => {
         return foreign(carrier);
       }
 
-      return readCookieHeader(carrier, sessionCookieParams(carrier.hostname, cookie).name) !== undefined;
+      return readCookieHeader(carrier, sessionCookieParams({ hostname: carrier.hostname }, cookie).name) !== undefined;
     },
 
     /**

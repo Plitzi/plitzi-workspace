@@ -168,7 +168,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     return;
   }
 
-  const limits = module.limitsFor(entry.document);
+  const limits = await module.limitsFor(spaceId, entry.document);
   const origin = requestOrigin(req);
   const input = body.input ?? {};
   const begin = {

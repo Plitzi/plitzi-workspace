@@ -8,6 +8,7 @@ import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 import { fleetStore } from '../../core/server/fleet/link';
+import { serverLog } from '../../helpers/serverLog';
 import { functionCeilings } from '../functions/config';
 import { createFunctionJobs } from '../functions/jobs';
 import { readManifest } from '../functions/manifest';
@@ -62,8 +63,11 @@ export type ActionsModule = ActionRunner & {
   /** The key/value store, namespaced to one space — the same one the `kv` tasks write through, so a rate limit the
    *  transport keeps and a counter a flow keeps cannot end up in different places. */
   kv: (spaceId: number) => ActionKvStore;
-  /** What this server will allow one run of that document to spend — the deployment's ceilings, tightened by it. */
-  limitsFor: (document: ActionDocument) => ResolvedActionLimits;
+  /**
+   * What this server will allow one run of that space's document to spend — the deployment's ceilings, tightened by the
+   * space's plan (`ActionsConfig.limitsFor`) and by the document.
+   */
+  limitsFor: (spaceId: number, document: ActionDocument) => Promise<ResolvedActionLimits>;
   /**
    * Puts the server half of a plugin this server ships in place — or takes it away, with none — while it runs: what a
    * development server does when a plugin's `functions/` change, instead of restarting. Checked as at boot: a task not
@@ -110,7 +114,8 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   const build = (from: ReadonlyMap<string, FunctionsDefinition>): ActionTaskRegistry =>
     createTaskRegistry(config.functions?.native, {
       db: (config.dbDrivers?.length ?? 0) > 0,
-      plugins: Object.fromEntries(from)
+      plugins: Object.fromEntries(from),
+      measureNative: config.functions?.measureNative === true
     });
   let current = build(plugins);
   // Handed out once and read through, so whoever holds it — a space's registry, the catalog — sees a plugin replaced.
@@ -166,7 +171,8 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
    */
   const guards = createRunGuards(config.concurrency, config.kv, config.idempotency);
   const kv = createKvStore(config.kv ?? createMemoryKv());
-  const limitsFor = (document: ActionDocument) => resolveLimits(config.limits, document.limits);
+  const limitsFor = async (spaceId: number, document: ActionDocument) =>
+    resolveLimits(config.limits, document.limits, await config.limitsFor?.(spaceId));
   const module: ActionsModule = {
     runAction,
     registry,
@@ -199,6 +205,14 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   };
 
   if (config.jobs !== false && config.lookups.listActions) {
+    // Said once, at boot: a job that publishes would fail here on every attempt, and spend its CPU on each of them.
+    if (!realtime && config.jobs?.workers !== 0) {
+      serverLog.warn(
+        'Actions',
+        "This runner takes jobs and has no realtime channels: a job that publishes (`ctx.publish`, `realtime.publish`) fails on it. Give it `realtime: createActionRealtime({ getOfflineData, pubsub, kv })` with the page servers' own, or `jobs: { workers: 0 }` to leave the jobs to them"
+      );
+    }
+
     module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups, functionJobs);
     jobsQueue = module.jobs.queue;
     // The door `$job:<id>` opens through: who started the job, and who its `watch` lets in.

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { defineFunctions } from './contract';
 import { actionLookupsOf } from '../../core/configSeam';
+import { serverLog } from '../../helpers/serverLog';
 import { createActionsModule } from '../actions';
 
 import type { FunctionContext, FunctionTask } from './contract';
@@ -55,7 +56,8 @@ const runProbe = async (
     credential,
     getData,
     getVisitor,
-    realtime
+    realtime,
+    measureNative = false
   }: {
     hosts?: string[];
     fetchImpl?: typeof fetch;
@@ -63,6 +65,7 @@ const runProbe = async (
     getData?: ActionLookups['getData'];
     getVisitor?: ActionLookupsConfig['getVisitor'];
     realtime?: ActionRealtime;
+    measureNative?: boolean;
   } = {}
 ) => {
   const probe: FunctionTask<Record<string, never>> = {
@@ -82,7 +85,7 @@ const runProbe = async (
         ? { getVisitor: actionLookupsOf({ getAction: () => Promise.resolve(undefined), getVisitor }).getVisitor }
         : {})
     },
-    functions: { native: [defineFunctions({ allow: { hosts }, tasks: [probe] })] },
+    functions: { native: [defineFunctions({ allow: { hosts }, tasks: [probe] })], measureNative },
     ...(fetchImpl ? { fetchImpl } : {}),
     ...(realtime ? { realtime } : {})
   });
@@ -286,5 +289,38 @@ describe('ctx.visitors', () => {
     );
 
     expect(result.output.value).toContain('tells no visitor apart');
+  });
+});
+
+// A project's server runs the space's functions natively; what a sandbox would stop is said as it happens.
+describe('a native function measured as a sandbox would hold it', () => {
+  const manyCalls = async (ctx: FunctionContext) => {
+    for (let index = 0; index < 120; index++) {
+      await ctx.kv.get(`key-${String(index)}`);
+    }
+
+    return 'done';
+  };
+
+  it('says the first limit it goes past, naming it and what hosted would answer, once a task', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    await runProbe(manyCalls, { measureNative: true });
+    await runProbe(manyCalls, { measureNative: true });
+    const said = warn.mock.calls.filter(([scope]) => scope === 'Functions').map(([, message]) => message);
+    warn.mockRestore();
+
+    expect(said).toHaveLength(1);
+    expect(said[0]).toContain('probe.run spent 120 calls to the platform, and a sandbox stops one at 100 (`calls`)');
+    expect(said[0]).toContain('Made more than the 100 calls to the platform it may');
+  });
+
+  it('measures nothing on a server that does not ask it to', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    const result = await runProbe(manyCalls);
+    const said = warn.mock.calls.filter(([scope]) => scope === 'Functions');
+    warn.mockRestore();
+
+    expect(result.output.value).toBe('done');
+    expect(said).toHaveLength(0);
   });
 });

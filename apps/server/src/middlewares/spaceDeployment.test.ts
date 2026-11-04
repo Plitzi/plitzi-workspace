@@ -28,7 +28,7 @@ const run = async (deployment: SSRSpaceDeployment) => {
   const adapters = { getSpaceDeployment: () => Promise.resolve(deployment) } as unknown as SSRPageAdapters;
   const next = vi.fn(() => Promise.resolve());
 
-  await spaceDeploymentMiddleware(adapters)(req, res, next);
+  await spaceDeploymentMiddleware(adapters, {})(req, res, next);
 
   return { headers, next, res };
 };
@@ -59,6 +59,20 @@ describe('spaceDeploymentMiddleware — framing', () => {
     const { headers } = await run({ spaceId: 42, frameAncestors: ['*'] });
 
     expect(headers['Content-Security-Policy']).toBe('frame-ancestors *');
+  });
+
+  // A domain's own sites are added to the space's, and frame its pages there alone.
+  it('adds the sites a domain lets frame it to those of its space', async () => {
+    const domain = { frameAncestors: ['https://shop.example', 'https://acme.com'] };
+
+    expect((await run({ spaceId: 42, security: domain })).headers['Content-Security-Policy']).toBe(
+      "frame-ancestors 'self' https://shop.example https://acme.com"
+    );
+    expect(
+      (await run({ spaceId: 42, frameAncestors: ["'self'", 'https://acme.com'], security: domain })).headers[
+        'Content-Security-Policy'
+      ]
+    ).toBe("frame-ancestors 'self' https://acme.com https://shop.example");
   });
 
   it('leaves the default alone when the consumer resolves no policy', async () => {

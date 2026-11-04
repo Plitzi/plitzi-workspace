@@ -35,6 +35,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     flags: config.flags,
     functions: functionsConfigOf(config.functions),
     limits: config.action?.limits,
+    limitsFor: config.action?.limitsFor,
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
     jobs: config.action?.jobs,

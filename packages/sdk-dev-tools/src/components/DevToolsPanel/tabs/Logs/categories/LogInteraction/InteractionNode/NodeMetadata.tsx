@@ -2,6 +2,7 @@ import { getValuesRequired } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
 import { syntaxHighlight } from '@plitzi/sdk-shared/helpers';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 
 import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -31,7 +32,7 @@ const NodeMetadata = ({ when, whenParams }: NodeMetadataProps) => {
       </span>
       <pre
         className="overflow-auto rounded bg-zinc-50 p-2 font-mono text-xs leading-5 dark:bg-zinc-800"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: ownHtml(content) }}
       />
     </div>
   );

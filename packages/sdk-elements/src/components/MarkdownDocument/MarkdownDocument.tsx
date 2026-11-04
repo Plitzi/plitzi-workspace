@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import markdownTree from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { keptByText } from './helpers/keptByText';
 import { markdownComponents } from './helpers/markdownComponents';
 import { rehypeHeadingAnchors } from './helpers/rehypeHeadingAnchors';
+import { keptByText } from '../../Element/helpers/keptByText';
 
 import type { MarkdownClassNames } from './helpers/markdownParts';
 import type { HeadingAnchor } from './helpers/rehypeHeadingAnchors';

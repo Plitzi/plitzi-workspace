@@ -10,6 +10,7 @@ import MarkdownDocument from '../../../components/MarkdownDocument';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import { authorHtml } from '../../../Element/security/authorHtml';
 import useMarkdownClassNames from '../Markdown/hooks/useMarkdownClassNames';
 
 import type { RefObject } from 'react';
@@ -53,7 +54,7 @@ const RichText = ({ ref, className = '', content = '', format = 'html', mediaBas
         className
       )}
     >
-      {format === 'html' && <div dangerouslySetInnerHTML={{ __html: html }} />}
+      {format === 'html' && <div dangerouslySetInnerHTML={{ __html: authorHtml(html) }} />}
       {format === 'markdown' && <MarkdownDocument classNames={classNames}>{content}</MarkdownDocument>}
       {format === 'text' && <div className="plitzi-component__rich-text-plain">{content}</div>}
     </RootElement>

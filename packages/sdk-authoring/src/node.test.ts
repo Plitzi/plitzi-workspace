@@ -320,6 +320,33 @@ describe('projectSpace', () => {
     expect((await authorProjectSpace()).schema.definition.permanentUrl).toBe('shop');
   });
 
+  // Its icon found by name, as its server and the push read the space: the one the space names is never replaced.
+  it('takes the project’s icon by its name when the space names none: public/assets/ first, then public/', async () => {
+    const shop =
+      "export const space = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [] }] };\n";
+    const iconOf = async (files: string[], source = shop) => {
+      const folder = projectWith(source);
+      folders.push(folder);
+      files.forEach(file => {
+        mkdirSync(path.dirname(path.join(folder, file)), { recursive: true });
+        writeFileSync(path.join(folder, file), '<svg/>');
+      });
+
+      return (await projectSpaceAt(folder)).space.settings?.favicon;
+    };
+
+    expect(await iconOf([])).toBeUndefined();
+    expect(await iconOf(['public/favicon.ico'])).toBe('/favicon.ico');
+    expect(await iconOf(['public/favicon.png', 'public/favicon.svg'])).toBe('/favicon.svg');
+    expect(await iconOf(['public/favicon.svg', 'public/assets/favicon.png'])).toBe('/assets/favicon.png');
+    expect(
+      await iconOf(
+        ['public/assets/favicon.svg'],
+        "export const space = { name: 'Shop', permanentUrl: 'shop', settings: { favicon: 'https://cdn.example/i.svg' }, pages: [{ name: 'Home', slug: '', body: [] }] };\n"
+      )
+    ).toBe('https://cdn.example/i.svg');
+  });
+
   // An export renamed or forgotten: said as what to export, not as `undefined` read three calls later.
   it('refuses a space module that exports no space, saying what to export', async () => {
     const folder = projectWith("export const site = { name: 'Shop' };\n");

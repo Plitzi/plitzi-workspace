@@ -28,6 +28,11 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
    * the page server's mirror. Absent means Google itself — a page the SDK renders with no page server behind it.
    */
   googleFontsUrl?: string;
+  /**
+   * The page's script policy as its server sent it (`SSRServerConfig.scriptPolicy`): `'enforce'`, and the SDK's Trusted
+   * Types policies clean what an author or the data wrote before it is put in the page; anything else, they pass it on.
+   */
+  scriptPolicy?: 'report-only' | 'enforce';
   websocketServer: string;
   subscriptionServer: string;
   location?: Location;

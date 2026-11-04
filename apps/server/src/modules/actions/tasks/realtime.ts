@@ -2,6 +2,9 @@ import { DEFAULT_GRANT_SECONDS, MAX_GRANT_SECONDS } from '../../realtime/grants'
 
 import type { ActionTask } from '../types';
 
+export const NO_REALTIME =
+  "This runner has no realtime channels: one made with `createActionsModule` publishes when it is given `realtime: createActionRealtime({ getOfflineData, pubsub, kv })`, with the page servers' own pubsub and kv";
+
 const parse = (value: unknown): unknown => {
   if (typeof value !== 'string') {
     return value;
@@ -32,7 +35,7 @@ const publish: ActionTask<{ topic: string; type: string; data: unknown }> = {
   },
   run: async ({ topic, type, data }, ctx) => {
     if (!ctx.publish) {
-      throw new Error('This server has no realtime channels');
+      throw new Error(NO_REALTIME);
     }
 
     await ctx.publish(topic, type, parse(data));
@@ -63,7 +66,7 @@ const grant: ActionTask<{ topic: string; ttlSeconds: string | number }> = {
   },
   run: async ({ topic, ttlSeconds }, ctx) => {
     if (!ctx.grant) {
-      throw new Error('This server has no realtime channels');
+      throw new Error(NO_REALTIME);
     }
 
     const seconds = ttlSeconds === '' ? undefined : Number(ttlSeconds);
@@ -89,7 +92,7 @@ const revoke: ActionTask<{ topic: string; grant: string }> = {
   },
   run: async ({ topic, grant }, ctx) => {
     if (!ctx.revoke) {
-      throw new Error('This server has no realtime channels');
+      throw new Error(NO_REALTIME);
     }
 
     await ctx.revoke(topic, grant ? grant : undefined);

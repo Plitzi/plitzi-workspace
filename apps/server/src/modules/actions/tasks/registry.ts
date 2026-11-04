@@ -41,6 +41,8 @@ export type TaskRegistryOptions = {
   db?: boolean;
   /** The server halves of the plugins this server ships, by plugin type: their tasks are `<type>.<action>`. */
   plugins?: Readonly<Record<string, FunctionsDefinition>>;
+  /** Measure the native functions' invocations against a sandbox's limits, and say one past them (`nativeTasks`). */
+  measureNative?: boolean;
 };
 
 /**
@@ -52,7 +54,7 @@ export type TaskRegistryOptions = {
  */
 export const createTaskRegistry = (
   functions: readonly FunctionsDefinition[] = [],
-  { db = false, plugins = {} }: TaskRegistryOptions = {}
+  { db = false, plugins = {}, measureNative = false }: TaskRegistryOptions = {}
 ): ActionTaskRegistry => {
   const tasks = new Map<string, RegisteredTask>();
 
@@ -61,7 +63,7 @@ export const createTaskRegistry = (
   const shipped = db ? [...builtinTasks, ...dbTasks] : builtinTasks;
   shipped.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task), origin: 'deployment' }));
 
-  nativeTasks(functions).forEach(task => {
+  nativeTasks(functions, { measure: measureNative }).forEach(task => {
     const problem = taskNameProblem(task);
     if (problem) {
       throw new Error(`[Actions] ${problem}`);
@@ -77,7 +79,7 @@ export const createTaskRegistry = (
 
   // A plugin's tasks are named after it, so no two plugins — and no plugin and the deployment — claim one name.
   Object.entries(plugins).forEach(([plugin, definition]) => {
-    nativeTasks([definition], { plugin }).forEach(task => {
+    nativeTasks([definition], { scope: { plugin } }).forEach(task => {
       const problem =
         taskNameProblem(task) ??
         (task.namespace === plugin ? undefined : pluginTaskProblem(plugin, task.namespace, task.action));

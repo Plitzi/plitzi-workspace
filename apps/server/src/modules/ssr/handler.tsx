@@ -151,7 +151,7 @@ export const renderSSR = async (
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     }
 
-    sendScriptPolicy(res, config, page.nonce);
+    sendScriptPolicy(res, config, page.nonce, req.ctx.spaceDeployment);
     // A copy of the compressed forms: one made for a client that takes another encoding is not added to the kept page
     // behind the cache's back, where its bytes would go uncounted.
     res.send(() => pageHtml(page), { compressed: { ...page.compressed } });
@@ -214,7 +214,7 @@ export const renderSSR = async (
       return;
     }
 
-    sendScriptPolicy(res, config, rendered.nonce);
+    sendScriptPolicy(res, config, rendered.nonce, req.ctx.spaceDeployment);
     res.send(rendered.body ?? '', page ? { compressed: { ...page.compressed } } : undefined);
   };
 

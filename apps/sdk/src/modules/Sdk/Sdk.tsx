@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useResolvedVariables } from '@plitzi/sdk-elements/dataSource';
 import { PluginAssetsContext } from '@plitzi/sdk-shared/plugins/react';
+import { startMarkupPolicies } from '@plitzi/sdk-shared/security';
 import { useActionsSync, useImagesSync, useRealtimeSync, useRscSync } from '@plitzi/sdk-shared/server';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import {
@@ -49,6 +50,12 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   // and the server would write this sheet without the variables that the browser hydrates it with.
   const variables = useResolvedVariables();
   const { renderMode, previewMode, debugMode, environment, enclosed } = useRenderSettings();
+  // Before anything below writes markup — the head's JSON-LD, React's first script — and as the page's server sent its
+  // policy. A page's `render` started them already; this is for an SDK mounted another way (`<PlitziSdk />`).
+  // Idempotent, so a render again starts nothing new.
+  useMemo(() => {
+    startMarkupPolicies(server?.scriptPolicy);
+  }, [server?.scriptPolicy]);
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
   useRealtimeSync(server?.ssr);

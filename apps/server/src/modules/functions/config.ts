@@ -15,6 +15,12 @@ export type FunctionUsageRecord = { spaceId: number; task: string; ok: boolean; 
 export type FunctionsConfig = {
   native?: FunctionsDefinition[];
   /**
+   * Say when an invocation of `native` spends more than a sandbox would let it — calls to `ctx`, CPU, time, the bytes it
+   * answers — naming the limit, once per task: a project's own server, whose functions are a hosted space's, runs them
+   * natively and held to nothing, and what passed there would fail hosted. Measured, never enforced.
+   */
+  measureNative?: boolean;
+  /**
    * The server halves of the plugins this server ships, by plugin type — loaded natively like `native`, but each with a
    * plugin's narrower `ctx` (its own `kv` and limits, signatures only it verifies, none of the space's credentials or
    * channels). Their tasks are `<type>.<action>`, their routes answer under `/fn/plugins/<type>/`.

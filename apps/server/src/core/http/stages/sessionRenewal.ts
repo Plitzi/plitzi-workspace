@@ -1,3 +1,4 @@
+import { knowHostDeployment } from './hostDeployment';
 import { isDocumentNavigation, renewForNavigation } from '../../auth/renewal';
 import { readRenewalGuard, readSessionHint, readSessionToken, writeRenewalGuard } from '../../auth/session';
 import { requestAuthority } from '../../requestParser';
@@ -62,7 +63,7 @@ export const createSessionRenewalStage = (url: string): Stage<BaseContext> => {
   const sameHost = url.startsWith('/') && !url.startsWith('//');
   const renewalPath = sameHost ? new URL(url, 'http://localhost').pathname : undefined;
 
-  return ({ req, res, config }) => {
+  return async ({ req, res, config }) => {
     if (req.method !== 'GET' || req.path === renewalPath || !isDocumentNavigation(req.headers)) {
       return false;
     }
@@ -74,6 +75,7 @@ export const createSessionRenewalStage = (url: string): Stage<BaseContext> => {
     const target = new URL(url, pageUrl(req));
     target.searchParams.set('redirect', sameHost ? `${req.path}${req.search}` : pageUrl(req));
 
+    await knowHostDeployment({ req, config });
     writeRenewalGuard(req, res, config.authCookie);
 
     res.setStatus(303);

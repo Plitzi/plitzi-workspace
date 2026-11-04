@@ -509,6 +509,32 @@ const isSpaceSpec = (value: unknown): value is SpaceSpec =>
 /** The space a project declares in `src/space/`, with what it is checked against (`projectAuthoring`). */
 export type ProjectSpaceSource = { space: SpaceSpec; authoring: ProjectAuthoring };
 
+/** The names a project's icon is found by, the first there winning: a vector first, then a picture, then the classic. */
+const ICON_NAMES = ['favicon.svg', 'favicon.png', 'favicon.ico'];
+
+/**
+ * The icon a project keeps, by its name, for a space that names none (`settings.favicon`): in `public/assets/` first —
+ * served by a project's own server, and put on the space's CDN by `plitzi space push` — else in `public/`, which only a
+ * project's own server serves (push says so). As the page names it: `/assets/favicon.svg`, `/favicon.svg`.
+ */
+export const projectIcon = (root: string): string | undefined => {
+  for (const folder of ['assets', '']) {
+    const name = ICON_NAMES.find(file => existsSync(path.join(root, PUBLIC_DIR, folder, file)));
+    if (name) {
+      return `/${folder ? `${folder}/` : ''}${name}`;
+    }
+  }
+
+  return undefined;
+};
+
+/** The space with the project's icon when it names none of its own: one it names is never replaced. */
+const withProjectIcon = (space: SpaceSpec, root: string): SpaceSpec => {
+  const icon = space.settings?.favicon === undefined ? projectIcon(root) : undefined;
+
+  return icon === undefined ? space : { ...space, settings: { ...space.settings, favicon: icon } };
+};
+
 /**
  * `projectSpace` of the project at `root`, held to the same checks: for a tool that works on a project from another
  * folder — the CLI, run anywhere inside one. A project's own code calls `projectSpace()` or `authorProjectSpace()`.
@@ -524,7 +550,7 @@ export const projectSpaceAt = async (root: string): Promise<ProjectSpaceSource> 
     throw new ProjectSpaceError(SPACE_ENTRY);
   }
 
-  return { space, authoring };
+  return { space: withProjectIcon(space, root), authoring };
 };
 
 /**

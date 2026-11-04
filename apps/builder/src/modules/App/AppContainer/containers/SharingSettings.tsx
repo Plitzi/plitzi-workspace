@@ -4,7 +4,7 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
-import { spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
+import { DEFAULT_FAVICON, spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Notice from '@pmodules/App/components/Notice';
 
@@ -33,6 +33,10 @@ const SharingSettings = () => {
     typeof identity.themeColor === 'object' ? (identity.themeColor.light ?? '') : (identity.themeColor ?? '');
   const dark = typeof identity.themeColor === 'object' ? (identity.themeColor.dark ?? '') : '';
   const problems = spaceIdentityProblems(identity);
+  // What the tab shows, drawn here when this page can reach it: an address, or Plitzi's own (served by every page
+  // server, this one's included). A file of the site (`/assets/favicon.svg`) is the site's, on another host.
+  const iconShown = identity.favicon ?? DEFAULT_FAVICON;
+  const showsIcon = identity.favicon === undefined || /^https?:\/\//.test(identity.favicon);
 
   const save = useCallback(
     (name: string, value: unknown) => {
@@ -127,10 +131,20 @@ const SharingSettings = () => {
           size="sm"
           name="favicon"
           label="Icon"
-          placeholder="/favicon.svg — Plitzi's when left out"
+          placeholder="https://… — Plitzi's when left out"
           value={identity.favicon ?? ''}
           onChange={handleText('favicon')}
         />
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
+          {showsIcon && <img src={iconShown} alt="" width={16} height={16} className="size-4 shrink-0" />}
+          <span>
+            {identity.favicon === undefined
+              ? "The tab shows Plitzi's icon. Name an address here — a file on your CDN — or, in a project, keep a favicon.svg, .png or .ico in public/assets/: it is found by its name."
+              : showsIcon
+                ? 'The tab shows this icon.'
+                : `The tab shows ${identity.favicon}, a file of the site: it is drawn on the site, not here.`}
+          </span>
+        </div>
         <Input
           size="sm"
           name="themeColorLight"

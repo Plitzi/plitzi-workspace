@@ -110,7 +110,7 @@ export const streamBody = async (
           return;
         }
 
-        sendScriptPolicy(res, config, nonce);
+        sendScriptPolicy(res, config, nonce, req.ctx.spaceDeployment);
         res.write(Buffer.from(head, 'utf-8'));
         pipe(writable);
       },

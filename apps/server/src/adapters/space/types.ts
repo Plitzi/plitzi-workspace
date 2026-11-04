@@ -1,4 +1,11 @@
-import type { Environment, PluginSource, SSRCredential, SSRRequest, SSRTemplateProps } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  PluginSource,
+  SSRCredential,
+  SSRDeploymentSecurity,
+  SSRRequest,
+  SSRTemplateProps
+} from '@plitzi/sdk-shared';
 
 /**
  * Which space a request resolved to, before the server fills in what is the same for everybody.
@@ -13,6 +20,11 @@ export interface SpaceResolution {
   /** Defaults to `0` — the live snapshot. */
   revision?: number;
   credential?: SSRCredential;
+  /**
+   * What the host's pages are held to, as the row that resolved it says (`SSRSpaceDeployment.security`): kept with the
+   * resolution, so no request asks for it again. Absent, the server's own.
+   */
+  security?: SSRDeploymentSecurity;
   /**
    * This render is an author looking at their own work rather than a visitor being served. Metering skips it.
    * `authoringPreview` sets it; nothing infers it, because only the resolver can tell the two apart.

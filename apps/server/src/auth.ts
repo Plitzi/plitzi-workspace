@@ -61,6 +61,7 @@ export {
   readRefreshToken,
   readSessionHint,
   readSessionToken,
+  registrableDomain,
   sessionCookieParams,
   sessionHintValue,
   sessionReturnTarget,
@@ -142,7 +143,14 @@ export type {
   StartedFlow
 } from './core/auth/oauth';
 export type { AuthRequest, AuthRoute } from './core/auth/routes';
-export type { CookieCarrier, CookieSink, SessionCookieParams, SessionCookies, SessionHint } from './core/auth/session';
+export type {
+  CookieCarrier,
+  CookieRequest,
+  CookieSink,
+  SessionCookieParams,
+  SessionCookies,
+  SessionHint
+} from './core/auth/session';
 export type {
   SpaceTokenAdapters,
   SpaceTokenApi,

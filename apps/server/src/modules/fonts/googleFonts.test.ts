@@ -118,14 +118,8 @@ describe('the Google Fonts mirror', () => {
   it('serves the stylesheet of a CJK family whole, and sends to Google only one past what a page could ask for', async () => {
     const face = (index: number) =>
       `@font-face { font-family: 'Zen Kaku Gothic New'; font-weight: 400; src: url(https://fonts.gstatic.com/s/zen/v1/${String(index)}.woff2) format('woff2'); unicode-range: U+${index.toString(16)}00-${index.toString(16)}ff; }\n`;
-    const sheetOf = (bytes: number) => {
-      let text = '';
-      for (let index = 0; Buffer.byteLength(text) < bytes; index++) {
-        text += face(index);
-      }
-
-      return text;
-    };
+    // One face repeated past the size: building it face by face took seconds for two megabytes.
+    const sheetOf = (bytes: number) => face(0).repeat(Math.ceil(bytes / Buffer.byteLength(face(0))) + 1);
     const answering = (css: string) =>
       vi.fn((): Promise<Response> => Promise.resolve(new Response(css, { headers: { 'content-type': 'text/css' } })));
 

@@ -40,6 +40,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.17",
     "immer": "^11.1.21",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.2",

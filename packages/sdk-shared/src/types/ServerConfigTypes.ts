@@ -60,8 +60,16 @@ export type SSRActionConfig = {
    * the endpoint keeps answering element-addressed connector writes alone.
    */
   lookups?: ActionLookupsConfig;
-  /** Ceilings for every run this server accepts. A document may tighten them, never widen them. */
+  /**
+   * Ceilings for every run this server accepts. A space's plan (`limitsFor`) and a document may tighten them, never
+   * widen them.
+   */
   limits?: ActionLimits;
+  /**
+   * What one run of that space's actions may spend — its plan's, each at most `limits`; an unset one is `limits`'. Read
+   * on every run, so a deployment caches what it answers. Absent, every space gets `limits`.
+   */
+  limitsFor?: (spaceId: number) => Promise<ActionLimits | undefined>;
   /**
    * Concurrency ceilings.
    *
@@ -510,12 +518,20 @@ export type SSRServerConfig = {
   crossOriginOpenerPolicy?: false | 'same-origin' | 'same-origin-allow-popups' | 'unsafe-none';
   /**
    * A page's script policy, against cross-site scripting: only the scripts its template writes run — by the render's
-   * nonce — and what they load (`'strict-dynamic'`); no plugin objects, no `<base>`. `'report-only'`, the default,
-   * enforces nothing yet: the browser reports to `/_plitzi/csp-report` what it would have refused, and the server says
-   * it in its log, so a space's own scripts (a raw HTML block's, a tag the space added) are seen before anything is
-   * refused. A cached page keeps its render's nonce while it is kept. `false` sends none, and writes no nonce.
+   * nonce — and what they load (`'strict-dynamic'`); no plugin objects, no `<base>`. `'enforce'` refuses the rest — an
+   * inline handler, a script a raw HTML block brought, an injected one. `'report-only'`, the default, refuses nothing:
+   * the browser reports to `/_plitzi/csp-report` what it would have refused, and the server says it in its log, so a
+   * space's own scripts are seen before anything is refused. A space's deployment may say otherwise for its host
+   * (`SSRSpaceDeployment.security`). A cached page keeps its render's nonce while it is kept. `false` sends none.
    */
-  scriptPolicy?: false | 'report-only';
+  scriptPolicy?: false | 'report-only' | 'enforce';
+  /**
+   * Trusted Types beside the script policy: every write of markup into the page (an `innerHTML`, a script's text) goes
+   * through one of the SDK's named policies, which clean what an author or the data wrote (DOMPurify) when the page's
+   * policy is enforced. `'report-only'` (the default, while there is a script policy) reports a write that went through
+   * none; `false` asks nothing.
+   */
+  trustedTypes?: false | 'report-only';
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
@@ -527,6 +543,8 @@ export type SSRServerConfig = {
    */
   functions?: {
     native?: unknown[];
+    /** Say an invocation of `native` that spends more than a sandbox would let it (sdk-server's `FunctionsConfig`). */
+    measureNative?: boolean;
     plugins?: Record<string, unknown>;
     runner?: unknown;
     limits?: Record<string, number>;

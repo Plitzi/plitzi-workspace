@@ -55,6 +55,10 @@ space while it hydrates.
   warm. A store that cannot answer is a miss, said in the log.
 - The query string is keyed in one order, without the parameters `cache.ignoredQueryParams` names.
 - The RSC answers and the schema data are bounded by bytes too.
+- **A space's plan bounds its actions**: `action.limitsFor(spaceId)` answers what one run of that space may spend —
+  each limit at most the deployment's `action.limits`, and a document's `limits` tighter still. A deployment selling
+  more to some spaces than to others sets `action.limits` to its largest plan's. `ActionsModule.limitsFor` takes the
+  space and answers a promise: `await limitsFor(spaceId, document)`.
 
 ## The space's stylesheet
 
@@ -120,7 +124,7 @@ space while it hydrates.
   dev tools when nothing takes it up). With hydration as a transition that window was long enough for the cookie bar
   to ignore a click.
 - **A published page's containers follow the registries through `ElementRegistryContext`** (`@plitzi/sdk-shared/
-  plugins/react`), whose value never changes: a plugin arriving, the host's components handed over, redraw the
+plugins/react`), whose value never changes: a plugin arriving, the host's components handed over, redraw the
   containers whose items they concern instead of every container of the page.
 - The page's context carries only what holds for the life of the page (see above), and the plugins' stylesheets their
   own context: an element registering its styles as it mounts drew every container again.

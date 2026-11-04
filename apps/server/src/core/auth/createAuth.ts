@@ -84,7 +84,7 @@ export const createAuth = (config: AuthConfig) => {
 
   // Both halves of the cookie contract from one source: the readers ask this for the name a credential arrives
   // under, and the writers put it there under the same one.
-  const cookieName = (hostname: string): string => sessionCookieParams(hostname, config.cookie).name;
+  const cookieName = (hostname: string): string => sessionCookieParams({ hostname }, config.cookie).name;
   const cookies = createSessionCookies(config.cookie);
 
   const identity = createIdentity({

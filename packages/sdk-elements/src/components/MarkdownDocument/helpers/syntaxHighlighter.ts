@@ -9,7 +9,7 @@ import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
 import ts from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
 
-import { keptByText } from './keptByText';
+import { keptByText } from '../../../Element/helpers/keptByText';
 
 import type { ReactElement } from 'react';
 import type { SyntaxHighlighterProps } from 'react-syntax-highlighter';

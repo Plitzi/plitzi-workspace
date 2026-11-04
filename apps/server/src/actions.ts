@@ -16,6 +16,12 @@
  * checks: a trigger that skipped them would be a weaker path to the same work.
  */
 export { createActionsModule, spaceKvPatterns } from './modules/actions';
+/**
+ * The realtime channels such a runner publishes on — a job's `ctx.publish`, a flow's `realtime.publish` — over the page
+ * servers' own `pubsub` and `kv`: `createActionsModule({ realtime: createActionRealtime(…) })`.
+ */
+export { createActionRealtime } from './modules/realtime';
+export type { RealtimeModuleOptions as ActionRealtimeOptions } from './modules/realtime';
 
 /**
  * Scheduled runs: a durable queue, a leaderless producer and the workers that drain it.

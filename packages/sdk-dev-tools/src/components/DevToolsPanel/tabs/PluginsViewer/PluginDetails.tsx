@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { syntaxHighlight } from '@plitzi/sdk-shared/helpers';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 
 import type { ComponentOrigin } from '@plitzi/sdk-shared';
 
@@ -66,7 +67,7 @@ const PluginDetails = ({ entry }: PluginDetailsProps) => {
           {settingsParsed ? (
             <pre
               className="overflow-auto rounded bg-zinc-50 p-2 font-mono text-xs leading-5 dark:bg-zinc-800"
-              dangerouslySetInnerHTML={{ __html: settingsParsed }}
+              dangerouslySetInnerHTML={{ __html: ownHtml(settingsParsed) }}
             />
           ) : (
             <span className="text-xs text-zinc-400 italic dark:text-zinc-500">No settings</span>

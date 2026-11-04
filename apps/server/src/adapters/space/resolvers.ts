@@ -2,7 +2,7 @@ import { refuse } from './types';
 
 import type { SpaceResolution, SpaceResolver } from './types';
 import type { Grant, GrantOptions, GrantResult } from '../../core/auth/identity';
-import type { Environment, SSRCredential, SSRRequest } from '@plitzi/sdk-shared';
+import type { Environment, SSRCredential, SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-shared';
 
 /**
  * Did this request even try to present a credential?
@@ -23,6 +23,8 @@ export interface DeploymentRow {
   credential?: SSRCredential;
   /** `false` refuses the request outright. A domain that is not proven is not a domain this space answers on. */
   verified?: boolean;
+  /** What the domain's pages are held to, where its owner chose (`SSRDeploymentSecurity`). */
+  security?: SSRDeploymentSecurity;
 }
 
 /**
@@ -40,7 +42,7 @@ export const verifiedDomain = (find: (domain: string) => Promise<DeploymentRow |
       return refuse(404, 'Domain not verified');
     }
 
-    const { spaceId, environment, credential } = row;
+    const { spaceId, environment, credential, security } = row;
 
     return {
       spaceId,
@@ -48,7 +50,8 @@ export const verifiedDomain = (find: (domain: string) => Promise<DeploymentRow |
       // A null revision means "the live one", which is what 0 says here. They arrive as different values from a
       // nullable column and mean the same thing.
       revision: row.revision ?? 0,
-      ...(credential ? { credential } : {})
+      ...(credential ? { credential } : {}),
+      ...(security ? { security } : {})
     };
   };
 };
@@ -56,8 +59,15 @@ export const verifiedDomain = (find: (domain: string) => Promise<DeploymentRow |
 export interface WildcardSubdomainOptions {
   /** The domain the sub-domains hang off, with or without a leading dot — `plitzi.app` or `.plitzi.app`. */
   suffix: string;
-  /** The slug IS the sub-domain. Return nothing for a slug that names no space. */
-  find: (slug: string) => Promise<{ spaceId: number; environment?: Environment } | undefined>;
+  /**
+   * The slug IS the sub-domain. Return nothing for a slug that names no space. A space's own script policy goes in
+   * `security`; the rest of it is the domain's, and this one is the deployment's own.
+   */
+  find: (
+    slug: string
+  ) => Promise<
+    { spaceId: number; environment?: Environment; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'> } | undefined
+  >;
 }
 
 /**

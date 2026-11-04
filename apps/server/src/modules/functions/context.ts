@@ -5,6 +5,7 @@ import { pluginKvPrefix, pluginSigned } from './scope';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { prefixKv } from '../actions/runtime/namespaceKv';
 import { countRate, refusedOver } from '../actions/runtime/rateLimit';
+import { NO_REALTIME } from '../actions/tasks/realtime';
 
 import type { FunctionContext, FunctionFetch, FunctionJobs, FunctionUser } from './contract';
 import type { FunctionScope } from './scope';
@@ -108,7 +109,7 @@ export const lineOf = (values: readonly unknown[]): string =>
     })
     .join(' ');
 
-const unavailable = (what: string) => () => Promise.reject(new Error(`This server has no realtime channels (${what})`));
+const unavailable = (what: string) => () => Promise.reject(new Error(`${NO_REALTIME} (${what})`));
 
 const unsigned = () => Promise.reject(new Error('This server signs nothing: its actions were given no signingSecret'));
 

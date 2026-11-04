@@ -631,7 +631,9 @@ connection while it does. The caller gets **504**, and the run is written to the
 with the budget it exceeded as its reason.
 
 Every ceiling here is the deployment's (`action.limits`, and on Plitzi's own the `ACTIONS_*` environment
-variables), and a per-action `limits` block may tighten any of them and widen none.
+variables). A deployment that sells more to some spaces than to others sets those ceilings to its largest plan's, and
+`action.limitsFor(spaceId)` answers each space's — tighter or the same, never more (on Plitzi's own, the workspace's
+plan). A per-action `limits` block may tighten any of them and widen none.
 
 A run is billed once, as a `server_action`. A run that was refused is not billed — billing a 409 only teaches
 callers to retry harder — and neither is one answered from an earlier run's result. A **test run from the builder

@@ -1,5 +1,7 @@
 import { createElement, useState } from 'react';
 
+import { ownHtml } from '@plitzi/sdk-shared/security';
+
 import type { CSSProperties, ReactNode } from 'react';
 
 type Snapshot = {
@@ -93,7 +95,7 @@ const ServerStaticShell = ({ id, frozen, children }: { id: string; frozen: boole
     className: snapshot.className || undefined,
     style: snapshot.style,
     ...snapshot.attrs,
-    dangerouslySetInnerHTML: { __html: snapshot.html }
+    dangerouslySetInnerHTML: { __html: ownHtml(snapshot.html) }
   });
 };
 

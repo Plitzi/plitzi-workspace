@@ -191,7 +191,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   // those, and one that needs the envelope declares `payload: json` and gets everything. Undeclared keys are
   // dropped by the input contract either way.
   const input = { ...payload, payload };
-  const limits = module.limitsFor(entry.document);
+  const limits = await module.limitsFor(spaceId, entry.document);
   const begin = {
     spaceId,
     actionId: entry.id,

@@ -143,7 +143,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
         idempotencyKey: `render:${randomUUID()}`,
         // Counted as traffic rather than as somebody asking for work: a page's popularity must not be refused.
         kind: 'render',
-        ttlMs: module.limitsFor(entry.document).timeoutMs
+        ttlMs: (await module.limitsFor(spaceId, entry.document)).timeoutMs
       });
       ownRunId = run.runId;
 

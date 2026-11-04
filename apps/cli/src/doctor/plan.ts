@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { hostedOptionsFindings, isSpaceRuns } from './hostedOptions';
 import { sayer } from './types';
 import { authorizedRequest, currentConnection } from '../account/session';
 import { readFunctionsFiles } from '../commands/functions/functions';
@@ -102,6 +103,11 @@ export const checkPlan: Check = async ({ root, origin }) => {
         )
       );
     }
+  }
+
+  // A server that says what one run may spend there: what the project's own server is told otherwise.
+  if (isSpaceRuns(entitlements.runs)) {
+    findings.push(...(await hostedOptionsFindings(root, origin.space.name, entitlements.runs)));
   }
 
   return findings;

@@ -366,8 +366,16 @@ export type ActionsConfig = {
   flags?: SSRServerConfig['flags'];
   /** Code of the server's own, and the sandbox for the spaces' — see `FunctionsConfig`. */
   functions?: FunctionsConfig;
-  /** Ceilings a per-action document may tighten but never exceed. */
+  /**
+   * Ceilings a space's plan (`limitsFor`) and a per-action document may tighten but never exceed. A deployment that
+   * sells more to some spaces than to others sets these to what its largest plan sells, and `limitsFor` to each.
+   */
   limits?: ActionLimits;
+  /**
+   * What one run of that space's actions may spend — its plan's, each at most `limits`; an unset one is `limits`'. Read
+   * on every run, so a deployment caches what it answers. Absent, every space gets `limits`.
+   */
+  limitsFor?: (spaceId: number) => Promise<ActionLimits | undefined>;
   /** How many runs may be in flight at once. Counted per space and for the process as a whole. */
   concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
   /** Where the `kv` tasks keep things. Omitted → an in-process Map, which is per-replica by definition. */

@@ -2,7 +2,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectModule } from './projectModules';
 import { sayer } from './types';
-import { readFunctionsFiles } from '../commands/functions/functions';
+import { ISOLATES_INSTALL, isolatesMissing, readFunctionsFiles } from '../commands/functions/functions';
+import { projectAdd } from '../scaffold/packageManager';
 import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { Check } from './types';
@@ -93,5 +94,21 @@ export const checkFunctions: Check = async ({ root, answers }) => {
     ];
   }
 
-  return problems.map(problem => say.error('functions-do-not-build', problem.message, { file: problem.where }));
+  const findings = problems.map(problem =>
+    say.error('functions-do-not-build', problem.message, { file: problem.where })
+  );
+  // Not needed to serve them — the project's server runs them natively — but the one way to try them within the
+  // platform's limits before they go up (`plitzi functions dev`), and a native module to build, so never installed unasked.
+  const { missing } = isolatesMissing(root);
+  if (missing.length > 0) {
+    findings.push(
+      say.info(
+        'functions-isolates-missing',
+        `plitzi functions dev runs ${FUNCTIONS_DIR}/ as the platform does — in isolates, within its limits — and this project lacks ${missing.join(', ')} for it. Its own server runs them natively, and says what a sandbox would stop.`,
+        { file: 'package.json', fix: projectAdd(ISOLATES_INSTALL) }
+      )
+    );
+  }
+
+  return findings;
 };

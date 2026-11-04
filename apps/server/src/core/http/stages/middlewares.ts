@@ -24,7 +24,7 @@ export const createMiddlewaresStage = (): Stage<SSRContext> => {
       built = {
         config,
         chain: [
-          spaceDeploymentMiddleware(config.adapters),
+          spaceDeploymentMiddleware(config.adapters, config),
           basicAuthMiddleware({ cacheTtlMs: config.cacheTtlMs }),
           authMiddleware(config.adapters),
           ...(config.middlewares || [])

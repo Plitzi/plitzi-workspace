@@ -37,6 +37,7 @@ import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
+import { startMarkupPolicies } from '@plitzi/sdk-shared/security';
 import { useRscRefresh, usePluginRoute } from '@plitzi/sdk-shared/server';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { useDisplayMode, useElementSize } from '@plitzi/sdk-shared/style/react';
@@ -282,6 +283,8 @@ export function render(
     return undefined;
   }
 
+  // Before the stores are first written and before anything writes markup: both depend on the page's policy.
+  startMarkupPolicies(renderParams.server?.scriptPolicy);
   const root = ssrMode ? hydrateAsTransition(rootDOM, <Widget isHydrating />) : createRoot(rootDOM);
   if (!ssrMode) {
     root.render(<Widget />);

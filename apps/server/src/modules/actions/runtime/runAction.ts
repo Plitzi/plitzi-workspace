@@ -424,7 +424,11 @@ export const createActionRunner = (
     // The deployment's tasks, and — when a step names one of its own — the space's functions as of this revision.
     const registry = await registryFor(request);
 
-    const limits: ResolvedActionLimits = resolveLimits(config.limits, document.limits);
+    const limits: ResolvedActionLimits = resolveLimits(
+      config.limits,
+      document.limits,
+      await config.limitsFor?.(request.spaceId)
+    );
     // Learns as the run goes: a credential is registered by the task that resolved it, always before that task's
     // own result is redacted. Nothing is resolved up front because nothing is declared up front any more.
     const redactor = createRedactor();

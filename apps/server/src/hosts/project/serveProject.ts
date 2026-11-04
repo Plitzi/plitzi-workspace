@@ -478,6 +478,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       dataDir: path.join(root, DATA_DIR),
       functions: {
         native: [...functions, ...(runtime?.native ?? [])],
+        // The space's own functions, run here natively: what a sandbox would stop is said as it happens.
+        measureNative: true,
         plugins: plugins.functions,
         oauth: callbackOrigin === undefined ? {} : { callbackOrigin }
       },

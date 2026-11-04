@@ -7,6 +7,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { fitSvg, isSvgMarkup, sanitizeSvg } from './sanitizeSvg';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
+import { authorHtml } from '../../../Element/security/authorHtml';
 
 import type { RefObject } from 'react';
 
@@ -40,7 +41,7 @@ const Svg = ({ ref, content = '', label = '', className = '' }: SvgProps) => {
       ref={ref}
       className={clsx('plitzi-component__svg', className)}
       {...meaning}
-      dangerouslySetInnerHTML={{ __html: markup }}
+      dangerouslySetInnerHTML={{ __html: authorHtml(markup) }}
     />
   );
 };

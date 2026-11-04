@@ -107,11 +107,14 @@ const withBudget = async <T>(
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => {
           controller.abort();
-          // Says the knob: a cold start reading many sources is the usual reason, and the element arrives empty.
+          // A cold start reading many sources is the usual reason. The space's author reads this as often as whoever
+          // runs the server, and only the second may raise the knob — on a hosted platform nobody the author can ask
+          // — so it says the fix both have: read what a schedule keeps, and the page waits for nothing.
           reject(
             new Error(
               `RSC resolution timed out after ${timeoutMs}ms for ${label} — its section arrives empty. ` +
-                'A slower producer is given more with `createServer({ rsc: { elementTimeoutMs } })`.'
+                `This server gives a section ${timeoutMs} ms (its \`rsc.elementTimeoutMs\`): a producer slower than ` +
+                'that is better read from what a schedule keeps (`kv`, warmed by a `trigger: schedule` action), so the page waits for nothing.'
             )
           );
         }, timeoutMs);

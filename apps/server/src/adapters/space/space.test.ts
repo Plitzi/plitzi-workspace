@@ -6,7 +6,7 @@ import { createMemoryCache, refuse } from './types';
 
 import type { SpaceResolver } from './types';
 import type { GrantResult } from '../../core/auth/identity';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-shared';
 
 const request = (hostname: string, extra: Partial<SSRRequest> = {}): SSRRequest =>
   ({ hostname, query: {}, headers: {}, ...extra }) as SSRRequest;
@@ -233,6 +233,18 @@ describe('verifiedDomain', () => {
     const resolver = verifiedDomain(() => Promise.resolve({ spaceId: 1, revision: null }));
 
     expect(await resolver(request('a.test'))).toMatchObject({ revision: 0 });
+  });
+
+  // Kept with the resolution: what a domain's pages are held to is asked once per host, not on every request.
+  it('carries what the domain’s owner chose its pages are held to', async () => {
+    const security: SSRDeploymentSecurity = {
+      hsts: 'subdomains',
+      scriptPolicy: 'enforce',
+      frameAncestors: ['https://shop.example']
+    };
+    const resolver = verifiedDomain(() => Promise.resolve({ spaceId: 1, security }));
+
+    expect(await resolver(request('a.test'))).toMatchObject({ security });
   });
 });
 

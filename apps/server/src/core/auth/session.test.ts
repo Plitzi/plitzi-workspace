@@ -48,23 +48,34 @@ describe('session cookie defaults', () => {
   // An app and the API it talks to are rarely the same host, so the default has to survive that: shared across
   // sub-domains — which are one site, so `Lax` reaches them all, and another site's page never carries it.
   it('shares the cookie across sub-domains of a real host, and keeps it off other sites', () => {
-    const params = sessionCookieParams('app.example.com');
+    const params = sessionCookieParams({ hostname: 'app.example.com' });
 
     expect(params).toMatchObject({ domain: '.example.com', secure: true, sameSite: 'lax' });
   });
 
   // A space shown in an iframe on another site, with its visitor's session inside: the deployment says so.
   it('sends it from other sites only when the deployment asks', () => {
-    expect(sessionCookieParams('app.example.com', { sameSite: 'none' })).toMatchObject({
+    expect(sessionCookieParams({ hostname: 'app.example.com' }, { sameSite: 'none' })).toMatchObject({
       secure: true,
       sameSite: 'none'
     });
   });
 
+  // A domain whose owner lets another site frame it: its visitor's session has to reach the frame, there and nowhere else.
+  it('sends it from other sites on a domain that lets them frame its pages, and only over https', () => {
+    const framed = { spaceDeployment: { security: { frameAncestors: ['https://shop.example'] } } };
+
+    expect(sessionCookieParams({ hostname: 'acme.com', ctx: framed })).toMatchObject({ sameSite: 'none' });
+    expect(sessionCookieParams({ hostname: 'acme.com', ctx: { spaceDeployment: {} } })).toMatchObject({
+      sameSite: 'lax'
+    });
+    expect(sessionCookieParams({ hostname: 'localhost', ctx: framed })).toMatchObject({ sameSite: 'lax' });
+  });
+
   // Secure over plain http is dropped by every browser, so localhost is not — and gets no Domain at all, which browsers
   // refuse on a single-label host.
   it('gives a local server cookies a browser will actually keep', () => {
-    const params = sessionCookieParams('localhost');
+    const params = sessionCookieParams({ hostname: 'localhost' });
 
     expect(params).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
   });
@@ -81,18 +92,21 @@ describe('session cookie defaults', () => {
     'fd12::4',
     'studio.local'
   ])('gives %s, this machine on its network, the local profile', hostname => {
-    expect(sessionCookieParams(hostname)).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
+    expect(sessionCookieParams({ hostname })).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
   });
 
   // A public address, and a deployment's own `.local` sub-domains — siblings sharing a session over https — keep it.
   it.each(['203.0.113.9', '172.32.0.1', 'app.example.local'])('keeps the strict profile for %s', hostname => {
-    expect(sessionCookieParams(hostname)).toMatchObject({ secure: true, sameSite: 'lax' });
+    expect(sessionCookieParams({ hostname })).toMatchObject({ secure: true, sameSite: 'lax' });
   });
 
   it('lets a deployment name its cookie per host, which is the part only it knows', () => {
-    const params = sessionCookieParams('api-dev.plitzi.com', {
-      name: hostname => (hostname.includes('-dev.') ? 'plitzi_auth_dev' : 'plitzi_auth')
-    });
+    const params = sessionCookieParams(
+      { hostname: 'api-dev.plitzi.com' },
+      {
+        name: hostname => (hostname.includes('-dev.') ? 'plitzi_auth_dev' : 'plitzi_auth')
+      }
+    );
 
     expect(params.name).toBe('plitzi_auth_dev');
   });
@@ -100,7 +114,7 @@ describe('session cookie defaults', () => {
   // An address has no registrable domain to share cookies across, so a Domain written for one would never be sent
   // back to it and the browser would silently drop the cookie.
   it('gives an IP host no domain at all', () => {
-    const params = sessionCookieParams('192.168.1.5');
+    const params = sessionCookieParams({ hostname: '192.168.1.5' });
 
     expect(params).toMatchObject({ domain: undefined });
   });
@@ -250,7 +264,8 @@ describe('the login route', () => {
       method: 'POST',
       path: '/auth/login',
       headers: { 'content-type': contentType },
-      query: {}
+      query: {},
+      ctx: {}
     } as unknown as SSRRequest;
 
     await loginStage({
@@ -339,7 +354,7 @@ describe('a plitzi deployment', () => {
   ];
 
   it.each(deployments)('derives cookies for %s', (host, name, domain, secure, sameSite) => {
-    expect(sessionCookieParams(host, config)).toEqual({
+    expect(sessionCookieParams({ hostname: host }, config)).toEqual({
       name,
       domain,
       secure,

@@ -5,6 +5,7 @@ import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
 import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import useAgentInspector from './agentInspector/useAgentInspector';
@@ -195,7 +196,7 @@ const DevToolsContainer = ({
                   {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
                   {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
                   <ContainerShadow.Content>
-                    <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
+                    <style dangerouslySetInnerHTML={{ __html: ownHtml(devToolsStyle) }} />
                     {panel}
                   </ContainerShadow.Content>
                 </ContainerShadow>

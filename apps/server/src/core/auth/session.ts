@@ -1,6 +1,6 @@
 import { BlockList, isIP } from 'node:net';
 
-import type { SSRAuthCookie, SSRRequest, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRAuthCookie, SSRRequest, SSRSession, SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
 /**
  * Anything that can carry `Set-Cookie`. Express `Response` and this server's own helpers both satisfy it, which is
@@ -68,6 +68,10 @@ const isIpAddress = (hostname: string): boolean => isIP(hostname) !== 0;
  * The last two labels of the host, so a session established on one sub-domain is carried by its siblings — an app
  * and the API it talks to are rarely the same host. Local and IP hosts get no domain at all: browsers refuse a
  * Domain on a single-label host, and one written for an address would never be sent back to it.
+ *
+ * A domain whose sub-domains belong to different people — the one a deployment serves its spaces on, like
+ * `*.plitzi.app` — is not one to share a cookie across: a session of one space's visitor would reach every other's.
+ * Such a deployment says so with `authCookie.domain`, answering this for its own hosts and nothing for the rest.
  */
 export const registrableDomain = (hostname: string): string | undefined => {
   if (isLocalHost(hostname) || isIpAddress(hostname) || isPrivateNetworkHost(hostname)) {
@@ -88,23 +92,40 @@ const resolve = <T>(value: T | ((hostname: string) => T) | undefined, hostname: 
 };
 
 /**
+ * The request a cookie is written for: its host and, on a page server once it is known, the deployment the host
+ * resolved to (`req.ctx.spaceDeployment`).
+ */
+export type CookieRequest = {
+  hostname: string;
+  ctx?: { spaceDeployment?: Pick<SSRSpaceDeployment, 'security'> };
+};
+
+/** A domain whose owner lets other sites frame its pages (`security.frameAncestors`). */
+const embeddedElsewhere = (req: CookieRequest): boolean =>
+  (req.ctx?.spaceDeployment?.security?.frameAncestors?.length ?? 0) > 0;
+
+/**
  * Everything about how a session cookie is written, derived from the request host unless the deployment says
  * otherwise. The defaults are the ones a server on a real domain needs: a cookie shared across sub-domains — an app and
  * the API it talks to are rarely the same host — Secure, and `SameSite=Lax`. Sub-domains of one site are the same site,
  * so `Lax` reaches all of them; what it keeps the cookie from is a request another site's page makes, which carried it
  * as a third-party cookie (Lighthouse: "Uses third-party cookies"), to the API and to every other host of the domain,
  * a CDN's included. A deployment whose pages need the session inside another site's page — a space in an iframe there,
- * an app on another site than its API — says `sameSite: 'none'`. A local server — this machine, or this machine as its
+ * an app on another site than its API — says `sameSite: 'none'`; a domain that lets other sites frame its pages
+ * (`security.frameAncestors` of its deployment) gets it on that host alone. A local server — this machine, or this machine as its
  * network reaches it — is not Secure, which plain http would drop.
  */
-export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}): SessionCookieParams => {
+export const sessionCookieParams = (req: CookieRequest, config: SSRAuthCookie = {}): SessionCookieParams => {
+  const { hostname } = req;
   const local = isLocalHost(hostname) || isPrivateNetworkHost(hostname);
+  const secure = config.secure ?? !local;
 
   return {
     name: resolve(config.name, hostname, 'plitzi_session'),
     domain: resolve(config.domain, hostname, registrableDomain(hostname)),
-    secure: config.secure ?? !local,
-    sameSite: config.sameSite ?? 'lax',
+    secure,
+    // A browser drops a `SameSite=None` cookie that is not Secure: over plain http the domain keeps the default.
+    sameSite: embeddedElsewhere(req) && secure ? 'none' : (config.sameSite ?? 'lax'),
     refreshPath: config.refreshPath ?? '/auth',
     hintSuffix: config.hintSuffix ?? '_hint'
   };
@@ -196,12 +217,12 @@ export const appendCookies = (res: CookieSink, cookies: string[]): void => {
  * clients to renew something that is gone, and one that dies early signs out a live session.
  */
 export const writeSessionCookies = (
-  req: { hostname: string },
+  req: CookieRequest,
   res: CookieSink,
   session: SSRSession,
   config?: SSRAuthCookie
 ): void => {
-  const params = sessionCookieParams(req.hostname, config);
+  const params = sessionCookieParams(req, config);
   const now = nowInSeconds();
   const cookies = [serializeCookie(params.name, session.token, session.expiresAt - now, params)];
 
@@ -233,8 +254,8 @@ export const writeSessionCookies = (
 };
 
 /** Ends the session in this browser. Every cookie the grant wrote is cleared, the readable one included. */
-export const clearSessionCookies = (req: { hostname: string }, res: CookieSink, config?: SSRAuthCookie): void => {
-  const params = sessionCookieParams(req.hostname, config);
+export const clearSessionCookies = (req: CookieRequest, res: CookieSink, config?: SSRAuthCookie): void => {
+  const params = sessionCookieParams(req, config);
 
   appendCookies(res, [
     serializeCookie(params.name, '', 0, params),
@@ -249,28 +270,28 @@ export const clearSessionCookies = (req: { hostname: string }, res: CookieSink, 
  * its API under a prefix, and the callback would then miss a cookie scoped to `/auth`.
  */
 export const writeFlowCookie = (
-  req: { hostname: string },
+  req: CookieRequest,
   res: CookieSink,
   value: string,
   ttlSeconds: number,
   config?: SSRAuthCookie
 ): void => {
-  const params = sessionCookieParams(req.hostname, config);
+  const params = sessionCookieParams(req, config);
 
   appendCookies(res, [serializeCookie(`${params.name}_oauth`, value, ttlSeconds, params)]);
 };
 
-export const clearFlowCookie = (req: { hostname: string }, res: CookieSink, config?: SSRAuthCookie): void => {
-  const params = sessionCookieParams(req.hostname, config);
+export const clearFlowCookie = (req: CookieRequest, res: CookieSink, config?: SSRAuthCookie): void => {
+  const params = sessionCookieParams(req, config);
 
   appendCookies(res, [serializeCookie(`${params.name}_oauth`, '', 0, params)]);
 };
 
 /** The value that flow cookie carries, for the callback leg. */
 export const readFlowCookie = (
-  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  req: SSRRequest | (CookieRequest & { headers: { cookie?: string } }),
   config?: SSRAuthCookie
-): string | undefined => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_oauth`);
+): string | undefined => readCookie(req, `${sessionCookieParams(req, config).name}_oauth`);
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const cookies: Record<string, string> = {};
@@ -294,22 +315,22 @@ const readCookie = (req: { headers: { cookie?: string } }, name: string): string
 
 /** The session credential this request carries, for an adapter that resolves identity from it. */
 export const readSessionToken = (
-  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  req: SSRRequest | (CookieRequest & { headers: { cookie?: string } }),
   config?: SSRAuthCookie
-): string | undefined => readCookie(req, sessionCookieParams(req.hostname, config).name);
+): string | undefined => readCookie(req, sessionCookieParams(req, config).name);
 
 /** The renewal credential, which rides in its own cookie confined to the refresh path. */
 export const readRefreshToken = (
-  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  req: SSRRequest | (CookieRequest & { headers: { cookie?: string } }),
   config?: SSRAuthCookie
-): string | undefined => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_refresh`);
+): string | undefined => readCookie(req, `${sessionCookieParams(req, config).name}_refresh`);
 
 /** What the readable companion cookie says about this browser's session, without presenting any credential. */
 export const readSessionHint = (
-  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  req: SSRRequest | (CookieRequest & { headers: { cookie?: string } }),
   config?: SSRAuthCookie
 ): SessionHint | undefined => {
-  const params = sessionCookieParams(req.hostname, config);
+  const params = sessionCookieParams(req, config);
 
   return parseSessionHint(readCookie(req, sessionHintCookieName(params)));
 };
@@ -325,8 +346,8 @@ export const RENEWAL_GUARD_SECONDS = 30;
  * than bounced again. Every renewal that can fail without ending the session — the refresh cookie not reaching the
  * endpoint, the store being down — would otherwise send the visitor round in a loop.
  */
-export const writeRenewalGuard = (req: { hostname: string }, res: CookieSink, config?: SSRAuthCookie): void => {
-  const params = sessionCookieParams(req.hostname, config);
+export const writeRenewalGuard = (req: CookieRequest, res: CookieSink, config?: SSRAuthCookie): void => {
+  const params = sessionCookieParams(req, config);
 
   appendCookies(res, [serializeCookie(`${params.name}_renewing`, '1', RENEWAL_GUARD_SECONDS, params)]);
 };
@@ -336,7 +357,7 @@ export const writeRenewalGuard = (req: { hostname: string }, res: CookieSink, co
  * scoped to — the only hosts that could have sent a browser here to renew, since the hint that triggers it rides on
  * the same cookie domain. Anything else is an open redirect, and goes to `/` instead.
  */
-export const sessionReturnTarget = (req: { hostname: string }, target: unknown, config?: SSRAuthCookie): string => {
+export const sessionReturnTarget = (req: CookieRequest, target: unknown, config?: SSRAuthCookie): string => {
   if (typeof target !== 'string' || target === '') {
     return '/';
   }
@@ -356,7 +377,7 @@ export const sessionReturnTarget = (req: { hostname: string }, target: unknown, 
     return '/';
   }
 
-  const { domain } = sessionCookieParams(req.hostname, config);
+  const { domain } = sessionCookieParams(req, config);
   const shared =
     url.hostname === req.hostname ||
     (domain !== undefined && (url.hostname === domain.slice(1) || url.hostname.endsWith(domain)));
@@ -365,9 +386,9 @@ export const sessionReturnTarget = (req: { hostname: string }, target: unknown, 
 };
 
 export const readRenewalGuard = (
-  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  req: SSRRequest | (CookieRequest & { headers: { cookie?: string } }),
   config?: SSRAuthCookie
-): boolean => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_renewing`) !== undefined;
+): boolean => readCookie(req, `${sessionCookieParams(req, config).name}_renewing`) !== undefined;
 
 /** Anything a credential can be read off: this server's own request, an Express one, a bare `node:http` one. */
 export type CookieCarrier = SSRRequest | { headers: { cookie?: string; authorization?: string }; hostname: string };
@@ -381,20 +402,20 @@ export type CookieCarrier = SSRRequest | { headers: { cookie?: string; authoriza
  * Express — a self-hoster running neither still gets the whole cycle.
  */
 export const createSessionCookies = (config?: SSRAuthCookie) => ({
-  write: (req: { hostname: string }, res: CookieSink, session: SSRSession): void =>
+  write: (req: CookieRequest, res: CookieSink, session: SSRSession): void =>
     writeSessionCookies(req, res, session, config),
 
-  clear: (req: { hostname: string }, res: CookieSink): void => clearSessionCookies(req, res, config),
+  clear: (req: CookieRequest, res: CookieSink): void => clearSessionCookies(req, res, config),
 
   /** Holds a social sign-in between its two legs: the CSRF nonce and the PKCE verifier. */
-  writeFlow: (req: { hostname: string }, res: CookieSink, value: string, ttlSeconds: number): void =>
+  writeFlow: (req: CookieRequest, res: CookieSink, value: string, ttlSeconds: number): void =>
     writeFlowCookie(req, res, value, ttlSeconds, config),
 
-  clearFlow: (req: { hostname: string }, res: CookieSink): void => clearFlowCookie(req, res, config),
+  clearFlow: (req: CookieRequest, res: CookieSink): void => clearFlowCookie(req, res, config),
 
   readFlow: (req: CookieCarrier): string | undefined => readFlowCookie(req, config),
 
-  returnTarget: (req: { hostname: string }, target: unknown): string => sessionReturnTarget(req, target, config),
+  returnTarget: (req: CookieRequest, target: unknown): string => sessionReturnTarget(req, target, config),
 
   /**
    * The session credential from `Authorization: Bearer` or the cookie, so one endpoint serves a bearer client and a

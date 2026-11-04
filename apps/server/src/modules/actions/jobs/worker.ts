@@ -293,7 +293,7 @@ export const createJobWorker = ({
         // alongside its replacement: the second one is refused as a duplicate and comes back later.
         idempotencyKey: job.id,
         sharedKey: true,
-        ttlMs: module.limitsFor(entry.document).timeoutMs
+        ttlMs: (await module.limitsFor(job.spaceId, entry.document)).timeoutMs
       });
     } catch (error) {
       const refusal = error instanceof ActionRunError ? error.reason : undefined;

@@ -19,7 +19,7 @@ import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
-import { newScriptNonce } from './scriptPolicy';
+import { newScriptNonce, scriptPolicyMode } from './scriptPolicy';
 import { publishSpaceDocument } from './spaceDocument';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { googleFontsUrlOf } from '../../core/http/stages/googleFonts';
@@ -514,7 +514,7 @@ export const prepareRender = async (
     entries,
     templateParams: {
       // One per render, written on the template's own scripts and named by the page's script policy (`scriptPolicy`).
-      ...(config.scriptPolicy === false ? {} : { nonce: newScriptNonce() }),
+      ...(scriptPolicyMode(config, req.ctx.spaceDeployment) === undefined ? {} : { nonce: newScriptNonce() }),
       title: DEFAULT_TITLE,
       jsPath: assets.jsPath,
       cssPath: assets.cssPath,

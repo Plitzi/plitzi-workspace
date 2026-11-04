@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+import { knowHostDeployment } from './hostDeployment';
 import { readCookies } from '../../auth/credentials';
 import { appendCookies, writeSessionCookies } from '../../auth/session';
 import { requestOrigin } from '../../requestParser';
@@ -180,6 +181,7 @@ export const signInStage: Stage = async ctx => {
 
   const result = await exchangeCredential(signIn.provider, granted.access_token, req);
   if (result.ok) {
+    await knowHostDeployment({ req, config });
     writeSessionCookies(req, res, result.session, config.authCookie);
   }
 

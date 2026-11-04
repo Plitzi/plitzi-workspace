@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { ownHtml } from '@plitzi/sdk-shared/security';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import PlitziBadge from '../components/PlitziBadge';
@@ -31,7 +32,7 @@ const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextV
       <ContainerShadow.Link href={sdkStylePath} />
       <ContainerShadow.Content>
         <SpaceContainer>
-          <style dangerouslySetInnerHTML={{ __html: style }} />
+          <style dangerouslySetInnerHTML={{ __html: ownHtml(style) }} />
           <PlitziProvider value={plitziContextValue}>
             {/* No key on the page: a key here remounts the WHOLE tree on every navigation, and the layout shell
                 (header, sidebar) is rendered inside the page — so two pages naming the same `layoutContainer` tore it

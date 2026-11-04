@@ -1,6 +1,7 @@
 import { sessionCookieParams, sessionHintCookieName } from '../core/auth/session';
 import { googleFontsUrlOf } from '../core/http/stages/googleFonts';
 import { requestOrigin } from '../core/requestParser';
+import { scriptPolicyMode } from '../modules/ssr/scriptPolicy';
 
 import type { Server, ServerSSR, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
 
@@ -70,6 +71,8 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
   const user = req.ctx.user;
   const { pageAuth } = config;
   const googleFontsUrl = googleFontsUrlOf(config);
+  // Whether the SDK's Trusted Types policies clean what they are handed: only where the page's policy is enforced.
+  const scriptPolicy = scriptPolicyMode(config, req.ctx.spaceDeployment);
 
   return getEnvironment(config.environment, {
     basePath: '/',
@@ -113,13 +116,14 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
     auth: pageAuth
       ? {
           ...pageAuth,
-          sessionHintCookie: sessionHintCookieName(sessionCookieParams(req.hostname, config.authCookie))
+          sessionHintCookie: sessionHintCookieName(sessionCookieParams(req, config.authCookie))
         }
       : undefined,
     // The fonts' addresses, as the page's head was written with them: the SDK writes the same head once it runs, and a
     // URL that differs by a prefix is the same face fetched twice.
     ...(config.fonts?.baseUrl ? { fontsBaseUrl: config.fonts.baseUrl } : {}),
     ...(googleFontsUrl === undefined ? {} : { googleFontsUrl }),
+    ...(scriptPolicy === undefined ? {} : { scriptPolicy }),
     ssr
   });
 };

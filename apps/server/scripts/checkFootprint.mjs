@@ -33,7 +33,8 @@ const BUDGET = {
   // 150: its server `query` (`serverQuery`) over the space's variables, resolved as the browser resolves them
   // (`dataSource/variables` — an entry of its own, so the computed values and their `deepEqual` stay the browser's).
   // 151: which pages a sitemap lists (`navigation/sitemap`), the rule the builder's map of pages shows too.
-  '@plitzi/sdk-shared': 151,
+  // 152: the Trusted Types policies' names (`security`), which a page's policy lists and the SDK creates.
+  '@plitzi/sdk-shared': 152,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,

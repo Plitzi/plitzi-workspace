@@ -35,6 +35,19 @@ export type TSpaceEntitlements = {
   /** The plan that plays more journeys on the server, when this one has a limit and one above plays more. */
   moreServerRuns?: TMoreOf;
   capabilities: Record<string, TCapability>;
+  /**
+   * What one run of the space may spend on the server that hosts it — what a project's own server does not hold it to,
+   * so the CLI can say before it goes up (`plitzi doctor`). Absent from a server that does not say.
+   */
+  runs?: TSpaceRuns;
+};
+
+/** One run's budget on a hosting server: an action's, one invocation of the space's functions', and a section's. */
+export type TSpaceRuns = {
+  action: { timeoutMs: number; maxRequests: number };
+  functions: { cpuMs: number; wallMs: number; memoryMb: number; outputBytes: number; calls: number };
+  /** How long a section resolved on the server is waited for before its page is answered without it. */
+  sectionMs: number;
 };
 
 /**

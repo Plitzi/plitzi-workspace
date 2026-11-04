@@ -13,6 +13,7 @@ import {
   blankSpace,
   blankSpaceSpec,
   blankTemplateFiles,
+  catalogTemplateFiles,
   emptyTemplateFiles,
   emptySpaceSpec,
   toPortableSource
@@ -486,5 +487,30 @@ describe('a new project’s space', () => {
         expect(authoring, `@plitzi/sdk-authoring exports ${name}`).toHaveProperty(name);
       }
     }
+  });
+});
+
+// A starting space is copied into the project `plitzi create` makes, which declares `@plitzi/sdk-authoring` and React
+// alone: an import of anything else works in this repo and is an undeclared dependency there (the doctor's error).
+describe('the starting spaces a project is given', () => {
+  it('import only what a project declares, and their own files', () => {
+    const files = {
+      ...blankTemplateFiles(),
+      ...emptyTemplateFiles({ dir: 'src/empty' }),
+      ...catalogTemplateFiles()
+    };
+    const foreign = Object.entries(files).flatMap(([file, source]) =>
+      [...source.matchAll(/(?:from|import)\s+'([^']+)'/g)]
+        .map(([, specifier]) => specifier)
+        .filter(
+          specifier =>
+            !specifier.startsWith('.') &&
+            !/^@plitzi\/sdk-authoring(\/|$)/.test(specifier) &&
+            !/^react(\/|$)/.test(specifier)
+        )
+        .map(specifier => `${file} imports ${specifier}`)
+    );
+
+    expect(foreign).toEqual([]);
   });
 });
