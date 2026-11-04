@@ -1,6 +1,6 @@
 import { STYLE_SHEET_PATH } from '@plitzi/sdk-shared/style';
 
-import { buildOfflineDataCacheKey } from '../../helpers/cache';
+import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { styleSheetOf } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
@@ -25,10 +25,9 @@ export const handleStyleSheet = async (
   offlineDataCache?: TtlCache<OfflineDataRaw>
 ): Promise<void> => {
   const hash = SHEET_PATH.exec(req.path)?.[1];
-  const { environment = 'main', revision = 0, flagsVersion } = req.ctx.spaceDeployment ?? {};
+  const { environment = 'main', revision = 0 } = req.ctx.spaceDeployment ?? {};
   const spaceId = req.ctx.spaceDeployment?.spaceId ?? 1;
-  const cacheKey =
-    environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision, flagsVersion) : undefined;
+  const cacheKey = offlineDataCacheKeyOf(req.ctx.spaceDeployment);
   const offlineData =
     hash === undefined
       ? undefined

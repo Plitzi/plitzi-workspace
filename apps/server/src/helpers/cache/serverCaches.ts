@@ -1,9 +1,11 @@
 import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from './defaults';
 import { sizeOfPage } from './pages';
 import { TtlCache } from './TtlCache';
+import { createRenderTurns } from '../../modules/ssr/renderTurns';
 import { spaceDocument } from '../hydrationPayload';
 
 import type { CachedPage } from './pages';
+import type { RenderTurns } from '../../modules/ssr/renderTurns';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export type ServerCaches = {
@@ -17,6 +19,8 @@ export type ServerCaches = {
    * in the second its render took — on a busy page, tens of renders of the same thing at once.
    */
   rendering: Map<string, Promise<CachedPage | undefined>>;
+  /** The renders each space has going in this process, held to its `renderLimit`. */
+  turns: RenderTurns;
 };
 
 export type ServerCachesOptions = {
@@ -59,7 +63,8 @@ export const createServerCaches = ({
           sizeOf: offlineData => spaceDocument(offlineData).json.length
         })
       : undefined,
-  rendering: new Map()
+  rendering: new Map(),
+  turns: createRenderTurns()
 });
 
 export const destroyServerCaches = ({ html, rsc, offlineData, rendering }: ServerCaches): void => {

@@ -206,7 +206,11 @@ export const externalQueryReader = ({
     };
   };
 
-  return async (query, signal, asker) => {
+  const read = async (
+    query: Extract<ServerQuery, { kind: 'url' }>,
+    signal: AbortSignal,
+    asker: ExternalQueryAsker
+  ): Promise<ExternalAnswer> => {
     const visit = query.asVisitor ? await asVisitor(query, asker) : undefined;
     const response = await fetchOutbound(
       visit?.base ?? base,
@@ -233,4 +237,63 @@ export const externalQueryReader = ({
 
     return { status: response.status, data };
   };
+
+  /**
+   * One read per address a render asks: two providers of a page asking the same thing — the dashboard's space page
+   * asked its entitlements twice — share the one answer. Per request, so no visitor is answered with another's; each
+   * provider keeps its own budget (it stops waiting when its own signal aborts), and the read stops only when no
+   * provider waits for it any more.
+   */
+  const asked = new WeakMap<SSRRequest, Map<string, SharedRead>>();
+
+  return (query, signal, asker) => {
+    const reads = asked.get(asker.req) ?? new Map<string, SharedRead>();
+    asked.set(asker.req, reads);
+    const key = JSON.stringify([query.url.href, query.headers, query.asVisitor]);
+    let shared = reads.get(key);
+    // One its providers all gave up on was stopped: asked again, it is read again.
+    if (!shared || shared.controller.signal.aborted) {
+      const controller = new AbortController();
+      shared = { answer: read(query, controller.signal, asker), controller, waiting: 0 };
+      reads.set(key, shared);
+    }
+
+    return waitFor(shared, signal);
+  };
+};
+
+type ExternalAnswer = { status: number; data: unknown };
+
+/** A read the providers of one render share, and how many of them still wait for it. */
+type SharedRead = { answer: Promise<ExternalAnswer>; controller: AbortController; waiting: number };
+
+/** The shared answer for one provider: given up on its own signal, and the read with it once nobody waits. */
+const waitFor = (shared: SharedRead, signal: AbortSignal): Promise<ExternalAnswer> => {
+  if (signal.aborted) {
+    return Promise.reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'));
+  }
+
+  shared.waiting++;
+
+  return new Promise<ExternalAnswer>((resolve, reject) => {
+    const leave = () => {
+      shared.waiting--;
+      if (shared.waiting === 0) {
+        shared.controller.abort(signal.reason);
+      }
+
+      reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'));
+    };
+    signal.addEventListener('abort', leave, { once: true });
+    shared.answer.then(
+      answer => {
+        signal.removeEventListener('abort', leave);
+        resolve(answer);
+      },
+      (error: unknown) => {
+        signal.removeEventListener('abort', leave);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    );
+  });
 };

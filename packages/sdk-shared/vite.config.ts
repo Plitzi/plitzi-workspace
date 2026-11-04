@@ -2,6 +2,7 @@
 /// <reference types="vitest" />
 
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
@@ -26,7 +27,63 @@ const skipUnchangedDts = (filePath: string, content: string) => {
   return undefined;
 };
 
+/**
+ * The path an external import is written with in the build (`output.paths`). As written — except a deep import of a
+ * package with no `exports` map that does not name its file (`react-syntax-highlighter/dist/esm/languages/prism/bash`),
+ * written as the file it resolves to (`….js`): a bundler finds the file either way, Node only by its name, and a server
+ * that runs this package's build with Node itself — a project of the CLI, a self-hosted server — failed on it.
+ */
+const externalPath = (source: string): string => {
+  const deep = deepSpecifier(source);
+  if (!deep || path.extname(deep.subpath) !== '') {
+    return source;
+  }
+
+  let file: string;
+  try {
+    file = createRequire(path.join(process.cwd(), 'package.json')).resolve(source);
+  } catch {
+    // Not resolvable from here (a peer the consumer brings): kept as written, as every other import is.
+    return source;
+  }
+
+  const root = packageRootOf(file, deep.name);
+  if (!root) {
+    return source;
+  }
+
+  const { exports } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf-8')) as { exports?: unknown };
+
+  return exports === undefined ? `${deep.name}/${path.relative(root, file).split(path.sep).join('/')}` : source;
+};
+
 const importedPackages = new Set();
+
+/** `@scope/name/sub/path` or `name/sub/path` → the package's name and the path inside it; nothing for a bare name. */
+const deepSpecifier = (source: string): { name: string; subpath: string } | undefined => {
+  const parts = source.split('/');
+  const nameParts = source.startsWith('@') ? 2 : 1;
+  if (parts.length <= nameParts) {
+    return undefined;
+  }
+
+  return { name: parts.slice(0, nameParts).join('/'), subpath: parts.slice(nameParts).join('/') };
+};
+
+/** The `package.json` of the package a resolved file belongs to: the nearest one above it that names the package. */
+const packageRootOf = (file: string, name: string): string | undefined => {
+  for (let dir = path.dirname(file); dir !== path.dirname(dir); dir = path.dirname(dir)) {
+    const manifest = path.join(dir, 'package.json');
+    if (fs.existsSync(manifest)) {
+      const { name: found } = JSON.parse(fs.readFileSync(manifest, 'utf-8')) as { name?: string };
+      if (found === name) {
+        return dir;
+      }
+    }
+  }
+
+  return undefined;
+};
 
 /**
  * Under test, a workspace package is read from its sources (`@plitzi/source` in its `exports`), not from `dist`: a test
@@ -173,6 +230,7 @@ export default defineConfig(({ mode, command }) => {
             format: 'es',
             exports: 'named',
             preserveModules: true, // Keep module structure for tree-shaking
+            paths: externalPath,
             preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
             entryFileNames: '[name].mjs',
             chunkFileNames: '[name].mjs',

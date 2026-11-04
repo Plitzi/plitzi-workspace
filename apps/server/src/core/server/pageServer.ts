@@ -18,6 +18,7 @@ import { isFunctionsDefinition } from '../../modules/functions/load';
 import { realtimeModuleFor } from '../../modules/realtime';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/preview';
+import { renderLimitOf } from '../../modules/ssr/renderTurns';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { watchPluginSources } from '../../plugins/watch';
@@ -64,6 +65,7 @@ export const createPageServer = (
   // Resolved once — the config, else the environment, else the default — and set on the config, where the render and
   // the boot report read it.
   config.cache = { ...config.cache, ...cacheLimitsOf(config) };
+  config.renderLimit = renderLimitOf(config.renderLimit);
   const caches = createServerCaches({
     htmlTtlMs,
     rscTtlMs: config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc,

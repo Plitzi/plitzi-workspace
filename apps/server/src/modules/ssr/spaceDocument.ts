@@ -2,7 +2,7 @@ import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 
 import { meterPage } from './meterPage';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
-import { buildOfflineDataCacheKey } from '../../helpers/cache';
+import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { digest, spaceDocument } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
@@ -94,10 +94,9 @@ const documentNow = async (
   offlineDataCache: TtlCache<OfflineDataRaw> | undefined,
   { linkStyle }: { linkStyle: boolean }
 ): Promise<{ document: SpaceDocument; cached: boolean } | undefined> => {
-  const { environment = 'main', revision = 0, flagsVersion } = req.ctx.spaceDeployment ?? {};
+  const { environment = 'main', revision = 0 } = req.ctx.spaceDeployment ?? {};
   const spaceId = req.ctx.spaceDeployment?.spaceId ?? 1;
-  const cacheKey =
-    environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision, flagsVersion) : undefined;
+  const cacheKey = offlineDataCacheKeyOf(req.ctx.spaceDeployment);
   const held = cacheKey ? offlineDataCache?.get(cacheKey) : undefined;
   const offlineData = held ?? (await config.adapters.getOfflineData(spaceId, environment, revision));
   if (!offlineData) {

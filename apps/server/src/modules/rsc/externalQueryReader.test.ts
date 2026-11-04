@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { serverQueryOf } from '@plitzi/sdk-shared/schema';
 
@@ -239,5 +239,105 @@ describe('externalQueryReader / as the visitor', () => {
     expect(() =>
       visitorCredentialsOf({ origins: ['https://api.example.com'], via: { 'https://other.example.com': 'http://x:1' } })
     ).toThrow('not one of its origins');
+  });
+});
+
+/** A site that answers only when told to, and counts what it was asked and what was given up. */
+const holding = () => {
+  const asked: Asked[] = [];
+  const releases: (() => void)[] = [];
+  const base = (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+    asked.push({ url: input instanceof Request ? input.url : input.toString(), init });
+
+    return new Promise<Response>((resolve, reject) => {
+      init.signal?.addEventListener('abort', () => reject(new Error('given up')), { once: true });
+      releases.push(() => resolve(new Response(JSON.stringify({ n: asked.length }))));
+    });
+  };
+
+  return { asked, base, release: () => releases.splice(0).forEach(release => release()) };
+};
+
+// Two parts of one page asking the same address (the plan, the account) is one request to it, not two.
+describe('externalQueryReader / one render', () => {
+  const asker = (req: SSRRequest) => ({ req, spaceId: 1, environment: 'production' as const });
+
+  it('reads an address its providers all ask once, and hands each the answer', async () => {
+    const { asked, base, release } = holding();
+    const reader = externalQueryReader({ base, outbound: { lookup: publicLookup } });
+    const req = visitWith('session=s1');
+    const query = urlOf({ query: 'https://api.example.com/plan' });
+
+    const first = reader(query, new AbortController().signal, asker(req));
+    const second = reader(query, new AbortController().signal, asker(req));
+    await vi.waitFor(() => {
+      expect(asked).toHaveLength(1);
+    });
+    release();
+
+    expect(await first).toEqual({ status: 200, data: { n: 1 } });
+    expect(await second).toEqual({ status: 200, data: { n: 1 } });
+    expect(await reader(query, new AbortController().signal, asker(req))).toEqual({ status: 200, data: { n: 1 } });
+    expect(asked).toHaveLength(1);
+  });
+
+  it('reads it again for another visit, another address or other headers', async () => {
+    const { asked, base } = answering('{}');
+    const reader = externalQueryReader({ base, outbound: { lookup: publicLookup } });
+    const req = visitWith('session=s1');
+
+    await reader(urlOf({ query: 'https://api.example.com/a' }), new AbortController().signal, asker(req));
+    await reader(urlOf({ query: 'https://api.example.com/a' }), new AbortController().signal, asker(visitWith()));
+    await reader(urlOf({ query: 'https://api.example.com/b' }), new AbortController().signal, asker(req));
+    await reader(
+      urlOf({ query: 'https://api.example.com/a', headers: { 'X-Shop': 'demo' } }),
+      new AbortController().signal,
+      asker(req)
+    );
+
+    expect(asked.map(({ url }) => url)).toEqual([
+      'https://api.example.com/a',
+      'https://api.example.com/a',
+      'https://api.example.com/b',
+      'https://api.example.com/a'
+    ]);
+  });
+
+  it('keeps the read for a provider still waiting when another gives up, and stops it once none waits', async () => {
+    const { asked, base, release } = holding();
+    const reader = externalQueryReader({ base, outbound: { lookup: publicLookup } });
+    const req = visitWith('session=s1');
+    const query = urlOf({ query: 'https://api.example.com/plan' });
+
+    const quitting = new AbortController();
+    const quitter = reader(query, quitting.signal, asker(req));
+    const stayer = reader(query, new AbortController().signal, asker(req));
+    await vi.waitFor(() => {
+      expect(asked).toHaveLength(1);
+    });
+    quitting.abort(new Error('timed out'));
+    release();
+
+    await expect(quitter).rejects.toThrow('timed out');
+    expect(await stayer).toEqual({ status: 200, data: { n: 1 } });
+
+    const alone = new AbortController();
+    const abandoned = reader(urlOf({ query: 'https://api.example.com/other' }), alone.signal, asker(req));
+    await vi.waitFor(() => {
+      expect(asked).toHaveLength(2);
+    });
+    alone.abort(new Error('timed out'));
+
+    await expect(abandoned).rejects.toThrow('timed out');
+    expect(asked[1]?.init.signal?.aborted).toBe(true);
+
+    // Asked again after everyone gave up on it: read again, not handed the stopped one.
+    const again = reader(urlOf({ query: 'https://api.example.com/other' }), new AbortController().signal, asker(req));
+    await vi.waitFor(() => {
+      expect(asked).toHaveLength(3);
+    });
+    release();
+
+    expect(await again).toEqual({ status: 200, data: { n: 3 } });
   });
 });

@@ -13,10 +13,12 @@ type CacheKeyRequest = {
   hostname: string;
   path: string;
   search: string;
-  ctx?: { spaceDeployment?: { flagsVersion?: string } };
+  ctx?: { spaceDeployment?: { flagsVersion?: string; draftVersion?: string } };
 };
 
 const flagsVersionOf = (req: CacheKeyRequest): string => req.ctx?.spaceDeployment?.flagsVersion ?? '';
+
+const draftVersionOf = (req: CacheKeyRequest): string => req.ctx?.spaceDeployment?.draftVersion ?? '';
 
 /** The fields of an HTML key, in the order they are joined. */
 const HTML_KEY_FIELDS = [
@@ -25,6 +27,7 @@ const HTML_KEY_FIELDS = [
   'environment',
   'revision',
   'flags',
+  'draft',
   'theme',
   'scheme',
   'painted',
@@ -86,6 +89,7 @@ export const buildHtmlCacheKey = (
     environment,
     revision: String(revision),
     flags: flagsVersionOf(req),
+    draft: draftVersionOf(req),
     theme: themeFromCookies(req.headers.cookie) ?? '',
     // What a `system` theme was drawn as (`theme.resolved`): only a visitor who chose a theme is drawn the same whatever
     // their machine says.
@@ -122,24 +126,58 @@ export const readHtmlCacheKey = (key: string): CacheKeyFacts => ({
   hostname: fieldOf(HTML_KEY_FIELDS, key, 'hostname')
 });
 
-const OFFLINE_DATA_KEY_FIELDS = ['spaceId', 'environment', 'revision', 'flags'] as const;
+const OFFLINE_DATA_KEY_FIELDS = ['spaceId', 'environment', 'revision', 'flags', 'draft'] as const;
 
-/** The space as read for a render: its revision, and what its flags are at when they change apart from it. */
+/**
+ * The space as read for a render: its revision, what its flags are at when they change apart from it, and — for the
+ * draft — what the draft is at.
+ */
 export const buildOfflineDataCacheKey = (
   spaceId: number,
   environment: string,
   revision: number,
-  flagsVersion: string | undefined
+  flagsVersion: string | undefined,
+  draftVersion?: string
 ): string => {
   const fields: Record<(typeof OFFLINE_DATA_KEY_FIELDS)[number], string> = {
     spaceId: String(spaceId),
     environment,
     revision: String(revision),
-    flags: flagsVersion ?? ''
+    flags: flagsVersion ?? '',
+    draft: draftVersion ?? ''
   };
 
   return OFFLINE_DATA_KEY_FIELDS.map(field => fields[field]).join('\0');
 };
+
+/** What a resolved deployment says of the version a request renders — the part the caches of a space are keyed by. */
+type DeploymentVersion = {
+  spaceId?: number | null;
+  environment?: string;
+  revision?: number;
+  flagsVersion?: string;
+  draftVersion?: string;
+};
+
+/**
+ * Whether what a request renders may be kept for the next: a published revision always — it never changes under its
+ * name — and the draft (`main`), which changes with every edit someone is making right then, only when the deployment
+ * says what it is at (`draftVersion`), which every such edit changes. Without it a draft is read and drawn every time.
+ */
+export const keepsVersion = (deployment: DeploymentVersion | undefined): boolean =>
+  (deployment?.environment ?? 'main') !== 'main' || deployment?.draftVersion !== undefined;
+
+/** Where the space a request resolves to is kept between renders, or nothing when it may not be (`keepsVersion`). */
+export const offlineDataCacheKeyOf = (deployment: DeploymentVersion | undefined): string | undefined =>
+  keepsVersion(deployment)
+    ? buildOfflineDataCacheKey(
+        deployment?.spaceId ?? 1,
+        deployment?.environment ?? 'main',
+        deployment?.revision ?? 0,
+        deployment?.flagsVersion,
+        deployment?.draftVersion
+      )
+    : undefined;
 
 export const readOfflineDataCacheKey = (key: string): CacheKeyFacts => ({
   spaceId: fieldOf(OFFLINE_DATA_KEY_FIELDS, key, 'spaceId'),

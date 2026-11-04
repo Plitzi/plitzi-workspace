@@ -410,6 +410,15 @@ export type SSRServerConfig = {
    * it would only pay for.
    */
   livePages?: boolean;
+  /**
+   * How many pages of ONE space this process renders at once, so a space's burst waits behind its own renders instead
+   * of taking every render from the other spaces this server serves. A kept page takes no turn: what is held back is
+   * what costs — a visitor's own page, a draft drawn with its providers' answers, an address no kept page answers.
+   * `perSpace` is every space's, unless its deployment says its own (`SSRSpaceDeployment.renderLimit`); without
+   * either a space has no limit. A page past it waits `waitMs` (2000) for a turn, then is answered 503 with
+   * `Retry-After`. Per process: a server of four workers renders up to four times as many.
+   */
+  renderLimit?: SSRRenderLimitConfig;
   /** Authorizes debugging on the pages this server renders. An SSR page loads the very same SDK, so this is the
    *  server-side face of the SDK's `debugMode` prop: the page decides, and the visitor's 'plitzi_debug' cookie can
    *  only narrow it. Left unset, `devMode` authorizes it — a development server debugs without being told to — and
@@ -619,6 +628,14 @@ export type SSRSignInConfig = {
   scope: (spaceId: number) => string;
   /** Where the flow answers. Default `/auth/sign-in`; the authorization server sends people back to `<path>/callback`. */
   path?: string;
+};
+
+/** `SSRServerConfig.renderLimit`: the turns of one space's renders in one process. */
+export type SSRRenderLimitConfig = {
+  /** Every space's limit, unless its deployment says its own. At least 1. */
+  perSpace?: number;
+  /** How long a page past the limit waits for a turn before it is answered 503. */
+  waitMs?: number;
 };
 
 export type SSRPageServerConfig = SSRServerConfig & { adapters: SSRPageAdapters };

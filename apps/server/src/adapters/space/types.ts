@@ -20,6 +20,8 @@ export interface SpaceResolution {
   authoring?: boolean;
   /** The origins of the credential that chose the space, when one did — `renderGrant` sets it. */
   grantOrigins?: string[];
+  /** What the draft is at, when the deployment can say — see `SSRSpaceDeployment.draftVersion`. Usually set by `decorate`. */
+  draftVersion?: string;
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;

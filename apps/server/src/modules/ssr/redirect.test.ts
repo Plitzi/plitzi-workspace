@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderSSR } from './handler';
+import { createRenderTurns } from './renderTurns';
 import { TtlCache } from '../../helpers/cache';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
@@ -65,7 +66,8 @@ const caches = (html?: TtlCache<CachedPage>): ServerCaches => ({
   html,
   rsc: undefined,
   offlineData: undefined,
-  rendering: new Map()
+  rendering: new Map(),
+  turns: createRenderTurns()
 });
 
 const render = (req: SSRRequest, res: SSRResponseHelpers, html?: TtlCache<CachedPage>) =>

@@ -1,7 +1,13 @@
 export { DEFAULT_CACHE_BYTES, DEFAULT_IGNORED_QUERY_PARAMS, DEFAULT_TTL_MS } from './defaults';
 export { TtlCache } from './TtlCache';
 export type { CacheRead, TtlCacheOptions } from './TtlCache';
-export { buildHtmlCacheKey, buildOfflineDataCacheKey, buildRscCacheKey } from './keys';
+export {
+  buildHtmlCacheKey,
+  buildOfflineDataCacheKey,
+  buildRscCacheKey,
+  keepsVersion,
+  offlineDataCacheKeyOf
+} from './keys';
 export { buildCacheManager } from './cacheManager';
 export { fromSharedPage, keepPage, pageHtml, sizeOfPage, toSharedPage } from './pages';
 export type { CachedPage } from './pages';

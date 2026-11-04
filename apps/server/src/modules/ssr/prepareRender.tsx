@@ -28,7 +28,7 @@ import { requestAuthority, requestOrigin } from '../../core/requestParser';
 import { pageAssets } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
-import { buildOfflineDataCacheKey } from '../../helpers/cache';
+import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { hydrationPayload, spaceDocument } from '../../helpers/hydrationPayload';
@@ -119,10 +119,13 @@ export const prepareRender = async (
   const m = <T,>(name: string, fn: () => T | Promise<T>): Promise<T> =>
     metrics ? metrics.measure(name, fn) : Promise.resolve(fn());
 
-  const offlineCacheKey =
-    environment !== 'main'
-      ? buildOfflineDataCacheKey(spaceId, environment, revision, req.ctx.spaceDeployment?.flagsVersion)
-      : undefined;
+  const offlineCacheKey = offlineDataCacheKeyOf({
+    spaceId,
+    environment,
+    revision,
+    flagsVersion: req.ctx.spaceDeployment?.flagsVersion,
+    draftVersion: req.ctx.spaceDeployment?.draftVersion
+  });
   // A draft override (an unsaved preview) never touches the adapters or the shared offline-data cache — it is a
   // one-shot render of in-memory edits, so it must not read from nor pollute the persisted-state cache.
   // The object itself, shared and never written to: parsed again per render, each one also serialised and hashed the
@@ -562,7 +565,13 @@ export const prepareRender = async (
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page;
     // one read with the visitor's cookies is not even theirs a minute later.
-    cacheable: actionRuns === undefined && forcedFlags === undefined && req.ctx.readAsVisitor !== true,
+    // Nor is a draft's page drawn with what its server providers answered: the draft is being developed, and its data
+    // is never kept (the RSC refresh of the draft is never cached either) — a page of it is kept only for its schema.
+    cacheable:
+      actionRuns === undefined &&
+      forcedFlags === undefined &&
+      req.ctx.readAsVisitor !== true &&
+      !(environment === 'main' && hasTargets),
     notFound,
     ...(refused ? { refused } : {})
   };

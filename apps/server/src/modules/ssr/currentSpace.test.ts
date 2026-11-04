@@ -91,7 +91,9 @@ describe('the space as it is now, for the host’s own pages', () => {
     expect(carried.space.style.cache).toBe('.hero{color:red}');
     expect(carried.space.style.cacheHref).toBeUndefined();
     expect(other.status).toBe(400);
-    expect(((await other.json()) as { error: string }).error).toMatch(/serves the main environment .* render credential/);
+    expect(((await other.json()) as { error: string }).error).toMatch(
+      /serves the main environment .* render credential/
+    );
   });
 
   it('holds back a visit the deployment holds back, in its words', async () => {

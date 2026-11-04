@@ -272,6 +272,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `livePages` | `boolean` | `false` | Every page this server renders listens for what changes under it: new documents for the space it shows, swapped where it stands with its state, scroll and focus kept (`server.updatePages(documents, { draft? })` — a draft's pages hear their own alone), or everything loaded again (`server.reloadPages()`); and it loads again when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. What `serveProject` uses while developing, and `createAuthoringHost` always. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
+| `renderLimit` | `{ perSpace?: number; waitMs?: number }` | — | How many pages of ONE space this process renders at once, so one space's burst waits behind its own renders instead of taking every render from the others. A kept page takes no turn: what is held back is what costs — a visitor's own page, a draft drawn with its providers' answers, an address no kept page answers (a `?x=<random>` per request). `perSpace` is every space's unless its deployment says its own (`SSRSpaceDeployment.renderLimit`, its plan's); without either a space has no limit. A page past it waits `waitMs` (2000) for a turn, then is answered 503 with `Retry-After: 2` and "This site is busy right now"; the refusals are said once a minute per space, with how many. Per process: four workers render up to four times as many. |
 | `cache` | `SSRCacheConfig` | — | What is kept of rendered pages (`maxBytes`, `staleMs`, `ignoredQueryParams`) and how several replicas keep them in step (`bus`, `store`). See [Render cache](#render-cache). |
 | `earlyHints` | `boolean` | `true` | Says what every page paints with — the SDK's stylesheets — in a `103 Early Hints` before the page is rendered, and again as the page's `Link` header (for a CDN that turns it into one). Not the SDK's module: it is asked once the page has painted. `false` sends neither. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
@@ -803,6 +804,17 @@ console.log(server.cache?.size);
 
 `server.cache` is `null` when nothing is cached (`cacheTtlMs: 0` and `rsc.cacheTtlMs: 0`). `size` counts the entries of all three caches. Given `cache.bus` or `cache.store`, an invalidation reaches every replica and the store they share.
 
+#### The draft
+
+The draft (`main`) is the space being developed right then — in the builder, by an agent, with `plitzi space push` — and
+a page of it is kept only under what it is at: `SSRSpaceDeployment.draftVersion`, which the deployment returns from
+`getSpaceDeployment` (usually its resolvers' `decorate`) and changes with every write that changes what a page of the
+draft draws — its schema, its style, its data, its server code. A new version is a new key: an edit is the next request
+drawn again, on every replica, with nothing to invalidate. Without one — a deployment that cannot say it, a self-hosted
+server, a project of the CLI developing its space — the draft is never kept, and each request draws it. Neither is a
+draft's page drawn with what its server providers answered: the draft's data is never kept (its RSC refresh neither).
+The space read for a render is kept by the same rule, so a page served from the cache reads nothing.
+
 #### `CacheFilter`
 
 | Field | Type | Description |
@@ -1117,6 +1129,10 @@ Return `{}` (empty object) when there is no server data for the current request.
 What a refresh asks for besides the location (`/_rsc?location=…&country=fr`) is `req.ctx.rscParams`; the action resolver hands it to the action over the `input` the element was saved with.
 
 ### Asked as the visitor
+
+Providers of one render that ask the same address — with the same headers, the same way — share one request to it:
+a page whose header and body both read the account is one call, and each provider still gives up on its own timeout
+(the request stops once none of them waits).
 
 A server provider whose `query` is an API's address is asked without the visitor's cookies. One that says
 `credentials: 'include'` is asked WITH them — its page arrives with that visitor's own data (an account's dashboard)

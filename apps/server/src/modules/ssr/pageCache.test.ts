@@ -83,6 +83,45 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+/**
+ * The draft (`main`) is being edited right then: a page of it is kept only under the version every edit changes, so a
+ * write is never answered with the page drawn before it — and never at all when the deployment cannot say the version.
+ */
+describe('the page cache for the draft', () => {
+  const draft = (draftVersion?: string): SSRRequest => {
+    const req = request();
+    req.ctx.spaceDeployment = { spaceId: 42, environment: 'main', revision: 0, ...(draftVersion ? { draftVersion } : {}) };
+
+    return req;
+  };
+
+  it('keeps no page of a draft whose version is not known', async () => {
+    buildBody.mockResolvedValue(page('<html>draft</html>'));
+    const pages = caches();
+    await render(draft(), response().res, pages);
+    const again = response();
+    await render(draft(), again.res, pages);
+
+    expect(buildBody).toHaveBeenCalledTimes(2);
+    expect(again.headers['X-Cache']).not.toBe('HIT');
+  });
+
+  it('keeps a page under the draft’s version, and draws it again for the next one', async () => {
+    buildBody.mockResolvedValueOnce(page('<html>v1</html>')).mockResolvedValueOnce(page('<html>v2</html>'));
+    const pages = caches();
+    await render(draft('v1'), response().res, pages);
+    const same = response();
+    await render(draft('v1'), same.res, pages);
+    const edited = response();
+    await render(draft('v2'), edited.res, pages);
+
+    expect(same.headers['X-Cache']).toBe('HIT');
+    expect(same.sent).toEqual(['<html>v1</html>']);
+    expect(edited.sent).toEqual(['<html>v2</html>']);
+    expect(buildBody).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('the page cache', () => {
   // A page a publish invalidated, asked for by every visitor in the second its render takes.
   it('renders a page once for the requests that ask for it at the same time', async () => {

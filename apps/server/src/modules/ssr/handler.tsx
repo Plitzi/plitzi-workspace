@@ -4,8 +4,9 @@ import { sendEarlyHints } from './earlyHints';
 import { meterPage } from './meterPage';
 import { claimRender, pageSlot, readPage, renderingNow } from './pageCache';
 import { draftSessionCookie, takeDraftOverride } from './preview';
+import { DEFAULT_RENDER_WAIT_MS, renderLimitFor } from './renderTurns';
 import { streamBody } from './streamBody';
-import { buildHtmlCacheKey, ignoredQueryParamsOf, pageHtml, renderedQuery } from '../../helpers/cache';
+import { buildHtmlCacheKey, ignoredQueryParamsOf, keepsVersion, pageHtml, renderedQuery } from '../../helpers/cache';
 import { resolveCompression } from '../../helpers/compress';
 import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
@@ -38,6 +39,12 @@ const sendUnavailable = (res: SSRResponseHelpers, said: string): void => {
   );
 };
 
+/** How long a page answered busy tells its visitor to wait before asking again, in seconds. */
+const BUSY_RETRY_AFTER_S = 2;
+
+/** The turn of a space with no limit: nothing to give back. */
+const noTurn = (): void => undefined;
+
 export const renderSSR = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
@@ -48,6 +55,8 @@ export const renderSSR = async (
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   const devMode = config.devMode ?? false;
+  // Read once: a deployment's value it cannot use is said here, not on every turn asked of it.
+  const limit = renderLimitFor(req.ctx.spaceDeployment, config.renderLimit);
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   // A `system` theme is drawn as the machine asks (`theme.resolved`): Chromium says which from its next request on.
@@ -82,8 +91,9 @@ export const renderSSR = async (
     }
   }
 
-  // Cache is disabled for the main environment (development) and for any draft-override render.
-  const htmlCache = environment !== 'main' && !offlineDataOverride ? caches.html : undefined;
+  // Kept for a published revision, and for the draft (`main`, edited right then) only under the version every edit
+  // changes (`keepsVersion`); never for a draft-override render, a one-shot of unsaved edits.
+  const htmlCache = keepsVersion(req.ctx.spaceDeployment) && !offlineDataOverride ? caches.html : undefined;
   const ignored = ignoredQueryParamsOf(config);
   // Rendered as it is keyed: a page kept without the analytics parameters of a link must not have been drawn with them.
   if (htmlCache) {
@@ -210,7 +220,14 @@ export const renderSSR = async (
     if (kept) {
       const decision = await serveKept(kept.page, kept.stale ? 'STALE' : 'HIT');
       // Served as it was, and rendered again behind it for whoever asks next — once, however many ask meanwhile.
-      if (kept.stale && decision?.unavailable === undefined && !renderingNow(slot)) {
+      // Only on a turn free right now: past its space's limit the stale page is served again, and drawn later.
+      const turn =
+        kept.stale && decision?.unavailable === undefined && !renderingNow(slot)
+          ? limit === undefined
+            ? noTurn
+            : caches.turns.tryTake(spaceId as number, limit)
+          : undefined;
+      if (turn) {
         const claim = claimRender(slot);
         req.ctx.meter = decision;
         renderPage()()
@@ -223,7 +240,10 @@ export const renderSSR = async (
             caches.html?.delete(slot.key);
             serverLog.warn('SSR cache', `${req.path} could not be rendered again; the next request renders it`, error);
           })
-          .finally(claim.release);
+          .finally(() => {
+            claim.release();
+            turn();
+          });
       }
 
       return;
@@ -242,9 +262,26 @@ export const renderSSR = async (
   }
 
   // Taken in this same turn as the look above: an `await` between the two let every request of a burst render.
+  // Claimed before the turn is waited for: whoever asks for this same page meanwhile waits on this one render.
   const claim = slot && !renderingNow(slot) ? claimRender(slot) : undefined;
   try {
-    await renderFresh(claim);
+    const turn =
+      limit === undefined
+        ? noTurn
+        : await caches.turns.take(spaceId as number, limit, config.renderLimit?.waitMs ?? DEFAULT_RENDER_WAIT_MS);
+    if (!turn) {
+      caches.turns.refused(spaceId as number, limit ?? 0);
+      res.setHeader('Retry-After', String(BUSY_RETRY_AFTER_S));
+      sendUnavailable(res, 'This site is busy right now. Try again in a moment.');
+
+      return;
+    }
+
+    try {
+      await renderFresh(claim);
+    } finally {
+      turn();
+    }
   } finally {
     claim?.release();
   }

@@ -55,6 +55,18 @@ export type SSRSpaceDeployment = {
    * a page of one of them renders the space itself and is answered its document across origins.
    */
   grantOrigins?: string[];
+  /**
+   * What the draft (`main`) is at, when the deployment can say: changed by every write that changes what a page of it
+   * draws — its schema, its style, its data, its server code. With it, a draft's pages are kept like a revision's,
+   * under it, so a write is never answered with the page before it; without it, a draft is never kept.
+   */
+  draftVersion?: string;
+  /**
+   * How many pages of this space one process renders at once, when the deployment says (its plan's) — the server's
+   * `renderLimit.perSpace` otherwise, and no limit without either. A kept page takes no turn; a page past it waits
+   * for one (`renderLimit.waitMs`) and is answered 503 when none comes.
+   */
+  renderLimit?: number;
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;

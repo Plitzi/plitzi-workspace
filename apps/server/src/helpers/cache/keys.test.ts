@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildHtmlCacheKey, buildRscCacheKey } from './keys';
+import { buildHtmlCacheKey, buildRscCacheKey, keepsVersion, offlineDataCacheKeyOf } from './keys';
 
 const req = (path: string, search = '', hostname = 'site.example.com', cookie?: string, host = hostname) => ({
   hostname,
@@ -169,5 +169,30 @@ describe('buildRscCacheKey', () => {
 
     expect(a).toBe(b);
     expect(a).not.toBe(shifted);
+  });
+});
+
+/**
+ * A published revision never changes under its name and is always kept; the draft (`main`) is being edited right then,
+ * and is kept only under the version every edit changes — a new version is a new key, so an edit is never answered
+ * with the space read before it.
+ */
+describe('what a space is kept under', () => {
+  it('keeps a revision, and the draft only with its version', () => {
+    expect(keepsVersion({ environment: 'production', revision: 3 })).toBe(true);
+    expect(keepsVersion({ environment: 'main', revision: 0 })).toBe(false);
+    expect(keepsVersion(undefined)).toBe(false);
+    expect(keepsVersion({ environment: 'main', revision: 0, draftVersion: 'v1' })).toBe(true);
+    expect(offlineDataCacheKeyOf({ spaceId: 4, environment: 'main', revision: 0 })).toBeUndefined();
+  });
+
+  it('keys the draft by its version, and the page too', () => {
+    const v1 = offlineDataCacheKeyOf({ spaceId: 4, environment: 'main', revision: 0, draftVersion: 'v1' });
+    const v2 = offlineDataCacheKeyOf({ spaceId: 4, environment: 'main', revision: 0, draftVersion: 'v2' });
+    const page = (draftVersion: string) =>
+      buildHtmlCacheKey(undefined, 4, 'main', 0, { ...req('/'), ctx: { spaceDeployment: { draftVersion } } }, []);
+
+    expect(v1).not.toBe(v2);
+    expect(page('v1')).not.toBe(page('v2'));
   });
 });
