@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import getBindingsDetails from './getBindingsDetails';
 
 import type { Element, ElementBinding } from '../types';
+import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 const makeElement = (
   bindings?: Element['definition']['bindings'],
@@ -88,6 +89,18 @@ describe('getBindingsDetails', () => {
     const result = getBindingsDetails({ variables: { title: 'Hello' } }, element);
 
     expect(result.attributes.text).toBe('Hello');
+  });
+
+  // Read as lodash's `get` read them, which this replaced: an index, a primitive's property, a key holding the dots.
+  it('reads a source path through an index, a value’s own property, and a key that is the whole path', () => {
+    const read = (source: string, data: Record<string, RuleValue>) =>
+      getBindingsDetails(data, makeElement({ attributes: [binding({ source, to: 'text' })] })).attributes.text;
+
+    expect(read('rows[1].name', { rows: [{ name: 'a' }, { name: 'b' }] })).toBe('b');
+    expect(read('rows.1.name', { rows: [{ name: 'a' }, { name: 'b' }] })).toBe('b');
+    expect(read('variables.title.length', { variables: { title: 'Hello' } })).toBe(5);
+    expect(read('list_x.item', { 'list_x.item': 'flat', list_x: { item: 'nested' } })).toBe('flat');
+    expect(read('variables.missing.deeper', { variables: {} })).toBeUndefined();
   });
 
   it('camelCases the to for style bindings', () => {

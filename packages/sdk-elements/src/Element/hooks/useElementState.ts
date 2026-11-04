@@ -1,10 +1,9 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
-import { useStoreById } from '@plitzi/nexus/react';
-import { useCommonStore, useCommonStoreSetter } from '@plitzi/sdk-shared/store';
+import { useDrawnCallback, useDrawnMemo } from './drawnMemo';
 
-import type { PathOf } from '@plitzi/nexus';
+import type { PathOf, StoreApi } from '@plitzi/nexus';
 import type { CommonState, Element } from '@plitzi/sdk-shared';
 
 // Element state lives in the shared root store under `runtime.elements.<id>`, with a `scopePath` sub-key for
@@ -19,37 +18,43 @@ import type { CommonState, Element } from '@plitzi/sdk-shared';
 // the element anyway; moving the slice with it would only preserve what a remount already threw away. Accepted
 // rather than worked around: it happens in the builder, to an element its author is editing right then.
 
-const emptyState: Record<string, unknown> = {};
+export const emptyState: Record<string, unknown> = {};
 
-const elementStatePath = (id: string, scopePath: string | undefined): PathOf<CommonState> =>
+/** Where an element's state is: its slice of `runtime.elements`, under its row's `scopePath` when it is a replica. */
+export const elementStatePath = (id: string, scopePath: string | undefined): PathOf<CommonState> =>
   scopePath ? `runtime.elements.${id}.${scopePath}` : `runtime.elements.${id}`;
 
-export type UseElementStateProps = {
+export type UseElementStateSetterProps = {
+  /** The nearest scope's store: what the element reads its state from (`elementStatePath`), and writes it through. */
+  store: StoreApi<CommonState>;
   id: string;
   bindings?: Partial<Element['definition']['bindings']>;
   previewMode: boolean;
 };
 
-const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) => {
+/**
+ * How an element writes its state, and where it is. The state itself is read with the element's other values in one
+ * subscription (`useElementInternal`): read here, it was a subscription of its own on every element.
+ */
+const useElementStateSetter = ({ store, id, bindings, previewMode }: UseElementStateSetterProps) => {
   // The nearest scope's position-derived identity: '' for a plain element (a single instance), or a per-row path for
   // a list replica, so duplicated element ids resolve to distinct slices.
-  const { scopePath } = useStoreById<CommonState>();
-  const path = useMemo(() => elementStatePath(id, scopePath), [id, scopePath]);
-  const [stateValue] = useCommonStore(path);
-  const state = (stateValue as Record<string, unknown> | undefined) ?? emptyState;
-  const setState = useCommonStoreSetter();
+  const { scopePath } = store;
+  const path = useDrawnMemo(() => elementStatePath(id, scopePath), [id, scopePath]);
+  const setState = store.setState;
 
-  const attributesBinded = useMemo(() => {
-    const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
-
-    return attributes.filter(binding => binding.enabled !== false).map(binding => get(binding, 'to', ''));
-  }, [bindings]);
-
-  const setElementState = useCallback(
+  const setElementState = useDrawnCallback(
     <T extends Record<string, unknown> = Record<string, unknown>>(value?: T | ((prev: T) => T)) => {
       if (!previewMode) {
         return false;
       }
+
+      // What a binding writes is not the element's to set: worked out on a write, which few elements ever make, rather
+      // than on every draw of every element.
+      const boundAttributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
+      const attributesBinded = boundAttributes
+        .filter(binding => binding.enabled !== false)
+        .map(binding => get(binding, 'to', ''));
 
       const computeNext = (prev: Record<string, unknown> | undefined) => {
         if (!value) {
@@ -68,7 +73,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
 
       return true;
     },
-    [attributesBinded, path, previewMode, setState]
+    [bindings, path, previewMode, setState]
   );
 
   // Only replicas (a non-empty `scopePath` — e.g. list rows) churn through many short-lived slices, so only they clear
@@ -82,7 +87,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
     return () => setState(path, undefined);
   }, [previewMode, scopePath, path, setState, id]);
 
-  return { state, setElementState };
+  return { path, setElementState };
 };
 
-export default useElementState;
+export default useElementStateSetter;

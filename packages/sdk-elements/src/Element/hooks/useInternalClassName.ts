@@ -1,8 +1,8 @@
 import clsx from 'clsx';
-import { useMemo } from 'react';
 
 import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
+import { useDrawnMemo } from './drawnMemo';
 import { isVisible } from '../helpers/isVisible';
 import { useLayoutBody } from '../LayoutBody';
 
@@ -35,7 +35,7 @@ const useInternalClassName = ({
   const unfilled = componentSlot && previewMode === true && (items ?? []).length === 0 && body === null;
   const visible = isVisible(elementState.visibility) && !unfilled;
 
-  return useMemo(
+  return useDrawnMemo(
     () =>
       clsx(
         className,

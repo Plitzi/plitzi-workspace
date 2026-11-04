@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import create from './create';
 import { scaffold } from '../../scaffold';
+import { RETIRED_MACHINERY } from '../../scaffold/machinery';
 import { CLI_DIR, REPORTS_DIR, TSCONFIG_BASE } from '../../scaffold/paths';
 import { NODE_RANGE } from '../../scaffold/project';
 
@@ -444,33 +445,23 @@ describe('the scaffold', () => {
   });
 
   /**
-   * Production runs JavaScript: stripping types loads a TypeScript transformer into the server for its whole life
-   * (~10 MB), so a deployment runs what `build` emitted. The plugins stay source — the page server builds them.
+   * Production runs JavaScript, bundled: stripping types loads a TypeScript transformer into the server for its whole
+   * life (~10 MB), and Node links every module it imports — so a deployment runs what `build` wrote: the server's
+   * bundle (`@plitzi/sdk-server/bundle`). The plugins stay source — the page server builds them.
    */
-  it('builds the server to JavaScript for production, leaving the plugins to the page server', () => {
+  it('bundles the server for production with the server’s own rules, and retires the tsc build', () => {
     const files = scaffold(answers({ mode: 'server' }));
     const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
-    const build = JSON.parse(files['tsconfig.build.json']) as {
-      compilerOptions: Record<string, unknown>;
-      include: string[];
-      exclude: string[];
-    };
 
-    expect(scripts.build).toBe('tsc -p tsconfig.build.json');
+    expect(scripts.build).toBe('node .plitzi/build.ts');
+    expect(files['.plitzi/build.ts']).toContain("import { bundleProject } from '@plitzi/sdk-server/bundle';");
     // Production by itself: without the variable a deployed server is a development one.
     expect(scripts['start:prod']).toBe('NODE_ENV=production node --env-file-if-exists=.env dist/main.js');
-    expect(build.compilerOptions).toMatchObject({
-      noEmit: false,
-      outDir: 'dist',
-      rewriteRelativeImportExtensions: true
-    });
-    // A space importing a plugin's declaration reaches its component and the stylesheet it imports.
-    expect(build.include).toEqual(['src', '.plitzi/assets.d.ts']);
-    // Built at boot from their source, by the server: never compiled ahead.
-    expect(build.exclude).toEqual(['src/plugins', 'src/functions']);
+    expect(files['tsconfig.build.json']).toBeUndefined();
+    expect(RETIRED_MACHINERY['tsconfig.build.json']).toBe('.plitzi/build.ts');
     // The same project from `src/main.ts` and from `dist/main.js`: the folder its scripts run in.
     expect(files['src/main.ts']).toContain('space: authorProjectSpace');
-    expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
+    expect(scaffold(answers({ mode: 'client' }))['.plitzi/build.ts']).toBeUndefined();
   });
 
   // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
@@ -638,7 +629,6 @@ describe('plitzi create', () => {
         'playwright.config.ts',
         'public',
         'src',
-        'tsconfig.build.json',
         'tsconfig.json',
         'visual'
       ]);

@@ -64,6 +64,8 @@ export default tsEslint.config({
     'react-hooks/immutability': 'off', // @todo: review later
     'react-hooks/set-state-in-effect': 'off', // @todo: review later
     'react-hooks/preserve-manual-memoization': 'off', // @todo: review later
+    // sdk-elements' memos that the page server, which draws once, makes as values (`Element/hooks/drawnMemo.ts`).
+    'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '(useDrawnMemo|useDrawnCallback)' }],
     'prettier/prettier': ['warn', { trailingComma: 'none' }],
     '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     // Destructuring a key out so the rest carries everything else is how a field is dropped from an object here.

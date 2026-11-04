@@ -67,49 +67,65 @@ const place = (map: Record<string, unknown>, path: string, value: unknown): void
   at[segments[segments.length - 1]] = value;
 };
 
-// Source VALUES live under `runtime.sources.*` (globals + scoped), combined by the store's deep-merge scope
-// chain. We subscribe only to the PATHS the element's bindings and templates read — not the whole source they sit
-// in — so the element re-renders only when one of those values changes. Subscribed by root, every element that read
-// any computed value rendered again whenever any computed value changed: on a board with a few hundred elements, the
-// tool in hand changing was the whole page drawn again.
-const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementDataSourceProps) => {
-  const sourcePaths = useMemo(() => {
-    const paths = new Set<string>(sourcesProp ?? []);
-    for (const bindingsGroup of Object.values(bindings ?? {})) {
-      if (!Array.isArray(bindingsGroup)) {
-        continue;
-      }
-
-      for (const binding of bindingsGroup) {
-        for (const path of pathsOf(binding)) {
-          paths.add(path);
-        }
-      }
+/**
+ * The paths of `runtime.sources` an element reads: what its bindings name (a source, a transformer's template, a
+ * condition) and what its attribute templates do, without one already under another — and the variables with them, which
+ * a template reads by their bare name.
+ *
+ * Source VALUES live under `runtime.sources.*` (globals + scoped), combined by the store's deep-merge scope chain. Only
+ * these PATHS are read — not the whole source they sit in — so an element renders again only when one of those values
+ * changes. Read by root, every element that read any computed value rendered again whenever any computed value changed:
+ * on a board with a few hundred elements, the tool in hand changing was the whole page drawn again.
+ */
+export const dataSourcePaths = (
+  bindings: Record<string, ElementBinding[]> | undefined,
+  sources: readonly string[] | undefined
+): string[] => {
+  const paths = new Set<string>(sources ?? []);
+  for (const bindingsGroup of Object.values(bindings ?? {})) {
+    if (!Array.isArray(bindingsGroup)) {
+      continue;
     }
 
-    if (paths.size > 0) {
-      paths.add('variables');
+    for (const binding of bindingsGroup) {
+      for (const path of pathsOf(binding)) {
+        paths.add(path);
+      }
     }
+  }
 
-    return covering(paths);
-  }, [bindings, sourcesProp]);
+  if (paths.size > 0) {
+    paths.add('variables');
+  }
 
-  const storePaths = useMemo(() => sourcePaths.map(path => `runtime.sources.${path}` as const), [sourcePaths]);
+  return covering(paths);
+};
+
+/** Where in the store a source path is read. */
+export const sourceStorePath = (path: string) => `runtime.sources.${path}` as const;
+
+/** The values read for `paths`, in their order, put back where each sits: what a binding and a template resolve against. */
+export const dataSourceFrom = (paths: readonly string[], values: readonly unknown[]): Record<string, unknown> => {
+  const map: Record<string, unknown> = {};
+  paths.forEach((path, index) => {
+    // Left out rather than set to undefined. A template root is not always a source — `{{ source }}` is the bound value,
+    // `{{ apiUrl }}` a variable the evaluator lifts to the root — and an undefined key spread over the template's context
+    // would shadow both.
+    if (values[index] !== undefined) {
+      place(map, path, values[index]);
+    }
+  });
+
+  return map;
+};
+
+/** What an element that reads only sources reads of them: `dataSourcePaths`, subscribed. */
+const useElementDataSource = ({ bindings, sources }: UseElementDataSourceProps) => {
+  const sourcePaths = useMemo(() => dataSourcePaths(bindings, sources), [bindings, sources]);
+  const storePaths = useMemo(() => sourcePaths.map(sourceStorePath), [sourcePaths]);
   const [values] = useCommonStore(storePaths);
 
-  return useMemo(() => {
-    const map: Record<string, unknown> = {};
-    sourcePaths.forEach((path, index) => {
-      // Left out rather than set to undefined. A template root is not always a source — `{{ source }}` is the bound
-      // value, `{{ apiUrl }}` a variable the evaluator lifts to the root — and an undefined key spread over the
-      // template's context would shadow both.
-      if (values[index] !== undefined) {
-        place(map, path, values[index]);
-      }
-    });
-
-    return map;
-  }, [sourcePaths, values]);
+  return useMemo(() => dataSourceFrom(sourcePaths, values), [sourcePaths, values]);
 };
 
 export default useElementDataSource;

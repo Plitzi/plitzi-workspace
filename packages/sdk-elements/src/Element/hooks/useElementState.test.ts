@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
-import useElementState from './useElementState';
+import { useElementStateRead as useElementState } from '../tests/useElementStateRead';
 
 import type { ElementBinding } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -22,7 +22,7 @@ const rootWrapper = ({ children }: { children: ReactNode }) => createElement(Sto
 
 const render = <T>(hook: () => T) => renderHook(hook, { wrapper: rootWrapper });
 
-describe('useElementState', () => {
+describe('useElementStateSetter', () => {
   it('does not change state and returns false when not in preview mode', () => {
     const { result } = render(() => useElementState({ id: 'el', previewMode: false }));
 

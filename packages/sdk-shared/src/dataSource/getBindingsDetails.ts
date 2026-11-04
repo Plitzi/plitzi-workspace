@@ -1,4 +1,4 @@
-import { camelCase, get, set } from '@plitzi/plitzi-ui/helpers/lodash';
+import { camelCase, set } from '@plitzi/plitzi-ui/helpers/lodash';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
 import utility from './utility';
@@ -23,8 +23,8 @@ const getValues = (
   // with none before is `undefined` there — given the source, a `styleVariant` appended to it spread the word "on" into
   // `{"0":"o","1":"n"}` beside its own key (a run's sheet).
   return {
-    fromValue: sourcePath ? get(dataSource, sourcePath) : undefined,
-    toValue: get(result, toPath)
+    fromValue: sourcePath ? readPath(dataSource, sourcePath) : undefined,
+    toValue: readPath(result, toPath)
   };
 };
 
@@ -38,12 +38,53 @@ const isStyleValue = (value: unknown): boolean =>
 
 type Written = { attributes: Element['attributes']; style: Record<string, string>; definition: Element['definition'] };
 
+const parsedPaths = new Map<string, readonly string[]>();
 /**
- * The keys `set` walks for a path — `a.b[0].c` is `a`, `b`, `0`, `c` — so each container on the way can be copied. A key
- * matches the first group and an index the second; the other is empty.
+ * Bounded, and once full it keeps what it has: a page reads its bindings' paths in the same order on every render, and
+ * a cache that evicted would drop each path just before it was read again (nexus's `getByPath` measured it).
  */
-const pathKeys = (path: string): string[] =>
-  [...path.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map(([, key, index]) => key || index);
+const MAX_PARSED_PATHS = 4096;
+
+/**
+ * The keys of a path — `a.b[0].c` is `a`, `b`, `0`, `c` — parsed once per path. A key matches the first group and an
+ * index the second; the other is empty.
+ */
+const pathKeys = (path: string): readonly string[] => {
+  const known = parsedPaths.get(path);
+  if (known) {
+    return known;
+  }
+
+  const keys = [...path.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map(([, key, index]) => key || index);
+  if (parsedPaths.size < MAX_PARSED_PATHS) {
+    parsedPaths.set(path, keys);
+  }
+
+  return keys;
+};
+
+/**
+ * The value at `path`, read as lodash's `get` reads it — a key that is the whole path first, then key by key, through
+ * anything that is not nullish (a string's `length`) — without parsing the path again on every read: lodash's own cache
+ * holds 500 paths for every caller in the process and empties itself when full, and a page's bindings alone outgrow it.
+ */
+const readPath = (from: unknown, path: string): unknown => {
+  if (typeof from === 'object' && from !== null && path in from) {
+    return (from as Record<string, unknown>)[path];
+  }
+
+  let at = from;
+  for (const key of pathKeys(path)) {
+    if (at === null || at === undefined) {
+      return undefined;
+    }
+
+    // Any value that is not nullish has properties to read, as with `get`; a primitive's are its wrapper's.
+    at = (Object(at) as Record<string, unknown>)[key];
+  }
+
+  return at;
+};
 
 /**
  * Writes `value` at `path` of `written` with every object on the way copied the first time it is written through: the
@@ -56,7 +97,7 @@ const pathKeys = (path: string): string[] =>
 const writeCopying = (written: Written, path: string, value: unknown, owned: WeakSet<object>): void => {
   // The same value written again changes nothing, and copies nothing: what a binding left as it was keeps being the
   // same object from one render to the next, which is what every memo below it is keyed on.
-  if (Object.is(get(written, path), value)) {
+  if (Object.is(readPath(written, path), value)) {
     return;
   }
 
@@ -136,7 +177,7 @@ const getBindingsDetails = (
        * empty, and a condition that printed `0` showed it: `isVisible` hides only on `false`. Before the data answers
        * nothing is written, as before: a flag nobody has set leaves the element as it starts, which spaces rely on.
        */
-      if (bkey === 'initialState' && toPath === 'visibility' && source && get(dataSource, source) !== undefined) {
+      if (bkey === 'initialState' && toPath === 'visibility' && source && readPath(dataSource, source) !== undefined) {
         resultValue = isTrue(resultValue);
       }
 

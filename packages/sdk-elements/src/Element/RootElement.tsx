@@ -1,4 +1,4 @@
-import { use, useMemo } from 'react';
+import { use } from 'react';
 
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
@@ -6,6 +6,7 @@ import { motionAttributes } from '@plitzi/sdk-shared/schema';
 
 import parseStyle from './helpers/parseStyle';
 import renderStaticTag from './helpers/renderStaticTag';
+import { useDrawnMemo } from './hooks/drawnMemo';
 import useElement from './hooks/useElement';
 import useRootElementInteractions from './hooks/useRootElementInteractions';
 import { anchorInRows, RowAnchorContext } from './RowAnchor';
@@ -42,7 +43,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   style: styleProp,
   ...otherProps
 }: RootElementProps<T>) => {
-  const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
+  const styleParsed = useDrawnMemo(() => parseStyle(styleProp), [styleProp]);
   const elementContext = useElement();
   const serviceContext = usePlitzi();
   const previewMode = serviceContext.settings.previewMode ?? true;

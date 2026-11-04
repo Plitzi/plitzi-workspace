@@ -14,6 +14,12 @@ import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
  */
 export const CLI_DIR_INCLUDE = `${CLI_DIR}/**/*`;
 
+/**
+ * What `npm run build` runs: the server bundled for production (`@plitzi/sdk-server/bundle`) into `BUILD_DIR`, for
+ * `start:prod`. The CLI's: `plitzi upgrade` keeps it current.
+ */
+export const BUILD_FILE = `${CLI_DIR}/build.ts`;
+
 export {
   ACTIVE_RUN_FILE,
   AUTHOR_FILE,
@@ -25,6 +31,7 @@ export {
   JOBS_FILE,
   KV_FILE,
   LEGACY_CLI_DIR,
+  MAIN_FILE,
   PLUGIN_DECLARATION_FILE,
   PLUGIN_ENTRIES,
   PLUGIN_FUNCTIONS_DIR,
@@ -43,12 +50,6 @@ export {
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
 } from '@plitzi/sdk-shared/project';
-
-/**
- * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The
- * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/config/serverOptions.ts`.
- */
-export const MAIN_FILE = 'src/main.ts';
 
 /**
  * The scripts that serve a project, as the scaffold writes them: `start` serves it, `start:dev` serves it and starts

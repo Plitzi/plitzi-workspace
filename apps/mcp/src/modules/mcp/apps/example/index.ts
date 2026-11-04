@@ -1,7 +1,4 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-import { VIEW_DIR } from '../shared';
+import { shippedPath, VIEW_DIR } from '../shared';
 
 import type { McpApp } from '../../types';
 
@@ -13,14 +10,14 @@ import type { McpApp } from '../../types';
 
 export const EXAMPLE_APP_URI = 'ui://plitzi/example.html';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-
 export const exampleApp: McpApp = {
   uri: EXAMPLE_APP_URI,
   name: 'plitzi-example-app',
   title: 'Example app',
   description: 'Reference MCP App: shows a tool result and calls a tool back. Not linked to any tool.',
-  entry: path.join(HERE, VIEW_DIR, 'index.tsx')
+  // Its view ships as source beside this module (the copy-assets step in vite.config.ts): this definition is compiled,
+  // everything the browser entry bundles travels verbatim.
+  entry: shippedPath(import.meta.url, `${VIEW_DIR}/index.tsx`, `modules/mcp/apps/example/${VIEW_DIR}/index.tsx`)
   // `styles` and `csp` are optional: a view with no stylesheet of its own inherits the host's look through
   // useHostStyles, and the default CSP already allows the images, fonts and fetches a view may need.
 };

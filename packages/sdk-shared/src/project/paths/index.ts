@@ -107,8 +107,15 @@ export const RUNTIME_DIR = 'src/runtime';
 export const RUNTIME_ENTRY = `${RUNTIME_DIR}/index.ts`;
 
 /**
- * What `npm run build` compiles `src/` into — the server's own code, as JavaScript, for `start:prod` to run with no
- * TypeScript in the process. The same tree: `src/runtime/index.ts` is `dist/runtime/index.js`.
+ * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The
+ * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/config/serverOptions.ts`.
+ */
+export const MAIN_FILE = 'src/main.ts';
+
+/**
+ * What `npm run build` bundles the server into (`@plitzi/sdk-server/bundle`), for `start:prod` to run with no TypeScript
+ * in the process: its entry point and the modules the server imports by their path, named as their sources are —
+ * `src/main.ts` is `dist/main.js`, `src/runtime/index.ts` is `dist/runtime/index.js` — and what they share in `chunks/`.
  */
 export const BUILD_DIR = 'dist';
 

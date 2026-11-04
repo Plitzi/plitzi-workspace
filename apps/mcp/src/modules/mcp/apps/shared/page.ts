@@ -1,14 +1,13 @@
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import ejs from 'ejs';
 
+import { shippedPath } from './assets';
 import { bundle } from './bundle';
 
 import type { McpApp, McpViewSettings } from '../../types';
 
-const SHELL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'shell.ejs');
+const SHELL = shippedPath(import.meta.url, 'shell.ejs', 'modules/mcp/apps/shared/shell.ejs');
 
 const template = (): ejs.TemplateFunction => ejs.compile(readFileSync(SHELL, 'utf-8'), { filename: SHELL });
 

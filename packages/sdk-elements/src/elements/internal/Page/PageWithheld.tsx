@@ -2,7 +2,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { withheldPageOf } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import useInternalItems from '../../../Element/hooks/useInternalItems';
+import useInternalItems, { useItemsSources } from '../../../Element/hooks/useInternalItems';
 
 import type { Element } from '@plitzi/sdk-shared';
 import type { PageWithheld as Reason } from '@plitzi/sdk-shared/schema';
@@ -41,7 +41,13 @@ type DrawnInsteadProps = { page: Element; previewMode?: boolean };
 
 /** The elements of the page the space draws instead, rendered the way any page's items are. */
 const DrawnInstead = ({ page, previewMode }: DrawnInsteadProps) =>
-  useInternalItems({ id: page.id, definition: page.definition, children: undefined, previewMode });
+  useInternalItems({
+    id: page.id,
+    ...useItemsSources(),
+    definition: page.definition,
+    children: undefined,
+    previewMode
+  });
 
 /**
  * What a page the server withheld from this visitor shows instead of its content — which was never sent — inside the

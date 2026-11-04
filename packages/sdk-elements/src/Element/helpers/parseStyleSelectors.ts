@@ -14,6 +14,9 @@ const getTypeRegex = (type: string) => {
 
 const parseStyleSelectors = (definition: Element['definition']) => {
   const styleVariant = definition.initialState?.styleVariant;
+  // Without variants every selector stays as written, after the part's own class: nothing to look for in it, and the
+  // regular expressions below were run on every selector of every element on each render to find that out.
+  const hasVariants = styleVariant !== undefined && Object.keys(styleVariant).length > 0;
 
   return Object.fromEntries(
     Object.entries(definition.styleSelectors).map(([styleSelector, selectors]) => {
@@ -24,13 +27,17 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         return [styleSelector, selectors];
       }
 
+      if (!hasVariants) {
+        return [styleSelector, selectors ? `${baseClass} ${selectors}` : baseClass];
+      }
+
       const hasExactTypeSelector = getTypeRegex(definition.type).test(selectors);
-      if (!hasExactTypeSelector && styleVariant?.[definition.type]?.[styleSelector]) {
+      if (!hasExactTypeSelector && styleVariant[definition.type]?.[styleSelector]) {
         selectors = selectors ? `${definition.type} ${selectors}` : definition.type;
       }
 
       const nextSelectors = selectors.replace(/\S+/g, sel => {
-        const variantsForSelector = styleVariant?.[sel]?.[styleSelector];
+        const variantsForSelector = styleVariant[sel]?.[styleSelector];
         if (!variantsForSelector) {
           return sel;
         }

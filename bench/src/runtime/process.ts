@@ -5,9 +5,9 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 /** Runs a command and hands back its stdout, trimmed. Rejects with stderr in the message when it fails. */
-export const run = async (command: string, args: string[]): Promise<string> => {
+export const run = async (command: string, args: string[], { cwd }: { cwd?: string } = {}): Promise<string> => {
   try {
-    const { stdout } = await execFileAsync(command, args, { maxBuffer: 64 * 1024 * 1024 });
+    const { stdout } = await execFileAsync(command, args, { cwd, maxBuffer: 64 * 1024 * 1024 });
 
     return stdout.trim();
   } catch (error) {

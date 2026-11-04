@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
-import useInternalItems from './useInternalItems';
+import useInternalItems, { useItemsSources } from './useInternalItems';
 import LayoutBody from '../LayoutBody';
 
 import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
@@ -52,9 +52,11 @@ const def = (items?: string[], loadStrategy?: Element['definition']['loadStrateg
   loadStrategy
 });
 
-type Props = Parameters<typeof useInternalItems>[0];
+/** What a test says of the hook: what it is handed besides what it reads its items from (`useItemsSources`). */
+type Props = Omit<Parameters<typeof useInternalItems>[0], 'store' | 'flags'>;
 
-const Harness = (props: Props) => createElement('div', { 'data-testid': 'out' }, useInternalItems(props));
+const Harness = (props: Props) =>
+  createElement('div', { 'data-testid': 'out' }, useInternalItems({ ...useItemsSources(), ...props }));
 
 /**
  * `components` is what this browser can render — empty stands for a plugin that exists only on the server.

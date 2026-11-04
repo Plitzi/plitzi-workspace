@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
-import useInternalItems from './useInternalItems';
+import useInternalItems, { useItemsSources } from './useInternalItems';
 
 import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
 
@@ -39,6 +39,7 @@ const Harness = () =>
     'div',
     null,
     useInternalItems({
+      ...useItemsSources(),
       id: 'host',
       definition: { rootId: 'root', label: 'host', type: 'container', styleSelectors: { base: '' }, items: ['feed'] },
       children: undefined,

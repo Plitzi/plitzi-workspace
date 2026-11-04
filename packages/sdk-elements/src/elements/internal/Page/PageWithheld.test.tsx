@@ -16,7 +16,8 @@ vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
 vi.mock('../../../Element/hooks/useInternalItems', () => ({
   default: ({ id, definition }: { id: string; definition: Element['definition'] }) => (
     <div data-page={id}>{definition.items?.join(',')}</div>
-  )
+  ),
+  useItemsSources: () => ({ store: undefined, flags: {} })
 }));
 
 const page = (id: string, items: string[], attributes: Record<string, unknown> = {}): Element => ({

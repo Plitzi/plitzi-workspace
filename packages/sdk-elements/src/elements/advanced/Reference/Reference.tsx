@@ -12,7 +12,7 @@ import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 import { isVisible } from '../../../Element/helpers/isVisible';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
-import useInternalItems from '../../../Element/hooks/useInternalItems';
+import useInternalItems, { useItemsSources } from '../../../Element/hooks/useInternalItems';
 import LayoutBody from '../../../Element/LayoutBody';
 import PluginManager from '../../../Element/PluginManager';
 import ReplicaProvider from '../../../Element/ReplicaProvider';
@@ -59,7 +59,17 @@ type SlotItemsProps = {
 const SlotItems = ({ instance, instanceId, items, plitziElementLayout, previewMode }: SlotItemsProps) => {
   const definition = useMemo(() => ({ ...instance, items }), [instance, items]);
 
-  return useInternalItems({ id: instanceId, definition, plitziElementLayout, children: undefined, previewMode });
+  const { store, flags } = useItemsSources();
+
+  return useInternalItems({
+    id: instanceId,
+    store,
+    flags,
+    definition,
+    plitziElementLayout,
+    children: undefined,
+    previewMode
+  });
 };
 
 type ComponentInstanceProps = {

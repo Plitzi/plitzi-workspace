@@ -7,11 +7,27 @@ import ejs from 'ejs';
 import type { SSRTemplateFn } from '@plitzi/sdk-shared';
 
 /**
- * Beside this module wherever it runs: in the source, and in the build, where it is a chunk of its own with `views`
- * copied beside it (`vite.config.ts`, `template` and `copyViews`) — the scripts there minified.
+ * Beside this module when it runs from this package: in the source, and in the build, where it is a chunk of its own
+ * with `views` copied beside it (`vite.config.ts`, `template` and `copyViews`) — the scripts there minified. A program
+ * that bundled this package into its own files moved the module and left the files: they are found in the package as
+ * it is installed, through its own name.
  */
-const VIEWS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'views');
-const DEFAULT_TEMPLATE_PATH = path.join(VIEWS, 'template.ejs');
+const viewsDir = (): string => {
+  const beside = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'views');
+  if (fs.existsSync(path.join(beside, 'template.ejs'))) {
+    return beside;
+  }
+
+  const installed = path.resolve(
+    path.dirname(fileURLToPath(import.meta.resolve('@plitzi/sdk-server'))),
+    'chunks/views'
+  );
+  if (!fs.existsSync(path.join(installed, 'template.ejs'))) {
+    throw new Error(`The page template is neither beside ${beside} nor in the installed package (${installed})`);
+  }
+
+  return installed;
+};
 
 /** Where the template takes a script of `views/inline/`: `<%- inline('name.js') %>`, on a line of its own. */
 const INLINE = /^<%- inline\('([\w.-]+\.js)'\) %>$/gmu;
@@ -22,9 +38,9 @@ const INLINE = /^<%- inline\('([\w.-]+\.js)'\) %>$/gmu;
  * and commented, and the template's own comments never reach a page. A script that is not there, or that holds a
  * template tag of its own, stops the server at boot rather than leaving a page without it.
  */
-export const templateSource = (): string => {
-  const source = fs.readFileSync(DEFAULT_TEMPLATE_PATH, 'utf-8').replace(INLINE, (_, name: string) => {
-    const file = path.join(VIEWS, 'inline', name);
+export const templateSource = (views = viewsDir()): string => {
+  const source = fs.readFileSync(path.join(views, 'template.ejs'), 'utf-8').replace(INLINE, (_, name: string) => {
+    const file = path.join(views, 'inline', name);
     if (!fs.existsSync(file)) {
       throw new Error(`template.ejs inlines views/inline/${name}, which is not there`);
     }
@@ -48,4 +64,8 @@ export const templateSource = (): string => {
   return source;
 };
 
-export const compileTemplate = (): SSRTemplateFn => ejs.compile(templateSource(), { filename: DEFAULT_TEMPLATE_PATH });
+export const compileTemplate = (): SSRTemplateFn => {
+  const views = viewsDir();
+
+  return ejs.compile(templateSource(views), { filename: path.join(views, 'template.ejs') });
+};

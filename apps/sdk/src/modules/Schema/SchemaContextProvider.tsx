@@ -14,6 +14,28 @@ export type SchemaContextProviderProps = {
   schema?: Schema;
 };
 
+/**
+ * The pages' elements, one object per `flat` and list of pages: the page server draws the same schema objects on every
+ * request until the space changes, and the routes built from these are kept by this object too (`NavigationProvider`).
+ */
+const pageDefinitionsByFlat = new WeakMap<
+  Schema['flat'],
+  { pages: Schema['pages']; definitions: Record<string, Element> }
+>();
+
+const pageDefinitionsOf = (flat: Schema['flat'], pages: Schema['pages']): Record<string, Element> => {
+  const known = pageDefinitionsByFlat.get(flat);
+  if (known && known.pages === pages) {
+    return known.definitions;
+  }
+
+  // `pick` is typed over the whole of `flat`'s values; the pages are elements.
+  const definitions = pick(flat, pages) as Record<string, Element>;
+  pageDefinitionsByFlat.set(flat, { pages, definitions });
+
+  return definitions;
+};
+
 const SchemaContextProvider = ({ children, schema: schemaProp }: SchemaContextProviderProps) => {
   const internalData = use(NetworkInternalContext);
   const schema = useMemo(
@@ -29,7 +51,7 @@ const SchemaContextProvider = ({ children, schema: schemaProp }: SchemaContextPr
    * not rebuild them.
    */
   const { flat, pages } = schema;
-  const pageDefinitions = useStableValue(useMemo(() => pick(flat, pages) as Record<string, Element>, [flat, pages]));
+  const pageDefinitions = useStableValue(pageDefinitionsOf(flat, pages));
 
   useSdkStoreSync('pageDefinitions', pageDefinitions);
 

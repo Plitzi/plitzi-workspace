@@ -7,6 +7,7 @@ import {
   RUNTIME_DIR,
   AUTHOR_FILE,
   BUILD_DIR,
+  BUILD_FILE,
   CLI_DIR,
   CLI_DIR_INCLUDE,
   DATA_DIR,
@@ -176,11 +177,12 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            */
           'start:dev-inspect': watchedNodeWithEnv(`--inspect ${watchPaths(answers)} ${MAIN_FILE}`),
           /**
-           * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
-           * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
-           * runs what `build` emitted and carries no TypeScript at all.
+           * What production runs: the server bundled (`${BUILD_FILE}`) — its entry and the modules it imports by their
+           * path, as JavaScript, with what they share in chunks. Node strips types by loading a TypeScript transformer
+           * into the process, ~10 MB a server keeps for its whole life, and resolves and links every module it imports:
+           * a deployment runs what `build` wrote, a few files and no TypeScript at all.
            */
-          build: 'tsc -p tsconfig.build.json',
+          build: `node ${BUILD_FILE}`,
           // Production by itself: without the variable the server is a development one — dev tools, every action's
           // trace in the answer — wherever somebody deployed it and forgot to set it.
           'start:prod': `NODE_ENV=production ${nodeWithEnv(`${BUILD_DIR}/main.js`)}`
@@ -245,25 +247,17 @@ export const packageJson = (answers: CreateAnswers, extra: Record<string, string
  * What `build` compiles: the server's own code, to `dist/`, with each relative `.ts` import rewritten to the `.js` it
  * becomes. The plugins are left out — the page server builds those itself, from their source.
  */
-export const tsconfigBuild = (): string =>
-  `${JSON.stringify(
-    {
-      extends: './tsconfig.json',
-      compilerOptions: {
-        noEmit: false,
-        outDir: BUILD_DIR,
-        rootDir: 'src',
-        rewriteRelativeImportExtensions: true
-      },
-      // The asset types too: a space that imports a plugin's declaration reaches its component, and the stylesheet the
-      // component imports is typed only there.
-      include: ['src', `${CLI_DIR}/assets.d.ts`],
-      // Built at boot from their source, by the server itself: never compiled ahead.
-      exclude: ['src/plugins', 'src/functions']
-    },
-    null,
-    2
-  )}\n`;
+/** `.plitzi/build.ts`: the server bundled for production, by the package that serves it — the rules are the server's. */
+export const buildScript = (): string => `/**
+ * \`npm run build\`: the server as production runs it (\`start:prod\`), bundled into ${BUILD_DIR}/ — its entry, the modules it
+ * imports by their path (the space, the runtime) and what they share. The plugins and functions are built from their
+ * source when the server starts, as always. This file is the CLI's: \`plitzi upgrade\` keeps it current.
+ */
+import { bundleProject } from '@plitzi/sdk-server/bundle';
+
+const { modules, chunks, ms } = await bundleProject();
+console.log(\`[build] \${modules} modules of the project and \${chunks} chunks of the packages they import, \${ms} ms\`);
+`;
 
 /**
  * The compiler options the CLI keeps up, in its own folder: the project's `tsconfig.json` extends them and says what
@@ -668,7 +662,7 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   'package.json': packageJson(answers),
   'tsconfig.json': tsconfig(answers),
   [TSCONFIG_BASE]: tsconfigBase(answers),
-  ...(answers.mode === 'server' ? { 'tsconfig.build.json': tsconfigBuild() } : {}),
+  ...(answers.mode === 'server' ? { [BUILD_FILE]: buildScript() } : {}),
   '.gitignore': gitignore(answers),
   'README.md': readme(answers),
   'AGENTS.md': agentsFile(answers),

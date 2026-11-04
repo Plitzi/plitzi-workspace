@@ -1,21 +1,22 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
-import { useMemo } from 'react';
+import { useRef } from 'react';
 
 import { getBindingsDetails } from '@plitzi/sdk-shared/dataSource';
 import { processTwig, hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import useElementDataSource from './useElementDataSource';
-import useElementState from './useElementState';
+import { useDrawnMemo } from './drawnMemo';
+import { useStoreValues } from './storeValues';
+import { dataSourceFrom, dataSourcePaths, sourceStorePath } from './useElementDataSource';
+import useElementStateSetter, { emptyState } from './useElementState';
 import useInternalItems from './useInternalItems';
 import { serverTemplatesByType } from '../../elements/declarations';
 import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
+import type { PathOf, StoreApi } from '@plitzi/nexus';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { KeepEmptyTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import type { ReactNode } from 'react';
 
@@ -75,6 +76,71 @@ const interpolateAttributes = (
   return interpolated;
 };
 
+const hasOwnKeys = (value: object): boolean => Object.keys(value).length > 0;
+
+type Templated = { type: string; keys: string[] };
+
+/**
+ * The keys of these attributes that hold a template this element interpolates, kept per attributes object: the schema's
+ * objects are replaced, never changed, when an element is edited, and the page server draws the same ones on every
+ * request — each read the value of every attribute through the token check, on every element, each time.
+ */
+const templatedByAttributes = new WeakMap<Element['attributes'], Templated>();
+
+const templatedKeysOf = (attributes: Element['attributes'], type: string): string[] => {
+  const kept = templatedByAttributes.get(attributes);
+  if (kept?.type === type) {
+    return kept.keys;
+  }
+
+  const evaluatedElsewhere = serverTemplatesByType[type] ?? [];
+  const keys = Object.keys(attributes).filter(key => {
+    const value = attributes[key];
+
+    return typeof value === 'string' && hasValidToken(value) && !evaluatedElsewhere.includes(key);
+  });
+  templatedByAttributes.set(attributes, { type, keys });
+
+  return keys;
+};
+
+/**
+ * A definition as an element draws with it when nothing at render time changes it — no binding rewrote it and its state
+ * names no selectors: its classes laid over its selectors, its initial state's over those. Kept per definition object on
+ * the server, which draws the same schema on every request; one a binding made is drawn once and dropped with it.
+ *
+ * Not in the browser, yet: there an element drawn again by its parent was handed a new definition each time, which the
+ * render tracing reads as a change of value (it compares a prop's fields by reference, and `styleSelectors` was new too).
+ * Kept, those renders show for what they are — the same inputs — and `screens.spec`'s budgets of renders that changed
+ * nothing rose with them (docs 0 → 12, the dashboard 7 → 33): renders that were always there, to be removed before the
+ * browser keeps the definition too.
+ */
+const drawnDefinitions = new WeakMap<Element['definition'], Element['definition']>();
+const keepsDrawnDefinitions = typeof window === 'undefined';
+
+const drawnDefinition = (
+  definition: Element['definition'],
+  stateSelectors: Element['definition']['styleSelectors'] | undefined,
+  kept: boolean
+): Element['definition'] => {
+  const reusable = keepsDrawnDefinitions && kept && stateSelectors === undefined;
+  const known = reusable ? drawnDefinitions.get(definition) : undefined;
+  if (known) {
+    return known;
+  }
+
+  const drawn = {
+    ...definition,
+    styleSelectors: { ...definition.styleSelectors, ...definition.initialState?.styleSelectors, ...stateSelectors }
+  };
+  drawn.styleSelectors = parseStyleSelectors(drawn);
+  if (reusable) {
+    drawnDefinitions.set(definition, drawn);
+  }
+
+  return drawn;
+};
+
 const hasBindings = (bindings: Element['definition']['bindings']): boolean =>
   !!bindings && Object.values(bindings).some(list => Array.isArray(list) && list.length > 0);
 
@@ -87,6 +153,8 @@ export const getProps = (
   let style: Record<string, string> | undefined = undefined;
   let { attributes, definition } = element;
   const { rootId, plitziElementLayout } = internalProps;
+  // What the element is handed besides its identity — props another element injects — laid over its attributes.
+  const injected = omitKeys(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout']);
   // Attribute injection, for example custom element (concat custom props + settings)
   if (internalProps.attributes) {
     attributes = { ...attributes, ...internalProps.attributes };
@@ -109,53 +177,41 @@ export const getProps = (
 
   // Only what was authored with a template is interpolated, so an element with none — nearly every one — builds no
   // template data and copies no attributes: that was work on every element of every render, for nothing.
-  // What the page server evaluates against its own context (a page's title over its providers) is left as written.
-  const evaluatedElsewhere = serverTemplatesByType[definition.type] ?? [];
-  const templated = Object.keys(attributes).filter(key => {
-    const value = attributes[key];
-
-    return (
-      typeof value === 'string' && value === authored[key] && hasValidToken(value) && !evaluatedElsewhere.includes(key)
-    );
-  });
+  // What the page server evaluates against its own context (a page's title over its providers) is left as written, and
+  // a value a binding put in place of a template is data.
+  const templated = templatedKeysOf(authored, definition.type).filter(key => attributes[key] === authored[key]);
   if (templated.length > 0) {
     attributes = interpolateAttributes(attributes, templated, dataSource);
   }
 
-  // State
-  attributes = { ...attributes, ...omitKeys(state, ['visibility', 'styleSelectors']) };
-  definition = {
-    ...definition,
-    styleSelectors: {
-      ...definition.styleSelectors,
-      ...definition.initialState?.styleSelectors,
-      ...(state.styleSelectors ?? {})
-    }
-  };
+  // State: most elements hold none, and a copy of their attributes for nothing was one more for each of them.
+  const hasState = Object.keys(state).length > 0;
+  if (hasState) {
+    attributes = { ...attributes, ...omitKeys(state, ['visibility', 'styleSelectors']) };
+  }
 
-  // StyleSelectors now will include the component class
-  definition.styleSelectors = parseStyleSelectors(definition);
+  definition = drawnDefinition(
+    definition,
+    // An element's state is untyped (anything a flow writes); under `styleSelectors` it holds selectors, as it always did.
+    state.styleSelectors as Element['definition']['styleSelectors'] | undefined,
+    definition === element.definition
+  );
 
   return {
     ...internalProps,
-    rootId: get(plitziElementLayout, 'rootId', rootId),
-    attributes: {
-      ...attributes,
-      ...omitKeys(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
-    },
+    rootId: plitziElementLayout ? plitziElementLayout.rootId : rootId,
+    // A copy of their own, always — the state's above, or this one: never the schema's object, which every render of the
+    // element shares.
+    attributes: hasState && !hasOwnKeys(injected) ? attributes : { ...attributes, ...injected },
     definition,
-    elementState: { ...definition.initialState, ...state },
+    elementState: hasState ? { ...definition.initialState, ...state } : { ...definition.initialState },
     style
   };
 };
 
-const templatesIn = (attributes: Record<string, unknown> | undefined, type: string): string[] => {
-  const evaluatedElsewhere = serverTemplatesByType[type] ?? [];
-
-  return Object.entries(attributes ?? {}).flatMap(([key, value]) =>
-    typeof value === 'string' && hasValidToken(value) && !evaluatedElsewhere.includes(key) ? [value] : []
-  );
-};
+const templatesIn = (attributes: Element['attributes'] | undefined, type: string): string[] =>
+  // The keys `templatedKeysOf` gives are those whose value is a string.
+  attributes ? templatedKeysOf(attributes, type).map(key => attributes[key] as string) : [];
 
 /** Every source path an attribute's templates read, and the variables — which a template reads by their bare name. */
 const templateSources = (templates: string[]): string[] => [
@@ -163,7 +219,62 @@ const templateSources = (templates: string[]): string[] => [
   ...new Set(templates.flatMap(template => templatePaths(template)))
 ];
 
+/** What an element's own attributes' templates read, per attributes object as `templatedKeysOf` keeps its keys. */
+const sourcesByAttributes = new WeakMap<Element['attributes'], { type: string; sources: string[] | undefined }>();
+
+const templateSourcesOf = (
+  attributes: Element['attributes'],
+  injected: Element['attributes'] | undefined,
+  type: string
+): string[] | undefined => {
+  const kept = injected ? undefined : sourcesByAttributes.get(attributes);
+  if (kept?.type === type) {
+    return kept.sources;
+  }
+
+  const templates = [...templatesIn(attributes, type), ...templatesIn(injected, type)];
+  const sources = templates.length > 0 ? templateSources(templates) : undefined;
+  if (!injected) {
+    sourcesByAttributes.set(attributes, { type, sources });
+  }
+
+  return sources;
+};
+
+/** Stand-ins for what an element may not have, so every read below is kept by an object. */
+const NO_BINDINGS: NonNullable<Element['definition']['bindings']> = {};
+const NO_SOURCES: string[] = [];
+
+/**
+ * The source paths an element reads and where in the store each is, kept per bindings and per list of template sources:
+ * both are the schema's own objects (or kept above), and the page server worked the two out again for every element of
+ * every request — every binding's paths, a set of them, sorted, and a store path made for each.
+ */
+type SourceReads = { sourcePaths: string[]; storePaths: PathOf<CommonState>[] };
+
+const readsByBindings = new WeakMap<object, WeakMap<string[], SourceReads>>();
+
+const sourceReadsOf = (bindings: Element['definition']['bindings'], sources: string[] | undefined): SourceReads => {
+  const byBindings = bindings ?? NO_BINDINGS;
+  const bySources = sources ?? NO_SOURCES;
+  const known = readsByBindings.get(byBindings) ?? new WeakMap<string[], SourceReads>();
+  readsByBindings.set(byBindings, known);
+  const kept = known.get(bySources);
+  if (kept) {
+    return kept;
+  }
+
+  const sourcePaths = dataSourcePaths(bindings, sources);
+  // A source path names a key of `runtime.sources`, which is open: its store path is one the store's type cannot list.
+  const reads = { sourcePaths, storePaths: sourcePaths.map(path => sourceStorePath(path) as PathOf<CommonState>) };
+  known.set(bySources, reads);
+
+  return reads;
+};
+
 export type UseElementInternalProps = {
+  /** The nearest scope's store, which `withElement` read the element from: its other values are read from it too. */
+  store: StoreApi<CommonState>;
   // The resolved element is read once by `withElement` and threaded in, so the element is subscribed to a single time
   // per instance instead of again here.
   element: Element;
@@ -174,7 +285,41 @@ export type UseElementInternalProps = {
   parentVisible?: boolean;
 };
 
+const NAVIGATION_PATHS = ['navigation.routeParams', 'navigation.queryParams', 'navigation.origin'] as const;
+const FLAGS_PATH = 'runtime.sources.flags';
+const NO_FLAGS: Record<string, boolean> = {};
+
+/**
+ * Everything an element reads of the store besides itself, in one subscription: its state, the route and the query when
+ * an attribute is a template (the only reader of them — subscribed for every element, they made the whole page render
+ * again on each navigation), the sources its bindings and templates name, and the flags when it has items to gate. Read
+ * one by one, these were four subscriptions on every element of a page, run whether they read anything or not: a fifth
+ * of what drawing a page cost.
+ */
+type ElementReads = { paths: PathOf<CommonState>[]; sourcePaths: string[]; navigation: boolean; flags: boolean };
+
+const sameValues = (previous: readonly unknown[], next: readonly unknown[]): boolean =>
+  previous.length === next.length && previous.every((value, index) => Object.is(value, next[index]));
+
+const elementReads = (
+  statePath: PathOf<CommonState>,
+  { sourcePaths, storePaths }: SourceReads,
+  navigation: boolean,
+  flags: boolean
+): ElementReads => ({
+  paths: [
+    statePath,
+    ...(navigation ? NAVIGATION_PATHS : []),
+    ...storePaths,
+    ...(flags ? [FLAGS_PATH as PathOf<CommonState>] : [])
+  ],
+  sourcePaths,
+  navigation,
+  flags
+});
+
 const useElementInternal = ({
+  store,
   element,
   children,
   internalProps,
@@ -182,40 +327,54 @@ const useElementInternal = ({
   parentVisible = true
 }: UseElementInternalProps) => {
   const { id } = internalProps;
-  const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
-  /**
-   * Whether any attribute is a template — the only reader of the route, the query and the variables below.
-   *
-   * Subscribed for every element, those made the whole page render again on each navigation, templates or not: a
-   * route change writes new params and new variables, and every element on the page was listening.
-   */
-  const { type } = element.definition;
-  const sources = useMemo(() => {
-    const templates = [...templatesIn(element.attributes, type), ...templatesIn(internalProps.attributes, type)];
-
-    return templates.length > 0 ? templateSources(templates) : undefined;
-  }, [element.attributes, type, internalProps.attributes]);
-  const usesTemplates = sources !== undefined;
-  const [[routeParams, queryParams, origin]] = useCommonStore(
-    ['navigation.routeParams', 'navigation.queryParams', 'navigation.origin'],
-    { enabled: usesTemplates }
-  );
-  const dataSource = useElementDataSource({
+  const { path: statePath, setElementState } = useElementStateSetter({
+    store,
+    id,
     bindings: element.definition.bindings,
-    sources
+    previewMode
   });
-
-  const internalPropsParsed = useMemo(
-    () => ({
-      ...getProps(element, internalProps, { ...dataSource, routeParams, queryParams, origin }, state),
-      setElementState
-    }),
-    [element, internalProps, dataSource, routeParams, queryParams, origin, state, setElementState]
+  const { type, bindings, items } = element.definition;
+  const sources = useDrawnMemo(
+    () => templateSourcesOf(element.attributes, internalProps.attributes, type),
+    [element.attributes, internalProps.attributes, type]
   );
+  const gatesItems = (items?.length ?? 0) > 0;
+  const reads = useDrawnMemo(
+    () => elementReads(statePath, sourceReadsOf(bindings, sources), sources !== undefined, gatesItems),
+    [statePath, bindings, sources, gatesItems]
+  );
+  const values = useStoreValues(store, reads.paths);
+  const state = (values[0] as Record<string, unknown> | undefined) ?? emptyState;
+  const navigationAt = 1;
+  const sourcesAt = navigationAt + (reads.navigation ? NAVIGATION_PATHS.length : 0);
+  const [routeParams, queryParams, origin] = reads.navigation
+    ? values.slice(navigationAt, sourcesAt)
+    : [undefined, undefined, undefined];
+  const flags = reads.flags
+    ? ((values[values.length - 1] as Record<string, boolean> | undefined) ?? NO_FLAGS)
+    : NO_FLAGS;
+  // The sources' values alone, the same array while they are the same: read with the state, the whole list is a new one
+  // whenever the state changes, and a data source made again from it renders the element's props again for nothing.
+  const read = values.slice(sourcesAt, sourcesAt + reads.sourcePaths.length);
+  const sourceValues = useRef(read);
+  if (!sameValues(sourceValues.current, read)) {
+    sourceValues.current = read;
+  }
 
-  const customProps = useMemo(
-    () =>
-      omitKeys(internalPropsParsed, [
+  const currentValues = sourceValues.current;
+  const dataSource = useDrawnMemo(() => dataSourceFrom(reads.sourcePaths, currentValues), [reads, currentValues]);
+
+  /**
+   * What the element is drawn with, and what it is handed besides: the props its parent gave that are not the element's
+   * own fields — the same keys of `internalProps`, read off it rather than off a copy made to add the setter.
+   */
+  const { internalPropsParsed, customProps } = useDrawnMemo(() => {
+    const parsed = getProps(element, internalProps, { ...dataSource, routeParams, queryParams, origin }, state);
+
+    return {
+      // `getProps` hands back an object of its own: the setter joins it rather than copying it again.
+      internalPropsParsed: Object.assign(parsed, { setElementState }),
+      customProps: omitKeys(internalProps, [
         'id',
         'rootId',
         'plitziElementLayout',
@@ -224,15 +383,17 @@ const useElementInternal = ({
         'style',
         'elementState',
         'setElementState'
-      ]),
-    [internalPropsParsed]
-  );
+      ])
+    };
+  }, [element, internalProps, dataSource, routeParams, queryParams, origin, state, setElementState]);
 
   return {
     internalProps: internalPropsParsed,
     customProps,
     children: useInternalItems({
       id,
+      store,
+      flags,
       definition: internalPropsParsed.definition,
       plitziElementLayout: internalPropsParsed.plitziElementLayout,
       children,

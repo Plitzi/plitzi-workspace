@@ -14,9 +14,10 @@ import type { ExitState, LaunchOptions, ResourceSample, RunningTarget, Runtime, 
 const CONTAINER_PORT = 4300;
 const WORKSPACE_MOUNT = '/w';
 const ESBUILD_MOUNT = '/opt/esbuild';
-// The plugin compiler writes here, relative to the server's cwd. A fresh volume per run also means every run
-// compiles its plugins from nothing, so the start-up time measured is a cold one.
-const WRITABLE_DIRS = ['tmp'];
+// What a server writes, relative to its cwd: the plugin compiler's `tmp/`, and a project's `state/` (its `kv` and jobs,
+// which it holds from boot). A fresh volume per run also means every run compiles its plugins from nothing, so the
+// start-up time measured is a cold one.
+const WRITABLE_DIRS = ['tmp', 'state'];
 
 /**
  * One reading of the container's cgroup, printed as one line: `memory anon peak usage periods throttled`.

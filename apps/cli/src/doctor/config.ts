@@ -10,6 +10,8 @@ import { sayer } from './types';
 import { CHECK_PASSWORD_ENV, CHECK_USER_ENV } from '../commands/page/check/account';
 import { projectSettings } from '../commands/project/projectSettings';
 import {
+  BUILD_DIR,
+  BUILD_FILE,
   CLI_DIR,
   CLI_DIR_INCLUDE,
   MAIN_FILE,
@@ -257,42 +259,29 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
   return answers.mode === 'server' ? [...findings, ...(await buildChecks(root))] : findings;
 };
 
-/** What `start:prod` runs is what `build` emits: `tsconfig.build.json` puts `src/main.ts` where the script looks. */
+/**
+ * What `start:prod` runs is what `build` writes: the CLI's build bundles `src/main.ts` into `dist/main.js`, so a
+ * `start:prod` that runs another file starts nothing. A build of the project's own is its own to check.
+ */
 const buildChecks = async (root: string): Promise<Finding[]> => {
-  const build = await readTsConfig(root, 'tsconfig.build.json');
-  if (!build) {
-    return [];
-  }
-
-  if ('problem' in build) {
-    return [
-      say.error('tsconfig-unreadable', `tsconfig.build.json cannot be read: ${build.problem}.`, {
-        file: 'tsconfig.build.json',
-        fix: 'plitzi upgrade files shows the CLI’s'
-      })
-    ];
-  }
-
   const manifest: unknown = JSON.parse((await readOptional(path.join(root, 'package.json'))) ?? '{}');
   const scripts = isRecord(manifest) && isRecord(manifest.scripts) ? manifest.scripts : {};
   const startProd = typeof scripts['start:prod'] === 'string' ? scripts['start:prod'] : '';
-  const builds = typeof scripts.build === 'string' && scripts.build.includes('tsconfig.build.json');
+  const builds = typeof scripts.build === 'string' && scripts.build.includes(BUILD_FILE);
   const runs = /node\s+(?:--\S+\s+)*(\S+\.js)\b/.exec(startProd)?.[1];
-  const { outDir, rootDir } = build.options;
-  if (!builds || !runs || typeof outDir !== 'string' || typeof rootDir !== 'string') {
-    return [];
-  }
-
-  const emitted = path.join(outDir, path.relative(rootDir, MAIN_FILE)).replace(/\.ts$/, '.js');
-  if (path.normalize(emitted) === path.normalize(runs)) {
+  const written = `${BUILD_DIR}/${path.basename(MAIN_FILE).replace(/\.ts$/, '.js')}`;
+  if (!builds || !runs || path.normalize(runs) === path.normalize(written)) {
     return [];
   }
 
   return [
     say.error(
       'build-misses-start',
-      `build writes ${MAIN_FILE} to ${emitted}, and start:prod runs ${runs}: production would start nothing.`,
-      { file: 'tsconfig.build.json', fix: `Make "outDir"/"rootDir" emit ${runs}, or run ${emitted} in start:prod.` }
+      `build writes ${MAIN_FILE} to ${written}, and start:prod runs ${runs}: production would start nothing.`,
+      {
+        file: 'package.json',
+        fix: `Run ${written} in start:prod.`
+      }
     )
   ];
 };

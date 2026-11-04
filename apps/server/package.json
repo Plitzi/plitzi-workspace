@@ -94,6 +94,12 @@
       "import": "./dist/project.js",
       "default": "./dist/project.js"
     },
+    "./bundle": {
+      "@plitzi/source": "./src/bundle.ts",
+      "types": "./dist/bundle.d.ts",
+      "import": "./dist/bundle.js",
+      "default": "./dist/bundle.js"
+    },
     "./env": {
       "@plitzi/source": "./src/env.ts",
       "types": "./dist/env.d.ts",

@@ -1,4 +1,4 @@
-import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE, TSCONFIG_BASE } from './paths';
+import { BUILD_FILE, CLI_DIR, FUNCTIONS_DIR, MAIN_FILE, TSCONFIG_BASE } from './paths';
 
 /**
  * The files of a project that are this CLI's machinery rather than the project's own: what `plitzi upgrade` keeps up
@@ -15,6 +15,7 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   // The entry point, in `src/` where one is looked for — and the CLI's folder, all of it.
   MAIN_FILE,
   `${CLI_DIR}/author.ts`,
+  BUILD_FILE,
   `${CLI_DIR}/preflight.css`,
   `${CLI_DIR}/assets.d.ts`,
   `${CLI_DIR}/README.md`,
@@ -22,7 +23,6 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   // What the tools find at the project's root.
   'index.html',
   'vite.config.ts',
-  'tsconfig.build.json',
   '.gitignore',
   'AGENTS.md',
   'CLAUDE.md',
@@ -46,5 +46,7 @@ export const MACHINERY: ReadonlySet<string> = new Set([
  */
 export const RETIRED_MACHINERY: Readonly<Record<string, string>> = {
   // `.env` is read as the scripts start now (`--env-file-if-exists`, `start:dev`'s preload), before any module is.
-  'src/env.ts': MAIN_FILE
+  'src/env.ts': MAIN_FILE,
+  // `build` bundles the server now (`.plitzi/build.ts`), rather than compiling it with this config.
+  'tsconfig.build.json': BUILD_FILE
 };

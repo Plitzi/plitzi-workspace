@@ -106,7 +106,7 @@ describe('the server a project starts', () => {
     }
 
     expect(MACHINERY.has('src/env.ts')).toBe(false);
-    expect(RETIRED_MACHINERY).toEqual({ 'src/env.ts': 'src/main.ts' });
+    expect(RETIRED_MACHINERY['src/env.ts']).toBe('src/main.ts');
   });
 
   it('names a cloud project’s server for /health by the project, a local one’s space naming it', () => {

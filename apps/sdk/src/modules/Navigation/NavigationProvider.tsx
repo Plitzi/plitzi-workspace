@@ -20,7 +20,7 @@ import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
 
-import type { CommonState, NavigateHow, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
+import type { CommonState, Element, NavigateHow, NavigationStatus, PageFolder, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { Location, NavigateFunction, NavigationType, PathMatch } from 'react-router-dom';
 
@@ -36,6 +36,40 @@ type RouterState = { location: Location; navigationType: NavigationType; navigat
 const PREFETCH_TIMEOUT_MS = 1500;
 
 const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+type RoutePaths = ReturnType<typeof getPaths>;
+
+/**
+ * The space's routes, kept per page definitions object (one per schema, `SchemaContextProvider`) and per how they are
+ * read: the page server draws every request of a space from the same schema, and built them all again each time to
+ * match one address.
+ */
+const routesByPages = new WeakMap<
+  Record<string, Element>,
+  Map<string, { pageFolders: PageFolder[] | undefined; paths: RoutePaths }>
+>();
+
+const routesOf = (
+  pages: Record<string, Element>,
+  pageFolders: PageFolder[] | undefined,
+  authenticated: boolean | undefined,
+  basePath: string | undefined,
+  previewMode: boolean
+): RoutePaths => {
+  const kept =
+    routesByPages.get(pages) ?? new Map<string, { pageFolders: PageFolder[] | undefined; paths: RoutePaths }>();
+  routesByPages.set(pages, kept);
+  const read = `${String(authenticated)}|${String(previewMode)}|${basePath ?? ''}`;
+  const known = kept.get(read);
+  if (known && known.pageFolders === pageFolders) {
+    return known.paths;
+  }
+
+  const paths = getPaths(pages, pageFolders, authenticated, basePath, previewMode);
+  kept.set(read, { pageFolders, paths });
+
+  return paths;
+};
 
 const NavigationCore = ({
   children,
@@ -86,7 +120,7 @@ const NavigationCore = ({
   }, [routerNavigate]);
 
   const paths = useMemo(
-    () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    () => routesOf(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
     [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 

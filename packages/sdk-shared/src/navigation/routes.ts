@@ -65,6 +65,24 @@ const collapseSlashes = (path: string) => path.replaceAll(/\/+/g, '/');
  */
 const parsePath = (path: string) => collapseSlashes(path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/gi, ':$1'));
 
+/**
+ * The folders by id, one index per list: a link and every page's route ask for their folder's path, and each made it
+ * again — a copy of the index for every folder in it.
+ */
+const folderIndexes = new WeakMap<PageFolder[], Record<string, PageFolder>>();
+
+const foldersById = (pageFolders: PageFolder[]): Record<string, PageFolder> => {
+  const known = folderIndexes.get(pageFolders);
+  if (known) {
+    return known;
+  }
+
+  const index = Object.fromEntries(pageFolders.map(pageFolder => [pageFolder.id, pageFolder]));
+  folderIndexes.set(pageFolders, index);
+
+  return index;
+};
+
 const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>, pageFolderId: string): string => {
   if (!pageFolderId || !pageFolders[pageFolderId]) {
     return '';
@@ -131,7 +149,7 @@ function getPageFullPath(
       : { [parsePath(`/${pageSlug}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
   }
 
-  const pageFoldersObj = pageFolders.reduce((acum, pageFolder) => ({ ...acum, [pageFolder.id]: pageFolder }), {});
+  const pageFoldersObj = foldersById(pageFolders);
   // An empty slug is the folder's own address, as it is the space's at the top level: `/analytics` is the page with no
   // slug inside the `analytics` folder, the way `/` is the page with none outside any.
   const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug].filter(Boolean).join('/');

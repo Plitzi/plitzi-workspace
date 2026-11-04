@@ -21,6 +21,17 @@ describe('parseStyleSelectors', () => {
     }
   };
 
+  // The shortcut for an element without variants writes what the full parse writes: the part's class, then its own.
+  it('writes each selector after its part’s class when there are no variants, as the full parse does', () => {
+    const plain = { ...definitionBase, initialState: undefined };
+    const emptyVariants = { ...definitionBase, initialState: { styleVariant: {} } };
+    const expected = { base: 'plitzi__button main-layout--left icon', header: 'plitzi__button-header header-item' };
+
+    expect(parseStyleSelectors(plain)).toEqual(expected);
+    expect(parseStyleSelectors(emptyVariants)).toEqual(expected);
+    expect(parseStyleSelectors({ ...plain, styleSelectors: { base: '' } })).toEqual({ base: 'plitzi__button' });
+  });
+
   it('applies single variant to sub-selector', () => {
     const result = parseStyleSelectors(definitionBase);
     expect(result.base).toContain('button button--primary');

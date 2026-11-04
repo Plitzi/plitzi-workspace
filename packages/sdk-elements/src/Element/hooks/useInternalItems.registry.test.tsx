@@ -6,7 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { createElementRegistry, ElementRegistryContext } from '@plitzi/sdk-shared/plugins/react';
 
-import useInternalItems from './useInternalItems';
+import useInternalItems, { useItemsSources } from './useInternalItems';
 
 import type { ComponentContextValue, ComponentDefinition, ComponentPluginWithHOC, Element } from '@plitzi/sdk-shared';
 
@@ -49,6 +49,7 @@ describe('a container and the registries it draws from', () => {
         'div',
         null,
         useInternalItems({
+          ...useItemsSources(),
           id: 'host',
           definition: {
             rootId: 'root',
@@ -103,6 +104,7 @@ describe('a container and the registries it draws from', () => {
         'div',
         null,
         useInternalItems({
+          ...useItemsSources(),
           id: 'host',
           definition: { rootId: 'root', label: 'host', type: 'container', styleSelectors: { base: '' }, items: ['a'] },
           children: undefined,

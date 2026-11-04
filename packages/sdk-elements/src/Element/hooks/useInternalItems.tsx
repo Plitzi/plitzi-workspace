@@ -1,6 +1,6 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
+import { useStoreById } from '@plitzi/nexus/react';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { passesFlagGate } from '@plitzi/sdk-shared/flags';
 import { ElementRegistryContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
@@ -10,7 +10,8 @@ import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
 import { useLayoutBody } from '../LayoutBody';
 import ServerStaticShell from '../ServerStaticShell';
 
-import type { ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
+import type { StoreApi } from '@plitzi/nexus';
+import type { CommonState, ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { ElementRegistry, ElementRegistrySnapshot } from '@plitzi/sdk-shared/plugins/react';
 import type { ReactNode } from 'react';
 
@@ -22,8 +23,6 @@ const isServer = typeof window === 'undefined';
  */
 const LAYOUT_BODY_KEY = '#layout-body';
 const CHILDREN_KEY = '#children';
-
-const NO_FLAGS: Record<string, boolean> = {};
 
 const storeSubscriber = () => () => {};
 // Typed `boolean` rather than left to infer `true`/`false`: what these mean is "hydrating or not", and a literal
@@ -49,44 +48,218 @@ const useRegistries = (registry: ElementRegistry | undefined): ElementRegistrySn
   return { components, componentDefinitions, plugins: use(PluginsContext).plugins };
 };
 
-const useInternalItems = ({
+/** The same list as `previous` when it holds the same elements: what the memo below is keyed on stays put between renders. */
+const sameElements = (previous: readonly (Element | undefined)[], next: readonly (Element | undefined)[]): boolean =>
+  previous.length === next.length && previous.every((element, index) => element === next[index]);
+
+type InternalItemsProps = {
+  id: string;
+  /** The nearest scope's store, which the items are read from. */
+  store: StoreApi<CommonState>;
+  /** The flags an item's gate reads (`runtime.sources.flags`), read with the element's other values. */
+  flags: Record<string, boolean>;
+  definition: Element['definition'];
+  plitziElementLayout?: ElementLayout;
+  children: ReactNode | ReactNode[];
+  previewMode?: boolean;
+  visible?: boolean;
+};
+
+/**
+ * Whether the element's items are built at all: always outside the builder's preview and for an `eager` element, else
+ * while it is visible — or, for a `lazy` one, once it has been.
+ *
+ * The strategy is the instance's own, else the one its TYPE declares, else `eager`. Per type because the right default
+ * depends on what the element is: a modal starts hidden and is worth deferring, while a container is on screen almost
+ * always and deferring it would only add a render cycle before the page appears. Read from the declaration at render
+ * rather than trusted to have been copied onto the instance, so a modal authored before its type declared one follows it
+ * too.
+ *
+ * Only `previewMode` defers — the builder must keep every subtree mounted no matter what. An author hides a modal and
+ * then has to be able to open, select and edit what is inside it; a tree whose items the canvas refuses to build is a
+ * tree with nothing to drop an element into. The strategy is a RUNTIME optimisation, and the builder is not the runtime.
+ */
+const mountsItems = (
+  definition: Element['definition'],
+  componentDefinitions: ElementRegistrySnapshot['componentDefinitions'],
+  previewMode: boolean | undefined,
+  visible: boolean,
+  revealed: boolean
+): boolean => {
+  // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
+  const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
+  const loadStrategy = definition.loadStrategy ?? declared?.definition.loadStrategy ?? 'eager';
+
+  return !previewMode || loadStrategy === 'eager' || visible || (loadStrategy === 'lazy' && revealed);
+};
+
+/**
+ * Which layout instance these items belong to, so switching to a DIFFERENT layout remounts them (resetting their
+ * internal state) — in the builder, where an author edits a shell and then views it under a page.
+ *
+ * Derived from the layout's identity, not from the prop's object identity. It used to be a counter bumped whenever
+ * `plitziElementLayout !== previous`, and that object is rebuilt whenever the page's id or children change — which is
+ * every navigation AND every edit. So the shell was torn down and rebuilt continuously while someone worked on the page
+ * inside it, and two pages naming the same layout never kept it. `referenceId` (the page) is deliberately NOT part of
+ * this: it is what made a navigation count as a different layout.
+ */
+const layoutKeyOf = (plitziElementLayout: ElementLayout | undefined): string =>
+  plitziElementLayout
+    ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.slots.join(',')}`
+    : '';
+
+type ItemsDrawn = {
+  items: string[] | undefined;
+  itemElements: readonly (Element | undefined)[];
+  flags: Record<string, boolean>;
+  plitziElementLayout: ElementLayout | undefined;
+  children: ReactNode | ReactNode[];
+  previewMode: boolean | undefined;
+  rscEnabled: boolean;
+  /** Whether hydration is over (always false on the server, which draws what hydration will compare). */
+  mounted: boolean;
+  layoutKeyIdentifier: string;
+  isSlot: boolean;
+  layoutBody: ReactNode;
+  registered: ElementRegistrySnapshot['components'];
+  installed: ElementRegistrySnapshot['plugins'];
+};
+
+/** The element's items as React nodes, with the layout's body in a slot and the children handed to the element. */
+const drawItems = ({
+  items,
+  itemElements,
+  flags,
+  plitziElementLayout,
+  children,
+  previewMode,
+  rscEnabled,
+  mounted,
+  layoutKeyIdentifier,
+  isSlot,
+  layoutBody,
+  registered,
+  installed
+}: ItemsDrawn): ReactNode | undefined => {
+  // Process items
+  const itemsParsed: ReactNode[] = (items ?? [])
+    // An item may name an element that is gone (deleted under it, a component since changed): the path reads nothing.
+    .map((itemId, index): { itemId: string; el: Element | undefined } => ({ itemId, el: itemElements[index] }))
+    .filter((entry): entry is { itemId: string; el: Element } => {
+      const { el } = entry;
+      if (!el) {
+        return false;
+      }
+
+      // A gated item whose flag says no is not built at all — in the builder too, where forcing a flag is how an
+      // author sees the other side of it. Unlike a hidden item, none of it is in the markup.
+      if (!passesFlagGate(el.definition.flag, flags)) {
+        return false;
+      }
+
+      if (!previewMode || !rscEnabled) {
+        return true;
+      }
+
+      const runtime = el.definition.runtime ?? 'shared';
+      if (!mounted && runtime === 'client') {
+        return false;
+      }
+
+      return true;
+    })
+    .map(({ itemId, el }) => {
+      const { rootId, type, runtime } = el.definition;
+      const finalRootId = plitziElementLayout ? plitziElementLayout.rootId : rootId;
+
+      /**
+       * Whether this browser can render the element itself.
+       *
+       * Everything the SDK ships can; a plugin registered only on the server cannot, and for that one the server's
+       * markup is the only thing there is. Asked rather than assumed, because the answer decides whether a server
+       * element stays frozen for the life of the page or only until hydration is over.
+       */
+      // The registry's type promises a component for every key; only asking it what it HOLDS tells the truth.
+      const renderable = type in registered.current || !!getRemoteSettings({ type, plugins: installed });
+
+      const item = pluginSelector({
+        key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
+        plitziElementLayout,
+        type,
+        internalProps: { id: itemId, rootId: finalRootId },
+        components: registered.current,
+        plugins: installed
+      });
+
+      /**
+       * A server element is frozen for HYDRATION, and then only for as long as it has to be.
+       *
+       * React must be handed exactly the markup the server sent, so the first client render replays it from the
+       * DOM — `RootElement` marks the server-rendered root with `data-rsc-id` for the shell to find. That is what
+       * `mounted` is: false while hydrating, true on the render right after, before the browser paints.
+       *
+       * Staying frozen after that was the mistake, and it was a big one. Frozen markup is not React's, so nothing
+       * inside it has a handler: a pager under a server-driven provider did nothing, the provider's own
+       * `loadMore` / `goToPage` / `writeRecord` could never fire, and a route change onto a page whose server
+       * markup this document never carried rendered an empty section. What keeps a credential on the server is
+       * `getRscData` running there — not whether the browser mounts what it already has the data for.
+       *
+       * So the element takes over once hydration is done, rendering from the same payload the server used. The
+       * exception is the element this browser has no component for, which has nothing to take over with.
+       */
+      // The shell stays around the element on both sides of hydration, under the same key, and only stops
+      // freezing: wrapped while hydrating and not after, the element changed type and key the moment hydration was
+      // over, and React tore down everything under it to build it again — a provider with no markup of its own
+      // took the whole layout with it, and every animation in it started over.
+      if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
+        return (
+          <ServerStaticShell key={itemId} id={itemId} frozen={!(mounted && renderable)}>
+            {item}
+          </ServerStaticShell>
+        );
+      }
+
+      return item;
+    });
+
+  if (isSlot) {
+    itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{layoutBody}</Fragment>);
+  }
+
+  if (Array.isArray(children)) {
+    itemsParsed.push(...children.filter(isValidElement));
+  } else if (isValidElement(children)) {
+    itemsParsed.push(<Fragment key={CHILDREN_KEY}>{children}</Fragment>);
+  }
+
+  if (!items) {
+    return undefined;
+  }
+
+  return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
+};
+
+const useInternalItemsInBrowser = ({
   id,
+  store,
+  flags,
   definition,
   plitziElementLayout,
   children,
   previewMode,
   visible = true
-}: {
-  id: string;
-  definition: Element['definition'];
-  plitziElementLayout?: ElementLayout;
-  children: ReactNode | ReactNode[];
-  previewMode?: boolean;
-  /** This element's resolved visibility — its own `visibility` state AND every ancestor's. */
-  visible?: boolean;
-}) => {
+}: InternalItemsProps) => {
   const { items } = definition;
-  /**
-   * Each item's element, read by its own path — never the whole `schema.flat`.
-   *
-   * Inside a component instance the store is a scope over the page's, and a read of `schema.flat` there merges the
-   * component's elements over every element of the space: one copy of a two-thousand-key object per instance, which was
-   * the largest single cost of hydrating a landing page. An item's path resolves where the element is — the
-   * component's own, else the page's — and merges nothing.
-   */
-  const itemPaths = useMemo(() => (items ?? []).map(itemId => `schema.flat.${itemId}` as const), [items]);
-  const [itemElements] = useCommonStore(itemPaths, { mode: 'mount' });
-  // `rsc.enabled`, not `schema.rsc.enabled`: the schema flag alone is also true on a client-only render, where there
-  // is no server HTML to freeze a server element against and it would be dropped altogether.
-  const [rscEnabled] = useCommonStore('rsc.enabled', { mode: 'mount' });
-  // Live, unlike the two above: a tester flips a flag on a page that is already drawn, and the items it gates have to
-  // come and go with it. Published stable, so a container re-renders only when a flag actually changed.
-  const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags');
-  /**
-   * The component and plugin registries — on a published page the SDK keeps, followed through `ElementRegistryContext`,
-   * whose value never changes, by what of them these items draw (`itemTypesHeld` below); anywhere else (the builder,
-   * where a plugin's settings change under the same type) read as the two contexts, every change drawing this again.
-   */
+  // Read as the element renders, and not followed: each item is an element that follows itself. A subscription each,
+  // these were two of the seven an element held; what changes them (an item added) renders this element anyway.
+  const read = (items ?? []).map(itemId => store.getPath(`schema.flat.${itemId}`));
+  const itemsRef = useRef(read);
+  if (!sameElements(itemsRef.current, read)) {
+    itemsRef.current = read;
+  }
+
+  const itemElements = itemsRef.current;
+  const rscEnabled = store.getPath('rsc.enabled') === true;
   const kept = use(ElementRegistryContext);
   const registry = previewMode === true ? kept : undefined;
   const followsRegistry = registry !== undefined;
@@ -94,17 +267,6 @@ const useInternalItems = ({
   const heldNow = () => (registry ? typesHeldIn(itemTypesKey, registry.get()) : '');
   const itemTypesHeld = useSyncExternalStore(registry ? registry.subscribe : storeSubscriber, heldNow, heldNow);
   const { components, componentDefinitions, plugins } = useRegistries(registry);
-  // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
-  const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
-  /**
-   * The instance's own strategy, else the one its TYPE declares, else `eager`.
-   *
-   * Per type because the right default depends on what the element is: a modal starts hidden and is worth
-   * deferring, while a container is on screen almost always and deferring it would only add a render cycle before
-   * the page appears. Read from the declaration at render rather than trusted to have been copied onto the instance,
-   * so a modal authored before its type declared one follows it too.
-   */
-  const loadStrategy = definition.loadStrategy ?? declared?.definition.loadStrategy ?? 'eager';
   const hasItems = plitziElementLayout || children || items?.length;
   /**
    * Whether this element has ever been shown, for `lazy`.
@@ -120,28 +282,8 @@ const useInternalItems = ({
     revealed.current = true;
   }
 
-  /**
-   * Only `previewMode` — the builder must keep every subtree mounted no matter what.
-   *
-   * An author hides a modal and then has to be able to open, select and edit what is inside it; a tree whose items
-   * the canvas refuses to build is a tree with nothing to drop an element into. The strategy is a RUNTIME
-   * optimisation, and the builder is not the runtime.
-   */
-  const mountItems =
-    !previewMode || loadStrategy === 'eager' || visible || (loadStrategy === 'lazy' && revealed.current);
-  /**
-   * Which layout instance these items belong to, so switching to a DIFFERENT layout remounts them (resetting
-   * their internal state) — in the builder, where an author edits a shell and then views it under a page.
-   *
-   * Derived from the layout's identity, not from the prop's object identity. It used to be a counter bumped
-   * whenever `plitziElementLayout !== previous`, and that object is rebuilt whenever the page's id or children
-   * change — which is every navigation AND every edit. So the shell was torn down and rebuilt continuously while
-   * someone worked on the page inside it, and two pages naming the same layout never kept it. `referenceId` (the
-   * page) is deliberately NOT part of this: it is what made a navigation count as a different layout.
-   */
-  const layoutKeyIdentifier = plitziElementLayout
-    ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.slots.join(',')}`
-    : '';
+  const mountItems = mountsItems(definition, componentDefinitions, previewMode, visible, revealed.current);
+  const layoutKeyIdentifier = layoutKeyOf(plitziElementLayout);
 
   /**
    * Whether hydration is over, for the items that draw differently once it is: a `runtime: 'client'` one the server
@@ -154,7 +296,7 @@ const useInternalItems = ({
    */
   const switchesOnMount =
     previewMode === true &&
-    rscEnabled === true &&
+    rscEnabled &&
     // An item naming an element that is gone reads nothing, whatever the path's type says.
     itemElements.some(
       (el: Element | undefined) => el?.definition.runtime === 'client' || el?.definition.runtime === 'server'
@@ -177,102 +319,22 @@ const useInternalItems = ({
 
     // The registries as they are now: what of them these items depend on is in the dependencies below.
     const { components: registered, plugins: installed } = registryRef.current;
-    // Process items
-    const itemsParsed: ReactNode[] = (items ?? [])
-      // An item may name an element that is gone (deleted under it, a component since changed): the path reads nothing.
-      .map((itemId, index): { itemId: string; el: Element | undefined } => ({ itemId, el: itemElements[index] }))
-      .filter((entry): entry is { itemId: string; el: Element } => {
-        const { el } = entry;
-        if (!el) {
-          return false;
-        }
 
-        // A gated item whose flag says no is not built at all — in the builder too, where forcing a flag is how an
-        // author sees the other side of it. Unlike a hidden item, none of it is in the markup.
-        if (!passesFlagGate(el.definition.flag, flags)) {
-          return false;
-        }
-
-        if (!previewMode || !rscEnabled) {
-          return true;
-        }
-
-        const runtime = el.definition.runtime ?? 'shared';
-        if (!mounted && runtime === 'client') {
-          return false;
-        }
-
-        return true;
-      })
-      .map(({ itemId, el }) => {
-        const { rootId, type, runtime } = el.definition;
-        const finalRootId = get(plitziElementLayout, 'rootId', rootId);
-
-        /**
-         * Whether this browser can render the element itself.
-         *
-         * Everything the SDK ships can; a plugin registered only on the server cannot, and for that one the server's
-         * markup is the only thing there is. Asked rather than assumed, because the answer decides whether a server
-         * element stays frozen for the life of the page or only until hydration is over.
-         */
-        // The registry's type promises a component for every key; only asking it what it HOLDS tells the truth.
-        const renderable = type in registered.current || !!getRemoteSettings({ type, plugins: installed });
-
-        const item = pluginSelector({
-          key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
-          plitziElementLayout,
-          type,
-          internalProps: { id: itemId, rootId: finalRootId },
-          components: registered.current,
-          plugins: installed
-        });
-
-        /**
-         * A server element is frozen for HYDRATION, and then only for as long as it has to be.
-         *
-         * React must be handed exactly the markup the server sent, so the first client render replays it from the
-         * DOM — `RootElement` marks the server-rendered root with `data-rsc-id` for the shell to find. That is what
-         * `mounted` is: false while hydrating, true on the render right after, before the browser paints.
-         *
-         * Staying frozen after that was the mistake, and it was a big one. Frozen markup is not React's, so nothing
-         * inside it has a handler: a pager under a server-driven provider did nothing, the provider's own
-         * `loadMore` / `goToPage` / `writeRecord` could never fire, and a route change onto a page whose server
-         * markup this document never carried rendered an empty section. What keeps a credential on the server is
-         * `getRscData` running there — not whether the browser mounts what it already has the data for.
-         *
-         * So the element takes over once hydration is done, rendering from the same payload the server used. The
-         * exception is the element this browser has no component for, which has nothing to take over with.
-         */
-        // The shell stays around the element on both sides of hydration, under the same key, and only stops
-        // freezing: wrapped while hydrating and not after, the element changed type and key the moment hydration was
-        // over, and React tore down everything under it to build it again — a provider with no markup of its own
-        // took the whole layout with it, and every animation in it started over.
-        if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
-          return (
-            <ServerStaticShell key={itemId} id={itemId} frozen={!(mounted && renderable)}>
-              {item}
-            </ServerStaticShell>
-          );
-        }
-
-        return item;
-      });
-
-    if (isSlot) {
-      itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{layoutBody}</Fragment>);
-    }
-
-    if (Array.isArray(children)) {
-      itemsParsed.push(...children.filter(isValidElement));
-    } else if (isValidElement(children)) {
-      itemsParsed.push(<Fragment key={CHILDREN_KEY}>{children}</Fragment>);
-    }
-
-    if (!items) {
-      return undefined;
-    }
-
-    return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
+    return drawItems({
+      items,
+      itemElements,
+      flags,
+      plitziElementLayout,
+      children,
+      previewMode,
+      rscEnabled,
+      mounted,
+      layoutKeyIdentifier,
+      isSlot,
+      layoutBody,
+      registered,
+      installed
+    });
     // The registries are read through `registryRef`; what of them these items depend on is `*Dependency`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -292,6 +354,65 @@ const useInternalItems = ({
     isSlot,
     layoutBody
   ]);
+};
+
+/**
+ * The same on the server, which draws a page once and follows nothing: the items as they are, with no memo to keep them
+ * by, no registry followed and hydration never over. The browser's asked every element with items for a subscription
+ * to the registry and the hydration — and for the string of its item types each needed — on a page of hundreds.
+ */
+const useInternalItemsOnServer = ({
+  id,
+  store,
+  flags,
+  definition,
+  plitziElementLayout,
+  children,
+  previewMode,
+  visible = true
+}: InternalItemsProps) => {
+  const { items } = definition;
+  const kept = use(ElementRegistryContext);
+  const { components, componentDefinitions, plugins } = useRegistries(previewMode === true ? kept : undefined);
+  const isSlot = plitziElementLayout?.slots.includes(id) ?? false;
+  const layoutBody = useLayoutBody(isSlot ? id : undefined);
+  const hasItems = plitziElementLayout || children || items?.length;
+  // Drawn once: an element is revealed on this render if it is visible on it.
+  if (!hasItems || !mountsItems(definition, componentDefinitions, previewMode, visible, visible)) {
+    return undefined;
+  }
+
+  return drawItems({
+    items,
+    itemElements: (items ?? []).map(itemId => store.getPath(`schema.flat.${itemId}`)),
+    flags,
+    plitziElementLayout,
+    children,
+    previewMode,
+    rscEnabled: store.getPath('rsc.enabled') === true,
+    mounted: false,
+    layoutKeyIdentifier: layoutKeyOf(plitziElementLayout),
+    isSlot,
+    layoutBody,
+    registered: components,
+    installed: plugins
+  });
+};
+
+// Chosen once, as the module loads: a page is drawn on the server or in a browser for the whole life of the process.
+const useInternalItems = isServer ? useInternalItemsOnServer : useInternalItemsInBrowser;
+
+const NO_FLAGS: Record<string, boolean> = {};
+
+/**
+ * What `useInternalItems` reads its items from, for a part that draws an element's items without being the element — a
+ * slot of a component, a withheld page's stand-in. An element reads the flags with its other values (`useElementInternal`).
+ */
+export const useItemsSources = (): { store: StoreApi<CommonState>; flags: Record<string, boolean> } => {
+  const store = useStoreById<CommonState>();
+  const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags', { store });
+
+  return { store, flags };
 };
 
 export default useInternalItems;

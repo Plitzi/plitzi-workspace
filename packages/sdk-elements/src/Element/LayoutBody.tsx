@@ -47,7 +47,7 @@ const LayoutBody = ({ bodies, children }: LayoutBodyProps) => {
 };
 
 /** The body of the nearest shell's slot `slotId`; nothing, and no subscription, for an element that is not a slot. */
-export const useLayoutBody = (slotId: string | undefined): ReactNode => {
+const useLayoutBodyInBrowser = (slotId: string | undefined): ReactNode => {
   const store = use(LayoutBodyContext);
 
   const subscribe = useCallback(
@@ -71,5 +71,18 @@ export const useLayoutBody = (slotId: string | undefined): ReactNode => {
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
+
+/**
+ * The same on the server, which draws a page once and follows nothing: the body as it is. Every element asks (its items
+ * and its class do), and the subscription it would set up was four hooks for each, on a page of hundreds of elements.
+ */
+const useLayoutBodyOnServer = (slotId: string | undefined): ReactNode => {
+  const store = use(LayoutBodyContext);
+
+  return slotId !== undefined && store ? store.current[slotId] : undefined;
+};
+
+// Chosen once, as the module loads: a page is drawn on the server or in a browser for the whole life of the process.
+export const useLayoutBody = typeof window === 'undefined' ? useLayoutBodyOnServer : useLayoutBodyInBrowser;
 
 export default LayoutBody;

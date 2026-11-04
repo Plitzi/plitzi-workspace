@@ -44,12 +44,8 @@ const scaffoldCliServer = async (workspaceRoot: string): Promise<void> => {
     'npm',
     '--no-install'
   ]);
-  // What a deployment runs: the project's own `build`, with the workspace's TypeScript.
-  await run('node', [
-    path.join(workspaceRoot, 'node_modules/typescript/bin/tsc'),
-    '-p',
-    path.join(dir, 'tsconfig.build.json')
-  ]);
+  // What a deployment runs: the project's own `build`, in the project — the server bundled by the workspace's sdk-server.
+  await run('node', ['.plitzi/build.ts'], { cwd: dir });
 };
 
 export const TARGETS: Target[] = [

@@ -189,6 +189,15 @@ with every problem (`SpaceRefusedError`): each printed as the report it is, and 
 its own server — the space gets a page for it at `/plitzi-preview`; a name that is no component or element type is
 refused saying which there are (`SpacePreviewError`).
 
+Production runs the project bundled — `bundleProject` of `@plitzi/sdk-server/bundle`, which the project's `build` calls
+(`.plitzi/build.ts`): `dist/main.js`, and the modules the server imports by their path as it runs — the space
+(`dist/space/index.js`) and the runtime (`dist/runtime/index.js`), where `projectModule` looks for them in a built
+project — with what they share in `dist/chunks/`, so the three are one copy of every package. React and the SDK stay in
+`node_modules`: the plugins the server compiles when it starts import them from there, and a second React would draw
+with other contexts. So does a native package, found by its manifest (`gypfile`, a binary, a loader of one), and one
+named in `external` — a package that reads its own files by a path of its own. The plugins and the functions are built
+from their source at boot, as always.
+
 The project is the working directory — where every script of its `package.json` runs it, and where a deployment runs
 `node dist/main.js` — never worked out from where a file is: `serveProject` and `authorProjectSpace` refuse to start
 anywhere else, naming what is missing (`package.json`, `src/`; `projectRoot` of `@plitzi/sdk-shared/project`, one
