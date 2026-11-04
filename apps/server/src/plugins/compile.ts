@@ -1,12 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import esbuild from 'esbuild';
-
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
 import { inPluginLayer } from '@plitzi/sdk-shared/style';
 
 import { writeFileAtomic } from '../helpers/atomicFile';
+import { esbuildBuild } from '../helpers/esbuild';
+
+import type esbuild from 'esbuild';
 
 const EXTERNAL = [
   'react',
@@ -41,7 +42,7 @@ export const compilePlugin = async (
   outDir: string,
   devMode: boolean = false
 ): Promise<{ hasCSS: boolean; inputs: string[] }> => {
-  const result = await esbuild.build({
+  const result = await esbuildBuild({
     entryPoints: [jsPath],
     bundle: true,
     format: 'esm',

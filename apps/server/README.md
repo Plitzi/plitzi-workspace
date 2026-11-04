@@ -949,6 +949,11 @@ When `action` is not set, the server infers it from the `js` value:
 - `.tsx`, `.ts`, `.jsx` extension → `compile` (esbuild, ESM output, React/SDK externalized)
 - `.js` extension → `copy`
 
+esbuild runs as a child process of its own (16–26 MiB resident). The server stops it once nothing has built for a
+minute (`ESBUILD_REST_MS`), and the next build starts it again. A server built on this package that builds with esbuild
+in the same process calls `esbuildBuild` from `@plitzi/sdk-server/kernel` instead of esbuild's `build`: a build that
+went to esbuild directly is not counted, and stopping the child would kill it.
+
 ### Plugin serving
 
 Compiled and copied plugin files are served under `/sdk-plugins/{name}/`:

@@ -22,6 +22,8 @@ export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 // Where a request somebody else authored may go. One rule for every server that fetches on a customer's or an
 // agent's say-so, so that a second copy is never the one that forgot a range.
 export { assertOutboundAllowed, isBlockedHost } from './helpers/outboundGuard';
+// The one way a process builds with esbuild, so its child process can be stopped once nothing is building.
+export { esbuildBuild, ESBUILD_REST_MS } from './helpers/esbuild';
 
 export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';

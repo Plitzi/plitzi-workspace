@@ -43,4 +43,16 @@ describe('the server’s layers', () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it('builds with esbuild only through helpers/esbuild, which stops its process once nothing builds', () => {
+    // A build that reached esbuild on its own would not be counted, and stopping the process would kill it.
+    const offenders = sourcesUnder('.')
+      .filter(file => path.relative(SRC, file) !== path.join('helpers', 'esbuild.ts'))
+      .filter(file =>
+        /^import\s+(?!type\b)[^;]*?\sfrom\s+'esbuild'|import\('esbuild'\)/mu.test(readFileSync(file, 'utf-8'))
+      )
+      .map(file => path.relative(SRC, file));
+
+    expect(offenders).toEqual([]);
+  });
 });

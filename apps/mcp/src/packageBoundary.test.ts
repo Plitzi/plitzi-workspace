@@ -37,6 +37,18 @@ describe('package boundary with @plitzi/sdk-server', () => {
     // if anything else starts importing it, a dedicated MCP process has quietly gained a renderer.
     expect(usingSsrEntry).toEqual(['preview/createPreview.ts']);
   });
+
+  it('builds through the kernel’s esbuildBuild, never with esbuild itself', () => {
+    // The kernel stops esbuild's process once nothing has built for a while, and a build that reached esbuild on its
+    // own would die with it — in a process that serves the MCP beside the page server.
+    const offenders = sourceFiles()
+      .filter(
+        file => valueImportsOf(file).includes('esbuild') || readFileSync(file, 'utf-8').includes("import('esbuild')")
+      )
+      .map(file => path.relative(SRC, file));
+
+    expect(offenders).toEqual([]);
+  });
 });
 
 /** What a file loads when it runs: its value imports and re-exports — `import type` is erased, `import()` is lazy. */

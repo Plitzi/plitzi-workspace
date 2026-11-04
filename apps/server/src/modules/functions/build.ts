@@ -1,13 +1,13 @@
 import path from 'node:path';
 
-import esbuild from 'esbuild';
-
 import { exportsByDefault, isFunctionsDefinitionFile, isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
 
 import { ActionRefusal, defineFunctions } from './contract';
+import { esbuildBuild } from '../../helpers/esbuild';
 
 import type { FunctionsDefinition } from './contract';
 import type { FunctionsProblem } from '@plitzi/sdk-shared';
+import type esbuild from 'esbuild';
 
 /** A space's functions source: its files under `functions/`, by path (`index.ts`, `lib/feed.ts`). */
 export type FunctionsSource = Record<string, string>;
@@ -264,7 +264,7 @@ export const buildFunctions = async (source: FunctionsSource): Promise<Functions
   const files = new Map(Object.entries(source).map(([file, text]) => [normalize(file), text]));
   let result: esbuild.BuildResult<{ write: false }>;
   try {
-    result = await esbuild.build({
+    result = await esbuildBuild({
       entryPoints: [ENTRY],
       bundle: true,
       write: false,

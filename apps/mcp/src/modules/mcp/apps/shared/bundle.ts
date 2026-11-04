@@ -1,4 +1,4 @@
-import { build } from 'esbuild';
+import { esbuildBuild } from '@plitzi/sdk-server/kernel';
 
 import { require } from './resolve';
 import { zodEnglishOnly } from './zodEnglishOnly';
@@ -26,7 +26,7 @@ const options = (entry: string) =>
   }) satisfies BuildOptions;
 
 export const bundle = async (entry: string): Promise<string> => {
-  const result = await build(options(entry));
+  const result = await esbuildBuild(options(entry));
 
   return result.outputFiles[0].text;
 };
@@ -34,7 +34,7 @@ export const bundle = async (entry: string): Promise<string> => {
 /** Every file the view pulls in, resolved by the build that serves it. The suite asks for this to check each one
  *  ships as source: a view-side module the package leaves behind resolves here, in the repo, and nowhere else. */
 export const bundleInputs = async (entry: string): Promise<string[]> => {
-  const result = await build({ ...options(entry), metafile: true });
+  const result = await esbuildBuild({ ...options(entry), metafile: true });
 
   return Object.keys(result.metafile.inputs);
 };

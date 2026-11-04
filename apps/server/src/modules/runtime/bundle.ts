@@ -4,9 +4,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gunzipSync, gzipSync } from 'node:zlib';
 
-import esbuild from 'esbuild';
-
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+
+import { esbuildBuild } from '../../helpers/esbuild';
 
 import type { SpaceRuntime } from './contract';
 
@@ -32,7 +32,7 @@ export const runtimeBundleId = (bytes: Uint8Array): string => createHash('sha256
  * export is `defineRuntime(…)`.
  */
 export const packRuntime = async (entry: string): Promise<Uint8Array> => {
-  const result = await esbuild.build({
+  const result = await esbuildBuild({
     entryPoints: [entry],
     bundle: true,
     platform: 'node',

@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import esbuild from 'esbuild';
+import { esbuildBuild } from '../../../helpers/esbuild';
 
 /**
  * The web APIs a bare V8 lacks that are the spec's to get right rather than ours: `URL`, `URLSearchParams`, `atob`,
@@ -27,7 +27,7 @@ const build = async (): Promise<string> => {
     throw new Error('Running space functions in isolates needs core-js@3 installed beside @plitzi/sdk-server');
   }
 
-  const result = await esbuild.build({
+  const result = await esbuildBuild({
     stdin: {
       contents: entries.map(entry => `import ${JSON.stringify(entry)};`).join('\n'),
       loader: 'js',
