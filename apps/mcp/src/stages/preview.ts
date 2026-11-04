@@ -2,8 +2,6 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { readRawBody } from '@plitzi/sdk-server/kernel';
 
-import { createPreview } from '../preview/createPreview';
-
 import type { PreviewRequestBody } from '../modules/mcp/types';
 import type { SSRContext, Stage } from '@plitzi/sdk-server/kernel';
 
@@ -84,6 +82,9 @@ export const previewStage: Stage<SSRContext> = async ctx => {
     return json(ctx, 400, { error: 'BAD_REQUEST', message: 'revision must be a positive integer when given.' });
   }
 
+  // Loaded by the first preview this process is asked for: the operations it applies, their lint and the draft's
+  // render are ~15 MB of a page server that may never be asked for one.
+  const { createPreview } = await import('../preview/createPreview');
   const result = await createPreview(body, ctx.config, ctx.renderFn, ctx.pluginManager, ctx.caches);
 
   return json(ctx, result.ok ? 200 : 422, result);

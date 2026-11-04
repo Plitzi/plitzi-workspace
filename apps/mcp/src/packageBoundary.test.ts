@@ -38,3 +38,57 @@ describe('package boundary with @plitzi/sdk-server', () => {
     expect(usingSsrEntry).toEqual(['preview/createPreview.ts']);
   });
 });
+
+/** What a file loads when it runs: its value imports and re-exports — `import type` is erased, `import()` is lazy. */
+const valueImportsOf = (file: string): string[] =>
+  [...readFileSync(file, 'utf-8').matchAll(/^(?:import|export)\s+(?!type\b)(?:[^;]*?\sfrom\s+)?'([^']+)'/gmu)].map(
+    m => m[1]
+  );
+
+/** Every file of this package a module reaches through what it loads when it runs. */
+const staticGraph = (entry: string): string[] => {
+  const reached = new Set<string>();
+  const visit = (file: string): void => {
+    if (reached.has(file)) {
+      return;
+    }
+
+    reached.add(file);
+    for (const spec of valueImportsOf(file).filter(each => each.startsWith('.'))) {
+      const base = path.resolve(path.dirname(file), spec);
+      const found = [`${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')].find(candidate => {
+        try {
+          readFileSync(candidate);
+
+          return true;
+        } catch {
+          return false;
+        }
+      });
+      if (found) {
+        visit(found);
+      }
+    }
+  };
+  visit(path.join(SRC, entry));
+
+  return [...reached];
+};
+
+// The page server mounts the preview endpoint on every process it runs: what a preview needs is loaded by the first one.
+describe('the preview entry', () => {
+  it('starts with the endpoint alone: neither the MCP SDK nor the preview it renders', () => {
+    const graph = staticGraph('preview.ts');
+
+    expect(graph.map(file => path.relative(SRC, file)).sort()).toEqual(['preview.ts', 'stages/preview.ts']);
+    expect(graph.flatMap(valueImportsOf).filter(spec => !spec.startsWith('.'))).not.toContainEqual(
+      expect.stringMatching(/^@modelcontextprotocol/u)
+    );
+  });
+
+  it('renders a draft without the MCP SDK', () => {
+    const packages = staticGraph('preview/createPreview.ts').flatMap(valueImportsOf);
+
+    expect(packages).not.toContainEqual(expect.stringMatching(/^@modelcontextprotocol/u));
+  });
+});

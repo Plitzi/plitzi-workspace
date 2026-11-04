@@ -1,5 +1,5 @@
 import { checkStyleVarRefs, checkVarRefs } from './context';
-import { ambiguousShorthands, expandShorthand, isCssProperty, suggestCssProperty } from '../../../resources';
+import { ambiguousShorthands, expandShorthand, isCssProperty, suggestCssProperty } from '../../../catalogs';
 
 import type { ValidationCtx } from './context';
 import type { DefinitionSlotPatch } from '../../operations';

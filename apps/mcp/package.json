@@ -27,6 +27,12 @@
       "types": "./dist/render.d.ts",
       "import": "./dist/render.js",
       "default": "./dist/render.js"
+    },
+    "./preview": {
+      "@plitzi/source": "./src/preview.ts",
+      "types": "./dist/preview.d.ts",
+      "import": "./dist/preview.js",
+      "default": "./dist/preview.js"
     }
   },
   "repository": {

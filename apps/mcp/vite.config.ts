@@ -90,7 +90,9 @@ export default defineConfig(({ mode }) => {
           // one reaches into the SSR render primitives a dedicated MCP process never constructs.
           server: path.resolve(root, 'src/server.ts'),
           // The widget render alone, for a project's own agent: no MCP server, no SSR, no OAuth.
-          render: path.resolve(root, 'src/render.ts')
+          render: path.resolve(root, 'src/render.ts'),
+          // The draft-preview endpoint alone, for the page server: what a preview needs is loaded by the first one.
+          preview: path.resolve(root, 'src/preview.ts')
         },
         formats: ['es']
       },

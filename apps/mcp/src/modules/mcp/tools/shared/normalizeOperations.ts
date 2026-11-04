@@ -1,5 +1,5 @@
 import { elementTypeNames } from '../../catalogs';
-import { buildTypeRegistry } from '../../resources';
+import { buildTypeRegistry } from '../../catalogs';
 
 import type { Space } from '../../helpers';
 import type { ElementInput, Operation } from '../operations';

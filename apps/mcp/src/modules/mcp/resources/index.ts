@@ -1,3 +1,5 @@
+// What edits a draft reads the catalogs from `../catalogs`, never from here: this barrel registers the resources on an
+// MCP server, and that is its SDK in every process that previews a draft (`packageBoundary.test.ts`).
 export { readPublicResource, readResource, resourceVersion } from './router';
 export { actionSummaries } from './actions';
 export { connectorSummaries } from './connectors';

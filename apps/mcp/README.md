@@ -55,10 +55,13 @@ draft-preview (off unless `preview.enabled`, then guarded by a shared secret). I
 want only some:
 
 ```ts
-import { previewStage } from '@plitzi/sdk-mcp';
+import { previewStage } from '@plitzi/sdk-mcp/preview';
 
 const server = createServer({ adapters, preview: { enabled: true, secret } }, { preAuth: [previewStage] });
 ```
+
+`@plitzi/sdk-mcp/preview` is the endpoint alone: a page server mounting it loads what a preview needs — the
+operations, their lint, the draft's render — with the first preview it is asked for, not when it starts.
 
 ## Adapters
 
@@ -233,6 +236,7 @@ MCP server, [self-hosting/07](../../examples/self-hosting/07-ssr-preview) is the
 | `@plitzi/sdk-mcp/server` | The dedicated MCP server and its clients. What an MCP deployment wires. |
 | `@plitzi/sdk-mcp` | Everything above plus the pipeline stages, `createPreview` and the tool engine. |
 | `@plitzi/sdk-mcp/render` | `plitzi_render`'s widget render alone — no MCP server, no SSR, no OAuth — for a project's own agent. |
+| `@plitzi/sdk-mcp/preview` | `previewStage` alone, for the page server that mounts it; the preview itself is loaded by the first one. |
 
 The split is about weight, not taste: ESM re-exports load eagerly, so the barrel pulls the draft-preview path and
 the renderer it reaches into. A `no-restricted-imports` rule and a test in `src/packageBoundary.test.ts` keep this

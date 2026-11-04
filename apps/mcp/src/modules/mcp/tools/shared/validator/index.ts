@@ -16,6 +16,7 @@ import { checkElementInput, checkRawMarkup, checkTypeProps, checkVariantApplicat
 import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
 import { observedDataSources, observedInteractionActions } from '../../../catalogs';
+import { buildTypeRegistry } from '../../../catalogs';
 import {
   componentView,
   findComponentByRef,
@@ -30,7 +31,6 @@ import {
   resolveRef,
   routeParamNames
 } from '../../../helpers';
-import { buildTypeRegistry } from '../../../resources';
 import { MAX_OPS } from '../../operations';
 
 import type { TypeMeta, ValidationCtx, ValidationMode } from './context';
