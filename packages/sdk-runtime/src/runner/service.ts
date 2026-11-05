@@ -54,6 +54,11 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
    * killed for memory with every invocation in it.
    */
   memoryShare?: number;
+  /**
+   * Whether it says it listens (`[Functions] runner listening on …`): what a runner of its own does. A host that runs the
+   * service inside something else — a space's runtime — says what it is itself, once, and passes `false`.
+   */
+  announce?: boolean;
   /** How full the process is; its resident memory against its container's limit by default. For tests. */
   readMemory?: () => MemoryReading;
 };
@@ -269,6 +274,7 @@ export const startFunctionsRunnerService = async ({
   http: answerHttp,
   stats: naming,
   memoryShare = 0.85,
+  announce = true,
   readMemory = sampleProcessMemory(),
   ...isolate
 }: FunctionsRunnerServiceOptions): Promise<FunctionsRunnerService> => {
@@ -385,7 +391,9 @@ export const startFunctionsRunnerService = async ({
       resolve();
     });
   });
-  serverLog.info('Functions', `runner listening on ${host}:${String(port)}`);
+  if (announce) {
+    serverLog.info('Functions', `runner listening on ${host}:${String(port)}`);
+  }
 
   return {
     address: () => {

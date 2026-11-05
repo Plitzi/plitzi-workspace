@@ -38,7 +38,8 @@ export type SpaceRuntimeHost = {
  * A space runtime, started and served: its tasks and routes over the functions runners' protocol (the platform invokes
  * them and answers every `ctx` call), and its endpoints as plain HTTP the platform forwards — both behind one secret,
  * since the only caller is the platform. The process is the space's alone: what its code can reach is this process
- * and the network it is given, never the platform's database or keys.
+ * and the network it is given, never the platform's database or keys. It says nothing of itself: its caller knows which
+ * space it is, and says so once it answers.
  */
 export const startSpaceRuntime = async ({
   runtime,
@@ -68,10 +69,12 @@ export const startSpaceRuntime = async ({
     functions: describeFunctions(parts.functions ?? {}),
     endpoints: paths
   };
+  // The runner's own line would read as a runner's: whoever started this names the space it serves, once.
   const service = await startFunctionsRunnerService({
     secret,
     port,
     host,
+    announce: false,
     runner: createRuntimeRunner(parts.functions),
     http: async (req, res) => {
       const url = new URL(req.url ?? '/', publicUrl);
