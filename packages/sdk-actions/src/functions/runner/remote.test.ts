@@ -317,6 +317,42 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
+  it('finishes what it runs when it stops, and hands a new invocation to another runner meanwhile', async () => {
+    const slow: FunctionRunner = {
+      describe: () => Promise.resolve({}),
+      invoke: () => new Promise(resolve => setTimeout(() => resolve('finished'), 400))
+    };
+    const stopping = await startFunctionsRunnerService({
+      secret: SECRET,
+      port: 0,
+      host: '127.0.0.1',
+      runner: slow,
+      shutdown: { graceMs: 5000 }
+    });
+    const url = `ws://127.0.0.1:${String(stopping.address().port)}`;
+    const runner = createRemoteRunner({ url, secret: SECRET });
+    const ask = () =>
+      runner.invoke({
+        bundle: { id: 'slow', load: () => Promise.resolve('') },
+        invocation,
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      });
+
+    const running = ask();
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const closed = stopping.close();
+    const refused = await ask().catch((error: unknown) => error);
+    const health = await fetch(url.replace('ws:', 'http:') + '/health').catch(() => undefined);
+
+    expect(await running).toBe('finished');
+    expect(refused instanceof FunctionFailure && refused.reason).toBe('busy');
+    expect(String(refused)).toContain('is stopping');
+    expect(health?.status).toBe(503);
+    await closed;
+  });
+
   it('needs a real secret to start', async () => {
     await expect(startFunctionsRunnerService({ secret: 'short' })).rejects.toThrow('at least 32 characters');
   });

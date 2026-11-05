@@ -3,6 +3,7 @@ export { closeOnSignals } from './closeOnSignals';
 export { DEFAULT_COMPRESSION, resolveCompression, selectEncoding, compressBody } from './compress';
 export { makeHandler } from './dispatcher';
 export { SHUTDOWN_GRACE_MS, watchConnections } from './drain';
+export { SHUTDOWN_ANNOUNCE_MS, isStopping, markStopping, shutdownOf } from './stopping';
 export {
   isFleetMessage,
   hostable,

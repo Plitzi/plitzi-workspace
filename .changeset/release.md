@@ -76,6 +76,10 @@ space while it hydrates.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its
   lines with `keepLogLine`). So one instance's whole log is read from a back-office without a log shipper.
+- **A deploy cuts nothing.** `shutdown: { announceMs, graceMs }` on a server, a worker and the functions runner: told
+  to stop, it serves for `announceMs` with `/health` at 503 and `/_stats` saying `stopping`, then gives what it runs
+  `graceMs` (10 s by default, which was fixed) to finish. A stopping runner answers new invocations `busy`, which the
+  platform takes to another runner, and waits for those it runs — it used to cut them at once.
 - **A console says what is worth reading.** A probe answered (`/_stats`, `/health`) and a run that worked are `debug`;
   a run of a second or more is a `warn`, marked `SLOW` with its steps (`slowRunMs` on the server's config raises it); a
   refused or failing probe is still said. A worker now holds what it says to its own `logLevel`, as a page server does.

@@ -2,9 +2,15 @@ import http from 'node:http';
 
 import { WebSocketServer } from 'ws';
 
-import { bearerMatches, frameText, watchConnections } from '@plitzi/sdk-kernel/http';
+import { SHUTDOWN_GRACE_MS, bearerMatches, frameText, shutdownOf, watchConnections } from '@plitzi/sdk-kernel/http';
 import { logQueryOf, readLogTail, serverLog } from '@plitzi/sdk-kernel/log';
-import { STATS_LOGS_PATH, STATS_PATH, createStatsRecorder, sampleProcessMemory } from '@plitzi/sdk-kernel/stats';
+import {
+  STATS_LOGS_PATH,
+  STATS_PATH,
+  createStatsRecorder,
+  sampleProcessMemory,
+  withStopping
+} from '@plitzi/sdk-kernel/stats';
 import {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
@@ -59,6 +65,13 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
    * service inside something else — a space's runtime — says what it is itself, once, and passes `false`.
    */
   announce?: boolean;
+  /**
+   * How it stops (`close()`): for `announceMs` its `/health` answers 503 and it takes no new invocation — the platform
+   * is answered `busy`, and takes it to another runner — while it keeps running what it has; then what is still
+   * running has `graceMs` to end before it is cut. 0 and 10000 by default; `graceMs` at least the longest function's
+   * time limit, or a deploy cuts one halfway.
+   */
+  shutdown?: { announceMs?: number; graceMs?: number };
   /** How full the process is; its resident memory against its container's limit by default. For tests. */
   readMemory?: () => MemoryReading;
 };
@@ -83,6 +96,8 @@ type ConnectionStats = {
   inFlight: { count: number };
   /** Why this runner takes no new invocation right now, or nothing. */
   busy: () => string | undefined;
+  /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
+  stopping: () => boolean;
 };
 
 const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: ConnectionStats): void => {
@@ -221,7 +236,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
 
     const busy = stats.busy();
     if (busy) {
-      stats.recorder.refuse('memory');
+      stats.recorder.refuse(stats.stopping() ? 'stopping' : 'memory');
       finish({ type: 'failed', reason: 'busy', error: busy });
 
       return;
@@ -275,6 +290,7 @@ export const startFunctionsRunnerService = async ({
   stats: naming,
   memoryShare = 0.85,
   announce = true,
+  shutdown,
   readMemory = sampleProcessMemory(),
   ...isolate
 }: FunctionsRunnerServiceOptions): Promise<FunctionsRunnerService> => {
@@ -295,7 +311,12 @@ export const startFunctionsRunnerService = async ({
 
   const recorder = createStatsRecorder({ pool: 'runner', ...naming, protocol: FUNCTIONS_PROTOCOL });
   const inFlight = { count: 0 };
+  let stopping = false;
   const busy = (): string | undefined => {
+    if (stopping) {
+      return 'This functions runner is stopping — a deploy or a scale-down — and takes no new invocation: another does';
+    }
+
     const memory = readMemory();
     if (memory.usedBytes <= memory.limitBytes * memoryShare) {
       return undefined;
@@ -321,8 +342,9 @@ export const startFunctionsRunnerService = async ({
   };
   const server = http.createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/health') {
-      res.writeHead(200, { 'content-type': 'text/plain' });
-      res.end('ok');
+      // Stopping, it is taken out of rotation while it finishes what it runs.
+      res.writeHead(stopping ? 503 : 200, { 'content-type': 'text/plain' });
+      res.end(stopping ? 'stopping' : 'ok');
 
       return;
     }
@@ -337,7 +359,7 @@ export const startFunctionsRunnerService = async ({
       const answer = (): unknown =>
         asked.pathname === STATS_LOGS_PATH
           ? readLogTail(logQueryOf(Object.fromEntries(asked.searchParams)))
-          : recorder.snapshot();
+          : withStopping(recorder.snapshot(), stopping);
       res.end(JSON.stringify(allowed ? answer() : { error: `${asked.pathname} is read with the runner's secret` }));
 
       return;
@@ -379,7 +401,9 @@ export const startFunctionsRunnerService = async ({
       return;
     }
 
-    sockets.handleUpgrade(req, socket, head, ws => serveConnection(ws, engine, { recorder, inFlight, busy }));
+    sockets.handleUpgrade(req, socket, head, ws =>
+      serveConnection(ws, engine, { recorder, inFlight, busy, stopping: () => stopping })
+    );
   });
 
   // Drained, not only closed, when it stops: the platform keeps a socket and keep-alive connections to it for as long
@@ -408,6 +432,25 @@ export const startFunctionsRunnerService = async ({
       return address;
     },
     close: async () => {
+      const { announceMs, graceMs } = shutdownOf({ ...(shutdown ? { shutdown } : {}) }, { graceMs: SHUTDOWN_GRACE_MS });
+      stopping = true;
+      if (announceMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, announceMs));
+      }
+
+      // What it runs ends on its own, within its time limit: cut only past the grace, and said.
+      const deadline = Date.now() + graceMs;
+      while (inFlight.count > 0 && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      if (inFlight.count > 0) {
+        serverLog.warn(
+          'Functions',
+          `${String(inFlight.count)} invocation(s) still running ${String(graceMs)} ms after stopping: cut`
+        );
+      }
+
       sockets.clients.forEach(client => client.terminate());
       await connections.drain('Functions');
       await engine.close?.();

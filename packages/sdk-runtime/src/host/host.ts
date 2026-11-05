@@ -27,6 +27,8 @@ export type SpaceRuntimeHostOptions = {
    * Given, the runtime's requests to its own space go there rather than out to the edge and back (`reachSpaceInside`).
    */
   insideUrl?: string | undefined;
+  /** How it stops: out of rotation for `announceMs`, then what it runs has `graceMs` to end (the runner service's). */
+  shutdown?: { announceMs?: number; graceMs?: number };
 };
 
 export type SpaceRuntimeHost = {
@@ -48,7 +50,8 @@ export const startSpaceRuntime = async ({
   host = '0.0.0.0',
   env,
   publicUrl,
-  insideUrl
+  insideUrl,
+  shutdown
 }: SpaceRuntimeHostOptions): Promise<SpaceRuntimeHost> => {
   // Before the space's code runs: whatever it opens to its own address, from its first request, goes the inside way.
   if (insideUrl) {
@@ -77,6 +80,7 @@ export const startSpaceRuntime = async ({
     announce: false,
     // Its stats say what it is: a space's runtime, not a functions runner, whose pool the back-office shows apart.
     stats: { pool: 'runtime' },
+    ...(shutdown ? { shutdown } : {}),
     runner: createRuntimeRunner(parts.functions),
     http: async (req, res) => {
       const url = new URL(req.url ?? '/', publicUrl);

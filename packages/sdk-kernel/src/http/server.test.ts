@@ -2,10 +2,13 @@ import net from 'node:net';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { makeHandler } from './dispatcher';
 import { createHttpServer } from './server';
+import { healthStage } from './stages/health';
 import { unusedPort } from './unusedPort';
 
 import type { Handler } from './transports';
+import type { BaseContext } from './types';
 import type { ServerBaseConfig } from '../types';
 
 const handler = (() => undefined) as unknown as Handler;
@@ -106,5 +109,31 @@ describe('createHttpServer as a single server', () => {
     single(false);
 
     expect(process.listenerCount('message')).toBe(listening);
+  });
+});
+
+describe('createHttpServer stopping', () => {
+  /** A deploy: the replica keeps serving for its announce, its /health saying it is going, so the balancer stops
+   *  sending — and only then stops listening. */
+  it('answers /health with 503 while it announces it is stopping, and serves until then', async () => {
+    const port = await unusedPort();
+    const config = { httpVersion: 1, shutdown: { announceMs: 300 } } as ServerBaseConfig;
+    const server = createHttpServer(
+      config,
+      () =>
+        makeHandler<BaseContext>('TEST', (raw, rawRes, req, res) => ({ raw, rawRes, req, res, config, port }), [
+          healthStage
+        ]),
+      { label: 'TEST' }
+    );
+    await server.listen(port, '127.0.0.1');
+    const before = await fetch(`http://127.0.0.1:${String(port)}/health`);
+    const closing = server.close();
+    const during = await fetch(`http://127.0.0.1:${String(port)}/health`);
+    const body = (await during.json()) as { stopping?: boolean };
+    await closing;
+
+    expect([before.status, during.status, body.stopping]).toEqual([200, 503, true]);
+    expect(await isBound(port)).toBe(false);
   });
 });

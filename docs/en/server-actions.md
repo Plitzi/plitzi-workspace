@@ -895,6 +895,15 @@ running job to be retried by somebody else. `closeOnSignals(server, { afterClose
 `server.close()` — which finishes the jobs this replica is running and leaves the waiting ones in the queue — and only
 then lets the process exit. A deployment that already handles its own signals calls `server.close()` from there.
 
+**Stop without cutting anything.** `shutdown: { announceMs, graceMs }` on `createServer`, `createWorker` and the
+functions runner says how. For `announceMs` the server keeps serving while `/health` answers 503, so a load balancer takes
+it out of rotation before its port closes; 0 by default, a few seconds behind one. Then what it is answering has
+`graceMs` to finish (10 s by default). Make that at least your longest action's time limit, or a deploy cuts a run
+halfway. While stopping, a runner answers new invocations `busy`, and the platform takes them to another runner. Give
+the orchestrator a grace longer than the two together (a pod's `terminationGracePeriodSeconds`), and roll the runners
+before the workers and the workers before the page servers: a callee accepts the protocol versions before its own,
+never after.
+
 ### The `kv` store
 
 `kv` falls back to an in-process Map, which is honest for one replica and a rate limit that multiplies by however

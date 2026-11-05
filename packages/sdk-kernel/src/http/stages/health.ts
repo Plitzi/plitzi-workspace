@@ -1,4 +1,5 @@
 import { buildHealthPayload } from '../health';
+import { isStopping } from '../stopping';
 
 import type { Stage } from '../types';
 
@@ -28,6 +29,11 @@ export const healthStage: Stage = async ctx => {
       // broken" when what is broken is the thing it was asked about.
       live = { healthy: false, reason: error instanceof Error ? error.message : String(error) };
     }
+  }
+
+  // Told to stop: still answering while it finishes, and taken out of rotation by whoever reads this.
+  if (isStopping(ctx.config)) {
+    live = { ...live, healthy: false, stopping: true, reason: 'stopping: finishing what it runs, taking nothing new' };
   }
 
   ctx.res.setHeader('Content-Type', 'application/json');

@@ -1,6 +1,7 @@
-import { watchConnections } from './drain';
+import { SHUTDOWN_GRACE_MS, watchConnections } from './drain';
 import { channelName } from './fleet/link';
 import { fleetRole, resolveWorkers } from './fleet/role';
+import { markStopping, shutdownOf } from './stopping';
 import { buildTransport, protoLabel } from './transports';
 import { serverLog } from '../log/serverLog';
 import { statsConfigProblem } from '../stats/stage';
@@ -176,13 +177,22 @@ export const createHttpServer = (
     // existing — that is what made an unstarted server throw on close instead of simply releasing its resources.
     async close() {
       closed = true;
+      const { announceMs, graceMs } = shutdownOf(config, { graceMs: SHUTDOWN_GRACE_MS });
+      // Said before it stops listening: `/health` answers 503 from here, and for `announceMs` it serves as before, so
+      // a load balancer takes it out of rotation before a request finds the port closed.
+      markStopping(config);
+      if (announceMs > 0 && primary) {
+        serverLog.info(label, `stopping: /health answers 503 for ${String(announceMs)} ms, then what runs finishes`);
+        await new Promise(resolve => setTimeout(resolve, announceMs));
+      }
+
       // The workers first: each finishes what it is serving before the primary lets go of what it holds.
       await fleet?.stop();
       fleet = undefined;
 
       // No new connection from here, and the open ones let go: requests finish, streams end, the rest is cut after the
       // grace (`drain.ts`). Started before the jobs are waited for, so a page reconnecting meanwhile finds nothing.
-      const draining = connections?.drain(label);
+      const draining = connections?.drain(label, graceMs);
       const quic = h3;
       primary = undefined;
       connections = undefined;

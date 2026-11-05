@@ -1,5 +1,5 @@
 export { createStatsRecorder, statsRecorderFor } from './recorder';
-export { STATS_LOGS_PATH, STATS_PATH, statsConfigProblem, statsStage } from './stage';
+export { STATS_LOGS_PATH, STATS_PATH, statsConfigProblem, statsStage, withStopping } from './stage';
 export { createLocalPoolSource, readPools } from './pools';
 export { processMemoryLimit, sampleProcessMemory } from './memory';
 

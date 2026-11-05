@@ -1,8 +1,10 @@
 import { statsRecorderFor } from './recorder';
 import { bearerMatches } from '../http/bearer';
 import { STATS_LOGS_PATH, STATS_PATH } from '../http/probes';
+import { isStopping } from '../http/stopping';
 import { logQueryOf, readLogTail } from '../log/tail';
 
+import type { ProcessStats } from './types';
 import type { BaseContext, Stage } from '../http/types';
 
 export { STATS_LOGS_PATH, STATS_PATH };
@@ -39,12 +41,24 @@ export const statsStage: Stage = ({ req, res, config }) => {
     JSON.stringify(
       req.path === STATS_LOGS_PATH
         ? readLogTail(logQueryOf(req.query))
-        : statsRecorderFor(config.stats, config.health?.version).snapshot()
+        : withStopping(statsRecorderFor(config.stats, config.health?.version).snapshot(), isStopping(config))
     )
   );
 
   return true;
 };
+
+/** A process told to stop says so: degraded, finishing what it runs — what a deploy looks like on the pools' screen. */
+export const withStopping = (stats: ProcessStats, stopping: boolean): ProcessStats =>
+  stopping
+    ? {
+        ...stats,
+        health: {
+          status: 'degraded',
+          reasons: ['stopping: finishing what it runs, taking nothing new', ...stats.health.reasons]
+        }
+      }
+    : stats;
 
 /** What a config's stats ask: refused at start when the secret is too short to be one. */
 export const statsConfigProblem = (config: Pick<BaseContext['config'], 'stats'>): string | undefined =>

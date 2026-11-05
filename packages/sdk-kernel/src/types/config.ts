@@ -100,6 +100,14 @@ export type ServerBaseConfig = {
    */
   logLevel?: LogLevel | 'silent';
   /**
+   * How it stops when told to (`close()`, a SIGTERM through `closeOnSignals`): for `announceMs` it keeps serving with
+   * `/health` answering 503 — so a load balancer takes it out of rotation before its port closes; 0 by default, 5000
+   * behind one — and then what it is answering has `graceMs` to finish before it is cut: 10000 by default, and at least
+   * the longest action it runs (a call cut halfway is a run lost). Its orchestrator's own grace (a pod's
+   * `terminationGracePeriodSeconds`) is longer than the two together.
+   */
+  shutdown?: { announceMs?: number; graceMs?: number };
+  /**
    * From how many ms a run that worked is said as slow, at `warn`, with its steps; below it a run that worked is `debug`.
    * 1000 by default (`SLOW_RUN_MS`): raise it where the actions are slow on purpose — a report, an import.
    */
