@@ -95,13 +95,30 @@ export type PoolReport = {
 /** Every pool, read at once. Without a source it says so, never an empty list that reads as "nothing runs". */
 export type PoolHealth = { at: string; pools: PoolReport[] } | { at: string; unconfigured: string };
 
+/** A floor held above a pool's own for a while, by somebody, for a reason: what the screen lists and anyone may end. */
+export type PoolOverride = {
+  pool: string;
+  floor: number;
+  reason: string;
+  /** Who set it, as the deployment names its people. */
+  by: string;
+  /** When the pool's own floor comes back, ISO 8601 in UTC. */
+  expiresAt: string;
+};
+
 /**
  * What changes a pool's capacity when an autoscaler does not, for a deployment that has one: the kernel defines it and
- * ships none. Without one a pool is shown read-only, and the screen says scaling is not managed from there.
+ * ships none. Without one a pool is shown read-only, and the screen says scaling is not managed from there. A floor is
+ * raised or lowered, never the count: an autoscaler keeps owning the count above it.
  */
 export type PoolScaler = {
-  read: (pool: string) => Promise<{ floor: number; ceiling: number; current: number }>;
-  /** Holds the pool at `floor` or more until `expiresAt` (ISO 8601, UTC), saying why. */
-  setFloor: (pool: string, floor: number, override: { reason: string; expiresAt: string }) => Promise<void>;
-  overrides: () => Promise<{ pool: string; floor: number; reason: string; expiresAt: string }[]>;
+  /** The pools it can change, by name. */
+  pools: () => string[];
+  /** Its floor now, its own floor (what an override ends back to), its ceiling, and how many instances it has. */
+  read: (pool: string) => Promise<{ floor: number; defaultFloor: number; ceiling: number; current: number }>;
+  /** Holds the pool at `floor` or more until `expiresAt`. Refused past its ceiling, saying so. */
+  setFloor: (pool: string, floor: number, override: Omit<PoolOverride, 'pool' | 'floor'>) => Promise<void>;
+  /** Ends an override now: the pool's own floor again. */
+  endOverride: (pool: string) => Promise<void>;
+  overrides: () => Promise<PoolOverride[]>;
 };

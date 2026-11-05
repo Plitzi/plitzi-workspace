@@ -9,6 +9,7 @@ export type {
   InstanceHealth,
   PoolHealth,
   PoolInstance,
+  PoolOverride,
   PoolReport,
   PoolScaler,
   PoolSource,
