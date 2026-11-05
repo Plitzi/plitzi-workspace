@@ -1,7 +1,17 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
-import type { JobQuery, JobQueue, JobSettlement, JobSpaces, JobStop, JobWrite, ActionSchedule } from '../../types';
-import type { Job, JobAttempt, JobInput } from '@plitzi/sdk-shared';
+import type {
+  JobQuery,
+  JobQueue,
+  JobQueueSummary,
+  JobSettlement,
+  JobSpaces,
+  JobStop,
+  JobWrite,
+  ActionSchedule,
+  WaitingJobs
+} from '../../types';
+import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
 
 /** Whether a job of `spaceId` is one a claim with `spaces` takes. */
 const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
@@ -328,6 +338,8 @@ export const queueRules = (
       };
     },
 
+    summarize: ({ spaces = 10 } = {}) => summarizeJobs([...jobs.values()], spaces),
+
     getJob: (spaceIds, jobId) => owned(spaceIds, jobId),
 
     listSchedules: spaceIds => [...schedules.values()].filter(schedule => spaceIds.includes(schedule.spaceId)),
@@ -446,6 +458,90 @@ export const queueRules = (
 };
 
 /** A state with nothing in it. */
+/** Which of {@link WaitingJobs} a job is, by its target's kind and trigger — as a store's own query reads them. */
+export const waitingKindOf = (kind: string, trigger: string | null | undefined): keyof WaitingJobs => {
+  if (kind === 'function') {
+    return 'functionJobs';
+  }
+
+  switch (trigger) {
+    case 'call':
+      return 'calls';
+    case 'schedule':
+      return 'schedules';
+    case 'later':
+      return 'later';
+    default:
+      return 'other';
+  }
+};
+
+/** Every status at zero: what a summary counts up from, so a status nothing is in still says 0. */
+export const noJobsByStatus = (): Record<JobStatus, number> => ({
+  pending: 0,
+  running: 0,
+  paused: 0,
+  succeeded: 0,
+  failed: 0,
+  dead: 0,
+  cancelled: 0
+});
+
+/** The statuses a job waits in. */
+export const WAITING_STATUSES: readonly JobStatus[] = ['pending', 'paused'];
+
+/**
+ * The queue at a glance, from its jobs: what `summarize` answers for a store that holds them all in hand — the database
+ * ones count the same in their own query.
+ */
+export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSummary => {
+  const byStatus = noJobsByStatus();
+  const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
+  const bySpace = new Map<number, JobQueueSummary['spaces'][number] & { lastAt: number }>();
+  let oldestDueAt: number | undefined;
+  all.forEach(job => {
+    byStatus[job.status] += 1;
+    if (!WAITING_STATUSES.includes(job.status)) {
+      return;
+    }
+
+    const kind = waitingKindOf(job.target.kind, job.target.kind === 'action' ? job.target.trigger : undefined);
+    waiting[kind] += 1;
+    oldestDueAt = oldestDueAt === undefined ? job.dueAt : Math.min(oldestDueAt, job.dueAt);
+    const space = bySpace.get(job.spaceId) ?? {
+      spaceId: job.spaceId,
+      waiting: 0,
+      calls: 0,
+      oldestDueAt: job.dueAt,
+      lastAt: Number.NEGATIVE_INFINITY
+    };
+    space.waiting += 1;
+    space.calls += kind === 'calls' ? 1 : 0;
+    space.oldestDueAt = Math.min(space.oldestDueAt, job.dueAt);
+    // What the job of it touched last said — nothing, when it said nothing.
+    if (job.updatedAt >= space.lastAt) {
+      space.lastAt = job.updatedAt;
+      if (job.error) {
+        space.lastError = job.error;
+      } else {
+        delete space.lastError;
+      }
+    }
+
+    bySpace.set(job.spaceId, space);
+  });
+
+  return {
+    byStatus,
+    waiting,
+    ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+    spaces: [...bySpace.values()]
+      .sort((a, b) => b.waiting - a.waiting || a.oldestDueAt - b.oldestDueAt)
+      .slice(0, spaces)
+      .map(({ lastAt: _lastAt, ...space }) => space)
+  };
+};
+
 export const emptyState = (): QueueState => ({ jobs: new Map(), schedules: new Map() });
 
 /** How a store runs one method of the rules: reading its state, and keeping it after one that changes it. */
@@ -478,6 +574,7 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   advanceSchedule: (...args) => access('advanceSchedule', args),
   putSchedules: (...args) => access('putSchedules', args),
   listJobs: (...args) => access('listJobs', args),
+  summarize: (...args) => access('summarize', args),
   getJob: (...args) => access('getJob', args),
   listSchedules: (...args) => access('listSchedules', args),
   requeue: (...args) => access('requeue', args),

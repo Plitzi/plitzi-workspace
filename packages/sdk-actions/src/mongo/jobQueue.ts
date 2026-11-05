@@ -1,5 +1,6 @@
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
 import type {
@@ -9,7 +10,8 @@ import type {
   JobStop,
   JobWrite,
   ActionSchedule,
-  ActionScheduleInput
+  ActionScheduleInput,
+  WaitingJobs
 } from '../types';
 import type { Job, JobInput, JobStatus } from '@plitzi/sdk-shared';
 import type { Collection, Db, Document } from 'mongodb';
@@ -425,6 +427,74 @@ export const createMongoJobQueue = ({
       ]);
 
       return { jobs: found.map(toJob), total };
+    },
+
+    summarize: async ({ spaces = 10 } = {}) => {
+      const { jobs } = await collections();
+      const waitingNow = { status: { $in: [...WAITING_STATUSES] } };
+      // One pass over the collection, three answers: every status, what waits by kind, the spaces with most waiting —
+      // a `$facet` answers one document even over an empty collection.
+      const [found] = await jobs
+        .aggregate<{
+          byStatus: { _id: JobStatus; n: number }[];
+          waiting: { _id: { kind: string; trigger?: string | null }; n: number; oldest: number }[];
+          spaces: { _id: number; waiting: number; calls: number; oldestDueAt: number; lastError?: string | null }[];
+        }>([
+          {
+            $facet: {
+              byStatus: [{ $group: { _id: '$status', n: { $sum: 1 } } }],
+              waiting: [
+                { $match: waitingNow },
+                {
+                  $group: {
+                    _id: { kind: '$target.kind', trigger: '$target.trigger' },
+                    n: { $sum: 1 },
+                    oldest: { $min: '$dueAt' }
+                  }
+                }
+              ],
+              spaces: [
+                { $match: waitingNow },
+                { $sort: { updatedAt: 1 } },
+                {
+                  $group: {
+                    _id: '$spaceId',
+                    waiting: { $sum: 1 },
+                    calls: { $sum: { $cond: [{ $eq: ['$target.trigger', 'call'] }, 1, 0] } },
+                    oldestDueAt: { $min: '$dueAt' },
+                    lastError: { $last: '$error' }
+                  }
+                },
+                { $sort: { waiting: -1, oldestDueAt: 1 } },
+                { $limit: spaces }
+              ]
+            }
+          }
+        ])
+        .toArray();
+      const byStatus = noJobsByStatus();
+      found.byStatus.forEach(each => {
+        byStatus[each._id] = each.n;
+      });
+      const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
+      let oldestDueAt: number | undefined;
+      found.waiting.forEach(each => {
+        waiting[waitingKindOf(each._id.kind, each._id.trigger)] += each.n;
+        oldestDueAt = oldestDueAt === undefined ? each.oldest : Math.min(oldestDueAt, each.oldest);
+      });
+
+      return {
+        byStatus,
+        waiting,
+        ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+        spaces: found.spaces.map(each => ({
+          spaceId: each._id,
+          waiting: each.waiting,
+          calls: each.calls,
+          oldestDueAt: each.oldestDueAt,
+          ...(each.lastError ? { lastError: each.lastError } : {})
+        }))
+      };
     },
 
     getJob: async (spaceIds, jobId) => {

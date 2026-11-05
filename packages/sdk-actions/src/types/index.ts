@@ -12,8 +12,10 @@ export type {
   ActionScheduleInput,
   JobQuery,
   JobQueue,
+  JobQueueSummary,
   JobSettlement,
   JobSpaces,
   JobStop,
-  JobWrite
+  JobWrite,
+  WaitingJobs
 } from './jobs';

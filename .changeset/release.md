@@ -88,6 +88,12 @@ space while it hydrates.
 - **The badge leads where the deployment says.** `SSRMeterDecision.badge` (and `render.badge`) is `BadgeLinks` —
   `{ madeWith, report }` — instead of `true`: a site served by a test tier reports to that tier, not to plitzi.com. A
   metering adapter that answered `badge: true` answers the two addresses.
+- **Every job queue sums itself up** (`JobQueue.summarize({ spaces })` → `JobQueueSummary`): its jobs by status, what
+  waits by what it is (kept calls, schedules, later, function jobs), the oldest wait and the spaces waiting most with
+  what their last job said — in the in-process, file, SQLite, Mongo and MySQL queues alike. A queue of a deployment's
+  own adds it. `KEPT_CALLS_PER_SPACE` and `KEPT_CALL_MS` are exported.
+- **The functions runner and a space runtime report a version** (`startFunctionsRunnerService({ version })`,
+  `startSpaceRuntime({ version })`), as page servers and workers do: a rolling deploy reads the same on every pool.
 - **A call nothing can run is kept, not lost.** A runner that cannot be reached is tried again (0.5, 1, 2 s) and then
   said away for 15 s (`FunctionRunner.reachable`, reason `unreachable`); a call whose action runs the space's code is
   then kept in the job queue as its caller's (`ActionJobTarget.user`, `callerId`, `idempotencyKey`, `at`, `origin`,
@@ -239,7 +245,8 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
   through with the arrow keys, a chart reads every series at that row (the `tooltip` part); `titleField` names each
   row there when the axis writes less (an empty label is not written, and the labels that are keep their room), and
   charts given the same `sync` point together. The axis draws a hairline at each time it names, and an area of
-  several series fades towards it.
+  several series fades towards it. A legend's click shows that series alone (again, every one), ⌘ or Ctrl + click hides
+  or shows it; what is hidden leaves the drawing, the scale and the readout.
 
 - **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
   that had one drew nothing in its place, without a word. A test now holds every declared type to a component.

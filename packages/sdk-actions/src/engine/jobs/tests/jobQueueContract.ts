@@ -65,6 +65,32 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
       expect(Math.abs((await nowMs()) - Date.now())).toBeLessThan(5_000);
     });
 
+    // What an operator reads of the queue: every status, what waits by what it is, and the spaces with most waiting.
+    it('sums the whole queue up: by status, what waits by kind, and the spaces waiting most', async () => {
+      const due = (await nowMs()) - 5_000;
+      const call = (id: string, at: number) =>
+        job({ id, dueAt: at, target: { kind: 'action', name: 'book', trigger: 'call', callerId: id, ticket: 't' } });
+      await Promise.all([
+        queue.enqueue(await job({ id: 'sched-1', dueAt: due })),
+        queue.enqueue(await call('call-1', due - 1_000)),
+        queue.enqueue(await call('call-2', due)),
+        queue.enqueue(await job({ id: 'fn-1', spaceId: OTHER_SPACE, target: { kind: 'function', name: 'export' } }))
+      ]);
+      // Touched after the others, so it is the last word of its space.
+      await wait(5);
+      expect(await queue.claim({ workerId: 'w1', leaseMs: 60_000, limit: 1 })).toMatchObject([{ id: 'call-1' }]);
+      await queue.settle({ jobId: 'call-1', workerId: 'w1', status: 'pending', delayMs: 60_000, error: 'no runner' });
+      const summary = await queue.summarize();
+
+      expect(summary).toMatchObject({ byStatus: { pending: 4, running: 0 }, oldestDueAt: due - 1_000 });
+      expect(summary.waiting).toEqual({ calls: 2, schedules: 1, later: 0, functionJobs: 1, other: 0 });
+      expect(summary.spaces).toEqual([
+        { spaceId: SPACE, waiting: 3, calls: 2, oldestDueAt: due - 1_000, lastError: 'no runner' },
+        { spaceId: OTHER_SPACE, waiting: 1, calls: 0, oldestDueAt: expect.any(Number) as number }
+      ]);
+      expect((await queue.summarize({ spaces: 1 })).spaces).toHaveLength(1);
+    });
+
     it('creates a job once, however many producers race for its id', async () => {
       const input = await job();
       const results = await Promise.all(Array.from({ length: 10 }, () => queue.enqueue(input)));

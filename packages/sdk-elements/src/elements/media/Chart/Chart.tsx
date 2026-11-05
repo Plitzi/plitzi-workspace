@@ -177,6 +177,8 @@ const Chart = ({
   const box = useRef<HTMLDivElement>(null);
   const size = useElementSize(box);
   const [hovered, setHovered] = useState<number | undefined>(undefined);
+  /** The series hidden from the legend, by place: not drawn, not in the readout, not in the scale. */
+  const [hidden, setHidden] = useState<readonly number[]>([]);
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   // Left empty, as the builder writes it, a row is named by its label.
   const titleField = titleAsked || labelField;
@@ -205,6 +207,23 @@ const Chart = ({
   const write = useMemo(() => formatter(format), [format]);
   const part = (name: string): string | undefined => (styleSelectors as Record<string, string | undefined>)[name];
   const colorOf = (index: number): string | undefined => (several ? seriesColor(index) : undefined);
+
+  const shows = (lineIndex: number): boolean => !hidden.includes(lineIndex);
+  /**
+   * A legend's click, as a monitoring screen answers it: one series alone — and every one again when it already was
+   * alone — or, with ⌘ or Ctrl, that one hidden or shown, the rest as they are.
+   */
+  const choose = (lineIndex: number, one: boolean) => {
+    const all = table.lines.map((_line, index) => index);
+    if (one) {
+      setHidden(shows(lineIndex) ? [...hidden, lineIndex] : hidden.filter(index => index !== lineIndex));
+
+      return;
+    }
+
+    const alone = hidden.length === all.length - 1 && shows(lineIndex);
+    setHidden(alone ? [] : all.filter(index => index !== lineIndex));
+  };
 
   const left = MARGIN.left;
   const right = width - MARGIN.right;
@@ -290,12 +309,16 @@ const Chart = ({
     }
 
     const scale = chartScale(
-      table.lines.flatMap(line => line.values.filter((value): value is number => value !== undefined)),
+      table.lines.flatMap((line, lineIndex) =>
+        shows(lineIndex) ? line.values.filter((value): value is number => value !== undefined) : []
+      ),
       max
     );
     const y = (value: number): number => along(value, scale, bottom, top);
     const zero = y(Math.max(scale.min, 0));
-    const lines = table.lines.length;
+    // The series drawn, in order: a row's bars are theirs alone, side by side with no gap for a hidden one.
+    const drawn = table.lines.flatMap((_line, lineIndex) => (shows(lineIndex) ? [lineIndex] : []));
+    const lines = Math.max(1, drawn.length);
     // A row's bars side by side, each as wide as the room allows up to its cap, the group centred on the row.
     const barWidth = Math.max(1, Math.min(BAR_MAX, (slot * 0.7) / lines - (lines > 1 ? 1 : 0)));
     const groupWidth = barWidth * lines + (lines > 1 ? lines - 1 : 0);
@@ -353,6 +376,10 @@ const Chart = ({
           </g>
         ))}
         {table.lines.map((line, lineIndex) => {
+          if (!shows(lineIndex)) {
+            return null;
+          }
+
           const color = colorOf(lineIndex);
           const segments = chartSegments(line.values);
           const path = (segment: { index: number; value: number }[]) =>
@@ -369,7 +396,7 @@ const Chart = ({
                       key={`bar-${String(index)}`}
                       className={clsx('chart__bar', part('bar'))}
                       style={color ? { fill: color } : undefined}
-                      x={barX(index, lineIndex)}
+                      x={barX(index, drawn.indexOf(lineIndex))}
                       width={barWidth}
                       y={Math.min(y(value), zero)}
                       height={Math.abs(zero - y(value))}
@@ -414,7 +441,7 @@ const Chart = ({
                     <text
                       key={`value-${String(index)}`}
                       className={clsx('chart__value', part('valueLabel'))}
-                      x={kind === 'bar' ? barX(index, lineIndex) + barWidth / 2 : x(index)}
+                      x={kind === 'bar' ? barX(index, drawn.indexOf(lineIndex)) + barWidth / 2 : x(index)}
                       y={Math.min(y(value), zero) - 6}
                       textAnchor="middle"
                     >
@@ -440,7 +467,7 @@ const Chart = ({
               table.lines.map((line, lineIndex) => {
                 const value = line.values[hovered];
 
-                return value === undefined ? null : (
+                return value === undefined || !shows(lineIndex) ? null : (
                   <circle
                     key={`hover-${String(lineIndex)}`}
                     cx={x(hovered)}
@@ -484,7 +511,7 @@ const Chart = ({
         {table.lines.map((line, lineIndex) => {
           const value = line.values[hovered];
 
-          return (
+          return !shows(lineIndex) ? null : (
             <div key={`tip-${line.label}-${String(lineIndex)}`} className="chart__tooltip-row" style={TIP_ROW}>
               <span aria-hidden="true" style={{ ...LINE_KEY, background: colorOf(lineIndex) ?? 'currentColor' }} />
               <strong>{value === undefined ? '—' : write(value)}</strong>
@@ -530,21 +557,32 @@ const Chart = ({
             const { last, max: highest } = lineSummary(line.values);
 
             return (
-              <li key={`legend-${line.label}-${String(lineIndex)}`} data-series={lineIndex} style={LEGEND_ITEM}>
-                <span
-                  aria-hidden="true"
-                  style={
-                    kind === 'line'
-                      ? { ...LINE_KEY, background: colorOf(lineIndex) }
-                      : { ...BOX_KEY, background: colorOf(lineIndex) }
-                  }
-                />
-                <span>{line.label}</span>
-                {last !== undefined && (
-                  <span style={MUTED}>
-                    last {write(last)} · max {write(highest ?? last)}
-                  </span>
-                )}
+              <li key={`legend-${line.label}-${String(lineIndex)}`} data-series={lineIndex}>
+                <button
+                  type="button"
+                  className="chart__legend-item"
+                  aria-pressed={shows(lineIndex)}
+                  title="Show only this one — again for all; ⌘ or Ctrl to hide or show it alone"
+                  style={{ ...LEGEND_ITEM, ...(shows(lineIndex) ? {} : HIDDEN_ITEM) }}
+                  onClick={event => {
+                    choose(lineIndex, event.metaKey || event.ctrlKey);
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={
+                      kind === 'line'
+                        ? { ...LINE_KEY, background: colorOf(lineIndex) }
+                        : { ...BOX_KEY, background: colorOf(lineIndex) }
+                    }
+                  />
+                  <span>{line.label}</span>
+                  {last !== undefined && (
+                    <span style={MUTED}>
+                      last {write(last)} · max {write(highest ?? last)}
+                    </span>
+                  )}
+                </button>
               </li>
             );
           })}
@@ -617,7 +655,21 @@ const LINE_KEY = { display: 'inline-block', width: '12px', height: '2px', border
 
 const BOX_KEY = { display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', flexShrink: 0 } as const;
 
-const LEGEND_ITEM = { display: 'inline-flex', alignItems: 'center', gap: '6px' } as const;
+const LEGEND_ITEM = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '6px',
+  padding: 0,
+  border: 0,
+  background: 'none',
+  color: 'inherit',
+  font: 'inherit',
+  cursor: 'pointer',
+  textAlign: 'left'
+} as const;
+
+/** A series hidden from the legend: still named there, faded, to show it again. */
+const HIDDEN_ITEM = { opacity: 0.4, textDecorationLine: 'line-through' } as const;
 
 const MUTED = { opacity: 0.65 } as const;
 

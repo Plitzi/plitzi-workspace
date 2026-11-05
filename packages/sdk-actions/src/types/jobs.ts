@@ -45,6 +45,37 @@ export type JobWrite = {
   progress?: Omit<JobProgress, 'at'>;
 };
 
+/** What waits in the queue — `pending` or `paused` — by what it is. */
+export type WaitingJobs = {
+  /** Visitors' calls kept because nothing could run them when they were made. */
+  calls: number;
+  /** Schedules' fires. */
+  schedules: number;
+  /** Runs set for later (`ctx.later`). */
+  later: number;
+  /** Jobs of the spaces' functions. */
+  functionJobs: number;
+  /** Anything else: a webhook's, a custom trigger's. */
+  other: number;
+};
+
+/** A queue at a glance — see `JobQueue.summarize`. */
+export type JobQueueSummary = {
+  byStatus: Record<JobStatus, number>;
+  waiting: WaitingJobs;
+  /** When the job waiting longest was due, epoch ms by the queue's clock; absent with nothing waiting. */
+  oldestDueAt?: number;
+  /** The spaces with the most waiting, the most first: how many, how many of them kept calls, since when, and why. */
+  spaces: {
+    spaceId: number;
+    waiting: number;
+    calls: number;
+    oldestDueAt: number;
+    /** What the last job of it handed back said: `not started: no functions runner answers`. */
+    lastError?: string;
+  }[];
+};
+
 export type JobQuery = {
   spaceIds: number[];
   status?: JobStatus;
@@ -145,6 +176,11 @@ export type JobQueue = {
   /** Replaces what this space has scheduled. An action no longer listed stops having a schedule at all. */
   putSchedules: (params: { spaceId: number; schedules: ActionScheduleInput[] }) => Promise<void>;
   listJobs: (query: JobQuery) => Promise<{ jobs: Job[]; total: number }>;
+  /**
+   * The whole queue at a glance, every space: what an operator reads to tell a queue that drains from one that fills —
+   * its jobs by status, what waits by what it is, the oldest of it, and the spaces with the most waiting.
+   */
+  summarize: (options?: { spaces?: number }) => Promise<JobQueueSummary>;
   getJob: (spaceIds: number[], jobId: string) => Promise<Job | undefined>;
   listSchedules: (spaceIds: number[]) => Promise<ActionSchedule[]>;
   /**

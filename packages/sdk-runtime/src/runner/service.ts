@@ -55,6 +55,11 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
    */
   stats?: Pick<StatsConfig, 'pool' | 'instance' | 'thresholds'>;
   /**
+   * The version its stats say it runs — the deployment's, as its page servers' and workers' say theirs: what tells a
+   * rolling deploy, or one stopped half-way, from a pool that is all on one version.
+   */
+  version?: string;
+  /**
    * The share of its memory limit past which it takes no new invocation, from 0 to 1: 0.85 by default. Past it, the
    * platform is answered `busy` — another instance, or the same a moment later, takes it — instead of the process being
    * killed for memory with every invocation in it.
@@ -298,6 +303,7 @@ export const startFunctionsRunnerService = async ({
   runner,
   http: answerHttp,
   stats: naming,
+  version,
   memoryShare = 0.85,
   announce = true,
   shutdown,
@@ -319,7 +325,12 @@ export const startFunctionsRunnerService = async ({
     engine = isolates;
   }
 
-  const recorder = createStatsRecorder({ pool: 'runner', ...naming, protocol: FUNCTIONS_PROTOCOL });
+  const recorder = createStatsRecorder({
+    pool: 'runner',
+    ...naming,
+    protocol: FUNCTIONS_PROTOCOL,
+    ...(version ? { version } : {})
+  });
   const inFlight = { count: 0 };
   let stopping = false;
   const busy = (): string | undefined => {

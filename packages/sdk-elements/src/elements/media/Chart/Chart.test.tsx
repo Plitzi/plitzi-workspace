@@ -85,6 +85,37 @@ describe('Chart', () => {
     ]);
   });
 
+  it('shows one series alone from its legend, every one again, and hides one alone with ⌘ or Ctrl', () => {
+    const { container } = render(
+      inElement(
+        <Chart
+          kind="line"
+          items={[
+            { at: '12:00', a: 1, b: 2 },
+            { at: '12:01', a: 3, b: 4 }
+          ]}
+          labelField="at"
+          series={[
+            { field: 'a', label: 'one' },
+            { field: 'b', label: 'two' }
+          ]}
+        />
+      )
+    );
+    const legend = () => [...container.querySelectorAll<HTMLButtonElement>('.chart__legend-item')];
+    const drawn = () => container.querySelectorAll('[data-series] path.chart__line').length;
+    const pressed = () => legend().map(item => item.getAttribute('aria-pressed'));
+
+    fireEvent.click(legend()[1]);
+    expect([pressed(), drawn()]).toEqual([['false', 'true'], 1]);
+
+    fireEvent.click(legend()[1]);
+    expect([pressed(), drawn()]).toEqual([['true', 'true'], 2]);
+
+    fireEvent.click(legend()[0], { metaKey: true });
+    expect([pressed(), drawn()]).toEqual([['false', 'true'], 1]);
+  });
+
   it('reads every series at the row the arrow keys move to', () => {
     const { container, getByRole } = render(
       inElement(

@@ -2,6 +2,7 @@ import { execute, selectOne, selectRows } from '@plitzi/sdk-kernel/mysql';
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
+import { summarizeJobsTable } from './summary';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
 import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite, ActionSchedule } from '../types';
@@ -578,6 +579,8 @@ export const createMysqlJobQueue = ({
 
       return { jobs: rows.map(toJob), total: Number(count?.total ?? 0) };
     },
+
+    summarize: async ({ spaces = 10 } = {}) => summarizeJobsTable(await db(), t.jobs, spaces),
 
     getJob: async (spaceIds, jobId) => {
       if (!inSpaces(spaceIds)) {
