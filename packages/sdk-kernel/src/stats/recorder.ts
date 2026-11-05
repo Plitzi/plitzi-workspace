@@ -1,15 +1,19 @@
 import os from 'node:os';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 
-import type { ProcessStats, StatsConfig, StatsThresholds, StatsWindow } from './types';
+import type { ProcessStats, StatsConfig, StatsMinute, StatsThresholds, StatsWindow } from './types';
 
 const MINUTE = 60_000;
 const KEPT_MINUTES = 60;
+/** How often the process's load is sampled on its own: what a minute's CPU, memory and lag are read from. */
+const SAMPLE_EVERY_MS = 10_000;
 /** Durations kept per minute for the percentiles: a uniform sample past this, so a busy minute costs no more. */
 const SAMPLE = 512;
 const DEFAULT_THRESHOLDS: Required<StatsThresholds> = { errorRate: 0.2, eventLoopLagMs: 500, slotShare: 0.9 };
 /** Fewer runs than this say nothing about an error rate: one failure in three is a bad minute, not a sick process. */
 const RATE_FLOOR = 10;
+
+type Load = { cpu: number; rss: number; lagMs: number };
 
 type Bucket = {
   minute: number;
@@ -18,6 +22,8 @@ type Bucket = {
   durations: number[];
   failures: Map<string, number>;
   refusals: Map<string, number>;
+  /** The load's samples taken in this minute: their mean CPU, and the most memory and lag any of them saw. */
+  load?: { cpuSum: number; samples: number; rss: number; lagMs: number };
 };
 
 export type StatsRecorder = {
@@ -36,6 +42,34 @@ const add = (map: Map<string, number>, key: string): void => {
 
 const percentile = (sorted: number[], share: number): number | undefined =>
   sorted.length === 0 ? undefined : sorted[Math.min(sorted.length - 1, Math.floor(share * sorted.length))];
+
+const total = (map: Map<string, number>): number => [...map.values()].reduce((sum, count) => sum + count, 0);
+
+/** Every minute of the last hour, oldest first — one with nothing in it said as zero runs, so a chart's axis is time. */
+const seriesOf = (buckets: Bucket[], minute: number): StatsMinute[] => {
+  const byMinute = new Map(buckets.map(bucket => [bucket.minute, bucket]));
+
+  return Array.from({ length: KEPT_MINUTES }, (_, index): StatsMinute => {
+    const at = minute - KEPT_MINUTES + 1 + index;
+    const bucket = byMinute.get(at);
+    const p95Ms = bucket
+      ? percentile(
+          [...bucket.durations].sort((a, b) => a - b),
+          0.95
+        )
+      : undefined;
+    const load = bucket?.load;
+
+    return {
+      at: new Date(at * MINUTE).toISOString(),
+      runs: bucket?.runs ?? 0,
+      failed: bucket ? total(bucket.failures) : 0,
+      refused: bucket ? total(bucket.refusals) : 0,
+      ...(p95Ms === undefined ? {} : { p95Ms }),
+      ...(load ? { cpu: Math.round((load.cpuSum / load.samples) * 1000) / 1000, rss: load.rss, lagMs: load.lagMs } : {})
+    };
+  });
+};
 
 const windowOf = (buckets: Bucket[]): StatsWindow => {
   const failures: Record<string, number> = {};
@@ -64,7 +98,8 @@ const windowOf = (buckets: Bucket[]): StatsWindow => {
 
 /**
  * A process's stats, kept in memory in one-minute buckets for an hour: what it records costs a map update, and a read
- * is the only work. CPU is measured between two reads, the event loop's delay since the last one.
+ * is the only work. Its load — CPU, memory, the event loop's delay — is sampled every ten seconds on its own, so each
+ * minute keeps its own, and two readers never split one measurement between them.
  */
 export const createStatsRecorder = (
   identity: Pick<StatsConfig, 'pool' | 'instance' | 'thresholds'> & { version?: string; protocol?: string },
@@ -108,6 +143,29 @@ export const createStatsRecorder = (
     return elapsedUs > 0 ? Math.round(((usage.user + usage.system) / elapsedUs) * 1000) / 1000 : 0;
   };
 
+  let latest: Load | undefined;
+  const sample = (): Load => {
+    const reading: Load = {
+      cpu: readCpu(),
+      rss: process.memoryUsage.rss(),
+      lagMs: Math.round(lag.percentile(99) / 1e4) / 100
+    };
+    lag.reset();
+    const bucket = current();
+    const kept = bucket.load ?? { cpuSum: 0, samples: 0, rss: 0, lagMs: 0 };
+    bucket.load = {
+      cpuSum: kept.cpuSum + reading.cpu,
+      samples: kept.samples + 1,
+      rss: Math.max(kept.rss, reading.rss),
+      lagMs: Math.max(kept.lagMs, reading.lagMs)
+    };
+    latest = reading;
+
+    return reading;
+  };
+  const sampler = setInterval(sample, SAMPLE_EVERY_MS);
+  sampler.unref();
+
   return {
     run: (durationMs, failure) => {
       const bucket = current();
@@ -135,11 +193,11 @@ export const createStatsRecorder = (
     snapshot: () => {
       const outcomes = { '1m': windowOf(since(1)), '15m': windowOf(since(15)), '60m': windowOf(since(60)) };
       const memory = process.memoryUsage();
-      const eventLoopLagP99Ms = Math.round(lag.percentile(99) / 1e4) / 100;
-      lag.reset();
+      // The last sample, or one taken now when none is yet: the first ten seconds of a process.
+      const { cpu, lagMs: eventLoopLagP99Ms } = latest ?? sample();
       const load = {
         slots: Object.fromEntries([...slots].map(([name, slot]) => [name, { used: slot.used(), of: slot.of }])),
-        cpu: readCpu(),
+        cpu,
         memory: { rss: memory.rss, heapUsed: memory.heapUsed, heapTotal: memory.heapTotal },
         eventLoopLagP99Ms
       };
@@ -170,6 +228,7 @@ export const createStatsRecorder = (
         uptimeSeconds: Math.round(process.uptime()),
         load,
         outcomes,
+        series: seriesOf(buckets, Math.floor(now() / MINUTE)),
         health: { status: reasons.length > 0 ? 'degraded' : 'healthy', reasons }
       };
     }

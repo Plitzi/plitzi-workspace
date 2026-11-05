@@ -36,6 +36,25 @@ export type StatsWindow = {
   p95Ms?: number;
 };
 
+/**
+ * One minute of a process: its work, and its load as sampled in that minute. A minute with no sample — before the
+ * process started, or one its event loop was too busy to take — has no load, never a zero.
+ */
+export type StatsMinute = {
+  /** The minute's start, ISO 8601 in UTC. */
+  at: string;
+  runs: number;
+  failed: number;
+  refused: number;
+  p95Ms?: number;
+  /** Its samples' mean CPU, as a share of one core. */
+  cpu?: number;
+  /** The most memory a sample saw, in bytes (RSS). */
+  rss?: number;
+  /** The most event-loop delay a sample saw (p99), in ms. */
+  lagMs?: number;
+};
+
 export type ProcessStats = {
   pool: string;
   instance: string;
@@ -48,12 +67,15 @@ export type ProcessStats = {
   load: {
     /** Work in flight against what this process takes at once: `calls`, `renders`, `isolates`. */
     slots: Record<string, { used: number; of: number }>;
-    /** CPU spent since the last read, as a share of one core over that time. */
+    /** CPU spent over the last sample (ten seconds), as a share of one core over that time. */
     cpu: number;
     memory: { rss: number; heapUsed: number; heapTotal: number };
+    /** The event loop's p99 delay over the last sample, in ms. */
     eventLoopLagP99Ms: number;
   };
   outcomes: { '1m': StatsWindow; '15m': StatsWindow; '60m': StatsWindow };
+  /** The last hour minute by minute, oldest first: what a chart of this process draws. */
+  series: StatsMinute[];
   /** `down` is never said by a process: it is a reader's, for an instance that did not answer. */
   health: { status: 'healthy' | 'degraded'; reasons: string[] };
 };

@@ -34,6 +34,28 @@ describe('a process’s stats', () => {
     expect(stats.snapshot().outcomes['60m'].runs).toBe(0);
   });
 
+  it('says the last hour minute by minute, every minute, with the load sampled in each', () => {
+    let now = 100 * MINUTE + 5000;
+    const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
+
+    stats.run(10);
+    stats.run(40, 'timeout');
+    stats.refuse('over_capacity');
+    stats.snapshot();
+    now += 2 * MINUTE;
+    stats.run(20);
+    const { series } = stats.snapshot();
+    const last = series.at(-1);
+    const earlier = series.at(-3);
+
+    expect(series).toHaveLength(60);
+    expect(series[0]?.at).toBe(new Date(43 * MINUTE).toISOString());
+    expect(last).toMatchObject({ at: new Date(102 * MINUTE).toISOString(), runs: 1, failed: 0, p95Ms: 20 });
+    expect(earlier).toMatchObject({ runs: 2, failed: 1, refused: 1, p95Ms: 40 });
+    expect(earlier?.rss).toBeGreaterThan(0);
+    expect(series.at(-2)).toEqual({ at: new Date(101 * MINUTE).toISOString(), runs: 0, failed: 0, refused: 0 });
+  });
+
   it('says it is degraded, and why, when too many runs fail or its slots are full', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' });
     for (let run = 0; run < 10; run += 1) {

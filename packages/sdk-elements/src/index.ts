@@ -25,6 +25,7 @@ export const defaultElements = {
   image: elements.Image,
   video: elements.Video,
   embed: elements.Embed,
+  chart: elements.Chart,
   svg: elements.Svg,
   fontAwesome: elements.FontAwesome,
   button: elements.Button,

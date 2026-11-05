@@ -67,7 +67,8 @@ space while it hydrates.
   `RENDER_PROTOCOL` `1.0`): its data, or its error state, and the runs that fed it.
 - **Every process says how it is doing.** `stats: { secret, pool }` on a page server, a worker or an MCP server answers
   `GET /_stats` behind that secret: its load against its slots, CPU, memory, event-loop lag, its runs' failures and
-  refusals by reason over 1, 15 and 60 minutes, and `healthy` or `degraded` with why; a functions runner answers the
+  refusals by reason over 1, 15 and 60 minutes, its last hour minute by minute (`series`: runs, failures, refusals,
+  p95, and its load sampled every ten seconds), and `healthy` or `degraded` with why; a functions runner answers the
   same behind its protocol secret. `readPools` (`@plitzi/sdk-kernel/stats`) reads every instance at once, a missing one
   `down`, from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
@@ -195,6 +196,9 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
   own context: an element registering its styles as it mounts drew every container again.
 
 ## Elements (`@plitzi/sdk-elements`)
+
+- **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
+  that had one drew nothing in its place, without a word. A test now holds every declared type to a component.
 
 - An element reads its items by their own paths. Inside a component instance, a read of the whole `schema.flat` merged
   the component's elements over every element of the space, once per instance: the home page of a two-thousand-element

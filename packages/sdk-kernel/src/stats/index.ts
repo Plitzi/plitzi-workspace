@@ -15,6 +15,7 @@ export type {
   PoolSource,
   ProcessStats,
   StatsConfig,
+  StatsMinute,
   StatsThresholds,
   StatsWindow
 } from './types';
