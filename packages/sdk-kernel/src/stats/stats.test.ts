@@ -160,6 +160,20 @@ describe('/_stats and the pools', () => {
     ]);
   });
 
+  it('reads an instance its orchestrator knows is down as down, with why, without asking it', async () => {
+    const source = createLocalPoolSource([
+      { pool: 'runtime', id: 'pizarra · main', url: 'http://192.0.2.1:9', secret: '', unreachable: 'the build failed' }
+    ]);
+    const startedAt = Date.now();
+    const health = await readPools(source, { timeoutMs: 5000 });
+
+    expect(Date.now() - startedAt).toBeLessThan(1000);
+    expect('pools' in health && health.pools[0]?.instances[0]).toMatchObject({
+      status: 'down',
+      reasons: ['the build failed']
+    });
+  });
+
   it('says so when nothing says which processes run', async () => {
     const health = await readPools(undefined);
 

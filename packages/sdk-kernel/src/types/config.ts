@@ -100,6 +100,11 @@ export type ServerBaseConfig = {
    */
   logLevel?: LogLevel | 'silent';
   /**
+   * From how many ms a run that worked is said as slow, at `warn`, with its steps; below it a run that worked is `debug`.
+   * 1000 by default (`SLOW_RUN_MS`): raise it where the actions are slow on purpose — a report, an import.
+   */
+  slowRunMs?: number;
+  /**
    * How responses are compressed. Omit for Brotli where the client takes it and gzip otherwise; `false` never
    * compresses, which is what to use when a proxy or CDN in front already does it.
    */

@@ -5,5 +5,9 @@ export {
   defaultLogLevel,
   consoleLogger,
   configureServerLog,
-  serverLog
+  serverLog,
+  SLOW_RUN_MS
 } from './serverLog';
+export { LOG_TAIL_SIZE, keepLogLine, logQueryOf, readLogTail } from './tail';
+
+export type { LogLine, LogQuery } from './tail';

@@ -15,8 +15,8 @@ import type { ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
  * deployment that wants run HISTORY rather than run logs keeps its own `onRun` and writes rows; the two compose,
  * since `onRun` is one function.
  *
- * Held to the server's `logLevel` like everything else on the stream: a run that completed is `info`, one that did not
- * is `error`.
+ * Held to the server's `logLevel` like everything else on the stream: a run that completed is `debug` — or `warn` when it
+ * was slow (`SLOW_RUN_MS`) — and one that did not is `error`.
  *
  * Never throws: the runner treats the record as best-effort, and a logging outage must not take an action down.
  */

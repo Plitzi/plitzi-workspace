@@ -1,3 +1,5 @@
+import { keepLogEvent } from './tail';
+
 import type { LogLevel, ServerLogEvent, ServerLogger } from '../types';
 
 const outcomeOf = (event: ServerLogEvent): string => (event.ok ? 'ok' : `ERROR ${event.error ?? ''}`.trim());
@@ -19,12 +21,26 @@ const renderTool = (event: Extract<ServerLogEvent, { kind: 'tool' }>): string =>
 const renderResource = (event: Extract<ServerLogEvent, { kind: 'resource' }>): string =>
   `[MCP] resources/read ${event.name} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
 
-/** The steps go on the line only when the run ended badly. On a run that worked they are noise on every single
- *  call; on one that did not they are the answer — which step stopped, and what the ones before it did. */
-const renderRun = (event: Extract<ServerLogEvent, { kind: 'run' }>): string => {
-  const steps = event.ok || event.steps.length === 0 ? '' : ` [${event.steps.join(' → ')}]`;
+/**
+ * From how long a run that worked is worth a line of its own, unless the deployment says (`configureServerLog`'s
+ * `slowRunMs`): below it, a run that completed is `debug` — on a busy space every schedule and every call said
+ * `completed 40ms ok`, and buried what went wrong — and at it, `warn`.
+ */
+export const SLOW_RUN_MS = 1000;
 
-  return `[Action] ${event.name} via ${event.trigger} space=${event.spaceId} ${event.status} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}${steps}`;
+let slowRunMs = SLOW_RUN_MS;
+
+const isSlowRun = (event: Extract<ServerLogEvent, { kind: 'run' }>): boolean =>
+  event.ok && event.durationMs >= slowRunMs;
+
+/** The steps go on the line only when the run ended badly or slowly. On a run that worked they are noise on every
+ *  single call; on one that did not they are the answer — which step stopped, or which took the time. */
+const renderRun = (event: Extract<ServerLogEvent, { kind: 'run' }>): string => {
+  const slow = isSlowRun(event);
+  const steps = (event.ok && !slow) || event.steps.length === 0 ? '' : ` [${event.steps.join(' → ')}]`;
+  const outcome = slow ? `ok SLOW (${String(slowRunMs)}ms or more)` : outcomeOf(event);
+
+  return `[Action] ${event.name} via ${event.trigger} space=${event.spaceId} ${event.status} ${Math.round(event.durationMs)}ms ${outcome}${steps}`;
 };
 
 /** A refusal reads as what refused it: `[Action] checkout via webhook space=1 REFUSED invalid_signature`. The
@@ -67,7 +83,8 @@ const RANK: Record<LogLevel | 'silent', number> = { silent: 0, error: 1, warn: 2
 
 /**
  * How severe an event is: what it says it is, or — for a request, a tool call, a run — whether it went wrong. A
- * refusal is never `ok` yet never the server's failure: the caller was turned away, which is a `warn`.
+ * refusal is never `ok` yet never the server's failure: the caller was turned away, which is a `warn`. A run that
+ * worked is `debug`, unless it was slow ({@link SLOW_RUN_MS}): then `warn`.
  */
 export const logLevelOf = (event: ServerLogEvent): LogLevel => {
   if (event.kind === 'message') {
@@ -76,6 +93,10 @@ export const logLevelOf = (event: ServerLogEvent): LogLevel => {
 
   if (event.kind === 'reject') {
     return 'warn';
+  }
+
+  if (event.kind === 'run' && event.ok) {
+    return isSlowRun(event) ? 'warn' : 'debug';
   }
 
   return event.ok ? 'info' : 'error';
@@ -116,17 +137,26 @@ const state: { level: LogLevel | 'silent'; sink: ServerLogger } = {
   sink: consoleLogger
 };
 
-export const configureServerLog = (options: { level: LogLevel | 'silent'; logger?: ServerLogger }): void => {
+/**
+ * The process's threshold and sink — and, with `slowRunMs`, from how long a run that worked is said as slow (a
+ * positive number of ms; {@link SLOW_RUN_MS} by default). Refused when it is not one, saying what was given.
+ */
+export const configureServerLog = (options: {
+  level: LogLevel | 'silent';
+  logger?: ServerLogger;
+  slowRunMs?: number;
+}): void => {
+  if (options.slowRunMs !== undefined && !(Number.isFinite(options.slowRunMs) && options.slowRunMs > 0)) {
+    throw new Error(`slowRunMs is a number of milliseconds above 0, and ${String(options.slowRunMs)} was given`);
+  }
+
   state.level = options.level;
   state.sink = options.logger ?? consoleLogger;
+  slowRunMs = options.slowRunMs ?? SLOW_RUN_MS;
 };
 
 const say = (level: LogLevel, scope: string, message: string, cause?: unknown): void => {
-  if (!isLogged(state.level, level)) {
-    return;
-  }
-
-  state.sink({
+  const event: ServerLogEvent = {
     kind: 'message',
     level,
     scope,
@@ -134,7 +164,12 @@ const say = (level: LogLevel, scope: string, message: string, cause?: unknown): 
     ok: level !== 'error',
     ...(cause === undefined ? {} : { error: errorText(cause) }),
     timestamp: new Date().toISOString()
-  });
+  };
+  // Kept whatever the console's threshold: the process's own log, read from the back-office (`readLogTail`).
+  keepLogEvent(event, level, renderLogEvent(event));
+  if (isLogged(state.level, level)) {
+    state.sink(event);
+  }
 };
 
 /** The server's own voice: `serverLog.error('RSC', 'element failed to resolve', error)`. Below the threshold, nothing. */
@@ -147,7 +182,9 @@ export const serverLog = {
   enabled: (level: LogLevel): boolean => isLogged(state.level, level),
   /** Hands an event to a sink the consumer wired itself (`onRun`, `onReject`) only when the process would say it. */
   emit: (logger: ServerLogger, event: ServerLogEvent): void => {
-    if (isLogged(state.level, logLevelOf(event))) {
+    const level = logLevelOf(event);
+    keepLogEvent(event, level, renderLogEvent(event));
+    if (isLogged(state.level, level)) {
       logger(event);
     }
   }

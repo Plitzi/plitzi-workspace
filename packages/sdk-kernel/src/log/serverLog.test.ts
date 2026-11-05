@@ -55,6 +55,33 @@ describe('serverLog — levels', () => {
     expect(logLevelOf(refused)).toBe('warn');
   });
 
+  it('leaves a run that worked to debug, and says a slow one as a warning, its steps on the line', () => {
+    const run = (ok: boolean, durationMs: number): ServerLogEvent => ({
+      kind: 'run',
+      name: 'world-skies',
+      spaceId: 34,
+      environment: 'production',
+      trigger: 'schedule',
+      status: ok ? 'completed' : 'failed',
+      steps: ['fetch:completed'],
+      durationMs,
+      ok,
+      timestamp: '2026-11-05T00:00:00.000Z'
+    });
+
+    expect([logLevelOf(run(true, 40)), logLevelOf(run(true, 1500)), logLevelOf(run(false, 40))]).toEqual([
+      'debug',
+      'warn',
+      'error'
+    ]);
+    expect(renderLogEvent(run(true, 1500))).toBe(
+      '[Action] world-skies via schedule space=34 completed 1500ms ok SLOW (1000ms or more) [fetch:completed]'
+    );
+    configureServerLog({ level: 'info', slowRunMs: 5000 });
+    expect([logLevelOf(run(true, 1500)), logLevelOf(run(true, 5000))]).toEqual(['debug', 'warn']);
+    configureServerLog({ level: 'info' });
+  });
+
   it('holds a sink the consumer wired itself to the same threshold', () => {
     const sink = vi.fn<ServerLogger>();
     configureServerLog({ level: 'error' });

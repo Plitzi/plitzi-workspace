@@ -3,8 +3,8 @@ import http from 'node:http';
 import { WebSocketServer } from 'ws';
 
 import { bearerMatches, frameText, watchConnections } from '@plitzi/sdk-kernel/http';
-import { serverLog } from '@plitzi/sdk-kernel/log';
-import { STATS_PATH, createStatsRecorder, sampleProcessMemory } from '@plitzi/sdk-kernel/stats';
+import { logQueryOf, readLogTail, serverLog } from '@plitzi/sdk-kernel/log';
+import { STATS_LOGS_PATH, STATS_PATH, createStatsRecorder, sampleProcessMemory } from '@plitzi/sdk-kernel/stats';
 import {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
@@ -327,15 +327,18 @@ export const startFunctionsRunnerService = async ({
       return;
     }
 
-    if (req.method === 'GET' && req.url === STATS_PATH) {
+    const asked = new URL(req.url ?? '/', 'http://runner');
+    if (req.method === 'GET' && (asked.pathname === STATS_PATH || asked.pathname === STATS_LOGS_PATH)) {
       const allowed = bearerMatches(req.headers.authorization, secret);
       res.writeHead(allowed ? 200 : 401, {
         'content-type': 'application/json; charset=utf-8',
         'cache-control': 'no-store'
       });
-      res.end(
-        JSON.stringify(allowed ? recorder.snapshot() : { error: `${STATS_PATH} is read with the runner's secret` })
-      );
+      const answer = (): unknown =>
+        asked.pathname === STATS_LOGS_PATH
+          ? readLogTail(logQueryOf(Object.fromEntries(asked.searchParams)))
+          : recorder.snapshot();
+      res.end(JSON.stringify(allowed ? answer() : { error: `${asked.pathname} is read with the runner's secret` }));
 
       return;
     }

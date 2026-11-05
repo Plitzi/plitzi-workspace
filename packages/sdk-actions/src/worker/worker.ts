@@ -5,6 +5,7 @@ import {
   healthStage,
   makeHandler
 } from '@plitzi/sdk-kernel/http';
+import { configureServerLog, defaultLogLevel } from '@plitzi/sdk-kernel/log';
 import { statsStage } from '@plitzi/sdk-kernel/stats';
 
 import { actionOriginProblem } from './origin';
@@ -64,6 +65,13 @@ export const createWorker = ({ identity, render, ...config }: WorkerConfig): Htt
       'createWorker: `render.secret` must be at least 32 characters — whoever holds it renders as anyone'
     );
   }
+
+  // What the worker says — its runs, the engine's own messages — held to its own threshold, as a page server's are.
+  configureServerLog({
+    level: config.logLevel ?? defaultLogLevel(config.devMode),
+    ...(config.logger ? { logger: config.logger } : {}),
+    ...(config.slowRunMs === undefined ? {} : { slowRunMs: config.slowRunMs })
+  });
 
   const pageOrigins = config.action?.origin ? (config.action.pageOrigins ?? []) : [];
   const served: WorkerConfig = {

@@ -88,6 +88,11 @@ export type PoolInstance = {
   secret: string;
   /** What its orchestrator knows of it, when it has one. */
   orchestrator?: { ready?: boolean; restarts?: number; lastExit?: string };
+  /**
+   * Why it is known not to answer — it failed to start, it has no address yet: read as `down` with this as its reason,
+   * and not asked.
+   */
+  unreachable?: string;
 };
 
 /** Which instances each pool has, and where to reach them. A deployment on an orchestrator supplies its own. */

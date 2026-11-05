@@ -16,6 +16,10 @@ const down = (instance: PoolInstance, reason: string): InstanceHealth => ({
 });
 
 const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<InstanceHealth> => {
+  if (instance.unreachable) {
+    return down(instance, instance.unreachable);
+  }
+
   const startedAt = performance.now();
   let answer: Response;
   try {

@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { renderLogEvent } from '@plitzi/sdk-kernel/log';
+import { configureServerLog, renderLogEvent } from '@plitzi/sdk-kernel/log';
 
 import { createRunLogger } from './runLogger';
 
@@ -40,6 +40,30 @@ const capture = () => {
 };
 
 describe('createRunLogger', () => {
+  // A run that worked is `debug`: these read every event, so the process says everything while they run.
+  beforeEach(() => {
+    configureServerLog({ level: 'debug' });
+  });
+
+  afterEach(() => {
+    configureServerLog({ level: 'info' });
+  });
+
+  it('says nothing at info of a run that worked quickly, and a slow or failed one', () => {
+    configureServerLog({ level: 'info' });
+    const { events, logger } = capture();
+    const log = createRunLogger(logger);
+
+    log(record());
+    log(record({ durationMs: 2500 }));
+    log(record({ status: 'failed', error: 'boom' }));
+
+    expect(events.map(event => (event.kind === 'run' ? [event.status, event.durationMs] : event.kind))).toEqual([
+      ['completed', 2500],
+      ['failed', 12]
+    ]);
+  });
+
   it('reports a run as one event on the stream the server already logs through', () => {
     const { events, logger } = capture();
 

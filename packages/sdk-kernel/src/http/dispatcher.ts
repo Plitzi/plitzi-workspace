@@ -1,17 +1,18 @@
 import { buildResponseHelpers } from './buildResponseHelpers';
 import { resolveCompression } from './compress';
+import { STATS_LOGS_PATH, STATS_PATH } from './probes';
 import { clientIp, parseRequest } from './requestParser';
 import { applySecurityHeaders } from './securityHeaders';
 import { socketResponse } from './socketResponse';
-import { serverLog } from '../log/serverLog';
-import { isLogged } from '../log/serverLog';
+import { isLogged, renderLogEvent, serverLog } from '../log/serverLog';
+import { keepLogEvent } from '../log/tail';
 
 import type { RawResponse } from './buildResponseHelpers';
 import type { ResolvedCompression } from './compress';
 import type { UpgradeRequest } from './socketResponse';
 import type { Handler } from './transports';
 import type { BaseContext, Stage } from './types';
-import type { SSRRequest, SSRResponseHelpers } from '../types';
+import type { SSRRequest, SSRResponseHelpers, ServerLogEvent } from '../types';
 import type { ServerBaseConfig } from '../types';
 import type { IncomingMessage } from 'node:http';
 
@@ -85,22 +86,22 @@ const runPipeline = async <C extends BaseContext>(
   } as C;
   const logger = ctx.config.logger;
   // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
-  const ip = logger ? clientIp(raw, req) : '';
+  const ip = clientIp(raw, req);
 
   // Every exit below funnels through this, so a request shows up whether it was served, rejected or threw.
   const logRequest = (error?: unknown): void => {
-    if (!logger) {
-      return;
-    }
-
     const status = statusOf(rawRes, res);
     const failed = !!error || status >= 500;
-    // Decided before the event is built: at the default `error`, an answered request costs nothing to not log.
-    if (!isLogged(ctx.config.logLevel ?? 'error', failed ? 'error' : 'info')) {
+    // A probe — a reader's `/_stats`, an orchestrator's `/health` — asks every few seconds: answered, it is `debug`,
+    // or it buries every other line; refused or failing (a secret that is not this one, a store gone), it is said.
+    // A reader of the log itself is never kept in it: it would fill it with itself.
+    if (req.path === STATS_LOGS_PATH && status < 400) {
       return;
     }
 
-    logger({
+    const probe = status < 400 && (req.path === STATS_PATH || req.path === (ctx.config.health?.path ?? '/health'));
+    const level = failed ? 'error' : probe ? 'debug' : 'info';
+    const event: ServerLogEvent = {
       kind: 'request',
       server,
       // From the parsed request, not the raw one: over HTTP/2 the method and URL live in pseudo-headers.
@@ -117,7 +118,11 @@ const runPipeline = async <C extends BaseContext>(
       ok: !error && status < 500,
       ...(error ? { error: errorText(error) } : {}),
       timestamp: new Date().toISOString()
-    });
+    };
+    keepLogEvent(event, level, renderLogEvent(event));
+    if (logger && isLogged(ctx.config.logLevel ?? 'error', level)) {
+      logger(event);
+    }
   };
 
   try {

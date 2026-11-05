@@ -75,6 +75,8 @@ export const startSpaceRuntime = async ({
     port,
     host,
     announce: false,
+    // Its stats say what it is: a space's runtime, not a functions runner, whose pool the back-office shows apart.
+    stats: { pool: 'runtime' },
     runner: createRuntimeRunner(parts.functions),
     http: async (req, res) => {
       const url = new URL(req.url ?? '/', publicUrl);

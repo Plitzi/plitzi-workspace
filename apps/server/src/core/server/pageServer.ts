@@ -58,7 +58,11 @@ export const createPageServer = (
     };
   }
 
-  configureServerLog({ level: logLevel, logger });
+  configureServerLog({
+    level: logLevel,
+    logger,
+    ...(config.slowRunMs === undefined ? {} : { slowRunMs: config.slowRunMs })
+  });
   reportReactBuild(config.devMode);
   // Draft-preview tokens need a store shared between the /preview writer and the __pt render reader; default to
   // an in-process one when the consumer injects none — the primary's, when workers serve, since the draft is written

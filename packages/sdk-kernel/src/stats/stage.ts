@@ -1,18 +1,20 @@
 import { statsRecorderFor } from './recorder';
 import { bearerMatches } from '../http/bearer';
+import { STATS_LOGS_PATH, STATS_PATH } from '../http/probes';
+import { logQueryOf, readLogTail } from '../log/tail';
 
 import type { BaseContext, Stage } from '../http/types';
 
-export const STATS_PATH = '/_stats';
+export { STATS_LOGS_PATH, STATS_PATH };
 
 /**
- * `GET /_stats`: this process's {@link ProcessStats}, for whoever holds its stats secret (`stats.secret`) — always
+ * `GET /_stats`: this process's {@link ProcessStats} — and `GET /_stats/logs` the last lines of its log — for whoever holds its stats secret (`stats.secret`) — always
  * behind it, whether or not the path is also kept off the public network, because a self-hoster may have no network
  * policy to keep it there. A server configured with no `stats` answers nothing here, and the path goes on to what else
  * it serves.
  */
 export const statsStage: Stage = ({ req, res, config }) => {
-  if (req.path !== STATS_PATH || !config.stats) {
+  if ((req.path !== STATS_PATH && req.path !== STATS_LOGS_PATH) || !config.stats) {
     return false;
   }
 
@@ -33,7 +35,13 @@ export const statsStage: Stage = ({ req, res, config }) => {
   }
 
   res.setStatus(200);
-  res.send(JSON.stringify(statsRecorderFor(config.stats, config.health?.version).snapshot()));
+  res.send(
+    JSON.stringify(
+      req.path === STATS_LOGS_PATH
+        ? readLogTail(logQueryOf(req.query))
+        : statsRecorderFor(config.stats, config.health?.version).snapshot()
+    )
+  );
 
   return true;
 };

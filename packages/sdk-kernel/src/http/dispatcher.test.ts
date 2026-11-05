@@ -150,6 +150,18 @@ describe('dispatcher cancellation', () => {
 });
 
 describe('dispatcher request log', () => {
+  it('leaves a probe answered to debug, and says one refused or failing', async () => {
+    const answered = await run(fakeRequest('/_stats'), [answer(200)]);
+    const health = await run(fakeRequest('/health'), [answer(200)]);
+    const refused = await run(fakeRequest('/_stats'), [answer(401)]);
+    const failing = await run(fakeRequest('/health'), [answer(503)]);
+    const atDebug = await run(fakeRequest('/_stats'), [answer(200)], fakeResponse(), 'debug');
+
+    expect([answered.length, health.length, atDebug.length]).toEqual([0, 0, 1]);
+    expect(firstRequest(refused)).toMatchObject({ path: '/_stats', status: 401 });
+    expect(firstRequest(failing)).toMatchObject({ path: '/health', status: 503, ok: false });
+  });
+
   it('logs the request the answering stage served', async () => {
     const events = await run(fakeRequest('/pricing'), [answer(200)]);
 

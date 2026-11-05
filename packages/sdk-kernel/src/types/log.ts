@@ -14,8 +14,9 @@ type ServerLogEventBase = {
 /** What every log event carries, whatever layer it came from. */
 /**
  * How much a server says, from least to most: each level includes every one above it. `error` is what a production
- * server shows unless told otherwise — something went wrong — and `warn`, `info` (every request answered, every
- * plugin built) and `debug` are asked for. `silent` says nothing at all.
+ * server shows unless told otherwise — something went wrong — and `warn` (a refusal, a slow run), `info` (every request
+ * answered, every plugin built) and `debug` (every run that worked, every probe answered) are asked for. `silent` says
+ * nothing at all.
  */
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 

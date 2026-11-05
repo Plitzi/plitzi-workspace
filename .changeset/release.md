@@ -69,9 +69,16 @@ space while it hydrates.
   `GET /_stats` behind that secret: its load against its slots, CPU, memory, event-loop lag, its runs' failures and
   refusals by reason over 1, 15 and 60 minutes, its last hour minute by minute (`series`: runs, failures, refusals,
   p95, and its load sampled every ten seconds), and `healthy` or `degraded` with why; a functions runner answers the
-  same behind its protocol secret. `readPools` (`@plitzi/sdk-kernel/stats`) reads every instance at once, a missing one
-  `down`, from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
+  same behind its protocol secret, and a space's runtime under the pool `runtime`. `readPools` (`@plitzi/sdk-kernel/stats`)
+  reads every instance at once, a missing one `down` — or one its orchestrator says is (`unreachable`), without asking
+  it — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
+- **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
+  `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its
+  lines with `keepLogLine`). So one instance's whole log is read from a back-office without a log shipper.
+- **A console says what is worth reading.** A probe answered (`/_stats`, `/health`) and a run that worked are `debug`;
+  a run of a second or more is a `warn`, marked `SLOW` with its steps (`slowRunMs` on the server's config raises it); a
+  refused or failing probe is still said. A worker now holds what it says to its own `logLevel`, as a page server does.
 - **`@plitzi/sdk-shared` no longer depends on plitzi-ui**, and React, React DOM and nexus are optional peers: a server,
   a worker or a runner installs neither, and a page server loads neither nexus, plitzi-ui nor zod at start. A package
   that draws or holds a store declares them itself. What moved, all rewritten by `plitzi upgrade` (`movedExports`):
