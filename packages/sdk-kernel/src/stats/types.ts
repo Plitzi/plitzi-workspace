@@ -76,8 +76,11 @@ export type ProcessStats = {
   outcomes: { '1m': StatsWindow; '15m': StatsWindow; '60m': StatsWindow };
   /** The last hour minute by minute, oldest first: what a chart of this process draws. */
   series: StatsMinute[];
-  /** `down` is never said by a process: it is a reader's, for an instance that did not answer. */
-  health: { status: 'healthy' | 'degraded'; reasons: string[] };
+  /**
+   * `stopping` once it is told to stop, while it finishes what it runs. `down` is never said by a process: it is a
+   * reader's, for an instance that did not answer.
+   */
+  health: { status: 'healthy' | 'degraded' | 'stopping'; reasons: string[] };
 };
 
 /** One instance of a pool, as a pool source knows it. */
@@ -86,8 +89,11 @@ export type PoolInstance = {
   /** Where its `/_stats` is answered: an origin, without the path. */
   url: string;
   secret: string;
-  /** What its orchestrator knows of it, when it has one. */
-  orchestrator?: { ready?: boolean; restarts?: number; lastExit?: string };
+  /**
+   * What its orchestrator knows of it, when it has one. `stopping`: it was told to stop and is finishing what it runs —
+   * read as `stopping`, not `down`, once it stops answering its stats on its way out.
+   */
+  orchestrator?: { ready?: boolean; restarts?: number; lastExit?: string; stopping?: boolean };
   /**
    * Why it is known not to answer — it failed to start, it has no address yet: read as `down` with this as its reason,
    * and not asked.
@@ -102,7 +108,7 @@ export type PoolSource = {
 
 export type InstanceHealth = {
   id: string;
-  status: 'healthy' | 'degraded' | 'down';
+  status: 'healthy' | 'degraded' | 'stopping' | 'down';
   /** How long its `/_stats` took to answer, in ms: the round trip to it, as the reader sees it. */
   latencyMs?: number;
   /** Why it is down, or what made it degraded. */
@@ -114,7 +120,7 @@ export type InstanceHealth = {
 export type PoolReport = {
   pool: string;
   instances: InstanceHealth[];
-  counts: { healthy: number; degraded: number; down: number };
+  counts: { healthy: number; degraded: number; stopping: number; down: number };
   /** Every version its instances answered with: more than one is a rolling deploy, or one that stopped half-way. */
   versions: string[];
 };
@@ -148,4 +154,10 @@ export type PoolScaler = {
   /** Ends an override now: the pool's own floor again. */
   endOverride: (pool: string) => Promise<void>;
   overrides: () => Promise<PoolOverride[]>;
+  /**
+   * Stops one instance: it is taken out of rotation at once, finishes what it runs, and then goes — the pool reads it
+   * `stopping` meanwhile. Answers what was done, in words. Absent where the orchestrator decides which instance goes (an
+   * autoscaler lowers the count from the floor).
+   */
+  stopInstance?: (pool: string, id: string, by: string) => Promise<string>;
 };

@@ -71,7 +71,8 @@ space while it hydrates.
   p95, and its load sampled every ten seconds), and `healthy` or `degraded` with why; a functions runner answers the
   same behind its protocol secret, and a space's runtime under the pool `runtime`. `readPools` (`@plitzi/sdk-kernel/stats`)
   reads every instance at once, a missing one `down` — or one its orchestrator says is (`unreachable`), without asking
-  it — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
+  it; one told to stop is `stopping` (its own stats say so, or its orchestrator: `orchestrator.stopping`), never `down`
+  while it drains; a scaler may stop one instance (`PoolScaler.stopInstance`) — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its

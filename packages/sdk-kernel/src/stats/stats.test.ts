@@ -148,7 +148,7 @@ describe('/_stats and the pools', () => {
 
     const pages = health.pools.find(report => report.pool === 'pages');
     const worker = health.pools.find(report => report.pool === 'worker');
-    expect(pages?.counts).toEqual({ healthy: 1, degraded: 0, down: 1 });
+    expect(pages?.counts).toEqual({ healthy: 1, degraded: 0, stopping: 0, down: 1 });
     expect(pages?.instances[0]?.latencyMs).toBeGreaterThanOrEqual(0);
     expect(pages?.instances.map(instance => instance.reasons)).toEqual([
       [],
@@ -157,6 +157,19 @@ describe('/_stats and the pools', () => {
     expect(worker?.counts.down).toBe(1);
     expect(worker?.instances.map(instance => instance.reasons.join())).toEqual([
       expect.stringMatching(/^did not answer in 500 ms/)
+    ]);
+  });
+
+  it('reads an instance told to stop as stopping, answering or not', async () => {
+    const source = createLocalPoolSource([
+      { pool: 'worker', id: 'w-2', url: 'http://192.0.2.1:9', secret: '', orchestrator: { stopping: true } }
+    ]);
+    const health = await readPools(source, { timeoutMs: 200 });
+    const pool = 'pools' in health ? health.pools[0] : undefined;
+
+    expect(pool?.counts).toEqual({ healthy: 0, degraded: 0, stopping: 1, down: 0 });
+    expect(pool?.instances[0]?.reasons).toEqual([
+      'stopping: finishing what it runs, and no longer answering its stats'
     ]);
   });
 

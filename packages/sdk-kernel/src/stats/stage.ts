@@ -48,13 +48,13 @@ export const statsStage: Stage = ({ req, res, config }) => {
   return true;
 };
 
-/** A process told to stop says so: degraded, finishing what it runs — what a deploy looks like on the pools' screen. */
+/** A process told to stop says so: `stopping`, finishing what it runs — what a deploy looks like on the pools' screen. */
 export const withStopping = (stats: ProcessStats, stopping: boolean): ProcessStats =>
   stopping
     ? {
         ...stats,
         health: {
-          status: 'degraded',
+          status: 'stopping',
           reasons: ['stopping: finishing what it runs, taking nothing new', ...stats.health.reasons]
         }
       }

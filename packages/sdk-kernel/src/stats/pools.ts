@@ -8,12 +8,23 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isStats = (value: unknown): value is ProcessStats =>
   isRecord(value) && typeof value.pool === 'string' && isRecord(value.health) && isRecord(value.load);
 
-const down = (instance: PoolInstance, reason: string): InstanceHealth => ({
-  id: instance.id,
-  status: 'down',
-  reasons: [instance.orchestrator?.lastExit ? `${reason} (last exit: ${instance.orchestrator.lastExit})` : reason],
-  ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})
-});
+/** Not answering: `down` — or `stopping`, when its orchestrator told it to and it is on its way out. */
+const down = (instance: PoolInstance, reason: string): InstanceHealth =>
+  instance.orchestrator?.stopping
+    ? {
+        id: instance.id,
+        status: 'stopping',
+        reasons: ['stopping: finishing what it runs, and no longer answering its stats'],
+        orchestrator: instance.orchestrator
+      }
+    : {
+        id: instance.id,
+        status: 'down',
+        reasons: [
+          instance.orchestrator?.lastExit ? `${reason} (last exit: ${instance.orchestrator.lastExit})` : reason
+        ],
+        ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})
+      };
 
 const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<InstanceHealth> => {
   if (instance.unreachable) {
@@ -48,7 +59,8 @@ const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<
 
   return {
     id: instance.id,
-    status: stats.health.status,
+    // Told to stop by its orchestrator, it is stopping whatever its own stats got round to saying.
+    status: instance.orchestrator?.stopping ? 'stopping' : stats.health.status,
     latencyMs: Math.round(performance.now() - startedAt),
     reasons: stats.health.reasons,
     stats,
@@ -81,6 +93,7 @@ export const readPools = async (
         counts: {
           healthy: read.filter(each => each.status === 'healthy').length,
           degraded: read.filter(each => each.status === 'degraded').length,
+          stopping: read.filter(each => each.status === 'stopping').length,
           down: read.filter(each => each.status === 'down').length
         },
         versions
