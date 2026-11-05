@@ -10,13 +10,15 @@
     ".": {
       "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./functions-api.d.ts": "./dist/functions-api.d.ts",
     "./*": {
       "@plitzi/source": "./src/*/index.ts",
       "types": "./dist/*/index.d.ts",
-      "import": "./dist/*/index.mjs"
+      "import": "./dist/*/index.mjs",
+      "default": "./dist/*/index.mjs"
     }
   },
   "repository": {

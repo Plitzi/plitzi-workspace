@@ -1317,8 +1317,8 @@ plitzi functions later show:s1 --now                               # one of them
 A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy
 of it: `.plitzi/functions.json` keeps what was pulled, so `space pull functions` refuses to overwrite what is not pushed (`--force`
 throws it away) and `space push functions` refuses when the space moved on since. A problem comes back as
-`src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
-`core-js` beside it); credentials come from `PLITZI_CREDENTIALS` (`.env`), as they do for the project's server. See `docs/en/functions.md`.
+`src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-actions` and `@plitzi/sdk-runtime`
+(`isolated-vm` beside them); credentials come from `PLITZI_CREDENTIALS` (`.env`), as they do for the project's server. See `docs/en/functions.md`.
 
 ## Credentials
 

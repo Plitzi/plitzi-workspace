@@ -206,8 +206,8 @@ come from `PLITZI_CREDENTIALS`, a JSON object of credential id → its keys — 
 invocation that spends more than a sandbox would let it (calls to `ctx`, CPU, time, the bytes it answers), with the
 refusal it would meet hosted. `plitzi doctor`, for a project of a space on a platform, says what its plan gives one run
 there against what `src/config/serverOptions.ts` asks of the project's server — `rsc.elementTimeoutMs`,
-`action.limits`, `functions.limits` — and that `dev` lacks `isolated-vm` and `core-js`, never installed unasked: a native
-module to build.
+`action.limits`, `functions.limits` — and that `dev` lacks `isolated-vm`, never installed unasked: a native module to
+build.
 
 **By an agent**, over MCP: the `upsertFunctionFile` / `deleteFunctionFile` operations of `plitzi_apply`, the
 `plitzi://functions/{env}` resources, and `plitzi_try_function`. The same build, checks and history as a person's —

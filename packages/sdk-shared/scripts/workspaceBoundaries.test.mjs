@@ -139,8 +139,20 @@ describe('workspace boundaries', () => {
   it('exports a library package by its root and its folder barrels, nothing else', () => {
     // `sdk-authoring` is bundled into one file per entry, so its few entries are written by hand (checked below).
     const shape = {
-      '.': { [SOURCE_CONDITION]: './src/index.ts', types: './dist/index.d.ts', import: './dist/index.mjs' },
-      './*': { [SOURCE_CONDITION]: './src/*/index.ts', types: './dist/*/index.d.ts', import: './dist/*/index.mjs' }
+      // `default` beside `import`, the same file: what a tool resolving the way `require` does (`createRequire`, the
+      // CLI reading a project's packages) is answered with, rather than ERR_PACKAGE_PATH_NOT_EXPORTED.
+      '.': {
+        [SOURCE_CONDITION]: './src/index.ts',
+        types: './dist/index.d.ts',
+        import: './dist/index.mjs',
+        default: './dist/index.mjs'
+      },
+      './*': {
+        [SOURCE_CONDITION]: './src/*/index.ts',
+        types: './dist/*/index.d.ts',
+        import: './dist/*/index.mjs',
+        default: './dist/*/index.mjs'
+      }
     };
     // A file a consumer reads as text, not a module: the functions contract the builder's editor loads (`?raw`).
     const files = { '@plitzi/sdk-runtime': { './functions-api.d.ts': './dist/functions-api.d.ts' } };

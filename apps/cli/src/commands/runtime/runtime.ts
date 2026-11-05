@@ -68,7 +68,7 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   }
 
   fail(
-    `plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-server, and none is installed:\n  ${projectAdd('@plitzi/sdk-server')}`
+    `plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-actions, and none is installed:\n  ${projectAdd('@plitzi/sdk-actions')}`
   );
 
   return undefined;
