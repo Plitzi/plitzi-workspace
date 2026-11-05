@@ -422,6 +422,11 @@ export type ActionRunRecord = {
   /** Why, when a ceiling ended it — its deadline, its step or request budget, the process's capacity. A step that threw is
    *  `error` with no reason. */
   reason?: ActionErrorReason;
+  /**
+   * The run ended because its own code refused (`ActionRefusal`, `refuse(…)`): an answer written for whoever asked, not
+   * a fault — `error` is that answer.
+   */
+  refused?: true;
 };
 
 /**

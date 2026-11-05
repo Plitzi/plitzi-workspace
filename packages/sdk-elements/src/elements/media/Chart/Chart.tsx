@@ -210,19 +210,19 @@ const Chart = ({
 
   const shows = (lineIndex: number): boolean => !hidden.includes(lineIndex);
   /**
-   * A legend's click, as a monitoring screen answers it: one series alone — and every one again when it already was
-   * alone — or, with ⌘ or Ctrl, that one hidden or shown, the rest as they are.
+   * A legend's click: that series hidden or shown, the rest as they are — several hidden or shown one after another.
+   * With ⌘ or Ctrl, that one alone, and every one again when it already was.
    */
-  const choose = (lineIndex: number, one: boolean) => {
-    const all = table.lines.map((_line, index) => index);
-    if (one) {
+  const choose = (lineIndex: number, alone: boolean) => {
+    if (!alone) {
       setHidden(shows(lineIndex) ? [...hidden, lineIndex] : hidden.filter(index => index !== lineIndex));
 
       return;
     }
 
-    const alone = hidden.length === all.length - 1 && shows(lineIndex);
-    setHidden(alone ? [] : all.filter(index => index !== lineIndex));
+    const all = table.lines.map((_line, index) => index);
+    const already = hidden.length === all.length - 1 && shows(lineIndex);
+    setHidden(already ? [] : all.filter(index => index !== lineIndex));
   };
 
   const left = MARGIN.left;
@@ -562,7 +562,7 @@ const Chart = ({
                   type="button"
                   className="chart__legend-item"
                   aria-pressed={shows(lineIndex)}
-                  title="Show only this one — again for all; ⌘ or Ctrl to hide or show it alone"
+                  title="Hide or show it — ⌘ or Ctrl to show it alone, again for every one"
                   style={{ ...LEGEND_ITEM, ...(shows(lineIndex) ? {} : HIDDEN_ITEM) }}
                   onClick={event => {
                     choose(lineIndex, event.metaKey || event.ctrlKey);

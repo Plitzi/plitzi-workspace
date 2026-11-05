@@ -107,6 +107,9 @@ space while it hydrates.
   says so (`QueuedNotice`, the run `queued`) and reads it at `GET /_plitzi/queued/<job>` with its ticket. Jobs of the
   space's code wait the same way rather than start (`ActionsModule.codeAway`). `ActionRunRequest.user` and the
   precheck take a `RunUser`.
+- **A run's record says when its code refused** (`ActionRunRecord.refused`): the error it carries is then the answer
+  the space wrote for whoever asked (`refuse(…)`), not a fault — what lets a history or a back-office tell a space
+  answering on purpose from one that broke.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its
   lines with `keepLogLine`). So one instance's whole log is read from a back-office without a log shipper.
@@ -250,8 +253,8 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
   through with the arrow keys, a chart reads every series at that row (the `tooltip` part); `titleField` names each
   row there when the axis writes less (an empty label is not written, and the labels that are keep their room), and
   charts given the same `sync` point together. The axis draws a hairline at each time it names, and an area of
-  several series fades towards it. A legend's click shows that series alone (again, every one), ⌘ or Ctrl + click hides
-  or shows it; what is hidden leaves the drawing, the scale and the readout.
+  several series fades towards it. A legend's click hides or shows that series — several, one after another — and ⌘ or
+  Ctrl + click shows it alone (again, every one); what is hidden leaves the drawing, the scale and the readout.
 
 - **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
   that had one drew nothing in its place, without a word. A test now holds every declared type to a component.

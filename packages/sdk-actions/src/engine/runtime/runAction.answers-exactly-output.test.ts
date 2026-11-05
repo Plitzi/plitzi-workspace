@@ -165,12 +165,21 @@ describe('runAction', () => {
       params: {},
       run: () => Promise.reject(new ActionRefusal('You are banned from this room.', { code: 'banned' }))
     };
-    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const records: ActionRunRecord[] = [];
+    const { runAction } = createActionsModule({
+      lookups,
+      functions: tasksOf(task),
+      onRun: record => {
+        records.push(record);
+      }
+    });
     const entry = buildEntry({
       nodes: { start: callTrigger({}, 'banned'), banned: node('banned', { action: 'test.banned', params: {} }) }
     });
 
     expect(await runAction(request(entry))).toMatchObject({ error: 'You are banned from this room.', code: 'banned' });
+    // Recorded as the code's answer, not a fault: what an operator reading the run tells apart from a throw.
+    expect(records.at(-1)).toMatchObject({ status: 'failed', refused: true, error: 'You are banned from this room.' });
   });
   describe('when a step fails after the flow already did something', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */

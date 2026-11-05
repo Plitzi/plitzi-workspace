@@ -779,7 +779,8 @@ export const createActionRunner = (
       output: redact(output),
       trace: recordedTrace,
       ...(failure === undefined ? {} : { error: redact(failure) }),
-      ...(fatal ? { reason: fatal.reason } : {})
+      ...(fatal ? { reason: fatal.reason } : {}),
+      ...(refusal === undefined ? {} : { refused: true as const })
     });
 
     // Only now, with the record written: the caller hears a status code, and the space's history still has the
