@@ -88,6 +88,11 @@ space while it hydrates.
 - **The badge leads where the deployment says.** `SSRMeterDecision.badge` (and `render.badge`) is `BadgeLinks` —
   `{ madeWith, report }` — instead of `true`: a site served by a test tier reports to that tier, not to plitzi.com. A
   metering adapter that answered `badge: true` answers the two addresses.
+- **`@plitzi/sdk-server/spaces` and `@plitzi/sdk-server/cache`**: which space a request is for (`createSpaceAdapters`,
+  the resolvers, `createMemoryCache`) and the pages replicas share (`createRedisPageStore`, `createCacheInvalidator`),
+  apart from the renderer. A process that serves no pages — a worker — imports them rather than the package's root,
+  and loads nothing of React or the SDK (measured: 36 MB less at rest). The helpers and adapters are a chunk of their
+  own, never the renderer's.
 - **Every job queue sums itself up** (`JobQueue.summarize({ spaces })` → `JobQueueSummary`): its jobs by status, what
   waits by what it is (kept calls, schedules, later, function jobs), the oldest wait and the spaces waiting most with
   what their last job said — in the in-process, file, SQLite, Mongo and MySQL queues alike. A queue of a deployment's

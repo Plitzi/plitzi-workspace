@@ -46,6 +46,18 @@
       "import": "./dist/platform.js",
       "default": "./dist/platform.js"
     },
+    "./spaces": {
+      "@plitzi/source": "./src/spaces.ts",
+      "types": "./dist/spaces.d.ts",
+      "import": "./dist/spaces.js",
+      "default": "./dist/spaces.js"
+    },
+    "./cache": {
+      "@plitzi/source": "./src/cache.ts",
+      "types": "./dist/cache.d.ts",
+      "import": "./dist/cache.js",
+      "default": "./dist/cache.js"
+    },
     "./project": {
       "@plitzi/source": "./src/project.ts",
       "types": "./dist/project.d.ts",

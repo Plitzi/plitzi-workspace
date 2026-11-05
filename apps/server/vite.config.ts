@@ -101,6 +101,10 @@ export default defineConfig(({ mode }) => {
           ssr: path.resolve(root, 'src/ssr.ts'),
           // Pages and actions in one process (`createPlatform`): a page server deployed on its own never loads the engine.
           platform: path.resolve(root, 'src/platform.ts'),
+          // Which space a request is for, and the pages replicas share: what a process that serves no pages uses of
+          // them, without the renderer (a worker resolves spaces and invalidates pages, and rendered nothing to do it).
+          spaces: path.resolve(root, 'src/spaces.ts'),
+          cache: path.resolve(root, 'src/cache.ts'),
           // The server of a project `@plitzi/cli` writes, wired from where the project keeps each part: its own entry, so
           // a server that is not such a project never loads what reads that layout or re-authors a space on a save.
           project: path.resolve(root, 'src/project.ts'),
@@ -138,7 +142,15 @@ export default defineConfig(({ mode }) => {
           format: 'es',
           entryFileNames: '[name].js',
           chunkFileNames: 'chunks/[name]-[hash].js',
-          manualChunks: id => (id.endsWith(TEMPLATE_MODULE) ? 'template' : undefined)
+          // What renders nothing — the helpers (caches, routes, defaults) and the space adapters — kept apart from the
+          // renderer: grouped with it, a process that only resolves spaces or invalidates pages (a worker) loaded React
+          // and the SDK with them, most of what it held at rest.
+          manualChunks: id =>
+            id.endsWith(TEMPLATE_MODULE)
+              ? 'template'
+              : id.includes('/src/helpers/') || id.includes('/src/adapters/') || id.endsWith('/redisPageStore.ts')
+                ? 'core'
+                : undefined
         }
       },
       target: 'node20',
