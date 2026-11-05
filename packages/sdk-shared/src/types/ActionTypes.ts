@@ -427,7 +427,29 @@ export type ActionRunRecord = {
    * a fault — `error` is that answer.
    */
   refused?: true;
+  /**
+   * The limit the run was stopped at, when that is what ended it — the run asked for more than it may, which is its own
+   * doing and not a fault: what a process's error rate leaves out. See {@link ActionRunLimit}.
+   */
+  limit?: ActionRunLimit;
 };
+
+/**
+ * A limit a run can be stopped at: the action's own — its deadline (`time`), its steps, its outbound requests and the
+ * bytes they answered (`response`) — those of the space's code it ran, as its runner stops it (`cpu`, `wall`, `memory`,
+ * `output`, `calls`: the runner's stop reasons), and its account's CPU budget over the minute (`cpuBudget`).
+ */
+export type ActionRunLimit =
+  | 'time'
+  | 'steps'
+  | 'requests'
+  | 'response'
+  | 'cpu'
+  | 'wall'
+  | 'memory'
+  | 'output'
+  | 'calls'
+  | 'cpuBudget';
 
 /**
  * One step of a server action run, as a debugger may show it to anybody allowed to debug the page.

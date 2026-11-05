@@ -69,7 +69,7 @@ export const createRunFetch = (
         onBudgetSpent?.(message);
       }
 
-      throw new ActionRunError('over_capacity', message);
+      throw new ActionRunError('over_capacity', message, 'requests');
     }
 
     const headers = new Headers(init?.headers);
@@ -78,7 +78,7 @@ export const createRunFetch = (
     return cappedResponse(
       await base(input, { ...init, headers, signal: init?.signal ?? signal }),
       limits.maxResponseBytes,
-      message => new ActionRunError('over_capacity', message),
+      message => new ActionRunError('over_capacity', message, 'response'),
       countRunBytes
     );
   };

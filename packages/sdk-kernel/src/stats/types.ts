@@ -17,7 +17,10 @@ export type StatsConfig = {
 
 /** Where `degraded` starts. Each is checked against the last fifteen minutes, and the slots and the lag as they are now. */
 export type StatsThresholds = {
-  /** Failures over runs, from 0 to 1. Asked only once there are 10 runs or more. Default 0.2. */
+  /**
+   * Failures over runs, from 0 to 1. Asked only once there are 10 runs or more. Default 0.2. Only what failed counts: a
+   * run that reached a limit, or whose code refused, is the run's own doing — never a sign of a sick process.
+   */
   errorRate?: number;
   /** The event loop's p99 delay, in ms. Default 500. */
   eventLoopLagMs?: number;
@@ -28,8 +31,10 @@ export type StatsThresholds = {
 /** How work went over one window. Durations are of runs, failed ones included. */
 export type StatsWindow = {
   runs: number;
-  /** Failed runs, by why: `timeout`, `cpu`, `memory`, `aborted`, `error`… — the reasons the process's work names. */
+  /** Failed runs, by why: `error`, `aborted`, `busy`… — the reasons the process's work names. Faults, every one. */
   failures: Record<string, number>;
+  /** Runs stopped at a limit of what they may spend, by which: `cpu`, `memory`, `time`, `steps`… — see {@link RunEnd}. */
+  limits: Record<string, number>;
   /** Requests that never became runs, by why: `over_capacity`, a version refused (`protocol`), `forbidden`… */
   refusals: Record<string, number>;
   p50Ms?: number;
@@ -42,11 +47,25 @@ export type StatsWindow = {
  */
 export type RunLabel = { spaceId: number; kind: string; name: string; trigger?: string; runId?: string };
 
-/** One run of a minute's slowest, or one that failed: what it was, how long it took, and when it ended. */
-export type SlowRun = RunLabel & { at: string; durationMs: number; failure?: string };
+/**
+ * How a run ended when it did not simply answer — three things, because they ask different things of whoever reads it:
+ *
+ * - `failed`: it broke — its code threw, the process could not run it. A fault: what an error rate counts, and what
+ *   turns an instance `degraded`.
+ * - `limit`: it was stopped at a limit of what it may spend — its CPU, memory or time, its steps or requests, its plan's
+ *   budget. Working as meant: the run asked for more than it may, and the process is fine.
+ * - `refused`: its own code refused on purpose, with an answer for whoever asked. Not a fault at all.
+ */
+export type RunEnd = { failed: string } | { limit: string } | { refused: true };
+
+/**
+ * One run of a minute's slowest, or one that did not answer: what it was, how long it took, when it ended, and how —
+ * `failure` when it failed, `limit` when it reached one, `refused` when its code refused ({@link RunEnd}).
+ */
+export type SlowRun = RunLabel & { at: string; durationMs: number; failure?: string; limit?: string; refused?: true };
 
 /** What one action or function did in a minute, among the ones that took the most of it. */
-export type NamedWork = RunLabel & { runs: number; failed: number; totalMs: number; maxMs: number };
+export type NamedWork = RunLabel & { runs: number; failed: number; limited: number; totalMs: number; maxMs: number };
 
 /**
  * One minute of a process: its work, and its load as sampled in that minute. A minute with no sample — before the
@@ -57,6 +76,9 @@ export type StatsMinute = {
   at: string;
   runs: number;
   failed: number;
+  /** Runs stopped at a limit ({@link RunEnd}): not among `failed`. */
+  limited: number;
+  /** Requests refused before they became runs. */
   refused: number;
   p95Ms?: number;
   /** Its samples' mean CPU, as a share of one core. */
@@ -65,7 +87,10 @@ export type StatsMinute = {
   rss?: number;
   /** The most event-loop delay a sample saw (p99), in ms. */
   lagMs?: number;
-  /** Its slowest runs, and every one that failed, up to {@link MINUTE_RUNS} — absent in a minute nothing ran. */
+  /**
+   * Its slowest runs, and every one that failed or reached a limit, up to {@link MINUTE_RUNS} — absent in a minute
+   * nothing ran.
+   */
   runsOf?: SlowRun[];
   /** The actions and functions that took the most of it, up to {@link MINUTE_NAMES}. */
   names?: NamedWork[];

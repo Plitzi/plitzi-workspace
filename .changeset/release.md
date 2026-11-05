@@ -107,6 +107,14 @@ space while it hydrates.
   says so (`QueuedNotice`, the run `queued`) and reads it at `GET /_plitzi/queued/<job>` with its ticket. Jobs of the
   space's code wait the same way rather than start (`ActionsModule.codeAway`). `ActionRunRequest.user` and the
   precheck take a `RunUser`.
+- **Only what broke is a failure.** A run ends one of three ways when it does not simply answer (`RunEnd`, sdk-kernel):
+  it failed, it was stopped at a limit — its deadline, its steps or requests, its code's CPU, time, memory, answer or
+  platform calls, its account's CPU budget — or its code refused. `StatsRecorder.run(durationMs, end?, label?)` takes
+  that end in place of a failure's name; `StatsWindow.limits`, `StatsMinute.limited`, `NamedWork.limited` and
+  `SlowRun.limit`/`refused` count the two that are not faults apart, and an instance's error rate — what turns it
+  `degraded` — counts failures alone: a space asking for more than its plan gives, or refusing its visitors, no longer
+  degrades the runner or the worker that ran it. The engine names the limit where it is thrown
+  (`ActionRunRecord.limit`, `ActionRunLimit`; `ActionRunError`'s third argument, `RunLimitReached`, `limitOf`).
 - **A run's record says when its code refused** (`ActionRunRecord.refused`): the error it carries is then the answer
   the space wrote for whoever asked (`refuse(…)`), not a fault — what lets a history or a back-office tell a space
   answering on purpose from one that broke.

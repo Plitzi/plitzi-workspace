@@ -6,6 +6,7 @@ import { MINUTE_NAMES, MINUTE_RUNS } from './types';
 import type {
   NamedWork,
   ProcessStats,
+  RunEnd,
   RunLabel,
   SlowRun,
   StatsConfig,
@@ -32,10 +33,11 @@ type Bucket = {
   seen: number;
   durations: number[];
   failures: Map<string, number>;
+  limits: Map<string, number>;
   refusals: Map<string, number>;
   /** The load's samples taken in this minute: their mean CPU, and the most memory and lag any of them saw. */
   load?: { cpuSum: number; samples: number; rss: number; lagMs: number };
-  /** The slowest labelled runs and every labelled failure, kept short; and each name's work, up to {@link NAMES}. */
+  /** The slowest labelled runs and every labelled one that did not answer, kept short; and each name's work, up to {@link NAMES}. */
   slow: SlowRun[];
   names: Map<string, NamedWork>;
 };
@@ -44,8 +46,11 @@ type Bucket = {
 const NAMES = 200;
 
 export type StatsRecorder = {
-  /** A run ended: how long it took, why it failed when it did, and — when the recorder knows — what it was. */
-  run: (durationMs: number, failure?: string, label?: RunLabel) => void;
+  /**
+   * A run ended: how long it took, how when it did not simply answer ({@link RunEnd}: failed, at a limit, refused by its
+   * code), and — when the recorder knows — what it was.
+   */
+  run: (durationMs: number, end?: RunEnd, label?: RunLabel) => void;
   /** A request refused before it became a run. */
   refuse: (reason: string) => void;
   /** Work in flight against a size: read when the stats are, so nothing is counted twice. */
@@ -81,6 +86,7 @@ const seriesOf = (buckets: Bucket[], minute: number): StatsMinute[] => {
       at: new Date(at * MINUTE).toISOString(),
       runs: bucket?.runs ?? 0,
       failed: bucket ? total(bucket.failures) : 0,
+      limited: bucket ? total(bucket.limits) : 0,
       refused: bucket ? total(bucket.refusals) : 0,
       ...(p95Ms === undefined ? {} : { p95Ms }),
       ...(load
@@ -94,19 +100,20 @@ const seriesOf = (buckets: Bucket[], minute: number): StatsMinute[] => {
   });
 };
 
+/** Whether a kept run is one to look at: it failed, or it reached a limit. */
+const unanswered = (run: SlowRun): number => Number(run.failure !== undefined || run.limit !== undefined);
+
 /**
- * Keeps a labelled run among its minute's: every failure first, then the slowest, {@link MINUTE_RUNS} in all — what a
- * spike on a chart is traced back to.
+ * Keeps a labelled run among its minute's: every failure and every limit reached first, then the slowest,
+ * {@link MINUTE_RUNS} in all — what a spike on a chart is traced back to.
  */
 const keepRun = (bucket: Bucket, run: SlowRun): void => {
   bucket.slow.push(run);
-  bucket.slow.sort(
-    (a, b) => Number(b.failure !== undefined) - Number(a.failure !== undefined) || b.durationMs - a.durationMs
-  );
+  bucket.slow.sort((a, b) => unanswered(b) - unanswered(a) || b.durationMs - a.durationMs);
   bucket.slow.length = Math.min(bucket.slow.length, MINUTE_RUNS);
 };
 
-const keepName = (bucket: Bucket, label: RunLabel, durationMs: number, failed: boolean): void => {
+const keepName = (bucket: Bucket, label: RunLabel, durationMs: number, end: RunEnd | undefined): void => {
   const key = `${String(label.spaceId)}:${label.kind}:${label.name}`;
   const kept = bucket.names.get(key);
   if (!kept && bucket.names.size >= NAMES) {
@@ -119,11 +126,13 @@ const keepName = (bucket: Bucket, label: RunLabel, durationMs: number, failed: b
     name: label.name,
     runs: 0,
     failed: 0,
+    limited: 0,
     totalMs: 0,
     maxMs: 0
   };
   work.runs += 1;
-  work.failed += failed ? 1 : 0;
+  work.failed += end && 'failed' in end ? 1 : 0;
+  work.limited += end && 'limit' in end ? 1 : 0;
   work.totalMs += durationMs;
   work.maxMs = Math.max(work.maxMs, durationMs);
   bucket.names.set(key, work);
@@ -131,12 +140,14 @@ const keepName = (bucket: Bucket, label: RunLabel, durationMs: number, failed: b
 
 const windowOf = (buckets: Bucket[]): StatsWindow => {
   const failures: Record<string, number> = {};
+  const limits: Record<string, number> = {};
   const refusals: Record<string, number> = {};
   const durations: number[] = [];
   let runs = 0;
   for (const bucket of buckets) {
     runs += bucket.runs;
     bucket.failures.forEach((count, reason) => (failures[reason] = (failures[reason] ?? 0) + count));
+    bucket.limits.forEach((count, limit) => (limits[limit] = (limits[limit] ?? 0) + count));
     bucket.refusals.forEach((count, reason) => (refusals[reason] = (refusals[reason] ?? 0) + count));
     durations.push(...bucket.durations);
   }
@@ -148,6 +159,7 @@ const windowOf = (buckets: Bucket[]): StatsWindow => {
   return {
     runs,
     failures,
+    limits,
     refusals,
     ...(p50Ms === undefined ? {} : { p50Ms }),
     ...(p95Ms === undefined ? {} : { p95Ms })
@@ -184,6 +196,7 @@ export const createStatsRecorder = (
       seen: 0,
       durations: [],
       failures: new Map(),
+      limits: new Map(),
       refusals: new Map(),
       slow: [],
       names: new Map()
@@ -234,16 +247,18 @@ export const createStatsRecorder = (
   sampler.unref();
 
   return {
-    run: (durationMs, failure, label) => {
+    run: (durationMs, end, label) => {
       const bucket = current();
       if (label) {
         keepRun(bucket, {
           ...label,
           at: new Date(now()).toISOString(),
           durationMs: Math.round(durationMs),
-          ...(failure ? { failure } : {})
+          ...(end && 'failed' in end ? { failure: end.failed } : {}),
+          ...(end && 'limit' in end ? { limit: end.limit } : {}),
+          ...(end && 'refused' in end ? { refused: true as const } : {})
         });
-        keepName(bucket, label, durationMs, failure !== undefined);
+        keepName(bucket, label, durationMs, end);
       }
 
       bucket.runs += 1;
@@ -257,8 +272,12 @@ export const createStatsRecorder = (
         }
       }
 
-      if (failure) {
-        add(bucket.failures, failure);
+      if (end && 'failed' in end) {
+        add(bucket.failures, end.failed);
+      }
+
+      if (end && 'limit' in end) {
+        add(bucket.limits, end.limit);
       }
     },
     refuse: reason => {

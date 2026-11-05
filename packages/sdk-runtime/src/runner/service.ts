@@ -23,9 +23,10 @@ import {
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
 
 import type { IsolateRunnerOptions } from './isolate';
-import type { MemoryReading, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
+import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
 import type {
   FunctionAnswer,
+  FunctionFailureReason,
   FunctionRunner,
   FunctionUsage,
   RunnerResponseMessage,
@@ -90,6 +91,13 @@ export type FunctionsRunnerService = {
 /** A bundle is at most 1 MB and an answer a few; anything past this on one frame is not the platform talking. */
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 
+/** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
+const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
+
+/** How an invocation that did not answer reads to the stats: a limit, its code refusing, or a failure. */
+const endOf = (reason: FunctionFailureReason): RunEnd =>
+  LIMITS.has(reason) ? { limit: reason } : reason === 'refused' ? { refused: true } : { failed: reason };
+
 /**
  * One operation on one connection — `describe`, or `invoke` with every call the code makes going back on the same
  * socket. The platform replica that asked is the one answering, so nothing about a run has to be shared between
@@ -123,7 +131,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
   const finish = (message: RunnerResponseMessage): void => {
     if (invokedAt !== undefined) {
       stats.inFlight.count -= 1;
-      stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? message.reason : undefined, label);
+      stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? endOf(message.reason) : undefined, label);
       invokedAt = undefined;
     }
 

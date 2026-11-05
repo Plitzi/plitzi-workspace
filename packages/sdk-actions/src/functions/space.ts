@@ -7,7 +7,7 @@ import { answerCall, readCall } from './capabilities';
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { readManifest } from './manifest';
-import { ActionRunError } from '../engine/runtime/errors';
+import { ActionRunError, RunLimitReached } from '../engine/runtime/errors';
 import { taskName } from '../engine/tasks/names';
 
 import type { FunctionsSource } from './build';
@@ -64,9 +64,10 @@ const spaceTasks = (
       ...(task.description ? { description: task.description } : {}),
       params: task.params,
       run: async (params, ctx) => {
+        // The account's CPU over the minute, spent: a limit its plan sets, said as one.
         const refusal = await admit?.(ctx.spaceId);
         if (refusal) {
-          throw new Error(refusal);
+          throw new RunLimitReached('cpuBudget', refusal);
         }
 
         const fnCtx = functionContextFor(

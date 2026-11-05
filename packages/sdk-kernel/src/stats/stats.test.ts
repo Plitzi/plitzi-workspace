@@ -21,15 +21,22 @@ describe('a process’s stats', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
 
     stats.run(10);
-    stats.run(30, 'timeout');
+    stats.run(30, { failed: 'error' });
+    stats.run(50, { limit: 'cpu' });
     now += 5 * MINUTE;
     stats.run(20);
     stats.refuse('over_capacity');
     const read = stats.snapshot();
 
     expect(read.outcomes['1m']).toMatchObject({ runs: 1, failures: {}, refusals: { over_capacity: 1 }, p50Ms: 20 });
-    expect(read.outcomes['15m']).toMatchObject({ runs: 3, failures: { timeout: 1 }, p50Ms: 20, p95Ms: 30 });
-    expect(read.outcomes['60m'].runs).toBe(3);
+    expect(read.outcomes['15m']).toMatchObject({
+      runs: 4,
+      failures: { error: 1 },
+      limits: { cpu: 1 },
+      p50Ms: 30,
+      p95Ms: 50
+    });
+    expect(read.outcomes['60m'].runs).toBe(4);
     now += 61 * MINUTE;
     expect(stats.snapshot().outcomes['60m'].runs).toBe(0);
   });
@@ -39,7 +46,8 @@ describe('a process’s stats', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
 
     stats.run(10);
-    stats.run(40, 'timeout');
+    stats.run(40, { failed: 'error' });
+    stats.run(30, { limit: 'time' });
     stats.refuse('over_capacity');
     stats.snapshot();
     now += 2 * MINUTE;
@@ -51,37 +59,47 @@ describe('a process’s stats', () => {
     expect(series).toHaveLength(60);
     expect(series[0]?.at).toBe(new Date(43 * MINUTE).toISOString());
     expect(last).toMatchObject({ at: new Date(102 * MINUTE).toISOString(), runs: 1, failed: 0, p95Ms: 20 });
-    expect(earlier).toMatchObject({ runs: 2, failed: 1, refused: 1, p95Ms: 40 });
+    expect(earlier).toMatchObject({ runs: 3, failed: 1, limited: 1, refused: 1, p95Ms: 40 });
     expect(earlier?.rss).toBeGreaterThan(0);
-    expect(series.at(-2)).toEqual({ at: new Date(101 * MINUTE).toISOString(), runs: 0, failed: 0, refused: 0 });
+    expect(series.at(-2)).toEqual({
+      at: new Date(101 * MINUTE).toISOString(),
+      runs: 0,
+      failed: 0,
+      limited: 0,
+      refused: 0
+    });
   });
 
-  it('names what made a minute slow: its slowest runs and failures first, and the names that took the most', () => {
+  it('names what made a minute slow: its failures and limits reached first, then its slowest, and the busiest names', () => {
     const now = 200 * MINUTE + 1000;
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
     const label = (name: string) => ({ spaceId: 34, kind: 'action', name, trigger: 'schedule' });
 
     stats.run(40, undefined, label('ping'));
     stats.run(9400, undefined, label('world-skies'));
-    stats.run(30, 'timeout', label('checkout'));
+    stats.run(30, { failed: 'error' }, label('checkout'));
+    stats.run(35, { limit: 'cpu' }, label('sweep'));
+    stats.run(15, { refused: true }, label('join'));
     for (let run = 0; run < 6; run += 1) {
       stats.run(20 + run, undefined, label('ping'));
     }
     stats.run(5);
     const minute = stats.snapshot().series.at(-1);
 
-    expect(minute?.runs).toBe(10);
-    expect(minute?.runsOf?.map(run => [run.name, run.durationMs, run.failure])).toEqual([
-      ['checkout', 30, 'timeout'],
+    expect(minute?.runs).toBe(12);
+    expect(minute?.runsOf?.map(run => [run.name, run.durationMs, run.failure ?? run.limit])).toEqual([
+      ['sweep', 35, 'cpu'],
+      ['checkout', 30, 'error'],
       ['world-skies', 9400, undefined],
       ['ping', 40, undefined],
-      ['ping', 25, undefined],
-      ['ping', 24, undefined]
+      ['ping', 25, undefined]
     ]);
-    expect(minute?.names?.map(work => [work.name, work.runs, work.failed, work.maxMs])).toEqual([
-      ['world-skies', 1, 0, 9400],
-      ['ping', 7, 0, 40],
-      ['checkout', 1, 1, 30]
+    expect(minute?.names?.map(work => [work.name, work.runs, work.failed, work.limited, work.maxMs])).toEqual([
+      ['world-skies', 1, 0, 0, 9400],
+      ['ping', 7, 0, 0, 40],
+      ['sweep', 1, 0, 1, 35],
+      ['checkout', 1, 1, 0, 30],
+      ['join', 1, 0, 0, 15]
     ]);
     expect(stats.snapshot().series.at(-2)?.runsOf).toBeUndefined();
   });
@@ -89,7 +107,7 @@ describe('a process’s stats', () => {
   it('says it is degraded, and why, when too many runs fail or its slots are full', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' });
     for (let run = 0; run < 10; run += 1) {
-      stats.run(5, run < 3 ? 'error' : undefined);
+      stats.run(5, run < 3 ? { failed: 'error' } : undefined);
     }
     stats.slot('calls', 10, () => 10);
 
@@ -100,9 +118,19 @@ describe('a process’s stats', () => {
     expect(load.slots.calls).toEqual({ used: 10, of: 10 });
   });
 
+  // A space asking for more than its plan gives, or refusing its visitors, is the space's doing: the process is fine.
+  it('is healthy however many runs reach a limit or are refused by their code', () => {
+    const stats = createStatsRecorder({ pool: 'runner', instance: 'r-1' });
+    for (let run = 0; run < 20; run += 1) {
+      stats.run(5, run % 2 ? { limit: 'cpu' } : { refused: true });
+    }
+
+    expect(stats.snapshot().health).toEqual({ status: 'healthy', reasons: [] });
+  });
+
   it('is healthy with too few runs to say anything of a rate', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' });
-    stats.run(5, 'error');
+    stats.run(5, { failed: 'error' });
 
     expect(stats.snapshot().health).toEqual({ status: 'healthy', reasons: [] });
   });

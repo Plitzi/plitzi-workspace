@@ -6,7 +6,7 @@ import { ActionRefusal, isActionRefusal, refusalCodeOf } from '@plitzi/sdk-share
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
-import { ActionRunError } from './errors';
+import { ActionRunError, limitOf } from './errors';
 import { flagsForRun } from './flags';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
@@ -33,7 +33,13 @@ import type {
   RegisteredTask,
   ResolvedActionLimits
 } from '../types';
-import type { ActionRunStep, ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
+import type {
+  ActionRunLimit,
+  ActionRunStep,
+  ElementInteraction,
+  InteractionNode,
+  InteractionNodeStatus
+} from '@plitzi/sdk-shared';
 import type { RuleValue } from '@plitzi/sdk-shared/conditions';
 
 /** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
@@ -67,7 +73,7 @@ const createDeadline = (timeoutMs: number, controller: AbortController) => {
   const promise = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => {
       controller.abort();
-      reject(new ActionRunError('timeout', `Action exceeded its ${timeoutMs}ms budget`));
+      reject(new ActionRunError('timeout', `Action exceeded its ${timeoutMs}ms budget`, 'time'));
     }, timeoutMs);
   });
 
@@ -604,7 +610,7 @@ export const createActionRunner = (
 
         executed += 1;
         if (executed > limits.maxNodes) {
-          throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxNodes} step budget`);
+          throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxNodes} step budget`, 'steps');
         }
 
         stepInFlight = next.id;
@@ -652,7 +658,11 @@ export const createActionRunner = (
         while (next) {
           executed += 1;
           if (executed > limits.maxNodes) {
-            throw new ActionRunError('over_capacity', `Undoing the action exceeded its ${limits.maxNodes} step budget`);
+            throw new ActionRunError(
+              'over_capacity',
+              `Undoing the action exceeded its ${limits.maxNodes} step budget`,
+              'steps'
+            );
           }
 
           await runStep(next, 'undo', buildUndoContext);
@@ -683,6 +693,8 @@ export const createActionRunner = (
     /** Set when a step refused with a reason written for the caller — the one failure a result may say the why of. */
     let refusal: string | undefined;
     let refusalCode: string | undefined;
+    /** Set when what ended it was a limit it reached — the run's own doing, never counted as a fault. */
+    let limit: ActionRunLimit | undefined;
 
     try {
       await Promise.race([runFlow(), deadline.promise]);
@@ -690,6 +702,7 @@ export const createActionRunner = (
       // A failed step ENDS the run. The client engine carries on past one because a broken button leaves a page
       // usable; a server flow that keeps going after a failed authorization or a failed charge does damage.
       status = controller.signal.aborted ? 'aborted' : 'failed';
+      limit = limitOf(error);
       if (error instanceof ActionRunError) {
         /**
          * Recorded before it is rethrown.
@@ -780,7 +793,8 @@ export const createActionRunner = (
       trace: recordedTrace,
       ...(failure === undefined ? {} : { error: redact(failure) }),
       ...(fatal ? { reason: fatal.reason } : {}),
-      ...(refusal === undefined ? {} : { refused: true as const })
+      ...(refusal === undefined ? {} : { refused: true as const }),
+      ...(limit ? { limit } : {})
     });
 
     // Only now, with the record written: the caller hears a status code, and the space's history still has the

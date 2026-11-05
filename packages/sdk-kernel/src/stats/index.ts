@@ -20,6 +20,7 @@ export type {
   PoolScaler,
   PoolSource,
   ProcessStats,
+  RunEnd,
   RunLabel,
   SlowRun,
   StatsConfig,

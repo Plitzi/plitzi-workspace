@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { defineFunctions } from '@plitzi/sdk-runtime';
-import { ActionRefusal } from '@plitzi/sdk-shared/functions';
+import { ActionRefusal, FunctionFailure } from '@plitzi/sdk-shared/functions';
 
 import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../module';
@@ -180,6 +180,46 @@ describe('runAction', () => {
     expect(await runAction(request(entry))).toMatchObject({ error: 'You are banned from this room.', code: 'banned' });
     // Recorded as the code's answer, not a fault: what an operator reading the run tells apart from a throw.
     expect(records.at(-1)).toMatchObject({ status: 'failed', refused: true, error: 'You are banned from this room.' });
+  });
+
+  // A limit is the run asking for more than it may — said as one, so no process's error rate counts it as a fault.
+  it('records the limit a run was stopped at, and none for a step that threw', async () => {
+    const stopped = (reason: 'cpu' | 'error'): FunctionTask<Record<string, never>> => ({
+      namespace: 'test',
+      action: reason,
+      title: reason,
+      params: {},
+      run: () => Promise.reject(new FunctionFailure(reason, reason === 'cpu' ? 'Stopped after 50 ms of CPU' : 'Boom'))
+    });
+    const records: ActionRunRecord[] = [];
+    const { runAction } = createActionsModule({
+      lookups,
+      functions: tasksOf(stopped('cpu'), stopped('error')),
+      limits: { maxNodes: 2 },
+      onRun: record => {
+        records.push(record);
+      }
+    });
+    const one = (action: string) =>
+      buildEntry({ nodes: { start: callTrigger({}, 'step'), step: node('step', { action, params: {} }) } });
+    const long = buildEntry({
+      nodes: {
+        start: callTrigger({}, 'a'),
+        a: node('a', { action: 'flow.output', params: { values: '{}' }, afterNode: 'b' }),
+        b: node('b', { action: 'flow.output', params: { values: '{}' }, afterNode: 'c' }),
+        c: node('c', { action: 'flow.output', params: { values: '{}' } })
+      }
+    });
+
+    await runAction(request(one('test.cpu')));
+    await runAction(request(one('test.error')));
+    await expect(runAction(request(long))).rejects.toMatchObject({ reason: 'over_capacity', limit: 'steps' });
+
+    expect(records.map(record => [record.status, record.limit])).toEqual([
+      ['failed', 'cpu'],
+      ['failed', undefined],
+      ['failed', 'steps']
+    ]);
   });
   describe('when a step fails after the flow already did something', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
