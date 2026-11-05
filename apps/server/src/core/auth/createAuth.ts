@@ -1,20 +1,24 @@
-import { createAuthApi } from './api';
-import { createAuthorizer } from './authorize';
-import { createCarriers, presentedOrigin } from './credentials';
-import { createCsrf } from './csrf';
-import { createIdentity } from './identity';
-import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
-import { createSessionCookies, sessionCookieParams } from './session';
-import { createTokens } from './tokens';
+import { createAuthorizer } from '@plitzi/sdk-kernel/identity';
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createCsrf } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { createSessionCookies, sessionCookieParams } from '@plitzi/sdk-kernel/identity';
+import { createTokens } from '@plitzi/sdk-kernel/tokens';
 
-import type { AccountAdapters, AuthApiConfig } from './api';
+import { createAuthApi } from './api';
+import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
+
+import type { AuthApiConfig } from './api';
 import type { AuthOutcome } from './api';
-import type { AuthPolicy, Requirement } from './authorize';
-import type { CredentialCarrier } from './credentials';
-import type { IdentityAdapters, IdentityConfig } from './identity';
-import type { CookieSink } from './session';
-import type { TokenConfig } from './tokens';
-import type { ServerAuth, SessionScope, SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
+import type { AccountAdapters, RequestIdentity } from '@plitzi/sdk-kernel/identity';
+import type { AuthPolicy, Requirement } from '@plitzi/sdk-kernel/identity';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters, IdentityConfig } from '@plitzi/sdk-kernel/identity';
+import type { CookieSink } from '@plitzi/sdk-kernel/identity';
+import type { TokenConfig } from '@plitzi/sdk-kernel/tokens';
+import type { SSRAuthCookie } from '@plitzi/sdk-kernel/types';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
+import type { ServerAuth, SessionScope, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * Everything a deployment says about its own auth, in one object.
@@ -29,8 +33,13 @@ import type { ServerAuth, SessionScope, SSRAuthCookie, SSRSession, SSRUser } fro
  * said once and both sides derive from it.
  */
 export interface AuthConfig {
-  /** The signing secret and the issuer that separate this deployment's credentials from every other's. */
+  /** The keys and the issuer that separate this deployment's credentials from every other's (`TokenKeys`). */
   tokens: TokenConfig;
+  /**
+   * Signs what this deployment hands a browser for its own use — the CSRF token — and checks it when it comes back.
+   * Never a credential: those are `tokens.keys`'. At least 32 characters; every process that checks a write holds it.
+   */
+  secret: string;
   /**
    * What this deployment calls its session cookies, and where they are scoped. Defaults derive from the request
    * host, which is right for a single-host deployment and wrong the moment an app and an API share a domain.
@@ -68,7 +77,8 @@ export interface AuthConfig {
  *
  * ```ts
  * const auth = createAuth({
- *   tokens: { secret, issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+ *   tokens: { keys, issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+ *   secret,
  *   cookie: { name: 'acme_session' },
  *   adapters: myStore
  * });
@@ -80,6 +90,13 @@ export interface AuthConfig {
  * ```
  */
 export const createAuth = (config: AuthConfig) => {
+  if (config.secret.length < 32) {
+    throw new Error(
+      `createAuth's \`secret\` is ${String(config.secret.length)} characters; it signs the CSRF token, so it takes at ` +
+        'least 32 — `openssl rand -base64 48` makes one'
+    );
+  }
+
   const tokens = createTokens(config.tokens);
 
   // Both halves of the cookie contract from one source: the readers ask this for the name a credential arrives
@@ -104,7 +121,7 @@ export const createAuth = (config: AuthConfig) => {
     config.csrf === false
       ? undefined
       : createCsrf({
-          secret: config.tokens.secret,
+          secret: config.secret,
           cookie: config.cookie,
           allowedOrigins: config.identity?.platformOrigins
         });
@@ -247,12 +264,13 @@ export const createAuth = (config: AuthConfig) => {
      * This is the set a deployment wants when its renderer and its sign-in live in different processes — a page
      * server that must know who is looking at it, while the `/auth` flows are served by an API tier next to it.
      * That shape had no name, so a deployment expressed it by reaching into `ssrAdapters` and lifting two keys out
-     * by hand: correct until a third identity adapter appears, which it then silently does not get.
+     * by hand: correct until a third identity adapter appears, which it then silently does not get. A worker takes the
+     * same object (`createWorker({ identity })`, `RequestIdentity`), so the two answer who a request is alike.
      *
      * `exchangeCredential` belongs here rather than with the flows: turning a credential a browser already holds
      * into a session is a question about identity, and it is the one the page server itself answers.
      */
-    ssrIdentityAdapters,
+    ssrIdentityAdapters: ssrIdentityAdapters satisfies RequestIdentity,
 
     /**
      * Every adapter a page server asks for, already answered. Spread these into `createServer`'s `adapters`

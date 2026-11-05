@@ -4,13 +4,14 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { imagesPathOf } from './images';
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { offlineDataOf } from '../../../modules/ssr/tests/offlineData';
 import { createServer } from '../../createServer';
-import { unusedPort } from '../../unusedPort';
 
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../../types';
 
 /**
  * `/_plitzi/img` over real HTTP, through the pipeline a deployment gets: mounted only where `images` is configured,

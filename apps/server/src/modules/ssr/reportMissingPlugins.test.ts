@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { reportMissingPlugins } from './reportMissingPlugins';
-import { configureServerLog } from '../../helpers/serverLog';
+import { configureServerLog } from '@plitzi/sdk-kernel/log';
 
-import type { Schema, ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
+import { reportMissingPlugins } from './reportMissingPlugins';
+
+import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-kernel/types';
+import type { Schema } from '@plitzi/sdk-shared';
 
 const schema = (custom: Record<string, unknown>): Schema => ({
   flat: {

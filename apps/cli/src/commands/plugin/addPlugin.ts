@@ -48,8 +48,9 @@ export interface AddPluginOptions extends ShapeFlags, DryRunOptions {
 }
 
 /**
- * A plugin package's server halves are typed by `@plitzi/sdk-server`, which a package that had none never installed:
- * added to its `devDependencies` — only for the types, the server that loads the plugin runs the code — and said.
+ * A plugin package's server halves are typed by the contract, `@plitzi/sdk-runtime`, which a package that had none
+ * never installed: added to its `devDependencies` — only for the types, the server that loads the plugin runs the code —
+ * and said.
  */
 const requireServerTypes = async (root: string): Promise<void> => {
   const file = path.join(root, 'package.json');
@@ -59,7 +60,7 @@ const requireServerTypes = async (root: string): Promise<void> => {
   }
 
   const declared = [json.dependencies, json.devDependencies, json.peerDependencies].some(
-    list => isRecord(list) && '@plitzi/sdk-server' in list
+    list => isRecord(list) && '@plitzi/sdk-runtime' in list
   );
   if (declared) {
     return;
@@ -67,10 +68,10 @@ const requireServerTypes = async (root: string): Promise<void> => {
 
   const devDependencies = isRecord(json.devDependencies) ? json.devDependencies : {};
   json.devDependencies = Object.fromEntries(
-    Object.entries({ ...devDependencies, '@plitzi/sdk-server': SDK_VERSION }).sort(([a], [b]) => a.localeCompare(b))
+    Object.entries({ ...devDependencies, '@plitzi/sdk-runtime': SDK_VERSION }).sort(([a], [b]) => a.localeCompare(b))
   );
   await fs.writeFile(file, `${JSON.stringify(json, null, 2)}\n`);
-  console.log('\n@plitzi/sdk-server added to devDependencies, for the server half’s types: install to use it.');
+  console.log('\n@plitzi/sdk-runtime added to devDependencies, for the server half’s types: install to use it.');
 };
 
 /**

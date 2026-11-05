@@ -13,10 +13,10 @@ route and a stream held open — loaded into a server of its own; Pizarra, the c
 
 ## 1. What you write
 
-A module whose default export is `defineRuntime`, from `@plitzi/sdk-server/runtime`:
+A module whose default export is `defineRuntime`, from `@plitzi/sdk-runtime`:
 
 ```ts
-import { defineRuntime } from '@plitzi/sdk-server/runtime';
+import { defineRuntime } from '@plitzi/sdk-runtime';
 
 import { createAgentEndpoint } from './agent';
 import { createBoardFunctions } from './tasks';
@@ -61,7 +61,8 @@ anything under `/_`, `/auth`, `/.well-known`.
 
 **Its code lives in a project of yours** — a folder, usually a repository — and is sent from there: the builder shows
 how a runtime runs and sets its variables, but it does not hold its code and cannot change it. The project needs
-`src/runtime/index.ts` (the module above, a file each beside it as it grows) and `@plitzi/sdk-server` installed:
+`src/runtime/index.ts` (the module above, a file each beside it as it grows), and `@plitzi/sdk-server` and
+`@plitzi/sdk-runtime` installed:
 `plitzi runtime add` writes it in a project `plitzi create` made in server mode — whose server runs it too, so what
 is pushed is what was tried — and [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one to start
 from — it also runs as a server of its own. From that project, signed in (`plitzi login`) with the space chosen
@@ -137,13 +138,13 @@ A server of your own loads the module with `serveRuntime` — its functions nati
 gating who may call it itself:
 
 ```ts
-import { createServer } from '@plitzi/sdk-server';
-import { serveRuntime } from '@plitzi/sdk-server/runtime';
+import { createPlatform } from '@plitzi/sdk-server/platform';
+import { serveRuntime } from '@plitzi/sdk-actions/runtimes';
 
 import runtime from './runtime';
 
 const served = await serveRuntime(runtime, { env: process.env, publicUrl: 'https://boards.example.com' });
-const server = createServer(
+const server = createPlatform(
   { /* … */ functions: { native: served.native }, action: { /* … */ } },
   { data: [served.stage] }
 );
@@ -152,7 +153,7 @@ const server = createServer(
 `examples/self-hosting/10-runtime`'s `main.ts` is exactly this: the server the platform would be (its `kv`, its
 actions) and its runtime loaded into it, its variables this process's environment.
 
-A project the CLI wrote finds its module with `loadRuntimeModule(file)` (`@plitzi/sdk-server/runtime`):
+A project the CLI wrote finds its module with `loadRuntimeModule(file)` (`@plitzi/sdk-actions/runtimes`):
 `src/runtime/index.ts`, or what `build` compiled it to (`dist/runtime/index.js`, for a server run compiled) — or
 `undefined` when the project has none, so a project starts one by writing it (`plitzi runtime add`), with nothing to
 wire.

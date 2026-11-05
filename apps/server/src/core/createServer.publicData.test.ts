@@ -4,15 +4,16 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { defineFunctions } from '@plitzi/sdk-runtime';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
-import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
+import { createPlatform } from './platform';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
-import { defineFunctions } from '../modules/functions/contract';
 
-import type { Schema, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * A project with no backend: its data is a file in `public/`, read by a server provider. The page has to arrive with
@@ -58,7 +59,7 @@ beforeAll(async () => {
   mkdirSync(path.join(base, 'data'), { recursive: true });
   writeFileSync(path.join(base, 'data/home.json'), JSON.stringify({ hero: { title: TITLE } }));
 
-  server = createServer({
+  server = createPlatform({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: { schema, style: EMPTY_STYLE_SCHEMA } }),
     publicDir: base
@@ -102,7 +103,7 @@ describe('createServer with the project’s own data', () => {
   beforeAll(async () => {
     dataDir = mkdtempSync(path.join(tmpdir(), 'plitzi-data-dir-'));
     writeFileSync(path.join(dataDir, 'home.json'), JSON.stringify({ hero: { title: TITLE }, cost: 'internal' }));
-    dataServer = createServer({
+    dataServer = createPlatform({
       port: DATA_PORT,
       adapters: createJsonAdapters({ offlineData: { schema, style: EMPTY_STYLE_SCHEMA } }),
       dataDir,

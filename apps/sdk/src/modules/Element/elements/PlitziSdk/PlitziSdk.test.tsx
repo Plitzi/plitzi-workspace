@@ -22,11 +22,11 @@ vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
   })
 }));
 
-vi.mock('@plitzi/sdk-shared/network', async importOriginal => {
+vi.mock('@plitzi/sdk-shared/network/react', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    ...(await importOriginal<typeof import('@plitzi/sdk-shared/network')>()),
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/network/react')>()),
     NetworkContext: createContext({})
   };
 });

@@ -6,7 +6,8 @@ import {
   SPACE_DOCUMENT_PATH
 } from '../../modules/ssr/spaceDocument';
 
-import type { SSRContext, Stage } from '../http/types';
+import type { SSRContext } from '../http/pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 // The space a page fetches beside it, and the space as it is now for a page that renders it itself. After the auth
 // middleware chain: whoever may not open a page may not read either.

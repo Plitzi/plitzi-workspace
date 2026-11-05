@@ -65,7 +65,7 @@ describe('explain "<words>", on a member named', () => {
     const later = {
       kind: 'api' as const,
       name: 'ctx.later',
-      from: '@plitzi/sdk-server/functions',
+      from: '@plitzi/sdk-runtime',
       of: 'FunctionContext',
       summary: 'Starts one of the space’s actions in so many seconds',
       written: 'later: (request: LaterRequest) => Promise<LaterAnswer>;'

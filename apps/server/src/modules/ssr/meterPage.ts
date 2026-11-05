@@ -1,4 +1,6 @@
-import type { Environment, SSRMeterDecision, SSRPageServerConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRMeterDecision, SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Environment } from '@plitzi/sdk-shared';
 
 // Metering a page must never be able to fail one. An adapter that throws (its store is down, its tables are
 // missing) leaves the request uncounted and the render untouched, which is the only acceptable direction for

@@ -27,7 +27,7 @@ export interface AddRuntimeOptions extends DryRunOptions {
   force?: boolean;
 }
 
-const RUNTIME_MODULE = `import { defineRuntime } from '@plitzi/sdk-server/runtime';
+const RUNTIME_MODULE = `import { defineRuntime } from '@plitzi/sdk-runtime';
 
 /**
  * The space's runtime: its own server code, run as a process of its own beside the space on Plitzi (\`plitzi runtime

@@ -1,6 +1,6 @@
 import { DEFAULT_IGNORED_QUERY_PARAMS } from './defaults';
 
-import type { SSRPageServerConfig } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
 
 /** The parameters this server renders and caches a page without — `cache.ignoredQueryParams`, or the analytics ones. */
 export const ignoredQueryParamsOf = (config: Pick<SSRPageServerConfig, 'cache'>): readonly string[] =>

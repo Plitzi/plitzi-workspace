@@ -1,9 +1,9 @@
 import { applySessionOutcome } from './routes';
 
 import type { AuthApi } from './api';
-import type { CredentialCarrier } from './credentials';
-import type { Csrf } from './csrf';
-import type { CookieSink, SessionCookies } from './session';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Csrf } from '@plitzi/sdk-kernel/identity';
+import type { CookieSink, SessionCookies } from '@plitzi/sdk-kernel/identity';
 
 /**
  * A navigation of the whole tab — not a frame, not an image, not a script's fetch. The one kind of request another

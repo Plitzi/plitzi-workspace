@@ -2,17 +2,18 @@ import { createHash } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
+import { createActionsModule } from '@plitzi/sdk-actions';
+import { DEFAULT_FUNCTION_CEILINGS } from '@plitzi/sdk-actions/functions';
+import { functionsInHand } from '@plitzi/sdk-actions/functions';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { createIsolateRunner } from '@plitzi/sdk-runtime/runner';
+
+import { createPlatform } from './platform';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
-import { createActionsModule } from '../modules/actions';
-import { DEFAULT_FUNCTION_CEILINGS } from '../modules/functions/config';
-import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
-import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
-import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 vi.mock('node:dns/promises', () => ({
   lookup: vi.fn(() => Promise.resolve([{ address: '203.0.113.10', family: 4 }]))
@@ -152,7 +153,7 @@ beforeAll(async () => {
   // The deployment's ceiling, not the default 100 ms of CPU: a first, cold run under the whole workspace's tests spent
   // more and was stopped — this file is about the connection, not what a route may spend.
   const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: DEFAULT_FUNCTION_CEILINGS };
-  server = createServer({
+  server = createPlatform({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
     action: {

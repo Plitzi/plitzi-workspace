@@ -1,11 +1,17 @@
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { createPublicKey } from 'node:crypto';
+
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { createMysqlStore } from '@plitzi/sdk-kernel/mysql';
+import { generateTokenKeys } from '@plitzi/sdk-kernel/tokens';
+import { createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createAuth } from '@plitzi/sdk-server/auth';
-import { createMysqlStore } from '@plitzi/sdk-server/mysql';
 
 import { seed } from './seed.ts';
 // The same two pages as the sessions example. What changes here is not what gets rendered — it is where the people
 // come from, and copying two hundred lines of page definition across would bury the one difference that matters.
 import { offlineData } from '../../03-sessions/src/space.ts';
+
+import type { TokenKeys } from '@plitzi/sdk-kernel/tokens';
 
 const PORT = Number(process.env.PORT ?? 4008);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
@@ -47,11 +53,29 @@ await seed(store);
  * where the same object is a file you maintain: that file is the price of bringing your own user table, and this is
  * what it costs not to have one.
  */
+/** The key pair a deployment keeps: its private key and its id, as `AUTH_SIGNING_KEY` (PEM) and `AUTH_KEY_ID`. */
+const keysFromEnv = (): TokenKeys | undefined => {
+  const privateKey = process.env.AUTH_SIGNING_KEY;
+  const kid = process.env.AUTH_KEY_ID;
+  if (!privateKey || !kid) {
+    return undefined;
+  }
+
+  return {
+    signing: { kid, privateKey },
+    verifying: [{ kid, publicKey: createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }) }]
+  };
+};
+
 const auth = createAuth({
   tokens: {
-    secret: process.env.AUTH_SECRET ?? 'example-secret-do-not-ship',
+    // The deployment's key pair (`generateTokenKeys()` once, kept as a secret). Without one in the environment this
+    // example makes a pair at start, so its sessions end when it restarts.
+    keys: keysFromEnv() ?? generateTokenKeys(),
     issuer: `http://127.0.0.1:${PORT}`
   },
+  // Signs the CSRF token: 32 characters or more, from `openssl rand -base64 48`.
+  secret: process.env.AUTH_SECRET ?? 'example-secret-do-not-ship-it-is-public',
   cookie: { name: COOKIE },
   adapters: {
     ...store.authAdapters,

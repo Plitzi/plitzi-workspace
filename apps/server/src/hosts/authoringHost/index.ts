@@ -2,15 +2,17 @@ import { randomBytes } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { PREVIEW_TOKEN_PARAM, readDraftToken } from '@plitzi/sdk-kernel/identity';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createServer } from '../../core/createServer';
-import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';
-import { serverLog } from '../../helpers/serverLog';
 
 import type { ServerConfig } from '../../core/createServer';
+import type { SSRServer } from '../../types';
 import type { AuthoredDocuments } from '../project/watchSpace';
-import type { DraftStore, OfflineDataRaw, SSRServer, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
+import type { DraftStore, OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
  * Pages somebody else authored — an agent designing a screen, a visitor's own page — served as a project's pages are,

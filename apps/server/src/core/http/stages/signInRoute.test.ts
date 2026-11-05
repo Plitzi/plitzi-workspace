@@ -3,11 +3,13 @@ import { createServer as createHttpServer } from 'node:http';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { createServer } from '../../createServer';
-import { unusedPort } from '../../unusedPort';
 
-import type { OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../../types';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 import type { IncomingMessage, Server } from 'node:http';
 
 /**

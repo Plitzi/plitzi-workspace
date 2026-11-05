@@ -4,8 +4,9 @@ import path from 'node:path';
 
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { createAuthoringHost } from '.';
-import { unusedPort } from '../../core/unusedPort';
 import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/tests/offlineData';
 
 import type { AuthoringHost } from '.';

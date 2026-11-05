@@ -4,11 +4,11 @@ import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { useNetwork } from '@plitzi/sdk-shared/hooks';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { SchemaContext } from '@plitzi/sdk-shared/schema/react';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/style';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 

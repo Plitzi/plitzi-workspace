@@ -1,7 +1,7 @@
-import { evaluateRuleGroup } from '../helpers/ruleEvaluator';
+import { evaluateRuleGroup } from '../conditions';
 
+import type { RuleGroup } from '../conditions';
 import type { VariableScope } from '../dataSource/variables';
-import type { RuleGroup } from '../helpers/ruleEvaluator';
 import type { AuthContextValue, Schema, SchemaFlag, SSRUser } from '../types';
 
 /**

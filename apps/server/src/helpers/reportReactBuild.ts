@@ -1,4 +1,4 @@
-import { serverLog } from './serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 let reported = false;
 

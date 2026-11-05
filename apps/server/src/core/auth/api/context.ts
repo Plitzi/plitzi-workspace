@@ -1,31 +1,29 @@
 import { createHash } from 'node:crypto';
 
-import { serverLog } from '../../../helpers/serverLog';
-import { checkPermission } from '../authorize';
+import { checkPermission } from '@plitzi/sdk-kernel/identity';
 import {
   generateToken as defaultGenerateToken,
   hashPassword as defaultHashPassword,
   verifyPassword as defaultVerifyPassword
-} from '../passwords';
+} from '@plitzi/sdk-kernel/identity';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { createMemoryRateLimit, fleetRateLimit } from '../throttle';
 import { normalizeRecoveryCode } from '../totp';
 import { refuse, now, clientOf } from './values';
 
-import type { CredentialCarrier } from '../credentials';
-import type { Actor, Identity } from '../identity';
-import type { Tokens } from '../tokens';
+import type { ThrottleAttempt, AuthApiConfig, ExchangeResult, AuthOutcome } from './types';
 import type {
   AccountRecord,
   AccountAccess,
   SecurityEvent,
   SessionContext,
-  AccountAdapters,
-  ThrottleAttempt,
-  AuthApiConfig,
-  ExchangeResult,
-  AuthOutcome
-} from './types';
-import type { SSRSession } from '@plitzi/sdk-shared';
+  AccountAdapters
+} from '@plitzi/sdk-kernel/identity';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Actor, Identity } from '@plitzi/sdk-kernel/identity';
+import type { Tokens } from '@plitzi/sdk-kernel/tokens';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 /** What every flow of the auth API shares: the adapters and the settings, read once, and the steps they take alike. */
 export const createAuthContext = ({

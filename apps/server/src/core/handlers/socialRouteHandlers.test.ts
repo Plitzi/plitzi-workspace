@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createSessionCookies } from '@plitzi/sdk-kernel/identity';
+
 import { createSocialAuthRouteHandlers, mountSocialAuthRoutes } from './socialRouteHandlers';
-import { createSessionCookies } from '../auth/session';
 
 import type { AuthedRequest, RedirectResponse, SocialRouteHandler } from './types';
-import type { Actor } from '../auth/identity';
 import type { SocialAuth } from '../auth/oauth';
-import type { SSRSession } from '@plitzi/sdk-shared';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 /**
  * Like the rest of this folder: every request and response below is an object literal. If a handler ever reached for

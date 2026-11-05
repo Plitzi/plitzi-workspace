@@ -1,19 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createAuthApi } from './api';
-import { createCarriers, presentedOrigin } from './credentials';
-import { createIdentity } from './identity';
-import { TOKENS, actorFor, ada, body, build } from './tests/lifecycle';
-import { createTokens } from './tokens';
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+import { createTokens } from '@plitzi/sdk-kernel/tokens';
 
-import type { AccountAdapters, AccountRecord, AuthApiConfig, SecurityEvent } from './api';
+import { createAuthApi } from './api';
+import { TOKENS, actorFor, ada, body, build } from './tests/lifecycle';
+
+import type { AuthApiConfig } from './api';
+import type { AccountAdapters, AccountRecord, SecurityEvent } from '@plitzi/sdk-kernel/identity';
 
 /** A refresh credential `build`'s deployment signed, as renewal verifies one before asking the store about it. */
 const refreshTokenFor = (userId: number): string => createTokens(TOKENS).generateRefreshToken(userId);
 
 describe('the longest a session may live', () => {
   const capped = (sessionStartedAt: number) => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test', lifetimes: { session: 3600 } });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test', lifetimes: { session: 3600 } });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -75,7 +78,7 @@ describe('signing in with a code instead of a password', () => {
       userId?: number;
     }[] = [];
     const sent: { to: string; data: Record<string, string> }[] = [];
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -194,7 +197,7 @@ describe('signing in with a code instead of a password', () => {
  * borrowed, cannot outlive its errand, and is not something an ordinary administrator quietly acquired.
  */
 describe('impersonation', () => {
-  const verifier = createTokens({ secret: 'test-secret', issuer: 'https://test' });
+  const verifier = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
   const bob: AccountRecord = { id: 2, username: 'bob', email: 'bob@example.test', active: true, verified: true };
 
   const impersonating = (overrides: Partial<AccountAdapters> = {}, config: AuthApiConfig = {}) => {

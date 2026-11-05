@@ -1,6 +1,7 @@
 import { pageAssets } from '../../core/sdkAssets';
 
-import type { SSRPageServerConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * What every page this server renders paints with, as `Link` values: the SDK's stylesheets. Only what is the same

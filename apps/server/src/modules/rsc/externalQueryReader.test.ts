@@ -4,8 +4,10 @@ import { serverQueryOf } from '@plitzi/sdk-shared/schema';
 
 import { externalQueryReader, visitorCredentialsOf } from './externalQueryReader';
 
-import type { HostLookup } from '../../helpers/outboundGuard';
-import type { Element, SSRRequest, SSRVisitorCredentialsConfig } from '@plitzi/sdk-shared';
+import type { SSRVisitorCredentialsConfig } from '../../types';
+import type { HostLookup } from '@plitzi/sdk-kernel/outbound';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Element } from '@plitzi/sdk-shared';
 import type { ServerTemplateData } from '@plitzi/sdk-shared/schema';
 
 const visit: ServerTemplateData = {

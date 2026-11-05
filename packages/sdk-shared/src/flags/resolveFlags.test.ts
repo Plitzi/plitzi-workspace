@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { flagValues, passesFlagGate, resolveFlags, undeclaredFlagOverrides } from './resolveFlags';
 
-import type { Rule, RuleGroup, RuleValue } from '../helpers/ruleEvaluator';
+import type { Rule, RuleGroup, RuleValue } from '../conditions';
 import type { SchemaFlag } from '../types';
 
 const onFor = (field: string, operator: Rule['operator'], value: RuleValue): RuleGroup => ({

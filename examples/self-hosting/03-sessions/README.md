@@ -31,7 +31,8 @@ source the SDK publishes from whoever is signed in.
 
 ```ts
 const auth = createAuth({
-  tokens: { secret, issuer: 'https://acme.test' },
+  tokens: { keys, issuer: 'https://acme.test' },
+  secret,
   cookie: { name: 'example_session' },
   adapters: accounts,
   api: { verifyPassword }

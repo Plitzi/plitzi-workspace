@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_COMPRESSION, resolveCompression } from '@plitzi/sdk-kernel/http';
+
 import { fromSharedPage, keepPage, pageHtml, sizeOfPage, toSharedPage } from './pages';
-import { DEFAULT_COMPRESSION, resolveCompression } from '../compress';
 
 const large = `<html><body>${'<p>A paragraph the page repeats.</p>'.repeat(2_000)}</body></html>`;
 

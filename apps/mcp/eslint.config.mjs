@@ -7,7 +7,7 @@ import sharedConfig from '../../packages/sdk-shared/eslint.config.mjs';
 // has to be proven against, and nothing there ships. The ban below is about what a running MCP process loads.
 const testOverride = {
   files: ['**/*.test.ts', '**/*.test.tsx'],
-  rules: { 'no-restricted-imports': 'off' }
+  rules: { '@typescript-eslint/no-restricted-imports': 'off' }
 };
 
 export default tsEslint.config(
@@ -25,16 +25,17 @@ export default tsEslint.config(
       import: importPlugin
     },
     rules: {
-      // The whole point of the split: this package pulls the HTTP kernel and nothing else. The root barrel of
-      // sdk-server re-exports SSR, RSC, plugins and the React render path, and ESM re-exports load eagerly — one
-      // import from it would drag all of that back into an MCP process. Keep it unreachable, not discouraged.
-      'no-restricted-imports': [
+      // The whole point of the split: this package runs on the kernel (`@plitzi/sdk-kernel`) and nothing else. The root
+      // barrel of sdk-server re-exports SSR, RSC, plugins and the React render path, and ESM re-exports load eagerly —
+      // one value imported from it would drag all of that back into an MCP process. Its types cost nothing at run time.
+      '@typescript-eslint/no-restricted-imports': [
         'error',
         {
           paths: [
             {
               name: '@plitzi/sdk-server',
-              message: 'Import from @plitzi/sdk-server/kernel — the root barrel loads the SSR/React graph.'
+              allowTypeImports: true,
+              message: 'Import from @plitzi/sdk-kernel — the root barrel of sdk-server loads the SSR/React graph.'
             }
           ]
         }

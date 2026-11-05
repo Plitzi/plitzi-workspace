@@ -1,4 +1,4 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers';
+import { sharedContext } from '@plitzi/sdk-shared/react';
 
 import type { StyleContextValue } from '@plitzi/sdk-shared';
 

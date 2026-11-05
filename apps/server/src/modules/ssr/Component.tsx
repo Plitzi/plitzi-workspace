@@ -1,11 +1,11 @@
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
+import type { SSRPlugin } from '../../types';
 import type {
   OfflineDataRaw,
   Environment,
   RenderMode,
   Server,
-  SSRPlugin,
   SSRRenderResult,
   Theme,
   ColorScheme

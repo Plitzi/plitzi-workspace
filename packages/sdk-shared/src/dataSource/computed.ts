@@ -1,6 +1,5 @@
-import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
-
 import { COMPUTED_GLOBALS } from './globalSources';
+import { deepEqual } from '../helpers/deepEqual';
 import { isRecord } from '../helpers/isRecord';
 import { processTwigValue } from '../helpers/twigWrapper';
 

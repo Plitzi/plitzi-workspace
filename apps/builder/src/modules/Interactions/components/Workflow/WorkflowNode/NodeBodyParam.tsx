@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import ParamBinding from './ParamBinding';

@@ -4,7 +4,7 @@ import { requestProxy } from '../modules/mcp/proxy';
 import { createHttpScreenshotClient } from '../modules/mcp/screenshotClient';
 
 import type { McpOptions } from '../options';
-import type { Stage } from '@plitzi/sdk-server/kernel';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 import type { ServerResponse } from 'node:http';
 
 // Where MCP answers inside a page server. Defaulting to '/' would make this stage swallow every route (it runs

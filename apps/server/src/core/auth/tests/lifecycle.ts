@@ -1,10 +1,13 @@
-import { createAuthApi } from '../api';
-import { createCarriers, presentedOrigin } from '../credentials';
-import { createIdentity } from '../identity';
-import { createTokens } from '../tokens';
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+import { createTokens } from '@plitzi/sdk-kernel/tokens';
 
-import type { AccountAdapters, AccountRecord, AuthApiConfig, AuthOutcome } from '../api';
-import type { Actor } from '../identity';
+import { createAuthApi } from '../api';
+
+import type { AuthApiConfig, AuthOutcome } from '../api';
+import type { AccountAdapters, AccountRecord } from '@plitzi/sdk-kernel/identity';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
 
 /**
  * The account's life after it exists: what it may change about itself, what an administrator may change about it,
@@ -31,7 +34,7 @@ export const actorFor = (account: AccountRecord, permissions: string[] = []): Ac
   expiresAt: Math.floor(Date.now() / 1000) + 3600
 });
 
-export const TOKENS = { secret: 'test-secret', issuer: 'https://test' };
+export const TOKENS = { keys: TEST_KEYS, issuer: 'https://test' };
 
 export const build = (adapters: Partial<AccountAdapters> = {}, config: AuthApiConfig = {}) => {
   const tokens = createTokens(TOKENS);

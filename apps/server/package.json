@@ -28,30 +28,6 @@
       "import": "./dist/oauth.js",
       "default": "./dist/oauth.js"
     },
-    "./kernel": {
-      "@plitzi/source": "./src/kernel.ts",
-      "types": "./dist/kernel.d.ts",
-      "import": "./dist/kernel.js",
-      "default": "./dist/kernel.js"
-    },
-    "./mysql": {
-      "@plitzi/source": "./src/mysql.ts",
-      "types": "./dist/mysql.d.ts",
-      "import": "./dist/mysql.js",
-      "default": "./dist/mysql.js"
-    },
-    "./mongo": {
-      "@plitzi/source": "./src/mongo.ts",
-      "types": "./dist/mongo.d.ts",
-      "import": "./dist/mongo.js",
-      "default": "./dist/mongo.js"
-    },
-    "./sqlite": {
-      "@plitzi/source": "./src/sqlite.ts",
-      "types": "./dist/sqlite.d.ts",
-      "import": "./dist/sqlite.js",
-      "default": "./dist/sqlite.js"
-    },
     "./handlers": {
       "@plitzi/source": "./src/handlers.ts",
       "types": "./dist/handlers.d.ts",
@@ -64,29 +40,11 @@
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
     },
-    "./actions": {
-      "@plitzi/source": "./src/actions.ts",
-      "types": "./dist/actions.d.ts",
-      "import": "./dist/actions.js",
-      "default": "./dist/actions.js"
-    },
-    "./functions": {
-      "@plitzi/source": "./src/functions.ts",
-      "types": "./dist/functions.d.ts",
-      "import": "./dist/functions.js",
-      "default": "./dist/functions.js"
-    },
-    "./functions-runner": {
-      "@plitzi/source": "./src/functionsRunner.ts",
-      "types": "./dist/functionsRunner.d.ts",
-      "import": "./dist/functionsRunner.js",
-      "default": "./dist/functionsRunner.js"
-    },
-    "./runtime": {
-      "@plitzi/source": "./src/runtime.ts",
-      "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js",
-      "default": "./dist/runtime.js"
+    "./platform": {
+      "@plitzi/source": "./src/platform.ts",
+      "types": "./dist/platform.d.ts",
+      "import": "./dist/platform.js",
+      "default": "./dist/platform.js"
     },
     "./project": {
       "@plitzi/source": "./src/project.ts",
@@ -105,8 +63,7 @@
       "types": "./dist/env.d.ts",
       "import": "./dist/env.js",
       "default": "./dist/env.js"
-    },
-    "./functions-api.d.ts": "./dist/functions-api.d.ts"
+    }
   },
   "repository": {
     "type": "https",
@@ -121,17 +78,14 @@
   ],
   "dependencies": {
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^7.0.2",
     "esbuild": "^0.28.2",
-    "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^10.1.3",
-    "undici": "^8.12.3",
-    "ws": "^8.22.0"
+    "jsonwebtoken": "^9.0.3"
   },
   "peerDependencies": {
-    "core-js": "^3.50.0",
-    "isolated-vm": "^7.0.1",
+    "@plitzi/sdk-actions": "workspace:*",
     "mongodb": "^6 || ^7",
     "mysql2": "^3",
     "react": "^19",
@@ -139,10 +93,7 @@
     "sharp": "^0.34.0"
   },
   "peerDependenciesMeta": {
-    "core-js": {
-      "optional": true
-    },
-    "isolated-vm": {
+    "@plitzi/sdk-actions": {
       "optional": true
     },
     "mongodb": {
@@ -156,20 +107,18 @@
     }
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.59.4",
+    "@plitzi/sdk-actions": "workspace:*",
+    "@plitzi/sdk-runtime": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.0.5",
-    "core-js": "^3.50.0",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "ioredis": "^6.0.0",
-    "isolated-vm": "^7.0.1",
     "mongodb": "^7.7.0",
     "mysql2": "^3.24.6",
     "react": "^19.3.1",
@@ -179,7 +128,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.4",
     "vite-plugin-dts": "^5.1.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "ws": "^8.22.0"
   },
   "scripts": {
     "prepack": "node scripts/copy-authoring-skill.mjs",
@@ -187,8 +137,8 @@
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx dev/main.ts",
     "start:watch": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch dev/main.ts",
     "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect dev/main.ts",
-    "build:dev": "vite build --mode development && node scripts/functions-api.mjs",
-    "build:prod": "vite build && node scripts/functions-api.mjs",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src ./dev",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",

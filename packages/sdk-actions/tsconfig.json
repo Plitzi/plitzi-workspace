@@ -1,0 +1,6 @@
+{
+  "extends": "../sdk-shared/tsconfig.json",
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "files": [],
+  "exclude": ["dist", "node_modules", "**/dist"]
+}

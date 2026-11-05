@@ -1,8 +1,9 @@
 import { pathToFileURL } from 'node:url';
 
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type { PluginEntry, SSRPlugin } from '@plitzi/sdk-shared';
+import type { SSRPlugin } from '../../types';
+import type { PluginEntry } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
 /** Module-level cache: the bundle's stamped identity → loaded React component. */

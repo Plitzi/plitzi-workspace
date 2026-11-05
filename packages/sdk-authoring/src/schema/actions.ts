@@ -343,7 +343,7 @@ export const defineAction = <const Spec extends ActionSpec>(spec: Spec): TypedAc
 };
 
 /**
- * A task of the space's own as `taskAction` reads it — what a `FunctionTask` of `@plitzi/sdk-server/functions` is, and
+ * A task of the space's own as `taskAction` reads it — what a `FunctionTask` of `@plitzi/sdk-runtime` is, and
  * only what a way into it needs: its address, its words and its params. Structural, so any task is one.
  */
 export interface ActionTask {

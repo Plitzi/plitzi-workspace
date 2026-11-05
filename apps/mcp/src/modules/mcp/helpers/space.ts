@@ -1,10 +1,10 @@
 import { descendants } from '@plitzi/sdk-schema';
 
 import type { AIElementDetail } from '../types';
+import type { ComponentCatalog } from '@plitzi/sdk-kernel/types';
 import type {
   ActionEntry,
   ActionTaskDescriptor,
-  ComponentCatalog,
   ConnectorEntry,
   DataDraft,
   Element,

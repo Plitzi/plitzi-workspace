@@ -1,3 +1,6 @@
+import { resolveCompression } from '@plitzi/sdk-kernel/http';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { applySSRResult, isReusable, renderParamsOf } from './applySSRResult';
 import { buildBody } from './buildBody';
 import { pageHints } from './earlyHints';
@@ -8,23 +11,18 @@ import { DEFAULT_RENDER_WAIT_MS, renderLimitFor } from './renderTurns';
 import { sendScriptPolicy } from './scriptPolicy';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey, ignoredQueryParamsOf, keepsVersion, pageHtml, renderedQuery } from '../../helpers/cache';
-import { resolveCompression } from '../../helpers/compress';
 import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
-import { serverLog } from '../../helpers/serverLog';
 import { SCHEME_HINT_HEADER } from '../../helpers/visitorScheme';
 
 import type { BuildBodyResult } from './buildBody';
 import type { RenderClaim, RenderedPage } from './pageCache';
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  SSRMeterDecision,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRTemplateFn
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRTemplateFn } from '../../types';
+import type { PageEngine } from '@plitzi/sdk-kernel/engine';
+import type { SSRMeterDecision, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * A page the deployment holds back (`SSRMeterDecision.unavailable`), in the words it chose: 503, kept by nobody — no
@@ -52,7 +50,8 @@ export const renderSSR = async (
   config: SSRPageServerConfig,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
-  caches: ServerCaches
+  caches: ServerCaches,
+  published?: PageEngine['published']
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   const devMode = config.devMode ?? false;
@@ -124,7 +123,8 @@ export const renderSSR = async (
       pluginManager,
       caches.offlineData,
       metrics,
-      offlineDataOverride
+      offlineDataOverride,
+      published
     );
   const keepable = ({ body, result, cacheable, nonce }: BuildBodyResult): RenderedPage | undefined =>
     body !== undefined && cacheable && isReusable(result) ? { html: body, nonce } : undefined;
@@ -196,7 +196,8 @@ export const renderSSR = async (
         caches.offlineData,
         claim ? page => claim.keep(page) : undefined,
         metrics,
-        offlineDataOverride
+        offlineDataOverride,
+        published
       );
 
       return;

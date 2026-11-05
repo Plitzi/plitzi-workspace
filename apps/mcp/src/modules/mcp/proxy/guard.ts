@@ -1,7 +1,7 @@
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
-import { isBlockedHost } from '@plitzi/sdk-server/kernel';
+import { isBlockedHost } from '@plitzi/sdk-kernel/outbound';
 
 /**
  * Whether an ADDRESS is never the public internet. The ranges are sdk-server's, the same rule its `http.request` task

@@ -1,6 +1,5 @@
-import { set } from '@plitzi/plitzi-ui/helpers/lodash';
-
 import { isRecord } from '../../helpers';
+import { set } from '../../helpers/lodash';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue, Element, Style, StyleItem } from '../../types';
 

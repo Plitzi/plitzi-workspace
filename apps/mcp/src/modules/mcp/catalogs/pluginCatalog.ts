@@ -1,4 +1,5 @@
-import type { ComponentCatalog, ComponentCatalogEntry, PluginManifest, PluginSchema } from '@plitzi/sdk-shared';
+import type { ComponentCatalog, ComponentCatalogEntry } from '@plitzi/sdk-kernel/types';
+import type { PluginManifest, PluginSchema } from '@plitzi/sdk-shared';
 
 /**
  * The catalog entries for a space's PLUGIN (custom) element types, read from each plugin's published manifest.

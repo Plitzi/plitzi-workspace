@@ -4,7 +4,7 @@ import { randomId } from './pkce';
 import { getClientByFingerprint, putClient, putClientFingerprint } from './records';
 import { sendErrorJson, sendJson } from './respond';
 
-import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 const parseUri = (value: string): URL | undefined => {
   try {

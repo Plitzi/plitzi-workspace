@@ -5,21 +5,16 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
+import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type { Server, ComponentDefinition, Environment } from '@plitzi/sdk-shared';
-import type {
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  BuilderMutationsMap,
-  SpaceEventMap,
-  NetworkInternalContextValue
-} from '@plitzi/sdk-shared/network';
+import type { BuilderQueriesMap, BuilderMutationsMap, SpaceEventMap } from '@plitzi/sdk-shared/network';
+import type { BuilderNetworkContextValue, NetworkInternalContextValue } from '@plitzi/sdk-shared/network/react';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {

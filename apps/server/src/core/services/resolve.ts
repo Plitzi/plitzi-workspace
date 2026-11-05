@@ -1,4 +1,5 @@
-import type { ServerServices, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { ServerServices } from '../../types';
+import type { SSRServerConfig } from '../../types';
 
 export type ResolvedServices = Required<ServerServices>;
 
@@ -22,19 +23,4 @@ export const resolveRscEndpoint = (config: SSRServerConfig): string | undefined 
   }
 
   return config.rsc?.path ?? '/_rsc';
-};
-
-/**
- * Where this server runs actions, or undefined when it runs none.
- *
- * Published to the client as `server.ssr.actionPath` for the same reason `rscPath` is: absence is how a page
- * learns, once, that a `serverAction` step has nowhere to run — instead of every click discovering it through a
- * 404. A static export or an embed with no server tier publishes nothing here.
- */
-export const resolveActionEndpoint = (config: SSRServerConfig): string | undefined => {
-  if (!config.action?.lookups) {
-    return undefined;
-  }
-
-  return config.action.path ?? '/_action';
 };

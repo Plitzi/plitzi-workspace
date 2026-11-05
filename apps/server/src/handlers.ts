@@ -27,7 +27,7 @@
  * const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
  *
  * http.createServer(async (raw, rawRes) => {
- *   const req = parseRequest(raw);              // from @plitzi/sdk-server/kernel
+ *   const req = parseRequest(raw);              // from @plitzi/sdk-kernel/http
  *   const route = routes.find(r => r.method === req.method && `/auth${r.path}` === req.path);
  *   if (route) {
  *     await route.handle(req, jsonResponse(rawRes));

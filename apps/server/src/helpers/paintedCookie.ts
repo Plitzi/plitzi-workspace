@@ -1,9 +1,9 @@
+import { requestAuthority } from '@plitzi/sdk-kernel/http';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { paintedKeys, paintedStateCookieName, paintedStateFor } from '@plitzi/sdk-shared/state';
 
-import { requestAuthority } from '../core/requestParser';
-
-import type { Schema, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * The name the painted state of a server-rendered page is kept under, for this request's host.

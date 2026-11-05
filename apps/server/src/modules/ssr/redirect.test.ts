@@ -6,7 +6,9 @@ import { TtlCache } from '../../helpers/cache';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRPageServerConfig, SSRRenderResult, SSRRequest, SSRResponseHelpers, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * What the page server does with the page's own decision about who may see it.

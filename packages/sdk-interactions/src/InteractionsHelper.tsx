@@ -1,8 +1,8 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
+import { ruleValuesOf } from '@plitzi/sdk-shared/conditions';
 import { pConsole } from '@plitzi/sdk-shared/devTools';
-import { ruleValuesOf } from '@plitzi/sdk-shared/helpers';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';
@@ -122,7 +122,7 @@ const processNode = (
   }
 
   const whenParams = ruleValuesOf({ ...globalParams, ...flowParams, [id]: params });
-  if (when && !QueryBuilderEvaluator(when, whenParams)) {
+  if (when && !evaluateRuleGroup(when, whenParams)) {
     return { status: 'skipped', result: {}, postCallbacks, whenParams };
   }
 
@@ -354,11 +354,7 @@ const flowTrigger = async (
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
-  if (
-    !action ||
-    !enabled ||
-    (when && !QueryBuilderEvaluator(when, ruleValuesOf({ ...readGlobals(), ...flowParams })))
-  ) {
+  if (!action || !enabled || (when && !evaluateRuleGroup(when, ruleValuesOf({ ...readGlobals(), ...flowParams })))) {
     storeLog(triggerNode, startTime, {}, 'skipped', hostElementId);
 
     return;

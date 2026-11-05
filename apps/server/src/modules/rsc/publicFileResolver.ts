@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/project/paths';
 
-import type { RscElementResolver } from './resolveRscData';
+import type { RscElementResolver } from '@plitzi/sdk-kernel/engine';
 import type { SpaceRevision } from '@plitzi/sdk-shared';
 
 /** Where a provider's `query` is a path: a URL, a protocol-relative one or one with `{{tokens}}` is not. */

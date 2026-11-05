@@ -5,7 +5,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 import { handleMcp } from '../handler';
 
-import type { SSRAdapters, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest } from '@plitzi/sdk-kernel/types';
 import type { IncomingMessage, Server } from 'node:http';
 
 /** A live MCP endpoint on loopback — the same handler a deployment serves, transport and all. */

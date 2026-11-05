@@ -154,7 +154,7 @@ yarn build:dev / build:prod # vite build
 apps/
   builder/          # Plitzi visual builder (main app)
   sdk/              # Plitzi SDK app (@plitzi/plitzi-sdk): renders a space; plitzi-sdk.css loads on EVERY published page
-  server/           # @plitzi/sdk-server: SSR/RSC, auth kernel, server actions, functions, realtime — the mechanism
+  server/           # @plitzi/sdk-server: SSR/RSC, signing in, and the composition (`createPlatform`, a project's server)
   mcp/              # @plitzi/sdk-mcp: MCP server for AI agents (tools, plitzi:// resources, the guide)
   cli/              # @plitzi/cli: projects, plugins, push/pull, doctor/lint/check; owns the project scaffold + skills
   desktop/          # Desktop client (frozen with RFC 0017 until the web product has traction)
@@ -163,8 +163,11 @@ e2e/                # Playwright suites (builder, SDK, examples); lint/typecheck
 examples/           # browser/ and self-hosting/ examples (each lints with examples/eslint.config.mjs)
 docs/               # en/ (contributor guides), es/ (8 translated), rfc/ (only NOT-yet-implemented proposals)
 packages/
-  sdk-shared/       # Shared configs, the document types (its root: types only), sharedContext, the runtime's shared areas
+  sdk-shared/       # Shared configs, the document types (its root: types only), conditions, sharedContext (`react`), the runtime's shared areas
   sdk-auth/
+  sdk-actions/      # The actions engine and its worker: actions, functions' host side, connectors, realtime, jobs, stores
+  sdk-kernel/       # What every server process is built on: HTTP pipeline, health, fleet, checking who a request is
+  sdk-runtime/      # The contract a space's code is written against, and what runs it with no access: runner, isolates
   sdk-authoring/    # The ONLY writer/validator of space documents in code: authorSpace, lintSpace, the skill
   sdk-dev-tools/
   sdk-elements/
@@ -430,7 +433,7 @@ After finishing any set of code changes, always run:
 1. `yarn typecheck` — fix all TypeScript errors before considering the task done.
 2. `yarn lint` — fix all ESLint errors (warnings are acceptable).
 3. The tests of what you touched; for documentation, the checks in § Documentation.
-4. Touched `apps/server` or `packages/sdk-shared`: `yarn build:dev` there, then `yarn check:server-footprint` — what the
+4. Touched `apps/server`, `packages/sdk-kernel` or `packages/sdk-shared`: `yarn build:dev` there, then `yarn check:server-footprint` — what the
    server loads at start, held to a budget; a module more fails, naming what imported it. One the server uses: raise
    `BUDGET` (`apps/server/scripts/checkFootprint.mjs`) in the same change; one a barrel dragged in: import from an entry
    without it. Left for CI, it reached the maintainer as somebody else's failure every time.
@@ -457,7 +460,10 @@ After finishing any set of code changes, always run:
   projects and read the published shape (`examples/tsconfig.base.json`). A new test config must resolve it too.
 - **A package imports only what it declares.** Portals hide undeclared dependencies (0.37.3 broke consumers without
   `@apollo/client`); nothing with an optional peer in a root barrel.
-- **Runtime contexts use `sharedContext(name, default)`** (`@plitzi/sdk-shared/helpers`), never
+- **sdk-shared's server folders reach no React, React DOM, nexus or plitzi-ui** (`src/serverSafe.test.ts` lists them):
+  they are optional peers of it, which a server does not install. What draws or holds a store goes in a `react` folder
+  of its own (`<area>/react`, `react`, `store`), never beside what a server imports from the same barrel.
+- **Runtime contexts use `sharedContext(name, default)`** (`@plitzi/sdk-shared/react`), never
   `createContext`: the builder bundles its own runtime while remote plugins import `@plitzi/plitzi-sdk` through the
   import map, and only a shared registry lets both see the same context.
 - **Plugins must behave in the builder**: inert outside preview (`settings.previewMode`), and never the global
@@ -521,7 +527,7 @@ Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publis
 - Tests that go through the outbound fetch guard mock DNS (`vi.mock('node:dns/promises', …)`); CI has slow/no DNS.
 - Multi-worker (fleet) tests start every worker and wait until all listen (`startServing(n)`); loops that ask workers
   are bounded by time, never by a request count. Fix the helpers, not one test.
-- A test listens on `await unusedPort()` (`@plitzi/sdk-server`): a free port BELOW the ephemeral range. Never a fixed
+- A test listens on `await unusedPort()` (`@plitzi/sdk-kernel/http`): a free port BELOW the ephemeral range. Never a fixed
   number nor `listen(0)`'s — another worker's outgoing connection takes ports from that range, and the listen then
   fails `EADDRINUSE` (a server without `onListenError` ends the process).
 - A sleep is safe only where lateness helps (TTL past expiry); where an upper bound must hold, wait on the event.

@@ -1,14 +1,16 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { cappedResponse, fetchOutbound } from '../../helpers/outboundGuard';
+import { cappedResponse, fetchOutbound } from '@plitzi/sdk-kernel/outbound';
 
-import type { OutboundOptions } from '../../helpers/outboundGuard';
-import type { Environment, SSRRequest, SSRVisitorCredentialsConfig } from '@plitzi/sdk-shared';
+import type { SSRVisitorCredentialsConfig } from '../../types';
+import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Environment } from '@plitzi/sdk-shared';
 import type { ServerQuery } from '@plitzi/sdk-shared/schema';
 
 /** What one answer of another site may carry into a page: the same ceiling an action's response has by default. */
-export const EXTERNAL_QUERY_MAX_BYTES = 5_000_000;
+const EXTERNAL_QUERY_MAX_BYTES = 5_000_000;
 
 /** Who asks: the page request a provider asking as the visitor carries the cookies of, and the space it is for. */
 export type ExternalQueryAsker = { req: SSRRequest; spaceId: number; environment: Environment };

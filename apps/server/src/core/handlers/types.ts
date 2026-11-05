@@ -1,6 +1,6 @@
-import type { CredentialCarrier } from '../auth/credentials';
-import type { Actor, Grant } from '../auth/identity';
-import type { CookieSink } from '../auth/session';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Actor, Grant } from '@plitzi/sdk-kernel/identity';
+import type { CookieSink } from '@plitzi/sdk-kernel/identity';
 
 /**
  * A request and a response, described by what these handlers actually touch and nothing more.

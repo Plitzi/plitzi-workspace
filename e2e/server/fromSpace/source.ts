@@ -53,7 +53,7 @@ import Tally from './Tally.tsx';
 export default Object.assign(Tally, declaration);
 `;
 
-const runtime = `import { defineRuntime } from '@plitzi/sdk-server/runtime';
+const runtime = `import { defineRuntime } from '@plitzi/sdk-runtime';
 
 import { greeting } from './shared/greeting.ts';
 
@@ -73,7 +73,7 @@ export const SOURCE_FILES: Record<string, string> = {
 
 /** The space's functions: one task, counting in the server's own `kv`. */
 export const FUNCTION_FILES: Record<string, string> = {
-  'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
+  'index.ts': `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 export default defineFunctions({
   tasks: [

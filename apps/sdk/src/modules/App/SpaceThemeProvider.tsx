@@ -1,7 +1,7 @@
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
-import { ThemeProvider, useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { ThemeProvider, useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
-import type { ThemeScope } from '@plitzi/sdk-shared/theme';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ColorScheme, Theme } from '@plitzi/sdk-shared/types';
 import type { ReactNode } from 'react';
 

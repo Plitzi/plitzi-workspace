@@ -1,7 +1,7 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import Notice from '@pmodules/App/components/Notice';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
 

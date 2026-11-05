@@ -1,7 +1,9 @@
-import { bytesFromEnvironment, CACHE_ENV, DEFAULT_CACHE_BYTES } from '../../helpers/cache';
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type { CacheFilter, SharedPage, SharedPageStore } from '@plitzi/sdk-shared';
+import { bytesFromEnvironment, CACHE_ENV, DEFAULT_CACHE_BYTES } from '../../helpers/cache';
+
+import type { CacheFilter } from '../../types';
+import type { SharedPage, SharedPageStore } from '../../types';
 
 /**
  * What the store needs of a Redis client — ioredis's own methods by these names: the deployment hands in the client it

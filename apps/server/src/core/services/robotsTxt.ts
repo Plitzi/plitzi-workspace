@@ -1,7 +1,9 @@
-import { requestOrigin } from '../requestParser';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
+
 import { servedSpace } from './servedSpace';
 
-import type { SSRContext, Stage } from '../http/types';
+import type { SSRContext } from '../http/pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 /** What a space that says nothing answers: everything may be crawled. */
 export const DEFAULT_ROBOTS_TXT = 'User-agent: *\nAllow: /\n';

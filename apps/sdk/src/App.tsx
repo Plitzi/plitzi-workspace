@@ -26,8 +26,9 @@ import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { type SdkState } from '@plitzi/sdk-shared';
 import { createStoreDevToolsLogger, debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
-import { documentCookies, EnclosingSpaceContext, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
-import { runtimeStatePersist } from '@plitzi/sdk-shared/state';
+import { documentCookies, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/react';
+import { runtimeStatePersist } from '@plitzi/sdk-shared/store';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 
@@ -47,7 +48,7 @@ import type {
   Server,
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
-import type { ThemeScope } from '@plitzi/sdk-shared/theme';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ReactNode } from 'react';
 
 export type AppProps = {

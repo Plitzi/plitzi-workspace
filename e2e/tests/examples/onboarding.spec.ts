@@ -189,6 +189,8 @@ describeTarget('server-actions-schedules', subject => {
     capture
   }) => {
     await page.goto(subject.origin);
+    // What is typed before the page hydrates is the server's markup, which hydration takes back.
+    await expect(page.locator('[data-hydrated]')).toHaveCount(1);
     await page.getByLabel('Remind me to').fill('Water the plants');
     await page.getByLabel('In how many seconds').fill('3');
     await page.getByRole('button', { name: 'Queue the reminder' }).click();
@@ -317,6 +319,8 @@ describeTarget('runtime', subject => {
    *  is a stream held open — each answered by the one module the platform would run beside a space. */
   test('the page shows the count and a visit adds one, through the runtime’s own task', async ({ page }) => {
     await page.goto(subject.origin);
+    // A button clicked before the page hydrates is the server's markup, and does nothing.
+    await expect(page.locator('[data-hydrated]')).toHaveCount(1);
     const count = page.locator('[data-plitzi-el="visits-count"]');
     await expect(count).toHaveText(/^\d+ visits so far$/);
     const before = Number.parseInt((await count.textContent()) ?? '', 10);
@@ -342,5 +346,54 @@ describeTarget('runtime', subject => {
     controller.abort();
 
     expect(JSON.parse(first.replace(/^data: /, ''))).toMatchObject({ listening: 1 });
+  });
+});
+
+/** The README's promise, both ways round: the page is the page server's, the press is the worker's — and the page
+ *  server runs none of it. Which process answered is read off where the browser sent the call. */
+const pressesOnAWorker = (id: string, callsAt: (subject: { origin: string }) => string) => {
+  describeTarget(id, subject => {
+    test('a press runs on the worker, and the page shows what it answered', async ({ page }) => {
+      const calls: string[] = [];
+      page.on('request', request => {
+        if (request.method() === 'POST') {
+          calls.push(request.url());
+        }
+      });
+      await page.goto(subject.origin);
+      // A button clicked before the page hydrates is the server's markup, and does nothing.
+      await expect(page.locator('[data-hydrated]')).toHaveCount(1);
+      await expect(page.getByText('No presses yet')).toBeVisible();
+      const count = page.locator('[data-plitzi-el="press-count"]');
+
+      await page.getByRole('button', { name: 'Press' }).click();
+      await expect(count).toHaveText(/^Presses so far: \d+$/);
+      const first = Number.parseInt((await count.textContent())?.replace('Presses so far: ', '') ?? '', 10);
+      await page.getByRole('button', { name: 'Press' }).click();
+
+      await expect(count).toHaveText(`Presses so far: ${String(first + 1)}`);
+      expect(calls).toEqual([callsAt(subject), callsAt(subject)]);
+    });
+  });
+};
+
+pressesOnAWorker('actions-on-a-worker', subject => `${subject.origin}/_action`);
+pressesOnAWorker('actions-on-another-origin', () => `http://127.0.0.1:${String(PORTS.elsewhereWorker)}/_action`);
+
+describeTarget('actions-on-another-origin', () => {
+  test('the worker answers its pages’ origin alone', async ({ request }) => {
+    const worker = `http://127.0.0.1:${String(PORTS.elsewhereWorker)}/_action`;
+    const from = (origin: string) =>
+      request.post(worker, {
+        headers: { origin, 'sec-fetch-site': 'cross-site' },
+        data: { actionId: 'press', input: {} }
+      });
+
+    const own = await from(`http://127.0.0.1:${String(PORTS.elsewherePages)}`);
+    const foreign = await from('https://elsewhere.example');
+
+    expect(own.status()).toBe(200);
+    expect(own.headers()['access-control-allow-origin']).toBe(`http://127.0.0.1:${String(PORTS.elsewherePages)}`);
+    expect(foreign.status()).toBe(403);
   });
 });

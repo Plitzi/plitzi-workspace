@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { busyLog, createRenderTurns, renderLimitFor, renderLimitOf } from './renderTurns';
-import { serverLog } from '../../helpers/serverLog';
 
 afterEach(() => {
   vi.useRealTimers();

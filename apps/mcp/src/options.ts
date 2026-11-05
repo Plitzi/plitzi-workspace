@@ -1,4 +1,4 @@
-import type { OAuthConfig } from '@plitzi/sdk-shared';
+import type { OAuthConfig } from '@plitzi/sdk-kernel/types';
 
 /** How a rendered widget reaches ANYTHING outside its sandbox — images, media, fonts, and the endpoints an
  *  apiContainer fetches. A widget runs in an iframe under a CSP the host builds from the origins this server

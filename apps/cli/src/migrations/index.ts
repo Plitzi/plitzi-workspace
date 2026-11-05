@@ -1,6 +1,7 @@
 import { folderImports } from './changes/folderImports';
 import { livePagesOption } from './changes/livePagesOption';
 import { movedExports } from './changes/movedExports';
+import { platformServer } from './changes/platformServer';
 
 import type { Migration } from './types';
 
@@ -17,4 +18,4 @@ export type { Migration, MigrationEdit, MigrationFinding, MigrationPlace, Migrat
  * `template.test.ts` beside it. One
  * stays as long as a project may still be on a version before it; removing it is a decision, said in the changeset.
  */
-export const MIGRATIONS: readonly Migration[] = [folderImports, movedExports, livePagesOption];
+export const MIGRATIONS: readonly Migration[] = [folderImports, movedExports, livePagesOption, platformServer];

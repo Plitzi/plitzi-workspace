@@ -3,7 +3,7 @@ import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { escapeHtml } from '../../helpers/escapeHtml';
 
-import type { Stage } from '../../core/http/types';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 /**
  * The page a project's server answers with while its space does not author — while developing only.

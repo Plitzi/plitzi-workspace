@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 
 import { offlineDataOf } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
 
 /**
  * Which React a page loads: the development build for the page that draws the dev tools — what the visitor chose with

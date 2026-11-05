@@ -254,7 +254,7 @@ runs when it can and says what is missing when it cannot — the vendor bundle o
 builder token exported.
 
 **The builder always runs.** With nothing exported it boots against the mock, and the suite mints its own
-credentials for it ([`credentials.ts`](./credentials.ts), through the SDK's own `createTokens`) — a mocked run
+credentials for it ([`credentials.ts`](./credentials.ts), through the kernel's own `createTokens`) — a mocked run
 needs them readable, not valid, and nothing there ever verifies a signature. That is what replaced the token
 pasted into `index.html` and expiring a day later.
 

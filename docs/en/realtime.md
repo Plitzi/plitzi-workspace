@@ -253,7 +253,7 @@ A page connects one of two ways, and the server serves both at the same address.
 use:
 
 ```ts
-createServer({ /* … */, realtime: { transport: 'websocket' } });   // 'sse' when absent
+createPlatform({ /* … */, realtime: { transport: 'websocket' } });   // 'sse' when absent
 ```
 
 |               | Server-Sent Events (`sse`)                     | WebSocket (`websocket`)                              |
@@ -333,11 +333,12 @@ type PubSubAdapter = {
 ```
 
 ```ts
-import { createMemoryPubSub, createRedisPubSub, createServer } from '@plitzi/sdk-server';
+import { createMemoryPubSub, createRedisPubSub } from '@plitzi/sdk-kernel/pubsub';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
-createServer({ /* … */, realtime: { pubsub: createMemoryPubSub() } });   // the default, when `realtime` is absent
-createServer({ /* … */, realtime: { pubsub: createRedisPubSub({ publisher: redis, subscriber: redis.duplicate() }) } });
-createServer({ /* … */, realtime: false });                             // no `/_realtime` at all
+createPlatform({ /* … */, realtime: { pubsub: createMemoryPubSub() } });   // the default, when `realtime` is absent
+createPlatform({ /* … */, realtime: { pubsub: createRedisPubSub({ publisher: redis, subscriber: redis.duplicate() }) } });
+createPlatform({ /* … */, realtime: false });                             // no `/_realtime` at all
 ```
 
 - **`createMemoryPubSub()`** — one process, and its workers: a publish is also a fleet broadcast, delivered by every
@@ -350,13 +351,13 @@ createServer({ /* … */, realtime: false });                             // no 
 Each process holds one adapter subscription per topic, however many pages share it; topics are namespaced by space and
 environment before they reach the adapter.
 
-**An actions runner that serves no pages** — one a deployment makes with `createActionsModule` (`@plitzi/sdk-server/actions`):
+**An actions runner that serves no pages** — one a deployment makes with `createActionsModule` (`@plitzi/sdk-actions`):
 a queue consumer, an API process answering test runs — has no channels of its own, and a job it takes that publishes
 (`ctx.publish`, `realtime.publish`) fails there on every attempt. Give it the page servers' own: the same `pubsub` and
 `kv`, so what it says reaches every page they hold open.
 
 ```ts
-import { createActionRealtime, createActionsModule } from '@plitzi/sdk-server/actions';
+import { createActionRealtime, createActionsModule } from '@plitzi/sdk-actions';
 
 createActionsModule({ /* … */, kv, realtime: createActionRealtime({ getOfflineData, pubsub, kv }) });
 ```

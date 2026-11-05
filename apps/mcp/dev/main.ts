@@ -2,11 +2,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { consoleLogger } from '@plitzi/sdk-server/kernel';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
 
 import { createServer } from '../src/server';
 
-import type { Schema, SSRAdapters, SSRSpaceDeployment, Style } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 
 // The lib build replaces `VERSION` with the package version (see vite.config.ts `define`); running the sources
 // through tsx there is no such replacement, and the MCP server reports it in its handshake.

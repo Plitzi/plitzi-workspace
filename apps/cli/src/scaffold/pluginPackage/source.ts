@@ -328,7 +328,7 @@ export default main;
 export const pluginFunctionsFile = ({
   component,
   type
-}: PluginNames): string => `import { defineFunctions } from '@plitzi/sdk-server/functions';
+}: PluginNames): string => `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 /**
  * ${component}'s server half. Its routes answer under \`/fn/plugins/${type}/\` — \`usePluginRoute('${type}')\` in the
@@ -336,7 +336,7 @@ export const pluginFunctionsFile = ({
  * action. \`ctx.kv\` is this plugin's own corner of the space's store; the space's credentials and realtime channels are
  * not reachable from here.
  *
- * Files here import each other by relative path, and \`@plitzi/sdk-server/functions\` — nothing else.
+ * Files here import each other by relative path, and \`@plitzi/sdk-runtime\` — nothing else.
  */
 export default defineFunctions({
   routes: {

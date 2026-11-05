@@ -75,6 +75,25 @@ export const TARGETS: Target[] = [
     ]
   },
   {
+    name: 'sdk-server-call',
+    description: "sdk-server answering a visitor's action call (POST /_action): what the page cache cannot hold",
+    cwd: PAGE_SERVER_DIR,
+    entry: 'pageServer.js',
+    prepare: compilePageServer,
+    env: { SPACE_ENVIRONMENT: 'production', BENCH_ACTIONS: '1' },
+    ready: '/',
+    scenarios: [
+      {
+        name: 'call',
+        method: 'POST',
+        path: '/_action',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ actionId: 'bench-call', input: {} }),
+        expectStatus: [200]
+      }
+    ]
+  },
+  {
     name: 'cli-server',
     description: 'A server project as `plitzi create` writes it — the product as a self-hoster gets it',
     cwd: CLI_SERVER_DIR,

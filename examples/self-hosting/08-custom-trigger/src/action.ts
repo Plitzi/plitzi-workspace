@@ -1,6 +1,6 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionLookups } from '@plitzi/sdk-actions';
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
 /**

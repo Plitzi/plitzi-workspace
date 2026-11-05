@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto';
 
-import { TRUSTED_TYPES_POLICIES } from '@plitzi/sdk-shared/security';
+import { frameAncestorsOf } from '@plitzi/sdk-kernel/http';
+import { TRUSTED_TYPES_POLICIES } from '@plitzi/sdk-shared/helpers';
 
-import { frameAncestorsOf } from '../../core/http/securityHeaders';
-
-import type { SSRResponseHelpers, SSRServerConfig, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRServerConfig } from '../../types';
+import type { SSRResponseHelpers, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
 /** Where a browser reports what the page's script policy would have refused (`cspReportStage`). */
 export const CSP_REPORT_PATH = '/_plitzi/csp-report';

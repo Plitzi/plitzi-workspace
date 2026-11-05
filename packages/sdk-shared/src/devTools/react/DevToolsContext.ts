@@ -1,4 +1,4 @@
-import { sharedContext } from '../../helpers/sharedContext';
+import { sharedContext } from '../../react/sharedContext';
 
 import type { Log, ProviderCallback } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';

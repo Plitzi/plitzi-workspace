@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import { createActionsModule } from '@plitzi/sdk-actions';
+import { createActionResolver } from '@plitzi/sdk-actions/render';
 import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 
 import { connectorRscData } from './connectorRscData';
-import { createActionsModule } from '../actions';
 
-import type { ActionEntry, ElementInteraction, Schema, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { ActionEntry, ElementInteraction, Schema } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
   id,
@@ -75,7 +77,7 @@ const req = {
 
 const resolve = (attributes: Record<string, unknown>, rsc: Schema['rsc'] | null = { enabled: true }) => {
   const lookups = { getAction: () => Promise.resolve(entry) };
-  const getRscData = connectorRscData({ actions: { lookups, module: createActionsModule({ lookups }) } });
+  const getRscData = connectorRscData({ engine: createActionResolver(lookups, createActionsModule({ lookups })) });
 
   return getRscData({
     req,
@@ -98,7 +100,7 @@ describe('connectorRscData', () => {
         })
     };
     const getRscData = connectorRscData({
-      actions: { lookups, module: createActionsModule({ lookups }) },
+      engine: createActionResolver(lookups, createActionsModule({ lookups })),
       elementTimeoutMs: 20
     });
 

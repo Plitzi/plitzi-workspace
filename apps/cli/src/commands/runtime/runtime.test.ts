@@ -28,12 +28,12 @@ vi.mock('../../account/oauth', async importOriginal => ({
 const { runtimeStatus, setRuntimeVariable, unsetRuntimeVariable } = await import('./runtime');
 const { push } = await import('../space/push');
 
-/** The project's own sdk-server, as an install would put it: this workspace's. */
-const installSdkServer = async () => {
+/** The project's own sdk-actions, which packs its runtime, as an install would put it: this workspace's. */
+const installSdkActions = async () => {
   await fs.mkdir(path.join(project, 'node_modules', '@plitzi'), { recursive: true });
   await fs.symlink(
-    path.join(WORKSPACE_ROOT, 'apps/server'),
-    path.join(project, 'node_modules', '@plitzi', 'sdk-server'),
+    path.join(WORKSPACE_ROOT, 'packages/sdk-actions'),
+    path.join(project, 'node_modules', '@plitzi', 'sdk-actions'),
     'dir'
   );
 };
@@ -73,7 +73,7 @@ afterEach(async () => {
 
 describe('plitzi runtime', () => {
   it('packs the module with the project’s own sdk-server, and keeps it as the draft runtime', async () => {
-    await installSdkServer();
+    await installSdkActions();
     // A folder, as it grows: the module beside the one it imports.
     await fs.mkdir(path.join(project, 'src', 'runtime'), { recursive: true });
     await fs.writeFile(

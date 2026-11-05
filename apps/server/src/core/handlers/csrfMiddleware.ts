@@ -1,8 +1,8 @@
-import { carrierOf, csrfFailureMessage } from '../auth/csrf';
+import { carrierOf, csrfFailureMessage } from '@plitzi/sdk-kernel/identity';
 
 import type { AuthedRequest, JsonResponse } from './types';
-import type { Csrf } from '../auth/csrf';
-import type { SessionCookies } from '../auth/session';
+import type { Csrf } from '@plitzi/sdk-kernel/identity';
+import type { SessionCookies } from '@plitzi/sdk-kernel/identity';
 
 export interface CsrfMiddlewareOptions {
   /** Paths this deployment answers that must not be asked for a token — a payment gateway's webhook, say. */

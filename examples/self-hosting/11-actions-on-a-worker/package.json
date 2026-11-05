@@ -1,0 +1,30 @@
+{
+  "name": "@plitzi/example-actions-on-a-worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pages on one server, actions on a worker of their own: one origin through a proxy, or the worker on another.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts",
+    "start:elsewhere": "node src/main.ts --elsewhere",
+    "start:pages": "node src/pages.ts",
+    "start:worker": "node src/worker.ts",
+    "start:gateway": "node src/gateway.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "yarn run -T eslint ."
+  },
+  "dependencies": {
+    "@plitzi/sdk-actions": "workspace:*",
+    "@plitzi/sdk-authoring": "workspace:*",
+    "@plitzi/sdk-kernel": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": "^24.22.1 || >=26.12.1"
+  }
+}

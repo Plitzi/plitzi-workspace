@@ -69,7 +69,7 @@ export type SpaceExport = {
      * platform keeps that privately, so it travels here rather than as a file on the CDN.
      */
     plugins: { type: string; files: SpaceExportFile[]; functions?: Record<string, string> }[];
-    /** The packed runtime, in base64 — what `@plitzi/sdk-server/runtime` loads. */
+    /** The packed runtime, in base64 — what `@plitzi/sdk-actions/runtimes` loads. */
     runtime: string | null;
   };
   /** The space's files on its CDN — pictures, fonts, data — for the project to serve itself. */

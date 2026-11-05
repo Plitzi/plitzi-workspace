@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createAuthApi } from './api';
-import { createCarriers, presentedOrigin } from './credentials';
-import { createIdentity } from './identity';
-import { actorFor, ada, body, build } from './tests/lifecycle';
-import { createTokens } from './tokens';
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+import { createTokens } from '@plitzi/sdk-kernel/tokens';
 
-import type { AccountAdapters, AuthApiConfig, SessionSummary } from './api';
+import { createAuthApi } from './api';
+import { actorFor, ada, body, build } from './tests/lifecycle';
+
+import type { AuthApiConfig } from './api';
+import type { AccountAdapters, SessionSummary } from '@plitzi/sdk-kernel/identity';
 
 describe('capabilities follow the adapters', () => {
   it('offers nothing extra to a store that implements nothing extra', () => {
@@ -239,7 +242,7 @@ describe('administration', () => {
   });
 
   it('honours a deployment’s own permission name', async () => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -366,7 +369,7 @@ describe('what a password has to be', () => {
   });
 
   it('takes the deployment’s own minimum', async () => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -393,7 +396,7 @@ describe('what a password has to be', () => {
   /** The hook is where a breach-list lookup or a strength estimator goes; the reason it gives reaches the caller. */
   it('reports what a deployment’s own rule refused, and what it was given', async () => {
     const validate = vi.fn(() => Promise.resolve('That password is in a breach list'));
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -422,7 +425,7 @@ describe('throttling', () => {
   const carrier = { headers: {}, hostname: 'test' };
 
   const limited = (adapters: Partial<AccountAdapters>, rateLimit: AuthApiConfig['rateLimit']) => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),

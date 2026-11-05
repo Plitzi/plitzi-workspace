@@ -22,8 +22,8 @@ const { toggleTheme, setTheme, interactionTrigger, currentTheme } = vi.hoisted((
   currentTheme: { value: 'dark' }
 }));
 
-vi.mock('@plitzi/sdk-shared/theme', async importOriginal => ({
-  ...(await importOriginal<typeof import('@plitzi/sdk-shared/theme')>()),
+vi.mock('@plitzi/sdk-shared/theme/react', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/theme/react')>()),
   useTheme: () => ({
     theme: currentTheme.value,
     resolvedTheme: currentTheme.value === 'system' ? 'light' : currentTheme.value,

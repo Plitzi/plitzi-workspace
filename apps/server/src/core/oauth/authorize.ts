@@ -1,3 +1,5 @@
+import { requestAuthority } from '@plitzi/sdk-kernel/http';
+
 import { renderConsentPage } from './consentPage';
 import { issueContextFor } from './issueContext';
 import { AUTHORIZE_PATH } from './metadata';
@@ -6,7 +8,6 @@ import { randomId } from './pkce';
 import { dropPending, getClient, getPending, putCode, putPending } from './records';
 import { isLoopbackRedirectUri } from './register';
 import { redirectToSignIn, redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
-import { requestAuthority } from '../requestParser';
 
 import type { OAuthParams } from './params';
 import type {
@@ -17,7 +18,7 @@ import type {
   OAuthUser,
   SSRRequest,
   SSRResponseHelpers
-} from '@plitzi/sdk-shared';
+} from '@plitzi/sdk-kernel/types';
 
 const DEFAULT_CODE_TTL_SECONDS = 60;
 

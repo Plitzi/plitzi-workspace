@@ -21,7 +21,9 @@ export const createCapture = async (page: Page, testInfo: TestInfo): Promise<Cap
 
   return async (name, target = page) => {
     const file = path.join(dir, `${slug(testInfo.title)}--${slug(name)}.png`);
-    await target.screenshot({ path: file, fullPage: true });
+    // `caret: 'initial'`: Playwright's default writes `caret-color: transparent` on every input, and a page still
+    // hydrating — a step's capture right after a navigation — reports that as a hydration mismatch it never had.
+    await target.screenshot({ path: file, fullPage: true, caret: 'initial' });
     await testInfo.attach(name, { path: file, contentType: 'image/png' });
 
     return file;

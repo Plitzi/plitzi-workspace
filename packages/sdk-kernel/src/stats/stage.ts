@@ -1,0 +1,45 @@
+import { statsRecorderFor } from './recorder';
+import { bearerMatches } from '../http/bearer';
+
+import type { BaseContext, Stage } from '../http/types';
+
+export const STATS_PATH = '/_stats';
+
+/**
+ * `GET /_stats`: this process's {@link ProcessStats}, for whoever holds its stats secret (`stats.secret`) — always
+ * behind it, whether or not the path is also kept off the public network, because a self-hoster may have no network
+ * policy to keep it there. A server configured with no `stats` answers nothing here, and the path goes on to what else
+ * it serves.
+ */
+export const statsStage: Stage = ({ req, res, config }) => {
+  if (req.path !== STATS_PATH || !config.stats) {
+    return false;
+  }
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (req.method !== 'GET') {
+    res.setStatus(405);
+    res.send(JSON.stringify({ error: `${STATS_PATH} is read with GET` }));
+
+    return true;
+  }
+
+  if (!bearerMatches(req.headers.authorization, config.stats.secret)) {
+    res.setStatus(401);
+    res.send(JSON.stringify({ error: `${STATS_PATH} is read with this server's stats secret, as a bearer token` }));
+
+    return true;
+  }
+
+  res.setStatus(200);
+  res.send(JSON.stringify(statsRecorderFor(config.stats, config.health?.version).snapshot()));
+
+  return true;
+};
+
+/** What a config's stats ask: refused at start when the secret is too short to be one. */
+export const statsConfigProblem = (config: Pick<BaseContext['config'], 'stats'>): string | undefined =>
+  config.stats && config.stats.secret.length < 32
+    ? '`stats.secret` must be at least 32 characters: /_stats says what this process runs and how it is doing'
+    : undefined;

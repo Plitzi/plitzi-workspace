@@ -1,9 +1,10 @@
+import { frameAncestors as mergeFrameAncestors } from '@plitzi/sdk-kernel/identity';
+
 import { presentsCredential } from './resolvers';
 import { isRefusal } from './types';
-import { frameAncestors as mergeFrameAncestors } from '../../core/auth/domains';
 
 import type { SpaceCache, SpaceRefusal, SpaceResolution, SpaceResolver } from './types';
-import type { SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
 export interface FrameAncestorsConfig {
   /** The domains this space declared. Usually the origins on its public credential. */

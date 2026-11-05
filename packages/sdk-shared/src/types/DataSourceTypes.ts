@@ -1,5 +1,5 @@
 import type { Element } from './SchemaTypes';
-import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { Field, RuleValue } from '../conditions/types';
 
 export type DataSourceUtilityParamsOption =
   { label: string; value: string } | { label: string; options: { label: string; value: string }[] };

@@ -34,6 +34,71 @@ space while it hydrates.
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
   behaviour.
 
+- **`@plitzi/sdk-kernel`** is new: what every server process is built on. `@plitzi/sdk-server/kernel` is gone, and
+  the page server no longer re-exports it — import from the kernel's entries: `closeOnSignals`, `unusedPort`,
+  `parseRequest`, `createHttpServer`, `makeHandler`, the stages' types and health from `@plitzi/sdk-kernel/http`;
+  `serverLog` and `consoleLogger` from `./log`; `createTokens` and `generateTokenKeys` from `./tokens`; the session
+  cookies, CSRF, `createIdentity`, the RBAC checks and the scopes from `./identity`; `esbuildBuild` from `./build`;
+  `assertOutboundAllowed` from `./outbound`. `@plitzi/sdk-server/auth` keeps signing in (`createAuth`, the flows).
+- **`@plitzi/sdk-runtime`** is new: the contract a space's own code is written against, and what runs it. A space's
+  functions import `defineFunctions`, `ActionRefusal` and the `ctx` types from `@plitzi/sdk-runtime`, and a runtime
+  `defineRuntime` — the build refuses `@plitzi/sdk-server/functions`, naming the new one, and `plitzi upgrade` rewrites
+  a project's imports and adds the package. The runner and its isolates are `@plitzi/sdk-runtime/runner`'s
+  (`startFunctionsRunnerService`, `createIsolateRunner`), the runtime's host `./host`'s; `createLocalFunctions` is
+  handed its runner (`{ runner: createIsolateRunner({ concurrency: 1 }) }`). A runner installs `isolated-vm` alone: the
+  web APIs' prelude ships built, so core-js is no longer needed. `reachOwnServer` and `reachSpaceInside` are
+  `@plitzi/sdk-kernel/outbound`'s; `endpointFor`, `endpointProblem` and `RUNTIME_DESCRIBE_PATH`
+  `@plitzi/sdk-shared/functions`'.
+- **`@plitzi/sdk-actions`** is new: the actions engine and its worker. `createServer` serves pages and refuses
+  `action`, `functions`, `connectors` and `realtime`: one process serving both is `createPlatform`
+  (`@plitzi/sdk-server/platform`), and a worker of its own `createWorker` (`@plitzi/sdk-actions/worker`), with
+  `identity: auth.ssrIdentityAdapters`. `@plitzi/sdk-server`'s `./actions`, `./functions`, `./functions-runner`,
+  `./runtime`, `./mysql`, `./mongo` and `./sqlite` are gone: the engine's are `@plitzi/sdk-actions` and its entries, the
+  account store is `@plitzi/sdk-kernel/mysql`, and the pub/sub adapters `@plitzi/sdk-kernel/pubsub`. `plitzi upgrade`
+  rewrites a project's imports and its server file (`movedExports`, `platformServer`).
+- **A worker may serve the actions on an origin of its own.** `action.origin` (`https://actions.example.com`) tells the
+  pages where to call, and `action.pageOrigins` tells the worker which pages do: it answers them with CORS and
+  credentials, takes them as its own in the cross-site check, and refuses to start with the first and not the second.
+  The page's action calls and a provider's writes now send the visitor's cookies (`credentials: 'include'`), which on
+  the page's own origin is what they did; a provider's writes go where the server says (`actions.endpoint`) instead of
+  a fixed `/_action`, so a custom `action.path` reaches them too. Example: `examples/self-hosting/11-actions-on-a-worker`.
+- **A page server may run no action at all.** `engineOnWorker({ render: { url, secret } })` asks the worker for each
+  server element that names an action or a connector (`POST /_render`, behind the worker's `render.secret`, versioned
+  `RENDER_PROTOCOL` `1.0`): its data, or its error state, and the runs that fed it.
+- **Every process says how it is doing.** `stats: { secret, pool }` on a page server, a worker or an MCP server answers
+  `GET /_stats` behind that secret: its load against its slots, CPU, memory, event-loop lag, its runs' failures and
+  refusals by reason over 1, 15 and 60 minutes, and `healthy` or `degraded` with why; a functions runner answers the
+  same behind its protocol secret. `readPools` (`@plitzi/sdk-kernel/stats`) reads every instance at once, a missing one
+  `down`, from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
+  ceiling ended it.
+- **`@plitzi/sdk-shared` no longer depends on plitzi-ui**, and React, React DOM and nexus are optional peers: a server,
+  a worker or a runner installs neither, and a page server loads neither nexus, plitzi-ui nor zod at start. A package
+  that draws or holds a store declares them itself. What moved, all rewritten by `plitzi upgrade` (`movedExports`):
+  `sharedContext`, `EnclosingSpaceContext` and `generateFacade` (named now) to `@plitzi/sdk-shared/react`; a condition's
+  types and `evaluateRuleGroup`, `ruleValuesOf` to `@plitzi/sdk-shared/conditions`, the rule evaluator the builder's
+  preview, the SDK and the server all read (plitzi-ui keeps its own copy; the workspace's ESLint refuses it); the theme's provider, hooks and store to `./theme/react` and
+  the network contexts to `./network/react`; `runtimeStatePersist` to `./store`; `TRUSTED_TYPES_POLICIES` to
+  `./helpers`. `evaluateRuleGroup` takes `{ whenMissing }`, what a rule whose field is missing answers.
+- **The server's types left `@plitzi/sdk-shared`**, each to the package that owns it: the request pipeline, the
+  adapters, `ServerBaseConfig`, the log's events and OAuth's are `@plitzi/sdk-kernel/types`; the job queue and the
+  engine's configuration (`EngineOptions`, `EngineConfig`, `SSRActionConfig`) `@plitzi/sdk-actions/types`; the page
+  server's (`SSRServerConfig`, `SSRServer`, `SSRTemplateFn`, `CacheManager`) `@plitzi/sdk-server`. `sdk-shared` keeps
+  what the browser reads too (`SSRUser`, `PluginSource`, `SSRRscData`, a job's record) and `ServerFlags`. `plitzi
+  upgrade` rewrites the imports (`movedExports`).
+- **Credentials are signed with ES256.** `createAuth({ tokens })` and `createTokens` take `keys` — a key pair
+  `generateTokenKeys()` makes once, kept as a secret — instead of `secret`, and `createAuth` takes `secret` (32
+  characters or more) for its CSRF tokens. A process that only checks credentials is given the public key alone.
+  Every session and token signed before is refused: its holders sign in again.
+- **The functions runner and the platform speak protocol `1.1`**, and refuse each other across a major version: deploy
+  them together, the runner first. `FUNCTIONS_PROTOCOL` and the `ctx` vocabulary are in `@plitzi/sdk-shared/functions`.
+  1.1 adds `busy`: a runner past `memoryShare` (85% of its memory limit) starts no invocation, and the run is
+  `over_capacity`, with a retry. `protocolRefusal` takes the names of its sides.
+- **An invocation has 32 MB of memory by default**, from 64: a plan that parses large answers raises it (`limitsFor`).
+  A runner keeps 32 MB of compiled bundles (`cacheBytes`), from 64.
+- **A run is held to `maxRunBytes`** (10 MB) across every answer its steps read, beside `maxResponseBytes`, and a server
+  short of memory (`concurrency.memoryShare`, 85% of its limit) refuses a new run as `over_capacity`.
+- **`createHttpServer`** answers `{ listen, close, channel }`; its parts no longer take `cache` or `plugins`.
+
 ## The server (`@plitzi/sdk-server`)
 
 - The render cache keeps a page in the encoding the server prefers — a 1 MB page as the ~90 KB a browser is sent — and

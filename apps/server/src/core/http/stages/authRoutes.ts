@@ -1,13 +1,16 @@
-import { refusedCrossSite } from './crossSiteWrites';
-import { exchangeStage } from './exchangeRoute';
-import { knowHostDeployment } from './hostDeployment';
-import { signInStage } from './signInRoute';
-import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
-import { readRawBody } from '../../requestParser';
-import { isNavigation, safeRedirectTarget } from '../navigation';
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { refusedCrossSite } from '@plitzi/sdk-kernel/http';
+import { readRawBody } from '@plitzi/sdk-kernel/http';
+import { isNavigation, safeRedirectTarget } from '@plitzi/sdk-kernel/http';
+import { clearSessionCookies, writeSessionCookies } from '@plitzi/sdk-kernel/identity';
 
-import type { Stage } from '../types';
-import type { SessionScope, SSRRequest } from '@plitzi/sdk-shared';
+import { exchangeStage } from './exchangeRoute';
+import { signInStage } from './signInRoute';
+
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { SessionScope } from '@plitzi/sdk-shared';
 
 /**
  * Credentials as they arrive from a page: a posted form, or JSON from a script. Every field is handed to the
@@ -35,7 +38,7 @@ const parseCredentials = (req: SSRRequest): Record<string, string> => {
   return Object.fromEntries(new URLSearchParams(req.body));
 };
 
-export const loginStage: Stage = async ctx => {
+export const loginStage: Stage<SSRContext> = async ctx => {
   const { config, raw, req, res } = ctx;
   const loginPath = config.loginPath === false ? null : (config.loginPath ?? '/auth/login');
   if (!loginPath || req.method !== 'POST' || req.path !== loginPath) {
@@ -84,7 +87,7 @@ export const loginStage: Stage = async ctx => {
   return true;
 };
 
-export const logoutStage: Stage = async ctx => {
+const logoutStage: Stage<SSRContext> = async ctx => {
   const { config, raw, req, res } = ctx;
   const logoutPath = config.logoutPath === false ? null : (config.logoutPath ?? '/auth/logout');
   if (!logoutPath || req.method !== 'POST' || req.path !== logoutPath) {
@@ -125,7 +128,7 @@ const isSessionScope = (value: unknown): value is SessionScope => value === 'sit
  * ending it on their phone too; `{ scope: 'all' }`, every session of the account. Said, never assumed: a sign-out the
  * page did not mean is one the person did not ask for. Guarded as a sign-out is — a page of another origin is refused.
  */
-export const logoutEverywhereStage: Stage = async ctx => {
+const logoutEverywhereStage: Stage<SSRContext> = async ctx => {
   const { config, raw, req, res } = ctx;
   const path =
     config.logoutEverywherePath === false ? null : (config.logoutEverywherePath ?? '/auth/logout-everywhere');
@@ -171,4 +174,10 @@ export const logoutEverywhereStage: Stage = async ctx => {
   return answer(200, { scope, ended: true });
 };
 
-export const authRoutesStages: Stage[] = [loginStage, logoutStage, logoutEverywhereStage, exchangeStage, signInStage];
+export const authRoutesStages: Stage<SSRContext>[] = [
+  loginStage,
+  logoutStage,
+  logoutEverywhereStage,
+  exchangeStage,
+  signInStage
+];

@@ -1,4 +1,5 @@
 import { loadTypeScript } from '../../projectTypeScript';
+import { SPLIT } from '../serverSplit';
 
 import type { Migration, MigrationPlace } from '../types';
 import type TypeScript from 'typescript';
@@ -32,11 +33,31 @@ const MOVES: readonly Move[] = [
       ['schema', ['SchemaContext']],
       ['plugins', ['PluginsContext']],
       ['devTools', ['DevToolsContext', 'DevToolsContextValue']],
-      ['flags', ['useFlagResolution']]
+      ['flags', ['useFlagResolution']],
+      ['network', ['NetworkContext', 'NetworkInternalContext', 'NetworkContextValue', 'NetworkContextValueBuilder']],
+      ['network', ['BuilderNetworkContextValue', 'NetworkInternalContextValue']],
+      ['theme', ['ThemeProvider', 'ThemeProviderProps', 'ThemeScope', 'ThemeScopeContext', 'ThemeStart', 'useTheme']],
+      ['theme', ['ThemeStartContext', 'ThemeStoreInstance', 'themeStore', 'createThemeState', 'createThemeStore']],
+      ['theme', ['resolveScheme', 'setAreaTheme', 'setMachineScheme', 'setThemeMode', 'startingThemeState']],
+      ['theme', ['themeFor', 'useThemeState', 'useThemeStore', 'SPACE_THEME_AREA']]
     ] as const
   ).flatMap(([area, names]) =>
     names.map(name => ({ name, from: `@plitzi/sdk-shared/${area}`, to: `@plitzi/sdk-shared/${area}/react` }))
-  )
+  ),
+  // sdk-shared without plitzi-ui, and its server's folders without React or nexus (RFC 0032, D13): React's own helpers in
+  // `react`, a condition and its evaluator in `conditions`, the persisted state with the store, the policies' names in
+  // `helpers`.
+  ...(
+    [
+      ['helpers', 'react', ['sharedContext', 'EnclosingSpaceContext', 'generateFacade']],
+      ['helpers', 'conditions', ['evaluateRuleGroup', 'ruleValuesOf', 'Rule', 'RuleGroup', 'RuleValue']],
+      ['state', 'store', ['runtimeStatePersist', 'stateOwner', 'StateOwner']],
+      ['security', 'helpers', ['TRUSTED_TYPES_POLICIES', 'TrustedTypesPolicyName']]
+    ] as const
+  ).flatMap(([from, to, names]) =>
+    names.map(name => ({ name, from: `@plitzi/sdk-shared/${from}`, to: `@plitzi/sdk-shared/${to}` }))
+  ),
+  ...SPLIT.flatMap(([from, to, names]) => names.map(name => ({ name, from, to })))
 ];
 
 const movedFrom = (from: string, name: string): Move | undefined =>
@@ -63,11 +84,19 @@ export const movedExports: Migration = {
       const lineOf = (offset: number): number => text.slice(0, offset).split('\n').length;
       if (!ts) {
         return Promise.resolve(
-          MOVES.flatMap(move =>
-            [...text.matchAll(new RegExp(`\\b${move.name}\\b`, 'g'))].map(match => ({
-              line: lineOf(match.index),
-              what: `${move.name} is imported from \`${move.to}\` now (the project installs no TypeScript to read the import with)`
-            }))
+          namedImports(text).flatMap(({ from, names, offset }) =>
+            names.flatMap(name => {
+              const move = movedFrom(from, name);
+
+              return move
+                ? [
+                    {
+                      line: lineOf(offset),
+                      what: `${name} is imported from \`${move.to}\` now (the project installs no TypeScript to read the import with)`
+                    }
+                  ]
+                : [];
+            })
           )
         );
       }
@@ -85,6 +114,26 @@ export const movedExports: Migration = {
     };
   }
 };
+
+/**
+ * The named imports a file writes, read without TypeScript: each declaration's specifier, the names it imports (as
+ * exported, before any `as`) and where it starts. Only what an import names is a move: a word elsewhere is not.
+ */
+const namedImports = (text: string): { from: string; names: string[]; offset: number }[] =>
+  [...text.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)].map(match => ({
+    from: match[2],
+    names: match[1]
+      .split(',')
+      .map(
+        part =>
+          part
+            .trim()
+            .replace(/^type\s+/, '')
+            .split(/\s+as\s+/)[0]
+      )
+      .filter(Boolean),
+    offset: match.index
+  }));
 
 /** The place an import of moved names is, with the declaration as it is written now. */
 const movedImport = (

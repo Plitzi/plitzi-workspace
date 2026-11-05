@@ -1,12 +1,12 @@
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { readRawBody } from '@plitzi/sdk-kernel/http';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { knowHostDeployment } from './hostDeployment';
-import { serverLog } from '../../../helpers/serverLog';
 import { CSP_REPORT_PATH } from '../../../modules/ssr/scriptPolicy';
-import { readRawBody } from '../../requestParser';
 
-import type { BaseContext, Stage } from '../types';
-import type { SSRScriptPolicyReport } from '@plitzi/sdk-shared';
+import type { BaseContext, Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRScriptPolicyReport } from '@plitzi/sdk-kernel/types';
 
 /**
  * What one report says: the page, what it would have refused, by which directive, where that was written, the first

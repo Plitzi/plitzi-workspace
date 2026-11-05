@@ -1,31 +1,32 @@
-import { actionLookupsOf, connectorLookupsOf } from './configSeam';
-import { privateOriginsOf } from '../helpers/outboundGuard';
-import { actionsModuleFor } from '../modules/actions/moduleFor';
-import { dataDirLookup } from '../modules/actions/runtime/projectData';
+import { dataDirLookup } from '@plitzi/sdk-kernel/data';
+import { privateOriginsOf } from '@plitzi/sdk-kernel/outbound';
+
 import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
 import { createRenewalEndpointStage, createSessionRenewalStage } from './http/stages/sessionRenewal';
 import { createPageServer } from './server/pageServer';
 import { resolveServices } from './services/resolve';
 
+import type { SSRPageServerConfig, SSRServerConfig } from '../types';
+import type { SSRServer } from '../types';
 import type { Auth } from './auth/createAuth';
-import type { PipelineExtensions } from './http/types';
-import type {
-  ConnectorLookupsConfig,
-  SSRActionConfig,
-  SSRPageAdapters,
-  SSRRscConfig,
-  SSROutboundConfig,
-  SSRPageServerConfig,
-  SSRServer,
-  SSRServerConfig
-} from '@plitzi/sdk-shared';
+import type { PipelineExtensions } from './http/pageContext';
+import type { PageEngine } from '@plitzi/sdk-kernel/engine';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
 
 export { resolveServices } from './services/resolve';
-export type { PipelineExtensions } from './http/types';
+export type { PipelineExtensions } from './http/pageContext';
 export type { ResolvedServices } from './services/resolve';
 
-export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
+/**
+ * What a page server is not configured with: the actions engine's own configuration, which `createPlatform` builds the
+ * engine from and hands the server (`engine`), or a worker runs elsewhere (RFC 0032, D12).
+ */
+const ENGINE_KEYS = ['action', 'functions', 'connectors', 'realtime'] as const;
+
+export type ServerConfig = Omit<SSRServerConfig, 'adapters' | (typeof ENGINE_KEYS)[number]> & {
+  /** What this server is handed of the actions engine (`createPlatform` builds it): absent, it runs no actions. */
+  engine?: PageEngine;
   /** A page server resolves and renders a space on every request, so the two adapters that do it are required
    *  here — see {@link SSRPageAdapters}. They are optional on the shared type because a server that renders no
    *  page (a dedicated MCP one) has nothing to answer them with. */
@@ -53,20 +54,6 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
   sessionRenewal?: { url: string } | false;
 };
 
-/**
- * The space's data as one lookup, for every reader of it: the deployment's `action.lookups.getData`, or — given none —
- * the files of `dataDir`. A `/data/<file>` provider and a function's `ctx.data` then read the same files the same way,
- * instead of the folder through one path and the lookup through another.
- */
-const withDataLookup = <T extends { action?: SSRActionConfig; dataDir?: string }>(config: T): T => {
-  const lookups = config.action?.lookups;
-  if (!config.dataDir || !lookups || lookups.getData) {
-    return config;
-  }
-
-  return { ...config, action: { ...config.action, lookups: { ...lookups, getData: dataDirLookup(config.dataDir) } } };
-};
-
 /** The server this package makes: pages and RSC, mounting whatever the config enables, plus any stages a
  *  companion package contributes through `extensions`. The MCP endpoint, the widget proxy and draft-preview
  *  arrive that way from `@plitzi/sdk-mcp`, which a page-only deployment never installs.
@@ -87,45 +74,42 @@ const withDataLookup = <T extends { action?: SSRActionConfig; dataDir?: string }
  * configure under `connectors`, and keying this on that alone left its `render` elements resolving to nothing
  * with no configuration missing anywhere.
  */
-const withConnectorRsc = <
-  T extends {
-    adapters: SSRPageAdapters;
-    connectors?: ConnectorLookupsConfig;
-    action?: SSRActionConfig;
-    rsc?: SSRRscConfig;
-    publicDir?: string;
-    dataDir?: string;
-    devMode?: boolean;
-    outbound?: SSROutboundConfig;
-  }
->(
-  config: T
+const withRsc = <T extends Omit<SSRPageServerConfig, (typeof ENGINE_KEYS)[number]>>(
+  config: T,
+  engine: PageEngine | undefined
 ): T => {
   if (config.adapters.getRscData) {
     return config;
   }
 
-  const resolved: T = { ...config, adapters: { ...config.adapters } };
-  // The same module the endpoint runs on, so a `render` element and a call share one guard set, one task registry
-  // and one `kv`. `actionsModuleFor` memoizes on the config OBJECT — so it is asked about the object the page server
-  // is handed, never the one this was spread from: asked about that one, it built a second module, and a board a
-  // call had just saved read as missing from every render.
-  const module = actionsModuleFor(resolved);
-  const actions =
-    module && config.action?.lookups ? { lookups: actionLookupsOf(config.action.lookups), module } : undefined;
-  resolved.adapters.getRscData = connectorRscData({
-    connectors: config.connectors ? connectorLookupsOf(config.connectors) : undefined,
-    actions,
-    publicDir: config.publicDir,
-    // A server with no actions has no lookup to put the folder in; it reads it the same way all the same.
-    data: actions?.lookups.getData ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
-    elementTimeoutMs: config.rsc?.elementTimeoutMs,
-    sayFailures: config.devMode === true,
-    outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
-    visitorCredentials: config.rsc?.visitorCredentials
-  });
+  return {
+    ...config,
+    adapters: {
+      ...config.adapters,
+      getRscData: connectorRscData({
+        ...(engine?.resolveElement ? { engine: engine.resolveElement } : {}),
+        publicDir: config.publicDir,
+        // The engine's lookup when it has one (`action.lookups.getData`), else the files of `dataDir`: a `/data/<file>`
+        // provider reads what a function's `ctx.data` reads.
+        data: engine?.data ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
+        elementTimeoutMs: config.rsc?.elementTimeoutMs,
+        sayFailures: config.devMode === true,
+        outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
+        visitorCredentials: config.rsc?.visitorCredentials
+      })
+    }
+  };
+};
 
-  return resolved;
+/** Refused rather than ignored: an `action` given here would leave every call a 404 with nothing said. */
+const refuseEngineConfig = (config: object): void => {
+  const given = ENGINE_KEYS.filter(key => key in config);
+  if (given.length > 0) {
+    throw new Error(
+      `createServer serves pages: ${given.join(', ')} ${given.length === 1 ? 'is' : 'are'} the actions engine's configuration. ` +
+        'Use createPlatform (@plitzi/sdk-server/platform) for pages and actions in one process, or a worker of its own.'
+    );
+  }
 };
 
 /** The renewal stage in front of whatever else gates itself, when there is anywhere to renew. */
@@ -135,16 +119,18 @@ const withRenewal = (extensions: PipelineExtensions | undefined, url: string | u
 });
 
 export const createServer = (
-  { auth, sessionRenewal, ...config }: ServerConfig,
+  { auth, sessionRenewal, engine, ...config }: ServerConfig,
   extensions?: PipelineExtensions
 ): SSRServer => {
+  refuseEngineConfig(config);
   if (!auth) {
-    const resolvedConfig = withConnectorRsc(withDataLookup(config));
+    const resolvedConfig = withRsc(config, engine);
 
     return createPageServer(
       resolvedConfig,
       resolveServices(resolvedConfig),
-      withRenewal(extensions, sessionRenewal ? sessionRenewal.url : undefined)
+      withRenewal(extensions, sessionRenewal ? sessionRenewal.url : undefined),
+      engine
     );
   }
 
@@ -162,8 +148,8 @@ export const createServer = (
   // successful sign-in is a bodyless 200 — they hold a session, not the account behind it. Left standing they
   // shadow the flows below, so a client that signed in correctly got nothing back to prove it. A deployment that
   // named its own paths keeps them: it asked for those endpoints, and they are then somewhere else entirely.
-  const resolved: SSRPageServerConfig = withConnectorRsc(
-    withDataLookup({
+  const resolved: SSRPageServerConfig = withRsc(
+    {
       loginPath: false,
       logoutPath: false,
       exchangePath: false,
@@ -174,18 +160,9 @@ export const createServer = (
         origins: [...(config.crossSiteWrites?.origins ?? []), ...auth.platformOrigins]
       },
       pageAuth: config.pageAuth ?? auth.pageAuth,
-      adapters: { ...auth.ssrAdapters, ...supplied },
-      // A server of your own: every account of its is its space's visitor — what `ctx.visitors.get` reads, public
-      // fields alone. One that says who its visitors are (`lookups.getVisitor`) keeps its own answer.
-      ...(config.action?.lookups && !config.action.lookups.getVisitor
-        ? {
-            action: {
-              ...config.action,
-              lookups: { ...config.action.lookups, getVisitor: (_space, _environment, who) => auth.publicAccount(who) }
-            }
-          }
-        : {})
-    })
+      adapters: { ...auth.ssrAdapters, ...supplied }
+    },
+    engine
   );
 
   // `preAuth`, because these gate themselves: each flow already states what a caller must present, and half of
@@ -197,5 +174,5 @@ export const createServer = (
   };
   const renewalUrl = sessionRenewal === false ? undefined : (sessionRenewal?.url ?? `${auth.basePath}/refresh`);
 
-  return createPageServer(resolved, resolveServices(resolved), withRenewal(withAuthRoutes, renewalUrl));
+  return createPageServer(resolved, resolveServices(resolved), withRenewal(withAuthRoutes, renewalUrl), engine);
 };

@@ -1,15 +1,9 @@
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 
-import { serverLog } from '../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type {
-  OfflineDataRaw,
-  Schema,
-  SSRPageAdapters,
-  SSRRequest,
-  SSRSpaceDeployment,
-  Style
-} from '@plitzi/sdk-shared';
+import type { SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 /**
  * Where a space comes from, and nothing else. Who is looking at it is `createAuthAdapters` (or the auth kernel's

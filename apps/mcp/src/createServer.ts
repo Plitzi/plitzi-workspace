@@ -1,17 +1,10 @@
-import { createHttpServer, makeHandler } from '@plitzi/sdk-server/kernel';
+import { createHttpServer, makeHandler } from '@plitzi/sdk-kernel/http';
 
 import { buildMCPPipeline } from './pipeline';
 
 import type { McpOptions } from './options';
-import type { BaseContext, BuildContext } from '@plitzi/sdk-server/kernel';
-import type { PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
-
-// MCP servers host no plugins and no HTML cache; an inert registry keeps the SSRServer shape uniform.
-const noPlugins: PluginRegistry = {
-  register: () => undefined,
-  unregister: () => undefined,
-  invalidate: () => Promise.resolve()
-};
+import type { BaseContext, BuildContext, HttpServer } from '@plitzi/sdk-kernel/http';
+import type { SSRServerConfig } from '@plitzi/sdk-server';
 
 /** The server this package makes: the lean MCP pipeline over the bare context — no render template, caches
  *  or plugin manager. `config` is the HTTP server's (port, TLS, health, logger, adapters); `options` is what MCP
@@ -21,7 +14,7 @@ const noPlugins: PluginRegistry = {
  *
  *  It owns its whole sub-domain, answering JSON-RPC on every path rather than under /mcp. To serve MCP alongside
  *  pages on one port instead, hand `mcpExtensions(options)` to createServer from `@plitzi/sdk-server`. */
-export const createServer = (config: SSRServerConfig, options: McpOptions = {}): SSRServer => {
+export const createServer = (config: SSRServerConfig, options: McpOptions = {}): HttpServer => {
   const stages = buildMCPPipeline(options);
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<BaseContext> = (raw, rawRes, req, res) => ({
@@ -36,5 +29,5 @@ export const createServer = (config: SSRServerConfig, options: McpOptions = {}):
     return makeHandler('MCP', buildContext, stages, { compression: config.compression });
   };
 
-  return createHttpServer(config, makeHandlerForPort, { label: 'MCP', cache: null, plugins: noPlugins });
+  return createHttpServer(config, makeHandlerForPort, { label: 'MCP' });
 };

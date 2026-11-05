@@ -1,9 +1,10 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
-import { readRawBody } from '@plitzi/sdk-server/kernel';
+import { readRawBody } from '@plitzi/sdk-kernel/http';
 
 import type { PreviewRequestBody } from '../modules/mcp/types';
-import type { SSRContext, Stage } from '@plitzi/sdk-server/kernel';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRContext } from '@plitzi/sdk-server';
 
 const PREVIEW_PATH_DEFAULT = '/__preview';
 

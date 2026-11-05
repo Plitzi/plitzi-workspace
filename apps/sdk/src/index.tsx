@@ -85,7 +85,7 @@ import type {
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
-import type { ThemeScope } from '@plitzi/sdk-shared/theme';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ReactNode } from 'react';
 import type { Root } from 'react-dom/client';
 

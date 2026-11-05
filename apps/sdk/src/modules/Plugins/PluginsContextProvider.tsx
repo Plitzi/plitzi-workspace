@@ -5,7 +5,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 import { getStyle } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import {
   createElementRegistry,
   ElementRegistryContext,

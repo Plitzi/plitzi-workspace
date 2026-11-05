@@ -1,7 +1,8 @@
-import { getClient } from './records';
-import { forwardedIp } from '../requestParser';
+import { forwardedIp } from '@plitzi/sdk-kernel/http';
 
-import type { OAuthConfig, OAuthIssueContext, SSRRequest } from '@plitzi/sdk-shared';
+import { getClient } from './records';
+
+import type { OAuthConfig, OAuthIssueContext, SSRRequest } from '@plitzi/sdk-kernel/types';
 
 /**
  * What `issueToken` is told about who it issues to, beyond the person: the application, as it registered, and the

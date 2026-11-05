@@ -1,12 +1,13 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { isDocumentNavigation, renewForNavigation } from '../auth/renewal';
 import { applySessionOutcome, authRoutes } from '../auth/routes';
 
 import type { AuthedRequest, JsonResponse, HttpRoute, RouterLike } from './types';
 import type { AuthApi } from '../auth/api';
-import type { Csrf } from '../auth/csrf';
 import type { AuthRequest } from '../auth/routes';
-import type { SessionCookies } from '../auth/session';
+import type { Csrf } from '@plitzi/sdk-kernel/identity';
+import type { SessionCookies } from '@plitzi/sdk-kernel/identity';
 
 export interface AuthRouteHandlersOptions {
   api: AuthApi;

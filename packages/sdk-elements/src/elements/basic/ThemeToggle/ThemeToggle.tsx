@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } fr
 
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';

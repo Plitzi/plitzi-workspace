@@ -1,0 +1,320 @@
+import type { ActionKvStore } from './kv';
+import type { LaterAnswer, LaterRequest } from './later';
+import type { RateCount, RateLimit } from './rateLimit';
+import type {
+  ActionAccess,
+  Environment,
+  FunctionJobView,
+  FunctionOAuthConnection,
+  FunctionTimeLimits,
+  InteractionCallbackParam
+} from '../types';
+
+/**
+ * Who started the run, as a space's own code may know them: everything a function decides by — who, their roles and
+ * permissions — and never their session. A token inside the sandbox is a token a function could send anywhere.
+ */
+export type FunctionUser = {
+  id: number;
+  username: string;
+  email: string;
+  verified: boolean;
+  permissions: string[];
+  roles: string[];
+};
+
+/**
+ * A request a function makes: `fetch`'s own init, and `credential` — the id of one of the space's credentials, whose
+ * values the platform writes into the request where it says `{{credential.<key>}}` (in the URL, a header or the
+ * body). The code never holds the value; it names it.
+ */
+export type FunctionFetchInit = {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  credential?: string;
+  /** Cuts the request short when it aborts (`AbortSignal.timeout(12_000)`); the run's own end cuts it regardless. */
+  signal?: AbortSignal;
+};
+
+/** What a function's `fetch` answers: a web `Response`, whichever runner it is in. */
+export type FunctionFetch = (url: string | URL, init?: FunctionFetchInit) => Promise<Response>;
+
+/**
+ * Whose an OAuth connection is: a signed-in visitor's own by default (`user:<id>`); `space` for one the whole space
+ * shares; or a key the code keeps for whom it serves — a profile, a team (`profile:ana`). Letters, digits and `:._@-`.
+ */
+export type FunctionOAuthOwner = { owner?: string };
+
+/**
+ * The `code` of a refusal `ctx.oauth` throws (an `ActionRefusal`), to tell it apart by: `oauth-not-connected` — no
+ * account connected for that owner yet, so `connect` first; `oauth-no-owner` — nobody signed in and no `owner` named.
+ */
+export type FunctionOAuthRefusal = 'oauth-not-connected' | 'oauth-no-owner';
+
+/** What `ctx.oauth.status` says of a connection — never its token. */
+export type FunctionOAuthStatus = { connected: boolean; scopes?: string[]; expiresAt?: number };
+
+/** The access token `ctx.oauth.token` hands out — never the refresh token, which stays with the platform. */
+export type FunctionOAuthToken = { token: string; type: string; expiresAt?: number; scopes?: string[] };
+
+/**
+ * OAuth 2.0 on behalf of whoever the space serves, through the connections it declared (`oauth` in its functions): the
+ * consent, the code exchanged, the token kept sealed and renewed by the platform. The code never holds a token, as it
+ * never holds a credential — it names the connection.
+ */
+export type FunctionOAuth = {
+  /**
+   * Where to send the visitor to consent (authorization code, PKCE). They come back to `/fn/oauth/callback` — the
+   * address to register with the provider, on the space's host — and from there to `returnTo`, a path of the space,
+   * with `?oauth=<connection>&oauth_result=connected` or `&oauth_error=<what>`. `authorizeParams` adds to the
+   * connection's for this consent alone — `{ prompt: 'select_account' }` to choose another account — never one the
+   * platform writes (`state`, `redirect_uri`, `scope`, PKCE's).
+   */
+  connect: (
+    connection: string,
+    options: { returnTo: string; authorizeParams?: Record<string, string> } & FunctionOAuthOwner
+  ) => Promise<{ url: string }>;
+  status: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthStatus>;
+  /**
+   * A request to the provider's API with the token written in (`Authorization: Bearer`), renewed when it is about to
+   * lapse and once more if the answer is 401. Only to the hosts the space declared (`allow.hosts`). With nobody
+   * connected it refuses, `code: 'oauth-not-connected'` ({@link FunctionOAuthRefusal}).
+   */
+  fetch: (
+    connection: string,
+    url: string | URL,
+    init?: Omit<FunctionFetchInit, 'credential'> & FunctionOAuthOwner
+  ) => Promise<Response>;
+  /** Forgets the connection — revoked at the provider when it says where — and answers whether there was one. */
+  disconnect: (connection: string, options?: FunctionOAuthOwner) => Promise<boolean>;
+  /**
+   * The access token itself, renewed first when it is about to lapse — only of a connection that declares
+   * `exposeToken: true`, for a provider's SDK in the page that asks for it (`getOAuthToken`). Whoever the code hands it
+   * to holds it until it lapses: answer it only to whom the connection is (its owner), from a route that checks so.
+   */
+  token: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthToken>;
+  /**
+   * The address providers send a visitor back to (`…/fn/oauth/callback`) — the one this run's `connect` hands them, to
+   * show whoever registers the app with a provider. The space's host the request came on, or the one the deployment
+   * fixed (`functions.oauth.callbackOrigin`); refused in a run no visitor's request started, when none was fixed.
+   */
+  callbackUrl: () => Promise<string>;
+};
+
+/**
+ * The space's jobs, from its code: what starts one, reads it and stops it. Who may is the code's to decide — these are
+ * called from its routes and tasks, behind its own checks.
+ */
+export type FunctionJobs = {
+  /**
+   * Starts one of the jobs this code declares (`jobs` in `defineFunctions`), with `input`: answered at once, the job
+   * `pending`. With `key`, at most one of that key runs at a time — starting it again while one is under way answers that
+   * one (a button pressed twice), and once it ended starts it over with the new input.
+   */
+  start: (name: string, input?: Record<string, unknown>, options?: { key?: string }) => Promise<FunctionJobView>;
+  /** One of the space's jobs, as whoever may watch it sees it — or nothing, when there is none by that id. */
+  get: (id: string) => Promise<FunctionJobView | undefined>;
+  /** Sets it aside: it stops once its code saved, and waits as `paused`. Answers whether anything changed. */
+  pause: (id: string) => Promise<boolean>;
+  /** Puts a paused job back in the queue, to go on from what it saved. */
+  resume: (id: string) => Promise<boolean>;
+  /** Stops it for good: dropped if it waits, aborted if it runs. */
+  cancel: (id: string) => Promise<boolean>;
+};
+
+/**
+ * Why a slice of a job is asked to end (`job.stopping`): it was set aside (`pause`) or cancelled (`cancel`), its time in
+ * one go is up (`limit`) or the server is going away (`shutdown`). Whichever, what was saved is where it goes on from.
+ */
+export type FunctionJobStop = 'pause' | 'cancel' | 'limit' | 'shutdown';
+
+/**
+ * What a job's `run` is handed besides its input: the job, and how it keeps where it is. A job runs in slices — a pause,
+ * a lost server or its time in one go ending one — and every slice but the first starts from what the one before saved.
+ */
+export type FunctionJobHandle<S = unknown> = {
+  id: string;
+  name: string;
+  /** What it last saved — `undefined` on its first slice, and whenever it never saved. */
+  state: S | undefined;
+  /** Which attempt this is, from 1: a slice after a failure is the next attempt, from the last save. */
+  attempt: number;
+  /**
+   * Keeps `state` durably: the next slice starts with it. JSON, within what the server keeps for one job. A method, not
+   * a property: so a job whose state has a type of its own is still one of `FunctionsDefinition['jobs']`.
+   */
+  save(state: S): Promise<void>;
+  /** How far it is, from 0 to 1, and what it is doing — for whoever watches it. Never fails the job. */
+  report: (fraction: number, step?: string) => void;
+  /** Why this slice is asked to end, once it is (`signal` aborted): save, and return. */
+  readonly stopping: FunctionJobStop | undefined;
+  /** Aborted when the slice is asked to end — the same as `ctx.signal`. Some seconds later it is cut. */
+  signal: AbortSignal;
+};
+
+/** A job of the space's: work longer than a request, run on the server slice by slice until it answers. */
+export type FunctionJob<I extends Record<string, unknown> = Record<string, unknown>, S = unknown, R = unknown> = {
+  /**
+   * Who may watch it (`$job:<id>`, `useJob`) besides whoever started it — a channel's access, read against the visitor's
+   * permissions in the space. Absent, only whoever started it.
+   */
+  watch?: ActionAccess;
+  /** How long it may run, every slice together, in seconds — within what the server allows. */
+  maxSeconds?: number;
+  /**
+   * The work. What it answers is the job's result; an `ActionRefusal` fails it without a retry. A method, not a property:
+   * so a job typed with an input and a state of its own is still one of `FunctionsDefinition['jobs']`, and one written
+   * in place there gets an object for its input and `unknown` for its state.
+   */
+  run(input: I, job: FunctionJobHandle<S>, ctx: FunctionContext): R | Promise<R>;
+};
+
+/**
+ * A person of the space as another's code may read them: who they are to a page — never their email, their roles or
+ * anything they did not show. `name` and `avatar` where the deployment keeps them.
+ */
+export type FunctionVisitor = { id: number; username: string; name?: string; avatar?: string };
+
+/** Who is on a presence channel's topic: how many, and each page with who is signed in on it. */
+export type FunctionPresence = {
+  count: number;
+  members: { from: string; user?: { id: number; name: string }; since: number }[];
+};
+
+/**
+ * Everything a space's code can do besides computing — one object, the same wherever it runs. In a self-hosted server
+ * it is built from the run's own context; in the sandbox each method is a call back to the platform, which scopes it
+ * to the space and the run before doing it.
+ */
+export type FunctionContext = {
+  spaceId: number;
+  environment: Environment;
+  runId: string;
+  /** How the run was started: `call`, `render`, `schedule`, `webhook`… */
+  trigger: string;
+  /** `user:<id>` for a session, `ip:<address>` for everyone else — what a limit per person keys on. */
+  callerId: string;
+  user?: FunctionUser;
+  /**
+   * The space's own key/value store: `get`, `set`, `swap`, `increment`, lists — and `change`, to read, change and write
+   * a value back without undoing a writer that got there first.
+   */
+  kv: ActionKvStore;
+  /**
+   * Counts one more of `bucket` — per caller unless `per: 'everyone'` — and says whether it was within `most` in every
+   * `perSeconds`. The same count as a flow's `flow.rateLimit` step on that bucket. What to answer when it is not is the
+   * code's.
+   */
+  rateLimit: (bucket: string, limit: RateLimit) => Promise<RateCount>;
+  /**
+   * Signs `value` with a key of the space's own that the platform keeps and the code never sees: HMAC-SHA-256,
+   * base64url. What a link, an invitation or a key handed to a page is made of. Refused on a server with no signing
+   * secret.
+   */
+  sign: (value: string) => Promise<string>;
+  /** Whether `signature` is what `sign` answered for `value`, compared in constant time. */
+  verify: (value: string, signature: string) => Promise<boolean>;
+  /** To the hosts the space declared (`allow.hosts`) — and, with `credential`, with one of its secrets written in. */
+  fetch: FunctionFetch;
+  /** Says something on one of the space's realtime channels, as the server. */
+  publish: (topic: string, type: string, data: unknown) => Promise<void>;
+  /**
+   * Who is on a topic of one of the space's `presence: true` channels now — every page connected to it, on whichever
+   * replica — the earliest arrived first. A room's listeners, counted by the server rather than by what pages report.
+   */
+  presence: (topic: string) => Promise<FunctionPresence>;
+  /**
+   * The space's people, read by another: `get('mika')` or `get(7)` — public fields alone, and only of someone who
+   * belongs to the space (the deployment says who: its visitors and members on Plitzi, every account of its own on a
+   * server of yours). `undefined` for anyone else, never "exists elsewhere": a profile page, a chat's names.
+   */
+  visitors: { get: (who: string | number) => Promise<FunctionVisitor | undefined> };
+  /** Lets the visitor into one topic of a private (`grant: true`) channel. */
+  grant: (topic: string, ttlSeconds?: number) => Promise<string>;
+  /** Takes a grant back — or every grant for the topic, naming none. */
+  revoke: (topic: string, grant?: string) => Promise<void>;
+  /**
+   * Starts one of the space's actions — one with a `later` trigger — in so many seconds, on the server, whether or not a
+   * page is still open: a turn that runs out, a bot's move, a hold that lapses. A `key` names it: set again under the
+   * same key, the one still waiting is replaced. Answers the job and when it is due (epoch ms, by the queue's clock).
+   * `ctx.later({ action: 'game.timeout', in: 45, input: { room }, key: 'turn:' + room })`.
+   */
+  later: (request: LaterRequest) => Promise<LaterAnswer>;
+  /** Drops what waits under `key` — the timer of a game that ended — and answers how many. */
+  cancelLater: (key: string) => Promise<number>;
+  /**
+   * One file of the space's data — a project's `src/data/<file>` — parsed, as of the version the run belongs to: what
+   * a page must not carry, read here and answered only as far as it is shown. Read-only. `ctx.data('products.json')`.
+   */
+  data: (file: string) => Promise<unknown>;
+  /** A line for whoever reads the run: the builder's Try, and the deployment's logs. */
+  log: (...values: unknown[]) => void;
+  /** OAuth 2.0 through the space's declared connections — see {@link FunctionOAuth}. */
+  oauth: FunctionOAuth;
+  /** The space's jobs — see {@link FunctionJobs}. */
+  jobs: FunctionJobs;
+  /** Progress for a caller that asked for a stream — a no-op when nobody did. */
+  emit: (chunk: unknown) => void;
+  /** Aborted when the run is: cancelled, or out of time. Hand it to what can stop early. */
+  signal: AbortSignal;
+};
+
+/**
+ * One step a server action can take, written by the space. The shape of the platform's own tasks — addressed as
+ * `<namespace>.<action>`, drawn in the builder from `params` — run with a {@link FunctionContext} rather than the
+ * platform's full one.
+ *
+ * `R` is what `run` answers: `taskAction(task, …)` hands it, with `T`, to a page that runs the action
+ * (`useServerAction`), so `FunctionTask<{ id: string }, Habit>` is typed at both ends.
+ */
+export type FunctionTask<T extends Record<string, unknown> = Record<string, unknown>, R = unknown> = {
+  namespace: string;
+  action: string;
+  title: string;
+  description?: string;
+  params: Record<keyof T, InteractionCallbackParam<T>>;
+  /**
+   * More CPU or time than an invocation gets by default — `{ cpuMs: 1000 }` for a task that reshapes a big feed — up to
+   * what the server allows. Over the functions' own `limits`, for this task.
+   */
+  limits?: FunctionTimeLimits;
+  run: (params: T, ctx: FunctionContext) => R | Promise<R>;
+};
+
+/** What a route's handler gets besides the request: the context, and the `:params` its key named, by name. */
+export type FunctionRouteContext = FunctionContext & { params: Record<string, string> };
+
+/**
+ * An HTTP endpoint of the space, under `/fn/`: a web-standard handler, the shape every edge runtime runs. The request
+ * carries no credentials — `ctx.user` says who is asking — and the response sets no cookies: the host's are the
+ * platform's.
+ */
+export type FunctionRoute = (request: Request, ctx: FunctionRouteContext) => Response | Promise<Response>;
+
+/**
+ * What each file at the top of a space's `functions/` exports by default — its tasks, its routes, and where its code
+ * may reach — merged into the one definition a bundle exports (`mergeFunctions`).
+ */
+export type FunctionsDefinition = {
+  /** The hosts `ctx.fetch` may reach. Anything else is refused before it leaves. */
+  allow?: { hosts?: string[] };
+  tasks?: FunctionTask<never>[];
+  /** `'GET /board-assets/:board/:asset'` → a handler, served at `/fn/board-assets/…`. */
+  routes?: Record<string, FunctionRoute>;
+  /** More CPU or time than an invocation gets by default, for every task and route — a task may ask for its own. */
+  limits?: FunctionTimeLimits;
+  /**
+   * The OAuth connections its code makes (`ctx.oauth`), by the name it calls them — any provider, as data: its `issuer`
+   * (OpenID) or its endpoints, the credential with the app's id and secret, the scopes.
+   */
+  oauth?: Record<string, FunctionOAuthConnection>;
+  /** Its jobs, by name (`ctx.jobs.start(name, input)`): work that outlives a request, run slice by slice. */
+  jobs?: Record<string, FunctionJob>;
+};
+
+/**
+ * Declares a space's functions. An identity at run time: it is here for the types, and so the same file is valid
+ * wherever it is loaded — natively in a self-hosted server, or built by the platform and run in its sandbox.
+ */
+export const defineFunctions = (definition: FunctionsDefinition): FunctionsDefinition => definition;

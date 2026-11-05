@@ -2,7 +2,7 @@
 
 A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;
 `src/functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) is typed in
-`@plitzi/sdk-server/functions`, whose `.d.ts` documents every field; what matters for the CLI:
+`@plitzi/sdk-runtime`, whose `.d.ts` documents every field; what matters for the CLI:
 
 - **Pull before you edit, push when done.** `space pull functions` refuses to overwrite what is not pushed (`--force` throws it
   away); `space push functions` refuses when the space changed since the pull — someone saved in the builder. Then: keep your
@@ -10,12 +10,12 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **A push is checked, not just stored.** A problem comes back as `src/functions/<file>:<line> <message>` and nothing is
   saved — fix it and push again. each top-level file may default-export `defineFunctions({ … })` — one `index.ts`, or one per domain, merged (a task or
   route said twice is refused); files import each other by
-  relative path and `@plitzi/sdk-server/functions`, nothing else — a package (installed in the project) is bundled in with
+  relative path and `@plitzi/sdk-runtime`, nothing else — a package (installed in the project) is bundled in with
   `functions add <package>`, as `./vendor/<package>.js`; one that needs Node is refused. `src/data/` is read with `ctx.data('x.json')`, never
   imported (`dev` reads the project's). An action's built-in steps read no file: without a function task, `src/data/`
   reaches an action only as rows imported where the action is written — fixed until the space is authored again.
 - **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `src/functions/` on this machine with
-  the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
+  the project's own `@plitzi/sdk-actions` and `@plitzi/sdk-runtime` — `npm install -D @plitzi/sdk-actions @plitzi/sdk-runtime isolated-vm` first — and sends
   nothing to the space. Credentials are `PLITZI_CREDENTIALS={"stripe":{"apiKey":"…"}}` in `.env` — what `dev` and the
   project's own server hand `ctx.fetch({ credential })`; in the cloud, the space's Credentials.
 - **A setting, not an environment variable:** a function runs in a sandbox (an isolate: no `process`, no `process.env`,
@@ -33,7 +33,7 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **Other people, from a task:** `ctx.visitors.get('mika')` is someone of the space's public face (`username`, `name`,
   `avatar` — never an email), `undefined` for anyone else; `ctx.presence(topic)` is who is on a `presence: true`
   channel now (`count`, `members`), counted by the server on every replica.
-- **Two visitors at once:** never read a value, change it and `set` it back — a write in between is undone. `ctx.kv.change(key, current => next)` writes what it answers, asking again when someone wrote meanwhile (`undefined` writes nothing); `ctx.kv.listChange(list, id, entry => …)` the same for one entry, never putting back one that left; `ctx.kv.swap(key, expected, next)` writes only if it still holds `expected`. "Somebody wrote meanwhile" is read by value, as `swap` compares: a write in between that leaves the value as it was read is no conflict, and the change goes on over it — a test of two writers needs them to leave different values (a fake store that compares otherwise tests another store). A test's store is the server's own, `createKvStore(createMemoryKv())` from `@plitzi/sdk-server/actions`: it refuses what the server refuses (a list entry's id is letters, digits and `: _ . @ -` — a `|` failed only on the real server).
+- **Two visitors at once:** never read a value, change it and `set` it back — a write in between is undone. `ctx.kv.change(key, current => next)` writes what it answers, asking again when someone wrote meanwhile (`undefined` writes nothing); `ctx.kv.listChange(list, id, entry => …)` the same for one entry, never putting back one that left; `ctx.kv.swap(key, expected, next)` writes only if it still holds `expected`. "Somebody wrote meanwhile" is read by value, as `swap` compares: a write in between that leaves the value as it was read is no conflict, and the change goes on over it — a test of two writers needs them to leave different values (a fake store that compares otherwise tests another store). A test's store is the server's own, `createKvStore(createMemoryKv())` from `@plitzi/sdk-actions`: it refuses what the server refuses (a list entry's id is letters, digits and `: _ . @ -` — a `|` failed only on the real server).
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
   A task a page's render action runs (`apiContainer({ runtime: 'server' })`) has the page's ceiling too, and it wins:
@@ -66,7 +66,7 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 ## A space's runtime (`runtime`)
 
 What a function cannot be — Node packages, a connection held open, state across requests — is the space's **runtime**:
-`src/runtime/index.ts` (`plitzi runtime add`), default-exporting `defineRuntime` from `@plitzi/sdk-server/runtime` (its
+`src/runtime/index.ts` (`plitzi runtime add`), default-exporting `defineRuntime` from `@plitzi/sdk-runtime` (its
 `.d.ts` documents it). The project's server runs it as Plitzi does, so try it with `npm start` before pushing.
 
 - `space push runtime` packs it (`src/runtime/index.ts`) as the draft's runtime; publishing deploys it. Its source goes

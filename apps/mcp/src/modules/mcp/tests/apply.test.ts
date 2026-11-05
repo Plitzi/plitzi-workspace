@@ -7,7 +7,7 @@ import { apply, operation } from '../tools';
 
 import type { Operation } from '../tools';
 import type { AIPageSkeleton } from '../types';
-import type { SSRAdapters } from '@plitzi/sdk-shared';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 describe('MCP apply (writes + dryRun + diff + full elements + OCC)', () => {
   const ops: Operation[] = [

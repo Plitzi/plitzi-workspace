@@ -1,10 +1,9 @@
 import { existsSync, readdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
+import { esbuildBuild } from '@plitzi/sdk-kernel/build';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { BUILD_DIR, FUNCTIONS_DIR, MAIN_FILE, PLUGINS_DIR, projectRoot, SOURCE_DIR } from '@plitzi/sdk-shared/project';
-
-import { esbuildBuild } from '../../helpers/esbuild';
 
 import type { Plugin } from 'esbuild';
 

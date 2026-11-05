@@ -1,11 +1,12 @@
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { unusedPort } from '@plitzi/sdk-server';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
 
 import { createServer } from './createServer';
 import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
-import type { SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
+import type { HttpServer } from '@plitzi/sdk-kernel/http';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 const PORT = await unusedPort();
 
@@ -15,7 +16,7 @@ const adapters = {
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true })
 } as unknown as SSRAdapters;
 
-const server: SSRServer = createServer({
+const server: HttpServer = createServer({
   httpVersion: 1,
   adapters,
   health: { payload: { role: 'mcp', ok: true } }

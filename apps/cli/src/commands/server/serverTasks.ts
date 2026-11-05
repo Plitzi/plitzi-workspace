@@ -66,7 +66,7 @@ const paramsOf = (params: unknown): ServerTaskParam[] =>
 export const serverTasks = async (root: string): Promise<{ tasks: ServerTask[] } | { problem: string }> => {
   let entry: string;
   try {
-    entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/actions');
+    entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-actions');
   } catch {
     return { problem: 'this project has no @plitzi/sdk-server installed: it runs no server actions' };
   }

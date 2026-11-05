@@ -11,15 +11,11 @@ import type { RenderedPage } from './pageCache';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  Environment,
-  OfflineDataRaw,
-  SSRPageServerConfig,
-  SSRRenderResult,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRTemplateFn
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRTemplateFn } from '../../types';
+import type { PageEngine } from '@plitzi/sdk-kernel/engine';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { Environment, OfflineDataRaw, SSRRenderResult } from '@plitzi/sdk-shared';
 
 // Placeholder injected into the template so we can split head/tail without parsing HTML.
 const SSR_SENTINEL = '<!--SSR_CONTENT-->';
@@ -37,7 +33,8 @@ export const streamBody = async (
   /** Keeps the page once it is all out — given only when it may be kept. */
   keep?: (page: RenderedPage) => void,
   metrics?: RequestMetrics,
-  offlineDataOverride?: OfflineDataRaw
+  offlineDataOverride?: OfflineDataRaw,
+  published?: PageEngine['published']
 ): Promise<void> => {
   const prep = await prepareRender(
     req,
@@ -48,7 +45,8 @@ export const streamBody = async (
     pluginManager,
     offlineDataCache,
     metrics,
-    offlineDataOverride
+    offlineDataOverride,
+    published
   );
 
   // Render the template with a sentinel in place of React HTML, then split it.

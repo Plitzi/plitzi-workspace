@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { emptySpace } from '../helpers';
 import { createMcpServer } from '../server';
 
-import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-kernel/types';
 import type { ActivityReader, SpaceActivityPage, SpaceActivityQuery } from '@plitzi/sdk-shared/activity';
 
 const PAGE: SpaceActivityPage = {

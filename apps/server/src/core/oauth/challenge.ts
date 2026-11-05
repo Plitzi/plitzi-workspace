@@ -1,7 +1,7 @@
 import { resourceMetadataUrl, scopesOf } from './metadata';
 import { sendJson } from './respond';
 
-import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /** The credential on an MCP request. `Authorization: Bearer` is what RFC 6750 defines and what a remote host
  *  sends; `x-access-token` is the platform's own header, which the builder and the CLI already use — a request

@@ -1,7 +1,8 @@
-import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from '../../helpers/cache';
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type { SSRPageServerConfig } from '@plitzi/sdk-shared';
+import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from '../../helpers/cache';
+
+import type { SSRPageServerConfig } from '../../types';
 
 const megabytes = (bytes: number): string => `${Math.round(bytes / (1024 * 1024))} MB`;
 const seconds = (ms: number): string => `${Math.round(ms / 1000)} s`;

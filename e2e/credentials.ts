@@ -1,4 +1,4 @@
-import { createTokens } from '@plitzi/sdk-server/auth';
+import { createTokens, generateTokenKeys } from '@plitzi/sdk-kernel/tokens';
 
 import { liveCredentials } from './backend';
 import { BUILDER_ORIGIN } from './launchConfig';
@@ -7,16 +7,16 @@ import { BUILDER_ORIGIN } from './launchConfig';
  *
  *  A mocked run needs them to be READABLE, not valid: the app decodes the space token to learn which space it is
  *  editing, and nothing on the other end ever verifies the signature — there is no other end. So the suite signs
- *  its own with a secret that means nothing anywhere, and stops depending on a literal in `index.html` that
- *  expires a day after somebody pasted it.
+ *  its own with a key pair made for the run, which means nothing anywhere, and stops depending on a literal in
+ *  `index.html` that expires a day after somebody pasted it.
  *
- *  A live run is the opposite: only the deployment's own secret produces a token its server will accept, so
+ *  A live run is the opposite: only the deployment's own key produces a token its server will accept, so
  *  `PLITZI_WEB_KEY` / `PLITZI_USER_KEY` from `yarn token 1 --user admin` win whenever they are set. */
 
 const ORIGIN = BUILDER_ORIGIN;
 
 const tokens = createTokens({
-  secret: 'e2e-not-a-real-secret',
+  keys: generateTokenKeys('e2e'),
   issuer: ORIGIN,
   audience: [ORIGIN]
 });

@@ -28,7 +28,7 @@ an OAuth provider said in two files is refused naming both, `limits` is said in 
 together. A top-level file that exports no definition, and anything in a subfolder (`lib/`), is code they import:
 
 ```ts
-import { defineFunctions } from '@plitzi/sdk-server/functions';
+import { defineFunctions } from '@plitzi/sdk-runtime';
 import { parseFeed } from './lib/feed';
 
 export default defineFunctions({
@@ -59,7 +59,7 @@ export default defineFunctions({
   `codemirror-json` for JSON — while an action's `input` names what the value is (`text`, `number`, `boolean`, `date`,
   `json`, `file`, `list` — several values, one per line in the builder, with `maxItems`). A JSON value is
   `codemirror-json` in a task's params and `json` in an action's input.
-- **Files import each other by relative path**, and `@plitzi/sdk-server/functions` — nothing else: no package, no
+- **Files import each other by relative path**, and `@plitzi/sdk-runtime` — nothing else: no package, no
   Node built-in (`fs`, `process`, `Buffer`). Saving refuses anything else, with the file and line. A package the code
   needs — an iCal reader, a CSV parser — comes with it, as a function carries its dependencies: installed in the
   project, `plitzi functions add ical.js` bundles it into `src/functions/vendor/` (web APIs only; one that reaches Node
@@ -125,7 +125,7 @@ await ctx.kv.listChange('queue', trackId, entry => (entry ? { score: entry.score
 `listSwap(list, id, expected, next)` writes `next` only while the entry is still `expected` (`null` takes it out), and
 answers whether it did.
 
-**Refusing is `ActionRefusal`**, from `@plitzi/sdk-server/functions`: throw it with a reason written for whoever
+**Refusing is `ActionRefusal`**, from `@plitzi/sdk-runtime`: throw it with a reason written for whoever
 asked, and the page reads it as the step's error (`{{ step.error }}`) — a route answers it with a `400` and
 `{ "error": … }`. Anything else a function throws stays in the run's record and the caller only learns that it failed:
 an error can carry a query, a URL or a credential's name, and a page is read by anybody. A refusal may carry a `code`
@@ -134,7 +134,7 @@ written for a person and may change. The platform's own refusals carry one too �
 `oauth-not-connected` — and reach the code as refusals, in the sandbox and in a runtime alike.
 
 ```ts
-import { ActionRefusal, defineFunctions } from '@plitzi/sdk-server/functions';
+import { ActionRefusal, defineFunctions } from '@plitzi/sdk-runtime';
 
 if (!isBoardId(id)) {
   throw new ActionRefusal(`"${id}" is not a board`);
@@ -197,8 +197,8 @@ plitzi functions dev seismic.feed --params '{}' --watch   # on this machine, as 
 ```
 
 `src/functions/` is a working copy: `.plitzi/functions.json` keeps what was pulled, so a pull knows what it would
-overwrite. `dev` runs the files with the project's own `@plitzi/sdk-server` (install `isolated-vm` and `core-js` beside
-it) — the same build, checks, isolates and limits as the platform; nothing reaches the space. Credentials for `dev`
+overwrite. `dev` runs the files with the project's own `@plitzi/sdk-actions` and `@plitzi/sdk-runtime` (install `isolated-vm`
+beside them) — the same build, checks, isolates and limits as the platform; nothing reaches the space. Credentials for `dev`
 come from `PLITZI_CREDENTIALS`, a JSON object of credential id → its keys — the same variable a project's own server
 (`serveProject`) reads in production, so a self-hosted space's code names its secrets the same way.
 
@@ -412,7 +412,7 @@ Per invocation — a task step or a route request:
 |---|---|---|
 | CPU | 100 ms | awaits not counted |
 | Wall time | 10 s | and never past the run's own deadline |
-| Memory | 64 MB | |
+| Memory | 32 MB | a deployment's plan raises it (`limitsFor`), up to its ceiling |
 | Answer | 1 MB | as JSON |
 | Calls to `ctx` | 100 | `kv`, `fetch`, `publish`… |
 
@@ -450,17 +450,19 @@ more is a problem when the functions are saved, never quietly cut down; the buil
 
 ## 9. For a deployment
 
-Everything here is `@plitzi/sdk-server`'s.
+Everything here is `@plitzi/sdk-server`'s, but for what runs the code: the runner and its isolates are
+`@plitzi/sdk-runtime/runner`'s, which holds nothing of a run (RFC 0032).
 
 **A self-hosted server's own functions** are loaded natively — trusted code, in the process. `loadFunctions` builds a
 folder of them (`src/functions/` in a project the CLI writes) the way the platform builds a space's (same files, same imports, same checks) and loads it:
 
 ```ts
-import { createServer, loadFunctions } from '@plitzi/sdk-server';
+import { loadFunctions } from '@plitzi/sdk-actions/functions';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
 const functions = await loadFunctions(path.join(PROJECT_ROOT, 'src/functions'));
 
-createServer({ /* … */ functions: { native: functions } });
+createPlatform({ /* … */ functions: { native: functions } });
 ```
 
 A server project made by `plitzi create` already does this, so the files `plitzi space pull functions` brings run there as
@@ -470,13 +472,13 @@ the old `action.tasks`: a deployment's own tasks and a space's are written the s
 
 **The spaces' functions** need a runner — `functions.runner`, any `FunctionRunner`:
 
-| From `@plitzi/sdk-server/functions-runner` | |
+| From | |
 |---|---|
-| `startFunctionsRunnerService({ secret, port })` | The runner as a service of its own: V8 isolates (`isolated-vm`, with `core-js` for the web APIs a bare isolate lacks), one per invocation, behind a shared secret. Run it where it reaches nothing: its pod needs no network out |
-| `createRemoteRunner({ url, secret })` | The page server's client to it: one WebSocket per invocation, over which every call the code makes comes back and is answered by the replica holding the run — so replicas share nothing about it |
-| `createIsolateRunner()` | The isolates in the page server's own process — for tests, or a deployment whose process holds nothing a space must not reach |
-| `createLocalFunctions()` | What `plitzi functions dev` runs: build, check and try a source on this machine |
-| `buildFunctions(source)` | The build every runner runs first, alone — no isolate: a bundle, or `FunctionsBuildError` with each problem by file and line. What `plitzi doctor` checks a project's `src/functions/` with |
+| `startFunctionsRunnerService({ secret, port })` (`@plitzi/sdk-runtime/runner`) | The runner as a service of its own: V8 isolates (`isolated-vm`; the web APIs a bare isolate lacks come built in the package), one per invocation, behind a shared secret. Run it where it reaches nothing: its pod needs no network out |
+| `createRemoteRunner({ url, secret })` (`@plitzi/sdk-actions/functions`) | The page server's client to it: one WebSocket per invocation, over which every call the code makes comes back and is answered by the replica holding the run — so replicas share nothing about it |
+| `createIsolateRunner()` (`@plitzi/sdk-runtime/runner`) | The isolates in the page server's own process — for tests, or a deployment whose process holds nothing a space must not reach |
+| `createLocalFunctions({ runner })` (`@plitzi/sdk-actions/functions`) | What `plitzi functions dev` runs: build, check and try a source on this machine, over the isolates it is handed |
+| `buildFunctions(source)` (`@plitzi/sdk-actions/functions`) | The build every runner runs first, alone — no isolate: a bundle, or `FunctionsBuildError` with each problem by file and line. What `plitzi doctor` checks a project's `src/functions/` with |
 
 Wherever isolates run, Node must start with **`--no-node-snapshot`** (`NODE_OPTIONS=--no-node-snapshot`):
 isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to start without it and says so.
@@ -493,9 +495,13 @@ params and `ctx`, and anything that must outlive the invocation goes to `ctx.kv`
 any invocation. What a runner keeps is only what makes the next start cheap:
 
 - the web-API prelude as a V8 snapshot, made before the service listens — the first request does not pay for it;
-- each bundle's compiled code, by size (`cacheBytes`, 64 MB), least recently used out. A run carries its bundle by
+- each bundle's compiled code, by size (`cacheBytes`, 32 MB), least recently used out. A run carries its bundle by
   reference (`FunctionsBundleRef`): the code crosses the wire, and is read from storage, only when the runner does not
   keep it.
+
+**A runner short of memory takes nothing new.** Past a share of its limit (`memoryShare`, 85% of its container's), it
+answers the platform `busy` instead of starting an invocation, and the run is over capacity, with a retry — never the
+code's error, and never the process killed for memory with every invocation in it.
 
 Nothing waits forever: past its wall time an invocation's isolate is disposed, and the page server's client
 (`createRemoteRunner`) gives up on the runner `graceMs` after that (5 s) even if the runner never answers — its
@@ -524,7 +530,7 @@ a `functions/` folder in the plugin's main element folder (`src/plugins/Board/fu
 space's functions are (§1): `plitzi plugin add board --server` starts one.
 
 ```ts
-import { defineFunctions } from '@plitzi/sdk-server/functions';
+import { defineFunctions } from '@plitzi/sdk-runtime';
 
 export default defineFunctions({
   routes: {
@@ -554,7 +560,7 @@ export default defineFunctions({
 **Where it runs.**
 
 - **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `src/functions/`:
-  `createServer({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
+  `createPlatform({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
   again in place (`server.functions.setPlugin(type, definition)`) — the server is not restarted.
 - **A packed plugin** carries its server half as source: `plitzi plugin pack` writes `functions.source.json`
   (`PLUGIN_FUNCTIONS_SOURCE`, `@plitzi/sdk-shared/actions`) beside the bundle and names it in the manifest (`functions`). Uploaded to a space, the platform builds and checks it as the

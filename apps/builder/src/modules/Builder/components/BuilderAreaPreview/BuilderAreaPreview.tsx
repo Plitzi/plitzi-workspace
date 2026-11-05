@@ -3,20 +3,20 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
 import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/react';
 import { MOTION_SEEN_CSS } from '@plitzi/sdk-shared/schema';
 import { ownHtml } from '@plitzi/sdk-shared/security';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
-import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 import { processCssTokens } from '@plitzi/sdk-style/helpers';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables';
 import AppContext from '@pmodules/App/AppContext';
@@ -95,7 +95,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         return { ...acum, [name]: value };
       }
 
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
+      const subValue = subValues.find(subValue => evaluateRuleGroup(subValue.when, whenData));
       if (subValue) {
         return { ...acum, [name]: subValue.value };
       }

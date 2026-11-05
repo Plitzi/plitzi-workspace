@@ -1,4 +1,5 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { handleAuthorizeStart, handleAuthorizeSubmit } from '../oauth/authorize';
 import { authorizationServerMetadata, protectedResourceMetadata } from '../oauth/metadata';
 import { handleRegister } from '../oauth/register';
@@ -7,7 +8,7 @@ import { handleRevoke, handleToken } from '../oauth/token';
 
 import type { AuthedRequest, HttpRoute, RouterLike } from './types';
 import type { OAuthParams } from '../oauth/params';
-import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * A response that can send bytes, which OAuth needs and `JsonResponse` does not offer.

@@ -4,16 +4,16 @@ import path from 'node:path';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
 import { ACTIVE_RUN_FILE } from '@plitzi/sdk-shared/project';
 import { RUN_REPORT_PATH, RUN_STATUS_PATH } from '@plitzi/sdk-shared/runs';
 
 import { runReportStage, runStatusStage, watchAgentRuns } from './agentRuns';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 import { offlineDataOf } from '../../modules/ssr/tests/offlineData';
 
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
 
 const roots: string[] = [];
 

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import ejs from 'ejs';
 
-import type { SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { SSRTemplateFn } from '../../types';
 
 /**
  * Beside this module when it runs from this package: in the source, and in the build, where it is a chunk of its own

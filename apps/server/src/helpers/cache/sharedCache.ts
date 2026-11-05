@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { serverLog } from '../serverLog';
-
-import type { CacheFilter, CacheManager, PubSubAdapter, SharedPageStore } from '@plitzi/sdk-shared';
+import type { CacheFilter, CacheManager } from '../../types';
+import type { SharedPageStore } from '../../types';
+import type { PubSubAdapter } from '@plitzi/sdk-shared';
 
 /** The topic the processes of a deployment tell each other what their pages no longer hold on. */
 export const CACHE_TOPIC = 'ssr.cache';

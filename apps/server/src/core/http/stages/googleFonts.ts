@@ -1,7 +1,9 @@
 import { createGoogleFontsMirror, GOOGLE_FONTS_PATH } from '../../../modules/fonts/googleFonts';
 
-import type { Stage } from '../types';
-import type { SSRFontsConfig, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRFontsConfig } from '../../../types';
+import type { SSRServerConfig } from '../../../types';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 /** Where this server's pages ask for their Google families — its own mirror, unless `fonts.google` is `false`. */
 export const googleFontsUrlOf = (config: Pick<SSRServerConfig, 'fonts'>): string | undefined =>
@@ -25,7 +27,7 @@ const mirrorFor = (google: Exclude<SSRFontsConfig['google'], false>) => {
 };
 
 /** `/_plitzi/fonts/google/css2?family=…` and the files it names — see `SSRFontsConfig.google`. */
-export const googleFontsStage: Stage = async ctx => {
+export const googleFontsStage: Stage<SSRContext> = async ctx => {
   const google = ctx.config.fonts?.google;
   if (google === false || !ctx.req.path.startsWith(`${GOOGLE_FONTS_PATH}/`)) {
     return false;

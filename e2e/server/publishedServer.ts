@@ -1,4 +1,4 @@
-import { createServer } from '@plitzi/sdk-server';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
 import { MAIL_SINK } from '../helpers/mail';
 import { PORTS } from '../launchConfig';
@@ -60,7 +60,7 @@ const lookups = {
     Promise.resolve(credentials[identifier])
 };
 
-const server = createServer({
+const server = createPlatform({
   port: PORT,
   // The whole point of this server. Left out entirely rather than set false: this is what a deployment that never
   // thought about it looks like, and the page must be told nothing all the same.

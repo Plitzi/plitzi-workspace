@@ -3,7 +3,7 @@ import { use, useCallback, useMemo, useRef, useState } from 'react';
 
 import { runE2eTest } from '@plitzi/sdk-authoring';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme';
+import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme/react';
 import AppContext from '@pmodules/App/AppContext';
 
 import { createCanvasPage } from './canvasPage';

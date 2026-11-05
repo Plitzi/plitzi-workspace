@@ -11,7 +11,7 @@ import { flagValues, passesFlagGate, resolveFlags, flagUserFrom } from '@plitzi/
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 

@@ -2,7 +2,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 
 import { useEventBridge } from '@plitzi/sdk-event-bridge';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
@@ -27,12 +27,8 @@ import type {
   StyleVariableValue,
   TagType
 } from '@plitzi/sdk-shared';
-import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  SpaceEventMap
-} from '@plitzi/sdk-shared/network';
+import type { BuilderMutationsMap, BuilderQueriesMap, SpaceEventMap } from '@plitzi/sdk-shared/network';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/react';
 
 /**
  * A middleware and what it is shown. The filter belongs to the caller, not here: a save queue must never see another

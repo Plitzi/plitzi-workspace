@@ -1,7 +1,8 @@
 import { cssProperties, elementCatalog } from '@plitzi/sdk-authoring';
 
 import type { ElementSemantics } from '@plitzi/sdk-authoring';
-import type { ComponentCatalog, Schema } from '@plitzi/sdk-shared';
+import type { ComponentCatalog } from '@plitzi/sdk-kernel/types';
+import type { Schema } from '@plitzi/sdk-shared';
 
 export interface TypePropInfo {
   valueTypes: string[];

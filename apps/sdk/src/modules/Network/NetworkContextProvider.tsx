@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { askSpace } from './askSpace';
 
 import type { OfflineDataRaw, Server, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
-import type { NetworkInternalContextValue, NetworkContextValue } from '@plitzi/sdk-shared/network';
+import type { NetworkInternalContextValue, NetworkContextValue } from '@plitzi/sdk-shared/network/react';
 import type { ReactNode, RefObject } from 'react';
 
 export type NetworkContextProviderProps = {

@@ -1,4 +1,4 @@
-import type { MysqlStore } from '@plitzi/sdk-server/mysql';
+import type { MysqlStore } from '@plitzi/sdk-kernel/mysql';
 
 /**
  * Two accounts and the roles behind them.

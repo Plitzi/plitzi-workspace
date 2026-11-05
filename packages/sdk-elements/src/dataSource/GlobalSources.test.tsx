@@ -5,7 +5,7 @@ import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { AuthContext } from '@plitzi/sdk-auth';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { setThemeMode } from '@plitzi/sdk-shared/theme';
+import { setThemeMode } from '@plitzi/sdk-shared/theme/react';
 
 import GlobalSources from './GlobalSources';
 import useElementDataSource from '../Element/hooks/useElementDataSource';

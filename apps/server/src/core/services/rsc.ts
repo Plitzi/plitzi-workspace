@@ -1,7 +1,8 @@
 import { resolveRscEndpoint } from './resolve';
 import { handleRsc } from '../../modules/rsc/handler';
 
-import type { SSRContext, Stage } from '../http/types';
+import type { SSRContext } from '../http/pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 // React Server Components endpoint. Only answers its configured path on GET; otherwise falls through to SSR.
 export const rscStage: Stage<SSRContext> = async ctx => {

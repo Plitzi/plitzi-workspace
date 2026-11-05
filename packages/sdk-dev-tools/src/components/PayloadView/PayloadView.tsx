@@ -1,7 +1,7 @@
 import JsonView from '@uiw/react-json-view';
 import * as vscode from '@uiw/react-json-view/vscode';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 const jsonViewStyle = {
   ...vscode.vscodeTheme,

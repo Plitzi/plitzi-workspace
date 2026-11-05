@@ -1,15 +1,17 @@
 import path from 'node:path';
 
+import { serverLog } from '@plitzi/sdk-kernel/log';
+import { privateOriginsOf } from '@plitzi/sdk-kernel/outbound';
 import { IMAGE_PATH } from '@plitzi/sdk-shared/helpers';
 
-import { privateOriginsOf } from '../../../helpers/outboundGuard';
-import { serverLog } from '../../../helpers/serverLog';
 import { createImageProxy } from '../../../modules/images/imageProxy';
 import { loadSharpTransform } from '../../../modules/images/transform';
 
 import type { ImageAnswer, ImageRequest } from '../../../modules/images/imageProxy';
-import type { Stage } from '../types';
-import type { SSRImagesConfig, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRImagesConfig } from '../../../types';
+import type { SSRServerConfig } from '../../../types';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 /** Where pictures are resized, when this server resizes them: published to the SDK, which builds every `srcset` on it. */
 export const imagesPathOf = (config: Pick<SSRServerConfig, 'images'>): string | undefined =>
@@ -49,7 +51,7 @@ const proxyFor = (
 };
 
 /** `/_plitzi/img?url=…&w=…` — a remote picture at one of the widths the SDK asks for. See `SSRImagesConfig`. */
-export const imagesStage: Stage = async ctx => {
+export const imagesStage: Stage<SSRContext> = async ctx => {
   const { images } = ctx.config;
   if (!images || imagesPathOf(ctx.config) === undefined || ctx.req.path !== IMAGE_PATH) {
     return false;

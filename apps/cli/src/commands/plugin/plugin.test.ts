@@ -276,7 +276,7 @@ describe('plitzi plugin add', () => {
       await from(dir, () => addPlugin(['board'], { server: true }));
 
       const functions = await fs.readFile(path.join(dir, 'src/plugins/Board/functions/index.ts'), 'utf-8');
-      expect(functions).toContain("import { defineFunctions } from '@plitzi/sdk-server/functions';");
+      expect(functions).toContain("import { defineFunctions } from '@plitzi/sdk-runtime';");
       expect(functions).toContain('/fn/plugins/board/');
       expect(functions).toContain("'POST /state'");
     });
@@ -297,7 +297,7 @@ describe('plitzi plugin add', () => {
       const json = JSON.parse(await fs.readFile(path.join(pkg, 'package.json'), 'utf-8')) as {
         devDependencies: Record<string, string>;
       };
-      expect(json.devDependencies['@plitzi/sdk-server']).toMatch(/^\^\d/);
+      expect(json.devDependencies['@plitzi/sdk-runtime']).toMatch(/^\^\d/);
       expect(await exists(path.join(pkg, 'src/Legend/functions/index.ts'))).toBe(true);
     });
   });

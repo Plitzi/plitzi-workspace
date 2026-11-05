@@ -2,7 +2,7 @@ import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import clsx from 'clsx';
 
 import { useSdkStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import MotionReveal from './MotionReveal';
 

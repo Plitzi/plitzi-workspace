@@ -1,6 +1,7 @@
+import { TtlCache } from '@plitzi/sdk-kernel/cache';
+
 import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from './defaults';
 import { sizeOfPage } from './pages';
-import { TtlCache } from './TtlCache';
 import { createRenderTurns } from '../../modules/ssr/renderTurns';
 import { spaceDocument } from '../hydrationPayload';
 

@@ -67,7 +67,7 @@
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-runtime": "workspace:*",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.3.3",
     "eslint": "^9.39.5",

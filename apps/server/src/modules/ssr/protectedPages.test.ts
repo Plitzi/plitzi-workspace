@@ -1,11 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { offlineDataOf, oneEmptyPage } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { Schema, SSRRequest, SSRServer, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Schema, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * A page that says who may see it, over real HTTP: a visitor who may not is answered with its refusal and never its

@@ -1,9 +1,10 @@
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
 import { sitemapPaths } from '@plitzi/sdk-shared/navigation';
 
-import { requestOrigin } from '../requestParser';
 import { servedSpace } from './servedSpace';
 
-import type { SSRContext, Stage } from '../http/types';
+import type { SSRContext } from '../http/pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 const XML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
 

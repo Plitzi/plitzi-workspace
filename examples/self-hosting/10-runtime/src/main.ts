@@ -1,6 +1,9 @@
-import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
-import { serveRuntime } from '@plitzi/sdk-server/runtime';
+import { createRejectLogger, createRunLogger } from '@plitzi/sdk-actions';
+import { serveRuntime } from '@plitzi/sdk-actions/runtimes';
+import { closeOnSignals } from '@plitzi/sdk-kernel/http';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { createJsonAdapters } from '@plitzi/sdk-server';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
 import { lookups } from './actions.ts';
 import pulse from './runtime.ts';
@@ -20,7 +23,7 @@ const publicUrl = (process.env.PUBLIC_URL ?? `http://127.0.0.1:${String(PORT)}`)
  */
 const runtime = await serveRuntime(pulse, { env: process.env, publicUrl });
 
-const server = createServer(
+const server = createPlatform(
   {
     port: PORT,
     devMode: process.env.NODE_ENV !== 'production',

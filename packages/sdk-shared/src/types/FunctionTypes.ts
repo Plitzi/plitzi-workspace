@@ -4,7 +4,7 @@ import type { JobStatus } from './JobTypes';
 
 /**
  * A space's own functions, as everything outside the runner sees them: the builder, the CLI, the MCP and the
- * platform that stores them. The contract the code itself is written against is `@plitzi/sdk-server/functions`.
+ * platform that stores them. The contract the code itself is written against is `@plitzi/sdk-runtime`.
  */
 
 /**

@@ -4,7 +4,7 @@ import { PROXY_PARAM, readGrant } from './grant';
 import { rewritablePayload, rewritePayload } from './payload';
 
 import type { ProxyKind, ResourceProxySettings } from './types';
-import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 // An asset is immutable for as long as the grant lasts (the URL names one target and is signed), so the host's
 // browser should ask for each picture once. An API answer is the opposite: it is fetched because it changes, and

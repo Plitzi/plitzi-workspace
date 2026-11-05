@@ -1,19 +1,15 @@
+import { SPACE_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
 import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 
 import { meterPage } from './meterPage';
-import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { digest, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { SpaceDocument } from '../../helpers/hydrationPayload';
-import type {
-  Environment,
-  OfflineDataRaw,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
 import type { PageAccess } from '@plitzi/sdk-shared/schema';
 
 /**

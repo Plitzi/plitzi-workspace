@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { use, useCallback, useState } from 'react';
 
 import { RUN_REPORT_TEXT_MOST } from '@plitzi/sdk-shared/runs';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import { reportOf, sendReport } from './reportHelpers';
 import { clearRecordedSteps } from './stepRecorder';

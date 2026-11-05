@@ -1,6 +1,6 @@
 import { use } from 'react';
 
-import { sharedContext } from '@plitzi/sdk-shared/helpers';
+import { sharedContext } from '@plitzi/sdk-shared/react';
 
 import type { NotificationOptions } from '@plitzi/sdk-shared/authoring';
 

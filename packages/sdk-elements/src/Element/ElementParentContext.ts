@@ -1,4 +1,4 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers';
+import { sharedContext } from '@plitzi/sdk-shared/react';
 
 /**
  * What an element needs from the element around it: whether that one is on screen, and its tracing identity.

@@ -1,13 +1,15 @@
-import { PREVIEW_COOKIE, readDraftToken } from '../../core/previewToken';
+import { PREVIEW_COOKIE, readDraftToken } from '@plitzi/sdk-kernel/identity';
 
-import type { StoreMethods } from '../../core/server/fleet/channel';
-import type { DraftStore, OfflineDataRaw, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRServerConfig } from '../../types';
+import type { StoreMethods } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { DraftStore, OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /** The READ side of draft-preview: a render resolving a stashed draft from its token. The write side — applying
  *  unsaved operations and rendering the result — lives in `@plitzi/sdk-mcp`, which is what knows how to interpret an
  *  operation; a page-only deployment keeps this much and never loads that. */
 
-/** Every method of the store, for the copy a server's workers share (see `fleet/stores.ts`). */
+/** Every method of the store, for the copy a server's workers share (`FleetStores`, `core/server/fleet/link.ts`). */
 export const DRAFT_STORE_METHODS: StoreMethods<DraftStore> = { put: true, take: true, drop: true };
 
 /** In-memory draft store — the default when the consumer injects none. Fine for a single replica; a multi-replica

@@ -12,14 +12,17 @@ plitzi-workspace/
 │   ├── cli/         # Crea proyectos y plugins, sube código a un space, saca un space como proyecto (@plitzi/cli)
 │   └── desktop/     # Cliente de escritorio
 ├── packages/
+│   ├── sdk-actions/     # El motor de actions y su worker: actions, el lado host de functions, realtime, jobs
 │   ├── sdk-auth/
 │   ├── sdk-authoring/   # Autoría offline de espacios y plantillas (@plitzi/sdk-authoring)
 │   ├── sdk-dev-tools/
 │   ├── sdk-elements/
 │   ├── sdk-event-bridge/
 │   ├── sdk-interactions/
+│   ├── sdk-kernel/      # La base de todo proceso de servidor: el pipeline HTTP, comprobar quién hace una petición
 │   ├── sdk-navigation/
 │   ├── sdk-plugins/
+│   ├── sdk-runtime/     # El contrato del código propio de un espacio, y lo que lo ejecuta sin acceso
 │   ├── sdk-schema/
 │   ├── sdk-shared/      # ESLint, TSConfig, tipos y utilidades compartidas
 │   ├── sdk-style/

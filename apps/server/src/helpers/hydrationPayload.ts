@@ -4,7 +4,8 @@ import { styleSheetCss, styleSheetHref, styleSheetLinkable } from '@plitzi/sdk-s
 
 import { escapeJson } from './escapeJson';
 
-import type { CompressedBodies, OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
+import type { CompressedBodies } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The space as a page reads it, the name of exactly that text, and the space it was written from. */
 export type SpaceDocument = { json: string; hash: string; data: OfflineDataRaw };

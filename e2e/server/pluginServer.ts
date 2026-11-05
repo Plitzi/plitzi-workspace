@@ -4,7 +4,8 @@ import http from 'node:http';
 import path from 'node:path';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
-import { closeOnSignals, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals } from '@plitzi/sdk-kernel/http';
+import { createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import { PORTS } from '../launchConfig';
 

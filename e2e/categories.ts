@@ -44,7 +44,9 @@ const EXAMPLE_TARGETS = [
   'mysql',
   'server-actions-no-server',
   'server-actions-schedules',
-  'runtime'
+  'runtime',
+  'actions-on-a-worker',
+  'actions-on-another-origin'
 ];
 
 export const categories: Category[] = [

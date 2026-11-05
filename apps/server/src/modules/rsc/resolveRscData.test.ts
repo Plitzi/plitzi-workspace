@@ -4,8 +4,9 @@ import { RSC_FAILURE } from '@plitzi/sdk-shared/schema';
 
 import { resolveRscData } from './resolveRscData';
 
-import type { RscElementResolver } from './resolveRscData';
-import type { Element, Schema, SSRRequest, SSRUser } from '@plitzi/sdk-shared';
+import type { RscElementResolver } from '@plitzi/sdk-kernel/engine';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Element, Schema, SSRUser } from '@plitzi/sdk-shared';
 
 const element = (
   id: string,

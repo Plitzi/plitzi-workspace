@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAuth } from './createAuth';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
 
-import type { AccountAdapters } from './api';
-import type { IdentityAdapters } from './identity';
-import type { SSRSession } from '@plitzi/sdk-shared';
+import { createAuth } from './createAuth';
+import { TEST_SECRET } from './tests/keys';
+
+import type { AccountAdapters } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 // What this facade is for is not brevity but the two facts that used to be stated twice. The tests that matter are
 // the ones proving they cannot disagree any more.
@@ -44,7 +47,8 @@ const store = () => {
 
 const build = (cookie?: { name: string }) =>
   createAuth({
-    tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+    tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+    secret: TEST_SECRET,
     cookie,
     adapters: store()
   });
@@ -112,7 +116,8 @@ describe('createAuth', () => {
 
   it('honours a base path other than /auth', async () => {
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: [] },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: [] },
+      secret: TEST_SECRET,
       adapters: store(),
       basePath: '/api/auth'
     });
@@ -123,7 +128,8 @@ describe('createAuth', () => {
   // A deployment's own rules come first, so it can always open a path of its own without editing the server.
   it('puts the deployment’s own rules ahead of the derived ones', async () => {
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: [] },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: [] },
+      secret: TEST_SECRET,
       adapters: store(),
       rules: [{ match: ['/health'], requirement: 'public' }]
     });
@@ -152,7 +158,8 @@ describe('an account’s public face', () => {
       gone: { id: 10, username: 'gone', email: 'gone@example.test', active: false, verified: true }
     };
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test' },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test' },
+      secret: TEST_SECRET,
       adapters: {
         ...store(),
         findByUsername: username => Promise.resolve(Object.values(accounts).find(each => each.username === username)),

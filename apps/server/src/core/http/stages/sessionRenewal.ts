@@ -1,11 +1,14 @@
-import { knowHostDeployment } from './hostDeployment';
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { requestAuthority } from '@plitzi/sdk-kernel/http';
+import { readRenewalGuard, readSessionHint, readSessionToken, writeRenewalGuard } from '@plitzi/sdk-kernel/identity';
+
 import { isDocumentNavigation, renewForNavigation } from '../../auth/renewal';
-import { readRenewalGuard, readSessionHint, readSessionToken, writeRenewalGuard } from '../../auth/session';
-import { requestAuthority } from '../../requestParser';
 
 import type { Auth } from '../../auth/createAuth';
-import type { BaseContext, Stage } from '../types';
-import type { SSRAuthCookie, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRAuthCookie } from '@plitzi/sdk-kernel/types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 /** Renewal this close to its deadline is not worth the round trip: it would be refused on arrival. */
 const REFRESH_MARGIN_SECONDS = 30;
@@ -59,7 +62,7 @@ const halfLapsed = (req: SSRRequest, cookie: SSRAuthCookie | undefined): boolean
  * own address travels as `redirect` accordingly, and the endpoint only sends the browser back to a host that shares
  * the session's cookies. Only whole-tab `GET` navigations take part: a renewal rotates the session.
  */
-export const createSessionRenewalStage = (url: string): Stage<BaseContext> => {
+export const createSessionRenewalStage = (url: string): Stage<SSRContext> => {
   const sameHost = url.startsWith('/') && !url.startsWith('//');
   const renewalPath = sameHost ? new URL(url, 'http://localhost').pathname : undefined;
 
@@ -91,7 +94,7 @@ export const createSessionRenewalStage = (url: string): Stage<BaseContext> => {
  * The renewal endpoint, on a page server that serves `/auth` itself: `GET <basePath>/refresh`. The `POST` flow at the
  * same path is the auth API stage's; this one only ever answers a whole-tab navigation.
  */
-export const createRenewalEndpointStage = (auth: Auth): Stage<BaseContext> => {
+export const createRenewalEndpointStage = (auth: Auth): Stage<SSRContext> => {
   const path = `${auth.basePath}/refresh`;
 
   return async ({ req, res }) => {

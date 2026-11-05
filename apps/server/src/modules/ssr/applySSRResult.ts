@@ -1,7 +1,8 @@
-import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
-import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
+import { SPACE_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
+import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
 
-import type { SSRRenderResult, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { SSRRenderResult } from '@plitzi/sdk-shared';
 
 /**
  * What names the render rather than the page: the space (`access-token`, on a host serving many) and the draft (`__pt`).
@@ -18,7 +19,7 @@ export const renderParamsOf = (query: Record<string, string>): [string, string][
  * `location` with the render's parameters, when it is on this site — a path. An address on another origin is never
  * given them: a space token sent there is a credential handed to somebody else.
  */
-export const withRenderParams = (location: string, params: readonly [string, string][]): string => {
+const withRenderParams = (location: string, params: readonly [string, string][]): string => {
   if (params.length === 0 || !location.startsWith('/') || location.startsWith('//')) {
     return location;
   }

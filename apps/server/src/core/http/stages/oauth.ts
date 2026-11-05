@@ -1,3 +1,5 @@
+import { readRawBody } from '@plitzi/sdk-kernel/http';
+
 import { handleAuthorizeStart, handleAuthorizeSubmit } from '../../oauth/authorize';
 import { bearerOf, sendChallenge } from '../../oauth/challenge';
 import {
@@ -14,11 +16,10 @@ import { getAccess } from '../../oauth/records';
 import { handleRegister } from '../../oauth/register';
 import { sendErrorJson, sendJson } from '../../oauth/respond';
 import { handleRevoke, handleToken } from '../../oauth/token';
-import { readRawBody } from '../../requestParser';
 
 import type { OAuthParams } from '../../oauth/params';
-import type { BaseContext, Stage } from '../types';
-import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type { BaseContext, Stage } from '@plitzi/sdk-kernel/http';
+import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-kernel/types';
 
 // RFC 9728 allows the resource's path to be appended to the well-known path, so a client may ask for either
 // `/.well-known/oauth-protected-resource` or `/.well-known/oauth-protected-resource/<path>`.

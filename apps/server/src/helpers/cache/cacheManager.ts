@@ -2,8 +2,8 @@ import { readHtmlCacheKey, readOfflineDataCacheKey, readRscCacheKey } from './ke
 
 import type { CacheKeyFacts } from './keys';
 import type { ServerCaches } from './serverCaches';
-import type { TtlCache } from './TtlCache';
-import type { CacheFilter, CacheManager } from '@plitzi/sdk-shared';
+import type { CacheFilter, CacheManager } from '../../types';
+import type { TtlCache } from '@plitzi/sdk-kernel/cache';
 
 /** What the manager does to a cache, whatever it holds. */
 type ManagedCache = Pick<TtlCache<never>, 'invalidateWhere' | 'clear' | 'size'>;

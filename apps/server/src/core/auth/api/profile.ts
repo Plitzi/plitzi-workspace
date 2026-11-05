@@ -1,8 +1,8 @@
 import { refuse, NOT_OFFERED, asString, LIFETIME, profileOf } from './values';
 
-import type { Actor } from '../identity';
 import type { AuthContext } from './context';
 import type { AuthOutcome } from './types';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
 
 /** What a signed-in person does to their own account: the profile, the address, the password, the sessions. */
 export const profileFlows = ({

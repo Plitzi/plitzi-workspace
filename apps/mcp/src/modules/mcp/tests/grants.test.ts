@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { emptySpace, noSpaceErrorCode, readOnlyGrantErrorCode } from '../helpers';
 import { createMcpServer } from '../server';
 
-import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-kernel/types';
 
 /**
  * Which grant reaches a space. A site's credential — the `render` token every published page embeds, a self-hosting

@@ -7,7 +7,7 @@ import { clickTrigger, interactiveSpace } from './interactionsHelpers';
 
 import type { Space } from '../helpers';
 import type { Operation } from '../tools';
-import type { ComponentCatalog } from '@plitzi/sdk-shared';
+import type { ComponentCatalog } from '@plitzi/sdk-kernel/types';
 
 // --- Dynamic per-space catalog: strict for default (custom:false) types, lenient for plugins (custom:true) ---
 const spaceWithCatalog = (catalog: ComponentCatalog): Space => ({ ...interactiveSpace(), catalog });

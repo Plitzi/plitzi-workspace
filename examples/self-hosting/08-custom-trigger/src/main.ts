@@ -1,5 +1,5 @@
-import { consoleLogger } from '@plitzi/sdk-server';
-import { createActionsModule, createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
+import { createActionsModule, createRejectLogger, createRunLogger } from '@plitzi/sdk-actions';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
 
 import { lookups, settlePayout } from './action.ts';
 import { exampleKv } from './kv.ts';

@@ -1,16 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
+import { createActionsModule } from '@plitzi/sdk-actions';
+import { functionsInHand } from '@plitzi/sdk-actions/functions';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { defineFunctions } from '@plitzi/sdk-runtime';
+import { createIsolateRunner } from '@plitzi/sdk-runtime/runner';
+
+import { createPlatform } from './platform';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
-import { createActionsModule } from '../modules/actions';
-import { defineFunctions } from '../modules/functions/contract';
-import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
-import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
-import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 /**
  * A space's functions answering HTTP under `/fn/`, through the server a deployment gets: the deployment's own routes
@@ -21,7 +22,7 @@ const PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const SPACE_SOURCE = {
-  'index.ts': `import { ActionRefusal } from '@plitzi/sdk-server/functions';
+  'index.ts': `import { ActionRefusal } from '@plitzi/sdk-runtime';
 
 export default {
   routes: {
@@ -56,7 +57,7 @@ beforeAll(async () => {
   }
 
   const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: { cpuMs: 100 } };
-  server = createServer({
+  server = createPlatform({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
     action: {

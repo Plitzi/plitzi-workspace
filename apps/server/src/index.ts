@@ -1,12 +1,4 @@
 export { createServer, resolveServices } from './core/createServer';
-export { closeOnSignals } from './core/server/closeOnSignals';
-// A project's own `src/functions/`, built as the platform builds a space's and loaded natively: `functions: { native }`.
-export { loadFunctions, loadFunctionsSource, readFunctionsDir } from './modules/functions/load';
-export { freePort } from './core/freePort';
-export { unusedPort } from './core/unusedPort';
-export { registerHealthCheck, buildHealthPayload } from './core/health';
-export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
-export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createCloudAdapters } from './adapters/cloudAdapters';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export { createAuthAdapters } from './adapters/authAdapters';
@@ -21,25 +13,17 @@ export {
   verifiedDomain,
   wildcardSubdomain
 } from './adapters/space';
-// Draft-preview primitives: the token param and the default store. The endpoint that MINTS a draft lives in
-// `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job, not the renderer's.
+// Draft-preview primitives: the default store (the token's carrier is the kernel's, `@plitzi/sdk-kernel/identity`). The
+// endpoint that MINTS a draft lives in `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job.
 export { createLocalFontStore, hostedPathsOf } from './core/fontStore';
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
 export { createAuthoringHost } from './hosts/authoringHost';
-export { createMemoryPubSub } from './modules/realtime/memoryPubSub';
-export { createRedisPubSub } from './modules/realtime/redisPubSub';
-// The pages several replicas keep in step: the bus an invalidation travels on is the realtime one (`createRedisPubSub`);
+// The pages several replicas keep in step: the bus an invalidation travels on is the realtime one (`createRedisPubSub`,
+// `@plitzi/sdk-kernel/pubsub`);
 // these are the store they share and what a process that serves no pages says an invalidation with.
 export { createRedisPageStore } from './modules/ssr/redisPageStore';
 export { createCacheInvalidator, DEFAULT_IGNORED_QUERY_PARAMS } from './helpers/cache';
-export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 export { resolveRscData } from './modules/rsc/resolveRscData';
-export {
-  fetchConnectorRecords,
-  rebaseMedia,
-  writeConnectorRecord,
-  createConnectorResolver
-} from './modules/connectors';
 
 export type { CloudAdaptersConfig, CloudSpaceCache } from './adapters/cloudAdapters';
 export type { RedisPageStoreClient, RedisPageStoreOptions } from './modules/ssr/redisPageStore';
@@ -59,28 +43,30 @@ export type {
   SpaceResolver,
   WildcardSubdomainOptions
 } from './adapters/space';
-export type { RscElementResolver, RscResolveContext, ResolveRscDataOptions } from './modules/rsc/resolveRscData';
-export type {
-  ConnectorAuth,
-  ConnectorCredential,
-  ConnectorEndpoints,
-  ConnectorFilter,
-  ConnectorLookups,
-  ConnectorManifest,
-  ConnectorManifestDraft,
-  ConnectorPageInfo,
-  ConnectorPagination,
-  ConnectorQuery,
-  ConnectorReadEndpoint,
-  ConnectorRecord,
-  ConnectorResponseMapping,
-  ConnectorResult,
-  ProviderPagination
-} from './modules/connectors';
+export type { ResolveRscDataOptions } from './modules/rsc/resolveRscData';
 export type { FontStore, StoredFont } from './core/fontStore';
 export type { PubSubAdapter, SSRRealtimeConfig } from '@plitzi/sdk-shared';
-export type { RedisPubSubClients } from './modules/realtime/redisPubSub';
 export type { ResolvedServices, ServerConfig } from './core/createServer';
 export type { AuthoringHost, AuthoringHostConfig } from './hosts/authoringHost';
-export type { Closable, CloseOnSignalsOptions } from './core/server/closeOnSignals';
-export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
+export type { PipelineExtensions, SSRContext } from './core/http/pageContext';
+export type {
+  CacheFilter,
+  CacheManager,
+  PluginRegistry,
+  SSRCacheConfig,
+  SSRFontsConfig,
+  SSRImagesConfig,
+  SSRPageServerConfig,
+  SSRPlugin,
+  SSRRenderLimitConfig,
+  SSRRscConfig,
+  SSRServer,
+  SSRServerConfig,
+  SSRSignInConfig,
+  SSRTemplateFn,
+  SSRVisitorCredentialsConfig,
+  ServerServices,
+  SharedPage,
+  SharedPageFacts,
+  SharedPageStore
+} from './types';

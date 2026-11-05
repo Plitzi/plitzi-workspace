@@ -209,6 +209,14 @@ export type ActionLimits = {
    * response rather than per run, because it exists to stop one answer from being unbounded. 5 000 000 by default.
    */
   maxResponseBytes?: number;
+  /**
+   * Bytes all of one run's outbound responses may carry back together: 10 000 000 by default.
+   *
+   * `maxResponseBytes` bounds one answer; a flow that reads twenty answers just under it holds twenty of them, and a
+   * parsed answer holds several times its size in memory. Counted as the answers stream in, across every request the
+   * run makes, and refused the moment they go over — the run fails as `over_capacity`, naming this ceiling.
+   */
+  maxRunBytes?: number;
 };
 
 /**
@@ -411,6 +419,9 @@ export type ActionRunRecord = {
   trace: InteractionNode[];
   /** Present when the run ended badly. Already redacted of credential values. */
   error?: string;
+  /** Why, when a ceiling ended it — its deadline, its step or request budget, the process's capacity. A step that threw is
+   *  `error` with no reason. */
+  reason?: ActionErrorReason;
 };
 
 /**

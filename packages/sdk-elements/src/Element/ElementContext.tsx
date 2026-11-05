@@ -1,4 +1,4 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers';
+import { sharedContext } from '@plitzi/sdk-shared/react';
 
 import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties } from 'react';

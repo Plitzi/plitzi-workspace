@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { serverProviderSource, serverWhenValues, whenOf, whenProviders, whenUnknownToServer } from './providerWhen';
-import { evaluateRuleGroup } from '../helpers/ruleEvaluator';
+import { evaluateRuleGroup } from '../conditions';
 
-import type { RuleGroup, RuleValue } from '../helpers/ruleEvaluator';
+import type { RuleGroup, RuleValue } from '../conditions';
 
 const group = (...rules: { field: string; value: RuleValue }[]): RuleGroup => ({
   combinator: 'and',

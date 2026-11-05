@@ -14,7 +14,7 @@ import type {
 
 /** What a space's functions start as: one file and one task already written, to change rather than to learn from blank. */
 export const STARTER_FILES: Record<string, string> = {
-  'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
+  'index.ts': `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 export default defineFunctions({
   // The hosts ctx.fetch may reach — anything else is refused before it leaves: ['api.example.com', '*.example.com']

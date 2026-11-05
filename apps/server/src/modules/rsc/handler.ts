@@ -1,23 +1,18 @@
+import { requestAuthority } from '@plitzi/sdk-kernel/http';
+import { readDraftToken } from '@plitzi/sdk-kernel/identity';
+import { resolveDebugAuthorization } from '@plitzi/sdk-kernel/identity';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
+import { requestFlagOverrides } from '@plitzi/sdk-shared/flags';
 
-import { readDraftToken } from '../../core/previewToken';
-import { requestAuthority } from '../../core/requestParser';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
-import { resolveDebugAuthorization } from '../../helpers/debugAuthorization';
-import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
-import { serverLog } from '../../helpers/serverLog';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  ActionRunSummary,
-  Environment,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRRscData
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { ActionRunSummary, Environment, SSRRscData } from '@plitzi/sdk-shared';
 
 /** Payload returned by the /_rsc endpoint. */
 type RscPayload = {
@@ -215,8 +210,11 @@ export const handleRsc = async (
   const loadOfflineData = createOfflineDataLoader(() => config.adapters.getOfflineData(spaceId, environment, revision));
 
   const settings = async () => (await loadOfflineData())?.schema.settings;
-  const flagOverrides = await requestFlagOverrides(config, req, { spaceId, environment }, () =>
-    resolveDebugAuthorization(config, settings)
+  const flagOverrides = await requestFlagOverrides(
+    config,
+    { cookie: req.headers.cookie, authority: requestAuthority(req) },
+    { spaceId, environment },
+    () => resolveDebugAuthorization(config, settings)
   );
 
   let rscData: SSRRscData;

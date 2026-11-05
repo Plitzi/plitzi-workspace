@@ -8,7 +8,7 @@ import {
   readNotificationOptions,
   spaceCallbacks
 } from '@plitzi/sdk-shared/authoring';
-import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
 import { NotifyContext } from './useNotify';
 

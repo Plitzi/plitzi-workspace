@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { PREVIEW_TOKEN_PARAM } from '../../previewToken';
-import { openEventStream } from '../sse';
+import { openEventStream } from '@plitzi/sdk-kernel/http';
+import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
 
-import type { EventStream } from '../sse';
-import type { Stage } from '../types';
+import type { SSRContext } from '../pageContext';
+import type { EventStream } from '@plitzi/sdk-kernel/http';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 import type { OfflineDataRaw, PluginEntry } from '@plitzi/sdk-shared';
 
 /** Where an open page listens for what the server has to tell it: its space changed, a plugin was built again. */
@@ -35,7 +36,7 @@ export const createLivePages = () => {
   const listening = new Map<EventStream, string>();
   const boot = randomUUID();
 
-  const stage: Stage = ctx => {
+  const stage: Stage<SSRContext> = ctx => {
     if (!ctx.config.livePages || ctx.req.path !== LIVE_PAGES_PATH) {
       return Promise.resolve(false);
     }

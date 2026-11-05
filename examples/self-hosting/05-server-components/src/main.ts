@@ -2,9 +2,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { offlineDataPath } from '@plitzi/example-space';
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
-import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRRscContext } from '@plitzi/sdk-kernel/types';
+import type { SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4004);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

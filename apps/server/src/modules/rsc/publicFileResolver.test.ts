@@ -4,10 +4,11 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
-import { dataDirLookup } from '../actions/runtime/projectData';
+import { dataDirLookup } from '@plitzi/sdk-kernel/data';
 
-import type { RscResolveContext } from './resolveRscData';
+import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
+
+import type { RscResolveContext } from '@plitzi/sdk-kernel/engine';
 import type { Element } from '@plitzi/sdk-shared';
 
 let base: string;

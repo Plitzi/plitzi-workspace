@@ -23,7 +23,7 @@ import type { PushOutcome } from '../space/pushOutcome';
 
 /**
  * `plitzi space push runtime`, `plitzi runtime status | vars`: a space's runtime — its own server code, run as a process of its own beside
- * the platform (`@plitzi/sdk-server/runtime`) — pushed from the project that holds it, and the variables it starts with.
+ * the platform (`@plitzi/sdk-runtime`) — pushed from the project that holds it, and the variables it starts with.
  *
  * The code is packed with the project's own `@plitzi/sdk-server`, at the version the project runs: what the platform
  * runs is what the project would have run itself.
@@ -58,7 +58,7 @@ const isPacker = (value: unknown): value is Packer => isRecord(value) && typeof 
 /** This project's own packer — read, since it is the project's. */
 const projectPacker = async (root: string): Promise<Packer | undefined> => {
   try {
-    const entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/runtime');
+    const entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-actions/runtimes');
     const loaded: unknown = await import(pathToFileURL(entry).href);
     if (isPacker(loaded)) {
       return loaded;

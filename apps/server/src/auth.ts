@@ -1,42 +1,25 @@
-/** Authentication and authorization, whole. Import it as `@plitzi/sdk-server/auth`.
+/** Signing people in. Import it as `@plitzi/sdk-server/auth`.
  *
- *  Everything a deployment needs to answer *who is this* and *may they* — the token kernel, the session cookies,
- *  the identity resolver, the RBAC checks, the `/auth` flows, the OAuth providers and the space-token lifecycle.
- *  `createAuth` assembles the lot in one call and is what almost every deployment wants; the pieces stay exported
- *  for the one that needs to build a half of it itself.
+ *  The `/auth` flows, passwords and second factors, the OAuth providers, the space-token lifecycle's routes, and
+ *  `createAuth`, which assembles them over the kernel's checks and is what almost every deployment wants.
  *
- *  This used to live in `@plitzi/sdk-server/kernel`, next to the HTTP dispatcher. Two unrelated surfaces under one
- *  name that named neither of them: a deployment wiring up sessions had no reason to read about stages, and
- *  `@plitzi/sdk-mcp`, which wants the dispatcher and no auth at all, had to import from the same place. `/kernel`
- *  is now the HTTP kernel and nothing else.
+ *  Checking who a request is — the tokens (`@plitzi/sdk-kernel/tokens`), the session cookies, the identity resolver,
+ *  CSRF, the RBAC checks (`@plitzi/sdk-kernel/identity`) — is the kernel's (RFC 0032, D3): a worker checks credentials
+ *  and signs nobody in, so it runs that half without this one.
  *
  *  ```ts
  *  import { createAuth } from '@plitzi/sdk-server/auth';
  *  import { createServer } from '@plitzi/sdk-server';
  *
- *  const auth = createAuth({ tokens: { secret, issuer }, adapters: myAccountStore });
+ *  const auth = createAuth({ tokens: { keys, issuer }, secret, adapters: myAccountStore });
  *  const server = createServer({ adapters: space, auth });
  *  ```
  *
- *  A deployment with no account store of its own can have one: `@plitzi/sdk-server/mysql` brings the tables and
+ *  A deployment with no account store of its own can have one: `@plitzi/sdk-kernel/mysql` brings the tables and
  *  every adapter below already implemented. */
 
 export { createAuth } from './core/auth/createAuth';
 export { createAuthApi } from './core/auth/api';
-export { createCsrf, csrfFailureMessage } from './core/auth/csrf';
-export { SESSION_ACTIVITY_RESOLUTION_SECONDS, activityDue } from './core/auth/sessionActivity';
-export { createAuthorizer, checkPermission, checkSpaceAccess, requirementFor } from './core/auth/authorize';
-export { createCarriers, presentedOrigin } from './core/auth/credentials';
-export {
-  ANY_DOMAIN,
-  corsOrigins,
-  domainAllowed,
-  frameAncestors,
-  hostnameOf,
-  normalizeDomain
-} from './core/auth/domains';
-export { createIdentity } from './core/auth/identity';
-export { generateToken, hashPassword, verifyPassword } from './core/auth/passwords';
 export {
   BUILT_IN_PROVIDERS,
   OAuthFailure,
@@ -50,27 +33,7 @@ export { isDocumentNavigation, renewForNavigation } from './core/auth/renewal';
 export type { RenewalOptions } from './core/auth/renewal';
 export type { RedirectPolicyConfig } from './core/auth/redirects';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
-export {
-  appendCookies,
-  clearFlowCookie,
-  clearSessionCookies,
-  createSessionCookies,
-  isLocalHost,
-  parseSessionHint,
-  readFlowCookie,
-  readRefreshToken,
-  readSessionHint,
-  readSessionToken,
-  registrableDomain,
-  sessionCookieParams,
-  sessionHintValue,
-  sessionReturnTarget,
-  writeFlowCookie,
-  writeSessionCookies
-} from './core/auth/session';
 export { createMemoryRateLimit } from './core/auth/throttle';
-export { createSpaceTokenApi } from './core/auth/spaceTokens';
-export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
 export {
   generateRecoveryCodes,
   generateTotpSecret,
@@ -84,49 +47,14 @@ export {
 
 export type { Auth, AuthConfig } from './core/auth/createAuth';
 export type {
-  AccountAccess,
-  AccountAdapters,
-  AccountQuery,
-  AccountRecord,
-  AccountStatus,
   AuthApi,
   AuthApiConfig,
   AuthOutcome,
   ExchangeResult,
-  MfaRecord,
   PasswordPolicy,
-  SecurityEvent,
-  SessionApp,
-  SessionClient,
-  SessionContext,
-  SessionSummary,
   ThrottleAttempt,
   ThrottledAction
 } from './core/auth/api';
-export type {
-  AuthPolicy,
-  AuthorizeResult,
-  Authorizer,
-  MembershipFacts,
-  PathMatcher,
-  PermissionCheck,
-  Requirement,
-  SpaceAccessCheck
-} from './core/auth/authorize';
-export type { CredentialCarrier } from './core/auth/credentials';
-export type { Csrf, CsrfCarrier, CsrfConfig, CsrfFailure, CsrfResult, CsrfSubject } from './core/auth/csrf';
-export type {
-  Actor,
-  ActorResult,
-  Grant,
-  GrantOptions,
-  GrantResult,
-  Identity,
-  IdentityAdapters,
-  IdentityConfig,
-  SpaceMembership,
-  StoredSpaceToken
-} from './core/auth/identity';
 export type {
   CompletedFlow,
   ListedProvider,
@@ -143,34 +71,3 @@ export type {
   StartedFlow
 } from './core/auth/oauth';
 export type { AuthRequest, AuthRoute } from './core/auth/routes';
-export type {
-  CookieCarrier,
-  CookieRequest,
-  CookieSink,
-  SessionCookieParams,
-  SessionCookies,
-  SessionHint
-} from './core/auth/session';
-export type {
-  SpaceTokenAdapters,
-  SpaceTokenApi,
-  SpaceTokenContext,
-  SpaceTokenOutcome,
-  SpaceTokenRecord,
-  SpaceTokenSummary
-} from './core/auth/spaceTokens';
-export type {
-  AuthFailure,
-  MfaChallengePayload,
-  RefreshTokenPayload,
-  SpaceScope,
-  SpaceTokenOptions,
-  SpaceTokenPayload,
-  TokenConfig,
-  TokenScope,
-  Tokens,
-  UserTokenOptions,
-  UserTokenPayload,
-  VerifyResult,
-  WidgetTokenPayload
-} from './core/auth/tokens';

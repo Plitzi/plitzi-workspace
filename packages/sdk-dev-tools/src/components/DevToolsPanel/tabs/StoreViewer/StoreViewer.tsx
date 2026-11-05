@@ -6,7 +6,7 @@ import { use, useCallback, useMemo } from 'react';
 
 import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import mapFunctionValues from './helpers/mapFunctionValues';
 import renderFreshnessKey from './helpers/renderFreshnessKey';

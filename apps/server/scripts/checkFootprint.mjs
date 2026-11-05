@@ -19,14 +19,25 @@ import { fileURLToPath } from 'url';
 
 const BUDGET = {
   // 205: the job queue's rules are one module every queue shares (`queueRules`), and the default queue is the fleet's
-  // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-server/actions`, a project's server).
+  // (`fleetJobQueue`); the file queue is loaded only by who uses it (`@plitzi/sdk-actions`, a project's server).
   // 207: a provider's server `query` read from an external URL (`externalQueryReader`), and the page handler's error
   // page escaped by the one helper (`escapeHtml`).
   // 209: a space's `/sitemap.xml` (`sitemapXml`), and the space a request is served, read once for it and `robots.txt`
   // (`servedSpace`).
   // 31: its `dist` in chunks (`vite.config.ts`, `chunkFileNames`), a module for each and not for every file of the source.
   // A module more is a chunk more: what loads only for some (the project's bundle, `./bundle`) stays out of these.
-  '@plitzi/sdk-server': 31,
+  // 14: the server it was built on left for `@plitzi/sdk-kernel` (RFC 0032, phase 4), and its chunks with it.
+  // 10: the actions engine is handed to a page server (`createPlatform`), never imported by it (RFC 0032, D11).
+  // 8: and it lives in `@plitzi/sdk-actions` now, its configuration's seam with it.
+  '@plitzi/sdk-server': 8,
+  // 14: the entries the page server reaches (`http`, `identity`, `deployment`, `cache`, `log`, `outbound`, `build`) and
+  // the chunks they share. Not `tokens`: `jsonwebtoken` loads only for a server that mints or verifies one (`createAuth`).
+  // 16: the space's data folder (`data`), read by a `/data/<file>` provider, and the pub/sub a cache bus travels on
+  // (`pubsub`).
+  // 18: who may see a debug trace (`identity/debugAuthorization`, the render's and a call's) and the account store's
+  // password hashing (`identity/passwords`), both the kernel's since the store is (RFC 0032, §11 Q7).
+  // 20: `/_stats` and its recorder (`stats`), mounted by every server beside `/health` (RFC 0032, phase 8).
+  '@plitzi/sdk-kernel': 20,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
@@ -34,9 +45,18 @@ const BUDGET = {
   // (`dataSource/variables` — an entry of its own, so the computed values and their `deepEqual` stay the browser's).
   // 151: which pages a sitemap lists (`navigation/sitemap`), the rule the builder's map of pages shows too.
   // 152: the Trusted Types policies' names (`security`), which a page's policy lists and the SDK creates.
-  '@plitzi/sdk-shared': 152,
-  '@plitzi/nexus': 31,
-  '@plitzi/plitzi-ui': 19,
+  // 158: what a run and the functions runner say to each other, and the `ctx` vocabulary (`functions`), moved here from
+  // sdk-server so both sides of the wire share them (RFC 0032, D5).
+  // 160: what both sides of a runtime read (`functions/runtime`), and `defineFunctions`, which a space's bundle is built
+  // with (`functions/contract`): the platform no longer reaches into `@plitzi/sdk-runtime` for them.
+  // 133: the engine's vocabulary — actions, connectors, the functions protocol — no longer loads with a page server.
+  // 134: the flags a request forces (`flags/overrides`), read by the render and by a call alike.
+  // 142: the rule evaluator and the lodash-like helpers are sdk-shared's own (`conditions`, `helpers/lodash`), in place of
+  // plitzi-ui's 19 modules; the persisted state and the theme's and network's React parts moved to folders the server
+  // never imports (`store`, `theme/react`, `network/react`), which took nexus off it (RFC 0032, D13).
+  '@plitzi/sdk-shared': 142,
+  '@plitzi/nexus': 0,
+  '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,
   'react-dom': 7,
   react: 6,

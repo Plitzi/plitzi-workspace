@@ -6,13 +6,8 @@ import { TtlCache } from '../../helpers/cache';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  MeteredKind,
-  SSRMeterDecision,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { MeteredKind, SSRMeterDecision, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 // The render pipeline is not what these tests are about: they are about WHEN the metering adapter is called
 // and what it is told, so everything past it is stubbed down to a body.

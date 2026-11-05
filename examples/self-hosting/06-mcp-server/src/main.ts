@@ -3,10 +3,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { offlineDataPath } from '@plitzi/example-space';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
 import { createServer } from '@plitzi/sdk-mcp/server';
-import { consoleLogger } from '@plitzi/sdk-server/kernel';
 
-import type { OfflineDataRaw, Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4005);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

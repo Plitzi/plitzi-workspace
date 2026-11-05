@@ -1,0 +1,68 @@
+{
+  "name": "@plitzi/sdk-kernel",
+  "version": "0.39.1",
+  "license": "AGPL-3.0",
+  "description": "What every Plitzi server process is built on: the HTTP pipeline, health and shutdown, the host → deployment resolution, and verifying who a request is.",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "@plitzi/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
+    }
+  },
+  "repository": {
+    "type": "https",
+    "url": "https://github.com/plitzi/plitzi-workspace.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": "^24.22.1 || >=26.12.1"
+  },
+  "scripts": {
+    "lint": "eslint ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build"
+  },
+  "dependencies": {
+    "@plitzi/sdk-shared": "workspace:*",
+    "jsonwebtoken": "^9.0.3",
+    "undici": "^8.12.3",
+    "ws": "^8.22.0"
+  },
+  "peerDependencies": {
+    "esbuild": "^0.28.2",
+    "mysql2": "^3"
+  },
+  "peerDependenciesMeta": {
+    "esbuild": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.5",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-import": "^2.32.0",
+    "mysql2": "^3.24.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4",
+    "vite-plugin-dts": "^5.1.2",
+    "vitest": "^5.0.5"
+  }
+}

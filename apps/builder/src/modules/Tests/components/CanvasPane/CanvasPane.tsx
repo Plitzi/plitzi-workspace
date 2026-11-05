@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { use } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme';
+import { SPACE_THEME_AREA, useTheme } from '@plitzi/sdk-shared/theme/react';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderArea from '@pmodules/Builder/components/BuilderArea';
 

@@ -11,7 +11,7 @@ const environmentWith = (files: Record<string, string>) => {
   return env;
 };
 
-const FEED = `import type { FunctionTask } from '@plitzi/sdk-server/functions';
+const FEED = `import type { FunctionTask } from '@plitzi/sdk-runtime';
 
 export const feedTask: FunctionTask<{ window: string }> = {
   namespace: 'seismic',
@@ -33,7 +33,7 @@ export const feedTask: FunctionTask<{ window: string }> = {
 };
 `;
 
-const INDEX = `import { defineFunctions } from '@plitzi/sdk-server/functions';
+const INDEX = `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 import { feedTask } from './lib/feed';
 
@@ -94,7 +94,7 @@ describe('what the source declares, read as it is written', () => {
 
 describe('the jobs the source declares', () => {
   it('reads each by name, with how long it may run and who may watch it, and says which it cannot read', () => {
-    const index = `import { defineFunctions } from '@plitzi/sdk-server/functions';
+    const index = `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 const WATCH = { mode: 'role', permissions: ['spaceView'] } as const;
 const more = {};
@@ -180,7 +180,7 @@ describe('a new task', () => {
   });
 
   it('starts the list when there is none', () => {
-    const empty = `import { defineFunctions } from '@plitzi/sdk-server/functions';
+    const empty = `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 export default defineFunctions({
   allow: { hosts: [] }

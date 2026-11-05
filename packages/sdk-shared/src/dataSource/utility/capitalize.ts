@@ -1,4 +1,4 @@
-import { capitalize as capitalizeHelper } from '@plitzi/plitzi-ui/helpers/lodash';
+import { capitalize as capitalizeHelper } from '../../helpers/lodash';
 
 import type { DataSourceUtility } from '../../types';
 

@@ -1,9 +1,9 @@
-import { createAuthorizer } from '../auth/authorize';
-import { authFailureMessage } from '../auth/tokens';
+import { createAuthorizer } from '@plitzi/sdk-kernel/identity';
+import { authFailureMessage } from '@plitzi/sdk-kernel/identity';
 
 import type { AuthedRequest, JsonResponse } from './types';
-import type { AuthPolicy } from '../auth/authorize';
-import type { Identity } from '../auth/identity';
+import type { AuthPolicy } from '@plitzi/sdk-kernel/identity';
+import type { Identity } from '@plitzi/sdk-kernel/identity';
 
 export interface AuthMiddlewareOptions {
   /**

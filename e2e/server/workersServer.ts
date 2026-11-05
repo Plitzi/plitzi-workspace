@@ -1,10 +1,11 @@
-import { closeOnSignals, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals } from '@plitzi/sdk-kernel/http';
+import { createServer } from '@plitzi/sdk-server';
 
 import { sampleSpace } from '../spaces';
 import { getRscData, plugins } from './sample';
 import { PORTS } from '../launchConfig';
 
-import type { SSRPageAdapters } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
 
 /**
  * The sample space served by two processes on one port — how a production server uses a machine with more than one

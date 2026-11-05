@@ -1,13 +1,15 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import { knowHostDeployment } from './hostDeployment';
-import { readCookies } from '../../auth/credentials';
-import { appendCookies, writeSessionCookies } from '../../auth/session';
-import { requestOrigin } from '../../requestParser';
-import { safeRedirectTarget } from '../navigation';
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
+import { safeRedirectTarget } from '@plitzi/sdk-kernel/http';
+import { readCookies } from '@plitzi/sdk-kernel/identity';
+import { appendCookies, writeSessionCookies } from '@plitzi/sdk-kernel/identity';
 
-import type { Stage } from '../types';
-import type { SSRRequest, SSRResponseHelpers, SSRSignInConfig } from '@plitzi/sdk-shared';
+import type { SSRSignInConfig } from '../../../types';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * Signing a visitor in by redirect (`config.signIn`): out to an authorization server, back with a code, and a session
@@ -101,7 +103,7 @@ const redirect = (res: SSRResponseHelpers, location: string): true => {
   return true;
 };
 
-export const signInStage: Stage = async ctx => {
+export const signInStage: Stage<SSRContext> = async ctx => {
   const { config, req, res } = ctx;
   const { signIn } = config;
   if (!signIn || req.method !== 'GET') {
@@ -116,7 +118,7 @@ export const signInStage: Stage = async ctx => {
 
   const { exchangeCredential, getSpaceDeployment } = config.adapters;
   const origin = requestOrigin(req);
-  if (!exchangeCredential || !getSpaceDeployment || !origin) {
+  if (!exchangeCredential || !origin) {
     res.setStatus(404);
     res.end();
 

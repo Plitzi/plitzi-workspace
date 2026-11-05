@@ -25,7 +25,8 @@ const store = await createMysqlStore({
 });
 
 const auth = createAuth({
-  tokens: { secret, issuer },
+  tokens: { keys, issuer },
+  secret,
   adapters: store.authAdapters,
 });
 

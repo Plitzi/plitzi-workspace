@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createCacheInvalidator, shareCache } from './sharedCache';
-import { createMemoryPubSub } from '../../modules/realtime/memoryPubSub';
+import { createMemoryPubSub } from '@plitzi/sdk-kernel/pubsub';
 
-import type { CacheManager, SharedPageStore } from '@plitzi/sdk-shared';
+import { createCacheInvalidator, shareCache } from './sharedCache';
+
+import type { CacheManager } from '../../types';
+import type { SharedPageStore } from '../../types';
 
 const manager = () => {
   const invalidate = vi.fn<CacheManager['invalidate']>(() => 1);

@@ -35,7 +35,7 @@ const exists = (file: string): Promise<boolean> =>
     () => false
   );
 
-/** The package an import names: `@plitzi/sdk-server/runtime` → `@plitzi/sdk-server`, `zod/v4` → `zod`. */
+/** The package an import names: `@plitzi/sdk-server/project` → `@plitzi/sdk-server`, `zod/v4` → `zod`. */
 const packageOf = (specifier: string): string => {
   const parts = specifier.split('/');
 

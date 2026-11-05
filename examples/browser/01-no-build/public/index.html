@@ -55,8 +55,9 @@
         environment: 'main',
         renderMode: 'raw',
         debugMode: true,
-        // The panel lives in a shadow root, so it loads its own stylesheet rather than inheriting the page's.
-        // With no bundler to resolve that path, the host is the one who knows where the SDK's assets are served.
+        // The icons' stylesheet and the panel's (it lives in a shadow root) are loaded by the SDK itself. With no
+        // bundler to resolve those paths, the host is the one who knows where the SDK's assets are served.
+        sdkIconsStylePath: '/sdk-assets/plitzi-sdk-icons.css',
         sdkDevToolsStylePath: '/sdk-assets/plitzi-sdk-devtools.css'
       });
     </script>

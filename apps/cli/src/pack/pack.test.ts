@@ -406,6 +406,7 @@ describe('a plugin’s server half', () => {
             react: '^19.0.0',
             '@plitzi/plitzi-sdk': '^0.38.0',
             '@plitzi/sdk-authoring': '^0.38.0',
+            '@plitzi/sdk-runtime': '^0.38.0',
             '@plitzi/sdk-server': '^0.38.0'
           }
         })

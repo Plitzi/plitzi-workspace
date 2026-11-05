@@ -1,6 +1,6 @@
 export { DEFAULT_CACHE_BYTES, DEFAULT_IGNORED_QUERY_PARAMS, DEFAULT_TTL_MS } from './defaults';
-export { TtlCache } from './TtlCache';
-export type { CacheRead, TtlCacheOptions } from './TtlCache';
+export { TtlCache } from '@plitzi/sdk-kernel/cache';
+export type { CacheRead, TtlCacheOptions } from '@plitzi/sdk-kernel/cache';
 export {
   buildHtmlCacheKey,
   buildOfflineDataCacheKey,

@@ -3,7 +3,7 @@ import { use, useEffect, useMemo } from 'react';
 
 import { withElement, RootElement } from '@plitzi/sdk-elements';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 
 import { offlineDocuments } from './offlineDocuments';
 import App from '../../../../App';

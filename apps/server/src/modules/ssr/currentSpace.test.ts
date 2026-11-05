@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { offlineDataOf } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { SSRMeterDecision, SSRMeterEvent, SSRServer, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { SSRMeterDecision, SSRMeterEvent, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
 /**
  * `/_plitzi/space.json` over real HTTP: the space as it is now, for a page that renders it itself — the same document a

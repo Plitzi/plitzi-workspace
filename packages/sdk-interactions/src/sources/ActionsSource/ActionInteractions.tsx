@@ -208,6 +208,8 @@ const flowErrorOf = (actionId: string, payload: ActionResponse) => ({
  */
 const ActionInteractions = ({ children }: ActionInteractionsProps) => {
   const { useInteractions, interactionsManager } = use(InteractionsContext);
+  // Called with the visitor's cookies (`credentials: 'include'`): the endpoint may be on the actions' own origin
+  // (`action.origin`), whose CORS answers this page; on the page's origin it is what `same-origin` is.
   const [endpoint] = useCommonStore('actions.endpoint');
   /**
    * What this space can run, when something knows — the builder seeds it, a published page has nothing here.
@@ -288,7 +290,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         if (serverRunId) {
           // The run is already marked aborted here; whether the server heard is not something the page can act on,
           // and an unhandled rejection over it is noise in somebody else's console.
-          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' }).catch(
+          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'include' }).catch(
             () => undefined
           );
         }
@@ -337,7 +339,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         void fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
+          credentials: 'include',
           keepalive: true,
           signal: controller.signal,
           body
@@ -420,7 +422,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-            credentials: 'same-origin',
+            credentials: 'include',
             signal: controller.signal,
             body
           });
@@ -528,7 +530,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
+          credentials: 'include',
           signal: controller.signal,
           body
         });
@@ -628,7 +630,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       try {
         const response = await fetch(`${endpoint}/run/${params.runId}`, {
           method: 'DELETE',
-          credentials: 'same-origin'
+          credentials: 'include'
         });
         const cancelled = response.status === 204;
         // Said either way, because "nothing happened" is the same thing to look at as "it stopped": a cancel is

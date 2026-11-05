@@ -1,11 +1,5 @@
-import type {
-  Environment,
-  PluginSource,
-  SSRCredential,
-  SSRDeploymentSecurity,
-  SSRRequest,
-  SSRTemplateProps
-} from '@plitzi/sdk-shared';
+import type { SSRCredential, SSRDeploymentSecurity, SSRRequest, SSRTemplateProps } from '@plitzi/sdk-kernel/types';
+import type { Environment, PluginSource } from '@plitzi/sdk-shared';
 
 /**
  * Which space a request resolved to, before the server fills in what is the same for everybody.

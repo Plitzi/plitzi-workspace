@@ -4,14 +4,18 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createServer, unusedPort } from '@plitzi/sdk-server';
-import { healthStage } from '@plitzi/sdk-server/kernel';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { healthStage } from '@plitzi/sdk-kernel/http';
+import { statsStage } from '@plitzi/sdk-kernel/stats';
+import { createServer } from '@plitzi/sdk-server';
 
 import { buildMCPPipeline, mcpExtensions } from './pipeline';
 import { previewStage } from './stages/preview';
 import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
-import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
+import type { SSRServer } from '@plitzi/sdk-server';
+import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 const PORT = await unusedPort();
 const OPEN_PORT = await unusedPort();
@@ -50,11 +54,11 @@ describe('buildMCPPipeline (the dedicated MCP server)', () => {
   // The MCP catch-all answers every request that reaches it, so anything that must stay reachable — health probes,
   // static mounts, the widget resource endpoint, the OAuth grant endpoints — has to precede it. Draft-preview is
   // not among them: it renders, which a dedicated MCP server cannot do.
-  it('is the six self-gating stages, and carries no draft-preview', () => {
+  it('is the seven self-gating stages, health and stats first, and carries no draft-preview', () => {
     const stages = buildMCPPipeline();
 
-    expect(stages[0]).toBe(healthStage);
-    expect(stages).toHaveLength(6);
+    expect(stages.slice(0, 2)).toEqual([healthStage, statsStage]);
+    expect(stages).toHaveLength(7);
     expect(stages).not.toContain(previewStage);
   });
 });

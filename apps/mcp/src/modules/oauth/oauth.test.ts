@@ -7,15 +7,8 @@ import { createOAuthGuardStage } from '@plitzi/sdk-server/oauth';
 
 import { createServer } from '../../createServer';
 
-import type { BaseContext } from '@plitzi/sdk-server/kernel';
-import type {
-  OAuthAdapters,
-  OAuthStore,
-  SSRAdapters,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRServer
-} from '@plitzi/sdk-shared';
+import type { BaseContext, HttpServer } from '@plitzi/sdk-kernel/http';
+import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 // The stage under test falls through when the bearer checks out, so it never writes a response; anything reaching
 // this is a bug the test must not hide.
@@ -127,9 +120,9 @@ const oauthAdapters = (): OAuthAdapters => ({
   store: delegatingStore
 });
 
-let server: SSRServer;
+let server: HttpServer;
 
-// An ephemeral port, claimed by probing one with a throwaway listener: the SSRServer takes the port to bind, and
+// An ephemeral port, claimed by probing one with a throwaway listener: the HttpServer takes the port to bind, and
 // a fixed one makes the suite fail on whatever else is already holding it.
 const freePort = (): Promise<number> =>
   new Promise(resolve => {
@@ -496,7 +489,7 @@ describe('MCP OAuth token exchange', () => {
 /** A deployment that configured no guest connection. Its own server, because whether the button exists is decided
  *  once when the server is built. */
 describe('MCP OAuth without a guest connection', () => {
-  let strictServer: SSRServer;
+  let strictServer: HttpServer;
   let strictBase = '';
 
   beforeAll(async () => {

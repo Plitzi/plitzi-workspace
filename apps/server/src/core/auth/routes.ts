@@ -1,11 +1,12 @@
-import { carrierOf, csrfFailureMessage } from './csrf';
+import { carrierOf, csrfFailureMessage } from '@plitzi/sdk-kernel/identity';
 
-import type { AccountStatus, AuthApi, AuthOutcome } from './api';
-import type { AuthPolicy, Requirement } from './authorize';
-import type { CredentialCarrier } from './credentials';
-import type { Csrf, CsrfSubject } from './csrf';
-import type { Actor } from './identity';
-import type { CookieSink, SessionCookies } from './session';
+import type { AuthApi, AuthOutcome } from './api';
+import type { AccountStatus } from '@plitzi/sdk-kernel/identity';
+import type { AuthPolicy, Requirement } from '@plitzi/sdk-kernel/identity';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Csrf, CsrfSubject } from '@plitzi/sdk-kernel/identity';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
+import type { CookieSink, SessionCookies } from '@plitzi/sdk-kernel/identity';
 
 /**
  * A request, as the auth flows need to read one. Everything here is either already on a `node:http` request or was

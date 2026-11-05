@@ -6,7 +6,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import Notice from '@pmodules/App/components/Notice';
 import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 

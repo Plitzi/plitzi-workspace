@@ -1,18 +1,14 @@
 import { serverQueryOf } from '@plitzi/sdk-shared/schema';
 
-import { createActionResolver } from '../actions/runtime/renderResolver';
-import { createConnectorResolver } from '../connectors';
 import { externalQueryReader, visitorCredentialsOf } from './externalQueryReader';
 import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
-import type { OutboundOptions } from '../../helpers/outboundGuard';
-import type { ActionsModule } from '../actions';
-import type { RscElementResolver } from './resolveRscData';
-import type { ProjectDataLookup } from '../actions/runtime/projectData';
-import type { ActionLookups } from '../actions/types';
-import type { ConnectorLookups } from '../connectors/resolver';
-import type { SSRAdapters, SSRVisitorCredentialsConfig } from '@plitzi/sdk-shared';
+import type { SSRVisitorCredentialsConfig } from '../../types';
+import type { ProjectDataLookup } from '@plitzi/sdk-kernel/data';
+import type { RscElementResolver } from '@plitzi/sdk-kernel/engine';
+import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 /**
  * `getRscData`, built from the producers the server was already given — connectors, actions, its own static files.
@@ -30,8 +26,7 @@ import type { SSRAdapters, SSRVisitorCredentialsConfig } from '@plitzi/sdk-share
  * A deployment that resolves server elements some other way still supplies its own `getRscData`, and that one wins.
  */
 export const connectorRscData = ({
-  connectors,
-  actions,
+  engine,
   publicDir,
   data,
   elementTimeoutMs,
@@ -39,8 +34,8 @@ export const connectorRscData = ({
   outbound,
   visitorCredentials
 }: {
-  connectors?: ConnectorLookups;
-  actions?: { lookups: ActionLookups; module: ActionsModule };
+  /** The engine's resolver of an element that names an action or a connector (`PageEngine.resolveElement`). */
+  engine?: RscElementResolver;
   /** Where the server's static files are: a provider whose `query` is one of them is read from disk. */
   publicDir?: string;
   /**
@@ -57,8 +52,6 @@ export const connectorRscData = ({
   /** The deployment's own APIs a provider may ask as the visitor, and from which spaces (`rsc.visitorCredentials`). */
   visitorCredentials?: SSRVisitorCredentialsConfig;
 }): NonNullable<SSRAdapters['getRscData']> => {
-  const resolveConnector = connectors ? createConnectorResolver(connectors, outbound) : undefined;
-  const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
   const resolveDataFile = data ? dataLookupResolver(data) : undefined;
   const readExternal = externalQueryReader({ outbound, visitor: visitorCredentialsOf(visitorCredentials) });
@@ -73,12 +66,8 @@ export const connectorRscData = ({
    */
   const resolveElement: RscElementResolver = async context => {
     const attributes = context.element.attributes as { connector?: string; action?: string };
-    if (attributes.connector) {
-      return resolveConnector ? resolveConnector(context) : undefined;
-    }
-
-    if (attributes.action) {
-      return resolveAction ? resolveAction(context) : undefined;
+    if (attributes.connector || attributes.action) {
+      return engine ? engine(context) : undefined;
     }
 
     // A query the page server cannot read is said, never resolved to nothing: authoring refuses it

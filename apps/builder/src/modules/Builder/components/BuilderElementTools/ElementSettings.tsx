@@ -12,7 +12,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import AppContext from '@pmodules/App/AppContext';
 import InstanceTools from '@pmodules/Components/components/InstanceTools';
 

@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
+import type { ActionLookups } from '@plitzi/sdk-actions';
 import type { ActionTriggerSpec } from '@plitzi/sdk-authoring';
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
 import type { ActionEntry, ActionField } from '@plitzi/sdk-shared';
 
 /**

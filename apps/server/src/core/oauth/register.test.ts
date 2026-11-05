@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { getClient } from './records';
 import { handleRegister } from './register';
 
-import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /** What a client calls itself is shown to the person it acts for, so it is kept — and kept to a line. */
 

@@ -1,20 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_COMPRESSION } from '@plitzi/sdk-kernel/http';
+
 import { renderSSR } from './handler';
 import { createServerCaches, destroyServerCaches, keepPage, toSharedPage } from '../../helpers/cache';
-import { DEFAULT_COMPRESSION } from '../../helpers/compress';
 
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  SharedPage,
-  SharedPageStore,
-  SSRPageServerConfig,
-  SSRRenderResult,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRUser
-} from '@plitzi/sdk-shared';
+import type { SharedPage, SharedPageStore, SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
 
 type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string };
 

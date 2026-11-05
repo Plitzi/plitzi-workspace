@@ -1,0 +1,827 @@
+import { onAbort } from '@plitzi/sdk-kernel/http';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
+import { ActionRefusal, isActionRefusal, refusalCodeOf } from '@plitzi/sdk-shared/functions';
+import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
+
+import { createEmailSender } from './email';
+import { ActionRunError } from './errors';
+import { flagsForRun } from './flags';
+import { runCancelKey } from './guards';
+import { createKvStore } from './kvStore';
+import { resolveLimits } from './limits';
+import { createMemoryKv } from './memoryKv';
+import { precheckRun } from './precheck';
+import { createRedactor, projectUser } from './scope';
+import { createSigning } from './signing';
+import { createRunFetch, taskContextFor } from './taskContext';
+import { DEFAULT_MAX_ATTEMPTS } from '../jobs/schedules';
+
+import type { TaskContextRequest } from './taskContext';
+import type { FunctionJobsService } from '../../functions/jobs';
+import type { JobQueue } from '../../types';
+import type { LaterDeps } from '../jobs/later';
+import type {
+  ActionKvAdapter,
+  ActionRunRecord,
+  ActionRunRequest,
+  ActionRunResult,
+  ActionsConfig,
+  ActionTaskContext,
+  ActionTaskRegistry,
+  RegisteredTask,
+  ResolvedActionLimits
+} from '../types';
+import type { ActionRunStep, ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
+import type { RuleValue } from '@plitzi/sdk-shared/conditions';
+
+/** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
+ *  boundaries a flow actually has, and it keeps a long run to sixty reads a minute. */
+const CANCEL_POLL_MS = 1_000;
+
+/**
+ * The most a failed run's undo may take, on a clock of its own.
+ *
+ * Its own because the run's clock may be exactly what ran out: a run that hit its deadline has seats to give back
+ * too. Short because the caller is still waiting for the failure, and giving back what a flow took is a handful of
+ * writes, not another run. Never longer than the run itself was allowed.
+ */
+const UNDO_TIMEOUT_MS = 5_000;
+
+/**
+ * The run's deadline, as a promise that loses patience.
+ *
+ * Aborting the controller is the polite half: a task that watches its signal stops, and the loop refuses to start
+ * the next step. It is not enough on its own, because a step that ignores the signal — a driver that does not
+ * take one, a provider client that swallows it, a `while (true)` inside a task — leaves the run awaiting something
+ * that never returns. That is the stuck run this exists to end: nothing else in the process can tell the
+ * difference between a flow that is working hard and one that will never finish.
+ *
+ * Racing the flow against this means the RUN always ends, even when a step does not. What the step does after
+ * that is beyond anybody's reach in a single-threaded runtime — but it no longer holds a caller, a slot, or a
+ * connection while it does it.
+ */
+const createDeadline = (timeoutMs: number, controller: AbortController) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const promise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new ActionRunError('timeout', `Action exceeded its ${timeoutMs}ms budget`));
+    }, timeoutMs);
+  });
+
+  return {
+    promise,
+    clear: () => clearTimeout(timer)
+  };
+};
+
+/**
+ * Whether somebody has asked this run to stop, from wherever the request landed.
+ *
+ * The socket closing aborts a run in the process that is running it, and a `DELETE` that happens to reach that
+ * same process does too. Behind a load balancer it usually does not: a cancel arrives at a replica that has never
+ * heard of the run, and the flow it was meant to stop carries on charging cards. So the cancel is a FLAG in the
+ * store the deployment already shares, and this is the run reading it at every step boundary.
+ *
+ * Without a shared store it is a no-op rather than a lie — one process's local abort is the whole mechanism there,
+ * and it already works.
+ */
+const createCancelWatch = (store: ActionKvAdapter | undefined, runId: string): (() => Promise<boolean>) => {
+  if (!store) {
+    return () => Promise.resolve(false);
+  }
+
+  let checkedAt = 0;
+
+  return async () => {
+    const now = Date.now();
+    if (now - checkedAt < CANCEL_POLL_MS) {
+      return false;
+    }
+
+    checkedAt = now;
+    try {
+      return (await store.get(runCancelKey(runId))) !== undefined;
+    } catch {
+      // A store that cannot answer is not a cancellation. Failing the run over it would turn an outage in the
+      // cache into an outage in everybody's flows.
+      return false;
+    }
+  };
+};
+
+/**
+ * Resolves twig in a node's params against the flow scope.
+ *
+ * With `resolveStepParam`, the resolver the browser's flows use too, so a param means the same on both sides: any
+ * template syntax is run, the expression's own type is kept, and a value that resolves to another template is read
+ * again up to a ceiling. Unresolved tokens are left as-is and show up in the trace, which is how an author sees that
+ * a step referenced something the flow never produced.
+ */
+const resolveParams = (
+  params: Record<string, unknown>,
+  scope: Record<string, unknown>,
+  raw: boolean
+): Record<string, unknown> => {
+  if (raw) {
+    return params;
+  }
+
+  return Object.entries(params).reduce<Record<string, unknown>>((acum, [key, param]) => {
+    acum[key] = typeof param === 'string' ? resolveStepParam(param, scope).value : param;
+
+    return acum;
+  }, {});
+};
+
+/**
+ * Fills in what the node left out, from the task's own catalog entry.
+ *
+ * A task declares its params with a `defaultValue`, and a document written before a param existed simply has no
+ * value for it. Without this the task receives `undefined` for something its signature says is a string, which is
+ * how tasks end up full of defensive conversions that hide the real gap.
+ */
+/**
+ * The pseudo-step a failure is recorded as.
+ *
+ * A run that died has no node to blame — a ceiling it hit, a throw from outside any step — and the trace is a list
+ * of steps. Written out in full rather than cast into shape: a field added to a step becomes a compile error here
+ * instead of an `undefined` whoever reads the trace has to work out.
+ */
+const errorNode = (action: string): ElementInteraction => ({
+  id: 'error',
+  title: 'Error',
+  type: 'task',
+  action,
+  params: {},
+  preview: {},
+  elementId: null,
+  beforeNode: '',
+  afterNode: '',
+  flowId: '',
+  enabled: true
+});
+
+/**
+ * Where a chain's undo begins, if it has one: the first `flow.onFailure` its steps reach.
+ *
+ * Per trigger, because each way in walks its own chain. Walked with a visited set: the validator refuses a chain that
+ * comes back on itself, but a stored document is still customer input, and a lookup must not be what spins.
+ */
+const failureHandlerOf = (
+  nodes: Record<string, ElementInteraction>,
+  trigger: ElementInteraction
+): ElementInteraction | undefined => {
+  const visited = new Set<string>();
+  let next = nodes[trigger.afterNode] as ElementInteraction | undefined;
+  while (next && !visited.has(next.id)) {
+    if (next.action === FAILURE_HANDLER_TASK) {
+      return next;
+    }
+
+    visited.add(next.id);
+    next = nodes[next.afterNode];
+  }
+
+  return undefined;
+};
+
+/** A step as a debugger may see it: what it was and how it ended, and nothing it was given or returned. */
+const stepOf = (
+  node: ElementInteraction,
+  { status, phase, startTime, endTime, error, logs = [] }: Omit<ActionRunStep, 'id' | 'title' | 'action'>
+): ActionRunStep => ({
+  id: node.id,
+  title: node.title || node.action,
+  action: node.action,
+  status,
+  phase,
+  startTime,
+  endTime,
+  ...(error === undefined ? {} : { error }),
+  ...(logs.length ? { logs } : {})
+});
+
+/** What one step may log: enough to debug with, bounded so a loop that logs cannot fill a run's record. */
+const MAX_LOG_LINES = 100;
+const MAX_LOG_LINE = 1000;
+
+/**
+ * A value written as text, read as the type its task declares: a `number` param written `5` — or bound to text that says
+ * it — arrives as 5, a `boolean` one written `'true'` as `true`, an empty number as nothing (so the default applies), and
+ * a `text` one bound to a number as its digits. The browser reads a callback's params the same way
+ * (`coerceDeclaredParams`): a task's author never writes `Number(…)` or `String(…)`.
+ */
+const asDeclared = (type: string, value: unknown): unknown => {
+  if (typeof value === 'number' && (type === 'text' || type === 'textarea')) {
+    return String(value);
+  }
+
+  // A list: bound to one, the list — its items as text; written by hand, a value a line or between commas.
+  if (type === 'list') {
+    if (Array.isArray(value)) {
+      return value.flatMap(item =>
+        typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' ? [String(item)] : []
+      );
+    }
+
+    return typeof value === 'string'
+      ? value
+          .split(/[\n,]/)
+          .map(item => item.trim())
+          .filter(item => item !== '')
+      : value;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (type === 'number') {
+    const parsed = Number(value.trim());
+
+    return value.trim() === '' ? undefined : Number.isFinite(parsed) ? parsed : value;
+  }
+
+  return type === 'boolean' && (value === 'true' || value === 'false') ? value === 'true' : value;
+};
+
+type TaskParam = RegisteredTask['params'][string];
+
+/**
+ * Why a value does not fit the rules its param declares — `required`, a text's `maxLength`, a number's `min` and `max` —
+ * in the words the page shows: what a task's code otherwise checked by hand before doing anything. A param that
+ * declares none is never judged.
+ */
+const paramProblem = (key: string, param: TaskParam, value: unknown): string | undefined => {
+  const name = param.label ?? key;
+  const empty =
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (Array.isArray(value) && value.length === 0);
+  if (empty) {
+    // A default fills an empty value: only a param with none is missing.
+    const defaulted =
+      param.defaultValue !== undefined &&
+      param.defaultValue !== '' &&
+      !(Array.isArray(param.defaultValue) && param.defaultValue.length === 0);
+
+    return param.required && !defaulted ? `${name} is required` : undefined;
+  }
+
+  if ((param.type === 'text' || param.type === 'textarea') && param.maxLength !== undefined) {
+    return typeof value === 'string' && value.length > param.maxLength
+      ? `${name} is longer than ${String(param.maxLength)} characters`
+      : undefined;
+  }
+
+  if (param.type === 'list' && param.maxItems !== undefined && Array.isArray(value) && value.length > param.maxItems) {
+    return `${name} takes at most ${String(param.maxItems)}`;
+  }
+
+  if (param.type === 'number' && (param.min !== undefined || param.max !== undefined)) {
+    if (typeof value !== 'number') {
+      return `${name} is not a number`;
+    }
+
+    if (param.min !== undefined && value < param.min) {
+      return `${name} is at least ${String(param.min)}`;
+    }
+
+    if (param.max !== undefined && value > param.max) {
+      return `${name} is at most ${String(param.max)}`;
+    }
+  }
+
+  return undefined;
+};
+
+const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> => {
+  const problems: string[] = [];
+  const values = Object.entries(task.params).reduce<Record<string, unknown>>(
+    (acum, [key, param]) => {
+      // A type that follows the other params is asked with them.
+      const type = typeof param.type === 'function' ? param.type(acum) : param.type;
+      const value = asDeclared(type, acum[key]);
+      const problem = paramProblem(key, param, value);
+      if (problem) {
+        problems.push(problem);
+      }
+
+      acum[key] = value === undefined || value === '' ? (param.defaultValue ?? '') : value;
+
+      return acum;
+    },
+    { ...params }
+  );
+
+  // Every rule the call broke at once, as the step's error — a refusal, so its words reach the page.
+  if (problems.length > 0) {
+    throw new ActionRefusal(problems.join('; '));
+  }
+
+  return values;
+};
+
+type NodeOutcome = { status: InteractionNodeStatus; result: unknown };
+
+const runNode = async (
+  node: ElementInteraction,
+  scope: Record<string, unknown>,
+  registry: ActionTaskRegistry,
+  buildContext: (scope: Record<string, unknown>) => ActionTaskContext
+): Promise<NodeOutcome> => {
+  if (!node.action || !node.enabled) {
+    return { status: 'disabled', result: {} };
+  }
+
+  if (node.when && !evaluateRuleGroup(node.when, { ...scope, [node.id]: node.params } as Record<string, RuleValue>)) {
+    return { status: 'skipped', result: {} };
+  }
+
+  if (node.type !== 'task') {
+    throw new ActionRunError('failed', `Step "${node.action}" is a ${node.type}, which cannot run on the server`);
+  }
+
+  const task = registry.get(node.action);
+  if (!task) {
+    throw new ActionRunError('failed', `No server task is registered as "${node.action}"`);
+  }
+
+  const params = withDefaults(task, resolveParams(node.params, scope, task.rawParams === true));
+  const result = await task.run(params, buildContext(scope));
+
+  return { status: 'success', result };
+};
+
+export type ActionRunner = { runAction: (request: ActionRunRequest) => Promise<ActionRunResult> };
+
+/**
+ * What a function answering a route runs with: the context a run's step gets — the same stores, the same redaction, the
+ * same outbound budget under the deployment's ceilings — for work that is not a flow.
+ */
+export type TaskContextSource = (
+  request: TaskContextRequest,
+  signal: AbortSignal,
+  lineage: string[]
+) => Omit<ActionTaskContext, 'log'>;
+
+/**
+ * Builds the runner every trigger goes through.
+ *
+ * Every check that decides whether a run may happen at all — the trigger and whether it is on, access, lineage,
+ * input contract — lives HERE rather than in a transport, because a deployment mounting its own trigger calls this
+ * directly. A check in the endpoint would be a check a custom trigger silently skips.
+ */
+export const createActionRunner = (
+  config: ActionsConfig,
+  registryFor: (request: ActionRunRequest) => ActionTaskRegistry | Promise<ActionTaskRegistry>,
+  baseFetch: typeof fetch = fetch,
+  /** The queue runs set for later go into, read when asked: it is made after the runner, and a server may run none. */
+  jobsQueue: () => JobQueue | undefined = () => undefined,
+  /** The space's jobs, for a function's `ctx.jobs` — made beside the runner, and reading back its `taskContext`. */
+  functionJobs?: FunctionJobsService
+): ActionRunner & { taskContext: TaskContextSource } => {
+  const kv = createKvStore(config.kv ?? createMemoryKv());
+  // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
+  const emailSender = createEmailSender({ ...config.email, kv });
+  const signing = config.signingSecret ? createSigning(config.signingSecret) : undefined;
+  const later: LaterDeps = {
+    queue: jobsQueue,
+    lookups: config.lookups,
+    maxAttempts: (config.jobs === false ? undefined : config.jobs?.maxAttempts) ?? DEFAULT_MAX_ATTEMPTS
+  };
+
+  /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
+  const record = async (entry: ActionRunRecord) => {
+    try {
+      await config.onRun?.(entry);
+    } catch (error) {
+      serverLog.error('Actions', 'run record failed', error);
+    }
+  };
+  const runAction = async (request: ActionRunRequest): Promise<ActionRunResult> => {
+    const { entry, runId } = request;
+    const { document } = entry;
+
+    // The endpoint already ran this; a custom trigger may not have. It is pure and cheap, and being the only
+    // implementation is what keeps the two paths from drifting into different rules. It also answers WHICH step
+    // starts the run — the trigger for the kind that fired, not whichever one comes first in the map.
+    const { trigger: triggerNode, values } = precheckRun(entry, {
+      trigger: request.trigger,
+      input: request.input,
+      user: request.user,
+      lineage: request.lineage
+    });
+
+    // The deployment's tasks, and — when a step names one of its own — the space's functions as of this revision.
+    const registry = await registryFor(request);
+
+    const limits: ResolvedActionLimits = resolveLimits(
+      config.limits,
+      document.limits,
+      await config.limitsFor?.(request.spaceId)
+    );
+    // Learns as the run goes: a credential is registered by the task that resolved it, always before that task's
+    // own result is redacted. Nothing is resolved up front because nothing is declared up front any more.
+    const redactor = createRedactor();
+    const redact = redactor.redact;
+
+    const controller = new AbortController();
+    // A streaming run is allowed to be longer-lived than a request/response one; both are ceilings the deployment
+    // sets and a document may only tighten.
+    const timeoutMs = request.emit ? limits.streamTimeoutMs : limits.timeoutMs;
+    const deadline = createDeadline(timeoutMs, controller);
+    const releaseOuter = onAbort(request.signal, () => controller.abort());
+
+    const lineage = [...(request.lineage ?? []), entry.id];
+    /**
+     * What a step runs with, for one abort signal and one outbound budget.
+     *
+     * Two of them per run at most: the flow's, and — only when it failed — the undo's, which must still be able to
+     * reach the outside world after the flow's signal was aborted or its request budget spent.
+     */
+    const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
+      taskContextFor(
+        config,
+        { kv, email: emailSender, redactor, signing, later, ...(functionJobs ? { jobs: functionJobs } : {}) },
+        request,
+        signal,
+        runFetch
+      );
+    /** The request budget ran out: said on the server's log at once, and in the step that hit it. */
+    let budgetSpent: string | undefined;
+    const buildContext = contextFor(
+      controller.signal,
+      createRunFetch(baseFetch, controller.signal, limits, lineage, message => {
+        budgetSpent = message;
+        serverLog.warn('Actions', `"${entry.id}" (run ${runId}): ${message}`);
+      })
+    );
+
+    const trace: InteractionNode[] = [];
+    const steps: ActionRunStep[] = [];
+    const startedAt = Date.now();
+    let failure: string | undefined;
+    /**
+     * What every step can see.
+     *
+     * The run itself carries only the basics — which space, which environment, who asked, what came in — and
+     * everything else a flow can reach is whatever a TASK chose to return into it. Credentials are deliberately
+     * NOT here: an ambient `{{credential.*}}` would be interpolable by any node, including `flow.output`, which
+     * is a secret handed to the browser through a step nobody would think to audit. A task that needs one asks
+     * for it by identifier and resolves it inside its own execution.
+     */
+    const scope: Record<string, unknown> = {
+      input: values,
+      user: projectUser(request.user),
+      // The space's feature flags as this run resolves them — read only by a flow that names them (see `flagsForRun`).
+      flags: await flagsForRun(config, request),
+      spaceId: request.spaceId,
+      environment: request.environment,
+      trigger: request.trigger,
+      runId,
+      /**
+       * The moment the run started, as an ISO string — and the same moment for every step. A check that asks the
+       * time and the write it guards cannot straddle midnight, and a template reads it in the zone it cares about
+       * with `{{ now|date('Y-m-d', 'Europe/Madrid') }}`.
+       */
+      now: new Date(startedAt).toISOString()
+    };
+
+    let status: ActionRunResult['status'] = 'completed';
+    let returned: unknown;
+
+    const isCancelled = createCancelWatch(config.kv, runId);
+
+    /**
+     * The flow itself, as something that can be raced.
+     *
+     * Separated from the `try` around it for one reason: what awaits it must be able to stop awaiting. A run that
+     * hits its deadline answers, releases its slot and closes its connection while whatever step ignored the abort
+     * carries on in the background — which is the difference between a stuck STEP and a stuck server.
+     */
+    const failureHandler = failureHandlerOf(document.nodes, triggerNode);
+    /** The step the flow was running when it stopped — what `{{ failure.step }}` names to the undo. */
+    let stepInFlight = '';
+    let stepInFlightSince = 0;
+    /**
+     * Set once the run stopped awaiting its flow. A step that ignored the abort may still settle afterwards, and it
+     * must not land in the run's account after the undo that followed it — it is already recorded as where it stopped.
+     */
+    let flowSettled = false;
+
+    /**
+     * Runs one step and records it twice: whole in the trace, and in `steps` as a debugger may see it.
+     *
+     * A step that throws is recorded as failed before the error travels on. Where a flow broke is the first thing
+     * anybody debugging it asks, and the error the run records afterwards says only that it did.
+     */
+    const runStep = async (
+      node: ElementInteraction,
+      phase: ActionRunStep['phase'],
+      build: typeof buildContext
+    ): Promise<NodeOutcome> => {
+      const startTime = Date.now();
+      const late = () => phase === 'flow' && flowSettled;
+      const logs: string[] = [];
+      const log = (line: string): void => {
+        if (logs.length < MAX_LOG_LINES) {
+          logs.push(redact(line.length > MAX_LOG_LINE ? `${line.slice(0, MAX_LOG_LINE)}…` : line));
+        }
+      };
+      /** The step that spent the budget says so, whether or not it caught the refusal. */
+      const noteBudget = () => {
+        if (budgetSpent) {
+          log(budgetSpent);
+          budgetSpent = undefined;
+        }
+      };
+      try {
+        const outcome = await runNode(node, scope, registry, stepScope => ({ ...build(stepScope), log }));
+        if (late()) {
+          return outcome;
+        }
+
+        noteBudget();
+
+        const endTime = Date.now();
+        trace.push({
+          node,
+          status: outcome.status,
+          result: redact(outcome.result),
+          postCallbacks: [],
+          startTime,
+          endTime
+        });
+        steps.push(stepOf(node, { status: outcome.status, phase, startTime, endTime, logs }));
+        request.onNode?.(node.id, outcome.status);
+        scope[node.id] = outcome.result;
+
+        return outcome;
+      } catch (error) {
+        if (late()) {
+          throw error;
+        }
+
+        noteBudget();
+        const endTime = Date.now();
+        const message = redact(error instanceof Error ? error.message : String(error));
+        trace.push({ node, status: 'failed', result: { error: message }, postCallbacks: [], startTime, endTime });
+        steps.push(stepOf(node, { status: 'failed', phase, startTime, endTime, error: message, logs }));
+        request.onNode?.(node.id, 'failed');
+
+        throw error;
+      }
+    };
+
+    const runFlow = async () => {
+      let current = triggerNode;
+      let executed = 0;
+      let next = document.nodes[current.afterNode] as ElementInteraction | undefined;
+      while (next) {
+        // A run that reaches its undo has succeeded: what follows is only ever for a run that did not.
+        if (next.action === FAILURE_HANDLER_TASK) {
+          break;
+        }
+
+        if (controller.signal.aborted) {
+          status = 'aborted';
+          break;
+        }
+
+        // Between steps, never inside one: a node already in flight is signalled and awaited rather than
+        // abandoned mid-write, so an aborted run is one that stopped starting things — not one that left half a
+        // request behind it.
+        if (await isCancelled()) {
+          controller.abort();
+          status = 'aborted';
+          break;
+        }
+
+        executed += 1;
+        if (executed > limits.maxNodes) {
+          throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxNodes} step budget`);
+        }
+
+        stepInFlight = next.id;
+        stepInFlightSince = Date.now();
+        const outcome = await runStep(next, 'flow', buildContext);
+        if (next.action === 'flow.output' && outcome.status === 'success') {
+          returned = outcome.result;
+        }
+
+        current = next;
+        next = document.nodes[current.afterNode];
+      }
+    };
+
+    /**
+     * Gives back what a run that did not finish already did: the steps after `flow.onFailure`.
+     *
+     * On a clock and an outbound budget of its own, because the run's may be exactly what ran out, and deliberately
+     * NOT tied to the caller's connection — somebody closing the tab is the last reason to leave seats taken. Each step
+     * still asks its own `when`: the failure may have come before the thing to undo was ever done. Nothing it does
+     * changes the run's status or its answer; an undo that fails too is added to the failure, never put in its place.
+     */
+    const undo = async (handler: ElementInteraction) => {
+      const undoController = new AbortController();
+      const undoDeadline = createDeadline(Math.min(limits.timeoutMs, UNDO_TIMEOUT_MS), undoController);
+      const buildUndoContext = contextFor(
+        undoController.signal,
+        createRunFetch(baseFetch, undoController.signal, limits, lineage)
+      );
+      scope.failure = { step: stepInFlight, message: failure ?? '', status };
+      const handlerTime = Date.now();
+      trace.push({
+        node: handler,
+        status: 'success',
+        result: redact(scope.failure),
+        postCallbacks: [],
+        startTime: handlerTime,
+        endTime: handlerTime
+      });
+      steps.push(stepOf(handler, { status: 'success', phase: 'undo', startTime: handlerTime, endTime: handlerTime }));
+
+      const runUndo = async () => {
+        let executed = 0;
+        let next = document.nodes[handler.afterNode] as ElementInteraction | undefined;
+        while (next) {
+          executed += 1;
+          if (executed > limits.maxNodes) {
+            throw new ActionRunError('over_capacity', `Undoing the action exceeded its ${limits.maxNodes} step budget`);
+          }
+
+          await runStep(next, 'undo', buildUndoContext);
+          next = document.nodes[next.afterNode];
+        }
+      };
+
+      try {
+        await Promise.race([runUndo(), undoDeadline.promise]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        trace.push({
+          node: errorNode('undo'),
+          status: 'failed',
+          result: redact({ error: message }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
+        failure = `${failure ?? 'Action failed'} — and undoing it failed too: ${message}`;
+      } finally {
+        undoDeadline.clear();
+      }
+    };
+
+    /** Set when the run ends in a way the CALLER has to hear as a status code rather than as a result. */
+    let fatal: ActionRunError | undefined;
+    /** Set when a step refused with a reason written for the caller — the one failure a result may say the why of. */
+    let refusal: string | undefined;
+    let refusalCode: string | undefined;
+
+    try {
+      await Promise.race([runFlow(), deadline.promise]);
+    } catch (error) {
+      // A failed step ENDS the run. The client engine carries on past one because a broken button leaves a page
+      // usable; a server flow that keeps going after a failed authorization or a failed charge does damage.
+      status = controller.signal.aborted ? 'aborted' : 'failed';
+      if (error instanceof ActionRunError) {
+        /**
+         * Recorded before it is rethrown.
+         *
+         * A run refused before it began is not a run and leaves nothing; a run that STARTED and then hit a
+         * ceiling — its deadline, its step budget, its request budget — is exactly the one somebody needs to find
+         * afterwards. Rethrowing straight from here used to skip the record, so the runs hardest to explain were
+         * the ones that left no trace at all.
+         */
+        fatal = error;
+        failure = error.message;
+        trace.push({
+          node: errorNode(error.reason),
+          status: 'failed',
+          result: redact({ error: error.message, reason: error.reason }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
+      } else {
+        failure = error instanceof Error ? error.message : String(error);
+        if (isActionRefusal(error)) {
+          refusal = redact(error.message);
+          refusalCode = refusalCodeOf(error);
+        }
+
+        trace.push({
+          node: errorNode('error'),
+          status: 'failed',
+          result: redact({ error: error instanceof Error ? error.message : String(error) }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
+      }
+    } finally {
+      flowSettled = true;
+      deadline.clear();
+      releaseOuter();
+    }
+
+    // A step still running when the run gave up — its deadline ran out while it worked — never settled, so it is where
+    // the run stopped. Recorded before the undo, which is what happened after it.
+    const stuck = document.nodes[stepInFlight] as ElementInteraction | undefined;
+    if (status !== 'completed' && stuck && !steps.some(step => step.phase === 'flow' && step.id === stepInFlight)) {
+      steps.push(
+        stepOf(stuck, {
+          status: 'failed',
+          phase: 'flow',
+          startTime: stepInFlightSince,
+          endTime: Date.now(),
+          ...(failure === undefined ? {} : { error: redact(failure) })
+        })
+      );
+    }
+
+    // Before the record and before a fatal failure is rethrown: the history keeps what was given back, and a caller
+    // hearing "timeout" has not left anything the flow took behind it.
+    if (status !== 'completed' && failureHandler?.enabled) {
+      await undo(failureHandler);
+    }
+
+    // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step
+    // did not name never existed as far as the caller is concerned.
+    const output = (returned ?? {}) as Record<string, unknown>;
+    /**
+     * Redacted again as a whole, and copied. A step's result was redacted when it landed, against the credentials
+     * known at that moment — a later step may have resolved one an earlier result echoed — and a step still running
+     * past the deadline may yet push into the live array.
+     */
+    const recordedTrace = redact([...trace]);
+
+    // Recorded here rather than at each transport, so a run started by a webhook, a schedule or a deployment's own
+    // trigger leaves the same trace as one started by a page.
+    await record({
+      runId,
+      actionId: entry.id,
+      spaceId: request.spaceId,
+      environment: request.environment,
+      trigger: request.trigger,
+      status,
+      startedAt,
+      durationMs: Date.now() - startedAt,
+      ...(request.user ? { userId: request.user.id } : {}),
+      steps: [...steps],
+      input: redact(request.input),
+      output: redact(output),
+      trace: recordedTrace,
+      ...(failure === undefined ? {} : { error: redact(failure) }),
+      ...(fatal ? { reason: fatal.reason } : {})
+    });
+
+    // Only now, with the record written: the caller hears a status code, and the space's history still has the
+    // run that produced it.
+    if (fatal) {
+      fatal.steps = [...steps];
+
+      throw fatal;
+    }
+
+    /**
+     * The trace is COPIED out.
+     *
+     * A run that hit its deadline is no longer awaited, and whatever step ignored the abort may still push into
+     * this array while the answer is being serialized. The caller gets what was true when it asked.
+     */
+    return {
+      runId,
+      status,
+      output: redact(output),
+      trace: [...trace],
+      steps: [...steps],
+      ...(refusal === undefined ? {} : { error: refusal }),
+      ...(refusalCode === undefined ? {} : { code: refusalCode })
+    };
+  };
+
+  const taskContext: TaskContextSource = (contextRequest, signal, lineage) =>
+    taskContextFor(
+      config,
+      {
+        kv,
+        email: emailSender,
+        redactor: createRedactor(),
+        signing,
+        later,
+        ...(functionJobs ? { jobs: functionJobs } : {})
+      },
+      contextRequest,
+      signal,
+      createRunFetch(baseFetch, signal, resolveLimits(config.limits, undefined), lineage)
+    )({});
+
+  return { runAction, taskContext };
+};

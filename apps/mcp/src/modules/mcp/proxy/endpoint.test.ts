@@ -4,7 +4,7 @@ import { grantUrl, readGrant } from './grant';
 import { handleProxyRequest } from './handler';
 
 import type { ResourceProxy, ResourceProxySettings } from './types';
-import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 // The SSRF guard is exercised in proxy.test.ts against real addresses; here every host is public, so these tests
 // are about what the endpoint does with what it fetched.

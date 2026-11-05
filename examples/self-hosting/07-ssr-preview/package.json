@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-mcp": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "react": "^19.3.1",
