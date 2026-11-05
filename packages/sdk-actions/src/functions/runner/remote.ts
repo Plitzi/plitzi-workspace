@@ -13,11 +13,12 @@ import type {
 
 export type RemoteRunnerOptions = {
   /**
-   * The runner service, `ws://functions-runner:8790`. A function is asked once per operation: what spreads them over
-   * several runners where no balancer sits in front (each invocation is one connection, so nothing is pinned). Then an
-   * invocation a runner refused as `busy` — short of memory, it took nothing — is tried once more on the next one.
+   * The runner service, `ws://functions-runner:8790`. A function is asked once per operation, with the space an
+   * invocation is for (none for reading a bundle): what spreads them over several runners where no balancer sits in
+   * front (each invocation is one connection, so nothing is pinned), and what sends a space to the runners it is
+   * assigned to. Then an invocation a runner refused as `busy` — short of memory, it took nothing — is tried once more.
    */
-  url: string | (() => string);
+  url: string | ((spaceId?: number) => string);
   secret: string;
   /** How long to wait for the runner to accept a connection. */
   connectTimeoutMs?: number;
@@ -57,10 +58,13 @@ export const createRemoteRunner = ({
 }: RemoteRunnerOptions): FunctionRunner => {
   const operate = ({ first, load, bundleId, deadlineMs, answer, signal, onUsage }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
-      const socket = new WebSocket(typeof url === 'function' ? url() : url, {
-        headers: { authorization: `Bearer ${secret}` },
-        handshakeTimeout: connectTimeoutMs
-      });
+      const socket = new WebSocket(
+        typeof url === 'function' ? url(first.type === 'invoke' ? first.invocation.context.spaceId : undefined) : url,
+        {
+          headers: { authorization: `Bearer ${secret}` },
+          handshakeTimeout: connectTimeoutMs
+        }
+      );
       let settled = false;
       /** A route answering as it writes: the body handed out at its head, fed until `done`. */
       let body: ReadableStreamDefaultController<Uint8Array> | undefined;

@@ -75,7 +75,10 @@ space while it hydrates.
   `stopped`, `failed` and `down` — its orchestrator says the phase (`orchestrator.phase`: one stopping is never `down`
   while it drains), and a scaler may stop or restart one (`PoolScaler.stopInstance`, `restartInstance`). Each minute
   of `series` names its slowest runs and failures (`runsOf`) and the actions and functions that took the most of it
-  (`names`): a run is recorded with what it was (`RunLabel`: space, kind, name) — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
+  (`names`): a run is recorded with what it was (`RunLabel`: space, kind, name). A scaler may hold what a pool's
+  instances run with for a while (`PoolScaler.resources`: knobs, each instance restarting with them in turn), and the
+  remote functions runner asks where to run with the space an invocation is for (`url(spaceId)`), so a deployment can
+  give a space its own runners — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its

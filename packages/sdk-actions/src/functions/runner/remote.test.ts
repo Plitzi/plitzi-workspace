@@ -353,6 +353,29 @@ describe('the runner service, through the remote runner', () => {
     await closed;
   });
 
+  it('asks where to run with the space an invocation is for: what sends a space to the runners it is given', async () => {
+    const asked: (number | undefined)[] = [];
+    const runner = createRemoteRunner({
+      url: spaceId => {
+        asked.push(spaceId);
+
+        return `ws://127.0.0.1:${String(service.address().port)}`;
+      },
+      secret: SECRET
+    });
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+
+    await runner.invoke({
+      bundle: { id: 'bundle-asked-by-space', load: () => Promise.resolve(code) },
+      invocation,
+      limits: LIMITS,
+      answer: () => Promise.resolve(null),
+      signal: new AbortController().signal
+    });
+
+    expect(asked).toEqual([3]);
+  });
+
   it('needs a real secret to start', async () => {
     await expect(startFunctionsRunnerService({ secret: 'short' })).rejects.toThrow('at least 32 characters');
   });

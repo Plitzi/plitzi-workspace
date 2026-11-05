@@ -197,4 +197,47 @@ export type PoolScaler = {
    * place, read `restarting` meanwhile. Answers what was done, in words. Absent where the orchestrator restarts its own.
    */
   restartInstance?: (pool: string, id: string, by: string) => Promise<string>;
+  /** What its instances run with — memory, CPU, how much each takes at once — changed for a while. Absent: fixed here. */
+  resources?: PoolResourcesControl;
+};
+
+/** One thing a pool's instances run with that an operator may change: its value now, and how far it may go. */
+export type PoolKnob = {
+  key: string;
+  label: string;
+  /** What its number counts: `MB`, `millicores`, `at once`. */
+  unit: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  /** What changing it does, in words. */
+  what: string;
+};
+
+/** What a pool's instances run with, the change held on them when one is, and what a reader should know. */
+export type PoolResources = {
+  knobs: PoolKnob[];
+  held?: { values: Record<string, number>; reason: string; by: string; expiresAt: string };
+  /** What applies here and what does not: a laptop limits no CPU, its own process keeps its own. */
+  note?: string;
+};
+
+/**
+ * Changes what a pool's instances run with. A change is applied by restarting them one at a time — each finishes what
+ * it runs first — so the pool never stops answering, and is held until `expiresAt`, when its own comes back the same way.
+ */
+export type PoolResourcesControl = {
+  read: (pool: string) => Promise<PoolResources>;
+  /**
+   * Sets the knobs named, the others kept — the values as asked (a form's text, a script's numbers), checked here:
+   * refused when one is no knob of the pool or out of its range, saying which. Answers what was done.
+   */
+  set: (
+    pool: string,
+    values: Record<string, unknown>,
+    override: Omit<PoolOverride, 'pool' | 'floor'>
+  ) => Promise<string>;
+  /** Puts the pool's own back now. Answers what was done. */
+  end: (pool: string) => Promise<string>;
 };
