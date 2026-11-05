@@ -267,7 +267,7 @@ export const createMysqlJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces }) => {
       const conn = await db();
       const at = await clock.now();
       const taken: Job[] = [];
@@ -282,12 +282,20 @@ export const createMysqlJobQueue = ({
        * holds one lock and cannot.
        */
       for (let round = 0; round < CLAIM_ROUNDS && taken.length < limit; round += 1) {
+        // Which spaces: as many placeholders as ids; an empty "only" takes none, an empty "except" every space.
+        const ids = spaces ? ('only' in spaces ? spaces.only : spaces.except) : [];
+        const bySpace =
+          !spaces || ids.length === 0
+            ? spaces && 'only' in spaces
+              ? ' AND FALSE'
+              : ''
+            : ` AND space_id ${'only' in spaces ? 'IN' : 'NOT IN'} (${ids.map(() => '?').join(', ')})`;
         const rows = await selectRows<JobRow>(
           conn,
           `SELECT * FROM ${t.jobs}
-          WHERE (status = 'pending' AND run_at <= ?) OR (status = 'running' AND lease_until < ?)
+          WHERE ((status = 'pending' AND run_at <= ?) OR (status = 'running' AND lease_until < ?))${bySpace}
           ORDER BY run_at LIMIT ?`,
-          [at, at, limit - taken.length]
+          [at, at, ...(bySpace.includes('?') ? ids : []), limit - taken.length]
         );
         if (rows.length === 0) {
           break;

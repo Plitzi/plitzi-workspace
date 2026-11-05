@@ -187,7 +187,7 @@ export const createMongoJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces }) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const taken: Job[] = [];
@@ -197,6 +197,7 @@ export const createMongoJobQueue = ({
       for (let slot = 0; slot < limit; slot += 1) {
         const claimed = await jobs.findOneAndUpdate(
           {
+            ...(spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {}),
             $or: [
               { status: 'pending', runAt: { $lte: at } },
               // A lapsed lease is a worker that died. Reaping is part of claiming rather than a second job somebody

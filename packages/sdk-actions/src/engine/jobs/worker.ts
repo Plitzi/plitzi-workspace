@@ -6,7 +6,7 @@ import { createFailureStreak } from './failureStreak';
 import { ActionRunError } from '../runtime/errors';
 
 import type { FunctionJobsService } from '../../functions/jobs';
-import type { JobQueue, JobSettlement } from '../../types';
+import type { JobQueue, JobSettlement, JobSpaces } from '../../types';
 import type { ActionsModule } from '../module';
 import type { ActionLookups, ActionRunResult } from '../types';
 import type { Job } from '@plitzi/sdk-shared';
@@ -64,6 +64,11 @@ export type JobWorkerOptions = {
   /** How often a worker with a free slot looks for work. Default 1s. */
   pollMs?: number;
   /**
+   * Which spaces' jobs this replica takes, asked on every claim: a worker kept for some spaces takes theirs alone, the
+   * others every space but those. Absent, every space's.
+   */
+  spaces?: () => JobSpaces | undefined;
+  /**
    * How long a claim is held before another worker may take the job over.
    *
    * The failover window, in other words: a replica that is killed has its jobs picked up this long afterwards. It
@@ -111,6 +116,7 @@ export const createJobWorker = ({
   functionJobs,
   workers = 4,
   pollMs = 1_000,
+  spaces,
   leaseMs = 30_000,
   backoff = {},
   workerId = `${process.pid}-${randomUUID().slice(0, 8)}`,
@@ -389,7 +395,8 @@ export const createJobWorker = ({
       return 0;
     }
 
-    const claimed = await queue.claim({ workerId, leaseMs, limit: free });
+    const asked = spaces?.();
+    const claimed = await queue.claim({ workerId, leaseMs, limit: free, ...(asked ? { spaces: asked } : {}) });
     if (isStopping()) {
       // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
       // that is staying to take now — rather than started here and held up the shutdown.

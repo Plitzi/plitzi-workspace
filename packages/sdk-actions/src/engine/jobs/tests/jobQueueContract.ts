@@ -124,6 +124,27 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
       expect(new Set(taken).size).toBe(30);
     });
 
+    it('takes only the spaces it is asked for, or every one but those', async () => {
+      await queue.enqueue(await job({ id: 'of-mine', spaceId: SPACE }));
+      await queue.enqueue(await job({ id: 'of-another', spaceId: SPACE + 1 }));
+
+      const kept = await queue.claim({
+        workerId: 'pod-kept',
+        leaseMs: 60_000,
+        limit: 5,
+        spaces: { only: [SPACE + 1] }
+      });
+      const others = await queue.claim({
+        workerId: 'pod-rest',
+        leaseMs: 60_000,
+        limit: 5,
+        spaces: { except: [SPACE + 1] }
+      });
+      const none = await queue.claim({ workerId: 'pod-none', leaseMs: 60_000, limit: 5, spaces: { only: [] } });
+
+      expect([kept.map(each => each.id), others.map(each => each.id), none]).toEqual([['of-another'], ['of-mine'], []]);
+    });
+
     it('marks a claimed job as running, under a lease', async () => {
       await queue.enqueue(await job());
       const before = await nowMs();

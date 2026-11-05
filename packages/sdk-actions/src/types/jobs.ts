@@ -1,5 +1,11 @@
 import type { Environment, Job, JobAttempt, JobInput, JobProgress, JobStatus, JobTarget } from '@plitzi/sdk-shared';
 
+/**
+ * Which spaces' jobs a worker takes: only these — a worker kept for some spaces — or every space but these, whose own
+ * workers take theirs. Absent, every space's.
+ */
+export type JobSpaces = { only: number[] } | { except: number[] };
+
 /** Why a worker is asked to stop a job it holds: an operator or the code cancelled it, or set it aside. */
 export type JobStop = 'cancel' | 'pause';
 
@@ -108,7 +114,7 @@ export type JobQueue = {
    *
    * A reclaimed job arrives with its previous holder's attempt already written to the history as `lost`.
    */
-  claim: (params: { workerId: string; leaseMs: number; limit: number }) => Promise<Job[]>;
+  claim: (params: { workerId: string; leaseMs: number; limit: number; spaces?: JobSpaces }) => Promise<Job[]>;
   /**
    * Extends the lease on jobs this worker still holds, and answers which of them it is asked to stop — cancelled, or
    * set aside (`pause`).

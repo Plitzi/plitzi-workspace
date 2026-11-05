@@ -1,4 +1,4 @@
-import type { JobQueue } from './jobs';
+import type { JobQueue, JobSpaces } from './jobs';
 import type { SSRPageAdapters, ServerBaseConfig } from '@plitzi/sdk-kernel/types';
 import type {
   ActionEmailConfig,
@@ -223,6 +223,11 @@ export type SSRActionJobsConfig = {
   spaces?: number[];
   /** How often a free worker looks for a job. Default 1s. */
   pollMs?: number;
+  /**
+   * Which spaces' jobs this replica takes, asked on every claim (`JobSpaces`): a worker kept for some spaces takes
+   * theirs alone, the others every space but those. Absent, every space's. Not `spaces`, which is what it schedules.
+   */
+  claims?: () => JobSpaces | undefined;
   /** How often this replica looks for due schedules. Default 15s. */
   schedulePollMs?: number;
   /** How long a claim is held before another replica may take the job over — the failover window. Default 30s. */

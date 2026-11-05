@@ -78,7 +78,9 @@ space while it hydrates.
   (`names`): a run is recorded with what it was (`RunLabel`: space, kind, name). A scaler may hold what a pool's
   instances run with for a while (`PoolScaler.resources`: knobs, each instance restarting with them in turn), and the
   remote functions runner asks where to run with the space an invocation is for (`url(spaceId)`), so a deployment can
-  give a space its own runners — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
+  give a space its own runners; a worker hands a space's requests to the worker that serves it (`createWorker`'s
+  `forward`, once, streamed, a 502 when it does not answer), and takes only the jobs of the spaces it is given
+  (`jobs.claims`, every queue's `claim({ spaces })`) — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its

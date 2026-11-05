@@ -11,6 +11,7 @@ import { statsStage } from '@plitzi/sdk-kernel/stats';
 import { actionOriginProblem } from './origin';
 import { createPageEngine } from './pageEngine';
 import { createActionCorsStage } from './stages/cors';
+import { createForwardStage } from './stages/forward';
 import { createRenderStage } from './stages/render';
 
 import type { EngineServerConfig } from '../types';
@@ -34,6 +35,11 @@ export type WorkerConfig = Omit<EngineServerConfig, 'adapters'> & {
    * too — a gateway sends a browser nothing there — but the secret does not depend on that.
    */
   render?: { secret: string };
+  /**
+   * Where a space's requests are served when not here: the origin of the worker kept for it, or nothing when this one
+   * serves it. Asked once the host's space is known; what it answers gets the request as it came (`createForwardStage`).
+   */
+  forward?: (spaceId: number) => string | undefined;
 };
 
 /** What no stage of a worker answers: its paths are the engine's, and nothing else is served here. */
@@ -54,7 +60,7 @@ const notFoundStage: Stage<DeployedContext> = ({ res }) => {
  * every call with nothing said. Refused too on another origin (`action.origin`) with no `action.pageOrigins`, whose
  * pages its CORS answers with credentials and its cross-site check takes as its own.
  */
-export const createWorker = ({ identity, render, ...config }: WorkerConfig): HttpServer => {
+export const createWorker = ({ identity, render, forward, ...config }: WorkerConfig): HttpServer => {
   const problem = actionOriginProblem(config.action, 'worker');
   if (problem) {
     throw new Error(`createWorker: ${problem}`);
@@ -105,6 +111,8 @@ export const createWorker = ({ identity, render, ...config }: WorkerConfig): Htt
     crossSiteWritesStage,
     // Which deployment the host is, its basic auth, and who is calling — what the engine's stages read off the request.
     createMiddlewaresStage(),
+    // A space kept on workers of its own goes to them, its space known now.
+    ...(forward ? [createForwardStage(forward)] : []),
     ...engine.endpoints,
     ...engine.routes,
     notFoundStage

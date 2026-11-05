@@ -1,3 +1,5 @@
+import { request as httpRequest } from 'node:http';
+
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { unusedPort } from '@plitzi/sdk-kernel/http';
@@ -360,5 +362,70 @@ describe('a page server whose actions run on a worker', () => {
     expect(
       engineOnWorker({ action: { origin: 'https://actions.example.com' }, realtime: false }).published.actionPath
     ).toBe('https://actions.example.com/_action');
+  });
+});
+
+describe('a worker that keeps some spaces on workers of their own', () => {
+  it('hands their requests over as they came, once, and serves the others itself', async () => {
+    const kept = await start();
+    const keptWorker = worker;
+    const port = await unusedPort();
+    const front = createWorker({
+      httpVersion: 1,
+      adapters: {
+        getSpaceDeployment: (req: SSRRequest) =>
+          Promise.resolve({ spaceId: req.hostname.startsWith('kept') ? 1 : 2, environment: 'main', revision: 0 }),
+        getOfflineData: () => Promise.resolve(offlineData)
+      },
+      action: {
+        lookups: { getAction: (_spaceId, actionId) => Promise.resolve(actionId === COUNT.id ? COUNT : undefined) }
+      },
+      forward: spaceId => (spaceId === 1 ? kept : undefined)
+    });
+    await front.listen(port, '127.0.0.1');
+    // By host, as a browser asks it: fetch keeps the host its URL names, so it is said through node:http.
+    const ask = (host: string): Promise<{ status: number; json: () => Promise<unknown> }> =>
+      new Promise((resolve, reject) => {
+        const asking = httpRequest(
+          {
+            host: '127.0.0.1',
+            port,
+            path: '/_action',
+            method: 'POST',
+            headers: { host, 'content-type': 'application/json' }
+          },
+          answer => {
+            const chunks: Buffer[] = [];
+            answer.on('data', (chunk: Buffer) => chunks.push(chunk));
+            answer.on('end', () => {
+              const text = Buffer.concat(chunks).toString('utf8');
+              resolve({ status: answer.statusCode ?? 0, json: () => Promise.resolve(JSON.parse(text) as unknown) });
+            });
+          }
+        );
+        asking.on('error', reject);
+        asking.end(JSON.stringify({ actionId: COUNT.id, input: {} }));
+      });
+
+    try {
+      const handed = await ask('kept.example.test');
+      const here = await ask('other.example.test');
+
+      expect(handed.status).toBe(200);
+      expect(((await handed.json()) as { output: { count: number } }).output.count).toBe(1);
+      expect(here.status).toBe(200);
+
+      // The kept worker gone: said, never served by the front in its place.
+      await keptWorker?.close();
+      worker = undefined;
+      const gone = await ask('kept.example.test');
+
+      expect(gone.status).toBe(502);
+      expect(((await gone.json()) as { error: string }).error).toContain(
+        'The worker that serves space 1 did not answer'
+      );
+    } finally {
+      await front.close();
+    }
   });
 });

@@ -1,7 +1,7 @@
 import type { ActionEmailSender } from './runtime/email';
 import type { SpaceSigning } from './runtime/signing';
 import type { FunctionsConfig } from '../functions/config';
-import type { JobQueue } from '../types';
+import type { JobQueue, JobSpaces } from '../types';
 import type { EngineConfig } from '../types';
 import type { ProjectDataLookup } from '@plitzi/sdk-kernel/data';
 import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
@@ -392,6 +392,11 @@ export type ActionsConfig = {
  * {@link JobQueue} over a store they share.
  */
 export type ActionJobsConfig = {
+  /**
+   * Which spaces' jobs this replica takes, asked on every claim: a worker kept for some spaces takes theirs alone, the
+   * others every space but those. Absent, every space's.
+   */
+  claims?: () => JobSpaces | undefined;
   /**
    * Where jobs and schedules live. Omitted → this process's memory: nothing survives a restart, and a second
    * replica produces the same fires all over again.

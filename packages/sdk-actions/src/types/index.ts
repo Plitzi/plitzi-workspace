@@ -7,4 +7,13 @@ export type {
   SSRActionConfig,
   SSRActionJobsConfig
 } from './config';
-export type { ActionSchedule, ActionScheduleInput, JobQuery, JobQueue, JobSettlement, JobStop, JobWrite } from './jobs';
+export type {
+  ActionSchedule,
+  ActionScheduleInput,
+  JobQuery,
+  JobQueue,
+  JobSettlement,
+  JobSpaces,
+  JobStop,
+  JobWrite
+} from './jobs';

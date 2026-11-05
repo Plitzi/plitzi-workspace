@@ -1,7 +1,11 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
-import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite, ActionSchedule } from '../../types';
+import type { JobQuery, JobQueue, JobSettlement, JobSpaces, JobStop, JobWrite, ActionSchedule } from '../../types';
 import type { Job, JobAttempt, JobInput } from '@plitzi/sdk-shared';
+
+/** Whether a job of `spaceId` is one a claim with `spaces` takes. */
+const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
+  !spaces || ('only' in spaces ? spaces.only.includes(spaceId) : !spaces.except.includes(spaceId));
 
 /**
  * The queue's rules — what `enqueue`, `claim`, `settle`… do to the jobs and schedules — over a state handed to them,
@@ -109,13 +113,14 @@ export const queueRules = (
       return true;
     },
 
-    claim: ({ workerId, leaseMs, limit }) => {
+    claim: ({ workerId, leaseMs, limit, spaces }) => {
       const at = now();
       const taken: Job[] = [];
       const candidates = [...jobs.values()]
         .filter(
           job =>
-            (job.status === 'pending' && job.runAt <= at) || (job.status === 'running' && (job.leaseUntil ?? 0) < at)
+            takesSpace(spaces, job.spaceId) &&
+            ((job.status === 'pending' && job.runAt <= at) || (job.status === 'running' && (job.leaseUntil ?? 0) < at))
         )
         .sort((a, b) => a.runAt - b.runAt);
 
