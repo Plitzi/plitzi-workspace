@@ -18,6 +18,11 @@ const PARK_MS = 4 * 366 * 24 * 60 * MINUTE_MS;
 export type SchedulerOptions = {
   queue: JobQueue;
   lookups: ActionLookups;
+  /**
+   * Whether a space may have scheduled runs at all — its plan, say: why not, or nothing. A space refused has none:
+   * its schedules are taken off the queue, and a fire already due is not run. Absent, every space may.
+   */
+  admit?: (spaceId: number) => Promise<string | undefined>;
   /** Which environment scheduled runs execute in. Defaults to `main`, the document the builder edits. */
   environment?: Environment;
   /** How often this replica looks for due schedules. Default 15s — the resolution of a cron is a minute. */
@@ -84,14 +89,38 @@ export const createScheduler = ({
   maxAttempts = DEFAULT_MAX_ATTEMPTS,
   reconcileMs = 15 * MINUTE_MS,
   spaces,
+  admit,
   onError
 }: SchedulerOptions): Scheduler => {
+  /** What was last said of each space refused, so a refusal is said once, not on every sweep. */
+  const refused = new Map<number, string>();
+  const refusalOf = async (spaceId: number): Promise<string | undefined> => {
+    const why = await admit?.(spaceId);
+    if (why && refused.get(spaceId) !== why) {
+      serverLog.warn('Actions', `space ${String(spaceId)} runs nothing on a schedule: ${why}`);
+    }
+
+    if (why) {
+      refused.set(spaceId, why);
+    } else {
+      refused.delete(spaceId);
+    }
+
+    return why;
+  };
   let timer: NodeJS.Timeout | undefined;
   let reconcileTimer: NodeJS.Timeout | undefined;
   let running = false;
 
   const produce = async (schedule: ActionSchedule, at: Date, result: SweepResult): Promise<void> => {
     const { spaceId, actionId, cron, timezone, nextRunAt: fireAt } = schedule;
+    // A space whose plan no longer runs schedules since its last reconcile: its schedules go now, this fire with them.
+    if (await refusalOf(spaceId)) {
+      await queue.putSchedules({ spaceId, schedules: [] });
+
+      return;
+    }
+
     const id = scheduleJobId(spaceId, actionId, fireAt);
 
     const created = await queue.enqueue({
@@ -140,6 +169,12 @@ export const createScheduler = ({
   };
 
   const reconcile = async (spaceId: number): Promise<void> => {
+    if (await refusalOf(spaceId)) {
+      await queue.putSchedules({ spaceId, schedules: [] });
+
+      return;
+    }
+
     const entries = (await lookups.listActions?.(spaceId)) ?? [];
     const at = await queue.now();
     await queue.putSchedules({

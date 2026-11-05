@@ -11,6 +11,9 @@ import type { SignedInTestAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
+/** Where a site's badge leads: who made it, and where to report one that abuses its address — the deployment's own. */
+export type BadgeLinks = { madeWith: string; report: string };
+
 // Real VALUES of the global data sources, published at runtime and read by element bindings. Grouped under
 // `runtime.sources` so all source data lives together, separate from the document state (schema/style)
 // and from the top-level `sources` registry (which only holds authoring definitions). See RFC §4 A.2.
@@ -176,9 +179,10 @@ export type RenderSettings = {
   quotaNear?: boolean;
   /**
    * The deployment's "Made with Plitzi" badge, as the SERVER decided when it metered the render: on a plan that does
-   * not remove it. Like `overQuota`, a fact about the account behind the site that nothing an author writes can set.
+   * not remove it — and where it leads, the deployment's own, so a site served on a test tier reports there. Like
+   * `overQuota`, a fact about the account behind the site that nothing an author writes can set.
    */
-  badge?: boolean;
+  badge?: BadgeLinks | false;
   /**
    * Whether every element carries `data-plitzi-el="<its id>"`, which is what an end-to-end test addresses it by.
    *

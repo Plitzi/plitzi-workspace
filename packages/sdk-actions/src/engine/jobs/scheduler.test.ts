@@ -84,6 +84,30 @@ describe('createScheduler', () => {
     expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-02T00:30:00.000Z');
   });
 
+  it('runs nothing on a schedule for a space refused one, and takes its schedules off the queue', async () => {
+    const world = cluster([scheduled('30 0 * * *')]);
+    await seed(world);
+    let plan: string | undefined;
+    const scheduler = createScheduler({
+      queue: world.queue,
+      lookups: world.lookups,
+      admit: () => Promise.resolve(plan)
+    });
+
+    // Its plan no longer runs schedules: the fire due is not run, and the schedule is gone.
+    plan = 'Scheduled runs are in App+ and up';
+    world.at('2026-03-01T00:30:00Z');
+
+    expect((await scheduler.sweep()).enqueued).toEqual([]);
+    expect(await world.queue.listSchedules([1])).toEqual([]);
+
+    // Back on a plan that runs them: the next reconcile puts them back.
+    plan = undefined;
+    await scheduler.reconcile(1);
+
+    expect(await world.queue.listSchedules([1])).toHaveLength(1);
+  });
+
   it('produces one job however many replicas reach the same fire', async () => {
     const world = cluster([scheduled('30 0 * * *')]);
     await seed(world);

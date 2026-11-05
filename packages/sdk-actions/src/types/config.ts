@@ -219,6 +219,8 @@ export type SSRActionJobsConfig = {
   workers?: number;
   /** Whether this replica sweeps due schedules into the queue. Default true. */
   produce?: boolean;
+  /** Whether a space may have scheduled runs — its plan, say: why not, or nothing. Absent, every space may. */
+  admitSchedules?: (spaceId: number) => Promise<string | undefined>;
   /** The spaces this server schedules for, when it serves a known few — the self-hosted shape. */
   spaces?: number[];
   /** How often a free worker looks for a job. Default 1s. */

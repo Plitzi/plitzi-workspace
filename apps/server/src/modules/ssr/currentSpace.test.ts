@@ -35,7 +35,9 @@ const start = async (adapters: Parameters<typeof createServer>[0]['adapters']) =
 describe('the space as it is now, for the host’s own pages', () => {
   let server: SSRServer;
   let base: string;
-  const meter = vi.fn<(event: SSRMeterEvent) => Promise<SSRMeterDecision>>(() => Promise.resolve({ badge: true }));
+  const meter = vi.fn<(event: SSRMeterEvent) => Promise<SSRMeterDecision>>(() =>
+    Promise.resolve({ badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' } })
+  );
 
   beforeAll(async () => {
     ({ server, base } = await start({ ...createJsonAdapters({ offlineData }), meter }));
@@ -53,7 +55,9 @@ describe('the space as it is now, for the host’s own pages', () => {
     expect(response.headers.get('cache-control')).toBe('private, no-cache');
     expect(body.space.style.cache).toBe('');
     expect(body.space.style.cacheHref).toMatch(/^\/_plitzi\/style\/[\w-]+\.css$/);
-    expect(body.visit).toEqual({ badge: true });
+    expect(body.visit).toEqual({
+      badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' }
+    });
   });
 
   it('counts each load as a visit, and answers one asked again unchanged with a 304', async () => {
@@ -119,7 +123,11 @@ describe('the space as it is now, for a page that asked with its credential', ()
     ({ server, base } = await start({
       ...json,
       getSpaceDeployment,
-      meter: () => Promise.resolve({ degrade: true, badge: true })
+      meter: () =>
+        Promise.resolve({
+          degrade: true,
+          badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' }
+        })
     }));
   });
 
@@ -136,6 +144,9 @@ describe('the space as it is now, for a page that asked with its credential', ()
     // Linked, it would be asked for of this host by a page of another, and answered with the host's own space.
     expect(body.space.style.cacheHref).toBeUndefined();
     expect(body.space.style.cache).toBe('.hero{color:red}');
-    expect(body.visit).toEqual({ overQuota: true, badge: true });
+    expect(body.visit).toEqual({
+      overQuota: true,
+      badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' }
+    });
   });
 });

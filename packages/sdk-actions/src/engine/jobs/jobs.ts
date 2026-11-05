@@ -48,6 +48,7 @@ export const createActionJobs = (
     ...(config.maxAttempts ? { maxAttempts: config.maxAttempts } : {}),
     ...(config.reconcileMs ? { reconcileMs: config.reconcileMs } : {}),
     ...(config.spaces ? { spaces: config.spaces } : {}),
+    ...(config.admitSchedules ? { admit: config.admitSchedules } : {}),
     ...(config.onError ? { onError: config.onError } : {})
   });
 

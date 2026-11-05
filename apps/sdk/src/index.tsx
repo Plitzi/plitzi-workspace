@@ -63,6 +63,7 @@ import type { ElementContextValue, ElementChild, PluginTriggerPayload, ChannelHa
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
+  BadgeLinks,
   ActionRunSummary,
   AnalyticsConfig,
   Element,
@@ -384,7 +385,7 @@ export type PlitziSdkProps = {
   quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's "Made with Plitzi" badge, on a plan that does not
    *  remove it. Never authored — a space cannot turn it off from its own settings. */
-  badge?: boolean;
+  badge?: BadgeLinks;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
   /** Where Font Awesome's sheet is served, for the panels the SDK draws in a root of their own (the dev tools, the

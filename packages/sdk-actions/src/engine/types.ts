@@ -393,6 +393,11 @@ export type ActionsConfig = {
  */
 export type ActionJobsConfig = {
   /**
+   * Whether a space may have scheduled runs at all — its plan, say: why not, or nothing. A space refused has none, and
+   * a fire already due is not run. Absent, every space may.
+   */
+  admitSchedules?: (spaceId: number) => Promise<string | undefined>;
+  /**
    * Which spaces' jobs this replica takes, asked on every claim: a worker kept for some spaces takes theirs alone, the
    * others every space but those. Absent, every space's.
    */

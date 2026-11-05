@@ -106,14 +106,20 @@ describe('SSR page metering', () => {
 
   // A free sub-domain is no place to host a site: kept out of search results, fresh or from the cache alike.
   it('sends noindex when the adapter says the address is not one sites are hosted on', async () => {
-    meter.mockResolvedValue({ noindex: true, badge: true });
+    meter.mockResolvedValue({
+      noindex: true,
+      badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' }
+    });
     const cache = new TtlCache<CachedPage>(60_000, 10);
     const req = request();
     const fresh = response();
 
     await render(req, fresh.res, caches(cache));
     expect(fresh.headers['X-Robots-Tag']).toBe('noindex, nofollow');
-    expect(req.ctx.meter?.badge).toBe(true);
+    expect(req.ctx.meter?.badge).toEqual({
+      madeWith: 'https://plitzi.test',
+      report: 'https://plitzi.test/report-abuse'
+    });
 
     const cached = response();
     await render(request(), cached.res, caches(cache));

@@ -37,6 +37,7 @@ import { getEnvironmentServer } from './config';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
+  BadgeLinks,
   AnalyticsConfig,
   ColorScheme,
   Theme,
@@ -84,7 +85,7 @@ export type AppProps = {
   quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's "Made with Plitzi" badge, on a plan that does not
    *  remove it. Never authored — a space cannot turn it off from its own settings. */
-  badge?: boolean;
+  badge?: BadgeLinks;
   externalStyle?: string;
   /** Reporting channel for this render — see {@link AnalyticsConfig}. Absent means report nothing. */
   analytics?: AnalyticsConfig;

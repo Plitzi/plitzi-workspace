@@ -9,7 +9,7 @@ import type { TtlCache } from '../../helpers/cache';
 import type { SpaceDocument } from '../../helpers/hydrationPayload';
 import type { SSRPageServerConfig } from '../../types';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
-import type { Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { BadgeLinks, Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
 import type { PageAccess } from '@plitzi/sdk-shared/schema';
 
 /**
@@ -161,7 +161,7 @@ export const handleSpaceDocument = async (
 };
 
 /** The decision about this visit a page drawn here is handed in its bootstrap, for a page that renders by itself. */
-type VisitFacts = { overQuota?: true; quotaNear?: true; badge?: true };
+type VisitFacts = { overQuota?: true; quotaNear?: true; badge?: BadgeLinks };
 
 /**
  * Lets a page of another origin read the space with its credential: the origins the credential was granted for
@@ -261,7 +261,7 @@ export const handleCurrentSpace = async (
   const visit: VisitFacts = {
     ...(decision?.degrade ? { overQuota: true } : {}),
     ...(decision?.quotaNear && !decision.degrade ? { quotaNear: true } : {}),
-    ...(decision?.badge ? { badge: true } : {})
+    ...(decision?.badge ? { badge: decision.badge } : {})
   };
   const visitJson = JSON.stringify(visit);
   const etag = `"${document.hash}.${digest(visitJson)}"`;

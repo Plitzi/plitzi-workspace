@@ -9,6 +9,7 @@ import type {
   SSRWriteContext
 } from './pipeline';
 import type {
+  BadgeLinks,
   ActionEntry,
   ActionRunReport,
   ActionTaskDescriptor,
@@ -358,8 +359,11 @@ export type SSRMeterDecision = {
   /** This space is over the quota its plan allows and the render should say so — the "Made with Plitzi" badge
    *  on the free tier. Paid plans accrue overage instead and never set this. */
   degrade?: boolean;
-  /** The deployment's "Made with Plitzi" badge on this render — its attribution, on a plan that does not remove it. */
-  badge?: boolean;
+  /**
+   * The deployment's "Made with Plitzi" badge on this render — its attribution, on a plan that does not remove it —
+   * and where it leads: the deployment's own addresses, its report page naming the page reported.
+   */
+  badge?: BadgeLinks;
   /**
    * This space has nearly spent its plan's allowance and the render should say so, calmly — before `degrade` would. The
    * deployment decides where: Plitzi says it on the shared domain, where the visitor is the one who might tell the owner.

@@ -82,6 +82,12 @@ space while it hydrates.
   `forward`, once, streamed, a 502 when it does not answer), and takes only the jobs of the spaces it is given
   (`jobs.claims`, every queue's `claim({ spaces })`) — from a pool source (`createLocalPoolSource`, or a deployment's own). A run record carries `reason` when a
   ceiling ended it.
+- **A deployment decides which spaces may have scheduled runs**: `jobs.admitSchedules(spaceId)` answers why not, or
+  nothing. A refused space's schedules are taken out of the queue — none is swept, the reason said once — and come back
+  when it answers nothing again. Absent, every space may, as before.
+- **The badge leads where the deployment says.** `SSRMeterDecision.badge` (and `render.badge`) is `BadgeLinks` —
+  `{ madeWith, report }` — instead of `true`: a site served by a test tier reports to that tier, not to plitzi.com. A
+  metering adapter that answered `badge: true` answers the two addresses.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its
   lines with `keepLogLine`). So one instance's whole log is read from a back-office without a log shipper.

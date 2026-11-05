@@ -296,7 +296,7 @@ export const prepareRender = async (
   // …and nearly over it, said calmly before it is: never both.
   const quotaNear = meteredNear && !degrade ? true : undefined;
   // The deployment's attribution, decided with the metering: a space cannot remove it from its own settings either.
-  const badge = meteredBadge ? true : undefined;
+  const badge = meteredBadge;
 
   /**
    * The visitor's theme, from the cookie the SDK writes it to.
