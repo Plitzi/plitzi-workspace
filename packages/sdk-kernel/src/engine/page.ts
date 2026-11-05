@@ -35,6 +35,8 @@ export type PageEngine = {
   listening?: () => void;
   /** The server has stopped taking connections: what holds them open for good — realtime sockets — lets them go. */
   closing?: () => void;
+  /** Told to stop, before it announces it: it takes no new work from here — a job worker claims nothing more. */
+  stopping?: () => void;
   /** Awaited before the sockets close: the jobs running here finish rather than being abandoned. */
   destroy?: () => Promise<void>;
   /** What the primary of a fleet keeps for its workers: each store named by the module that keeps it. */

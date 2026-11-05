@@ -51,6 +51,11 @@ export interface HttpServerParts {
    * sockets and streams — lets them go now, rather than being cut when the grace runs out.
    */
   onClosing?: () => void;
+  /**
+   * Told to stop, before it announces it: what takes work of its own accord — a job worker claiming — stops taking it,
+   * so what arrives meanwhile goes to the replicas that stay.
+   */
+  onStopping?: () => void;
   /** Awaited, so a server that holds work in flight — jobs, drains — can finish it before the sockets close. */
   onDestroy?: () => void | Promise<void>;
   /** What the primary does once, before it starts the workers — work each of them would otherwise repeat, or race
@@ -181,6 +186,7 @@ export const createHttpServer = (
       // Said before it stops listening: `/health` answers 503 from here, and for `announceMs` it serves as before, so
       // a load balancer takes it out of rotation before a request finds the port closed.
       markStopping(config);
+      parts.onStopping?.();
       if (announceMs > 0 && primary) {
         serverLog.info(label, `stopping: /health answers 503 for ${String(announceMs)} ms, then what runs finishes`);
         await new Promise(resolve => setTimeout(resolve, announceMs));

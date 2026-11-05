@@ -32,6 +32,8 @@ export const createPageEngine = (config: EngineServerConfig): PageEngine | undef
 
   const actions = actionsModuleFor(config);
   const realtime = realtimeModuleFor(config);
+  /** The job worker's stop, once: begun when the server is told to stop, awaited before its sockets close. */
+  let jobsStopped: Promise<void> | undefined;
   const connectors = config.connectors ? connectorLookupsOf(config.connectors) : undefined;
   if (!actions && !realtime && !connectors) {
     return undefined;
@@ -73,9 +75,13 @@ export const createPageEngine = (config: EngineServerConfig): PageEngine | undef
     },
     // An open socket or stream never ends on its own, and would hold the shutdown until the grace cut it.
     closing: () => realtime?.close(),
-    // The jobs running here are finished rather than abandoned: what is still pending stays in the shared queue.
+    // Told to stop, it claims no job more — what is queued meanwhile goes to the replicas that stay — and finishes
+    // the ones it runs, rather than abandoning them: what is still pending stays in the shared queue.
+    stopping: () => {
+      jobsStopped ??= actions?.jobs?.stop();
+    },
     destroy: async () => {
-      await actions?.jobs?.stop();
+      await (jobsStopped ??= actions?.jobs?.stop());
     },
     fleetStores: ACTIONS_FLEET_STORES,
     setPluginFunctions: (plugin, definition) => {

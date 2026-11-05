@@ -137,6 +137,7 @@ export const createWorker = ({ identity, render, forward, ...config }: WorkerCon
     label: 'Worker',
     ...(engine.listening ? { onListen: engine.listening } : {}),
     ...(engine.closing ? { onClosing: engine.closing } : {}),
+    ...(engine.stopping ? { onStopping: engine.stopping } : {}),
     ...(engine.destroy ? { onDestroy: engine.destroy } : {}),
     ...(engine.fleetStores ? { fleetStores: engine.fleetStores } : {})
   });

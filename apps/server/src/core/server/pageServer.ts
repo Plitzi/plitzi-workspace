@@ -174,6 +174,10 @@ export const createPageServer = (
     },
     // Every realtime connection told to go the moment the server stops taking new ones: an open socket or stream never
     // ends on its own, and would hold the shutdown until the grace cut it.
+    // Told to stop, it takes no new job before it announces it is going.
+    onStopping: () => {
+      engine?.stopping?.();
+    },
     onClosing: () => {
       engine?.closing?.();
       stopWatchingPlugins?.();
