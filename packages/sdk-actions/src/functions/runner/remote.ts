@@ -35,6 +35,32 @@ const DESCRIBE_DEADLINE_MS = 10_000;
 
 const unreachable = (detail: string) => new FunctionFailure('error', `The functions runner is unreachable (${detail})`);
 
+/** A runner that was never connected to: the invocation was not sent, so nothing of it ran and it may be sent again. */
+const notReached = (detail: string) =>
+  new FunctionFailure('unreachable', `No functions runner could be reached (${detail})`);
+
+/**
+ * How long a runner that could not be reached is taken to be away: calls that need it are queued meanwhile rather
+ * than started. The first invocation past it tries again, and says whether it is back.
+ */
+const AWAY_MS = 15_000;
+
+/** The waits between tries of a runner that could not be reached: a restart takes a few seconds, an outage longer. */
+const RETRY_WAITS_MS = [500, 1000, 2000];
+
+const wait = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise(resolve => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
+
 type Operation = {
   first: RunnerRequestMessage;
   load: () => Promise<string>;
@@ -56,16 +82,19 @@ export const createRemoteRunner = ({
   connectTimeoutMs = 5000,
   graceMs = 5000
 }: RemoteRunnerOptions): FunctionRunner => {
+  /** When each runner address last could not be reached: while recent, the calls that need it are queued instead. */
+  const away = new Map<string, number>();
+  const addressOf = (spaceId?: number): string => (typeof url === 'function' ? url(spaceId) : url);
+
   const operate = ({ first, load, bundleId, deadlineMs, answer, signal, onUsage }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
-      const socket = new WebSocket(
-        typeof url === 'function' ? url(first.type === 'invoke' ? first.invocation.context.spaceId : undefined) : url,
-        {
-          headers: { authorization: `Bearer ${secret}` },
-          handshakeTimeout: connectTimeoutMs
-        }
-      );
+      const address = addressOf(first.type === 'invoke' ? first.invocation.context.spaceId : undefined);
+      const socket = new WebSocket(address, {
+        headers: { authorization: `Bearer ${secret}` },
+        handshakeTimeout: connectTimeoutMs
+      });
       let settled = false;
+      let opened = false;
       /** A route answering as it writes: the body handed out at its head, fed until `done`. */
       let body: ReadableStreamDefaultController<Uint8Array> | undefined;
       let bodyEnded = false;
@@ -104,6 +133,8 @@ export const createRemoteRunner = ({
       signal?.addEventListener('abort', onAbort, { once: true });
 
       socket.on('open', () => {
+        opened = true;
+        away.delete(address);
         send(first);
         if (signal?.aborted) {
           onAbort();
@@ -211,6 +242,15 @@ export const createRemoteRunner = ({
         }
       });
       socket.on('error', error => {
+        // Refused or timed out before it opened — or answered by a runner going away (5xx): nothing was sent, which is
+        // the one failure safe to try again. A runner that turned this side away (a 4xx: the secret) is not away.
+        if (!opened && !/Unexpected server response: 4\d\d/.test(error.message)) {
+          away.set(address, Date.now());
+          settle(() => reject(notReached(error.message)));
+
+          return;
+        }
+
         endBody(controller => controller.error(unreachable(error.message)));
         settle(() => reject(unreachable(error.message)));
       });
@@ -241,16 +281,32 @@ export const createRemoteRunner = ({
           onUsage
         });
 
-      try {
-        return await attempt();
-      } catch (error) {
-        // A busy runner started nothing, so the invocation is whole to give the next one: once, and only with several.
-        if (typeof url === 'function' && error instanceof FunctionFailure && error.reason === 'busy') {
-          return attempt();
-        }
+      // A runner that could not be reached was sent nothing: tried again a few times — a restart, a rolling deploy —
+      // before the invocation is said to have found none.
+      for (let tries = 0; ; tries += 1) {
+        try {
+          return await attempt();
+        } catch (error) {
+          const reason = error instanceof FunctionFailure ? error.reason : undefined;
+          // A busy runner started nothing, so the invocation is whole to give the next one: once, with several.
+          if (reason === 'busy' && typeof url === 'function' && tries === 0) {
+            continue;
+          }
 
-        throw error;
+          const pause = RETRY_WAITS_MS.at(tries);
+          if (reason === 'unreachable' && pause !== undefined && !signal.aborted) {
+            await wait(pause, signal);
+            continue;
+          }
+
+          throw error;
+        }
       }
+    },
+    reachable: spaceId => {
+      const since = away.get(addressOf(spaceId));
+
+      return since === undefined || Date.now() - since > AWAY_MS;
     }
   };
 };

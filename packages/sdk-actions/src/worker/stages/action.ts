@@ -27,7 +27,7 @@ const safeParse = (body: string): unknown => {
  * for a `public` action, and the derived key also folds in the input: two people submitting different forms do
  * not collide.
  */
-const callerIdOf = (ctx: BaseContext, req: SSRRequest): string =>
+export const callerIdOf = (ctx: BaseContext, req: SSRRequest): string =>
   req.ctx.user ? `user:${req.ctx.user.id}` : `ip:${clientIp(ctx.raw, req)}`;
 
 const lineageOf = (req: SSRRequest): string[] => {

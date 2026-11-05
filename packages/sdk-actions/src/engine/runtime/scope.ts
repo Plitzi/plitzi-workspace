@@ -1,5 +1,5 @@
 import type { ActionCredential } from '../types';
-import type { ActionField, ActionFieldType, SSRUser } from '@plitzi/sdk-shared';
+import type { ActionField, ActionFieldType, RunUser } from '@plitzi/sdk-shared';
 
 const coerce = (type: ActionFieldType, value: unknown): unknown => {
   switch (type) {
@@ -126,7 +126,7 @@ export const applyFields = (fields: Record<string, ActionField>, raw: Record<str
 };
 
 /** The visitor as a flow sees them. The token is deliberately absent — see the `auth.currentUser` task. */
-export const projectUser = (user?: SSRUser) => {
+export const projectUser = (user?: RunUser) => {
   if (!user) {
     return undefined;
   }

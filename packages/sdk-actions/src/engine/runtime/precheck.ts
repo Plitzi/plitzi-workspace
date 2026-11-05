@@ -4,12 +4,13 @@ import { ActionRunError } from './errors';
 import { applyFields } from './scope';
 import { findTriggerNode, triggerParams } from './triggers';
 
-import type { ActionAccess, ActionEntry, ActionTriggerType, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
+import type { ActionAccess, ActionEntry, ActionTriggerType, ElementInteraction, RunUser } from '@plitzi/sdk-shared';
 
 export type PrecheckParams = {
   trigger: ActionTriggerType;
   input: Record<string, unknown>;
-  user?: SSRUser;
+  /** Who asks, as the session named them — or, for a call kept in the queue, as it named them then. */
+  user?: RunUser;
   /** Chain of run ids that caused this one. A run naming its own action is a loop. */
   lineage?: string[];
 };
@@ -17,7 +18,7 @@ export type PrecheckParams = {
 /** The entry point that was cleared, and the input that survived its contract. */
 export type PrecheckResult = { trigger: ElementInteraction; values: Record<string, unknown> };
 
-const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, user?: SSRUser) => {
+const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, user?: RunUser) => {
   // A schedule has no caller: nothing about a clock is a session, and demanding a rule here would only invite one
   // that means nothing. Nor has a run set for later — the run that set it was the one let in. Every other way in
   // states its own — the validator refuses a document that does not.

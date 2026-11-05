@@ -239,6 +239,66 @@
     }
   }
 
+  /**
+   * A call waiting in the queue: between the quota notice and the badge, so all three can show at once. Told by
+   * `light-dark()`, which the theme's class and the machine's scheme both set above — calm in either.
+   */
+  .plitzi-queued-notice {
+    padding: 6px 12px;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    position: fixed;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
+    border: 1px solid light-dark(rgb(228, 228, 231), rgb(63, 63, 70));
+    border-radius: 999px;
+    background-color: light-dark(rgb(255, 255, 255), rgb(24, 24, 27));
+    color: light-dark(rgb(63, 63, 70), rgb(212, 212, 216));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    line-height: 16px;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    font-size: 12px;
+
+    .plitzi-queued-notice__dot {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background-color: light-dark(rgb(217, 119, 6), rgb(251, 191, 36));
+      animation: plitzi-queued-pulse 1.6s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .plitzi-queued-notice__dot {
+        animation: none;
+      }
+    }
+  }
+
+  @keyframes plitzi-queued-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.35;
+    }
+  }
+
   /** The deployment's badge: the opposite corner from the quota notice, so both can show at once. */
   .plitzi-badge {
     padding: 6px 10px;

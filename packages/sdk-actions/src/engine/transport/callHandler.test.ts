@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { handleActionCall } from './callHandler';
 import { tasksOf } from '../../functions/tests/tasksOf';
+import { readKeptCall } from '../jobs/calls';
+import { createMemoryJobQueue } from '../jobs/memoryQueue';
 import { createActionsModule } from '../module';
 
 import type { EngineServerConfig } from '../../types';
@@ -293,6 +295,38 @@ describe('handleActionCall', () => {
     expect((payload.steps as { id: string; status: string }[]).map(step => [step.id, step.status])).toEqual([
       ['hang', 'failed']
     ]);
+  });
+
+  // Its code has nowhere to run: kept for later as the caller's, answered 202 with what reads it back — not started
+  // and failed half-way.
+  it('keeps a call whose code has no runner answering, to run once one does', async () => {
+    const queue = createMemoryJobQueue();
+    // A deployment that lists its spaces' actions is one with a queue.
+    const built = createActionsModule({
+      lookups: { getAction: () => Promise.resolve(undefined), listActions: () => Promise.resolve([]) },
+      jobs: { queue, workers: 0, produce: false }
+    });
+    const module: ActionsModule = { ...built, codeAway: () => Promise.resolve(true) };
+
+    const { sent, payload } = await call(
+      buildConfig(entry()),
+      { actionId: 'quote', input: { amount: 3 }, idempotencyKey: 'k-1' },
+      { module }
+    );
+    const ticket = typeof payload.ticket === 'string' ? payload.ticket : '';
+    const jobId = typeof payload.jobId === 'string' ? payload.jobId : '';
+
+    expect(sent.status).toBe(202);
+    expect(payload.status).toBe('queued');
+    expect(await readKeptCall(queue, 3, jobId, ticket)).toMatchObject({ status: 'queued' });
+    expect((await queue.getJob([3], jobId))?.target).toMatchObject({
+      kind: 'action',
+      name: 'quote',
+      trigger: 'call',
+      callerId: 'ip:127.0.0.1',
+      idempotencyKey: 'k-1',
+      at: { environment: 'production', revision: 1 }
+    });
   });
 
   // A tester verified a render action no page used yet by importing its function into a probe of its own: a

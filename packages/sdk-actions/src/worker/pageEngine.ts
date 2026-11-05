@@ -7,6 +7,7 @@ import { realtimeModuleFor } from '../realtime';
 import { actionOriginProblem, publishedActionEndpoint } from './origin';
 import { createActionStage } from './stages/action';
 import { createFunctionRoutesStage } from './stages/functionRoutes';
+import { createQueuedCallsStage } from './stages/queuedCalls';
 import { createRealtimeStage } from './stages/realtime';
 import { createConnectorResolver } from '../connectors/connectors';
 import { actionLookupsOf, connectorLookupsOf } from '../engine/configSeam';
@@ -57,6 +58,8 @@ export const createPageEngine = (config: EngineServerConfig): PageEngine | undef
   return {
     endpoints: [
       ...(actions || connectors ? [createActionStage(config, actions)] : []),
+      // Where a page keeps a call no worker answered: served wherever pages are, the moment workers are not.
+      ...(actions?.jobs ? [createQueuedCallsStage(config, actions)] : []),
       ...(realtime ? [createRealtimeStage(realtime)] : [])
     ],
     routes: actions ? [createFunctionRoutesStage(actions)] : [],

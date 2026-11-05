@@ -456,7 +456,7 @@ export type ActionRunEntry = {
   mode: 'await' | 'detached' | 'stream' | 'render';
   /** The server's own id, once it answers. Absent for a run that never reached one. */
   runId?: string;
-  status: 'running' | 'completed' | 'failed' | 'accepted' | 'streaming' | 'skipped' | 'aborted';
+  status: 'running' | 'completed' | 'failed' | 'accepted' | 'queued' | 'streaming' | 'skipped' | 'aborted';
   /** The server's vocabulary when it refused: `duplicate`, `over_capacity`, `recursion`, `forbidden`… */
   reason?: string;
   /** What went wrong, when anything says so. Never a credential — the server redacts before answering. */

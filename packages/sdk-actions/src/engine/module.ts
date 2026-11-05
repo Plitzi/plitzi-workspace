@@ -46,6 +46,11 @@ export type ActionsModule = ActionRunner & {
    */
   registryFor: (spaceId: number, at?: SpaceRevision) => Promise<ActionTaskRegistry>;
   /**
+   * Whether this action runs the space's own code and no runner for it answers now: a call to it waits in the queue
+   * rather than start and fail half-way, its earlier steps done and its later ones not.
+   */
+  codeAway: (spaceId: number, document: ActionDocument, at?: SpaceRevision) => Promise<boolean>;
+  /**
    * A space's functions source, built, read and checked — ready to store, or the problems to show where they are. The
    * one way a space's functions become storable; refused when this server has no runner. With a `scope`, a plugin's
    * server half: its tasks named after the plugin, its routes its own.
@@ -140,6 +145,19 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     )
       ? registry
       : registryFor(request.spaceId, request.at);
+  const codeAway = async (spaceId: number, document: ActionDocument, at?: SpaceRevision): Promise<boolean> => {
+    const runsCode = Object.values(document.nodes).some(
+      node => node.type === 'task' && node.action && !registry.get(node.action)
+    );
+    if (!runsCode) {
+      return false;
+    }
+
+    // The runner its code runs on: its own when it names one (a runtime), else the deployment's.
+    const runner = (await config.lookups.getFunctions?.(spaceId, at))?.runner ?? config.functions?.runner;
+
+    return runner?.reachable ? !runner.reachable(spaceId) : false;
+  };
   // Read when a run asks: the queue is made below, from the module this runner is part of.
   let jobsQueue: JobQueue | undefined;
   const { realtime } = config;
@@ -179,6 +197,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     runAction,
     registry,
     registryFor,
+    codeAway,
     routeFor: routes.routeFor,
     prepareFunctions: (source, scope) => {
       const runner = config.functions?.runner;

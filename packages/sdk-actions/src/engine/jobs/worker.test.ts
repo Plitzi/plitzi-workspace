@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { ActionRefusal } from '@plitzi/sdk-shared/functions';
+
+import { keepCall, readKeptCall } from './calls';
 import { createMemoryJobQueue } from './memoryQueue';
 import { createJobWorker } from './worker';
 import { tasksOf } from '../../functions/tests/tasksOf';
@@ -471,5 +474,94 @@ describe('stopping a worker', () => {
     expect(ran).not.toHaveBeenCalled();
     // Given back as it was: waiting, its attempt refunded, nothing written against it.
     expect(await test.read()).toMatchObject({ status: 'pending', attempts: 0, history: [] });
+  });
+});
+
+describe('a call kept in the queue', () => {
+  const callEntry: ActionEntry = {
+    id: 'greet',
+    document: {
+      name: 'greet',
+      output: { who: { type: 'json' } },
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', params: { access: 'session' }, afterNode: 'work' }),
+        work: node('work', { action: 'test.work', afterNode: 'ret' }),
+        ret: node('ret', { action: 'flow.output', params: { values: '{"who": {{ work|json_encode }}}' } })
+      }
+    }
+  };
+  const ana = { id: 7, username: 'ana', email: 'ana@example.com', verified: true, permissions: [], roles: [] };
+
+  it('runs as the visitor who made it, and keeps its answer for them alone', async () => {
+    const test = world((_params, ctx) => ctx.user?.email ?? 'nobody', [callEntry]);
+    const kept = await keepCall(test.queue, {
+      spaceId: 1,
+      environment: 'main',
+      actionId: 'greet',
+      input: {},
+      user: ana,
+      callerId: 'user:7'
+    });
+    if ('refused' in kept) {
+      throw new Error(kept.refused);
+    }
+
+    expect(await readKeptCall(test.queue, 1, kept.jobId, kept.ticket)).toMatchObject({ status: 'queued' });
+    // Kept by the real clock: the queue's is brought up to it.
+    test.advance(Date.now() - MIDNIGHT);
+    expect(await test.worker().poll()).toBe(1);
+    await settle();
+
+    expect(await readKeptCall(test.queue, 1, kept.jobId, kept.ticket)).toMatchObject({
+      status: 'completed',
+      output: { who: 'ana@example.com' }
+    });
+    // Another ticket reads nothing: the answer is the caller's.
+    expect(await readKeptCall(test.queue, 1, kept.jobId, 'not-the-ticket')).toBeUndefined();
+  });
+
+  it('is the same call asked again under the same key, and nobody else’s', async () => {
+    const test = world(() => 'ok', [callEntry]);
+    const call = {
+      spaceId: 1,
+      environment: 'main' as const,
+      actionId: 'greet',
+      input: {},
+      user: ana,
+      callerId: 'user:7',
+      idempotencyKey: 'submit-1'
+    };
+    const first = await keepCall(test.queue, call);
+    const again = await keepCall(test.queue, call);
+    const stranger = await keepCall(test.queue, { ...call, callerId: 'user:8' });
+
+    expect(again).toEqual(first);
+    // A different caller under the same key is a different call: kept on its own, never handed the first one's ticket.
+    expect('refused' in stranger || ('jobId' in first && stranger.jobId !== first.jobId)).toBe(true);
+  });
+
+  it('answers a refusal once, never running it again', async () => {
+    const test = world(() => Promise.reject(new ActionRefusal('No more seats')), [callEntry]);
+    const kept = await keepCall(test.queue, {
+      spaceId: 1,
+      environment: 'main',
+      actionId: 'greet',
+      input: {},
+      user: ana,
+      callerId: 'user:7'
+    });
+    if ('refused' in kept) {
+      throw new Error(kept.refused);
+    }
+
+    test.advance(Date.now() - MIDNIGHT);
+    await test.worker().poll();
+    await settle();
+
+    expect(await readKeptCall(test.queue, 1, kept.jobId, kept.ticket)).toMatchObject({
+      status: 'failed',
+      error: 'No more seats'
+    });
+    expect((await test.read(kept.jobId)).status).toBe('failed');
   });
 });

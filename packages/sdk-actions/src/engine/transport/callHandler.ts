@@ -6,6 +6,7 @@ import { triggerAccess } from '@plitzi/sdk-shared/actions';
 import { forcedFlagsFor } from '@plitzi/sdk-shared/flags';
 
 import { openStream, wantsStream } from './stream';
+import { keepCall } from '../jobs/calls';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 import { reportReject } from '../runtime/report';
@@ -46,7 +47,7 @@ export type ActionCallDeps = {
  * going", a 429 means "come back", a 508 means "you built a loop". `recursion` is the one worth the unusual code:
  * 508 Loop Detected says exactly what happened, and anything else would read as a server fault.
  */
-const STATUS_BY_REASON: Record<ActionErrorReason, number> = {
+export const STATUS_BY_REASON: Record<ActionErrorReason, number> = {
   not_found: 404,
   disabled: 409,
   unauthenticated: 401,
@@ -193,11 +194,53 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     return;
   }
 
+  const at = { environment, revision };
+  // A call that may wait in the queue: one a page made and awaits as an answer — a stream has nothing to wait in.
+  const keepable = trigger === 'call' && module.jobs !== undefined && !wantsStream(req.headers.accept);
+  /**
+   * Keeps the call, to run as the caller's the moment its code has a runner again, answering 202 with what reads it
+   * back — rather than started and failed half-way.
+   */
+  const keep = async (): Promise<void> => {
+    if (!module.jobs) {
+      return;
+    }
+
+    const kept = await keepCall(module.jobs.queue, {
+      spaceId,
+      environment,
+      actionId: entry.id,
+      input,
+      ...(req.ctx.user ? { user: req.ctx.user } : {}),
+      callerId,
+      ...(body.idempotencyKey ? { idempotencyKey: body.idempotencyKey } : {}),
+      ...(origin ? { origin } : {}),
+      at
+    });
+    if ('refused' in kept) {
+      await reject('over_capacity', kept.refused);
+      fail(res, 'over_capacity', kept.refused);
+
+      return;
+    }
+
+    serverLog.info('Action', `${entry.id} kept in the queue for space=${String(spaceId)}: no functions runner answers`);
+    send(res, 202, { status: 'queued', jobId: kept.jobId, ticket: kept.ticket, runId: '', output: {} });
+  };
+
   let run;
   let entryPoint;
   try {
     // Before anything is spent: a refusal here has taken no slot and no metering event.
     entryPoint = precheckRun(entry, { trigger, input, user: req.ctx.user, lineage }).trigger;
+    // Its code has no runner to run on now: kept, to run as the caller's the moment one answers, rather than started
+    // and failed half-way. A stream has nothing to wait in — it runs, and says how it went, as before.
+    if (keepable && (await module.codeAway(spaceId, entry.document, at))) {
+      await keep();
+
+      return;
+    }
+
     run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
@@ -354,6 +397,17 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     // A run that STARTED and then hit a ceiling took steps on the way there, and they are the only account of what it
     // managed to do before it died. Carried by the error itself; a refusal that never became a run has none.
     const steps = error instanceof ActionRunError && error.steps && (await showsOutline()) ? error.steps : undefined;
+
+    // Its runner went away as it started — the first call to find it so — and no step of it had done anything yet: it
+    // is kept like the calls after it, rather than answered as a failure the page can do nothing about.
+    const untouched =
+      error instanceof ActionRunError &&
+      !error.steps?.some(step => step.phase === 'flow' && step.status === 'success');
+    if (keepable && reason === 'over_capacity' && untouched && (await module.codeAway(spaceId, entry.document, at))) {
+      await keep();
+
+      return;
+    }
 
     if (stream) {
       // The status line is long gone by the time a stream fails, so the failure travels as a frame. Same reason

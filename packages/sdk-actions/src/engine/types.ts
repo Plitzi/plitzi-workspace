@@ -24,8 +24,7 @@ import type {
   InteractionNodeStatus,
   RunUser,
   Schema,
-  SpaceRevision,
-  SSRUser
+  SpaceRevision
 } from '@plitzi/sdk-shared';
 import type { ActionKvStore } from '@plitzi/sdk-shared/functions';
 import type { LaterAnswer, LaterRequest } from '@plitzi/sdk-shared/functions';
@@ -468,7 +467,8 @@ export type ActionRunRequest = {
   spaceId: number;
   environment: Environment;
   trigger: ActionTriggerType;
-  user?: SSRUser;
+  /** Who asks: the session's person — or, for a call kept in the queue, who made it, as the session said then. */
+  user?: RunUser;
   /** Who is asking. Stated by whatever started the run — see {@link ActionTaskContext.callerId}. */
   callerId: string;
   /** The public origin of the request that started it — see {@link ActionTaskContext.origin}. */

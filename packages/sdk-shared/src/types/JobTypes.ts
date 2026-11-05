@@ -18,14 +18,41 @@ import type { RunUser } from './ServerTypes';
  */
 export type JobStatus = 'pending' | 'running' | 'paused' | 'succeeded' | 'failed' | 'dead' | 'cancelled';
 
-/** A run of one of the space's actions: a schedule's fire, a run set for later. */
+/** A run of one of the space's actions: a schedule's fire, a run set for later, a call kept until it could run. */
 export type ActionJobTarget = {
   kind: 'action';
   /** The action, by its identifier. */
   name: string;
   /** The trigger it is run through — what the action's document lets start it this way. */
   trigger: ActionTriggerType;
+  /**
+   * For a call kept in the queue because nothing could run it then (no worker, no runner): who made it, as the
+   * session said when it was accepted — the run is theirs, with their permissions, however long after — and how the
+   * transport named them (`user:<id>`, `ip:<address>`).
+   */
+  user?: RunUser;
+  callerId?: string;
+  /** The key the caller named the call by: a call that did run before it was kept answers with that run instead. */
+  idempotencyKey?: string;
+  /** The page's origin, and the version of the space it was published at: what the call would have run with then. */
+  origin?: string;
+  at?: SpaceRevision;
+  /** The secret the caller reads the call's answer with (`QueuedCallStatus`): the job's id alone is not enough. */
+  ticket?: string;
 };
+
+/** A call kept in the queue, as its caller reads it: where it is, and once it ran, what it answered. */
+export type QueuedCallStatus =
+  | { status: 'queued' | 'running'; jobId: string; attempts: number }
+  | {
+      status: 'completed' | 'failed';
+      jobId: string;
+      runId: string;
+      output: Record<string, unknown>;
+      error?: string;
+      code?: string;
+      reason?: string;
+    };
 
 /**
  * One of the space's functions' jobs (`defineFunctions({ jobs })`), run slice by slice — kept as it was when it started:

@@ -98,8 +98,9 @@ const spaceTasks = (
             throw new ActionRefusal(error.message);
           }
 
-          // A runner short of memory took nothing: the run is over capacity, said with a retry, never the code's error.
-          if (error instanceof FunctionFailure && error.reason === 'busy') {
+          // A runner short of memory, or none to reach, took nothing: the run is over capacity, said with a retry —
+          // never the code's error, which it never got to run.
+          if (error instanceof FunctionFailure && (error.reason === 'busy' || error.reason === 'unreachable')) {
             throw new ActionRunError('over_capacity', error.message);
           }
 

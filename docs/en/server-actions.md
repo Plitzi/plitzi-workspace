@@ -650,6 +650,33 @@ Only ever for a key the CALLER named: an `idempotencyKey` on the step, or the de
 webhook. A key derived from the input is not replayed, because two identical calls a minute apart are usually two
 things somebody meant to happen twice.
 
+### When nothing can run it: a call kept for later
+
+A call a page makes while nothing can run it is not lost. Two cases, the same answer:
+
+- **No runner for the space's code.** The action uses the space's own functions and no functions runner answers — a
+  restart, a deploy, an outage. A runner that cannot be reached is tried again a few times first (half a second, one,
+  two), which covers a restart; past that it is taken as away for fifteen seconds. A call that needs it is then not
+  started: the worker keeps it in the job queue and answers `202 { status: 'queued', jobId, ticket }`. The first call
+  to find the runner gone is kept the same way when none of its steps had done anything yet.
+- **No worker.** The request never reached one, or the proxy in front found none (502, 503). The page hands the call to
+  the page server — which serves the page's host whatever the workers do — at `POST /_plitzi/queued`, under a key of
+  its own. It is checked as `/_action` checks it (the action at the page's revision, its access for the session, its
+  input) and kept the same way.
+
+A kept call runs as **its caller's**: who made it, their roles and permissions as the session said when it was kept,
+the revision and origin of the page — with the caller's `idempotencyKey` when they named one, so a call that did run
+after all answers with that run rather than running twice. It runs on the first worker whose runner answers, whether
+or not anybody is still on the page, and is dropped after a day unrun. A run that fails answers once (a refusal, a step's
+error) and is not run again. A space has at most 500 calls waiting; past that a call is refused (`over_capacity`).
+
+Meanwhile the page waits for the answer, saying so — **Your request is waiting for the server — it will finish on its
+own**, the run reading `queued` — and reads it at `GET /_plitzi/queued/<jobId>` with its ticket (`x-plitzi-ticket`),
+less often the longer it waits. When it ran, the flow goes on with the answer it would have had then: `On Server
+Action End` with its output, `On Server Action Error` with its reason. A stream is never kept: it runs, and says how it
+went, as before. Scheduled jobs wait the same way: a fire whose code has no runner is not started, and its attempt is
+not spent.
+
 ---
 
 ## 10. When something does not work

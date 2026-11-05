@@ -228,6 +228,12 @@ export type FunctionRunner = {
    * {@link FunctionFailure}.
    */
   invoke: (request: FunctionInvokeRequest) => Promise<unknown>;
+  /**
+   * Whether a runner for this space answered the last time one was asked — false for a while after none could be
+   * reached. What lets a call that needs the space's code wait in the queue instead of starting and failing half-way.
+   * Absent: always reachable (the runner is this process).
+   */
+  reachable?: (spaceId?: number) => boolean;
   close?: () => Promise<void>;
 };
 
@@ -247,10 +253,11 @@ export type FunctionInvokeRequest = {
 
 /**
  * Why an invocation did not answer: the code refused (`refused` — an `ActionRefusal`, its message written for whoever
- * asked), it threw (`error`), the runner stopped it (a {@link FunctionStopReason}), or the runner took none, short of
- * memory (`busy` — another instance, or a moment later, takes it).
+ * asked), it threw (`error`), the runner stopped it (a {@link FunctionStopReason}), the runner took none, short of
+ * memory (`busy` — another instance, or a moment later, takes it), or no runner could be reached at all
+ * (`unreachable` — the invocation was never sent, so nothing of it ran).
  */
-export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused' | 'busy';
+export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused' | 'busy' | 'unreachable';
 
 /** An invocation that did not answer, and why ({@link FunctionFailureReason}). */
 export class FunctionFailure extends Error {

@@ -148,6 +148,57 @@ describe('the runner service, through the remote runner', () => {
     });
   });
 
+  // A runner restarting is a few seconds with nothing listening: the invocation, never sent, waits for it.
+  it('tries a runner that cannot be reached again, and goes through once it is back', async () => {
+    const free = await startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1' });
+    const { port } = free.address();
+    await free.close();
+    const later = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
+    let back: FunctionsRunnerService | undefined;
+    setTimeout(() => {
+      void startFunctionsRunnerService({ secret: SECRET, port, host: '127.0.0.1' }).then(started => {
+        back = started;
+      });
+    }, 700);
+
+    const answer = await later.invoke({
+      bundle: {
+        id: 'bundle-after-restart',
+        load: () =>
+          Promise.resolve('export default { tasks: [{ namespace: "probe", action: "run", run: () => "back" }] };')
+      },
+      invocation,
+      limits: LIMITS,
+      answer: () => Promise.resolve(null),
+      signal: new AbortController().signal
+    });
+
+    expect(answer).toBe('back');
+    expect(later.reachable?.(3)).toBe(true);
+    await back?.close();
+  });
+
+  // Nothing listening for longer: said as found nowhere — never run — and the runner is taken as away for a while.
+  it('says when no runner could be reached at all, and that it is away', async () => {
+    const free = await startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1' });
+    const { port } = free.address();
+    await free.close();
+    const gone = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
+
+    const failure: unknown = await gone
+      .invoke({
+        bundle: { id: 'bundle-nowhere', load: () => Promise.resolve('export default {};') },
+        invocation,
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      })
+      .catch((error: unknown) => error);
+
+    expect(failure instanceof FunctionFailure && failure.reason).toBe('unreachable');
+    expect(gone.reachable?.(3)).toBe(false);
+  }, 15_000);
+
   it('refuses a platform without the secret', async () => {
     const stranger = createRemoteRunner({
       url: `ws://127.0.0.1:${String(service.address().port)}`,

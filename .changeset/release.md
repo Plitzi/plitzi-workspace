@@ -88,6 +88,14 @@ space while it hydrates.
 - **The badge leads where the deployment says.** `SSRMeterDecision.badge` (and `render.badge`) is `BadgeLinks` —
   `{ madeWith, report }` — instead of `true`: a site served by a test tier reports to that tier, not to plitzi.com. A
   metering adapter that answered `badge: true` answers the two addresses.
+- **A call nothing can run is kept, not lost.** A runner that cannot be reached is tried again (0.5, 1, 2 s) and then
+  said away for 15 s (`FunctionRunner.reachable`, reason `unreachable`); a call whose action runs the space's code is
+  then kept in the job queue as its caller's (`ActionJobTarget.user`, `callerId`, `idempotencyKey`, `at`, `origin`,
+  `ticket`) and answered `202 queued` — and a page that reaches no worker (network error, 502, 503) hands it to the page
+  server, `POST /_plitzi/queued` (`createQueuedCallsStage`, mounted wherever the engine has a queue). The page waits,
+  says so (`QueuedNotice`, the run `queued`) and reads it at `GET /_plitzi/queued/<job>` with its ticket. Jobs of the
+  space's code wait the same way rather than start (`ActionsModule.codeAway`). `ActionRunRequest.user` and the
+  precheck take a `RunUser`.
 - **Every process keeps its last thousand log lines**, every level, whatever its console says, and answers them at
   `GET /_stats/logs?since&level&limit&q` behind the same secret (`readLogTail`; a deployment's own logger adds its
   lines with `keepLogLine`). So one instance's whole log is read from a back-office without a log shipper.

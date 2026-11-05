@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { serverLog } from '@plitzi/sdk-kernel/log';
 
+import { KEPT_CALL_MS } from './calls';
 import { createFailureStreak } from './failureStreak';
 import { ActionRunError } from '../runtime/errors';
 
@@ -276,7 +277,22 @@ export const createJobWorker = ({
     }
 
     const { name: actionId, trigger } = target;
-    const entry = await lookups.getAction(job.spaceId, actionId);
+    // A visitor's call kept until something could run it: run as theirs, under the key they named it by.
+    const call = trigger === 'call' && target.callerId ? { ...target, callerId: target.callerId } : undefined;
+    // Its `dueAt` is when it was kept, by the clock of the process that kept it — the clock this one reads.
+    if (call && Date.now() - job.dueAt > KEPT_CALL_MS) {
+      await settle({
+        jobId: job.id,
+        workerId,
+        status: 'dead',
+        error: 'kept a day and nothing could run it: not run so long after it was asked',
+        attempt: { status: 'failed', workerId, error: 'expired' }
+      });
+
+      return;
+    }
+
+    const entry = await lookups.getAction(job.spaceId, actionId, call?.at);
     if (!entry) {
       await settle({
         jobId: job.id,
@@ -289,20 +305,57 @@ export const createJobWorker = ({
       return;
     }
 
+    // Its code has no runner to run on now: not started, the attempt refunded, so nothing of it runs half-way — a
+    // schedule's fire and a kept call alike wait for one.
+    if (await module.codeAway(job.spaceId, entry.document, call?.at)) {
+      await release(job, retryDelay(1), 'not started: no functions runner answers');
+
+      return;
+    }
+
+    const ttlMs = (await module.limitsFor(job.spaceId, entry.document)).timeoutMs;
+    const begin = call?.idempotencyKey
+      ? // The key its caller named: a call that ran after all — the page's first try reached a worker — answers with
+        // that run, and one running now is not started twice.
+        {
+          spaceId: job.spaceId,
+          actionId,
+          callerId: call.callerId,
+          input: job.input,
+          idempotencyKey: call.idempotencyKey,
+          ttlMs
+        }
+      : {
+          spaceId: job.spaceId,
+          actionId,
+          callerId: call?.callerId ?? trigger,
+          input: job.input,
+          // The JOB is the unit of work, so the job's own id is its single-flight key. That is what stops a worker
+          // that merely stalled — lease lapsed, job handed to somebody else — from running the same flow twice
+          // alongside its replacement: the second one is refused as a duplicate and comes back later.
+          idempotencyKey: job.id,
+          sharedKey: true,
+          ttlMs
+        };
+    if (call) {
+      const replayed = await module.guards.replay(begin);
+      if (replayed) {
+        await settle({
+          jobId: job.id,
+          workerId,
+          status: 'succeeded',
+          runId: replayed.runId,
+          result: { ...replayed },
+          attempt: { status: 'succeeded', workerId, runId: replayed.runId }
+        });
+
+        return;
+      }
+    }
+
     let run;
     try {
-      run = await module.guards.begin({
-        spaceId: job.spaceId,
-        actionId,
-        callerId: trigger,
-        input: job.input,
-        // The JOB is the unit of work, so the job's own id is its single-flight key. That is what stops a worker
-        // that merely stalled — lease lapsed, job handed to somebody else — from running the same flow twice
-        // alongside its replacement: the second one is refused as a duplicate and comes back later.
-        idempotencyKey: job.id,
-        sharedKey: true,
-        ttlMs: (await module.limitsFor(job.spaceId, entry.document)).timeoutMs
-      });
+      run = await module.guards.begin(begin);
     } catch (error) {
       const refusal = error instanceof ActionRunError ? error.reason : undefined;
       /**
@@ -336,10 +389,25 @@ export const createJobWorker = ({
         spaceId: job.spaceId,
         environment: job.environment,
         trigger,
-        callerId: trigger,
+        callerId: call?.callerId ?? trigger,
+        ...(call?.user ? { user: call.user } : {}),
+        ...(call?.origin ? { origin: call.origin } : {}),
+        ...(call?.at ? { at: call.at } : {}),
         runId: run.runId,
         signal: run.controller.signal
       });
+      // What its caller reads once it ran (`readKeptCall`): the answer the page would have had then.
+      const answer = call
+        ? {
+            result: {
+              runId: result.runId,
+              status: result.status === 'completed' ? 'completed' : 'failed',
+              output: result.output,
+              ...(result.error === undefined ? {} : { error: result.error }),
+              ...(result.code === undefined ? {} : { code: result.code })
+            }
+          }
+        : {};
 
       if (result.status === 'completed') {
         await settle({
@@ -347,7 +415,23 @@ export const createJobWorker = ({
           workerId,
           status: 'succeeded',
           runId: run.runId,
+          ...answer,
           attempt: { status: 'succeeded', workerId, runId: run.runId }
+        });
+
+        return;
+      }
+
+      // A call that ran and failed answered its caller: a refusal, a step's error — said once, never run again.
+      if (call && !(result.status === 'aborted' && run.controller.signal.aborted)) {
+        await settle({
+          jobId: job.id,
+          workerId,
+          status: 'failed',
+          runId: run.runId,
+          error: failureOf(result),
+          ...answer,
+          attempt: { status: 'failed', workerId, runId: run.runId, error: failureOf(result) }
         });
 
         return;
