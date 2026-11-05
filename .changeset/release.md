@@ -223,6 +223,16 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
 
 ## Elements (`@plitzi/sdk-elements`)
 
+- **`chart` draws several series, and reads them back as a monitoring screen does.** `series: [{ field, label }]` (or
+  `field:label, …` from the builder) draws a line, an area or a bar a series, each in a colour of its own — eight
+  hues in a fixed order, a step for light and one for dark, `--plitzi-chart-series-1`…`-8` to change them — with a
+  legend of each one's last and highest value. A row without a series's value is a gap, not a point moved along; a
+  record without its `valueField` is now a gap in one series too, where it was left out. Pointed at, or moved
+  through with the arrow keys, a chart reads every series at that row (the `tooltip` part); `titleField` names each
+  row there when the axis writes less (an empty label is not written, and the labels that are keep their room), and
+  charts given the same `sync` point together. The axis draws a hairline at each time it names, and an area of
+  several series fades towards it.
+
 - **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
   that had one drew nothing in its place, without a word. A test now holds every declared type to a component.
 

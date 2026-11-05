@@ -54,7 +54,21 @@ export const elementAttributeNames = {
   carousel: ['autoplay', 'itemKey', 'items', 'label', 'loop', 'mode', 'pauseOnHover', 'speed', 'transition'],
   carouselTrack: [],
   channel: ['grant', 'keep', 'presence', 'subType', 'topic'],
-  chart: ['emptyText', 'format', 'height', 'items', 'kind', 'label', 'labelField', 'max', 'showValues', 'valueField'],
+  chart: [
+    'emptyText',
+    'format',
+    'height',
+    'items',
+    'kind',
+    'label',
+    'labelField',
+    'max',
+    'series',
+    'showValues',
+    'sync',
+    'titleField',
+    'valueField'
+  ],
   container: ['decorative', 'label', 'live', 'open', 'subType', 'title'],
   custom: null,
   dialogContainer: [
