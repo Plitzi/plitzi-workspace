@@ -7,6 +7,9 @@ export type { MemoryReading } from './memory';
 export type { StatsRecorder } from './recorder';
 export type {
   InstanceHealth,
+  InstancePhase,
+  InstanceStatus,
+  NamedWork,
   PoolHealth,
   PoolInstance,
   PoolOverride,
@@ -14,6 +17,8 @@ export type {
   PoolScaler,
   PoolSource,
   ProcessStats,
+  RunLabel,
+  SlowRun,
   StatsConfig,
   StatsMinute,
   StatsThresholds,

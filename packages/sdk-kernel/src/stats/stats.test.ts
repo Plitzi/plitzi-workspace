@@ -56,6 +56,36 @@ describe('a process’s stats', () => {
     expect(series.at(-2)).toEqual({ at: new Date(101 * MINUTE).toISOString(), runs: 0, failed: 0, refused: 0 });
   });
 
+  it('names what made a minute slow: its slowest runs and failures first, and the names that took the most', () => {
+    const now = 200 * MINUTE + 1000;
+    const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
+    const label = (name: string) => ({ spaceId: 34, kind: 'action', name, trigger: 'schedule' });
+
+    stats.run(40, undefined, label('ping'));
+    stats.run(9400, undefined, label('world-skies'));
+    stats.run(30, 'timeout', label('checkout'));
+    for (let run = 0; run < 6; run += 1) {
+      stats.run(20 + run, undefined, label('ping'));
+    }
+    stats.run(5);
+    const minute = stats.snapshot().series.at(-1);
+
+    expect(minute?.runs).toBe(10);
+    expect(minute?.runsOf?.map(run => [run.name, run.durationMs, run.failure])).toEqual([
+      ['checkout', 30, 'timeout'],
+      ['world-skies', 9400, undefined],
+      ['ping', 40, undefined],
+      ['ping', 25, undefined],
+      ['ping', 24, undefined]
+    ]);
+    expect(minute?.names?.map(work => [work.name, work.runs, work.failed, work.maxMs])).toEqual([
+      ['world-skies', 1, 0, 9400],
+      ['ping', 7, 0, 40],
+      ['checkout', 1, 1, 30]
+    ]);
+    expect(stats.snapshot().series.at(-2)?.runsOf).toBeUndefined();
+  });
+
   it('says it is degraded, and why, when too many runs fail or its slots are full', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' });
     for (let run = 0; run < 10; run += 1) {
@@ -148,7 +178,7 @@ describe('/_stats and the pools', () => {
 
     const pages = health.pools.find(report => report.pool === 'pages');
     const worker = health.pools.find(report => report.pool === 'worker');
-    expect(pages?.counts).toEqual({ healthy: 1, degraded: 0, stopping: 0, down: 1 });
+    expect(pages?.counts).toMatchObject({ healthy: 1, degraded: 0, stopping: 0, down: 1 });
     expect(pages?.instances[0]?.latencyMs).toBeGreaterThanOrEqual(0);
     expect(pages?.instances.map(instance => instance.reasons)).toEqual([
       [],
@@ -162,29 +192,53 @@ describe('/_stats and the pools', () => {
 
   it('reads an instance told to stop as stopping, answering or not', async () => {
     const source = createLocalPoolSource([
-      { pool: 'worker', id: 'w-2', url: 'http://192.0.2.1:9', secret: '', orchestrator: { stopping: true } }
+      { pool: 'worker', id: 'w-2', url: 'http://192.0.2.1:9', secret: '', orchestrator: { phase: 'stopping' } }
     ]);
     const health = await readPools(source, { timeoutMs: 200 });
     const pool = 'pools' in health ? health.pools[0] : undefined;
 
-    expect(pool?.counts).toEqual({ healthy: 0, degraded: 0, stopping: 1, down: 0 });
-    expect(pool?.instances[0]?.reasons).toEqual([
-      'stopping: finishing what it runs, and no longer answering its stats'
-    ]);
+    expect(pool?.counts).toMatchObject({ healthy: 0, stopping: 1, down: 0 });
+    expect(pool?.instances[0]?.reasons).toEqual(['stopping: finishing what it runs, taking nothing new']);
   });
 
-  it('reads an instance its orchestrator knows is down as down, with why, without asking it', async () => {
+  it('reads an instance its orchestrator says failed as failed, with why, without asking it', async () => {
     const source = createLocalPoolSource([
-      { pool: 'runtime', id: 'pizarra · main', url: 'http://192.0.2.1:9', secret: '', unreachable: 'the build failed' }
+      {
+        pool: 'runtime',
+        id: 'pizarra · main',
+        url: 'http://192.0.2.1:9',
+        secret: '',
+        orchestrator: { phase: 'failed', why: 'the build failed' }
+      }
     ]);
     const startedAt = Date.now();
     const health = await readPools(source, { timeoutMs: 5000 });
 
     expect(Date.now() - startedAt).toBeLessThan(1000);
     expect('pools' in health && health.pools[0]?.instances[0]).toMatchObject({
-      status: 'down',
+      status: 'failed',
       reasons: ['the build failed']
     });
+  });
+
+  it('reads each phase its orchestrator says — starting, restarting, stopped — over what it answers', async () => {
+    const source = createLocalPoolSource(
+      (['starting', 'restarting', 'stopped'] as const).map(phase => ({
+        pool: 'runner',
+        id: `r-${phase}`,
+        url: phase === 'stopped' ? 'http://192.0.2.1:9' : '',
+        secret: '',
+        orchestrator: { phase }
+      }))
+    );
+    const health = await readPools(source, { timeoutMs: 200 });
+    const instances = 'pools' in health ? (health.pools[0]?.instances ?? []) : [];
+
+    expect(instances.map(each => [each.id, each.status])).toEqual([
+      ['r-starting', 'starting'],
+      ['r-restarting', 'restarting'],
+      ['r-stopped', 'stopped']
+    ]);
   });
 
   it('says so when nothing says which processes run', async () => {

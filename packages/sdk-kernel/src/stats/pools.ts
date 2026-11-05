@@ -1,6 +1,14 @@
 import { STATS_PATH } from './stage';
 
-import type { InstanceHealth, PoolHealth, PoolInstance, PoolReport, PoolSource, ProcessStats } from './types';
+import type {
+  InstanceHealth,
+  InstanceStatus,
+  PoolHealth,
+  PoolInstance,
+  PoolReport,
+  PoolSource,
+  ProcessStats
+} from './types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -8,27 +16,46 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isStats = (value: unknown): value is ProcessStats =>
   isRecord(value) && typeof value.pool === 'string' && isRecord(value.health) && isRecord(value.load);
 
-/** Not answering: `down` — or `stopping`, when its orchestrator told it to and it is on its way out. */
-const down = (instance: PoolInstance, reason: string): InstanceHealth =>
-  instance.orchestrator?.stopping
-    ? {
-        id: instance.id,
-        status: 'stopping',
-        reasons: ['stopping: finishing what it runs, and no longer answering its stats'],
-        orchestrator: instance.orchestrator
-      }
-    : {
-        id: instance.id,
-        status: 'down',
-        reasons: [
-          instance.orchestrator?.lastExit ? `${reason} (last exit: ${instance.orchestrator.lastExit})` : reason
-        ],
-        ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})
-      };
+/** What a status means, said where nothing more particular is known. */
+const MEANING: Record<InstanceStatus, string> = {
+  starting: 'starting: not taking work yet',
+  healthy: '',
+  degraded: '',
+  restarting: 'restarting: it stopped answering, and another is starting in its place',
+  stopping: 'stopping: finishing what it runs, taking nothing new',
+  stopped: 'stopped: it finished what it ran and went',
+  failed: 'failed: it could not start, or ended on its own',
+  down: 'has no address'
+};
+
+const said = (instance: PoolInstance, status: InstanceStatus, reason: string): InstanceHealth => ({
+  id: instance.id,
+  status,
+  reasons: [instance.orchestrator?.lastExit ? `${reason} (last exit: ${instance.orchestrator.lastExit})` : reason],
+  ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})
+});
+
+/** The status its orchestrator's phase says — none while it runs, when what it answers decides. */
+const phaseStatus = (instance: PoolInstance): InstanceStatus | undefined => {
+  const phase = instance.orchestrator?.phase;
+
+  return phase === undefined || phase === 'running' ? undefined : phase;
+};
+
+/** Not answering: `down` — unless its orchestrator says it is on its way in or out, which is not being down. */
+const down = (instance: PoolInstance, reason: string): InstanceHealth => {
+  const phase = phaseStatus(instance);
+
+  return phase ? said(instance, phase, instance.orchestrator?.why ?? MEANING[phase]) : said(instance, 'down', reason);
+};
 
 const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<InstanceHealth> => {
-  if (instance.unreachable) {
-    return down(instance, instance.unreachable);
+  const phase = phaseStatus(instance);
+  // Over, never begun, or with nowhere to ask: what its orchestrator says is all there is.
+  if (phase === 'stopped' || phase === 'failed' || !instance.url) {
+    const status = phase ?? 'down';
+
+    return said(instance, status, instance.orchestrator?.why ?? MEANING[status]);
   }
 
   const startedAt = performance.now();
@@ -57,15 +84,35 @@ const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<
     return down(instance, `answered ${STATS_PATH} with something that is not a process's stats`);
   }
 
+  const phased = phaseStatus(instance);
+
   return {
     id: instance.id,
-    // Told to stop by its orchestrator, it is stopping whatever its own stats got round to saying.
-    status: instance.orchestrator?.stopping ? 'stopping' : stats.health.status,
+    // On its way in or out, it is that, whatever its own stats got round to saying.
+    status: phased ?? stats.health.status,
     latencyMs: Math.round(performance.now() - startedAt),
     reasons: stats.health.reasons,
     stats,
     ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})
   };
+};
+
+const countsOf = (read: InstanceHealth[]): Record<InstanceStatus, number> => {
+  const counts: Record<InstanceStatus, number> = {
+    starting: 0,
+    healthy: 0,
+    degraded: 0,
+    restarting: 0,
+    stopping: 0,
+    stopped: 0,
+    failed: 0,
+    down: 0
+  };
+  read.forEach(each => {
+    counts[each.status] += 1;
+  });
+
+  return counts;
 };
 
 /**
@@ -90,12 +137,7 @@ export const readPools = async (
       return {
         pool,
         instances: read,
-        counts: {
-          healthy: read.filter(each => each.status === 'healthy').length,
-          degraded: read.filter(each => each.status === 'degraded').length,
-          stopping: read.filter(each => each.status === 'stopping').length,
-          down: read.filter(each => each.status === 'down').length
-        },
+        counts: countsOf(read),
         versions
       };
     })

@@ -23,7 +23,7 @@ import {
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
 
 import type { IsolateRunnerOptions } from './isolate';
-import type { MemoryReading, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
+import type { MemoryReading, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
 import type {
   FunctionAnswer,
   FunctionRunner,
@@ -113,10 +113,12 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     }
   };
   let invokedAt: number | undefined;
+  /** What it runs, for its stats: which space's task, route or job. */
+  let label: RunLabel | undefined;
   const finish = (message: RunnerResponseMessage): void => {
     if (invokedAt !== undefined) {
       stats.inFlight.count -= 1;
-      stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? message.reason : undefined);
+      stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? message.reason : undefined, label);
       invokedAt = undefined;
     }
 
@@ -243,6 +245,14 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     }
 
     const { bundleId, invocation, limits } = message;
+    label = {
+      spaceId: invocation.context.spaceId,
+      kind: invocation.kind,
+      // A route is named by its method and path (`GET /orders/:id`), the others by theirs.
+      name: invocation.kind === 'route' ? invocation.key : invocation.name,
+      trigger: invocation.context.trigger,
+      runId: invocation.context.runId
+    };
     invokedAt = Date.now();
     stats.inFlight.count += 1;
     settle(

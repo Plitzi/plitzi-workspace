@@ -1,7 +1,18 @@
 import os from 'node:os';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 
-import type { ProcessStats, StatsConfig, StatsMinute, StatsThresholds, StatsWindow } from './types';
+import { MINUTE_NAMES, MINUTE_RUNS } from './types';
+
+import type {
+  NamedWork,
+  ProcessStats,
+  RunLabel,
+  SlowRun,
+  StatsConfig,
+  StatsMinute,
+  StatsThresholds,
+  StatsWindow
+} from './types';
 
 const MINUTE = 60_000;
 const KEPT_MINUTES = 60;
@@ -24,11 +35,17 @@ type Bucket = {
   refusals: Map<string, number>;
   /** The load's samples taken in this minute: their mean CPU, and the most memory and lag any of them saw. */
   load?: { cpuSum: number; samples: number; rss: number; lagMs: number };
+  /** The slowest labelled runs and every labelled failure, kept short; and each name's work, up to {@link NAMES}. */
+  slow: SlowRun[];
+  names: Map<string, NamedWork>;
 };
 
+/** How many names a minute counts on their own; past it, a new name's runs are not kept by name. */
+const NAMES = 200;
+
 export type StatsRecorder = {
-  /** A run ended: how long it took, and why it failed when it did. */
-  run: (durationMs: number, failure?: string) => void;
+  /** A run ended: how long it took, why it failed when it did, and — when the recorder knows — what it was. */
+  run: (durationMs: number, failure?: string, label?: RunLabel) => void;
   /** A request refused before it became a run. */
   refuse: (reason: string) => void;
   /** Work in flight against a size: read when the stats are, so nothing is counted twice. */
@@ -66,9 +83,50 @@ const seriesOf = (buckets: Bucket[], minute: number): StatsMinute[] => {
       failed: bucket ? total(bucket.failures) : 0,
       refused: bucket ? total(bucket.refusals) : 0,
       ...(p95Ms === undefined ? {} : { p95Ms }),
-      ...(load ? { cpu: Math.round((load.cpuSum / load.samples) * 1000) / 1000, rss: load.rss, lagMs: load.lagMs } : {})
+      ...(load
+        ? { cpu: Math.round((load.cpuSum / load.samples) * 1000) / 1000, rss: load.rss, lagMs: load.lagMs }
+        : {}),
+      ...(bucket && bucket.slow.length > 0 ? { runsOf: bucket.slow } : {}),
+      ...(bucket && bucket.names.size > 0
+        ? { names: [...bucket.names.values()].sort((a, b) => b.totalMs - a.totalMs).slice(0, MINUTE_NAMES) }
+        : {})
     };
   });
+};
+
+/**
+ * Keeps a labelled run among its minute's: every failure first, then the slowest, {@link MINUTE_RUNS} in all — what a
+ * spike on a chart is traced back to.
+ */
+const keepRun = (bucket: Bucket, run: SlowRun): void => {
+  bucket.slow.push(run);
+  bucket.slow.sort(
+    (a, b) => Number(b.failure !== undefined) - Number(a.failure !== undefined) || b.durationMs - a.durationMs
+  );
+  bucket.slow.length = Math.min(bucket.slow.length, MINUTE_RUNS);
+};
+
+const keepName = (bucket: Bucket, label: RunLabel, durationMs: number, failed: boolean): void => {
+  const key = `${String(label.spaceId)}:${label.kind}:${label.name}`;
+  const kept = bucket.names.get(key);
+  if (!kept && bucket.names.size >= NAMES) {
+    return;
+  }
+
+  const work = kept ?? {
+    spaceId: label.spaceId,
+    kind: label.kind,
+    name: label.name,
+    runs: 0,
+    failed: 0,
+    totalMs: 0,
+    maxMs: 0
+  };
+  work.runs += 1;
+  work.failed += failed ? 1 : 0;
+  work.totalMs += durationMs;
+  work.maxMs = Math.max(work.maxMs, durationMs);
+  bucket.names.set(key, work);
 };
 
 const windowOf = (buckets: Bucket[]): StatsWindow => {
@@ -120,7 +178,16 @@ export const createStatsRecorder = (
       return last;
     }
 
-    const bucket: Bucket = { minute, runs: 0, seen: 0, durations: [], failures: new Map(), refusals: new Map() };
+    const bucket: Bucket = {
+      minute,
+      runs: 0,
+      seen: 0,
+      durations: [],
+      failures: new Map(),
+      refusals: new Map(),
+      slow: [],
+      names: new Map()
+    };
     buckets.push(bucket);
     while (buckets.length > 0 && (buckets[0]?.minute ?? minute) <= minute - KEPT_MINUTES) {
       buckets.shift();
@@ -167,8 +234,18 @@ export const createStatsRecorder = (
   sampler.unref();
 
   return {
-    run: (durationMs, failure) => {
+    run: (durationMs, failure, label) => {
       const bucket = current();
+      if (label) {
+        keepRun(bucket, {
+          ...label,
+          at: new Date(now()).toISOString(),
+          durationMs: Math.round(durationMs),
+          ...(failure ? { failure } : {})
+        });
+        keepName(bucket, label, durationMs, failure !== undefined);
+      }
+
       bucket.runs += 1;
       bucket.seen += 1;
       if (bucket.durations.length < SAMPLE) {

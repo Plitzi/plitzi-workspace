@@ -37,6 +37,18 @@ export type StatsWindow = {
 };
 
 /**
+ * What a run was: the space it ran for, what kind of thing — an action, or a space function's `task`, `route` or `job`
+ * — and its name. Said by whatever records the run, so a slow minute names what made it slow.
+ */
+export type RunLabel = { spaceId: number; kind: string; name: string; trigger?: string; runId?: string };
+
+/** One run of a minute's slowest, or one that failed: what it was, how long it took, and when it ended. */
+export type SlowRun = RunLabel & { at: string; durationMs: number; failure?: string };
+
+/** What one action or function did in a minute, among the ones that took the most of it. */
+export type NamedWork = RunLabel & { runs: number; failed: number; totalMs: number; maxMs: number };
+
+/**
  * One minute of a process: its work, and its load as sampled in that minute. A minute with no sample — before the
  * process started, or one its event loop was too busy to take — has no load, never a zero.
  */
@@ -53,7 +65,15 @@ export type StatsMinute = {
   rss?: number;
   /** The most event-loop delay a sample saw (p99), in ms. */
   lagMs?: number;
+  /** Its slowest runs, and every one that failed, up to {@link MINUTE_RUNS} — absent in a minute nothing ran. */
+  runsOf?: SlowRun[];
+  /** The actions and functions that took the most of it, up to {@link MINUTE_NAMES}. */
+  names?: NamedWork[];
 };
+
+/** How many of a minute's runs it keeps by name (its slowest, its failures), and how many of its names. */
+export const MINUTE_RUNS = 5;
+export const MINUTE_NAMES = 8;
 
 export type ProcessStats = {
   pool: string;
@@ -89,17 +109,29 @@ export type PoolInstance = {
   /** Where its `/_stats` is answered: an origin, without the path. */
   url: string;
   secret: string;
-  /**
-   * What its orchestrator knows of it, when it has one. `stopping`: it was told to stop and is finishing what it runs —
-   * read as `stopping`, not `down`, once it stops answering its stats on its way out.
-   */
-  orchestrator?: { ready?: boolean; restarts?: number; lastExit?: string; stopping?: boolean };
-  /**
-   * Why it is known not to answer — it failed to start, it has no address yet: read as `down` with this as its reason,
-   * and not asked.
-   */
-  unreachable?: string;
+  /** What its orchestrator knows of it, when it has one: where it is in its life, and what happened to it before. */
+  orchestrator?: {
+    /**
+     * `starting` until it takes work, `running`, `restarting` while a stuck one is replaced, `stopping` while it finishes
+     * what it runs, `stopped` once it has, and `failed` when it could not start or ended on its own. A reader asks a
+     * `stopped` or `failed` one nothing.
+     */
+    phase?: InstancePhase;
+    /** What the phase means here, in words: why it failed, who stopped it. */
+    why?: string;
+    restarts?: number;
+    lastExit?: string;
+  };
 };
+
+/** Where an instance is in its life, as its orchestrator knows it. */
+export type InstancePhase = 'starting' | 'running' | 'restarting' | 'stopping' | 'stopped' | 'failed';
+
+/**
+ * How an instance is, as a reader says it: its phase where that says it all — starting, stopping, stopped, failed — and
+ * otherwise what it answered: `healthy`, `degraded`, or `down` for one that should answer and did not.
+ */
+export type InstanceStatus = Exclude<InstancePhase, 'running'> | 'healthy' | 'degraded' | 'down';
 
 /** Which instances each pool has, and where to reach them. A deployment on an orchestrator supplies its own. */
 export type PoolSource = {
@@ -108,7 +140,7 @@ export type PoolSource = {
 
 export type InstanceHealth = {
   id: string;
-  status: 'healthy' | 'degraded' | 'stopping' | 'down';
+  status: InstanceStatus;
   /** How long its `/_stats` took to answer, in ms: the round trip to it, as the reader sees it. */
   latencyMs?: number;
   /** Why it is down, or what made it degraded. */
@@ -120,7 +152,7 @@ export type InstanceHealth = {
 export type PoolReport = {
   pool: string;
   instances: InstanceHealth[];
-  counts: { healthy: number; degraded: number; stopping: number; down: number };
+  counts: Record<InstanceStatus, number>;
   /** Every version its instances answered with: more than one is a rolling deploy, or one that stopped half-way. */
   versions: string[];
 };
@@ -160,4 +192,9 @@ export type PoolScaler = {
    * autoscaler lowers the count from the floor).
    */
   stopInstance?: (pool: string, id: string, by: string) => Promise<string>;
+  /**
+   * Replaces one instance: out of rotation, it finishes what it runs — or, stuck, is cut — and a new one starts in its
+   * place, read `restarting` meanwhile. Answers what was done, in words. Absent where the orchestrator restarts its own.
+   */
+  restartInstance?: (pool: string, id: string, by: string) => Promise<string>;
 };
