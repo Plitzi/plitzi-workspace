@@ -21,3 +21,4 @@ export * from './images';
 export * from './keys';
 export * from './scroll';
 export * from './clipboard';
+export * from './resources';

@@ -107,6 +107,11 @@ space while it hydrates.
   says so (`QueuedNotice`, the run `queued`) and reads it at `GET /_plitzi/queued/<job>` with its ticket. Jobs of the
   space's code wait the same way rather than start (`ActionsModule.codeAway`). `ActionRunRequest.user` and the
   precheck take a `RunUser`.
+- **CPU and memory are said as the clouds say them.** `@plitzi/sdk-shared/helpers` holds one scale of each —
+  `VCPU_STEPS` (0.125 to 4 vCPU, in millicores) and `MEMORY_STEPS` (128 MiB to 8 GiB) — and their words: `vcpuWords`,
+  `memoryWords`, `sizeWords` (`0.25 vCPU · 512 MiB`), and `millicoresOf`, `mibOf`, `quantityWords` to read Kubernetes'
+  quantities (`250m`, `1Gi`). A pool's knob may be a size from a scale (`PoolKnob.options`) and says its value in words
+  (`valueLabel`). The builder's runtime sizes read `Small — 0.25 vCPU · 256 MiB`.
 - **Only what broke is a failure.** A run ends one of three ways when it does not simply answer (`RunEnd`, sdk-kernel):
   it failed, it was stopped at a limit — its deadline, its steps or requests, its code's CPU, time, memory, answer or
   platform calls, its account's CPU budget — or its code refused. `StatsRecorder.run(durationMs, end?, label?)` takes

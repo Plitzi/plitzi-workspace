@@ -230,12 +230,19 @@ export type PoolScaler = {
 export type PoolKnob = {
   key: string;
   label: string;
-  /** What its number counts: `MB`, `millicores`, `at once`. */
+  /** What its number counts: `MiB`, `millicores`, `at once`. */
   unit: string;
   value: number;
   min: number;
   max: number;
   step: number;
+  /**
+   * The values it may take, when it is a size picked from a scale rather than any number in its range — memory and CPU,
+   * as the clouds offer them (`512 MiB`, `0.25 vCPU`) — each with its words. Absent, any step of the range.
+   */
+  options?: { value: number; label: string }[];
+  /** Its value in words, as `options` say it, or its number and unit. */
+  valueLabel?: string;
   /** What changing it does, in words. */
   what: string;
 };

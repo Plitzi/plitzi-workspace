@@ -2,6 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
+import { quantityWords } from '@plitzi/sdk-shared/helpers';
 import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
@@ -17,14 +18,9 @@ export type RuntimeSizeProps = {
   onChange: () => Promise<void>;
 };
 
-/** Cores, from how Kubernetes writes them: `250m` is a quarter of one. */
-const coresOf = (cpu: string): string => (cpu.endsWith('m') ? String(Number(cpu.slice(0, -1)) / 1000) : cpu);
-
-/** Memory, from how Kubernetes writes it, as a person reads it: `256Mi` is 256 MB, `1Gi` 1 GB. */
-const memoryOf = (memory: string): string => memory.replace(/Mi$/, ' MB').replace(/Gi$/, ' GB');
-
+/** A size as the clouds say it — `Small — 0.25 vCPU · 256 MiB` — from the quantities its pod is given. */
 const optionLabelOf = (option: SpaceRuntimeSizeOption): string =>
-  `${option.label} — ${coresOf(option.cpu)} CPU, ${memoryOf(option.memory)}${option.included ? '' : ' (not in this plan)'}`;
+  `${option.label} — ${quantityWords(option.cpu, option.memory) ?? `${option.cpu} CPU, ${option.memory}`}${option.included ? '' : ' (not in this plan)'}`;
 
 const messageOf = (error: string | Error | undefined): string =>
   (error instanceof Error ? error.message : error) || 'The size could not be changed.';
