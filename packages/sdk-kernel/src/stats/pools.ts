@@ -16,6 +16,7 @@ const down = (instance: PoolInstance, reason: string): InstanceHealth => ({
 });
 
 const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<InstanceHealth> => {
+  const startedAt = performance.now();
   let answer: Response;
   try {
     answer = await fetch(`${instance.url}${STATS_PATH}`, {
@@ -44,6 +45,7 @@ const readInstance = async (instance: PoolInstance, timeoutMs: number): Promise<
   return {
     id: instance.id,
     status: stats.health.status,
+    latencyMs: Math.round(performance.now() - startedAt),
     reasons: stats.health.reasons,
     stats,
     ...(instance.orchestrator ? { orchestrator: instance.orchestrator } : {})

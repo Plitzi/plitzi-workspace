@@ -127,6 +127,7 @@ describe('/_stats and the pools', () => {
     const pages = health.pools.find(report => report.pool === 'pages');
     const worker = health.pools.find(report => report.pool === 'worker');
     expect(pages?.counts).toEqual({ healthy: 1, degraded: 0, down: 1 });
+    expect(pages?.instances[0]?.latencyMs).toBeGreaterThanOrEqual(0);
     expect(pages?.instances.map(instance => instance.reasons)).toEqual([
       [],
       ['answered 401 at /_stats: its secret is not this one']

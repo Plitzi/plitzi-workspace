@@ -76,6 +76,8 @@ export type PoolSource = {
 export type InstanceHealth = {
   id: string;
   status: 'healthy' | 'degraded' | 'down';
+  /** How long its `/_stats` took to answer, in ms: the round trip to it, as the reader sees it. */
+  latencyMs?: number;
   /** Why it is down, or what made it degraded. */
   reasons: string[];
   stats?: ProcessStats;

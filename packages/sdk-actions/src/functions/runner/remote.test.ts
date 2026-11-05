@@ -280,6 +280,43 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
+  it('spreads its invocations over several runners, and gives a busy one’s to the next', async () => {
+    const full = await startFunctionsRunnerService({
+      secret: SECRET,
+      port: 0,
+      host: '127.0.0.1',
+      readMemory: () => ({ usedBytes: 900, limitBytes: 1000 })
+    });
+    const urls = [`ws://127.0.0.1:${String(full.address().port)}`, `ws://127.0.0.1:${String(service.address().port)}`];
+    let next = 0;
+    const asked: string[] = [];
+    const runners = createRemoteRunner({
+      url: () => {
+        const url = urls[next++ % urls.length] ?? '';
+        asked.push(url);
+
+        return url;
+      },
+      secret: SECRET
+    });
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+
+    try {
+      const value = await runners.invoke({
+        bundle: { id: 'bundle-of-two-runners', load: () => Promise.resolve(code) },
+        invocation,
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      });
+
+      expect(value).toBe('ran');
+      expect(asked).toEqual(urls);
+    } finally {
+      await full.close();
+    }
+  });
+
   it('needs a real secret to start', async () => {
     await expect(startFunctionsRunnerService({ secret: 'short' })).rejects.toThrow('at least 32 characters');
   });

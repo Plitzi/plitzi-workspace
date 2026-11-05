@@ -12,8 +12,12 @@ import type {
 } from '@plitzi/sdk-shared/functions';
 
 export type RemoteRunnerOptions = {
-  /** The runner service, `ws://functions-runner:8790`. */
-  url: string;
+  /**
+   * The runner service, `ws://functions-runner:8790`. A function is asked once per operation: what spreads them over
+   * several runners where no balancer sits in front (each invocation is one connection, so nothing is pinned). Then an
+   * invocation a runner refused as `busy` — short of memory, it took nothing — is tried once more on the next one.
+   */
+  url: string | (() => string);
   secret: string;
   /** How long to wait for the runner to accept a connection. */
   connectTimeoutMs?: number;
@@ -53,7 +57,7 @@ export const createRemoteRunner = ({
 }: RemoteRunnerOptions): FunctionRunner => {
   const operate = ({ first, load, bundleId, deadlineMs, answer, signal, onUsage }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
-      const socket = new WebSocket(url, {
+      const socket = new WebSocket(typeof url === 'function' ? url() : url, {
         headers: { authorization: `Bearer ${secret}` },
         handshakeTimeout: connectTimeoutMs
       });
@@ -221,15 +225,28 @@ export const createRemoteRunner = ({
         deadlineMs: DESCRIBE_DEADLINE_MS,
         answer: () => Promise.reject(new Error('Nothing is reachable while a bundle is read'))
       }),
-    invoke: ({ bundle, invocation, limits, answer, signal, onUsage }) =>
-      operate({
-        first: { type: 'invoke', protocol: FUNCTIONS_PROTOCOL, bundleId: bundle.id, invocation, limits },
-        load: bundle.load,
-        bundleId: bundle.id,
-        deadlineMs: limits.wallMs + graceMs,
-        answer,
-        signal,
-        onUsage
-      })
+    invoke: async ({ bundle, invocation, limits, answer, signal, onUsage }) => {
+      const attempt = () =>
+        operate({
+          first: { type: 'invoke', protocol: FUNCTIONS_PROTOCOL, bundleId: bundle.id, invocation, limits },
+          load: bundle.load,
+          bundleId: bundle.id,
+          deadlineMs: limits.wallMs + graceMs,
+          answer,
+          signal,
+          onUsage
+        });
+
+      try {
+        return await attempt();
+      } catch (error) {
+        // A busy runner started nothing, so the invocation is whole to give the next one: once, and only with several.
+        if (typeof url === 'function' && error instanceof FunctionFailure && error.reason === 'busy') {
+          return attempt();
+        }
+
+        throw error;
+      }
+    }
   };
 };
