@@ -3449,8 +3449,6 @@ __metadata:
     eslint-plugin-import: "npm:^2.32.0"
     ioredis: "npm:^6.0.0"
     jsonwebtoken: "npm:^9.0.3"
-    mongodb: "npm:^7.7.0"
-    mysql2: "npm:^3.24.6"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
     sharp: "npm:^0.35.5"
@@ -3461,18 +3459,12 @@ __metadata:
     vitest: "npm:^5.0.5"
     ws: "npm:^8.22.0"
   peerDependencies:
-    "@plitzi/sdk-actions": "workspace:*"
-    mongodb: ^6 || ^7
-    mysql2: ^3
+    "@plitzi/sdk-actions": ^0.39.1
     react: ^19
     react-dom: ^19
     sharp: ^0.34.0
   peerDependenciesMeta:
     "@plitzi/sdk-actions":
-      optional: true
-    mongodb:
-      optional: true
-    mysql2:
       optional: true
     sharp:
       optional: true
