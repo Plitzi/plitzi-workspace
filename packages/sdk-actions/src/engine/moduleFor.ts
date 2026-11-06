@@ -61,7 +61,7 @@ export const actionsModuleFor = (config: EngineConfig): ActionsModule | undefine
     const jobs = module.jobs;
     const jobWorkers = config.action?.jobs === false ? 0 : (config.action?.jobs?.workers ?? DEFAULT_JOB_WORKERS);
     if (jobs && jobWorkers > 0) {
-      stats.slot('jobs', jobWorkers, () => jobs.worker.inFlight());
+      stats.slot('jobs', jobWorkers, () => jobs.worker.inFlight(), { queues: true });
     }
   }
 

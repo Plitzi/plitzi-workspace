@@ -361,7 +361,8 @@ export const startFunctionsRunnerService = async ({
   };
   // The isolates' own size; an engine handed in says nothing of its own, so its work is counted without one.
   if (!runner) {
-    recorder.slot('isolates', isolate.concurrency ?? DEFAULT_CONCURRENCY, () => inFlight.count);
+    // Past its size an invocation waits its turn here: full is at work, and only what waits degrades it.
+    recorder.slot('isolates', isolate.concurrency ?? DEFAULT_CONCURRENCY, () => inFlight.count, { queues: true });
   }
 
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });

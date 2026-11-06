@@ -53,8 +53,13 @@ export type StatsRecorder = {
   run: (durationMs: number, end?: RunEnd, label?: RunLabel) => void;
   /** A request refused before it became a run. */
   refuse: (reason: string) => void;
-  /** Work in flight against a size: read when the stats are, so nothing is counted twice. */
-  slot: (name: string, of: number, used: () => number) => void;
+  /**
+   * Work in flight against a size: read when the stats are, so nothing is counted twice. With `queues`, what comes past
+   * the size waits its turn rather than being refused — a worker's jobs, a runner's invocations — and a full slot is a
+   * process at work: it degrades only while something waits (`used` past `of`). Otherwise near full degrades it: what
+   * comes next is refused.
+   */
+  slot: (name: string, of: number, used: () => number, options?: { queues?: boolean }) => void;
   snapshot: () => ProcessStats;
 };
 
@@ -178,7 +183,7 @@ export const createStatsRecorder = (
   const thresholds = { ...DEFAULT_THRESHOLDS, ...identity.thresholds };
   const instance = identity.instance ?? `${os.hostname()}:${String(process.pid)}`;
   const buckets: Bucket[] = [];
-  const slots = new Map<string, { of: number; used: () => number }>();
+  const slots = new Map<string, { of: number; used: () => number; queues: boolean }>();
   const lag = monitorEventLoopDelay({ resolution: 20 });
   lag.enable();
   let cpuAt = { usage: process.cpuUsage(), wall: process.hrtime.bigint() };
@@ -283,8 +288,8 @@ export const createStatsRecorder = (
     refuse: reason => {
       add(current().refusals, reason);
     },
-    slot: (name, of, used) => {
-      slots.set(name, { of, used });
+    slot: (name, of, used, { queues = false } = {}) => {
+      slots.set(name, { of, used, queues });
     },
     snapshot: () => {
       const outcomes = { '1m': windowOf(since(1)), '15m': windowOf(since(15)), '60m': windowOf(since(60)) };
@@ -310,8 +315,13 @@ export const createStatsRecorder = (
       }
 
       Object.entries(load.slots).forEach(([name, slot]) => {
-        if (slot.of > 0 && slot.used / slot.of > thresholds.slotShare) {
-          reasons.push(`${name}: ${String(slot.used)} of ${String(slot.of)} in use`);
+        const waits = slots.get(name)?.queues === true;
+        if (waits ? slot.used > slot.of : slot.of > 0 && slot.used / slot.of > thresholds.slotShare) {
+          reasons.push(
+            waits
+              ? `${name}: ${String(slot.used - slot.of)} waiting past its ${String(slot.of)}`
+              : `${name}: ${String(slot.used)} of ${String(slot.of)} in use`
+          );
         }
       });
 

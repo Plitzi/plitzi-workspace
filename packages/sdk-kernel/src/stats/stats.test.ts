@@ -118,6 +118,18 @@ describe('a process’s stats', () => {
     expect(load.slots.calls).toEqual({ used: 10, of: 10 });
   });
 
+  // A worker's jobs and a runner's invocations wait their turn past their size: full is a process at work.
+  it('is degraded by a slot that queues only while something waits past it', () => {
+    let used = 4;
+    const stats = createStatsRecorder({ pool: 'runner', instance: 'r-1' });
+    stats.slot('isolates', 4, () => used, { queues: true });
+
+    expect(stats.snapshot().health).toEqual({ status: 'healthy', reasons: [] });
+
+    used = 6;
+    expect(stats.snapshot().health).toEqual({ status: 'degraded', reasons: ['isolates: 2 waiting past its 4'] });
+  });
+
   // A space asking for more than its plan gives, or refusing its visitors, is the space's doing: the process is fine.
   it('is healthy however many runs reach a limit or are refused by their code', () => {
     const stats = createStatsRecorder({ pool: 'runner', instance: 'r-1' });

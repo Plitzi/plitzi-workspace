@@ -198,6 +198,12 @@ space while it hydrates.
 
 ## The job queue (`@plitzi/sdk-actions`)
 
+- **A slot that queues is full at work, not degraded.** `stats.slot(name, of, used, { queues: true })`: what comes past
+  its size waits its turn — a worker's jobs (`jobs`, new), a runner's invocations (`isolates`) — so it degrades only
+  while something waits past it, said as `isolates: 2 waiting past its 4`. A slot whose overflow is refused (a worker's
+  `calls`, a page server's `renders`) still degrades past 90%. A micro runner running its one invocation, or a worker
+  its one job, read as degraded.
+
 - **A job that takes its worker down runs next on a larger one.** `jobs.claimMemory: () => ({ mb, ceilingMb })` says
   what a worker may hold and the most any of the deployment's may. A worker that has it reads its memory every second
   while it holds jobs, and near it (85% of its container, or of V8's heap limit) marks them (`heartbeat`'s
