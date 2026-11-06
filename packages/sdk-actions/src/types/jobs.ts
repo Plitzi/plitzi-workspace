@@ -218,6 +218,11 @@ export type JobQueue = {
    * its jobs by status, what waits by what it is, the oldest of it, and the spaces with the most waiting.
    */
   summarize: (options?: { spaces?: number }) => Promise<JobQueueSummary>;
+  /**
+   * How many jobs a claim with these `spaces` and `memoryMb` would take now — due and waiting, as `claim` reads them:
+   * what an autoscaler adds to the work its workers hold, so a queue that grows behind a slow job grows the pool.
+   */
+  countDue: (params?: { spaces?: JobSpaces; memoryMb?: number }) => Promise<number>;
   getJob: (spaceIds: number[], jobId: string) => Promise<Job | undefined>;
   listSchedules: (spaceIds: number[]) => Promise<ActionSchedule[]>;
   /**

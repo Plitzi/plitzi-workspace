@@ -34,6 +34,7 @@ export const JOB_QUEUE_METHODS: StoreMethods<JobQueue> = {
   putSchedules: true,
   listJobs: true,
   summarize: true,
+  countDue: true,
   getJob: true,
   listSchedules: true,
   requeue: true,

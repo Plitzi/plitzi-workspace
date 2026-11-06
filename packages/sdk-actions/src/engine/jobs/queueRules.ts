@@ -382,6 +382,14 @@ export const queueRules = (
 
     summarize: ({ spaces = 10 } = {}) => summarizeJobs([...jobs.values()], spaces),
 
+    countDue: ({ spaces, memoryMb } = {}) => {
+      const at = now();
+      const memory = memoryMb === undefined ? undefined : { mb: memoryMb, ceilingMb: memoryMb };
+
+      return [...jobs.values()].filter(job => job.status === 'pending' && job.runAt <= at && fits(job, spaces, memory))
+        .length;
+    },
+
     getJob: (spaceIds, jobId) => owned(spaceIds, jobId),
 
     listSchedules: spaceIds => [...schedules.values()].filter(schedule => spaceIds.includes(schedule.spaceId)),
@@ -628,6 +636,7 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   putSchedules: (...args) => access('putSchedules', args),
   listJobs: (...args) => access('listJobs', args),
   summarize: (...args) => access('summarize', args),
+  countDue: (...args) => access('countDue', args),
   getJob: (...args) => access('getJob', args),
   listSchedules: (...args) => access('listSchedules', args),
   requeue: (...args) => access('requeue', args),

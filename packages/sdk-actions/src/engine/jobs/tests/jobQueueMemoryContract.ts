@@ -77,6 +77,29 @@ export const describeMemoryNeeds = (ctx: MemoryNeedsSubject): void => {
     expect(await ctx.queue().getJob([ctx.space], 'job-1')).toMatchObject({ status: 'pending', needsMemoryMb: 513 });
   });
 
+  // What an autoscaler reads: the work a claim would take now, so a pool grows with what waits for it.
+  it('counts what a claim would take now: due, of its spaces, and what it may hold', async () => {
+    const at = (await ctx.queue().now()).getTime();
+    await ctx.queue().enqueue(await ctx.job({ id: 'due-1' }));
+    await ctx.queue().enqueue(await ctx.job({ id: 'due-2' }));
+    await ctx.queue().enqueue(await ctx.job({ id: 'other', spaceId: ctx.otherSpace }));
+    await ctx.queue().enqueue(await ctx.job({ id: 'later', dueAt: at + 60_000 }));
+
+    expect(await ctx.queue().countDue()).toBe(3);
+    expect(await ctx.queue().countDue({ spaces: { only: [ctx.space] } })).toBe(2);
+    expect(await ctx.queue().countDue({ spaces: { except: [ctx.space] } })).toBe(1);
+
+    await ctx
+      .queue()
+      .claim({ workerId: 'pod-a', leaseMs: 40, limit: 1, spaces: { only: [ctx.otherSpace] }, memory: small });
+    await ctx.queue().heartbeat({ jobIds: ['other'], workerId: 'pod-a', leaseMs: 40, nearMemoryLimit: true });
+    await ctx.wait(150);
+    // Reaped by the next claim, it waits for a larger worker: counted for one, not for its twin.
+    await ctx.queue().claim({ workerId: 'pod-b', leaseMs: 60_000, limit: 0, memory: small });
+    expect(await ctx.queue().countDue({ spaces: { only: [ctx.otherSpace] }, memoryMb: 512 })).toBe(0);
+    expect(await ctx.queue().countDue({ spaces: { only: [] }, memoryMb: 1024 })).toBe(1);
+  });
+
   it('sets a job aside when no worker may hold what it needs, saying so, and resumes it on a larger one', async () => {
     await ctx.queue().enqueue(await ctx.job());
     await diesHolding('pod-large', large, true);

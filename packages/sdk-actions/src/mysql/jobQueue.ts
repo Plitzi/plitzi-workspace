@@ -1,13 +1,15 @@
 import { execute, selectOne, selectRows } from '@plitzi/sdk-kernel/mysql';
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { claimable, jsonOrNull, toJob, toSchedule } from './rows';
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { summarizeJobsTable } from './summary';
 import { lostError, LOST_ERROR, needsAfterLoss, outgrewWorker, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
-import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite, ActionSchedule } from '../types';
-import type { Job, JobAttempt, JobInput, JobProgress, JobStatus, Environment, JobTarget } from '@plitzi/sdk-shared';
+import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite } from '../types';
+import type { JobRow, Numeric, ScheduleRow } from './rows';
+import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
 import type { Pool, PoolConnection } from 'mysql2/promise';
 
 /** Spread into a plain array: the queries take a mutable list. */
@@ -36,111 +38,6 @@ export type MysqlJobQueue = JobQueue & {
   /** Takes the store's clock again on the next call — after a failover to another primary. */
   resyncClock: () => void;
 };
-
-type Numeric = number | string;
-
-type JobRow = {
-  id: string;
-  space_id: Numeric;
-  target_kind: string;
-  target_name: string;
-  target: string;
-  environment: string;
-  input: string;
-  due_at: Numeric;
-  max_attempts: Numeric;
-  missed: Numeric | null;
-  job_key: string | null;
-  status: string;
-  run_at: Numeric;
-  attempts: Numeric;
-  lease_until: Numeric | null;
-  worker_id: string | null;
-  run_id: string | null;
-  cancel_requested: Numeric;
-  created_at: Numeric;
-  updated_at: Numeric;
-  error: string | null;
-  history: string;
-  state: string | null;
-  progress: string | null;
-  result: string | null;
-  pause_requested: Numeric;
-  active_ms: Numeric;
-  holder_memory_mb: Numeric | null;
-  needs_memory_mb: Numeric | null;
-  near_memory_limit: Numeric;
-};
-
-type ScheduleRow = {
-  space_id: Numeric;
-  action_id: string;
-  cron: string;
-  timezone: string | null;
-  environment: string;
-  enabled: Numeric;
-  next_run_at: Numeric;
-  last_fire_at: Numeric | null;
-  missed: Numeric;
-  max_attempts: Numeric;
-  updated_at: Numeric;
-};
-
-/**
- * A row as the contract shapes it.
- *
- * `BIGINT` arrives as a number or as a string depending on how the deployment configured its pool
- * (`bigNumberStrings`), so every numeric column goes through `Number`. The text columns hold only what this queue
- * wrote into them — a status, an environment, a trigger — which is why they can be read back as those types.
- */
-const toJob = (row: JobRow): Job => ({
-  id: row.id,
-  spaceId: Number(row.space_id),
-  // Written by this queue alone, from the job's own target: read back as what it was.
-  target: JSON.parse(row.target) as JobTarget,
-  environment: row.environment as Environment,
-  input: JSON.parse(row.input) as Record<string, unknown>,
-  dueAt: Number(row.due_at),
-  maxAttempts: Number(row.max_attempts),
-  ...(row.missed === null ? {} : { missed: Number(row.missed) }),
-  ...(row.job_key === null ? {} : { key: row.job_key }),
-  status: row.status as JobStatus,
-  runAt: Number(row.run_at),
-  attempts: Number(row.attempts),
-  ...(row.lease_until === null ? {} : { leaseUntil: Number(row.lease_until) }),
-  ...(row.worker_id === null ? {} : { workerId: row.worker_id }),
-  ...(row.run_id === null ? {} : { runId: row.run_id }),
-  ...(Number(row.cancel_requested) === 1 ? { cancelRequested: true } : {}),
-  createdAt: Number(row.created_at),
-  updatedAt: Number(row.updated_at),
-  ...(row.error === null ? {} : { error: row.error }),
-  history: JSON.parse(row.history) as JobAttempt[],
-  ...(row.state === null ? {} : { state: JSON.parse(row.state) as unknown }),
-  ...(row.progress === null ? {} : { progress: JSON.parse(row.progress) as JobProgress }),
-  ...(row.result === null ? {} : { result: JSON.parse(row.result) as unknown }),
-  ...(Number(row.pause_requested) === 1 ? { pauseRequested: true } : {}),
-  ...(Number(row.active_ms) > 0 ? { activeMs: Number(row.active_ms) } : {}),
-  ...(row.holder_memory_mb === null ? {} : { holderMemoryMb: Number(row.holder_memory_mb) }),
-  ...(row.needs_memory_mb === null ? {} : { needsMemoryMb: Number(row.needs_memory_mb) }),
-  ...(Number(row.near_memory_limit) === 1 ? { nearMemoryLimit: true } : {})
-});
-
-/** A value of a JSON column, or SQL's NULL for none. */
-const jsonOrNull = (value: unknown): string | null => (value === undefined ? null : JSON.stringify(value));
-
-const toSchedule = (row: ScheduleRow): ActionSchedule => ({
-  spaceId: Number(row.space_id),
-  actionId: row.action_id,
-  cron: row.cron,
-  ...(row.timezone === null ? {} : { timezone: row.timezone }),
-  environment: row.environment as Environment,
-  enabled: Number(row.enabled) === 1,
-  nextRunAt: Number(row.next_run_at),
-  ...(row.last_fire_at === null ? {} : { lastFireAt: Number(row.last_fire_at) }),
-  missed: Number(row.missed),
-  maxAttempts: Number(row.max_attempts),
-  updatedAt: Number(row.updated_at)
-});
 
 /** MySQL's answer when two transactions wait on each other: one is rolled back, and is meant to be run again. */
 const DEADLOCK = 'ER_LOCK_DEADLOCK';
@@ -343,22 +240,11 @@ export const createMysqlJobQueue = ({
        * holds one lock and cannot.
        */
       for (let round = 0; round < CLAIM_ROUNDS && taken.length < limit; round += 1) {
-        // Which spaces: as many placeholders as ids; an empty "only" takes none, an empty "except" every space.
-        const ids = spaces ? ('only' in spaces ? spaces.only : spaces.except) : [];
-        const bySpace =
-          !spaces || ids.length === 0
-            ? spaces && 'only' in spaces
-              ? ' AND FALSE'
-              : ''
-            : ` AND space_id ${'only' in spaces ? 'IN' : 'NOT IN'} (${ids.map(() => '?').join(', ')})`;
-        // One of its spaces, or a job a worker died running that this one may hold, whatever its spaces.
+        const where = claimable(at, spaces, memory?.mb);
         const rows = await selectRows<JobRow>(
           conn,
-          `SELECT * FROM ${t.jobs}
-          WHERE status = 'pending' AND run_at <= ?
-            AND ((needs_memory_mb IS NULL${bySpace})${memory ? ' OR needs_memory_mb <= ?' : ''})
-          ORDER BY run_at LIMIT ?`,
-          [at, ...(bySpace.includes('?') ? ids : []), ...(memory ? [memory.mb] : []), limit - taken.length]
+          `SELECT * FROM ${t.jobs} WHERE ${where.sql} ORDER BY run_at LIMIT ?`,
+          [...where.params, limit - taken.length]
         );
         if (rows.length === 0) {
           break;
@@ -613,6 +499,18 @@ export const createMysqlJobQueue = ({
       ]);
 
       return { jobs: rows.map(toJob), total: Number(count?.total ?? 0) };
+    },
+
+    countDue: async ({ spaces, memoryMb } = {}) => {
+      const conn = await db();
+      const where = claimable(await clock.now(), spaces, memoryMb);
+      const row = await selectOne<{ n: Numeric }>(
+        conn,
+        `SELECT COUNT(*) AS n FROM ${t.jobs} WHERE ${where.sql}`,
+        where.params
+      );
+
+      return Number(row?.n ?? 0);
     },
 
     summarize: async ({ spaces = 10 } = {}) => summarizeJobsTable(await db(), t.jobs, spaces),

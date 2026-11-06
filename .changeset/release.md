@@ -37,8 +37,8 @@ space while it hydrates.
 - **A MySQL job queue** made before this release needs two columns:
   `ALTER TABLE action_jobs ADD holder_memory_mb INT NULL, ADD needs_memory_mb INT NULL, ADD near_memory_limit
   TINYINT(1) NOT NULL DEFAULT 0` (with its `tablePrefix`); the tables made from now on have them. A store of its own
-  implementing `JobQueue` keeps the new `claim` and `heartbeat` rules (`memory`, `nearMemoryLimit`, below) and answers
-  `needingMemory` from `summarize`.
+  implementing `JobQueue` keeps the new `claim` and `heartbeat` rules (`memory`, `nearMemoryLimit`, below), answers
+  `needingMemory` from `summarize`, and answers `countDue`.
 
 - **`@plitzi/sdk-kernel`** is new: what every server process is built on. `@plitzi/sdk-server/kernel` is gone, and
   the page server no longer re-exports it — import from the kernel's entries: `closeOnSignals`, `unusedPort`,
@@ -208,6 +208,8 @@ space while it hydrates.
   a node lost, a deploy past its grace — leaves its jobs to the next, as before. `summarize` counts what waits and what
   is set aside (`needingMemory`). Every store keeps the rule: memory, file, SQLite, Mongo and MySQL. Without
   `claimMemory` the queue is as it was.
+- **`countDue({ spaces, memoryMb })`** answers how many jobs a claim with those would take now: what an autoscaler adds to
+  the work its workers hold, so a pool grows with a queue that grows behind a slow job, and comes down once it drains.
 
 ## The space's stylesheet
 

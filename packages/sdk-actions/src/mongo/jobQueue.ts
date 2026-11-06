@@ -8,6 +8,7 @@ import type {
   JobQuery,
   JobQueue,
   JobSettlement,
+  JobSpaces,
   JobStop,
   JobWrite,
   ActionSchedule,
@@ -120,6 +121,20 @@ const lostErrorOf: Document = {
     LOST_ERROR
   ]
 };
+
+/** What a claim with these `spaces` and `memoryMb` takes at `at`: due and waiting, of its spaces — or a job a worker died
+ * running that this one may hold, whatever its spaces. */
+const claimable = (at: number, spaces: JobSpaces | undefined, memoryMb: number | undefined): Document => ({
+  status: 'pending',
+  runAt: { $lte: at },
+  $or: [
+    {
+      needsMemoryMb: { $exists: false },
+      ...(spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {})
+    },
+    ...(memoryMb === undefined ? [] : [{ needsMemoryMb: { $lte: memoryMb } }])
+  ]
+});
 
 /** `setAsideError`, as Mongo composes it over the document. */
 const setAsideErrorOf = (ceilingMb: number): Document => ({
@@ -264,20 +279,11 @@ export const createMongoJobQueue = ({
         ]);
       }
 
-      const ofItsSpaces = spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {};
       // One document at a time, because `findOneAndUpdate` is the atomic unit: a multi-document update could hand
       // the same job to two workers between the read and the write.
       for (let slot = 0; slot < limit; slot += 1) {
         const claimed = await jobs.findOneAndUpdate(
-          {
-            status: 'pending',
-            runAt: { $lte: at },
-            // One of its spaces, or a job a worker died running that this one may hold, whatever its spaces.
-            $or: [
-              { needsMemoryMb: { $exists: false }, ...ofItsSpaces },
-              ...(memory ? [{ needsMemoryMb: { $lte: memory.mb } }] : [])
-            ]
-          },
+          claimable(at, spaces, memory?.mb),
           [
             {
               $set: {
@@ -579,6 +585,12 @@ export const createMongoJobQueue = ({
           ...(each.lastError ? { lastError: each.lastError } : {})
         }))
       };
+    },
+
+    countDue: async ({ spaces, memoryMb } = {}) => {
+      const { jobs } = await collections();
+
+      return jobs.countDocuments(claimable(await clock.now(), spaces, memoryMb));
     },
 
     getJob: async (spaceIds, jobId) => {
