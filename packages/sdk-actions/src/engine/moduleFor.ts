@@ -2,6 +2,7 @@ import { privateOriginsOf } from '@plitzi/sdk-kernel/outbound';
 import { statsRecorderFor } from '@plitzi/sdk-kernel/stats';
 
 import { actionLookupsOf, dbDriversOf, functionsConfigOf } from './configSeam';
+import { DEFAULT_JOB_WORKERS } from './jobs/jobs';
 import { createActionsModule } from './module';
 import { realtimeModuleFor } from '../realtime';
 import { recordedRun } from './runtime/runStats';
@@ -56,6 +57,12 @@ export const actionsModuleFor = (config: EngineConfig): ActionsModule | undefine
     const sizes = module.guards.slots();
     stats.slot('calls', sizes.calls.of, () => module.guards.slots().calls.used);
     stats.slot('renders', sizes.renders.of, () => module.guards.slots().renders.used);
+    // The jobs it runs at once beside them: what an autoscaler adds to the queue's due ones to size its pool.
+    const jobs = module.jobs;
+    const jobWorkers = config.action?.jobs === false ? 0 : (config.action?.jobs?.workers ?? DEFAULT_JOB_WORKERS);
+    if (jobs && jobWorkers > 0) {
+      stats.slot('jobs', jobWorkers, () => jobs.worker.inFlight());
+    }
   }
 
   modules.set(config, module);

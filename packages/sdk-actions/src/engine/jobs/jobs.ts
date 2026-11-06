@@ -10,6 +10,9 @@ import type { JobQueue } from '../../types';
 import type { ActionsModule } from '../module';
 import type { ActionJobsConfig, ActionLookups } from '../types';
 
+/** Jobs a replica runs at once when its deployment does not say (`jobs.workers`). */
+export const DEFAULT_JOB_WORKERS = 4;
+
 export type ActionJobs = {
   queue: JobQueue;
   scheduler: Scheduler;
@@ -38,7 +41,7 @@ export const createActionJobs = (
   functionJobs?: FunctionJobsService
 ): ActionJobs => {
   const queue = config.queue ?? fleetJobQueue(() => createMemoryJobQueue());
-  const { produce = true, workers = 4 } = config;
+  const { produce = true, workers = DEFAULT_JOB_WORKERS } = config;
 
   const scheduler = createScheduler({
     queue,
