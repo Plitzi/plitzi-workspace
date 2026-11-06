@@ -92,6 +92,8 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
         { spaceId: OTHER_SPACE, waiting: 1, calls: 0, oldestDueAt: expect.any(Number) as number }
       ]);
       expect((await queue.summarize({ spaces: 1 })).spaces).toHaveLength(1);
+      // What a caller reading only the counts asks: no space at all.
+      expect((await queue.summarize({ spaces: 0 })).spaces).toEqual([]);
     });
 
     it('creates a job once, however many producers race for its id', async () => {

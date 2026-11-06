@@ -549,7 +549,8 @@ export const createMongoJobQueue = ({
                   }
                 },
                 { $sort: { waiting: -1, oldestDueAt: 1 } },
-                { $limit: spaces }
+                // Mongo refuses a `$limit` of 0: one is read, and none of it kept, when no space is asked for.
+                { $limit: Math.max(1, spaces) }
               ]
             }
           }
@@ -577,7 +578,7 @@ export const createMongoJobQueue = ({
           paused: found.needingMemory.find(each => each._id === 'paused')?.n ?? 0,
           ...(waitingForMemory ? { mostMb: waitingForMemory.most } : {})
         },
-        spaces: found.spaces.map(each => ({
+        spaces: found.spaces.slice(0, spaces).map(each => ({
           spaceId: each._id,
           waiting: each.waiting,
           calls: each.calls,
