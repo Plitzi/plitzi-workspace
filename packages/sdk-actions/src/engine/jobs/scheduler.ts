@@ -122,6 +122,11 @@ export const createScheduler = ({
     }
 
     const id = scheduleJobId(spaceId, actionId, fireAt);
+    // The fire before needed a larger worker: this one starts there, rather than taking a smaller one down first.
+    const before =
+      schedule.lastFireAt === undefined
+        ? undefined
+        : await queue.getJob([spaceId], scheduleJobId(spaceId, actionId, schedule.lastFireAt));
 
     const created = await queue.enqueue({
       id,
@@ -130,7 +135,8 @@ export const createScheduler = ({
       target: { kind: 'action', name: actionId, trigger: 'schedule' },
       input: {},
       dueAt: fireAt,
-      maxAttempts: schedule.maxAttempts
+      maxAttempts: schedule.maxAttempts,
+      ...(before?.needsMemoryMb === undefined ? {} : { needsMemoryMb: before.needsMemoryMb })
     });
     (created ? result.enqueued : result.duplicates).push(id);
 

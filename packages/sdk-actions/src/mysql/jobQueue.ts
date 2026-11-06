@@ -143,8 +143,8 @@ export const createMysqlJobQueue = ({
         await execute(
           conn,
           `INSERT INTO ${t.jobs} (id, space_id, target_kind, target_name, target, environment, input, due_at,
-            max_attempts, missed, job_key, status, run_at, attempts, created_at, updated_at, history)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
+            max_attempts, missed, job_key, needs_memory_mb, status, run_at, attempts, created_at, updated_at, history)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
           [
             job.id,
             job.spaceId,
@@ -157,6 +157,7 @@ export const createMysqlJobQueue = ({
             job.maxAttempts,
             job.missed ?? null,
             job.key ?? null,
+            job.needsMemoryMb ?? null,
             // The fire's own instant, so a job produced late is still claimable at once rather than waiting again.
             job.dueAt,
             at,

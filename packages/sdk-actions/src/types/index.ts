@@ -5,7 +5,7 @@ export type {
   EngineOptions,
   EngineServerConfig,
   SSRActionConfig,
-  SSRActionJobsConfig
+  ActionJobsConfig
 } from './config';
 export type {
   ActionSchedule,

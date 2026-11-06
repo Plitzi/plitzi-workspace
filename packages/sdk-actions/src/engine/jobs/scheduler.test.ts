@@ -84,6 +84,23 @@ describe('createScheduler', () => {
     expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-02T00:30:00.000Z');
   });
 
+  // A nightly job that takes a small worker down each night would take one down every night: it starts on a larger one.
+  it('starts a fire on the larger worker the fire before it needed', async () => {
+    const world = cluster([scheduled('30 0 * * *')]);
+    await seed(world);
+    world.at('2026-03-01T00:30:00Z');
+    const [first] = (await world.replica().sweep()).enqueued;
+    const small = { mb: 512, ceilingMb: 1024 };
+    await world.queue.claim({ workerId: 'pod-a', leaseMs: 1_000, limit: 1, memory: small });
+    await world.queue.heartbeat({ jobIds: [first], workerId: 'pod-a', leaseMs: 1_000, nearMemoryLimit: true });
+    world.at('2026-03-01T00:31:00Z');
+    await world.queue.claim({ workerId: 'pod-b', leaseMs: 1_000, limit: 1, memory: small });
+
+    world.at('2026-03-02T00:30:00Z');
+    const [second] = (await world.replica().sweep()).enqueued;
+    expect(await world.queue.getJob([1], second)).toMatchObject({ status: 'pending', needsMemoryMb: 513 });
+  });
+
   it('runs nothing on a schedule for a space refused one, and takes its schedules off the queue', async () => {
     const world = cluster([scheduled('30 0 * * *')]);
     await seed(world);

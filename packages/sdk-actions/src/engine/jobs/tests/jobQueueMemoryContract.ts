@@ -77,6 +77,18 @@ export const describeMemoryNeeds = (ctx: MemoryNeedsSubject): void => {
     expect(await ctx.queue().getJob([ctx.space], 'job-1')).toMatchObject({ status: 'pending', needsMemoryMb: 513 });
   });
 
+  it('keeps what a job is enqueued needing: only a worker that may hold it takes it', async () => {
+    await ctx.queue().enqueue(await ctx.job({ needsMemoryMb: 513 }));
+
+    expect(await ctx.queue().getJob([ctx.space], 'job-1')).toMatchObject({ needsMemoryMb: 513 });
+    expect(await ctx.queue().claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1, memory: small })).toEqual([]);
+    expect(
+      await ctx
+        .queue()
+        .claim({ workerId: 'pod-large', leaseMs: 60_000, limit: 1, memory: { mb: 1024, ceilingMb: 1024 } })
+    ).toMatchObject([{ id: 'job-1' }]);
+  });
+
   // What an autoscaler reads: the work a claim would take now, so a pool grows with what waits for it.
   it('counts what a claim would take now: due, of its spaces, and what it may hold', async () => {
     const at = (await ctx.queue().now()).getTime();

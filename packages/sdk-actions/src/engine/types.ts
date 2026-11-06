@@ -1,8 +1,7 @@
 import type { ActionEmailSender } from './runtime/email';
 import type { SpaceSigning } from './runtime/signing';
 import type { FunctionsConfig } from '../functions/config';
-import type { JobClaimMemory, JobQueue, JobSpaces } from '../types';
-import type { EngineConfig } from '../types';
+import type { ActionJobsConfig, EngineConfig } from '../types';
 import type { ProjectDataLookup } from '@plitzi/sdk-kernel/data';
 import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
 import type {
@@ -30,6 +29,9 @@ import type { ActionKvStore } from '@plitzi/sdk-shared/functions';
 import type { LaterAnswer, LaterRequest } from '@plitzi/sdk-shared/functions';
 import type { FunctionJobs, FunctionPresence, FunctionVisitor } from '@plitzi/sdk-shared/functions';
 import type { SpaceFunctions } from '@plitzi/sdk-shared/functions';
+
+/** How a deployment runs what a clock starts: the one in `@plitzi/sdk-actions/types`. */
+export type { ActionJobsConfig };
 
 /** Resolved secret material, as the connector engine already models it. */
 export type ActionCredential = Record<string, string>;
@@ -381,77 +383,6 @@ export type ActionsConfig = {
    * environment signs with a key derived from it, so none can vouch for another. Absent, spaces sign nothing.
    */
   signingSecret?: string;
-};
-
-/**
- * Scheduled runs: how they are produced, how many run at once, and where they are kept while they wait.
- *
- * Supplying nothing still schedules — over an in-process queue, which is correct for one replica and silently
- * wrong for two, since each gets its own copy of every schedule. A deployment with more than one supplies a
- * {@link JobQueue} over a store they share.
- */
-export type ActionJobsConfig = {
-  /**
-   * Whether a space may have scheduled runs at all — its plan, say: why not, or nothing. A space refused has none, and
-   * a fire already due is not run. Absent, every space may.
-   */
-  admitSchedules?: (spaceId: number) => Promise<string | undefined>;
-  /**
-   * Which spaces' jobs this replica takes, asked on every claim: a worker kept for some spaces takes theirs alone, the
-   * others every space but those. Absent, every space's.
-   */
-  claims?: () => JobSpaces | undefined;
-  /**
-   * What this replica may hold, and the most any of the deployment's may (`JobClaimMemory`), asked on every claim: a
-   * job a worker died running then needs more than that one could, runs on a replica that may hold it, and is set aside
-   * (`paused`) when none may. Absent, a job whose worker died runs again on whichever claims it.
-   */
-  claimMemory?: () => JobClaimMemory | undefined;
-  /**
-   * Where jobs and schedules live. Omitted → this process's memory: nothing survives a restart, and a second
-   * replica produces the same fires all over again.
-   */
-  queue?: JobQueue;
-  /**
-   * How many jobs this replica runs at once. Default 4; `0` makes it a producer that never consumes.
-   *
-   * The number that decides whether a backlog drains in minutes or hours, and it belongs to the deployment because
-   * only it knows what its flows do — a queue of five hundred HTTP calls wants a far higher number than a queue of
-   * five hundred renders. It never widens the run guards: `concurrency.perSpace` still caps one space's runs per
-   * replica, and jobs over that ceiling go back to the queue rather than failing.
-   */
-  workers?: number;
-  /** Whether this replica sweeps schedules into the queue at all. Default true. */
-  produce?: boolean;
-  /**
-   * The spaces this server schedules for, when it serves a known few.
-   *
-   * The self-hosted shape: one space, named once. A multi-tenant deployment answers the same question with
-   * {@link ActionLookups.listScheduledSpaces} instead, which wins when both are given. With neither, nothing tells
-   * the scheduler where to look and it says so at boot rather than sitting silent — a schedule that never fires is
-   * indistinguishable from a cron expression that is wrong.
-   */
-  spaces?: number[];
-  /** How often a free worker looks for a job. Default 1s. */
-  pollMs?: number;
-  /** How often this replica looks for due schedules. Default 15s. */
-  schedulePollMs?: number;
-  /**
-   * How long a claim is held before another replica may take the job over — the failover window. Default 30s,
-   * renewed every third of it while a job runs.
-   */
-  leaseMs?: number;
-  /** Attempts a scheduled job gets before it is left for an operator as `dead`. Default 3. */
-  maxAttempts?: number;
-  /** First retry delay, doubling per attempt, up to `maxMs`. Defaults to 30s and 15 minutes. */
-  backoff?: { baseMs?: number; maxMs?: number };
-  /** Which environment scheduled runs execute in. Default `main`. */
-  environment?: Environment;
-  /** How often schedules are re-derived from documents, where `listScheduledSpaces` allows it. Default 15 min. */
-  reconcileMs?: number;
-  /** Names this replica in the job history. Defaults to the pid and a random suffix. */
-  workerId?: string;
-  onError?: (error: unknown) => void;
 };
 
 /** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`

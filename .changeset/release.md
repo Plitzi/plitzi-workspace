@@ -34,6 +34,8 @@ space while it hydrates.
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
   behaviour.
 
+- **`SSRActionJobsConfig` is `ActionJobsConfig`**, one type for both entries (`@plitzi/sdk-actions/types` and the root):
+  rename the import.
 - **A MySQL job queue** made before this release needs two columns:
   `ALTER TABLE action_jobs ADD holder_memory_mb INT NULL, ADD needs_memory_mb INT NULL, ADD near_memory_limit
   TINYINT(1) NOT NULL DEFAULT 0` (with its `tablePrefix`); the tables made from now on have them. A store of its own
@@ -197,6 +199,10 @@ space while it hydrates.
   space and answers a promise: `await limitsFor(spaceId, document)`.
 
 ## The job queue (`@plitzi/sdk-actions`)
+
+- **A schedule's next fire starts where the last one had to go.** A fire whose job needed a larger worker
+  (`needsMemoryMb`) hands that to the next fire of the same schedule, which starts on a worker that may hold it rather
+  than taking a smaller one down first; `needsMemoryMb` may be given on enqueue.
 
 - **A job that fails every attempt is set aside, not dead.** Out of its attempts (3 by default) it is `paused`, its
   error saying how many failed and what the last said, and the worker says so in its log: somebody reads its runs, then

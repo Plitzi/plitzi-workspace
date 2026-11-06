@@ -131,6 +131,14 @@ export type JobInput = {
   /** Fires that went by unclaimed before this one. Shown to an operator; never acted on. */
   missed?: number;
   /**
+   * The least a worker must be able to hold to take it, in MiB: set once a worker died running it near its memory — or
+   * a second worker in a row died running it — more than that one could, so it runs next on a larger one, whatever
+   * spaces that one is kept for, and is set aside (`paused`) when no worker of the deployment may hold that much.
+   * Absent, any worker that takes its space takes it. Given on enqueue, the job starts there: a schedule's next fire
+   * after one that needed a larger worker.
+   */
+  needsMemoryMb?: number;
+  /**
    * What a run set to run later (`trigger: 'later'`) was named by: setting it again under the same name replaces the
    * one still waiting, and cancelling it by name drops it.
    */
@@ -167,13 +175,6 @@ export type Job = JobInput & {
   holderMemoryMb?: number;
   /** The worker that last claimed it said it neared its memory holding it (`heartbeat`'s `nearMemoryLimit`). */
   nearMemoryLimit?: true;
-  /**
-   * The least a worker must be able to hold to take it, in MiB: set once a worker died running it near its memory — or
-   * a second worker in a row died running it — more than that one could, so it runs next on a larger one, whatever
-   * spaces that one is kept for, and is set aside (`paused`) when no worker of the deployment may hold that much.
-   * Absent, any worker that takes its space takes it.
-   */
-  needsMemoryMb?: number;
 };
 
 /** What a panel may do to a job: set it aside, put it back, stop it, or run a finished one again. */

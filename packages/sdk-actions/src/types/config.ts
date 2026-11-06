@@ -201,7 +201,7 @@ export type SSRActionConfig = {
    *
    * `false` turns it off for a replica that must only serve pages.
    */
-  jobs?: SSRActionJobsConfig | false;
+  jobs?: ActionJobsConfig | false;
 };
 
 /**
@@ -212,7 +212,7 @@ export type SSRActionConfig = {
  * drains. Nothing in this config is a clock: the queue's own is the only one the scheduling path reads, so
  * replicas in different countries agree about what has run without agreeing about what time it is.
  */
-export type SSRActionJobsConfig = {
+export type ActionJobsConfig = {
   /** Shaped as `JobQueue`. Omitted → this process's memory. */
   queue?: JobQueue;
   /** Jobs this replica runs at once. Default 4; `0` produces without consuming. */
