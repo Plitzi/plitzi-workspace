@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
-import { durationLabel, jobControlsOf } from '../../../../helpers';
+import { durationLabel, jobControlsOf, setAsideAfterFailing } from '../../../../helpers';
 
 import type { JobControlAction, JobStatus, SpaceJob } from '@plitzi/sdk-shared';
 
@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<JobStatus, string> = {
   paused: 'Paused',
   succeeded: 'Done',
   failed: 'Failed',
-  dead: 'Out of attempts',
+  dead: 'Gave up',
   cancelled: 'Cancelled'
 };
 
@@ -108,7 +108,7 @@ const JobRun = ({ job, onControl }: JobRunProps) => {
     <li className="flex flex-col gap-1.5 rounded-md border border-gray-200 px-3 py-2 text-xs dark:border-zinc-800">
       <div className="flex items-center justify-between gap-2">
         <span className={clsx('shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium', STATUS_TONE[job.status])}>
-          {STATUS_LABEL[job.status]}
+          {setAsideAfterFailing(job) ? 'Needs a look' : STATUS_LABEL[job.status]}
         </span>
         <code className="truncate text-[11px] text-gray-400 dark:text-zinc-500" title={job.id}>
           {job.id}

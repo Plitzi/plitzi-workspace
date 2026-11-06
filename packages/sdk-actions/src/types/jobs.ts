@@ -242,7 +242,10 @@ export type JobQueue = {
    * holding it, which stops it once its code has saved. Answers whether it changed anything.
    */
   pause: (spaceIds: number[], jobId: string) => Promise<boolean>;
-  /** Puts a `paused` job back in the queue, to start again from what it saved. */
+  /**
+   * Puts a `paused` job back in the queue, to start again from what it saved — one set aside after failing every
+   * attempt with every attempt again.
+   */
   resume: (spaceIds: number[], jobId: string) => Promise<boolean>;
   /**
    * Drops the space's jobs waiting under `key` (`cancelled`), and answers how many. With `olderThan`, only the ones

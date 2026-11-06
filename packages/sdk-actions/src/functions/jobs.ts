@@ -146,7 +146,9 @@ export const jobsManifestOf = (definition: FunctionsDefinition): Record<string, 
  */
 export const jobViewOf = (job: Job): FunctionJobView => {
   const last = job.history.at(-1);
-  const failed = job.status === 'failed' || job.status === 'dead';
+  // Set aside after failing every attempt, it failed as far as a watcher is concerned: somebody decides what next.
+  const failed =
+    job.status === 'failed' || job.status === 'dead' || (job.status === 'paused' && last?.status === 'failed');
 
   return {
     id: job.id,

@@ -626,7 +626,8 @@ export const createMysqlJobQueue = ({
       const at = await clock.now();
       const resumed = await execute(
         conn,
-        `UPDATE ${t.jobs} SET status = 'pending', run_at = ?, updated_at = ?
+        `UPDATE ${t.jobs} SET status = 'pending', run_at = ?, updated_at = ?,
+          attempts = IF(attempts >= max_attempts, 0, attempts)
         WHERE id = ? AND space_id IN (?) AND status = 'paused'`,
         [at, at, jobId, spaceIds]
       );

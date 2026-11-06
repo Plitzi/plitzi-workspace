@@ -534,8 +534,10 @@ Four properties follow, and they are the reason the design looks the way it does
   comes from the store the cluster shares. Replicas in different countries agree about what has run without
   agreeing about what time it is.
 
-A failed run is retried with a widening backoff, up to the attempts the deployment allows, and then left as
-**dead**: visible, with every attempt and every error, for somebody to run again or drop.
+A failed run is retried with a widening backoff, up to the attempts the deployment allows (3 by default), and then set
+aside (**paused**) for somebody: its runs and every attempt's error say why, and it is resumed once fixed — with every
+attempt again — or cancelled. The worker says so in its log. **dead** is left for a job that can never run: its action
+is gone or switched off, or a visitor's call was kept past a day.
 
 Missed fires are **not** replayed as a burst. After an outage the overdue fire runs once and the schedule jumps to
 the next occurrence, recording how many went by — a digest missed for a day sends once and says it missed 23,

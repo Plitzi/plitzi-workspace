@@ -207,11 +207,12 @@ describe('a job of the functions', () => {
     expect(refused.attempts).toBe(1);
     expect(heard.at(-1)).toMatchObject({ status: 'failed', error: 'There is nothing to import yet' });
 
-    const crashed = await until((await start('crash')).id, 'dead');
+    // Out of attempts it is set aside for somebody to read; whoever watches still reads only that it failed.
+    const crashed = await until((await start('crash')).id, 'paused');
     expect(crashed.history.map(attempt => attempt.status)).toEqual(['failed', 'failed']);
-    expect(crashed.error).toBe('the database password is hunter2');
+    expect(crashed.error).toContain('The last said: the database password is hunter2');
     expect(jobViewOf(crashed).error).toBe('The job failed');
-    expect(heard.at(-1)).toMatchObject({ status: 'dead', error: 'The job failed' });
+    expect(heard.at(-1)).toMatchObject({ status: 'paused', error: 'The job failed' });
   });
 
   it('runs no longer than it may, every slice together', async () => {
@@ -244,8 +245,8 @@ describe('a job of the functions', () => {
     );
 
     const small = world({ stateBytes: 1_000 });
-    const hoard = await small.until((await small.start('hoard')).id, 'dead');
-    expect(hoard.error).toMatch(/^job\.save: the state is 2002 bytes, over the 1000 a job keeps/);
+    const hoard = await small.until((await small.start('hoard')).id, 'paused');
+    expect(hoard.error).toMatch(/The last said: job\.save: the state is 2002 bytes, over the 1000 a job keeps/);
   });
 
   it('waits while its account runs as many jobs as it may', async () => {

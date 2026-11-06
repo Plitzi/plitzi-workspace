@@ -46,6 +46,14 @@ const failureOf = (result: ActionRunResult): string => {
  */
 const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion']);
 
+/**
+ * Why a job that failed every attempt waits: it is set aside (`paused`) for somebody to read its runs and decide —
+ * resume it once fixed, with every attempt again, or cancel it.
+ */
+export const failedOutError = (attempts: number, last: string): string =>
+  `Set aside after ${String(attempts)} failed attempt${attempts === 1 ? '' : 's'}: look at its runs, then resume it ` +
+  `once fixed — every attempt again — or cancel it. The last said: ${last}`;
+
 export type JobWorkerOptions = {
   queue: JobQueue;
   lookups: ActionLookups;
@@ -188,15 +196,23 @@ export const createJobWorker = ({
     { spentMs, refused = false }: { spentMs?: number; refused?: boolean } = {}
   ) => {
     const exhausted = job.attempts >= job.maxAttempts;
+    if (exhausted) {
+      serverLog.warn(
+        'Actions',
+        `job ${job.id} of space ${String(job.spaceId)} set aside after ${String(job.attempts)} failed attempt(s), for ` +
+          `someone to look at its runs: ${error}`
+      );
+    }
 
+    // Out of attempts it waits for somebody, not for nothing: whatever failed may be fixed, and only a person knows.
     return settle({
       jobId: job.id,
       workerId,
-      status: exhausted ? 'dead' : 'pending',
+      status: exhausted ? 'paused' : 'pending',
       ...(exhausted ? {} : { delayMs: retryDelay(job.attempts) }),
       ...(runId ? { runId } : {}),
       ...(spentMs ? { spentMs } : {}),
-      error,
+      error: exhausted ? failedOutError(job.attempts, error) : error,
       attempt: { status: 'failed', workerId, ...(runId ? { runId } : {}), error, ...(refused ? { refused } : {}) }
     });
   };

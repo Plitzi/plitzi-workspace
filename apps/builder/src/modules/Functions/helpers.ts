@@ -276,5 +276,12 @@ export const jobControlsOf = (job: SpaceJob): JobControlAction[] => {
   return controls;
 };
 
+/**
+ * Whether a job failed every attempt and was set aside for somebody to read its runs: resumed once fixed — every
+ * attempt again — or cancelled.
+ */
+export const setAsideAfterFailing = (job: SpaceJob): boolean =>
+  job.status === 'paused' && job.attempts >= job.maxAttempts;
+
 /** Whether a job may still move by itself: what the panel keeps reading while it shows one. */
 export const isJobMoving = (job: SpaceJob): boolean => job.status === 'pending' || job.status === 'running';

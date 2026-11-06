@@ -238,7 +238,9 @@ describe('createJobWorker', () => {
     await settle();
 
     job = await test.read();
-    expect(job.status).toBe('dead');
+    // Out of attempts, it waits for somebody to read its runs: resumed once fixed, or cancelled.
+    expect(job.status).toBe('paused');
+    expect(job.error).toMatch(/^Set aside after 2 failed attempts: look at its runs/);
     expect(job.attempts).toBe(2);
     expect(job.history).toMatchObject([
       { attempt: 1, status: 'failed' },
@@ -258,8 +260,8 @@ describe('createJobWorker', () => {
     await settle();
 
     const job = await test.read();
-    expect(job.status).toBe('dead');
-    expect(job.error).toBe('step "work" failed: the provider said no');
+    expect(job.status).toBe('paused');
+    expect(job.error).toContain('The last said: step "work" failed: the provider said no');
     expect(job.history).toMatchObject([
       { attempt: 1, status: 'failed', error: 'step "work" failed: the provider said no' }
     ]);

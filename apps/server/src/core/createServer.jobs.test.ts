@@ -186,10 +186,11 @@ describe('a space’s job through the server', () => {
 
   it('fails a slice cut by its time that saved nothing, rather than run it again forever', async () => {
     const { id } = await start('quiet');
-    const job = await until(id, each => each.status === 'dead');
+    // Out of attempts, it is set aside for somebody to read, saying why.
+    const job = await until(id, each => each.status === 'paused');
 
-    expect(job.error).toBe(
-      'its slice ran out of time without saving progress — job.save where it is, to go on in the next one'
+    expect(job.error).toContain(
+      'The last said: its slice ran out of time without saving progress — job.save where it is, to go on in the next one'
     );
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { durationLabel, jobControlsOf, watchLabel } from './helpers';
+import { durationLabel, jobControlsOf, setAsideAfterFailing, watchLabel } from './helpers';
 
 import type { SpaceJob } from '@plitzi/sdk-shared';
 
@@ -19,6 +19,17 @@ const job = (over: Partial<SpaceJob>): SpaceJob => ({
 });
 
 describe('what can be done to a job', () => {
+  // Out of attempts it waits for somebody: read its runs, then resume it once fixed or cancel it.
+  it('says a job that failed every attempt needs a look, and offers to resume or cancel it', () => {
+    const failedOut = job({ status: 'paused', attempts: 3, maxAttempts: 3 });
+
+    expect([setAsideAfterFailing(failedOut), setAsideAfterFailing(job({ status: 'paused', attempts: 1 }))]).toEqual([
+      true,
+      false
+    ]);
+    expect(jobControlsOf(failedOut)).toEqual(['resume', 'cancel']);
+  });
+
   it('follows the Queue: pause what moves, resume what is set aside, stop what is not done, rerun what is', () => {
     expect(jobControlsOf(job({ status: 'pending' }))).toEqual(['pause', 'cancel']);
     expect(jobControlsOf(job({ status: 'running', pauseRequested: true }))).toEqual(['cancel']);

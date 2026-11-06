@@ -685,7 +685,17 @@ export const createMongoJobQueue = ({
       const at = await clock.now();
       const resumed = await jobs.updateOne(
         { _id: jobId, spaceId: { $in: spaceIds }, status: 'paused' },
-        { $set: { status: 'pending', runAt: at, updatedAt: at } }
+        // Set aside after failing every attempt: resumed once fixed, it has them all again.
+        [
+          {
+            $set: {
+              status: 'pending',
+              runAt: at,
+              updatedAt: at,
+              attempts: { $cond: [{ $gte: ['$attempts', '$maxAttempts'] }, 0, '$attempts'] }
+            }
+          }
+        ]
       );
 
       return resumed.matchedCount === 1;

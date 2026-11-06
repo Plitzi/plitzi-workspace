@@ -476,6 +476,10 @@ export const queueRules = (
       job.status = 'pending';
       job.runAt = now();
       job.updatedAt = now();
+      // Set aside after failing every attempt: resumed once fixed, it has them all again.
+      if (job.attempts >= job.maxAttempts) {
+        job.attempts = 0;
+      }
 
       return true;
     },

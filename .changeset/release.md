@@ -198,6 +198,12 @@ space while it hydrates.
 
 ## The job queue (`@plitzi/sdk-actions`)
 
+- **A job that fails every attempt is set aside, not dead.** Out of its attempts (3 by default) it is `paused`, its
+  error saying how many failed and what the last said, and the worker says so in its log: somebody reads its runs, then
+  resumes it once fixed — `resume` gives it every attempt again — or cancels it. `dead` is left for a job that can never
+  run (its action gone or switched off, a kept call past a day). A watcher of a function job still reads only that it
+  failed. The builder labels one **Needs a look**; `dead` reads **Gave up**.
+
 - **A slot that queues is full at work, not degraded.** `stats.slot(name, of, used, { queues: true })`: what comes past
   its size waits its turn — a worker's jobs (`jobs`, new), a runner's invocations (`isolates`) — so it degrades only
   while something waits past it, said as `isolates: 2 waiting past its 4`. A slot whose overflow is refused (a worker's

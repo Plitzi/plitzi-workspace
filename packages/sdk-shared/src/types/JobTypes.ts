@@ -11,10 +11,11 @@ import type { RunUser } from './ServerTypes';
 /**
  * Where a job is, as the only durable answer to "did it happen".
  *
- * `pending` is waiting to be taken, `running` is held by a worker under a lease, `paused` is a job of a space's functions
- * set aside with what it saved, until it is resumed — and the other four are terminal, except that an operator may put
- * a `failed`, `dead` or `cancelled` one back to `pending`. `dead` is a job that used up every attempt it was given: it
- * stays, visibly, because the alternative is work that quietly evaporated.
+ * `pending` is waiting to be taken, `running` is held by a worker under a lease, `paused` is set aside until somebody
+ * resumes it — a job of a space's functions with what it saved, one that failed every attempt it was given (for somebody
+ * to read its runs and resume it once fixed, every attempt again, or cancel it), one no worker may hold — and the other
+ * four are terminal, except that an operator may put a `failed`, `dead` or `cancelled` one back to `pending`. `dead` is
+ * a job that can never run: its action is gone or switched off, or a visitor's call was kept past a day.
  */
 export type JobStatus = 'pending' | 'running' | 'paused' | 'succeeded' | 'failed' | 'dead' | 'cancelled';
 
