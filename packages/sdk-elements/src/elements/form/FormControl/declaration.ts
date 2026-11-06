@@ -11,7 +11,8 @@ export type FormControlAttributes = AuthorableAttributes<
   FormControlProps,
   'value' | 'error' | 'handleChange' | 'handleValidate'
 > & {
-  defaultValue?: string;
+  /** Text, or a number bound to it, which the field shows as its digits. */
+  defaultValue?: string | number;
   /** Read by `withFieldValue`, not by the component: shows the control in its error state while editing. */
   previewError?: boolean;
 };

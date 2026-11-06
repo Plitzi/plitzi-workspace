@@ -1,5 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
+import { fieldText } from './fieldText';
+import { isBlankValue } from './isBlankValue';
+
 /**
  * What a control asks of its value before the form around it may submit.
  *
@@ -60,16 +63,6 @@ const FORMATS = new Map<string, Format>([
 /** Whether a control of this type asks its value for a shape, and so whether a `formatMessage` can ever be said. */
 export const hasFormat = (type: string): boolean => FORMATS.has(type);
 
-const isBlank = (value: unknown): boolean => value === undefined || value === null || value === '' || value === false;
-
-const asText = (value: unknown): string => {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  return typeof value === 'number' ? String(value) : '';
-};
-
 /**
  * Anchored, and failing CLOSED on an expression that does not compile.
  *
@@ -94,7 +87,7 @@ const matchesPattern = (text: string, pattern: string): boolean => {
  * is one character to them and two to `String.length`.
  */
 export const validateField = (value: unknown, rules: FieldRules, values: Record<string, unknown>): string => {
-  if (isBlank(value)) {
+  if (isBlankValue(value)) {
     return rules.required ? rules.requiredMessage || REQUIRED_MESSAGE : '';
   }
 
@@ -102,7 +95,7 @@ export const validateField = (value: unknown, rules: FieldRules, values: Record<
     return '';
   }
 
-  const text = asText(value);
+  const text = fieldText(value);
   const length = Array.from(text).length;
   if (rules.minLength > 0 && length < rules.minLength) {
     return rules.minLengthMessage || `Use at least ${rules.minLength} characters`;
@@ -138,7 +131,7 @@ export const validateField = (value: unknown, rules: FieldRules, values: Record<
     return rules.patternMessage || DEFAULT_PATTERN_MESSAGE;
   }
 
-  if (rules.matches && text !== asText(get(values, rules.matches, ''))) {
+  if (rules.matches && text !== fieldText(get(values, rules.matches, ''))) {
     return rules.matchesMessage || DEFAULT_MATCHES_MESSAGE;
   }
 

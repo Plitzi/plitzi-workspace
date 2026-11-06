@@ -5,6 +5,7 @@ import { createStoreHook } from '@plitzi/nexus/react';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
+import { isBlankValue } from '../helpers/isBlankValue';
 import { validateField } from '../helpers/validateField';
 
 import type { FormContextValue } from '../../Form/Form';
@@ -15,7 +16,8 @@ import type { ChangeEvent, FC, RefObject } from 'react';
 export type WithFieldValueProps<T> = {
   ref: RefObject<HTMLElement>;
   name: string;
-  defaultValue?: string;
+  /** Text, or a number bound to it — a count from a provider — which the field shows as its digits. */
+  defaultValue?: string | number;
   subType: FormControlSubType;
   required: boolean;
   requiredMessage?: string;
@@ -151,8 +153,9 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       return () => unregisterValidator(name);
     }, [name, defaultValue, rules, registerValidator, unregisterValidator]);
 
+    // A default the form does not hold yet is put in it — `0` too: a count bound to a field is sent as it shows.
     useEffect(() => {
-      if (setFieldValue && defaultValue && value && name) {
+      if (setFieldValue && !isBlankValue(defaultValue) && !isBlankValue(value) && name) {
         setFieldValue(name, value);
       }
     }, [defaultValue, name, setFieldValue, value]);

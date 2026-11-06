@@ -220,6 +220,26 @@ describe('Form / the rules its controls declare', () => {
     });
   });
 
+  // A count bound to a field from a provider is a number: it was drawn empty, and a 0 was never put in the form.
+  it('shows a number bound as the default and sends it as it is, 0 included', () => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('small')}>
+          <Control {...control({ name: 'small', subType: 'text', label: 'Small', required: false })} defaultValue={1} />
+        </ElementContext>
+        <ElementContext value={controlEntry('micro')}>
+          <Control {...control({ name: 'micro', subType: 'text', label: 'Micro', required: false })} defaultValue={0} />
+        </ElementContext>
+      </Harness>
+    );
+
+    expect([input('small').value, input('micro').value]).toEqual(['1', '0']);
+
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()[0][2]).toMatchObject({ values: { small: 1, micro: 0 } });
+  });
+
   /**
    * A control nobody typed into is never blurred, so only the form asking at submit time can catch it — this is the
    * case a blur-only check would let straight through.

@@ -275,6 +275,11 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
   added or gone, leaves every series its colour and whether it is hidden — a screen refreshed every few seconds kept
   repainting and unhiding its lines.
 
+- **A field shows a number bound to it.** A `formControl`'s `defaultValue` bound to a number — a count or a price from
+  a provider — drew an empty field: the control read its value as text alone. It shows the number's digits now, and a
+  `0` goes into the form as any other default does (only an empty one is left out); the form sends the number as it
+  is. `defaultValue` is declared `string | number`.
+
 - **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
   that had one drew nothing in its place, without a word. A test now holds every declared type to a component.
 
