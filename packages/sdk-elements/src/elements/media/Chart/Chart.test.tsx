@@ -121,6 +121,53 @@ describe('Chart', () => {
     expect([pressed(), drawn()]).toEqual([['true', 'true', 'true'], 3]);
   });
 
+  // The pools screen's charts, refreshed every few seconds with their instances ordered by load, changed a series's
+  // colour and showed the series hidden when its place moved.
+  it('keeps each series’s colour and whether it is hidden when a refresh reorders them or adds one', () => {
+    const chart = (series: { field: string; label: string }[]) =>
+      inElement(
+        <Chart
+          kind="line"
+          items={[
+            { at: '12:00', a: 1, b: 2, c: 3 },
+            { at: '12:01', a: 3, b: 4, c: 5 }
+          ]}
+          labelField="at"
+          series={series}
+        />
+      );
+    const { container, rerender } = render(
+      chart([
+        { field: 'a', label: 'one' },
+        { field: 'b', label: 'two' }
+      ])
+    );
+    const legend = () => [...container.querySelectorAll<HTMLButtonElement>('.chart__legend-item')];
+    const colour = (label: string) =>
+      legend()
+        .find(item => item.textContent.includes(label))
+        ?.querySelector('span')
+        ?.getAttribute('style');
+    const pressed = (label: string) =>
+      legend()
+        .find(item => item.textContent.includes(label))
+        ?.getAttribute('aria-pressed');
+    const before = { one: colour('one'), two: colour('two') };
+    fireEvent.click(legend()[0]);
+
+    rerender(
+      chart([
+        { field: 'c', label: 'three' },
+        { field: 'b', label: 'two' },
+        { field: 'a', label: 'one' }
+      ])
+    );
+
+    expect([colour('one'), colour('two')]).toEqual([before.one, before.two]);
+    expect(colour('three')).toContain('--plitzi-chart-series-3');
+    expect([pressed('one'), pressed('two'), pressed('three')]).toEqual(['false', 'true', 'true']);
+  });
+
   it('reads every series at the row the arrow keys move to', () => {
     const { container, getByRole } = render(
       inElement(

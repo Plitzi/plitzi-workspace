@@ -9,8 +9,30 @@ import {
   chartSeriesOf,
   chartSlices,
   chartTable,
+  colorSlots,
   lineSummary
 } from './chartGeometry';
+
+describe('a chart’s colours', () => {
+  it('keeps each series’s colour by its key while it is drawn, whatever its place, and gives a new one the first free', () => {
+    const first = colorSlots(new Map(), ['a', 'b', 'c']);
+
+    expect([...first]).toEqual([
+      ['a', 0],
+      ['b', 1],
+      ['c', 2]
+    ]);
+    // Reordered: nothing changes, and the same map is answered, so the chart renders once.
+    expect(colorSlots(first, ['c', 'a', 'b'])).toBe(first);
+
+    // `b` left and `d` came: `d` takes what nobody drawn holds; `b`, back, finds its own while it is free.
+    const second = colorSlots(first, ['c', 'd', 'a']);
+
+    expect([second.get('a'), second.get('c'), second.get('d')]).toEqual([0, 2, 1]);
+    expect(colorSlots(second, ['a', 'b', 'c']).get('b')).toBe(1);
+    expect(colorSlots(second, ['a', 'b', 'c', 'd']).get('b')).toBe(3);
+  });
+});
 
 describe('a chart’s rows', () => {
   it('reads records by their fields, plain numbers by their place, and leaves out what is no number', () => {
@@ -86,8 +108,8 @@ describe('a chart of several series', () => {
       labels: ['12:00', '12:01', '12:02'],
       titles: ['12:00', '12:01', '12:02'],
       lines: [
-        { label: 'worker-1', values: [1, undefined, 3] },
-        { label: 'worker-2', values: [4, 5, 6] }
+        { key: 'a', label: 'worker-1', values: [1, undefined, 3] },
+        { key: 'b', label: 'worker-2', values: [4, 5, 6] }
       ]
     });
   });

@@ -60,7 +60,8 @@ export const chartSeriesOf = (value: unknown): ChartSeries[] =>
   );
 
 /** Each series's values in the rows' order: a row without one is a gap in that series, never a zero. */
-export type ChartLine = { label: string; values: (number | undefined)[] };
+/** A series: what tells it apart from the others — its field — its name, and its value on each row. */
+export type ChartLine = { key: string; label: string; values: (number | undefined)[] };
 
 /** The rows' axis labels, what the readout calls each (`titles`), and each series's values. */
 export type ChartTable = { labels: string[]; titles: string[]; lines: ChartLine[] };
@@ -93,10 +94,56 @@ export const chartTable = (
   return {
     labels,
     titles: titleField === labelField ? labels : words(titleField),
-    lines: series
-      .slice(0, MAX_SERIES)
-      .map(each => ({ label: each.label, values: records.map(record => numberOf(record[each.field])) }))
+    lines: series.slice(0, MAX_SERIES).map(each => ({
+      key: each.field,
+      label: each.label,
+      values: records.map(record => numberOf(record[each.field]))
+    }))
   };
+};
+
+/**
+ * Each series's colour, by its key, kept while it is drawn: one already drawn keeps its own, a new one takes the first
+ * no series drawn now holds. A series that moves in the list — its data reordered, another added before it — keeps its
+ * colour, and one that comes back finds its own again while nobody took it, or a free one. Answers `kept` itself when nothing changes,
+ * so a chart holding it in state renders once.
+ */
+export const colorSlots = (kept: ReadonlyMap<string, number>, keys: readonly string[]): ReadonlyMap<string, number> => {
+  const taken = new Set<number>();
+  const keeps = keys.filter(key => {
+    const slot = kept.get(key);
+    if (slot === undefined || taken.has(slot)) {
+      return false;
+    }
+
+    taken.add(slot);
+
+    return true;
+  });
+  if (keeps.length === keys.length) {
+    return kept;
+  }
+
+  const next = new Map(kept);
+  keys
+    .filter(key => !keeps.includes(key))
+    .forEach(key => {
+      let slot = 0;
+      while (taken.has(slot)) {
+        slot += 1;
+      }
+
+      taken.add(slot);
+      // Whoever held it before, no longer drawn, gives it up: back later, it takes a free one, not the drawn one's.
+      [...next].forEach(([other, held]) => {
+        if (held === slot) {
+          next.delete(other);
+        }
+      });
+      next.set(key, slot);
+    });
+
+  return next;
 };
 
 /** One series's runs of consecutive values, each as the places and values it joins: a line breaks where one is missing. */

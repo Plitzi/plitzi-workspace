@@ -15,6 +15,7 @@ import {
   chartSeriesOf,
   chartSlices,
   chartTable,
+  colorSlots,
   lineSummary
 } from './chartGeometry';
 import withElement from '../../../Element/hocs/withElement';
@@ -177,8 +178,13 @@ const Chart = ({
   const box = useRef<HTMLDivElement>(null);
   const size = useElementSize(box);
   const [hovered, setHovered] = useState<number | undefined>(undefined);
-  /** The series hidden from the legend, by place: not drawn, not in the readout, not in the scale. */
-  const [hidden, setHidden] = useState<readonly number[]>([]);
+  /**
+   * The series hidden from the legend, by key: not drawn, not in the readout, not in the scale. By key, not by place, so
+   * a series hidden stays hidden when the data comes again in another order.
+   */
+  const [hidden, setHidden] = useState<readonly string[]>([]);
+  /** Each series's colour, by key (`colorSlots`): kept through every refresh while it is drawn. */
+  const [slots, setSlots] = useState<ReadonlyMap<string, number>>(() => new Map());
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   // Left empty, as the builder writes it, a row is named by its label.
   const titleField = titleAsked || labelField;
@@ -200,29 +206,43 @@ const Chart = ({
 
     const labels = rows.map(row => row.label);
 
-    return { labels, titles: labels, lines: [{ label: label || valueField, values: rows.map(row => row.value) }] };
+    return {
+      labels,
+      titles: labels,
+      lines: [{ key: valueField, label: label || valueField, values: rows.map(row => row.value) }]
+    };
   }, [several, items, labelField, asked, titleField, bound, rows, label, valueField]);
   const count = table.labels.length;
   const hasValues = table.lines.some(line => line.values.some(value => value !== undefined));
   const write = useMemo(() => formatter(format), [format]);
   const part = (name: string): string | undefined => (styleSelectors as Record<string, string | undefined>)[name];
-  const colorOf = (index: number): string | undefined => (several ? seriesColor(index) : undefined);
+  const keys = table.lines.map(line => line.key);
+  const assigned = colorSlots(slots, keys);
+  // Derived from the series of this render, kept for the next: React's way to remember what an earlier render saw.
+  if (assigned !== slots) {
+    setSlots(assigned);
+  }
 
-  const shows = (lineIndex: number): boolean => !hidden.includes(lineIndex);
+  const keyAt = (lineIndex: number): string => keys[lineIndex] ?? String(lineIndex);
+  const colorOf = (lineIndex: number): string | undefined =>
+    several ? seriesColor(assigned.get(keyAt(lineIndex)) ?? lineIndex) : undefined;
+
+  const shows = (lineIndex: number): boolean => !hidden.includes(keyAt(lineIndex));
   /**
    * A legend's click: that series hidden or shown, the rest as they are — several hidden or shown one after another.
    * With ⌘ or Ctrl, that one alone, and every one again when it already was.
    */
   const choose = (lineIndex: number, alone: boolean) => {
+    const key = keyAt(lineIndex);
     if (!alone) {
-      setHidden(shows(lineIndex) ? [...hidden, lineIndex] : hidden.filter(index => index !== lineIndex));
+      setHidden(shows(lineIndex) ? [...hidden, key] : hidden.filter(each => each !== key));
 
       return;
     }
 
-    const all = table.lines.map((_line, index) => index);
-    const already = hidden.length === all.length - 1 && shows(lineIndex);
-    setHidden(already ? [] : all.filter(index => index !== lineIndex));
+    const others = keys.filter(each => each !== key);
+    const already = shows(lineIndex) && others.every(each => hidden.includes(each));
+    setHidden(already ? [] : others);
   };
 
   const left = MARGIN.left;
@@ -388,7 +408,7 @@ const Chart = ({
               .join(' ');
 
           return (
-            <g key={`series-${line.label}-${String(lineIndex)}`} data-series={lineIndex}>
+            <g key={`series-${line.key}`} data-series={lineIndex}>
               {kind === 'bar' &&
                 line.values.map((value, index) =>
                   value === undefined ? null : (
@@ -557,7 +577,7 @@ const Chart = ({
             const { last, max: highest } = lineSummary(line.values);
 
             return (
-              <li key={`legend-${line.label}-${String(lineIndex)}`} data-series={lineIndex}>
+              <li key={`legend-${line.key}`} data-series={lineIndex}>
                 <button
                   type="button"
                   className="chart__legend-item"

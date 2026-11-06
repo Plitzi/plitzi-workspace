@@ -271,6 +271,9 @@ plugins/react`), whose value never changes: a plugin arriving, the host's compon
   charts given the same `sync` point together. The axis draws a hairline at each time it names, and an area of
   several series fades towards it. A legend's click hides or shows that series — several, one after another — and ⌘ or
   Ctrl + click shows it alone (again, every one); what is hidden leaves the drawing, the scale and the readout.
+  Both are kept by each series's `field`, not its place: data that comes again in another order, or with a series
+  added or gone, leaves every series its colour and whether it is hidden — a screen refreshed every few seconds kept
+  repainting and unhiding its lines.
 
 - **`chart` draws.** It was declared and authored, and missing from the elements the runtime draws by type: every page
   that had one drew nothing in its place, without a word. A test now holds every declared type to a component.
