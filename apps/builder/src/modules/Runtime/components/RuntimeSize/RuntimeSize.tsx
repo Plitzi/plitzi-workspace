@@ -18,15 +18,21 @@ export type RuntimeSizeProps = {
   onChange: () => Promise<void>;
 };
 
-/** A size as the clouds say it — `Small — 0.25 vCPU · 256 MiB` — from the quantities its pod is given. */
+/** Whether the space may run an environment at it: it bought one, or is not bounded. */
+const available = (option: SpaceRuntimeSizeOption): boolean => option.bought === null || option.bought > 0;
+
+/**
+ * A size as the clouds say it — `Small — 0.25 vCPU · 256 MiB` — from the quantities its pod is given, and what one costs
+ * when the space bought none.
+ */
 const optionLabelOf = (option: SpaceRuntimeSizeOption): string =>
-  `${option.label} — ${quantityWords(option.cpu, option.memory) ?? `${option.cpu} CPU, ${option.memory}`}${option.included ? '' : ' (not in this plan)'}`;
+  `${option.label} — ${quantityWords(option.cpu, option.memory) ?? `${option.cpu} CPU, ${option.memory}`}${available(option) ? '' : ` (none bought — ${String(option.displayAmount / 100)} € a month)`}`;
 
 const messageOf = (error: string | Error | undefined): string =>
   (error instanceof Error ? error.message : error) || 'The size could not be changed.';
 
 /**
- * The size an environment's runtime runs at, and choosing another among those the space's plan includes. Nothing
+ * The size an environment's runtime runs at, and choosing another among those the space bought. Nothing
  * changes until it is applied — a restart is not something a slip of the select should cause — and while the runtime
  * restarts at the new size, it says so.
  */
@@ -59,7 +65,7 @@ const RuntimeSize = ({ environment, size, status, sizes, onChange }: RuntimeSize
         <div className="grow">
           <Select value={choice} label="Size" onChange={setChoice} size="xs" disabled={restarting}>
             {sizes.map(option => (
-              <option key={option.name} value={option.name} disabled={!option.included}>
+              <option key={option.name} value={option.name} disabled={!available(option)}>
                 {optionLabelOf(option)}
               </option>
             ))}
@@ -74,7 +80,8 @@ const RuntimeSize = ({ environment, size, status, sizes, onChange }: RuntimeSize
       )}
       {!restarting && (
         <span className="text-xs text-gray-500 dark:text-zinc-400">
-          The processing power and memory this runtime may use. Applying a new size restarts it.
+          The processing power and memory this runtime may use — each size bought on the space&apos;s billing runs one
+          environment. Applying a new size restarts it.
         </span>
       )}
       {problem && <Notice tone="danger">{problem}</Notice>}

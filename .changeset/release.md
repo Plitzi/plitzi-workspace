@@ -107,6 +107,9 @@ space while it hydrates.
   says so (`QueuedNotice`, the run `queued`) and reads it at `GET /_plitzi/queued/<job>` with its ticket. Jobs of the
   space's code wait the same way rather than start (`ActionsModule.codeAway`). `ActionRunRequest.user` and the
   precheck take a `RunUser`.
+- **A runtime size says how many the space bought and its price.** `SpaceRuntimeSizeOption` gives `bought` (each runs
+  one environment; `null` where it is not bounded) and `displayAmount` (euro cents a month) in place of `included`, and
+  the builder's size picker says a size bought none of with its price.
 - **CPU and memory are said as the clouds say them.** `@plitzi/sdk-shared/helpers` holds one scale of each —
   `VCPU_STEPS` (0.125 to 4 vCPU, in millicores) and `MEMORY_STEPS` (128 MiB to 8 GiB) — and their words: `vcpuWords`,
   `memoryWords`, `sizeWords` (`0.25 vCPU · 512 MiB`), and `millicoresOf`, `mibOf`, `quantityWords` to read Kubernetes'
