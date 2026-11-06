@@ -3,6 +3,7 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { summarizeJobsTable } from './summary';
+import { lostError, LOST_ERROR, needsAfterLoss, outgrewWorker, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
 import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite, ActionSchedule } from '../types';
@@ -66,6 +67,9 @@ type JobRow = {
   result: string | null;
   pause_requested: Numeric;
   active_ms: Numeric;
+  holder_memory_mb: Numeric | null;
+  needs_memory_mb: Numeric | null;
+  near_memory_limit: Numeric;
 };
 
 type ScheduleRow = {
@@ -115,7 +119,10 @@ const toJob = (row: JobRow): Job => ({
   ...(row.progress === null ? {} : { progress: JSON.parse(row.progress) as JobProgress }),
   ...(row.result === null ? {} : { result: JSON.parse(row.result) as unknown }),
   ...(Number(row.pause_requested) === 1 ? { pauseRequested: true } : {}),
-  ...(Number(row.active_ms) > 0 ? { activeMs: Number(row.active_ms) } : {})
+  ...(Number(row.active_ms) > 0 ? { activeMs: Number(row.active_ms) } : {}),
+  ...(row.holder_memory_mb === null ? {} : { holderMemoryMb: Number(row.holder_memory_mb) }),
+  ...(row.needs_memory_mb === null ? {} : { needsMemoryMb: Number(row.needs_memory_mb) }),
+  ...(Number(row.near_memory_limit) === 1 ? { nearMemoryLimit: true } : {})
 });
 
 /** A value of a JSON column, or SQL's NULL for none. */
@@ -141,6 +148,9 @@ const TRANSACTION_ATTEMPTS = 3;
 
 /** Claim rounds per call: a worker that lost every row it read to other workers looks once more, then waits a poll. */
 const CLAIM_ROUNDS = 3;
+
+/** Lapsed jobs reaped per claim: the rest are reaped by the next one, a poll later. */
+const REAP_ROWS = 50;
 
 /**
  * One connection, one transaction: what a settlement or a schedule write needs so the rows it read stay locked until
@@ -268,15 +278,65 @@ export const createMysqlJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit, spaces }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces, memory }) => {
       const conn = await db();
       const at = await clock.now();
       const taken: Job[] = [];
 
+      // Reaped first, whoever claims: a lapsed lease is a worker that died, and its attempt is written for it — so a
+      // replica that keeps dying shows. Each row by a compare-and-set on the version read, so it is reaped once.
+      const lapsed = await selectRows<JobRow>(
+        conn,
+        `SELECT * FROM ${t.jobs} WHERE status = 'running' AND lease_until < ? ORDER BY run_at LIMIT ?`,
+        [at, REAP_ROWS]
+      );
+      for (const row of lapsed) {
+        const job = toJob(row);
+        const holderMb = job.holderMemoryMb;
+        const outgrew = outgrewWorker(job);
+        const history: JobAttempt[] = [
+          ...job.history,
+          {
+            attempt: job.history.length + 1,
+            status: 'lost',
+            startedAt: job.updatedAt,
+            endedAt: at,
+            workerId: job.workerId ?? 'unknown',
+            error: LOST_ERROR,
+            ...(holderMb === undefined ? {} : { memoryMb: holderMb }),
+            ...(job.nearMemoryLimit ? { nearMemoryLimit: job.nearMemoryLimit } : {})
+          }
+        ];
+        await execute(
+          conn,
+          `UPDATE ${t.jobs} SET status = 'pending', worker_id = NULL, lease_until = NULL, holder_memory_mb = NULL,
+            near_memory_limit = 0, needs_memory_mb = ?, error = ?, history = ?, updated_at = ?
+          WHERE id = ? AND status = 'running' AND updated_at = ? AND lease_until < ?`,
+          [
+            needsAfterLoss(job.needsMemoryMb, holderMb, outgrew) ?? null,
+            lostError(holderMb, outgrew),
+            JSON.stringify(history),
+            at,
+            job.id,
+            job.updatedAt,
+            at
+          ]
+        );
+      }
+
+      if (memory) {
+        await execute(
+          conn,
+          `UPDATE ${t.jobs} SET status = 'paused', error = CONCAT(?, needs_memory_mb - 1, ?, ?, ?), updated_at = ?
+          WHERE status = 'pending' AND needs_memory_mb > ?`,
+          [...SET_ASIDE_WORDS.slice(0, 2), String(memory.ceilingMb), SET_ASIDE_WORDS[2], at, memory.ceilingMb]
+        );
+      }
+
       /**
        * Read, then take each job with ONE single-row update that only lands if the row is still the version that was
-       * read — due, unclaimed or with its lease still lapsed, and not written since. Two workers reading the same
-       * candidates each get the rows they win and skip the rest.
+       * read — due, waiting, and not written since. Two workers reading the same candidates each get the rows they
+       * win and skip the rest.
        *
        * Not `SELECT … FOR UPDATE SKIP LOCKED` in a transaction: the locks that takes on the status index cross with
        * the ones the updates need, and two replicas claiming at once deadlock. A single-row update by primary key
@@ -291,12 +351,14 @@ export const createMysqlJobQueue = ({
               ? ' AND FALSE'
               : ''
             : ` AND space_id ${'only' in spaces ? 'IN' : 'NOT IN'} (${ids.map(() => '?').join(', ')})`;
+        // One of its spaces, or a job a worker died running that this one may hold, whatever its spaces.
         const rows = await selectRows<JobRow>(
           conn,
           `SELECT * FROM ${t.jobs}
-          WHERE ((status = 'pending' AND run_at <= ?) OR (status = 'running' AND lease_until < ?))${bySpace}
+          WHERE status = 'pending' AND run_at <= ?
+            AND ((needs_memory_mb IS NULL${bySpace})${memory ? ' OR needs_memory_mb <= ?' : ''})
           ORDER BY run_at LIMIT ?`,
-          [at, at, ...(bySpace.includes('?') ? ids : []), limit - taken.length]
+          [at, ...(bySpace.includes('?') ? ids : []), ...(memory ? [memory.mb] : []), limit - taken.length]
         );
         if (rows.length === 0) {
           break;
@@ -304,40 +366,12 @@ export const createMysqlJobQueue = ({
 
         for (const row of rows) {
           const job = toJob(row);
-          // A lapsed lease is a worker that died: its attempt is written for it, so a replica that keeps dying shows.
-          const history: JobAttempt[] =
-            job.status === 'running'
-              ? [
-                  ...job.history,
-                  {
-                    attempt: job.history.length + 1,
-                    status: 'lost',
-                    startedAt: job.updatedAt,
-                    endedAt: at,
-                    workerId: job.workerId ?? 'unknown',
-                    error: 'the worker holding this job stopped reporting'
-                  }
-                ]
-              : job.history;
-
           const won = await execute(
             conn,
             `UPDATE ${t.jobs} SET status = 'running', worker_id = ?, lease_until = ?, updated_at = ?,
-              attempts = attempts + 1, history = ?
-            WHERE id = ? AND status = ? AND updated_at = ? AND attempts = ?
-              AND ((status = 'pending' AND run_at <= ?) OR (status = 'running' AND lease_until < ?))`,
-            [
-              workerId,
-              at + leaseMs,
-              at,
-              JSON.stringify(history),
-              job.id,
-              job.status,
-              job.updatedAt,
-              job.attempts,
-              at,
-              at
-            ]
+              attempts = attempts + 1, holder_memory_mb = ?, near_memory_limit = 0
+            WHERE id = ? AND status = 'pending' AND updated_at = ? AND attempts = ? AND run_at <= ?`,
+            [workerId, at + leaseMs, at, memory?.mb ?? null, job.id, job.updatedAt, job.attempts, at]
           );
           if (won.affectedRows !== 1) {
             continue;
@@ -350,7 +384,7 @@ export const createMysqlJobQueue = ({
             leaseUntil: at + leaseMs,
             updatedAt: at,
             attempts: job.attempts + 1,
-            history
+            ...(memory ? { holderMemoryMb: memory.mb } : {})
           });
         }
       }
@@ -358,7 +392,7 @@ export const createMysqlJobQueue = ({
       return taken;
     },
 
-    heartbeat: async ({ jobIds, workerId, leaseMs }) => {
+    heartbeat: async ({ jobIds, workerId, leaseMs, nearMemoryLimit }) => {
       if (jobIds.length === 0) {
         return [];
       }
@@ -367,7 +401,8 @@ export const createMysqlJobQueue = ({
       const at = await clock.now();
       await execute(
         conn,
-        `UPDATE ${t.jobs} SET lease_until = ? WHERE id IN (?) AND worker_id = ? AND status = 'running'`,
+        `UPDATE ${t.jobs} SET lease_until = ?${nearMemoryLimit ? ', near_memory_limit = 1' : ''}
+          WHERE id IN (?) AND worker_id = ? AND status = 'running'`,
         [at + leaseMs, jobIds, workerId]
       );
 

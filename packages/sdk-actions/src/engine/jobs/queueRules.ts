@@ -1,6 +1,10 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
+import { LOST_ERROR, lostError, needsAfterLoss, outgrewWorker, setAsideError } from './memoryNeeds';
+
 import type {
+  JobClaimMemory,
+  JobsNeedingMemory,
   JobQuery,
   JobQueue,
   JobQueueSummary,
@@ -16,6 +20,15 @@ import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
 /** Whether a job of `spaceId` is one a claim with `spaces` takes. */
 const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
   !spaces || ('only' in spaces ? spaces.only.includes(spaceId) : !spaces.except.includes(spaceId));
+
+/**
+ * Whether a claim takes a job: one of its spaces — or, for a job a worker died running, one this worker may hold,
+ * whatever spaces it is kept for: the larger workers are few, and the job's own space's may all be the size that died.
+ */
+const fits = (job: Job, spaces: JobSpaces | undefined, memory: JobClaimMemory | undefined): boolean =>
+  job.needsMemoryMb === undefined
+    ? takesSpace(spaces, job.spaceId)
+    : memory !== undefined && memory.mb >= job.needsMemoryMb;
 
 /**
  * The queue's rules — what `enqueue`, `claim`, `settle`… do to the jobs and schedules — over a state handed to them,
@@ -69,11 +82,16 @@ export type QueueRulesOptions = {
   retainFinished: number;
   /** What the queue calls now, in epoch ms: the one clock everything here reads. */
   clock: () => number;
+  /**
+   * Told when a rule changed the state though its answer does not say so (`changedBy`): a claim that reaped a job, or
+   * set one aside, and took nothing. A store that keeps the state elsewhere writes it back then too.
+   */
+  onUnansweredChange?: () => void;
 };
 
 export const queueRules = (
   { jobs, schedules }: QueueState,
-  { retainFinished, clock }: QueueRulesOptions
+  { retainFinished, clock, onUnansweredChange }: QueueRulesOptions
 ): QueueRules => {
   const key = scheduleKey;
   const now = () => clock();
@@ -123,34 +141,54 @@ export const queueRules = (
       return true;
     },
 
-    claim: ({ workerId, leaseMs, limit, spaces }) => {
+    claim: ({ workerId, leaseMs, limit, spaces, memory }) => {
       const at = now();
-      const taken: Job[] = [];
-      const candidates = [...jobs.values()]
-        .filter(
-          job =>
-            takesSpace(spaces, job.spaceId) &&
-            ((job.status === 'pending' && job.runAt <= at) || (job.status === 'running' && (job.leaseUntil ?? 0) < at))
-        )
-        .sort((a, b) => a.runAt - b.runAt);
-
-      for (const job of candidates.slice(0, limit)) {
-        // The previous holder never came back, so its attempt is written for it — otherwise a replica that died
-        // mid-run leaves a job that simply restarts, with nothing anywhere saying it had been tried.
-        if (job.status === 'running') {
+      // Reaped first, whoever claims: the previous holder never came back, so its attempt is written for it —
+      // otherwise a replica that died mid-run leaves a job that simply restarts, with nothing saying it had been tried.
+      for (const job of jobs.values()) {
+        if (job.status === 'running' && (job.leaseUntil ?? 0) < at) {
+          const holderMb = job.holderMemoryMb;
+          const outgrew = outgrewWorker(job);
           appendAttempt(job, {
             status: 'lost',
             startedAt: job.updatedAt,
             endedAt: at,
             workerId: job.workerId ?? 'unknown',
-            error: 'the worker holding this job stopped reporting'
+            error: LOST_ERROR,
+            ...(holderMb === undefined ? {} : { memoryMb: holderMb }),
+            ...(job.nearMemoryLimit ? { nearMemoryLimit: job.nearMemoryLimit } : {})
           });
+          job.status = 'pending';
+          job.workerId = undefined;
+          job.leaseUntil = undefined;
+          job.holderMemoryMb = undefined;
+          job.nearMemoryLimit = undefined;
+          job.needsMemoryMb = needsAfterLoss(job.needsMemoryMb, holderMb, outgrew);
+          job.error = lostError(holderMb, outgrew);
+          job.updatedAt = at;
+          onUnansweredChange?.();
         }
 
+        if (memory && job.status === 'pending' && (job.needsMemoryMb ?? 0) > memory.ceilingMb) {
+          job.status = 'paused';
+          job.error = setAsideError(job.needsMemoryMb ?? 0, memory.ceilingMb);
+          job.updatedAt = at;
+          onUnansweredChange?.();
+        }
+      }
+
+      const taken: Job[] = [];
+      const candidates = [...jobs.values()]
+        .filter(job => job.status === 'pending' && job.runAt <= at && fits(job, spaces, memory))
+        .sort((a, b) => a.runAt - b.runAt);
+
+      for (const job of candidates.slice(0, limit)) {
         job.status = 'running';
         job.attempts += 1;
         job.workerId = workerId;
         job.leaseUntil = at + leaseMs;
+        job.holderMemoryMb = memory?.mb;
+        job.nearMemoryLimit = undefined;
         job.updatedAt = at;
         taken.push({ ...job });
       }
@@ -158,7 +196,7 @@ export const queueRules = (
       return taken;
     },
 
-    heartbeat: ({ jobIds, workerId, leaseMs }) => {
+    heartbeat: ({ jobIds, workerId, leaseMs, nearMemoryLimit }) => {
       const at = now();
       const stops: { jobId: string; stop: JobStop }[] = [];
       for (const id of jobIds) {
@@ -168,6 +206,10 @@ export const queueRules = (
         }
 
         job.leaseUntil = at + leaseMs;
+        if (nearMemoryLimit) {
+          job.nearMemoryLimit = true;
+        }
+
         // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
         if (job.cancelRequested) {
           stops.push({ jobId: id, stop: 'cancel' });
@@ -499,10 +541,20 @@ export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSumm
   const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
   const bySpace = new Map<number, JobQueueSummary['spaces'][number] & { lastAt: number }>();
   let oldestDueAt: number | undefined;
+  const needingMemory: JobsNeedingMemory = { waiting: 0, paused: 0 };
   all.forEach(job => {
     byStatus[job.status] += 1;
     if (!WAITING_STATUSES.includes(job.status)) {
       return;
+    }
+
+    if (job.needsMemoryMb !== undefined) {
+      if (job.status === 'paused') {
+        needingMemory.paused += 1;
+      } else {
+        needingMemory.waiting += 1;
+        needingMemory.mostMb = Math.max(needingMemory.mostMb ?? 0, job.needsMemoryMb);
+      }
     }
 
     const kind = waitingKindOf(job.target.kind, job.target.kind === 'action' ? job.target.trigger : undefined);
@@ -535,6 +587,7 @@ export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSumm
     byStatus,
     waiting,
     ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+    needingMemory,
     spaces: [...bySpace.values()]
       .sort((a, b) => b.waiting - a.waiting || a.oldestDueAt - b.oldestDueAt)
       .slice(0, spaces)

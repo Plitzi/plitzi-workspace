@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { describeMemoryNeeds } from './jobQueueMemoryContract';
+
 import type { JobQueue, ActionScheduleInput } from '../../../types';
 import type { ActionKvAdapter } from '../../types';
 import type { JobInput } from '@plitzi/sdk-shared';
@@ -189,7 +191,11 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
 
       expect(taken).toMatchObject({ workerId: 'pod-b', attempts: 2 });
       expect(taken.history).toMatchObject([{ attempt: 1, status: 'lost', workerId: 'pod-a' }]);
+      // Workers that say nothing of their memory keep the queue as it was: the next one takes it, whatever its size.
+      expect(taken.needsMemoryMb ?? null).toBeNull();
     });
+
+    describeMemoryNeeds({ queue: () => queue, job, wait, space: SPACE, otherSpace: OTHER_SPACE });
 
     it('keeps a claim alive while its worker reports in', async () => {
       // Only the wait past the first lease is timed; a slow store can make the heartbeat or the next claim late, never

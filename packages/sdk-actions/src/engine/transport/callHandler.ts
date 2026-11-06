@@ -401,8 +401,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     // Its runner went away as it started — the first call to find it so — and no step of it had done anything yet: it
     // is kept like the calls after it, rather than answered as a failure the page can do nothing about.
     const untouched =
-      error instanceof ActionRunError &&
-      !error.steps?.some(step => step.phase === 'flow' && step.status === 'success');
+      error instanceof ActionRunError && !error.steps?.some(step => step.phase === 'flow' && step.status === 'success');
     if (keepable && reason === 'over_capacity' && untouched && (await module.codeAway(spaceId, entry.document, at))) {
       await keep();
 

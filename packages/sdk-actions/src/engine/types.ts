@@ -1,7 +1,7 @@
 import type { ActionEmailSender } from './runtime/email';
 import type { SpaceSigning } from './runtime/signing';
 import type { FunctionsConfig } from '../functions/config';
-import type { JobQueue, JobSpaces } from '../types';
+import type { JobClaimMemory, JobQueue, JobSpaces } from '../types';
 import type { EngineConfig } from '../types';
 import type { ProjectDataLookup } from '@plitzi/sdk-kernel/data';
 import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
@@ -401,6 +401,12 @@ export type ActionJobsConfig = {
    * others every space but those. Absent, every space's.
    */
   claims?: () => JobSpaces | undefined;
+  /**
+   * What this replica may hold, and the most any of the deployment's may (`JobClaimMemory`), asked on every claim: a
+   * job a worker died running then needs more than that one could, runs on a replica that may hold it, and is set aside
+   * (`paused`) when none may. Absent, a job whose worker died runs again on whichever claims it.
+   */
+  claimMemory?: () => JobClaimMemory | undefined;
   /**
    * Where jobs and schedules live. Omitted → this process's memory: nothing survives a restart, and a second
    * replica produces the same fires all over again.

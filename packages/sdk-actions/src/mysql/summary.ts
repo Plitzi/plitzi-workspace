@@ -17,7 +17,7 @@ const WAITING = "status IN ('pending', 'paused')";
  * spaces with the most waiting — with what the job of each touched last said.
  */
 export const summarizeJobsTable = async (conn: Pool, table: string, spaces: number): Promise<JobQueueSummary> => {
-  const [statuses, kinds, bySpace] = await Promise.all([
+  const [statuses, kinds, bySpace, needing] = await Promise.all([
     selectRows<{ status: JobStatus; n: Numeric }>(
       conn,
       `SELECT status, COUNT(*) AS n FROM ${table} GROUP BY status`,
@@ -44,8 +44,16 @@ export const summarizeJobsTable = async (conn: Pool, table: string, spaces: numb
          FROM ${table} j WHERE j.${WAITING}
          GROUP BY j.space_id ORDER BY waiting DESC, oldest ASC LIMIT ?`,
       [spaces]
+    ),
+    selectRows<{ status: JobStatus; n: Numeric; most: Numeric }>(
+      conn,
+      `SELECT status, COUNT(*) AS n, MAX(needs_memory_mb) AS most
+         FROM ${table} WHERE ${WAITING} AND needs_memory_mb IS NOT NULL GROUP BY status`,
+      []
     )
   ]);
+  const waitingForMemory = needing.find(row => row.status === 'pending');
+  const pausedForMemory = needing.find(row => row.status === 'paused');
   const byStatus = noJobsByStatus();
   statuses.forEach(row => {
     byStatus[row.status] = Number(row.n);
@@ -61,6 +69,11 @@ export const summarizeJobsTable = async (conn: Pool, table: string, spaces: numb
     byStatus,
     waiting,
     ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+    needingMemory: {
+      waiting: Number(waitingForMemory?.n ?? 0),
+      paused: Number(pausedForMemory?.n ?? 0),
+      ...(waitingForMemory ? { mostMb: Number(waitingForMemory.most) } : {})
+    },
     spaces: bySpace.map(row => ({
       spaceId: Number(row.space_id),
       waiting: Number(row.waiting),

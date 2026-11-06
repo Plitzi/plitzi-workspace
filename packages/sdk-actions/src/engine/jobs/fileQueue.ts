@@ -81,13 +81,13 @@ export const createFileJobQueue = ({
     throw error;
   }
 
-  const rules = queueRules(state, { retainFinished, clock });
   const { changed, flush } = documentWriter({
     file,
     document: () => `${JSON.stringify(documentOf(state), null, 2)}\n`,
     store: 'createFileJobQueue',
     what: 'job queue file'
   });
+  const rules = queueRules(state, { retainFinished, clock, onUnansweredChange: changed });
 
   return {
     ...queueOver((method, args) => {

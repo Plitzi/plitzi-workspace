@@ -45,6 +45,28 @@ export type JobWrite = {
   progress?: Omit<JobProgress, 'at'>;
 };
 
+/**
+ * What a worker may hold, said as it claims, so the queue moves a job a worker died running to a larger one rather than
+ * let it kill the next of the same size. A deployment whose workers say nothing keeps the queue as it always was: a job
+ * whose worker died runs again on whichever claims it.
+ */
+export type JobClaimMemory = {
+  /** What this worker may hold, in MiB: its container's memory. */
+  mb: number;
+  /** The most any worker of the deployment may hold, in MiB: a job that needs more is set aside (`paused`), saying so. */
+  ceilingMb: number;
+};
+
+/** The jobs a worker died running, as `summarize` counts them. */
+export type JobsNeedingMemory = {
+  /** Waiting for a worker that may hold more than the one that died running them. */
+  waiting: number;
+  /** Set aside: no worker of the deployment may hold what they need. */
+  paused: number;
+  /** The most any of them waiting needs, in MiB: what a deployment keeps a worker of, while they wait. */
+  mostMb?: number;
+};
+
 /** What waits in the queue — `pending` or `paused` — by what it is. */
 export type WaitingJobs = {
   /** Visitors' calls kept because nothing could run them when they were made. */
@@ -65,6 +87,8 @@ export type JobQueueSummary = {
   waiting: WaitingJobs;
   /** When the job waiting longest was due, epoch ms by the queue's clock; absent with nothing waiting. */
   oldestDueAt?: number;
+  /** The jobs a worker died running, waiting for a larger one or set aside. */
+  needingMemory: JobsNeedingMemory;
   /** The spaces with the most waiting, the most first: how many, how many of them kept calls, since when, and why. */
   spaces: {
     spaceId: number;
@@ -133,7 +157,8 @@ export type ActionScheduleInput = Omit<ActionSchedule, 'missed' | 'updatedAt' | 
  *
  * **`claim` is atomic, and it also reaps.** A job whose lease has lapsed is a job whose worker died, and it is
  * taken by whoever claims next — the same operation, because a separate reaper is a second thing to deploy, to
- * schedule and to forget.
+ * schedule and to forget. When the claims say what their workers may hold (`memory`), a reaped job that took its
+ * worker down needs more than that one could: it waits for a worker that may, and is set aside (`paused`) when none may.
  */
 export type JobQueue = {
   /** The cluster's clock. The only clock anything in the scheduling path is allowed to read. */
@@ -143,17 +168,29 @@ export type JobQueue = {
   /**
    * Takes up to `limit` jobs that are due, and any whose lease has lapsed — atomically, one worker per job.
    *
-   * A reclaimed job arrives with its previous holder's attempt already written to the history as `lost`.
+   * A reaped job has its previous holder's attempt written to the history as `lost`. One that took that holder down —
+   * it neared its memory holding it (`heartbeat`'s `nearMemoryLimit`), or the attempt before was lost too — then needs
+   * more than the holder could hold, when its claim said (`needsMemoryMb`): taken by a worker that may, whatever its
+   * `spaces`, or set aside (`paused`) when more than `memory.ceilingMb`. A job that needs more than this worker may hold
+   * is left to another.
    */
-  claim: (params: { workerId: string; leaseMs: number; limit: number; spaces?: JobSpaces }) => Promise<Job[]>;
+  claim: (params: {
+    workerId: string;
+    leaseMs: number;
+    limit: number;
+    spaces?: JobSpaces;
+    memory?: JobClaimMemory;
+  }) => Promise<Job[]>;
   /**
    * Extends the lease on jobs this worker still holds, and answers which of them it is asked to stop — cancelled, or
-   * set aside (`pause`).
+   * set aside (`pause`). With `nearMemoryLimit`, this worker neared its memory: should it die holding them, they need
+   * a larger one.
    */
   heartbeat: (params: {
     jobIds: string[];
     workerId: string;
     leaseMs: number;
+    nearMemoryLimit?: boolean;
   }) => Promise<{ jobId: string; stop: JobStop }[]>;
   settle: (settlement: JobSettlement) => Promise<void>;
   /** Writes what a running job's code saved or reported. False when this worker no longer holds it. */

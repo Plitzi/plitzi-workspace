@@ -81,8 +81,15 @@ export const createSqliteJobQueue = (options: SqliteJobQueueOptions): JobQueue =
     db.exec('BEGIN IMMEDIATE');
     try {
       const state = read();
-      const answer = applyRule(queueRules(state, rulesOptions), method, args);
-      if (changedBy(method, answer)) {
+      const unanswered = { changed: false };
+      const rules = queueRules(state, {
+        ...rulesOptions,
+        onUnansweredChange: () => {
+          unanswered.changed = true;
+        }
+      });
+      const answer = applyRule(rules, method, args);
+      if (unanswered.changed || changedBy(method, answer)) {
         statements.write.run(JSON.stringify(documentOf(state)));
       }
 

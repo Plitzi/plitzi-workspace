@@ -10,10 +10,12 @@ export type {
 export type {
   ActionSchedule,
   ActionScheduleInput,
+  JobClaimMemory,
   JobQuery,
   JobQueue,
   JobQueueSummary,
   JobSettlement,
+  JobsNeedingMemory,
   JobSpaces,
   JobStop,
   JobWrite,

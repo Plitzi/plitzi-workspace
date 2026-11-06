@@ -1,4 +1,4 @@
-import type { JobQueue, JobSpaces } from './jobs';
+import type { JobClaimMemory, JobQueue, JobSpaces } from './jobs';
 import type { SSRPageAdapters, ServerBaseConfig } from '@plitzi/sdk-kernel/types';
 import type {
   ActionEmailConfig,
@@ -230,6 +230,12 @@ export type SSRActionJobsConfig = {
    * theirs alone, the others every space but those. Absent, every space's. Not `spaces`, which is what it schedules.
    */
   claims?: () => JobSpaces | undefined;
+  /**
+   * What this replica may hold, and the most any of the deployment's may (`JobClaimMemory`), asked on every claim: a
+   * job a worker died running then needs more than that one could, runs on a replica that may hold it, and is set aside
+   * (`paused`) when none may. Absent, a job whose worker died runs again on whichever claims it.
+   */
+  claimMemory?: () => JobClaimMemory | undefined;
   /** How often this replica looks for due schedules. Default 15s. */
   schedulePollMs?: number;
   /** How long a claim is held before another replica may take the job over — the failover window. Default 30s. */

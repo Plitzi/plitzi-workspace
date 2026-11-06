@@ -1,5 +1,6 @@
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
@@ -77,9 +78,57 @@ const lostAttempt = (at: number): Document => ({
         startedAt: '$updatedAt',
         endedAt: at,
         workerId: { $ifNull: ['$workerId', 'unknown'] },
-        error: 'the worker holding this job stopped reporting'
+        error: LOST_ERROR,
+        // Missing when its worker said nothing of its memory, or did not near it, and a missing value is not written.
+        memoryMb: '$holderMemoryMb',
+        nearMemoryLimit: '$nearMemoryLimit'
       }
     ]
+  ]
+});
+
+/**
+ * Whether the job took the worker that held it down, and that worker said what it could hold: `outgrewWorker` — it
+ * neared its memory, or the attempt before was lost too — read over the document before its lost attempt is written.
+ */
+const outgrewSaid: Document = {
+  $and: [
+    { $ne: [{ $type: '$holderMemoryMb' }, 'missing'] },
+    {
+      $or: [
+        { $eq: ['$nearMemoryLimit', true] },
+        { $eq: [{ $arrayElemAt: [{ $ifNull: ['$history.status', []] }, -1] }, 'lost'] }
+      ]
+    }
+  ]
+};
+
+/** `needsAfterLoss`, as Mongo computes it over the document. */
+const needsAfterLossOf: Document = {
+  $cond: [
+    outgrewSaid,
+    { $max: [{ $ifNull: ['$needsMemoryMb', 0] }, { $add: ['$holderMemoryMb', 1] }] },
+    '$needsMemoryMb'
+  ]
+};
+
+/** `lostError`, as Mongo composes it over the document. */
+const lostErrorOf: Document = {
+  $cond: [
+    outgrewSaid,
+    { $concat: [LOST_MEMORY_WORDS[0], { $toString: '$holderMemoryMb' }, LOST_MEMORY_WORDS[1]] },
+    LOST_ERROR
+  ]
+};
+
+/** `setAsideError`, as Mongo composes it over the document. */
+const setAsideErrorOf = (ceilingMb: number): Document => ({
+  $concat: [
+    SET_ASIDE_WORDS[0],
+    { $toString: { $subtract: ['$needsMemoryMb', 1] } },
+    SET_ASIDE_WORDS[1],
+    String(ceilingMb),
+    SET_ASIDE_WORDS[2]
   ]
 });
 
@@ -189,35 +238,58 @@ export const createMongoJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit, spaces }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces, memory }) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const taken: Job[] = [];
 
+      // Reaped first, whoever claims: a lapsed lease is a worker that died. Reaping is part of claiming rather than a
+      // second job somebody has to deploy, schedule and remember — and each document is reaped once, however many
+      // claim at once: the filter is read again as each one is written.
+      await jobs.updateMany({ status: 'running', leaseUntil: { $lt: at } }, [
+        {
+          $set: {
+            history: lostAttempt(at),
+            needsMemoryMb: needsAfterLossOf,
+            error: lostErrorOf,
+            status: 'pending',
+            updatedAt: at
+          }
+        },
+        { $unset: ['workerId', 'leaseUntil', 'holderMemoryMb', 'nearMemoryLimit'] }
+      ]);
+      if (memory) {
+        await jobs.updateMany({ status: 'pending', needsMemoryMb: { $gt: memory.ceilingMb } }, [
+          { $set: { status: 'paused', error: setAsideErrorOf(memory.ceilingMb), updatedAt: at } }
+        ]);
+      }
+
+      const ofItsSpaces = spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {};
       // One document at a time, because `findOneAndUpdate` is the atomic unit: a multi-document update could hand
       // the same job to two workers between the read and the write.
       for (let slot = 0; slot < limit; slot += 1) {
         const claimed = await jobs.findOneAndUpdate(
           {
-            ...(spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {}),
+            status: 'pending',
+            runAt: { $lte: at },
+            // One of its spaces, or a job a worker died running that this one may hold, whatever its spaces.
             $or: [
-              { status: 'pending', runAt: { $lte: at } },
-              // A lapsed lease is a worker that died. Reaping is part of claiming rather than a second job somebody
-              // has to deploy, schedule and remember.
-              { status: 'running', leaseUntil: { $lt: at } }
+              { needsMemoryMb: { $exists: false }, ...ofItsSpaces },
+              ...(memory ? [{ needsMemoryMb: { $lte: memory.mb } }] : [])
             ]
           },
           [
-            { $set: { history: { $cond: [{ $eq: ['$status', 'running'] }, lostAttempt(at), '$history'] } } },
             {
               $set: {
                 status: 'running',
                 workerId,
                 leaseUntil: at + leaseMs,
                 updatedAt: at,
-                attempts: { $add: ['$attempts', 1] }
+                attempts: { $add: ['$attempts', 1] },
+                ...(memory ? { holderMemoryMb: memory.mb } : {})
               }
-            }
+            },
+            { $unset: 'nearMemoryLimit' }
           ],
           { sort: { runAt: 1 }, returnDocument: 'after' }
         );
@@ -232,12 +304,12 @@ export const createMongoJobQueue = ({
       return taken;
     },
 
-    heartbeat: async ({ jobIds, workerId, leaseMs }) => {
+    heartbeat: async ({ jobIds, workerId, leaseMs, nearMemoryLimit }) => {
       const { jobs } = await collections();
       const at = await clock.now();
       await jobs.updateMany(
         { _id: { $in: jobIds }, workerId, status: 'running' },
-        { $set: { leaseUntil: at + leaseMs } }
+        { $set: { leaseUntil: at + leaseMs, ...(nearMemoryLimit ? { nearMemoryLimit: true } : {}) } }
       );
 
       const stopping = await jobs
@@ -439,10 +511,15 @@ export const createMongoJobQueue = ({
           byStatus: { _id: JobStatus; n: number }[];
           waiting: { _id: { kind: string; trigger?: string | null }; n: number; oldest: number }[];
           spaces: { _id: number; waiting: number; calls: number; oldestDueAt: number; lastError?: string | null }[];
+          needingMemory: { _id: JobStatus; n: number; most: number }[];
         }>([
           {
             $facet: {
               byStatus: [{ $group: { _id: '$status', n: { $sum: 1 } } }],
+              needingMemory: [
+                { $match: { ...waitingNow, needsMemoryMb: { $exists: true } } },
+                { $group: { _id: '$status', n: { $sum: 1 }, most: { $max: '$needsMemoryMb' } } }
+              ],
               waiting: [
                 { $match: waitingNow },
                 {
@@ -483,10 +560,17 @@ export const createMongoJobQueue = ({
         oldestDueAt = oldestDueAt === undefined ? each.oldest : Math.min(oldestDueAt, each.oldest);
       });
 
+      const waitingForMemory = found.needingMemory.find(each => each._id === 'pending');
+
       return {
         byStatus,
         waiting,
         ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+        needingMemory: {
+          waiting: waitingForMemory?.n ?? 0,
+          paused: found.needingMemory.find(each => each._id === 'paused')?.n ?? 0,
+          ...(waitingForMemory ? { mostMb: waitingForMemory.most } : {})
+        },
         spaces: found.spaces.map(each => ({
           spaceId: each._id,
           waiting: each.waiting,

@@ -60,6 +60,7 @@ export const createActionJobs = (
     workers,
     ...(config.pollMs ? { pollMs: config.pollMs } : {}),
     ...(config.claims ? { spaces: config.claims } : {}),
+    ...(config.claimMemory ? { memory: config.claimMemory } : {}),
     ...(config.leaseMs ? { leaseMs: config.leaseMs } : {}),
     ...(config.backoff ? { backoff: config.backoff } : {}),
     ...(config.workerId ? { workerId: config.workerId } : {}),

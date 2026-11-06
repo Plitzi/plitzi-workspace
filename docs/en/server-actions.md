@@ -514,6 +514,15 @@ Four properties follow, and they are the reason the design looks the way it does
 - **A job survives its worker.** A claim is held under a lease and renewed while the flow runs. A replica that is
   killed stops renewing, and the next worker to claim takes the job over — with the dead one's attempt written into
   the history as `lost`, so a machine that keeps dying is visible rather than merely slow.
+- **A job that takes its worker down runs next on a larger one.** Run again on the same size, a job that ended its
+  worker for its memory would end the next one too. When the workers say what they may hold
+  (`jobs.claimMemory: () => ({ mb, ceilingMb })` — their container's memory, and the most any of the deployment's
+  may), each reads its memory every second while it holds jobs and, near it (85% of the container, or of V8's heap
+  limit), marks them and says so in its log. A marked job whose worker then died — or one a second worker in a row died
+  running — needs more than that worker could hold (`needsMemoryMb`), and only a worker that may hold that takes it,
+  whatever spaces it is kept for. When none may (`ceilingMb`), the job is set aside (`paused`), its error saying so,
+  until a worker is given more memory and it is resumed. A worker that died for anything else leaves its jobs to the
+  next, as above. `summarize` counts both (`needingMemory`). Without `claimMemory`, nothing changes.
 - **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
   SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
   job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is

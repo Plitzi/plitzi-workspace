@@ -4,10 +4,12 @@ import { serverLog } from '@plitzi/sdk-kernel/log';
 
 import { KEPT_CALL_MS } from './calls';
 import { createFailureStreak } from './failureStreak';
+import { memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { ActionRunError } from '../runtime/errors';
 
+import type { MemoryReading } from './memoryWatch';
 import type { FunctionJobsService } from '../../functions/jobs';
-import type { JobQueue, JobSettlement, JobSpaces } from '../../types';
+import type { JobClaimMemory, JobQueue, JobSettlement, JobSpaces } from '../../types';
 import type { ActionsModule } from '../module';
 import type { ActionLookups, ActionRunResult } from '../types';
 import type { Job } from '@plitzi/sdk-shared';
@@ -70,6 +72,18 @@ export type JobWorkerOptions = {
    */
   spaces?: () => JobSpaces | undefined;
   /**
+   * What this replica may hold and the most any of the deployment's may, asked on every claim (`JobClaimMemory`): a job
+   * a worker died running is then left to one that may hold more, or set aside when none may. Absent, as it always was.
+   */
+  memory?: () => JobClaimMemory | undefined;
+  /**
+   * How often, while it holds jobs, this replica reads how near its memory it is (with `memory`): near it, it marks
+   * them (`heartbeat`'s `nearMemoryLimit`), so that should it die, they run next on a larger worker. Default 1s.
+   */
+  memoryWatchMs?: number;
+  /** This process's memory, as the watch reads it. Default `process.memoryUsage.rss()` and V8's heap. */
+  readMemory?: () => MemoryReading;
+  /**
    * How long a claim is held before another worker may take the job over.
    *
    * The failover window, in other words: a replica that is killed has its jobs picked up this long afterwards. It
@@ -97,6 +111,8 @@ export type JobWorker = {
    * that polls without beating loses its jobs to the next replica halfway through them.
    */
   beat: () => Promise<void>;
+  /** Reads how near its memory this replica is, and marks the jobs it holds when near — `start` does it every second. */
+  watchMemory: () => Promise<void>;
   start: () => void;
   /**
    * Stops claiming, then waits for every job this worker is running to FINISH — however long past its lease that is.
@@ -118,6 +134,9 @@ export const createJobWorker = ({
   workers = 4,
   pollMs = 1_000,
   spaces,
+  memory,
+  memoryWatchMs = 1_000,
+  readMemory = readProcessMemory,
   leaseMs = 30_000,
   backoff = {},
   workerId = `${process.pid}-${randomUUID().slice(0, 8)}`,
@@ -134,6 +153,7 @@ export const createJobWorker = ({
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
   let heart: NodeJS.Timeout | undefined;
+  let watch: NodeJS.Timeout | undefined;
   let stopping = false;
   let pass: Promise<void> | undefined;
   // Read through a call where it is read after an await: `stop()` can set it meanwhile, and the compiler keeps the
@@ -480,7 +500,14 @@ export const createJobWorker = ({
     }
 
     const asked = spaces?.();
-    const claimed = await queue.claim({ workerId, leaseMs, limit: free, ...(asked ? { spaces: asked } : {}) });
+    const holds = memory?.();
+    const claimed = await queue.claim({
+      workerId,
+      leaseMs,
+      limit: free,
+      ...(asked ? { spaces: asked } : {}),
+      ...(holds ? { memory: holds } : {})
+    });
     if (isStopping()) {
       // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
       // that is staying to take now — rather than started here and held up the shutdown.
@@ -490,6 +517,14 @@ export const createJobWorker = ({
     }
 
     for (const job of claimed) {
+      if (job.needsMemoryMb !== undefined) {
+        serverLog.warn(
+          'Actions',
+          `job ${job.id} of space ${String(job.spaceId)}: a worker died running it — running it here, which may hold ` +
+            `${String(holds?.mb ?? '?')} MiB (it needs more than ${String(job.needsMemoryMb - 1)})`
+        );
+      }
+
       // Deliberately not awaited: the point of `workers` is that this pass starts several and returns.
       const running = execute(job).catch(onError);
       inFlight.add(running);
@@ -512,6 +547,40 @@ export const createJobWorker = ({
     }
   };
 
+  /** The jobs this replica marked as held near its memory: each is said once, while it holds it. */
+  const markedNear = new Set<string>();
+
+  /**
+   * Reads how near its memory this replica is, and near it, marks the jobs it holds — at once, not at the next beat: a
+   * worker this near may not live to it. Each job is said once in the log, with what was read.
+   */
+  const watchMemory = async (): Promise<void> => {
+    const limitMb = memory?.()?.mb;
+    for (const jobId of markedNear) {
+      if (!active.has(jobId)) {
+        markedNear.delete(jobId);
+      }
+    }
+
+    if (limitMb === undefined || active.size === 0) {
+      return;
+    }
+
+    const reading = readMemory();
+    const unmarked = [...active.keys()].filter(jobId => !markedNear.has(jobId));
+    if (!nearMemory(reading, limitMb) || unmarked.length === 0) {
+      return;
+    }
+
+    unmarked.forEach(jobId => markedNear.add(jobId));
+    serverLog.warn(
+      'Actions',
+      `near its memory (${memoryWords(reading, limitMb)}) while running ${unmarked.join(', ')}: should this worker ` +
+        'die, they run next on a larger one'
+    );
+    await queue.heartbeat({ jobIds: [...active.keys()], workerId, leaseMs, nearMemoryLimit: true });
+  };
+
   /** One pass at a time, and the one under way is kept so `stop()` can wait for the claim it may be making. */
   const guarded = async (): Promise<void> => {
     if (pass) {
@@ -530,6 +599,7 @@ export const createJobWorker = ({
   return {
     poll,
     beat,
+    watchMemory,
     inFlight: () => active.size,
     start: () => {
       if (timer || workers <= 0) {
@@ -546,6 +616,10 @@ export const createJobWorker = ({
         Math.max(1_000, Math.floor(leaseMs / 3))
       );
       heart.unref();
+      if (memory) {
+        watch = setInterval(() => void watchMemory().catch(onError), memoryWatchMs);
+        watch.unref();
+      }
     },
     stop: async () => {
       stopping = true;
@@ -574,6 +648,8 @@ export const createJobWorker = ({
       await Promise.allSettled([...inFlight]);
       clearInterval(heart);
       heart = undefined;
+      clearInterval(watch);
+      watch = undefined;
     }
   };
 };

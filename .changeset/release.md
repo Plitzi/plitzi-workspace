@@ -34,6 +34,12 @@ space while it hydrates.
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
   behaviour.
 
+- **A MySQL job queue** made before this release needs two columns:
+  `ALTER TABLE action_jobs ADD holder_memory_mb INT NULL, ADD needs_memory_mb INT NULL, ADD near_memory_limit
+  TINYINT(1) NOT NULL DEFAULT 0` (with its `tablePrefix`); the tables made from now on have them. A store of its own
+  implementing `JobQueue` keeps the new `claim` and `heartbeat` rules (`memory`, `nearMemoryLimit`, below) and answers
+  `needingMemory` from `summarize`.
+
 - **`@plitzi/sdk-kernel`** is new: what every server process is built on. `@plitzi/sdk-server/kernel` is gone, and
   the page server no longer re-exports it — import from the kernel's entries: `closeOnSignals`, `unusedPort`,
   `parseRequest`, `createHttpServer`, `makeHandler`, the stages' types and health from `@plitzi/sdk-kernel/http`;
@@ -189,6 +195,19 @@ space while it hydrates.
   each limit at most the deployment's `action.limits`, and a document's `limits` tighter still. A deployment selling
   more to some spaces than to others sets `action.limits` to its largest plan's. `ActionsModule.limitsFor` takes the
   space and answers a promise: `await limitsFor(spaceId, document)`.
+
+## The job queue (`@plitzi/sdk-actions`)
+
+- **A job that takes its worker down runs next on a larger one.** `jobs.claimMemory: () => ({ mb, ceilingMb })` says
+  what a worker may hold and the most any of the deployment's may. A worker that has it reads its memory every second
+  while it holds jobs, and near it (85% of its container, or of V8's heap limit) marks them (`heartbeat`'s
+  `nearMemoryLimit`) and says so in its log. Should it die, a job it marked — or one a second worker in a row died
+  running — needs more than that worker could hold (`needsMemoryMb`; the `lost` attempt keeps `memoryMb` and
+  `nearMemoryLimit`), is taken only by a worker that may hold it, whatever spaces that one is kept for, and is set aside
+  (`paused`) when none may, its error saying what it needs and how to resume it. A worker that died for anything else —
+  a node lost, a deploy past its grace — leaves its jobs to the next, as before. `summarize` counts what waits and what
+  is set aside (`needingMemory`). Every store keeps the rule: memory, file, SQLite, Mongo and MySQL. Without
+  `claimMemory` the queue is as it was.
 
 ## The space's stylesheet
 

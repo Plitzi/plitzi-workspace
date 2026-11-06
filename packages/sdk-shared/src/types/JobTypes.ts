@@ -103,6 +103,10 @@ export type JobAttempt = {
   error?: string;
   /** The error is the code's own refusal (`ActionRefusal`), written for whoever asked — what a job's watcher may read. */
   refused?: true;
+  /** What the worker that held it may hold, in MiB, when it said. */
+  memoryMb?: number;
+  /** That worker said it neared its memory while it held the job: a `lost` one then needs a larger worker. */
+  nearMemoryLimit?: true;
 };
 
 /** What starting a job needs. Everything else is the queue's to fill in. */
@@ -158,6 +162,17 @@ export type Job = JobInput & {
   result?: unknown;
   /** How long it has run, every slice together, in ms — what its total duration is held to. */
   activeMs?: number;
+  /** What the worker that last claimed it may hold, in MiB, when its claim said (`claim`'s `memory`). */
+  holderMemoryMb?: number;
+  /** The worker that last claimed it said it neared its memory holding it (`heartbeat`'s `nearMemoryLimit`). */
+  nearMemoryLimit?: true;
+  /**
+   * The least a worker must be able to hold to take it, in MiB: set once a worker died running it near its memory — or
+   * a second worker in a row died running it — more than that one could, so it runs next on a larger one, whatever
+   * spaces that one is kept for, and is set aside (`paused`) when no worker of the deployment may hold that much.
+   * Absent, any worker that takes its space takes it.
+   */
+  needsMemoryMb?: number;
 };
 
 /** What a panel may do to a job: set it aside, put it back, stop it, or run a finished one again. */

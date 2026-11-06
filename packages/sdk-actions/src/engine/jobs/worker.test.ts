@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { ActionRefusal } from '@plitzi/sdk-shared/functions';
 
 import { keepCall, readKeptCall } from './calls';
@@ -125,6 +126,48 @@ describe('createJobWorker', () => {
     expect(taken.workerId).toBe('pod-b');
     expect(taken.attempts).toBe(2);
     expect(taken.history).toMatchObject([{ attempt: 1, status: 'lost', workerId: 'pod-a' }]);
+  });
+
+  // A worker that took its job's memory with it: the job runs next on a larger one, which says so, not on its twin.
+  it('marks what it runs near its memory, once, and a larger worker runs it after this one dies', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    // A run that never answers: the worker the kernel is about to end.
+    const test = world(() => new Promise(() => {}));
+    await test.job();
+    const small = () => ({ mb: 512, ceilingMb: 1024 });
+    let rssMb = 200;
+    const holder = test.worker({
+      workerId: 'pod-small',
+      memory: small,
+      readMemory: () => ({ rssMb, heapUsedMb: 120, heapLimitMb: 259 })
+    });
+    expect(await holder.poll()).toBe(1);
+    await settle();
+
+    await holder.watchMemory();
+    expect((await test.read()).nearMemoryLimit ?? null).toBeNull();
+    rssMb = 470;
+    await holder.watchMemory();
+    await holder.watchMemory();
+    expect((await test.read()).nearMemoryLimit).toBe(true);
+    expect(
+      warn.mock.calls.filter(([, said]) => typeof said === 'string' && said.includes('near its memory (470 of 512 MiB'))
+    ).toHaveLength(1);
+
+    test.advance(2_000);
+    expect(await test.worker({ workerId: 'pod-twin', memory: small }).poll()).toBe(0);
+    expect(await test.worker({ workerId: 'pod-large', memory: () => ({ mb: 1024, ceilingMb: 1024 }) }).poll()).toBe(1);
+    await settle();
+
+    // Taken by the larger one; its run is refused here only by the dead one's single-flight key, which its process
+    // would have taken with it (asserted in the queue, as the takeover above is).
+    expect(await test.read()).toMatchObject({
+      holderMemoryMb: 1024,
+      needsMemoryMb: 513,
+      history: [{ status: 'lost', workerId: 'pod-small', memoryMb: 512, nearMemoryLimit: true }]
+    });
+    expect(warn).toHaveBeenCalledWith('Actions', expect.stringContaining('a worker died running it'));
+    warn.mockRestore();
   });
 
   it('refuses to run the same job twice while the first one is still going', async () => {
