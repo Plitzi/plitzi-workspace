@@ -25,6 +25,13 @@ import type { Job } from '@plitzi/sdk-shared';
  */
 const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 
+/** Why a job was handed back "not now", in the words its line in the queue says — again in a second or two. */
+const NOT_NOW_WORDS: Partial<Record<string, string>> = {
+  over_capacity:
+    'its space runs as many at once as this worker takes of it (`concurrency.perSpace`), or the worker is full — it starts as one ends',
+  duplicate: 'the same run is running already — it starts once that one ends'
+};
+
 /**
  * How long from `now` — the queue's clock, which every instant of it is read by — until the next minute begins, and a
  * moment more: when a budget over the minute may be spent again.
@@ -464,7 +471,7 @@ export const createJobWorker = ({
        * operator sees a queue that is waiting rather than a queue that has been emptied.
        */
       if (!refusal || TRY_AGAIN.has(refusal)) {
-        await release(job, tryAgainMs(), `not started: ${refusal ?? messageOf(error)}`);
+        await release(job, tryAgainMs(), `not started yet: ${NOT_NOW_WORDS[refusal ?? ''] ?? messageOf(error)}`);
 
         return;
       }

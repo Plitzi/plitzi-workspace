@@ -374,9 +374,11 @@ export const createIsolateRunner = ({
     let ended = false;
     /** How long it waited for turns: the runner's time, which its time limit does not count. */
     let waitedMs = 0;
-    /** What the CPU it is measured at was inflated by while it ran beside more isolates than cores, on average. */
-    let sharedSum = 0;
-    let sharedLooks = 0;
+    /**
+     * The most the CPU it is measured at was inflated by while it ran beside more isolates than cores: the peak, not the
+     * mean — a burst of a few looks inflated a route's CPU past its limit while the mean of its run barely moved.
+     */
+    let sharedPeak = 1;
     const takeTurn = async (): Promise<void> => {
       if (holding !== undefined) {
         return;
@@ -433,14 +435,13 @@ export const createIsolateRunner = ({
     const watchdog = setInterval(() => {
       const cpuMs = readCpu();
       if (holding !== undefined) {
-        sharedSum += Math.max(1, turns.load());
-        sharedLooks++;
+        sharedPeak = Math.max(sharedPeak, turns.load());
       }
 
       // Its CPU is the code's own while it runs alone on a core; beside more isolates than cores, threads fighting for
-      // the CPU inflate what each is measured at, so its limit grows by how shared the CPU was — the runner's doing.
-      const shared = sharedLooks > 0 ? sharedSum / sharedLooks : 1;
-      if (!isolate.isDisposed && cpuMs > limits.cpuMs * shared) {
+      // the CPU inflate what each is measured at, so its limit grows by how shared the CPU was at its most — the
+      // runner's doing, never the code's. Code that spins is still stopped, a few times its limit at worst.
+      if (!isolate.isDisposed && cpuMs > limits.cpuMs * sharedPeak) {
         stop('cpu');
       }
 
