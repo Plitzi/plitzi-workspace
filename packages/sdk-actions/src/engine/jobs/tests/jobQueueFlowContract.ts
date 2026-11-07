@@ -37,4 +37,18 @@ export const describeFlow = (ctx: FlowSubject): void => {
     expect(Math.max(...waits)).toBeGreaterThanOrEqual(2_000);
     expect(flow.at(-1)?.minute).toBe(Math.floor((until - 1) / 60_000));
   });
+
+  // An operator's view across spaces: what waits the longest first, what runs, what just ended.
+  it('lists the jobs of every space in some statuses, the longest due or the latest written first', async () => {
+    const queue = ctx.queue();
+    const at = (await queue.now()).getTime();
+    await queue.enqueue(await ctx.job({ id: 'newer', dueAt: at - 1_000 }));
+    await queue.enqueue(await ctx.job({ id: 'older', dueAt: at - 5_000, spaceId: 7_999 }));
+    await queue.enqueue(await ctx.job({ id: 'later', dueAt: at + 60_000 }));
+
+    const waiting = await queue.listAcross({ statuses: ['pending'], limit: 10, order: 'due' });
+    expect(waiting.map(job => job.id)).toEqual(['older', 'newer', 'later']);
+    expect(await queue.listAcross({ statuses: ['pending'], limit: 1, order: 'due' })).toHaveLength(1);
+    expect(await queue.listAcross({ statuses: ['running'], limit: 10, order: 'latest' })).toEqual([]);
+  });
 };

@@ -233,6 +233,11 @@ export type JobQueue = {
   putSchedules: (params: { spaceId: number; schedules: ActionScheduleInput[] }) => Promise<void>;
   listJobs: (query: JobQuery) => Promise<{ jobs: Job[]; total: number }>;
   /**
+   * Jobs of EVERY space in these statuses — an operator's view, never a space's own (`listJobs` is): the longest due first
+   * (`due`), or the latest written first (`latest`). What a monitoring screen lists of what waits, runs and just ended.
+   */
+  listAcross: (query: { statuses: JobStatus[]; limit: number; order: 'due' | 'latest' }) => Promise<Job[]>;
+  /**
    * The whole queue at a glance, every space: what an operator reads to tell a queue that drains from one that fills —
    * its jobs by status, what waits by what it is, the oldest of it, and the spaces with the most waiting.
    */

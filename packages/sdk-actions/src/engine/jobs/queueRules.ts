@@ -381,6 +381,13 @@ export const queueRules = (
       };
     },
 
+    listAcross: ({ statuses, limit, order }) =>
+      [...jobs.values()]
+        .filter(job => statuses.includes(job.status))
+        .sort((a, b) => (order === 'due' ? a.runAt - b.runAt : b.updatedAt - a.updatedAt))
+        .slice(0, limit)
+        .map(job => ({ ...job })),
+
     summarize: ({ spaces = 10 } = {}) => summarizeJobs([...jobs.values()], spaces),
 
     countDue: ({ spaces, memoryMb } = {}) => {
@@ -642,6 +649,7 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   advanceSchedule: (...args) => access('advanceSchedule', args),
   putSchedules: (...args) => access('putSchedules', args),
   listJobs: (...args) => access('listJobs', args),
+  listAcross: (...args) => access('listAcross', args),
   summarize: (...args) => access('summarize', args),
   countDue: (...args) => access('countDue', args),
   flow: (...args) => access('flow', args),

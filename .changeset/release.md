@@ -255,6 +255,10 @@ space while it hydrates.
 
 ## The job queue (`@plitzi/sdk-actions`)
 
+- **`JobQueue.listAcross({ statuses, limit, order })`**: the jobs of every space in some statuses, the longest due or
+  the latest written first — an operator's view (a monitoring screen's lists of what waits, runs and just ended), never
+  a space's own. A store of your own implements it.
+
 - **`JobQueue.flow({ from, to })`**: the queue minute by minute — what fell due, was started and ended, and the p95 of
   how long jobs waited for their first attempt — in every store (`JobFlowMinute`). A store of your own implements it;
   the Mongo and MySQL ones add an index on `dueAt` and `updatedAt` (MySQL's on a new table: add `action_jobs_due` and

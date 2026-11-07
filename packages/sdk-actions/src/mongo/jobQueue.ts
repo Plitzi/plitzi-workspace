@@ -510,6 +510,17 @@ export const createMongoJobQueue = ({
       return { jobs: found.map(toJob), total };
     },
 
+    listAcross: async ({ statuses, limit, order }) => {
+      const { jobs } = await collections();
+      const found = await jobs
+        .find({ status: { $in: statuses } })
+        .sort(order === 'due' ? { runAt: 1, _id: 1 } : { updatedAt: -1, _id: -1 })
+        .limit(limit)
+        .toArray();
+
+      return found.map(toJob);
+    },
+
     summarize: async ({ spaces = 10 } = {}) => {
       const { jobs } = await collections();
       const waitingNow = { status: { $in: [...WAITING_STATUSES] } };

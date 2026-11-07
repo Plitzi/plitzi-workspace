@@ -33,6 +33,7 @@ export const JOB_QUEUE_METHODS: StoreMethods<JobQueue> = {
   advanceSchedule: true,
   putSchedules: true,
   listJobs: true,
+  listAcross: true,
   summarize: true,
   countDue: true,
   flow: true,
