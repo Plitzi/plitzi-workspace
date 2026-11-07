@@ -23,6 +23,12 @@ import type { Job } from '@plitzi/sdk-shared';
  */
 const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 
+/**
+ * How long from `now` — the queue's clock, which every instant of it is read by — until the next minute begins, and a
+ * moment more: when a budget over the minute may be spent again.
+ */
+const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
+
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
@@ -495,6 +501,13 @@ export const createJobWorker = ({
           runId: run.runId,
           attempt: { status: 'cancelled', workerId, runId: run.runId }
         });
+
+        return;
+      }
+
+      // Its account's CPU for the minute, spent: not now rather than wrong — back next minute, its attempt refunded.
+      if (result.limit === 'cpuBudget') {
+        await release(job, msToNextMinute((await queue.now()).getTime()), failureOf(result));
 
         return;
       }

@@ -8,6 +8,7 @@ import { createMemoryJobQueue } from './memoryQueue';
 import { createJobWorker } from './worker';
 import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../module';
+import { RunLimitReached } from '../runtime/errors';
 
 import type { ActionEntry, JobInput, ElementInteraction } from '@plitzi/sdk-shared';
 import type { FunctionTask } from '@plitzi/sdk-shared/functions';
@@ -389,6 +390,21 @@ describe('createJobWorker', () => {
       warn.mock.calls.filter(([, said]) => typeof said === 'string' && said.includes('takes no new job'))
     ).toHaveLength(1);
     warn.mockRestore();
+  });
+
+  // A budget over the minute spent is not now, not wrong: a busy minute must not set a healthy job aside.
+  it('puts back a job whose account spent its CPU for the minute, for the next one, its attempt refunded', async () => {
+    const test = world(() => {
+      throw new RunLimitReached('cpuBudget', 'This account’s functions have used their CPU for this minute');
+    });
+    await test.job();
+
+    await test.worker().poll();
+    await settle();
+
+    const job = await test.read();
+    expect(job).toMatchObject({ status: 'pending', attempts: 0 });
+    expect(job.runAt).toBeGreaterThanOrEqual(Math.ceil((MIDNIGHT + 1) / 60_000) * 60_000);
   });
 
   it('carries as many jobs at once as it was told to, and no more', async () => {

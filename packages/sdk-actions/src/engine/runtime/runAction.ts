@@ -818,7 +818,8 @@ export const createActionRunner = (
       trace: [...trace],
       steps: [...steps],
       ...(refusal === undefined ? {} : { error: refusal }),
-      ...(refusalCode === undefined ? {} : { code: refusalCode })
+      ...(refusalCode === undefined ? {} : { code: refusalCode }),
+      ...(limit ? { limit } : {})
     };
   };
 

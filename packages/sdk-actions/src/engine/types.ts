@@ -11,6 +11,7 @@ import type {
   ActionLimits,
   ActionRejectRecord,
   ActionRunRecord,
+  ActionRunLimit,
   ActionRunStatus,
   ActionRunStep,
   ActionTriggerType,
@@ -452,4 +453,6 @@ export type ActionRunResult = {
    * specs could only read their words.
    */
   code?: string;
+  /** The limit that stopped it, when one did (`ActionRunLimit`): what a job is retried by, or not. */
+  limit?: ActionRunLimit;
 };

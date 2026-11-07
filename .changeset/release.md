@@ -215,6 +215,9 @@ space while it hydrates.
 - **A worker runs as many jobs as its memory holds, and takes a slot again as soon as a job ends.** `jobs.workers` is the
   most at once: with `claimMemory`, near its memory (85%) it takes no new job, saying so once. A job that ends hands its
   slot to the next at once instead of at the next poll — a queue of short jobs ran at one a second a slot.
+- **A job whose account spent its functions' CPU for the minute goes back for the next one**, its attempt refunded — a
+  budget over the minute is "not now", and a busy minute set healthy jobs aside after three. `ActionRunResult` says the
+  limit that stopped a run (`limit`).
 - **`jobs.helps`**: whose jobs a worker takes besides its own while it has more than one slot free — a larger worker kept
   for the heavy jobs helps the others while idle, keeping a slot for its own.
 
