@@ -220,6 +220,9 @@ space while it hydrates.
   others (`jobs.helps`) with half its memory. A job that ends hands its slot to the next at once.
 - **A runner reserves each invocation it took in the last 250 ms its share** beside what it holds: a burst taken within
   one memory reading (every 100 ms) no longer all lands on the room one had — so `concurrency` can be a high ceiling.
+- **An invocation is stopped for CPU by its CPU alone.** isolated-vm's `timeout` is wall time while the isolate runs:
+  given the CPU limit, a runner whose isolates shared its CPU stopped a 5 ms route as `Stopped after 100 ms of CPU`
+  under load — blaming the space's code. It is given the time limit now; the CPU is the watchdog's (`cpuTime`).
 - **A runner past its CPU takes no invocation** (90% of its quota, or its event loop 250 ms behind): the platform places
   it on another, as for memory. `startFunctionsRunnerService({ readLoad })` for tests.
 - **`processLoad()`, `overloaded()`, `LOAD_LIMITS`, `cpuLimitCores()`** (`@plitzi/sdk-kernel/stats`): a process's CPU over

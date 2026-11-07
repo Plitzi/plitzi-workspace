@@ -64,7 +64,11 @@ const describeAnswer = (call: unknown): Promise<unknown> =>
 
 const WATCHDOG_MS = 5;
 
-/** What isolated-vm throws when a `timeout` it was given runs out. */
+/**
+ * What isolated-vm throws when a `timeout` it was given runs out. Its timeout is wall time while the isolate runs, not
+ * CPU: a runner whose isolates share its CPU stretched a 5 ms route past a 100 ms "CPU limit" under load. So it is given
+ * the wall limit, a backstop; the CPU limit is the watchdog's, which reads the isolate's own `cpuTime`.
+ */
 const ISOLATE_TIMEOUT = 'Script execution timed out.';
 
 /** How long code that listens to `ctx.signal` gets to stop by itself before the isolate is disposed under it. */
@@ -445,7 +449,7 @@ export const createIsolateRunner = ({
       });
       // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU.
       readyCpuMs = Number(isolate.cpuTime) / 1e6;
-      await module.evaluate({ timeout: limits.cpuMs });
+      await module.evaluate({ timeout: limits.wallMs });
       const definition = module.namespace.getSync('default', { reference: true });
       if (definition.typeof !== 'object') {
         throw new FunctionFailure(
@@ -481,11 +485,10 @@ export const createIsolateRunner = ({
         throw error;
       }
 
-      // isolated-vm's own timeout is only ever given `cpuMs`, so its error is the CPU limit too — reached inside a
-      // synchronous stretch before the watchdog looked. Disposed with no reason of ours: V8 ran out of the isolate's
-      // memory and took it down itself.
+      // isolated-vm's own timeout is only ever given `wallMs`, so its error is the time limit — a synchronous stretch
+      // that outlasted it. Disposed with no reason of ours: V8 ran out of the isolate's memory and took it down itself.
       const timedOut = error instanceof Error && error.message === ISOLATE_TIMEOUT;
-      const reason = stopped ?? (timedOut ? 'cpu' : isolate.isDisposed ? 'memory' : undefined);
+      const reason = stopped ?? (timedOut ? 'wall' : isolate.isDisposed ? 'memory' : undefined);
       throw reason
         ? new FunctionFailure(reason, stopMessage(reason, limits))
         : new FunctionFailure('error', messageOf(error));
@@ -512,7 +515,7 @@ export const createIsolateRunner = ({
 
         return describeRef.apply(driver.derefInto(), [definition.derefInto()], {
           result: { copy: true },
-          timeout: DESCRIBE_LIMITS.cpuMs
+          timeout: DESCRIBE_LIMITS.wallMs
         });
       }
     });
@@ -533,7 +536,7 @@ export const createIsolateRunner = ({
 
           return invoke.apply(driver.derefInto(), [definition.derefInto(), message], {
             result: { promise: true, copy: true },
-            timeout: limits.cpuMs
+            timeout: limits.wallMs
           });
         }
       }),
