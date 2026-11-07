@@ -169,8 +169,9 @@ export const createJobWorker = ({
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
   let heart: NodeJS.Timeout | undefined;
-  /** A pass asked for while one was under way: run once that one ends. */
+  /** A pass asked for while one was under way: run once that one ends. Read through a call: another sets it meanwhile. */
   let again = false;
+  const askedAgain = (): boolean => again;
   /** Whether it is holding back new jobs for its memory, so it says so once, not every poll. */
   let holdingBack = false;
   let watch: NodeJS.Timeout | undefined;
@@ -662,7 +663,7 @@ export const createJobWorker = ({
           pass = undefined;
         });
       await pass;
-    } while (again && timer && !stopping);
+    } while (askedAgain() && timer && !stopping);
   };
 
   return {
