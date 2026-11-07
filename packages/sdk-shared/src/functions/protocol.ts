@@ -13,8 +13,11 @@ import type { FunctionsManifest } from '../types';
  * 1.1 added the `busy` refusal: a runner short of memory takes no new invocation. A 1.0 platform reads it as an error.
  * 1.2 added `accepted`: the runner took the invocation — an isolate free and memory for it — and the platform's wait for
  * its answer starts then, not while it was being placed. A runner sends it to a 1.2 platform alone.
+ * 1.3 added `waited`: how long the invocation waited for the runner's CPU — a turn at running JavaScript, shared with the
+ * other invocations — which is the runner's time, not the code's: the platform's wait for its answer grows by it. A
+ * runner sends it to a 1.3 platform alone.
  */
-export const FUNCTIONS_PROTOCOL = '1.2';
+export const FUNCTIONS_PROTOCOL = '1.3';
 
 const VERSION = /^(\d+)\.(\d+)$/;
 
@@ -259,6 +262,11 @@ export type FunctionInvokeRequest = {
   signal: AbortSignal;
   /** Told what the invocation spent once it ends, however it ended — before `invoke` settles. */
   onUsage?: (usage: FunctionUsage) => void;
+  /**
+   * Told how long it waited for the runner's CPU, as it waits — a turn shared with the other invocations: the runner's
+   * time, which neither its time limit nor whoever waits for its answer should count.
+   */
+  onWaited?: (ms: number) => void;
 };
 
 /**
@@ -307,6 +315,8 @@ export type RunnerRequestMessage =
 export type RunnerResponseMessage =
   /** The invocation was taken — a free isolate and memory for it (1.2): what its answer is waited for from. */
   | { type: 'accepted' }
+  /** It waited this long for the runner's CPU since it last said (1.3): the runner's time, which the deadline grows by. */
+  | { type: 'waited'; ms: number }
   | { type: 'needBundle' }
   /** A route answering as it writes: its head, then each `chunk` of its body, then `done`. */
   | { type: 'head'; status: number; statusText: string; headers: WireHeaders }

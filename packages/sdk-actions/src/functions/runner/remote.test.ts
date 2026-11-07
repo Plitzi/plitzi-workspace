@@ -295,6 +295,37 @@ describe('the runner service, through the remote runner', () => {
     expect(Date.now() - started).toBeLessThan(2000);
   });
 
+  // Waiting for the runner's CPU is the runner's time: an invocation that waited its turn is not cut by the platform.
+  it('waits longer for a runner that says it waited for its CPU, by what it waited', async () => {
+    const turnTaking = new WebSocketServer({ port: 0, host: '127.0.0.1' });
+    turnTaking.on('connection', socket => {
+      socket.on('message', () => {
+        socket.send(JSON.stringify({ type: 'accepted' }));
+        socket.send(JSON.stringify({ type: 'waited', ms: 400 }));
+        // Past its 150 ms of time and grace, within them and what it waited.
+        setTimeout(() => socket.send(JSON.stringify({ type: 'done', value: 'waited its turn' })), 300);
+      });
+    });
+    await new Promise<void>(resolve => turnTaking.on('listening', () => resolve()));
+    const address = turnTaking.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+    const patient = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET, graceMs: 50 });
+
+    try {
+      expect(
+        await patient.invoke({
+          bundle: { id: 'x', load: () => Promise.resolve('') },
+          invocation,
+          limits: { ...LIMITS, wallMs: 100 },
+          answer: () => Promise.resolve(null),
+          signal: new AbortController().signal
+        })
+      ).toBe('waited its turn');
+    } finally {
+      turnTaking.close();
+    }
+  });
+
   it('answers its stats behind its secret: what it ran, its isolates and the protocol it speaks', async () => {
     const stats = `http://127.0.0.1:${String(service.address().port)}/_stats`;
 

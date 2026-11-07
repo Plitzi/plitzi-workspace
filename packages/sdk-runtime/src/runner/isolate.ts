@@ -1,6 +1,7 @@
 import { createHash, createHmac, pbkdf2, randomBytes } from 'node:crypto';
 import { promisify } from 'node:util';
 
+import { cpuLimitCores } from '@plitzi/sdk-kernel/stats';
 import { changeKv, changeListEntry } from '@plitzi/sdk-shared/functions';
 import { FunctionFailure, failedAnswerOf } from '@plitzi/sdk-shared/functions';
 
@@ -11,6 +12,7 @@ import { guestEvents } from './guest/events';
 import { guestFetch } from './guest/fetch';
 import { installGuest } from './guest/install';
 import { guestPrelude } from './prelude';
+import { createTurns } from './turns';
 
 import type { GuestDriver } from './guest/types';
 import type {
@@ -39,10 +41,21 @@ export type IsolateRunnerOptions = {
    * let go costs one recompile, which V8's code cache shortens.
    */
   cacheBytes?: number;
+  /**
+   * How many isolates run JavaScript at once: as many as the cores this runner may use (its container's quota, at least
+   * one) by default. An isolate waiting on the platform — a call, a sleep, a derivation — gives its turn up and takes one
+   * again when the answer is back. isolated-vm runs isolates on as many threads as the machine has cores, whatever the
+   * container's quota: past it they fought for its CPU, and a route that spent 5 ms of its own was measured at 100–300
+   * under a burst and stopped for CPU it never used. With turns, a burst runs slower, never stopped for the runner's
+   * own contention.
+   */
+  turns?: number;
 };
 
 /** The isolates, and what readies them before the first invocation pays for it. */
 export type IsolateRunner = FunctionRunner & {
+  /** Its turns at running JavaScript — as many as its cores — and how many isolates wait for one now. */
+  cpu: () => { turns: number; waiting: number };
   /**
    * Builds the prelude, the heap every isolate starts from and V8's cache of the guest, and runs a first bundle — what
    * the first invocation of a fresh process would otherwise spend (~70 ms) on top of its own.
@@ -238,6 +251,8 @@ type Session = {
   /** How long code that listens to `ctx.signal` gets once it is aborted — a job's slice says, anything else is quick. */
   graceMs?: number;
   onUsage?: (usage: FunctionUsage) => void;
+  /** How long it waited for a turn at the runner's CPU, as it waits — the runner's time, not the code's (1.3's `waited`). */
+  onWaited?: (ms: number) => void;
   /** Given the guest's driver and the definition, answers the guest's JSON. */
   drive: (driver: IsolatedVM.Reference<GuestDriver>, definition: IsolatedVM.Reference<unknown>) => Promise<string>;
 };
@@ -255,8 +270,10 @@ export const DEFAULT_CONCURRENCY = 8;
 
 export const createIsolateRunner = ({
   concurrency = DEFAULT_CONCURRENCY,
-  cacheBytes = 32 * 1024 * 1024
+  cacheBytes = 32 * 1024 * 1024,
+  turns: turnCount = Math.max(1, Math.round(cpuLimitCores()))
 }: IsolateRunnerOptions = {}): IsolateRunner => {
+  const turns = createTurns(turnCount);
   const cache = new Map<string, Cached>();
   let cachedBytes = 0;
   /** Every isolate starts from a heap with the prelude already run in it: running it each time was most of the cost. */
@@ -319,6 +336,7 @@ export const createIsolateRunner = ({
     signal,
     graceMs = ABORT_GRACE_MS,
     onUsage,
+    onWaited,
     drive
   }: Session): Promise<unknown> => {
     const ivm = await ready();
@@ -347,6 +365,59 @@ export const createIsolateRunner = ({
 
       return (readyCpuMs === undefined ? 0 : isolateCpuMs - readyCpuMs) + hostCpuMs;
     };
+    /** The turn at running JavaScript this isolate holds, if any, and how many answers of the platform it waits for. */
+    let holding: number | undefined;
+    let awaited = 0;
+    /** What its CPU read when the watchdog last looked: still, while it waits, it is not running. */
+    let lastCpuMs = 0;
+    /** A turn asked for and not yet given: two answers back at once ask once. */
+    let taking: Promise<void> | undefined;
+    /** Ended: a turn handed to it after that goes straight back. */
+    let ended = false;
+    /** How long it waited for turns: the runner's time, which its time limit does not count. */
+    let waitedMs = 0;
+    /** What the CPU it is measured at was inflated by while it ran beside more isolates than cores, on average. */
+    let sharedSum = 0;
+    let sharedLooks = 0;
+    const takeTurn = async (): Promise<void> => {
+      if (holding !== undefined) {
+        return;
+      }
+
+      const askedAt = Date.now();
+      taking ??= turns.take().then(id => {
+        taking = undefined;
+        const waited = Date.now() - askedAt;
+        if (waited > 0) {
+          waitedMs += waited;
+          onWaited?.(waited);
+        }
+
+        if (ended) {
+          turns.give(id);
+        } else {
+          holding = id;
+        }
+      });
+      await taking;
+    };
+    const giveTurn = (): void => {
+      if (holding !== undefined) {
+        turns.give(holding);
+        holding = undefined;
+      }
+    };
+    /** Something it asked of the platform, its turn given up while it waits and taken again before it hears back. */
+    const waitingOn = async <T>(work: () => Promise<T>): Promise<T> => {
+      awaited++;
+      giveTurn();
+      try {
+        return await work();
+      } finally {
+        awaited--;
+        await takeTurn();
+      }
+    };
     const stop = (reason: FunctionStopReason): void => {
       stopped ??= reason;
       readCpu();
@@ -362,11 +433,32 @@ export const createIsolateRunner = ({
       timers.add(timer);
     };
     const watchdog = setInterval(() => {
-      if (!isolate.isDisposed && readCpu() > limits.cpuMs) {
+      const cpuMs = readCpu();
+      if (holding !== undefined) {
+        sharedSum += Math.max(1, turns.load());
+        sharedLooks++;
+      }
+
+      // Its CPU is the code's own while it runs alone on a core; beside more isolates than cores, threads fighting for
+      // the CPU inflate what each is measured at, so its limit grows by how shared the CPU was — the runner's doing.
+      const shared = sharedLooks > 0 ? sharedSum / sharedLooks : 1;
+      if (!isolate.isDisposed && cpuMs > limits.cpuMs * shared) {
         stop('cpu');
       }
+
+      // Its time is its own: what it waited for a turn is the runner's, and not counted.
+      if (!isolate.isDisposed && Date.now() - startedAt - waitedMs > limits.wallMs) {
+        stop('wall');
+      }
+
+      // Back from one answer while it waits on others, it holds its turn though it runs nothing: given up once its CPU
+      // stood still a whole look — the next answer back takes one again.
+      if (holding !== undefined && awaited > 0 && cpuMs === lastCpuMs) {
+        giveTurn();
+      }
+
+      lastCpuMs = cpuMs;
     }, WATCHDOG_MS);
-    later(limits.wallMs, () => stop('wall'));
 
     let driver: IsolatedVM.Reference<GuestDriver> | undefined;
     const onAbort = (): void => {
@@ -395,21 +487,22 @@ export const createIsolateRunner = ({
             return JSON.stringify({ ok: false, error: stopMessage('calls', limits) });
           }
 
-          try {
-            // Read by the platform, not here: a runner is not trusted to have checked what the code sent.
-            const value = await answer(JSON.parse(message));
+          return waitingOn(async () => {
+            try {
+              // Read by the platform, not here: a runner is not trusted to have checked what the code sent.
+              const value = await answer(JSON.parse(message));
 
-            return JSON.stringify({ ok: true, value: value ?? null });
-          } catch (error) {
-            return JSON.stringify(failedAnswerOf(error));
-          }
+              return JSON.stringify({ ok: true, value: value ?? null });
+            } catch (error) {
+              return JSON.stringify(failedAnswerOf(error));
+            }
+          });
         })
       );
       global.setSync(
         '__plitziSleep',
-        new ivm.Reference(
-          (ms: number): Promise<void> =>
-            new Promise(resolve => later(Math.min(Math.max(0, ms), limits.wallMs), resolve))
+        new ivm.Reference((ms: number): Promise<void> =>
+          waitingOn(() => new Promise(resolve => later(Math.min(Math.max(0, ms), limits.wallMs), resolve)))
         )
       );
       global.setSync(
@@ -419,12 +512,14 @@ export const createIsolateRunner = ({
       global.setSync(
         '__plitziCrypto',
         new ivm.Reference((message: string) =>
-          cryptoAnswer(message, ms => {
-            hostCpuMs += ms;
-            if (readCpu() > limits.cpuMs) {
-              stop('cpu');
-            }
-          })
+          waitingOn(() =>
+            cryptoAnswer(message, ms => {
+              hostCpuMs += ms;
+              if (readCpu() > limits.cpuMs) {
+                stop('cpu');
+              }
+            })
+          )
         )
       );
 
@@ -447,7 +542,8 @@ export const createIsolateRunner = ({
       module.instantiateSync(context, specifier => {
         throw new Error(`"${specifier}" cannot be imported: a bundle is one module`);
       });
-      // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU.
+      // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU, run in its turn.
+      await takeTurn();
       readyCpuMs = Number(isolate.cpuTime) / 1e6;
       await module.evaluate({ timeout: limits.wallMs });
       const definition = module.namespace.getSync('default', { reference: true });
@@ -501,6 +597,8 @@ export const createIsolateRunner = ({
         isolate.dispose();
       }
 
+      ended = true;
+      giveTurn();
       release();
     }
   };
@@ -521,8 +619,9 @@ export const createIsolateRunner = ({
     });
 
   return {
+    cpu: () => ({ turns: turnCount, waiting: turns.waiting() }),
     describe,
-    invoke: ({ bundle, invocation, limits, answer, signal, onUsage }) =>
+    invoke: ({ bundle, invocation, limits, answer, signal, onUsage, onWaited }) =>
       session({
         bundle,
         limits,
@@ -530,6 +629,7 @@ export const createIsolateRunner = ({
         signal,
         ...(invocation.kind === 'job' ? { graceMs: invocation.graceMs } : {}),
         onUsage,
+        ...(onWaited ? { onWaited } : {}),
         drive: async (driver, definition) => {
           const invoke = driver.getSync('invoke', { reference: true });
           const message = JSON.stringify(invocation satisfies FunctionInvocation);

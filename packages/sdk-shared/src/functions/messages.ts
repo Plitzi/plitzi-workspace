@@ -272,6 +272,10 @@ export const readResponseMessage = (data: string): RunnerResponseMessage | undef
   switch (message?.type) {
     case 'accepted':
       return { type: 'accepted' };
+    case 'waited':
+      return typeof message.ms === 'number' && Number.isFinite(message.ms) && message.ms >= 0
+        ? { type: 'waited', ms: message.ms }
+        : undefined;
     case 'needBundle':
       return { type: 'needBundle' };
     case 'head':

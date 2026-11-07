@@ -25,7 +25,7 @@ import {
 
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
 
-import type { IsolateRunnerOptions } from './isolate';
+import type { IsolateRunner, IsolateRunnerOptions } from './isolate';
 import type {
   MemoryReading,
   ProcessLoad,
@@ -114,6 +114,12 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
  * network and hold a few MB, and its isolate's own limit stops one that grows past its own.
  */
 const MEMORY_RESERVE_SHARE = 0.25;
+
+/**
+ * How many isolates may wait for each turn at the CPU before the runner takes no more: past it a new invocation would
+ * wait its turn here while another runner has one, so it is turned away (`busy`) for the platform to place.
+ */
+const WAITING_PER_TURN = 4;
 
 /**
  * How long an invocation taken is still reserved its share beside what the runner holds: until its isolate is built and
@@ -324,7 +330,9 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
         signal: controller.signal,
         onUsage: spent => {
           usage = spent;
-        }
+        },
+        // What it waited for the CPU, to a platform that knows (1.3): its wait for the answer grows by it.
+        ...(protocolKnows(message.protocol, '1.3') ? { onWaited: (ms: number) => send({ type: 'waited', ms }) } : {})
       })
     );
   });
@@ -363,6 +371,8 @@ export const startFunctionsRunnerService = async ({
   }
 
   let engine: FunctionRunner;
+  /** Its own isolates' turns at the CPU — an engine handed in keeps its own. */
+  let cpu: IsolateRunner['cpu'] | undefined;
   if (runner) {
     engine = runner;
   } else {
@@ -371,6 +381,7 @@ export const startFunctionsRunnerService = async ({
     const isolates = createIsolateRunner(isolate);
     await isolates.warm();
     engine = isolates;
+    cpu = isolates.cpu;
   }
 
   const recorder = createStatsRecorder({
@@ -391,6 +402,14 @@ export const startFunctionsRunnerService = async ({
 
     if (!runner && inFlight.count >= most) {
       return `This functions runner runs ${String(most)} invocations, the most it takes at once: another runner takes it`;
+    }
+
+    const turns = cpu?.();
+    if (turns && turns.waiting >= turns.turns * WAITING_PER_TURN) {
+      return (
+        `The functions runner is short of CPU — ${String(turns.waiting)} invocations wait for a turn at its ` +
+        `${String(turns.turns)} core(s) — so it took none: another runner takes it.`
+      );
     }
 
     const memory = readMemory();

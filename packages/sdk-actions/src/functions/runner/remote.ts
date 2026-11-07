@@ -186,16 +186,28 @@ export const createRemoteRunner = ({
           settle(() => reject(new FunctionFailure('wall', words)));
           socket.terminate();
         }, ms);
+      /** When the runner's answer is due: `deadlineMs` after it took it, and later by what it says it waited for its CPU. */
+      let dueAt = 0;
+      let waitedMs = 0;
       const answerDeadline = () =>
-        giveUp(deadlineMs, `The functions runner did not answer within ${String(deadlineMs)} ms of taking it`);
+        giveUp(
+          Math.max(0, dueAt - Date.now()),
+          `The functions runner did not answer within ${String(deadlineMs)} ms of taking it` +
+            (waitedMs > 0 ? `, and the ${String(waitedMs)} ms it waited for its CPU` : '')
+        );
       // An invocation's time starts once a runner takes it (1.2's `accepted`); till then the runner has a moment to say.
       let accepted = first.type !== 'invoke';
+      if (accepted) {
+        dueAt = Date.now() + deadlineMs;
+      }
+
       let deadline = accepted
         ? answerDeadline()
         : giveUp(connectTimeoutMs + ACCEPT_MS, 'The functions runner neither took nor turned away the invocation');
       const accept = (): void => {
         if (!accepted) {
           accepted = true;
+          dueAt = Date.now() + deadlineMs;
           clearTimeout(deadline);
           deadline = answerDeadline();
         }
@@ -227,6 +239,16 @@ export const createRemoteRunner = ({
 
         switch (message.type) {
           case 'accepted':
+            return;
+          case 'waited':
+            // The runner's time, not the code's: what it is waited for grows by it (1.3).
+            if (!settled) {
+              waitedMs += message.ms;
+              dueAt += message.ms;
+              clearTimeout(deadline);
+              deadline = answerDeadline();
+            }
+
             return;
           case 'needBundle':
             // Only now, and only for a runner that has never kept this bundle: a run carries no code otherwise.

@@ -220,6 +220,14 @@ space while it hydrates.
   others (`jobs.helps`) with half its memory. A job that ends hands its slot to the next at once.
 - **A runner reserves each invocation it took in the last 250 ms its share** beside what it holds: a burst taken within
   one memory reading (every 100 ms) no longer all lands on the room one had — so `concurrency` can be a high ceiling.
+- **A runner manages the CPU it is given, and an invocation never fails for the runner's contention — it waits.**
+  isolated-vm runs isolates on as many threads as the machine has cores, whatever the container's quota: on 1 vCPU of a
+  12-core node, a route that spent 5 ms of its own was measured at 100–300 ms under a burst and stopped for CPU it
+  never used. Isolates now take turns at running JavaScript — as many as the runner's cores (`turns`, its quota by
+  default), given up while they wait on the platform and shared past a 20 ms slice so a long run holds nobody up. The
+  CPU limit grows by how shared the CPU was while it ran, its time limit leaves out what it waited for a turn, and
+  protocol **1.3** adds `waited`, by which the platform's wait for the answer grows too. A runner with four isolates
+  waiting per turn takes no new invocation (`busy`), for the platform to place on another. Deploy the runners first.
 - **An invocation is stopped for CPU by its CPU alone.** isolated-vm's `timeout` is wall time while the isolate runs:
   given the CPU limit, a runner whose isolates shared its CPU stopped a 5 ms route as `Stopped after 100 ms of CPU`
   under load — blaming the space's code. It is given the time limit now; the CPU is the watchdog's (`cpuTime`).
