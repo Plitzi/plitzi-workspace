@@ -210,7 +210,14 @@ export const readRequestMessage = (data: string): RunnerRequestMessage | undefin
       const limits = limitsOf(message.limits);
 
       return invocation && limits && typeof message.bundleId === 'string' && typeof message.protocol === 'string'
-        ? { type: 'invoke', protocol: message.protocol, bundleId: message.bundleId, invocation, limits }
+        ? {
+            type: 'invoke',
+            protocol: message.protocol,
+            bundleId: message.bundleId,
+            invocation,
+            limits,
+            ...(message.queue === true ? { queue: true } : {})
+          }
         : undefined;
     }
     case 'bundle': {
@@ -272,6 +279,8 @@ export const readResponseMessage = (data: string): RunnerResponseMessage | undef
   switch (message?.type) {
     case 'accepted':
       return { type: 'accepted' };
+    case 'queued':
+      return { type: 'queued' };
     case 'waited':
       return typeof message.ms === 'number' && Number.isFinite(message.ms) && message.ms >= 0
         ? { type: 'waited', ms: message.ms }

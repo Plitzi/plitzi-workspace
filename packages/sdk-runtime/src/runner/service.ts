@@ -23,7 +23,7 @@ import {
 
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
 
-import type { IsolateRunner, IsolateRunnerOptions } from './isolate';
+import type { IsolateRunnerOptions } from './isolate';
 import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
 import type {
   FunctionAnswer,
@@ -31,6 +31,7 @@ import type {
   FunctionLimits,
   FunctionRunner,
   FunctionUsage,
+  RunnerRequestMessage,
   RunnerResponseMessage,
   StreamedRouteAnswer
 } from '@plitzi/sdk-shared/functions';
@@ -102,18 +103,15 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 const MEMORY_RESERVE_SHARE = 0.25;
 
 /**
- * How many isolates may wait for each turn at the CPU before the runner takes no more: past it a new invocation would
- * wait its turn here while another runner has one, so it is turned away (`busy`) for the platform to place.
- */
-const WAITING_PER_TURN = 4;
-
-/**
  * How long an invocation taken is still reserved its share beside what the runner holds: until its isolate is built and
  * held, and a reading of the memory (every 100 ms) says so. A burst taken within one reading is each reserved its
  * share, not all admitted on the room one had. Held for a whole second, it capped a runner at a few dozen a second
  * with half its memory free.
  */
 const RESERVED_FOR_MS = 250;
+
+/** How often what is kept waiting is looked at again, beside each invocation that ends: memory frees between them. */
+const KEPT_LOOK_MS = 100;
 
 /** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
 const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
@@ -135,6 +133,13 @@ type ConnectionStats = {
   busy: (limits: FunctionLimits) => string | undefined;
   /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
   stopping: () => boolean;
+  /**
+   * Keeps an invocation it has no room for until it has (1.3's `queue`): true once it is taken — counted as `busy` counts
+   * one — false when the runner starts stopping first, or the platform goes away.
+   */
+  wait: (limits: FunctionLimits, signal: AbortSignal) => Promise<boolean>;
+  /** An invocation ended: what was kept waiting may have room now. */
+  ended: () => void;
 };
 
 const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: ConnectionStats): void => {
@@ -157,6 +162,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       stats.inFlight.count -= 1;
       stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? endOf(message.reason) : undefined, label);
       invokedAt = undefined;
+      stats.ended();
     }
 
     send(message);
@@ -273,15 +279,40 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       return;
     }
 
+    void start(message).catch((error: unknown) => {
+      finish({ type: 'failed', reason: 'error', error: error instanceof Error ? error.message : String(error) });
+    });
+  });
+
+  /** An invocation taken — now, or once there is room for it — and run. */
+  const start = async (message: Extract<RunnerRequestMessage, { type: 'invoke' }>): Promise<void> => {
     const { bundleId, invocation, limits } = message;
-    // Taken only with an isolate free and memory for it: a runner full answers at once, and the platform places the
-    // invocation on another rather than leaving it to wait here, its time running.
+    // Taken with an isolate free and memory for it. Full, it answers at once for the platform to place the invocation
+    // on a runner with room; when every runner is full, the platform asks one to keep it (`queue`), and it waits here
+    // — its time not yet running — until there is room.
     const busy = stats.busy(limits);
     if (busy) {
-      stats.recorder.refuse(stats.stopping() ? 'stopping' : 'busy');
-      finish({ type: 'failed', reason: 'busy', error: busy });
+      const keeps = !stats.stopping() && message.queue === true && protocolKnows(message.protocol, '1.3');
+      if (!keeps) {
+        stats.recorder.refuse(stats.stopping() ? 'stopping' : 'busy');
+        finish({ type: 'failed', reason: 'busy', error: busy });
 
-      return;
+        return;
+      }
+
+      send({ type: 'queued' });
+      if (!(await stats.wait(limits, controller.signal))) {
+        if (!controller.signal.aborted) {
+          stats.recorder.refuse('stopping');
+          finish({
+            type: 'failed',
+            reason: 'busy',
+            error: 'This functions runner started stopping while it kept the invocation: another runner takes it'
+          });
+        }
+
+        return;
+      }
     }
 
     label = {
@@ -321,7 +352,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
         ...(protocolKnows(message.protocol, '1.3') ? { onWaited: (ms: number) => send({ type: 'waited', ms }) } : {})
       })
     );
-  });
+  };
 
   socket.on('close', () => {
     controller.abort();
@@ -356,8 +387,6 @@ export const startFunctionsRunnerService = async ({
   }
 
   let engine: FunctionRunner;
-  /** Its own isolates' turns at the CPU — an engine handed in keeps its own. */
-  let cpu: IsolateRunner['cpu'] | undefined;
   if (runner) {
     engine = runner;
   } else {
@@ -366,7 +395,6 @@ export const startFunctionsRunnerService = async ({
     const isolates = createIsolateRunner(isolate);
     await isolates.warm();
     engine = isolates;
-    cpu = isolates.cpu;
   }
 
   const recorder = createStatsRecorder({
@@ -387,14 +415,6 @@ export const startFunctionsRunnerService = async ({
 
     if (!runner && inFlight.count >= most) {
       return `This functions runner runs ${String(most)} invocations, the most it takes at once: another runner takes it`;
-    }
-
-    const turns = cpu?.();
-    if (turns && turns.waiting >= turns.turns * WAITING_PER_TURN) {
-      return (
-        `The functions runner is short of CPU — ${String(turns.waiting)} invocations wait for a turn at its ` +
-        `${String(turns.turns)} core(s) — so it took none: another runner takes it.`
-      );
     }
 
     const memory = readMemory();
@@ -421,6 +441,47 @@ export const startFunctionsRunnerService = async ({
       'runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
     );
   };
+  /**
+   * The invocations kept until there is room for them (1.3's `queue`), in the order they came: each let in as one ends —
+   * and looked at again as memory frees — never past one that came before it.
+   */
+  type Kept = { limits: FunctionLimits; admit: (taken: boolean) => void };
+  const kept: Kept[] = [];
+  let keptTimer: NodeJS.Timeout | undefined;
+  const letIn = (): void => {
+    for (let head = kept.at(0); head; head = kept.at(0)) {
+      if (!stopping && busy(head.limits) !== undefined) {
+        break;
+      }
+
+      kept.shift();
+      head.admit(!stopping);
+    }
+
+    if (kept.length === 0 && keptTimer) {
+      clearInterval(keptTimer);
+      keptTimer = undefined;
+    } else if (kept.length > 0 && !keptTimer) {
+      keptTimer = setInterval(letIn, KEPT_LOOK_MS);
+    }
+  };
+  const wait = (limits: FunctionLimits, signal: AbortSignal): Promise<boolean> =>
+    new Promise<boolean>(resolve => {
+      const entry: Kept = { limits, admit: resolve };
+      kept.push(entry);
+      signal.addEventListener(
+        'abort',
+        () => {
+          const at = kept.indexOf(entry);
+          if (at >= 0) {
+            kept.splice(at, 1);
+            resolve(false);
+          }
+        },
+        { once: true }
+      );
+      letIn();
+    });
   // The isolates' own size; an engine handed in says nothing of its own, so its work is counted without one.
   if (!runner) {
     // Past its size an invocation waits its turn here: full is at work, and only what waits degrades it.
@@ -495,7 +556,7 @@ export const startFunctionsRunnerService = async ({
     }
 
     sockets.handleUpgrade(req, socket, head, ws =>
-      serveConnection(ws, engine, { recorder, inFlight, busy, stopping: () => stopping })
+      serveConnection(ws, engine, { recorder, inFlight, busy, stopping: () => stopping, wait, ended: letIn })
     );
   });
 
@@ -527,6 +588,8 @@ export const startFunctionsRunnerService = async ({
     close: async () => {
       const { announceMs, graceMs } = shutdownOf({ ...(shutdown ? { shutdown } : {}) }, { graceMs: SHUTDOWN_GRACE_MS });
       stopping = true;
+      // What it kept waiting goes to another runner now, not after its drain.
+      letIn();
       if (announceMs > 0) {
         await new Promise(resolve => setTimeout(resolve, announceMs));
       }

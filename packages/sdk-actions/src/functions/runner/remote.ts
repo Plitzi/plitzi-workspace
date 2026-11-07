@@ -20,16 +20,10 @@ export type RemoteRunnerOptions = {
    * for (none for reading a bundle): what sends a space to the runners it is assigned to. A name that resolves to several
    * addresses — a headless Service, a network alias — is each runner behind it: an invocation is placed on one of them
    * at random, and one a runner turns away as `busy` (no isolate free, or no memory for it: it took nothing) goes to the
-   * next at once. It waits only while every one is full (`waitForRunnerMs`).
+   * next at once. With every one full, one of them keeps it until it has room (1.3's `queue`): it waits, never fails
+   * for the runners' capacity — its own time starts once one takes it.
    */
   url: string | ((spaceId?: number) => string);
-  /**
-   * How long an invocation waits for a runner to take it while every one is full, before it is answered `busy` — and
-   * never past its caller giving up (`signal`): what a burst rides out while the runners' autoscaler adds some. Waiting
-   * for a runner is the platform's time, not the code's: its own time limit starts once one takes it. 60 s — a visitor's
-   * request outlasts a proxy's timeout past that; a job's slice or an action waits as long.
-   */
-  waitForRunnerMs?: number;
   secret: string;
   /** How long to wait for the runner to accept a connection. */
   connectTimeoutMs?: number;
@@ -47,7 +41,7 @@ const DESCRIBE_DEADLINE_MS = 10_000;
 /** How long a runner has to take or turn away an invocation once connected: it answers at once, either way. */
 const ACCEPT_MS = 5000;
 
-/** The waits between rounds of every runner while all of them are full, growing to the last. */
+/** The waits between rounds while every runner is full and even the one asked to keep it turned it away (stopping). */
 const FULL_WAITS_MS = [100, 250, 500, 1000];
 
 /** How long the addresses a runner name resolves to are kept: a scale-up is seen within it. */
@@ -102,8 +96,7 @@ export const createRemoteRunner = ({
   url,
   secret,
   connectTimeoutMs = 5000,
-  graceMs = 5000,
-  waitForRunnerMs = 60_000
+  graceMs = 5000
 }: RemoteRunnerOptions): FunctionRunner => {
   /** When none of the runners a name stands for could be reached: while recent, the calls that need them are kept. */
   const away = new Map<string, number>();
@@ -234,13 +227,19 @@ export const createRemoteRunner = ({
           return;
         }
 
-        // A 1.1 runner says nothing as it takes it: whatever it says first of the invocation is that it did.
-        if (message.type !== 'failed' || message.reason !== 'busy') {
+        // A 1.1 runner says nothing as it takes it: whatever it says first of the invocation is that it did — but that it
+        // keeps it waiting for room (`queued`), which is not taking it yet.
+        if ((message.type !== 'failed' || message.reason !== 'busy') && message.type !== 'queued') {
           accept();
         }
 
         switch (message.type) {
           case 'accepted':
+            return;
+          case 'queued':
+            // Kept until the runner has room: nothing to wait for but that — or its caller giving up (`signal`).
+            clearTimeout(deadline);
+
             return;
           case 'waited':
             // The runner's time, not the code's: what it is waited for grows by it (1.3).
@@ -373,9 +372,16 @@ export const createRemoteRunner = ({
         answer: () => Promise.reject(new Error('Nothing is reachable while a bundle is read'))
       }),
     invoke: async ({ bundle, invocation, limits, answer, signal, onUsage }) => {
-      const attempt = (address: string) =>
+      const attempt = (address: string, queue = false) =>
         operate({
-          first: { type: 'invoke', protocol: FUNCTIONS_PROTOCOL, bundleId: bundle.id, invocation, limits },
+          first: {
+            type: 'invoke',
+            protocol: FUNCTIONS_PROTOCOL,
+            bundleId: bundle.id,
+            invocation,
+            limits,
+            ...(queue ? { queue: true } : {})
+          },
           load: bundle.load,
           bundleId: bundle.id,
           address,
@@ -384,17 +390,17 @@ export const createRemoteRunner = ({
           signal,
           onUsage
         });
-      const since = Date.now();
       const name = addressOf(invocation.context.spaceId);
       let unreachableRounds = 0;
 
       // A round tries each runner the space may run on once: a busy one took nothing, an unreachable one was sent
-      // nothing, so the invocation is whole to give the next. Rounds go on while every runner is full — for
-      // `waitForRunnerMs` — or while none can be reached, a few times: a restart, a rolling deploy.
+      // nothing, so the invocation is whole to give the next. With every one full, one of them keeps it until it has
+      // room (`queue`) — it waits, never fails for the runners' capacity; while none can be reached, rounds go on a few
+      // times: a restart, a rolling deploy.
       for (let round = 0; ; round += 1) {
         const tried = new Set<string>();
         let last: unknown;
-        let busyCount = 0;
+        const full: string[] = [];
         for (;;) {
           const untried = (await runnersOf(addressOf(invocation.context.spaceId))).filter(each => !tried.has(each));
           const next = untried.at(0);
@@ -414,7 +420,10 @@ export const createRemoteRunner = ({
               throw error;
             }
 
-            busyCount += reason === 'busy' ? 1 : 0;
+            if (reason === 'busy') {
+              full.push(next);
+            }
+
             last = error;
           }
         }
@@ -423,18 +432,22 @@ export const createRemoteRunner = ({
           throw last;
         }
 
-        if (busyCount > 0) {
-          const pause = FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000;
-          if (Date.now() - since + pause > waitForRunnerMs) {
-            throw new FunctionFailure(
-              'busy',
-              `Every functions runner was full for ${String(Math.round((Date.now() - since) / 1000))} s — the last ` +
-                `said: ${last instanceof Error ? last.message : String(last)} Try again shortly: more are started as ` +
-                'their load says.'
-            );
+        if (full.length > 0) {
+          // Kept by one of them at random — the next to have room takes it. One that turns even that away is stopping
+          // (or speaks 1.2): the next round, a moment later, places it again.
+          const keeper = full[Math.floor(Math.random() * full.length)];
+          try {
+            const value = await attempt(keeper, true);
+            away.delete(name);
+
+            return value;
+          } catch (error) {
+            if (!(error instanceof FunctionFailure && error.reason === 'busy')) {
+              throw error;
+            }
           }
 
-          await wait(pause, signal);
+          await wait(FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000, signal);
           continue;
         }
 

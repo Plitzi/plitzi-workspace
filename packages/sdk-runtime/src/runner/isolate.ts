@@ -54,8 +54,6 @@ export type IsolateRunnerOptions = {
 
 /** The isolates, and what readies them before the first invocation pays for it. */
 export type IsolateRunner = FunctionRunner & {
-  /** Its turns at running JavaScript — as many as its cores — and how many isolates wait for one now. */
-  cpu: () => { turns: number; waiting: number };
   /**
    * Builds the prelude, the heap every isolate starts from and V8's cache of the guest, and runs a first bundle — what
    * the first invocation of a fresh process would otherwise spend (~70 ms) on top of its own.
@@ -619,7 +617,6 @@ export const createIsolateRunner = ({
     });
 
   return {
-    cpu: () => ({ turns: turnCount, waiting: turns.waiting() }),
     describe,
     invoke: ({ bundle, invocation, limits, answer, signal, onUsage, onWaited }) =>
       session({

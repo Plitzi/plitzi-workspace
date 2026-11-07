@@ -339,32 +339,38 @@ describe('the runner service, through the remote runner', () => {
     expect((await fetch(stats)).status).toBe(401);
   });
 
-  it('takes no invocation short of memory, and the run is over capacity — not the code’s error', async () => {
+  // A runner short of memory is the runners' capacity, never the code's error: the invocation waits for room, and runs.
+  it('keeps an invocation it has no memory for until it has, and runs it then', async () => {
+    const MIB = 1_048_576;
+    // 90 of 100 MiB held: past the 85% it takes work to, whatever an invocation is kept.
+    let usedBytes = 90 * MIB;
     const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
-      readMemory: () => ({ usedBytes: 900, limitBytes: 1000 })
+      readMemory: () => ({ usedBytes, limitBytes: 100 * MIB })
     });
-    const runner = createRemoteRunner({
-      url: `ws://127.0.0.1:${String(full.address().port)}`,
-      secret: SECRET,
-      waitForRunnerMs: 300
-    });
+    const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(full.address().port)}`, secret: SECRET });
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
 
     try {
-      const failure = await runner
+      let answered = false;
+      const asked = runner
         .invoke({
-          bundle: { id: 'none', load: () => Promise.resolve('') },
+          bundle: { id: 'kept', load: () => Promise.resolve(code) },
           invocation,
           limits: LIMITS,
           answer: () => Promise.resolve(null),
           signal: new AbortController().signal
         })
-        .catch((error: unknown) => error);
+        .finally(() => {
+          answered = true;
+        });
+      await new Promise(resolve => setTimeout(resolve, 400));
+      expect(answered).toBe(false);
 
-      expect(failure instanceof FunctionFailure && failure.reason).toBe('busy');
-      expect(String(failure)).toContain('The functions runner is short of memory');
+      usedBytes = 0;
+      expect(await asked).toBe('ran');
     } finally {
       await full.close();
     }
@@ -373,7 +379,7 @@ describe('the runner service, through the remote runner', () => {
   // Memory is read every 100 ms: a burst within one reading is each reserved its share, not all taken on one room.
   it('reserves each invocation it just took its share, so a burst never all lands on one reading', async () => {
     const MIB = 1_048_576;
-    // 85 MiB it takes work to, a quarter of 64 MiB kept for each: five at once, the sixth turned away.
+    // 85 MiB it takes work to, a quarter of 64 MiB kept for each: five at once, the sixth kept until their share lapses.
     const burst = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
@@ -382,8 +388,7 @@ describe('the runner service, through the remote runner', () => {
     });
     const runner = createRemoteRunner({
       url: `ws://127.0.0.1:${String(burst.address().port)}`,
-      secret: SECRET,
-      waitForRunnerMs: 200
+      secret: SECRET
     });
     const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
     const once = () =>
@@ -400,8 +405,14 @@ describe('the runner service, through the remote runner', () => {
     try {
       const answers = await Promise.all(Array.from({ length: 6 }, once));
 
-      expect(answers.filter(answer => answer === 'ran')).toHaveLength(5);
-      expect(answers.filter(answer => answer === 'busy')).toHaveLength(1);
+      expect(answers).toEqual(['ran', 'ran', 'ran', 'ran', 'ran', 'ran']);
+      // The sixth was kept, not run on the room the first five were taken on.
+      const stats = (await (
+        await fetch(`http://127.0.0.1:${String(burst.address().port)}/_stats`, {
+          headers: { authorization: `Bearer ${SECRET}` }
+        })
+      ).json()) as { outcomes: { '1m': { refusals: Record<string, number> } } };
+      expect(stats.outcomes['1m'].refusals.busy).toBe(1);
     } finally {
       await burst.close();
     }
@@ -456,26 +467,31 @@ describe('the runner service, through the remote runner', () => {
       runner: slow,
       shutdown: { graceMs: 5000 }
     });
-    const url = `ws://127.0.0.1:${String(stopping.address().port)}`;
-    const runner = createRemoteRunner({ url, secret: SECRET, waitForRunnerMs: 300 });
-    const ask = () =>
+    const stoppingUrl = `ws://127.0.0.1:${String(stopping.address().port)}`;
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+    const ask = (runner: FunctionRunner) =>
       runner.invoke({
-        bundle: { id: 'slow', load: () => Promise.resolve('') },
+        bundle: { id: 'slow-or-ran', load: () => Promise.resolve(code) },
         invocation,
         limits: LIMITS,
         answer: () => Promise.resolve(null),
         signal: new AbortController().signal
       });
 
-    const running = ask();
+    const running = ask(createRemoteRunner({ url: stoppingUrl, secret: SECRET }));
     await new Promise(resolve => setTimeout(resolve, 100));
     const closed = stopping.close();
-    const refused = await ask().catch((error: unknown) => error);
-    const health = await fetch(url.replace('ws:', 'http:') + '/health').catch(() => undefined);
+    // Asked first of the one stopping — as its name, then its first try: it turns the new invocation away, and the
+    // other runs it.
+    const order = [stoppingUrl, stoppingUrl, `ws://127.0.0.1:${String(service.address().port)}`];
+    let asked = 0;
+    const elsewhere = await ask(
+      createRemoteRunner({ url: () => order[Math.min(asked++, order.length - 1)] ?? '', secret: SECRET })
+    );
+    const health = await fetch(stoppingUrl.replace('ws:', 'http:') + '/health').catch(() => undefined);
 
     expect(await running).toBe('finished');
-    expect(refused instanceof FunctionFailure && refused.reason).toBe('busy');
-    expect(String(refused)).toContain('is stopping');
+    expect(elsewhere).toBe('ran');
     expect(health?.status).toBe(503);
     await closed;
   });

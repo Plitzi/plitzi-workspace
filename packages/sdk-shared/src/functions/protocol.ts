@@ -15,7 +15,8 @@ import type { FunctionsManifest } from '../types';
  * its answer starts then, not while it was being placed. A runner sends it to a 1.2 platform alone.
  * 1.3 added `waited`: how long the invocation waited for the runner's CPU — a turn at running JavaScript, shared with the
  * other invocations — which is the runner's time, not the code's: the platform's wait for its answer grows by it. A
- * runner sends it to a 1.3 platform alone.
+ * runner sends it to a 1.3 platform alone. And `queue`: with every runner full, the platform asks one to keep the
+ * invocation until it has room rather than turn it away — the runner says `queued`, then `accepted` once it starts.
  */
 export const FUNCTIONS_PROTOCOL = '1.3';
 
@@ -306,7 +307,15 @@ export type SpaceFunctions = {
 /** The messages of one runner connection (our own runner service), each side's in turn. */
 export type RunnerRequestMessage =
   | { type: 'describe'; protocol: string; bundle: FunctionsBundle }
-  | { type: 'invoke'; protocol: string; bundleId: string; invocation: FunctionInvocation; limits: FunctionLimits }
+  | {
+      type: 'invoke';
+      protocol: string;
+      bundleId: string;
+      invocation: FunctionInvocation;
+      limits: FunctionLimits;
+      /** Every runner was full: keep it until there is room, rather than turn it away (1.3). */
+      queue?: boolean;
+    }
   | { type: 'bundle'; bundle: FunctionsBundle }
   | { type: 'answer'; id: number; answer: FunctionAnswer }
   /** The invocation is asked to end — for a job's slice, with why (a `FunctionJobStop`). */
@@ -315,6 +324,8 @@ export type RunnerRequestMessage =
 export type RunnerResponseMessage =
   /** The invocation was taken — a free isolate and memory for it (1.2): what its answer is waited for from. */
   | { type: 'accepted' }
+  /** Kept until it has room for it (1.3, `queue`): `accepted` follows once it starts — what its time is counted from. */
+  | { type: 'queued' }
   /** It waited this long for the runner's CPU since it last said (1.3): the runner's time, which the deadline grows by. */
   | { type: 'waited'; ms: number }
   | { type: 'needBundle' }
