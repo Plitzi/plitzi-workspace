@@ -170,6 +170,29 @@ describe('how much a job worker takes', () => {
     expect(job.runAt).toBeGreaterThanOrEqual(Math.ceil((MIDNIGHT + 1) / 60_000) * 60_000);
   });
 
+  // The same code meets the same limit on every attempt: two more would spend a worker for nothing.
+  it('sets aside at once a job stopped at a limit its plan sets, and retries one stopped at its time', async () => {
+    const test = world(() => {
+      throw new RunLimitReached('cpu', 'Stopped after 100 ms of CPU');
+    });
+    await test.job();
+
+    await test.worker().poll();
+    await settle();
+
+    const job = await test.read();
+    expect(job).toMatchObject({ status: 'paused', attempts: 1 });
+    expect(job.error).toContain('Set aside at once: it reached a limit its plan sets');
+
+    const slow = world(() => {
+      throw new RunLimitReached('wall', 'Stopped after 10000 ms');
+    });
+    await slow.job();
+    await slow.worker().poll();
+    await settle();
+    expect(await slow.read()).toMatchObject({ status: 'pending', attempts: 1 });
+  });
+
   it('carries as many jobs at once as it was told to, and no more', async () => {
     let live = 0;
     let peak = 0;

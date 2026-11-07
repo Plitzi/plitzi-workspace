@@ -92,6 +92,18 @@ const failureOf = (result: ActionRunResult): string => {
 const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion']);
 
 /**
+ * The limits the same code meets again on every attempt — what it spends of CPU, memory, calls, output, steps or
+ * requests: a job stopped at one is set aside at once, for its owner to fix or its plan to allow more, rather than run
+ * twice more for nothing. Time is not among them: an API slow for a minute answers the next attempt.
+ */
+const SET_ASIDE_LIMITS = new Set(['cpu', 'memory', 'calls', 'output', 'steps', 'requests', 'response']);
+
+/** Why a job stopped at one of {@link SET_ASIDE_LIMITS} waits for somebody. */
+export const limitSetAsideError = (said: string): string =>
+  `Set aside at once: it reached a limit its plan sets, which it would reach again on every attempt. Fix it, or give ` +
+  `its plan more, then resume it. It said: ${said}`;
+
+/**
  * Why a job that failed every attempt waits: it is set aside (`paused`) for somebody to read its runs and decide —
  * resume it once fixed, with every attempt again, or cancel it.
  */
@@ -553,6 +565,24 @@ export const createJobWorker = ({
       // Its account's CPU for the minute, spent: not now rather than wrong — back next minute, its attempt refunded.
       if (result.limit === 'cpuBudget') {
         await release(job, msToNextMinute((await queue.now()).getTime()), failureOf(result));
+
+        return;
+      }
+
+      if (result.limit && SET_ASIDE_LIMITS.has(result.limit)) {
+        const said = failureOf(result);
+        serverLog.warn(
+          'Actions',
+          `job ${job.id} of space ${String(job.spaceId)} set aside at its plan's limit: ${said}`
+        );
+        await settle({
+          jobId: job.id,
+          workerId,
+          status: 'paused',
+          runId: run.runId,
+          error: limitSetAsideError(said),
+          attempt: { status: 'failed', workerId, runId: run.runId, error: said }
+        });
 
         return;
       }

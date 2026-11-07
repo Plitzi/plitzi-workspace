@@ -247,6 +247,9 @@ space while it hydrates.
   (`RunGuards.room()`); a job refused `over_capacity` or `duplicate` was released with a failure's backoff — a burst's
   jobs each waited 30–60 s for a slot that freed in a second. `perProcess` defaults to 100 plus `jobs.workers`: a
   process's jobs are calls too, and a worker of 256 jobs at once stopped at 100.
+- **A job stopped at a limit its plan sets — CPU, memory, calls, output, steps, requests — is set aside at once**, saying
+  so, for its owner to fix or its plan to allow more: the same code meets it on every attempt. One stopped at its time
+  is still retried — a slow API answers the next attempt.
 - **A job whose account spent its functions' CPU for the minute goes back for the next one**, its attempt refunded — a
   budget over the minute is "not now", and a busy minute set healthy jobs aside after three. `ActionRunResult` says the
   limit that stopped a run (`limit`).
