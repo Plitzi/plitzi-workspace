@@ -331,12 +331,17 @@ export const createIsolateRunner = ({
     let isolateCpuMs = 0;
     /** What the runner spent on the run's behalf — a PBKDF2 derivation — which the isolate's clock never sees. */
     let hostCpuMs = 0;
+    /**
+     * The isolate's CPU once it was ready — the guest and the bundle compiled, the first time on a runner without V8's
+     * cache of them: the platform's work, not the space's code. Its time is the code's own from there.
+     */
+    let readyCpuMs: number | undefined;
     const readCpu = (): number => {
       if (!isolate.isDisposed) {
         isolateCpuMs = Number(isolate.cpuTime) / 1e6;
       }
 
-      return isolateCpuMs + hostCpuMs;
+      return (readyCpuMs === undefined ? 0 : isolateCpuMs - readyCpuMs) + hostCpuMs;
     };
     const stop = (reason: FunctionStopReason): void => {
       stopped ??= reason;
@@ -438,6 +443,8 @@ export const createIsolateRunner = ({
       module.instantiateSync(context, specifier => {
         throw new Error(`"${specifier}" cannot be imported: a bundle is one module`);
       });
+      // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU.
+      readyCpuMs = Number(isolate.cpuTime) / 1e6;
       await module.evaluate({ timeout: limits.cpuMs });
       const definition = module.namespace.getSync('default', { reference: true });
       if (definition.typeof !== 'object') {

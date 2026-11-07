@@ -209,6 +209,9 @@ space while it hydrates.
   takes it: protocol **1.2** adds `accepted`, which a runner sends a 1.2 platform alone. Deploy the runners first. A
   burst no longer spends invocations' wall time queued on one runner while others are idle (`503 … ran out of what it
   may spend`).
+- **An invocation's CPU is its code's.** It is counted from the moment its isolate is ready — the guest and the bundle
+  compiled — so the first invocation on a runner that never ran the bundle (a runner just started, mid-burst) no longer
+  pays its compile from its own CPU limit (`Stopped after 100 ms of CPU`), and what it is billed is its code alone.
 - **`jobs.helps`**: whose jobs a worker takes besides its own while it has more than one slot free — a larger worker kept
   for the heavy jobs helps the others while idle, keeping a slot for its own.
 

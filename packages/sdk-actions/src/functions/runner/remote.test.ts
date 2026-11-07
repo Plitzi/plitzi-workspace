@@ -489,6 +489,26 @@ describe('the runner service, through the remote runner', () => {
     });
   });
 
+  // A runner compiles a bundle it never ran — the first invocation after it starts, mid-burst — and that is the
+  // platform's work: the invocation's CPU is its code's alone.
+  it('counts an invocation’s CPU from its code, never what compiling its bundle cost', async () => {
+    const filler = Array.from(
+      { length: 12_000 },
+      (_, index) => `const filler${String(index)} = (a) => a + ${String(index)};`
+    );
+    const code = `${filler.join('\n')}\nexport default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };`;
+
+    const value = await remote.invoke({
+      bundle: { id: 'a-bundle-heavy-to-compile', load: () => Promise.resolve(code) },
+      invocation,
+      limits: { ...LIMITS, cpuMs: 5 },
+      answer: () => Promise.resolve(null),
+      signal: new AbortController().signal
+    });
+
+    expect(value).toBe('ran');
+  });
+
   it('needs a real secret to start', async () => {
     await expect(startFunctionsRunnerService({ secret: 'short' })).rejects.toThrow('at least 32 characters');
   });
