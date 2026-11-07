@@ -218,7 +218,7 @@ space while it hydrates.
   behind) it claims none either, saying so once a reason. A job waiting a minute on an API no longer holds the others
   up. It runs one job a worker died running (`needsMemoryMb`) at a time (`JobClaimMemory.takesNeeding`), and helps
   others (`jobs.helps`) with half its memory. A job that ends hands its slot to the next at once.
-- **A runner reserves each invocation it took in the last second its share** beside what it holds: a burst taken within
+- **A runner reserves each invocation it took in the last 250 ms its share** beside what it holds: a burst taken within
   one memory reading (every 100 ms) no longer all lands on the room one had — so `concurrency` can be a high ceiling.
 - **A runner past its CPU takes no invocation** (90% of its quota, or its event loop 250 ms behind): the platform places
   it on another, as for memory. `startFunctionsRunnerService({ readLoad })` for tests.

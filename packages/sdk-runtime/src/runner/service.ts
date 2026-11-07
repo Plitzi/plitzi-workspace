@@ -117,10 +117,11 @@ const MEMORY_RESERVE_SHARE = 0.25;
 
 /**
  * How long an invocation taken is still reserved its share beside what the runner holds: until its isolate is built and
- * held — what a reading of the memory then says. A burst taken within one reading is each reserved its share, not all
- * admitted on the room one had.
+ * held, and a reading of the memory (every 100 ms) says so. A burst taken within one reading is each reserved its
+ * share, not all admitted on the room one had. Held for a whole second, it capped a runner at a few dozen a second
+ * with half its memory free.
  */
-const RESERVED_FOR_MS = 1_000;
+const RESERVED_FOR_MS = 250;
 
 /** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
 const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
@@ -411,11 +412,15 @@ export const startFunctionsRunnerService = async ({
       return undefined;
     }
 
+    const kept =
+      taken.length > 0
+        ? `${mb(reserved * (taken.length + 1))} MB kept for this one and the ${String(taken.length)} it just took`
+        : `${mb(reserved)} MB kept for this one`;
+
     return (
       `The functions runner is short of memory — ${mb(memory.usedBytes)} of its ${mb(memory.limitBytes)} MB in use, ` +
-      `and an invocation is kept ${mb(reserved)} of room under the ${String(Math.round(memoryShare * 100))}% it takes ` +
-      'new ones up to — so it took none: another runner takes it. A deployment that sees this often gives the runners ' +
-      'more memory or more instances.'
+      `${kept}, under the ${String(Math.round(memoryShare * 100))}% it takes new ones up to — so it took none: another ` +
+      'runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
     );
   };
   // The isolates' own size; an engine handed in says nothing of its own, so its work is counted without one.
