@@ -8,6 +8,8 @@ import {
   STATS_LOGS_PATH,
   STATS_PATH,
   createStatsRecorder,
+  overloaded,
+  processLoad,
   sampleProcessMemory,
   withStopping
 } from '@plitzi/sdk-kernel/stats';
@@ -24,7 +26,14 @@ import {
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
 
 import type { IsolateRunnerOptions } from './isolate';
-import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
+import type {
+  MemoryReading,
+  ProcessLoad,
+  RunEnd,
+  RunLabel,
+  StatsConfig,
+  StatsRecorder
+} from '@plitzi/sdk-kernel/stats';
 import type {
   FunctionAnswer,
   FunctionFailureReason,
@@ -84,6 +93,11 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
   shutdown?: { announceMs?: number; graceMs?: number };
   /** How full the process is; its resident memory against its container's limit by default. For tests. */
   readMemory?: () => MemoryReading;
+  /**
+   * How loaded its CPU is (`processLoad` by default): past `LOAD_LIMITS` it takes no new invocation — the platform places
+   * it on another runner — so a runner whose invocations are spending its CPU does not slow every one of them down.
+   */
+  readLoad?: () => ProcessLoad;
 };
 
 export type FunctionsRunnerService = {
@@ -333,6 +347,7 @@ export const startFunctionsRunnerService = async ({
   announce = true,
   shutdown,
   readMemory = sampleProcessMemory(),
+  readLoad = processLoad,
   ...isolate
 }: FunctionsRunnerServiceOptions): Promise<FunctionsRunnerService> => {
   if (secret.length < 32) {
@@ -370,11 +385,15 @@ export const startFunctionsRunnerService = async ({
 
     const memory = readMemory();
     const reserved = limits.memoryMb * 1048576 * MEMORY_RESERVE_SHARE;
-    if (memory.usedBytes + reserved <= memory.limitBytes * memoryShare) {
-      return undefined;
-    }
-
     const mb = (bytes: number) => String(Math.round(bytes / 1048576));
+    if (memory.usedBytes + reserved <= memory.limitBytes * memoryShare) {
+      const cpu = overloaded(readLoad());
+
+      return cpu
+        ? `The functions runner is short of CPU — ${cpu} — so it took none: another runner takes it. A deployment that ` +
+            'sees this often gives the runners more CPU or more instances.'
+        : undefined;
+    }
 
     return (
       `The functions runner is short of memory — ${mb(memory.usedBytes)} of its ${mb(memory.limitBytes)} MB in use, ` +

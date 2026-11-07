@@ -39,6 +39,9 @@ const entry = (id = 'digest'): ActionEntry => ({
   }
 });
 
+/** A process with all its CPU free: what the tests run as unless they say otherwise, whatever the machine is doing. */
+const idle = () => ({ cpuCores: 0, cpuShare: 0, lagMs: 0 });
+
 const MIDNIGHT = Date.parse('2026-03-01T00:00:00Z');
 
 const jobInput = (over: Partial<JobInput> = {}): JobInput => ({
@@ -72,7 +75,16 @@ const world = (run: FunctionTask['run'], entries = [entry()]) => {
       now += ms;
     },
     worker: (over: Parameters<typeof createJobWorker>[0] extends infer T ? Partial<T> : never = {}) =>
-      createJobWorker({ queue, lookups, module, pollMs: 5, leaseMs: 1_000, onError: () => {}, ...over }),
+      createJobWorker({
+        queue,
+        lookups,
+        module,
+        pollMs: 5,
+        leaseMs: 1_000,
+        onError: () => {},
+        readLoad: idle,
+        ...over
+      }),
     job: async (over: Partial<JobInput> = {}) => {
       await queue.enqueue(jobInput(over));
     },
@@ -390,6 +402,68 @@ describe('createJobWorker', () => {
       warn.mock.calls.filter(([, said]) => typeof said === 'string' && said.includes('takes no new job'))
     ).toHaveLength(1);
     warn.mockRestore();
+  });
+
+  it('takes no new job with its CPU spent, whatever slots it has, and says so once', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    const test = world(() => ({ ok: true }));
+    await test.job();
+    const busy = test.worker({ workers: 8, readLoad: () => ({ cpuCores: 0.24, cpuShare: 0.96, lagMs: 40 }) });
+
+    expect([await busy.poll(), await busy.poll()]).toEqual([0, 0]);
+    expect(
+      warn.mock.calls.filter(([, said]) => typeof said === 'string' && said.includes('CPU is 96% used'))
+    ).toHaveLength(1);
+    warn.mockRestore();
+  });
+
+  // Its size is the most it may hold, not how many it runs: a job waiting a minute on somebody's API holds a few MiB,
+  // and what it takes is what its memory still has room for — read off what the ones it runs hold.
+  it('takes as many jobs at once as its memory has room for, by what the ones it runs hold', async () => {
+    const test = world(() => new Promise(() => {}));
+    for (let index = 0; index < 40; index += 1) {
+      // Over four spaces: a space runs ten at once (`concurrency.perSpace`), however much room the worker has.
+      await test.job({ id: `wait-${String(index)}`, spaceId: (index % 4) + 1 });
+    }
+
+    let rssMb = 300;
+    const worker = test.worker({
+      workers: 64,
+      leaseMs: 60_000,
+      memory: () => ({ mb: 512, ceilingMb: 1024 }),
+      readMemory: () => ({ rssMb, heapUsedMb: 100, heapLimitMb: 1024 })
+    });
+
+    // 135 MiB of room under 85% of 512, at 8 MiB a job until it has measured one.
+    expect(await worker.poll()).toBe(16);
+    await settle();
+    // The sixteen hold 2 MiB each: still reckoned eight a job, the least, which twelve more fit.
+    rssMb = 332;
+    expect(await worker.poll()).toBe(12);
+    await settle();
+    // The twenty-eight hold 4 MiB each: 23 MiB of room is two more.
+    rssMb = 412;
+    expect(await worker.poll()).toBe(2);
+    await settle();
+    expect(worker.inFlight()).toBe(30);
+  });
+
+  // Each may need all a worker has: two at once is the death the first one escaped.
+  it('runs one job a worker died running at a time, and hands the others back untouched', async () => {
+    const test = world(() => new Promise(() => {}));
+    await test.job({ id: 'heavy-a', needsMemoryMb: 513 });
+    await test.job({ id: 'heavy-b', needsMemoryMb: 513 });
+    const large = test.worker({
+      workers: 4,
+      leaseMs: 60_000,
+      memory: () => ({ mb: 1024, ceilingMb: 1024 }),
+      readMemory: () => ({ rssMb: 300, heapUsedMb: 100, heapLimitMb: 1024 })
+    });
+
+    expect(await large.poll()).toBe(1);
+    await settle();
+    expect(await large.poll()).toBe(0);
+    expect(await test.read('heavy-b')).toMatchObject({ status: 'pending', attempts: 0 });
   });
 
   // A budget over the minute spent is not now, not wrong: a busy minute must not set a healthy job aside.

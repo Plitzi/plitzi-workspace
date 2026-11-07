@@ -212,9 +212,17 @@ space while it hydrates.
 - **An invocation's CPU is its code's.** It is counted from the moment its isolate is ready — the guest and the bundle
   compiled — so the first invocation on a runner that never ran the bundle (a runner just started, mid-burst) no longer
   pays its compile from its own CPU limit (`Stopped after 100 ms of CPU`), and what it is billed is its code alone.
-- **A worker runs as many jobs as its memory holds, and takes a slot again as soon as a job ends.** `jobs.workers` is the
-  most at once: with `claimMemory`, near its memory (85%) it takes no new job, saying so once. A job that ends hands its
-  slot to the next at once instead of at the next poll — a queue of short jobs ran at one a second a slot.
+- **A worker runs as many jobs as its memory and CPU hold, and takes a slot again as soon as a job ends.** `jobs.workers`
+  is a ceiling: with `claimMemory` it claims no more at once than its memory has room for — what one more is reckoned to
+  hold read off the ones it runs — and none near its memory (85%); near all of its CPU (90%, or its event loop 250 ms
+  behind) it claims none either, saying so once a reason. A job waiting a minute on an API no longer holds the others
+  up. It runs one job a worker died running (`needsMemoryMb`) at a time (`JobClaimMemory.takesNeeding`), and helps
+  others (`jobs.helps`) with half its memory. A job that ends hands its slot to the next at once.
+- **A runner past its CPU takes no invocation** (90% of its quota, or its event loop 250 ms behind): the platform places
+  it on another, as for memory. `startFunctionsRunnerService({ readLoad })` for tests.
+- **`processLoad()`, `overloaded()`, `LOAD_LIMITS`, `cpuLimitCores()`** (`@plitzi/sdk-kernel/stats`): a process's CPU over
+  the last two seconds against its container's quota (cgroup v1 or v2, else the machine's cores) and its event loop's
+  delay — what a worker and a runner admit work by.
 - **A job whose account spent its functions' CPU for the minute goes back for the next one**, its attempt refunded — a
   budget over the minute is "not now", and a busy minute set healthy jobs aside after three. `ActionRunResult` says the
   limit that stopped a run (`limit`).

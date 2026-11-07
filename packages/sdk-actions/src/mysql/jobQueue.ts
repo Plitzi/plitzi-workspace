@@ -241,7 +241,7 @@ export const createMysqlJobQueue = ({
        * holds one lock and cannot.
        */
       for (let round = 0; round < CLAIM_ROUNDS && taken.length < limit; round += 1) {
-        const where = claimable(at, spaces, memory?.mb);
+        const where = claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb);
         const rows = await selectRows<JobRow>(
           conn,
           `SELECT * FROM ${t.jobs} WHERE ${where.sql} ORDER BY run_at LIMIT ?`,

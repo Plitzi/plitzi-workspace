@@ -55,6 +55,11 @@ export type JobClaimMemory = {
   mb: number;
   /** The most any worker of the deployment may hold, in MiB: a job that needs more is set aside (`paused`), saying so. */
   ceilingMb: number;
+  /**
+   * Whether it takes a job a worker died running, besides its own: not while it runs one already — each may need all it
+   * has. Default yes.
+   */
+  takesNeeding?: boolean;
 };
 
 /** The jobs a worker died running, as `summarize` counts them. */

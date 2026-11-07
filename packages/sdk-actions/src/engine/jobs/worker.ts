@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { serverLog } from '@plitzi/sdk-kernel/log';
+import { overloaded, processLoad } from '@plitzi/sdk-kernel/stats';
 
 import { KEPT_CALL_MS } from './calls';
 import { createFailureStreak } from './failureStreak';
-import { memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
+import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { ActionRunError } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
@@ -12,6 +13,7 @@ import type { FunctionJobsService } from '../../functions/jobs';
 import type { JobClaimMemory, JobQueue, JobSettlement, JobSpaces } from '../../types';
 import type { ActionsModule } from '../module';
 import type { ActionLookups, ActionRunResult } from '../types';
+import type { ProcessLoad } from '@plitzi/sdk-kernel/stats';
 import type { Job } from '@plitzi/sdk-shared';
 
 /**
@@ -28,6 +30,15 @@ const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
  * moment more: when a budget over the minute may be spent again.
  */
 const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
+
+/**
+ * What a job is reckoned to hold until this worker has measured its own (what it holds over what it held idle, by the
+ * jobs it runs): a flow waiting on somebody else's API holds a few MiB.
+ */
+const JOB_MEMORY_FLOOR_MB = 8;
+
+/** The share of its memory a worker helps others with while idle (`helps`): the rest is kept for what only it may run. */
+const HELP_MEMORY_SHARE = 0.5;
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
@@ -73,7 +84,8 @@ export type JobWorkerOptions = {
    * to set because only it knows what its jobs do: flows that wait on somebody else's API are cheap to hold many of,
    * flows that render or transform are not. Zero makes this replica a producer only — which is how a deployment
    * dedicates a pod to running jobs and leaves the ones serving pages alone. With `memory`, it is the most: near its
-   * memory the replica takes no new job, whatever slots it has. A slot is taken again as soon as its job ends.
+   * memory the replica takes no new job, whatever slots it has, and takes no more at once than its memory has room for.
+   * Near all of its CPU it takes none either. A slot is taken again as soon as its job ends.
    *
    * It does not widen the run guards. A replica whose `concurrency.perSpace` is 10 will hold 10 runs for one space
    * however many workers it has, and the rest go back to the queue and come round again.
@@ -104,6 +116,8 @@ export type JobWorkerOptions = {
   memoryWatchMs?: number;
   /** This process's memory, as the watch reads it. Default `process.memoryUsage.rss()` and V8's heap. */
   readMemory?: () => MemoryReading;
+  /** This process's CPU and event loop, as a claim reads them: past `LOAD_LIMITS` it takes nothing. Default `processLoad`. */
+  readLoad?: () => ProcessLoad;
   /**
    * How long a claim is held before another worker may take the job over.
    *
@@ -159,6 +173,7 @@ export const createJobWorker = ({
   helps,
   memoryWatchMs = 1_000,
   readMemory = readProcessMemory,
+  readLoad = processLoad,
   leaseMs = 30_000,
   backoff = {},
   workerId = `${process.pid}-${randomUUID().slice(0, 8)}`,
@@ -178,8 +193,10 @@ export const createJobWorker = ({
   /** A pass asked for while one was under way: run once that one ends. Read through a call: another sets it meanwhile. */
   let again = false;
   const askedAgain = (): boolean => again;
-  /** Whether it is holding back new jobs for its memory, so it says so once, not every poll. */
-  let holdingBack = false;
+  /** Why it is holding back new jobs — its memory, its CPU — so it says so once a reason, not every poll. */
+  let holdingBack: string | undefined;
+  /** What it held the last time it ran nothing: what a job holds is read over it. */
+  let idleRssMb: number | undefined;
   let watch: NodeJS.Timeout | undefined;
   let stopping = false;
   let pass: Promise<void> | undefined;
@@ -535,6 +552,38 @@ export const createJobWorker = ({
     }
   };
 
+  /**
+   * How many more jobs its memory has room for, under `share` of what it may hold — and of what V8 lets its heap grow
+   * to: what it holds over what it held idle, shared by the jobs it runs, is what one more is reckoned to hold.
+   */
+  const roomFor = (reading: MemoryReading, limitMb: number, share: number): number => {
+    if (active.size === 0) {
+      idleRssMb = reading.rssMb;
+    }
+
+    const perJobMb =
+      active.size === 0
+        ? JOB_MEMORY_FLOOR_MB
+        : Math.max(JOB_MEMORY_FLOOR_MB, (reading.rssMb - (idleRssMb ?? reading.rssMb)) / active.size);
+    const roomMb = Math.min(limitMb * share - reading.rssMb, reading.heapLimitMb * share - reading.heapUsedMb);
+
+    return Math.max(0, Math.floor(roomMb / perJobMb));
+  };
+
+  /** Holds back new jobs for `reason`, saying so once a reason; nothing, to say it takes them again. */
+  const holdBack = (reason: string | undefined): void => {
+    if (reason && reason !== holdingBack) {
+      serverLog.warn('Actions', `job worker ${workerId}: ${reason} — takes no new job until it is not`);
+    }
+
+    holdingBack = reason;
+  };
+
+  /** Whether a job is one a worker died running, which may need all this one has. */
+  const needing = (job: Job): boolean => job.needsMemoryMb !== undefined;
+  /** The ids of the jobs it runs that a worker died running: one at a time. */
+  const runningNeeding = new Set<string>();
+
   const poll = async (): Promise<number> => {
     const free = workers - active.size;
     if (stopping || free <= 0) {
@@ -542,31 +591,31 @@ export const createJobWorker = ({
     }
 
     const asked = spaces?.();
-    const holds = memory?.();
-    // Near its memory it takes no new job, whatever slots it has: what it holds finishes first.
-    const reading = holds ? readMemory() : undefined;
-    if (holds && reading && nearMemory(reading, holds.mb)) {
-      if (!holdingBack) {
-        holdingBack = true;
-        serverLog.warn(
-          'Actions',
-          `near its memory (${memoryWords(reading, holds.mb)}): takes no new job until it is not`
-        );
-      }
-
+    const limits = memory?.();
+    const reading = limits ? readMemory() : undefined;
+    // Near its memory or its CPU it takes no new job, whatever slots it has: what it holds finishes first.
+    const busy =
+      (limits && reading && nearMemory(reading, limits.mb)
+        ? `near its memory (${memoryWords(reading, limits.mb)})`
+        : undefined) ?? overloaded(readLoad());
+    holdBack(busy);
+    if (busy) {
       return 0;
     }
 
-    holdingBack = false;
+    const room = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
+    const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
     const claimed = await queue.claim({
       workerId,
       leaseMs,
-      limit: free,
+      limit: Math.max(1, Math.min(free, room)),
       ...(asked ? { spaces: asked } : {}),
       ...(holds ? { memory: holds } : {})
     });
-    // Its own work first; idle past one slot, it takes others' — and keeps that one for what only it may run.
-    const spare = free - claimed.length - 1;
+    // Its own work first; idle past one slot, it takes others' with half its memory — the rest, and a slot, kept for
+    // what only it may run.
+    const helpRoom = limits && reading ? roomFor(reading, limits.mb, HELP_MEMORY_SHARE) - claimed.length : free;
+    const spare = Math.min(free - claimed.length - 1, helpRoom);
     const helping = spare > 0 ? helps?.() : undefined;
     if (helping) {
       claimed.push(
@@ -587,8 +636,16 @@ export const createJobWorker = ({
       return 0;
     }
 
-    for (const job of claimed) {
+    // One a worker died running at a time: what else this claim took of them goes back, for another worker or later.
+    const extra = claimed.filter(needing).slice(runningNeeding.size === 0 ? 1 : 0);
+    await Promise.all(
+      extra.map(job => release(job, 0, 'not started: the worker runs one that needs its memory already'))
+    );
+    const started = claimed.filter(job => !extra.includes(job));
+
+    for (const job of started) {
       if (job.needsMemoryMb !== undefined) {
+        runningNeeding.add(job.id);
         serverLog.warn(
           'Actions',
           `job ${job.id} of space ${String(job.spaceId)}: a worker died running it — running it here, which may hold ` +
@@ -602,13 +659,14 @@ export const createJobWorker = ({
       // Its slot is taken again at once, not at the next poll: a queue of short jobs runs as fast as they end.
       void running.finally(() => {
         inFlight.delete(running);
+        runningNeeding.delete(job.id);
         if (timer && !stopping) {
           void guarded();
         }
       });
     }
 
-    return claimed.length;
+    return started.length;
   };
 
   /** Renews every claim this worker holds, and stops the ones an operator asked to cancel. */

@@ -89,6 +89,20 @@ export const describeMemoryNeeds = (ctx: MemoryNeedsSubject): void => {
     ).toMatchObject([{ id: 'job-1' }]);
   });
 
+  // Each may need all a worker has: one that runs one already takes its own work alone until it ends.
+  it('leaves a job a worker died running to another while the claim says it runs one already', async () => {
+    await ctx.queue().enqueue(await ctx.job({ needsMemoryMb: 513 }));
+
+    expect(
+      await ctx
+        .queue()
+        .claim({ workerId: 'pod-large', leaseMs: 60_000, limit: 1, memory: { ...large, takesNeeding: false } })
+    ).toEqual([]);
+    expect(await ctx.queue().claim({ workerId: 'pod-large', leaseMs: 60_000, limit: 1, memory: large })).toMatchObject([
+      { id: 'job-1', holderMemoryMb: 1024 }
+    ]);
+  });
+
   // What an autoscaler reads: the work a claim would take now, so a pool grows with what waits for it.
   it('counts what a claim would take now: due, of its spaces, and what it may hold', async () => {
     const at = (await ctx.queue().now()).getTime();

@@ -28,7 +28,7 @@ const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
 const fits = (job: Job, spaces: JobSpaces | undefined, memory: JobClaimMemory | undefined): boolean =>
   job.needsMemoryMb === undefined
     ? takesSpace(spaces, job.spaceId)
-    : memory !== undefined && memory.mb >= job.needsMemoryMb;
+    : memory !== undefined && memory.takesNeeding !== false && memory.mb >= job.needsMemoryMb;
 
 /**
  * The queue's rules — what `enqueue`, `claim`, `settle`… do to the jobs and schedules — over a state handed to them,
