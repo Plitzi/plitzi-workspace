@@ -125,6 +125,9 @@ export type SSRActionConfig = {
    * takes no new run, of either kind: 0.85 by default. A slot ceiling counts runs, not what they hold, and runs reading
    * large answers can fill a process long before its slots — refusing the next one (`over_capacity`, with a retry) is
    * what keeps the process alive for the runs already in it.
+   *
+   * `perSpace` is 10 by default and `perProcess` 100, plus the job workers of a process that runs jobs (`jobs.workers`):
+   * its jobs are calls too. A job worker claims only what these leave room for — never a job of a space at its ceiling.
    */
   concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number; memoryShare?: number };
   /** Inbound webhooks are public by construction, so they are counted per caller per minute. Default 60. */

@@ -228,6 +228,11 @@ space while it hydrates.
 - **`processLoad()`, `overloaded()`, `LOAD_LIMITS`, `cpuLimitCores()`** (`@plitzi/sdk-kernel/stats`): a process's CPU over
   the last two seconds against its container's quota (cgroup v1 or v2, else the machine's cores) and its event loop's
   delay — what a worker and a runner admit work by.
+- **A worker claims no job its guards would refuse, and one refused "not now" comes round in a second or two.** It skips
+  the spaces at their `concurrency.perSpace` ceiling and claims no more than `perProcess` leaves room for
+  (`RunGuards.room()`); a job refused `over_capacity` or `duplicate` was released with a failure's backoff — a burst's
+  jobs each waited 30–60 s for a slot that freed in a second. `perProcess` defaults to 100 plus `jobs.workers`: a
+  process's jobs are calls too, and a worker of 256 jobs at once stopped at 100.
 - **A job whose account spent its functions' CPU for the minute goes back for the next one**, its attempt refunded — a
   budget over the minute is "not now", and a busy minute set healthy jobs aside after three. `ActionRunResult` says the
   limit that stopped a run (`limit`).

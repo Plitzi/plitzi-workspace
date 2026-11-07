@@ -130,9 +130,15 @@ export type RunGuards = {
   active: () => number;
   /** Runs in flight against what this process takes at once, by kind: what its stats report as its slots. */
   slots: () => { calls: { used: number; of: number }; renders: { used: number; of: number } };
+  /**
+   * The room this process has for more calls: how many more it takes, and the spaces already at their own ceiling — what
+   * a job worker claims by, so it never takes a job only to hand it back refused.
+   */
+  room: () => { calls: number; fullSpaces: number[] };
 };
 
-const DEFAULTS = { perSpace: 10, perProcess: 100, renderPerProcess: 1000, memoryShare: 0.85 };
+export const DEFAULT_GUARDS = { perSpace: 10, perProcess: 100, renderPerProcess: 1000, memoryShare: 0.85 };
+const DEFAULTS = DEFAULT_GUARDS;
 
 /**
  * How long a cancellation waits to be read, when the replica that owns the run is not the one that took the
@@ -501,5 +507,21 @@ export const createRunGuards = (
     renders: { used: count(run => run.kind === 'render'), of: renderPerProcess }
   });
 
-  return { begin, join, end, get: runId => byId.get(runId), replay, cancel, active: () => byKey.size, slots };
+  const room = () => {
+    const bySpace = new Map<number, number>();
+    let calls = 0;
+    byKey.forEach(run => {
+      if (run.kind === 'call') {
+        calls += 1;
+        bySpace.set(run.spaceId, (bySpace.get(run.spaceId) ?? 0) + 1);
+      }
+    });
+
+    return {
+      calls: Math.max(0, perProcess - calls),
+      fullSpaces: [...bySpace.entries()].filter(([, held]) => held >= perSpace).map(([spaceId]) => spaceId)
+    };
+  };
+
+  return { begin, join, end, get: runId => byId.get(runId), replay, cancel, active: () => byKey.size, slots, room };
 };

@@ -1,9 +1,9 @@
 import { fleetStore } from '@plitzi/sdk-kernel/http';
 import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import { createActionJobs } from './jobs/jobs';
+import { DEFAULT_JOB_WORKERS, createActionJobs } from './jobs/jobs';
 import { DEFAULT_MAX_ATTEMPTS } from './jobs/schedules';
-import { createRunGuards } from './runtime/guards';
+import { DEFAULT_GUARDS, createRunGuards } from './runtime/guards';
 import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
 import { createMemoryKv, KV_METHODS } from './runtime/memoryKv';
@@ -189,7 +189,17 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
    * runs — because per process it is not a guarantee: the same double-click behind a load balancer lands on two
    * replicas and both run. With none configured this is one process's Map, which is exactly right for one.
    */
-  const guards = createRunGuards(config.concurrency, config.kv, config.idempotency);
+  // A process that runs jobs carries them as calls too: unless the deployment said, it takes its job workers beside the
+  // page calls it always took — or a worker of 256 jobs at once stopped at 100, saying nothing.
+  const jobWorkers = config.jobs ? (config.jobs.workers ?? DEFAULT_JOB_WORKERS) : 0;
+  const guards = createRunGuards(
+    {
+      ...config.concurrency,
+      perProcess: config.concurrency?.perProcess ?? DEFAULT_GUARDS.perProcess + jobWorkers
+    },
+    config.kv,
+    config.idempotency
+  );
   const kv = createKvStore(config.kv ?? createMemoryKv());
   const limitsFor = async (spaceId: number, document: ActionDocument) =>
     resolveLimits(config.limits, document.limits, await config.limitsFor?.(spaceId));

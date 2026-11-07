@@ -32,6 +32,27 @@ const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
 
 /**
+ * How soon a job refused "not now" comes round again: a slot of its space frees in seconds, not the half minute and more
+ * a failure's backoff waits — a burst's jobs refused at their space's ceiling each waited 30–60 s for nothing.
+ */
+const tryAgainMs = (): number => 1_000 + Math.floor(Math.random() * 1_000);
+
+/** `spaces` without those at their ceiling: what a claim takes, so no job is claimed only to be handed back refused. */
+const withoutFull = (spaces: JobSpaces | undefined, full: number[]): JobSpaces | undefined => {
+  if (full.length === 0) {
+    return spaces;
+  }
+
+  if (!spaces) {
+    return { except: full };
+  }
+
+  return 'only' in spaces
+    ? { only: spaces.only.filter(spaceId => !full.includes(spaceId)) }
+    : { except: [...new Set([...spaces.except, ...full])] };
+};
+
+/**
  * What a job is reckoned to hold until this worker has measured its own (what it holds over what it held idle, by the
  * jobs it runs): a flow waiting on somebody else's API holds a few MiB.
  */
@@ -443,7 +464,7 @@ export const createJobWorker = ({
        * operator sees a queue that is waiting rather than a queue that has been emptied.
        */
       if (!refusal || TRY_AGAIN.has(refusal)) {
-        await release(job, retryDelay(1), `not started: ${refusal ?? messageOf(error)}`);
+        await release(job, tryAgainMs(), `not started: ${refusal ?? messageOf(error)}`);
 
         return;
       }
@@ -590,33 +611,36 @@ export const createJobWorker = ({
       return 0;
     }
 
-    const asked = spaces?.();
+    const room = module.guards.room();
+    const asked = withoutFull(spaces?.(), room.fullSpaces);
     const limits = memory?.();
     const reading = limits ? readMemory() : undefined;
     // Near its memory or its CPU it takes no new job, whatever slots it has: what it holds finishes first.
     const busy =
       (limits && reading && nearMemory(reading, limits.mb)
         ? `near its memory (${memoryWords(reading, limits.mb)})`
-        : undefined) ?? overloaded(readLoad());
+        : undefined) ??
+      overloaded(readLoad()) ??
+      (room.calls === 0 ? 'carries as many calls as it takes at once (`concurrency.perProcess`)' : undefined);
     holdBack(busy);
     if (busy) {
       return 0;
     }
 
-    const room = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
+    const memoryRoom = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
     const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
     const claimed = await queue.claim({
       workerId,
       leaseMs,
-      limit: Math.max(1, Math.min(free, room)),
+      limit: Math.max(1, Math.min(free, memoryRoom, room.calls)),
       ...(asked ? { spaces: asked } : {}),
       ...(holds ? { memory: holds } : {})
     });
     // Its own work first; idle past one slot, it takes others' with half its memory — the rest, and a slot, kept for
     // what only it may run.
     const helpRoom = limits && reading ? roomFor(reading, limits.mb, HELP_MEMORY_SHARE) - claimed.length : free;
-    const spare = Math.min(free - claimed.length - 1, helpRoom);
-    const helping = spare > 0 ? helps?.() : undefined;
+    const spare = Math.min(free - claimed.length - 1, helpRoom, room.calls - claimed.length);
+    const helping = spare > 0 ? withoutFull(helps?.(), room.fullSpaces) : undefined;
     if (helping) {
       claimed.push(
         ...(await queue.claim({

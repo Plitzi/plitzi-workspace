@@ -77,6 +77,16 @@ describe('createRunGuards', () => {
     await expect(guards.begin(params({ spaceId: 2, idempotencyKey: 'd' }))).resolves.toBeDefined();
   });
 
+  // What a job worker claims by: never a job of a space at its ceiling, never past the process's.
+  it('says the room it has left: calls it takes, and the spaces at their own ceiling', async () => {
+    const guards = createRunGuards({ perSpace: 2, perProcess: 5 });
+    await guards.begin(params({ idempotencyKey: 'a' }));
+    await guards.begin(params({ idempotencyKey: 'b' }));
+    await guards.begin(params({ spaceId: 2, idempotencyKey: 'c' }));
+
+    expect(guards.room()).toEqual({ calls: 2, fullSpaces: [1] });
+  });
+
   /**
    * The rule this file exists for.
    *
