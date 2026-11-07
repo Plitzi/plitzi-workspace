@@ -8,15 +8,11 @@ import { createRemoteRunner } from './remote';
 import { createActionsModule } from '../../engine/module';
 import { functionsInHand } from '../space';
 
-import type { FunctionsRunnerService, FunctionsRunnerServiceOptions } from '@plitzi/sdk-runtime/runner';
+import type { FunctionsRunnerService } from '@plitzi/sdk-runtime/runner';
 import type { ActionEntry, ElementInteraction } from '@plitzi/sdk-shared';
 import type { FunctionInvocation, FunctionLimits, FunctionRunner, SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 const SECRET = 'a-runner-secret-of-at-least-32-characters';
-
-/** A runner with all its CPU free, whatever the machine running the tests is doing, unless a test says otherwise. */
-const startRunner = (options: FunctionsRunnerServiceOptions) =>
-  startFunctionsRunnerService({ readLoad: () => ({ cpuCores: 0, cpuShare: 0, lagMs: 0 }), ...options });
 
 const LIMITS: FunctionLimits = { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 100_000, calls: 20 };
 
@@ -68,7 +64,7 @@ let service: FunctionsRunnerService;
 let remote: FunctionRunner;
 
 beforeAll(async () => {
-  service = await startRunner({ secret: SECRET, port: 0, host: '127.0.0.1' });
+  service = await startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1' });
   remote = createRemoteRunner({ url: `ws://127.0.0.1:${String(service.address().port)}`, secret: SECRET });
 });
 
@@ -154,13 +150,13 @@ describe('the runner service, through the remote runner', () => {
 
   // A runner restarting is a few seconds with nothing listening: the invocation, never sent, waits for it.
   it('tries a runner that cannot be reached again, and goes through once it is back', async () => {
-    const free = await startRunner({ secret: SECRET, port: 0, host: '127.0.0.1' });
+    const free = await startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1' });
     const { port } = free.address();
     await free.close();
     const later = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
     let back: FunctionsRunnerService | undefined;
     setTimeout(() => {
-      void startRunner({ secret: SECRET, port, host: '127.0.0.1' }).then(started => {
+      void startFunctionsRunnerService({ secret: SECRET, port, host: '127.0.0.1' }).then(started => {
         back = started;
       });
     }, 700);
@@ -184,7 +180,7 @@ describe('the runner service, through the remote runner', () => {
 
   // Nothing listening for longer: said as found nowhere — never run — and the runner is taken as away for a while.
   it('says when no runner could be reached at all, and that it is away', async () => {
-    const free = await startRunner({ secret: SECRET, port: 0, host: '127.0.0.1' });
+    const free = await startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1' });
     const { port } = free.address();
     await free.close();
     const gone = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
@@ -344,7 +340,7 @@ describe('the runner service, through the remote runner', () => {
   });
 
   it('takes no invocation short of memory, and the run is over capacity — not the code’s error', async () => {
-    const full = await startRunner({
+    const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
@@ -378,7 +374,7 @@ describe('the runner service, through the remote runner', () => {
   it('reserves each invocation it just took its share, so a burst never all lands on one reading', async () => {
     const MIB = 1_048_576;
     // 85 MiB it takes work to, a quarter of 64 MiB kept for each: five at once, the sixth turned away.
-    const burst = await startRunner({
+    const burst = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
@@ -411,39 +407,8 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
-  it('takes no invocation with its CPU spent: another runner does', async () => {
-    const busy = await startRunner({
-      secret: SECRET,
-      port: 0,
-      host: '127.0.0.1',
-      readLoad: () => ({ cpuCores: 0.5, cpuShare: 1, lagMs: 300 })
-    });
-    const runner = createRemoteRunner({
-      url: `ws://127.0.0.1:${String(busy.address().port)}`,
-      secret: SECRET,
-      waitForRunnerMs: 300
-    });
-
-    try {
-      const failure = await runner
-        .invoke({
-          bundle: { id: 'none', load: () => Promise.resolve('') },
-          invocation,
-          limits: LIMITS,
-          answer: () => Promise.resolve(null),
-          signal: new AbortController().signal
-        })
-        .catch((error: unknown) => error);
-
-      expect(failure instanceof FunctionFailure && failure.reason).toBe('busy');
-      expect(String(failure)).toContain('The functions runner is short of CPU — its CPU is 100% used');
-    } finally {
-      await busy.close();
-    }
-  });
-
   it('spreads its invocations over several runners, and gives a busy one’s to the next', async () => {
-    const full = await startRunner({
+    const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
@@ -484,7 +449,7 @@ describe('the runner service, through the remote runner', () => {
       describe: () => Promise.resolve({}),
       invoke: () => new Promise(resolve => setTimeout(() => resolve('finished'), 400))
     };
-    const stopping = await startRunner({
+    const stopping = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
@@ -544,7 +509,7 @@ describe('the runner service, through the remote runner', () => {
     const SLEEPY =
       'export default { tasks: [{ namespace: "probe", action: "run", run: (params) => new Promise(resolve => setTimeout(() => resolve(params.ms), params.ms)) }] };';
     const sleepFor = (ms: number) => ({ ...invocation, params: { ms } });
-    const one = () => startRunner({ secret: SECRET, port: 0, host: '127.0.0.1', concurrency: 1 });
+    const one = () => startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1', concurrency: 1 });
     const urlOf = (runner: FunctionsRunnerService) => `ws://127.0.0.1:${String(runner.address().port)}`;
     const ask = (remote: FunctionRunner, ms: number, wallMs = 5000) =>
       remote.invoke({
@@ -613,6 +578,6 @@ describe('the runner service, through the remote runner', () => {
   });
 
   it('needs a real secret to start', async () => {
-    await expect(startRunner({ secret: 'short' })).rejects.toThrow('at least 32 characters');
+    await expect(startFunctionsRunnerService({ secret: 'short' })).rejects.toThrow('at least 32 characters');
   });
 });

@@ -24,8 +24,10 @@ export type RemoteRunnerOptions = {
    */
   url: string | ((spaceId?: number) => string);
   /**
-   * How long an invocation waits for a runner to take it while every one is full, before it is answered `busy`: what a
-   * burst rides out while the runners' autoscaler adds some. Its own time limit starts once one takes it. 10 s.
+   * How long an invocation waits for a runner to take it while every one is full, before it is answered `busy` — and
+   * never past its caller giving up (`signal`): what a burst rides out while the runners' autoscaler adds some. Waiting
+   * for a runner is the platform's time, not the code's: its own time limit starts once one takes it. 60 s — a visitor's
+   * request outlasts a proxy's timeout past that; a job's slice or an action waits as long.
    */
   waitForRunnerMs?: number;
   secret: string;
@@ -101,7 +103,7 @@ export const createRemoteRunner = ({
   secret,
   connectTimeoutMs = 5000,
   graceMs = 5000,
-  waitForRunnerMs = 10_000
+  waitForRunnerMs = 60_000
 }: RemoteRunnerOptions): FunctionRunner => {
   /** When none of the runners a name stands for could be reached: while recent, the calls that need them are kept. */
   const away = new Map<string, number>();

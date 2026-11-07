@@ -227,7 +227,9 @@ space while it hydrates.
   default), given up while they wait on the platform and shared past a 20 ms slice so a long run holds nobody up. The
   CPU limit grows by how shared the CPU was while it ran, its time limit leaves out what it waited for a turn, and
   protocol **1.3** adds `waited`, by which the platform's wait for the answer grows too. A runner with four isolates
-  waiting per turn takes no new invocation (`busy`), for the platform to place on another. Deploy the runners first.
+  waiting per turn takes no new invocation (`busy`), for the platform to place on another — its CPU busy alone no longer
+  refuses (`readLoad` is gone from `startFunctionsRunnerService`). `waitForRunnerMs` is 60 s, from 10: with every runner
+  full, an invocation waits for one as long as its caller does, rather than failing at 10 s. Deploy the runners first.
 - **An invocation is stopped for CPU by its CPU alone.** isolated-vm's `timeout` is wall time while the isolate runs:
   given the CPU limit, a runner whose isolates shared its CPU stopped a 5 ms route as `Stopped after 100 ms of CPU`
   under load — blaming the space's code. It is given the time limit now; the CPU is the watchdog's (`cpuTime`).
