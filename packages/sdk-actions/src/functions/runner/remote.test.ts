@@ -262,9 +262,13 @@ describe('the runner service, through the remote runner', () => {
   });
 
   it('gives up on a runner that stops answering, and closes the connection', async () => {
+    // It takes the invocation, then says nothing more: its time runs from the moment it took it.
     const silent = new WebSocketServer({ port: 0, host: '127.0.0.1' });
     const closed = new Promise<void>(resolve => {
-      silent.on('connection', socket => socket.on('close', () => resolve()));
+      silent.on('connection', socket => {
+        socket.on('message', () => socket.send(JSON.stringify({ type: 'accepted' })));
+        socket.on('close', () => resolve());
+      });
     });
     await new Promise<void>(resolve => silent.on('listening', () => resolve()));
     const address = silent.address();
@@ -311,7 +315,11 @@ describe('the runner service, through the remote runner', () => {
       host: '127.0.0.1',
       readMemory: () => ({ usedBytes: 900, limitBytes: 1000 })
     });
-    const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(full.address().port)}`, secret: SECRET });
+    const runner = createRemoteRunner({
+      url: `ws://127.0.0.1:${String(full.address().port)}`,
+      secret: SECRET,
+      waitForRunnerMs: 300
+    });
 
     try {
       const failure = await runner
@@ -381,7 +389,7 @@ describe('the runner service, through the remote runner', () => {
       shutdown: { graceMs: 5000 }
     });
     const url = `ws://127.0.0.1:${String(stopping.address().port)}`;
-    const runner = createRemoteRunner({ url, secret: SECRET });
+    const runner = createRemoteRunner({ url, secret: SECRET, waitForRunnerMs: 300 });
     const ask = () =>
       runner.invoke({
         bundle: { id: 'slow', load: () => Promise.resolve('') },
@@ -424,7 +432,61 @@ describe('the runner service, through the remote runner', () => {
       signal: new AbortController().signal
     });
 
-    expect(asked).toEqual([3]);
+    // Asked again as it is placed, always for the same space.
+    expect(new Set(asked)).toEqual(new Set([3]));
+  });
+
+  // A runner runs what it may at once and turns the rest away: a full one costs an invocation nothing but a hop.
+  describe('placing an invocation on a runner with room', () => {
+    const SLEEPY =
+      'export default { tasks: [{ namespace: "probe", action: "run", run: (params) => new Promise(resolve => setTimeout(() => resolve(params.ms), params.ms)) }] };';
+    const sleepFor = (ms: number) => ({ ...invocation, params: { ms } });
+    const one = () => startFunctionsRunnerService({ secret: SECRET, port: 0, host: '127.0.0.1', concurrency: 1 });
+    const urlOf = (runner: FunctionsRunnerService) => `ws://127.0.0.1:${String(runner.address().port)}`;
+    const ask = (remote: FunctionRunner, ms: number, wallMs = 5000) =>
+      remote.invoke({
+        bundle: { id: 'sleepy', load: () => Promise.resolve(SLEEPY) },
+        invocation: sleepFor(ms),
+        limits: { ...LIMITS, wallMs },
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      });
+
+    it('takes an invocation a full runner turns away to one with room, at once', async () => {
+      const [first, second] = await Promise.all([one(), one()]);
+      const urls = [urlOf(first), urlOf(second)];
+      let turn = 0;
+      const remote = createRemoteRunner({ url: () => urls[turn++ % 2] ?? '', secret: SECRET });
+      try {
+        // Both warm, so a bundle's first compile is not what is timed.
+        await Promise.all([ask(remote, 1), ask(remote, 1)]);
+        const holding = ask(remote, 600);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const started = Date.now();
+
+        expect(await ask(remote, 50)).toBe(50);
+        expect(Date.now() - started).toBeLessThan(400);
+        expect(await holding).toBe(600);
+      } finally {
+        await Promise.all([first.close(), second.close()]);
+      }
+    });
+
+    it('waits while every runner is full, and its time starts once one takes it', async () => {
+      const only = await one();
+      const remote = createRemoteRunner({ url: urlOf(only), secret: SECRET, graceMs: 0 });
+      try {
+        await ask(remote, 1);
+        const holding = ask(remote, 500);
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // 300 ms of its own, after ~450 waiting for the runner: placed, not queued on it, it is not out of time.
+        expect(await ask(remote, 100, 300)).toBe(100);
+        expect(await holding).toBe(500);
+      } finally {
+        await only.close();
+      }
+    });
   });
 
   it('needs a real secret to start', async () => {

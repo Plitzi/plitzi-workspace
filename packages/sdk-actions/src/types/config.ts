@@ -236,6 +236,11 @@ export type ActionJobsConfig = {
    * (`paused`) when none may. Absent, a job whose worker died runs again on whichever claims it.
    */
   claimMemory?: () => JobClaimMemory | undefined;
+  /**
+   * Whose jobs this replica takes besides its own while it has more than one slot free (`JobSpaces`): a larger worker
+   * kept for the heavy jobs helps the others while it is idle, and keeps a slot for what only it may run.
+   */
+  helps?: () => JobSpaces | undefined;
   /** How often this replica looks for due schedules. Default 15s. */
   schedulePollMs?: number;
   /** How long a claim is held before another replica may take the job over — the failover window. Default 30s. */

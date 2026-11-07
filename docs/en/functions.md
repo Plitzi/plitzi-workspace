@@ -499,13 +499,18 @@ any invocation. What a runner keeps is only what makes the next start cheap:
   reference (`FunctionsBundleRef`): the code crosses the wire, and is read from storage, only when the runner does not
   keep it.
 
-**A runner short of memory takes nothing new.** Past a share of its limit (`memoryShare`, 85% of its container's), it
-answers the platform `busy` instead of starting an invocation, and the run is over capacity, with a retry — never the
-code's error, and never the process killed for memory with every invocation in it.
+**A runner takes an invocation only with room for it, and turns the rest away at once.** An isolate free (at most
+`concurrency` at once) and memory for it — what it holds plus a quarter of what the invocation may grow to, under
+`memoryShare` (85%) of its container's — or it answers `busy` and starts nothing. Memory, not a count, says how many it
+runs: an invocation waiting on the network holds a few MB, so a runner with room runs many at once, as many isolates as
+fit — each its own, as each Lambda invocation has its own sandbox.
 
-Nothing waits forever: past its wall time an invocation's isolate is disposed, and the page server's client
-(`createRemoteRunner`) gives up on the runner `graceMs` after that (5 s) even if the runner never answers — its
-connection is closed and the step fails with `wall`.
+**The platform places each invocation on a runner with room.** `createRemoteRunner` resolves the runner's name to every
+runner behind it (a headless Service, a network alias), tries one at random, and takes what one turns away to the next
+at once. Only while every runner is full does it wait — `waitForRunnerMs`, 10 s, while their autoscaler adds some — and
+then the run is over capacity, never the code's error. An invocation's time starts once a runner takes it (`accepted`,
+protocol 1.2): a burst never spends an invocation's wall time waiting for a runner. Past it the isolate is disposed, and
+the client gives up `graceMs` after that (5 s) even if the runner never answers — the step fails with `wall`.
 
 The runner is an adapter: the same bundle runs on another one — a Cloudflare Workers for Platforms dispatcher, or a
 Lambda per bundle — that implements `describe` and `invoke` over the same messages.

@@ -1,3 +1,6 @@
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
+
 import { WebSocket } from 'ws';
 
 import { frameText } from '@plitzi/sdk-kernel/http';
@@ -13,12 +16,18 @@ import type {
 
 export type RemoteRunnerOptions = {
   /**
-   * The runner service, `ws://functions-runner:8790`. A function is asked once per operation, with the space an
-   * invocation is for (none for reading a bundle): what spreads them over several runners where no balancer sits in
-   * front (each invocation is one connection, so nothing is pinned), and what sends a space to the runners it is
-   * assigned to. Then an invocation a runner refused as `busy` — short of memory, it took nothing — is tried once more.
+   * The runner service, `ws://functions-runner:8790`. A function is asked once per try, with the space an invocation is
+   * for (none for reading a bundle): what sends a space to the runners it is assigned to. A name that resolves to several
+   * addresses — a headless Service, a network alias — is each runner behind it: an invocation is placed on one of them
+   * at random, and one a runner turns away as `busy` (no isolate free, or no memory for it: it took nothing) goes to the
+   * next at once. It waits only while every one is full (`waitForRunnerMs`).
    */
   url: string | ((spaceId?: number) => string);
+  /**
+   * How long an invocation waits for a runner to take it while every one is full, before it is answered `busy`: what a
+   * burst rides out while the runners' autoscaler adds some. Its own time limit starts once one takes it. 10 s.
+   */
+  waitForRunnerMs?: number;
   secret: string;
   /** How long to wait for the runner to accept a connection. */
   connectTimeoutMs?: number;
@@ -32,6 +41,15 @@ export type RemoteRunnerOptions = {
 
 /** What reading a bundle may take on the runner (its own ceiling is 5 s), and then some. */
 const DESCRIBE_DEADLINE_MS = 10_000;
+
+/** How long a runner has to take or turn away an invocation once connected: it answers at once, either way. */
+const ACCEPT_MS = 5000;
+
+/** The waits between rounds of every runner while all of them are full, growing to the last. */
+const FULL_WAITS_MS = [100, 250, 500, 1000];
+
+/** How long the addresses a runner name resolves to are kept: a scale-up is seen within it. */
+const RESOLVE_MS = 1000;
 
 const unreachable = (detail: string) => new FunctionFailure('error', `The functions runner is unreachable (${detail})`);
 
@@ -65,7 +83,9 @@ type Operation = {
   first: RunnerRequestMessage;
   load: () => Promise<string>;
   bundleId: string;
-  /** When this side stops waiting, however the runner is doing. */
+  /** The runner it is placed on: one address of what `url` names. */
+  address: string;
+  /** When this side stops waiting once the runner took it, however the runner is doing. */
   deadlineMs: number;
   answer: (call: unknown) => Promise<unknown>;
   signal?: AbortSignal;
@@ -80,15 +100,55 @@ export const createRemoteRunner = ({
   url,
   secret,
   connectTimeoutMs = 5000,
-  graceMs = 5000
+  graceMs = 5000,
+  waitForRunnerMs = 10_000
 }: RemoteRunnerOptions): FunctionRunner => {
-  /** When each runner address last could not be reached: while recent, the calls that need it are queued instead. */
+  /** When none of the runners a name stands for could be reached: while recent, the calls that need them are kept. */
   const away = new Map<string, number>();
   const addressOf = (spaceId?: number): string => (typeof url === 'function' ? url(spaceId) : url);
+  const resolved = new Map<string, { at: number; addresses: Promise<string[]> }>();
 
-  const operate = ({ first, load, bundleId, deadlineMs, answer, signal, onUsage }: Operation): Promise<unknown> =>
+  /** Each runner a name stands for — every address it resolves to — in an order of its own each time. */
+  const runnersOf = (address: string): Promise<string[]> => {
+    const named = new URL(address);
+    if (isIP(named.hostname.replace(/^\[|\]$/g, '')) !== 0) {
+      return Promise.resolve([address]);
+    }
+
+    const kept = resolved.get(address);
+    if (!kept || Date.now() - kept.at > RESOLVE_MS) {
+      resolved.set(address, {
+        at: Date.now(),
+        addresses: lookup(named.hostname, { all: true }).then(
+          found =>
+            found.map(({ address: ip, family }) => {
+              const each = new URL(address);
+              each.hostname = family === 6 ? `[${ip}]` : ip;
+
+              return each.toString().replace(/\/$/, '');
+            }),
+          // Unresolved, the name is tried as it is: the connection says why it could not be reached.
+          () => [address]
+        )
+      });
+    }
+
+    return (resolved.get(address)?.addresses ?? Promise.resolve([address])).then(addresses =>
+      [...addresses].sort(() => Math.random() - 0.5)
+    );
+  };
+
+  const operate = ({
+    first,
+    load,
+    bundleId,
+    address,
+    deadlineMs,
+    answer,
+    signal,
+    onUsage
+  }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
-      const address = addressOf(first.type === 'invoke' ? first.invocation.context.spaceId : undefined);
       const socket = new WebSocket(address, {
         headers: { authorization: `Bearer ${secret}` },
         handshakeTimeout: connectTimeoutMs
@@ -121,12 +181,25 @@ export const createRemoteRunner = ({
         outcome();
         socket.close(1000);
       };
-      const deadline = setTimeout(() => {
-        settle(() =>
-          reject(new FunctionFailure('wall', `The functions runner did not answer within ${String(deadlineMs)} ms`))
-        );
-        socket.terminate();
-      }, deadlineMs);
+      const giveUp = (ms: number, words: string) =>
+        setTimeout(() => {
+          settle(() => reject(new FunctionFailure('wall', words)));
+          socket.terminate();
+        }, ms);
+      const answerDeadline = () =>
+        giveUp(deadlineMs, `The functions runner did not answer within ${String(deadlineMs)} ms of taking it`);
+      // An invocation's time starts once a runner takes it (1.2's `accepted`); till then the runner has a moment to say.
+      let accepted = first.type !== 'invoke';
+      let deadline = accepted
+        ? answerDeadline()
+        : giveUp(connectTimeoutMs + ACCEPT_MS, 'The functions runner neither took nor turned away the invocation');
+      const accept = (): void => {
+        if (!accepted) {
+          accepted = true;
+          clearTimeout(deadline);
+          deadline = answerDeadline();
+        }
+      };
       // Why it was asked to end goes with it: a job's slice tells its code whether it was paused, cancelled or timed.
       const onAbort = (): void =>
         send(typeof signal?.reason === 'string' ? { type: 'abort', reason: signal.reason } : { type: 'abort' });
@@ -134,7 +207,6 @@ export const createRemoteRunner = ({
 
       socket.on('open', () => {
         opened = true;
-        away.delete(address);
         send(first);
         if (signal?.aborted) {
           onAbort();
@@ -148,7 +220,14 @@ export const createRemoteRunner = ({
           return;
         }
 
+        // A 1.1 runner says nothing as it takes it: whatever it says first of the invocation is that it did.
+        if (message.type !== 'failed' || message.reason !== 'busy') {
+          accept();
+        }
+
         switch (message.type) {
+          case 'accepted':
+            return;
           case 'needBundle':
             // Only now, and only for a runner that has never kept this bundle: a run carries no code otherwise.
             load().then(
@@ -245,7 +324,6 @@ export const createRemoteRunner = ({
         // Refused or timed out before it opened — or answered by a runner going away (5xx): nothing was sent, which is
         // the one failure safe to try again. A runner that turned this side away (a 4xx: the secret) is not away.
         if (!opened && !/Unexpected server response: 4\d\d/.test(error.message)) {
-          away.set(address, Date.now());
           settle(() => reject(notReached(error.message)));
 
           return;
@@ -261,46 +339,90 @@ export const createRemoteRunner = ({
     });
 
   return {
-    describe: bundle =>
+    describe: async bundle =>
       operate({
         first: { type: 'describe', protocol: FUNCTIONS_PROTOCOL, bundle },
+        address: (await runnersOf(addressOf()))[0] ?? addressOf(),
         load: () => Promise.resolve(bundle.code),
         bundleId: bundle.id,
         deadlineMs: DESCRIBE_DEADLINE_MS,
         answer: () => Promise.reject(new Error('Nothing is reachable while a bundle is read'))
       }),
     invoke: async ({ bundle, invocation, limits, answer, signal, onUsage }) => {
-      const attempt = () =>
+      const attempt = (address: string) =>
         operate({
           first: { type: 'invoke', protocol: FUNCTIONS_PROTOCOL, bundleId: bundle.id, invocation, limits },
           load: bundle.load,
           bundleId: bundle.id,
+          address,
           deadlineMs: limits.wallMs + graceMs,
           answer,
           signal,
           onUsage
         });
+      const since = Date.now();
+      const name = addressOf(invocation.context.spaceId);
+      let unreachableRounds = 0;
 
-      // A runner that could not be reached was sent nothing: tried again a few times — a restart, a rolling deploy —
-      // before the invocation is said to have found none.
-      for (let tries = 0; ; tries += 1) {
-        try {
-          return await attempt();
-        } catch (error) {
-          const reason = error instanceof FunctionFailure ? error.reason : undefined;
-          // A busy runner started nothing, so the invocation is whole to give the next one: once, with several.
-          if (reason === 'busy' && typeof url === 'function' && tries === 0) {
-            continue;
+      // A round tries each runner the space may run on once: a busy one took nothing, an unreachable one was sent
+      // nothing, so the invocation is whole to give the next. Rounds go on while every runner is full — for
+      // `waitForRunnerMs` — or while none can be reached, a few times: a restart, a rolling deploy.
+      for (let round = 0; ; round += 1) {
+        const tried = new Set<string>();
+        let last: unknown;
+        let busyCount = 0;
+        for (;;) {
+          const untried = (await runnersOf(addressOf(invocation.context.spaceId))).filter(each => !tried.has(each));
+          const next = untried.at(0);
+          if (next === undefined) {
+            break;
           }
 
-          const pause = RETRY_WAITS_MS.at(tries);
-          if (reason === 'unreachable' && pause !== undefined && !signal.aborted) {
-            await wait(pause, signal);
-            continue;
-          }
+          tried.add(next);
+          try {
+            const value = await attempt(next);
+            away.delete(name);
 
-          throw error;
+            return value;
+          } catch (error) {
+            const reason = error instanceof FunctionFailure ? error.reason : undefined;
+            if (reason !== 'busy' && reason !== 'unreachable') {
+              throw error;
+            }
+
+            busyCount += reason === 'busy' ? 1 : 0;
+            last = error;
+          }
         }
+
+        if (signal.aborted) {
+          throw last;
+        }
+
+        if (busyCount > 0) {
+          const pause = FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000;
+          if (Date.now() - since + pause > waitForRunnerMs) {
+            throw new FunctionFailure(
+              'busy',
+              `Every functions runner was full for ${String(Math.round((Date.now() - since) / 1000))} s — the last ` +
+                `said: ${last instanceof Error ? last.message : String(last)} Try again shortly: more are started as ` +
+                'their load says.'
+            );
+          }
+
+          await wait(pause, signal);
+          continue;
+        }
+
+        // Not one of its runners could be reached: calls that need them are kept meanwhile (`reachable`).
+        away.set(name, Date.now());
+        const pause = RETRY_WAITS_MS.at(unreachableRounds);
+        unreachableRounds += 1;
+        if (pause === undefined) {
+          throw last;
+        }
+
+        await wait(pause, signal);
       }
     },
     reachable: spaceId => {

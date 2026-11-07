@@ -339,6 +339,21 @@ describe('createJobWorker', () => {
     expect(job.error).toContain('no longer exists');
   });
 
+  // A large worker kept for the heavy jobs is idle most of the time: it helps the others, keeping a slot of its own.
+  it('takes others’ jobs while it has more than one slot free, and keeps one for its own', async () => {
+    const test = world(() => new Promise(() => {}));
+    for (const id of ['a', 'b', 'c']) {
+      await test.job({ id: `other-${id}`, spaceId: 2 });
+    }
+
+    const large = test.worker({ workers: 3, spaces: () => ({ only: [1] }), helps: () => ({ except: [1] }) });
+
+    expect(await large.poll()).toBe(2);
+    await settle();
+    // One slot left: kept for its own, which none is.
+    expect(await large.poll()).toBe(0);
+  });
+
   it('carries as many jobs at once as it was told to, and no more', async () => {
     let live = 0;
     let peak = 0;

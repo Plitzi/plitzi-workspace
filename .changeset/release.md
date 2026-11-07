@@ -198,6 +198,20 @@ space while it hydrates.
   more to some spaces than to others sets `action.limits` to its largest plan's. `ActionsModule.limitsFor` takes the
   space and answers a promise: `await limitsFor(spaceId, document)`.
 
+## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
+
+- **A runner takes an invocation only with room for it, and turns the rest away (`busy`) at once** — an isolate free
+  (`concurrency` is now the most at once, not a queue) and memory for it: what it holds and a quarter of what the
+  invocation may grow to, under `memoryShare`. Memory decides how many run: one waiting on the network holds a few MB.
+- **The platform places each invocation on a runner with room.** `createRemoteRunner` resolves the runner's name to every
+  runner behind it — a headless Service, a network alias — tries one at random and takes a busy one's to the next at
+  once; it waits only while every runner is full (`waitForRunnerMs`, 10 s). An invocation's time starts once a runner
+  takes it: protocol **1.2** adds `accepted`, which a runner sends a 1.2 platform alone. Deploy the runners first. A
+  burst no longer spends invocations' wall time queued on one runner while others are idle (`503 … ran out of what it
+  may spend`).
+- **`jobs.helps`**: whose jobs a worker takes besides its own while it has more than one slot free — a larger worker kept
+  for the heavy jobs helps the others while idle, keeping a slot for its own.
+
 ## The job queue (`@plitzi/sdk-actions`)
 
 - **A schedule's next fire starts where the last one had to go.** A fire whose job needed a larger worker

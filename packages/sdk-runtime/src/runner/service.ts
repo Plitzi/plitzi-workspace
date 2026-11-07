@@ -16,6 +16,7 @@ import {
   FunctionFailure,
   errorOfAnswer,
   isStreamedRouteAnswer,
+  protocolKnows,
   protocolRefusal,
   readRequestMessage
 } from '@plitzi/sdk-shared/functions';
@@ -27,6 +28,7 @@ import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from
 import type {
   FunctionAnswer,
   FunctionFailureReason,
+  FunctionLimits,
   FunctionRunner,
   FunctionUsage,
   RunnerResponseMessage,
@@ -61,9 +63,11 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
    */
   version?: string;
   /**
-   * The share of its memory limit past which it takes no new invocation, from 0 to 1: 0.85 by default. Past it, the
-   * platform is answered `busy` — another instance, or the same a moment later, takes it — instead of the process being
-   * killed for memory with every invocation in it.
+   * The share of its memory limit it takes new invocations up to, from 0 to 1: 0.85 by default. An invocation is taken
+   * while what the runner holds, and a share of what the invocation may grow to (`limits.memoryMb`), fit under it —
+   * past it the platform is answered `busy` and places it on another runner, instead of the process being killed for
+   * memory with every invocation in it. Its memory, not a count, is what says how many it runs: one waiting on the
+   * network holds a few MB. `concurrency` is the most it runs at once all the same.
    */
   memoryShare?: number;
   /**
@@ -91,6 +95,12 @@ export type FunctionsRunnerService = {
 /** A bundle is at most 1 MB and an answer a few; anything past this on one frame is not the platform talking. */
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 
+/**
+ * The share of what an invocation may grow to (`limits.memoryMb`) kept free for it as it is taken: most wait on the
+ * network and hold a few MB, and its isolate's own limit stops one that grows past its own.
+ */
+const MEMORY_RESERVE_SHARE = 0.25;
+
 /** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
 const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
 
@@ -107,8 +117,8 @@ const endOf = (reason: FunctionFailureReason): RunEnd =>
 type ConnectionStats = {
   recorder: StatsRecorder;
   inFlight: { count: number };
-  /** Why this runner takes no new invocation right now, or nothing. */
-  busy: () => string | undefined;
+  /** Why this runner takes no new invocation of these limits right now, or nothing. */
+  busy: (limits: FunctionLimits) => string | undefined;
   /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
   stopping: () => boolean;
 };
@@ -249,15 +259,17 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       return;
     }
 
-    const busy = stats.busy();
+    const { bundleId, invocation, limits } = message;
+    // Taken only with an isolate free and memory for it: a runner full answers at once, and the platform places the
+    // invocation on another rather than leaving it to wait here, its time running.
+    const busy = stats.busy(limits);
     if (busy) {
-      stats.recorder.refuse(stats.stopping() ? 'stopping' : 'memory');
+      stats.recorder.refuse(stats.stopping() ? 'stopping' : 'busy');
       finish({ type: 'failed', reason: 'busy', error: busy });
 
       return;
     }
 
-    const { bundleId, invocation, limits } = message;
     label = {
       spaceId: invocation.context.spaceId,
       kind: invocation.kind,
@@ -268,6 +280,11 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     };
     invokedAt = Date.now();
     stats.inFlight.count += 1;
+    // What the platform waits for its answer from (1.2): an older one is told nothing it does not know.
+    if (protocolKnows(message.protocol, '1.2')) {
+      send({ type: 'accepted' });
+    }
+
     settle(
       runner.invoke({
         // The code only if the engine has never kept this id: asked of the platform on this same connection.
@@ -341,13 +358,19 @@ export const startFunctionsRunnerService = async ({
   });
   const inFlight = { count: 0 };
   let stopping = false;
-  const busy = (): string | undefined => {
+  const most = isolate.concurrency ?? DEFAULT_CONCURRENCY;
+  const busy = (limits: FunctionLimits): string | undefined => {
     if (stopping) {
       return 'This functions runner is stopping — a deploy or a scale-down — and takes no new invocation: another does';
     }
 
+    if (!runner && inFlight.count >= most) {
+      return `This functions runner runs ${String(most)} invocations, the most it takes at once: another runner takes it`;
+    }
+
     const memory = readMemory();
-    if (memory.usedBytes <= memory.limitBytes * memoryShare) {
+    const reserved = limits.memoryMb * 1048576 * MEMORY_RESERVE_SHARE;
+    if (memory.usedBytes + reserved <= memory.limitBytes * memoryShare) {
       return undefined;
     }
 
@@ -355,14 +378,16 @@ export const startFunctionsRunnerService = async ({
 
     return (
       `The functions runner is short of memory — ${mb(memory.usedBytes)} of its ${mb(memory.limitBytes)} MB in use, ` +
-      `past the ${String(Math.round(memoryShare * 100))}% it takes new invocations up to — so it took none: try again ` +
-      'shortly. A deployment that sees this often gives the runner more memory, more instances, or a lower `concurrency`.'
+      `and an invocation is kept ${mb(reserved)} of room under the ${String(Math.round(memoryShare * 100))}% it takes ` +
+      'new ones up to — so it took none: another runner takes it. A deployment that sees this often gives the runners ' +
+      'more memory or more instances.'
     );
   };
   // The isolates' own size; an engine handed in says nothing of its own, so its work is counted without one.
   if (!runner) {
     // Past its size an invocation waits its turn here: full is at work, and only what waits degrades it.
-    recorder.slot('isolates', isolate.concurrency ?? DEFAULT_CONCURRENCY, () => inFlight.count, { queues: true });
+    // Full, it turns invocations away to other runners: near full is what its autoscaler and its health read.
+    recorder.slot('isolates', most, () => inFlight.count);
   }
 
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });

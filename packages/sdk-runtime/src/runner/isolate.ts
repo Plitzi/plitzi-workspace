@@ -28,8 +28,9 @@ type Ivm = typeof IsolatedVM;
 
 export type IsolateRunnerOptions = {
   /**
-   * Invocations running at once; the rest wait their turn. Each isolate may take about twice its `memoryMb`, so this
-   * times that times two is what the runner needs.
+   * Invocations running at once, at most: the runner service turns the rest away (`busy`) for the platform to place on
+   * another runner — and takes fewer while its memory is short (`memoryShare`). Each isolate may grow to about twice its
+   * `memoryMb`; most wait on the network and hold a few MB, which is why memory, not this, decides how many run.
    */
   concurrency?: number;
   /**

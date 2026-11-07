@@ -11,10 +11,20 @@ import type { FunctionsManifest } from '../types';
  * platform that calls it: `major.minor`, where a minor only adds and a major may change what was there.
  *
  * 1.1 added the `busy` refusal: a runner short of memory takes no new invocation. A 1.0 platform reads it as an error.
+ * 1.2 added `accepted`: the runner took the invocation — an isolate free and memory for it — and the platform's wait for
+ * its answer starts then, not while it was being placed. A runner sends it to a 1.2 platform alone.
  */
-export const FUNCTIONS_PROTOCOL = '1.1';
+export const FUNCTIONS_PROTOCOL = '1.2';
 
 const VERSION = /^(\d+)\.(\d+)$/;
+
+/** Whether a side speaking `theirs` knows what `since` added: the same major, and that minor or a later one. */
+export const protocolKnows = (theirs: unknown, since: string): boolean => {
+  const sent = typeof theirs === 'string' ? VERSION.exec(theirs) : null;
+  const added = VERSION.exec(since);
+
+  return Boolean(sent && added && sent[1] === added[1] && Number(sent[2]) >= Number(added[2]));
+};
 
 /** Who speaks each side of a versioned protocol, as its refusal names them: `here` answers, `there` calls. */
 export type ProtocolSides = { here: string; there: string };
@@ -295,6 +305,8 @@ export type RunnerRequestMessage =
   | { type: 'abort'; reason?: string };
 
 export type RunnerResponseMessage =
+  /** The invocation was taken — a free isolate and memory for it (1.2): what its answer is waited for from. */
+  | { type: 'accepted' }
   | { type: 'needBundle' }
   /** A route answering as it writes: its head, then each `chunk` of its body, then `done`. */
   | { type: 'head'; status: number; statusText: string; headers: WireHeaders }

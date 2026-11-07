@@ -85,6 +85,12 @@ export type JobWorkerOptions = {
    */
   memory?: () => JobClaimMemory | undefined;
   /**
+   * Whose jobs this replica takes besides its own while it has more than one slot free, asked on every claim: a larger
+   * worker kept for the heavy jobs helps the others while it is idle, and keeps a slot for what only it may run.
+   * Absent, its own alone.
+   */
+  helps?: () => JobSpaces | undefined;
+  /**
    * How often, while it holds jobs, this replica reads how near its memory it is (with `memory`): near it, it marks
    * them (`heartbeat`'s `nearMemoryLimit`), so that should it die, they run next on a larger worker. Default 1s.
    */
@@ -143,6 +149,7 @@ export const createJobWorker = ({
   pollMs = 1_000,
   spaces,
   memory,
+  helps,
   memoryWatchMs = 1_000,
   readMemory = readProcessMemory,
   leaseMs = 30_000,
@@ -524,6 +531,20 @@ export const createJobWorker = ({
       ...(asked ? { spaces: asked } : {}),
       ...(holds ? { memory: holds } : {})
     });
+    // Its own work first; idle past one slot, it takes others' — and keeps that one for what only it may run.
+    const spare = free - claimed.length - 1;
+    const helping = spare > 0 ? helps?.() : undefined;
+    if (helping) {
+      claimed.push(
+        ...(await queue.claim({
+          workerId,
+          leaseMs,
+          limit: spare,
+          spaces: helping,
+          ...(holds ? { memory: holds } : {})
+        }))
+      );
+    }
     if (isStopping()) {
       // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
       // that is staying to take now — rather than started here and held up the shutdown.

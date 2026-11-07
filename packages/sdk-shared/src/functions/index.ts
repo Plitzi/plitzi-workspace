@@ -34,6 +34,7 @@ export {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
   isStreamedRouteAnswer,
+  protocolKnows,
   protocolRefusal
 } from './protocol';
 export type {

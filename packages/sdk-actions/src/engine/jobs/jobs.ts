@@ -64,6 +64,7 @@ export const createActionJobs = (
     ...(config.pollMs ? { pollMs: config.pollMs } : {}),
     ...(config.claims ? { spaces: config.claims } : {}),
     ...(config.claimMemory ? { memory: config.claimMemory } : {}),
+    ...(config.helps ? { helps: config.helps } : {}),
     ...(config.leaseMs ? { leaseMs: config.leaseMs } : {}),
     ...(config.backoff ? { backoff: config.backoff } : {}),
     ...(config.workerId ? { workerId: config.workerId } : {}),

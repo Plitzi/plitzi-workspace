@@ -270,6 +270,8 @@ const headersOf = (value: unknown): [string, string][] =>
 export const readResponseMessage = (data: string): RunnerResponseMessage | undefined => {
   const message = parse(data);
   switch (message?.type) {
+    case 'accepted':
+      return { type: 'accepted' };
     case 'needBundle':
       return { type: 'needBundle' };
     case 'head':
