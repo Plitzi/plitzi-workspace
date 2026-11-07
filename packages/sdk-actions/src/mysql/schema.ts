@@ -78,7 +78,9 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       KEY action_jobs_space (space_id, updated_at),
       KEY action_jobs_target (space_id, target_name, updated_at),
       KEY action_jobs_key (space_id, job_key, status),
-      KEY action_jobs_expires (expires_at)
+      KEY action_jobs_expires (expires_at),
+      KEY action_jobs_due (due_at),
+      KEY action_jobs_updated (updated_at)
     ) ${CHARSET}`,
     `CREATE TABLE IF NOT EXISTS ${t.schedules} (
       space_id BIGINT NOT NULL,

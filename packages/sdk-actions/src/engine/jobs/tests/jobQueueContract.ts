@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { describeFlow } from './jobQueueFlowContract';
 import { describeMemoryNeeds } from './jobQueueMemoryContract';
 import { describeSetAside } from './jobQueueSetAsideContract';
 
@@ -199,6 +200,7 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     });
 
     describeMemoryNeeds({ queue: () => queue, job, wait, space: SPACE, otherSpace: OTHER_SPACE });
+    describeFlow({ queue: () => queue, job });
     describeSetAside({ queue: () => queue, job, space: SPACE });
 
     it('keeps a claim alive while its worker reports in', async () => {

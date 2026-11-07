@@ -105,6 +105,20 @@ export type JobQueueSummary = {
   }[];
 };
 
+/** One minute of the queue's flow (`flow`): what an operator reads to tell whether it keeps up. */
+export type JobFlowMinute = {
+  /** Minutes since the epoch, UTC. */
+  minute: number;
+  /** Jobs that fell due in it: a schedule's fire, a kept call, a run set for later reaching its time. */
+  due: number;
+  /** Attempts started in it — the one running now included. */
+  started: number;
+  /** Attempts that ended in it, however they ended. */
+  ended: number;
+  /** Of the jobs whose first attempt started in it, the p95 of how long each waited from due to that start. */
+  waitP95Ms?: number;
+};
+
 export type JobQuery = {
   spaceIds: number[];
   status?: JobStatus;
@@ -228,6 +242,11 @@ export type JobQueue = {
    * what an autoscaler adds to the work its workers hold, so a queue that grows behind a slow job grows the pool.
    */
   countDue: (params?: { spaces?: JobSpaces; memoryMb?: number }) => Promise<number>;
+  /**
+   * The queue's flow minute by minute over `[from, to)` (epoch ms, the queue's clock): what fell due, was started and
+   * ended in each minute, and how long jobs waited for their first attempt — every space.
+   */
+  flow: (params: { from: number; to: number }) => Promise<JobFlowMinute[]>;
   getJob: (spaceIds: number[], jobId: string) => Promise<Job | undefined>;
   listSchedules: (spaceIds: number[]) => Promise<ActionSchedule[]>;
   /**

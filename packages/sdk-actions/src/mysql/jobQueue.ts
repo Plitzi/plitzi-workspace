@@ -4,6 +4,7 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 import { claimable, jsonOrNull, toJob, toSchedule } from './rows';
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { summarizeJobsTable } from './summary';
+import { flowOf } from '../engine/jobs/flow';
 import { lostError, LOST_ERROR, needsAfterLoss, outgrewWorker, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
@@ -515,6 +516,29 @@ export const createMysqlJobQueue = ({
     },
 
     summarize: async ({ spaces = 10 } = {}) => summarizeJobsTable(await db(), t.jobs, spaces),
+
+    flow: async ({ from, to }) => {
+      type FlowRow = Pick<JobRow, 'due_at' | 'history' | 'status' | 'updated_at' | 'attempts'>;
+      const rows = await selectRows<FlowRow>(
+        await db(),
+        `SELECT due_at, history, status, updated_at, attempts FROM ${t.jobs}
+        WHERE (due_at >= ? AND due_at < ?) OR updated_at >= ?`,
+        [from, to, from]
+      );
+
+      return flowOf(
+        rows.map(row => ({
+          dueAt: Number(row.due_at),
+          // Written by this queue alone, as a job's attempts: read back as them.
+          history: JSON.parse(row.history) as JobAttempt[],
+          status: row.status as JobStatus,
+          updatedAt: Number(row.updated_at),
+          attempts: Number(row.attempts)
+        })),
+        from,
+        to
+      );
+    },
 
     getJob: async (spaceIds, jobId) => {
       if (!inSpaces(spaceIds)) {

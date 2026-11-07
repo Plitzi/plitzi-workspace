@@ -1,5 +1,6 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
+import { flowOf } from './flow';
 import { LOST_ERROR, lostError, needsAfterLoss, outgrewWorker, setAsideError } from './memoryNeeds';
 
 import type {
@@ -390,6 +391,8 @@ export const queueRules = (
         .length;
     },
 
+    flow: ({ from, to }) => flowOf(jobs.values(), from, to),
+
     getJob: (spaceIds, jobId) => owned(spaceIds, jobId),
 
     listSchedules: spaceIds => [...schedules.values()].filter(schedule => spaceIds.includes(schedule.spaceId)),
@@ -641,6 +644,7 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   listJobs: (...args) => access('listJobs', args),
   summarize: (...args) => access('summarize', args),
   countDue: (...args) => access('countDue', args),
+  flow: (...args) => access('flow', args),
   getJob: (...args) => access('getJob', args),
   listSchedules: (...args) => access('listSchedules', args),
   requeue: (...args) => access('requeue', args),

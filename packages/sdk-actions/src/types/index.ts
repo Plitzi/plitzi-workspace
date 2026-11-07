@@ -13,6 +13,7 @@ export type {
   JobClaimMemory,
   JobQuery,
   JobQueue,
+  JobFlowMinute,
   JobQueueSummary,
   JobSettlement,
   JobsNeedingMemory,

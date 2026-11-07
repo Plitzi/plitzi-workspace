@@ -115,6 +115,13 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
  */
 const MEMORY_RESERVE_SHARE = 0.25;
 
+/**
+ * How long an invocation taken is still reserved its share beside what the runner holds: until its isolate is built and
+ * held — what a reading of the memory then says. A burst taken within one reading is each reserved its share, not all
+ * admitted on the room one had.
+ */
+const RESERVED_FOR_MS = 1_000;
+
 /** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
 const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
 
@@ -131,7 +138,7 @@ const endOf = (reason: FunctionFailureReason): RunEnd =>
 type ConnectionStats = {
   recorder: StatsRecorder;
   inFlight: { count: number };
-  /** Why this runner takes no new invocation of these limits right now, or nothing. */
+  /** Why this runner takes no new invocation of these limits right now, or nothing — and then it is counted as taken. */
   busy: (limits: FunctionLimits) => string | undefined;
   /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
   stopping: () => boolean;
@@ -374,6 +381,8 @@ export const startFunctionsRunnerService = async ({
   const inFlight = { count: 0 };
   let stopping = false;
   const most = isolate.concurrency ?? DEFAULT_CONCURRENCY;
+  /** When each invocation of the last `RESERVED_FOR_MS` was taken: what is still reserved beside what is held. */
+  let taken: number[] = [];
   const busy = (limits: FunctionLimits): string | undefined => {
     if (stopping) {
       return 'This functions runner is stopping — a deploy or a scale-down — and takes no new invocation: another does';
@@ -386,13 +395,20 @@ export const startFunctionsRunnerService = async ({
     const memory = readMemory();
     const reserved = limits.memoryMb * 1048576 * MEMORY_RESERVE_SHARE;
     const mb = (bytes: number) => String(Math.round(bytes / 1048576));
-    if (memory.usedBytes + reserved <= memory.limitBytes * memoryShare) {
+    const now = Date.now();
+    taken = taken.filter(at => now - at < RESERVED_FOR_MS);
+    if (memory.usedBytes + reserved * (taken.length + 1) <= memory.limitBytes * memoryShare) {
       const cpu = overloaded(readLoad());
+      if (cpu) {
+        return (
+          `The functions runner is short of CPU — ${cpu} — so it took none: another runner takes it. A deployment that ` +
+          'sees this often gives the runners more CPU or more instances.'
+        );
+      }
 
-      return cpu
-        ? `The functions runner is short of CPU — ${cpu} — so it took none: another runner takes it. A deployment that ` +
-            'sees this often gives the runners more CPU or more instances.'
-        : undefined;
+      taken.push(now);
+
+      return undefined;
     }
 
     return (

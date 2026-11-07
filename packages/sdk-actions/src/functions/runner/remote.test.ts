@@ -343,6 +343,43 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
+  // Memory is read every 100 ms: a burst within one reading is each reserved its share, not all taken on one room.
+  it('reserves each invocation it just took its share, so a burst never all lands on one reading', async () => {
+    const MIB = 1_048_576;
+    // 85 MiB it takes work to, a quarter of 64 MiB kept for each: five at once, the sixth turned away.
+    const burst = await startRunner({
+      secret: SECRET,
+      port: 0,
+      host: '127.0.0.1',
+      readMemory: () => ({ usedBytes: 0, limitBytes: 100 * MIB })
+    });
+    const runner = createRemoteRunner({
+      url: `ws://127.0.0.1:${String(burst.address().port)}`,
+      secret: SECRET,
+      waitForRunnerMs: 200
+    });
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+    const once = () =>
+      runner
+        .invoke({
+          bundle: { id: 'burst', load: () => Promise.resolve(code) },
+          invocation,
+          limits: LIMITS,
+          answer: () => Promise.resolve(null),
+          signal: new AbortController().signal
+        })
+        .catch((error: unknown) => (error instanceof FunctionFailure ? error.reason : error));
+
+    try {
+      const answers = await Promise.all(Array.from({ length: 6 }, once));
+
+      expect(answers.filter(answer => answer === 'ran')).toHaveLength(5);
+      expect(answers.filter(answer => answer === 'busy')).toHaveLength(1);
+    } finally {
+      await burst.close();
+    }
+  });
+
   it('takes no invocation with its CPU spent: another runner does', async () => {
     const busy = await startRunner({
       secret: SECRET,

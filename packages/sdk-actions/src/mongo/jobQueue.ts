@@ -1,5 +1,6 @@
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
 import { createStoreClock } from '../engine/jobs/storeClock';
@@ -200,6 +201,8 @@ export const createMongoJobQueue = ({
       // Only runs set for later carry a key: the index holds those and nothing else.
       jobsOf().createIndex({ spaceId: 1, key: 1, status: 1 }, { partialFilterExpression: { key: { $exists: true } } }),
       jobsOf().createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+      jobsOf().createIndex({ dueAt: 1 }),
+      jobsOf().createIndex({ updatedAt: 1 }),
       schedulesOf().createIndex({ enabled: 1, nextRunAt: 1 }),
       schedulesOf().createIndex({ spaceId: 1 })
     ]);
@@ -586,6 +589,18 @@ export const createMongoJobQueue = ({
           ...(each.lastError ? { lastError: each.lastError } : {})
         }))
       };
+    },
+
+    flow: async ({ from, to }) => {
+      const { jobs } = await collections();
+      const touching = await jobs
+        .find(
+          { $or: [{ dueAt: { $gte: from, $lt: to } }, { updatedAt: { $gte: from } }] },
+          { projection: { _id: 0, dueAt: 1, history: 1, status: 1, updatedAt: 1, attempts: 1 } }
+        )
+        .toArray();
+
+      return flowOf(touching, from, to);
     },
 
     countDue: async ({ spaces, memoryMb } = {}) => {

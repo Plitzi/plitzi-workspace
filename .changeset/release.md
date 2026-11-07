@@ -218,6 +218,8 @@ space while it hydrates.
   behind) it claims none either, saying so once a reason. A job waiting a minute on an API no longer holds the others
   up. It runs one job a worker died running (`needsMemoryMb`) at a time (`JobClaimMemory.takesNeeding`), and helps
   others (`jobs.helps`) with half its memory. A job that ends hands its slot to the next at once.
+- **A runner reserves each invocation it took in the last second its share** beside what it holds: a burst taken within
+  one memory reading (every 100 ms) no longer all lands on the room one had — so `concurrency` can be a high ceiling.
 - **A runner past its CPU takes no invocation** (90% of its quota, or its event loop 250 ms behind): the platform places
   it on another, as for memory. `startFunctionsRunnerService({ readLoad })` for tests.
 - **`processLoad()`, `overloaded()`, `LOAD_LIMITS`, `cpuLimitCores()`** (`@plitzi/sdk-kernel/stats`): a process's CPU over
@@ -230,6 +232,11 @@ space while it hydrates.
   for the heavy jobs helps the others while idle, keeping a slot for its own.
 
 ## The job queue (`@plitzi/sdk-actions`)
+
+- **`JobQueue.flow({ from, to })`**: the queue minute by minute — what fell due, was started and ended, and the p95 of
+  how long jobs waited for their first attempt — in every store (`JobFlowMinute`). A store of your own implements it;
+  the Mongo and MySQL ones add an index on `dueAt` and `updatedAt` (MySQL's on a new table: add `action_jobs_due` and
+  `action_jobs_updated` to one you created).
 
 - **A schedule's next fire starts where the last one had to go.** A fire whose job needed a larger worker
   (`needsMemoryMb`) hands that to the next fire of the same schedule, which starts on a worker that may hold it rather
