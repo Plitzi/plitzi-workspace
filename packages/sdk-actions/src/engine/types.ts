@@ -172,6 +172,11 @@ export type ActionTaskContext = {
   callerId: string;
   signal: AbortSignal;
   /**
+   * Tells the run it waited this long for the platform's capacity — a runner's queue, a turn at its CPU — which is not the
+   * run's to spend: its time limit moves by it. Absent where nothing is timed (a function's route keeps its own).
+   */
+  waited?: (ms: number) => void;
+  /**
    * The flow scope as the current node sees it: `input`, every previous node's result by id, `user`, and the
    * credentials the document declared. Read-only, and present because a `rawParams` task has to render templates
    * against something.

@@ -306,6 +306,7 @@ describe('the runner service, through the remote runner', () => {
     const address = turnTaking.address();
     const port = address && typeof address === 'object' ? address.port : 0;
     const patient = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET, graceMs: 50 });
+    const waited: number[] = [];
 
     try {
       expect(
@@ -314,9 +315,12 @@ describe('the runner service, through the remote runner', () => {
           invocation,
           limits: { ...LIMITS, wallMs: 100 },
           answer: () => Promise.resolve(null),
-          signal: new AbortController().signal
+          signal: new AbortController().signal,
+          onWaited: ms => waited.push(ms)
         })
       ).toBe('waited its turn');
+      // Told on, for the run's own time limit to move by it too.
+      expect(waited).toContain(400);
     } finally {
       turnTaking.close();
     }

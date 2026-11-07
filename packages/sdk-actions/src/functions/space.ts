@@ -88,7 +88,9 @@ const spaceTasks = (
             signal: ctx.signal,
             onUsage: usage => {
               spent = usage;
-            }
+            },
+            // A runner's queue, a turn at its CPU: the run's time limit moves by it, never the code's to have spent.
+            ...(ctx.waited ? { onWaited: ctx.waited } : {})
           });
           ok = true;
 

@@ -95,6 +95,8 @@ export type TaskContextDeps = {
   later: LaterDeps;
   /** The space's jobs, for a function's `ctx.jobs`. */
   jobs?: FunctionJobsService;
+  /** The run's time limit moved by what it waited for the platform's capacity (`ActionTaskContext.waited`). */
+  waited?: (ms: number) => void;
 };
 
 /**
@@ -113,7 +115,7 @@ export type TaskContextRequest = Pick<
  */
 export const taskContextFor = (
   config: ActionsConfig,
-  { kv, email, redactor, signing, later, jobs }: TaskContextDeps,
+  { kv, email, redactor, signing, later, jobs, waited }: TaskContextDeps,
   request: TaskContextRequest,
   signal: AbortSignal,
   runFetch: typeof fetch
@@ -134,6 +136,7 @@ export const taskContextFor = (
     user: request.user,
     callerId: request.callerId,
     signal,
+    ...(waited ? { waited } : {}),
     scope,
     /**
      * The secret a STEP asked for, resolved inside that step and never in the flow scope.

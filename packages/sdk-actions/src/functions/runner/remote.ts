@@ -86,6 +86,12 @@ type Operation = {
   answer: (call: unknown) => Promise<unknown>;
   signal?: AbortSignal;
   onUsage?: (usage: FunctionUsage) => void;
+  /**
+   * Told what the invocation waited for the runners' capacity: from `placedSince` until a runner took it — placed, or
+   * kept in its queue — and every turn at its CPU it waited for after (1.3's `waited`).
+   */
+  onWaited?: (ms: number) => void;
+  placedSince?: number;
 };
 
 /**
@@ -141,7 +147,9 @@ export const createRemoteRunner = ({
     deadlineMs,
     answer,
     signal,
-    onUsage
+    onUsage,
+    onWaited,
+    placedSince
   }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const socket = new WebSocket(address, {
@@ -202,6 +210,10 @@ export const createRemoteRunner = ({
       const accept = (): void => {
         if (!accepted) {
           accepted = true;
+          if (placedSince !== undefined && Date.now() > placedSince) {
+            onWaited?.(Date.now() - placedSince);
+          }
+
           dueAt = Date.now() + deadlineMs;
           clearTimeout(deadline);
           deadline = answerDeadline();
@@ -244,6 +256,7 @@ export const createRemoteRunner = ({
           case 'waited':
             // The runner's time, not the code's: what it is waited for grows by it (1.3).
             if (!settled) {
+              onWaited?.(message.ms);
               waitedMs += message.ms;
               dueAt += message.ms;
               clearTimeout(deadline);
@@ -371,7 +384,9 @@ export const createRemoteRunner = ({
         deadlineMs: DESCRIBE_DEADLINE_MS,
         answer: () => Promise.reject(new Error('Nothing is reachable while a bundle is read'))
       }),
-    invoke: async ({ bundle, invocation, limits, answer, signal, onUsage }) => {
+    invoke: async ({ bundle, invocation, limits, answer, signal, onUsage, onWaited }) => {
+      // Placing it is the runners' capacity, not the code's time: what that took is said once a runner takes it.
+      const placedSince = Date.now();
       const attempt = (address: string, queue = false) =>
         operate({
           first: {
@@ -388,7 +403,8 @@ export const createRemoteRunner = ({
           deadlineMs: limits.wallMs + graceMs,
           answer,
           signal,
-          onUsage
+          onUsage,
+          ...(onWaited ? { onWaited, placedSince } : {})
         });
       const name = addressOf(invocation.context.spaceId);
       let unreachableRounds = 0;

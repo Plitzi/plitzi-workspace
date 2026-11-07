@@ -5,6 +5,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { ActionRefusal, isActionRefusal, refusalCodeOf } from '@plitzi/sdk-shared/functions';
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { createDeadline } from './deadline';
 import { createEmailSender } from './email';
 import { ActionRunError, limitOf } from './errors';
 import { flagsForRun } from './flags';
@@ -54,34 +55,6 @@ const CANCEL_POLL_MS = 1_000;
  * writes, not another run. Never longer than the run itself was allowed.
  */
 const UNDO_TIMEOUT_MS = 5_000;
-
-/**
- * The run's deadline, as a promise that loses patience.
- *
- * Aborting the controller is the polite half: a task that watches its signal stops, and the loop refuses to start
- * the next step. It is not enough on its own, because a step that ignores the signal — a driver that does not
- * take one, a provider client that swallows it, a `while (true)` inside a task — leaves the run awaiting something
- * that never returns. That is the stuck run this exists to end: nothing else in the process can tell the
- * difference between a flow that is working hard and one that will never finish.
- *
- * Racing the flow against this means the RUN always ends, even when a step does not. What the step does after
- * that is beyond anybody's reach in a single-threaded runtime — but it no longer holds a caller, a slot, or a
- * connection while it does it.
- */
-const createDeadline = (timeoutMs: number, controller: AbortController) => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const promise = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(new ActionRunError('timeout', `Action exceeded its ${timeoutMs}ms budget`, 'time'));
-    }, timeoutMs);
-  });
-
-  return {
-    promise,
-    clear: () => clearTimeout(timer)
-  };
-};
 
 /**
  * Whether somebody has asked this run to stop, from wherever the request landed.
@@ -453,7 +426,15 @@ export const createActionRunner = (
     const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
       taskContextFor(
         config,
-        { kv, email: emailSender, redactor, signing, later, ...(functionJobs ? { jobs: functionJobs } : {}) },
+        {
+          kv,
+          email: emailSender,
+          redactor,
+          signing,
+          later,
+          ...(functionJobs ? { jobs: functionJobs } : {}),
+          waited: deadline.extend
+        },
         request,
         signal,
         runFetch

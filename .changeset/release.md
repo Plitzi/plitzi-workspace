@@ -231,6 +231,9 @@ space while it hydrates.
   with room, and with every one full the platform asks one to keep it (`queue`) — it says `queued`, and `accepted` once
   it starts, its time counted from then; it waits as long as its caller does. `readLoad` is gone from
   `startFunctionsRunnerService` and `waitForRunnerMs` from `createRemoteRunner`. Deploy the runners first.
+- **An action's time limit leaves out what its steps waited for the runners' capacity** — a runner's queue, its
+  placement, a turn at its CPU: `ActionTaskContext.waited` moves the run's deadline, fed by the runner
+  (`FunctionInvokeRequest.onWaited`). A burst queued on full runners no longer ends its actions "exceeded its budget".
 - **An invocation is stopped for CPU by its CPU alone.** isolated-vm's `timeout` is wall time while the isolate runs:
   given the CPU limit, a runner whose isolates shared its CPU stopped a 5 ms route as `Stopped after 100 ms of CPU`
   under load — blaming the space's code. It is given the time limit now; the CPU is the watchdog's (`cpuTime`).
