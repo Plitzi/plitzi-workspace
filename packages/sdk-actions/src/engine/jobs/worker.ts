@@ -66,7 +66,8 @@ export type JobWorkerOptions = {
    * The number that decides whether five hundred queued jobs take five minutes or an hour, and it is a deployment's
    * to set because only it knows what its jobs do: flows that wait on somebody else's API are cheap to hold many of,
    * flows that render or transform are not. Zero makes this replica a producer only — which is how a deployment
-   * dedicates a pod to running jobs and leaves the ones serving pages alone.
+   * dedicates a pod to running jobs and leaves the ones serving pages alone. With `memory`, it is the most: near its
+   * memory the replica takes no new job, whatever slots it has. A slot is taken again as soon as its job ends.
    *
    * It does not widen the run guards. A replica whose `concurrency.perSpace` is 10 will hold 10 runs for one space
    * however many workers it has, and the rest go back to the queue and come round again.
@@ -168,6 +169,10 @@ export const createJobWorker = ({
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
   let heart: NodeJS.Timeout | undefined;
+  /** A pass asked for while one was under way: run once that one ends. */
+  let again = false;
+  /** Whether it is holding back new jobs for its memory, so it says so once, not every poll. */
+  let holdingBack = false;
   let watch: NodeJS.Timeout | undefined;
   let stopping = false;
   let pass: Promise<void> | undefined;
@@ -524,6 +529,21 @@ export const createJobWorker = ({
 
     const asked = spaces?.();
     const holds = memory?.();
+    // Near its memory it takes no new job, whatever slots it has: what it holds finishes first.
+    const reading = holds ? readMemory() : undefined;
+    if (holds && reading && nearMemory(reading, holds.mb)) {
+      if (!holdingBack) {
+        holdingBack = true;
+        serverLog.warn(
+          'Actions',
+          `near its memory (${memoryWords(reading, holds.mb)}): takes no new job until it is not`
+        );
+      }
+
+      return 0;
+    }
+
+    holdingBack = false;
     const claimed = await queue.claim({
       workerId,
       leaseMs,
@@ -565,7 +585,13 @@ export const createJobWorker = ({
       // Deliberately not awaited: the point of `workers` is that this pass starts several and returns.
       const running = execute(job).catch(onError);
       inFlight.add(running);
-      void running.finally(() => inFlight.delete(running));
+      // Its slot is taken again at once, not at the next poll: a queue of short jobs runs as fast as they end.
+      void running.finally(() => {
+        inFlight.delete(running);
+        if (timer && !stopping) {
+          void guarded();
+        }
+      });
     }
 
     return claimed.length;
@@ -620,17 +646,23 @@ export const createJobWorker = ({
 
   /** One pass at a time, and the one under way is kept so `stop()` can wait for the claim it may be making. */
   const guarded = async (): Promise<void> => {
+    // Asked again while a pass is under way — a job ended mid-claim — it runs once more after, not a second at once.
     if (pass) {
+      again = true;
+
       return;
     }
 
-    pass = poll()
-      .then(() => claimFailures.succeeded())
-      .catch(customOnError ?? claimFailures.failed)
-      .finally(() => {
-        pass = undefined;
-      });
-    await pass;
+    do {
+      again = false;
+      pass = poll()
+        .then(() => claimFailures.succeeded())
+        .catch(customOnError ?? claimFailures.failed)
+        .finally(() => {
+          pass = undefined;
+        });
+      await pass;
+    } while (again && timer && !stopping);
   };
 
   return {

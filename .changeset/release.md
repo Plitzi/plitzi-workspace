@@ -212,6 +212,9 @@ space while it hydrates.
 - **An invocation's CPU is its code's.** It is counted from the moment its isolate is ready — the guest and the bundle
   compiled — so the first invocation on a runner that never ran the bundle (a runner just started, mid-burst) no longer
   pays its compile from its own CPU limit (`Stopped after 100 ms of CPU`), and what it is billed is its code alone.
+- **A worker runs as many jobs as its memory holds, and takes a slot again as soon as a job ends.** `jobs.workers` is the
+  most at once: with `claimMemory`, near its memory (85%) it takes no new job, saying so once. A job that ends hands its
+  slot to the next at once instead of at the next poll — a queue of short jobs ran at one a second a slot.
 - **`jobs.helps`**: whose jobs a worker takes besides its own while it has more than one slot free — a larger worker kept
   for the heavy jobs helps the others while idle, keeping a slot for its own.
 

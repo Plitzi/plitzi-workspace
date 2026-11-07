@@ -354,6 +354,43 @@ describe('createJobWorker', () => {
     expect(await large.poll()).toBe(0);
   });
 
+  // Short jobs end in milliseconds: waiting a poll between them ran a queue of them at one a second a slot.
+  it('takes its slot again as soon as its job ends, not at the next poll', async () => {
+    const seen = vi.fn(() => ({ ok: true }));
+    const test = world(seen);
+    for (const id of ['a', 'b', 'c']) {
+      await test.job({ id: `quick-${id}` });
+    }
+
+    const worker = test.worker({ workers: 1, pollMs: 60_000 });
+    worker.start();
+    try {
+      await worker.poll();
+      await settle();
+
+      expect(seen).toHaveBeenCalledTimes(3);
+    } finally {
+      await worker.stop();
+    }
+  });
+
+  it('takes no new job near its memory, whatever slots it has, and says so once', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    const test = world(() => ({ ok: true }));
+    await test.job();
+    const full = test.worker({
+      workers: 8,
+      memory: () => ({ mb: 512, ceilingMb: 1024 }),
+      readMemory: () => ({ rssMb: 470, heapUsedMb: 100, heapLimitMb: 259 })
+    });
+
+    expect([await full.poll(), await full.poll()]).toEqual([0, 0]);
+    expect(
+      warn.mock.calls.filter(([, said]) => typeof said === 'string' && said.includes('takes no new job'))
+    ).toHaveLength(1);
+    warn.mockRestore();
+  });
+
   it('carries as many jobs at once as it was told to, and no more', async () => {
     let live = 0;
     let peak = 0;
