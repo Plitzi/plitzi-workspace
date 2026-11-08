@@ -100,7 +100,7 @@ export type JobQueueSummary = {
     waiting: number;
     calls: number;
     oldestDueAt: number;
-    /** What the last job of it handed back said: `not started: no functions runner answers`. */
+    /** What the last job of it handed back said: `Waiting for a functions runner to answer`. */
     lastError?: string;
   }[];
 };

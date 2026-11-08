@@ -129,7 +129,7 @@ describe('createJobWorker', () => {
     expect(held.status).toBe('pending');
     expect(held.attempts).toBe(0);
     expect(held.history).toEqual([]);
-    expect(held.error).toContain('not started');
+    expect(held.error).toContain('Waiting');
     expect(ran).not.toHaveBeenCalled();
   });
 

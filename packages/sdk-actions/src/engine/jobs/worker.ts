@@ -25,11 +25,14 @@ import type { Job } from '@plitzi/sdk-shared';
  */
 const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 
-/** Why a job was handed back "not now", in the words its line in the queue says — again in a second or two. */
+/**
+ * Why a job was handed back "not now", in the words its line in the queue says — again in a second or two. Short and
+ * plain: it is read beside every waiting job of a burst; which ceiling (`concurrency.perSpace`, the worker's own) is the
+ * docs' to say, not every line's.
+ */
 const NOT_NOW_WORDS: Partial<Record<string, string>> = {
-  over_capacity:
-    'its space runs as many at once as this worker takes of it (`concurrency.perSpace`), or the worker is full — it starts as one ends',
-  duplicate: 'the same run is running already — it starts once that one ends'
+  over_capacity: 'Waiting for a free slot',
+  duplicate: 'Waiting for the same run to finish'
 };
 
 /**
@@ -382,7 +385,7 @@ export const createJobWorker = ({
       if (functionJobs) {
         await executeSlice(job, functionJobs);
       } else {
-        await release(job, retryDelay(1), 'not started: this replica runs no jobs of the spaces’ functions');
+        await release(job, retryDelay(1), 'Waiting for a worker that runs functions’ jobs');
       }
 
       return;
@@ -420,7 +423,7 @@ export const createJobWorker = ({
     // Its code has no runner to run on now: not started, the attempt refunded, so nothing of it runs half-way — a
     // schedule's fire and a kept call alike wait for one.
     if (await module.codeAway(job.spaceId, entry.document, call?.at)) {
-      await release(job, retryDelay(1), 'not started: no functions runner answers');
+      await release(job, retryDelay(1), 'Waiting for a functions runner to answer');
 
       return;
     }
@@ -483,7 +486,7 @@ export const createJobWorker = ({
        * operator sees a queue that is waiting rather than a queue that has been emptied.
        */
       if (!refusal || TRY_AGAIN.has(refusal)) {
-        await release(job, tryAgainMs(), `not started yet: ${NOT_NOW_WORDS[refusal ?? ''] ?? messageOf(error)}`);
+        await release(job, tryAgainMs(), NOT_NOW_WORDS[refusal ?? ''] ?? `Waiting: ${messageOf(error)}`);
 
         return;
       }
@@ -692,16 +695,14 @@ export const createJobWorker = ({
     if (isStopping()) {
       // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
       // that is staying to take now — rather than started here and held up the shutdown.
-      await Promise.all(claimed.map(job => release(job, 0, 'not started: the replica was shutting down')));
+      await Promise.all(claimed.map(job => release(job, 0, 'Waiting: this worker is shutting down')));
 
       return 0;
     }
 
     // One a worker died running at a time: what else this claim took of them goes back, for another worker or later.
     const extra = claimed.filter(needing).slice(runningNeeding.size === 0 ? 1 : 0);
-    await Promise.all(
-      extra.map(job => release(job, 0, 'not started: the worker runs one that needs its memory already'))
-    );
+    await Promise.all(extra.map(job => release(job, 0, 'Waiting: this worker already runs one that needs its memory')));
     const started = claimed.filter(job => !extra.includes(job));
 
     for (const job of started) {

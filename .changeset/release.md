@@ -303,6 +303,10 @@ space while it hydrates.
 
 ## The job queue (`@plitzi/sdk-actions`)
 
+- **A job waiting says why in a few words**: `Waiting for a free slot`, `Waiting for the same run to finish`,
+  `Waiting for a functions runner to answer` — not `not started yet: its space runs as many at once as this worker takes
+  of it (\`concurrency.perSpace\`)…`, read beside every waiting job of a burst. Which ceiling it is, is the docs' to say.
+
 - **A claim no longer writes to reap when nothing lapsed** (the Mongo queue). Every claim reaped lapsed leases, and set
   aside jobs too large for any worker, with a multi-document write — and a worker claims as each job ends, thirty
   times a second a replica under load. Those writes fought the heartbeats for the same documents (a load probe
