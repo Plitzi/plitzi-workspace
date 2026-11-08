@@ -1,3 +1,6 @@
+import type { JobQueue } from '../../types';
+import type { Job } from '@plitzi/sdk-shared';
+
 /** Why a worker takes a job later, not never: handed back "not now", or held back from claiming. */
 
 /**
@@ -38,3 +41,36 @@ export const runnersFull = (waiting: number): string | undefined =>
   waiting >= RUNNER_WAITING_MOST
     ? `${String(RUNNER_WAITING_MOST)} or more of its runs wait for a functions runner with room: it takes no more until a runner takes one`
     : undefined;
+
+/** Whether a job needs a functions runner: a function's job, or an action marked as running the space's code. */
+const needsRunner = (job: Job): boolean => job.target.kind === 'function' || job.target.code === true;
+
+/**
+ * A worker's claims for one look: every job that needs no runner as its slots allow, and of those that do no more than
+ * its runs waiting for one leave room for (`RUNNER_WAITING_MOST`). One claim of every free slot took 160 jobs of space
+ * code at once — before any of them reached a runner to be counted as waiting — and held them as running beside the
+ * runners' 36; with the room spent, it takes only what needs none (`withoutCode`), and a burst's 20 ms actions run on.
+ */
+export const claimsWithin = (queue: JobQueue, waiting: number) => {
+  let room = Math.max(0, RUNNER_WAITING_MOST - waiting);
+
+  return async (claim: Parameters<JobQueue['claim']>[0]): Promise<Job[]> => {
+    if (claim.limit <= 0) {
+      return [];
+    }
+
+    if (room >= claim.limit) {
+      const jobs = await queue.claim(claim);
+      room -= jobs.filter(needsRunner).length;
+
+      return jobs;
+    }
+
+    const light = await queue.claim({ ...claim, withoutCode: true });
+    const more = Math.min(room, claim.limit - light.length);
+    const heavy = more > 0 ? await queue.claim({ ...claim, limit: more }) : [];
+    room -= heavy.filter(needsRunner).length;
+
+    return [...light, ...heavy];
+  };
+};

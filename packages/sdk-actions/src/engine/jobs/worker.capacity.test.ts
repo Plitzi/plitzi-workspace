@@ -172,13 +172,35 @@ describe('how much a job worker takes', () => {
     await settle();
     expect((await test.read('runs-none')).status).toBe('succeeded');
     expect((await test.read('runs-code')).status).toBe('pending');
-    expect(debug.mock.calls.some(([, words]) => words.includes('10 or more of its runs wait for a functions runner'))).toBe(
-      true
-    );
+    expect(
+      debug.mock.calls.some(([, words]) => words.includes('10 or more of its runs wait for a functions runner'))
+    ).toBe(true);
 
     waiting = 9;
     expect(await worker.poll()).toBe(1);
     debug.mockRestore();
+  });
+
+  // One claim of every free slot took 160 jobs of space code at once, before any reached a runner to be counted as
+  // waiting: it takes no more of them than its runs waiting leave room for, and every job that needs none.
+  it('takes of the jobs that need a runner only what its runs waiting leave room for, and all the rest', async () => {
+    const test = world(() => new Promise(() => {}));
+    for (let n = 0; n < 8; n += 1) {
+      await test.job({
+        id: `code-${String(n)}`,
+        target: { kind: 'action', name: 'digest', trigger: 'schedule', code: true }
+      });
+    }
+
+    await test.job({ id: 'light-a' });
+    await test.job({ id: 'light-b' });
+    test.module.runnerWaiting = () => 5;
+
+    expect(await test.worker({ workers: 32, leaseMs: 60_000 }).poll()).toBe(7);
+    await settle();
+    const pending = (await test.queue.listJobs({ spaceIds: [1], status: 'pending', limit: 20, offset: 0 })).jobs;
+    expect(pending.map(job => job.id).every(id => id.startsWith('code-'))).toBe(true);
+    expect(pending).toHaveLength(3);
   });
 
   // A worker of 256 jobs at once stopped at the guards' 100 calls a process, saying nothing.

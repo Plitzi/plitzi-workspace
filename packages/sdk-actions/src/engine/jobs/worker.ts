@@ -8,7 +8,7 @@ import { onlyFull, withoutFull } from './claimSpaces';
 import { GIVE_UP, SET_ASIDE_LIMITS, failedOutError, failureOf, limitSetAsideError } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
-import { NOT_NOW_WORDS, TRY_AGAIN, runnersFull, tryAgainMs } from './notNow';
+import { NOT_NOW_WORDS, TRY_AGAIN, claimsWithin, runnersFull, tryAgainMs } from './notNow';
 import { ActionRunError } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
@@ -596,23 +596,23 @@ export const createJobWorker = ({
       return 0;
     }
 
-    // Its runs waiting for a runner with room, it takes only jobs that run no space code (`target.code`): said at
-    // `debug`, being the load it was made for, many times a burst.
-    const runnersBusy = runnersFull(module.runnerWaiting());
-    const withoutCode = runnersBusy ? { withoutCode: true } : {};
+    // Of jobs that need a runner, only what its runs waiting for one leave room for (`claimsWithin`): said at `debug`
+    // once they fill it, being the load it was made for, many times a burst.
+    const waiting = module.runnerWaiting();
+    const claim = claimsWithin(queue, waiting);
+    const runnersBusy = runnersFull(waiting);
     if (runnersBusy) {
       serverLog.debug('Actions', `job worker ${workerId}: ${runnersBusy}`);
     }
     const memoryRoom = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
     const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
     const asking = Math.max(1, Math.min(free, memoryRoom, room.calls));
-    const claimed = await queue.claim({
+    const claimed = await claim({
       workerId,
       leaseMs,
       limit: asking,
       ...(asked ? { spaces: asked } : {}),
-      ...(holds ? { memory: holds } : {}),
-      ...withoutCode
+      ...(holds ? { memory: holds } : {})
     });
     // Its own work first; idle past one slot, it takes others' with half its memory — the rest, and a slot, kept for
     // what only it may run.
@@ -621,13 +621,12 @@ export const createJobWorker = ({
     const helping = spare > 0 ? withoutFull(helps?.(), room.fullSpaces) : undefined;
     if (helping) {
       claimed.push(
-        ...(await queue.claim({
+        ...(await claim({
           workerId,
           leaseMs,
           limit: spare,
           spaces: helping,
-          ...(holds ? { memory: holds } : {}),
-          ...withoutCode
+          ...(holds ? { memory: holds } : {})
         }))
       );
     }
@@ -636,13 +635,12 @@ export const createJobWorker = ({
     const leftover = Math.min(free - claimed.length, room.spare, memoryRoom - claimed.length);
     const sparing = claimed.length < asking && leftover > 0 ? onlyFull(spaces?.(), room.fullSpaces) : undefined;
     if (sparing) {
-      const taken = await queue.claim({
+      const taken = await claim({
         workerId,
         leaseMs,
         limit: leftover,
         spaces: sparing,
-        ...(holds ? { memory: holds } : {}),
-        ...withoutCode
+        ...(holds ? { memory: holds } : {})
       });
       taken.forEach(job => spareJobs.add(job.id));
       claimed.push(...taken);
