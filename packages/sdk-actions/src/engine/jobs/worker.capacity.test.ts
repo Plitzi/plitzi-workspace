@@ -154,6 +154,29 @@ describe('how much a job worker takes', () => {
     expect(await worker.poll()).toBe(0);
   });
 
+  /**
+   * The regression it guards: two workers held 430 runs as running while their two runners ran 26, each claimed only to
+   * wait beside the others for a runner with room. With ten of its runs waiting it claims nothing more — what waits
+   * waits in the queue — and takes more as soon as a runner takes one.
+   */
+  it('claims nothing while ten of its runs wait for a functions runner with room, and says so', async () => {
+    const debug = vi.spyOn(serverLog, 'debug').mockImplementation(() => undefined);
+    const test = world(() => ({ ok: true }));
+    await test.job();
+    let waiting = 10;
+    test.module.runnerWaiting = () => waiting;
+    const worker = test.worker({ workers: 8 });
+
+    expect(await worker.poll()).toBe(0);
+    expect(debug.mock.calls.some(([, words]) => words.includes('10 or more of its runs wait for a functions runner'))).toBe(
+      true
+    );
+
+    waiting = 9;
+    expect(await worker.poll()).toBe(1);
+    debug.mockRestore();
+  });
+
   // A worker of 256 jobs at once stopped at the guards' 100 calls a process, saying nothing.
   it('runs as many jobs as its workers say, not the guards’ 100 calls a process', () => {
     const queue = createMemoryJobQueue();

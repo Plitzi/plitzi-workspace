@@ -278,6 +278,12 @@ export type FunctionRunner = {
    * Absent: always reachable (the runner is this process).
    */
   reachable?: (spaceId?: number) => boolean;
+  /**
+   * How many invocations this process asked of it that no runner has taken yet — being placed, or kept in a runner's
+   * queue. What a job worker holds back by: with runs waiting for room, a job it claims would wait beside them, held
+   * as running, while it could wait in the queue. Absent: none ever waits (the runner is this process).
+   */
+  waitingForRoom?: () => number;
   close?: () => Promise<void>;
 };
 

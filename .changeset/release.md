@@ -212,6 +212,11 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A worker claims no more while its runs wait for a functions runner with room** (`FunctionRunner.waitingForRoom`,
+  ten at most). Two workers held 430 runs as running while their two runners ran 26 — each claimed only to wait beside
+  the others, past the queue's order, and the whole took twice its estimate. What waits now waits in the queue, where
+  every worker sees it and a screen shows it as waiting; a worker takes more as soon as a runner takes one of its own.
+
 - **A space's share of a worker is a share, not a cap** (`concurrency.perSpace`). A worker ran at most that many of one
   space's runs however idle it was: under load a space's 20 ms actions waited 37 s behind its own runs that waited for a
   runner, while slots stood empty. A worker now claims every space's work up to its share first, then — in the slots no

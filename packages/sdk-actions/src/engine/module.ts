@@ -51,6 +51,11 @@ export type ActionsModule = ActionRunner & {
    */
   codeAway: (spaceId: number, document: ActionDocument, at?: SpaceRevision) => Promise<boolean>;
   /**
+   * How many of this process's invocations no functions runner has taken yet (`FunctionRunner.waitingForRoom`): what a
+   * job worker holds back by.
+   */
+  runnerWaiting: () => number;
+  /**
    * A space's functions source, built, read and checked — ready to store, or the problems to show where they are. The
    * one way a space's functions become storable; refused when this server has no runner. With a `scope`, a plugin's
    * server half: its tasks named after the plugin, its routes its own.
@@ -208,6 +213,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     registry,
     registryFor,
     codeAway,
+    runnerWaiting: () => config.functions?.runner?.waitingForRoom?.() ?? 0,
     routeFor: routes.routeFor,
     prepareFunctions: (source, scope) => {
       const runner = config.functions?.runner;

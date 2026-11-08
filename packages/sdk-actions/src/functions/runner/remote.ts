@@ -122,6 +122,8 @@ export const createRemoteRunner = ({
 }: RemoteRunnerOptions): FunctionRunner => {
   /** When none of the runners a name stands for could be reached: while recent, the calls that need them are kept. */
   const away = new Map<string, number>();
+  /** Invocations asked of it that no runner took yet: placed, or kept in a runner's queue (`waitingForRoom`). */
+  let waitingForRoom = 0;
   const addressOf = (spaceId?: number): string => (typeof url === 'function' ? url(spaceId) : url);
   const resolved = new Map<string, { at: number; addresses: Promise<string[]> }>();
 
@@ -414,6 +416,14 @@ export const createRemoteRunner = ({
       // took it, a wait longer than what the run had left ended the run as over its budget before it had run at all.
       let waitedSince = Date.now();
       let taken = false;
+      waitingForRoom += 1;
+      let counted = true;
+      const uncount = (): void => {
+        if (counted) {
+          counted = false;
+          waitingForRoom -= 1;
+        }
+      };
       const tellWaited = (tookIt: boolean): void => {
         if (taken) {
           return;
@@ -427,6 +437,7 @@ export const createRemoteRunner = ({
 
         if (tookIt) {
           taken = true;
+          uncount();
           clearInterval(waiting);
         }
       };
@@ -448,7 +459,8 @@ export const createRemoteRunner = ({
           answer,
           signal,
           onUsage,
-          ...(onWaited ? { onWaited, tellWaited } : {})
+          ...(onWaited ? { onWaited } : {}),
+          tellWaited
         });
       try {
         const name = addressOf(invocation.context.spaceId);
@@ -540,8 +552,10 @@ export const createRemoteRunner = ({
       } finally {
         // Taken, given up, or failed: what it waited is said, and nothing goes on saying it.
         clearInterval(waiting);
+        uncount();
       }
     },
+    waitingForRoom: () => waitingForRoom,
     reachable: spaceId => {
       const since = away.get(addressOf(spaceId));
 

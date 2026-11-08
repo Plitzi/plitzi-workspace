@@ -7,6 +7,7 @@ import { KEPT_CALL_MS } from './calls';
 import { onlyFull, withoutFull } from './claimSpaces';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
+import { NOT_NOW_WORDS, TRY_AGAIN, runnersFull, tryAgainMs } from './notNow';
 import { ActionRunError } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
@@ -18,35 +19,10 @@ import type { ProcessLoad } from '@plitzi/sdk-kernel/stats';
 import type { Job } from '@plitzi/sdk-shared';
 
 /**
- * Refusals that mean "not now" rather than "not ever".
- *
- * Both are the cluster protecting itself — another run holds the single-flight key, or this replica is already
- * carrying as much as it will — and neither says anything about the job. So the job goes back to the queue with
- * its attempt REFUNDED: burning one would let a busy afternoon retire a nightly digest as dead.
- */
-const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
-
-/**
- * Why a job was handed back "not now", in the words its line in the queue says — again in a second or two. Short and
- * plain: it is read beside every waiting job of a burst; which ceiling (`concurrency.perSpace`, the worker's own) is the
- * docs' to say, not every line's.
- */
-const NOT_NOW_WORDS: Partial<Record<string, string>> = {
-  over_capacity: 'Waiting for a free slot',
-  duplicate: 'Waiting for the same run to finish'
-};
-
-/**
  * How long from `now` — the queue's clock, which every instant of it is read by — until the next minute begins, and a
  * moment more: when a budget over the minute may be spent again.
  */
 const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
-
-/**
- * How soon a job refused "not now" comes round again: a slot of its space frees in seconds, not the half minute and more
- * a failure's backoff waits — a burst's jobs refused at their space's ceiling each waited 30–60 s for nothing.
- */
-const tryAgainMs = (): number => 1_000 + Math.floor(Math.random() * 1_000);
 
 /**
  * What a job is reckoned to hold until this worker has measured its own (what it holds over what it held idle, by the
@@ -658,6 +634,15 @@ export const createJobWorker = ({
       (room.calls === 0 ? 'carries as many calls as it takes at once (`concurrency.perProcess`)' : undefined);
     holdBack(busy);
     if (busy) {
+      return 0;
+    }
+
+    // Its runs waiting for a runner with room is the load it was made for, in and out of it many times a burst: said at
+    // `debug` (the process's log tail), never as a warning each time.
+    const runnersBusy = runnersFull(module.runnerWaiting());
+    if (runnersBusy) {
+      serverLog.debug('Actions', `job worker ${workerId}: ${runnersBusy}`);
+
       return 0;
     }
 
