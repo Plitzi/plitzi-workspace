@@ -1,4 +1,4 @@
-import type { ActionSchedule, JobSpaces } from '../types';
+import type { ActionSchedule, JobSpaces, JobTake } from '../types';
 import type { Environment, Job, JobAttempt, JobProgress, JobStatus, JobTarget } from '@plitzi/sdk-shared';
 
 /** The MySQL job queue's rows, as they are read and written, and what a claim takes (`jobQueue.ts`). */
@@ -113,11 +113,18 @@ export const toSchedule = (row: ScheduleRow): ActionSchedule => ({
  * placeholders as ids; an empty "only" takes none, an empty "except" every space — or a job a worker died running that
  * this one may hold, whatever its spaces.
  */
+/** What each kind of work is, as a condition (`JobTake`, `queueRules`' `takeOf`): `code` is written only as true. */
+const TAKES: Record<JobTake, string> = {
+  light: "target_kind = 'action' AND JSON_EXTRACT(target, '$.code') IS NULL",
+  codeActions: "target_kind = 'action' AND JSON_EXTRACT(target, '$.code') IS NOT NULL",
+  functionJobs: "target_kind = 'function'"
+};
+
 export const claimable = (
   at: number,
   spaces: JobSpaces | undefined,
   memoryMb: number | undefined,
-  withoutCode = false
+  takes?: JobTake
 ): { sql: string; params: (number | string)[] } => {
   const ids = spaces ? ('only' in spaces ? spaces.only : spaces.except) : [];
   const bySpace =
@@ -128,7 +135,7 @@ export const claimable = (
       : ` AND space_id ${'only' in spaces ? 'IN' : 'NOT IN'} (${ids.map(() => '?').join(', ')})`;
 
   return {
-    sql: `status = 'pending' AND run_at <= ?${withoutCode ? " AND target_kind = 'action' AND JSON_EXTRACT(target, '$.code') IS NULL" : ''}
+    sql: `status = 'pending' AND run_at <= ?${takes ? ` AND ${TAKES[takes]}` : ''}
       AND ((needs_memory_mb IS NULL${bySpace})${memoryMb === undefined ? '' : ' OR needs_memory_mb <= ?'})`,
     params: [at, ...(bySpace.includes('?') ? ids : []), ...(memoryMb === undefined ? [] : [memoryMb])]
   };

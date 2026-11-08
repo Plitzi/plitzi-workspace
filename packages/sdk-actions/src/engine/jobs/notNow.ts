@@ -1,4 +1,4 @@
-import type { JobQueue } from '../../types';
+import type { JobQueue, JobTake } from '../../types';
 import type { Job } from '@plitzi/sdk-shared';
 
 /** Why a worker takes a job later, not never: handed back "not now", or held back from claiming. */
@@ -42,35 +42,36 @@ export const runnersFull = (waiting: number): string | undefined =>
     ? `${String(RUNNER_WAITING_MOST)} or more of its runs wait for a functions runner with room: it takes no more until a runner takes one`
     : undefined;
 
-/** Whether a job needs a functions runner: a function's job, or an action marked as running the space's code. */
-const needsRunner = (job: Job): boolean => job.target.kind === 'function' || job.target.code === true;
-
 /**
- * A worker's claims for one look: every job that needs no runner as its slots allow, and of those that do no more than
- * its runs waiting for one leave room for (`RUNNER_WAITING_MOST`). One claim of every free slot took 160 jobs of space
- * code at once — before any of them reached a runner to be counted as waiting — and held them as running beside the
- * runners' 36; with the room spent, it takes only what needs none (`withoutCode`), and a burst's 20 ms actions run on.
+ * A worker's claims for one look. Every job that needs no runner as its slots allow (`light`); of those that do, no more
+ * than its runs waiting for one leave room for (`RUNNER_WAITING_MOST`) — one claim of every free slot took 160 jobs of
+ * space code at once, before any reached a runner to be counted — shared by turns between the two kinds of them, the
+ * actions that run code and the functions' jobs: half the room each, the first of them `turn`'s (alternated look by
+ * look), and what one leaves the other takes. Taken in the queue's order, a burst's actions held 100 minute-long jobs
+ * back for two and a half minutes; sustained, for ever.
  */
-export const claimsWithin = (queue: JobQueue, waiting: number) => {
+export const claimsWithin = (queue: JobQueue, waiting: number, turn: 'codeActions' | 'functionJobs') => {
   let room = Math.max(0, RUNNER_WAITING_MOST - waiting);
+  const order: JobTake[] = turn === 'codeActions' ? ['codeActions', 'functionJobs'] : ['functionJobs', 'codeActions'];
 
   return async (claim: Parameters<JobQueue['claim']>[0]): Promise<Job[]> => {
     if (claim.limit <= 0) {
       return [];
     }
 
-    if (room >= claim.limit) {
-      const jobs = await queue.claim(claim);
-      room -= jobs.filter(needsRunner).length;
+    const taken = await queue.claim({ ...claim, takes: 'light' });
+    const share = async (takes: JobTake, limit: number): Promise<void> => {
+      const left = Math.min(limit, room, claim.limit - taken.length);
+      if (left > 0) {
+        const jobs = await queue.claim({ ...claim, takes, limit: left });
+        room -= jobs.length;
+        taken.push(...jobs);
+      }
+    };
+    await share(order[0] ?? 'codeActions', Math.ceil(room / 2));
+    await share(order[1] ?? 'functionJobs', room);
+    await share(order[0] ?? 'codeActions', room);
 
-      return jobs;
-    }
-
-    const light = await queue.claim({ ...claim, withoutCode: true });
-    const more = Math.min(room, claim.limit - light.length);
-    const heavy = more > 0 ? await queue.claim({ ...claim, limit: more }) : [];
-    room -= heavy.filter(needsRunner).length;
-
-    return [...light, ...heavy];
+    return taken;
   };
 };

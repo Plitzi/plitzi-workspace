@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 
-import type { JobQueue } from '../../../types';
+import type { JobQueue, JobTake } from '../../../types';
 import type { JobInput } from '@plitzi/sdk-shared';
 
 /** What the space-code half of the job queue contract reads of the contract around it. */
@@ -10,21 +10,24 @@ export type CodeClaimsSubject = {
 };
 
 /**
- * A worker whose runs wait for a functions runner with room takes only the jobs that need none (`withoutCode`), run
- * inside `describeJobQueue` against each store: an action's that runs no space code — never one marked `code`, never a
- * function's job.
+ * A worker shares its room between kinds of work (`takes`), run inside `describeJobQueue` against each store: actions
+ * that run no space code (`light`), actions that do (`codeActions`, marked `code`), and the functions' jobs.
  */
 export const describeCodeClaims = (ctx: CodeClaimsSubject): void => {
-  it('takes only jobs that run no space code when asked, and every job otherwise', async () => {
+  it('takes only the kind of work it is asked for, and every job otherwise', async () => {
     const code = { kind: 'action', name: 'digest', trigger: 'schedule', code: true } as const;
     await ctx.queue().enqueue(await ctx.job({ id: 'runs-code', target: code }));
     await ctx.queue().enqueue(await ctx.job({ id: 'a-function', target: { kind: 'function', name: 'train' } }));
     await ctx.queue().enqueue(await ctx.job({ id: 'runs-none' }));
 
-    const light = await ctx.queue().claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 5, withoutCode: true });
-    const rest = await ctx.queue().claim({ workerId: 'pod-b', leaseMs: 60_000, limit: 5 });
+    const ids = async (takes?: JobTake) =>
+      (await ctx.queue().claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 5, ...(takes ? { takes } : {}) })).map(
+        each => each.id
+      );
 
-    expect(light.map(each => each.id)).toEqual(['runs-none']);
-    expect(rest.map(each => each.id).sort()).toEqual(['a-function', 'runs-code']);
+    expect(await ids('functionJobs')).toEqual(['a-function']);
+    expect(await ids('light')).toEqual(['runs-none']);
+    expect(await ids('codeActions')).toEqual(['runs-code']);
+    expect(await ids()).toEqual([]);
   });
 };

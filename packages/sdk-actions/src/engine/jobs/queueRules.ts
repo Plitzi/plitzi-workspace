@@ -11,12 +11,17 @@ import type {
   JobQueueSummary,
   JobSettlement,
   JobSpaces,
+  JobTake,
   JobStop,
   JobWrite,
   ActionSchedule,
   WaitingJobs
 } from '../../types';
 import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
+
+/** The kind of work a job is (`JobTake`): what a claim's `takes` picks by. */
+export const takeOf = (target: Job['target']): JobTake =>
+  target.kind === 'function' ? 'functionJobs' : target.code ? 'codeActions' : 'light';
 
 /** Whether a job of `spaceId` is one a claim with `spaces` takes. */
 const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
@@ -142,7 +147,7 @@ export const queueRules = (
       return true;
     },
 
-    claim: ({ workerId, leaseMs, limit, spaces, memory, withoutCode }) => {
+    claim: ({ workerId, leaseMs, limit, spaces, memory, takes }) => {
       const at = now();
       // Reaped first, whoever claims: the previous holder never came back, so its attempt is written for it —
       // otherwise a replica that died mid-run leaves a job that simply restarts, with nothing saying it had been tried.
@@ -185,7 +190,7 @@ export const queueRules = (
             job.status === 'pending' &&
             job.runAt <= at &&
             fits(job, spaces, memory) &&
-            (!withoutCode || (job.target.kind === 'action' && job.target.code !== true))
+            (!takes || takeOf(job.target) === takes)
         )
         .sort((a, b) => a.runAt - b.runAt);
 

@@ -153,6 +153,8 @@ export const createJobWorker = ({
   const active = new Map<string, AbortController>();
   /** Of `active`, the jobs of a space's functions: what a stop asks to save and hand back, rather than waits for. */
   const slicing = new Set<string>();
+  /** Which kind of the work that needs a runner a look offers its room to first (`claimsWithin`), by turns. */
+  let turn: 'codeActions' | 'functionJobs' = 'functionJobs';
   /** Of `active`, the jobs taken in a spare slot, past their space's share (`room().spare`): their runs say so. */
   const spareJobs = new Set<string>();
   /** Every job this worker started, until it has settled — what `stop()` waits for. */
@@ -599,7 +601,8 @@ export const createJobWorker = ({
     // Of jobs that need a runner, only what its runs waiting for one leave room for (`claimsWithin`): said at `debug`
     // once they fill it, being the load it was made for, many times a burst.
     const waiting = module.runnerWaiting();
-    const claim = claimsWithin(queue, waiting);
+    turn = turn === 'codeActions' ? 'functionJobs' : 'codeActions';
+    const claim = claimsWithin(queue, waiting, turn);
     const runnersBusy = runnersFull(waiting);
     if (runnersBusy) {
       serverLog.debug('Actions', `job worker ${workerId}: ${runnersBusy}`);

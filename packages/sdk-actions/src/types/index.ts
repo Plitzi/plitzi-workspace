@@ -19,6 +19,7 @@ export type {
   JobsNeedingMemory,
   JobSpaces,
   JobStop,
+  JobTake,
   JobWake,
   JobWrite,
   WaitingJobs

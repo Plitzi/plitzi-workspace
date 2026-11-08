@@ -17,6 +17,12 @@ export type JobWake = {
   listen: (onWake: () => void) => () => void;
 };
 
+/**
+ * A kind of work, as a worker's claim shares its room between them: actions that run no space code (`light`, needing no
+ * runner), actions that do (`codeActions`, `target.code`), and the spaces' functions' jobs (`functionJobs`).
+ */
+export type JobTake = 'light' | 'codeActions' | 'functionJobs';
+
 /** Why a worker is asked to stop a job it holds: an operator or the code cancelled it, or set it aside. */
 export type JobStop = 'cancel' | 'pause';
 
@@ -210,8 +216,8 @@ export type JobQueue = {
     limit: number;
     spaces?: JobSpaces;
     memory?: JobClaimMemory;
-    /** Only jobs that run no space code: an action's whose `target.code` is unset, never a function's job. */
-    withoutCode?: boolean;
+    /** Only jobs of one kind of work (`JobTake`): what a worker shares its room between. Absent, every job. */
+    takes?: JobTake;
   }) => Promise<Job[]>;
   /**
    * Extends the lease on jobs this worker still holds, and answers which of them it is asked to stop — cancelled, or

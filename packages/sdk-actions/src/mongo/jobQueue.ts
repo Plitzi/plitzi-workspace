@@ -275,7 +275,7 @@ export const createMongoJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit, spaces, memory, withoutCode }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces, memory, takes }) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const taken: Job[] = [];
@@ -289,7 +289,7 @@ export const createMongoJobQueue = ({
       // the same job to two workers between the read and the write.
       for (let slot = 0; slot < limit; slot += 1) {
         const claimed = await jobs.findOneAndUpdate(
-          claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb, withoutCode),
+          claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb, takes),
           [
             {
               $set: {

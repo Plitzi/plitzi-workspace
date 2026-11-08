@@ -217,9 +217,12 @@ space while it hydrates.
   apart (`byStatus.paused`); a job a worker died running still counts while it needs a larger one, set aside or not.
 
 - **A job says whether it runs the space's code** (`target.code`, set as it is queued from its action's document), and a
-  worker whose runs wait for a runner with room takes only the jobs that need none (`claim({ withoutCode })`, in every
-  store's queue). Held back from every claim, a burst's 20 ms actions waited 105 s behind the jobs that needed a runner;
-  now they run while those wait in the queue. **To redo:** a `JobQueue` of one's own honours `withoutCode` in `claim`.
+  worker shares its room between kinds of work (`claim({ takes })`: `light`, `codeActions`, `functionJobs`, in every
+  store's queue): every job that needs no runner as its slots allow, and the room its runs waiting for a runner leave
+  shared by turns between actions that run code and the functions' jobs — half each, what one leaves the other takes.
+  Held back from every claim, a burst's 20 ms actions waited 105 s behind the jobs that needed a runner; taken in the
+  queue's order, its actions held 100 minute-long jobs back for two and a half minutes. **To redo:** a `JobQueue` of
+  one's own honours `takes` in `claim`.
 
 - **A worker claims no more while its runs wait for a functions runner with room** (`FunctionRunner.waitingForRoom`,
   ten at most). Two workers held 430 runs as running while their two runners ran 26 — each claimed only to wait beside
