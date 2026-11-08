@@ -62,7 +62,11 @@ export type RunKeyStore = {
 };
 
 export type RunGuardsConfig = {
-  /** Concurrent CALLS one space may have in flight. Renders are not counted here — see {@link RunKind}. */
+  /**
+   * Concurrent CALLS one space may have in flight — its fair share of the process: a job worker gives it more of the
+   * slots no other space's work waits for (`spare`), keeping this many free for the next that comes. Renders are not
+   * counted here — see {@link RunKind}.
+   */
   perSpace?: number;
   /** Concurrent calls this process will carry, across every space. */
   perProcess?: number;
@@ -106,6 +110,11 @@ export type BeginRunParams = {
   ttlMs: number;
   /** Which budget this run draws on. Defaults to `call`: a trigger that says nothing is somebody asking. */
   kind?: RunKind;
+  /**
+   * Taken in a slot this process had spare — no other space's work waiting for it (`room().spare`): counted against
+   * the process, never against its space's share (`perSpace`). A job worker's, which knows what waits.
+   */
+  spare?: boolean;
 };
 
 /** What a deployment may set about replaying a finished run. Off unless it says otherwise. */
@@ -131,10 +140,11 @@ export type RunGuards = {
   /** Runs in flight against what this process takes at once, by kind: what its stats report as its slots. */
   slots: () => { calls: { used: number; of: number }; renders: { used: number; of: number } };
   /**
-   * The room this process has for more calls: how many more it takes, and the spaces already at their own ceiling — what
-   * a job worker claims by, so it never takes a job only to hand it back refused.
+   * The room this process has for more calls: how many more it takes, the spaces already at their share, and how many it
+   * may take past a share while no other space's work waits (`spare`) — what a job worker claims by, so it never takes a
+   * job only to hand it back refused, nor leaves a slot idle that a waiting job could have.
    */
-  room: () => { calls: number; fullSpaces: number[] };
+  room: () => { calls: number; fullSpaces: number[]; spare: number };
 };
 
 export const DEFAULT_GUARDS = { perSpace: 10, perProcess: 100, renderPerProcess: 1000, memoryShare: 0.85 };
@@ -335,7 +345,7 @@ export const createRunGuards = (
       kind === 'render'
         ? count(run => run.kind === 'render') >= renderPerProcess
         : count(run => run.kind === 'call') >= perProcess ||
-          count(run => run.kind === 'call' && run.spaceId === params.spaceId) >= perSpace;
+          (!params.spare && count(run => run.kind === 'call' && run.spaceId === params.spaceId) >= perSpace);
     if (overCapacity) {
       throw new ActionRunError('over_capacity', 'Too many actions are running right now');
     }
@@ -519,7 +529,10 @@ export const createRunGuards = (
 
     return {
       calls: Math.max(0, perProcess - calls),
-      fullSpaces: [...bySpace.entries()].filter(([, held]) => held >= perSpace).map(([spaceId]) => spaceId)
+      fullSpaces: [...bySpace.entries()].filter(([, held]) => held >= perSpace).map(([spaceId]) => spaceId),
+      // Past a space's share, what may be taken while nothing else waits: a share's worth is kept free, for the work of
+      // a space that comes next to start at once.
+      spare: Math.max(0, perProcess - calls - perSpace)
     };
   };
 

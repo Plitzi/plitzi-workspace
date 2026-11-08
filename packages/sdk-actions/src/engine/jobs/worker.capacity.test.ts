@@ -109,22 +109,48 @@ describe('how much a job worker takes', () => {
   });
 
   // Claimed past its space's ceiling, a job was handed back refused — and waited a failure's backoff for nothing.
-  it('claims no job of a space at its ceiling, and leaves it untouched for when a slot frees', async () => {
-    const test = world(() => new Promise(() => {}), [entry()], { perSpace: 2 });
-    for (const id of ['a', 'b', 'c']) {
+  // A space's share is what it gets while another's work waits: the slot goes to the other space first.
+  it('gives another space’s waiting job the slot before more of a space at its share', async () => {
+    const test = world(() => new Promise(() => {}), [entry()], { perSpace: 2, perProcess: 5 });
+    for (const id of ['a', 'b']) {
+      await test.job({ id: `busy-${id}` });
+    }
+
+    const worker = test.worker({ workers: 3, leaseMs: 60_000 });
+    expect(await worker.poll()).toBe(2);
+    await settle();
+    await test.job({ id: 'more-of-space-1' });
+    await test.job({ id: 'other-space', spaceId: 2 });
+
+    expect(await worker.poll()).toBe(1);
+    await settle();
+    expect((await test.queue.getJob([2], 'other-space'))?.status).toBe('running');
+    expect((await test.read('more-of-space-1')).status).toBe('pending');
+  });
+
+  /**
+   * The regression it guards: under a load probe a space's 20 ms actions waited 37 s behind its own share, held by its
+   * runs that waited for a runner, while the worker had slots nobody else wanted. Past its share it takes the slots no
+   * other space's work waits for — never the last share's worth, kept for the next space that comes.
+   */
+  it('takes a space’s job past its share in a slot nothing else waits for, keeping a share free', async () => {
+    const test = world(() => new Promise(() => {}), [entry()], { perSpace: 2, perProcess: 5 });
+    for (const id of ['a', 'b']) {
       await test.job({ id: `busy-${id}` });
     }
 
     const worker = test.worker({ workers: 8, leaseMs: 60_000 });
-    expect(await worker.poll()).toBe(3);
+    expect(await worker.poll()).toBe(2);
     await settle();
-    // Two run; the third was refused at the ceiling and comes round in a second or two, not a backoff's half minute.
-    const refused = (await test.queue.listJobs({ spaceIds: [1], status: 'pending', limit: 5, offset: 0 })).jobs;
-    expect(refused).toHaveLength(1);
-    expect(refused[0]?.runAt).toBeLessThanOrEqual(MIDNIGHT + 2_000);
-    expect(refused[0]?.attempts).toBe(0);
-    // Now its space is full: the next pass takes none of it.
-    test.advance(5_000);
+    for (const id of ['c', 'd']) {
+      await test.job({ id: `busy-${id}` });
+    }
+
+    // Five calls a process, two of a share kept free: one more of this space, past its share.
+    expect(await worker.poll()).toBe(1);
+    await settle();
+    const statuses = await Promise.all(['busy-c', 'busy-d'].map(async id => (await test.read(id)).status));
+    expect(statuses.sort()).toEqual(['pending', 'running']);
     expect(await worker.poll()).toBe(0);
   });
 

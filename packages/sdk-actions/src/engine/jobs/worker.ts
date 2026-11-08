@@ -4,6 +4,7 @@ import { serverLog } from '@plitzi/sdk-kernel/log';
 import { overloaded, processLoad } from '@plitzi/sdk-kernel/stats';
 
 import { KEPT_CALL_MS } from './calls';
+import { onlyFull, withoutFull } from './claimSpaces';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { ActionRunError } from '../runtime/errors';
@@ -46,21 +47,6 @@ const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.f
  * a failure's backoff waits — a burst's jobs refused at their space's ceiling each waited 30–60 s for nothing.
  */
 const tryAgainMs = (): number => 1_000 + Math.floor(Math.random() * 1_000);
-
-/** `spaces` without those at their ceiling: what a claim takes, so no job is claimed only to be handed back refused. */
-const withoutFull = (spaces: JobSpaces | undefined, full: number[]): JobSpaces | undefined => {
-  if (full.length === 0) {
-    return spaces;
-  }
-
-  if (!spaces) {
-    return { except: full };
-  }
-
-  return 'only' in spaces
-    ? { only: spaces.only.filter(spaceId => !full.includes(spaceId)) }
-    : { except: [...new Set([...spaces.except, ...full])] };
-};
 
 /**
  * What a job is reckoned to hold until this worker has measured its own (what it holds over what it held idle, by the
@@ -232,6 +218,8 @@ export const createJobWorker = ({
   const active = new Map<string, AbortController>();
   /** Of `active`, the jobs of a space's functions: what a stop asks to save and hand back, rather than waits for. */
   const slicing = new Set<string>();
+  /** Of `active`, the jobs taken in a spare slot, past their space's share (`room().spare`): their runs say so. */
+  const spareJobs = new Set<string>();
   /** Every job this worker started, until it has settled — what `stop()` waits for. */
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
@@ -442,7 +430,8 @@ export const createJobWorker = ({
           callerId: call.callerId,
           input: job.input,
           idempotencyKey: call.idempotencyKey,
-          ttlMs
+          ttlMs,
+          ...(spareJobs.has(job.id) ? { spare: true } : {})
         }
       : {
           spaceId: job.spaceId,
@@ -453,6 +442,7 @@ export const createJobWorker = ({
           // that merely stalled — lease lapsed, job handed to somebody else — from running the same flow twice
           // alongside its replacement: the second one is refused as a duplicate and comes back later.
           idempotencyKey: job.id,
+          ...(spareJobs.has(job.id) ? { spare: true } : {}),
           sharedKey: true,
           ttlMs
         };
@@ -673,10 +663,11 @@ export const createJobWorker = ({
 
     const memoryRoom = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
     const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
+    const asking = Math.max(1, Math.min(free, memoryRoom, room.calls));
     const claimed = await queue.claim({
       workerId,
       leaseMs,
-      limit: Math.max(1, Math.min(free, memoryRoom, room.calls)),
+      limit: asking,
       ...(asked ? { spaces: asked } : {}),
       ...(holds ? { memory: holds } : {})
     });
@@ -696,6 +687,24 @@ export const createJobWorker = ({
         }))
       );
     }
+    // Every space's share taken and slots left with nothing else due: more of the spaces at their share, past it — a
+    // share kept free (`room().spare`) for the next space's work. A space's burst no longer waits behind its own share
+    // while the worker idles: under a load probe, its 20 ms actions waited 37 s behind its own runs that waited for a
+    // runner.
+    const leftover = Math.min(free - claimed.length, room.spare, memoryRoom - claimed.length);
+    const sparing = claimed.length < asking && leftover > 0 ? onlyFull(spaces?.(), room.fullSpaces) : undefined;
+    if (sparing) {
+      const taken = await queue.claim({
+        workerId,
+        leaseMs,
+        limit: leftover,
+        spaces: sparing,
+        ...(holds ? { memory: holds } : {})
+      });
+      taken.forEach(job => spareJobs.add(job.id));
+      claimed.push(...taken);
+    }
+
     if (isStopping()) {
       // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
       // that is staying to take now — rather than started here and held up the shutdown.
@@ -726,6 +735,7 @@ export const createJobWorker = ({
       void running.finally(() => {
         inFlight.delete(running);
         runningNeeding.delete(job.id);
+        spareJobs.delete(job.id);
         if (timer && !stopping) {
           void guarded();
         }

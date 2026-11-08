@@ -78,13 +78,24 @@ describe('createRunGuards', () => {
   });
 
   // What a job worker claims by: never a job of a space at its ceiling, never past the process's.
-  it('says the room it has left: calls it takes, and the spaces at their own ceiling', async () => {
-    const guards = createRunGuards({ perSpace: 2, perProcess: 5 });
+  it('says the room it has left: calls it takes, the spaces at their share, and what is spare past a share', async () => {
+    const guards = createRunGuards({ perSpace: 2, perProcess: 6 });
     await guards.begin(params({ idempotencyKey: 'a' }));
     await guards.begin(params({ idempotencyKey: 'b' }));
     await guards.begin(params({ spaceId: 2, idempotencyKey: 'c' }));
 
-    expect(guards.room()).toEqual({ calls: 2, fullSpaces: [1] });
+    // Six a process, three running, a share of two kept free: one spare.
+    expect(guards.room()).toEqual({ calls: 3, fullSpaces: [1], spare: 1 });
+  });
+
+  // A job worker's run in a spare slot: its space's share does not refuse it, the process's ceiling still does.
+  it('starts a run in a spare slot past its space’s share, never past the process’s', async () => {
+    const guards = createRunGuards({ perSpace: 1, perProcess: 2 });
+    await guards.begin(params({ idempotencyKey: 'a' }));
+
+    await expect(guards.begin(params({ idempotencyKey: 'b' }))).rejects.toThrow('Too many actions');
+    await guards.begin(params({ idempotencyKey: 'b', spare: true }));
+    await expect(guards.begin(params({ idempotencyKey: 'c', spare: true }))).rejects.toThrow('Too many actions');
   });
 
   /**

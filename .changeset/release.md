@@ -212,6 +212,12 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A space's share of a worker is a share, not a cap** (`concurrency.perSpace`). A worker ran at most that many of one
+  space's runs however idle it was: under load a space's 20 ms actions waited 37 s behind its own runs that waited for a
+  runner, while slots stood empty. A worker now claims every space's work up to its share first, then — in the slots no
+  other space's work waits for — more of the spaces at their share, keeping a share's worth free for the next space that
+  comes (`room().spare`, `begin({ spare })`); the process's ceiling (`perProcess`) still holds.
+
 - **A job due now is taken as it is enqueued** (`jobs.wake`, `JobWake`): a worker found new jobs only by looking every
   `pollMs`, so an idle server started a scheduled or later run half a second late on average. Given a pub/sub — `notify`
   as a job due now is enqueued or handed back, `listen` on every worker — it looks at once. Absent, as before.
