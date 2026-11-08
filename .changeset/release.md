@@ -292,6 +292,12 @@ space while it hydrates.
 
 ## The job queue (`@plitzi/sdk-actions`)
 
+- **A claim no longer writes to reap when nothing lapsed** (the Mongo queue). Every claim reaped lapsed leases, and set
+  aside jobs too large for any worker, with a multi-document write — and a worker claims as each job ends, thirty
+  times a second a replica under load. Those writes fought the heartbeats for the same documents (a load probe
+  measured 333 ms each, 18 s of Mongo's time in 3 s) until leases lapsed, and live workers' jobs were reaped as lost
+  and run again — 216 in one round. Each is now asked first by a read of one id, and written only when there is one.
+
 - **`JobQueue.listAcross({ statuses, limit, order })`**: the jobs of every space in some statuses, the longest due or
   the latest written first — an operator's view (a monitoring screen's lists of what waits, runs and just ended), never
   a space's own. A store of your own implements it.

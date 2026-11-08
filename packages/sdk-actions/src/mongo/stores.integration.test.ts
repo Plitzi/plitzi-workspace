@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb';
-import { afterAll, describe, expect, it } from 'vitest';
+import { Collection, MongoClient } from 'mongodb';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { leftByGoneRun, runName } from '@plitzi/sdk-kernel/testing';
 
@@ -80,5 +80,44 @@ describe.skipIf(!available)('mongo — a queue on a database that has none', () 
     });
 
     expect(await queue.listJobs({ spaceIds: [7], limit: 5, offset: 0 })).toEqual({ jobs: [], total: 0 });
+  });
+});
+
+describe.skipIf(!available)('mongo — what a claim writes', () => {
+  /**
+   * The regression this guards: every claim reaped lapsed leases with a multi-document write — a worker claims as each
+   * job ends, thirty times a second a replica under load — and those writes fought the heartbeats for the same
+   * documents until leases lapsed, and live workers' jobs were reaped as lost and run again. With no lease lapsed, a
+   * claim writes nothing to reap: it reads, and finds none.
+   */
+  it('writes nothing to reap while no lease has lapsed', async () => {
+    await emptied('itest_claim_jobs')();
+    const queue = createMongoJobQueue({
+      db: () => db,
+      collections: { jobs: 'itest_claim_jobs', schedules: 'itest_claim_schedules' }
+    });
+    const due = Date.now() - 1_000;
+    for (let n = 0; n < 5; n += 1) {
+      await queue.enqueue({
+        id: `claim-${String(n)}`,
+        spaceId: 7,
+        environment: 'main',
+        target: { kind: 'action', name: 'a', trigger: 'schedule' },
+        input: {},
+        dueAt: due,
+        maxAttempts: 3
+      });
+    }
+
+    const updateMany = vi.spyOn(Collection.prototype, 'updateMany');
+    try {
+      for (let n = 0; n < 5; n += 1) {
+        await queue.claim({ workerId: 'w', leaseMs: 60_000, limit: 1, memory: { mb: 512, ceilingMb: 1024 } });
+      }
+
+      expect(updateMany).not.toHaveBeenCalled();
+    } finally {
+      updateMany.mockRestore();
+    }
   });
 });

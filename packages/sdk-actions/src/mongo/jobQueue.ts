@@ -218,6 +218,39 @@ export const createMongoJobQueue = ({
     return { jobs: jobsOf(), schedules: schedulesOf() };
   };
 
+  /**
+   * A lapsed lease reaped — its worker died, its attempt written for it — and a job that needs more memory than the
+   * largest worker holds set aside, each document once however many claim at once: the filter is read again as each is
+   * written. Each asked first by a read of one id, and written only when there is one: a worker claims as each job
+   * ends, and a multi-document write on every claim — thirty a second a replica under load — fought the heartbeats for
+   * the same documents until leases lapsed, and live workers' jobs were reaped as lost and run again.
+   */
+  const maintain = async (jobs: Collection<JobDocument>, at: number, ceilingMb: number | undefined): Promise<void> => {
+    const lapsed = { status: 'running' as const, leaseUntil: { $lt: at } };
+    if (await jobs.findOne(lapsed, { projection: { _id: 1 } })) {
+      await jobs.updateMany(lapsed, [
+        {
+          $set: {
+            history: lostAttempt(at),
+            needsMemoryMb: needsAfterLossOf,
+            error: lostErrorOf,
+            status: 'pending',
+            updatedAt: at
+          }
+        },
+        { $unset: ['workerId', 'leaseUntil', 'holderMemoryMb', 'nearMemoryLimit'] }
+      ]);
+    }
+
+    // After the reap: a job it just gave back may need more than any worker holds, and is set aside on this claim.
+    const outgrown = { status: 'pending' as const, needsMemoryMb: { $gt: ceilingMb ?? Number.POSITIVE_INFINITY } };
+    if (ceilingMb !== undefined && (await jobs.findOne(outgrown, { projection: { _id: 1 } }))) {
+      await jobs.updateMany(outgrown, [
+        { $set: { status: 'paused', error: setAsideErrorOf(ceilingMb), updatedAt: at } }
+      ]);
+    }
+  };
+
   const expiryOf = (at: number): Date => new Date(at + retentionDays * DAY_MS);
 
   return {
@@ -263,24 +296,8 @@ export const createMongoJobQueue = ({
 
       // Reaped first, whoever claims: a lapsed lease is a worker that died. Reaping is part of claiming rather than a
       // second job somebody has to deploy, schedule and remember — and each document is reaped once, however many
-      // claim at once: the filter is read again as each one is written.
-      await jobs.updateMany({ status: 'running', leaseUntil: { $lt: at } }, [
-        {
-          $set: {
-            history: lostAttempt(at),
-            needsMemoryMb: needsAfterLossOf,
-            error: lostErrorOf,
-            status: 'pending',
-            updatedAt: at
-          }
-        },
-        { $unset: ['workerId', 'leaseUntil', 'holderMemoryMb', 'nearMemoryLimit'] }
-      ]);
-      if (memory) {
-        await jobs.updateMany({ status: 'pending', needsMemoryMb: { $gt: memory.ceilingMb } }, [
-          { $set: { status: 'paused', error: setAsideErrorOf(memory.ceilingMb), updatedAt: at } }
-        ]);
-      }
+      // claim at once (`maintain`): written only when a read finds one.
+      await maintain(jobs, at, memory?.ceilingMb);
 
       // One document at a time, because `findOneAndUpdate` is the atomic unit: a multi-document update could hand
       // the same job to two workers between the read and the write.
