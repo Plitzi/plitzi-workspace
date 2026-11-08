@@ -77,7 +77,7 @@ beforeEach(() => {
   save.mockReset();
   tryTask.mockReset();
   install.mockReset();
-  draft = { files: {}, version: 'v0', manifest: null, offer: null };
+  draft = { files: {}, version: 'v0', manifest: null, offer: null, sizes: ['small'] };
   dialog.answer = true;
   typescript.ready = false;
   typescript.source = undefined;
@@ -118,7 +118,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': 'export default {};\n', 'lib/feed.ts': 'export const feed = 1;\n' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     const { container } = renderPanel();
     await waitFor(() => expect(container.querySelector('.cm-content')?.textContent).toBe('export default {};'));
@@ -137,7 +138,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': 'export default {};' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     save.mockResolvedValue({ ok: false, problems: [{ file: 'lib/feed.ts', line: 3, message: 'Expected ";"' }] });
     renderPanel();
@@ -183,7 +185,8 @@ describe('the Functions panel', () => {
         ],
         routes: ['GET /feed/:id']
       },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     tryTask.mockResolvedValue({ status: 'completed', steps: [], output: { value: { ok: true } } });
     renderPanel();
@@ -208,7 +211,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': index },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     typescript.ready = true;
     typescript.source = { defined: true, tasks: [], routes: [], jobs: [], hosts: [], unreadable: [] };
@@ -249,7 +253,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': 'export default defineFunctions({});' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     typescript.ready = true;
     typescript.source = {
@@ -273,12 +278,46 @@ describe('the Functions panel', () => {
     expect(screen.getByText('Unsaved · 1 file')).toBeDefined();
   });
 
+  // A size the plan leaves out is shown locked, never hidden; one it includes is written into the task's code, beside
+  // the time it already asked for, and the default size is taken out.
+  it('writes the size a task asks for into its code, with the sizes its plan leaves out locked', async () => {
+    const at = { file: 'index.ts', line: 3, start: 40, end: 120 };
+    draft = {
+      files: { 'index.ts': 'export default defineFunctions({});' },
+      version: 'v1',
+      manifest: { hosts: [], tasks: [], routes: [] },
+      offer: null,
+      sizes: ['small', 'medium']
+    };
+    typescript.ready = true;
+    typescript.source = {
+      defined: true,
+      tasks: [{ namespace: 'feed', action: 'read', title: 'Read', params: {}, limits: { cpuMs: 300 }, at }],
+      routes: [],
+      jobs: [],
+      hosts: [],
+      unreadable: []
+    };
+    typescript.setTaskLimits.mockResolvedValue({ file: 'index.ts', code: 'limits written' });
+    renderPanel();
+
+    expect(screen.getByText('Large').closest('button')?.disabled).toBe(true);
+    expect(screen.getByText(/This space’s plan includes up to medium/)).toBeDefined();
+
+    fireEvent.click(screen.getByText('Medium'));
+    await waitFor(() => expect(typescript.setTaskLimits).toHaveBeenCalledWith(at, { cpuMs: 300, size: 'medium' }));
+
+    fireEvent.click(screen.getByText('Small'));
+    await waitFor(() => expect(typescript.setTaskLimits).toHaveBeenLastCalledWith(at, { cpuMs: 300 }));
+  });
+
   it('discards every unsaved change, back to what was last saved', async () => {
     draft = {
       files: { 'index.ts': 'export default {};' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     renderPanel();
 
@@ -311,7 +350,7 @@ describe('the Functions panel', () => {
   });
 
   it('offers the functions the space’s template brought, and installs them', async () => {
-    draft = { files: {}, version: 'v0', manifest: null, offer: { template: 'Shipping quote' } };
+    draft = { files: {}, version: 'v0', manifest: null, offer: { template: 'Shipping quote' }, sizes: ['small'] };
     install.mockResolvedValue({ ok: true, version: 'v1', manifest: { hosts: [], tasks: [], routes: [] } });
     renderPanel();
 
@@ -327,7 +366,7 @@ describe('the Functions panel', () => {
   /** Server code is kept in the space's private bucket: without one the save is refused with how to add it. */
   it('says how to add a private bucket when the space has none', async () => {
     const error = 'This space has no private bucket to keep its server code in. In Resources, add a bucket…';
-    draft = { files: {}, version: 'v0', manifest: null, offer: { template: 'Shipping quote' } };
+    draft = { files: {}, version: 'v0', manifest: null, offer: { template: 'Shipping quote' }, sizes: ['small'] };
     install.mockResolvedValue({ ok: false, refusal: { status: 409, limit: 'storage', error } });
     renderPanel();
 
@@ -343,7 +382,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': 'export default defineFunctions({ jobs: { train: {} } });' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [], jobs: { train: { maxSeconds: 5400 } } },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     queue.jobs = [
       {
@@ -403,7 +443,8 @@ describe('the Functions panel', () => {
       files: { 'index.ts': 'export default defineFunctions({});' },
       version: 'v1',
       manifest: { hosts: [], tasks: [], routes: [] },
-      offer: null
+      offer: null,
+      sizes: ['small']
     };
     typescript.source = {
       defined: true,

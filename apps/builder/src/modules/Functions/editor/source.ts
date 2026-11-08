@@ -1,6 +1,7 @@
 import ts from 'typescript';
 
 import { actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { isFunctionSize } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { FUNCTIONS_ROOT } from './paths';
@@ -188,9 +189,9 @@ const textOf = (object: ts.ObjectLiteralExpression, name: string, checker: ts.Ty
 };
 
 /** The limits a task may ask for, in the order they are written. */
-const ASKED_KEYS = ['cpuMs', 'wallMs', 'memoryMb'] as const satisfies readonly (keyof FunctionAskedLimits)[];
+const ASKED_KEYS = ['cpuMs', 'wallMs', 'size'] as const satisfies readonly (keyof FunctionAskedLimits)[];
 
-/** What a task or the functions ask for: whole positive milliseconds and megabytes, as the platform would keep them. */
+/** What a task or the functions ask for: milliseconds and a size, as the platform would keep them. */
 const limitsOf = (object: ts.ObjectLiteralExpression, checker: ts.TypeChecker): FunctionAskedLimits | undefined => {
   const value = propertyOf(object, 'limits');
   const read = value ? literalValue(value, checker) : undefined;
@@ -199,12 +200,18 @@ const limitsOf = (object: ts.ObjectLiteralExpression, checker: ts.TypeChecker): 
   }
 
   const limits: FunctionAskedLimits = {};
-  ASKED_KEYS.forEach(key => {
-    const asked = read[key];
-    if (typeof asked === 'number') {
-      limits[key] = asked;
-    }
-  });
+  const { cpuMs, wallMs, size } = read;
+  if (typeof cpuMs === 'number') {
+    limits.cpuMs = cpuMs;
+  }
+
+  if (typeof wallMs === 'number') {
+    limits.wallMs = wallMs;
+  }
+
+  if (isFunctionSize(size)) {
+    limits.size = size;
+  }
 
   return Object.keys(limits).length ? limits : undefined;
 };
@@ -356,7 +363,11 @@ const objectAt = (env: VirtualTypeScriptEnvironment, place: SourcePlace): ts.Obj
 };
 
 const limitsText = (limits: FunctionAskedLimits): string =>
-  `{ ${ASKED_KEYS.flatMap(key => (limits[key] === undefined ? [] : [`${key}: ${String(limits[key])}`])).join(', ')} }`;
+  `{ ${ASKED_KEYS.flatMap(key => {
+    const value = limits[key];
+
+    return value === undefined ? [] : [`${key}: ${typeof value === 'number' ? String(value) : `'${value}'`}`];
+  }).join(', ')} }`;
 
 /**
  * The task written at `place`, asking for `limits` — written into its own `limits`, or that taken out when it asks for

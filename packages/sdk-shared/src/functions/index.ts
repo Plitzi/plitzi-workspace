@@ -75,4 +75,12 @@ export {
   wireResponseOf
 } from './wire';
 export { endpointFor, endpointProblem, PLATFORM_HEADERS, RUNTIME_DESCRIBE_PATH } from './runtime';
+export {
+  FUNCTION_SIZE_NAMES,
+  FUNCTION_SIZES,
+  functionSizeOfMemory,
+  functionSizesWithin,
+  isFunctionSize,
+  largerFunctionSize
+} from './sizes';
 export type { SpaceRuntime, SpaceRuntimeContext, SpaceRuntimeEndpoint, SpaceRuntimeParts } from './runtime';

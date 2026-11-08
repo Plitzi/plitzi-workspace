@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { cpuLimitCores } from '@plitzi/sdk-kernel/stats';
 import { changeKv, changeListEntry } from '@plitzi/sdk-shared/functions';
 import { FunctionFailure, failedAnswerOf } from '@plitzi/sdk-shared/functions';
+import { functionSizeOfMemory, largerFunctionSize } from '@plitzi/sdk-shared/functions';
 
 import { createCpuMeter } from './cpuMeter';
 import { createFunctionsDriver, describeFunctions } from './driver';
@@ -149,6 +150,17 @@ const cachedDataOf = (ivm: Ivm, compiled: object): IsolatedVM.ExternalCopy<Array
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
+/** Past its memory: how much, and the size to ask for instead — the one thing its author can change. */
+const memoryStopMessage = (memoryMb: number): string => {
+  const size = functionSizeOfMemory(memoryMb);
+  const larger = size ? largerFunctionSize(size) : undefined;
+  const ran = size ? ` (a ${size} task)` : '';
+
+  return larger
+    ? `Went over its ${String(memoryMb)} MB of memory${ran}: a task that needs more asks to be larger in its limits ({ size: '${larger}' }), as far as its plan allows`
+    : `Went over its ${String(memoryMb)} MB of memory${ran}, the most a task runs with: hold less of it at once`;
+};
+
 const stopMessage = (reason: FunctionStopReason, limits: FunctionLimits): string => {
   switch (reason) {
     case 'cpu':
@@ -156,7 +168,7 @@ const stopMessage = (reason: FunctionStopReason, limits: FunctionLimits): string
     case 'wall':
       return `Did not finish within ${String(limits.wallMs)} ms`;
     case 'memory':
-      return `Went over its ${String(limits.memoryMb)} MB of memory: a task that needs more asks for it in its limits ({ memoryMb }), up to what its plan allows`;
+      return memoryStopMessage(limits.memoryMb);
     case 'output':
       return `Answered more than the ${String(limits.outputBytes)} bytes it may`;
     case 'calls':

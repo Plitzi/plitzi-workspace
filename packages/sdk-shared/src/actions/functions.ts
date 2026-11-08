@@ -22,15 +22,13 @@ export const pluginRoutePath = (plugin: string, path = '/'): string =>
   `${FUNCTION_ROUTES_PREFIX}/${PLUGIN_ROUTES_SEGMENT}/${encodeURIComponent(plugin)}${path.startsWith('/') ? path : `/${path}`}`;
 
 /**
- * The CPU, time and memory an invocation gets when its task asks for none: what the server runs it with, and what the
- * builder shows as "default". A task asks for more in its `limits`, up to what its plan and its deployment allow. 32 MB:
- * a runner keeps each invocation's memory whole while it runs, so the default is what most code needs, and a task that
- * parses large answers asks for its own rather than every invocation keeping room for the one that does.
+ * The CPU, time and size an invocation gets when its task asks for none: what the server runs it with, and what the
+ * builder shows as "default". A task asks for more in its `limits`, up to what its plan and its deployment allow.
  */
 export const DEFAULT_FUNCTION_ASKED_LIMITS = {
   cpuMs: 100,
   wallMs: 10_000,
-  memoryMb: 32
+  size: 'small'
 } as const satisfies Required<FunctionAskedLimits>;
 
 /** Whether a page at `path` would sit where the space's functions answer. */

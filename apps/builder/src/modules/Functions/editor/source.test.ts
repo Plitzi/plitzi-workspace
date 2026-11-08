@@ -151,18 +151,18 @@ describe('a task asking for its time', () => {
     expect(describeSource(env).tasks[0].limits).toEqual({ cpuMs: 450 });
   });
 
-  // The panel sets the CPU alone: the memory the code asked for — kept whole for the task by the runner — stays.
-  it('keeps the memory its code asked for when the panel sets its CPU', () => {
+  // The panel sets the CPU alone: the size the code asked for — kept whole for the task by the runner — stays.
+  it('keeps the size its code asked for when the panel sets its CPU', () => {
     const env = environmentWith({ 'index.ts': INDEX, 'lib/feed.ts': FEED });
-    const asked = withTaskLimits(env, describeSource(env).tasks[0].at, { memoryMb: 128 });
+    const asked = withTaskLimits(env, describeSource(env).tasks[0].at, { size: 'medium' });
     env.updateFile(workerPathOf('lib/feed.ts'), asked?.code ?? '');
     const [feed] = describeSource(env).tasks;
 
     const edit = withTaskLimits(env, feed.at, withCpu(feed.limits, 800));
     env.updateFile(workerPathOf('lib/feed.ts'), edit?.code ?? '');
 
-    expect(edit?.code).toContain('limits: { cpuMs: 800, memoryMb: 128 },');
-    expect(describeSource(env).tasks[0].limits).toEqual({ cpuMs: 800, memoryMb: 128 });
+    expect(edit?.code).toContain("limits: { cpuMs: 800, size: 'medium' },");
+    expect(describeSource(env).tasks[0].limits).toEqual({ cpuMs: 800, size: 'medium' });
   });
 });
 

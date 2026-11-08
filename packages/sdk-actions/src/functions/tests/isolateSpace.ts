@@ -5,7 +5,7 @@ import { functionsInHand } from '../space';
 
 import type { FunctionsConfig } from '../config';
 import type { IsolateRunner } from '@plitzi/sdk-runtime/runner';
-import type { ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
+import type { ActionEntry, ElementInteraction, FunctionAskedLimits, SSRUser } from '@plitzi/sdk-shared';
 import type { FunctionLimits, SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 /** A space whose functions run in isolates, as the tests of the isolate runner build it: its source, its run. */
@@ -57,7 +57,7 @@ export interface SourceOptions {
   hosts?: string[];
   extra?: string;
   /** What the task asks for itself: an invocation's CPU is the task's to ask, the space's limits only cap it. */
-  asks?: { cpuMs?: number; wallMs?: number };
+  asks?: FunctionAskedLimits;
 }
 
 /**

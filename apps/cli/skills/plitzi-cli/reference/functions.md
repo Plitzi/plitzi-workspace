@@ -34,10 +34,11 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   `avatar` — never an email), `undefined` for anyone else; `ctx.presence(topic)` is who is on a `presence: true`
   channel now (`count`, `members`), counted by the server on every replica.
 - **Two visitors at once:** never read a value, change it and `set` it back — a write in between is undone. `ctx.kv.change(key, current => next)` writes what it answers, asking again when someone wrote meanwhile (`undefined` writes nothing); `ctx.kv.listChange(list, id, entry => …)` the same for one entry, never putting back one that left; `ctx.kv.swap(key, expected, next)` writes only if it still holds `expected`. "Somebody wrote meanwhile" is read by value, as `swap` compares: a write in between that leaves the value as it was read is no conflict, and the change goes on over it — a test of two writers needs them to leave different values (a fake store that compares otherwise tests another store). A test's store is the server's own, `createKvStore(createMemoryKv())` from `@plitzi/sdk-actions`: it refuses what the server refuses (a list entry's id is letters, digits and `: _ . @ -` — a `|` failed only on the real server).
-- **A run gets 100 ms of CPU, 10 s and 32 MB.** A task that needs more asks with `limits: { cpuMs, wallMs, memoryMb }`
-  (or `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
-  Ask for the memory it needs, not the plan's most: the runner keeps it whole while the task runs, so more is slower to
-  place.
+- **A run gets 100 ms of CPU, 10 s and the small size (32 MB).** A task that needs more asks with
+  `limits: { cpuMs, wallMs, size }` (or `defineFunctions({ limits })` for all) — sizes `small` 32 MB, `medium` 128 MB,
+  `large` 256 MB — up to what the plan includes; asking above the server's is a problem the push reports, a size the
+  plan leaves out is refused when the task runs. Start small and go up when a run says it went over: the runner keeps
+  a task's memory whole while it runs, so a larger size is slower to place.
   A task a page's render action runs (`apiContainer({ runtime: 'server' })`) has the page's ceiling too, and it wins:
   each section is cut at **5 s** (`rsc.elementTimeoutMs`) and arrives empty. A source slower than that is kept in kv
   and served from there, refreshed after — never waited on in the render. One no page uses yet is run from the

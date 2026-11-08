@@ -212,15 +212,17 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
-- **A function asks for the memory it needs; the plan's is the most it may ask for.** Every invocation was given its
-  plan's memory, asked for or not, and the runner keeps an invocation's memory whole while it runs: under load a 1 GB
-  runner held two invocations at once and the rest waited (calls past a minute, actions over three). An invocation now
-  gets 32 MB unless its task asks for more — `limits: { cpuMs, wallMs, memoryMb }`, on a task or on
-  `defineFunctions({ limits })` — up to its plan and the server's ceiling; asking above the server's is a problem when
-  the functions are saved. **To redo:** a function that holds more than 32 MB asks for it in its `limits`, or it stops
-  with `Went over its 32 MB of memory`, naming `memoryMb`. `FunctionTimeLimits` is `FunctionAskedLimits` and
-  `DEFAULT_FUNCTION_TIME_LIMITS` is `DEFAULT_FUNCTION_ASKED_LIMITS` (with `memoryMb: 32`); the builder's CPU control
-  keeps the memory a task asked for.
+- **A function runs at the size it asks for — small, medium or large — and the plan says which it may.** Every
+  invocation was given its plan's memory, asked for or not, and the runner keeps an invocation's memory whole while it
+  runs: under load a 1 GB runner held two invocations at once and the rest waited (calls past a minute, actions over
+  three). An invocation now runs small (32 MB) unless its task asks for `medium` (128 MB) or `large` (256 MB) —
+  `limits: { cpuMs, wallMs, size }`, on a task or on `defineFunctions({ limits })` (`FUNCTION_SIZES`,
+  `@plitzi/sdk-shared/functions`). A size past the server's ceiling is a problem when the functions are saved; one the
+  space's plan leaves out is refused when the task runs, naming the size that fits, and the builder shows it locked
+  (`FunctionsDraft.sizes`). Past its memory, a run says the size to ask for. **To redo:** a function that holds more
+  than 32 MB asks for a size; a deployment's `functions.limits.memoryMb` is now the largest size it allows (256 by
+  default, was 32); `FunctionTimeLimits` is `FunctionAskedLimits` and `DEFAULT_FUNCTION_TIME_LIMITS` is
+  `DEFAULT_FUNCTION_ASKED_LIMITS` (with `size: 'small'`); a server answering `SpaceFunctions` adds `sizes`.
 
 - **A run's time is its execution alone.** Its wait for a runner with room — every attempt at placing it, the pauses
   between, a runner's queue — was told to its time limit only once a runner took it: a wait longer than what the run had

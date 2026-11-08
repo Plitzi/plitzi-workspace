@@ -7,7 +7,7 @@ import { isActionRefusal } from '@plitzi/sdk-shared/functions';
 import { responseOf, wireRequestOf, wireResponseFrom } from '@plitzi/sdk-shared/functions';
 
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor } from './config';
+import { functionLimitsFor, functionSizeRefusal } from './config';
 import { functionContextFor } from './context';
 import { jobsManifestOf } from './jobs';
 import { parseRouteKey, reservedRouteProblem } from './manifest';
@@ -326,6 +326,12 @@ export const createRoutes = ({
           config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage });
         };
         try {
+          // A size its plan does not include, refused before it runs: answered as the limit it is.
+          const sizeRefusal = functionSizeRefusal(config.limits, functions.limits, functions.manifest.limits);
+          if (sizeRefusal) {
+            throw new FunctionFailure('memory', sizeRefusal);
+          }
+
           const value = await runner.invoke({
             bundle: functions.bundle,
             invocation: {

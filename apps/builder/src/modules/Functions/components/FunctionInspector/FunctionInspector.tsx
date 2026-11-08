@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 
 import InspectorSection from '../InspectorSection';
+import TaskSize from './components/TaskSize';
 import TaskTest from './components/TaskTest';
 import TimeLimit from './components/TimeLimit';
-import { cpuOf, taskNameOf } from '../../helpers';
+import { cpuOf, sizeOf, taskNameOf } from '../../helpers';
 
 import type { ListedTask } from '../../helpers';
-import type { ActionRunReport, FunctionAskedLimits } from '@plitzi/sdk-shared';
+import type { ActionRunReport, FunctionAskedLimits, FunctionSize } from '@plitzi/sdk-shared';
 
 export type FunctionInspectorProps = {
   task: ListedTask;
@@ -17,13 +18,16 @@ export type FunctionInspectorProps = {
   limitsDisabledReason: string;
   /** The code differs from the saved draft. */
   modified: boolean;
+  /** The sizes the space's plan includes, smallest first. */
+  sizes: readonly FunctionSize[];
   onLimitsChange: (task: ListedTask, cpuMs: number | undefined) => void;
+  onSizeChange: (task: ListedTask, size: FunctionSize) => void;
   onRun: (task: string, params: Record<string, unknown>) => Promise<ActionRunReport | undefined>;
 };
 
 /**
- * The selected task: what it is as a step, how much CPU a run of it may use — written into its code — and a run of it
- * in the sandbox, saving first when the code changed.
+ * The selected task: what it is as a step, how much CPU and memory a run of it may use — written into its code — and a
+ * run of it in the sandbox, saving first when the code changed.
  */
 const FunctionInspector = ({
   task,
@@ -31,13 +35,18 @@ const FunctionInspector = ({
   hosts,
   limitsDisabledReason,
   modified,
+  sizes,
   onLimitsChange,
+  onSizeChange,
   onRun
 }: FunctionInspectorProps) => {
   const name = taskNameOf(task);
   const cpu = cpuOf(task, sharedLimits);
+  const size = sizeOf(task, sharedLimits);
 
   const handleLimit = useCallback((cpuMs: number | undefined) => onLimitsChange(task, cpuMs), [onLimitsChange, task]);
+
+  const handleSize = useCallback((picked: FunctionSize) => onSizeChange(task, picked), [onSizeChange, task]);
 
   return (
     <aside className="flex w-80 shrink-0 flex-col overflow-auto border-l border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -60,6 +69,15 @@ const FunctionInspector = ({
       </header>
       <InspectorSection title="Time limit">
         <TimeLimit ms={cpu.ms} asked={cpu.asked} disabledReason={limitsDisabledReason} onChange={handleLimit} />
+      </InspectorSection>
+      <InspectorSection title="Size">
+        <TaskSize
+          size={size.size}
+          asked={size.asked}
+          allowed={sizes}
+          disabledReason={limitsDisabledReason}
+          onChange={handleSize}
+        />
       </InspectorSection>
       <InspectorSection title="Test" hint="Runs in the sandbox as you: its fetches and writes are real.">
         <TaskTest key={name} task={task} needsSave={modified || !task.saved} onRun={onRun} />

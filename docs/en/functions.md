@@ -412,7 +412,7 @@ Per invocation — a task step or a route request:
 |---|---|---|
 | CPU | 100 ms | awaits not counted |
 | Wall time | 10 s | and never past the run's own deadline |
-| Memory | 32 MB | kept whole for it while it runs |
+| Memory | 32 MB (`small`) | kept whole for it while it runs |
 | Answer | 1 MB | as JSON |
 | Calls to `ctx` | 100 | `kv`, `fetch`, `publish`… |
 
@@ -421,24 +421,28 @@ functions share a CPU budget per minute** (30 s by default): past it the next in
 turns, so one space's loop slows its own account and nobody else. Each deployment sets both (§9).
 
 **Asking for more.** A task that needs more — it reshapes a big feed, it waits on a slow API, it parses a large
-answer — says so with `limits`, in milliseconds and megabytes; `defineFunctions({ limits })` asks it for every task and
-route at once, and a task's own wins over it:
+answer — says so with `limits`: CPU and time in milliseconds, memory by size; `defineFunctions({ limits })` asks it for
+every task and route at once, and a task's own wins over it:
 
 ```ts
 const feed: FunctionTask<{ window: string }> = {
   namespace: 'seismic',
   action: 'feed',
   // …
-  limits: { cpuMs: 1000, wallMs: 20_000, memoryMb: 128 },
+  limits: { cpuMs: 1000, wallMs: 20_000, size: 'medium' },
   run: ({ window }, ctx) => report(window, ctx.fetch)
 };
 ```
 
 Up to the server's ceiling — 2 s of CPU and 30 s of time unless it sets other ones — and the space's plan. Asking for
 more than the server allows is a problem when the functions are saved, never quietly cut down; the builder shows each
-task's time beside it. Ask for the memory a task needs, not the most it may have: the runner keeps an invocation's
-memory for it whole while it runs, so a task asking for 256 MB takes the room of eight that ask for none, and waits
-longer for a runner with that much free. One that goes over says so, naming `limits.memoryMb`.
+task's time and size beside it.
+
+**Sizes.** `small` is 32 MB, `medium` 128 MB, `large` 256 MB (`FUNCTION_SIZES`, `@plitzi/sdk-shared/functions`). A
+space's plan says which its tasks may ask for: a size it leaves out is refused when the task runs, naming the plan, and
+the builder shows it locked. Start small and go up when a run says it went over (`Went over its 32 MB of memory (a
+small task)… { size: 'medium' }`): the runner keeps a task's memory for it whole while it runs, so a large task takes
+the room of eight small ones, and waits longer for a runner with that much free.
 
 ## 8. Security: why one space cannot reach another
 
@@ -490,7 +494,8 @@ isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to
 A space's functions reach a run through `action.lookups.getFunctions(spaceId, at)` — the bundle and what it declared
 when it was saved, as of the revision the run belongs to. `actions.prepareFunctions(source)` is the one way to make
 one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings — what a task may ask
-for in CPU, time and memory (`DEFAULT_FUNCTION_CEILINGS` for each unset one), and what every invocation gets of the rest;
+for in CPU and time, and the largest size (`DEFAULT_FUNCTION_CEILINGS` for each unset one: 2 s, 30 s, large), and what
+every invocation gets of the rest; `limitsFor` answers a space's plan the same way;
 `functions.admit` and `functions.onUsage` are how a deployment budgets CPU across a space's account.
 
 **What a runner keeps, and what it does not.** A function is stateless, like a Lambda: everything it needs comes in its

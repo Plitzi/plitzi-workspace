@@ -7,7 +7,7 @@ import { ActionRefusal, isActionRefusal } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor } from './config';
+import { functionLimitsFor, functionSizeRefusal } from './config';
 import { functionContextFor } from './context';
 
 import type { FunctionsConfig } from './config';
@@ -561,6 +561,12 @@ export const createFunctionJobs = ({
       const runner = functions.runner ?? config.runner;
       if (!runner) {
         throw new Error('This server runs no space functions');
+      }
+
+      // A size its plan does not include: refused before it runs, and for good — another slice would be refused too.
+      const sizeRefusal = functionSizeRefusal(config.limits, functions.limits, functions.manifest.limits);
+      if (sizeRefusal) {
+        return { kind: 'failed', error: sizeRefusal, final: true, refused: false, spentMs: spent() };
       }
 
       const fnCtx = contextOf(functions.manifest.hosts, functions.manifest, functions.manifest.jobs);

@@ -8,12 +8,19 @@ import type { JobStatus } from './JobTypes';
  */
 
 /**
- * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
- * default: CPU time, awaits not counted; wall time, from the moment it starts; and memory, which the runner keeps for
- * it whole while it runs, so a task that asks for none leaves room for many beside it. Never more than the space's
- * plan or the server allows; asking for more than the server does is a problem when the functions are saved.
+ * How much memory a task runs with, by name (`FUNCTION_SIZES` in `@plitzi/sdk-shared/actions`): small unless it asks
+ * for more. The runner keeps a task's memory for it whole while it runs, so a small one leaves room for many beside it;
+ * a space's plan says which sizes its tasks may ask for.
  */
-export type FunctionAskedLimits = { cpuMs?: number; wallMs?: number; memoryMb?: number };
+export type FunctionSize = 'small' | 'medium' | 'large';
+
+/**
+ * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
+ * default: CPU time, awaits not counted; wall time, from the moment it starts; and its size, the memory it runs with.
+ * Never more than the space's plan or the server allows; asking for more than the server does is a problem when the
+ * functions are saved, and a size the plan does not include is refused when the task runs, naming the plan.
+ */
+export type FunctionAskedLimits = { cpuMs?: number; wallMs?: number; size?: FunctionSize };
 
 /** One task the functions declare: everything but its code — what the catalog shows and a step is drawn from. */
 export type FunctionTaskManifest = {
@@ -119,6 +126,8 @@ export type FunctionsDraft = {
    * install them.
    */
   offer: { template: string } | null;
+  /** The sizes the space's plan lets a task ask for, smallest first: what the builder offers, the rest locked. */
+  sizes: FunctionSize[];
 };
 
 /**

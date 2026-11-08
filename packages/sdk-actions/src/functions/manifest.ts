@@ -1,4 +1,5 @@
 import { PLUGIN_ROUTES_SEGMENT, actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { FUNCTION_SIZE_NAMES, FUNCTION_SIZES, functionSizesWithin, isFunctionSize } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { pluginTaskProblem } from './scope';
@@ -324,20 +325,18 @@ const paramOf = (value: unknown): TaskParam | string => {
 
 export type ManifestReading = { manifest: FunctionsManifest; problems: string[] };
 
-/** Each limit a function may ask for: its unit, and what it is in the words a problem is written in. */
-const ASKED_LIMITS: Record<keyof FunctionAskedLimits, { unit: string; words: string; units: string }> = {
-  cpuMs: { unit: 'ms', words: 'of CPU', units: 'milliseconds' },
-  wallMs: { unit: 'ms', words: 'to finish', units: 'milliseconds' },
-  memoryMb: { unit: 'MB', words: 'of memory', units: 'megabytes' }
-};
+/** Each time a function may ask for, in the words a problem is written in. */
+const TIME_WORDS = { cpuMs: 'of CPU', wallMs: 'to finish' } as const;
 
-const ASKED_KEYS = Object.keys(ASKED_LIMITS) as (keyof FunctionAskedLimits)[];
+const TIME_KEYS = Object.keys(TIME_WORDS) as (keyof typeof TIME_WORDS)[];
 
-const isAskedKey = (key: string): key is keyof FunctionAskedLimits => key in ASKED_LIMITS;
+/** Every limit a function may ask for. */
+const ASKED_KEYS: readonly string[] = [...TIME_KEYS, 'size'] satisfies (keyof FunctionAskedLimits)[];
 
 /**
- * What `where` asks for beyond the default, read: whole milliseconds and megabytes above nothing — and never more than
- * `ceilings`, which is said rather than quietly cut down, so the author knows what the code will get.
+ * What `where` asks for beyond the default, read: whole milliseconds above nothing and a size by its name — and never
+ * more than `ceilings`, which is said rather than quietly cut down, so the author knows what the code will get. A size
+ * this server allows but the space's plan does not is said when the task runs: the plan can change after the save.
  */
 const limitsOf = (
   value: unknown,
@@ -350,31 +349,45 @@ const limitsOf = (
   }
 
   if (!isRecord(value)) {
-    problems.push(`${where}: limits is not an object like { cpuMs: 1000, wallMs: 20000, memoryMb: 128 }`);
+    problems.push(`${where}: limits is not an object like { cpuMs: 1000, wallMs: 20000, size: 'medium' }`);
 
     return undefined;
   }
 
   const limits: FunctionAskedLimits = {};
-  ASKED_KEYS.forEach(key => {
+  TIME_KEYS.forEach(key => {
     const asked = value[key];
     if (asked === undefined) {
       return;
     }
 
-    const { unit, words, units } = ASKED_LIMITS[key];
     if (typeof asked !== 'number' || !Number.isInteger(asked) || asked <= 0) {
-      problems.push(`${where}: limits.${key} is not a whole number of ${units} above 0`);
+      problems.push(`${where}: limits.${key} is not a whole number of milliseconds above 0`);
     } else if (asked > ceilings[key]) {
       problems.push(
-        `${where}: asks for ${String(asked)} ${unit} ${words}, and this server allows at most ${String(ceilings[key])} ${unit}`
+        `${where}: asks for ${String(asked)} ms ${TIME_WORDS[key]}, and this server allows at most ${String(ceilings[key])} ms`
       );
     } else {
       limits[key] = asked;
     }
   });
+
+  const { size } = value;
+  if (size !== undefined) {
+    const allowed = functionSizesWithin(ceilings.memoryMb);
+    if (!isFunctionSize(size)) {
+      problems.push(`${where}: limits.size is not a size (${FUNCTION_SIZE_NAMES.join(', ')})`);
+    } else if (!allowed.includes(size)) {
+      problems.push(
+        `${where}: asks to be ${size} (${String(FUNCTION_SIZES[size].memoryMb)} MB of memory), and this server allows up to ${allowed.at(-1) ?? 'none'}`
+      );
+    } else {
+      limits.size = size;
+    }
+  }
+
   Object.keys(value)
-    .filter(key => !isAskedKey(key))
+    .filter(key => !ASKED_KEYS.includes(key))
     .forEach(key =>
       problems.push(`${where}: limits.${key} is not a limit a function asks for (${ASKED_KEYS.join(', ')})`)
     );

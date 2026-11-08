@@ -4,7 +4,7 @@ import { ActionRefusal, FunctionFailure } from '@plitzi/sdk-shared/functions';
 
 import { buildFunctions, FunctionsBuildError } from './build';
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor } from './config';
+import { functionLimitsFor, functionSizeRefusal } from './config';
 import { functionContextFor } from './context';
 import { readManifest } from './manifest';
 import { ActionRunError, RunLimitReached } from '../engine/runtime/errors';
@@ -44,18 +44,19 @@ const invocationContextOf = ({
 /**
  * A space's tasks as the registry holds them — each run by the runner, answering the code's calls with the run's own
  * {@link FunctionContext}: the same one native functions get, built by the same function. Each is given what
- * `limitsFor` answers for what it asked: its own limits, over its functions'.
+ * `limitsFor` answers for what it asked: its own limits, over its functions' — or refused, before it runs, a size its
+ * plan does not include.
  */
 const spaceTasks = (
   functions: SpaceFunctions,
   runner: FunctionRunner,
-  limitsFor: (asked: FunctionAskedLimits) => FunctionLimits,
+  limitsFor: (asked: FunctionAskedLimits) => { limits: FunctionLimits; sizeRefusal?: string },
   { admit, onUsage }: Pick<FunctionsConfig, 'admit' | 'onUsage'> = {},
   scope?: FunctionScope
 ): ActionTask<Record<string, unknown>>[] =>
   functions.manifest.tasks.map(task => {
     const name = taskName(task);
-    const limits = limitsFor({ ...functions.manifest.limits, ...task.limits });
+    const { limits, sizeRefusal } = limitsFor({ ...functions.manifest.limits, ...task.limits });
 
     return {
       namespace: task.namespace,
@@ -68,6 +69,10 @@ const spaceTasks = (
         const refusal = await admit?.(ctx.spaceId);
         if (refusal) {
           throw new RunLimitReached('cpuBudget', refusal);
+        }
+
+        if (sizeRefusal) {
+          throw new FunctionFailure('memory', sizeRefusal);
         }
 
         const fnCtx = functionContextFor(
@@ -189,7 +194,14 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
       const registry = composeRegistry(
         base,
         runnable.flatMap(({ functions: own, runner, scope }) => {
-          const limitsFor = (asked: FunctionAskedLimits) => functionLimitsFor(config.limits, own.limits, asked);
+          const limitsFor = (asked: FunctionAskedLimits) => {
+            const sizeRefusal = functionSizeRefusal(config.limits, own.limits, asked);
+
+            return {
+              limits: functionLimitsFor(config.limits, own.limits, asked),
+              ...(sizeRefusal ? { sizeRefusal } : {})
+            };
+          };
 
           return spaceTasks(own, runner, limitsFor, config, scope).map(task => ({
             task,

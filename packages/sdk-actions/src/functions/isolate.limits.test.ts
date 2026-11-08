@@ -227,19 +227,33 @@ describe('an invocation’s limits', () => {
     expect(result.error).toContain('ms of CPU');
   });
 
-  it('stops code that takes more memory than it may, and the next one runs', async () => {
-    // Chunks the size of the whole limit: it is crossed in an allocation or two. The task asks for the CPU ceiling —
-    // left at the default 100 ms, the collector's fight near the limit spent it first on a busy CI runner.
+  it('stops code that takes more memory than its size, says the size to ask for, and the next one runs', async () => {
+    // Chunks half the small size: it is crossed in an allocation or two. The task asks for the CPU ceiling — left at
+    // the default 100 ms, the collector's fight near the limit spent it first on a busy CI runner.
     const hog = await spaceWith(
       sourceOf('const keep = []; while (true) { keep.push(new Array(2e6).fill(Math.random())); }', {
         asks: { cpuMs: 2000 }
-      }),
-      { limits: { memoryMb: 16 } }
+      })
     );
     const next = await spaceWith(sourceOf('return "fine";'));
 
-    expect((await hog.run()).error).toContain('MB of memory');
+    expect((await hog.run()).error).toContain(
+      "Went over its 32 MB of memory (a small task): a task that needs more asks to be larger in its limits ({ size: 'medium' })"
+    );
     expect((await next.run()).value).toBe('fine');
+  });
+
+  // A plan's memory is the largest size it includes: a task asking for more is told so before it runs, never run
+  // quietly smaller.
+  it('refuses a task a size its plan does not include, before it runs', async () => {
+    const large = await spaceWith(sourceOf('return "ran";', { asks: { cpuMs: 1000, size: 'large' } }), {
+      limits: { memoryMb: 128 }
+    });
+
+    const result = await large.run();
+
+    expect(result.status).toBe('failed');
+    expect(result.error).toContain('asks to be large (256 MB of memory), and its space’s plan allows up to medium');
   });
 
   it('stops code that calls the platform more than it may', async () => {

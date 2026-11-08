@@ -8,6 +8,7 @@ import type {
   FunctionsProblem,
   FunctionTaskManifest,
   FunctionAskedLimits,
+  FunctionSize,
   JobControlAction,
   SpaceJob
 } from '@plitzi/sdk-shared';
@@ -156,6 +157,21 @@ export const cpuOf = (task: ListedTask, shared: FunctionAskedLimits | undefined)
   return { ms: shared?.cpuMs ?? DEFAULT_FUNCTION_ASKED_LIMITS.cpuMs, asked: false };
 };
 
+/**
+ * The size a task runs at, and whether it chose it: its own `limits.size`, else the one every task of the space gets
+ * from `defineFunctions`, else small.
+ */
+export const sizeOf = (
+  task: ListedTask,
+  shared: FunctionAskedLimits | undefined
+): { size: FunctionSize; asked: boolean } => {
+  if (task.limits?.size !== undefined) {
+    return { size: task.limits.size, asked: true };
+  }
+
+  return { size: shared?.size ?? DEFAULT_FUNCTION_ASKED_LIMITS.size, asked: false };
+};
+
 /** What the run button says: running, or whether it saves first. */
 export const runLabel = (isRunning: boolean, needsSave: boolean): string => {
   if (isRunning) {
@@ -183,6 +199,20 @@ export const withCpu = (limits: FunctionAskedLimits | undefined, cpuMs: number |
   const { cpuMs: _replaced, ...rest } = limits ?? {};
 
   return cpuMs === undefined ? rest : { cpuMs, ...rest };
+};
+
+/**
+ * A task's limits with its size set — taken out when it is the one the task would get without asking — and the rest
+ * as they were.
+ */
+export const withSize = (
+  limits: FunctionAskedLimits | undefined,
+  size: FunctionSize,
+  shared: FunctionAskedLimits | undefined
+): FunctionAskedLimits => {
+  const { size: _replaced, ...rest } = limits ?? {};
+
+  return size === (shared?.size ?? DEFAULT_FUNCTION_ASKED_LIMITS.size) ? rest : { ...rest, size };
 };
 
 /** Why the panel cannot write a task's limits for you right now, or nothing when it can. */
