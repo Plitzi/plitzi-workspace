@@ -39,8 +39,6 @@ export const createTurns = (size: number) => {
   };
 
   return {
-    /** How many isolates run at once against the turns there are: past 1, they share the CPU — each measured slower. */
-    load: (): number => held.size / size,
     take: async (): Promise<number> => {
       if (queue.length === 0 && held.size < size) {
         return grant();

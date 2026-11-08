@@ -500,8 +500,8 @@ describe('an invocation’s limits', () => {
     expect((await space.run()).value).toBe('done');
   });
 
-  // Sharing the CPU grows a limit by how shared it was, a few times at most: a burst of spinners on one turn is stopped.
-  it('stops code that spins beside many others on one core, a few times its limit at worst', async () => {
+  // Each is charged its share of the process's CPU: a burst of spinners on one core is stopped by the CPU it took.
+  it('stops code that spins beside many others on one core, by the CPU it took', async () => {
     const crowded = createIsolateRunner({ concurrency: 12, turns: 1 });
     const space = await spaceWith(
       sourceOf('const until = Date.now() + 20000; while (Date.now() < until) {} return 1;'),
@@ -514,8 +514,29 @@ describe('an invocation’s limits', () => {
     const results = await Promise.all(Array.from({ length: 12 }, () => space.run()));
 
     results.forEach(result => expect(result.error).toContain('ms of CPU'));
-    // Twelve on one core at four times 50 ms each: well under the twenty seconds they would spin unchecked.
     expect(Date.now() - started).toBeLessThan(10_000);
+  });
+
+  // The other half: code that takes a few ms beside spinners on one core is never charged the core it waited for — a
+  // 5 ms route was stopped at a 100 ms limit under load when the time it waited counted.
+  it('never stops light code for the CPU others took beside it', async () => {
+    const crowded = createIsolateRunner({ concurrency: 16, turns: 1 });
+    const spinners = await spaceWith(
+      sourceOf('const until = Date.now() + 1500; while (Date.now() < until) {} return 1;'),
+      {
+        runner: crowded
+      }
+    );
+    const light = await spaceWith(
+      sourceOf('const until = Date.now() + 5; while (Date.now() < until) {} return "light";', { asks: { cpuMs: 50 } }),
+      { runner: crowded }
+    );
+    const [, lights] = await Promise.all([
+      Promise.all(Array.from({ length: 8 }, () => spinners.run())),
+      Promise.all(Array.from({ length: 8 }, () => light.run()))
+    ]);
+
+    expect(lights.map(result => result.value)).toEqual(Array.from({ length: 8 }, () => 'light'));
   });
 
   // The runner derives outside the isolate's clock: what it took is the run's all the same.

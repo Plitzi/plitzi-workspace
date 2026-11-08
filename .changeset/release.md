@@ -212,10 +212,14 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
-- **A limit holds under load too.** The CPU limit grows by how shared the CPU was — threads fighting for a core are
-  measured slower than they run — but by four times at most: a burst of forty made a 1 s limit forty, and code that spun
-  for five seconds finished. And a sleep (`setTimeout`) past the time an invocation has left ends it there, by its time
-  limit: it was cut short to fit, the code woke at the limit and, the watchdog a look behind, finished as if it had slept.
+- **A limit holds under load too, and never stops code for the runner's load.** V8 measures an isolate's CPU as the
+  time it spent running JavaScript, on a core or waiting for one, so beside more threads than cores each was measured
+  as if it had a core of its own: a 5 ms route was stopped at its 100 ms limit, and growing the limit for it let code
+  spin for five seconds. The runner now charges each isolate its share of the process's own CPU, as the system counts
+  it (`createCpuMeter`): code that spins pays what it took, code beside it never the cores it waited for. An
+  invocation's time counts from when its code begins — making its isolate and compiling its bundle are the platform's —
+  and a sleep (`setTimeout`) past the time it has left ends it there, by its time limit: it was cut short to fit, the code
+  woke at the limit and finished as if it had slept.
 - **A function route stopped at a limit says which, and is not a 503.** It answered `503 This route ran out of what
   it may spend` — a status that tells a caller to ask again, and a sentence that named nothing. A limit of its own is
   the code's to fix: `500 This route stopped at a limit its plan sets: Stopped after 100 ms of CPU`. A runner without

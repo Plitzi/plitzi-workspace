@@ -5,6 +5,7 @@ import { cpuLimitCores } from '@plitzi/sdk-kernel/stats';
 import { changeKv, changeListEntry } from '@plitzi/sdk-shared/functions';
 import { FunctionFailure, failedAnswerOf } from '@plitzi/sdk-shared/functions';
 
+import { createCpuMeter } from './cpuMeter';
 import { createFunctionsDriver, describeFunctions } from './driver';
 import { guestBytes } from './guest/bytes';
 import { guestCrypto } from './guest/crypto';
@@ -14,6 +15,7 @@ import { installGuest } from './guest/install';
 import { guestPrelude } from './prelude';
 import { createTurns } from './turns';
 
+import type { MeteredIsolate } from './cpuMeter';
 import type { GuestDriver } from './guest/types';
 import type {
   FunctionsBundleRef,
@@ -74,17 +76,12 @@ const describeAnswer = (call: unknown): Promise<unknown> =>
     : Promise.reject(new Error('Nothing is reachable while a bundle is read'));
 
 const WATCHDOG_MS = 5;
-/**
- * The most an invocation's CPU limit grows by for sharing the CPU with more isolates than cores. Threads that fight for
- * a core are measured slower than they run, and that is the runner's doing; but without a bound, a burst of forty made a
- * 1 s limit forty — code that spun for five seconds finished as if it had a limit at all.
- */
-const MAX_SHARED_TOLERANCE = 4;
 
 /**
  * What isolated-vm throws when a `timeout` it was given runs out. Its timeout is wall time while the isolate runs, not
  * CPU: a runner whose isolates share its CPU stretched a 5 ms route past a 100 ms "CPU limit" under load. So it is given
- * the wall limit, a backstop; the CPU limit is the watchdog's, which reads the isolate's own `cpuTime`.
+ * the wall limit, a backstop; the CPU limit is the watchdog's, which reads the isolate's share of the process's CPU
+ * (`createCpuMeter`).
  */
 const ISOLATE_TIMEOUT = 'Script execution timed out.';
 
@@ -278,6 +275,7 @@ export const createIsolateRunner = ({
   turns: turnCount = Math.max(1, Math.round(cpuLimitCores()))
 }: IsolateRunnerOptions = {}): IsolateRunner => {
   const turns = createTurns(turnCount);
+  const cpu = createCpuMeter(WATCHDOG_MS);
   const cache = new Map<string, Cached>();
   let cachedBytes = 0;
   /** Every isolate starts from a heap with the prelude already run in it: running it each time was most of the cost. */
@@ -353,7 +351,7 @@ export const createIsolateRunner = ({
     let stopped: FunctionStopReason | undefined;
     let calls = 0;
     const startedAt = Date.now();
-    /** The CPU the isolate used, kept as it is read: a disposed isolate has none left to ask. */
+    /** The CPU the isolate was measured at, kept as it is read: a disposed isolate has none left to ask. */
     let isolateCpuMs = 0;
     /** What the runner spent on the run's behalf — a PBKDF2 derivation — which the isolate's clock never sees. */
     let hostCpuMs = 0;
@@ -362,13 +360,23 @@ export const createIsolateRunner = ({
      * cache of them: the platform's work, not the space's code. Its time is the code's own from there.
      */
     let readyCpuMs: number | undefined;
-    const readCpu = (): number => {
+    const readIsolateCpu = (): number => {
       if (!isolate.isDisposed) {
         isolateCpuMs = Number(isolate.cpuTime) / 1e6;
       }
 
-      return (readyCpuMs === undefined ? 0 : isolateCpuMs - readyCpuMs) + hostCpuMs;
+      return isolateCpuMs;
     };
+    /** Whether it ran since the last look: what it was measured at moved. */
+    const readCpu = (): number => (readyCpuMs === undefined ? 0 : readIsolateCpu() - readyCpuMs) + hostCpuMs;
+    /** Its share of the process's CPU from the moment it was ready (`createCpuMeter`), and what the runner spent for it. */
+    let metered: MeteredIsolate | undefined;
+    const chargedCpu = (): number => (metered?.charged() ?? 0) + hostCpuMs;
+    /** When its code began: what came before — the isolate made, the bundle compiled — is the platform's time. */
+    let readyAt: number | undefined;
+    let waitedAtReady = 0;
+    /** Its own time: since its code began, less what it waited for a turn — the runner's, never counted. */
+    const ownMs = (): number => (readyAt === undefined ? 0 : Date.now() - readyAt - (waitedMs - waitedAtReady));
     /** The turn at running JavaScript this isolate holds, if any, and how many answers of the platform it waits for. */
     let holding: number | undefined;
     let awaited = 0;
@@ -380,12 +388,6 @@ export const createIsolateRunner = ({
     let ended = false;
     /** How long it waited for turns: the runner's time, which its time limit does not count. */
     let waitedMs = 0;
-    /**
-     * The most the CPU it is measured at was inflated by while it ran beside more isolates than cores: the peak, not the
-     * mean — a burst of a few looks inflated a route's CPU past its limit while the mean of its run barely moved — and
-     * never past `MAX_SHARED_TOLERANCE`.
-     */
-    let sharedPeak = 1;
     const takeTurn = async (): Promise<void> => {
       if (holding !== undefined) {
         return;
@@ -441,20 +443,13 @@ export const createIsolateRunner = ({
     };
     const watchdog = setInterval(() => {
       const cpuMs = readCpu();
-      if (holding !== undefined) {
-        sharedPeak = Math.min(MAX_SHARED_TOLERANCE, Math.max(sharedPeak, turns.load()));
-      }
-
-      // Its CPU is the code's own while it runs alone on a core; beside more isolates than cores, threads fighting for
-      // the CPU inflate what each is measured at, so its limit grows by how shared the CPU was at its most — the
-      // runner's doing, never the code's. Code that spins is still stopped, `MAX_SHARED_TOLERANCE` times its limit at
-      // worst.
-      if (!isolate.isDisposed && cpuMs > limits.cpuMs * sharedPeak) {
+      // Its CPU is its share of what the process took (`createCpuMeter`): beside more isolates than cores, never the time
+      // it waited for one.
+      if (!isolate.isDisposed && chargedCpu() > limits.cpuMs) {
         stop('cpu');
       }
 
-      // Its time is its own: what it waited for a turn is the runner's, and not counted.
-      if (!isolate.isDisposed && Date.now() - startedAt - waitedMs > limits.wallMs) {
+      if (!isolate.isDisposed && ownMs() > limits.wallMs) {
         stop('wall');
       }
 
@@ -511,7 +506,7 @@ export const createIsolateRunner = ({
         new ivm.Reference((ms: number): Promise<void> => {
           // A sleep past the time it has left ends it there, by its time limit — never cut short to fit: cut, the code
           // woke at the limit and, the watchdog a look behind, finished as if it had slept.
-          const left = limits.wallMs - (Date.now() - startedAt - waitedMs);
+          const left = limits.wallMs - ownMs();
           const wanted = Math.max(0, ms);
           if (wanted >= left) {
             later(Math.max(0, left), () => stop('wall'));
@@ -532,7 +527,7 @@ export const createIsolateRunner = ({
           waitingOn(() =>
             cryptoAnswer(message, ms => {
               hostCpuMs += ms;
-              if (readCpu() > limits.cpuMs) {
+              if (chargedCpu() > limits.cpuMs) {
                 stop('cpu');
               }
             })
@@ -561,7 +556,10 @@ export const createIsolateRunner = ({
       });
       // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU, run in its turn.
       await takeTurn();
-      readyCpuMs = Number(isolate.cpuTime) / 1e6;
+      readyCpuMs = readIsolateCpu();
+      metered = cpu.meter(readIsolateCpu);
+      readyAt = Date.now();
+      waitedAtReady = waitedMs;
       await module.evaluate({ timeout: limits.wallMs });
       const definition = module.namespace.getSync('default', { reference: true });
       if (definition.typeof !== 'object') {
@@ -606,7 +604,8 @@ export const createIsolateRunner = ({
         ? new FunctionFailure(reason, stopMessage(reason, limits))
         : new FunctionFailure('error', messageOf(error));
     } finally {
-      onUsage?.({ cpuMs: Math.round(readCpu()), wallMs: Date.now() - startedAt, calls });
+      metered?.end();
+      onUsage?.({ cpuMs: Math.round(chargedCpu()), wallMs: Date.now() - startedAt, calls });
       clearInterval(watchdog);
       timers.forEach(timer => clearTimeout(timer));
       signal?.removeEventListener('abort', onAbort);
