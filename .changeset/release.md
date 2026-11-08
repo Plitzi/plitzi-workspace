@@ -212,6 +212,11 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A light invocation is never stopped for CPU the runner's main thread took.** Under a thousand calls at once, the
+  main thread took the core from the isolate whose turn it was, V8 measured that isolate as if it ran, and the meter's
+  bound — the machine's cores — let it through: a 5 ms route was stopped after "100 ms of CPU". The meter is now bound by
+  the container's quota (`cpuLimitCores`) less what the main thread took of it.
+
 - **A task no runner could ever hold fails at once, naming what it needs** (protocol 1.4, `too_large`). A runner whose
   share of its memory could not hold an invocation's size even with nothing else running said `busy`, like a full one,
   and the platform kept the invocation in its queue for room that would never come — at the head of the queue, holding

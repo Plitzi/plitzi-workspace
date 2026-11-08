@@ -30,6 +30,13 @@ export const isolatesCpuMs = (): number => {
   return (all.user + all.system - main.user - main.system) / 1000;
 };
 
+/** The CPU the runner's main thread took, in ms: what its cores held that no isolate had. */
+export const mainThreadCpuMs = (): number => {
+  const main = process.threadCpuUsage();
+
+  return (main.user + main.system) / 1000;
+};
+
 /**
  * The CPU the isolates' threads took, shared out between the isolates that ran.
  *
@@ -38,16 +45,23 @@ export const isolatesCpuMs = (): number => {
  * 100 ms limit under load, and a ceiling on how much a limit may grow for it let code that spun go on, or stopped light
  * code, depending on the burst. Each look, what the isolates were measured at is scaled down, in proportion, to the
  * most they can have taken together, by whichever bound is lower: what their threads took as the system counts it, and
- * the machine's cores for the time the look spans — V8's collector and the runner's helper threads take CPU nobody is
- * measured at, and on the threads' count alone a measure inflated in those moments went through whole. The cores are
- * the machine's, not the container's quota: threads run at once on every core until the quota throttles them, and the
- * threads' count is what sees that. Code that spins alone is charged all it took; code beside others, never the cores
- * it waited for.
+ * the cores for the time the look spans less what the main thread took of them — V8's collector and the runner's helper
+ * threads take CPU nobody is measured at, and on the threads' count alone a measure inflated in those moments went
+ * through whole. The cores are the container's quota (`cpuLimitCores`): over the window it holds every thread to it, and
+ * an isolate whose thread the main one took the core from — a thousand sockets under load — is measured by V8 as if it
+ * ran: on the machine's cores, a 5 ms route was charged past its 100 ms limit. Code that spins alone is charged all it
+ * took; code beside others, never the cores it waited for.
  */
-export const createCpuMeter = (everyMs: number, cores: number, readProcess: () => number = isolatesCpuMs): CpuMeter => {
+export const createCpuMeter = (
+  everyMs: number,
+  cores: number,
+  readProcess: () => number = isolatesCpuMs,
+  readMain: () => number = mainThreadCpuMs
+): CpuMeter => {
   type Entry = { read: () => number; last: number; charged: number };
   const live = new Set<Entry>();
   let lastProcess = readProcess();
+  let lastMain = readMain();
   let lastAt = Date.now();
   let timer: NodeJS.Timeout | undefined;
   /** The last quarter second of looks: what the threads took, what the cores held, what the isolates were measured at. */
@@ -60,7 +74,9 @@ export const createCpuMeter = (everyMs: number, cores: number, readProcess: () =
     // A look sooner than its interval — an isolate ending — is taken as a whole one: its cores' bound never shrinks
     // below what an interval holds, so a last slice is never charged less for being read early.
     const at = Date.now();
-    const capacity = cores * Math.max(everyMs, at - lastAt);
+    const main = readMain();
+    const capacity = Math.max(0, cores * Math.max(everyMs, at - lastAt) - Math.max(0, main - lastMain));
+    lastMain = main;
     lastAt = at;
     const slices = [...live].map(entry => {
       const read = entry.read();
@@ -88,6 +104,7 @@ export const createCpuMeter = (everyMs: number, cores: number, readProcess: () =
     meter: read => {
       if (live.size === 0) {
         lastProcess = readProcess();
+        lastMain = readMain();
         lastAt = Date.now();
         timer = setInterval(look, everyMs);
         timer.unref();

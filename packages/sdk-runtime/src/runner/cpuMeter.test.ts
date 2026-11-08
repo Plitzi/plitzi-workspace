@@ -2,11 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createCpuMeter, isolatesCpuMs } from './cpuMeter';
 
-/** A clock in hand: what the process took and what each isolate was measured at, moved by the test. */
+/** A clock in hand: what the isolates' threads and the main one took, and what each isolate was measured at. */
 const clocks = () => {
-  const state = { process: 0, isolates: [0, 0, 0, 0] };
+  const state = { process: 0, main: 0, isolates: [0, 0, 0, 0] };
 
-  return { state, readProcess: () => state.process, readIsolate: (index: number) => () => state.isolates[index] ?? 0 };
+  return {
+    state,
+    readProcess: () => state.process,
+    readMain: () => state.main,
+    readIsolate: (index: number) => () => state.isolates[index] ?? 0
+  };
 };
 
 describe('the CPU meter', () => {
@@ -16,8 +21,8 @@ describe('the CPU meter', () => {
 
   it('charges an isolate what it was measured at while it had the CPU to itself', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 64, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 64, readProcess, readMain);
     const one = meter.meter(readIsolate(0));
 
     state.process += 10;
@@ -30,8 +35,8 @@ describe('the CPU meter', () => {
   // Four measured 10 ms each in a slice the process took 10 ms of: each ran a quarter of it, and waited the rest.
   it('shares out what the process took when the isolates were measured at more, as each ran', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 64, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 64, readProcess, readMain);
     const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
 
     state.process += 10;
@@ -43,8 +48,8 @@ describe('the CPU meter', () => {
 
   it('charges a spinner beside a light one its share, and the light one only its own', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 64, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 64, readProcess, readMain);
     const spinner = meter.meter(readIsolate(0));
     const light = meter.meter(readIsolate(1));
 
@@ -59,8 +64,8 @@ describe('the CPU meter', () => {
 
   it('charges its last slice as it ends, and looks at it no more', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 64, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 64, readProcess, readMain);
     const one = meter.meter(readIsolate(0));
 
     state.process += 3;
@@ -78,10 +83,10 @@ describe('the CPU meter', () => {
    * threads' count alone a light route measured inflated beside it was charged it all, and stopped at its limit. One core
    * for 5 ms holds 5 ms of all of them: four measured 5 each, beside 20 the threads took, had 1.25 each.
    */
-  it('charges no more than the machine’s cores held for the look, whatever else the threads took', async () => {
+  it('charges no more than the cores held for the look, whatever else the threads took', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 1, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess, readMain);
     const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
 
     state.process += 20;
@@ -91,11 +96,31 @@ describe('the CPU meter', () => {
     metered.forEach(each => expect(each.charged()).toBe(1.25));
   });
 
+  /**
+   * The regression it guards: under load the main thread — a thousand sockets — took the core from the isolate whose turn
+   * it was, and V8 measured that isolate as if it ran. On the machine's cores, a 5 ms route was charged past its 100 ms
+   * limit and stopped. What the main thread took of the quota's core was no isolate's: of 5 ms, it took 3.
+   */
+  it('charges no more than the cores held less what the main thread took of them', async () => {
+    vi.useFakeTimers();
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess, readMain);
+    const one = meter.meter(readIsolate(0));
+
+    state.main += 3;
+    // The threads' count holds work no isolate is measured at too (a bundle compiled, the collector): 5 in all.
+    state.process += 5;
+    state.isolates[0] = 5;
+    await vi.advanceTimersByTimeAsync(5);
+
+    expect(one.charged()).toBe(2);
+  });
+
   // Shared in proportion to what each ran: one that barely ran beside a spinner takes nothing from what it is charged.
   it('shares the cores’ bound in proportion to what each ran', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 1, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess, readMain);
     const spinner = meter.meter(readIsolate(0));
     const idle = meter.meter(readIsolate(1));
 
@@ -114,8 +139,8 @@ describe('the CPU meter', () => {
    */
   it('shares what the threads took over a window, so the system’s lumpy count is charged whole', async () => {
     vi.useFakeTimers();
-    const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 1, readProcess);
+    const { state, readProcess, readMain, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess, readMain);
     const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
 
     // Forty looks: four isolates measured 5 ms each a look, the threads counted 0 and 10 by turns — 5 a look, one core.
