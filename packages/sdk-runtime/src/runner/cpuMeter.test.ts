@@ -116,6 +116,56 @@ describe('the CPU meter', () => {
     expect(one.charged()).toBe(2);
   });
 
+  /**
+   * A runner of 2 vCPU runs two isolates truly at once (its turns are its quota's cores): each that spun its whole look is
+   * charged all of it — never half, as one core would read it — and a third that waited for a core shares, never adds.
+   */
+  describe('on a runner of 2 vCPU', () => {
+    it('charges two isolates that ran at once each all they took', async () => {
+      vi.useFakeTimers();
+      const { state, readProcess, readMain, readIsolate } = clocks();
+      const meter = createCpuMeter(5, 2, readProcess, readMain);
+      const [first, second] = [0, 1].map(index => meter.meter(readIsolate(index)));
+
+      state.process += 10;
+      state.isolates = [5, 5, 0, 0];
+      await vi.advanceTimersByTimeAsync(5);
+
+      expect(first.charged()).toBe(5);
+      expect(second.charged()).toBe(5);
+    });
+
+    it('shares two cores between three that wanted them, never charging the wait', async () => {
+      vi.useFakeTimers();
+      const { state, readProcess, readMain, readIsolate } = clocks();
+      const meter = createCpuMeter(5, 2, readProcess, readMain);
+      const metered = [0, 1, 2].map(index => meter.meter(readIsolate(index)));
+
+      // Two cores for 5 ms: 10 ms between three, each measured as if it had a core of its own.
+      state.process += 10;
+      state.isolates = [5, 5, 5, 0];
+      await vi.advanceTimersByTimeAsync(5);
+
+      metered.forEach(each => expect(each.charged()).toBeCloseTo(10 / 3, 9));
+    });
+
+    it('leaves out of both cores what the main thread took of them', async () => {
+      vi.useFakeTimers();
+      const { state, readProcess, readMain, readIsolate } = clocks();
+      const meter = createCpuMeter(5, 2, readProcess, readMain);
+      const [first, second] = [0, 1].map(index => meter.meter(readIsolate(index)));
+
+      // Of 10 ms of two cores, the main thread took 4: 6 left between two measured 5 each.
+      state.main += 4;
+      state.process += 10;
+      state.isolates = [5, 5, 0, 0];
+      await vi.advanceTimersByTimeAsync(5);
+
+      expect(first.charged()).toBe(3);
+      expect(second.charged()).toBe(3);
+    });
+  });
+
   // Shared in proportion to what each ran: one that barely ran beside a spinner takes nothing from what it is charged.
   it('shares the cores’ bound in proportion to what each ran', async () => {
     vi.useFakeTimers();

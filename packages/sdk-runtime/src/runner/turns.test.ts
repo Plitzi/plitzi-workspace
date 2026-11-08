@@ -26,6 +26,24 @@ describe('turns at running JavaScript', () => {
     expect(second).toBeDefined();
   });
 
+  // A runner of 2 vCPU: two isolates run JavaScript truly at once, the third waits for one of them.
+  it('hands out two at once on a runner of two cores, and a third as one is given back', async () => {
+    const turns = createTurns(2);
+    const first = await turns.take();
+    const second = await turns.take();
+    let third: number | undefined;
+    void turns.take().then(id => {
+      third = id;
+    });
+    await vi.advanceTimersByTimeAsync(TURN_SLICE_MS / 2);
+    expect(second).not.toBe(first);
+    expect(third).toBeUndefined();
+
+    turns.give(second);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(third).toBeDefined();
+  });
+
   // A run long on the CPU shares it with the next, as a scheduler would, rather than holding every other isolate up.
   it('lets the next one in beside a turn held past its slice', async () => {
     const turns = createTurns(1);
