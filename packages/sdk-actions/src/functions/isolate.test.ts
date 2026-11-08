@@ -60,7 +60,7 @@ interface SourceOptions {
   hosts?: string[];
   extra?: string;
   /** What the task asks for itself: an invocation's CPU is the task's to ask, the space's limits only cap it. */
-  asks?: { cpuMs?: number };
+  asks?: { cpuMs?: number; wallMs?: number };
 }
 
 /**
@@ -93,7 +93,8 @@ const spaceWith = async (
     limits,
     admit,
     onUsage,
-    unsigned
+    unsigned,
+    runner: own = runner
   }: {
     fetchImpl?: typeof fetch;
     credential?: Record<string, string>;
@@ -102,11 +103,13 @@ const spaceWith = async (
     onUsage?: FunctionsConfig['onUsage'];
     /** A server that was given no signing secret. */
     unsigned?: boolean;
+    /** Another runner than the suite's: one sized for what the test is about. */
+    runner?: IsolateRunner;
   } = {}
 ): Promise<Space> => {
   const probe = createActionsModule({
     lookups: { getAction: () => Promise.resolve(undefined) },
-    functions: { runner }
+    functions: { runner: own }
   });
   const prepared = await probe.prepareFunctions(source);
   if (!prepared.ok) {
@@ -120,7 +123,7 @@ const spaceWith = async (
       getCredential: () => Promise.resolve(credential),
       getFunctions: () => Promise.resolve(functions)
     },
-    functions: { runner, ...(admit ? { admit } : {}), ...(onUsage ? { onUsage } : {}) },
+    functions: { runner: own, ...(admit ? { admit } : {}), ...(onUsage ? { onUsage } : {}) },
     ...(unsigned ? {} : { signingSecret: SIGNING_SECRET }),
     ...(fetchImpl ? { fetchImpl } : {})
   });
@@ -472,6 +475,47 @@ describe('an invocation’s limits', () => {
     expect(result.status).toBe('failed');
     expect(result.error).toContain('ms of CPU');
     expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  // A sleep past its time used to be cut to the limit: the code woke at it and, the watchdog a look behind, finished.
+  it('stops a sleep past its time by its time limit, never cutting it short to finish', async () => {
+    const space = await spaceWith(
+      sourceOf('await new Promise(r => setTimeout(r, 3000)); return "woke";', {
+        asks: { cpuMs: 1000, wallMs: 300 }
+      })
+    );
+    const results = await Promise.all(Array.from({ length: 5 }, () => space.run()));
+
+    expect(results.map(result => result.status)).toEqual(Array.from({ length: 5 }, () => 'failed'));
+    results.forEach(result => expect(result.error).toContain('Did not finish within 300 ms'));
+  });
+
+  it('leaves a long timer the code clears alone, when the code finishes in time', async () => {
+    const space = await spaceWith(
+      sourceOf('const guard = setTimeout(() => {}, 60000); clearTimeout(guard); return "done";', {
+        asks: { cpuMs: 1000, wallMs: 300 }
+      })
+    );
+
+    expect((await space.run()).value).toBe('done');
+  });
+
+  // Sharing the CPU grows a limit by how shared it was, a few times at most: a burst of spinners on one turn is stopped.
+  it('stops code that spins beside many others on one core, a few times its limit at worst', async () => {
+    const crowded = createIsolateRunner({ concurrency: 12, turns: 1 });
+    const space = await spaceWith(
+      sourceOf('const until = Date.now() + 20000; while (Date.now() < until) {} return 1;'),
+      {
+        limits: { cpuMs: 50 },
+        runner: crowded
+      }
+    );
+    const started = Date.now();
+    const results = await Promise.all(Array.from({ length: 12 }, () => space.run()));
+
+    results.forEach(result => expect(result.error).toContain('ms of CPU'));
+    // Twelve on one core at four times 50 ms each: well under the twenty seconds they would spin unchecked.
+    expect(Date.now() - started).toBeLessThan(10_000);
   });
 
   // The runner derives outside the isolate's clock: what it took is the run's all the same.

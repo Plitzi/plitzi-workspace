@@ -212,6 +212,14 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A limit holds under load too.** The CPU limit grows by how shared the CPU was — threads fighting for a core are
+  measured slower than they run — but by four times at most: a burst of forty made a 1 s limit forty, and code that spun
+  for five seconds finished. And a sleep (`setTimeout`) past the time an invocation has left ends it there, by its time
+  limit: it was cut short to fit, the code woke at the limit and, the watchdog a look behind, finished as if it had slept.
+- **`flow.delay` says when it is capped.** It waits at most `FLOW_DELAY_MAX_MS` (5 s; `@plitzi/sdk-shared/actions`): a
+  longer one written in the document is refused (`validateActionDocument`) — a longer wait is a schedule — and a bound
+  one past it waits the cap and says so on the step's log. A flow written to wait 15 s ran on after 5, without a word.
+
 - **A runner takes an invocation only with room for it, and turns the rest away (`busy`) at once** — an isolate free
   (`concurrency` is now the most at once, not a queue) and memory for it: what it holds and a quarter of what the
   invocation may grow to, under `memoryShare`. Memory decides how many run: one waiting on the network holds a few MB.

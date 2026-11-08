@@ -1,5 +1,6 @@
 import { isKnownTimeZone, parseCron } from './cron';
 import { FAILURE_HANDLER_TASK } from './failureHandler';
+import { FLOW_DELAY_MAX_MS } from './flowDelay';
 import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
 import { isRecord } from '../helpers/isRecord';
 
@@ -503,6 +504,30 @@ const validateCredentialTokens = (nodes: Record<string, unknown>, warnings: Acti
   });
 };
 
+/**
+ * A delay written longer than a step may wait. The step caps it, so the flow ran on sooner than its author wrote — a
+ * test of a run's time limit waited 5 s of the 15 it asked for, and finished. A bound value is capped at run time and
+ * says so on the step's log; a written one is refused here, where it can be fixed.
+ */
+const validateDelays = (nodes: Record<string, unknown>, errors: ActionDocumentIssue[]) => {
+  Object.entries(nodes).forEach(([key, node]) => {
+    if (!isRecord(node) || node.action !== 'flow.delay' || !isRecord(node.params)) {
+      return;
+    }
+
+    const written = node.params.milliseconds;
+    const ms =
+      typeof written === 'number' ? written : typeof written === 'string' ? Number(written.trim()) : Number.NaN;
+    if (Number.isFinite(ms) && ms > FLOW_DELAY_MAX_MS) {
+      errors.push({
+        path: `nodes.${key}.params.milliseconds`,
+        message: `this step waits ${String(ms)} ms, and a step waits at most ${String(FLOW_DELAY_MAX_MS)} ms`,
+        hint: 'a longer wait is a schedule: enqueue the rest of the work for later instead of holding the run'
+      });
+    }
+  });
+};
+
 export const validateActionDocument = (document: unknown): ActionDocumentReport => {
   const errors: ActionDocumentIssue[] = [];
   const warnings: ActionDocumentIssue[] = [];
@@ -520,6 +545,7 @@ export const validateActionDocument = (document: unknown): ActionDocumentReport 
   validateFields(document.output, 'output', errors);
   validateNodes(document.nodes, document.output, errors, warnings);
   validateCredentialTokens(isRecord(document.nodes) ? document.nodes : {}, warnings);
+  validateDelays(isRecord(document.nodes) ? document.nodes : {}, errors);
 
   return { valid: errors.length === 0, errors, warnings };
 };

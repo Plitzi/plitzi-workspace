@@ -440,16 +440,7 @@ export type ActionRunRecord = {
  * `output`, `calls`: the runner's stop reasons), and its account's CPU budget over the minute (`cpuBudget`).
  */
 export type ActionRunLimit =
-  | 'time'
-  | 'steps'
-  | 'requests'
-  | 'response'
-  | 'cpu'
-  | 'wall'
-  | 'memory'
-  | 'output'
-  | 'calls'
-  | 'cpuBudget';
+  'time' | 'steps' | 'requests' | 'response' | 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'cpuBudget';
 
 /**
  * One step of a server action run, as a debugger may show it to anybody allowed to debug the page.

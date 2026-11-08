@@ -2,6 +2,7 @@ export { accessRefusal, actionAccessOf } from './access';
 export { JOB_KINDS, JOB_STATUSES, TERMINAL_JOB_STATUSES, isJobKind, isJobStatus, isTerminalJobStatus } from './jobs';
 export { cronFiresBetween, cronMatches, cronNextFire, isKnownTimeZone, parseCron, zonedClock } from './cron';
 export { FAILURE_HANDLER_TASK } from './failureHandler';
+export { FLOW_DELAY_MAX_MS } from './flowDelay';
 export {
   DEFAULT_FUNCTION_TIME_LIMITS,
   FUNCTION_ROUTES_PREFIX,

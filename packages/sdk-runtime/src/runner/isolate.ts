@@ -74,6 +74,12 @@ const describeAnswer = (call: unknown): Promise<unknown> =>
     : Promise.reject(new Error('Nothing is reachable while a bundle is read'));
 
 const WATCHDOG_MS = 5;
+/**
+ * The most an invocation's CPU limit grows by for sharing the CPU with more isolates than cores. Threads that fight for
+ * a core are measured slower than they run, and that is the runner's doing; but without a bound, a burst of forty made a
+ * 1 s limit forty — code that spun for five seconds finished as if it had a limit at all.
+ */
+const MAX_SHARED_TOLERANCE = 4;
 
 /**
  * What isolated-vm throws when a `timeout` it was given runs out. Its timeout is wall time while the isolate runs, not
@@ -376,7 +382,8 @@ export const createIsolateRunner = ({
     let waitedMs = 0;
     /**
      * The most the CPU it is measured at was inflated by while it ran beside more isolates than cores: the peak, not the
-     * mean — a burst of a few looks inflated a route's CPU past its limit while the mean of its run barely moved.
+     * mean — a burst of a few looks inflated a route's CPU past its limit while the mean of its run barely moved — and
+     * never past `MAX_SHARED_TOLERANCE`.
      */
     let sharedPeak = 1;
     const takeTurn = async (): Promise<void> => {
@@ -435,12 +442,13 @@ export const createIsolateRunner = ({
     const watchdog = setInterval(() => {
       const cpuMs = readCpu();
       if (holding !== undefined) {
-        sharedPeak = Math.max(sharedPeak, turns.load());
+        sharedPeak = Math.min(MAX_SHARED_TOLERANCE, Math.max(sharedPeak, turns.load()));
       }
 
       // Its CPU is the code's own while it runs alone on a core; beside more isolates than cores, threads fighting for
       // the CPU inflate what each is measured at, so its limit grows by how shared the CPU was at its most — the
-      // runner's doing, never the code's. Code that spins is still stopped, a few times its limit at worst.
+      // runner's doing, never the code's. Code that spins is still stopped, `MAX_SHARED_TOLERANCE` times its limit at
+      // worst.
       if (!isolate.isDisposed && cpuMs > limits.cpuMs * sharedPeak) {
         stop('cpu');
       }
@@ -500,9 +508,19 @@ export const createIsolateRunner = ({
       );
       global.setSync(
         '__plitziSleep',
-        new ivm.Reference((ms: number): Promise<void> =>
-          waitingOn(() => new Promise(resolve => later(Math.min(Math.max(0, ms), limits.wallMs), resolve)))
-        )
+        new ivm.Reference((ms: number): Promise<void> => {
+          // A sleep past the time it has left ends it there, by its time limit — never cut short to fit: cut, the code
+          // woke at the limit and, the watchdog a look behind, finished as if it had slept.
+          const left = limits.wallMs - (Date.now() - startedAt - waitedMs);
+          const wanted = Math.max(0, ms);
+          if (wanted >= left) {
+            later(Math.max(0, left), () => stop('wall'));
+
+            return waitingOn(() => new Promise<void>(() => undefined));
+          }
+
+          return waitingOn(() => new Promise(resolve => later(wanted, resolve)));
+        })
       );
       global.setSync(
         '__plitziRandom',

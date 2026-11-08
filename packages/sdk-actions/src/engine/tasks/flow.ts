@@ -1,29 +1,35 @@
 import { onAbort } from '@plitzi/sdk-kernel/http';
+import { FLOW_DELAY_MAX_MS } from '@plitzi/sdk-shared/actions';
 import { ActionRefusal } from '@plitzi/sdk-shared/functions';
 
 import { countRate } from '../runtime/rateLimit';
 
 import type { ActionTask } from '../types';
 
-const MAX_DELAY_MS = 5000;
-
 /**
  * Pauses the flow.
  *
- * Capped hard: a run holds a connection and a concurrency slot for its whole life, so an authored `delay` is a way
- * to spend both on nothing. Anything longer than this is a schedule, not a step.
+ * Capped hard (`FLOW_DELAY_MAX_MS`): a run holds a connection and a concurrency slot for its whole life, so an authored
+ * `delay` is a way to spend both on nothing. Anything longer is a schedule, not a step — a longer one written as it is
+ * is refused when the action is saved, and a bound one is capped here, saying so on the step's log.
  */
 const delay: ActionTask<{ milliseconds: string | number }> = {
   namespace: 'flow',
   action: 'delay',
   title: 'Delay',
-  description: "Waits so many milliseconds before the next step, capped by the run's time budget; answers `waited`.",
+  description: `Waits so many milliseconds before the next step, at most ${String(FLOW_DELAY_MAX_MS)} — a longer wait is a schedule; answers \`waited\`.`,
   params: {
     milliseconds: { type: 'text', canBind: true, defaultValue: '1000', label: 'Milliseconds' }
   },
   run: async ({ milliseconds }, ctx) => {
     const parsed = typeof milliseconds === 'number' ? milliseconds : Number.parseInt(milliseconds, 10);
-    const waitMs = Math.min(Number.isNaN(parsed) || parsed < 0 ? 0 : parsed, MAX_DELAY_MS);
+    const asked = Number.isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    const waitMs = Math.min(asked, FLOW_DELAY_MAX_MS);
+    if (asked > waitMs) {
+      ctx.log(
+        `Asked to wait ${String(asked)} ms; a step waits at most ${String(FLOW_DELAY_MAX_MS)} ms, and waited that`
+      );
+    }
 
     await new Promise<void>(resolve => {
       const timer = setTimeout(resolve, waitMs);
