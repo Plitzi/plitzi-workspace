@@ -212,13 +212,17 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
-- **A runner short of memory gives one invocation back instead of being killed with all of them.** It takes an
-  invocation while a quarter of what it may grow to fits, since most hold a few MB; nothing kept the ones it took from
-  growing together past its container's limit, and the kernel killed it — every invocation in it with it (`closed with
-  1006`, 150 calls of one load round). Past 92% of its memory it now gives back the one whose isolate holds the most
-  (`IsolateRunner.shed`, `createMemoryGuard`): stopped at its own limit when past it, else handed back as `busy` — a
-  worker tries it again on another runner, a route answers 503 with `Retry-After` — and says so in its log.
-
+- **A runner reserves each invocation what it may hold, whole, and is never killed with all of them for it.** It took
+  an invocation while a quarter of what it may grow to fitted, since most hold a few MB; those it took grew together
+  past its container's limit, and the kernel killed it — every invocation in it with it (`closed with 1006`, 150 calls
+  of one load round). Each is now reserved its footprint whole (`invocationFootprintMb`: its limit, what isolated-vm
+  lets an isolate grow past it, and the isolate's own — 256 MB holds ~262) from the moment it is taken until it ends,
+  as a Lambda's memory is its own; one with no room waits for it. Past 92% of its memory anyway it gives back the one
+  holding the most (`IsolateRunner.shed`, `createMemoryGuard`): stopped at its own limit when past it, else `busy`.
+  The platform's sizing reckons a runner's tasks by the same footprint (`tasksAtWorst`).
+- **A runner that goes away mid-invocation says so: `lost`** (`FunctionFailureReason`), the platform's and never the
+  code's — it may have run in part, so it is not sent again for it — and a route answers 502 saying it. It was an
+  `error`, a 500 that read as the route's own failure. A runner that turns the platform away (its secret) says that.
 - **A limit holds under load too, and never stops code for the runner's load.** V8 measures an isolate's CPU as the
   time it spent running JavaScript, on a core or waiting for one, so beside more threads than cores each was measured
   as if it had a core of its own: a 5 ms route was stopped at its 100 ms limit, and growing the limit for it let code

@@ -67,10 +67,10 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
   version?: string;
   /**
    * The share of its memory limit it takes new invocations up to, from 0 to 1: 0.85 by default. An invocation is taken
-   * while what the runner holds, and a share of what the invocation may grow to (`limits.memoryMb`), fit under it —
-   * past it the platform is answered `busy` and places it on another runner, instead of the process being killed for
-   * memory with every invocation in it. Its memory, not a count, is what says how many it runs: one waiting on the
-   * network holds a few MB. `concurrency` is the most it runs at once all the same.
+   * while what it may hold, whole (`invocationFootprintMb`), fits beside what every invocation it runs was reserved —
+   * past it the platform is answered `busy` and places it on another runner, or the runner keeps it until there is room,
+   * instead of the process being killed for memory with every invocation in it. `concurrency` is the most it runs at
+   * once all the same.
    */
   memoryShare?: number;
   /**
@@ -99,18 +99,12 @@ export type FunctionsRunnerService = {
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 
 /**
- * The share of what an invocation may grow to (`limits.memoryMb`) kept free for it as it is taken: most wait on the
- * network and hold a few MB, and its isolate's own limit stops one that grows past its own.
+ * What one invocation may hold, in MB, as the runner reserves it: its limit, what isolated-vm lets an isolate grow past
+ * it before it is stopped, and an isolate's own (measured: 32 MB → ~40, 128 → ~147, 256 → ~262). Reserved whole from
+ * the moment it is taken until it ends — as a Lambda's memory is its own — since a share let invocations that grew
+ * together kill the runner, every invocation in it with it. One rule, read by the platform's sizing too.
  */
-const MEMORY_RESERVE_SHARE = 0.25;
-
-/**
- * How long an invocation taken is still reserved its share beside what the runner holds: until its isolate is built and
- * held, and a reading of the memory (every 100 ms) says so. A burst taken within one reading is each reserved its
- * share, not all admitted on the room one had. Held for a whole second, it capped a runner at a few dozen a second
- * with half its memory free.
- */
-const RESERVED_FOR_MS = 250;
+export const invocationFootprintMb = (memoryMb: number): number => Math.ceil(memoryMb * 1.1 + 8);
 
 /** How often what is kept waiting is looked at again, beside each invocation that ends: memory frees between them. */
 const KEPT_LOOK_MS = 100;
@@ -137,8 +131,8 @@ type ConnectionStats = {
    * one — false when the runner starts stopping first, or the platform goes away.
    */
   wait: (limits: FunctionLimits, signal: AbortSignal) => Promise<boolean>;
-  /** An invocation ended: what was kept waiting may have room now. */
-  ended: () => void;
+  /** An invocation it took ended: what it reserved is free (`release`), and what was kept waiting may have room now. */
+  ended: (limits: FunctionLimits) => void;
 };
 
 const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: ConnectionStats): void => {
@@ -156,12 +150,18 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
   let invokedAt: number | undefined;
   /** What it runs, for its stats: which space's task, route or job. */
   let label: RunLabel | undefined;
+  /** What the invocation it took was reserved of the runner's memory by: given back as it ends. */
+  let takenLimits: FunctionLimits | undefined;
   const finish = (message: RunnerResponseMessage): void => {
     if (invokedAt !== undefined) {
       stats.inFlight.count -= 1;
       stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? endOf(message.reason) : undefined, label);
       invokedAt = undefined;
-      stats.ended();
+    }
+
+    if (takenLimits) {
+      stats.ended(takenLimits);
+      takenLimits = undefined;
     }
 
     send(message);
@@ -314,6 +314,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       }
     }
 
+    takenLimits = limits;
     label = {
       spaceId: invocation.context.spaceId,
       kind: invocation.kind,
@@ -425,8 +426,15 @@ export const startFunctionsRunnerService = async ({
   const inFlight = { count: 0 };
   let stopping = false;
   const most = isolate.concurrency ?? DEFAULT_CONCURRENCY;
-  /** When each invocation of the last `RESERVED_FOR_MS` was taken: what is still reserved beside what is held. */
-  let taken: number[] = [];
+  const MB = 1048576;
+  /** What the runner holds with nothing running — read whenever nothing does: what every reservation is counted beside. */
+  let idleBytes = readMemory().usedBytes;
+  /** What the invocations it took are reserved, whole (`invocationFootprintMb`), until each ends. */
+  let reservedBytes = 0;
+  const footprintOf = (limits: FunctionLimits): number => invocationFootprintMb(limits.memoryMb) * MB;
+  const release = (limits: FunctionLimits): void => {
+    reservedBytes = Math.max(0, reservedBytes - footprintOf(limits));
+  };
   const busy = (limits: FunctionLimits): string | undefined => {
     if (stopping) {
       return 'This functions runner is stopping — a deploy or a scale-down — and takes no new invocation: another does';
@@ -437,27 +445,27 @@ export const startFunctionsRunnerService = async ({
     }
 
     const memory = readMemory();
-    const reserved = limits.memoryMb * 1048576 * MEMORY_RESERVE_SHARE;
-    const mb = (bytes: number) => String(Math.round(bytes / 1048576));
-    const now = Date.now();
-    taken = taken.filter(at => now - at < RESERVED_FOR_MS);
-    if (memory.usedBytes + reserved * (taken.length + 1) <= memory.limitBytes * memoryShare) {
-      // Its CPU busy is not a refusal: invocations take turns at it and wait — the runner's time, never counted against
-      // theirs. Only a queue of turns this long sends the next to another runner (above).
-      taken.push(now);
+    if (reservedBytes === 0) {
+      idleBytes = memory.usedBytes;
+    }
+
+    const need = footprintOf(limits);
+    const cap = memory.limitBytes * memoryShare;
+    const mb = (bytes: number) => String(Math.round(bytes / MB));
+    // Taken when what it may hold, whole, fits beside what every invocation it runs was reserved — and beside what it
+    // holds now, which past those (a fragmented heap) says so too. Its CPU busy is not a refusal: invocations take turns
+    // at it and wait, the runner's time, never counted against theirs.
+    if (Math.max(idleBytes + reservedBytes, memory.usedBytes) + need <= cap) {
+      reservedBytes += need;
 
       return undefined;
     }
 
-    const kept =
-      taken.length > 0
-        ? `${mb(reserved * (taken.length + 1))} MB kept for this one and the ${String(taken.length)} it just took`
-        : `${mb(reserved)} MB kept for this one`;
-
     return (
-      `The functions runner is short of memory — ${mb(memory.usedBytes)} of its ${mb(memory.limitBytes)} MB in use, ` +
-      `${kept}, under the ${String(Math.round(memoryShare * 100))}% it takes new ones up to — so it took none: another ` +
-      'runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
+      `The functions runner is short of memory — ${mb(idleBytes + reservedBytes)} MB reserved for what it runs ` +
+      `(${mb(memory.usedBytes)} in use), and this one may hold ${mb(need)}, past the ${mb(cap)} MB ` +
+      `(${String(Math.round(memoryShare * 100))}% of ${mb(memory.limitBytes)}) it takes new ones up to — so it took ` +
+      'none: another runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
     );
   };
   /**
@@ -575,7 +583,17 @@ export const startFunctionsRunnerService = async ({
     }
 
     sockets.handleUpgrade(req, socket, head, ws =>
-      serveConnection(ws, engine, { recorder, inFlight, busy, stopping: () => stopping, wait, ended: letIn })
+      serveConnection(ws, engine, {
+        recorder,
+        inFlight,
+        busy,
+        stopping: () => stopping,
+        wait,
+        ended: limits => {
+          release(limits);
+          letIn();
+        }
+      })
     );
   });
 

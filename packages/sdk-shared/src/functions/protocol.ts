@@ -287,10 +287,11 @@ export type FunctionInvokeRequest = {
 /**
  * Why an invocation did not answer: the code refused (`refused` — an `ActionRefusal`, its message written for whoever
  * asked), it threw (`error`), the runner stopped it (a {@link FunctionStopReason}), the runner took none, short of
- * memory (`busy` — another instance, or a moment later, takes it), or no runner could be reached at all
- * (`unreachable` — the invocation was never sent, so nothing of it ran).
+ * memory (`busy` — another instance, or a moment later, takes it), no runner could be reached at all
+ * (`unreachable` — the invocation was never sent, so nothing of it ran), or the runner went away while it ran it
+ * (`lost` — the platform's doing, never the code's, but it may have run in part, so it is not sent again for it).
  */
-export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused' | 'busy' | 'unreachable';
+export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused' | 'busy' | 'unreachable' | 'lost';
 
 /** An invocation that did not answer, and why ({@link FunctionFailureReason}). */
 export class FunctionFailure extends Error {

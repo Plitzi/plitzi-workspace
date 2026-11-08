@@ -47,7 +47,19 @@ const FULL_WAITS_MS = [100, 250, 500, 1000];
 /** How long the addresses a runner name resolves to are kept: a scale-up is seen within it. */
 const RESOLVE_MS = 1000;
 
-const unreachable = (detail: string) => new FunctionFailure('error', `The functions runner is unreachable (${detail})`);
+/**
+ * A runner that went away while it ran the invocation — killed, crashed, its connection cut: the platform's, never the
+ * code's, but it may have run in part (a call made, a request sent), so nothing sends it again on its own.
+ */
+const unreachable = (detail: string) =>
+  new FunctionFailure('lost', `The functions runner went away while it ran this (${detail}): it may have run in part`);
+
+/** A runner that turned this platform away before it opened — its secret is another's: nothing ran, nor will by asking. */
+const refusedBy = (detail: string) =>
+  new FunctionFailure(
+    'error',
+    `The functions runner turned this platform away (${detail}): its secret is not this platform's`
+  );
 
 /** A runner that was never connected to: the invocation was not sent, so nothing of it ran and it may be sent again. */
 const notReached = (detail: string) =>
@@ -365,12 +377,21 @@ export const createRemoteRunner = ({
           return;
         }
 
+        // Turned away before it opened (a 4xx): nothing ran, and asking again would be turned away the same.
+        if (!opened) {
+          settle(() => reject(refusedBy(error.message)));
+
+          return;
+        }
+
         endBody(controller => controller.error(unreachable(error.message)));
         settle(() => reject(unreachable(error.message)));
       });
       socket.on('close', code => {
-        endBody(controller => controller.error(unreachable(`closed with ${String(code)}`)));
-        settle(() => reject(unreachable(`closed with ${String(code)}`)));
+        // Closed before it opened: nothing was sent, which may be sent again.
+        const why = opened ? unreachable(`closed with ${String(code)}`) : notReached(`closed with ${String(code)}`);
+        endBody(controller => controller.error(why));
+        settle(() => reject(why));
       });
     });
 

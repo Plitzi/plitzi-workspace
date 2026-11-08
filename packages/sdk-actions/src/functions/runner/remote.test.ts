@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 
-import { startFunctionsRunnerService } from '@plitzi/sdk-runtime/runner';
+import { invocationFootprintMb, startFunctionsRunnerService } from '@plitzi/sdk-runtime/runner';
 import { FUNCTIONS_PROTOCOL, FunctionFailure } from '@plitzi/sdk-shared/functions';
 
 import { createRemoteRunner } from './remote';
@@ -209,7 +209,46 @@ describe('the runner service, through the remote runner', () => {
       .catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(FunctionFailure);
-    expect(String(failure)).toContain('unreachable');
+    // Turned away, nothing ran: never said as a runner that went away while it ran it.
+    expect(String(failure)).toContain('turned this platform away');
+  });
+
+  /**
+   * A runner that goes away while it runs the invocation — the kernel killed it for memory — is the platform's, said as
+   * `lost`: never the code's `error`, nor `unreachable`, which is sent again though it may have run in part.
+   */
+  it('says a runner that went away mid-invocation lost it, the platform’s, and does not send it again', async () => {
+    const dying = new WebSocketServer({ port: 0, host: '127.0.0.1' });
+    let sent = 0;
+    dying.on('connection', socket => {
+      socket.on('message', () => {
+        sent += 1;
+        socket.send(JSON.stringify({ type: 'accepted' }));
+        socket.terminate();
+      });
+    });
+    await new Promise<void>(resolve => dying.on('listening', () => resolve()));
+    const address = dying.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+    const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
+
+    try {
+      const failure: unknown = await runner
+        .invoke({
+          bundle: { id: 'gone', load: () => Promise.resolve('export default {};') },
+          invocation,
+          limits: LIMITS,
+          answer: () => Promise.resolve(null),
+          signal: new AbortController().signal
+        })
+        .catch((error: unknown) => error);
+
+      expect(failure instanceof FunctionFailure && failure.reason).toBe('lost');
+      expect(String(failure)).toContain('it may have run in part');
+      expect(sent).toBe(1);
+    } finally {
+      dying.close();
+    }
   });
 
   // A refusal is the code's answer, not a fault: across the wire it stays a refusal, with its reason.
@@ -380,10 +419,14 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
-  // Memory is read every 100 ms: a burst within one reading is each reserved its share, not all taken on one room.
-  it('reserves each invocation it just took its share, so a burst never all lands on one reading', async () => {
+  /**
+   * Each invocation is reserved what it may hold, whole, from the moment it is taken until it ends: a share let the ones
+   * it took grow together past the container's limit, and the kernel killed the runner with all of them in it. 64 MiB
+   * may hold 79 (`invocationFootprintMb`) of the 85 it takes work to: one at a time, the rest kept until it ends — never
+   * refused, never two on room for one.
+   */
+  it('reserves each invocation what it may hold, whole, and keeps the next until the room is back', async () => {
     const MIB = 1_048_576;
-    // 85 MiB it takes work to, a quarter of 64 MiB kept for each: five at once, the sixth kept until their share lapses.
     const burst = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
@@ -394,7 +437,8 @@ describe('the runner service, through the remote runner', () => {
       url: `ws://127.0.0.1:${String(burst.address().port)}`,
       secret: SECRET
     });
-    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+    const code =
+      'export default { tasks: [{ namespace: "probe", action: "run", run: async () => { await new Promise(r => setTimeout(r, 30)); return "ran"; } }] };';
     const once = () =>
       runner
         .invoke({
@@ -402,21 +446,19 @@ describe('the runner service, through the remote runner', () => {
           invocation,
           limits: LIMITS,
           answer: () => Promise.resolve(null),
-          signal: new AbortController().signal
+          signal: new AbortController().signal,
+          onWaited: () => undefined
         })
-        .catch((error: unknown) => (error instanceof FunctionFailure ? error.reason : error));
-
+        .then(
+          value => value,
+          (error: unknown) => (error instanceof FunctionFailure ? error.reason : error)
+        );
     try {
-      const answers = await Promise.all(Array.from({ length: 6 }, once));
-
-      expect(answers).toEqual(['ran', 'ran', 'ran', 'ran', 'ran', 'ran']);
-      // The sixth was kept, not run on the room the first five were taken on.
-      const stats = (await (
-        await fetch(`http://127.0.0.1:${String(burst.address().port)}/_stats`, {
-          headers: { authorization: `Bearer ${SECRET}` }
-        })
-      ).json()) as { outcomes: { '1m': { refusals: Record<string, number> } } };
-      expect(stats.outcomes['1m'].refusals.busy).toBe(1);
+      expect(invocationFootprintMb(LIMITS.memoryMb)).toBe(79);
+      const started = Date.now();
+      expect(await Promise.all(Array.from({ length: 4 }, once))).toEqual(['ran', 'ran', 'ran', 'ran']);
+      // Four of 30 ms one after another: run two at once on room for one and they take half of it.
+      expect(Date.now() - started).toBeGreaterThanOrEqual(110);
     } finally {
       await burst.close();
     }

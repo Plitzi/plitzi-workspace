@@ -142,6 +142,15 @@ const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
     );
   }
 
+  // The runner went away while it ran the route: the platform's, said as such — a 502, since it may have run in part and
+  // asking again is the caller's to judge.
+  if (error instanceof FunctionFailure && error.reason === 'lost') {
+    return Response.json(
+      { error: 'The functions runner went away while it ran this route: it may have run in part' },
+      { status: 502 }
+    );
+  }
+
   return Response.json({ error: 'This route failed' }, { status: 500 });
 };
 
