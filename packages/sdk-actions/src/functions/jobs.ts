@@ -382,9 +382,14 @@ export const createFunctionJobs = ({
       };
     }
 
+    // The minute's CPU spent, it waits for the next; the period's compute spent, a paywall: set aside.
     const refusal = found.native ? undefined : await config.admit?.(job.spaceId);
+    if (refusal?.limit === 'quota') {
+      return { kind: 'setAside', why: refusal.message };
+    }
+
     if (refusal) {
-      return { kind: 'wait', delayMs: BUSY_WAIT_MS, why: `waiting: ${refusal}` };
+      return { kind: 'wait', delayMs: BUSY_WAIT_MS, why: `waiting: ${refusal.message}` };
     }
 
     const declared = found.native ? jobsManifestOf(found.definition)[target.name] : found.declaration;

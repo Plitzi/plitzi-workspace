@@ -25,10 +25,11 @@ export const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion
 
 /**
  * The limits the same code meets again on every attempt — what it spends of CPU, memory, calls, output, steps or
- * requests: a job stopped at one is set aside at once, for its owner to fix or its plan to allow more, rather than run
- * twice more for nothing. Time is not among them: an API slow for a minute answers the next attempt.
+ * requests, and its plan's allowance for the period spent (`quota`): a job stopped at one is set aside at once, for its
+ * owner to fix or its plan to allow more, rather than run twice more for nothing. Time is not among them: an API slow
+ * for a minute answers the next attempt.
  */
-export const SET_ASIDE_LIMITS = new Set(['cpu', 'memory', 'calls', 'output', 'steps', 'requests', 'response']);
+export const SET_ASIDE_LIMITS = new Set(['cpu', 'memory', 'calls', 'output', 'steps', 'requests', 'response', 'quota']);
 
 /** Why a job stopped at one of {@link SET_ASIDE_LIMITS} waits for somebody. */
 export const limitSetAsideError = (said: string): string =>

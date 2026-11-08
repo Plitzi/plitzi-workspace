@@ -10,7 +10,7 @@ export { readManifest } from './manifest';
 export { oauthCallbackUrlOn } from './oauth';
 
 export type { FunctionsSource, FunctionsBuild } from './build';
-export type { FunctionsConfig, FunctionUsageRecord } from './config';
+export type { FunctionRefusal, FunctionsConfig, FunctionUsageRecord } from './config';
 export type { FunctionJobLimits } from './jobs';
 export type { LocalFunctions, LocalFunctionsOptions } from './local';
 export type { ManifestReading } from './manifest';

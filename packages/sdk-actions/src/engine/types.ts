@@ -324,6 +324,12 @@ export type ActionsConfig = {
    */
   limitsFor?: (spaceId: number) => Promise<ActionLimits | undefined>;
   /**
+   * Whether that space may start a run now — its plan's allowance of runs for the period not spent — or why not, asked
+   * before every run but a page's render (which its page view already pays for). A refusal is the run's, `quota`: a
+   * call answered 402, a job set aside. Absent, every run may start.
+   */
+  admitRun?: (spaceId: number) => Promise<string | undefined>;
+  /**
    * How many runs may be in flight at once. Counted per space and for the process as a whole.
    *
    * `memoryShare` is the share of this process's memory limit (its container's, else V8's heap limit) past which it

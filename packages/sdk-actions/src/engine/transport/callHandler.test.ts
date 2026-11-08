@@ -358,6 +358,21 @@ describe('handleActionCall', () => {
     expect(payload.reason).toBe('not_found');
   });
 
+  // A plan's runs for the period spent is a paywall: 402, the caller is allowed and the plan is what is not — and the
+  // refusal names what has more, so a page can say it instead of a generic failure.
+  it('answers 402 when its plan’s runs for the period are spent, saying which plan has more', async () => {
+    const module = createActionsModule({
+      lookups: { getAction: () => Promise.resolve(undefined) },
+      admitRun: () => Promise.resolve('This space has used the 75,000 action runs its Site plan includes')
+    });
+
+    const { sent, payload } = await call(buildConfig(entry()), { actionId: 'quote', input: { amount: 1 } }, { module });
+
+    expect(sent.status).toBe(402);
+    expect(payload.reason).toBe('quota');
+    expect(JSON.stringify(payload)).toContain('used the 75,000 action runs its Site plan includes');
+  });
+
   it('answers 422 when a required input is missing', async () => {
     const { sent, payload } = await call(buildConfig(entry()), { actionId: 'quote', input: {} });
 

@@ -308,6 +308,11 @@ space while it hydrates.
   the code's to fix: `500 This route stopped at a limit its plan sets: Stopped after 100 ms of CPU`. A runner without
   room or out of reach is the platform's, and alone answers 503, with `Retry-After`. `isFunctionLimit`
   (`@plitzi/sdk-shared/functions`) is the one list of the stops that are limits.
+- **A plan's allowance for the period is a paywall a run is refused at** (`quota`: `ActionErrorReason`,
+  `ActionRunLimit`). `admitRun(spaceId)` (actions config) answers why a space may start no more runs — refused before
+  any step, **402** at `/_action`, a render never asked — and a function's `admit` refuses with `limit: 'quota'`: 402 at
+  its route (429 stays a busy minute), a job so refused is set aside, not retried. **To redo:** `functions.admit`
+  answers `FunctionRefusal` (`{ limit: 'cpuBudget' | 'quota', message }`), not a string.
 - **`flow.delay` says when it is capped.** It waits at most `FLOW_DELAY_MAX_MS` (5 s; `@plitzi/sdk-shared/actions`): a
   longer one written in the document is warned of (`validateActionDocument`) — a longer wait is a schedule — and any one
   past it waits the cap and says so on the step's log. A flow written to wait 15 s ran on after 5, without a word.

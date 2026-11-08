@@ -55,6 +55,8 @@ export const STATUS_BY_REASON: Record<ActionErrorReason, number> = {
   invalid_input: 422,
   duplicate: 409,
   over_capacity: 429,
+  // Payment Required: the plan's allowance for the period is spent — the refusal names the plan that has more.
+  quota: 402,
   recursion: 508,
   timeout: 504,
   aborted: 499,

@@ -341,10 +341,27 @@ describe('what an invocation spends', () => {
     expect(usage.cpuMs).toBeGreaterThanOrEqual(15);
   });
 
+  // The plan's compute for the period spent: a paywall, said as the limit it is — never retried as a busy minute.
+  it('is stopped at its plan’s compute for the period, said as that limit', async () => {
+    const space = await spaceWith(sourceOf('return 1;'), {
+      admit: () =>
+        Promise.resolve({ limit: 'quota' as const, message: 'This space used its 2,000,000 small-seconds this month' })
+    });
+
+    const result = await space.run();
+
+    expect(result.status).toBe('failed');
+    expect(result.error).toContain('used its 2,000,000 small-seconds this month');
+  });
+
   it('is refused before it starts when the deployment says the space is over its budget', async () => {
     const onUsage = vi.fn();
     const space = await spaceWith(sourceOf('return 1;'), {
-      admit: () => Promise.resolve('This account’s functions used their CPU for this minute'),
+      admit: () =>
+        Promise.resolve({
+          limit: 'cpuBudget' as const,
+          message: 'This account’s functions used their CPU for this minute'
+        }),
       onUsage
     });
 

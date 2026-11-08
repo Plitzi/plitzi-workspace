@@ -310,9 +310,10 @@ export const createRoutes = ({
     return {
       key: match.key,
       handle: async request => {
+        // The minute's CPU spent asks again shortly (429); the period's compute is a paywall (402).
         const refusal = await config.admit?.(visit.spaceId);
         if (refusal) {
-          return whole(Response.json({ error: refusal }, { status: 429 }));
+          return whole(Response.json({ error: refusal.message }, { status: refusal.limit === 'quota' ? 402 : 429 }));
         }
 
         const fnCtx = contextOf(

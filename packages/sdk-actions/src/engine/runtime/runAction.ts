@@ -396,6 +396,14 @@ export const createActionRunner = (
       lineage: request.lineage
     });
 
+    // Its plan's allowance of runs for the period, spent: refused before anything runs (a page's render is its view's).
+    if (request.trigger !== 'render') {
+      const refusal = await config.admitRun?.(request.spaceId);
+      if (refusal) {
+        throw new ActionRunError('quota', refusal, 'quota');
+      }
+    }
+
     // The deployment's tasks, and — when a step names one of its own — the space's functions as of this revision.
     const registry = await registryFor(request);
 

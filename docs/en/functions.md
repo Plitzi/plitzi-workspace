@@ -496,7 +496,11 @@ when it was saved, as of the revision the run belongs to. `actions.prepareFuncti
 one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings — what a task may ask
 for in CPU and time, and the largest size (`DEFAULT_FUNCTION_CEILINGS` for each unset one: 2 s, 30 s, large), and what
 every invocation gets of the rest; `limitsFor` answers a space's plan the same way;
-`functions.admit` and `functions.onUsage` are how a deployment budgets CPU across a space's account.
+`functions.admit` and `functions.onUsage` are how a deployment budgets a space's functions: `admit(spaceId)`
+answers why one may not start — `{ limit: 'cpuBudget', message }` for a busy minute (429 at a route, a job waits),
+`{ limit: 'quota', message }` for its plan's allowance for the period spent, a paywall (402, a job set aside) — and
+`onUsage` is told what each spent, the memory it held among it. `admitRun(spaceId)` on the actions config is the same
+paywall for runs: refused before any step (402 at `/_action`), a render never asked.
 
 **What a runner keeps, and what it does not.** A function is stateless, like a Lambda: everything it needs comes in its
 params and `ctx`, and anything that must outlive the invocation goes to `ctx.kv` — so any runner, any replica, can run

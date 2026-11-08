@@ -20,6 +20,9 @@ export type FunctionUsageRecord = {
   memoryMb: number;
 };
 
+/** Why a space may not run code now (`FunctionsConfig.admit`): which limit it reached, and what to say. */
+export type FunctionRefusal = { limit: 'cpuBudget' | 'quota'; message: string };
+
 /**
  * A server's functions. `native` is code the deployment trusts, loaded in its own process with the context narrowed to
  * a function's; the spaces' own code — which nobody here reviewed — only ever runs in the sandbox (`runner`).
@@ -51,10 +54,12 @@ export type FunctionsConfig = {
    */
   limits?: Partial<FunctionLimits>;
   /**
-   * Asked before each invocation: why this space may not run code right now — its account spent its CPU for the minute,
-   * say — or nothing. What keeps one space's loop from slowing everybody else's on the same runner.
+   * Asked before each invocation: why this space may not run code right now, and which limit that is — its account's CPU
+   * for the minute spent (`cpuBudget`: it waits, a route answers 429), or its plan's compute for the period (`quota`, a
+   * paywall: a step stops at it, a route answers 402, a job is set aside) — or nothing. What keeps one space's loop from
+   * slowing everybody else's on the same runner, and a plan from spending past what it sold.
    */
-  admit?: (spaceId: number) => Promise<string | undefined>;
+  admit?: (spaceId: number) => Promise<FunctionRefusal | undefined>;
   /** Told what each invocation spent, however it ended: what `admit` budgets by, and what a deployment meters. */
   onUsage?: (record: FunctionUsageRecord) => void;
   /** The spaces' jobs (`defineFunctions({ jobs })`): what each may spend. */

@@ -264,6 +264,21 @@ describe('how much a job worker takes', () => {
     expect(job.runAt).toBeGreaterThanOrEqual(Math.ceil((MIDNIGHT + 1) / 60_000) * 60_000);
   });
 
+  // The period's allowance spent is a paywall, not a busy minute: retried, it would be refused until the period rolls.
+  it('sets aside at once a job stopped at its plan’s allowance for the period, saying so', async () => {
+    const test = world(() => {
+      throw new RunLimitReached('quota', 'This space has used the 25,000 small-seconds its App plan includes');
+    });
+    await test.job();
+
+    await test.worker().poll();
+    await settle();
+
+    const job = await test.read();
+    expect(job).toMatchObject({ status: 'paused', attempts: 1 });
+    expect(job.error).toContain('used the 25,000 small-seconds its App plan includes');
+  });
+
   // The same code meets the same limit on every attempt: two more would spend a worker for nothing.
   it('sets aside at once a job stopped at a limit its plan sets, and retries one stopped at its time', async () => {
     const test = world(() => {

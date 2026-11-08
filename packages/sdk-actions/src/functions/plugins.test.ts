@@ -283,6 +283,42 @@ describe('a plugin’s server half, brought by a plugin the space uses', () => {
     expect(route?.key).toBe('POST /save');
   });
 
+  // The minute's CPU spent asks again shortly; the period's compute spent is a paywall, said as one — never a retry.
+  it('answers its route 402 once the plan’s compute for the period is spent, and 429 for a busy minute', async () => {
+    const answer = async (refusal: { limit: 'quota' | 'cpuBudget'; message: string }) => {
+      const module = moduleWith({
+        lookups: {
+          getAction: () => Promise.resolve(undefined),
+          getPluginFunctions: () => Promise.resolve({ board: brought(kvRunner()) })
+        },
+        functions: { admit: () => Promise.resolve(refusal) }
+      });
+      const visit = {
+        spaceId: SPACE,
+        environment: 'main' as const,
+        callerId: 'ip:1',
+        signal: new AbortController().signal
+      };
+      const route = await module.routeFor(visit, 'POST', '/plugins/board/save');
+      if (!route) {
+        throw new Error('No route answers POST /plugins/board/save');
+      }
+
+      return (await route.handle(new Request('https://space.example.test/fn/plugins/board/save', { method: 'POST' })))
+        .response;
+    };
+
+    const paywall = await answer({
+      limit: 'quota',
+      message: 'This space has used the 25,000 small-seconds its App plan includes'
+    });
+    expect(paywall.status).toBe(402);
+    expect(await paywall.json()).toEqual({
+      error: 'This space has used the 25,000 small-seconds its App plan includes'
+    });
+    expect((await answer({ limit: 'cpuBudget', message: 'Its CPU for this minute is spent' })).status).toBe(429);
+  });
+
   it('is refused when saved with a task named after something else, or a space’s route under /plugins/', () => {
     const ceilings = functionCeilings();
     const plugin = readManifest(

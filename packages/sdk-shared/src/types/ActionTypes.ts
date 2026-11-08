@@ -335,6 +335,11 @@ export type ActionErrorReason =
   | 'duplicate'
   /** A concurrency or stream cap was reached. */
   | 'over_capacity'
+  /**
+   * The space's plan spent this period's allowance of runs (a paywall): refused until the period renews or the plan
+   * grows, the refusal naming which. Never retried: it would be refused again.
+   */
+  | 'quota'
   /** The run's lineage already names this action: a loop through the outside world. */
   | 'recursion'
   | 'timeout'
@@ -437,10 +442,11 @@ export type ActionRunRecord = {
 /**
  * A limit a run can be stopped at: the action's own — its deadline (`time`), its steps, its outbound requests and the
  * bytes they answered (`response`) — those of the space's code it ran, as its runner stops it (`cpu`, `wall`, `memory`,
- * `output`, `calls`: the runner's stop reasons), and its account's CPU budget over the minute (`cpuBudget`).
+ * `output`, `calls`: the runner's stop reasons), its account's CPU budget over the minute (`cpuBudget`), and its plan's
+ * allowance over the period — runs, a function's compute — spent (`quota`, a paywall).
  */
 export type ActionRunLimit =
-  'time' | 'steps' | 'requests' | 'response' | 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'cpuBudget';
+  'time' | 'steps' | 'requests' | 'response' | 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'cpuBudget' | 'quota';
 
 /**
  * One step of a server action run, as a debugger may show it to anybody allowed to debug the page.

@@ -65,10 +65,10 @@ const spaceTasks = (
       ...(task.description ? { description: task.description } : {}),
       params: task.params,
       run: async (params, ctx) => {
-        // The account's CPU over the minute, spent: a limit its plan sets, said as one.
+        // The account's CPU over the minute, or its plan's compute for the period, spent: a limit its plan sets.
         const refusal = await admit?.(ctx.spaceId);
         if (refusal) {
-          throw new RunLimitReached('cpuBudget', refusal);
+          throw new RunLimitReached(refusal.limit, refusal.message);
         }
 
         if (sizeRefusal) {

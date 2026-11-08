@@ -114,6 +114,12 @@ export type SSRActionConfig = {
    */
   limitsFor?: (spaceId: number) => Promise<ActionLimits | undefined>;
   /**
+   * Whether that space may start a run now — its plan's allowance of runs for the period not spent — or why not, asked
+   * before every run but a page's render (which its page view already pays for). A refusal is the run's, `quota`: a
+   * call answered 402, a job set aside. Absent, every run may start.
+   */
+  admitRun?: (spaceId: number) => Promise<string | undefined>;
+  /**
    * Concurrency ceilings.
    *
    * `perSpace`/`perProcess` count CALLS — a click, a webhook, a schedule — where one run is somebody asking for
