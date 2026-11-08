@@ -29,11 +29,13 @@ export const isolatesCpuMs = (): number => {
  * V8 measures an isolate's CPU as the time it spent running JavaScript — on a core, or ready and waiting for one — so
  * beside more threads than cores each is measured as if it had a core of its own: a 5 ms route was measured past its
  * 100 ms limit under load, and a ceiling on how much a limit may grow for it let code that spun go on, or stopped light
- * code, depending on the burst. What their threads took, as the system counts it, is the truth: each look, what the
- * isolates were measured at is scaled to it when they add up to more, and charged as measured when they do not. Code
- * that spins is charged the CPU it took; code beside it, never the cores it waited for.
+ * code, depending on the burst. Each look, what the isolates were measured at is scaled down to the most they can have
+ * taken, by whichever bound is lower: what their threads took as the system counts it, and the cores shared by those
+ * that ran — V8's collector and the runner's helper threads take CPU nobody is measured at, and on the threads' count
+ * alone a measure inflated in those moments went through whole. Code that spins alone is charged all it took; code
+ * beside others, never the cores it waited for.
  */
-export const createCpuMeter = (everyMs: number, readProcess: () => number = isolatesCpuMs): CpuMeter => {
+export const createCpuMeter = (everyMs: number, cores: number, readProcess: () => number = isolatesCpuMs): CpuMeter => {
   type Entry = { read: () => number; last: number; charged: number };
   const live = new Set<Entry>();
   let lastProcess = readProcess();
@@ -51,7 +53,8 @@ export const createCpuMeter = (everyMs: number, readProcess: () => number = isol
       return { entry, slice };
     });
     const measured = slices.reduce((total, { slice }) => total + slice, 0);
-    const share = measured > spent ? spent / measured : 1;
+    const ran = slices.filter(({ slice }) => slice > 0).length;
+    const share = Math.min(1, measured > 0 ? spent / measured : 1, ran > 0 ? cores / ran : 1);
     slices.forEach(({ entry, slice }) => {
       entry.charged += slice * share;
     });
