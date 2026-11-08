@@ -1,5 +1,6 @@
 import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
+import { wakingQueue } from './wake';
 import { createJobWorker } from './worker';
 import { fleetJobQueue } from '../fleet';
 
@@ -40,7 +41,7 @@ export const createActionJobs = (
   lookups: ActionLookups,
   functionJobs?: FunctionJobsService
 ): ActionJobs => {
-  const queue = config.queue ?? fleetJobQueue(() => createMemoryJobQueue());
+  const queue = wakingQueue(config.queue ?? fleetJobQueue(() => createMemoryJobQueue()), config.wake);
   const { produce = true, workers = DEFAULT_JOB_WORKERS } = config;
 
   const scheduler = createScheduler({
@@ -62,6 +63,7 @@ export const createActionJobs = (
     ...(functionJobs ? { functionJobs } : {}),
     workers,
     ...(config.pollMs ? { pollMs: config.pollMs } : {}),
+    ...(config.wake ? { wake: config.wake } : {}),
     ...(config.claims ? { spaces: config.claims } : {}),
     ...(config.claimMemory ? { memory: config.claimMemory } : {}),
     ...(config.helps ? { helps: config.helps } : {}),

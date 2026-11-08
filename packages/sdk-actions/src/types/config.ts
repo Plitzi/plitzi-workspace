@@ -1,4 +1,4 @@
-import type { JobClaimMemory, JobQueue, JobSpaces } from './jobs';
+import type { JobClaimMemory, JobQueue, JobSpaces, JobWake } from './jobs';
 import type { SSRPageAdapters, ServerBaseConfig } from '@plitzi/sdk-kernel/types';
 import type {
   ActionEmailConfig,
@@ -228,6 +228,11 @@ export type ActionJobsConfig = {
   spaces?: number[];
   /** How often a free worker looks for a job. Default 1s. */
   pollMs?: number;
+  /**
+   * How replicas tell each other a job is due now (`JobWake`): a worker then takes one as it is enqueued, not on its next
+   * look. Absent, every worker finds new jobs by looking, up to `pollMs` late.
+   */
+  wake?: JobWake;
   /**
    * Which spaces' jobs this replica takes, asked on every claim (`JobSpaces`): a worker kept for some spaces takes
    * theirs alone, the others every space but those. Absent, every space's. Not `spaces`, which is what it schedules.

@@ -6,6 +6,17 @@ import type { Environment, Job, JobAttempt, JobInput, JobProgress, JobStatus, Jo
  */
 export type JobSpaces = { only: number[] } | { except: number[] };
 
+/**
+ * How replicas tell each other a job is due now, beside each worker looking every `pollMs`: `notify` as one is enqueued
+ * or handed back due, `listen` for it — a deployment's pub/sub. Without it a worker finds a new job on its next look: up
+ * to `pollMs` late, half of it on average, with nothing else to do.
+ */
+export type JobWake = {
+  notify: () => void;
+  /** Called on every notice from any replica, this one's included; answers how to stop listening. */
+  listen: (onWake: () => void) => () => void;
+};
+
 /** Why a worker is asked to stop a job it holds: an operator or the code cancelled it, or set it aside. */
 export type JobStop = 'cancel' | 'pause';
 

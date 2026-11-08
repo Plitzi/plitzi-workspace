@@ -212,6 +212,10 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A job due now is taken as it is enqueued** (`jobs.wake`, `JobWake`): a worker found new jobs only by looking every
+  `pollMs`, so an idle server started a scheduled or later run half a second late on average. Given a pub/sub — `notify`
+  as a job due now is enqueued or handed back, `listen` on every worker — it looks at once. Absent, as before.
+
 - **A light invocation is never stopped for CPU the runner's main thread took.** Under a thousand calls at once, the
   main thread took the core from the isolate whose turn it was, V8 measured that isolate as if it ran, and the meter's
   bound — the machine's cores — let it through: a 5 ms route was stopped after "100 ms of CPU". The meter is now bound by

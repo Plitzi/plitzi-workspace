@@ -10,7 +10,7 @@ import { ActionRunError } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
 import type { FunctionJobsService } from '../../functions/jobs';
-import type { JobClaimMemory, JobQueue, JobSettlement, JobSpaces } from '../../types';
+import type { JobClaimMemory, JobQueue, JobSettlement, JobSpaces, JobWake } from '../../types';
 import type { ActionsModule } from '../module';
 import type { ActionLookups, ActionRunResult } from '../types';
 import type { ProcessLoad } from '@plitzi/sdk-kernel/stats';
@@ -136,6 +136,8 @@ export type JobWorkerOptions = {
   workers?: number;
   /** How often a worker with a free slot looks for work. Default 1s. */
   pollMs?: number;
+  /** Told a job is due now (`JobWake.listen`): it looks at once, rather than on its next look. */
+  wake?: JobWake;
   /**
    * Which spaces' jobs this replica takes, asked on every claim: a worker kept for some spaces takes theirs alone, the
    * others every space but those. Absent, every space's.
@@ -211,6 +213,7 @@ export const createJobWorker = ({
   functionJobs,
   workers = 4,
   pollMs = 1_000,
+  wake,
   spaces,
   memory,
   helps,
@@ -233,6 +236,7 @@ export const createJobWorker = ({
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
   let heart: NodeJS.Timeout | undefined;
+  let stopListening: (() => void) | undefined;
   /** A pass asked for while one was under way: run once that one ends. Read through a call: another sets it meanwhile. */
   let again = false;
   const askedAgain = (): boolean => again;
@@ -811,6 +815,7 @@ export const createJobWorker = ({
 
       timer = setInterval(() => void guarded(), pollMs);
       timer.unref();
+      stopListening = wake?.listen(() => void guarded());
       heart = setInterval(
         () =>
           void beat()
@@ -828,6 +833,8 @@ export const createJobWorker = ({
       stopping = true;
       clearInterval(timer);
       timer = undefined;
+      stopListening?.();
+      stopListening = undefined;
 
       // A claim already on its way comes back to a worker that is stopping, and hands its jobs back — see `poll`.
       await pass;
