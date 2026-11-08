@@ -29,6 +29,7 @@ export type AuthStateReason =
   | 'no-provider'
   | 'skip-auth'
   | 'hint-missing'
+  | 'server-found-nobody'
   | 'no-evidence'
   | 'signed-out'
   | 'another-tab'
@@ -49,6 +50,8 @@ export type AuthBootstrap<U> = {
   accessToken?: string;
   expiresAt?: number;
   skipAuth?: boolean;
+  /** The server rendered this page, resolved this very request's session, and found nobody (`server.authenticated`). */
+  serverFoundNobody?: boolean;
 };
 
 export type AuthProviderProps = {
@@ -297,6 +300,19 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     // storage in both directions: it appears when a sibling app signs in, and it is gone the moment one signs out.
     if (this.hintCookie && !hint) {
       this.endSession(undefined, 'hint-missing');
+
+      return;
+    }
+
+    /**
+     * The server that rendered this page judged this request's session cookie — the one the hint stands for — and found
+     * nobody: the session ended there (signed out everywhere, revoked) while this browser kept its token. Standing on
+     * the token would send a page for signed-out visitors on to one that sends it straight back, for ever; so it is
+     * asked first, and a refusal ends it. A space with no hint is not judged by the server, and restores as it did.
+     */
+    if (bootstrap.serverFoundNobody && this.hintCookie && this.hasLiveToken() && this.session.user) {
+      this.setState('initLoading', 'server-found-nobody');
+      await this.revalidate(true);
 
       return;
     }

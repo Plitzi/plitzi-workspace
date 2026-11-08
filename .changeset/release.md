@@ -34,6 +34,10 @@ space while it hydrates.
   render, and a page is kept without them; the browser still reads them. `cache.ignoredQueryParams: []` keeps the old
   behaviour.
 
+- **A deployment's own `getUser`** (`SSRAdapters`, `RequestIdentity`) is handed the response as a second argument: one
+  that finds the request's session cookie over for good clears it there (`createSessionCookies(...).clear`), its hint
+  with it, as `createAuth`'s does now.
+
 - **`SSRActionJobsConfig` is `ActionJobsConfig`**, one type for both entries (`@plitzi/sdk-actions/types` and the root):
   rename the import.
 - **A MySQL job queue** made before this release needs two columns:
@@ -173,6 +177,14 @@ space while it hydrates.
 - **`createHttpServer`** answers `{ listen, close, channel }`; its parts no longer take `cache` or `plugins`.
 
 ## The server (`@plitzi/sdk-server`)
+
+- **A session that ended on the server no longer sends the browser round the sign-in for ever.** Signed out everywhere,
+  revoked, or the database restored, the browser kept its cookie, the readable hint and the token it stored: it took
+  itself for signed in, a sign-in for signed-out visitors sent it on, and the page server sent it straight back — 271
+  page loads in ten seconds, until the tab was closed. The page server now clears a session cookie it finds over for
+  good (revoked, outdated, an account that may not sign in, never a token at all), the hint with it — never one the
+  refresh may still renew. And the browser (`@plitzi/sdk-auth`), on a page whose server found nobody while a hint says
+  otherwise, asks before restoring the token it kept, and ends it on a refusal; a space with no hint restores as before.
 
 - The render cache keeps a page in the encoding the server prefers — a 1 MB page as the ~90 KB a browser is sent — and
   is bounded by bytes. It dropped the page stored first, the site's home page among them, and held up to 500 pages of

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
 
@@ -147,6 +147,69 @@ describe('createAuth', () => {
     });
 
     expect(grant.ok).toBe(false);
+  });
+});
+
+/**
+ * A session the store no longer has — signed out everywhere, revoked, the database restored — while the browser keeps
+ * its cookie, its readable hint and the token it stored: left as they are, the browser believes it is signed in, and a
+ * sign-in for signed-out visitors sends it on to a page that sends it straight back, for ever.
+ */
+describe('a session that is over, on a page request', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const answer = () => {
+    const written: string[] = [];
+    const res = { setHeader: (_name: string, value: string | string[]) => written.push(...[value].flat()) };
+
+    return { res, written };
+  };
+  const cleared = (written: string[]) => written.filter(cookie => /Max-Age=0/i.test(cookie)).map(c => c.split('=')[0]);
+
+  it('is cleared, its readable hint with it', async () => {
+    // Issued by a deployment with the same keys whose store kept it: this one's store never had it.
+    const session = await build().api.issueSession(7);
+    const { res, written } = answer();
+
+    const user = await build().ssrIdentityAdapters.getUser(
+      { hostname: 'acme.test', headers: { cookie: `plitzi_session=${encodeURIComponent(session.token)}` } },
+      res
+    );
+
+    expect(user).toBeUndefined();
+    expect(cleared(written)).toEqual(['plitzi_session', 'plitzi_session_refresh', 'plitzi_session_hint']);
+  });
+
+  it('leaves a live one, an expired one the refresh may renew, and a bearer header alone', async () => {
+    const auth = build();
+    const session = await auth.api.issueSession(7);
+    const cookie = `plitzi_session=${encodeURIComponent(session.token)}`;
+    const live = answer();
+
+    expect(
+      await auth.ssrIdentityAdapters.getUser({ hostname: 'acme.test', headers: { cookie } }, live.res)
+    ).toBeDefined();
+    expect(live.written).toEqual([]);
+
+    const foreign = await build().api.issueSession(7);
+    const bearer = answer();
+    await auth.ssrIdentityAdapters.getUser(
+      { hostname: 'acme.test', headers: { authorization: `Bearer ${foreign.token}` } },
+      bearer.res
+    );
+
+    expect(bearer.written).toEqual([]);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 400 * 24 * 60 * 60 * 1000);
+    const expired = answer();
+
+    expect(
+      await auth.ssrIdentityAdapters.getUser({ hostname: 'acme.test', headers: { cookie } }, expired.res)
+    ).toBeUndefined();
+    expect(expired.written).toEqual([]);
   });
 });
 

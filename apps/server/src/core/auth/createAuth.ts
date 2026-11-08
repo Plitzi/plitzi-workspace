@@ -11,7 +11,7 @@ import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
 import type { AuthApiConfig } from './api';
 import type { AuthOutcome } from './api';
 import type { AccountAdapters, RequestIdentity } from '@plitzi/sdk-kernel/identity';
-import type { AuthPolicy, Requirement } from '@plitzi/sdk-kernel/identity';
+import type { AuthFailure, AuthPolicy, Requirement } from '@plitzi/sdk-kernel/identity';
 import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
 import type { IdentityAdapters, IdentityConfig } from '@plitzi/sdk-kernel/identity';
 import type { CookieSink } from '@plitzi/sdk-kernel/identity';
@@ -19,6 +19,18 @@ import type { TokenConfig } from '@plitzi/sdk-kernel/tokens';
 import type { SSRAuthCookie } from '@plitzi/sdk-kernel/types';
 import type { SSRSession } from '@plitzi/sdk-kernel/types';
 import type { ServerAuth, SessionScope, SSRUser } from '@plitzi/sdk-shared';
+
+/**
+ * The refusals of a session credential that no renewal brings back: the store has no such session, the account may not
+ * sign in, the token was never one this deployment would accept. `expired` is not one — the refresh may still renew it.
+ */
+const SESSION_OVER: ReadonlySet<AuthFailure> = new Set<AuthFailure>([
+  'revoked',
+  'outdated',
+  'inactive',
+  'malformed',
+  'issuer-not-allowed'
+]);
 
 /**
  * Everything a deployment says about its own auth, in one object.
@@ -160,9 +172,16 @@ export const createAuth = (config: AuthConfig) => {
    * is nowhere near where the mistake was made.
    */
   const ssrIdentityAdapters = {
-    getUser: async (req: CredentialCarrier): Promise<SSRUser | undefined> => {
+    getUser: async (req: CredentialCarrier, res?: CookieSink): Promise<SSRUser | undefined> => {
       const resolved = await identity.resolveActor(req);
       if (!resolved.ok) {
+        // A session cookie over for good is cleared with its hint; one that may still be renewed (`expired`) is left
+        // for the renewal, and a bearer header is the caller's own. A store that cannot answer throws before here.
+        const fromCookie = !req.headers.authorization?.startsWith('Bearer ') && !!cookies.resolveSessionToken(req);
+        if (res && fromCookie && SESSION_OVER.has(resolved.reason)) {
+          cookies.clear(req, res);
+        }
+
         return undefined;
       }
 

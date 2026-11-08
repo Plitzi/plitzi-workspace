@@ -4,6 +4,7 @@ import type {
   SSRCredential,
   SSRGrant,
   SSRRequest,
+  SSRResponseHelpers,
   SSRSession,
   SSRTemplateProps,
   SSRWriteContext
@@ -252,9 +253,16 @@ export type SSRAdapters = {
     reader: ActivityReader,
     signal?: AbortSignal
   ) => Promise<SpaceActivityPage>;
-  /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
-   *  in was written by the server, from {@link SSRAuthCookie}. */
-  getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
+  /**
+   * Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived in
+   * was written by the server, from {@link SSRAuthCookie}.
+   *
+   * `res` is the response this request is answered with, when there is one: a session cookie the identity finds over
+   * for good — revoked, ended, never a token at all — is cleared on it, the readable hint with it. Left in place, the
+   * hint tells the browser it still holds a session, the browser restores the token it kept, and a page for signed-out
+   * visitors sends it on to one that sends it straight back, for ever.
+   */
+  getUser?: (req: SSRRequest, res?: SSRResponseHelpers) => Promise<SSRUser | undefined>;
   /**
    * Verify credentials and mint a session — identity, and nothing else. The server writes the cookies, clears them,
    * and keeps the readable hint in step, because those are properties of how sessions travel rather than of who

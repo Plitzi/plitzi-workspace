@@ -124,11 +124,13 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
       user: fresh ? serverUser : undefined,
       accessToken: fresh ? serverToken : undefined,
       expiresAt: fresh ? server?.user?.expiresAt : undefined,
-      skipAuth: server?.skipAuth
+      skipAuth: server?.skipAuth,
+      // Only a server that rendered the page says `false`; a page drawn in the browser alone says nothing.
+      serverFoundNobody: fresh && server?.authenticated === false
     });
 
     return () => manager.dispose();
-  }, [manager, serverUser, serverToken, server?.user?.expiresAt, server?.skipAuth]);
+  }, [manager, serverUser, serverToken, server?.user?.expiresAt, server?.skipAuth, server?.authenticated]);
 
   // A server-rendered page arrives with its answer already in hand, and the browser has nothing to wait for.
   const hookValue = useMemo(

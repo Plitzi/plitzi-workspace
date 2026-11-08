@@ -1,4 +1,4 @@
-import type { SSRRequest } from '../types';
+import type { SSRRequest, SSRResponseHelpers } from '../types';
 import type { SSRUser } from '@plitzi/sdk-shared';
 
 /**
@@ -7,6 +7,9 @@ import type { SSRUser } from '@plitzi/sdk-shared';
  * accounts writes its own. Absent, every request is a guest's.
  */
 export type RequestIdentity = {
-  /** The person a request carries a live session for, with the roles and permissions it was granted; else nobody. */
-  getUser: (req: SSRRequest) => Promise<SSRUser | undefined>;
+  /**
+   * The person a request carries a live session for, with the roles and permissions it was granted; else nobody. With
+   * `res`, a session cookie found over for good is cleared on it (`SSRAdapters.getUser`).
+   */
+  getUser: (req: SSRRequest, res?: SSRResponseHelpers) => Promise<SSRUser | undefined>;
 };
