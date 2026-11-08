@@ -80,6 +80,8 @@ const describeAnswer = (call: unknown): Promise<unknown> =>
     : Promise.reject(new Error('Nothing is reachable while a bundle is read'));
 
 const WATCHDOG_MS = 5;
+/** How much of an invocation's time is the runner's before the platform is told, so its wait for the answer grows. */
+const TELL_WAITED_MS = 100;
 
 /**
  * What isolated-vm throws when a `timeout` it was given runs out. Its timeout is wall time while the isolate runs, not
@@ -376,11 +378,19 @@ export const createIsolateRunner = ({
     /** Its share of the process's CPU from the moment it was ready (`createCpuMeter`), and what the runner spent for it. */
     let metered: MeteredIsolate | undefined;
     const chargedCpu = (): number => (metered?.charged() ?? 0) + hostCpuMs;
-    /** When its code began: what came before — the isolate made, the bundle compiled — is the platform's time. */
-    let readyAt: number | undefined;
-    let waitedAtReady = 0;
-    /** Its own time: since its code began, less what it waited for a turn — the runner's, never counted. */
-    const ownMs = (): number => (readyAt === undefined ? 0 : Date.now() - readyAt - (waitedMs - waitedAtReady));
+    /** Whether its code began: what came before — the isolate made, the bundle compiled — is the platform's time. */
+    let codeBegan = false;
+    /** How long it waited on what it asked of the platform — calls, sleeps — counted once while it waits on several. */
+    let awaitedMs = 0;
+    let awaitingSince: number | undefined;
+    /**
+     * Its own time: what it waited on that it asked for, and the CPU it took — what it would take on a runner of its own.
+     * Never the runner's: a turn waited for, a place behind other isolates in isolated-vm's threads (one per core: a
+     * spinner holds one until it ends), a core it was ready for and did not get. Counted from the clock, a route that
+     * slept 200 ms on a crowded runner was stopped at its 10 s.
+     */
+    const ownMs = (): number =>
+      codeBegan ? awaitedMs + (awaitingSince === undefined ? 0 : Date.now() - awaitingSince) + chargedCpu() : 0;
     /** The turn at running JavaScript this isolate holds, if any, and how many answers of the platform it waits for. */
     let holding: number | undefined;
     let awaited = 0;
@@ -390,22 +400,15 @@ export const createIsolateRunner = ({
     let taking: Promise<void> | undefined;
     /** Ended: a turn handed to it after that goes straight back. */
     let ended = false;
-    /** How long it waited for turns: the runner's time, which its time limit does not count. */
-    let waitedMs = 0;
+    /** What of its time was the runner's, and told the platform so far: its wait for the answer grows by it. */
+    let toldWaitedMs = 0;
     const takeTurn = async (): Promise<void> => {
       if (holding !== undefined) {
         return;
       }
 
-      const askedAt = Date.now();
       taking ??= turns.take().then(id => {
         taking = undefined;
-        const waited = Date.now() - askedAt;
-        if (waited > 0) {
-          waitedMs += waited;
-          onWaited?.(waited);
-        }
-
         if (ended) {
           turns.give(id);
         } else {
@@ -422,12 +425,21 @@ export const createIsolateRunner = ({
     };
     /** Something it asked of the platform, its turn given up while it waits and taken again before it hears back. */
     const waitingOn = async <T>(work: () => Promise<T>): Promise<T> => {
+      if (awaited === 0) {
+        awaitingSince = Date.now();
+      }
+
       awaited++;
       giveTurn();
       try {
         return await work();
       } finally {
         awaited--;
+        if (awaited === 0 && awaitingSince !== undefined) {
+          awaitedMs += Date.now() - awaitingSince;
+          awaitingSince = undefined;
+        }
+
         await takeTurn();
       }
     };
@@ -453,8 +465,17 @@ export const createIsolateRunner = ({
         stop('cpu');
       }
 
-      if (!isolate.isDisposed && ownMs() > limits.wallMs) {
+      const own = ownMs();
+      if (!isolate.isDisposed && own > limits.wallMs) {
         stop('wall');
+      }
+
+      // Every moment that was not its own — its isolate made, a turn, a place behind others, a core — is the runner's:
+      // told the platform, whose wait for the answer would otherwise run out on time the code never had.
+      const runners = Date.now() - startedAt - own;
+      if (onWaited && runners - toldWaitedMs >= TELL_WAITED_MS) {
+        onWaited(runners - toldWaitedMs);
+        toldWaitedMs = runners;
       }
 
       // Back from one answer while it waits on others, it holds its turn though it runs nothing: given up once its CPU
@@ -562,9 +583,10 @@ export const createIsolateRunner = ({
       await takeTurn();
       readyCpuMs = readIsolateCpu();
       metered = cpu.meter(readIsolateCpu);
-      readyAt = Date.now();
-      waitedAtReady = waitedMs;
-      await module.evaluate({ timeout: limits.wallMs });
+      codeBegan = true;
+      // No timeout of isolated-vm's: it counts the clock while JavaScript runs, a core waited for included, and stopped
+      // code for the runner's load. The watchdog judges its time and CPU, and disposing the isolate stops any loop.
+      await module.evaluate();
       const definition = module.namespace.getSync('default', { reference: true });
       if (definition.typeof !== 'object') {
         throw new FunctionFailure(
@@ -654,8 +676,7 @@ export const createIsolateRunner = ({
           const message = JSON.stringify(invocation satisfies FunctionInvocation);
 
           return invoke.apply(driver.derefInto(), [definition.derefInto(), message], {
-            result: { promise: true, copy: true },
-            timeout: limits.wallMs
+            result: { promise: true, copy: true }
           });
         }
       }),

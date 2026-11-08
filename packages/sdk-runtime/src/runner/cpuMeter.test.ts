@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createCpuMeter } from './cpuMeter';
+import { createCpuMeter, isolatesCpuMs } from './cpuMeter';
 
 /** A clock in hand: what the process took and what each isolate was measured at, moved by the test. */
 const clocks = () => {
@@ -71,5 +71,19 @@ describe('the CPU meter', () => {
     await vi.advanceTimersByTimeAsync(20);
 
     expect(one.charged()).toBe(3);
+  });
+
+  // The regression it guards: the main thread's work — making isolates, compiling bundles — counted as theirs, and a
+  // running isolate was charged what V8 measured while it was busy. The main thread spinning moves none of it.
+  it('reads the isolates’ threads alone, never the main thread’s work', () => {
+    const before = isolatesCpuMs();
+    const until = Date.now() + 100;
+    let n = 0;
+    while (Date.now() < until) {
+      n += Math.sqrt(n + 1);
+    }
+
+    expect(n).toBeGreaterThan(0);
+    expect(isolatesCpuMs() - before).toBeLessThan(30);
   });
 });

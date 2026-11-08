@@ -216,9 +216,11 @@ space while it hydrates.
   time it spent running JavaScript, on a core or waiting for one, so beside more threads than cores each was measured
   as if it had a core of its own: a 5 ms route was stopped at its 100 ms limit, and growing the limit for it let code
   spin for five seconds. The runner now charges each isolate its share of the process's own CPU, as the system counts
-  it (`createCpuMeter`): code that spins pays what it took, code beside it never the cores it waited for. An
-  invocation's time counts from when its code begins — making its isolate and compiling its bundle are the platform's —
-  and a sleep (`setTimeout`) past the time it has left ends it there, by its time limit: it was cut short to fit, the code
+  it (`createCpuMeter`, its threads' CPU less the main thread's, whose work is the runner's): code that spins pays
+  what it took, code beside it never the cores it waited for. An invocation's time is what it waited on that it asked
+  for — calls, sleeps — and the CPU it took, never the clock: a turn, a place behind spinners in isolated-vm's threads, a
+  core it did not get are the runner's, told the platform so its wait for the answer grows by them, and isolated-vm's
+  own timeouts, which counted the clock, are gone. And a sleep (`setTimeout`) past the time it has left ends it there, by its time limit: it was cut short to fit, the code
   woke at the limit and finished as if it had slept.
 - **A function route stopped at a limit says which, and is not a 503.** It answered `503 This route ran out of what
   it may spend` — a status that tells a caller to ask again, and a sentence that named nothing. A limit of its own is
