@@ -23,6 +23,7 @@ import {
 } from '@plitzi/sdk-shared/functions';
 
 import { DEFAULT_CONCURRENCY, createIsolateRunner } from './isolate';
+import { createMemoryGuard } from './memoryGuard';
 
 import type { IsolateRunnerOptions } from './isolate';
 import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
@@ -385,6 +386,8 @@ export const startFunctionsRunnerService = async ({
   }
 
   let engine: FunctionRunner;
+  /** The memory guard's look, while the runner is its own isolates (`createMemoryGuard`). */
+  let memoryWatch: NodeJS.Timeout | undefined;
   if (runner) {
     engine = runner;
   } else {
@@ -393,6 +396,24 @@ export const startFunctionsRunnerService = async ({
     const isolates = createIsolateRunner(isolate);
     await isolates.warm();
     engine = isolates;
+    // Near its memory it gives the largest invocation back, rather than be killed with every one in it.
+    const guard = createMemoryGuard({
+      readMemory,
+      shed: () => {
+        const gave = isolates.shed();
+        if (gave) {
+          serverLog.warn(
+            'Functions',
+            `ran short of memory: gave back an invocation of space ${String(gave.spaceId)} holding ${String(gave.heldMb)} MB` +
+              (gave.overItsOwn ? ', past its own limit — stopped at it' : ', within its own — for another runner')
+          );
+        }
+
+        return gave !== undefined;
+      }
+    });
+    memoryWatch = setInterval(() => void guard.look(), 100);
+    memoryWatch.unref();
   }
 
   const recorder = createStatsRecorder({
@@ -584,6 +605,7 @@ export const startFunctionsRunnerService = async ({
       return address;
     },
     close: async () => {
+      clearInterval(memoryWatch);
       const { announceMs, graceMs } = shutdownOf({ ...(shutdown ? { shutdown } : {}) }, { graceMs: SHUTDOWN_GRACE_MS });
       stopping = true;
       // What it kept waiting goes to another runner now, not after its drain.

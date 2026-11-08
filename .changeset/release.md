@@ -212,6 +212,13 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A runner short of memory gives one invocation back instead of being killed with all of them.** It takes an
+  invocation while a quarter of what it may grow to fits, since most hold a few MB; nothing kept the ones it took from
+  growing together past its container's limit, and the kernel killed it — every invocation in it with it (`closed with
+  1006`, 150 calls of one load round). Past 92% of its memory it now gives back the one whose isolate holds the most
+  (`IsolateRunner.shed`, `createMemoryGuard`): stopped at its own limit when past it, else handed back as `busy` — a
+  worker tries it again on another runner, a route answers 503 with `Retry-After` — and says so in its log.
+
 - **A limit holds under load too, and never stops code for the runner's load.** V8 measures an isolate's CPU as the
   time it spent running JavaScript, on a core or waiting for one, so beside more threads than cores each was measured
   as if it had a core of its own: a 5 ms route was stopped at its 100 ms limit, and growing the limit for it let code

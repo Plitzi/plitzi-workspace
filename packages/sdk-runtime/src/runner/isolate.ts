@@ -66,7 +66,26 @@ export type IsolateRunner = FunctionRunner & {
    * the first invocation of a fresh process would otherwise spend (~70 ms) on top of its own.
    */
   warm: () => Promise<void>;
+  /**
+   * Gives back the invocation whose isolate holds the most memory — what the runner does when it runs short of its own
+   * (`startFunctionsRunnerService`): stopped as `memory` when it is past its own limit (the code's), else handed back
+   * as `busy`, for another runner (the runner's). What it gave back, or nothing when nothing runs.
+   */
+  shed: () => { overItsOwn: boolean; heldMb: number; spaceId: number } | undefined;
 };
+
+/** An invocation running, as the runner short of memory reads it: what its isolate holds, and how to give it back. */
+type LiveInvocation = {
+  heldBytes: () => number;
+  limitBytes: number;
+  spaceId: number;
+  shed: (overItsOwn: boolean) => void;
+};
+
+/** Why a runner gave an invocation back that was within its own memory: the runner's, never the code's. */
+const SHED_SAID =
+  'The functions runner ran short of memory and gave this invocation back before it took the whole runner down: ' +
+  'another runner takes it';
 
 /** What reading a bundle's declaration may spend: its top level runs, and nothing else. */
 const DESCRIBE_LIMITS: FunctionLimits = { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 1_000_000, calls: 100 };
@@ -263,6 +282,8 @@ type Session = {
   onWaited?: (ms: number) => void;
   /** Given the guest's driver and the definition, answers the guest's JSON. */
   drive: (driver: IsolatedVM.Reference<GuestDriver>, definition: IsolatedVM.Reference<unknown>) => Promise<string>;
+  /** Whose code it is, for what a runner short of memory says it gave back (`shed`). */
+  spaceId?: number;
 };
 
 /**
@@ -283,6 +304,8 @@ export const createIsolateRunner = ({
   cpuMeter: cpu = createCpuMeter(WATCHDOG_MS, availableParallelism())
 }: IsolateRunnerOptions = {}): IsolateRunner => {
   const turns = createTurns(turnCount);
+  /** Every invocation running, with the memory its isolate holds and the way to give it back (`shed`). */
+  const live = new Set<LiveInvocation>();
   const cache = new Map<string, Cached>();
   let cachedBytes = 0;
   /** Every isolate starts from a heap with the prelude already run in it: running it each time was most of the cost. */
@@ -346,7 +369,8 @@ export const createIsolateRunner = ({
     graceMs = ABORT_GRACE_MS,
     onUsage,
     onWaited,
-    drive
+    drive,
+    spaceId = 0
   }: Session): Promise<unknown> => {
     const ivm = await ready();
     // Before a slot is taken: fetching code a runner does not keep is waiting on the platform, not running anything.
@@ -355,7 +379,8 @@ export const createIsolateRunner = ({
 
     const isolate = new ivm.Isolate({ memoryLimit: limits.memoryMb, snapshot });
     const timers = new Set<NodeJS.Timeout>();
-    let stopped: FunctionStopReason | undefined;
+    /** Why it was stopped: a limit of its own, an abort — or `shed`, given back by a runner short of memory. */
+    let stopped: FunctionStopReason | 'shed' | undefined;
     let calls = 0;
     const startedAt = Date.now();
     /** The CPU the isolate was measured at, kept as it is read: a disposed isolate has none left to ask. */
@@ -461,13 +486,35 @@ export const createIsolateRunner = ({
         await takeTurn();
       }
     };
-    const stop = (reason: FunctionStopReason): void => {
+    const stop = (reason: FunctionStopReason | 'shed'): void => {
       stopped ??= reason;
       readCpu();
       if (!isolate.isDisposed) {
         isolate.dispose();
       }
     };
+    /** How a stop reads to the platform: a limit of its own as itself; given back by the runner, as `busy`. */
+    const failureOf = (reason: FunctionStopReason | 'shed'): FunctionFailure =>
+      reason === 'shed'
+        ? new FunctionFailure('busy', SHED_SAID)
+        : new FunctionFailure(reason, stopMessage(reason, limits));
+    const running: LiveInvocation = {
+      heldBytes: (): number => {
+        if (isolate.isDisposed) {
+          return 0;
+        }
+
+        const heap = isolate.getHeapStatisticsSync();
+
+        return heap.used_heap_size + heap.externally_allocated_size;
+      },
+      limitBytes: limits.memoryMb * 1048576,
+      spaceId,
+      shed: (overItsOwn: boolean) => {
+        stop(overItsOwn ? 'memory' : 'shed');
+      }
+    };
+    live.add(running);
     const later = (ms: number, run: () => void): void => {
       const timer = setTimeout(() => {
         timers.delete(timer);
@@ -631,7 +678,7 @@ export const createIsolateRunner = ({
       }
 
       if (stopped) {
-        throw new FunctionFailure(stopped, stopMessage(stopped, limits));
+        throw failureOf(stopped);
       }
 
       const outcome: unknown = JSON.parse(text);
@@ -656,10 +703,9 @@ export const createIsolateRunner = ({
       // that outlasted it. Disposed with no reason of ours: V8 ran out of the isolate's memory and took it down itself.
       const timedOut = error instanceof Error && error.message === ISOLATE_TIMEOUT;
       const reason = stopped ?? (timedOut ? 'wall' : isolate.isDisposed ? 'memory' : undefined);
-      throw reason
-        ? new FunctionFailure(reason, stopMessage(reason, limits))
-        : new FunctionFailure('error', messageOf(error));
+      throw reason ? failureOf(reason) : new FunctionFailure('error', messageOf(error));
     } finally {
+      live.delete(running);
       metered?.end();
       onUsage?.({ cpuMs: Math.round(chargedCpu()), wallMs: Date.now() - startedAt, calls });
       clearInterval(watchdog);
@@ -698,6 +744,7 @@ export const createIsolateRunner = ({
         limits,
         answer,
         signal,
+        spaceId: invocation.context.spaceId,
         ...(invocation.kind === 'job' ? { graceMs: invocation.graceMs } : {}),
         onUsage,
         ...(onWaited ? { onWaited } : {}),
@@ -710,6 +757,22 @@ export const createIsolateRunner = ({
           });
         }
       }),
+    shed: () => {
+      const largest = [...live]
+        .map(each => ({ each, held: each.heldBytes() }))
+        .reduce<{ each: LiveInvocation; held: number } | undefined>(
+          (most, next) => (most === undefined || next.held > most.held ? next : most),
+          undefined
+        );
+      if (!largest) {
+        return undefined;
+      }
+
+      const overItsOwn = largest.held > largest.each.limitBytes;
+      largest.each.shed(overItsOwn);
+
+      return { overItsOwn, heldMb: Math.round(largest.held / 1048576), spaceId: largest.each.spaceId };
+    },
     warm: async () => {
       await ready();
       // One whole invocation's path, so V8's cache of the guest is made now too — not by a visitor's first request.

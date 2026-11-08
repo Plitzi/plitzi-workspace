@@ -145,6 +145,33 @@ describe('an invocation’s limits', () => {
     expect((await running).value).toBe('woke');
   });
 
+  /**
+   * A runner short of memory gives back the invocation that holds the most — within its own limit, as `busy`, for
+   * another runner — and the rest go on: before, they grew together past the container's limit, and the kernel killed
+   * the runner with every one of them in it.
+   */
+  it('gives back the invocation holding the most memory, and leaves the others running', async () => {
+    const runner = createIsolateRunner();
+    const hog = await spaceWith(
+      sourceOf(
+        // About 16 MB, under its own 32: what it holds is the most, and within its limit.
+        'const kept = []; for (let i = 0; i < 40; i++) { kept.push(new Array(5e4).fill(i + 0.5)); await new Promise(r => setTimeout(r, 20)); } return kept.length;',
+        { asks: { cpuMs: 2000, wallMs: 20_000 } }
+      ),
+      { runner }
+    );
+    const light = await spaceWith(sourceOf('await new Promise(r => setTimeout(r, 600)); return "light";'), { runner });
+    const [hogRun, lightRun] = [hog.run(), light.run()];
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    const gave = runner.shed();
+
+    expect(gave?.overItsOwn).toBe(false);
+    // Over capacity, thrown for the worker to try again on another runner — never the code's failure.
+    await expect(hogRun).rejects.toThrow('ran short of memory');
+    expect((await lightRun).value).toBe('light');
+  });
+
   // What was not its own is the runner's, and told: the platform's wait for the answer grows by it, or runs out first.
   it('tells the platform the time that was the runner’s, so its wait for the answer grows by it', async () => {
     const crowded: CpuMeter = {
