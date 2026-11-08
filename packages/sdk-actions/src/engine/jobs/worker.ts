@@ -5,11 +5,11 @@ import { overloaded, processLoad } from '@plitzi/sdk-kernel/stats';
 
 import { KEPT_CALL_MS } from './calls';
 import { onlyFull, withoutFull } from './claimSpaces';
-import { GIVE_UP, SET_ASIDE_LIMITS, failedOutError, failureOf, limitSetAsideError } from './endings';
+import { GIVE_UP, failedOutError, failureOf, limitEndings, limitSetAsideError } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { NOT_NOW_WORDS, TRY_AGAIN, claimsWithin, msToNextMinute, runnersFull, tryAgainMs } from './notNow';
-import { ActionRunError } from '../runtime/errors';
+import { ActionRunError, limitOf } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
 import type { FunctionJobsService } from '../../functions/jobs';
@@ -193,6 +193,13 @@ export const createJobWorker = ({
 
     return settle({ jobId: job.id, workerId, status: 'pending', delayMs, error });
   };
+
+  const stoppedAtLimit = limitEndings({
+    workerId,
+    settle,
+    release,
+    nextMinuteMs: async () => msToNextMinute((await queue.now()).getTime())
+  });
 
   const fail = (
     job: Job,
@@ -502,33 +509,17 @@ export const createJobWorker = ({
         return;
       }
 
-      // Its account's CPU for the minute, spent: not now rather than wrong — back next minute, its attempt refunded.
-      if (result.limit === 'cpuBudget') {
-        await release(job, msToNextMinute((await queue.now()).getTime()), failureOf(result));
-
-        return;
-      }
-
-      if (result.limit && SET_ASIDE_LIMITS.has(result.limit)) {
-        const said = failureOf(result);
-        serverLog.warn(
-          'Actions',
-          `job ${job.id} of space ${String(job.spaceId)} set aside at its plan's limit: ${said}`
-        );
-        await settle({
-          jobId: job.id,
-          workerId,
-          status: 'paused',
-          runId: run.runId,
-          error: limitSetAsideError(said),
-          attempt: { status: 'failed', workerId, runId: run.runId, error: said }
-        });
-
+      if (await stoppedAtLimit(job, run.runId, result.limit, failureOf(result))) {
         return;
       }
 
       await fail(job, run.runId, failureOf(result));
     } catch (error) {
+      // Refused before it ran — its plan's runs for the period spent (`admitRun`) — is the same limit as one reached.
+      if (await stoppedAtLimit(job, run.runId, limitOf(error), messageOf(error))) {
+        return;
+      }
+
       const reason = error instanceof ActionRunError ? error.reason : undefined;
       if (reason && GIVE_UP.has(reason)) {
         await settle({

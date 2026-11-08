@@ -1,4 +1,8 @@
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
+import type { JobSettlement } from '../../types';
 import type { ActionRunResult } from '../types';
+import type { ActionRunLimit, Job } from '@plitzi/sdk-shared';
 
 /** How a job ends badly: given up, set aside at a limit, or out of attempts — and what its line says. */
 
@@ -43,3 +47,44 @@ export const limitSetAsideError = (said: string): string =>
 export const failedOutError = (attempts: number, last: string): string =>
   `Set aside after ${String(attempts)} failed attempt${attempts === 1 ? '' : 's'}: look at its runs, then resume it ` +
   `once fixed — every attempt again — or cancel it. The last said: ${last}`;
+
+/**
+ * A run stopped at a limit is not retried as a failure, whether it was reached as the run went or refused before it
+ * started: its account's CPU for the minute is not now — back next minute, its attempt refunded — and a limit its plan
+ * sets is reached again on every attempt, so it is set aside at once. Answers whether it was one.
+ */
+export const limitEndings =
+  ({
+    workerId,
+    settle,
+    release,
+    nextMinuteMs
+  }: {
+    workerId: string;
+    settle: (settlement: JobSettlement) => Promise<void>;
+    release: (job: Job, delayMs: number, error: string) => Promise<void>;
+    nextMinuteMs: () => Promise<number>;
+  }) =>
+  async (job: Job, runId: string, limit: ActionRunLimit | undefined, said: string): Promise<boolean> => {
+    if (limit === 'cpuBudget') {
+      await release(job, await nextMinuteMs(), said);
+
+      return true;
+    }
+
+    if (!limit || !SET_ASIDE_LIMITS.has(limit)) {
+      return false;
+    }
+
+    serverLog.warn('Actions', `job ${job.id} of space ${String(job.spaceId)} set aside at its plan's limit: ${said}`);
+    await settle({
+      jobId: job.id,
+      workerId,
+      status: 'paused',
+      runId,
+      error: limitSetAsideError(said),
+      attempt: { status: 'failed', workerId, runId, error: said }
+    });
+
+    return true;
+  };

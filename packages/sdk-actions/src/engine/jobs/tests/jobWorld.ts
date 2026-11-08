@@ -57,7 +57,8 @@ export const jobInput = (over: Partial<JobInput> = {}): JobInput => ({
 export const world = (
   run: FunctionTask['run'],
   entries = [entry()],
-  concurrency?: Parameters<typeof createActionsModule>[0]['concurrency']
+  concurrency?: Parameters<typeof createActionsModule>[0]['concurrency'],
+  admitRun?: Parameters<typeof createActionsModule>[0]['admitRun']
 ) => {
   let now = MIDNIGHT;
   const queue = createMemoryJobQueue({ clock: () => now });
@@ -71,7 +72,8 @@ export const world = (
     lookups,
     functions: tasksOf(task),
     jobs: false,
-    ...(concurrency ? { concurrency } : {})
+    ...(concurrency ? { concurrency } : {}),
+    ...(admitRun ? { admitRun } : {})
   });
 
   return {

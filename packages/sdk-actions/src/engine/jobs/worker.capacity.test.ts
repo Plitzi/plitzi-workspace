@@ -279,6 +279,24 @@ describe('how much a job worker takes', () => {
     expect(job.error).toContain('used the 25,000 small-seconds its App plan includes');
   });
 
+  // Refused before it ran — its plan's runs for the period spent — is the same paywall: tried twice more, it waited
+  // minutes of backoff to be refused twice more (a load round past its allowance took 156 s of them).
+  it('sets aside at once a job whose run its plan’s allowance refused before it started', async () => {
+    const run = vi.fn(() => ({ ok: true }));
+    const test = world(run, undefined, undefined, () =>
+      Promise.resolve('This space has used the 150 action runs its App plan includes')
+    );
+    await test.job();
+
+    await test.worker().poll();
+    await settle();
+
+    const job = await test.read();
+    expect(job).toMatchObject({ status: 'paused', attempts: 1 });
+    expect(job.error).toContain('used the 150 action runs its App plan includes');
+    expect(run).not.toHaveBeenCalled();
+  });
+
   // The same code meets the same limit on every attempt: two more would spend a worker for nothing.
   it('sets aside at once a job stopped at a limit its plan sets, and retries one stopped at its time', async () => {
     const test = world(() => {
