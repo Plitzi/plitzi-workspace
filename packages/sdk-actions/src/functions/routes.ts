@@ -142,6 +142,11 @@ const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
     );
   }
 
+  // Of a size no runner here could ever hold: asking again changes nothing — the deployment's runners are too small.
+  if (error instanceof FunctionFailure && error.reason === 'too_large') {
+    return Response.json({ error: `This route could not run on this server: ${error.message}` }, { status: 500 });
+  }
+
   // The runner went away while it ran the route: the platform's, said as such — a 502, since it may have run in part and
   // asking again is the caller's to judge.
   if (error instanceof FunctionFailure && error.reason === 'lost') {

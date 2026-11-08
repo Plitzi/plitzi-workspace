@@ -133,6 +133,8 @@ type ConnectionStats = {
   inFlight: { count: number };
   /** Why this runner takes no new invocation of these limits right now, or nothing — and then it is counted as taken. */
   busy: (limits: FunctionLimits, urgency: FunctionUrgency) => string | undefined;
+  /** Why this runner could never take an invocation of these limits — its size past its whole room — or nothing. */
+  tooLarge: (limits: FunctionLimits) => string | undefined;
   /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
   stopping: () => boolean;
   /**
@@ -296,6 +298,19 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
   const start = async (message: Extract<RunnerRequestMessage, { type: 'invoke' }>): Promise<void> => {
     const { bundleId, invocation, limits } = message;
     const urgency = invocationUrgency(invocation);
+    // Never to have room for it: said at once, for the platform to try a larger runner — kept, it would wait for ever,
+    // and at the head of the queue hold up every invocation behind it.
+    const tooLarge = stats.tooLarge(limits);
+    if (tooLarge) {
+      stats.recorder.refuse('busy');
+      finish({
+        type: 'failed',
+        reason: protocolKnows(message.protocol, '1.4') ? 'too_large' : 'busy',
+        error: tooLarge
+      });
+
+      return;
+    }
     // Taken with an isolate free and memory for it. Full, it answers at once for the platform to place the invocation
     // on a runner with room; when every runner is full, the platform asks one to keep it (`queue`), and it waits here
     // — its time not yet running — until there is room.
@@ -444,6 +459,22 @@ export const startFunctionsRunnerService = async ({
   const footprintOf = (limits: FunctionLimits): number => invocationFootprintMb(limits.memoryMb) * MB;
   const release = (limits: FunctionLimits): void => {
     reservedBytes = Math.max(0, reservedBytes - footprintOf(limits));
+  };
+  // Against its whole share alone, which never changes: what it holds besides does, and a runner holding much at a
+  // moment (its own start, a collection not yet run) would turn away for good what it takes a moment later.
+  const tooLarge = (limits: FunctionLimits): string | undefined => {
+    const room = readMemory().limitBytes * memoryShare;
+    const need = footprintOf(limits);
+    if (need <= room) {
+      return undefined;
+    }
+
+    const mb = (bytes: number) => String(Math.round(bytes / MB));
+
+    return (
+      `This functions runner could never hold it: it may hold ${mb(need)} MB (${String(limits.memoryMb)} MB of memory), ` +
+      `past the ${mb(room)} MB this runner takes work up to, with nothing else running — a larger runner takes it`
+    );
   };
   const busy = (limits: FunctionLimits, urgency: FunctionUrgency): string | undefined => {
     if (stopping) {
@@ -604,6 +635,7 @@ export const startFunctionsRunnerService = async ({
         recorder,
         inFlight,
         busy,
+        tooLarge,
         stopping: () => stopping,
         wait,
         ended: limits => {

@@ -246,7 +246,8 @@ const FAILURE_REASONS: readonly FunctionFailureReason[] = [
   'aborted',
   'error',
   'refused',
-  'busy'
+  'busy',
+  'too_large'
 ];
 
 const reasonOf = (value: unknown): FunctionFailureReason => FAILURE_REASONS.find(reason => reason === value) ?? 'error';

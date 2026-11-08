@@ -17,8 +17,11 @@ import type { ActionTriggerType, FunctionsManifest } from '../types';
  * other invocations — which is the runner's time, not the code's: the platform's wait for its answer grows by it. A
  * runner sends it to a 1.3 platform alone. And `queue`: with every runner full, the platform asks one to keep the
  * invocation until it has room rather than turn it away — the runner says `queued`, then `accepted` once it starts.
+ * 1.4 added the `too_large` refusal: an invocation of a size this runner could not hold even with nothing else running —
+ * never `busy`, which waits for room that will never come. The platform gives it to another runner (a larger class), and
+ * fails it at once, naming the size, when none can. A runner sends it to a 1.4 platform alone; to an older one, `busy`.
  */
-export const FUNCTIONS_PROTOCOL = '1.3';
+export const FUNCTIONS_PROTOCOL = '1.4';
 
 const VERSION = /^(\d+)\.(\d+)$/;
 
@@ -304,7 +307,8 @@ export type FunctionInvokeRequest = {
  * (`unreachable` — the invocation was never sent, so nothing of it ran), or the runner went away while it ran it
  * (`lost` — the platform's doing, never the code's, but it may have run in part, so it is not sent again for it).
  */
-export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused' | 'busy' | 'unreachable' | 'lost';
+export type FunctionFailureReason =
+  FunctionStopReason | 'error' | 'refused' | 'busy' | 'too_large' | 'unreachable' | 'lost';
 
 /** An invocation that did not answer, and why ({@link FunctionFailureReason}). */
 export class FunctionFailure extends Error {

@@ -254,8 +254,9 @@ export const createRemoteRunner = ({
         }
 
         // A 1.1 runner says nothing as it takes it: whatever it says first of the invocation is that it did — but that it
-        // keeps it waiting for room (`queued`), which is not taking it yet.
-        if ((message.type !== 'failed' || message.reason !== 'busy') && message.type !== 'queued') {
+        // keeps it waiting for room (`queued`), which is not taking it yet, and a refusal (`busy`, `too_large`).
+        const refused = message.type === 'failed' && (message.reason === 'busy' || message.reason === 'too_large');
+        if (!refused && message.type !== 'queued') {
           accept();
         }
 
@@ -461,6 +462,9 @@ export const createRemoteRunner = ({
           const tried = new Set<string>();
           let last: unknown;
           const full: string[] = [];
+          // Those that could never hold it, whatever ran beside it: another may — a larger class — and none keeps it.
+          let tooLarge: FunctionFailure | undefined;
+          let unreachable = false;
           for (;;) {
             const untried = (await runnersOf(addressOf(invocation.context.spaceId))).filter(each => !tried.has(each));
             const next = untried.at(0);
@@ -476,12 +480,16 @@ export const createRemoteRunner = ({
               return value;
             } catch (error) {
               const reason = error instanceof FunctionFailure ? error.reason : undefined;
-              if (reason !== 'busy' && reason !== 'unreachable') {
+              if (reason !== 'busy' && reason !== 'unreachable' && reason !== 'too_large') {
                 throw error;
               }
 
               if (reason === 'busy') {
                 full.push(next);
+              } else if (reason === 'too_large' && error instanceof FunctionFailure) {
+                tooLarge = error;
+              } else {
+                unreachable = true;
               }
 
               last = error;
@@ -509,6 +517,14 @@ export const createRemoteRunner = ({
 
             await wait(FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000, signal);
             continue;
+          }
+
+          // Every runner it could reach says it could never hold it: waiting is for ever. Said at once, with what it needs.
+          if (tooLarge && !unreachable) {
+            throw new FunctionFailure(
+              'too_large',
+              `No functions runner here could hold it: ${tooLarge.message}. A deployment that runs tasks of this size gives its runners more memory (a larger class)`
+            );
           }
 
           // Not one of its runners could be reached: calls that need them are kept meanwhile (`reachable`).

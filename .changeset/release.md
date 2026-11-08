@@ -212,6 +212,13 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A task no runner could ever hold fails at once, naming what it needs** (protocol 1.4, `too_large`). A runner whose
+  share of its memory could not hold an invocation's size even with nothing else running said `busy`, like a full one,
+  and the platform kept the invocation in its queue for room that would never come — at the head of the queue, holding
+  up every one behind it. It now says so at once; the platform gives it to another runner (a larger class) and, when
+  none could hold it, fails it with the size it needs. **To redo:** deploy the runners first — a 1.4 runner says `busy`
+  to an older platform.
+
 - **What an invocation spent says the memory it ran with** (`FunctionUsageRecord.memoryMb`, beside `usage`): a
   deployment bills compute as memory over the time it was held, as Lambda does. **To redo:** a `functions.onUsage`
   that builds records by hand adds it.
