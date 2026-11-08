@@ -212,6 +212,11 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A job says whether it runs the space's code** (`target.code`, set as it is queued from its action's document), and a
+  worker whose runs wait for a runner with room takes only the jobs that need none (`claim({ withoutCode })`, in every
+  store's queue). Held back from every claim, a burst's 20 ms actions waited 105 s behind the jobs that needed a runner;
+  now they run while those wait in the queue. **To redo:** a `JobQueue` of one's own honours `withoutCode` in `claim`.
+
 - **A worker claims no more while its runs wait for a functions runner with room** (`FunctionRunner.waitingForRoom`,
   ten at most). Two workers held 430 runs as running while their two runners ran 26 — each claimed only to wait beside
   the others, past the queue's order, and the whole took twice its estimate. What waits now waits in the queue, where

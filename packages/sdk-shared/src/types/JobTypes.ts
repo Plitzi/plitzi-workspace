@@ -32,6 +32,12 @@ export type ActionJobTarget = {
    * transport named them (`user:<id>`, `ip:<address>`).
    */
   user?: RunUser;
+  /**
+   * Its action runs the space's own code — a step of its functions: what a worker leaves in the queue while its runs
+   * wait for a functions runner with room (`claim({ withoutCode })`), taking the jobs that need none meanwhile. Set as
+   * the job is queued, from the action's document; absent, it runs none.
+   */
+  code?: true;
   callerId?: string;
   /** The key the caller named the call by: a call that did run before it was kept answers with that run instead. */
   idempotencyKey?: string;

@@ -177,7 +177,7 @@ export const createMysqlJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit, spaces, memory }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces, memory, withoutCode }) => {
       const conn = await db();
       const at = await clock.now();
       const taken: Job[] = [];
@@ -242,7 +242,7 @@ export const createMysqlJobQueue = ({
        * holds one lock and cannot.
        */
       for (let round = 0; round < CLAIM_ROUNDS && taken.length < limit; round += 1) {
-        const where = claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb);
+        const where = claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb, withoutCode);
         const rows = await selectRows<JobRow>(
           conn,
           `SELECT * FROM ${t.jobs} WHERE ${where.sql} ORDER BY run_at LIMIT ?`,

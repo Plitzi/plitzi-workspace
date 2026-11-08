@@ -116,7 +116,8 @@ export const toSchedule = (row: ScheduleRow): ActionSchedule => ({
 export const claimable = (
   at: number,
   spaces: JobSpaces | undefined,
-  memoryMb: number | undefined
+  memoryMb: number | undefined,
+  withoutCode = false
 ): { sql: string; params: (number | string)[] } => {
   const ids = spaces ? ('only' in spaces ? spaces.only : spaces.except) : [];
   const bySpace =
@@ -127,7 +128,7 @@ export const claimable = (
       : ` AND space_id ${'only' in spaces ? 'IN' : 'NOT IN'} (${ids.map(() => '?').join(', ')})`;
 
   return {
-    sql: `status = 'pending' AND run_at <= ?
+    sql: `status = 'pending' AND run_at <= ?${withoutCode ? " AND target_kind = 'action' AND JSON_EXTRACT(target, '$.code') IS NULL" : ''}
       AND ((needs_memory_mb IS NULL${bySpace})${memoryMb === undefined ? '' : ' OR needs_memory_mb <= ?'})`,
     params: [at, ...(bySpace.includes('?') ? ids : []), ...(memoryMb === undefined ? [] : [memoryMb])]
   };

@@ -155,19 +155,23 @@ describe('how much a job worker takes', () => {
   });
 
   /**
-   * The regression it guards: two workers held 430 runs as running while their two runners ran 26, each claimed only to
-   * wait beside the others for a runner with room. With ten of its runs waiting it claims nothing more — what waits
-   * waits in the queue — and takes more as soon as a runner takes one.
+   * The regressions it guards: two workers held 430 runs as running while their two runners ran 26, each claimed only to
+   * wait beside the others; held back from every claim, a burst's 20 ms actions then waited 105 s behind them. With ten
+   * of its runs waiting for a runner it takes only jobs that run no space code (`target.code`) — those wait in the queue.
    */
-  it('claims nothing while ten of its runs wait for a functions runner with room, and says so', async () => {
+  it('takes only jobs that run no space code while ten of its runs wait for a runner with room', async () => {
     const debug = vi.spyOn(serverLog, 'debug').mockImplementation(() => undefined);
     const test = world(() => ({ ok: true }));
-    await test.job();
+    await test.job({ id: 'runs-code', target: { kind: 'action', name: 'digest', trigger: 'schedule', code: true } });
+    await test.job({ id: 'runs-none' });
     let waiting = 10;
     test.module.runnerWaiting = () => waiting;
     const worker = test.worker({ workers: 8 });
 
-    expect(await worker.poll()).toBe(0);
+    expect(await worker.poll()).toBe(1);
+    await settle();
+    expect((await test.read('runs-none')).status).toBe('succeeded');
+    expect((await test.read('runs-code')).status).toBe('pending');
     expect(debug.mock.calls.some(([, words]) => words.includes('10 or more of its runs wait for a functions runner'))).toBe(
       true
     );

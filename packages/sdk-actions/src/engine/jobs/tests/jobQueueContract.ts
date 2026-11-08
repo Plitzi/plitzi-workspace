@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { describeCodeClaims } from './jobQueueCodeContract';
 import { describeFlow } from './jobQueueFlowContract';
 import { describeMemoryNeeds } from './jobQueueMemoryContract';
 import { describeSetAside } from './jobQueueSetAsideContract';
@@ -202,6 +203,7 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     describeMemoryNeeds({ queue: () => queue, job, wait, space: SPACE, otherSpace: OTHER_SPACE });
     describeFlow({ queue: () => queue, job });
     describeSetAside({ queue: () => queue, job, space: SPACE });
+    describeCodeClaims({ queue: () => queue, job });
 
     it('keeps a claim alive while its worker reports in', async () => {
       // Only the wait past the first lease is timed; a slow store can make the heartbeat or the next claim late, never

@@ -1,5 +1,6 @@
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { claimable } from './claimable';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
@@ -9,7 +10,6 @@ import type {
   JobQuery,
   JobQueue,
   JobSettlement,
-  JobSpaces,
   JobStop,
   JobWrite,
   ActionSchedule,
@@ -122,20 +122,6 @@ const lostErrorOf: Document = {
     LOST_ERROR
   ]
 };
-
-/** What a claim with these `spaces` and `memoryMb` takes at `at`: due and waiting, of its spaces — or a job a worker died
- * running that this one may hold, whatever its spaces. */
-const claimable = (at: number, spaces: JobSpaces | undefined, memoryMb: number | undefined): Document => ({
-  status: 'pending',
-  runAt: { $lte: at },
-  $or: [
-    {
-      needsMemoryMb: { $exists: false },
-      ...(spaces ? { spaceId: 'only' in spaces ? { $in: spaces.only } : { $nin: spaces.except } } : {})
-    },
-    ...(memoryMb === undefined ? [] : [{ needsMemoryMb: { $lte: memoryMb } }])
-  ]
-});
 
 /** `setAsideError`, as Mongo composes it over the document. */
 const setAsideErrorOf = (ceilingMb: number): Document => ({
@@ -289,7 +275,7 @@ export const createMongoJobQueue = ({
       }
     },
 
-    claim: async ({ workerId, leaseMs, limit, spaces, memory }) => {
+    claim: async ({ workerId, leaseMs, limit, spaces, memory, withoutCode }) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const taken: Job[] = [];
@@ -303,7 +289,7 @@ export const createMongoJobQueue = ({
       // the same job to two workers between the read and the write.
       for (let slot = 0; slot < limit; slot += 1) {
         const claimed = await jobs.findOneAndUpdate(
-          claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb),
+          claimable(at, spaces, memory?.takesNeeding === false ? undefined : memory?.mb, withoutCode),
           [
             {
               $set: {

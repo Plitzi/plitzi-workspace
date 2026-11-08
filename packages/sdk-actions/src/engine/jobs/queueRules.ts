@@ -142,7 +142,7 @@ export const queueRules = (
       return true;
     },
 
-    claim: ({ workerId, leaseMs, limit, spaces, memory }) => {
+    claim: ({ workerId, leaseMs, limit, spaces, memory, withoutCode }) => {
       const at = now();
       // Reaped first, whoever claims: the previous holder never came back, so its attempt is written for it —
       // otherwise a replica that died mid-run leaves a job that simply restarts, with nothing saying it had been tried.
@@ -180,7 +180,13 @@ export const queueRules = (
 
       const taken: Job[] = [];
       const candidates = [...jobs.values()]
-        .filter(job => job.status === 'pending' && job.runAt <= at && fits(job, spaces, memory))
+        .filter(
+          job =>
+            job.status === 'pending' &&
+            job.runAt <= at &&
+            fits(job, spaces, memory) &&
+            (!withoutCode || (job.target.kind === 'action' && job.target.code !== true))
+        )
         .sort((a, b) => a.runAt - b.runAt);
 
       for (const job of candidates.slice(0, limit)) {

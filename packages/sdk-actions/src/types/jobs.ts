@@ -210,6 +210,8 @@ export type JobQueue = {
     limit: number;
     spaces?: JobSpaces;
     memory?: JobClaimMemory;
+    /** Only jobs that run no space code: an action's whose `target.code` is unset, never a function's job. */
+    withoutCode?: boolean;
   }) => Promise<Job[]>;
   /**
    * Extends the lease on jobs this worker still holds, and answers which of them it is asked to stop — cancelled, or

@@ -55,6 +55,8 @@ export type ActionsModule = ActionRunner & {
    * job worker holds back by.
    */
   runnerWaiting: () => number;
+  /** Whether an action runs the space's own code: a task step this server's registry does not hold. */
+  runsCode: (document: ActionDocument) => boolean;
   /**
    * A space's functions source, built, read and checked — ready to store, or the problems to show where they are. The
    * one way a space's functions become storable; refused when this server has no runner. With a `scope`, a plugin's
@@ -150,11 +152,10 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     )
       ? registry
       : registryFor(request.spaceId, request.at);
+  const runsCode = (document: ActionDocument): boolean =>
+    Object.values(document.nodes).some(node => node.type === 'task' && node.action && !registry.get(node.action));
   const codeAway = async (spaceId: number, document: ActionDocument, at?: SpaceRevision): Promise<boolean> => {
-    const runsCode = Object.values(document.nodes).some(
-      node => node.type === 'task' && node.action && !registry.get(node.action)
-    );
-    if (!runsCode) {
+    if (!runsCode(document)) {
       return false;
     }
 
@@ -214,6 +215,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     registryFor,
     codeAway,
     runnerWaiting: () => config.functions?.runner?.waitingForRoom?.() ?? 0,
+    runsCode,
     routeFor: routes.routeFor,
     prepareFunctions: (source, scope) => {
       const runner = config.functions?.runner;

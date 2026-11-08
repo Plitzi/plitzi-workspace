@@ -1,3 +1,4 @@
+import { codeMarkingQueue } from './codeMarks';
 import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { wakingQueue } from './wake';
@@ -41,7 +42,10 @@ export const createActionJobs = (
   lookups: ActionLookups,
   functionJobs?: FunctionJobsService
 ): ActionJobs => {
-  const queue = wakingQueue(config.queue ?? fleetJobQueue(() => createMemoryJobQueue()), config.wake);
+  const queue = wakingQueue(
+    codeMarkingQueue(config.queue ?? fleetJobQueue(() => createMemoryJobQueue()), lookups, module.runsCode),
+    config.wake
+  );
   const { produce = true, workers = DEFAULT_JOB_WORKERS } = config;
 
   const scheduler = createScheduler({

@@ -5,6 +5,7 @@ import { overloaded, processLoad } from '@plitzi/sdk-kernel/stats';
 
 import { KEPT_CALL_MS } from './calls';
 import { onlyFull, withoutFull } from './claimSpaces';
+import { GIVE_UP, SET_ASIDE_LIMITS, failedOutError, failureOf, limitSetAsideError } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { NOT_NOW_WORDS, TRY_AGAIN, runnersFull, tryAgainMs } from './notNow';
@@ -14,7 +15,7 @@ import type { MemoryReading } from './memoryWatch';
 import type { FunctionJobsService } from '../../functions/jobs';
 import type { JobClaimMemory, JobQueue, JobSettlement, JobSpaces, JobWake } from '../../types';
 import type { ActionsModule } from '../module';
-import type { ActionLookups, ActionRunResult } from '../types';
+import type { ActionLookups } from '../types';
 import type { ProcessLoad } from '@plitzi/sdk-kernel/stats';
 import type { Job } from '@plitzi/sdk-shared';
 
@@ -35,47 +36,6 @@ const HELP_MEMORY_SHARE = 0.5;
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/**
- * Why a run that ended badly did, in the words an operator can act on: the step that failed and what it said.
- *
- * Read from `steps` — the outline, whose errors are already redacted of every credential the run resolved — so
- * nothing lands on the job that the run history would not show. A run that failed without any step failing (a
- * timeout between steps, a budget spent) has no step to name, and says how it ended instead.
- */
-const failureOf = (result: ActionRunResult): string => {
-  const failed = result.steps.find(step => step.phase === 'flow' && step.status === 'failed');
-
-  return failed
-    ? `step "${failed.id}" failed: ${failed.error ?? 'no reason given'}`
-    : `the flow ended ${result.status}`;
-};
-
-/**
- * Refusals no number of attempts will change: the action was deleted, its schedule was switched off, or the
- * document refuses this trigger. Retrying is noise, and the job stops where an operator can see why.
- */
-const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion']);
-
-/**
- * The limits the same code meets again on every attempt — what it spends of CPU, memory, calls, output, steps or
- * requests: a job stopped at one is set aside at once, for its owner to fix or its plan to allow more, rather than run
- * twice more for nothing. Time is not among them: an API slow for a minute answers the next attempt.
- */
-const SET_ASIDE_LIMITS = new Set(['cpu', 'memory', 'calls', 'output', 'steps', 'requests', 'response']);
-
-/** Why a job stopped at one of {@link SET_ASIDE_LIMITS} waits for somebody. */
-export const limitSetAsideError = (said: string): string =>
-  `Set aside at once: it reached a limit its plan sets, which it would reach again on every attempt. Fix it, or give ` +
-  `its plan more, then resume it. It said: ${said}`;
-
-/**
- * Why a job that failed every attempt waits: it is set aside (`paused`) for somebody to read its runs and decide —
- * resume it once fixed, with every attempt again, or cancel it.
- */
-export const failedOutError = (attempts: number, last: string): string =>
-  `Set aside after ${String(attempts)} failed attempt${attempts === 1 ? '' : 's'}: look at its runs, then resume it ` +
-  `once fixed — every attempt again — or cancel it. The last said: ${last}`;
-
 export type JobWorkerOptions = {
   queue: JobQueue;
   lookups: ActionLookups;
@@ -92,8 +52,7 @@ export type JobWorkerOptions = {
    * memory the replica takes no new job, whatever slots it has, and takes no more at once than its memory has room for.
    * Near all of its CPU it takes none either. A slot is taken again as soon as its job ends.
    *
-   * It does not widen the run guards. A replica whose `concurrency.perSpace` is 10 will hold 10 runs for one space
-   * however many workers it has, and the rest go back to the queue and come round again.
+   * Past its share (`concurrency.perSpace`) a space's jobs take only the slots no other space's work waits for.
    */
   workers?: number;
   /** How often a worker with a free slot looks for work. Default 1s. */
@@ -637,15 +596,13 @@ export const createJobWorker = ({
       return 0;
     }
 
-    // Its runs waiting for a runner with room is the load it was made for, in and out of it many times a burst: said at
-    // `debug` (the process's log tail), never as a warning each time.
+    // Its runs waiting for a runner with room, it takes only jobs that run no space code (`target.code`): said at
+    // `debug`, being the load it was made for, many times a burst.
     const runnersBusy = runnersFull(module.runnerWaiting());
+    const withoutCode = runnersBusy ? { withoutCode: true } : {};
     if (runnersBusy) {
       serverLog.debug('Actions', `job worker ${workerId}: ${runnersBusy}`);
-
-      return 0;
     }
-
     const memoryRoom = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
     const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
     const asking = Math.max(1, Math.min(free, memoryRoom, room.calls));
@@ -654,7 +611,8 @@ export const createJobWorker = ({
       leaseMs,
       limit: asking,
       ...(asked ? { spaces: asked } : {}),
-      ...(holds ? { memory: holds } : {})
+      ...(holds ? { memory: holds } : {}),
+      ...withoutCode
     });
     // Its own work first; idle past one slot, it takes others' with half its memory — the rest, and a slot, kept for
     // what only it may run.
@@ -668,14 +626,13 @@ export const createJobWorker = ({
           leaseMs,
           limit: spare,
           spaces: helping,
-          ...(holds ? { memory: holds } : {})
+          ...(holds ? { memory: holds } : {}),
+          ...withoutCode
         }))
       );
     }
-    // Every space's share taken and slots left with nothing else due: more of the spaces at their share, past it — a
-    // share kept free (`room().spare`) for the next space's work. A space's burst no longer waits behind its own share
-    // while the worker idles: under a load probe, its 20 ms actions waited 37 s behind its own runs that waited for a
-    // runner.
+    // Every share taken and slots left with nothing else due: more of the spaces at their share, a share kept free for
+    // the next space's work (`room().spare`) — a burst's 20 ms actions waited 37 s behind their own share.
     const leftover = Math.min(free - claimed.length, room.spare, memoryRoom - claimed.length);
     const sparing = claimed.length < asking && leftover > 0 ? onlyFull(spaces?.(), room.fullSpaces) : undefined;
     if (sparing) {
@@ -684,7 +641,8 @@ export const createJobWorker = ({
         leaseMs,
         limit: leftover,
         spaces: sparing,
-        ...(holds ? { memory: holds } : {})
+        ...(holds ? { memory: holds } : {}),
+        ...withoutCode
       });
       taken.forEach(job => spareJobs.add(job.id));
       claimed.push(...taken);
