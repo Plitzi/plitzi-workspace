@@ -6,12 +6,12 @@ import TimeLimit from './components/TimeLimit';
 import { cpuOf, taskNameOf } from '../../helpers';
 
 import type { ListedTask } from '../../helpers';
-import type { ActionRunReport, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { ActionRunReport, FunctionAskedLimits } from '@plitzi/sdk-shared';
 
 export type FunctionInspectorProps = {
   task: ListedTask;
   /** What every task gets unless it asks for its own, from `defineFunctions`. */
-  sharedLimits?: FunctionTimeLimits;
+  sharedLimits?: FunctionAskedLimits;
   hosts: string[];
   /** Why its limits cannot be written for you right now — the code is still being read, say — or nothing. */
   limitsDisabledReason: string;

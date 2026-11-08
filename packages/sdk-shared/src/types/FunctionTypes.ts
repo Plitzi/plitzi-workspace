@@ -9,10 +9,11 @@ import type { JobStatus } from './JobTypes';
 
 /**
  * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
- * default: CPU time, awaits not counted, and wall time, from the moment it starts. Never more than the server allows;
- * asking for more is a problem when the functions are saved.
+ * default: CPU time, awaits not counted; wall time, from the moment it starts; and memory, which the runner keeps for
+ * it whole while it runs, so a task that asks for none leaves room for many beside it. Never more than the space's
+ * plan or the server allows; asking for more than the server does is a problem when the functions are saved.
  */
-export type FunctionTimeLimits = { cpuMs?: number; wallMs?: number };
+export type FunctionAskedLimits = { cpuMs?: number; wallMs?: number; memoryMb?: number };
 
 /** One task the functions declare: everything but its code — what the catalog shows and a step is drawn from. */
 export type FunctionTaskManifest = {
@@ -22,7 +23,7 @@ export type FunctionTaskManifest = {
   description?: string;
   params: Record<string, InteractionCallbackParam<Record<string, unknown>>>;
   /** What it asks for beyond the default — over what the functions ask for all of their tasks. */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
 };
 
 /** One job the functions declare (`defineFunctions({ jobs })`): everything but its code. */
@@ -95,7 +96,7 @@ export type FunctionsManifest = {
   /** The route keys, `'GET /board-assets/:board/:asset'`, as declared. */
   routes: string[];
   /** What every task and route asks for beyond the default, unless a task asks for its own. */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   /** The OAuth connections its code makes (`ctx.oauth`), by the name the code calls them. */
   oauth?: Record<string, FunctionOAuthConnection>;
   /** The jobs it runs (`ctx.jobs.start`), by name. */

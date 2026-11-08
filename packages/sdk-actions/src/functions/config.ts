@@ -1,7 +1,7 @@
-import { DEFAULT_FUNCTION_TIME_LIMITS } from '@plitzi/sdk-shared/actions';
+import { DEFAULT_FUNCTION_ASKED_LIMITS } from '@plitzi/sdk-shared/actions';
 
 import type { FunctionJobLimits } from './jobs';
-import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { FunctionsDefinition } from '@plitzi/sdk-shared/functions';
 import type { FunctionLimits, FunctionRunner, FunctionUsage } from '@plitzi/sdk-shared/functions';
 
@@ -34,7 +34,7 @@ export type FunctionsConfig = {
   runner?: FunctionRunner;
   /**
    * The most one invocation may spend on this deployment ({@link DEFAULT_FUNCTION_CEILINGS} for each unset): what a
-   * task may ask for in CPU and time, and what every invocation gets of the rest. A space's plan may allow less, never
+   * task may ask for in CPU, time and memory, and what every invocation gets of the rest. A space's plan may allow less, never
    * more.
    */
   limits?: Partial<FunctionLimits>;
@@ -66,21 +66,16 @@ export type FunctionsConfig = {
   };
 };
 
-/**
- * What an invocation gets unless its task asks for more CPU or time. 32 MB of memory: what a runner holds is its
- * isolates' budget, about twice this for each invocation at once, so a plan that parses large answers raises it
- * (`limitsFor`) rather than every invocation paying for the one that does.
- */
+/** What an invocation gets unless its task asks for more CPU, time or memory. */
 export const DEFAULT_FUNCTION_LIMITS: FunctionLimits = {
-  ...DEFAULT_FUNCTION_TIME_LIMITS,
-  memoryMb: 32,
+  ...DEFAULT_FUNCTION_ASKED_LIMITS,
   outputBytes: 1_000_000,
   calls: 100
 };
 
 /**
  * The most a deployment lets one invocation have, unless it says otherwise: two seconds of CPU and half a minute of
- * time for a task that asks; the rest as every invocation gets it.
+ * time for a task that asks; the rest — memory included — as every invocation gets it.
  */
 export const DEFAULT_FUNCTION_CEILINGS: FunctionLimits = { ...DEFAULT_FUNCTION_LIMITS, cpuMs: 2_000, wallMs: 30_000 };
 
@@ -91,13 +86,15 @@ export const functionCeilings = (ceilings: Partial<FunctionLimits> = {}): Functi
 });
 
 /**
- * What one invocation of a space may spend: the CPU and time its task asked for — the default's when it asked for none
- * — and the rest as the deployment gives it; never above the space's plan, nor above the deployment's ceilings.
+ * What one invocation of a space may spend: the CPU, time and memory its task asked for — the default's when it asked
+ * for none — and the rest as the deployment gives it; never above the space's plan, nor above the deployment's ceilings.
+ * A plan's memory is the most a task may ask for, never what every invocation is given: the runner keeps an
+ * invocation's memory whole while it runs, so each one given the plan's would leave room for a few at once.
  */
 export const functionLimitsFor = (
   ceilings: Partial<FunctionLimits> = {},
   space: Partial<FunctionLimits> = {},
-  asked: FunctionTimeLimits = {}
+  asked: FunctionAskedLimits = {}
 ): FunctionLimits => {
   const ceiling = functionCeilings(ceilings);
   const capOf = (key: keyof FunctionLimits): number => Math.min(space[key] ?? ceiling[key], ceiling[key]);
@@ -105,7 +102,7 @@ export const functionLimitsFor = (
   return {
     cpuMs: Math.min(asked.cpuMs ?? DEFAULT_FUNCTION_LIMITS.cpuMs, capOf('cpuMs')),
     wallMs: Math.min(asked.wallMs ?? DEFAULT_FUNCTION_LIMITS.wallMs, capOf('wallMs')),
-    memoryMb: capOf('memoryMb'),
+    memoryMb: Math.min(asked.memoryMb ?? DEFAULT_FUNCTION_LIMITS.memoryMb, capOf('memoryMb')),
     outputBytes: capOf('outputBytes'),
     calls: capOf('calls')
   };

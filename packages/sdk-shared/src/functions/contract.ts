@@ -6,7 +6,7 @@ import type {
   Environment,
   FunctionJobView,
   FunctionOAuthConnection,
-  FunctionTimeLimits,
+  FunctionAskedLimits,
   InteractionCallbackParam
 } from '../types';
 
@@ -275,10 +275,11 @@ export type FunctionTask<T extends Record<string, unknown> = Record<string, unkn
   description?: string;
   params: Record<keyof T, InteractionCallbackParam<T>>;
   /**
-   * More CPU or time than an invocation gets by default — `{ cpuMs: 1000 }` for a task that reshapes a big feed — up to
-   * what the server allows. Over the functions' own `limits`, for this task.
+   * More CPU, time or memory than an invocation gets by default — `{ cpuMs: 1000, memoryMb: 128 }` for a task that
+   * reshapes a big feed — up to what the space's plan and the server allow. Over the functions' own `limits`, for this
+   * task.
    */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   run: (params: T, ctx: FunctionContext) => R | Promise<R>;
 };
 
@@ -302,8 +303,11 @@ export type FunctionsDefinition = {
   tasks?: FunctionTask<never>[];
   /** `'GET /board-assets/:board/:asset'` → a handler, served at `/fn/board-assets/…`. */
   routes?: Record<string, FunctionRoute>;
-  /** More CPU or time than an invocation gets by default, for every task and route — a task may ask for its own. */
-  limits?: FunctionTimeLimits;
+  /**
+   * More CPU, time or memory than an invocation gets by default, for every task and route — a task may ask for its
+   * own.
+   */
+  limits?: FunctionAskedLimits;
   /**
    * The OAuth connections its code makes (`ctx.oauth`), by the name it calls them — any provider, as data: its `issuer`
    * (OpenID) or its endpoints, the credential with the app's id and secret, the scopes.

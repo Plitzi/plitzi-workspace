@@ -212,6 +212,16 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A function asks for the memory it needs; the plan's is the most it may ask for.** Every invocation was given its
+  plan's memory, asked for or not, and the runner keeps an invocation's memory whole while it runs: under load a 1 GB
+  runner held two invocations at once and the rest waited (calls past a minute, actions over three). An invocation now
+  gets 32 MB unless its task asks for more — `limits: { cpuMs, wallMs, memoryMb }`, on a task or on
+  `defineFunctions({ limits })` — up to its plan and the server's ceiling; asking above the server's is a problem when
+  the functions are saved. **To redo:** a function that holds more than 32 MB asks for it in its `limits`, or it stops
+  with `Went over its 32 MB of memory`, naming `memoryMb`. `FunctionTimeLimits` is `FunctionAskedLimits` and
+  `DEFAULT_FUNCTION_TIME_LIMITS` is `DEFAULT_FUNCTION_ASKED_LIMITS` (with `memoryMb: 32`); the builder's CPU control
+  keeps the memory a task asked for.
+
 - **A run's time is its execution alone.** Its wait for a runner with room — every attempt at placing it, the pauses
   between, a runner's queue — was told to its time limit only once a runner took it: a wait longer than what the run had
   left ended it as over its budget before it had run at all (`Action exceeded its 10000ms budget`). It is told as it

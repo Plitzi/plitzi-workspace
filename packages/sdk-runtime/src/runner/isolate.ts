@@ -156,7 +156,7 @@ const stopMessage = (reason: FunctionStopReason, limits: FunctionLimits): string
     case 'wall':
       return `Did not finish within ${String(limits.wallMs)} ms`;
     case 'memory':
-      return `Went over its ${String(limits.memoryMb)} MB of memory`;
+      return `Went over its ${String(limits.memoryMb)} MB of memory: a task that needs more asks for it in its limits ({ memoryMb }), up to what its plan allows`;
     case 'output':
       return `Answered more than the ${String(limits.outputBytes)} bytes it may`;
     case 'calls':

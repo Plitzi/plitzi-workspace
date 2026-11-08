@@ -11,12 +11,12 @@ import { cpuOf, newFileName, routeParts, taskNameOf, usualNamespace } from '../.
 
 import type { NewTask as NewTaskSpec } from '../../editor/source';
 import type { ListedJob, ListedRoute, ListedTask } from '../../helpers';
-import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionAskedLimits } from '@plitzi/sdk-shared';
 
 export type FunctionsSidebarProps = {
   tasks: ListedTask[];
   /** What every task gets unless it asks for its own, from `defineFunctions`. */
-  sharedLimits?: FunctionTimeLimits;
+  sharedLimits?: FunctionAskedLimits;
   selectedTask: string;
   /** Tasks the code builds by calling something: there, but only a save can say what they are. */
   unreadableTasks: number;

@@ -107,7 +107,29 @@ describe('what a task asks for beyond the default', () => {
     expect(problems).toEqual([
       'Task "feed.read": asks for 60000 ms of CPU, and this server allows at most 2000 ms',
       'Task "feed.read": limits.wallMs is not a whole number of milliseconds above 0',
-      'Task "feed.read": limits.timeout is not a limit a function asks for (cpuMs, wallMs)'
+      'Task "feed.read": limits.timeout is not a limit a function asks for (cpuMs, wallMs, memoryMb)'
+    ]);
+  });
+
+  it('asks for memory too, in whole megabytes, within what the server allows', () => {
+    const ceilings = { ...CEILINGS, memoryMb: 256 };
+    const { manifest, problems } = readManifest(
+      { tasks: [task({ memoryMb: 128 })], routes: [], limits: { memoryMb: 64 } },
+      RESERVED,
+      ceilings
+    );
+    const refused = readManifest(
+      { tasks: [task({ memoryMb: 512 }), { ...task({ memoryMb: 1.5 }), action: 'other' }], routes: [] },
+      RESERVED,
+      ceilings
+    );
+
+    expect(problems).toEqual([]);
+    expect(manifest.tasks[0].limits).toEqual({ memoryMb: 128 });
+    expect(manifest.limits).toEqual({ memoryMb: 64 });
+    expect(refused.problems).toEqual([
+      'Task "feed.read": asks for 512 MB of memory, and this server allows at most 256 MB',
+      'Task "feed.other": limits.memoryMb is not a whole number of megabytes above 0'
     ]);
   });
 
@@ -116,6 +138,18 @@ describe('what a task asks for beyond the default', () => {
     expect(functionLimitsFor({}, {}, { cpuMs: 1000 })).toMatchObject({ cpuMs: 1000, wallMs: 10_000 });
     expect(functionLimitsFor({ cpuMs: 500 }, {}, { cpuMs: 1000 })).toMatchObject({ cpuMs: 500 });
     expect(functionLimitsFor({}, { cpuMs: 300 }, { cpuMs: 1000 })).toMatchObject({ cpuMs: 300 });
+  });
+
+  // The runner keeps an invocation's memory whole while it runs: given the plan's 256 MB each, a runner of 1 GB ran
+  // two at once under load, and the rest waited. The plan's is what a task may ask for.
+  it('gives a task the memory it asked for — the default when it asked for none — and the plan’s only as the most', () => {
+    const plan = { memoryMb: 256 };
+    const deployment = { memoryMb: 256 };
+
+    expect(functionLimitsFor(deployment, plan, {}).memoryMb).toBe(32);
+    expect(functionLimitsFor(deployment, plan, { memoryMb: 128 }).memoryMb).toBe(128);
+    expect(functionLimitsFor(deployment, { memoryMb: 64 }, { memoryMb: 128 }).memoryMb).toBe(64);
+    expect(functionLimitsFor({ memoryMb: 32 }, plan, { memoryMb: 128 }).memoryMb).toBe(32);
   });
 });
 

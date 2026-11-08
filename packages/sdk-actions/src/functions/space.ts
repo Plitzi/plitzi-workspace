@@ -14,7 +14,7 @@ import type { FunctionsSource } from './build';
 import type { FunctionsConfig } from './config';
 import type { FunctionScope } from './scope';
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../engine/types';
-import type { FunctionsManifest, FunctionsProblem, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionsManifest, FunctionsProblem, FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { FunctionContext } from '@plitzi/sdk-shared/functions';
 import type {
   FunctionsBundle,
@@ -49,7 +49,7 @@ const invocationContextOf = ({
 const spaceTasks = (
   functions: SpaceFunctions,
   runner: FunctionRunner,
-  limitsFor: (asked: FunctionTimeLimits) => FunctionLimits,
+  limitsFor: (asked: FunctionAskedLimits) => FunctionLimits,
   { admit, onUsage }: Pick<FunctionsConfig, 'admit' | 'onUsage'> = {},
   scope?: FunctionScope
 ): ActionTask<Record<string, unknown>>[] =>
@@ -189,7 +189,7 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
       const registry = composeRegistry(
         base,
         runnable.flatMap(({ functions: own, runner, scope }) => {
-          const limitsFor = (asked: FunctionTimeLimits) => functionLimitsFor(config.limits, own.limits, asked);
+          const limitsFor = (asked: FunctionAskedLimits) => functionLimitsFor(config.limits, own.limits, asked);
 
           return spaceTasks(own, runner, limitsFor, config, scope).map(task => ({
             task,

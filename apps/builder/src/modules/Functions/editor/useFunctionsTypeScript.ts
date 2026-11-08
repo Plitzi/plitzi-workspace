@@ -14,7 +14,7 @@ import { workerPathOf } from './paths';
 import type { NewTask, SourceEdit, SourceFunctions, SourcePlace } from './source';
 import type { FunctionsWorker } from './typescriptWorker';
 import type { Extension } from '@codemirror/state';
-import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { Remote } from 'comlink';
 
 /** How long typing pauses before what the source declares is read again: a list that follows, not one that flickers. */
@@ -75,7 +75,7 @@ const useFunctionsTypeScript = (workerUrl: string, files: Record<string, string>
   }, [worker, files]);
 
   const setTaskLimits = useCallback(
-    (place: SourcePlace, limits: FunctionTimeLimits): Promise<SourceEdit | undefined> =>
+    (place: SourcePlace, limits: FunctionAskedLimits): Promise<SourceEdit | undefined> =>
       worker ? worker.setTaskLimits(place, limits) : Promise.resolve(undefined),
     [worker]
   );

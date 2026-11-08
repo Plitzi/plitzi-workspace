@@ -4,7 +4,7 @@ export { cronFiresBetween, cronMatches, cronNextFire, isKnownTimeZone, parseCron
 export { FAILURE_HANDLER_TASK } from './failureHandler';
 export { FLOW_DELAY_MAX_MS } from './flowDelay';
 export {
-  DEFAULT_FUNCTION_TIME_LIMITS,
+  DEFAULT_FUNCTION_ASKED_LIMITS,
   FUNCTION_ROUTES_PREFIX,
   isFunctionRoutePath,
   exportsByDefault,

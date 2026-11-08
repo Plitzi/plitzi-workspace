@@ -10,7 +10,7 @@ import type {
   FunctionOAuthConnection,
   FunctionsManifest,
   FunctionTaskManifest,
-  FunctionTimeLimits
+  FunctionAskedLimits
 } from '@plitzi/sdk-shared';
 import type { FunctionLimits } from '@plitzi/sdk-shared/functions';
 
@@ -324,49 +324,60 @@ const paramOf = (value: unknown): TaskParam | string => {
 
 export type ManifestReading = { manifest: FunctionsManifest; problems: string[] };
 
-/** What each asked limit is, in words a problem is written in. */
-const LIMIT_WORDS: Record<keyof FunctionTimeLimits, string> = { cpuMs: 'of CPU', wallMs: 'to finish' };
+/** Each limit a function may ask for: its unit, and what it is in the words a problem is written in. */
+const ASKED_LIMITS: Record<keyof FunctionAskedLimits, { unit: string; words: string; units: string }> = {
+  cpuMs: { unit: 'ms', words: 'of CPU', units: 'milliseconds' },
+  wallMs: { unit: 'ms', words: 'to finish', units: 'milliseconds' },
+  memoryMb: { unit: 'MB', words: 'of memory', units: 'megabytes' }
+};
+
+const ASKED_KEYS = Object.keys(ASKED_LIMITS) as (keyof FunctionAskedLimits)[];
+
+const isAskedKey = (key: string): key is keyof FunctionAskedLimits => key in ASKED_LIMITS;
 
 /**
- * What `where` asks for beyond the default, read: whole milliseconds above nothing — and never more than `ceilings`, which
- * is said rather than quietly cut down, so the author knows what the code will get.
+ * What `where` asks for beyond the default, read: whole milliseconds and megabytes above nothing — and never more than
+ * `ceilings`, which is said rather than quietly cut down, so the author knows what the code will get.
  */
 const limitsOf = (
   value: unknown,
   where: string,
   ceilings: FunctionLimits,
   problems: string[]
-): FunctionTimeLimits | undefined => {
+): FunctionAskedLimits | undefined => {
   if (value === undefined) {
     return undefined;
   }
 
   if (!isRecord(value)) {
-    problems.push(`${where}: limits is not an object like { cpuMs: 1000, wallMs: 20000 }`);
+    problems.push(`${where}: limits is not an object like { cpuMs: 1000, wallMs: 20000, memoryMb: 128 }`);
 
     return undefined;
   }
 
-  const limits: FunctionTimeLimits = {};
-  (['cpuMs', 'wallMs'] as const).forEach(key => {
+  const limits: FunctionAskedLimits = {};
+  ASKED_KEYS.forEach(key => {
     const asked = value[key];
     if (asked === undefined) {
       return;
     }
 
+    const { unit, words, units } = ASKED_LIMITS[key];
     if (typeof asked !== 'number' || !Number.isInteger(asked) || asked <= 0) {
-      problems.push(`${where}: limits.${key} is not a whole number of milliseconds above 0`);
+      problems.push(`${where}: limits.${key} is not a whole number of ${units} above 0`);
     } else if (asked > ceilings[key]) {
       problems.push(
-        `${where}: asks for ${String(asked)} ms ${LIMIT_WORDS[key]}, and this server allows at most ${String(ceilings[key])} ms`
+        `${where}: asks for ${String(asked)} ${unit} ${words}, and this server allows at most ${String(ceilings[key])} ${unit}`
       );
     } else {
       limits[key] = asked;
     }
   });
   Object.keys(value)
-    .filter(key => key !== 'cpuMs' && key !== 'wallMs')
-    .forEach(key => problems.push(`${where}: limits.${key} is not a limit a function asks for (cpuMs, wallMs)`));
+    .filter(key => !isAskedKey(key))
+    .forEach(key =>
+      problems.push(`${where}: limits.${key} is not a limit a function asks for (${ASKED_KEYS.join(', ')})`)
+    );
 
   return Object.keys(limits).length ? limits : undefined;
 };

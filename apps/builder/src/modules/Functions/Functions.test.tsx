@@ -10,7 +10,7 @@ import type { NewTask, SourceEdit, SourceFunctions, SourcePlace } from './editor
 import type {
   FunctionsDraft,
   FunctionsSaveResult,
-  FunctionTimeLimits,
+  FunctionAskedLimits,
   JobControlAction,
   SpaceJob
 } from '@plitzi/sdk-shared';
@@ -55,7 +55,7 @@ const typescript = vi.hoisted(() => ({
   ready: false,
   source: undefined as SourceFunctions | undefined,
   addTask: vi.fn<(task: NewTask) => Promise<SourceEdit | undefined>>(),
-  setTaskLimits: vi.fn<(place: SourcePlace, limits: FunctionTimeLimits) => Promise<SourceEdit | undefined>>()
+  setTaskLimits: vi.fn<(place: SourcePlace, limits: FunctionAskedLimits) => Promise<SourceEdit | undefined>>()
 }));
 
 vi.mock('./editor/useFunctionsTypeScript', () => ({

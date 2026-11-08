@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createFunctionsEnvironment } from './functionsEnvironment';
 import { workerPathOf } from './paths';
 import { describeSource, withNewTask, withTaskLimits } from './source';
+import { withCpu } from '../helpers';
 
 const environmentWith = (files: Record<string, string>) => {
   const env = createFunctionsEnvironment();
@@ -148,6 +149,20 @@ describe('a task asking for its time', () => {
     env.updateFile(workerPathOf('lib/feed.ts'), edit?.code ?? '');
 
     expect(describeSource(env).tasks[0].limits).toEqual({ cpuMs: 450 });
+  });
+
+  // The panel sets the CPU alone: the memory the code asked for — kept whole for the task by the runner — stays.
+  it('keeps the memory its code asked for when the panel sets its CPU', () => {
+    const env = environmentWith({ 'index.ts': INDEX, 'lib/feed.ts': FEED });
+    const asked = withTaskLimits(env, describeSource(env).tasks[0].at, { memoryMb: 128 });
+    env.updateFile(workerPathOf('lib/feed.ts'), asked?.code ?? '');
+    const [feed] = describeSource(env).tasks;
+
+    const edit = withTaskLimits(env, feed.at, withCpu(feed.limits, 800));
+    env.updateFile(workerPathOf('lib/feed.ts'), edit?.code ?? '');
+
+    expect(edit?.code).toContain('limits: { cpuMs: 800, memoryMb: 128 },');
+    expect(describeSource(env).tasks[0].limits).toEqual({ cpuMs: 800, memoryMb: 128 });
   });
 });
 

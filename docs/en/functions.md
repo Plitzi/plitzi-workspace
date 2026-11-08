@@ -174,7 +174,7 @@ in the middle (TypeScript that knows `ctx`: completion, hover, errors as you typ
   Clicking a task or route opens its file at its line, and moving the cursor into a task selects it.
 - **+** asks for a namespace, action and title and writes the task into `defineFunctions`, with a `run` to start from.
 - A slider sets a task's CPU per run, 100 ms to 1 s (`limits: { cpuMs }` written into the task; **Use default** takes it
-  out). `DEFAULT_FUNCTION_TIME_LIMITS` in `@plitzi/sdk-shared/actions` is the default both the panel and the server use.
+  out). `DEFAULT_FUNCTION_ASKED_LIMITS` in `@plitzi/sdk-shared/actions` is the default both the panel and the server use.
 - **Test** fills a task's params the way its step does; with unsaved changes it reads **Save & run**.
 - **Jobs** are listed beside the tasks and routes, with how long each may run. Selecting one shows how it is started,
   who may watch it, and the space's runs of it — live while one moves, its progress and step as its code reported
@@ -412,7 +412,7 @@ Per invocation — a task step or a route request:
 |---|---|---|
 | CPU | 100 ms | awaits not counted |
 | Wall time | 10 s | and never past the run's own deadline |
-| Memory | 32 MB | a deployment's plan raises it (`limitsFor`), up to its ceiling |
+| Memory | 32 MB | kept whole for it while it runs |
 | Answer | 1 MB | as JSON |
 | Calls to `ctx` | 100 | `kv`, `fetch`, `publish`… |
 
@@ -420,22 +420,25 @@ Past one, the invocation stops and says which ("Stopped after 100 ms of CPU"). O
 functions share a CPU budget per minute** (30 s by default): past it the next invocation is refused until the minute
 turns, so one space's loop slows its own account and nobody else. Each deployment sets both (§9).
 
-**Asking for more time.** A task that needs more — it reshapes a big feed, it waits on a slow API — says so with
-`limits`, in milliseconds; `defineFunctions({ limits })` asks it for every task and route at once, and a task's own
-wins over it:
+**Asking for more.** A task that needs more — it reshapes a big feed, it waits on a slow API, it parses a large
+answer — says so with `limits`, in milliseconds and megabytes; `defineFunctions({ limits })` asks it for every task and
+route at once, and a task's own wins over it:
 
 ```ts
 const feed: FunctionTask<{ window: string }> = {
   namespace: 'seismic',
   action: 'feed',
   // …
-  limits: { cpuMs: 1000, wallMs: 20_000 },
+  limits: { cpuMs: 1000, wallMs: 20_000, memoryMb: 128 },
   run: ({ window }, ctx) => report(window, ctx.fetch)
 };
 ```
 
 Up to the server's ceiling — 2 s of CPU and 30 s of time unless it sets other ones — and the space's plan. Asking for
-more is a problem when the functions are saved, never quietly cut down; the builder shows each task's time beside it.
+more than the server allows is a problem when the functions are saved, never quietly cut down; the builder shows each
+task's time beside it. Ask for the memory a task needs, not the most it may have: the runner keeps an invocation's
+memory for it whole while it runs, so a task asking for 256 MB takes the room of eight that ask for none, and waits
+longer for a runner with that much free. One that goes over says so, naming `limits.memoryMb`.
 
 ## 8. Security: why one space cannot reach another
 
@@ -487,7 +490,7 @@ isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to
 A space's functions reach a run through `action.lookups.getFunctions(spaceId, at)` — the bundle and what it declared
 when it was saved, as of the revision the run belongs to. `actions.prepareFunctions(source)` is the one way to make
 one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings — what a task may ask
-for in CPU and time (`DEFAULT_FUNCTION_CEILINGS` for each unset one), and what every invocation gets of the rest;
+for in CPU, time and memory (`DEFAULT_FUNCTION_CEILINGS` for each unset one), and what every invocation gets of the rest;
 `functions.admit` and `functions.onUsage` are how a deployment budgets CPU across a space's account.
 
 **What a runner keeps, and what it does not.** A function is stateless, like a Lambda: everything it needs comes in its

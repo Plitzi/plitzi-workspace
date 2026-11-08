@@ -173,7 +173,7 @@ Type-only imports cost nothing at run time, and every import from the root `@pli
 | | Names | Who else uses them |
 |---|---|---|
 | **Server-only types** (23) | `SSRRequest`, `SSRServerConfig`, `SSRPageServerConfig`, `SSRSpaceDeployment`, `SSRSession`, `SSRAuthCookie`, `SSRHeaders`, `SSRMiddleware`, `SSRResponseHelpers`, `SSRServer`, `SSRTemplateFn`, `ServerLogger`, `ServerLogEvent`, `LogLevel`, `CacheManager`, `JobQueue`, `SpaceRevision`, `PluginRegistry`, `PluginAction`, `PluginSourceFile`, `ActionErrorReason`, `FunctionOAuthConnection`, `FunctionsSourceReader` | Only `apps/server` and the CLI. No browser package |
-| **Shared types** (8) | `Environment`, `ActionAccess`, `FunctionTimeLimits`, `FunctionJobView`, `InteractionCallbackParam`, `FunctionsManifest`, `ActionRunStep`, `OfflineDataRaw` | The SDK, the builder, the elements, authoring |
+| **Shared types** (8) | `Environment`, `ActionAccess`, `FunctionAskedLimits`, `FunctionJobView`, `InteractionCallbackParam`, `FunctionsManifest`, `ActionRunStep`, `OfflineDataRaw` | The SDK, the builder, the elements, authoring |
 | **Shared values** (4) | `PLUGIN_ROUTES_SEGMENT`, `readFunctionsSource`, `FUNCTION_ROUTES_PREFIX` (the runtime), `isRecord` | 45 files use `isRecord`; the CLI and the builder use the others |
 
 **The server-only types name much of Plitzi's vocabulary.** What each one drags from the rest of `sdk-shared`:
