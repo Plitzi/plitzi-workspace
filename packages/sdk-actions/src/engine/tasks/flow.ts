@@ -11,7 +11,7 @@ import type { ActionTask } from '../types';
  *
  * Capped hard (`FLOW_DELAY_MAX_MS`): a run holds a connection and a concurrency slot for its whole life, so an authored
  * `delay` is a way to spend both on nothing. Anything longer is a schedule, not a step — a longer one written as it is
- * is refused when the action is saved, and a bound one is capped here, saying so on the step's log.
+ * is warned of when the action is saved, and capped here, saying so on the step's log.
  */
 const delay: ActionTask<{ milliseconds: string | number }> = {
   namespace: 'flow',

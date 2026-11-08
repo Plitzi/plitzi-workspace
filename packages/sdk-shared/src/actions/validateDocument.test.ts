@@ -81,7 +81,9 @@ describe('validateActionDocument', () => {
   });
 
   // The step caps it: a flow written to wait 15 s ran on after 5, and a test of a run's time limit finished.
-  it('refuses a delay written longer than a step waits, and leaves a bound one to the step', () => {
+  // A warning, never an error: the same check is what a server runs a stored document by, and an error stopped an action
+  // saved with a long delay from running at all.
+  it('warns of a delay written longer than a step waits, and still runs it, capped', () => {
     const withDelay = (milliseconds: unknown) =>
       validateActionDocument(
         document({
@@ -94,8 +96,8 @@ describe('validateActionDocument', () => {
       );
     const long = withDelay('15000');
 
-    expect(long.valid).toBe(false);
-    expect(messages(long.errors)).toContain('this step waits 15000 ms, and a step waits at most 5000 ms');
+    expect(long.valid).toBe(true);
+    expect(messages(long.warnings)).toContain('this step waits 15000 ms, and a step waits at most 5000 ms');
     expect(withDelay(5000).valid).toBe(true);
     expect(withDelay('{{ input.wait }}').valid).toBe(true);
   });

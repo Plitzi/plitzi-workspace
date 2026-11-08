@@ -231,8 +231,8 @@ space while it hydrates.
   room or out of reach is the platform's, and alone answers 503, with `Retry-After`. `isFunctionLimit`
   (`@plitzi/sdk-shared/functions`) is the one list of the stops that are limits.
 - **`flow.delay` says when it is capped.** It waits at most `FLOW_DELAY_MAX_MS` (5 s; `@plitzi/sdk-shared/actions`): a
-  longer one written in the document is refused (`validateActionDocument`) — a longer wait is a schedule — and a bound
-  one past it waits the cap and says so on the step's log. A flow written to wait 15 s ran on after 5, without a word.
+  longer one written in the document is warned of (`validateActionDocument`) — a longer wait is a schedule — and any one
+  past it waits the cap and says so on the step's log. A flow written to wait 15 s ran on after 5, without a word.
 
 - **A runner takes an invocation only with room for it, and turns the rest away (`busy`) at once** — an isolate free
   (`concurrency` is now the most at once, not a queue) and memory for it: what it holds and a quarter of what the
