@@ -1,4 +1,5 @@
 import { createHash, createHmac, pbkdf2, randomBytes } from 'node:crypto';
+import { availableParallelism } from 'node:os';
 import { promisify } from 'node:util';
 
 import { cpuLimitCores } from '@plitzi/sdk-kernel/stats';
@@ -279,7 +280,7 @@ export const createIsolateRunner = ({
   concurrency = DEFAULT_CONCURRENCY,
   cacheBytes = 32 * 1024 * 1024,
   turns: turnCount = Math.max(1, Math.round(cpuLimitCores())),
-  cpuMeter: cpu = createCpuMeter(WATCHDOG_MS, Math.max(1, cpuLimitCores()))
+  cpuMeter: cpu = createCpuMeter(WATCHDOG_MS, availableParallelism())
 }: IsolateRunnerOptions = {}): IsolateRunner => {
   const turns = createTurns(turnCount);
   const cache = new Map<string, Cached>();

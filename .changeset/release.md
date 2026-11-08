@@ -216,8 +216,8 @@ space while it hydrates.
   time it spent running JavaScript, on a core or waiting for one, so beside more threads than cores each was measured
   as if it had a core of its own: a 5 ms route was stopped at its 100 ms limit, and growing the limit for it let code
   spin for five seconds. The runner now charges each isolate its share of the process's own CPU, as the system counts
-  it (`createCpuMeter`, its threads' CPU less the main thread's, and never more than the cores shared by the isolates
-  that ran — V8's collector takes CPU nobody is measured at): code that spins pays
+  it (`createCpuMeter`, its threads' CPU less the main thread's, and never more than the machine's cores held for the
+  time — V8's collector takes CPU nobody is measured at — shared in proportion to what each ran): code that spins pays
   what it took, code beside it never the cores it waited for. An invocation's time is what it waited on that it asked
   for — calls, sleeps — and the CPU it took, never the clock: a turn, a place behind spinners in isolated-vm's threads, a
   core it did not get are the runner's, told the platform so its wait for the answer grows by them, and isolated-vm's

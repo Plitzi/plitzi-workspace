@@ -17,7 +17,7 @@ describe('the CPU meter', () => {
   it('charges an isolate what it was measured at while it had the CPU to itself', async () => {
     vi.useFakeTimers();
     const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 4, readProcess);
+    const meter = createCpuMeter(5, 64, readProcess);
     const one = meter.meter(readIsolate(0));
 
     state.process += 10;
@@ -31,7 +31,7 @@ describe('the CPU meter', () => {
   it('shares out what the process took when the isolates were measured at more, as each ran', async () => {
     vi.useFakeTimers();
     const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 4, readProcess);
+    const meter = createCpuMeter(5, 64, readProcess);
     const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
 
     state.process += 10;
@@ -44,7 +44,7 @@ describe('the CPU meter', () => {
   it('charges a spinner beside a light one its share, and the light one only its own', async () => {
     vi.useFakeTimers();
     const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 4, readProcess);
+    const meter = createCpuMeter(5, 64, readProcess);
     const spinner = meter.meter(readIsolate(0));
     const light = meter.meter(readIsolate(1));
 
@@ -60,7 +60,7 @@ describe('the CPU meter', () => {
   it('charges its last slice as it ends, and looks at it no more', async () => {
     vi.useFakeTimers();
     const { state, readProcess, readIsolate } = clocks();
-    const meter = createCpuMeter(5, 4, readProcess);
+    const meter = createCpuMeter(5, 64, readProcess);
     const one = meter.meter(readIsolate(0));
 
     state.process += 3;
@@ -75,20 +75,36 @@ describe('the CPU meter', () => {
 
   /**
    * The other bound: V8's collector and the runner's helper threads take CPU no isolate is measured at, and on the
-   * threads' count alone four measured 10 ms each, beside 40 ms the threads took, were charged it all — a light route
-   * was stopped at its limit so. Four running on one core had a quarter of it each.
+   * threads' count alone a light route measured inflated beside it was charged it all, and stopped at its limit. One core
+   * for 5 ms holds 5 ms of all of them: four measured 5 each, beside 20 the threads took, had 1.25 each.
    */
-  it('charges no more than the cores the isolates that ran shared, whatever else the threads took', async () => {
+  it('charges no more than the machine’s cores held for the look, whatever else the threads took', async () => {
     vi.useFakeTimers();
     const { state, readProcess, readIsolate } = clocks();
     const meter = createCpuMeter(5, 1, readProcess);
     const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
 
-    state.process += 40;
-    state.isolates = [10, 10, 10, 10];
+    state.process += 20;
+    state.isolates = [5, 5, 5, 5];
     await vi.advanceTimersByTimeAsync(5);
 
-    metered.forEach(each => expect(each.charged()).toBe(2.5));
+    metered.forEach(each => expect(each.charged()).toBe(1.25));
+  });
+
+  // Shared in proportion to what each ran: one that barely ran beside a spinner takes nothing from what it is charged.
+  it('shares the cores’ bound in proportion to what each ran', async () => {
+    vi.useFakeTimers();
+    const { state, readProcess, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess);
+    const spinner = meter.meter(readIsolate(0));
+    const idle = meter.meter(readIsolate(1));
+
+    state.process += 5;
+    state.isolates = [5, 0.1, 0, 0];
+    await vi.advanceTimersByTimeAsync(5);
+
+    expect(spinner.charged()).toBeCloseTo(4.9, 1);
+    expect(idle.charged()).toBeCloseTo(0.1, 1);
   });
 
   // The regression it guards: the main thread's work — making isolates, compiling bundles — counted as theirs, and a
