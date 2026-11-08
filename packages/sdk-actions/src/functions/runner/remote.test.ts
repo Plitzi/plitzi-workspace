@@ -365,6 +365,49 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
+  /**
+   * A run's time is its execution alone. Its wait for a runner with room was told only once a runner took it: a wait
+   * longer than what the run had left ended it as over its budget before it had run at all (`Action exceeded its
+   * 10000ms budget`, a load round's medium and large actions). Told as it lasts, the run's limit moves with it.
+   */
+  it('tells a wait in a runner’s queue as it lasts, not only once the runner takes it', async () => {
+    const full = new WebSocketServer({ port: 0, host: '127.0.0.1' });
+    let acceptedAt = 0;
+    full.on('connection', socket => {
+      socket.on('message', () => {
+        socket.send(JSON.stringify({ type: 'queued' }));
+        setTimeout(() => {
+          acceptedAt = Date.now();
+          socket.send(JSON.stringify({ type: 'accepted' }));
+          socket.send(JSON.stringify({ type: 'done', value: 'ran once there was room' }));
+        }, 700);
+      });
+    });
+    await new Promise<void>(resolve => full.on('listening', () => resolve()));
+    const address = full.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+    const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET });
+    const told: { ms: number; at: number }[] = [];
+
+    try {
+      expect(
+        await runner.invoke({
+          bundle: { id: 'x', load: () => Promise.resolve('') },
+          invocation,
+          limits: LIMITS,
+          answer: () => Promise.resolve(null),
+          signal: new AbortController().signal,
+          onWaited: ms => told.push({ ms, at: Date.now() })
+        })
+      ).toBe('ran once there was room');
+      // Said several times before the runner took it, and the whole wait said.
+      expect(told.filter(each => each.at < acceptedAt).length).toBeGreaterThanOrEqual(2);
+      expect(told.reduce((total, each) => total + each.ms, 0)).toBeGreaterThanOrEqual(650);
+    } finally {
+      full.close();
+    }
+  });
+
   it('answers its stats behind its secret: what it ran, its isolates and the protocol it speaks', async () => {
     const stats = `http://127.0.0.1:${String(service.address().port)}/_stats`;
 

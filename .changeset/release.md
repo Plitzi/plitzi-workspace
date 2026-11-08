@@ -212,6 +212,11 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A run's time is its execution alone.** Its wait for a runner with room — every attempt at placing it, the pauses
+  between, a runner's queue — was told to its time limit only once a runner took it: a wait longer than what the run had
+  left ended it as over its budget before it had run at all (`Action exceeded its 10000ms budget`). It is told as it
+  lasts, every 250 ms, and the run's limit moves with it.
+
 - **A runner reserves each invocation what it may hold, whole, and is never killed with all of them for it.** It took
   an invocation while a quarter of what it may grow to fitted, since most hold a few MB; those it took grew together
   past its container's limit, and the kernel killed it — every invocation in it with it (`closed with 1006`, 150 calls

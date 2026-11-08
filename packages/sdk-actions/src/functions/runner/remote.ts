@@ -99,12 +99,16 @@ type Operation = {
   signal?: AbortSignal;
   onUsage?: (usage: FunctionUsage) => void;
   /**
-   * Told what the invocation waited for the runners' capacity: from `placedSince` until a runner took it — placed, or
-   * kept in its queue — and every turn at its CPU it waited for after (1.3's `waited`).
+   * Told what the invocation waited for the runners' capacity, AS it waits — placed, or kept in a runner's queue — and
+   * every turn at its CPU it waited for after (1.3's `waited`).
    */
   onWaited?: (ms: number) => void;
-  placedSince?: number;
+  /** Says what it waited since it was last said, and — `taken` — that a runner took it: one count for every attempt. */
+  tellWaited?: (taken: boolean) => void;
 };
+
+/** How often a wait for the runners' capacity is said while it lasts. */
+const TELL_WAIT_MS = 250;
 
 /**
  * The platform's side of the runner service: a {@link FunctionRunner} over one WebSocket per operation. Each call the
@@ -161,7 +165,7 @@ export const createRemoteRunner = ({
     signal,
     onUsage,
     onWaited,
-    placedSince
+    tellWaited
   }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const socket = new WebSocket(address, {
@@ -222,9 +226,7 @@ export const createRemoteRunner = ({
       const accept = (): void => {
         if (!accepted) {
           accepted = true;
-          if (placedSince !== undefined && Date.now() > placedSince) {
-            onWaited?.(Date.now() - placedSince);
-          }
+          tellWaited?.(true);
 
           dueAt = Date.now() + deadlineMs;
           clearTimeout(deadline);
@@ -406,8 +408,28 @@ export const createRemoteRunner = ({
         answer: () => Promise.reject(new Error('Nothing is reachable while a bundle is read'))
       }),
     invoke: async ({ bundle, invocation, limits, answer, signal, onUsage, onWaited }) => {
-      // Placing it is the runners' capacity, not the code's time: what that took is said once a runner takes it.
-      const placedSince = Date.now();
+      // Placing it is the runners' capacity, not the code's time — every attempt at it, the pauses between them, a
+      // runner's queue — said as it lasts, not once it ends: a run's time limit moves by it, and told only when a runner
+      // took it, a wait longer than what the run had left ended the run as over its budget before it had run at all.
+      let waitedSince = Date.now();
+      let taken = false;
+      const tellWaited = (tookIt: boolean): void => {
+        if (taken) {
+          return;
+        }
+
+        const now = Date.now();
+        if (now > waitedSince) {
+          onWaited?.(now - waitedSince);
+          waitedSince = now;
+        }
+
+        if (tookIt) {
+          taken = true;
+          clearInterval(waiting);
+        }
+      };
+      const waiting = onWaited ? setInterval(() => tellWaited(false), TELL_WAIT_MS) : undefined;
       const attempt = (address: string, queue = false) =>
         operate({
           first: {
@@ -425,78 +447,83 @@ export const createRemoteRunner = ({
           answer,
           signal,
           onUsage,
-          ...(onWaited ? { onWaited, placedSince } : {})
+          ...(onWaited ? { onWaited, tellWaited } : {})
         });
-      const name = addressOf(invocation.context.spaceId);
-      let unreachableRounds = 0;
+      try {
+        const name = addressOf(invocation.context.spaceId);
+        let unreachableRounds = 0;
 
-      // A round tries each runner the space may run on once: a busy one took nothing, an unreachable one was sent
-      // nothing, so the invocation is whole to give the next. With every one full, one of them keeps it until it has
-      // room (`queue`) — it waits, never fails for the runners' capacity; while none can be reached, rounds go on a few
-      // times: a restart, a rolling deploy.
-      for (let round = 0; ; round += 1) {
-        const tried = new Set<string>();
-        let last: unknown;
-        const full: string[] = [];
-        for (;;) {
-          const untried = (await runnersOf(addressOf(invocation.context.spaceId))).filter(each => !tried.has(each));
-          const next = untried.at(0);
-          if (next === undefined) {
-            break;
-          }
-
-          tried.add(next);
-          try {
-            const value = await attempt(next);
-            away.delete(name);
-
-            return value;
-          } catch (error) {
-            const reason = error instanceof FunctionFailure ? error.reason : undefined;
-            if (reason !== 'busy' && reason !== 'unreachable') {
-              throw error;
+        // A round tries each runner the space may run on once: a busy one took nothing, an unreachable one was sent
+        // nothing, so the invocation is whole to give the next. With every one full, one of them keeps it until it has
+        // room (`queue`) — it waits, never fails for the runners' capacity; while none can be reached, rounds go on a few
+        // times: a restart, a rolling deploy.
+        for (let round = 0; ; round += 1) {
+          const tried = new Set<string>();
+          let last: unknown;
+          const full: string[] = [];
+          for (;;) {
+            const untried = (await runnersOf(addressOf(invocation.context.spaceId))).filter(each => !tried.has(each));
+            const next = untried.at(0);
+            if (next === undefined) {
+              break;
             }
 
-            if (reason === 'busy') {
-              full.push(next);
-            }
+            tried.add(next);
+            try {
+              const value = await attempt(next);
+              away.delete(name);
 
-            last = error;
-          }
-        }
+              return value;
+            } catch (error) {
+              const reason = error instanceof FunctionFailure ? error.reason : undefined;
+              if (reason !== 'busy' && reason !== 'unreachable') {
+                throw error;
+              }
 
-        if (signal.aborted) {
-          throw last;
-        }
+              if (reason === 'busy') {
+                full.push(next);
+              }
 
-        if (full.length > 0) {
-          // Kept by one of them at random — the next to have room takes it. One that turns even that away is stopping
-          // (or speaks 1.2): the next round, a moment later, places it again.
-          const keeper = full[Math.floor(Math.random() * full.length)];
-          try {
-            const value = await attempt(keeper, true);
-            away.delete(name);
-
-            return value;
-          } catch (error) {
-            if (!(error instanceof FunctionFailure && error.reason === 'busy')) {
-              throw error;
+              last = error;
             }
           }
 
-          await wait(FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000, signal);
-          continue;
-        }
+          if (signal.aborted) {
+            throw last;
+          }
 
-        // Not one of its runners could be reached: calls that need them are kept meanwhile (`reachable`).
-        away.set(name, Date.now());
-        const pause = RETRY_WAITS_MS.at(unreachableRounds);
-        unreachableRounds += 1;
-        if (pause === undefined) {
-          throw last;
-        }
+          if (full.length > 0) {
+            // Kept by one of them at random — the next to have room takes it. One that turns even that away is stopping
+            // (or speaks 1.2): the next round, a moment later, places it again.
+            const keeper = full[Math.floor(Math.random() * full.length)];
+            try {
+              const value = await attempt(keeper, true);
+              away.delete(name);
 
-        await wait(pause, signal);
+              return value;
+            } catch (error) {
+              if (!(error instanceof FunctionFailure && error.reason === 'busy')) {
+                throw error;
+              }
+            }
+
+            await wait(FULL_WAITS_MS[Math.min(round, FULL_WAITS_MS.length - 1)] ?? 1000, signal);
+            continue;
+          }
+
+          // Not one of its runners could be reached: calls that need them are kept meanwhile (`reachable`).
+          away.set(name, Date.now());
+          const pause = RETRY_WAITS_MS.at(unreachableRounds);
+          unreachableRounds += 1;
+          if (pause === undefined) {
+            throw last;
+          }
+
+          await wait(pause, signal);
+        }
+      } finally {
+        // Taken, given up, or failed: what it waited is said, and nothing goes on saying it.
+        clearInterval(waiting);
       }
     },
     reachable: spaceId => {
