@@ -625,7 +625,13 @@ export const createFunctionJobs = ({
         return outcomeOf({ value });
       } finally {
         if (usage) {
-          config.onUsage?.({ spaceId: job.spaceId, task: `job ${target.name}`, ok, usage });
+          config.onUsage?.({
+            spaceId: job.spaceId,
+            task: `job ${target.name}`,
+            ok,
+            usage,
+            memoryMb: limitsForSlice.memoryMb
+          });
         }
       }
     } catch (error) {

@@ -322,8 +322,9 @@ export const createRoutes = ({
         let spent: FunctionUsage | undefined;
         // A route that streams has spent what it spent once its body ends, long after it answered.
         let streaming = false;
+        const limits = functionLimitsFor(config.limits, functions.limits, functions.manifest.limits);
         const meter = (usage: FunctionUsage, done: boolean): void => {
-          config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage });
+          config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage, memoryMb: limits.memoryMb });
         };
         try {
           // A size its plan does not include, refused before it runs: answered as the limit it is.
@@ -348,7 +349,7 @@ export const createRoutes = ({
                 ...(fnCtx.user ? { user: fnCtx.user } : {})
               }
             },
-            limits: functionLimitsFor(config.limits, functions.limits, functions.manifest.limits),
+            limits,
             answer: call => answerCall(fnCtx, readCall(call)),
             signal: visit.signal,
             onUsage: usage => {

@@ -6,8 +6,11 @@ import type { FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { FunctionsDefinition } from '@plitzi/sdk-shared/functions';
 import type { FunctionLimits, FunctionRunner, FunctionUsage } from '@plitzi/sdk-shared/functions';
 
-/** One invocation of a space's task, as metering sees it. */
-export type FunctionUsageRecord = { spaceId: number; task: string; ok: boolean; usage: FunctionUsage };
+/**
+ * One invocation of a space's task, as metering sees it: what it spent, and the memory it ran with (its size) — what a
+ * deployment bills by, as memory over the time it was held.
+ */
+export type FunctionUsageRecord = { spaceId: number; task: string; ok: boolean; usage: FunctionUsage; memoryMb: number };
 
 /**
  * A server's functions. `native` is code the deployment trusts, loaded in its own process with the context narrowed to

@@ -332,7 +332,9 @@ describe('what an invocation spends', () => {
       spaceId: 3,
       task: 'probe.run',
       ok: true,
-      usage: { cpuMs: expect.any(Number) as number, wallMs: expect.any(Number) as number, calls: 1 }
+      usage: { cpuMs: expect.any(Number) as number, wallMs: expect.any(Number) as number, calls: 1 },
+      // Its size's memory: what its compute is billed by.
+      memoryMb: 32
     });
     const [[{ usage }]] = onUsage.mock.calls as [[{ usage: { cpuMs: number } }]];
     expect(usage.cpuMs).toBeGreaterThanOrEqual(15);
