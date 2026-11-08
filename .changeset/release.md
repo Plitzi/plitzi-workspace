@@ -216,6 +216,11 @@ space while it hydrates.
   measured slower than they run — but by four times at most: a burst of forty made a 1 s limit forty, and code that spun
   for five seconds finished. And a sleep (`setTimeout`) past the time an invocation has left ends it there, by its time
   limit: it was cut short to fit, the code woke at the limit and, the watchdog a look behind, finished as if it had slept.
+- **A function route stopped at a limit says which, and is not a 503.** It answered `503 This route ran out of what
+  it may spend` — a status that tells a caller to ask again, and a sentence that named nothing. A limit of its own is
+  the code's to fix: `500 This route stopped at a limit its plan sets: Stopped after 100 ms of CPU`. A runner without
+  room or out of reach is the platform's, and alone answers 503, with `Retry-After`. `isFunctionLimit`
+  (`@plitzi/sdk-shared/functions`) is the one list of the stops that are limits.
 - **`flow.delay` says when it is capped.** It waits at most `FLOW_DELAY_MAX_MS` (5 s; `@plitzi/sdk-shared/actions`): a
   longer one written in the document is refused (`validateActionDocument`) — a longer wait is a schedule — and a bound
   one past it waits the cap and says so on the step's log. A flow written to wait 15 s ran on after 5, without a word.

@@ -15,6 +15,7 @@ import {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
   errorOfAnswer,
+  isFunctionLimit,
   isStreamedRouteAnswer,
   protocolKnows,
   protocolRefusal,
@@ -113,12 +114,9 @@ const RESERVED_FOR_MS = 250;
 /** How often what is kept waiting is looked at again, beside each invocation that ends: memory frees between them. */
 const KEPT_LOOK_MS = 100;
 
-/** The runner's stops that are limits — the code asked for more than it may: not a fault of the runner's. */
-const LIMITS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
-
 /** How an invocation that did not answer reads to the stats: a limit, its code refusing, or a failure. */
 const endOf = (reason: FunctionFailureReason): RunEnd =>
-  LIMITS.has(reason) ? { limit: reason } : reason === 'refused' ? { refused: true } : { failed: reason };
+  isFunctionLimit(reason) ? { limit: reason } : reason === 'refused' ? { refused: true } : { failed: reason };
 
 /**
  * One operation on one connection — `describe`, or `invoke` with every call the code makes going back on the same

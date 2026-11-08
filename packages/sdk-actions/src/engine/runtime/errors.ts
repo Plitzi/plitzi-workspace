@@ -1,7 +1,6 @@
-import { FunctionFailure } from '@plitzi/sdk-shared/functions';
+import { FunctionFailure, isFunctionLimit } from '@plitzi/sdk-shared/functions';
 
 import type { ActionErrorReason, ActionRunLimit, ActionRunStep } from '@plitzi/sdk-shared';
-import type { FunctionFailureReason } from '@plitzi/sdk-shared/functions';
 
 /**
  * A run that stopped for a reason the caller is entitled to know, as opposed to one whose step threw.
@@ -43,16 +42,11 @@ export class RunLimitReached extends Error {
   }
 }
 
-/** The runner's reasons that are limits — the code asked for more than it may — rather than faults or refusals. */
-const STOPS: ReadonlySet<FunctionFailureReason> = new Set(['cpu', 'wall', 'memory', 'output', 'calls']);
-
-const isStop = (reason: FunctionFailureReason): reason is ActionRunLimit & FunctionFailureReason => STOPS.has(reason);
-
 /** The limit an error that ended a run says it is: a ceiling of the run's, one of its step's, or its code's runner's. */
 export const limitOf = (error: unknown): ActionRunLimit | undefined => {
   if (error instanceof ActionRunError || error instanceof RunLimitReached) {
     return error.limit;
   }
 
-  return error instanceof FunctionFailure && isStop(error.reason) ? error.reason : undefined;
+  return error instanceof FunctionFailure && isFunctionLimit(error.reason) ? error.reason : undefined;
 };

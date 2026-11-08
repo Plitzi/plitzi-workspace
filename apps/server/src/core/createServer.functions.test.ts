@@ -111,11 +111,16 @@ describe('functions under /fn/', () => {
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
   });
 
-  it('stop a route that spins, and say only that it ran out', async () => {
+  // The code's limit, said with which: never a 503, which tells a caller to ask again and reach it again.
+  it('stop a route that spins, and say which limit it reached', async () => {
     const response = await fetch(`${BASE}/fn/spin`);
 
-    expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'This route ran out of what it may spend' });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: expect.stringMatching(
+        /^This route stopped at a limit its plan sets: Stopped after \d+ ms of CPU$/
+      ) as string
+    });
   });
 
   it('answer a refusal with its reason, and anything else thrown with nothing of what it said', async () => {

@@ -231,6 +231,20 @@ export const errorOfAnswer = ({ error, refused, code }: Extract<FunctionAnswer, 
 /** Why the runner stopped an invocation, when it was not the code's own error. */
 export type FunctionStopReason = 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'aborted';
 
+/** The stops that are limits: the code asked for more than it may — never the runner's fault, nor fixed by asking again. */
+export type FunctionLimitReason = Exclude<FunctionStopReason, 'aborted'>;
+
+const FUNCTION_LIMIT_REASONS: ReadonlySet<string> = new Set<FunctionLimitReason>([
+  'cpu',
+  'wall',
+  'memory',
+  'output',
+  'calls'
+]);
+
+/** Whether an invocation was stopped at a limit of its own ({@link FunctionLimitReason}). */
+export const isFunctionLimit = (reason: string): reason is FunctionLimitReason => FUNCTION_LIMIT_REASONS.has(reason);
+
 /** What the platform asks a runner for: every runner implements this, and nothing else of it is assumed. */
 export type FunctionRunner = {
   /** Loads a bundle and answers what it declares — when the space's functions are saved, never on a run. */

@@ -33,6 +33,7 @@ export {
   failedAnswerOf,
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
+  isFunctionLimit,
   isStreamedRouteAnswer,
   protocolKnows,
   protocolRefusal
@@ -45,6 +46,7 @@ export type {
   FunctionInvocationContext,
   FunctionInvokeRequest,
   FunctionJobSlice,
+  FunctionLimitReason,
   FunctionLimits,
   FunctionRunner,
   FunctionsBundle,

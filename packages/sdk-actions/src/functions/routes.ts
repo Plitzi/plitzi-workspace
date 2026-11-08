@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { serverLog } from '@plitzi/sdk-kernel/log';
 import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
-import { FunctionFailure, isStreamedRouteAnswer } from '@plitzi/sdk-shared/functions';
+import { FunctionFailure, isFunctionLimit, isStreamedRouteAnswer } from '@plitzi/sdk-shared/functions';
 import { isActionRefusal } from '@plitzi/sdk-shared/functions';
 import { responseOf, wireRequestOf, wireResponseFrom } from '@plitzi/sdk-shared/functions';
 
@@ -120,8 +120,10 @@ const withoutCookies = (response: Response): Response => {
 };
 
 /**
- * A route that refused, threw or was stopped. A refusal's message was written for the visitor, who gets it with a 400;
- * of anything else the visitor gets that it failed, and the server's log gets why.
+ * A route that refused, threw or was stopped. A refusal's message was written for the visitor, who gets it with a 400.
+ * A limit of its own is the code's to fix, and says which — asking again reaches it again, so never a 503, which tells a
+ * caller to retry. A runner without room or out of reach is the platform's: a 503 to ask again in a moment. Of anything
+ * else the visitor gets that it failed, and the server's log gets why.
  */
 const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
   if (isActionRefusal(error) || (error instanceof FunctionFailure && error.reason === 'refused')) {
@@ -129,12 +131,18 @@ const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
   }
 
   serverLog.error('Functions', `route ${key} of space ${String(visit.spaceId)} failed`, error);
-  const stopped = error instanceof FunctionFailure && error.reason !== 'error';
+  if (error instanceof FunctionFailure && isFunctionLimit(error.reason)) {
+    return Response.json({ error: `This route stopped at a limit its plan sets: ${error.message}` }, { status: 500 });
+  }
 
-  return Response.json(
-    { error: stopped ? 'This route ran out of what it may spend' : 'This route failed' },
-    { status: stopped ? 503 : 500 }
-  );
+  if (error instanceof FunctionFailure && (error.reason === 'busy' || error.reason === 'unreachable')) {
+    return Response.json(
+      { error: 'This route could not run right now: ask again in a moment' },
+      { status: 503, headers: { 'retry-after': '1' } }
+    );
+  }
+
+  return Response.json({ error: 'This route failed' }, { status: 500 });
 };
 
 export type RouteSources = {
