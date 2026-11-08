@@ -251,9 +251,9 @@ space while it hydrates.
   none could hold it, fails it with the size it needs. **To redo:** deploy the runners first — a 1.4 runner says `busy`
   to an older platform.
 
-- **What an invocation spent says the memory it ran with** (`FunctionUsageRecord.memoryMb`, beside `usage`): a
-  deployment bills compute as memory over the time it was held, as Lambda does. **To redo:** a `functions.onUsage`
-  that builds records by hand adds it.
+- **What an invocation spent says the memory it ran with and the build it ran** (`FunctionUsageRecord.memoryMb` and
+  `environment`, beside `usage`): a deployment bills compute as memory over the time it was held, as Lambda does, and
+  files it under that build. **To redo:** a `functions.onUsage` that builds records by hand adds both.
 
 - **A visitor's request never waits behind work nobody waits on.** Under load, minute-long job slices and scheduled
   actions filled every runner, and visitors' calls waited behind them in the same queue past their own timeout (129 of
