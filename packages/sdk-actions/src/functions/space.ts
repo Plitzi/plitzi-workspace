@@ -4,7 +4,7 @@ import { ActionRefusal, FunctionFailure } from '@plitzi/sdk-shared/functions';
 
 import { buildFunctions, FunctionsBuildError } from './build';
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor, functionSizeRefusal } from './config';
+import { invocationLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { readManifest } from './manifest';
 import { ActionRunError, RunLimitReached } from '../engine/runtime/errors';
@@ -194,14 +194,7 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
       const registry = composeRegistry(
         base,
         runnable.flatMap(({ functions: own, runner, scope }) => {
-          const limitsFor = (asked: FunctionAskedLimits) => {
-            const sizeRefusal = functionSizeRefusal(config.limits, own.limits, asked);
-
-            return {
-              limits: functionLimitsFor(config.limits, own.limits, asked),
-              ...(sizeRefusal ? { sizeRefusal } : {})
-            };
-          };
+          const limitsFor = (asked: FunctionAskedLimits) => invocationLimitsFor(config.limits, own.limits, asked);
 
           return spaceTasks(own, runner, limitsFor, config, scope).map(task => ({
             task,

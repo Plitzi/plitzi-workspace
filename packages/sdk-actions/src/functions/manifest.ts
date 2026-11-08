@@ -1,4 +1,4 @@
-import { PLUGIN_ROUTES_SEGMENT, actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { FUNCTION_ASKED_KEYS, PLUGIN_ROUTES_SEGMENT, actionAccessOf } from '@plitzi/sdk-shared/actions';
 import { FUNCTION_SIZE_NAMES, FUNCTION_SIZES, functionSizesWithin, isFunctionSize } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
@@ -328,10 +328,11 @@ export type ManifestReading = { manifest: FunctionsManifest; problems: string[] 
 /** Each time a function may ask for, in the words a problem is written in. */
 const TIME_WORDS = { cpuMs: 'of CPU', wallMs: 'to finish' } as const;
 
+// `Object.keys` answers strings; they are `TIME_WORDS`' own keys.
 const TIME_KEYS = Object.keys(TIME_WORDS) as (keyof typeof TIME_WORDS)[];
 
 /** Every limit a function may ask for. */
-const ASKED_KEYS: readonly string[] = [...TIME_KEYS, 'size'] satisfies (keyof FunctionAskedLimits)[];
+const ASKED_KEYS: readonly string[] = FUNCTION_ASKED_KEYS;
 
 /**
  * What `where` asks for beyond the default, read: whole milliseconds above nothing and a size by its name — and never

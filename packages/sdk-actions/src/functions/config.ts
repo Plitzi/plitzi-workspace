@@ -10,7 +10,13 @@ import type { FunctionLimits, FunctionRunner, FunctionUsage } from '@plitzi/sdk-
  * One invocation of a space's task, as metering sees it: what it spent, and the memory it ran with (its size) — what a
  * deployment bills by, as memory over the time it was held.
  */
-export type FunctionUsageRecord = { spaceId: number; task: string; ok: boolean; usage: FunctionUsage; memoryMb: number };
+export type FunctionUsageRecord = {
+  spaceId: number;
+  task: string;
+  ok: boolean;
+  usage: FunctionUsage;
+  memoryMb: number;
+};
 
 /**
  * A server's functions. `native` is code the deployment trusts, loaded in its own process with the context narrowed to
@@ -144,4 +150,19 @@ export const functionSizeRefusal = (
     : `${who} none of its sizes`;
 
   return `This task asks to be ${size} (${String(memoryMb)} MB of memory), and ${instead}: ask for a size that fits in its limits, or for a plan that includes ${size}`;
+};
+
+/**
+ * What one invocation may spend (`functionLimitsFor`) and, when the size it asked for is past what its plan or this
+ * server allows, why it may not run (`functionSizeRefusal`) — the one call every place that invokes makes, so none runs
+ * a refused size quietly made smaller.
+ */
+export const invocationLimitsFor = (
+  ceilings: Partial<FunctionLimits> = {},
+  space: Partial<FunctionLimits> = {},
+  asked: FunctionAskedLimits = {}
+): { limits: FunctionLimits; sizeRefusal?: string } => {
+  const sizeRefusal = functionSizeRefusal(ceilings, space, asked);
+
+  return { limits: functionLimitsFor(ceilings, space, asked), ...(sizeRefusal ? { sizeRefusal } : {}) };
 };

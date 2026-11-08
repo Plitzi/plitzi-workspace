@@ -275,7 +275,7 @@ export type FunctionTask<T extends Record<string, unknown> = Record<string, unkn
   description?: string;
   params: Record<keyof T, InteractionCallbackParam<T>>;
   /**
-   * More CPU, time or memory than an invocation gets by default — `{ cpuMs: 1000, memoryMb: 128 }` for a task that
+   * More CPU, time or memory than an invocation gets by default — `{ cpuMs: 1000, size: 'medium' }` for a task that
    * reshapes a big feed — up to what the space's plan and the server allow. Over the functions' own `limits`, for this
    * task.
    */

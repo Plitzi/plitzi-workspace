@@ -7,7 +7,7 @@ import { isActionRefusal } from '@plitzi/sdk-shared/functions';
 import { responseOf, wireRequestOf, wireResponseFrom } from '@plitzi/sdk-shared/functions';
 
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor, functionSizeRefusal } from './config';
+import { invocationLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { jobsManifestOf } from './jobs';
 import { parseRouteKey, reservedRouteProblem } from './manifest';
@@ -327,13 +327,12 @@ export const createRoutes = ({
         let spent: FunctionUsage | undefined;
         // A route that streams has spent what it spent once its body ends, long after it answered.
         let streaming = false;
-        const limits = functionLimitsFor(config.limits, functions.limits, functions.manifest.limits);
+        const { limits, sizeRefusal } = invocationLimitsFor(config.limits, functions.limits, functions.manifest.limits);
         const meter = (usage: FunctionUsage, done: boolean): void => {
           config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage, memoryMb: limits.memoryMb });
         };
         try {
           // A size its plan does not include, refused before it runs: answered as the limit it is.
-          const sizeRefusal = functionSizeRefusal(config.limits, functions.limits, functions.manifest.limits);
           if (sizeRefusal) {
             throw new FunctionFailure('memory', sizeRefusal);
           }

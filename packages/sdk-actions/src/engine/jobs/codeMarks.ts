@@ -1,3 +1,5 @@
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import type { JobQueue } from '../../types';
 import type { ActionLookups } from '../types';
 import type { ActionDocument } from '@plitzi/sdk-shared';
@@ -20,7 +22,16 @@ export const codeMarkingQueue = (
       return queue.enqueue(job);
     }
 
-    const entry = await lookups.getAction(job.spaceId, target.name, target.at);
+    // Its document unread — a store that did not answer — it is queued unmarked, never lost for a mark.
+    const entry = await lookups.getAction(job.spaceId, target.name, target.at).catch((error: unknown) => {
+      serverLog.warn(
+        'Actions',
+        `job ${job.id}: queued without reading whether its action runs the space's code`,
+        error
+      );
+
+      return undefined;
+    });
 
     return queue.enqueue(entry && runsCode(entry.document) ? { ...job, target: { ...target, code: true } } : job);
   }

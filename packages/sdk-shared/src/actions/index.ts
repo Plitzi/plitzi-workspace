@@ -5,6 +5,7 @@ export { FAILURE_HANDLER_TASK } from './failureHandler';
 export { FLOW_DELAY_MAX_MS } from './flowDelay';
 export {
   DEFAULT_FUNCTION_ASKED_LIMITS,
+  FUNCTION_ASKED_KEYS,
   FUNCTION_ROUTES_PREFIX,
   isFunctionRoutePath,
   exportsByDefault,

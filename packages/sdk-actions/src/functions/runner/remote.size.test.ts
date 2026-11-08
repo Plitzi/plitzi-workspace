@@ -22,12 +22,12 @@ const invocation: FunctionInvocation = {
   context: { spaceId: 3, environment: 'main', runId: 'run-large', trigger: 'call', callerId: 'ip:1' }
 };
 
-const runnerOf = (limitMb: number) =>
+const runnerOf = (limitMb: number, idleMb = 0) =>
   startFunctionsRunnerService({
     secret: SECRET,
     port: 0,
     host: '127.0.0.1',
-    readMemory: () => ({ usedBytes: 0, limitBytes: limitMb * MIB })
+    readMemory: () => ({ usedBytes: idleMb * MIB, limitBytes: limitMb * MIB })
   });
 
 const urlOf = (service: Awaited<ReturnType<typeof runnerOf>>) => `ws://127.0.0.1:${String(service.address().port)}`;
@@ -80,6 +80,32 @@ describe('a task larger than a runner could ever hold', () => {
       expect(failure).toBeInstanceOf(FunctionFailure);
       expect((failure as FunctionFailure).reason).toBe('too_large');
       expect((failure as FunctionFailure).message).toContain('could never hold it: it may hold 290 MB');
+      expect(Date.now() - started).toBeLessThan(2000);
+    } finally {
+      await small.close();
+    }
+  });
+
+  // Its share held it, but not beside what the runner holds empty: judged by the share alone it was said to fit, and
+  // admission — which counts what an empty runner holds — kept it for ever at the head of the queue.
+  it('fails at once when it fits the runner’s share but not beside what the runner holds empty', async () => {
+    // 400 MiB: 340 of them for work, 100 held empty — 240 for invocations, under the 290 a large one may hold.
+    const small = await runnerOf(400, 100);
+    try {
+      const runner = createRemoteRunner({ url: urlOf(small), secret: SECRET });
+      const started = Date.now();
+
+      const failure = await runner
+        .invoke({
+          bundle: { id: 'large', load: () => Promise.resolve(CODE) },
+          invocation,
+          limits: LARGE,
+          answer: () => Promise.resolve(null),
+          signal: AbortSignal.timeout(10_000)
+        })
+        .catch((error: unknown) => error);
+
+      expect((failure as FunctionFailure).reason).toBe('too_large');
       expect(Date.now() - started).toBeLessThan(2000);
     } finally {
       await small.close();

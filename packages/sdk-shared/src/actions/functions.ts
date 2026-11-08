@@ -31,6 +31,13 @@ export const DEFAULT_FUNCTION_ASKED_LIMITS = {
   size: 'small'
 } as const satisfies Required<FunctionAskedLimits>;
 
+/** Every limit a task may ask for, in the order they are written: what the manifest reads and the builder writes. */
+export const FUNCTION_ASKED_KEYS = [
+  'cpuMs',
+  'wallMs',
+  'size'
+] as const satisfies readonly (keyof FunctionAskedLimits)[];
+
 /** Whether a page at `path` would sit where the space's functions answer. */
 export const isFunctionRoutePath = (path: string): boolean =>
   path === FUNCTION_ROUTES_PREFIX || path.startsWith(`${FUNCTION_ROUTES_PREFIX}/`);

@@ -34,7 +34,7 @@ export type ActionJobTarget = {
   user?: RunUser;
   /**
    * Its action runs the space's own code — a step of its functions: what a worker leaves in the queue while its runs
-   * wait for a functions runner with room (`claim({ withoutCode })`), taking the jobs that need none meanwhile. Set as
+   * wait for a functions runner with room (`claim({ takes })`), taking the jobs that need none meanwhile. Set as
    * the job is queued, from the action's document; absent, it runs none.
    */
   code?: true;

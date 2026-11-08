@@ -428,14 +428,15 @@ describe('the runner service, through the remote runner', () => {
   // A runner short of memory is the runners' capacity, never the code's error: the invocation waits for room, and runs.
   it('keeps an invocation it has no memory for until it has, and runs it then', async () => {
     const MIB = 1_048_576;
-    // 90 of 100 MiB held: past the 85% it takes work to, whatever an invocation is kept.
-    let usedBytes = 90 * MIB;
+    // 20 of 200 MiB held empty, then 190: past the 85% it takes work to, whatever an invocation is kept.
+    let usedBytes = 20 * MIB;
     const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
-      readMemory: () => ({ usedBytes, limitBytes: 100 * MIB })
+      readMemory: () => ({ usedBytes, limitBytes: 200 * MIB })
     });
+    usedBytes = 190 * MIB;
     const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(full.address().port)}`, secret: SECRET });
     const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
 

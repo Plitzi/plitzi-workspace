@@ -8,7 +8,7 @@ import { onlyFull, withoutFull } from './claimSpaces';
 import { GIVE_UP, SET_ASIDE_LIMITS, failedOutError, failureOf, limitSetAsideError } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
-import { NOT_NOW_WORDS, TRY_AGAIN, claimsWithin, runnersFull, tryAgainMs } from './notNow';
+import { NOT_NOW_WORDS, TRY_AGAIN, claimsWithin, msToNextMinute, runnersFull, tryAgainMs } from './notNow';
 import { ActionRunError } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
@@ -18,12 +18,6 @@ import type { ActionsModule } from '../module';
 import type { ActionLookups } from '../types';
 import type { ProcessLoad } from '@plitzi/sdk-kernel/stats';
 import type { Job } from '@plitzi/sdk-shared';
-
-/**
- * How long from `now` — the queue's clock, which every instant of it is read by — until the next minute begins, and a
- * moment more: when a budget over the minute may be spent again.
- */
-const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
 
 /**
  * What a job is reckoned to hold until this worker has measured its own (what it holds over what it held idle, by the
@@ -155,7 +149,7 @@ export const createJobWorker = ({
   const slicing = new Set<string>();
   /** Which kind of the work that needs a runner a look offers its room to first (`claimsWithin`), by turns. */
   let turn: 'codeActions' | 'functionJobs' = 'functionJobs';
-  /** Of `active`, the jobs taken in a spare slot, past their space's share (`room().spare`): their runs say so. */
+  /** Of `active`, the jobs taken in a spare slot, past their space's share (`room().spare`): none handed back. */
   const spareJobs = new Set<string>();
   /** Every job this worker started, until it has settled — what `stop()` waits for. */
   const inFlight = new Set<Promise<void>>();
@@ -194,8 +188,11 @@ export const createJobWorker = ({
   };
 
   /** Back to the queue with nothing held against it — see {@link TRY_AGAIN}. */
-  const release = (job: Job, delayMs: number, error: string) =>
-    settle({ jobId: job.id, workerId, status: 'pending', delayMs, error });
+  const release = (job: Job, delayMs: number, error: string) => {
+    spareJobs.delete(job.id);
+
+    return settle({ jobId: job.id, workerId, status: 'pending', delayMs, error });
+  };
 
   const fail = (
     job: Job,
@@ -240,6 +237,15 @@ export const createJobWorker = ({
       switch (outcome.kind) {
         case 'wait':
           await release(job, outcome.delayMs, outcome.why);
+          break;
+        case 'setAside':
+          await settle({
+            ...base,
+            status: 'paused',
+            refund: true,
+            error: limitSetAsideError(outcome.why),
+            attempt: { status: 'paused', workerId, error: outcome.why }
+          });
           break;
         case 'done':
           await settle({
@@ -607,6 +613,7 @@ export const createJobWorker = ({
     if (runnersBusy) {
       serverLog.debug('Actions', `job worker ${workerId}: ${runnersBusy}`);
     }
+
     const memoryRoom = limits && reading ? roomFor(reading, limits.mb, NEAR_MEMORY_SHARE) : free;
     const holds = limits ? { ...limits, takesNeeding: runningNeeding.size === 0 } : undefined;
     const asking = Math.max(1, Math.min(free, memoryRoom, room.calls));
@@ -635,7 +642,7 @@ export const createJobWorker = ({
     }
     // Every share taken and slots left with nothing else due: more of the spaces at their share, a share kept free for
     // the next space's work (`room().spare`) — a burst's 20 ms actions waited 37 s behind their own share.
-    const leftover = Math.min(free - claimed.length, room.spare, memoryRoom - claimed.length);
+    const leftover = Math.min(free - claimed.length, room.spare - claimed.length, memoryRoom - claimed.length);
     const sparing = claimed.length < asking && leftover > 0 ? onlyFull(spaces?.(), room.fullSpaces) : undefined;
     if (sparing) {
       const taken = await claim({

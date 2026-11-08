@@ -23,6 +23,12 @@ export const NOT_NOW_WORDS: Partial<Record<string, string>> = {
 };
 
 /**
+ * How long from `now` — the queue's clock, which every instant of it is read by — until the next minute begins, and a
+ * moment more: when a budget over the minute may be spent again.
+ */
+export const msToNextMinute = (now: number): number => 60_000 - (now % 60_000) + Math.floor(Math.random() * 5_000);
+
+/**
  * How soon a job refused "not now" comes round again: a slot of its space frees in seconds, not the half minute and more
  * a failure's backoff waits — a burst's jobs refused at their space's ceiling each waited 30–60 s for nothing.
  */
@@ -32,7 +38,7 @@ export const tryAgainMs = (): number => 1_000 + Math.floor(Math.random() * 1_000
  * How many of its runs may wait for a functions runner with room before a worker claims no more: a job it claimed then
  * waited beside them, held as running — under a load probe, 430 runs held by two workers while their two runners ran 26,
  * every one past its share of the queue's order. Held back, what waits waits in the queue, where every worker sees it,
- * and a worker takes more as soon as a runner takes one of its own (the queue's notice, `wake`, starts it at once).
+ * and a worker takes more on its next look: as one of its jobs ends, a job is queued (`wake`), or `pollMs` passes.
  */
 const RUNNER_WAITING_MOST = 10;
 
@@ -43,12 +49,13 @@ export const runnersFull = (waiting: number): string | undefined =>
     : undefined;
 
 /**
- * A worker's claims for one look. Every job that needs no runner as its slots allow (`light`); of those that do, no more
- * than its runs waiting for one leave room for (`RUNNER_WAITING_MOST`) — one claim of every free slot took 160 jobs of
- * space code at once, before any reached a runner to be counted — shared by turns between the two kinds of them, the
- * actions that run code and the functions' jobs: half the room each, the first of them `turn`'s (alternated look by
- * look), and what one leaves the other takes. Taken in the queue's order, a burst's actions held 100 minute-long jobs
- * back for two and a half minutes; sustained, for ever.
+ * A worker's claims for one look. Of the jobs that need a runner, no more than its runs waiting for one leave room for
+ * (`RUNNER_WAITING_MOST`) — one claim of every free slot took 160 jobs of space code at once, before any reached a runner
+ * to be counted — shared by turns between their two kinds, the actions that run code and the functions' jobs: half the
+ * room each, the first of them `turn`'s (alternated look by look), what one leaves the other takes. They are offered
+ * their room first, and every job that needs none (`light`) the slots left: taken in the queue's order, a burst's
+ * actions held 100 minute-long jobs back for two and a half minutes, and light jobs first, a steady flow of them would
+ * have held both kinds back for ever.
  */
 export const claimsWithin = (queue: JobQueue, waiting: number, turn: 'codeActions' | 'functionJobs') => {
   let room = Math.max(0, RUNNER_WAITING_MOST - waiting);
@@ -59,7 +66,7 @@ export const claimsWithin = (queue: JobQueue, waiting: number, turn: 'codeAction
       return [];
     }
 
-    const taken = await queue.claim({ ...claim, takes: 'light' });
+    const taken: Job[] = [];
     const share = async (takes: JobTake, limit: number): Promise<void> => {
       const left = Math.min(limit, room, claim.limit - taken.length);
       if (left > 0) {
@@ -71,6 +78,9 @@ export const claimsWithin = (queue: JobQueue, waiting: number, turn: 'codeAction
     await share(order[0] ?? 'codeActions', Math.ceil(room / 2));
     await share(order[1] ?? 'functionJobs', room);
     await share(order[0] ?? 'codeActions', room);
+    if (claim.limit > taken.length) {
+      taken.push(...(await queue.claim({ ...claim, takes: 'light', limit: claim.limit - taken.length })));
+    }
 
     return taken;
   };

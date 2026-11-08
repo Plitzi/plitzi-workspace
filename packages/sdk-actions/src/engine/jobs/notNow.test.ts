@@ -70,4 +70,11 @@ describe('a look’s claims', () => {
       codeActions: 1
     });
   });
+
+  // Light jobs first, a steady flow of them took every slot and held both kinds that need a runner back for ever.
+  it('offers the work that needs a runner its room before a flood of light jobs takes the slots', async () => {
+    const take = claimsWithin(queueOf({ light: 100, codeActions: 5, functionJobs: 5 }), 6, 'codeActions');
+
+    expect(kindsOf(await take({ ...claim, limit: 10 }))).toEqual({ codeActions: 2, functionJobs: 2, light: 6 });
+  });
 });

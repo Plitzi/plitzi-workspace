@@ -203,6 +203,25 @@ describe('how much a job worker takes', () => {
     expect(pending).toHaveLength(3);
   });
 
+  // Its spare room read before the pass's own claim: it took past their share the slots kept free for the next space.
+  it('keeps a share free past what the same look already took', async () => {
+    const test = world(() => new Promise(() => {}), [entry()], { perSpace: 2, perProcess: 6 });
+    for (const id of ['a', 'b']) {
+      await test.job({ id: `busy-${id}` });
+    }
+
+    const worker = test.worker({ workers: 8, leaseMs: 60_000 });
+    expect(await worker.poll()).toBe(2);
+    await settle();
+    await test.job({ id: 'other-space', spaceId: 2 });
+    for (const id of ['c', 'd', 'e']) {
+      await test.job({ id: `busy-${id}` });
+    }
+
+    // Six a process, two running and one taken of another space: one more past the share, two kept free.
+    expect(await worker.poll()).toBe(2);
+  });
+
   // A worker of 256 jobs at once stopped at the guards' 100 calls a process, saying nothing.
   it('runs as many jobs as its workers say, not the guards’ 100 calls a process', () => {
     const queue = createMemoryJobQueue();

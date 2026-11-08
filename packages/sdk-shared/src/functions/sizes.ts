@@ -12,6 +12,7 @@ export const FUNCTION_SIZES = {
 } as const satisfies Record<FunctionSize, { memoryMb: number }>;
 
 /** Every size, smallest first. */
+// `Object.keys` answers strings; they are the table's own keys, which `satisfies` above holds to every `FunctionSize`.
 export const FUNCTION_SIZE_NAMES = Object.keys(FUNCTION_SIZES) as FunctionSize[];
 
 /** Whether a value names a size. */

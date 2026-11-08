@@ -7,7 +7,7 @@ import { ActionRefusal, isActionRefusal } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { answerCall, readCall } from './capabilities';
-import { functionLimitsFor, functionSizeRefusal } from './config';
+import { invocationLimitsFor } from './config';
 import { functionContextFor } from './context';
 
 import type { FunctionsConfig } from './config';
@@ -102,7 +102,12 @@ export type JobSliceOutcome =
   /** `final`: no attempt would change it — a refusal, a job no code declares, a job out of its time. */
   | { kind: 'failed'; error: string; final: boolean; refused: boolean; spentMs: number }
   /** Not started: the account runs as many jobs as it may, or may not run code right now. */
-  | { kind: 'wait'; delayMs: number; why: string };
+  | { kind: 'wait'; delayMs: number; why: string }
+  /**
+   * Not started, and would not be on any attempt: it asks for what its plan does not include (a size). Set aside, what it
+   * saved kept, for its owner to change it or the plan and resume it — never failed for good.
+   */
+  | { kind: 'setAside'; why: string };
 
 /** Who and where a run of a space's code is, as `ctx.jobs` starts a job from it. */
 export type JobRunScope = { spaceId: number; environment: Environment; at?: SpaceRevision; user?: RunUser };
@@ -563,14 +568,18 @@ export const createFunctionJobs = ({
         throw new Error('This server runs no space functions');
       }
 
-      // A size its plan does not include: refused before it runs, and for good — another slice would be refused too.
-      const sizeRefusal = functionSizeRefusal(config.limits, functions.limits, functions.manifest.limits);
+      // A size its plan does not include: refused before it runs — another slice would be too — and set aside, what it
+      // saved kept, for a plan that includes it or a smaller size.
+      const { limits: base, sizeRefusal } = invocationLimitsFor(
+        config.limits,
+        functions.limits,
+        functions.manifest.limits
+      );
       if (sizeRefusal) {
-        return { kind: 'failed', error: sizeRefusal, final: true, refused: false, spentMs: spent() };
+        return { kind: 'setAside', why: sizeRefusal };
       }
 
       const fnCtx = contextOf(functions.manifest.hosts, functions.manifest, functions.manifest.jobs);
-      const base = functionLimitsFor(config.limits, functions.limits, functions.manifest.limits);
       const limitsForSlice: FunctionLimits = {
         ...base,
         cpuMs: sandboxed ? limits.sliceCpuMs : boundMs,

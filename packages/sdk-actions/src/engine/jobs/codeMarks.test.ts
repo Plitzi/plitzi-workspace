@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 import { codeMarkingQueue } from './codeMarks';
 import { createMemoryJobQueue } from './memoryQueue';
@@ -48,5 +50,21 @@ describe('a job as it is queued', () => {
 
     expect((await queue.getJob([1], 'syncing'))?.target).toMatchObject({ code: true });
     expect((await queue.getJob([1], 'beating'))?.target).not.toHaveProperty('code');
+  });
+
+  // A store that did not answer is a mark missed, never a schedule's fire or a kept call lost.
+  it('is queued unmarked when its action cannot be read', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => undefined);
+    const queue = createMemoryJobQueue();
+    const marking = codeMarkingQueue(
+      queue,
+      { getAction: () => Promise.reject(new Error('MySQL went away')), listActions: () => Promise.resolve([]) },
+      () => true
+    );
+
+    expect(await marking.enqueue(jobInput({ id: 'fired' }))).toBe(true);
+    expect((await queue.getJob([1], 'fired'))?.target).not.toHaveProperty('code');
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 });

@@ -24,14 +24,15 @@ const invocation: FunctionInvocation = {
  */
 describe('the invocations waiting for a runner with room', () => {
   it('counts one a full runner keeps, until the runner takes it', async () => {
-    // 90 of 100 MiB held: past the 85% it takes work to, so it keeps what it is asked.
-    let usedBytes = 90 * MIB;
+    // 20 of 200 MiB held empty, then 190: past the 85% it takes work to, so it keeps what it is asked.
+    let usedBytes = 20 * MIB;
     const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
       host: '127.0.0.1',
-      readMemory: () => ({ usedBytes, limitBytes: 100 * MIB })
+      readMemory: () => ({ usedBytes, limitBytes: 200 * MIB })
     });
+    usedBytes = 190 * MIB;
     const runner = createRemoteRunner({ url: `ws://127.0.0.1:${String(full.address().port)}`, secret: SECRET });
     try {
       expect(runner.waitingForRoom?.()).toBe(0);

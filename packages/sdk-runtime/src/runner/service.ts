@@ -454,16 +454,21 @@ export const startFunctionsRunnerService = async ({
   const MB = 1048576;
   /** What the runner holds with nothing running — read whenever nothing does: what every reservation is counted beside. */
   let idleBytes = readMemory().usedBytes;
+  /**
+   * The least it was read holding with nothing running: what it holds empty at its leanest, which an invocation may be
+   * judged by for good (`tooLarge`) — the last reading may be a moment's (its start, a collection not yet run).
+   */
+  let leanestIdleBytes = idleBytes;
   /** What the invocations it took are reserved, whole (`invocationFootprintMb`), until each ends. */
   let reservedBytes = 0;
   const footprintOf = (limits: FunctionLimits): number => invocationFootprintMb(limits.memoryMb) * MB;
   const release = (limits: FunctionLimits): void => {
     reservedBytes = Math.max(0, reservedBytes - footprintOf(limits));
   };
-  // Against its whole share alone, which never changes: what it holds besides does, and a runner holding much at a
-  // moment (its own start, a collection not yet run) would turn away for good what it takes a moment later.
+  // Against its share past what it held empty at its leanest — what admission (`busy`) counts an empty runner by, so
+  // nothing it says fits is then kept for ever; the last reading alone would turn away for good what a moment frees.
   const tooLarge = (limits: FunctionLimits): string | undefined => {
-    const room = readMemory().limitBytes * memoryShare;
+    const room = readMemory().limitBytes * memoryShare - leanestIdleBytes;
     const need = footprintOf(limits);
     if (need <= room) {
       return undefined;
@@ -473,7 +478,7 @@ export const startFunctionsRunnerService = async ({
 
     return (
       `This functions runner could never hold it: it may hold ${mb(need)} MB (${String(limits.memoryMb)} MB of memory), ` +
-      `past the ${mb(room)} MB this runner takes work up to, with nothing else running — a larger runner takes it`
+      `past the ${mb(room)} MB this runner has for invocations with nothing else running — a larger runner takes it`
     );
   };
   const busy = (limits: FunctionLimits, urgency: FunctionUrgency): string | undefined => {
@@ -488,6 +493,7 @@ export const startFunctionsRunnerService = async ({
     const memory = readMemory();
     if (reservedBytes === 0) {
       idleBytes = memory.usedBytes;
+      leanestIdleBytes = Math.min(leanestIdleBytes, idleBytes);
     }
 
     const need = footprintOf(limits);

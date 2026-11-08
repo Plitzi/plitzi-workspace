@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-import { actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { FUNCTION_ASKED_KEYS, actionAccessOf } from '@plitzi/sdk-shared/actions';
 import { isFunctionSize } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
@@ -188,9 +188,6 @@ const textOf = (object: ts.ObjectLiteralExpression, name: string, checker: ts.Ty
   return typeof read === 'string' ? read : undefined;
 };
 
-/** The limits a task may ask for, in the order they are written. */
-const ASKED_KEYS = ['cpuMs', 'wallMs', 'size'] as const satisfies readonly (keyof FunctionAskedLimits)[];
-
 /** What a task or the functions ask for: milliseconds and a size, as the platform would keep them. */
 const limitsOf = (object: ts.ObjectLiteralExpression, checker: ts.TypeChecker): FunctionAskedLimits | undefined => {
   const value = propertyOf(object, 'limits');
@@ -363,7 +360,7 @@ const objectAt = (env: VirtualTypeScriptEnvironment, place: SourcePlace): ts.Obj
 };
 
 const limitsText = (limits: FunctionAskedLimits): string =>
-  `{ ${ASKED_KEYS.flatMap(key => {
+  `{ ${FUNCTION_ASKED_KEYS.flatMap(key => {
     const value = limits[key];
 
     return value === undefined ? [] : [`${key}: ${typeof value === 'number' ? String(value) : `'${value}'`}`];
@@ -385,7 +382,7 @@ export const withTaskLimits = (
 
   const source = task.getSourceFile();
   const text = source.getFullText();
-  const asksFor = ASKED_KEYS.some(key => limits[key] !== undefined);
+  const asksFor = FUNCTION_ASKED_KEYS.some(key => limits[key] !== undefined);
   const existing = task.properties.find(property => propertyName(property) === 'limits');
   if (existing) {
     if (asksFor && ts.isPropertyAssignment(existing)) {
