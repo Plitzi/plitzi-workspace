@@ -10,7 +10,10 @@ import type { Pool } from 'mysql2/promise';
 type Numeric = number | string;
 
 const TRIGGER = "JSON_UNQUOTE(JSON_EXTRACT(target, '$.trigger'))";
-const WAITING = "status IN ('pending', 'paused')";
+// Waiting for the queue: one set aside (`paused`) waits for a person, and is said apart (`queueRules`' WAITING_STATUSES).
+const WAITING = "status = 'pending'";
+// A job a worker died running, waiting for a larger worker or set aside.
+const NEEDING = "status IN ('pending', 'paused')";
 
 /**
  * The jobs table at a glance (`JobQueue.summarize`), counted by MySQL: every status, what waits by what it is, and the
@@ -48,7 +51,7 @@ export const summarizeJobsTable = async (conn: Pool, table: string, spaces: numb
     selectRows<{ status: JobStatus; n: Numeric; most: Numeric }>(
       conn,
       `SELECT status, COUNT(*) AS n, MAX(needs_memory_mb) AS most
-         FROM ${table} WHERE ${WAITING} AND needs_memory_mb IS NOT NULL GROUP BY status`,
+         FROM ${table} WHERE ${NEEDING} AND needs_memory_mb IS NOT NULL GROUP BY status`,
       []
     )
   ]);

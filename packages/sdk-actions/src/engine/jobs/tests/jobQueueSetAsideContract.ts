@@ -35,4 +35,18 @@ export const describeSetAside = (ctx: SetAsideSubject): void => {
       { id: 'job-1', attempts: 1, history: [{ status: 'failed', error: 'the provider said no' }] }
     ]);
   });
+
+  // Counted as waiting, 32 jobs set aside at their limits read as a queue falling behind for minutes, with nothing to run.
+  it('says a job set aside apart from what waits for the queue', async () => {
+    await ctx.queue().enqueue(await ctx.job({ maxAttempts: 1 }));
+    await ctx.queue().claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+    await ctx.queue().settle({ jobId: 'job-1', workerId: 'pod-a', status: 'paused', error: 'Set aside at once' });
+
+    const summary = await ctx.queue().summarize();
+
+    expect(summary.byStatus.paused).toBe(1);
+    expect(summary.waiting).toEqual({ calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 });
+    expect(summary.oldestDueAt).toBeUndefined();
+    expect(summary.spaces).toEqual([]);
+  });
 };

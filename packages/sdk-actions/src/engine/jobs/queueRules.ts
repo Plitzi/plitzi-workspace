@@ -557,8 +557,15 @@ export const noJobsByStatus = (): Record<JobStatus, number> => ({
   cancelled: 0
 });
 
-/** The statuses a job waits in. */
-export const WAITING_STATUSES: readonly JobStatus[] = ['pending', 'paused'];
+/**
+ * The status a job waits for the queue in. One set aside (`paused`) waits for a person and is said apart
+ * (`byStatus.paused`): counted as waiting, 32 jobs set aside at their limits read as a queue falling behind for
+ * minutes, the oldest of them its wait, with nothing left to run.
+ */
+export const WAITING_STATUSES: readonly JobStatus[] = ['pending'];
+
+/** The statuses a job a worker died running is in while it needs a larger worker: waiting for one, or set aside. */
+export const NEEDING_STATUSES: readonly JobStatus[] = ['pending', 'paused'];
 
 /**
  * The queue at a glance, from its jobs: what `summarize` answers for a store that holds them all in hand — the database
@@ -572,17 +579,17 @@ export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSumm
   const needingMemory: JobsNeedingMemory = { waiting: 0, paused: 0 };
   all.forEach(job => {
     byStatus[job.status] += 1;
-    if (!WAITING_STATUSES.includes(job.status)) {
-      return;
-    }
-
-    if (job.needsMemoryMb !== undefined) {
+    if (job.needsMemoryMb !== undefined && NEEDING_STATUSES.includes(job.status)) {
       if (job.status === 'paused') {
         needingMemory.paused += 1;
       } else {
         needingMemory.waiting += 1;
         needingMemory.mostMb = Math.max(needingMemory.mostMb ?? 0, job.needsMemoryMb);
       }
+    }
+
+    if (!WAITING_STATUSES.includes(job.status)) {
+      return;
     }
 
     const kind = waitingKindOf(job.target.kind, job.target.kind === 'action' ? job.target.trigger : undefined);

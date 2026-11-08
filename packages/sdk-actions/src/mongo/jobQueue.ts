@@ -3,7 +3,7 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 import { claimable } from './claimable';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
-import { noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
+import { NEEDING_STATUSES, noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
 import type {
@@ -540,7 +540,7 @@ export const createMongoJobQueue = ({
             $facet: {
               byStatus: [{ $group: { _id: '$status', n: { $sum: 1 } } }],
               needingMemory: [
-                { $match: { ...waitingNow, needsMemoryMb: { $exists: true } } },
+                { $match: { status: { $in: [...NEEDING_STATUSES] }, needsMemoryMb: { $exists: true } } },
                 { $group: { _id: '$status', n: { $sum: 1 }, most: { $max: '$needsMemoryMb' } } }
               ],
               waiting: [

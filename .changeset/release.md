@@ -212,6 +212,10 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A job set aside is not waiting for the queue** (`summarize`): counted with what waits, 32 jobs set aside at their
+  limits read as a queue falling behind for minutes, the oldest of them its wait, with nothing left to run. They are said
+  apart (`byStatus.paused`); a job a worker died running still counts while it needs a larger one, set aside or not.
+
 - **A job says whether it runs the space's code** (`target.code`, set as it is queued from its action's document), and a
   worker whose runs wait for a runner with room takes only the jobs that need none (`claim({ withoutCode })`, in every
   store's queue). Held back from every claim, a burst's 20 ms actions waited 105 s behind the jobs that needed a runner;
