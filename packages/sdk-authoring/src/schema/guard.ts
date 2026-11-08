@@ -80,6 +80,7 @@ export const PAGE_SPEC_KEYS = [
   'accessLevel',
   'access',
   'unauthorizedRedirect',
+  'whenRefused',
   'folder',
   'layout',
   'css',

@@ -15,6 +15,18 @@ import type { Element, Schema } from '../types';
  */
 export type PageAccess = { permissions: string[] };
 
+/**
+ * What a page answers whoever it is not for (`unauthorizedBehaviour`): its refusal when it says nothing — 401 or 403
+ * and `settings.withheldPage` —, `redirect` to `unauthorizedPageRedirect` (signed out), or `notFound`: as if it did not
+ * exist — the space's 404 — and nothing of it is sent, not even its name or its path, because a refusal tells whoever
+ * probes a path that something is there (a back-office).
+ */
+export const NOT_FOUND_WHEN_REFUSED = 'notFound';
+
+/** Whether a page answers as if it did not exist to whoever it is not for. */
+export const notFoundWhenRefused = (attributes: Record<string, unknown> | undefined): boolean =>
+  attributes?.unauthorizedBehaviour === NOT_FOUND_WHEN_REFUSED;
+
 /** A page's access, when its attributes declare one — at least one permission, each a name — or nothing. */
 export const pageAccessOf = (attributes: Record<string, unknown> | undefined): PageAccess | undefined => {
   const access = attributes?.access;
@@ -83,17 +95,23 @@ export type WithheldSchema = { schema: Schema; withheld: string[]; kept: PageAcc
  * may be handed to.
  */
 export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSchema => {
-  const refusals = new Map<string, PageWithheld>();
+  const refusals = new Map<string, Refusal>();
   const kept: PageAccess[] = [];
   for (const pageId of schema.pages) {
-    const access = pageAccessOf((schema.flat[pageId] as Element | undefined)?.attributes);
+    const attributes = (schema.flat[pageId] as Element | undefined)?.attributes;
+    const hides = notFoundWhenRefused(attributes);
+    // A page for signed-in visitors that answers as if it did not exist is kept from the signed out as one for some
+    // permissions is: any session, none of them.
+    const access =
+      pageAccessOf(attributes) ??
+      (hides && attributes?.accessLevel === 'authenticated' ? { permissions: [] } : undefined);
     if (!access) {
       continue;
     }
 
     const refusal = pageAccessRefusal(access, caller);
     if (refusal) {
-      refusals.set(pageId, refusal);
+      refusals.set(pageId, hides ? 'hidden' : refusal);
     } else {
       kept.push(access);
     }
@@ -106,6 +124,9 @@ export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSch
   return { schema: emptiedSchema(schema, refusals), withheld: [...refusals.keys()], kept };
 };
 
+/** Why a page is not this visitor's: withheld (sent empty, saying why), or hidden (not sent at all). */
+type Refusal = PageWithheld | 'hidden';
+
 /**
  * The emptied schemas made from one schema, by which pages were withheld and why. Visitors fall into a few such groups —
  * signed out, signed in without a permission — and making one walks every element: made once per group and handed out
@@ -117,7 +138,7 @@ const emptied = new WeakMap<Schema, Map<string, Schema>>();
 /** Past this many groups for one schema, the oldest is made again when it is next asked for. */
 const EMPTIED_PER_SCHEMA = 16;
 
-const emptiedSchema = (schema: Schema, refusals: ReadonlyMap<string, PageWithheld>): Schema => {
+const emptiedSchema = (schema: Schema, refusals: ReadonlyMap<string, Refusal>): Schema => {
   const signature = [...refusals].map(([pageId, refusal]) => `${pageId}:${refusal}`).join('\n');
   const made = emptied.get(schema) ?? new Map<string, Schema>();
   emptied.set(schema, made);
@@ -129,6 +150,11 @@ const emptiedSchema = (schema: Schema, refusals: ReadonlyMap<string, PageWithhel
   const flat: Schema['flat'] = {};
   for (const [id, element] of Object.entries(schema.flat)) {
     const refusal = refusals.get(id);
+    // A hidden page is not there at all: its path answers what any path the space does not have answers.
+    if (refusal === 'hidden') {
+      continue;
+    }
+
     if (refusal) {
       flat[id] = {
         ...element,
@@ -146,7 +172,12 @@ const emptiedSchema = (schema: Schema, refusals: ReadonlyMap<string, PageWithhel
     flat[id] = element;
   }
 
-  const sent: Schema = { ...schema, flat };
+  const hidden = [...refusals].filter(([, refusal]) => refusal === 'hidden').map(([pageId]) => pageId);
+  const sent: Schema = {
+    ...schema,
+    flat,
+    ...(hidden.length > 0 ? { pages: schema.pages.filter(pageId => !hidden.includes(pageId)) } : {})
+  };
   if (made.size >= EMPTIED_PER_SCHEMA) {
     made.delete(made.keys().next().value ?? '');
   }

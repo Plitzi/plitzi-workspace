@@ -1,5 +1,5 @@
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
-import { pageAccessOf } from '@plitzi/sdk-shared/schema';
+import { NOT_FOUND_WHEN_REFUSED, pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import { groupBindings, withVisibility } from '../bindings';
 import { AuthoringError } from '../codes';
@@ -18,7 +18,6 @@ import type { SpaceAuthor } from './author';
 import type { PageHandle } from '../handles';
 import type { ComponentSpec, LayoutRef, LayoutSpec, PageSpec } from '../types';
 import type { Element, PageFolder, SpaceComponent } from '@plitzi/sdk-shared';
-
 /**
  * Where a page's ids are derived from — its slug, unless another page already claimed it.
  *
@@ -84,6 +83,12 @@ export const buildPageFolders = (author: SpaceAuthor): PageFolder[] => {
  * "Access Denied", with the flow that would have navigated away unmounted under it.
  */
 export const writeRedirect = (author: SpaceAuthor, page: PageSpec, id: string): void => {
+  if (page.whenRefused === 'notFound') {
+    writeNotFoundWhenRefused(author, page, id);
+
+    return;
+  }
+
   if (page.unauthorizedRedirect === undefined) {
     return;
   }
@@ -96,6 +101,33 @@ export const writeRedirect = (author: SpaceAuthor, page: PageSpec, id: string): 
       unauthorizedBehaviour: 'redirect',
       unauthorizedPageRedirect: redirectTarget(author, page.unauthorizedRedirect, `Page "${page.name}"`)
     }
+  });
+};
+
+/**
+ * A page that answers as if it did not exist to whoever it is not for. Refused for a page that is for everybody — nobody
+ * is refused it — and beside a redirect: a visitor is either sent on or answered not found, never both.
+ */
+const writeNotFoundWhenRefused = (author: SpaceAuthor, page: PageSpec, id: string): void => {
+  const where = `Page "${page.name}"`;
+  if (page.unauthorizedRedirect !== undefined) {
+    throw new AuthoringError(
+      'when-refused-conflict',
+      `${where} says both \`whenRefused: 'notFound'\` and \`unauthorizedRedirect\`: a visitor it is not for is either sent on or answered as if it did not exist. Keep one.`
+    );
+  }
+
+  if (page.accessLevel !== 'authenticated' && page.access === undefined) {
+    throw new AuthoringError(
+      'when-refused-conflict',
+      `${where} says \`whenRefused: 'notFound'\`, but it is for everybody — nobody is refused it. Give it \`access: { permissions: [...] }\` or \`accessLevel: 'authenticated'\`, or leave \`whenRefused\` out.`
+    );
+  }
+
+  const element = author.flatMap.flat[id];
+  author.flatMap.updateElement({
+    ...element,
+    attributes: { ...element.attributes, unauthorizedBehaviour: NOT_FOUND_WHEN_REFUSED }
   });
 };
 

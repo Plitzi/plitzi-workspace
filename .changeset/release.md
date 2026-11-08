@@ -178,6 +178,11 @@ space while it hydrates.
 
 ## The server (`@plitzi/sdk-server`)
 
+- **A page can answer whoever it is not for as if it did not exist.** `unauthorizedBehaviour: 'notFound'` (the builder's
+  Unauthorized Behaviour → Not found; authoring's `whenRefused: 'notFound'`), with `access` or `accessLevel:
+  'authenticated'`: the space's 404, and nothing of it sent — not its name nor its path (`withholdPages`), where a
+  401/403 told whoever probed the path that something was there. For a back-office.
+
 - **A session that ended on the server no longer sends the browser round the sign-in for ever.** Signed out everywhere,
   revoked, or the database restored, the browser kept its cookie, the readable hint and the token it stored: it took
   itself for signed in, a sign-in for signed-out visitors sent it on, and the page server sent it straight back — 271

@@ -52,6 +52,11 @@ export const PAGE_CODES = {
     means: 'a page that sends visitors it is not for to a page the space does not have',
     fix: "a page's id or slug (`''` is the home page), or a full URL"
   },
+  'when-refused-conflict': {
+    kind: 'refused',
+    means: "a page's `whenRefused: 'notFound'` beside `unauthorizedRedirect`, or on a page nobody is refused",
+    fix: "keep the redirect or the not found; give the page `access` or `accessLevel: 'authenticated'`"
+  },
   'robots-unknown': {
     kind: 'refused',
     means: "a page's `robots` with a directive no search engine reads, or none",

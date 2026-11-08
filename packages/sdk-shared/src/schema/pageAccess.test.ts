@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   mayReceive,
+  notFoundWhenRefused,
   pageAccessOf,
   pageAccessRefusal,
   pageWithheldOf,
@@ -94,6 +95,63 @@ describe('the space a visitor is sent', () => {
     expect(mayReceive(kept, { permissions: ['adminManage'] })).toBe(true);
     expect(mayReceive(kept, { permissions: [] })).toBe(false);
     expect(mayReceive(kept, undefined)).toBe(false);
+  });
+});
+
+// A back-office says nothing to whoever probes its paths: a refusal is an answer that something is there.
+describe('a page that answers as if it did not exist to whoever it is not for', () => {
+  const hiding = (): Schema => {
+    const space = schema();
+    space.flat.staff = element(
+      'staff',
+      'staff',
+      { slug: 'staff', access: { permissions: ['adminManage'] }, unauthorizedBehaviour: 'notFound' },
+      ['secret']
+    );
+
+    return space;
+  };
+
+  it('says so only when its unauthorized behaviour is notFound', () => {
+    expect(notFoundWhenRefused({ unauthorizedBehaviour: 'notFound' })).toBe(true);
+    expect(notFoundWhenRefused({ unauthorizedBehaviour: 'redirect' })).toBe(false);
+    expect(notFoundWhenRefused({})).toBe(false);
+  });
+
+  it('is not in the space a visitor it is not for is sent — not its name, nor its path — signed out or in', () => {
+    for (const caller of [undefined, { permissions: ['spaceView'] }]) {
+      const { schema: sent, withheld } = withholdPages(hiding(), caller);
+
+      expect(withheld).toEqual(['staff']);
+      expect(sent.pages).toEqual(['home']);
+      expect(sent.flat.staff).toBeUndefined();
+      expect(sent.flat.secret).toBeUndefined();
+      expect(JSON.stringify(sent)).not.toContain('staff');
+      expect(sent.flat.welcome).toEqual(schema().flat.welcome);
+    }
+  });
+
+  it('is sent whole to a visitor it is for', () => {
+    const original = hiding();
+
+    expect(withholdPages(original, { permissions: ['adminManage'] }).schema).toBe(original);
+  });
+
+  it('keeps a page for signed-in visitors from the signed out, and sends it whole to any session', () => {
+    const space = schema();
+    space.flat.staff = element(
+      'staff',
+      'staff',
+      { slug: 'staff', accessLevel: 'authenticated', unauthorizedBehaviour: 'notFound' },
+      ['secret']
+    );
+
+    const signedOut = withholdPages(space, undefined);
+    expect(signedOut.schema.pages).toEqual(['home']);
+    expect(JSON.stringify(signedOut.schema)).not.toContain('The release checklist');
+    const signedIn = withholdPages(space, { permissions: [] });
+    expect(signedIn.schema).toBe(space);
+    expect(mayReceive(signedIn.kept, undefined)).toBe(false);
   });
 });
 

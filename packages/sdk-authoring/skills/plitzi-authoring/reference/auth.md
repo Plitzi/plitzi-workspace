@@ -80,6 +80,10 @@ the browser fetches. Signed out, they go to `unauthorizedRedirect` when the page
 of Plitzi's unless `settings.withheldPage` names a page of the space (id or slug, with no `access`): it is drawn
 instead, in the same layout, with the same status — `auth.isAuthenticated` tells "sign in" from "not yours". Hiding a
 part of a page on `auth.details.permissions` is not this: the part was still sent.
+`whenRefused: 'notFound'` (with `access` or `accessLevel: 'authenticated'`) keeps even its existence from them — a
+back-office: anybody it is not for is answered the space's 404, as for a path it does not have, and sent nothing of it,
+not its name nor its path (a 401 or 403 tells whoever probes the path that something is there). Not beside
+`unauthorizedRedirect`: a visitor is sent on or answered not found. The builder's "Unauthorized Behaviour".
 
 ## What a visitor may do
 

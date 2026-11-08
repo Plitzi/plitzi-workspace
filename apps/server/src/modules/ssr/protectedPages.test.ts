@@ -19,12 +19,36 @@ const PORT = await unusedPort();
 const base = `http://127.0.0.1:${String(PORT)}`;
 const PORT_INSTEAD = await unusedPort();
 const SECRET = 'The release checklist, step by step';
+const VAULT = 'The pools of every replica, live';
 
 const schema: Schema = {
   ...oneEmptyPage,
-  pages: ['home', 'staff'],
+  pages: ['home', 'staff', 'vault'],
   flat: {
     ...oneEmptyPage.flat,
+    vault: {
+      id: 'vault',
+      attributes: {
+        slug: 'back-office-vault',
+        folder: '',
+        default: false,
+        access: { permissions: ['adminManage'] },
+        unauthorizedBehaviour: 'notFound'
+      },
+      definition: { type: 'page', label: 'vault', rootId: 'vault', items: ['vault-text'], styleSelectors: { base: '' } }
+    },
+    'vault-text': {
+      id: 'vault-text',
+      attributes: { content: VAULT },
+      definition: {
+        type: 'text',
+        label: 'vault-text',
+        rootId: 'vault',
+        parentId: 'vault',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    },
     staff: {
       id: 'staff',
       attributes: { slug: 'staff', folder: '', default: false, access: { permissions: ['adminManage'] } },
@@ -130,6 +154,33 @@ describe('a page for some permissions', () => {
 
     expect(await (await fetch(`${base}${path}`)).text()).not.toContain(SECRET);
     expect(await (await fetch(`${base}${path}`, as('spaceView'))).text()).not.toContain(SECRET);
+  });
+});
+
+// A back-office says nothing to whoever probes its paths: a 401 or a 403 is an answer that something is there.
+describe('a page hidden from whoever it is not for', () => {
+  it('answers what a path the space does not have answers, signed out or in, and sends nothing of it', async () => {
+    const nothing = await fetch(`${base}/no-page-here`, as('spaceView'));
+    await nothing.text();
+
+    for (const who of [undefined, 'spaceView']) {
+      const response = await fetch(`${base}/back-office-vault`, as(who));
+      const html = await response.text();
+
+      expect(response.status).toBe(nothing.status);
+      expect(response.status).toBe(404);
+      expect(html).not.toContain(VAULT);
+      // The path asked is echoed as any path is; what would tell is the page itself — its id, in the page or the space.
+      expect(html).not.toContain('"vault"');
+      expect(await (await fetch(`${base}${documentPath(html)}`, as(who))).text()).not.toContain('back-office-vault');
+    }
+  });
+
+  it('is drawn whole for a visitor it is for', async () => {
+    const response = await fetch(`${base}/back-office-vault`, as('adminManage'));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain(VAULT);
   });
 });
 
