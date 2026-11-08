@@ -9,7 +9,7 @@ import { createActionsModule } from '../engine/module';
 import { createSigning } from '../engine/runtime/signing';
 
 import type { FunctionsConfig } from './config';
-import type { IsolateRunner } from '@plitzi/sdk-runtime/runner';
+import type { CpuMeter, IsolateRunner } from '@plitzi/sdk-runtime/runner';
 import type { ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 import type { FunctionLimits, SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
@@ -515,6 +515,32 @@ describe('an invocation’s limits', () => {
 
     results.forEach(result => expect(result.error).toContain('ms of CPU'));
     expect(Date.now() - started).toBeLessThan(10_000);
+  });
+
+  /**
+   * What the limit is judged by — the regression this guards: V8 counts the time an isolate waited for a core as its CPU,
+   * and under a burst a 5 ms route was stopped at its 100 ms limit. A meter here charges what a crowded runner would —
+   * a tenth of what each is measured at — or ten times it: the limit follows what is charged, never what V8 measured.
+   */
+  it('judges the CPU limit by what the meter charges, not by what V8 measured', async () => {
+    const meterCharging = (share: number): CpuMeter => ({
+      meter: read => {
+        const from = read();
+
+        return { charged: () => (read() - from) * share, end: () => undefined };
+      }
+    });
+    const spin = (ms: number) =>
+      sourceOf(`const until = Date.now() + ${String(ms)}; while (Date.now() < until) {} return "done";`, {
+        asks: { cpuMs: 100 }
+      });
+    const crowded = await spaceWith(spin(300), { runner: createIsolateRunner({ cpuMeter: meterCharging(0.1) }) });
+    const charged = await spaceWith(spin(30), { runner: createIsolateRunner({ cpuMeter: meterCharging(10) }) });
+
+    // Measured 300 ms against a 100 ms limit, charged 30: it ran its share of a crowded core, and finishes.
+    expect((await crowded.run()).value).toBe('done');
+    // Measured 30 ms, charged 300: stopped by what it was charged.
+    expect((await charged.run()).error).toContain('ms of CPU');
   });
 
   // The other half: code that takes a few ms beside spinners on one core is never charged the core it waited for — a

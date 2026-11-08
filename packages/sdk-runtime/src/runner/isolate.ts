@@ -15,7 +15,7 @@ import { installGuest } from './guest/install';
 import { guestPrelude } from './prelude';
 import { createTurns } from './turns';
 
-import type { MeteredIsolate } from './cpuMeter';
+import type { CpuMeter, MeteredIsolate } from './cpuMeter';
 import type { GuestDriver } from './guest/types';
 import type {
   FunctionsBundleRef,
@@ -47,11 +47,15 @@ export type IsolateRunnerOptions = {
    * How many isolates run JavaScript at once: as many as the cores this runner may use (its container's quota, at least
    * one) by default. An isolate waiting on the platform — a call, a sleep, a derivation — gives its turn up and takes one
    * again when the answer is back. isolated-vm runs isolates on as many threads as the machine has cores, whatever the
-   * container's quota: past it they fought for its CPU, and a route that spent 5 ms of its own was measured at 100–300
-   * under a burst and stopped for CPU it never used. With turns, a burst runs slower, never stopped for the runner's
-   * own contention.
+   * container's quota: past it they fought for its CPU. With turns, fewer fight at once; what each is charged is the
+   * meter's (`cpuMeter`).
    */
   turns?: number;
+  /**
+   * What each isolate is charged of the CPU: its share of the process's own, as the system counts it, by default
+   * (`createCpuMeter`) — never the time it waited for a core, which V8 counts as its CPU. A test hands one of its own.
+   */
+  cpuMeter?: CpuMeter;
 };
 
 /** The isolates, and what readies them before the first invocation pays for it. */
@@ -272,10 +276,10 @@ export const DEFAULT_CONCURRENCY = 8;
 export const createIsolateRunner = ({
   concurrency = DEFAULT_CONCURRENCY,
   cacheBytes = 32 * 1024 * 1024,
-  turns: turnCount = Math.max(1, Math.round(cpuLimitCores()))
+  turns: turnCount = Math.max(1, Math.round(cpuLimitCores())),
+  cpuMeter: cpu = createCpuMeter(WATCHDOG_MS)
 }: IsolateRunnerOptions = {}): IsolateRunner => {
   const turns = createTurns(turnCount);
-  const cpu = createCpuMeter(WATCHDOG_MS);
   const cache = new Map<string, Cached>();
   let cachedBytes = 0;
   /** Every isolate starts from a heap with the prelude already run in it: running it each time was most of the cost. */
