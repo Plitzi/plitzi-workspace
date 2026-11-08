@@ -212,6 +212,10 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **What an invocation spent says the memory it ran with** (`FunctionUsageRecord.memoryMb`, beside `usage`): a
+  deployment bills compute as memory over the time it was held, as Lambda does. **To redo:** a `functions.onUsage`
+  that builds records by hand adds it.
+
 - **A visitor's request never waits behind work nobody waits on.** Under load, minute-long job slices and scheduled
   actions filled every runner, and visitors' calls waited behind them in the same queue past their own timeout (129 of
   1000). A runner now takes work nobody waits on — a `schedule` or `later` run, a job's slice — up to three quarters of
