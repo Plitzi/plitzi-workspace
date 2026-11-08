@@ -390,8 +390,25 @@ export const createIsolateRunner = ({
      * spinner holds one until it ends), a core it was ready for and did not get. Counted from the clock, a route that
      * slept 200 ms on a crowded runner was stopped at its 10 s.
      */
-    const ownMs = (): number =>
-      codeBegan ? awaitedMs + (awaitingSince === undefined ? 0 : Date.now() - awaitingSince) + chargedCpu() : 0;
+    /**
+     * A sleep counts what it asked for: the timer that wakes it is the runner's, on its main thread, and a crowded runner
+     * woke a 200 ms sleep seconds late — counted, a route was stopped at its 10 s. Its lateness, of the sleeps that ended
+     * and of the ones still past their time, is the runner's.
+     */
+    let lateMs = 0;
+    const sleeping = new Set<{ from: number; wanted: number }>();
+    const lateNow = (now: number): number =>
+      [...sleeping].reduce((late, sleep) => late + Math.max(0, now - sleep.from - sleep.wanted), lateMs);
+    const ownMs = (): number => {
+      if (!codeBegan) {
+        return 0;
+      }
+
+      const now = Date.now();
+      const awaitedNow = awaitedMs + (awaitingSince === undefined ? 0 : now - awaitingSince);
+
+      return Math.max(0, awaitedNow - lateNow(now)) + chargedCpu();
+    };
     /** The turn at running JavaScript this isolate holds, if any, and how many answers of the platform it waits for. */
     let holding: number | undefined;
     let awaited = 0;
@@ -540,7 +557,19 @@ export const createIsolateRunner = ({
             return waitingOn(() => new Promise<void>(() => undefined));
           }
 
-          return waitingOn(() => new Promise(resolve => later(wanted, resolve)));
+          const sleep = { from: Date.now(), wanted };
+          sleeping.add(sleep);
+
+          return waitingOn(
+            () =>
+              new Promise<void>(resolve => {
+                later(wanted, () => {
+                  sleeping.delete(sleep);
+                  lateMs += Math.max(0, Date.now() - sleep.from - wanted);
+                  resolve();
+                });
+              })
+          );
         })
       );
       global.setSync(

@@ -12,6 +12,13 @@ export type CpuMeter = {
 };
 
 /**
+ * How far back the meter's share is read: the system counts a thread's CPU in its scheduler's ticks, a few ms each, so a
+ * look of 5 ms read 0 or 12 ms beside a smooth measure, and the lower bound of each look lost the lumps — eight spinners
+ * that took 25 s of CPU were charged 7. Over a quarter of a second the lumps even out, and it follows a change as soon.
+ */
+const SHARE_WINDOW_MS = 250;
+
+/**
  * The CPU the isolates' threads took, as the system counts it, in ms: the process's, every thread on a core, less its
  * main thread's — making isolates, compiling bundles, speaking to the platform is the runner's work, and counted with
  * theirs it let a running isolate be charged what V8 measured while the main thread was busy.
@@ -43,6 +50,8 @@ export const createCpuMeter = (everyMs: number, cores: number, readProcess: () =
   let lastProcess = readProcess();
   let lastAt = Date.now();
   let timer: NodeJS.Timeout | undefined;
+  /** The last quarter second of looks: what the threads took, what the cores held, what the isolates were measured at. */
+  const window: { at: number; spent: number; capacity: number; measured: number }[] = [];
 
   const look = (): void => {
     const now = readProcess();
@@ -61,7 +70,15 @@ export const createCpuMeter = (everyMs: number, cores: number, readProcess: () =
       return { entry, slice };
     });
     const measured = slices.reduce((total, { slice }) => total + slice, 0);
-    const share = measured > 0 ? Math.min(1, spent / measured, capacity / measured) : 1;
+    window.push({ at, spent, capacity, measured });
+    while (window.length > 1 && (window[0]?.at ?? at) < at - SHARE_WINDOW_MS) {
+      window.shift();
+    }
+
+    const sum = (key: 'spent' | 'capacity' | 'measured'): number =>
+      window.reduce((total, look) => total + look[key], 0);
+    const inWindow = sum('measured');
+    const share = inWindow > 0 ? Math.min(1, sum('spent') / inWindow, sum('capacity') / inWindow) : 1;
     slices.forEach(({ entry, slice }) => {
       entry.charged += slice * share;
     });
@@ -91,6 +108,7 @@ export const createCpuMeter = (everyMs: number, cores: number, readProcess: () =
           if (live.size === 0 && timer) {
             clearInterval(timer);
             timer = undefined;
+            window.length = 0;
           }
         }
       };

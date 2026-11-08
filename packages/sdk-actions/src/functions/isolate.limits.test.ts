@@ -129,6 +129,22 @@ describe('an invocation’s limits', () => {
     expect((await space.run()).value).toBe('done');
   });
 
+  // A sleep counts what it asked for: the runner's main thread woke a 200 ms sleep seconds late on a crowded runner, and a
+  // route was stopped at its 10 s for it. Its main thread held here, the sleep wakes late — the code finishes in time.
+  it('counts a sleep as what it asked for, never the runner waking it late', async () => {
+    const space = await spaceWith(
+      sourceOf('await new Promise(r => setTimeout(r, 100)); return "woke";', { asks: { cpuMs: 1000, wallMs: 300 } })
+    );
+    const running = space.run();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const busyUntil = Date.now() + 600;
+    while (Date.now() < busyUntil) {
+      // The runner's main thread, held: its timers — the code's sleep among them — fire late.
+    }
+
+    expect((await running).value).toBe('woke');
+  });
+
   // What was not its own is the runner's, and told: the platform's wait for the answer grows by it, or runs out first.
   it('tells the platform the time that was the runner’s, so its wait for the answer grows by it', async () => {
     const crowded: CpuMeter = {

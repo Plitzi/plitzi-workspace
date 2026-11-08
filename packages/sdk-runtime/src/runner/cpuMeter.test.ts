@@ -107,6 +107,28 @@ describe('the CPU meter', () => {
     expect(idle.charged()).toBeCloseTo(0.1, 1);
   });
 
+  /**
+   * The regression the window guards: the system counts a thread's CPU in scheduler ticks, so 5 ms looks read 0 or 10
+   * beside a smooth measure, and a share read look by look lost every lump — eight spinners that took 25 s were charged
+   * 7 and ran past their limit. Over the window it is the 5 a look the threads truly took, shared between them.
+   */
+  it('shares what the threads took over a window, so the system’s lumpy count is charged whole', async () => {
+    vi.useFakeTimers();
+    const { state, readProcess, readIsolate } = clocks();
+    const meter = createCpuMeter(5, 1, readProcess);
+    const metered = [0, 1, 2, 3].map(index => meter.meter(readIsolate(index)));
+
+    // Forty looks: four isolates measured 5 ms each a look, the threads counted 0 and 10 by turns — 5 a look, one core.
+    for (let look = 0; look < 40; look += 1) {
+      state.process += look % 2 === 0 ? 0 : 10;
+      state.isolates = state.isolates.map(measured => measured + 5);
+      await vi.advanceTimersByTimeAsync(5);
+    }
+
+    // 200 ms of one core between four: 50 each, give or take the first look's lump.
+    metered.forEach(each => expect(each.charged()).toBeGreaterThan(45));
+  });
+
   // The regression it guards: the main thread's work — making isolates, compiling bundles — counted as theirs, and a
   // running isolate was charged what V8 measured while it was busy. The main thread spinning moves none of it.
   it('reads the isolates’ threads alone, never the main thread’s work', () => {
