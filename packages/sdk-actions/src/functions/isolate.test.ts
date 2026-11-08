@@ -330,6 +330,7 @@ describe('what an invocation spends', () => {
 
     expect(onUsage).toHaveBeenCalledWith({
       spaceId: 3,
+      environment: 'main',
       task: 'probe.run',
       ok: true,
       usage: { cpuMs: expect.any(Number) as number, wallMs: expect.any(Number) as number, calls: 1 },

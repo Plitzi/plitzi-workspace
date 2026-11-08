@@ -329,7 +329,14 @@ export const createRoutes = ({
         let streaming = false;
         const { limits, sizeRefusal } = invocationLimitsFor(config.limits, functions.limits, functions.manifest.limits);
         const meter = (usage: FunctionUsage, done: boolean): void => {
-          config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage, memoryMb: limits.memoryMb });
+          config.onUsage?.({
+            spaceId: visit.spaceId,
+            environment: visit.environment,
+            task: usageName,
+            ok: done,
+            usage,
+            memoryMb: limits.memoryMb
+          });
         };
         try {
           // A size its plan does not include, refused before it runs: answered as the limit it is.

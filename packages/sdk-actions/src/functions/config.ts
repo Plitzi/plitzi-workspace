@@ -2,7 +2,7 @@ import { DEFAULT_FUNCTION_ASKED_LIMITS } from '@plitzi/sdk-shared/actions';
 import { FUNCTION_SIZES, functionSizesWithin } from '@plitzi/sdk-shared/functions';
 
 import type { FunctionJobLimits } from './jobs';
-import type { FunctionAskedLimits } from '@plitzi/sdk-shared';
+import type { Environment, FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { FunctionsDefinition } from '@plitzi/sdk-shared/functions';
 import type { FunctionLimits, FunctionRunner, FunctionUsage } from '@plitzi/sdk-shared/functions';
 
@@ -12,6 +12,8 @@ import type { FunctionLimits, FunctionRunner, FunctionUsage } from '@plitzi/sdk-
  */
 export type FunctionUsageRecord = {
   spaceId: number;
+  /** Which build of the space it ran, as its run did: what a deployment files what it spent under. */
+  environment: Environment;
   task: string;
   ok: boolean;
   usage: FunctionUsage;

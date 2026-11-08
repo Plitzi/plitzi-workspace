@@ -115,7 +115,14 @@ const spaceTasks = (
           throw error;
         } finally {
           if (spent) {
-            onUsage?.({ spaceId: ctx.spaceId, task: name, ok, usage: spent, memoryMb: limits.memoryMb });
+            onUsage?.({
+              spaceId: ctx.spaceId,
+              environment: ctx.environment,
+              task: name,
+              ok,
+              usage: spent,
+              memoryMb: limits.memoryMb
+            });
           }
         }
       }

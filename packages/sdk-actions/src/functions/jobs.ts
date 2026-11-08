@@ -636,6 +636,7 @@ export const createFunctionJobs = ({
         if (usage) {
           config.onUsage?.({
             spaceId: job.spaceId,
+            environment: job.environment,
             task: `job ${target.name}`,
             ok,
             usage,
