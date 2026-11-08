@@ -68,4 +68,58 @@ describe('actionsModuleFor', () => {
 
     await expect(module.guards.begin({ ...begin, idempotencyKey: 'b' })).rejects.toThrow(/Too many/);
   });
+
+  // Dropped here, a space's runs never stopped at its plan's allowance on a page server or a worker — only where a
+  // deployment built the module itself — and a load round past it ran every one.
+  it('carries the paywall on runs through', async () => {
+    const entry = {
+      id: 'quote',
+      document: {
+        name: 'Quote',
+        nodes: {
+          start: {
+            id: 'start',
+            title: 'start',
+            type: 'trigger' as const,
+            action: 'call',
+            params: { access: 'public' },
+            preview: {},
+            elementId: null,
+            beforeNode: '',
+            afterNode: 'out',
+            flowId: 'flow',
+            enabled: true
+          },
+          out: {
+            id: 'out',
+            title: 'out',
+            type: 'task' as const,
+            action: 'flow.output',
+            params: { values: '{"ok": true}' },
+            preview: {},
+            elementId: null,
+            beforeNode: 'start',
+            afterNode: '',
+            flowId: 'flow',
+            enabled: true
+          }
+        }
+      }
+    };
+    const module = moduleFrom({
+      admitRun: () => Promise.resolve('This space has used the 150 action runs its plan includes')
+    });
+
+    await expect(
+      module.runAction({
+        entry,
+        input: {},
+        callerId: 'user:1',
+        spaceId: 1,
+        environment: 'main',
+        trigger: 'call',
+        runId: 'r'
+      })
+    ).rejects.toMatchObject({ reason: 'quota', message: 'This space has used the 150 action runs its plan includes' });
+  });
 });

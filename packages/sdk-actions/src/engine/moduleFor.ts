@@ -41,6 +41,7 @@ export const actionsModuleFor = (config: EngineConfig): ActionsModule | undefine
     functions: functionsConfigOf(config.functions),
     limits: config.action?.limits,
     limitsFor: config.action?.limitsFor,
+    admitRun: config.action?.admitRun,
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
     jobs: config.action?.jobs,
