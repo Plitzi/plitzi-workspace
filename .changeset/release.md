@@ -212,6 +212,13 @@ space while it hydrates.
 
 ## The functions runners (`@plitzi/sdk-runtime`, `@plitzi/sdk-actions`)
 
+- **A visitor's request never waits behind work nobody waits on.** Under load, minute-long job slices and scheduled
+  actions filled every runner, and visitors' calls waited behind them in the same queue past their own timeout (129 of
+  1000). A runner now takes work nobody waits on — a `schedule` or `later` run, a job's slice — up to three quarters of
+  its room, keeping the rest for requests someone waits on (a route, a call, a render, a webhook), and lets those in
+  first from its queue (`invocationUrgency`, `@plitzi/sdk-shared/functions`). An empty runner still takes background
+  work against its whole room.
+
 - **A function runs at the size it asks for — small, medium or large — and the plan says which it may.** Every
   invocation was given its plan's memory, asked for or not, and the runner keeps an invocation's memory whole while it
   runs: under load a 1 GB runner held two invocations at once and the rest waited (calls past a minute, actions over

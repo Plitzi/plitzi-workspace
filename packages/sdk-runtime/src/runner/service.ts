@@ -15,6 +15,7 @@ import {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
   errorOfAnswer,
+  invocationUrgency,
   isFunctionLimit,
   isStreamedRouteAnswer,
   protocolKnows,
@@ -32,6 +33,7 @@ import type {
   FunctionFailureReason,
   FunctionLimits,
   FunctionRunner,
+  FunctionUrgency,
   FunctionUsage,
   RunnerRequestMessage,
   RunnerResponseMessage,
@@ -109,6 +111,13 @@ export const invocationFootprintMb = (memoryMb: number): number => Math.ceil(mem
 /** How often what is kept waiting is looked at again, beside each invocation that ends: memory frees between them. */
 const KEPT_LOOK_MS = 100;
 
+/**
+ * The share of a runner's room — its memory past what it holds idle — that what nobody waits on may take (a schedule's
+ * run, a job's slice): the rest is kept for a visitor's request. Under a load probe, minute-long job slices and
+ * scheduled actions filled every runner, and visitors' calls waited behind them past their own timeout.
+ */
+const BACKGROUND_SHARE = 0.75;
+
 /** How an invocation that did not answer reads to the stats: a limit, its code refusing, or a failure. */
 const endOf = (reason: FunctionFailureReason): RunEnd =>
   isFunctionLimit(reason) ? { limit: reason } : reason === 'refused' ? { refused: true } : { failed: reason };
@@ -123,14 +132,14 @@ type ConnectionStats = {
   recorder: StatsRecorder;
   inFlight: { count: number };
   /** Why this runner takes no new invocation of these limits right now, or nothing — and then it is counted as taken. */
-  busy: (limits: FunctionLimits) => string | undefined;
+  busy: (limits: FunctionLimits, urgency: FunctionUrgency) => string | undefined;
   /** Whether that is because it is stopping, rather than short of memory: what its stats count it as. */
   stopping: () => boolean;
   /**
    * Keeps an invocation it has no room for until it has (1.3's `queue`): true once it is taken — counted as `busy` counts
    * one — false when the runner starts stopping first, or the platform goes away.
    */
-  wait: (limits: FunctionLimits, signal: AbortSignal) => Promise<boolean>;
+  wait: (limits: FunctionLimits, urgency: FunctionUrgency, signal: AbortSignal) => Promise<boolean>;
   /** An invocation it took ended: what it reserved is free (`release`), and what was kept waiting may have room now. */
   ended: (limits: FunctionLimits) => void;
 };
@@ -286,10 +295,11 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
   /** An invocation taken — now, or once there is room for it — and run. */
   const start = async (message: Extract<RunnerRequestMessage, { type: 'invoke' }>): Promise<void> => {
     const { bundleId, invocation, limits } = message;
+    const urgency = invocationUrgency(invocation);
     // Taken with an isolate free and memory for it. Full, it answers at once for the platform to place the invocation
     // on a runner with room; when every runner is full, the platform asks one to keep it (`queue`), and it waits here
     // — its time not yet running — until there is room.
-    const busy = stats.busy(limits);
+    const busy = stats.busy(limits, urgency);
     if (busy) {
       const keeps = !stats.stopping() && message.queue === true && protocolKnows(message.protocol, '1.3');
       if (!keeps) {
@@ -300,7 +310,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       }
 
       send({ type: 'queued' });
-      if (!(await stats.wait(limits, controller.signal))) {
+      if (!(await stats.wait(limits, urgency, controller.signal))) {
         if (!controller.signal.aborted) {
           stats.recorder.refuse('stopping');
           finish({
@@ -435,7 +445,7 @@ export const startFunctionsRunnerService = async ({
   const release = (limits: FunctionLimits): void => {
     reservedBytes = Math.max(0, reservedBytes - footprintOf(limits));
   };
-  const busy = (limits: FunctionLimits): string | undefined => {
+  const busy = (limits: FunctionLimits, urgency: FunctionUrgency): string | undefined => {
     if (stopping) {
       return 'This functions runner is stopping — a deploy or a scale-down — and takes no new invocation: another does';
     }
@@ -450,7 +460,10 @@ export const startFunctionsRunnerService = async ({
     }
 
     const need = footprintOf(limits);
-    const cap = memory.limitBytes * memoryShare;
+    const whole = memory.limitBytes * memoryShare;
+    // An empty runner takes it against its whole room: one whose share would hold none must not keep it for ever.
+    const cap =
+      urgency === 'background' && reservedBytes > 0 ? idleBytes + (whole - idleBytes) * BACKGROUND_SHARE : whole;
     const mb = (bytes: number) => String(Math.round(bytes / MB));
     // Taken when what it may hold, whole, fits beside what every invocation it runs was reserved — and beside what it
     // holds now, which past those (a fragmented heap) says so too. Its CPU busy is not a refusal: invocations take turns
@@ -464,24 +477,28 @@ export const startFunctionsRunnerService = async ({
     return (
       `The functions runner is short of memory — ${mb(idleBytes + reservedBytes)} MB reserved for what it runs ` +
       `(${mb(memory.usedBytes)} in use), and this one may hold ${mb(need)}, past the ${mb(cap)} MB ` +
-      `(${String(Math.round(memoryShare * 100))}% of ${mb(memory.limitBytes)}) it takes new ones up to — so it took ` +
-      'none: another runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
+      (urgency === 'background'
+        ? `it takes work nobody waits on up to (${String(Math.round(BACKGROUND_SHARE * 100))}% of its room, the rest kept for visitors' requests) — `
+        : `(${String(Math.round(memoryShare * 100))}% of ${mb(memory.limitBytes)}) it takes new ones up to — `) +
+      'so it took none: another runner takes it. A deployment that sees this often gives the runners more memory or more instances.'
     );
   };
   /**
-   * The invocations kept until there is room for them (1.3's `queue`), in the order they came: each let in as one ends —
-   * and looked at again as memory frees — never past one that came before it.
+   * The invocations kept until there is room for them (1.3's `queue`): those someone waits on first, then the rest, each
+   * in the order they came — let in as one ends, and looked at again as memory frees. One never passes another of its
+   * own urgency, and nothing passes a visitor's request still waiting: what frees is kept for it.
    */
-  type Kept = { limits: FunctionLimits; admit: (taken: boolean) => void };
+  type Kept = { limits: FunctionLimits; urgency: FunctionUrgency; admit: (taken: boolean) => void };
   const kept: Kept[] = [];
   let keptTimer: NodeJS.Timeout | undefined;
+  const nextKept = (): Kept | undefined => kept.find(entry => entry.urgency === 'interactive') ?? kept.at(0);
   const letIn = (): void => {
-    for (let head = kept.at(0); head; head = kept.at(0)) {
-      if (!stopping && busy(head.limits) !== undefined) {
+    for (let head = nextKept(); head; head = nextKept()) {
+      if (!stopping && busy(head.limits, head.urgency) !== undefined) {
         break;
       }
 
-      kept.shift();
+      kept.splice(kept.indexOf(head), 1);
       head.admit(!stopping);
     }
 
@@ -492,9 +509,9 @@ export const startFunctionsRunnerService = async ({
       keptTimer = setInterval(letIn, KEPT_LOOK_MS);
     }
   };
-  const wait = (limits: FunctionLimits, signal: AbortSignal): Promise<boolean> =>
+  const wait = (limits: FunctionLimits, urgency: FunctionUrgency, signal: AbortSignal): Promise<boolean> =>
     new Promise<boolean>(resolve => {
-      const entry: Kept = { limits, admit: resolve };
+      const entry: Kept = { limits, urgency, admit: resolve };
       kept.push(entry);
       signal.addEventListener(
         'abort',

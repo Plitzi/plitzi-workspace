@@ -34,6 +34,7 @@ export {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
   isFunctionLimit,
+  invocationUrgency,
   isStreamedRouteAnswer,
   protocolKnows,
   protocolRefusal
@@ -52,6 +53,7 @@ export type {
   FunctionsBundle,
   FunctionsBundleRef,
   FunctionStopReason,
+  FunctionUrgency,
   FunctionUsage,
   RunnerRequestMessage,
   RunnerResponseMessage,

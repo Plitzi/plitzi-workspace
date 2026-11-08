@@ -3,7 +3,7 @@ import { ActionRefusal, isActionRefusal, refusalCodeOf } from './refusal';
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { LaterRequest } from './later';
 import type { RateLimit } from './rateLimit';
-import type { FunctionsManifest } from '../types';
+import type { ActionTriggerType, FunctionsManifest } from '../types';
 
 /**
  * The messages between the platform and whatever runs a space's code — the one protocol every runner speaks, whether
@@ -151,6 +151,19 @@ export type FunctionInvocation =
       request: WireRequest;
       context: FunctionInvocationContext;
     };
+
+/**
+ * Whether someone waits on an invocation's answer as it runs — a visitor's request to a route, an action a page called
+ * or renders, a webhook's sender — or nothing does: a schedule, a run put off for later, a job's slice. What a runner
+ * lets in first, and what it keeps room for: a visitor never waits behind a minute-long job.
+ */
+export type FunctionUrgency = 'interactive' | 'background';
+
+const BACKGROUND_TRIGGERS: ReadonlySet<string> = new Set(['schedule', 'later'] satisfies ActionTriggerType[]);
+
+/** An invocation's {@link FunctionUrgency}, read off what it is and what started its run. */
+export const invocationUrgency = (invocation: FunctionInvocation): FunctionUrgency =>
+  invocation.kind === 'job' || BACKGROUND_TRIGGERS.has(invocation.context.trigger) ? 'background' : 'interactive';
 
 /** A request's init as the wire carries it: what the code wrote but its `signal`, which never crosses (`request`). */
 export type WireFetchInit = Omit<FunctionFetchInit, 'signal'>;
