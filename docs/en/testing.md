@@ -24,6 +24,15 @@ and the timing budgets and Vitest's own timeouts are multiplied by 5 (`PERF_MULT
 times out only there is load, not a bug: never raise one test's timeout for it. A test slow alone (a real build, a
 real server) says its own timeout, with why, beside it.
 
+What does not change is not checked again. `yarn test` replays a package whose inputs are the same — its files, the
+files of every workspace package it depends on (turbo's `transit` task) and the variables its tests read (`env` of
+`test` in `turbo.json`): a test that starts reading another variable names it there, or a run with a different value is
+replayed from one without it. CI keeps the same cache per package. Lint (`--cache`, `.eslintcache`) and typecheck
+(`--incremental`, `.tsbuildinfo/`) keep theirs beside each package, git-ignored and never restored in CI — a typed
+rule can depend on a file the lint did not see change, so a fresh CI run is the one that settles it. A test that measures
+time scales its own waits and budgets by `PERF_MULTIPLIER` too (`sdk-actions`' `remote.urgency.test.ts`), so its order
+holds under the shared run.
+
 A test against a real database (`*.integration.test.ts` in `apps/server`, skipped with no database) shares it with
 every other run on the machine: whatever it creates is named after its process (`runName(base)`, `<base>_<pid>`,
 `apps/server/src/modules/tests/runNames.ts`), dropped at its end, and what a run killed before its end left under the

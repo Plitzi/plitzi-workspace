@@ -141,8 +141,8 @@
     "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect dev/main.ts",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
-    "lint": "TIMING=1 eslint ./src ./dev",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "TIMING=1 eslint --cache --cache-location .eslintcache --cache-strategy content ./src ./dev",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "bench": "vitest bench --run"

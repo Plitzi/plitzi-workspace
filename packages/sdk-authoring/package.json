@@ -47,8 +47,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint ./src ./skills ./templates",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint --cache --cache-location .eslintcache --cache-strategy content ./src ./skills ./templates",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:dev": "vite build --mode development",

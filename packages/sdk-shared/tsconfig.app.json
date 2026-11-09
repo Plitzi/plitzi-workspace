@@ -4,9 +4,9 @@
     "allowJs": true,
     "maxNodeModuleJsDepth": 5,
 
-    /* For project references and the editor's resolution of them. The `typecheck` scripts turn it off
-       (`--composite false --emitDeclarationOnly false`): a check emits nothing, and with it on TypeScript leaves a
-       `.tsbuildinfo` beside every config it visits — build state from a command that builds nothing. */
+    /* For project references and the editor's resolution of them. The `typecheck` scripts keep their build state in
+       the package's git-ignored `.tsbuildinfo/` (`--incremental --tsBuildInfoFile`): a second run reads what did not
+       change instead of checking it again, and nothing lands beside the configs. */
     "composite": true,
     "target": "ES2023",
     "useDefineForClassFields": true,

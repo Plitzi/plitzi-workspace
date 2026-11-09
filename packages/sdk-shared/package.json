@@ -26,10 +26,10 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint ./src",
+    "lint": "eslint --cache --cache-location .eslintcache --cache-strategy content ./src",
     "test": "vitest run",
     "bench": "vitest bench",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
     "build:prod": "vite build"

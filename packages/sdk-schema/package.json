@@ -22,8 +22,8 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint ./src",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint --cache --cache-location .eslintcache --cache-strategy content ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
