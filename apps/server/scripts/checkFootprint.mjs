@@ -29,7 +29,8 @@ const BUDGET = {
   // 14: the server it was built on left for `@plitzi/sdk-kernel` (RFC 0032, phase 4), and its chunks with it.
   // 10: the actions engine is handed to a page server (`createPlatform`), never imported by it (RFC 0032, D11).
   // 8: and it lives in `@plitzi/sdk-actions` now, its configuration's seam with it.
-  '@plitzi/sdk-server': 8,
+  // 7: a chunk fewer since the stats and the log tail are the kernel's.
+  '@plitzi/sdk-server': 7,
   // 14: the entries the page server reaches (`http`, `identity`, `deployment`, `cache`, `log`, `outbound`, `build`) and
   // the chunks they share. Not `tokens`: `jsonwebtoken` loads only for a server that mints or verifies one (`createAuth`).
   // 16: the space's data folder (`data`), read by a `/data/<file>` provider, and the pub/sub a cache bus travels on
@@ -37,7 +38,8 @@ const BUDGET = {
   // 18: who may see a debug trace (`identity/debugAuthorization`, the render's and a call's) and the account store's
   // password hashing (`identity/passwords`), both the kernel's since the store is (RFC 0032, §11 Q7).
   // 20: `/_stats` and its recorder (`stats`), mounted by every server beside `/health` (RFC 0032, phase 8).
-  '@plitzi/sdk-kernel': 20,
+  // 21: each process's last lines at every level (`log/tail`), what `/_stats/logs` answers.
+  '@plitzi/sdk-kernel': 21,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
@@ -54,7 +56,8 @@ const BUDGET = {
   // 142: the rule evaluator and the lodash-like helpers are sdk-shared's own (`conditions`, `helpers/lodash`), in place of
   // plitzi-ui's 19 modules; the persisted state and the theme's and network's React parts moved to folders the server
   // never imports (`store`, `theme/react`, `network/react`), which took nexus off it (RFC 0032, D13).
-  '@plitzi/sdk-shared': 142,
+  // 143: CPU and memory in one scale each (`helpers/resources`), a pure helper of the `helpers` barrel.
+  '@plitzi/sdk-shared': 143,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,
