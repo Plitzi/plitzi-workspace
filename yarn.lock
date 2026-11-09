@@ -3335,7 +3335,7 @@ __metadata:
     vitest: "npm:^5.1.0"
     ws: "npm:^8.22.2"
   peerDependencies:
-    "@plitzi/sdk-actions": ^0.39.1
+    "@plitzi/sdk-actions": ^0.39.2
     react: ^19
     react-dom: ^19
     sharp: ^0.34.0
