@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'es',
           entryFileNames: devMode ? 'plitzi-builder-dev-vendor.js' : 'plitzi-builder-vendor.js',
-          inlineDynamicImports: true,
+          codeSplitting: false,
           manualChunks: undefined,
           chunkFileNames: undefined,
           assetFileNames: 'assets/[name][extname]'

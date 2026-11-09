@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
       formats: ['es'],
       fileName: () => 'plitzi-functions-worker.js'
     },
-    rollupOptions: { output: { inlineDynamicImports: true } },
+    rollupOptions: { output: { codeSplitting: false } },
     minify: mode === 'production' ? 'terser' : false,
     sourcemap: false
   }

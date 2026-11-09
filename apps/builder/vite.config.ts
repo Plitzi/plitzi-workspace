@@ -286,7 +286,7 @@ export default defineConfig(({ mode, command }) => {
             format: 'es',
             exports: 'named',
             manualChunks: undefined,
-            inlineDynamicImports: true, // false if u want to have chunks !devMode,
+            codeSplitting: false,
             entryFileNames: 'plitzi-builder.js',
             globals: {
               react: 'React',
