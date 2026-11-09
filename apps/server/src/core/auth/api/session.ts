@@ -1,11 +1,13 @@
-import { authFailureMessage, userIdOf } from '../tokens';
+import { authFailureMessage } from '@plitzi/sdk-kernel/identity';
+import { userIdOf } from '@plitzi/sdk-kernel/tokens';
+
 import { totpStep } from '../totp';
 import { refuse, NOT_OFFERED, asText, asString, now, deniedReason, clientOf } from './values';
 
-import type { CredentialCarrier } from '../credentials';
-import type { Actor } from '../identity';
 import type { AuthContext } from './context';
 import type { AuthOutcome } from './types';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
 
 /** Signing in and out: the session, a password or a provider's token, the second factor, refreshing and revoking. */
 export const sessionFlows = ({

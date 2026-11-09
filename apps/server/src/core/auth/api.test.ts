@@ -1,17 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createAuthApi } from './api';
-import { createCarriers, presentedOrigin } from './credentials';
-import { createIdentity } from './identity';
-import { createTokens } from './tokens';
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+import { createTokens, generateTokenKeys } from '@plitzi/sdk-kernel/tokens';
 
-import type { AccountAdapters, AccountRecord, AuthApiConfig } from './api';
+import { createAuthApi } from './api';
+
+import type { AuthApiConfig } from './api';
+import type { AccountAdapters, AccountRecord } from '@plitzi/sdk-kernel/identity';
 
 // What the auth API is for: a deployment says where its accounts live and what it wants offered, and gets the flows
 // without writing them. So what is asserted here is the deciding, not the plumbing — which endpoints exist at all,
 // and what each one refuses.
 
-const tokens = createTokens({ secret: 's', issuer: 'https://this.test', audience: ['a'] });
+const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://this.test', audience: ['a'] });
 
 const identity = createIdentity({
   tokens,
@@ -281,7 +284,7 @@ describe('renewing and ending a session', () => {
   // Asked before the store is: a token this deployment never signed is refused without a lookup to answer it.
   it('refuses a malformed or foreign token before asking the store', async () => {
     const findByRefreshToken = vi.fn(() => Promise.resolve(live));
-    const foreign = createTokens({ secret: 'another', issuer: 'https://this.test', audience: ['a'] });
+    const foreign = createTokens({ keys: generateTokenKeys('another'), issuer: 'https://this.test', audience: ['a'] });
 
     for (const presented of ['r', foreign.generateRefreshToken(ada.id), tokens.generateUserToken(ada.id)]) {
       expect(await build({ findByRefreshToken }).refresh(presented)).toMatchObject({

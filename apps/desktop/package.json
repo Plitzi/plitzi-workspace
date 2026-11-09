@@ -52,8 +52,8 @@
     "build:renderer": "vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "TIMING=1 eslint ./src ./electron",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "lint": "TIMING=1 eslint --cache --cache-location .eslintcache --cache-strategy content ./src ./electron",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo && tsc -p tsconfig.node.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/node.tsbuildinfo",
     "build:dev": "yarn build:renderer --mode development && yarn build:electron:dev",
     "build:prod": "yarn build:renderer && yarn build:electron",
     "package": "yarn build:prod && electron-builder --publish never"

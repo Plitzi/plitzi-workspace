@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
 
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
 import { DEFAULT_TTL_MS, fromSharedPage, keepPage, toSharedPage } from '../../helpers/cache';
-import { serverLog } from '../../helpers/serverLog';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
-import type { ResolvedCompression } from '../../helpers/compress';
-import type { SharedPageFacts, SharedPageStore, SSRPageServerConfig } from '@plitzi/sdk-shared';
+import type { SharedPageFacts, SharedPageStore, SSRPageServerConfig } from '../../types';
+import type { ResolvedCompression } from '@plitzi/sdk-kernel/http';
 
 /** Where one request's page is kept: this process's copy, and — for a page rendered for nobody in particular — the
  *  copy every replica shares. */
@@ -77,7 +78,7 @@ export const readPage = async ({ caches, key, shared, ttlMs, staleMs }: PageSlot
 };
 
 /** Keeps a page just rendered, here and in the shared store, and hands back what was kept. */
-export const storePage = (
+const storePage = (
   { caches, key, shared, ttlMs, staleMs, compression }: PageSlot,
   { html, nonce }: RenderedPage
 ): CachedPage => {

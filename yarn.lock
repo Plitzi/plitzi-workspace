@@ -2623,7 +2623,9 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/mailparser": "npm:^3.9.0"
@@ -2644,10 +2646,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-actions-on-a-worker@workspace:examples/self-hosting/11-actions-on-a-worker":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-actions-on-a-worker@workspace:examples/self-hosting/11-actions-on-a-worker"
+  dependencies:
+    "@plitzi/sdk-actions": "workspace:*"
+    "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.6.5"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-cloud-space@workspace:examples/self-hosting/02-from-the-cloud":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-cloud-space@workspace:examples/self-hosting/02-from-the-cloud"
   dependencies:
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
     react: "npm:^19.3.1"
@@ -2661,6 +2678,7 @@ __metadata:
   resolution: "@plitzi/example-mcp-server@workspace:examples/self-hosting/06-mcp-server"
   dependencies:
     "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
@@ -2718,7 +2736,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/example-runtime@workspace:examples/self-hosting/10-runtime"
   dependencies:
+    "@plitzi/sdk-actions": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/node": "npm:^26.6.5"
@@ -2730,7 +2751,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/example-server-actions-custom-trigger@workspace:examples/self-hosting/08-custom-trigger"
   dependencies:
+    "@plitzi/sdk-actions": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/node": "npm:^26.6.5"
@@ -2761,7 +2784,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/example-server-actions-schedules@workspace:examples/self-hosting/09-schedules"
   dependencies:
+    "@plitzi/sdk-actions": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/node": "npm:^26.6.5"
@@ -2789,6 +2815,7 @@ __metadata:
   resolution: "@plitzi/example-ssr-mcp-preview@workspace:examples/self-hosting/07-ssr-preview"
   dependencies:
     "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
@@ -2805,6 +2832,7 @@ __metadata:
     "@playwright/test": "npm:^1.64.1"
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
     react: "npm:^19.3.1"
@@ -2819,6 +2847,7 @@ __metadata:
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
     react: "npm:^19.3.1"
@@ -2832,6 +2861,7 @@ __metadata:
   resolution: "@plitzi/example-with-users-mysql@workspace:examples/self-hosting/04-mysql"
   dependencies:
     "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
     mysql2: "npm:^3.24.6"
@@ -2847,6 +2877,7 @@ __metadata:
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/node": "npm:^26.6.5"
     react: "npm:^19.3.1"
@@ -2894,8 +2925,8 @@ __metadata:
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-plugins": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
-    "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3083,6 +3114,44 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-actions@workspace:*, @plitzi/sdk-actions@workspace:packages/sdk-actions":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-actions@workspace:packages/sdk-actions"
+  dependencies:
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.6.5"
+    "@types/nodemailer": "npm:^8.0.2"
+    "@types/ws": "npm:^8.18.2"
+    core-js: "npm:^3.50.0"
+    esbuild: "npm:^0.28.2"
+    eslint: "npm:^9.39.5"
+    eslint-plugin-import: "npm:^2.32.0"
+    ioredis: "npm:^6.0.0"
+    isolated-vm: "npm:^7.0.1"
+    mongodb: "npm:^7.7.0"
+    mysql2: "npm:^3.24.6"
+    nodemailer: "npm:^10.1.3"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.3.4"
+    vite-plugin-dts: "npm:^5.1.2"
+    vitest: "npm:^5.0.5"
+    ws: "npm:^8.22.0"
+  peerDependencies:
+    esbuild: ^0.28.2
+    mongodb: ^6 || ^7
+    mysql2: ^3
+  peerDependenciesMeta:
+    esbuild:
+      optional: true
+    mongodb:
+      optional: true
+    mysql2:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-auth@workspace:*, @plitzi/sdk-auth@workspace:packages/sdk-auth":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
@@ -3202,6 +3271,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
+    "@plitzi/nexus": "npm:^1.4.0"
     "@plitzi/plitzi-ui": "npm:^1.6.38"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3216,6 +3286,36 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-kernel@workspace:*, @plitzi/sdk-kernel@workspace:packages/sdk-kernel":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-kernel@workspace:packages/sdk-kernel"
+  dependencies:
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/jsonwebtoken": "npm:^9.0.10"
+    "@types/node": "npm:^26.6.5"
+    "@types/ws": "npm:^8.18.2"
+    esbuild: "npm:^0.28.2"
+    eslint: "npm:^9.39.5"
+    eslint-plugin-import: "npm:^2.32.0"
+    jsonwebtoken: "npm:^9.0.3"
+    mysql2: "npm:^3.24.6"
+    typescript: "npm:^6.0.3"
+    undici: "npm:^8.12.3"
+    vite: "npm:^8.3.4"
+    vite-plugin-dts: "npm:^5.1.2"
+    vitest: "npm:^5.0.5"
+    ws: "npm:^8.22.0"
+  peerDependencies:
+    esbuild: ^0.28.2
+    mysql2: ^3
+  peerDependenciesMeta:
+    esbuild:
+      optional: true
+    mysql2:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-mcp@workspace:*, @plitzi/sdk-mcp@workspace:apps/mcp":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-mcp@workspace:apps/mcp"
@@ -3224,6 +3324,7 @@ __metadata:
     "@modelcontextprotocol/sdk": "npm:^1.32.1"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3284,6 +3385,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-runtime@workspace:*, @plitzi/sdk-runtime@workspace:packages/sdk-runtime":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-runtime@workspace:packages/sdk-runtime"
+  dependencies:
+    "@microsoft/api-extractor": "npm:^7.59.4"
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.6.5"
+    "@types/ws": "npm:^8.18.2"
+    core-js: "npm:^3.50.0"
+    esbuild: "npm:^0.28.2"
+    eslint: "npm:^9.39.5"
+    eslint-plugin-import: "npm:^2.32.0"
+    isolated-vm: "npm:^7.0.1"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.3.4"
+    vite-plugin-dts: "npm:^5.1.2"
+    vitest: "npm:^5.0.5"
+    ws: "npm:^8.22.0"
+  peerDependencies:
+    isolated-vm: ^7.0.1
+  peerDependenciesMeta:
+    isolated-vm:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-schema@workspace:*, @plitzi/sdk-schema@workspace:packages/sdk-schema":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
@@ -3303,54 +3431,40 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-server@workspace:apps/server"
   dependencies:
-    "@microsoft/api-extractor": "npm:^7.59.4"
     "@plitzi/plitzi-sdk": "workspace:*"
+    "@plitzi/sdk-actions": "workspace:*"
+    "@plitzi/sdk-kernel": "workspace:*"
+    "@plitzi/sdk-runtime": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/ejs": "npm:^3.1.5"
     "@types/jsonwebtoken": "npm:^9.0.10"
     "@types/node": "npm:^26.6.5"
-    "@types/nodemailer": "npm:^8.0.2"
     "@types/react": "npm:^19.3.0"
     "@types/ws": "npm:^8.18.2"
     "@vitejs/plugin-react": "npm:^6.1.2"
     "@vitest/coverage-v8": "npm:^5.0.5"
-    core-js: "npm:^3.50.0"
     ejs: "npm:^7.0.2"
     esbuild: "npm:^0.28.2"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
     ioredis: "npm:^6.0.0"
-    isolated-vm: "npm:^7.0.1"
     jsonwebtoken: "npm:^9.0.3"
-    mongodb: "npm:^7.7.0"
-    mysql2: "npm:^3.24.6"
-    nodemailer: "npm:^10.1.3"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
     sharp: "npm:^0.35.5"
     tsx: "npm:^4.23.15"
     typescript: "npm:^6.0.3"
-    undici: "npm:^8.12.3"
     vite: "npm:^8.3.4"
     vite-plugin-dts: "npm:^5.1.2"
     vitest: "npm:^5.0.5"
     ws: "npm:^8.22.0"
   peerDependencies:
-    core-js: ^3.50.0
-    isolated-vm: ^7.0.1
-    mongodb: ^6 || ^7
-    mysql2: ^3
+    "@plitzi/sdk-actions": ^0.39.1
     react: ^19
     react-dom: ^19
     sharp: ^0.34.0
   peerDependenciesMeta:
-    core-js:
-      optional: true
-    isolated-vm:
-      optional: true
-    mongodb:
-      optional: true
-    mysql2:
+    "@plitzi/sdk-actions":
       optional: true
     sharp:
       optional: true
@@ -3364,7 +3478,6 @@ __metadata:
     "@apollo/client": "npm:^4.3.4"
     "@eslint/js": "npm:^10.0.1"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.38"
     "@testing-library/dom": "npm:^10.4.2"
     "@testing-library/react": "npm:^16.3.3"
     "@types/react": "npm:^19.3.0"
@@ -3383,6 +3496,7 @@ __metadata:
     eslint-plugin-storybook: "npm:^10.6.2"
     globals: "npm:^17.13.0"
     jsdom: "npm:^30.1.3"
+    lodash: "npm:^4.17.15"
     prettier: "npm:^3.9.10"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
@@ -3396,10 +3510,17 @@ __metadata:
     zod: "npm:^4.6.7"
   peerDependencies:
     "@apollo/client": ^4.3.1
+    "@plitzi/nexus": ^1.4.0
     react: ^19
     react-dom: ^19
   peerDependenciesMeta:
     "@apollo/client":
+      optional: true
+    "@plitzi/nexus":
+      optional: true
+    react:
+      optional: true
+    react-dom:
       optional: true
   languageName: unknown
   linkType: soft
@@ -3408,6 +3529,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
+    "@plitzi/nexus": "npm:^1.4.0"
     "@plitzi/plitzi-ui": "npm:^1.6.38"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"

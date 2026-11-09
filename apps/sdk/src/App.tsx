@@ -26,8 +26,9 @@ import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { type SdkState } from '@plitzi/sdk-shared';
 import { createStoreDevToolsLogger, debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
-import { documentCookies, EnclosingSpaceContext, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
-import { runtimeStatePersist } from '@plitzi/sdk-shared/state';
+import { documentCookies, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/react';
+import { runtimeStatePersist } from '@plitzi/sdk-shared/store';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 
@@ -36,6 +37,7 @@ import { getEnvironmentServer } from './config';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
+  BadgeLinks,
   AnalyticsConfig,
   ColorScheme,
   Theme,
@@ -47,7 +49,7 @@ import type {
   Server,
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
-import type { ThemeScope } from '@plitzi/sdk-shared/theme';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ReactNode } from 'react';
 
 export type AppProps = {
@@ -83,7 +85,7 @@ export type AppProps = {
   quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's "Made with Plitzi" badge, on a plan that does not
    *  remove it. Never authored — a space cannot turn it off from its own settings. */
-  badge?: boolean;
+  badge?: BadgeLinks;
   externalStyle?: string;
   /** Reporting channel for this render — see {@link AnalyticsConfig}. Absent means report nothing. */
   analytics?: AnalyticsConfig;

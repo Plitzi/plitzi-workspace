@@ -1,0 +1,11 @@
+{
+  "extends": "../sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "types": ["node"],
+    // DOM only for the types of sdk-shared this reads, which name the browser's (`Location`, `window`).
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src", "package.json"]
+}

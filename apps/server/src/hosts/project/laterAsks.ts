@@ -4,7 +4,8 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { LATER_ANSWER_FILE, LATER_ASK_FILE } from '@plitzi/sdk-shared/project';
 
-import type { Job, JobQueue } from '@plitzi/sdk-shared';
+import type { JobQueue } from '@plitzi/sdk-actions/types';
+import type { Job } from '@plitzi/sdk-shared';
 
 /**
  * `plitzi functions later` while the project is served: what waits to run later (`ctx.later`), and one of them started

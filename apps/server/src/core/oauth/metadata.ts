@@ -1,6 +1,6 @@
-import { requestOrigin } from '../requestParser';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
 
-import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-kernel/types';
 
 export const AUTHORIZE_PATH = '/authorize';
 export const TOKEN_PATH = '/token';
@@ -14,7 +14,7 @@ const DEFAULT_SCOPES = ['plitzi'];
 /** The identifier the two documents agree on. This server is both the protected resource and its own
  *  authorization server, so one origin names both. Derived from the request unless pinned, which keeps a
  *  deployment correct across its dev, staging and production hosts without per-environment config. */
-export const issuerOf = (config: OAuthConfig, req: SSRRequest): string => config.issuer ?? requestOrigin(req);
+const issuerOf = (config: OAuthConfig, req: SSRRequest): string => config.issuer ?? requestOrigin(req);
 
 export const scopesOf = (config: OAuthConfig): string[] => config.scopes ?? DEFAULT_SCOPES;
 

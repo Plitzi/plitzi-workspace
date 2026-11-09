@@ -1,5 +1,6 @@
 import type { ActivityEntry } from './store/activity.ts';
-import type { ActionEntry, ActionJob, ActionJobStatus, ActionSchedule } from '@plitzi/sdk-shared';
+import type { ActionSchedule } from '@plitzi/sdk-actions/types';
+import type { ActionEntry, Job, JobStatus } from '@plitzi/sdk-shared';
 
 /**
  * The queue, shaped for a page that can only bind.
@@ -9,7 +10,7 @@ import type { ActionEntry, ActionJob, ActionJobStatus, ActionSchedule } from '@p
  * boolean: `canRetry`, `canCancel`, `hasError`. The page stays a layout.
  */
 
-const TERMINAL: ActionJobStatus[] = ['succeeded', 'failed', 'dead', 'cancelled'];
+const TERMINAL: JobStatus[] = ['succeeded', 'failed', 'dead', 'cancelled'];
 
 /**
  * Every instant the server prints is UTC, and says so.
@@ -61,16 +62,17 @@ const span = (ms: number): string => {
 
 const relative = (deltaMs: number): string => (deltaMs >= 0 ? `in ${span(deltaMs)}` : `${span(deltaMs)} ago`);
 
-const STATUS_LABEL: Record<ActionJobStatus, string> = {
+const STATUS_LABEL: Record<JobStatus, string> = {
   pending: 'Waiting',
   running: 'Running',
+  paused: 'Paused',
   succeeded: 'Done',
   failed: 'Failed',
   dead: 'Gave up',
   cancelled: 'Cancelled'
 };
 
-const statusLabel = (job: ActionJob): string => {
+const statusLabel = (job: Job): string => {
   if (job.status === 'running' && job.cancelRequested) {
     return 'Stopping';
   }
@@ -79,7 +81,7 @@ const statusLabel = (job: ActionJob): string => {
   return job.status === 'pending' && job.history.length > 0 ? 'Retrying' : STATUS_LABEL[job.status];
 };
 
-const detail = (job: ActionJob, at: number): string => {
+const detail = (job: Job, at: number): string => {
   if (job.status === 'pending') {
     return job.runAt > at ? `due ${time(job.runAt)} · ${relative(job.runAt - at)}` : 'due now · waiting for a worker';
   }
@@ -94,7 +96,7 @@ const detail = (job: ActionJob, at: number): string => {
 export type BoardJob = {
   id: string;
   name: string;
-  status: ActionJobStatus;
+  status: JobStatus;
   statusLabel: string;
   source: string;
   attempts: string;
@@ -107,15 +109,15 @@ export type BoardJob = {
   canCancel: boolean;
 };
 
-const boardJob = (job: ActionJob, names: Map<string, string>, at: number): BoardJob => {
+const boardJob = (job: Job, names: Map<string, string>, at: number): BoardJob => {
   const missed = job.missed ? ` · ${job.missed} missed before it` : '';
 
   return {
     id: job.id,
-    name: names.get(job.actionId) ?? job.actionId,
+    name: names.get(job.target.name) ?? job.target.name,
     status: job.status,
     statusLabel: statusLabel(job),
-    source: `${job.trigger === 'schedule' ? 'scheduled' : 'queued'}${missed}`,
+    source: `${job.target.kind === 'action' && job.target.trigger === 'schedule' ? 'scheduled' : 'queued'}${missed}`,
     attempts: `attempt ${job.attempts} of ${job.maxAttempts}`,
     detail: detail(job, at),
     // `lost` is the attempt nobody reported — a replica that died holding it — and the one worth seeing here.
@@ -176,14 +178,14 @@ export type BoardReminder = {
   detail: string;
 };
 
-const messageOf = (job: ActionJob): string => (typeof job.input.message === 'string' ? job.input.message : 'Reminder');
+const messageOf = (job: Job): string => (typeof job.input.message === 'string' ? job.input.message : 'Reminder');
 
 /**
  * The reminder the page leads with: the next one still waiting, with its countdown — or, once none is waiting, the
  * last one that fired, loud for {@link FRESH_MS} and quiet after. The moment a delayed job runs is the point of the
  * demo, so it is on top of the page rather than one line in a feed below the fold.
  */
-const boardReminder = (next: ActionJob | undefined, last: ActionJob | undefined, at: number) => {
+const boardReminder = (next: Job | undefined, last: Job | undefined, at: number) => {
   if (next) {
     return {
       tone: 'pending',
@@ -215,12 +217,12 @@ export type BoardInput = {
   at: number;
   replica: string;
   actions: ActionEntry[];
-  jobs: ActionJob[];
+  jobs: Job[];
   schedules: ActionSchedule[];
   activity: ActivityEntry[];
-  counts: Record<ActionJobStatus, number>;
+  counts: Record<JobStatus, number>;
   /** Reminders still waiting, in any order, and the last one that ran. */
-  reminders: { waiting: ActionJob[]; last?: ActionJob };
+  reminders: { waiting: Job[]; last?: Job };
 };
 
 export const shapeBoard = ({ at, replica, actions, jobs, schedules, activity, counts, reminders }: BoardInput) => {

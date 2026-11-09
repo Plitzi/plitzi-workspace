@@ -1,6 +1,6 @@
-import { defineFunctions } from '@plitzi/sdk-server/functions';
+import { defineFunctions } from '@plitzi/sdk-runtime';
 
-import type { FunctionContext, FunctionTask } from '@plitzi/sdk-server/functions';
+import type { FunctionContext, FunctionTask } from '@plitzi/sdk-runtime';
 
 /**
  * The runtime's functions: written exactly as a space's functions are (`docs/en/functions.md`), with the server's `ctx`

@@ -1,4 +1,4 @@
-import { DEFAULT_FUNCTION_TIME_LIMITS, isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
+import { DEFAULT_FUNCTION_ASKED_LIMITS, isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
 import type { SourceFunctions, SourceJob, SourcePlace, SourceRoute } from './editor/source';
 import type { Text } from '@codemirror/state';
@@ -7,14 +7,15 @@ import type {
   FunctionsManifest,
   FunctionsProblem,
   FunctionTaskManifest,
-  FunctionTimeLimits,
+  FunctionAskedLimits,
+  FunctionSize,
   JobControlAction,
   SpaceJob
 } from '@plitzi/sdk-shared';
 
 /** What a space's functions start as: one file and one task already written, to change rather than to learn from blank. */
 export const STARTER_FILES: Record<string, string> = {
-  'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
+  'index.ts': `import { defineFunctions } from '@plitzi/sdk-runtime';
 
 export default defineFunctions({
   // The hosts ctx.fetch may reach — anything else is refused before it leaves: ['api.example.com', '*.example.com']
@@ -92,15 +93,15 @@ export const fieldText = (value: unknown): string =>
  * a person can tell apart. More than that is asked for in the code, up to what the server allows.
  */
 export const TIME_LIMIT = {
-  min: DEFAULT_FUNCTION_TIME_LIMITS.cpuMs,
+  min: DEFAULT_FUNCTION_ASKED_LIMITS.cpuMs,
   max: 1000,
   step: 50,
-  presets: [DEFAULT_FUNCTION_TIME_LIMITS.cpuMs, 250, 500, 1000]
+  presets: [DEFAULT_FUNCTION_ASKED_LIMITS.cpuMs, 250, 500, 1000]
 } as const;
 
 /** A task as the panel lists it: what the source declares right now, where, and whether a save has it yet. */
 export type ListedTask = FunctionTaskManifest & {
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   /** Where it is written — none while the source has not been read, when the saved list is all there is. */
   at?: SourcePlace;
   /** In the saved draft too: what Try can run. A task only written so far is run once it is saved. */
@@ -148,12 +149,27 @@ export const usualNamespace = (tasks: readonly ListedTask[]): string => tasks[0]
  * The CPU a task runs with, and whether it chose it: its own `limits.cpuMs`, else the one every task of the space gets
  * from `defineFunctions`, else the server's default.
  */
-export const cpuOf = (task: ListedTask, shared: FunctionTimeLimits | undefined): { ms: number; asked: boolean } => {
+export const cpuOf = (task: ListedTask, shared: FunctionAskedLimits | undefined): { ms: number; asked: boolean } => {
   if (task.limits?.cpuMs !== undefined) {
     return { ms: task.limits.cpuMs, asked: true };
   }
 
-  return { ms: shared?.cpuMs ?? DEFAULT_FUNCTION_TIME_LIMITS.cpuMs, asked: false };
+  return { ms: shared?.cpuMs ?? DEFAULT_FUNCTION_ASKED_LIMITS.cpuMs, asked: false };
+};
+
+/**
+ * The size a task runs at, and whether it chose it: its own `limits.size`, else the one every task of the space gets
+ * from `defineFunctions`, else small.
+ */
+export const sizeOf = (
+  task: ListedTask,
+  shared: FunctionAskedLimits | undefined
+): { size: FunctionSize; asked: boolean } => {
+  if (task.limits?.size !== undefined) {
+    return { size: task.limits.size, asked: true };
+  }
+
+  return { size: shared?.size ?? DEFAULT_FUNCTION_ASKED_LIMITS.size, asked: false };
 };
 
 /** What the run button says: running, or whether it saves first. */
@@ -178,11 +194,26 @@ export type EditorTarget = {
 export const lineRange = (doc: Text, line: number): { from: number; to: number } =>
   doc.line(Math.min(Math.max(line, 1), doc.lines));
 
-/** A task's time limits with its CPU set — or taken out, to run with the default — and the rest as they were. */
-export const withCpu = (limits: FunctionTimeLimits | undefined, cpuMs: number | undefined): FunctionTimeLimits => ({
-  ...(cpuMs === undefined ? {} : { cpuMs }),
-  ...(limits?.wallMs === undefined ? {} : { wallMs: limits.wallMs })
-});
+/** A task's limits with its CPU set — or taken out, to run with the default — and the rest as they were. */
+export const withCpu = (limits: FunctionAskedLimits | undefined, cpuMs: number | undefined): FunctionAskedLimits => {
+  const { cpuMs: _replaced, ...rest } = limits ?? {};
+
+  return cpuMs === undefined ? rest : { cpuMs, ...rest };
+};
+
+/**
+ * A task's limits with its size set — taken out when it is the one the task would get without asking — and the rest
+ * as they were.
+ */
+export const withSize = (
+  limits: FunctionAskedLimits | undefined,
+  size: FunctionSize,
+  shared: FunctionAskedLimits | undefined
+): FunctionAskedLimits => {
+  const { size: _replaced, ...rest } = limits ?? {};
+
+  return size === (shared?.size ?? DEFAULT_FUNCTION_ASKED_LIMITS.size) ? rest : { ...rest, size };
+};
 
 /** Why the panel cannot write a task's limits for you right now, or nothing when it can. */
 export const limitsBlockedBy = (ready: boolean, task: ListedTask): string => {
@@ -275,6 +306,13 @@ export const jobControlsOf = (job: SpaceJob): JobControlAction[] => {
 
   return controls;
 };
+
+/**
+ * Whether a job failed every attempt and was set aside for somebody to read its runs: resumed once fixed — every
+ * attempt again — or cancelled.
+ */
+export const setAsideAfterFailing = (job: SpaceJob): boolean =>
+  job.status === 'paused' && job.attempts >= job.maxAttempts;
 
 /** Whether a job may still move by itself: what the panel keeps reading while it shows one. */
 export const isJobMoving = (job: SpaceJob): boolean => job.status === 'pending' || job.status === 'running';

@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { StoreContext } from '@plitzi/nexus/react';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
-import { ThemeScopeContext } from '@plitzi/sdk-shared/theme';
+import { ThemeScopeContext } from '@plitzi/sdk-shared/theme/react';
 
 import type { ReactNode } from 'react';
 import type { Root } from 'react-dom/client';

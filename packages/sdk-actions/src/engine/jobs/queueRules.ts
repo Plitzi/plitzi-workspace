@@ -1,0 +1,681 @@
+import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
+
+import { flowOf } from './flow';
+import { LOST_ERROR, lostError, needsAfterLoss, outgrewWorker, setAsideError } from './memoryNeeds';
+
+import type {
+  JobClaimMemory,
+  JobsNeedingMemory,
+  JobQuery,
+  JobQueue,
+  JobQueueSummary,
+  JobSettlement,
+  JobSpaces,
+  JobTake,
+  JobStop,
+  JobWrite,
+  ActionSchedule,
+  WaitingJobs
+} from '../../types';
+import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
+
+/** The kind of work a job is (`JobTake`): what a claim's `takes` picks by. */
+export const takeOf = (target: Job['target']): JobTake =>
+  target.kind === 'function' ? 'functionJobs' : target.code ? 'codeActions' : 'light';
+
+/** Whether a job of `spaceId` is one a claim with `spaces` takes. */
+const takesSpace = (spaces: JobSpaces | undefined, spaceId: number): boolean =>
+  !spaces || ('only' in spaces ? spaces.only.includes(spaceId) : !spaces.except.includes(spaceId));
+
+/**
+ * Whether a claim takes a job: one of its spaces — or, for a job a worker died running, one this worker may hold,
+ * whatever spaces it is kept for: the larger workers are few, and the job's own space's may all be the size that died.
+ */
+const fits = (job: Job, spaces: JobSpaces | undefined, memory: JobClaimMemory | undefined): boolean =>
+  job.needsMemoryMb === undefined
+    ? takesSpace(spaces, job.spaceId)
+    : memory !== undefined && memory.takesNeeding !== false && memory.mb >= job.needsMemoryMb;
+
+/**
+ * The queue's rules — what `enqueue`, `claim`, `settle`… do to the jobs and schedules — over a state handed to them,
+ * kept apart from WHERE the state is: a process's Maps (`createMemoryJobQueue`), a JSON file (`createFileJobQueue`), a
+ * SQLite table (`createSqliteJobQueue`). One set of rules, so a store kept anywhere keeps the contract to the letter: a
+ * test that passes against one is testing all of them.
+ */
+
+/** The jobs and the schedules, by id: what a queue keeps. */
+export type QueueState = { jobs: Map<string, Job>; schedules: Map<string, ActionSchedule> };
+
+/** The queue's methods, answering at once: what each store wraps in its own way of reading and keeping the state. */
+export type QueueRules = {
+  [K in keyof JobQueue]: (...args: Parameters<JobQueue[K]>) => Awaited<ReturnType<JobQueue[K]>>;
+};
+
+/**
+ * Whether a call changed the state, by its method and what it answered — what a store keeping the state elsewhere writes
+ * back after. A worker claims every second: a claim that took nothing, a refused `write` or `cancel` change nothing, and
+ * are not written.
+ */
+export const changedBy = <K extends keyof JobQueue>(method: K, answer: Awaited<ReturnType<JobQueue[K]>>): boolean => {
+  switch (method) {
+    case 'claim':
+      return Array.isArray(answer) && answer.length > 0;
+    case 'enqueue':
+    case 'write':
+    case 'advanceSchedule':
+    case 'requeue':
+    case 'cancel':
+    case 'pause':
+    case 'resume':
+      return answer === true;
+    case 'cancelPending':
+      return typeof answer === 'number' && answer > 0;
+    // A worker beats only for the jobs it holds: each extends a lease.
+    case 'heartbeat':
+    case 'settle':
+    case 'putSchedules':
+      return true;
+    default:
+      return false;
+  }
+};
+
+/** What a schedule is kept by: its space and its action. */
+export const scheduleKey = (spaceId: number, actionId: string): string => `${String(spaceId)}:${actionId}`;
+
+export type QueueRulesOptions = {
+  /** How many finished jobs to keep before the oldest are dropped. */
+  retainFinished: number;
+  /** What the queue calls now, in epoch ms: the one clock everything here reads. */
+  clock: () => number;
+  /**
+   * Told when a rule changed the state though its answer does not say so (`changedBy`): a claim that reaped a job, or
+   * set one aside, and took nothing. A store that keeps the state elsewhere writes it back then too.
+   */
+  onUnansweredChange?: () => void;
+};
+
+export const queueRules = (
+  { jobs, schedules }: QueueState,
+  { retainFinished, clock, onUnansweredChange }: QueueRulesOptions
+): QueueRules => {
+  const key = scheduleKey;
+  const now = () => clock();
+
+  /** Oldest finished jobs first, so the bound drops history rather than anything anybody is waiting on. */
+  const evict = () => {
+    const finished = [...jobs.values()]
+      .filter(job => isTerminalJobStatus(job.status))
+      .sort((a, b) => a.updatedAt - b.updatedAt);
+    for (const job of finished.slice(0, finished.length - retainFinished)) {
+      jobs.delete(job.id);
+    }
+  };
+
+  const owned = (spaceIds: number[], jobId: string): Job | undefined => {
+    const job = jobs.get(jobId);
+
+    return job && spaceIds.includes(job.spaceId) ? job : undefined;
+  };
+
+  /** Numbered by the history itself, not by `attempts`: an operator who repeats a finished job starts its attempt
+   *  count again, and the record of what has already been tried must not start again with it. */
+  const appendAttempt = (job: Job, attempt: Omit<JobAttempt, 'attempt'>) => {
+    job.history = [...job.history, { ...attempt, attempt: job.history.length + 1 }];
+  };
+
+  return {
+    now: () => new Date(now()),
+
+    enqueue: (job: JobInput) => {
+      if (jobs.has(job.id)) {
+        return false;
+      }
+
+      const at = now();
+      jobs.set(job.id, {
+        ...job,
+        status: 'pending',
+        runAt: job.dueAt,
+        attempts: 0,
+        createdAt: at,
+        updatedAt: at,
+        history: []
+      });
+      evict();
+
+      return true;
+    },
+
+    claim: ({ workerId, leaseMs, limit, spaces, memory, takes }) => {
+      const at = now();
+      // Reaped first, whoever claims: the previous holder never came back, so its attempt is written for it —
+      // otherwise a replica that died mid-run leaves a job that simply restarts, with nothing saying it had been tried.
+      for (const job of jobs.values()) {
+        if (job.status === 'running' && (job.leaseUntil ?? 0) < at) {
+          const holderMb = job.holderMemoryMb;
+          const outgrew = outgrewWorker(job);
+          appendAttempt(job, {
+            status: 'lost',
+            startedAt: job.updatedAt,
+            endedAt: at,
+            workerId: job.workerId ?? 'unknown',
+            error: LOST_ERROR,
+            ...(holderMb === undefined ? {} : { memoryMb: holderMb }),
+            ...(job.nearMemoryLimit ? { nearMemoryLimit: job.nearMemoryLimit } : {})
+          });
+          job.status = 'pending';
+          job.workerId = undefined;
+          job.leaseUntil = undefined;
+          job.holderMemoryMb = undefined;
+          job.nearMemoryLimit = undefined;
+          job.needsMemoryMb = needsAfterLoss(job.needsMemoryMb, holderMb, outgrew);
+          job.error = lostError(holderMb, outgrew);
+          job.updatedAt = at;
+          onUnansweredChange?.();
+        }
+
+        if (memory && job.status === 'pending' && (job.needsMemoryMb ?? 0) > memory.ceilingMb) {
+          job.status = 'paused';
+          job.error = setAsideError(job.needsMemoryMb ?? 0, memory.ceilingMb);
+          job.updatedAt = at;
+          onUnansweredChange?.();
+        }
+      }
+
+      const taken: Job[] = [];
+      const candidates = [...jobs.values()]
+        .filter(
+          job =>
+            job.status === 'pending' &&
+            job.runAt <= at &&
+            fits(job, spaces, memory) &&
+            (!takes || takeOf(job.target) === takes)
+        )
+        .sort((a, b) => a.runAt - b.runAt);
+
+      for (const job of candidates.slice(0, limit)) {
+        job.status = 'running';
+        job.attempts += 1;
+        job.workerId = workerId;
+        job.leaseUntil = at + leaseMs;
+        job.holderMemoryMb = memory?.mb;
+        job.nearMemoryLimit = undefined;
+        job.updatedAt = at;
+        taken.push({ ...job });
+      }
+
+      return taken;
+    },
+
+    heartbeat: ({ jobIds, workerId, leaseMs, nearMemoryLimit }) => {
+      const at = now();
+      const stops: { jobId: string; stop: JobStop }[] = [];
+      for (const id of jobIds) {
+        const job = jobs.get(id);
+        if (!job || job.workerId !== workerId || job.status !== 'running') {
+          continue;
+        }
+
+        job.leaseUntil = at + leaseMs;
+        if (nearMemoryLimit) {
+          job.nearMemoryLimit = true;
+        }
+
+        // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
+        if (job.cancelRequested) {
+          stops.push({ jobId: id, stop: 'cancel' });
+        } else if (job.pauseRequested) {
+          stops.push({ jobId: id, stop: 'pause' });
+        }
+      }
+
+      return stops;
+    },
+
+    write: ({ jobId, workerId, state, progress }: JobWrite) => {
+      const job = jobs.get(jobId);
+      if (!job || job.workerId !== workerId || job.status !== 'running') {
+        return false;
+      }
+
+      const at = now();
+      if (state !== undefined) {
+        job.state = state;
+      }
+
+      if (progress) {
+        job.progress = { ...progress, at };
+      }
+
+      job.updatedAt = at;
+
+      return true;
+    },
+
+    settle: ({
+      jobId,
+      workerId,
+      status,
+      delayMs,
+      runId,
+      error,
+      attempt,
+      result,
+      spentMs,
+      refund = status === 'pending' && !attempt
+    }: JobSettlement) => {
+      const job = jobs.get(jobId);
+      // A settlement from a worker that no longer holds the job is a report from the past: its lease lapsed, the
+      // job was reclaimed, and whoever holds it now owns the outcome. Dropping it is what stops a slow replica
+      // from overwriting a live attempt with a stale verdict.
+      if (!job || job.workerId !== workerId) {
+        return undefined;
+      }
+
+      const at = now();
+      if (attempt) {
+        appendAttempt(job, { ...attempt, startedAt: job.updatedAt, endedAt: at });
+      }
+
+      // Asked to stop while it was settling: the next slice it was handed back for is what that stop was about.
+      job.status =
+        status === 'pending' && job.cancelRequested
+          ? 'cancelled'
+          : status === 'pending' && job.pauseRequested
+            ? 'paused'
+            : status;
+      job.updatedAt = at;
+      job.leaseUntil = undefined;
+      job.error = error;
+      job.cancelRequested = undefined;
+      job.pauseRequested = undefined;
+      if (runId) {
+        job.runId = runId;
+      }
+
+      if (result !== undefined) {
+        job.result = result;
+      }
+
+      if (spentMs) {
+        job.activeMs = (job.activeMs ?? 0) + spentMs;
+      }
+
+      if (refund) {
+        // Handed back untouched, or a slice that did not fail: the attempt it took is given back too.
+        job.attempts = Math.max(0, job.attempts - 1);
+      }
+
+      if (job.status === 'pending') {
+        job.runAt = at + (delayMs ?? 0);
+      }
+
+      if (job.status === 'pending' || job.status === 'paused') {
+        job.workerId = undefined;
+      }
+
+      evict();
+
+      return undefined;
+    },
+
+    dueSchedules: limit => {
+      const at = now();
+
+      return [...schedules.values()]
+        .filter(schedule => schedule.enabled && schedule.nextRunAt <= at)
+        .sort((a, b) => a.nextRunAt - b.nextRunAt)
+        .slice(0, limit)
+        .map(schedule => ({ ...schedule }));
+    },
+
+    advanceSchedule: ({ spaceId, actionId, from, to, missed }) => {
+      const schedule = schedules.get(key(spaceId, actionId));
+      if (!schedule || schedule.nextRunAt !== from) {
+        return false;
+      }
+
+      schedule.nextRunAt = to;
+      schedule.lastFireAt = from;
+      schedule.missed += missed;
+      schedule.updatedAt = now();
+
+      return true;
+    },
+
+    putSchedules: ({ spaceId, schedules: incoming }) => {
+      const at = now();
+      const keep = new Set(incoming.map(schedule => key(spaceId, schedule.actionId)));
+      for (const existing of schedules.keys()) {
+        if (existing.startsWith(`${spaceId}:`) && !keep.has(existing)) {
+          schedules.delete(existing);
+        }
+      }
+
+      for (const incomingSchedule of incoming) {
+        const id = key(spaceId, incomingSchedule.actionId);
+        const existing = schedules.get(id);
+        // An existing schedule keeps its own `nextRunAt`: it is a fire already promised, and recomputing it on
+        // every save would let a space saved once a minute never reach a due time at all.
+        const unchanged =
+          existing &&
+          existing.cron === incomingSchedule.cron &&
+          existing.timezone === incomingSchedule.timezone &&
+          existing.environment === incomingSchedule.environment;
+        schedules.set(id, {
+          ...incomingSchedule,
+          missed: existing?.missed ?? 0,
+          ...(existing?.lastFireAt === undefined ? {} : { lastFireAt: existing.lastFireAt }),
+          nextRunAt: unchanged ? existing.nextRunAt : incomingSchedule.nextRunAt,
+          updatedAt: at
+        });
+      }
+
+      return undefined;
+    },
+
+    listJobs: ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
+      const matching = [...jobs.values()]
+        .filter(
+          job =>
+            spaceIds.includes(job.spaceId) &&
+            (name === undefined || job.target.name === name) &&
+            (status === undefined || job.status === status) &&
+            (kind === undefined || job.target.kind === kind)
+        )
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+
+      return {
+        jobs: matching.slice(offset, offset + limit).map(job => ({ ...job })),
+        total: matching.length
+      };
+    },
+
+    listAcross: ({ statuses, limit, order }) =>
+      [...jobs.values()]
+        .filter(job => statuses.includes(job.status))
+        .sort((a, b) => (order === 'due' ? a.runAt - b.runAt : b.updatedAt - a.updatedAt))
+        .slice(0, limit)
+        .map(job => ({ ...job })),
+
+    summarize: ({ spaces = 10 } = {}) => summarizeJobs([...jobs.values()], spaces),
+
+    countDue: ({ spaces, memoryMb } = {}) => {
+      const at = now();
+      const memory = memoryMb === undefined ? undefined : { mb: memoryMb, ceilingMb: memoryMb };
+
+      return [...jobs.values()].filter(job => job.status === 'pending' && job.runAt <= at && fits(job, spaces, memory))
+        .length;
+    },
+
+    flow: ({ from, to }) => flowOf(jobs.values(), from, to),
+
+    getJob: (spaceIds, jobId) => owned(spaceIds, jobId),
+
+    listSchedules: spaceIds => [...schedules.values()].filter(schedule => spaceIds.includes(schedule.spaceId)),
+
+    requeue: (spaceIds, jobId, { input, fresh = false } = {}) => {
+      const job = owned(spaceIds, jobId);
+      if (!job || !isTerminalJobStatus(job.status)) {
+        return false;
+      }
+
+      job.status = 'pending';
+      job.runAt = now();
+      job.attempts = 0;
+      job.workerId = undefined;
+      job.leaseUntil = undefined;
+      job.cancelRequested = undefined;
+      job.pauseRequested = undefined;
+      job.error = undefined;
+      job.result = undefined;
+      if (input) {
+        job.input = input;
+      }
+
+      if (fresh) {
+        job.state = undefined;
+        job.progress = undefined;
+        job.activeMs = undefined;
+      }
+
+      job.updatedAt = now();
+
+      return true;
+    },
+
+    cancel: (spaceIds, jobId) => {
+      const job = owned(spaceIds, jobId);
+      if (!job || isTerminalJobStatus(job.status)) {
+        return false;
+      }
+
+      // A waiting job is simply dropped; a running one is FLAGGED, because the only thing that can stop a flow is
+      // the worker holding it, and it reads this at its next heartbeat.
+      if (job.status === 'pending' || job.status === 'paused') {
+        job.status = 'cancelled';
+        job.workerId = undefined;
+        job.pauseRequested = undefined;
+      } else {
+        job.cancelRequested = true;
+      }
+
+      job.updatedAt = now();
+
+      return true;
+    },
+
+    pause: (spaceIds, jobId) => {
+      const job = owned(spaceIds, jobId);
+      // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
+      if (
+        job?.target.kind !== 'function' ||
+        (job.status !== 'pending' && job.status !== 'running') ||
+        job.pauseRequested
+      ) {
+        return false;
+      }
+
+      if (job.status === 'pending') {
+        job.status = 'paused';
+      } else {
+        job.pauseRequested = true;
+      }
+
+      job.updatedAt = now();
+
+      return true;
+    },
+
+    resume: (spaceIds, jobId) => {
+      const job = owned(spaceIds, jobId);
+      if (job?.status !== 'paused') {
+        return false;
+      }
+
+      job.status = 'pending';
+      job.runAt = now();
+      job.updatedAt = now();
+      // Set aside after failing every attempt: resumed once fixed, it has them all again.
+      if (job.attempts >= job.maxAttempts) {
+        job.attempts = 0;
+      }
+
+      return true;
+    },
+
+    cancelPending: ({ spaceId, key, olderThan }) => {
+      const newest = olderThan === undefined ? undefined : jobs.get(olderThan);
+      const isOlder = (job: Job): boolean =>
+        newest === undefined ||
+        job.createdAt < newest.createdAt ||
+        (job.createdAt === newest.createdAt && job.id < newest.id);
+      const at = now();
+      let dropped = 0;
+      for (const job of jobs.values()) {
+        if (
+          job.spaceId === spaceId &&
+          job.key === key &&
+          job.status === 'pending' &&
+          job.id !== olderThan &&
+          isOlder(job)
+        ) {
+          job.status = 'cancelled';
+          job.updatedAt = at;
+          dropped += 1;
+        }
+      }
+
+      return dropped;
+    }
+  };
+};
+
+/** A state with nothing in it. */
+/** Which of {@link WaitingJobs} a job is, by its target's kind and trigger — as a store's own query reads them. */
+export const waitingKindOf = (kind: string, trigger: string | null | undefined): keyof WaitingJobs => {
+  if (kind === 'function') {
+    return 'functionJobs';
+  }
+
+  switch (trigger) {
+    case 'call':
+      return 'calls';
+    case 'schedule':
+      return 'schedules';
+    case 'later':
+      return 'later';
+    default:
+      return 'other';
+  }
+};
+
+/** Every status at zero: what a summary counts up from, so a status nothing is in still says 0. */
+export const noJobsByStatus = (): Record<JobStatus, number> => ({
+  pending: 0,
+  running: 0,
+  paused: 0,
+  succeeded: 0,
+  failed: 0,
+  dead: 0,
+  cancelled: 0
+});
+
+/**
+ * The status a job waits for the queue in. One set aside (`paused`) waits for a person and is said apart
+ * (`byStatus.paused`): counted as waiting, 32 jobs set aside at their limits read as a queue falling behind for
+ * minutes, the oldest of them its wait, with nothing left to run.
+ */
+export const WAITING_STATUSES: readonly JobStatus[] = ['pending'];
+
+/** The statuses a job a worker died running is in while it needs a larger worker: waiting for one, or set aside. */
+export const NEEDING_STATUSES: readonly JobStatus[] = ['pending', 'paused'];
+
+/**
+ * The queue at a glance, from its jobs: what `summarize` answers for a store that holds them all in hand — the database
+ * ones count the same in their own query.
+ */
+export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSummary => {
+  const byStatus = noJobsByStatus();
+  const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
+  const bySpace = new Map<number, JobQueueSummary['spaces'][number] & { lastAt: number }>();
+  let oldestDueAt: number | undefined;
+  const needingMemory: JobsNeedingMemory = { waiting: 0, paused: 0 };
+  all.forEach(job => {
+    byStatus[job.status] += 1;
+    if (job.needsMemoryMb !== undefined && NEEDING_STATUSES.includes(job.status)) {
+      if (job.status === 'paused') {
+        needingMemory.paused += 1;
+      } else {
+        needingMemory.waiting += 1;
+        needingMemory.mostMb = Math.max(needingMemory.mostMb ?? 0, job.needsMemoryMb);
+      }
+    }
+
+    if (!WAITING_STATUSES.includes(job.status)) {
+      return;
+    }
+
+    const kind = waitingKindOf(job.target.kind, job.target.kind === 'action' ? job.target.trigger : undefined);
+    waiting[kind] += 1;
+    oldestDueAt = oldestDueAt === undefined ? job.dueAt : Math.min(oldestDueAt, job.dueAt);
+    const space = bySpace.get(job.spaceId) ?? {
+      spaceId: job.spaceId,
+      waiting: 0,
+      calls: 0,
+      oldestDueAt: job.dueAt,
+      lastAt: Number.NEGATIVE_INFINITY
+    };
+    space.waiting += 1;
+    space.calls += kind === 'calls' ? 1 : 0;
+    space.oldestDueAt = Math.min(space.oldestDueAt, job.dueAt);
+    // What the job of it touched last said — nothing, when it said nothing.
+    if (job.updatedAt >= space.lastAt) {
+      space.lastAt = job.updatedAt;
+      if (job.error) {
+        space.lastError = job.error;
+      } else {
+        delete space.lastError;
+      }
+    }
+
+    bySpace.set(job.spaceId, space);
+  });
+
+  return {
+    byStatus,
+    waiting,
+    ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
+    needingMemory,
+    spaces: [...bySpace.values()]
+      .sort((a, b) => b.waiting - a.waiting || a.oldestDueAt - b.oldestDueAt)
+      .slice(0, spaces)
+      .map(({ lastAt: _lastAt, ...space }) => space)
+  };
+};
+
+export const emptyState = (): QueueState => ({ jobs: new Map(), schedules: new Map() });
+
+/** How a store runs one method of the rules: reading its state, and keeping it after one that changes it. */
+export type QueueAccess = <K extends keyof JobQueue>(
+  method: K,
+  args: Parameters<JobQueue[K]>
+) => Promise<Awaited<ReturnType<JobQueue[K]>>>;
+
+/** One method of the rules, called with the arguments its contract types. */
+export const applyRule = <K extends keyof JobQueue>(
+  rules: QueueRules,
+  method: K,
+  args: Parameters<JobQueue[K]>
+): Awaited<ReturnType<JobQueue[K]>> => {
+  // TypeScript cannot tie a generic key's method to that key's arguments (a correlated union): each is the same K's.
+  const rule = rules[method] as (...given: Parameters<JobQueue[K]>) => Awaited<ReturnType<JobQueue[K]>>;
+
+  return rule(...args);
+};
+
+/** The contract, each method run through `access`: what every store answers with. */
+export const queueOver = (access: QueueAccess): JobQueue => ({
+  now: (...args) => access('now', args),
+  enqueue: (...args) => access('enqueue', args),
+  claim: (...args) => access('claim', args),
+  heartbeat: (...args) => access('heartbeat', args),
+  settle: (...args) => access('settle', args),
+  write: (...args) => access('write', args),
+  dueSchedules: (...args) => access('dueSchedules', args),
+  advanceSchedule: (...args) => access('advanceSchedule', args),
+  putSchedules: (...args) => access('putSchedules', args),
+  listJobs: (...args) => access('listJobs', args),
+  listAcross: (...args) => access('listAcross', args),
+  summarize: (...args) => access('summarize', args),
+  countDue: (...args) => access('countDue', args),
+  flow: (...args) => access('flow', args),
+  getJob: (...args) => access('getJob', args),
+  listSchedules: (...args) => access('listSchedules', args),
+  requeue: (...args) => access('requeue', args),
+  cancel: (...args) => access('cancel', args),
+  pause: (...args) => access('pause', args),
+  resume: (...args) => access('resume', args),
+  cancelPending: (...args) => access('cancelPending', args)
+});

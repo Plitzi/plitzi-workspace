@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { buildServerInfo } from './buildServerInfo';
 
-import type { SSRRequest, SSRServerConfig, ServerSSR } from '@plitzi/sdk-shared';
+import type { SSRServerConfig } from '../types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { ServerSSR } from '@plitzi/sdk-shared';
 
 /** A request as `parseRequest` makes one: a host it cannot trust leaves `hostname` empty. */
 const request = (host: string, protocol: 'http' | 'https' = 'http'): SSRRequest => ({

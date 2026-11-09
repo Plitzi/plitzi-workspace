@@ -4,12 +4,12 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createMemoryJobQueue } from '@plitzi/sdk-actions';
 import { LATER_ANSWER_FILE, LATER_ASK_FILE } from '@plitzi/sdk-shared/project';
 
 import { answerLaterAsk, watchLaterAsks } from './laterAsks';
-import { createMemoryJobQueue } from '../../modules/actions/jobs';
 
-import type { JobQueue } from '@plitzi/sdk-shared';
+import type { JobQueue } from '@plitzi/sdk-actions/types';
 
 const SPACE = 1;
 const HOUR = 3_600_000;

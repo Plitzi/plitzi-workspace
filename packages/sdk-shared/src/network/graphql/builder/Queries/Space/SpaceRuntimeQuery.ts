@@ -25,7 +25,8 @@ const SpaceRuntimeQuery = /* GraphQL */ `
         label
         cpu
         memory
-        included
+        bought
+        displayAmount
       }
     }
   }

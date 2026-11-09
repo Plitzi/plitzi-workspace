@@ -242,6 +242,23 @@ describe('an address no page answers', () => {
     expect(matchRoutePath(paths, '/analytics/nope', false).pageId).toBe('notFound');
   });
 
+  // A back-office's path told whoever probed it that something was there: refused, it answers as a typo does.
+  it('is what a page answers whoever it is not for, when it says to answer as if it did not exist', () => {
+    const hiding: Record<string, Element> = {
+      ...withNotFound,
+      staff: page('staff', { slug: 'staff', accessLevel: 'authenticated', unauthorizedBehaviour: 'notFound' })
+    };
+
+    expect(matchRoutePath(getPaths(hiding, folders, false), '/staff', false)).toMatchObject({
+      action: { type: 'notFound' },
+      pageId: 'notFound'
+    });
+    expect(matchRoutePath(getPaths(hiding, folders, true), '/staff', true)).toMatchObject({
+      action: { type: 'normal' },
+      pageId: 'staff'
+    });
+  });
+
   it('is never what a page the visitor may not see answers with: that one still sends them on', () => {
     const guarded = getPaths(
       {

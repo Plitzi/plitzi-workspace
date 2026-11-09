@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createCloudAdapters } from './cloudAdapters';
 
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 /**
  * What this file is really about is how often Plitzi is asked, and what happens when it does not answer.

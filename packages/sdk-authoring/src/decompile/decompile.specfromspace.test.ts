@@ -123,6 +123,31 @@ describe('specFromSpace', () => {
     expect(compareSpaces(first, authorSpace(spec))).toEqual([]);
   });
 
+  // Lost on the way back, a back-office exported and pushed again would answer 403 — telling whoever probes it.
+  it('keeps a page that answers whoever it is not for as if it did not exist', () => {
+    const space: SpaceSpec = {
+      name: 'Kept',
+      permanentUrl: 'kept',
+      pages: [
+        { id: 'home', name: 'Home', slug: '', body: [heading('Welcome', { id: 'welcome' })] },
+        {
+          id: 'staff',
+          name: 'Staff',
+          slug: 'staff',
+          access: { permissions: ['adminManage'] },
+          whenRefused: 'notFound',
+          body: [heading('Pools', { id: 'pools' })]
+        }
+      ]
+    };
+    const first = authorSpace(space);
+    const { spec } = specFromSpace(first);
+
+    expect(first.schema.flat.staff.attributes.unauthorizedBehaviour).toBe('notFound');
+    expect(spec.pages.find(page => page.id === 'staff')?.whenRefused).toBe('notFound');
+    expect(compareSpaces(first, authorSpace(spec))).toEqual([]);
+  });
+
   it('round-trips the blank space every account starts with', () => {
     const { first, second } = roundTrip(blankSpaceSpec);
 

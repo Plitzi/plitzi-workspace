@@ -7,8 +7,8 @@ import { useCallback, use, useMemo } from 'react';
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useNetwork } from '@plitzi/sdk-shared/hooks';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 export type ElementAdvancedEditorProps = {
   className?: string;

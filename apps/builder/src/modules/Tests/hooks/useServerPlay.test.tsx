@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 
 import useServerPlay from './useServerPlay';
 
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/react';
 import type { ReactNode } from 'react';
 
 /** The hook on a space channel of its own, and a way to deliver what the server publishes on it. */

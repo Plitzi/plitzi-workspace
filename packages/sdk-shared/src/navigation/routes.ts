@@ -338,6 +338,16 @@ const matchRoutePath = (
     return { action: { type: 'redirect', path: unauthorizedPageRedirect }, pathMatch: undefined };
   }
 
+  // A page that answers as if it did not exist, to whoever it is not for: what a path no page answers gets — the
+  // space's own "not found" page when it declares one.
+  if (!hasAccess && unauthorizedBehaviour === 'notFound') {
+    const instead = best(candidates.filter(({ path }) => path.notFound));
+
+    return instead
+      ? { action: { type: 'notFound', path: undefined }, pathMatch: instead.matchResult, pageId: instead.pageId }
+      : { action: { type: 'notFound', path: undefined }, pathMatch: undefined };
+  }
+
   // The space's "not found" page answers with its status, whichever of its addresses was asked for.
   if (hasAccess) {
     return { action: { type: notFound ? 'notFound' : 'normal', path: undefined }, pathMatch: matchResult, pageId };

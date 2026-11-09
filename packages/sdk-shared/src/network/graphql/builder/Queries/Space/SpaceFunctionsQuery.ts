@@ -13,6 +13,7 @@ const SpaceFunctionsQuery = /* GraphQL */ `
       offer {
         template
       }
+      sizes
     }
   }
 `;

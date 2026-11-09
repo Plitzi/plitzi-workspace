@@ -1,18 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { PREVIEW_COOKIE } from '@plitzi/sdk-kernel/identity';
+
 import { renderSSR } from './handler';
 import { createMemoryDraftStore, takeDraftOverride } from './preview';
-import { PREVIEW_COOKIE } from '../../core/previewToken';
 
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  OfflineDataRaw,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers,
-  SSRServerConfig
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig, SSRServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
  * A draft is unsaved work being looked at, and everything asserted here follows from that one sentence: it must not

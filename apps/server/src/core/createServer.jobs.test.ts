@@ -1,16 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
+import { createActionsModule } from '@plitzi/sdk-actions';
+import { createMemoryJobQueue } from '@plitzi/sdk-actions';
+import { functionsInHand } from '@plitzi/sdk-actions/functions';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { createIsolateRunner } from '@plitzi/sdk-runtime/runner';
+
+import { createPlatform } from './platform';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
-import { createActionsModule } from '../modules/actions';
-import { createMemoryJobQueue } from '../modules/actions/jobs/memoryQueue';
-import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
-import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
-import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { Job, FunctionJobView, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { Job, FunctionJobView } from '@plitzi/sdk-shared';
+import type { SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 /**
  * A space's job the whole way, through the server a deployment gets: its code in the sandbox declares it, a route starts
@@ -76,7 +78,7 @@ beforeAll(async () => {
   }
 
   const functions: SpaceFunctions = functionsInHand(prepared.functions);
-  server = createServer({
+  server = createPlatform({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
     action: {
@@ -184,10 +186,11 @@ describe('a space’s job through the server', () => {
 
   it('fails a slice cut by its time that saved nothing, rather than run it again forever', async () => {
     const { id } = await start('quiet');
-    const job = await until(id, each => each.status === 'dead');
+    // Out of attempts, it is set aside for somebody to read, saying why.
+    const job = await until(id, each => each.status === 'paused');
 
-    expect(job.error).toBe(
-      'its slice ran out of time without saving progress — job.save where it is, to go on in the next one'
+    expect(job.error).toContain(
+      'The last said: its slice ran out of time without saving progress — job.save where it is, to go on in the next one'
     );
   });
 

@@ -122,4 +122,10 @@ See recipes/carousel.ts.
 A `chart` draws rows too — bars, a line, an area or a donut, SVG of its own: bind `items` as a list's
 (`bindTemplate('items', 'stats.data', '{{ source.days }}', { returns: 'value' })`), name the fields (`labelField`,
 `valueField`) and say what it shows (`label`, read aloud with its rows as a table). It takes the colour of the text
-around it; its parts (`bar`, `line`, `grid`, `axisLabel`…) restyle it. Never a plugin for a bar chart.
+around it; its parts (`bar`, `line`, `grid`, `axisLabel`, `tooltip`…) restyle it. Several values a row — a line per
+server — are `series: [{ field, label }]` instead of `valueField`: each in a colour of its own
+(`--plitzi-chart-series-1`…`-8`), with a legend of its last and highest value — a click on it hides or shows that series,
+⌘ or Ctrl + click shows it alone; a row without one is a gap. Pointed at,
+or moved through with the arrow keys, it reads every series at that row — by `titleField` when the axis says less
+(an empty `labelField` is not written there) — and charts with the same `sync` point together, at the row with the same
+title. Never a plugin for a bar chart.

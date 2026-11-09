@@ -18,11 +18,12 @@ const importsOf = (file: string): string[] =>
  *  React render path; ESM re-exports load eagerly, so ONE import of it from shipped code would pull that whole
  *  graph into every MCP process — measured at the time of the split as 233 modules of dead weight.
  *
- *  ESLint bans it too, but a lint rule only fires where lint runs. This pins it in the suite that gates CI. */
+ *  What a server is built on comes from `@plitzi/sdk-kernel`. ESLint bans the barrel too, but a lint rule only fires
+ *  where lint runs. This pins it in the suite that gates CI. */
 describe('package boundary with @plitzi/sdk-server', () => {
-  it('imports only the narrow entries, never the root barrel', () => {
+  it('loads nothing of the root barrel: its types alone, which are erased', () => {
     const offenders = sourceFiles()
-      .filter(file => importsOf(file).includes('@plitzi/sdk-server'))
+      .filter(file => valueImportsOf(file).includes('@plitzi/sdk-server'))
       .map(file => path.relative(SRC, file));
 
     expect(offenders).toEqual([]);

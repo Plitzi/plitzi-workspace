@@ -93,7 +93,7 @@ describe('data file ops', () => {
       },
       {
         ...withData(),
-        functions: { files: {}, version: 'v1', manifest: null, offer: null }
+        functions: { files: {}, version: 'v1', manifest: null, offer: null, sizes: ['small'] }
       },
       { saveFunctions, saveData }
     );

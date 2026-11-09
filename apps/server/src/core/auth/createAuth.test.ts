@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
 
 import { createAuth } from './createAuth';
+import { TEST_SECRET } from './tests/keys';
 
-import type { AccountAdapters } from './api';
-import type { IdentityAdapters } from './identity';
-import type { SSRSession } from '@plitzi/sdk-shared';
+import type { AccountAdapters } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 // What this facade is for is not brevity but the two facts that used to be stated twice. The tests that matter are
 // the ones proving they cannot disagree any more.
@@ -44,7 +47,8 @@ const store = () => {
 
 const build = (cookie?: { name: string }) =>
   createAuth({
-    tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+    tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: ['https://api.acme.test'] },
+    secret: TEST_SECRET,
     cookie,
     adapters: store()
   });
@@ -112,7 +116,8 @@ describe('createAuth', () => {
 
   it('honours a base path other than /auth', async () => {
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: [] },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: [] },
+      secret: TEST_SECRET,
       adapters: store(),
       basePath: '/api/auth'
     });
@@ -123,7 +128,8 @@ describe('createAuth', () => {
   // A deployment's own rules come first, so it can always open a path of its own without editing the server.
   it('puts the deployment’s own rules ahead of the derived ones', async () => {
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: [] },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: [] },
+      secret: TEST_SECRET,
       adapters: store(),
       rules: [{ match: ['/health'], requirement: 'public' }]
     });
@@ -144,6 +150,69 @@ describe('createAuth', () => {
   });
 });
 
+/**
+ * A session the store no longer has — signed out everywhere, revoked, the database restored — while the browser keeps
+ * its cookie, its readable hint and the token it stored: left as they are, the browser believes it is signed in, and a
+ * sign-in for signed-out visitors sends it on to a page that sends it straight back, for ever.
+ */
+describe('a session that is over, on a page request', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const answer = () => {
+    const written: string[] = [];
+    const res = { setHeader: (_name: string, value: string | string[]) => written.push(...[value].flat()) };
+
+    return { res, written };
+  };
+  const cleared = (written: string[]) => written.filter(cookie => /Max-Age=0/i.test(cookie)).map(c => c.split('=')[0]);
+
+  it('is cleared, its readable hint with it', async () => {
+    // Issued by a deployment with the same keys whose store kept it: this one's store never had it.
+    const session = await build().api.issueSession(7);
+    const { res, written } = answer();
+
+    const user = await build().ssrIdentityAdapters.getUser(
+      { hostname: 'acme.test', headers: { cookie: `plitzi_session=${encodeURIComponent(session.token)}` } },
+      res
+    );
+
+    expect(user).toBeUndefined();
+    expect(cleared(written)).toEqual(['plitzi_session', 'plitzi_session_refresh', 'plitzi_session_hint']);
+  });
+
+  it('leaves a live one, an expired one the refresh may renew, and a bearer header alone', async () => {
+    const auth = build();
+    const session = await auth.api.issueSession(7);
+    const cookie = `plitzi_session=${encodeURIComponent(session.token)}`;
+    const live = answer();
+
+    expect(
+      await auth.ssrIdentityAdapters.getUser({ hostname: 'acme.test', headers: { cookie } }, live.res)
+    ).toBeDefined();
+    expect(live.written).toEqual([]);
+
+    const foreign = await build().api.issueSession(7);
+    const bearer = answer();
+    await auth.ssrIdentityAdapters.getUser(
+      { hostname: 'acme.test', headers: { authorization: `Bearer ${foreign.token}` } },
+      bearer.res
+    );
+
+    expect(bearer.written).toEqual([]);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 400 * 24 * 60 * 60 * 1000);
+    const expired = answer();
+
+    expect(
+      await auth.ssrIdentityAdapters.getUser({ hostname: 'acme.test', headers: { cookie } }, expired.res)
+    ).toBeUndefined();
+    expect(expired.written).toEqual([]);
+  });
+});
+
 /** A server of your own: its accounts are its space's people, read by another as an id and a username, nothing more. */
 describe('an account’s public face', () => {
   it('answers an active account by username or id, its id and username alone — and nobody for an inactive one', async () => {
@@ -152,7 +221,8 @@ describe('an account’s public face', () => {
       gone: { id: 10, username: 'gone', email: 'gone@example.test', active: false, verified: true }
     };
     const auth = createAuth({
-      tokens: { secret: 'test-secret', issuer: 'https://acme.test' },
+      tokens: { keys: TEST_KEYS, issuer: 'https://acme.test' },
+      secret: TEST_SECRET,
       adapters: {
         ...store(),
         findByUsername: username => Promise.resolve(Object.values(accounts).find(each => each.username === username)),

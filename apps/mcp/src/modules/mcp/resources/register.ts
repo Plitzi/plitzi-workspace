@@ -13,7 +13,7 @@ import type { McpLog } from '../helpers';
 import type { Space } from '../helpers';
 import type { Env } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { SSRChangePage, SSRChangeQuery } from '@plitzi/sdk-shared';
+import type { SSRChangePage, SSRChangeQuery } from '@plitzi/sdk-kernel/types';
 
 /** A page an agent can read in one go: each change carries whole elements before and after. */
 const CHANGES_PAGE = 20;

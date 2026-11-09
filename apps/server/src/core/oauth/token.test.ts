@@ -6,7 +6,7 @@ import { handleAuthorizeStart, handleAuthorizeSubmit } from './authorize';
 import { handleRevoke, handleToken } from './token';
 
 import type { OAuthParams } from './params';
-import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * A client that asked to CHOOSE — which space to work in — gets the choice back with its credential.

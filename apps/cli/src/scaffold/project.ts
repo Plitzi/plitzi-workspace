@@ -84,7 +84,11 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
    * first time the one that pulled it in stops depending on it.
    */
   '@plitzi/plitzi-sdk': SDK_VERSION,
-  ...(mode === 'server' ? { '@plitzi/sdk-server': SDK_VERSION } : {}),
+  // The page server, the actions engine it is composed with (`@plitzi/sdk-actions`), and the contract its own functions
+  // and runtime are written against (`@plitzi/sdk-runtime`).
+  ...(mode === 'server'
+    ? { '@plitzi/sdk-actions': SDK_VERSION, '@plitzi/sdk-runtime': SDK_VERSION, '@plitzi/sdk-server': SDK_VERSION }
+    : {}),
   // Authoring is what turns `src/space/` into documents, so a local project always needs it. A cloud one never
   // does: its space is a document Plitzi holds, and nothing here builds one.
   ...(source === 'local' ? { '@plitzi/sdk-authoring': SDK_VERSION } : {}),

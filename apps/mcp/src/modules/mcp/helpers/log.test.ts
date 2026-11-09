@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createMcpLog } from './log';
 
-import type { McpResourceLogEvent, McpToolLogEvent, ServerLogEvent } from '@plitzi/sdk-shared';
+import type { McpResourceLogEvent, McpToolLogEvent, ServerLogEvent } from '@plitzi/sdk-kernel/types';
 
 // The MCP sink emits only tool and resource events (requests come from the dispatcher); narrowing here keeps the
 // assertions typed against the shape under test.

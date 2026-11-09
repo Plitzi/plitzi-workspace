@@ -9,6 +9,7 @@ import { RUNTIME_STYLE_ID } from '@plitzi/sdk-shared/style';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import PlitziBadge from '../components/PlitziBadge';
+import QueuedNotice from '../components/QueuedNotice';
 import QuotaNotice from '../components/QuotaNotice';
 
 import type { RenderMode } from '@plitzi/sdk-shared';
@@ -48,6 +49,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziProvider>
       <QuotaNotice />
+      <QueuedNotice />
       <PlitziBadge />
     </SpaceContainer>
   );

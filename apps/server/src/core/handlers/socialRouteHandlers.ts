@@ -1,10 +1,10 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 import type { HttpRoute, RouterLike, SocialRouteHandler } from './types';
-import type { Actor } from '../auth/identity';
 import type { SocialAuth } from '../auth/oauth';
-import type { SessionCookies } from '../auth/session';
-import type { SSRSession } from '@plitzi/sdk-shared';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
+import type { SessionCookies } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 export interface SocialRouteHandlersOptions {
   /** A `createSocialAuth(...)` result — the providers this deployment has credentials for. */

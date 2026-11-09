@@ -1,7 +1,7 @@
 import { handleProxyRequest, proxySettings } from '../modules/mcp/proxy';
 
 import type { McpOptions } from '../options';
-import type { Stage } from '@plitzi/sdk-server/kernel';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 // The endpoint a rendered widget loads its images, media, fonts and API data from (see {@link McpProxyOptions}).
 // Inert unless the deployment configured a secret, and deliberately ahead of the OAuth guard: the host's sandboxed

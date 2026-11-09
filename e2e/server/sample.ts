@@ -3,7 +3,8 @@ import { fileURLToPath } from 'node:url';
 
 import { sampleId } from '../spaces';
 
-import type { SSRRscContext, SSRRscData } from '@plitzi/sdk-shared';
+import type { SSRRscContext } from '@plitzi/sdk-kernel/types';
+import type { SSRRscData } from '@plitzi/sdk-shared';
 
 /** What every server rendering the sample space needs beside it: its plugins, and the RSC slices its server
  *  elements read. Shared by the suite's own server and the one spread over several processes. */

@@ -1,4 +1,4 @@
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
+import { evaluateRuleGroup } from '../../conditions';
 
 import type { SchemaVariable, SchemaVariableValue } from '../../types';
 
@@ -36,7 +36,7 @@ export const resolveVariables = (
       return { ...acum, [name]: value };
     }
 
-    const subValue = subValues.find(entry => QueryBuilderEvaluator(entry.when, scope));
+    const subValue = subValues.find(entry => evaluateRuleGroup(entry.when, scope));
 
     return { ...acum, [name]: subValue ? subValue.value : value };
   }, {});

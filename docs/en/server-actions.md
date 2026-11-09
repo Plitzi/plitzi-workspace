@@ -269,10 +269,10 @@ whenFailed('saved', addNotification({ content: '{{ saved.error ? saved.error : "
 A step's own failure message never leaves the server — it can hold a query, a URL, a credential's name — so `error`
 is there for two things alone: a refusal before the run began (`This action is already running`), and a step that
 refused ON PURPOSE. In a flow that is **`flow.fail` with *Tell the caller why* on**; in a task of your own, throw
-**`ActionRefusal`** (`@plitzi/sdk-server/actions`) with a message written for the person on the page:
+**`ActionRefusal`** (`@plitzi/sdk-actions`) with a message written for the person on the page:
 
 ```ts
-import { ActionRefusal } from '@plitzi/sdk-server/actions';
+import { ActionRefusal } from '@plitzi/sdk-actions';
 
 if (taken) {
   throw new ActionRefusal('That name is taken — try another');
@@ -514,6 +514,15 @@ Four properties follow, and they are the reason the design looks the way it does
 - **A job survives its worker.** A claim is held under a lease and renewed while the flow runs. A replica that is
   killed stops renewing, and the next worker to claim takes the job over — with the dead one's attempt written into
   the history as `lost`, so a machine that keeps dying is visible rather than merely slow.
+- **A job that takes its worker down runs next on a larger one.** Run again on the same size, a job that ended its
+  worker for its memory would end the next one too. When the workers say what they may hold
+  (`jobs.claimMemory: () => ({ mb, ceilingMb })` — their container's memory, and the most any of the deployment's
+  may), each reads its memory every second while it holds jobs and, near it (85% of the container, or of V8's heap
+  limit), marks them and says so in its log. A marked job whose worker then died — or one a second worker in a row died
+  running — needs more than that worker could hold (`needsMemoryMb`), and only a worker that may hold that takes it,
+  whatever spaces it is kept for. When none may (`ceilingMb`), the job is set aside (`paused`), its error saying so,
+  until a worker is given more memory and it is resumed. A worker that died for anything else leaves its jobs to the
+  next, as above. `summarize` counts both (`needingMemory`). Without `claimMemory`, nothing changes.
 - **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
   SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
   job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is
@@ -525,8 +534,10 @@ Four properties follow, and they are the reason the design looks the way it does
   comes from the store the cluster shares. Replicas in different countries agree about what has run without
   agreeing about what time it is.
 
-A failed run is retried with a widening backoff, up to the attempts the deployment allows, and then left as
-**dead**: visible, with every attempt and every error, for somebody to run again or drop.
+A failed run is retried with a widening backoff, up to the attempts the deployment allows (3 by default), and then set
+aside (**paused**) for somebody: its runs and every attempt's error say why, and it is resumed once fixed — with every
+attempt again — or cancelled. The worker says so in its log. **dead** is left for a job that can never run: its action
+is gone or switched off, or a visitor's call was kept past a day.
 
 Missed fires are **not** replayed as a burst. After an outage the overdue fire runs once and the schedule jumps to
 the next occurrence, recording how many went by — a digest missed for a day sends once and says it missed 23,
@@ -650,6 +661,33 @@ Only ever for a key the CALLER named: an `idempotencyKey` on the step, or the de
 webhook. A key derived from the input is not replayed, because two identical calls a minute apart are usually two
 things somebody meant to happen twice.
 
+### When nothing can run it: a call kept for later
+
+A call a page makes while nothing can run it is not lost. Two cases, the same answer:
+
+- **No runner for the space's code.** The action uses the space's own functions and no functions runner answers — a
+  restart, a deploy, an outage. A runner that cannot be reached is tried again a few times first (half a second, one,
+  two), which covers a restart; past that it is taken as away for fifteen seconds. A call that needs it is then not
+  started: the worker keeps it in the job queue and answers `202 { status: 'queued', jobId, ticket }`. The first call
+  to find the runner gone is kept the same way when none of its steps had done anything yet.
+- **No worker.** The request never reached one, or the proxy in front found none (502, 503). The page hands the call to
+  the page server — which serves the page's host whatever the workers do — at `POST /_plitzi/queued`, under a key of
+  its own. It is checked as `/_action` checks it (the action at the page's revision, its access for the session, its
+  input) and kept the same way.
+
+A kept call runs as **its caller's**: who made it, their roles and permissions as the session said when it was kept,
+the revision and origin of the page — with the caller's `idempotencyKey` when they named one, so a call that did run
+after all answers with that run rather than running twice. It runs on the first worker whose runner answers, whether
+or not anybody is still on the page, and is dropped after a day unrun. A run that fails answers once (a refusal, a step's
+error) and is not run again. A space has at most 500 calls waiting; past that a call is refused (`over_capacity`).
+
+Meanwhile the page waits for the answer, saying so — **Your request is waiting for the server — it will finish on its
+own**, the run reading `queued` — and reads it at `GET /_plitzi/queued/<jobId>` with its ticket (`x-plitzi-ticket`),
+less often the longer it waits. When it ran, the flow goes on with the answer it would have had then: `On Server
+Action End` with its output, `On Server Action Error` with its reason. A stream is never kept: it runs, and says how it
+went, as before. Scheduled jobs wait the same way: a fire whose code has no runner is not started, and its attempt is
+not spent.
+
 ---
 
 ## 10. When something does not work
@@ -661,6 +699,8 @@ things somebody meant to happen twice.
 | `unauthenticated` (401) | Nobody is signed in and the trigger asks for somebody. Usually a session that ended under a page that still believed it had one — the SDK reports it to auth, which renews it or signs the visitor out there and then |
 | `forbidden` (403) | The action has no trigger step of that kind, or a signed-in caller does not hold the permissions the trigger asks for. Never read as a dead session: there is nothing to renew |
 | `over_capacity` | Too many runs at once. Calls are capped per space (`concurrency.perSpace`) and renders per process (`concurrency.renderPerProcess`) — a busy page is never counted against the space's call budget |
+| `over_capacity` saying the server is short of memory | The process is past its share of its memory limit (`concurrency.memoryShare`, 85% of its container's limit) and starts no new run until those in it finish. Runs reading large answers are the usual cause: each holds several times an answer's size while it parses. Retry; a deployment that sees it often gives the process more memory or lowers `concurrency.perProcess` |
+| `over_capacity` naming a byte budget across requests | The run's answers together carried more than `limits.maxRunBytes` (10 MB). One answer is capped at `limits.maxResponseBytes` (5 MB); this is all of them. Read less per run — a narrower query, a page of results — or raise it for that action or the deployment |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |
 | `Request host is not allowed` | The URL points inside the network the server runs in — a private address, `localhost`, or a public name whose DNS answers one. An authored request may only reach the public internet |
@@ -668,7 +708,7 @@ things somebody meant to happen twice.
 | A section that is always missing on a slow provider | The page's own ceiling for one section — `rsc.elementTimeoutMs`, 5 s by default — is tighter than what the action is allowed. Whichever is tighter wins, and being cut there now ends the run rather than leaving it to finish for nobody |
 | A section reporting it could not be reached | A `render` action did not complete; the reason is in the server log, and one slice failing never takes the page down. The element publishes `hasError` and `errorMessage` — bind them and the page says what a visitor can act on: an action's refusal (`refuse(code, words)`) arrives as its words alone, in production too; any other failure's message only while developing |
 | A webhook that appears to do nothing at all | Open the action and read **Recent activity**. A delivery refused for a signature that does not match is recorded there with the reason — it is the most common cause, and it never reaches a run |
-| Sources past the twentieth answering like network errors | The run's outbound budget (`limits.maxRequests`, 20) refused them. A task that catches a failed fetch hides it, so the step that ran into the budget says so in its log, and the server logs it once, with `createServer({ action: { limits: { maxRequests } } })` |
+| Sources past the twentieth answering like network errors | The run's outbound budget (`limits.maxRequests`, 20) refused them. A task that catches a failed fetch hides it, so the step that ran into the budget says so in its log, and the server logs it once, with `createPlatform({ action: { limits: { maxRequests } } })` |
 | `invalid_input` (422) naming `text, got a list` | A step param that is only `{{ rows\|json_encode }}` is the value it encodes, not its text: declare the input field `json` |
 | A run that ends at exactly 10 s (or 120 s streaming) with `timeout` | It hit its wall clock. Either the flow is doing more than it can in that budget — raise it for that action, or for the deployment — or a step is not coming back at all. The history says which step it stopped at |
 | A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
@@ -740,8 +780,8 @@ Four decisions that are open rather than forgotten, so nobody re-derives them fr
 
 Everything above is configuration; the two extension points are code you own:
 
-- **Your own tasks** — `createServer({ functions: { native: [defineFunctions({ tasks: [...] })] } })`, from
-  `@plitzi/sdk-server/functions`. They appear in your builder's catalog with no fork, because the catalog is served
+- **Your own tasks** — `createPlatform({ functions: { native: [defineFunctions({ tasks: [...] })] } })`, from
+  `@plitzi/sdk-runtime`. They appear in your builder's catalog with no fork, because the catalog is served
   rather than hardcoded. A task declares its parameters the same way an interaction callback does, and runs with a
   function's context (`kv`, `fetch`, `publish`, `user`, …) — the same code a space runs in the platform's sandbox. See
   [Functions](./functions.md) — and for a space's own, written in the builder and run in the sandbox.
@@ -753,8 +793,8 @@ an action whose step is the space's own function in `shippingQuote`, and the ren
 `runtime: 'server'` element while the page is built — in `catGallery`. On a server of your own: **your own
 trigger**, over a shared `kv` adapter written out in full, in
 [`08-custom-trigger`](../../examples/self-hosting/08-custom-trigger). **Scheduled and delayed jobs** over a
-queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
-sharing it — are in [`09-schedules`](../../examples/self-hosting/09-schedules).
+queue and a `kv` the deployment keeps itself — the SDK's SQLite ones, in one file two replicas share — are in
+[`09-schedules`](../../examples/self-hosting/09-schedules).
 
 **How the server reaches a space** is `action.lookups` (`ActionLookupsConfig`), each read as of the version a run
 belongs to: `getAction` (required) and `listActions`, `listScheduledSpaces`, `getCredential`, `getConnector`,
@@ -787,6 +827,24 @@ still running). Which of them are worth keeping is yours to decide — Plitzi's 
 misconfigurations into the space's activity feed and throttles them to one a minute, and sends all of them to the
 log stream.
 
+### On a worker of their own
+
+One process serving pages and actions is `createPlatform` (`@plitzi/sdk-server/platform`). When calls, webhooks or jobs
+start to weigh on the pages, they run on a **worker**: `createWorker` (`@plitzi/sdk-actions/worker`), the engine with
+no page, no render and no sign-in, given the same adapters and identity as the page servers. The page servers are then
+told where their pages call (`engineOnWorker`) and run nothing of it.
+
+- **One origin, routed by path** — the recommended way. A gateway sends a space's `/_action`, `/fn` and `/_realtime` to
+  the worker and the rest to the pages; the browser sees one origin, so the session and the cross-site check are
+  unchanged.
+- **Another origin** — `action.origin` on both (`https://actions.example.com`), and `action.pageOrigins` on the worker:
+  the pages call there with the visitor's cookies, and the worker answers those origins alone, with CORS and
+  credentials. It refuses to start with the first and not the second. The session must be readable on that host (a
+  cookie on a parent domain both share), and a page's `/fn` routes and channels stay on its own origin.
+
+Both, as separate processes: [`11-actions-on-a-worker`](../../examples/self-hosting/11-actions-on-a-worker). The
+whole configuration is `@plitzi/sdk-server`'s README, *Actions apart from pages*.
+
 ### Scheduled jobs
 
 A `schedule` trigger works with no configuration at all — over an in-process queue, which is correct for one
@@ -798,17 +856,17 @@ rules (`queueRules`):
 
 | Store | | For |
 | --- | --- | --- |
-| `createMemoryJobQueue()` | `@plitzi/sdk-server/actions` | tests, and a server whose jobs may go with it |
-| `createFileJobQueue({ file })` | `@plitzi/sdk-server/actions` | one process that must survive a restart — **a project's server: `state/jobs.json`, beside its `kv`** |
-| `createSqliteJobQueue({ file \| db })` | `@plitzi/sdk-server/sqlite` | every process on one machine sharing it — beside `createSqliteKv({ db })` |
-| `createMongoJobQueue` / `createMysqlJobQueue` | `@plitzi/sdk-server/mongo` · `/mysql` | replicas sharing a database (below) |
+| `createMemoryJobQueue()` | `@plitzi/sdk-actions` | tests, and a server whose jobs may go with it |
+| `createFileJobQueue({ file })` | `@plitzi/sdk-actions` | one process that must survive a restart — **a project's server: `state/jobs.json`, beside its `kv`** |
+| `createSqliteJobQueue({ file \| db })` | `@plitzi/sdk-actions/sqlite` | every process on one machine sharing it — beside `createSqliteKv({ db })` |
+| `createMongoJobQueue` / `createMysqlJobQueue` | `@plitzi/sdk-actions/mongo` · `/mysql` | replicas sharing a database (below) |
 | your own `JobQueue` | | any other store: the seam below |
 
 The JSON file and the SQLite table keep the queue's state whole — right for what a project's queue holds; a deployment
 of thousands of jobs a minute keeps it in a database.
 
 ```ts
-createServer({
+createPlatform({
   action: {
     lookups,
     jobs: {
@@ -854,25 +912,35 @@ opens no connection: these take the database the deployment already has, create 
 or three tables) on first use, and pass the same contract tests as the in-process queue.
 
 ```ts
-import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo'; // `mongodb`, your client
-import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql'; // `mysql2`, your pool
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-actions/mongo'; // `mongodb`, your client
+import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-actions/mysql'; // `mysql2`, your pool
 
 const db = mongoClient.db('app');
-createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } } });
+createPlatform({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } } });
 ```
 
 On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as they are in Redis — and a value is a
 `MEDIUMTEXT`, so one past 64 KB is kept whole, and a job carries the `job_key` a run set for later is replaced by.
 With `createTables: false`, your own migrations create the tables from `mysqlJobSchemaStatements()`.
 
-Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
-[`09-schedules`](../../examples/self-hosting/09-schedules) is one written out: every method of the queue
-over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
+Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store: the
+`JobQueue` contract (`@plitzi/sdk-actions/types`), keeping the rules above. The stock queues' tests are what to hold one
+to. [`09-schedules`](../../examples/self-hosting/09-schedules) runs the SQLite one with a page to watch two replicas
+share it.
 
 **Close the server on SIGTERM.** A deploy stops a replica with a signal, and a process that simply exits leaves every
-running job to be retried by somebody else. `closeOnSignals(server, { afterClose })` (from `@plitzi/sdk-server`) calls
+running job to be retried by somebody else. `closeOnSignals(server, { afterClose })` (from `@plitzi/sdk-kernel/http`) calls
 `server.close()` — which finishes the jobs this replica is running and leaves the waiting ones in the queue — and only
 then lets the process exit. A deployment that already handles its own signals calls `server.close()` from there.
+
+**Stop without cutting anything.** `shutdown: { announceMs, graceMs }` on `createServer`, `createWorker` and the
+functions runner says how. For `announceMs` the server keeps serving while `/health` answers 503, so a load balancer takes
+it out of rotation before its port closes; 0 by default, a few seconds behind one. Then what it is answering has
+`graceMs` to finish (10 s by default). Make that at least your longest action's time limit, or a deploy cuts a run
+halfway. While stopping, a runner answers new invocations `busy`, and the platform takes them to another runner. Give
+the orchestrator a grace longer than the two together (a pod's `terminationGracePeriodSeconds`), and roll the runners
+before the workers and the workers before the page servers: a callee accepts the protocol versions before its own,
+never after.
 
 ### The `kv` store
 
@@ -886,11 +954,11 @@ whatever it already runs — Redis, Memcached, a table:
 source's cached answer — and, in development, every save that restarts the server. Two stores need nothing installed:
 
 ```ts
-import { createFileKv } from '@plitzi/sdk-server/actions';
-import { createSqliteKv } from '@plitzi/sdk-server/sqlite';
+import { createFileKv } from '@plitzi/sdk-actions';
+import { createSqliteKv } from '@plitzi/sdk-actions/sqlite';
 
-createServer({ action: { lookups, kv: createFileKv({ file: 'state/kv.json' }) } });   // one process, a readable file
-createServer({ action: { lookups, kv: createSqliteKv({ file: 'state/kv.sqlite' }) } }); // every process on the file
+createPlatform({ action: { lookups, kv: createFileKv({ file: 'state/kv.json' }) } });   // one process, a readable file
+createPlatform({ action: { lookups, kv: createSqliteKv({ file: 'state/kv.sqlite' }) } }); // every process on the file
 ```
 
 `createFileKv` keeps the Map in one JSON file, written whole (through a temporary file) as soon as anything changes —
@@ -910,9 +978,9 @@ On Redis there is nothing to write — `sdk-server` ships the adapter, over any 
 (ioredis does):
 
 ```ts
-import { createRedisKv } from '@plitzi/sdk-server/actions';
+import { createRedisKv } from '@plitzi/sdk-actions';
 
-createServer({ action: { lookups, kv: createRedisKv(redis, { prefix: 'myapp:' }) } });
+createPlatform({ action: { lookups, kv: createRedisKv(redis, { prefix: 'myapp:' }) } });
 ```
 
 Anything else is six operations:
@@ -944,8 +1012,8 @@ Two things your adapter does owe:
 
 ### Signing
 
-`signingSecret` (on the actions' config — `createServer({ action: { signingSecret } })`) is what a space's functions
-sign with: `ctx.sign` and `ctx.verify`. At least `MIN_SIGNING_SECRET_LENGTH` (32, from `@plitzi/sdk-server/actions`)
+`signingSecret` (on the actions' config — `createPlatform({ action: { signingSecret } })`) is what a space's functions
+sign with: `ctx.sign` and `ctx.verify`. At least `MIN_SIGNING_SECRET_LENGTH` (32, from `@plitzi/sdk-actions`)
 characters — the server does not start with a shorter one — and the **same on every replica**, since a key one of
 them signed is verified by whichever the next request reaches. Each space and environment signs with a key derived
 from it, so the secret itself signs nothing and no space can vouch for another. Without it a space's `ctx.sign` is
@@ -968,7 +1036,7 @@ check reports it before anybody runs the flow.
 The server still opens the connection, from the deployment's addresses, so two things stay the deployment's:
 
 ```ts
-createServer({ action: { lookups, email: { dailyLimitPerSpace: 200, allowPrivateHosts: false } } });
+createPlatform({ action: { lookups, email: { dailyLimitPerSpace: 200, allowPrivateHosts: false } } });
 ```
 
 - **`dailyLimitPerSpace`** (default 200) — messages one space may send per UTC day, counted in `kv` before each
@@ -989,7 +1057,7 @@ createServer({ action: { lookups, email: { dailyLimitPerSpace: 200, allowPrivate
     await ses.send({ from: smtp.fromEmail, to: message.to, subject: message.subject, text: message.text });
   };
 
-  createServer({ action: { lookups, email: { transport } } });
+  createPlatform({ action: { lookups, email: { transport } } });
   ```
 
 Where the SMTP credentials come from is the other half a self-hosted deployment owns: `lookups.getCredential` reads
@@ -1005,7 +1073,7 @@ const mysql: ActionDbDriver = {
   query: async (dsn, sql, params, signal) => { /* your client, your pool */ }
 };
 
-createServer({ action: { lookups, dbDrivers: [mysql] } });
+createPlatform({ action: { lookups, dbDrivers: [mysql] } });
 ```
 
 Four things are worth copying from a working one, because each fails in a way that does not point at itself:

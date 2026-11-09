@@ -1,0 +1,220 @@
+import { buildResponseHelpers } from './buildResponseHelpers';
+import { resolveCompression } from './compress';
+import { STATS_LOGS_PATH, STATS_PATH } from './probes';
+import { clientIp, parseRequest } from './requestParser';
+import { applySecurityHeaders } from './securityHeaders';
+import { socketResponse } from './socketResponse';
+import { isLogged, renderLogEvent, serverLog } from '../log/serverLog';
+import { keepLogEvent } from '../log/tail';
+
+import type { RawResponse } from './buildResponseHelpers';
+import type { ResolvedCompression } from './compress';
+import type { UpgradeRequest } from './socketResponse';
+import type { Handler } from './transports';
+import type { BaseContext, Stage } from './types';
+import type { SSRRequest, SSRResponseHelpers, ServerLogEvent } from '../types';
+import type { ServerBaseConfig } from '../types';
+import type { IncomingMessage } from 'node:http';
+
+// Builds the per-request context for a given server. Each server supplies its own — an SSR server folds in the
+// render deps, an MCP server just the essentials — so the dispatcher stays agnostic of what a server carries.
+export type BuildContext<C extends BaseContext> = (
+  raw: IncomingMessage,
+  rawRes: RawResponse,
+  req: SSRRequest,
+  res: SSRResponseHelpers
+  // `signal` is the dispatcher's to supply: it owns the socket and therefore the only thing that knows when the
+  // request died. A builder that had to produce one would be inventing a lifecycle it cannot observe.
+) => Omit<C, 'signal'>;
+
+// Query-string VALUES are the part of a URL that routinely carries personal data (emails, tokens, search terms),
+// and the access log has no use for them: the KEYS already say which shape of request came in.
+const safePath = (url: string): string => {
+  const [path = '/', query] = url.split('?');
+  if (!query) {
+    return path;
+  }
+
+  const keys = [...new Set(new URLSearchParams(query).keys())];
+
+  return keys.length > 0 ? `${path}?${keys.join('&')}` : path;
+};
+
+const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+// Until something is written, `rawRes.statusCode` is still the 200 default while the helpers hold the status a
+// stage set; afterwards the wire is the truth (stages like MCP write straight to the raw response).
+const statusOf = (rawRes: RawResponse, res: SSRResponseHelpers): number =>
+  rawRes.headersSent ? rawRes.statusCode : res.status;
+
+const runPipeline = async <C extends BaseContext>(
+  raw: IncomingMessage,
+  rawRes: RawResponse,
+  buildContext: BuildContext<C>,
+  stages: Stage<C>[],
+  server: string,
+  compression: ResolvedCompression,
+  upgrade?: UpgradeRequest
+): Promise<void> => {
+  const startedAt = Date.now();
+  const req = parseRequest(raw);
+  const res = buildResponseHelpers(rawRes, req.headers['accept-encoding'], compression);
+  /**
+   * One controller per request, aborted when the PEER goes away.
+   *
+   * Watched on the RESPONSE, not on the request: `IncomingMessage` emits `close` as soon as its body has been
+   * read, so a POST aborted itself the millisecond the server finished parsing it — measurably, at 9ms of a
+   * 300ms request. Everything downstream either ignored that (a listener attached after the event never fires,
+   * which is what kept actions working at all) or acted on it and cancelled work nobody had abandoned.
+   *
+   * `writableFinished` is what tells the two apart: a response that closed after finishing was SERVED, and one
+   * that closed before is a caller who left. `once` so a request that ends normally leaves no listener on a
+   * socket the runtime may keep alive for the next one.
+   */
+  const controller = new AbortController();
+  rawRes.once?.('close', () => {
+    if (!rawRes.writableFinished) {
+      controller.abort();
+    }
+  });
+  // The cast is the price of assembling a generic context from its parts: TypeScript cannot see that adding the
+  // one omitted key back reconstructs `C`.
+  const ctx = {
+    ...buildContext(raw, rawRes, req, res),
+    signal: controller.signal,
+    ...(upgrade ? { upgrade } : {})
+  } as C;
+  const logger = ctx.config.logger;
+  // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
+  const ip = clientIp(raw, req);
+
+  // Every exit below funnels through this, so a request shows up whether it was served, rejected or threw.
+  const logRequest = (error?: unknown): void => {
+    const status = statusOf(rawRes, res);
+    const failed = !!error || status >= 500;
+    // A probe — a reader's `/_stats`, an orchestrator's `/health` — asks every few seconds: answered, it is `debug`,
+    // or it buries every other line; refused or failing (a secret that is not this one, a store gone), it is said.
+    // A reader of the log itself is never kept in it: it would fill it with itself.
+    if (req.path === STATS_LOGS_PATH && status < 400) {
+      return;
+    }
+
+    const probe = status < 400 && (req.path === STATS_PATH || req.path === (ctx.config.health?.path ?? '/health'));
+    const level = failed ? 'error' : probe ? 'debug' : 'info';
+    const event: ServerLogEvent = {
+      kind: 'request',
+      server,
+      // From the parsed request, not the raw one: over HTTP/2 the method and URL live in pseudo-headers.
+      method: req.method,
+      path: safePath(req.url),
+      ...(ip ? { clientIp: ip } : {}),
+      ...(ctx.operation === undefined ? {} : { operation: ctx.operation }),
+      status,
+      durationMs: Date.now() - startedAt,
+      // A 4xx is an ANSWER, not a fault: "no such page", "renew your session", "not yours". Flagging those as
+      // errors buried the ones that mean something under Chrome probing /.well-known on every devtools open and
+      // under every signed-out visitor. The status is on the line either way — this only decides what reads as
+      // the server having gone wrong, which is 5xx and a thrown exception.
+      ok: !error && status < 500,
+      ...(error ? { error: errorText(error) } : {}),
+      timestamp: new Date().toISOString()
+    };
+    keepLogEvent(event, level, renderLogEvent(event));
+    if (logger && isLogged(ctx.config.logLevel ?? 'error', level)) {
+      logger(event);
+    }
+  };
+
+  try {
+    // Reject null bytes immediately — they are never valid in a URL path.
+    if (req.path === '\0') {
+      res.setStatus(400);
+      res.end();
+      logRequest();
+
+      return;
+    }
+
+    applySecurityHeaders(req, res, ctx.config, ctx.port);
+
+    for (const stage of stages) {
+      if (await stage(ctx)) {
+        logRequest();
+
+        return;
+      }
+    }
+
+    logRequest();
+  } catch (error) {
+    logRequest(error);
+
+    throw error;
+  }
+};
+
+// Turns a server's context builder + pipeline into an HTTP handler. Errors that escape a stage produce a bare
+// 500 so the socket is never left hanging. `label` names the server in logs (e.g. SSR, MCP).
+export type HandlerOptions = {
+  compression?: ServerBaseConfig['compression'];
+  /**
+   * The paths that may switch protocols. An upgrade anywhere else is refused before the pipeline runs: a WebSocket
+   * opened on a page's address would otherwise render the page — and count a visit — to answer a socket.
+   */
+  upgrades?: (path: string) => boolean;
+};
+
+const pathOf = (url: string | undefined): string => (url ?? '/').split('?')[0];
+
+export const makeHandler = <C extends BaseContext>(
+  label: string,
+  buildContext: BuildContext<C>,
+  stages: Stage<C>[],
+  { compression: compressionConfig, upgrades }: HandlerOptions = {}
+): Handler => {
+  // Resolved once per server rather than per request: the policy cannot change between requests, and the
+  // defaults would otherwise be re-merged on every one of them.
+  const compression = resolveCompression(compressionConfig);
+
+  const fail = (rawRes: RawResponse) => (err: unknown) => {
+    serverLog.error(label, 'Unhandled error', err);
+    try {
+      if (!rawRes.headersSent) {
+        rawRes.writeHead(500, { 'Content-Type': 'text/plain' });
+      }
+
+      rawRes.end('Internal Server Error');
+    } catch {
+      // stream already closed
+    }
+  };
+
+  const handler: Handler = (raw, rawRes) => {
+    runPipeline(raw, rawRes, buildContext, stages, label, compression).catch(fail(rawRes));
+  };
+
+  if (upgrades) {
+    handler.upgrade = (raw, socket, head) => {
+      const rawRes = socketResponse(socket);
+      if (!upgrades(pathOf(raw.url))) {
+        rawRes.writeHead(404, { 'Content-Type': 'text/plain' });
+        rawRes.end('Not Found');
+
+        return;
+      }
+
+      const upgrade: UpgradeRequest = { socket, head, taken: false };
+      runPipeline(raw, rawRes, buildContext, stages, label, compression, upgrade)
+        .then(() => {
+          // Every stage fell through: nobody answered, and a socket left open here would hang until it timed out.
+          if (!upgrade.taken && !rawRes.writableFinished) {
+            rawRes.writeHead(404, { 'Content-Type': 'text/plain' });
+            rawRes.end('Not Found');
+          }
+        })
+        .catch(fail(rawRes));
+    };
+  }
+
+  return handler;
+};

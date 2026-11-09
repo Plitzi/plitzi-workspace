@@ -1,6 +1,6 @@
 import type { ElementInteraction } from './SchemaTypes';
 import type { SpaceCredentialProvider } from './SpaceTypes';
-import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { RuleValue } from '../conditions/types';
 
 // `task` is server-only: it runs inside a server action, never in the browser. It is not a `utility` — those are
 // resolved by action alone and offered in CLIENT flows, where a task has nothing to run on — and not a

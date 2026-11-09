@@ -1,0 +1,8 @@
+{
+  "extends": "../sdk-shared/tsconfig.node.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist"
+  },
+  "include": ["vite.config.ts", "vitest.config.ts"]
+}

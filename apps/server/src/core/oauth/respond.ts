@@ -1,6 +1,6 @@
 import { renderErrorPage } from './consentPage';
 
-import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /** The error codes RFC 6749 defines for the responses this server produces. */
 export type OAuthErrorCode =

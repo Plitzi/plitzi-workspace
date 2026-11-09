@@ -19,6 +19,7 @@ it do work on its own. Each one is the previous one plus the next thing a real d
 | 08 | [custom-trigger](./08-custom-trigger) | A way in this deployment mounts itself — a queue consumer — over a store it already runs | — |
 | 09 | [schedules](./09-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
 | 10 | [runtime](./10-runtime) | A space's runtime — a task, a route and a stream held open, in one module — loaded into a server of your own | 4017 |
+| 11 | [actions-on-a-worker](./11-actions-on-a-worker) | Pages on one server, actions on a worker of their own — one origin through a gateway, or another | 4018 |
 
 ## Rendered on the server
 
@@ -70,6 +71,12 @@ deployment brings.
 **10** — a space's runtime: its own server code as one module, for what functions cannot be — a stream held open,
 memory that outlives a request. The same module the platform runs beside a space, loaded here with `serveRuntime`.
 A whole product built this way is Pizarra, the collaborative whiteboard the platform seeds at `pizarra.plitzi.app`.
+
+## Apart
+
+**11** — the pages and their actions as two servers: a worker that serves no page runs every call, behind one origin
+or on its own. What a deployment does when its actions need their own machines, or must not share a process with what
+renders.
 
 ## Next
 

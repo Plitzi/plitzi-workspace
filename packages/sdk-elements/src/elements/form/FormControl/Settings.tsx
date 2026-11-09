@@ -4,6 +4,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
+import { fieldText } from './helpers/fieldText';
 import { hasFormat } from './helpers/validateField';
 import { SUBTYPE_LABELS, TYPED_SUBTYPES } from './subTypes';
 
@@ -19,7 +20,7 @@ type SettingsProps = {
   accept?: string;
   autoComplete?: boolean;
   autoFocus?: boolean;
-  defaultValue?: string;
+  defaultValue?: string | number;
   options?: string[];
   required?: boolean;
   requiredMessage?: string;
@@ -219,7 +220,7 @@ const Settings = ({
       )}
       {/* A file is picked by the visitor; there is no file an author could type as its default. */}
       {subType !== 'file' && (
-        <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
+        <TextArea value={fieldText(defaultValue)} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
       )}
       {subType === 'text' && (
         <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />

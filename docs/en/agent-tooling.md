@@ -190,7 +190,51 @@ process it started). Its shape follows from that:
 The space on Plitzi has the same need from the other side — a person editing in the builder while an agent works — and
 the same kind of answer: [activity](./activity.md), a cursor and a wait.
 
+## Built for the smallest model that does the work
+
+A smaller model and a smaller context always cost less — down to the point where the agent starts to fail, invent
+names or go the long way round, and no further. That point is not chosen: the agent benchmark measures it
+([`bench/README.md`](../../bench/README.md) § Agents), and it moves every time a tool takes reasoning off the model. So
+the tools carry the work a rule can do, and every surface an agent reads is held to these:
+
+- **A fixed start budget.** What a session loads before its first action has a ceiling held by a test: the MCP's tool
+  listing (`e2e/connector.test.ts`, every raise said in its comment) and each skill's core (`skills.test.ts`: a
+  `SKILL.md` is a routing table and the rules that go wrong most; the rest is in references, one subject each).
+- **Intentions first, operations on demand.** The common work is a tool with few parameters and closed values
+  (`plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page`;
+  `plitzi element where` and `plitzi element edit` on a project). The operations stay for what no tool foresaw — their
+  schema listed once, by `plitzi_apply`, and one at a time through `plitzi_describe_operation` — so a larger model
+  never does worse.
+- **Closed vocabularies.** A value from a known set — an element type, a slot, a state, a class the space has — is an
+  enum or a list the tool answers with, and anything else is refused naming the nearest. A model never asked to
+  recall a name cannot invent one.
+- **A mistake costs one round trip at most.** Prevented where it can be (the enum), absorbed where it has one reading
+  (`'Heading'` for `'heading'`, said as a warning — authoring corrects aloud, never silently), fixed in one retry where
+  it does not: every problem at once, each with the corrected call. A batch refused again is told that sending it
+  once more will not change the answer — change what the errors name, or ask the person — and a third identical one
+  is not run (`REPEATED_BATCH`): a model is not trusted to notice it is going round in circles.
+- **A write proves itself.** Every tool that changes the space answers with the check of what it changed, so "done"
+  is the check being clean, never the agent saying so.
+- **Bounded, and ending with the next step.** Every output has a ceiling and a cursor for the rest, so none overflows a
+  32k window, and names the command that comes next, so a small model follows a path instead of planning one.
+- **Text first.** `plitzi page check` and the MCP's check are enough on their own; a picture is an extra, for the
+  models that see.
+- **Computed when asked.** Where an element is written, what a page holds, what a type is (`plitzi explain <name>`,
+  from the `.d.ts` the project installed) — read at that moment, never written down, because people move code.
+- **One reading, everywhere.** Each job has one tool, a name says its verb and object, a parameter never changes
+  meaning by default, and an input that could mean two things is answered as one and says the other.
+- **Less context is not less correct.** What a small context leaves out is one call away and named where it was left
+  out — never simply absent, which is what makes a model guess.
+
+A change to what an agent reads or calls enters when the benchmark says no configuration at or above the floor does
+worse and some configuration pays less for the same result. The benchmark spends tokens, so it runs at milestones;
+between runs, what is free to measure — a listing's size, a skill's budget, a refusal's shape — is held by tests.
+
 ## Left open
 
+- **The floor is a context, not yet a model.** The first baseline ran Opus 5.5 alone (`bench/README.md` § The first
+  baseline): the rungs below it — Sonnet, Haiku, an open model through Ollama — are what say how small a model the
+  tools let do the work, and which tool the next one is.
+- **The intention tools' catalogue** grows or shrinks by what those models fail at, not in advance.
 - `plitzi page import` measures one page. A site of many pages is many imports, each into its own `--out`.
 - What `page import` cannot read stays in `IMPORT.md` for the author: text, states, scripts, fonts not on Google Fonts.

@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { offlineDataOf } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
  * The space's compiled stylesheet beside the page, over real HTTP: the page links it instead of carrying it, and any

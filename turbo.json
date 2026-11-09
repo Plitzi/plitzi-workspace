@@ -19,8 +19,14 @@
       "cache": false,
       "persistent": true
     },
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "test": {
-      "cache": false
+      "dependsOn": ["transit"],
+      "cache": true,
+      "outputs": [],
+      "env": ["PERF_MULTIPLIER", "TURBO_RUN", "MONGO_TEST_URL", "MYSQL_*", "REDIS_TEST_URL", "TZ", "CI"]
     },
     "test:coverage": {
       "cache": false

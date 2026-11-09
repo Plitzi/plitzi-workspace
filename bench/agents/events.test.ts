@@ -75,6 +75,17 @@ describe('a run, read whichever harness made it', () => {
     expect(record.final).toBe('Done.');
   });
 
+  // Five turns of Opus read as 45 tokens written: each turn's usage is its message's start, the whole is the result's.
+  it('takes what a Claude Code run wrote from its result, not from its turns', () => {
+    const record = fromClaudeCode([
+      line({ type: 'assistant', message: { id: 'm1', usage: { input_tokens: 100, output_tokens: 3 }, content: [] } }),
+      line({ type: 'result', result: 'Done.', usage: { output_tokens: 640 } })
+    ]);
+
+    expect(record.outputTotal).toBe(640);
+    expect(measureRun({ record, check: { ok: true }, overhead: 0, ceiling: 10_000 }).tokensOut).toBe(640);
+  });
+
   it('reads OpenCode: a turn per step, a refusal by its words even when the tool says it completed', () => {
     const record = fromOpenCode(openCodeRun);
 

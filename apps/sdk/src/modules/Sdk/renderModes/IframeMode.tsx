@@ -8,6 +8,7 @@ import { ownHtml } from '@plitzi/sdk-shared/security';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import PlitziBadge from '../components/PlitziBadge';
+import QueuedNotice from '../components/QueuedNotice';
 import QuotaNotice from '../components/QuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
@@ -37,6 +38,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
           {pageId && <Page internalProps={pageValueMemo} />}
         </PlitziProvider>
         <QuotaNotice />
+        <QueuedNotice />
         <PlitziBadge />
       </SpaceContainer>
     </ContainerFrame>

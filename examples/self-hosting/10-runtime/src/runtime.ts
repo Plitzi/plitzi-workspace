@@ -1,4 +1,4 @@
-import { defineRuntime } from '@plitzi/sdk-server/runtime';
+import { defineRuntime } from '@plitzi/sdk-runtime';
 
 import { functions } from './functions.ts';
 import { createPulse } from './pulse.ts';

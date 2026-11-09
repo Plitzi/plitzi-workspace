@@ -1,6 +1,6 @@
 # A space's runtime, on a server of your own
 
-A space's own server code, as one module: `defineRuntime` from `@plitzi/sdk-server/runtime`. It is for what a
+A space's own server code, as one module: `defineRuntime` from `@plitzi/sdk-runtime`. It is for what a
 space's [functions](../../../docs/en/functions.md) cannot be — a connection held open, memory that outlives a request,
 Node and its packages. This example is the smallest one that shows all three parts, and loads it into a server of its
 own with `serveRuntime`.

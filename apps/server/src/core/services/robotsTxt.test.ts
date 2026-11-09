@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../createServer';
-import { unusedPort } from '../unusedPort';
 import { AI_CRAWLERS, DEFAULT_ROBOTS_TXT } from './robotsTxt';
 
-import type { OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
  * A space's /robots.txt: its own, or one that lets crawlers read everything — never its page for an unknown address — and

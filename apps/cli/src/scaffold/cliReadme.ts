@@ -55,7 +55,7 @@ const FUNCTIONS = `## \`${FUNCTIONS_DIR}/\` — the project's own server code
 
 The tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes under \`/fn/\`, a domain a file:
 each file at the top (\`rooms.ts\`, \`queue.ts\`) exports \`defineFunctions({ tasks, routes, allow })\` from
-\`@plitzi/sdk-server/functions\` by default, and the server merges them — nothing lists them, and a task or a route two
+\`@plitzi/sdk-runtime\` by default, and the server merges them — nothing lists them, and a task or a route two
 files define is refused. A folder there is helpers. The server builds them at boot the way Plitzi builds a space's,
 and \`start:dev\` restarts on a change there. Nothing there, no functions.
 \`plitzi space pull functions\` writes the space's functions there, and \`space push functions\` sends them back. A file imports its siblings

@@ -5,7 +5,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createServer } from '../../../createServer';
 import { emptySpace } from '../helpers';
 
-import type { SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
+import type { HttpServer } from '@plitzi/sdk-kernel/http';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 // An ephemeral port, claimed by probing one with a throwaway listener.
 const freePort = (): Promise<number> =>
@@ -50,7 +51,7 @@ const call = (id: number) => ({
 describe('admitting tool calls', () => {
   const asked: number[] = [];
   let refuse = false;
-  let server: SSRServer;
+  let server: HttpServer;
   let port: number;
 
   beforeAll(async () => {

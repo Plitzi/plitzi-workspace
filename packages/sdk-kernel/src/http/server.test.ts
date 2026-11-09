@@ -1,0 +1,139 @@
+import net from 'node:net';
+
+import { describe, expect, it, vi } from 'vitest';
+
+import { makeHandler } from './dispatcher';
+import { createHttpServer } from './server';
+import { healthStage } from './stages/health';
+import { unusedPort } from './unusedPort';
+
+import type { Handler } from './transports';
+import type { BaseContext } from './types';
+import type { ServerBaseConfig } from '../types';
+
+const handler = (() => undefined) as unknown as Handler;
+
+const build = (config: ServerBaseConfig = { httpVersion: 1 } as ServerBaseConfig, onDestroy?: () => void) =>
+  createHttpServer(config, () => handler, { label: 'TEST', onDestroy });
+
+/** Whether anything is accepting connections on the port: what proves a bind, or its release. */
+const isBound = (port: number): Promise<boolean> =>
+  new Promise(resolve => {
+    const socket = net.connect({ port, host: '127.0.0.1' });
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('error', () => resolve(false));
+  });
+
+describe('createHttpServer lifecycle', () => {
+  /** A server can be built and discarded without ever taking a port — a consumer that wires one and then bails
+   *  on a config error, or a test that only needs the registry. Closing it must release what it owns rather
+   *  than throwing on the socket it never opened. */
+  it('closes cleanly when it never listened', async () => {
+    const onDestroy = vi.fn();
+    const server = build(undefined, onDestroy);
+
+    await expect(server.close()).resolves.toBeUndefined();
+    expect(onDestroy).toHaveBeenCalledOnce();
+  });
+
+  /** What says "ready" after `listen` — a log line, a file a tool reads — is said when the port already answers. */
+  it('resolves its listen once the port answers, and releases it on close', async () => {
+    const port = await unusedPort();
+    const server = build();
+    await server.listen(port, '127.0.0.1');
+    expect(await isBound(port)).toBe(true);
+
+    await expect(server.close()).resolves.toBeUndefined();
+
+    // The port going free is the only proof the transport actually closed.
+    await vi.waitFor(async () => expect(await isBound(port)).toBe(false));
+  });
+
+  /** A shutdown signal can land before the bind completes, and a teardown path must not blow up on that —
+   *  ERR_SERVER_NOT_RUNNING is the state close() is aiming for, not a failure. Same for closing twice. */
+  it('closes without waiting for the bind, and again after that', async () => {
+    const port = await unusedPort();
+    const server = build();
+    void server.listen(port, '127.0.0.1');
+
+    await expect(server.close()).resolves.toBeUndefined();
+    await expect(server.close()).resolves.toBeUndefined();
+    expect(await isBound(port)).toBe(false);
+  });
+
+  it('refuses HTTP/3 without TLS, naming the server', () => {
+    expect(() => build({ httpVersion: 3 } as ServerBaseConfig)).toThrow(/\[TEST\].*httpVersion: 3.*tls/u);
+  });
+
+  /**
+   * A port already taken is the first thing a new deployment hits, and it used to arrive as an unhandled `error`
+   * event: a stack through node:net naming neither the port nor the server. The handler is what makes it reportable
+   * at all — without one there is nothing to hand to `onListenError` either.
+   */
+  it('reports a port it cannot take, naming the server and the port', async () => {
+    const port = await unusedPort();
+    const holder = build();
+    await holder.listen(port, '127.0.0.1');
+
+    const onListenError = vi.fn();
+    const blocked = build({ httpVersion: 1, onListenError } as unknown as ServerBaseConfig);
+    void blocked.listen(port, '127.0.0.1');
+
+    await vi.waitFor(() => expect(onListenError).toHaveBeenCalled());
+    const [error, context] = onListenError.mock.calls[0] as [NodeJS.ErrnoException, { port: number; label: string }];
+    expect(error.code).toBe('EADDRINUSE');
+    expect(context).toMatchObject({ port, host: '127.0.0.1', label: 'TEST' });
+
+    await blocked.close();
+    await holder.close();
+  });
+});
+
+/**
+ * One process — workers off, one asked for, one core — is the server as it was before workers existed: no channel, so
+ * what the server built on it offers (a page server's caches and plugins) reaches nobody else.
+ */
+describe('createHttpServer as a single server', () => {
+  const single = (workers: ServerBaseConfig['workers']) =>
+    createHttpServer({ httpVersion: 1, workers, adapters: {} }, () => handler, { label: 'TEST' });
+
+  it.each([false, 1] as const)('has no fleet channel with workers: %s', workers => {
+    expect(single(workers).channel).toBeUndefined();
+  });
+
+  it('listens on no channel', () => {
+    const listening = process.listenerCount('message');
+    single(false);
+
+    expect(process.listenerCount('message')).toBe(listening);
+  });
+});
+
+describe('createHttpServer stopping', () => {
+  /** A deploy: the replica keeps serving for its announce, its /health saying it is going, so the balancer stops
+   *  sending — and only then stops listening. */
+  it('answers /health with 503 while it announces it is stopping, and serves until then', async () => {
+    const port = await unusedPort();
+    const config = { httpVersion: 1, shutdown: { announceMs: 300 } } as ServerBaseConfig;
+    const server = createHttpServer(
+      config,
+      () =>
+        makeHandler<BaseContext>('TEST', (raw, rawRes, req, res) => ({ raw, rawRes, req, res, config, port }), [
+          healthStage
+        ]),
+      { label: 'TEST' }
+    );
+    await server.listen(port, '127.0.0.1');
+    const before = await fetch(`http://127.0.0.1:${String(port)}/health`);
+    const closing = server.close();
+    const during = await fetch(`http://127.0.0.1:${String(port)}/health`);
+    const body = (await during.json()) as { stopping?: boolean };
+    await closing;
+
+    expect([before.status, during.status, body.stopping]).toEqual([200, 503, true]);
+    expect(await isBound(port)).toBe(false);
+  });
+});

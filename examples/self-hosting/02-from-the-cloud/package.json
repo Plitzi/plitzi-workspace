@@ -11,6 +11,7 @@
     "lint": "yarn run -T eslint ."
   },
   "dependencies": {
+    "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

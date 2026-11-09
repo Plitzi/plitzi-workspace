@@ -1,8 +1,9 @@
-import { forwardedIp } from '../../requestParser';
+import { forwardedIp } from '@plitzi/sdk-kernel/http';
 
-import type { CredentialCarrier } from '../credentials';
-import type { AuthFailure } from '../tokens';
-import type { AccountRecord, SessionClient, AccountStatus, AuthOutcome } from './types';
+import type { AuthOutcome } from './types';
+import type { AccountRecord, SessionClient, AccountStatus } from '@plitzi/sdk-kernel/identity';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { AuthFailure } from '@plitzi/sdk-kernel/identity';
 
 export const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined => {
   if (!carrier) {

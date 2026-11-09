@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createCsrf } from '@plitzi/sdk-kernel/identity';
+
 import { createOriginGuardMiddleware } from './csrfMiddleware';
-import { createCsrf } from '../auth/csrf';
 
 import type { AuthedRequest, JsonResponse } from './types';
 

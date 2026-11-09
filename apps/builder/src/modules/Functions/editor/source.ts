@@ -1,11 +1,12 @@
 import ts from 'typescript';
 
-import { actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { FUNCTION_ASKED_KEYS, actionAccessOf } from '@plitzi/sdk-shared/actions';
+import { isFunctionSize } from '@plitzi/sdk-shared/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { FUNCTIONS_ROOT } from './paths';
 
-import type { FunctionJobManifest, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionJobManifest, FunctionTaskManifest, FunctionAskedLimits } from '@plitzi/sdk-shared';
 import type { VirtualTypeScriptEnvironment } from '@typescript/vfs';
 
 /**
@@ -20,7 +21,7 @@ import type { VirtualTypeScriptEnvironment } from '@typescript/vfs';
 export type SourcePlace = { file: string; line: number; start: number; end: number };
 
 export type SourceTask = Pick<FunctionTaskManifest, 'namespace' | 'action' | 'title' | 'description' | 'params'> & {
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   at: SourcePlace;
 };
 
@@ -37,7 +38,7 @@ export type SourceFunctions = {
   jobs: SourceJob[];
   hosts: string[];
   /** What every task and route asks for, unless one asks for its own. */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   /** Entries that are there but cannot be read without running the code: what to look at, and where. */
   unreadable: { what: string; of: 'tasks' | 'jobs'; at: SourcePlace }[];
 };
@@ -187,22 +188,26 @@ const textOf = (object: ts.ObjectLiteralExpression, name: string, checker: ts.Ty
   return typeof read === 'string' ? read : undefined;
 };
 
-/** What a task or the functions ask for: whole positive milliseconds, as the platform would keep them. */
-const limitsOf = (object: ts.ObjectLiteralExpression, checker: ts.TypeChecker): FunctionTimeLimits | undefined => {
+/** What a task or the functions ask for: milliseconds and a size, as the platform would keep them. */
+const limitsOf = (object: ts.ObjectLiteralExpression, checker: ts.TypeChecker): FunctionAskedLimits | undefined => {
   const value = propertyOf(object, 'limits');
   const read = value ? literalValue(value, checker) : undefined;
   if (!isRecord(read)) {
     return undefined;
   }
 
-  const limits: FunctionTimeLimits = {};
-  const { cpuMs, wallMs } = read;
+  const limits: FunctionAskedLimits = {};
+  const { cpuMs, wallMs, size } = read;
   if (typeof cpuMs === 'number') {
     limits.cpuMs = cpuMs;
   }
 
   if (typeof wallMs === 'number') {
     limits.wallMs = wallMs;
+  }
+
+  if (isFunctionSize(size)) {
+    limits.size = size;
   }
 
   return Object.keys(limits).length ? limits : undefined;
@@ -354,10 +359,12 @@ const objectAt = (env: VirtualTypeScriptEnvironment, place: SourcePlace): ts.Obj
   return found;
 };
 
-const limitsText = ({ cpuMs, wallMs }: FunctionTimeLimits): string =>
-  `{ ${[cpuMs === undefined ? '' : `cpuMs: ${String(cpuMs)}`, wallMs === undefined ? '' : `wallMs: ${String(wallMs)}`]
-    .filter(Boolean)
-    .join(', ')} }`;
+const limitsText = (limits: FunctionAskedLimits): string =>
+  `{ ${FUNCTION_ASKED_KEYS.flatMap(key => {
+    const value = limits[key];
+
+    return value === undefined ? [] : [`${key}: ${typeof value === 'number' ? String(value) : `'${value}'`}`];
+  }).join(', ')} }`;
 
 /**
  * The task written at `place`, asking for `limits` — written into its own `limits`, or that taken out when it asks for
@@ -366,7 +373,7 @@ const limitsText = ({ cpuMs, wallMs }: FunctionTimeLimits): string =>
 export const withTaskLimits = (
   env: VirtualTypeScriptEnvironment,
   place: SourcePlace,
-  limits: FunctionTimeLimits
+  limits: FunctionAskedLimits
 ): SourceEdit | undefined => {
   const task = objectAt(env, place);
   if (!task) {
@@ -375,7 +382,7 @@ export const withTaskLimits = (
 
   const source = task.getSourceFile();
   const text = source.getFullText();
-  const asksFor = limits.cpuMs !== undefined || limits.wallMs !== undefined;
+  const asksFor = FUNCTION_ASKED_KEYS.some(key => limits[key] !== undefined);
   const existing = task.properties.find(property => propertyName(property) === 'limits');
   if (existing) {
     if (asksFor && ts.isPropertyAssignment(existing)) {

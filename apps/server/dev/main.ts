@@ -2,17 +2,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { consoleLogger, createServer } from '../src';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
 
-import type {
-  OfflineDataRaw,
-  Schema,
-  Style,
-  SSRPageAdapters,
-  SSRRscContext,
-  SSRRscData,
-  SSRSpaceDeployment
-} from '@plitzi/sdk-shared';
+import { createServer } from '../src';
+
+import type { SSRPageAdapters, SSRRscContext, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw, Schema, Style, SSRRscData } from '@plitzi/sdk-shared';
 
 // The lib build replaces `VERSION` with the package version (see vite.config.ts `define`); running the sources
 // through tsx there is no such replacement, and the health payload reports it.

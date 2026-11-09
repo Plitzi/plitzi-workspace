@@ -34,10 +34,26 @@ const ALLOWED = [
     files: ['apps/cli/src/migrations/changes/folderImports.ts', 'apps/cli/dist/index.js'],
     specifier: '@plitzi/sdk-shared/helpers/isRecord',
     why: 'the migration that rewrites file imports, saying which shape it rewrites'
+  },
+  ...['kernel', 'actions', 'functions', 'functions-runner', 'runtime', 'mysql', 'mongo', 'sqlite'].map(entry => ({
+    files: ['apps/cli/src/migrations/serverSplit.ts', 'apps/cli/dist/index.js'],
+    specifier: `@plitzi/sdk-server/${entry}`,
+    why: 'the migration that moves imports to the packages the server split into, naming the entry they came from (RFC 0032)'
+  })),
+  {
+    // A chunk of the build, named by its hash: matched by its folder.
+    files: ['packages/sdk-actions/src/functions/build.ts', /^packages\/sdk-actions\/dist\/chunks\/module-[\w-]+\.mjs$/],
+    specifier: '@plitzi/sdk-server/functions',
+    why: "the build of a space's functions, refusing the contract's former import by name"
   }
 ];
 
-const allowed = (file, specifier) => ALLOWED.some(entry => entry.specifier === specifier && entry.files.includes(file));
+const allowed = (file, specifier) =>
+  ALLOWED.some(
+    entry =>
+      entry.specifier === specifier &&
+      entry.files.some(allowedFile => (typeof allowedFile === 'string' ? allowedFile === file : allowedFile.test(file)))
+  );
 
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf-8'));
 

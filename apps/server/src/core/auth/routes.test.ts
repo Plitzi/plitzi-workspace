@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCsrf } from './csrf';
+import { createCsrf } from '@plitzi/sdk-kernel/identity';
+import { createSessionCookies } from '@plitzi/sdk-kernel/identity';
+
 import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
-import { createSessionCookies } from './session';
 
 import type { AuthApi, AuthOutcome } from './api';
 import type { AuthRequest } from './routes';
-import type { CookieSink } from './session';
+import type { CookieSink } from '@plitzi/sdk-kernel/identity';
 
 // The `/auth` surface as data, exercised with no framework anywhere in sight — which is the property being pinned.
 // A host on bare `node:http` binds these the same way an Express one does.

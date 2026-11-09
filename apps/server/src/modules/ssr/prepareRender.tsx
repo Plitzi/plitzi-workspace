@@ -1,5 +1,11 @@
+import { requestAuthority, requestOrigin } from '@plitzi/sdk-kernel/http';
+import { SPACE_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
+import { PREVIEW_TOKEN_PARAM, readDraftToken } from '@plitzi/sdk-kernel/identity';
+import { authorizesDebugging } from '@plitzi/sdk-kernel/identity';
+import { privateOriginsOf } from '@plitzi/sdk-kernel/outbound';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
+import { requestFlagOverrides } from '@plitzi/sdk-shared/flags';
 import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins';
 import {
   pageElementTypes,
@@ -21,43 +27,29 @@ import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { scriptTemplateParams } from './scriptPolicy';
 import { publishSpaceDocument } from './spaceDocument';
-import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { googleFontsUrlOf } from '../../core/http/stages/googleFonts';
 import { imagesPathOf } from '../../core/http/stages/images';
-import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';
-import { requestAuthority, requestOrigin } from '../../core/requestParser';
 import { pageAssets } from '../../core/sdkAssets';
-import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
+import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
-import { authorizesDebugging } from '../../helpers/debugAuthorization';
-import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { hydrationPayload, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
-import { privateOriginsOf } from '../../helpers/outboundGuard';
 import { requestPaintedState } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 import { visitorScheme } from '../../helpers/visitorScheme';
-import { realtimeModuleFor } from '../realtime';
 import { matchRscPage } from '../rsc/matchRscPage';
 
 import type { ComponentProps } from './Component';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  Environment,
-  OfflineDataRaw,
-  PluginDeclaration,
-  PluginEntry,
-  SSRPageServerConfig,
-  SSRPlugin,
-  SSRRequest,
-  SSRTemplateProps,
-  Style,
-  Theme
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRPlugin } from '../../types';
+import type { PageEngine } from '@plitzi/sdk-kernel/engine';
+import type { SSRRequest, SSRTemplateProps } from '@plitzi/sdk-kernel/types';
+import type { Environment, OfflineDataRaw, PluginDeclaration, PluginEntry, Style, Theme } from '@plitzi/sdk-shared';
 import type { PageWithheld } from '@plitzi/sdk-shared/schema';
 import type { FC } from 'react';
 
@@ -115,7 +107,9 @@ export const prepareRender = async (
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<OfflineDataRaw>,
   metrics?: RequestMetrics,
-  offlineDataOverride?: OfflineDataRaw
+  offlineDataOverride?: OfflineDataRaw,
+  /** What the engine this server was handed tells a page (`PageEngine.published`); none, it runs no actions. */
+  published: PageEngine['published'] = {}
 ): Promise<RenderPrep> => {
   const m = <T,>(name: string, fn: () => T | Promise<T>): Promise<T> =>
     metrics ? metrics.measure(name, fn) : Promise.resolve(fn());
@@ -180,7 +174,7 @@ export const prepareRender = async (
   const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
   const flagOverrides = await requestFlagOverrides(
     config,
-    req,
+    { cookie: req.headers.cookie, authority: requestAuthority(req) },
     {
       spaceId: req.ctx.spaceDeployment?.spaceId ?? spaceId,
       environment: req.ctx.spaceDeployment?.environment ?? environment
@@ -244,9 +238,9 @@ export const prepareRender = async (
   const server = buildServerInfo(req, config, {
     rscPath,
     rscData,
-    actionPath: resolveActionEndpoint(config),
-    realtimePath: realtimeModuleFor(config)?.path,
-    realtimeTransport: realtimeModuleFor(config)?.transport,
+    actionPath: published.actionPath,
+    realtimePath: published.realtimePath,
+    realtimeTransport: published.realtimeTransport,
     imagePath: imagesPathOf(config)
   });
 
@@ -302,7 +296,7 @@ export const prepareRender = async (
   // …and nearly over it, said calmly before it is: never both.
   const quotaNear = meteredNear && !degrade ? true : undefined;
   // The deployment's attribution, decided with the metering: a space cannot remove it from its own settings either.
-  const badge = meteredBadge ? true : undefined;
+  const badge = meteredBadge;
 
   /**
    * The visitor's theme, from the cookie the SDK writes it to.

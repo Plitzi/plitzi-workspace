@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import Elements from '@pmodules/Elements/Elements';
 
@@ -16,7 +16,7 @@ import type {
   PluginAssetsContextValue,
   PluginsContextValue
 } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/react';
 
 // The catalog under test is the elements': the space's components — their chip and their list — read a store these
 // tests do not mount, and a space with none is all they need of it.

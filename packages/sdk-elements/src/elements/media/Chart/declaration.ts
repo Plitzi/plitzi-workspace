@@ -22,6 +22,10 @@ const declaration = elementDeclaration<ChartAttributes>()({
       kind: 'bar',
       labelField: 'label',
       valueField: 'value',
+      // Empty: one series, `valueField`'s; the readout names a row by its label; no chart points with it.
+      series: '',
+      titleField: '',
+      sync: '',
       label: '',
       format: 'number',
       showValues: false,
@@ -35,7 +39,11 @@ const declaration = elementDeclaration<ChartAttributes>()({
         "rows, as a list is (`bindTemplate('items', source, '{{ … }}', { returns: 'value' })`): records read by " +
         '`labelField` and `valueField`, or plain numbers. It takes its box’s width and its `height`, and the colour of ' +
         'the text around it — its parts (`bar`, `line`, `area`, `point`, `slice`, `grid`, `axisLabel`, `valueLabel`) ' +
-        'restyle it. Name it with `label`: a screen reader reads that, and the rows as a table drawn with it.',
+        'restyle it. Name it with `label`: a screen reader reads that, and the rows as a table drawn with it. ' +
+        'Several values a row — a line per server, a bar per plan — are `series: [{ field, label }]`: each in a colour ' +
+        'of its own (`--plitzi-chart-series-1` to `-8`, a step for light and one for dark), with a legend of each ' +
+        "one's last and highest value. Pointed at or moved through with the arrow keys, it reads every series at that " +
+        'row (`tooltip`).',
       items: [],
       styleSelectors: {
         bar: '',
@@ -48,6 +56,7 @@ const declaration = elementDeclaration<ChartAttributes>()({
         axisLabel: '',
         valueLabel: '',
         legend: '',
+        tooltip: '',
         empty: ''
       }
     },
@@ -76,8 +85,8 @@ const declaration = elementDeclaration<ChartAttributes>()({
             'row-gap': '4px',
             'list-style-type': 'none',
             'padding-left': '0px',
-            'margin-top': '12px',
-            'font-size': '14px'
+            'margin-top': '8px',
+            'font-size': '12px'
           }
         },
         empty: { default: { 'font-size': '14px', opacity: '0.7' } }

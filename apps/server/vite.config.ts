@@ -93,34 +93,18 @@ export default defineConfig(({ mode }) => {
       lib: {
         entry: {
           index: path.resolve(root, 'src/index.ts'),
-          // Narrow entries for packages that build on this one. The barrel re-exports the whole render path and
-          // ESM re-exports load eagerly, so a sibling server importing from it would load React with them.
-          kernel: path.resolve(root, 'src/kernel.ts'),
           auth: path.resolve(root, 'src/auth.ts'),
           // OAuth 2.1 authorization. Its own entry because it is mounted more than once with different adapters —
           // the MCP connector grants a space token, a native client grants a session — and a server that mounts
           // neither should not carry the protocol to find that out.
           oauth: path.resolve(root, 'src/oauth.ts'),
-          // The account store, implemented. Its own entry because it is the only thing in the package that reaches
-          // for a database driver: a deployment bringing its own store never loads `mysql2` to find that out.
-          mysql: path.resolve(root, 'src/mysql.ts'),
-          // Job queue and key/value adapters over a Mongo database the deployment owns. Its own entry for the same
-          // reason: a deployment that stores its jobs elsewhere never loads anything that knows what Mongo is.
-          mongo: path.resolve(root, 'src/mongo.ts'),
-          // A key/value store in a SQLite file. Its own entry because it loads `node:sqlite`, which still warns that it
-          // is experimental when it loads: a deployment that keeps its keys elsewhere never hears about it.
-          sqlite: path.resolve(root, 'src/sqlite.ts'),
           ssr: path.resolve(root, 'src/ssr.ts'),
-          // Server actions. Own entry so a deployment writing its own tasks imports the contract alone, and a
-          // server that runs none never loads the runner or the task set to find that out.
-          actions: path.resolve(root, 'src/actions.ts'),
-          // Functions: the contract a space's code and a server's own code are written against. Own entry so that code
-          // imports the contract alone — nothing that runs it, no sandbox, no runner.
-          functions: path.resolve(root, 'src/functions.ts'),
-          // What runs the spaces' functions: the runner service, the platform's client to it, the isolates.
-          functionsRunner: path.resolve(root, 'src/functionsRunner.ts'),
-          // Space runtimes: a space's own server code beside the platform — the contract, the host, packing, the stages.
-          runtime: path.resolve(root, 'src/runtime.ts'),
+          // Pages and actions in one process (`createPlatform`): a page server deployed on its own never loads the engine.
+          platform: path.resolve(root, 'src/platform.ts'),
+          // Which space a request is for, and the pages replicas share: what a process that serves no pages uses of
+          // them, without the renderer (a worker resolves spaces and invalidates pages, and rendered nothing to do it).
+          spaces: path.resolve(root, 'src/spaces.ts'),
+          cache: path.resolve(root, 'src/cache.ts'),
           // The server of a project `@plitzi/cli` writes, wired from where the project keeps each part: its own entry, so
           // a server that is not such a project never loads what reads that layout or re-authors a space on a save.
           project: path.resolve(root, 'src/project.ts'),
@@ -158,7 +142,15 @@ export default defineConfig(({ mode }) => {
           format: 'es',
           entryFileNames: '[name].js',
           chunkFileNames: 'chunks/[name]-[hash].js',
-          manualChunks: id => (id.endsWith(TEMPLATE_MODULE) ? 'template' : undefined)
+          // What renders nothing — the helpers (caches, routes, defaults) and the space adapters — kept apart from the
+          // renderer: grouped with it, a process that only resolves spaces or invalidates pages (a worker) loaded React
+          // and the SDK with them, most of what it held at rest.
+          manualChunks: id =>
+            id.endsWith(TEMPLATE_MODULE)
+              ? 'template'
+              : id.includes('/src/helpers/') || id.includes('/src/adapters/') || id.endsWith('/redisPageStore.ts')
+                ? 'core'
+                : undefined
         }
       },
       target: 'node20',

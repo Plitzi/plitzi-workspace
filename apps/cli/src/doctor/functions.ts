@@ -24,7 +24,7 @@ const isProblem = (value: unknown): value is Problem => isRecord(value) && typeo
 
 /** `buildFunctions` of the project's own sdk-server — or nothing, when it has none that offers it. */
 const projectBuild = async (root: string): Promise<Build | undefined> => {
-  const runner = await projectModule(root, '@plitzi/sdk-server/functions-runner').catch(() => undefined);
+  const runner = await projectModule(root, '@plitzi/sdk-actions/functions').catch(() => undefined);
   const build = isRecord(runner) ? runner.buildFunctions : undefined;
 
   // What the module exports is checked to be a function; what it answers is read below as `unknown`, field by field.

@@ -8,7 +8,8 @@ import { generateStyleSelector } from '@plitzi/sdk-style/helpers';
 
 import type { ComponentDefinition, Element, Schema, SchemaVariable, Style } from '@plitzi/sdk-shared';
 import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
-import type { BuilderMutationsMap, BuilderNetworkContextValue, BuilderQueriesMap } from '@plitzi/sdk-shared/network';
+import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared/network';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/react';
 
 const getImageSize = async (file: File): Promise<{ height: number; width: number }> =>
   new Promise((resolve, reject) => {

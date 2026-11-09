@@ -85,7 +85,7 @@ export type SpaceRuntimeEnvironment = {
   size: string;
 };
 
-/** A size a runtime may run at: what its pod may spend, and whether the space's plan includes it. */
+/** A size a runtime may run at: what its pod may spend, how many of it the space bought, and its price a month. */
 export type SpaceRuntimeSizeOption = {
   name: string;
   label: string;
@@ -93,7 +93,10 @@ export type SpaceRuntimeSizeOption = {
   cpu: string;
   /** As Kubernetes reads it: `256Mi`. */
   memory: string;
-  included: boolean;
+  /** How many of it the space bought, each running one environment; `null` where it is not bounded. */
+  bought: number | null;
+  /** Its price a month, in euro cents, VAT included. */
+  displayAmount: number;
 };
 
 /** A space's runtime: every environment's, and the names of the variables it starts with — never their values. */

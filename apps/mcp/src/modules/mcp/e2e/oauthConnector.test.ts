@@ -13,7 +13,8 @@ import type {
   OAuthClientMetadata,
   OAuthTokens
 } from '@modelcontextprotocol/sdk/shared/auth.js';
-import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
+import type { HttpServer } from '@plitzi/sdk-kernel/http';
+import type { OAuthAdapters, OAuthStore, SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 /** The OAuth grant as a HOST runs it, through the official client and its auth machinery rather than hand-written
  *  HTTP (that is `modules/oauth/oauth.test.ts`): the challenge is what starts the flow, the resource metadata is
@@ -166,7 +167,7 @@ class HostProvider implements OAuthClientProvider {
 }
 
 let provider = new HostProvider();
-let server: SSRServer;
+let server: HttpServer;
 
 const freePort = (): Promise<number> =>
   new Promise(resolve => {

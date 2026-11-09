@@ -1,5 +1,6 @@
-import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
 import { useRef } from 'react';
+
+import { deepEqual } from '../helpers/deepEqual';
 
 /**
  * The previous value, as long as the new one has the same content.

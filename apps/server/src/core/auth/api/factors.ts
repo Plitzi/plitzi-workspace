@@ -1,11 +1,12 @@
-import { authFailureMessage } from '../tokens';
+import { authFailureMessage } from '@plitzi/sdk-kernel/identity';
+
 import { generateRecoveryCodes, generateTotpSecret, randomCode, totpStep, totpUri } from '../totp';
 import { refuse, NOT_OFFERED, asString, now, LIFETIME, deniedReason, clientOf } from './values';
 
-import type { CredentialCarrier } from '../credentials';
-import type { Actor } from '../identity';
 import type { AuthContext } from './context';
 import type { AuthOutcome } from './types';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
 
 /** The ways in besides a password: a code or a link by email (`passwordless`), and the second factor (`mfa`). */
 export const factorsFlows = ({

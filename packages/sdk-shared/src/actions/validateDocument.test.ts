@@ -80,6 +80,28 @@ describe('validateActionDocument', () => {
     });
   });
 
+  // The step caps it: a flow written to wait 15 s ran on after 5, and a test of a run's time limit finished.
+  // A warning, never an error: the same check is what a server runs a stored document by, and an error stopped an action
+  // saved with a long delay from running at all.
+  it('warns of a delay written longer than a step waits, and still runs it, capped', () => {
+    const withDelay = (milliseconds: unknown) =>
+      validateActionDocument(
+        document({
+          nodes: {
+            start: callTrigger({}),
+            wait: { id: 'wait', type: 'task', action: 'flow.delay', params: { milliseconds }, afterNode: 'ret' },
+            ret: { id: 'ret', type: 'task', action: 'flow.output', params: { values: '{}' } }
+          }
+        })
+      );
+    const long = withDelay('15000');
+
+    expect(long.valid).toBe(true);
+    expect(messages(long.warnings)).toContain('this step waits 15000 ms, and a step waits at most 5000 ms');
+    expect(withDelay(5000).valid).toBe(true);
+    expect(withDelay('{{ input.wait }}').valid).toBe(true);
+  });
+
   it('refuses anything that is not a document', () => {
     expect(validateActionDocument(undefined).valid).toBe(false);
     expect(validateActionDocument('nope').valid).toBe(false);

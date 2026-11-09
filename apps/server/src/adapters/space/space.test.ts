@@ -5,8 +5,8 @@ import { authoringPreview, renderGrant, verifiedDomain, wildcardSubdomain } from
 import { createMemoryCache, refuse } from './types';
 
 import type { SpaceResolver } from './types';
-import type { GrantResult } from '../../core/auth/identity';
-import type { SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-shared';
+import type { GrantResult } from '@plitzi/sdk-kernel/identity';
+import type { SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-kernel/types';
 
 const request = (hostname: string, extra: Partial<SSRRequest> = {}): SSRRequest =>
   ({ hostname, query: {}, headers: {}, ...extra }) as SSRRequest;

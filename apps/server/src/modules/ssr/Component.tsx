@@ -1,11 +1,12 @@
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
+import type { SSRPlugin } from '../../types';
 import type {
+  BadgeLinks,
   OfflineDataRaw,
   Environment,
   RenderMode,
   Server,
-  SSRPlugin,
   SSRRenderResult,
   Theme,
   ColorScheme
@@ -27,7 +28,7 @@ export type ComponentProps = {
   /** Set when the metering adapter says the space has nearly spent its allowance. */
   quotaNear?: boolean;
   /** Set when the metering adapter keeps the deployment's badge on this render. */
-  badge?: boolean;
+  badge?: BadgeLinks;
   /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
   theme?: Theme;
   /** The scheme the visitor's machine asks for, as this request said it — what a `system` theme is drawn as. */

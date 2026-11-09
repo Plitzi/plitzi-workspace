@@ -47,7 +47,7 @@ const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
     </ol>
     <p className="text-xs text-gray-500 dark:text-zinc-400">
       A project made with <code className={CODE}>plitzi create</code> in server mode has what a push needs; any other,{' '}
-      <code className={CODE}>npm install @plitzi/sdk-server</code>.
+      <code className={CODE}>npm install @plitzi/sdk-server @plitzi/sdk-runtime</code>.
       {idleMinutes > 0 &&
         ` A runtime nobody uses for ${idleDurationOf(idleMinutes)} — no request to its endpoints, no task run — stops by itself, so it spends nothing while idle. Start it again here; a push or a publish starts it too.`}
     </p>

@@ -1,12 +1,2 @@
-import ThemeProvider from './ThemeProvider';
-import useTheme from './useTheme';
-
-export * from './ThemeProvider';
-export * from './ThemeScope';
+/** What a theme is on the wire — its cookie — for a server as for a page. Drawing one is `./react`. */
 export * from './cookie';
-export * from './themeStore';
-export * from './useTheme';
-export { default as themeStore } from './themeStore';
-export { default as ThemeScopeContext } from './ThemeScope';
-
-export { ThemeProvider, useTheme };

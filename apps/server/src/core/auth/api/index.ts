@@ -5,9 +5,10 @@ import { factorsFlows } from './factors';
 import { profileFlows } from './profile';
 import { sessionFlows } from './session';
 
-import type { Identity } from '../identity';
-import type { Tokens } from '../tokens';
-import type { AccountAdapters, AuthApiConfig } from './types';
+import type { AuthApiConfig } from './types';
+import type { AccountAdapters } from '@plitzi/sdk-kernel/identity';
+import type { Identity } from '@plitzi/sdk-kernel/identity';
+import type { Tokens } from '@plitzi/sdk-kernel/tokens';
 
 export type * from './types';
 

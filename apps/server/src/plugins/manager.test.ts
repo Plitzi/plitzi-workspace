@@ -4,10 +4,11 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { PluginManager } from './manager';
-import { configureServerLog } from '../helpers/serverLog';
+import { configureServerLog } from '@plitzi/sdk-kernel/log';
 
-import type { ServerLogEvent } from '@plitzi/sdk-shared';
+import { PluginManager } from './manager';
+
+import type { ServerLogEvent } from '@plitzi/sdk-kernel/types';
 
 /**
  * What a dev server does when the component behind a plugin is edited.

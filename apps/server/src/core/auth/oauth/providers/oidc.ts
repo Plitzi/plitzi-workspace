@@ -191,7 +191,7 @@ const claimString = (claims: Record<string, unknown>, name: string): string => {
  * asymmetric algorithm, from this issuer, for this client — and, when it names several audiences, authorized for this
  * one (`azp`) — unexpired, and carrying this flow's nonce, so a token from another sign-in cannot be replayed into it.
  */
-export const verifyIdToken = async (
+const verifyIdToken = async (
   idToken: string,
   discovery: OidcDiscovery,
   clientId: string,

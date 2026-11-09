@@ -336,6 +336,13 @@ export interface PageSpec {
    */
   access?: { permissions: string[] };
   /**
+   * What a visitor this page is not for is answered — by `accessLevel` or `access` — when it is not sent elsewhere
+   * (`unauthorizedRedirect`). Unsaid, its refusal: 401 or 403 and `settings.withheldPage`. `'notFound'` answers as if
+   * it did not exist — the space's 404 — and sends nothing of it, not its name nor its path: a back-office, whose
+   * refusal would tell whoever probes the path that something is there. The builder's "Unauthorized Behaviour".
+   */
+  whenRefused?: 'refusal' | 'notFound';
+  /**
    * Where a visitor this page is not for is sent — a page's id or slug (`login`; `''` is the home page), its path, or a
    * full URL for somewhere off this space. Resolved to the page's id, and refused when it names no page.
    *

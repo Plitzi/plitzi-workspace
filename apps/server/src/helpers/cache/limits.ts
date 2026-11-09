@@ -1,6 +1,6 @@
 import { DEFAULT_CACHE_BYTES, DEFAULT_TTL_MS } from './defaults';
 
-import type { SSRPageServerConfig } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
 
 /** What the deployment's environment may say of the caches when its code says nothing. */
 export const CACHE_ENV = {

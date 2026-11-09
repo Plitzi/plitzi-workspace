@@ -118,7 +118,7 @@ export const serverOptions: ProjectServerOptions = {};
 const actionsModule = (): string => `import { actionsIn } from '@plitzi/sdk-authoring/node';
 
 import type { ActionEntry } from '@plitzi/sdk-authoring';
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionLookups } from '@plitzi/sdk-actions';
 
 type Connector = NonNullable<Awaited<ReturnType<NonNullable<ActionLookups['getConnector']>>>>;
 

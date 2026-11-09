@@ -1,18 +1,9 @@
+import { serverLog } from '@plitzi/sdk-kernel/log';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { schemaFromWire } from '@plitzi/sdk-shared/schema';
 
-import { serverLog } from '../helpers/serverLog';
-
-import type {
-  Environment,
-  OfflineDataRaw,
-  PluginRaw,
-  Schema,
-  SchemaRaw,
-  SSRPageAdapters,
-  SSRSpaceDeployment,
-  Style
-} from '@plitzi/sdk-shared';
+import type { SSRPageAdapters, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
+import type { Environment, OfflineDataRaw, PluginRaw, Schema, SchemaRaw, Style } from '@plitzi/sdk-shared';
 
 /**
  * A space fetched from Plitzi, for a server that is not Plitzi's.

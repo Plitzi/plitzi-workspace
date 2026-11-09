@@ -1,8 +1,9 @@
 import { refuse } from './types';
 
 import type { SpaceResolution, SpaceResolver } from './types';
-import type { Grant, GrantOptions, GrantResult } from '../../core/auth/identity';
-import type { Environment, SSRCredential, SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-shared';
+import type { Grant, GrantOptions, GrantResult } from '@plitzi/sdk-kernel/identity';
+import type { SSRCredential, SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Environment } from '@plitzi/sdk-shared';
 
 /**
  * Did this request even try to present a credential?

@@ -1,4 +1,4 @@
-import { sharedContext } from '../../helpers/sharedContext';
+import { sharedContext } from '../../react/sharedContext';
 
 import type { ComponentContextValue, PluginsContextValue } from '../../types';
 

@@ -1,4 +1,4 @@
-import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-server/kernel';
+import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
 
 import { outlineOfSnapshot, outlineOfTree } from './accessibilityOutline';
 

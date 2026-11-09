@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { offlineDataOf } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
 
 /**
  * The space beside the page, over real HTTP: the page names it and leaves it out of its payload, and the name answers

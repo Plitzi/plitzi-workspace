@@ -5,7 +5,8 @@ import { sampleSpace } from '../spaces';
 import { getRscData, plugins } from './sample';
 import { PORTS } from '../launchConfig';
 
-import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The suite's own server.
  *

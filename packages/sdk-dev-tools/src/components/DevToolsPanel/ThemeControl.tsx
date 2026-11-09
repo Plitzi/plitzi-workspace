@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import DevToolsButton from './DevToolsButton';
 

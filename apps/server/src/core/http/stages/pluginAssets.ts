@@ -1,7 +1,8 @@
-import { serveStatic } from '../../staticFiles';
+import { serveStatic } from '@plitzi/sdk-kernel/http';
 
-import type { SSRContext, Stage } from '../types';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 // Serves compiled plugin bundles under the plugin manager's URL prefix, preparing the plugin on demand.
 export const pluginAssetsStage: Stage<SSRContext> = async ctx => {

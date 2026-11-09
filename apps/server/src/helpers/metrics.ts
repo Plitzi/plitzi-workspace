@@ -1,4 +1,4 @@
-import { serverLog } from './serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 export class RequestMetrics {
   private readonly start: number;

@@ -1,6 +1,6 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionLookups } from '@plitzi/sdk-actions';
 
 /**
  * The page's two server actions — documents, like any space's — and each one step: a task of the runtime's own. The

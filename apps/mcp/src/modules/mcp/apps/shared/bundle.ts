@@ -1,4 +1,4 @@
-import { esbuildBuild } from '@plitzi/sdk-server/kernel';
+import { esbuildBuild } from '@plitzi/sdk-kernel/build';
 
 import { require } from './resolve';
 import { zodEnglishOnly } from './zodEnglishOnly';

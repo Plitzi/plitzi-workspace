@@ -1,7 +1,7 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import Notice from '@pmodules/App/components/Notice';
 
 import ExportLocked from './components/ExportLocked';

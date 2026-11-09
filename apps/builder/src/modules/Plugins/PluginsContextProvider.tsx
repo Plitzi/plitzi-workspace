@@ -3,7 +3,7 @@ import { useCallback, use, useEffect, useMemo, useRef, useState, useReducer } fr
 
 import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 

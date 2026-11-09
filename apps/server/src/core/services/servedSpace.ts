@@ -1,6 +1,6 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type { SSRContext } from '../http/types';
+import type { SSRContext } from '../http/pageContext';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**

@@ -11,10 +11,10 @@
  * it in Redis. The workers of one server are one replica: they count in the primary (`fleetRateLimit`).
  */
 
-import { fleetStore } from '../server/fleet/link';
+import { fleetStore } from '@plitzi/sdk-kernel/http';
 
 import type { ThrottleAttempt, ThrottledAction } from './api';
-import type { StoreMethods } from '../server/fleet/channel';
+import type { StoreMethods } from '@plitzi/sdk-kernel/http';
 
 /** Attempts allowed per window, per key, per action. */
 const LIMITS: Record<ThrottledAction, { attempts: number; windowSeconds: number }> = {
@@ -90,7 +90,7 @@ export const createMemoryRateLimit = (): ((attempt: ThrottleAttempt) => Promise<
 
 type RateLimitStore = { check: ReturnType<typeof createMemoryRateLimit> };
 
-/** Every method of the store, for the copy a fleet's workers share (see `fleet/stores.ts`). */
+/** Every method of the store, for the copy a fleet's workers share (`FleetStores`, `core/server/fleet/link.ts`). */
 export const RATE_LIMIT_METHODS: StoreMethods<RateLimitStore> = { check: true };
 
 /**

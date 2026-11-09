@@ -2,15 +2,19 @@ import { request } from 'node:http';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+
 import { createAuth } from './auth/createAuth';
+import { TEST_SECRET } from './auth/tests/keys';
 import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
-import type { AccountAdapters, AccountRecord } from './auth/api';
-import type { IdentityAdapters } from './auth/identity';
-import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { AccountAdapters, AccountRecord } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 /**
  * The auth flows over real HTTP, through the pipeline a deployment actually gets.
@@ -86,7 +90,8 @@ const store = () => {
 };
 
 const auth = createAuth({
-  tokens: { secret: 'test-secret', issuer: BASE, audience: [BASE] },
+  tokens: { keys: TEST_KEYS, issuer: BASE, audience: [BASE] },
+  secret: TEST_SECRET,
   cookie: { name: 'test_session' },
   adapters: store(),
   api: {
@@ -377,5 +382,19 @@ describe('createServer with auth', () => {
     const res = await navigate('/auth/login?redirect=//evil.test/', 'username=ada&password=password');
 
     expect(res.location).toBe('/');
+  });
+});
+
+/** The engine's configuration is `createPlatform`'s, or a worker's: given here it would leave every call a 404, unsaid. */
+describe('createServer and the actions engine', () => {
+  const adapters = createJsonAdapters({ offlineData: offlineDataOf() });
+
+  it.each(['action', 'functions', 'connectors', 'realtime'])('refuses %s, naming where it goes', key => {
+    // What a JavaScript caller can pass, and a typed one cannot: the type leaves it out.
+    const config = { adapters, [key]: {} } as unknown as Parameters<typeof createServer>[0];
+
+    expect(() => createServer(config)).toThrow(
+      `createServer serves pages: ${key} is the actions engine's configuration. Use createPlatform (@plitzi/sdk-server/platform)`
+    );
   });
 });

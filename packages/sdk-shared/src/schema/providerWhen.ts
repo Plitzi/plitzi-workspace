@@ -3,7 +3,7 @@ import { GLOBAL_SOURCES } from '../dataSource/globalSources';
 import getSourceName from '../dataSource/helpers/getSourceName';
 import { isRecord } from '../helpers/isRecord';
 
-import type { RuleGroup, RuleValue } from '../helpers/ruleEvaluator';
+import type { RuleGroup, RuleValue } from '../conditions';
 import type { Element, SSRUser } from '../types';
 
 /**

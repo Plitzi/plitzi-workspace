@@ -1,7 +1,7 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import AppContext from '@pmodules/App/AppContext';
 import Notice from '@pmodules/App/components/Notice';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
@@ -27,13 +27,21 @@ import {
   taskNameOf,
   unreadableIn,
   withCpu,
+  withSize,
   writtenAt
 } from './helpers';
 import useFunctions from './useFunctions';
 
 import type { NewTask, SourceEdit, SourcePlace } from './editor/source';
 import type { EditorTarget, ListedTask } from './helpers';
-import type { ActionRunReport, FunctionsProblem, FunctionsRefusal, FunctionsSaveResult } from '@plitzi/sdk-shared';
+import type {
+  ActionRunReport,
+  FunctionAskedLimits,
+  FunctionSize,
+  FunctionsProblem,
+  FunctionsRefusal,
+  FunctionsSaveResult
+} from '@plitzi/sdk-shared';
 
 const EMPTY_FILES: Record<string, string> = {};
 
@@ -188,14 +196,24 @@ const Functions = () => {
     [jumpTo]
   );
 
-  // Written into the task's code, and the code shown where it changed — without taking the keyboard off the slider.
-  const handleLimitsChange = useCallback(
-    async (task: ListedTask, cpuMs: number | undefined) => {
-      if (task.at && applyEdit(await typescript.setTaskLimits(task.at, withCpu(task.limits, cpuMs)))) {
+  // Written into the task's code, and the code shown where it changed — without taking the keyboard off the control.
+  const writeLimits = useCallback(
+    async (task: ListedTask, limits: FunctionAskedLimits) => {
+      if (task.at && applyEdit(await typescript.setTaskLimits(task.at, limits))) {
         jumpTo(task.at, false);
       }
     },
     [applyEdit, jumpTo, typescript]
+  );
+
+  const handleLimitsChange = useCallback(
+    (task: ListedTask, cpuMs: number | undefined) => writeLimits(task, withCpu(task.limits, cpuMs)),
+    [writeLimits]
+  );
+
+  const handleSizeChange = useCallback(
+    (task: ListedTask, size: FunctionSize) => writeLimits(task, withSize(task.limits, size, sharedLimits)),
+    [sharedLimits, writeLimits]
   );
 
   const handleAddFile = useCallback((file: string) => {
@@ -400,7 +418,9 @@ const Functions = () => {
               hosts={hosts}
               limitsDisabledReason={limitsBlockedBy(typescript.ready, selectedTask)}
               modified={modified.length > 0}
+              sizes={draft?.sizes ?? []}
               onLimitsChange={handleLimitsChange}
+              onSizeChange={handleSizeChange}
               onRun={handleRun}
             />
           )}

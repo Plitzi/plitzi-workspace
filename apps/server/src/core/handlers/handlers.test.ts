@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+
 import { createAuthMiddleware } from './authMiddleware';
 import { createAuthRouteHandlers, mountAuthRoutes } from './authRouteHandlers';
 import { createAuth } from '../auth/createAuth';
+import { TEST_SECRET } from '../auth/tests/keys';
 
 import type { AuthedRequest, JsonResponse, RouteHandler } from './types';
-import type { AccountAdapters, AccountRecord } from '../auth/api';
-import type { IdentityAdapters } from '../auth/identity';
-import type { SSRSession } from '@plitzi/sdk-shared';
+import type { AccountAdapters, AccountRecord } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 /**
  * These exist to keep one promise: that nothing here needs a framework. Every request and response below is an
@@ -51,7 +54,8 @@ const build = () => {
   };
 
   return createAuth({
-    tokens: { secret: 'test-secret', issuer: 'https://acme.test', audience: [] },
+    tokens: { keys: TEST_KEYS, issuer: 'https://acme.test', audience: [] },
+    secret: TEST_SECRET,
     adapters,
     api: { verifyPassword: plain => Promise.resolve(plain === 'password') }
   });

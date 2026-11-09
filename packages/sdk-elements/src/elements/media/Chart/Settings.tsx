@@ -7,7 +7,9 @@ import useSettingsUpdate from '../../useSettingsUpdate';
 
 import type { ChartProps } from './Chart';
 
-type SettingsProps = Omit<ChartProps, 'ref' | 'className' | 'items'> & {
+type SettingsProps = Omit<ChartProps, 'ref' | 'className' | 'items' | 'series'> & {
+  /** Written here as `field:label, field:label`; a binding may hand records instead, which this does not edit. */
+  series?: unknown;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -15,6 +17,7 @@ const Settings = ({
   kind = 'bar',
   labelField = 'label',
   valueField = 'value',
+  series,
   label = '',
   format = 'number',
   showValues = false,
@@ -39,6 +42,14 @@ const Settings = ({
       <Input value={label} label="Name (read aloud)" onChange={update.text('label')} />
       <Input value={labelField} label="Label Field" onChange={update.text('labelField')} />
       <Input value={valueField} label="Value Field" onChange={update.text('valueField')} />
+      {kind !== 'donut' && (
+        <Input
+          value={typeof series === 'string' ? series : ''}
+          label="Series (field:label, …)"
+          placeholder={Array.isArray(series) ? 'Bound' : 'One line per field: cpu:CPU, memory:Memory'}
+          onChange={update.text('series')}
+        />
+      )}
       <Select value={format} label="Values" onChange={update.text('format')} size="xs">
         <option value="number">1,284</option>
         <option value="percent">42%</option>

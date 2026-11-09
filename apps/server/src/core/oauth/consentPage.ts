@@ -1,6 +1,6 @@
 import { escapeHtml } from '../../helpers/escapeHtml';
 
-import type { OAuthConsentView } from '@plitzi/sdk-shared';
+import type { OAuthConsentView } from '@plitzi/sdk-kernel/types';
 
 // Deliberately one stylesheet and zero script tags: this page decides what a connector may reach, so the less of
 // it that can be influenced from anywhere else, the better. It is also why the flow is plain form POSTs and not

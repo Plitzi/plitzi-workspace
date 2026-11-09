@@ -6,7 +6,7 @@ import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
 import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
 import { ownHtml } from '@plitzi/sdk-shared/security';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import useAgentInspector from './agentInspector/useAgentInspector';
 // The recorder alone, not the Run tab: the panel is loaded only once it opens, and the steps are kept from the page's load.

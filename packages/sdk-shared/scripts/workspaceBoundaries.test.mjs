@@ -109,15 +109,57 @@ describe('workspace boundaries', () => {
     expect([...new Set(cycles)]).toEqual([]);
   });
 
+  // RFC 0032, phase 10: a runner's image and a worker's are their packages' installs, and the page server is not in them.
+  it('installs a runner and a worker without the page server', () => {
+    const byName = new Map(packages.map(({ manifest }) => [manifest.name, manifest]));
+    const installed = name => {
+      const seen = new Set();
+      const pending = [name];
+      while (pending.length > 0) {
+        const next = pending.pop();
+        const manifest = byName.get(next);
+        if (seen.has(next) || !manifest) {
+          continue;
+        }
+
+        seen.add(next);
+        const optional = manifest.peerDependenciesMeta ?? {};
+        const peers = Object.keys(manifest.peerDependencies ?? {}).filter(peer => optional[peer]?.optional !== true);
+        pending.push(...Object.keys(manifest.dependencies ?? {}), ...peers);
+      }
+
+      return [...seen];
+    };
+
+    expect(installed('@plitzi/sdk-runtime')).not.toContain('@plitzi/sdk-server');
+    expect(installed('@plitzi/sdk-actions')).not.toContain('@plitzi/sdk-server');
+    expect(installed('@plitzi/sdk-runtime')).not.toContain('@plitzi/sdk-actions');
+  });
+
   it('exports a library package by its root and its folder barrels, nothing else', () => {
     // `sdk-authoring` is bundled into one file per entry, so its few entries are written by hand (checked below).
     const shape = {
-      '.': { [SOURCE_CONDITION]: './src/index.ts', types: './dist/index.d.ts', import: './dist/index.mjs' },
-      './*': { [SOURCE_CONDITION]: './src/*/index.ts', types: './dist/*/index.d.ts', import: './dist/*/index.mjs' }
+      // `default` beside `import`, the same file: what a tool resolving the way `require` does (`createRequire`, the
+      // CLI reading a project's packages) is answered with, rather than ERR_PACKAGE_PATH_NOT_EXPORTED.
+      '.': {
+        [SOURCE_CONDITION]: './src/index.ts',
+        types: './dist/index.d.ts',
+        import: './dist/index.mjs',
+        default: './dist/index.mjs'
+      },
+      './*': {
+        [SOURCE_CONDITION]: './src/*/index.ts',
+        types: './dist/*/index.d.ts',
+        import: './dist/*/index.mjs',
+        default: './dist/*/index.mjs'
+      }
     };
+    // A file a consumer reads as text, not a module: the functions contract the builder's editor loads (`?raw`).
+    const files = { '@plitzi/sdk-runtime': { './functions-api.d.ts': './dist/functions-api.d.ts' } };
+    const shapeOf = name => ({ '.': shape['.'], ...files[name], './*': shape['./*'] });
     const misshapen = packages
       .filter(({ dir }) => path.basename(path.dirname(dir)) === 'packages' && path.basename(dir) !== 'sdk-authoring')
-      .filter(({ manifest }) => JSON.stringify(manifest.exports) !== JSON.stringify(shape))
+      .filter(({ manifest }) => JSON.stringify(manifest.exports) !== JSON.stringify(shapeOf(manifest.name)))
       .map(({ manifest }) => `${manifest.name}: ${JSON.stringify(manifest.exports)}`);
 
     expect(misshapen).toEqual([]);

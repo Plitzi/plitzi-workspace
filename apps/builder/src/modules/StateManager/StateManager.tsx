@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 export type StateManagerProps = {
   className?: string;

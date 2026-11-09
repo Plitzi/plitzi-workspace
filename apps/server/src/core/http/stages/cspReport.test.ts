@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { cspReportStage } from './cspReport';
 
-import type { BaseContext } from '../types';
-import type { SSRScriptPolicyReport, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { BaseContext } from '@plitzi/sdk-kernel/http';
+import type { SSRScriptPolicyReport, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
 /** A report posted to a host, through the stage alone: what the deployment is handed, and what the browser is told. */
 const post = async (

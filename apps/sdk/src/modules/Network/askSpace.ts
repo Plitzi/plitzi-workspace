@@ -1,13 +1,13 @@
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import type { Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { BadgeLinks, Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /** Where the page server answers the space as it is now (sdk-server's `handleCurrentSpace`). */
 export const CURRENT_SPACE_PATH = '/_plitzi/space.json';
 
 /** What the page server decided about this visit: what a page it draws is handed in its bootstrap. */
-export type VisitFacts = { overQuota?: boolean; quotaNear?: boolean; badge?: boolean };
+export type VisitFacts = { overQuota?: boolean; quotaNear?: boolean; badge?: BadgeLinks };
 
 export type SpaceAnswer = { ok: true; space: OfflineDataRaw; visit: VisitFacts } | { ok: false; message: string };
 
@@ -23,8 +23,12 @@ export type AskSpaceOptions = {
   carryStyle: boolean;
 };
 
+const isBadge = (value: unknown): value is BadgeLinks =>
+  isRecord(value) && typeof value.madeWith === 'string' && typeof value.report === 'string';
+
 const isVisit = (value: unknown): value is VisitFacts =>
-  isRecord(value) && Object.values(value).every(fact => typeof fact === 'boolean');
+  isRecord(value) &&
+  Object.entries(value).every(([fact, said]) => (fact === 'badge' ? isBadge(said) : typeof said === 'boolean'));
 
 const errorOf = (body: unknown): string | undefined =>
   isRecord(body) && typeof body.error === 'string' ? body.error : undefined;

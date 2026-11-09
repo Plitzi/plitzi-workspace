@@ -25,7 +25,8 @@ import type { ResourceProxy } from './proxy';
 import type { Persisters, ToolContext, ToolDef } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters, Environment, ServerLogger, SSRGrant, SSRWriteContext } from '@plitzi/sdk-shared';
+import type { SSRAdapters, ServerLogger, SSRGrant, SSRWriteContext } from '@plitzi/sdk-kernel/types';
+import type { Environment } from '@plitzi/sdk-shared';
 
 /** The package's version, written in by the build's `define`. Declared beside its one use rather than as a global, so
  *  this file still compiles where another package's typecheck reads it from source. */

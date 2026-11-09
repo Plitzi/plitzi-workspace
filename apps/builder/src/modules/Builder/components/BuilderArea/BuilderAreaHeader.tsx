@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import Transform from '@pmodules/Transformers/Transform';
 

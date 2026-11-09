@@ -1,9 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { copyFileAtomic, writeFileAtomic } from '@plitzi/sdk-kernel/files';
 import { inPluginLayer } from '@plitzi/sdk-shared/style';
-
-import { copyFileAtomic, writeFileAtomic } from '../helpers/atomicFile';
 
 export const copyPlugin = async (src: string, destDir: string, filename: string): Promise<void> => {
   const dest = path.join(destDir, filename);

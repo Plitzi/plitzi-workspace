@@ -2,7 +2,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { createAuthoringHost, unusedPort } from '@plitzi/sdk-server';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { createAuthoringHost } from '@plitzi/sdk-server';
 
 import { expect, test } from '../../../fixtures';
 import { liveSpace } from '../../../spaces';

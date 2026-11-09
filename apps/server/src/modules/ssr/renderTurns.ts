@@ -1,6 +1,7 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import type { SSRRenderLimitConfig, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRRenderLimitConfig } from '../../types';
+import type { SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
 /**
  * How many pages of one space this process renders at once (`renderLimit`): the turns of each space, and the requests

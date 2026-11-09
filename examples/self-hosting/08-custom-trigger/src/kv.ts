@@ -1,4 +1,4 @@
-import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
+import type { ActionKvAdapter } from '@plitzi/sdk-actions';
 
 /**
  * The store seam, written out in full — because it is the one that degrades in SILENCE.

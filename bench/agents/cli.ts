@@ -15,7 +15,7 @@ import type { Scenario, Task } from './tasks';
 
 const HELP = `Usage: yarn agents --model <label> [options]
 
-The agent benchmark of RFC 0025: each task run by each model in its harness, checked on the result, and the floor —
+The agent benchmark (bench/README.md § Agents): each task run by each model in its harness, checked on the result, and the floor —
 the smallest model and context as good as the first — found. It spends tokens: nothing runs without --model.
 
   --model <label>     A rung of the ladder, largest first, repeatable: claude:claude-haiku-4-5-20251001,
@@ -77,13 +77,14 @@ const runOne = async (
   task: Task,
   run: number,
   overhead: number,
-  references: string
+  references: string,
+  transcripts: string
 ): Promise<RunResult> => {
   const fixture: Fixture = task.scenario === 'mcp' ? await mcpFixture() : await projectFixture();
   const workDir = task.scenario === 'mcp' ? await scratch('agent') : fixture.dir;
   try {
     await task.setup?.(fixture.dir);
-    const record = await runAgent({
+    const { record, lines } = await runAgent({
       model,
       scenario: task.scenario,
       prompt: task.prompt,
@@ -95,16 +96,16 @@ const runOne = async (
       timeoutMs: plan.timeoutMs
     });
     const check = await task.check(fixture.dir);
+    // The ceiling is the reference's, known once it has run: the report applies it.
+    const metrics = measureRun({ record, check, overhead, ceiling: Number.POSITIVE_INFINITY });
+    // What broke is read in the run itself: a run that failed or met a refusal keeps the harness's stream.
+    if (!check.ok || metrics.refusals > 0) {
+      const name = `${label.replace(/[^\w.-]+/g, '_')}-${context}-${task.id}-${String(run)}.jsonl`;
+      await fs.mkdir(transcripts, { recursive: true });
+      await fs.writeFile(path.join(transcripts, name), `${lines.join('\n')}\n`);
+    }
 
-    return {
-      model: label,
-      context,
-      task: task.id,
-      run,
-      check,
-      // The ceiling is the reference's, known once it has run: the report applies it.
-      metrics: measureRun({ record, check, overhead, ceiling: Number.POSITIVE_INFINITY })
-    };
+    return { model: label, context, task: task.id, run, check, metrics };
   } finally {
     await fixture.stop();
     if (workDir !== fixture.dir) {
@@ -199,7 +200,8 @@ const main = async (): Promise<void> => {
             task,
             run,
             overheads.get(task.scenario) ?? 0,
-            references
+            references,
+            path.join(dir, 'transcripts')
           );
           results.push(result);
           await fs.appendFile(path.join(dir, 'runs.jsonl'), `${JSON.stringify(result)}\n`);

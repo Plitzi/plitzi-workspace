@@ -12,7 +12,7 @@ import { nodeOf } from '@plitzi/sdk-shared/helpers';
 import { useNetwork } from '@plitzi/sdk-shared/hooks';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import Notice from '@pmodules/App/components/Notice';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 

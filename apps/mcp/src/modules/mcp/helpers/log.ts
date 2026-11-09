@@ -1,6 +1,6 @@
-import { renderLogEvent } from '@plitzi/sdk-server/kernel';
+import { renderLogEvent } from '@plitzi/sdk-kernel/log';
 
-import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
+import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-kernel/types';
 
 // The protocol half of the server's log: what the agent CALLED, which the HTTP request event cannot show (every
 // call shares one POST, and a failing tool still answers 200). Two ways to turn it on:

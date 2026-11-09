@@ -2,7 +2,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 export type NodePreviewProps = {
   preview?: Record<string, unknown>;

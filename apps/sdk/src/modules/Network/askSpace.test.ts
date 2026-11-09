@@ -56,14 +56,17 @@ describe('asking the page server for the space', () => {
   });
 
   it('takes the space and the visit, its stylesheet the page server’s wherever the page is', async () => {
-    answering(200, { space, visit: { badge: true } });
+    answering(200, {
+      space,
+      visit: { badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' } }
+    });
 
     const answer = await askSpace(options);
 
     expect(answer).toEqual({
       ok: true,
       space: { ...space, style: { cache: '', cacheHref: 'https://ssr.example.com/_plitzi/style/abc.css' } },
-      visit: { badge: true }
+      visit: { badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' } }
     });
   });
 });

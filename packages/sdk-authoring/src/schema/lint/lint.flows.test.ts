@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BUILTIN_GLOBAL_CALLBACKS, lintSpace } from '../../index';
 import { addElement, errorsOf, onClick, setFlow, step, warningsOf, withChange } from './tests/lintFixture';
 
-import type { Rule } from '@plitzi/sdk-shared/helpers';
+import type { Rule } from '@plitzi/sdk-shared/conditions';
 
 /**
  * Every rule of the linter, pinned by its code.

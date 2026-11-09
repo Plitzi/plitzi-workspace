@@ -2,14 +2,14 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { writeFileAtomic } from '@plitzi/sdk-kernel/files';
+import { fetchOutbound } from '@plitzi/sdk-kernel/outbound';
 import { IMAGE_WIDTHS, isImageWidth } from '@plitzi/sdk-shared/helpers';
 
 import { isAllowedImageHost } from './allowlist';
-import { writeFileAtomic } from '../../helpers/atomicFile';
-import { fetchOutbound } from '../../helpers/outboundGuard';
 
 import type { ImageFormat, ImageTransform } from './transform';
-import type { OutboundOptions } from '../../helpers/outboundGuard';
+import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
 
 /** What a request for a picture asked: the picture, the width, and what the browser takes (its `Accept`). */
 export type ImageRequest = { url?: string; width?: string; accept?: string };

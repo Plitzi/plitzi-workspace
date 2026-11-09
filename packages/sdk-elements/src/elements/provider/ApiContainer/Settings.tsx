@@ -9,7 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useSdkStore, useBuilderStore, useCommonStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme';
+import { useTheme } from '@plitzi/sdk-shared/theme/react';
 
 import useSettingsUpdate from '../../useSettingsUpdate';
 import FiltersInput from './components/FiltersInput';

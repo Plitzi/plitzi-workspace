@@ -107,7 +107,7 @@ const actionsModule = (coded: readonly CodedAction[]): string => {
   return `import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 ${lines ? `\n${lines}` : ''}
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionLookups } from '@plitzi/sdk-actions';
 
 type ActionEntry = NonNullable<Awaited<ReturnType<ActionLookups['getAction']>>>;
 type Connector = NonNullable<Awaited<ReturnType<NonNullable<ActionLookups['getConnector']>>>>;

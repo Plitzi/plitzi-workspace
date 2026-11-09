@@ -3,14 +3,17 @@
 '@plitzi/sdk-mcp': patch
 '@plitzi/plitzi-sdk': patch
 '@plitzi/sdk-server': patch
+'@plitzi/sdk-actions': patch
 '@plitzi/sdk-auth': patch
 '@plitzi/sdk-authoring': patch
 '@plitzi/sdk-dev-tools': patch
 '@plitzi/sdk-elements': patch
 '@plitzi/sdk-event-bridge': patch
 '@plitzi/sdk-interactions': patch
+'@plitzi/sdk-kernel': patch
 '@plitzi/sdk-navigation': patch
 '@plitzi/sdk-plugins': patch
+'@plitzi/sdk-runtime': patch
 '@plitzi/sdk-schema': patch
 '@plitzi/sdk-shared': patch
 '@plitzi/sdk-style': patch

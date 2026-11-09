@@ -149,7 +149,7 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
 - **Write** files with \`upsertFunctionFile { path, content }\` (whole files; \`deleteFunctionFile { path }\` removes
   one). \`index.ts\` default-exports the definition:
   \`export default defineFunctions({ allow: { hosts: ["api.example.com"] }, tasks: [{ namespace, action, title, params, run: async (params, ctx) => … }] })\`,
-  \`defineFunctions\` from \`@plitzi/sdk-server/functions\`. Files import each other by relative path — no package,
+  \`defineFunctions\` from \`@plitzi/sdk-runtime\`. Files import each other by relative path — no package,
   no Node built-in.
 - **\`ctx\` is all a function reaches:** \`ctx.kv\` (the space's store), \`ctx.fetch(url, init)\` to the hosts
   \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels),
@@ -157,7 +157,7 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
   headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`. \`signal\` in the init cuts a slow request short
   (\`AbortSignal.timeout(12000)\`).
-- **Refuse with \`ActionRefusal\`** (from \`@plitzi/sdk-server/functions\`): its message is written for whoever asked and
+- **Refuse with \`ActionRefusal\`** (from \`@plitzi/sdk-runtime\`): its message is written for whoever asked and
   reaches them (\`{{ step.error }}\`, a route's \`400 { error }\`); anything else thrown stays in the run's record.
   \`new ActionRefusal(message, { code })\` names it for code that catches it — compare \`error.code\`, never the message.
 - **An API on behalf of a visitor** (their calendar, their music) is an OAuth connection declared as data:

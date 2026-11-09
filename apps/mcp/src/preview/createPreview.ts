@@ -6,8 +6,10 @@ import { computeVersion, findPageByRef, getPageElements } from '../modules/mcp/h
 import { draftBatch } from '../modules/mcp/tools/shared/draftBatch';
 
 import type { PreviewRequestBody, PreviewResult } from '../modules/mcp/types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { SSRPageServerConfig, SSRTemplateFn } from '@plitzi/sdk-server';
 import type { PluginManager, ServerCaches } from '@plitzi/sdk-server/ssr';
-import type { Environment, Schema, SSRPageServerConfig, SSRRequest, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { Environment, Schema } from '@plitzi/sdk-shared';
 
 const resolvePagePath = (schema: Schema, pageRef?: string): string => {
   const pages = getPageElements(schema);

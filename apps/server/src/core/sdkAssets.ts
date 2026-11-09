@@ -36,7 +36,7 @@ export const resolveSdkAssetsDir = (): string | undefined => {
  */
 let cachedVersion: string | undefined;
 
-export const sdkAssetVersion = (): string => {
+const sdkAssetVersion = (): string => {
   // Read once: it cannot change while this process runs, and the alternative is a `statSync` on every page render.
   if (cachedVersion !== undefined) {
     return cachedVersion;

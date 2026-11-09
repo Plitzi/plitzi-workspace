@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "mysql2": "^3.24.6",
     "react": "^19.3.1",

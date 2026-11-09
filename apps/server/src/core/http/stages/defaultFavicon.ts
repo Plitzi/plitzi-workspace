@@ -2,7 +2,7 @@ import { DEFAULT_FAVICON } from '@plitzi/sdk-shared/schema';
 
 import { DEFAULT_FAVICON_SVG } from '../../../modules/ssr/defaultFavicon';
 
-import type { Stage } from '../types';
+import type { Stage } from '@plitzi/sdk-kernel/http';
 
 /** Plitzi's icon, at the address a page that names none points its tab at — see `DEFAULT_FAVICON_SVG`. */
 export const defaultFaviconStage: Stage = ctx => {

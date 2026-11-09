@@ -38,7 +38,7 @@ import type { Space } from '../../../helpers';
 import type { ValidationResult } from '../../../types';
 import type { Operation } from '../../operations';
 import type { ElementInput, InteractionNodeInput } from '../../operations/schema/shared';
-import type { ComponentCatalog } from '@plitzi/sdk-shared';
+import type { ComponentCatalog } from '@plitzi/sdk-kernel/types';
 
 // The batch validator: builds the shared context from the space, then runs the per-op checks (split across the
 // sibling modules: refs, css, elements, batch, context) and the pageRef existence guard. The only export a

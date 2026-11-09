@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createFunctionsEnvironment } from './functionsEnvironment';
 import { workerPathOf } from './paths';
 
-const INDEX = `import { defineFunctions } from '@plitzi/sdk-server/functions';
+const INDEX = `import { defineFunctions } from '@plitzi/sdk-runtime';
 import { label } from './lib/label';
 
 export default defineFunctions({
@@ -55,7 +55,7 @@ describe('the TypeScript a space’s functions are checked with', () => {
 
   it('offers what ctx has', async () => {
     const code =
-      'import { defineFunctions } from "@plitzi/sdk-server/functions";\nexport default defineFunctions({ tasks: [{ namespace: "a", action: "b", title: "B", params: {}, run: (_p, ctx) => ctx. }] });';
+      'import { defineFunctions } from "@plitzi/sdk-runtime";\nexport default defineFunctions({ tasks: [{ namespace: "a", action: "b", title: "B", params: {}, run: (_p, ctx) => ctx. }] });';
     const env = environmentWith({ 'index.ts': code });
     const completion = await getAutocompletion({
       env,

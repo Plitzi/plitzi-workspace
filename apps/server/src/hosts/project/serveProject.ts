@@ -4,6 +4,19 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
+import { fleetJobQueue, fleetKv } from '@plitzi/sdk-actions';
+import { createFileJobQueue } from '@plitzi/sdk-actions';
+import { credentialsFromEnv } from '@plitzi/sdk-actions';
+import { createFileKv } from '@plitzi/sdk-actions';
+import { loadFunctions } from '@plitzi/sdk-actions/functions';
+import { oauthCallbackUrlOn } from '@plitzi/sdk-actions/functions';
+import { loadRuntime, loadRuntimeModule } from '@plitzi/sdk-actions/runtimes';
+import { serveRuntime } from '@plitzi/sdk-actions/runtimes';
+import { reservePort } from '@plitzi/sdk-kernel/http';
+import { closeOnSignals } from '@plitzi/sdk-kernel/http';
+import { isFleetWorker } from '@plitzi/sdk-kernel/http';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { reachOwnServer } from '@plitzi/sdk-kernel/outbound';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
   assertProjectLayout,
@@ -37,43 +50,32 @@ import { createSpaceFailure } from './spaceFailure';
 import { watchSpace } from './watchSpace';
 import { createCloudAdapters } from '../../adapters/cloudAdapters';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
-import { createServer } from '../../core/createServer';
-import { reservePort } from '../../core/freePort';
-import { closeOnSignals } from '../../core/server/closeOnSignals';
-import { isFleetWorker } from '../../core/server/fleet/role';
-import { fleetJobQueue, fleetKv } from '../../core/server/fleet/stores';
-import { consoleLogger } from '../../helpers/serverLog';
-import { createFileJobQueue } from '../../modules/actions/jobs/fileQueue';
-import { credentialsFromEnv } from '../../modules/actions/runtime/credentials';
-import { createFileKv } from '../../modules/actions/runtime/fileKv';
-import { loadFunctions } from '../../modules/functions/load';
-import { oauthCallbackUrlOn } from '../../modules/functions/oauth';
-import { loadRuntime, loadRuntimeModule } from '../../modules/runtime/bundle';
-import { reachOwnServer } from '../../modules/runtime/inside';
-import { serveRuntime } from '../../modules/runtime/stages';
+import { createPlatform } from '../../core/platform';
 
 import type { AuthoredDocuments } from './watchSpace';
-import type { ServerConfig } from '../../core/createServer';
-import type { FileJobQueue } from '../../modules/actions/jobs/fileQueue';
-import type { FileKv } from '../../modules/actions/runtime/fileKv';
-import type { ActionCredential, ActionLookups } from '../../modules/actions/types';
-import type { ConnectorManifest } from '../../modules/connectors';
-import type { FunctionsConfig } from '../../modules/functions/config';
-import type { ActionEntry, Environment, SSRPageAdapters, SSRServer } from '@plitzi/sdk-shared';
+import type { PlatformConfig } from '../../core/platform';
+import type { SSRServer } from '../../types';
+import type { FileJobQueue } from '@plitzi/sdk-actions';
+import type { FileKv } from '@plitzi/sdk-actions';
+import type { ActionCredential, ActionLookups } from '@plitzi/sdk-actions';
+import type { FunctionsConfig } from '@plitzi/sdk-actions/functions';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
+import type { ConnectorManifest } from '@plitzi/sdk-shared';
+import type { ActionEntry, Environment } from '@plitzi/sdk-shared';
 
 /** What `serveProject` sets itself, from the project's layout — so never the project's options'. */
 type SetByProject = 'port' | 'health' | 'adapters' | 'plugins' | 'publicDir' | 'dataDir' | 'functions' | 'action';
 
 /**
- * What a project's server does besides serving its space — its `src/config/serverOptions.ts`: what `createServer`
+ * What a project's server does besides serving its space — its `src/config/serverOptions.ts`: what `createPlatform`
  * takes, but for what `serveProject` wires from the project's layout, and an action's `lookups`, which are the
  * project's `src/actions/`. `logLevel` and `logger` are the project's to change; `action.kv` too. So are `devMode` and
  * `livePages`, which follow `NODE_ENV` when left out — on unless it is `production`. A deployment started without it (a
  * container's `CMD`, a process manager with no environment) says `devMode: false` here, and a public action answers
  * with its output alone, never the trace of every step.
  */
-export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
-  action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
+export type ProjectServerOptions = Partial<Omit<PlatformConfig, SetByProject>> & {
+  action?: Omit<NonNullable<PlatformConfig['action']>, 'lookups'>;
   /**
    * Of the functions, what is the project's to say: `oauth.callbackOrigin`, the one address OAuth providers send a
    * visitor back to — `PUBLIC_URL` when it is HTTPS; else, while developing, this machine's loopback, and in production
@@ -461,7 +463,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project —
   // and `instance`, which copy of it: a run's copies share the name, and one on a port another copy holds reached that.
-  const server = createServer(
+  const server = createPlatform(
     {
       // What went wrong and nothing else: `npm start -- --verbose` adds a line for every request.
       logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',

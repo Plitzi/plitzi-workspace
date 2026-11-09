@@ -156,8 +156,21 @@ jobs:
           cache-version: ${{ secrets.CACHE_VERSION }}
           build: 'true'
 
+      # Turbo's own cache, per package: a package whose inputs — its files, its dependencies' (the `transit` task) and
+      # the variables its tests read (turbo.json) — did not change is replayed, not tested again.
+      - name: Restore Cache turbo
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: ${{ runner.os }}-turbo-test-${{ matrix.package }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-test-${{ matrix.package }}-${{ secrets.CACHE_VERSION }}-
+
       - name: Yarn Test
-        run: yarn workspace ${{ matrix.package }} test
+        run: yarn turbo run test --filter=${{ matrix.package }}
+
+      - name: Prune Cache turbo
+        run: find .turbo/cache -type f -mtime +7 -delete || true
 
   # The browser suite, split two ways by category, the examples' left out — they run on request only. Needs the build —
   # the apps render built output, so an e2e run on an unbuilt tree tests nothing — but not the checks: a formatting

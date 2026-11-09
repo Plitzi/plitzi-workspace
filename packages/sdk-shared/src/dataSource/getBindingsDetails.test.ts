@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 
 import getBindingsDetails from './getBindingsDetails';
 
+import type { RuleValue } from '../conditions/types';
 import type { Element, ElementBinding } from '../types';
-import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 const makeElement = (
   bindings?: Element['definition']['bindings'],

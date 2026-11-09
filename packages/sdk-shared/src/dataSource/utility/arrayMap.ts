@@ -1,4 +1,4 @@
-import { get, set } from '@plitzi/plitzi-ui/helpers/lodash';
+import { get, set } from '../../helpers/lodash';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 

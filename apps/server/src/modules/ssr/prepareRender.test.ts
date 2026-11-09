@@ -5,15 +5,10 @@ import { TtlCache } from '../../helpers/cache';
 import { RequestMetrics } from '../../helpers/metrics';
 
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  Element,
-  OfflineDataRaw,
-  SchemaRsc,
-  SpaceFont,
-  SSRFontsConfig,
-  SSRPageServerConfig,
-  SSRRequest
-} from '@plitzi/sdk-shared';
+import type { SSRFontsConfig } from '../../types';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Element, OfflineDataRaw, SchemaRsc, SpaceFont } from '@plitzi/sdk-shared';
 
 const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'): Element => ({
   id,

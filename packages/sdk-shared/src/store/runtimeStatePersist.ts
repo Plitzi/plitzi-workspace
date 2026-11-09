@@ -1,0 +1,433 @@
+import { persistMiddleware } from '@plitzi/nexus';
+
+import { pConsole } from '../devTools/utils/PlitziConsole';
+import { isRecord } from '../helpers/isRecord';
+import {
+  accountOwner,
+  browserKeys,
+  clearPaintedEntry,
+  paintedKeys,
+  paintedStateCookieName,
+  pickPainted,
+  readPaintedEntry,
+  writePaintedEntry
+} from '../state/paintedState';
+
+import type { CommonState } from '../types';
+import type { PathOf, PersistStorage, StoreMiddleware } from '@plitzi/nexus';
+
+type AuthSource = { status?: string; isAuthenticated?: boolean; details?: { id?: number | string } };
+
+/** Auth is still finding out who this is: nothing kept can be told apart yet from somebody else's. */
+const UNSETTLED = new Set(['init', 'initLoading', 'authenticating']);
+
+/**
+ * Who `runtime.state` belongs to.
+ *
+ * Read from the `auth` source GlobalSources publishes, which every auth provider feeds the same way — so this is the
+ * whole vocabulary, whatever a space signs people in with. A space with no accounts at all (no provider, or none of its
+ * auth published) has one owner, the browser. Otherwise it is the signed-in account, or the guest.
+ */
+export type StateOwner = { kind: 'browser' } | { kind: 'guest' } | { kind: 'account'; id: string };
+
+/**
+ * `undefined` while nobody can say yet: nothing kept can be told apart from somebody else's.
+ *
+ * That includes the moment before the `auth` source EXISTS. GlobalSources publishes it for every space — `{}` for one
+ * with no accounts, a `status` for one with a provider — but only once it mounts, and the store is asked for its
+ * storage before that. Read as "the browser" there, the first read of every visit found the guest's entry, called it
+ * somebody else's, and deleted it: a space with `keepState` kept nothing past a reload.
+ */
+export const stateOwner = (state: CommonState): StateOwner | undefined => {
+  // The sources are an open record typed `unknown`; this shape is what GlobalSources publishes under `auth`.
+  const auth = state.runtime?.sources.auth as AuthSource | undefined;
+  if (!auth) {
+    return undefined;
+  }
+
+  if (auth.status === undefined) {
+    return { kind: 'browser' };
+  }
+
+  if (UNSETTLED.has(auth.status)) {
+    return undefined;
+  }
+
+  return auth.isAuthenticated && auth.details?.id !== undefined
+    ? { kind: 'account', id: String(auth.details.id) }
+    : { kind: 'guest' };
+};
+
+/** How an owner is written on a kept entry. Entries already in browsers carry exactly these strings. */
+const ownerKey = (owner: StateOwner): string => {
+  switch (owner.kind) {
+    case 'account':
+      return accountOwner(owner.id);
+    case 'guest':
+      return 'guest';
+    case 'browser':
+      return '';
+  }
+};
+
+/**
+ * A storage whose entries remember who wrote them, and that forgets an entry written by somebody else.
+ *
+ * The key is per space and the storage per browser, so two people signing in on one browser shared one kept state —
+ * the dashboard reopened the previous account's workspace, which the new one cannot even see. Signing out does not
+ * clear it either, because signing out happens on the sign-in screen, which is another origin with another storage.
+ * So the owner travels with the entry: read back by anyone else, it is removed and nothing is restored.
+ */
+const ownedStorage = (storage: Storage, owner: string): PersistStorage => ({
+  getItem: key => {
+    const raw = storage.getItem(key);
+    if (raw === null) {
+      return null;
+    }
+
+    try {
+      const entry = JSON.parse(raw) as { owner?: unknown; payload?: unknown };
+      if (entry.owner === owner && typeof entry.payload === 'string') {
+        return entry.payload;
+      }
+    } catch {
+      // Not an entry of this shape at all; it goes the way somebody else's would.
+    }
+
+    storage.removeItem(key);
+
+    return null;
+  },
+  setItem: (key, value) => storage.setItem(key, JSON.stringify({ owner, payload: value })),
+  removeItem: key => storage.removeItem(key)
+});
+
+/** The one path this module keeps. */
+const KEPT_PATH = 'runtime.state';
+
+const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
+
+/** `schema` is typed required but seeded after mount, so it is read defensively. */
+const schemaSettings = (state: CommonState): CommonState['schema']['settings'] | undefined =>
+  (state.schema as CommonState['schema'] | undefined)?.settings;
+
+const keyList = (keys: unknown): Set<string> =>
+  new Set(Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string' && key !== '') : []);
+
+/**
+ * Whether a key of `runtime.state` is kept: one of `keptState` when the space names the keys it keeps, else any not in
+ * `transientState`, the keys it names to leave out.
+ */
+const keptKey = (
+  settings: Pick<CommonState['schema']['settings'], 'transientState' | 'keptState'> | undefined
+): ((key: string) => boolean) => {
+  const kept = keyList(settings?.keptState);
+  if (kept.size > 0) {
+    return key => kept.has(key);
+  }
+
+  const transient = keyList(settings?.transientState);
+
+  return key => !transient.has(key);
+};
+
+const keysWhere = (from: unknown, keep: (key: string) => boolean): Record<string, unknown> =>
+  isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keep(key))) : {};
+
+/** A kept key filed under whoever the state belongs to: any kept one but the browser's, which have an entry of their own. */
+const ownedKey = (settings: CommonState['schema']['settings'] | undefined): ((key: string) => boolean) => {
+  const kept = keptKey(settings);
+  const browser = browserKeys(settings);
+
+  return key => kept(key) && !browser.has(key);
+};
+
+const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
+  try {
+    return kind === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
+  } catch {
+    // A sandboxed frame or a privacy mode throws on access rather than answering `undefined`.
+    return undefined;
+  }
+};
+
+/**
+ * Keeps the cookie of `settings.paintedState` (see `paintedState.ts`) in step with `runtime.state`.
+ *
+ * Under the same gates as the restore — after hydration, with `keepState` on, once auth has said who this is — and for
+ * the same reason as the owner on a kept entry: the first time those hold, an entry somebody else wrote is removed, and
+ * the values the page rendered with from it are dropped. After that, a change to a declared key rewrites the entry;
+ * nothing else touches the cookie.
+ */
+const paintedSync = <TState extends CommonState>(
+  api: { getState: () => TState; setState: (path: PathOf<TState>, value: never) => void },
+  webId: number
+): (() => void) => {
+  const name = paintedStateCookieName(webId, typeof window === 'undefined' ? undefined : window.location.host);
+  let checked = false;
+  let written: string | undefined;
+
+  return () => {
+    const state = api.getState();
+    if (typeof document === 'undefined' || (state.render?.isHydrating && !state.render.hydrated)) {
+      return;
+    }
+
+    const settings = schemaSettings(state);
+    const keys = paintedKeys(settings);
+    const current = stateOwner(state);
+    if (!settings?.keepState || keys.size === 0 || current === undefined) {
+      return;
+    }
+
+    const owner = ownerKey(current);
+    const kept = state.runtime?.state;
+    if (!checked) {
+      checked = true;
+      const entry = readPaintedEntry(name);
+      if (entry && entry.owner !== owner) {
+        // The browser's keys are nobody's: they stay, and the entry is written again under this owner with them alone.
+        // Of the rest, only a value that is still the entry's goes: what this account wrote since the page hydrated —
+        // a workspace its own provider's first answer picked, as early as a server provider answers — is its own.
+        const browser = browserKeys(settings);
+        const theirs = new Set(
+          [...keys].filter(
+            key =>
+              !browser.has(key) &&
+              isRecord(kept) &&
+              key in kept &&
+              JSON.stringify(kept[key]) === JSON.stringify(entry.values[key])
+          )
+        );
+        if (isRecord(kept) && theirs.size > 0) {
+          // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+          // Its commit comes back through here, and rewrites the entry.
+          api.setState('runtime.state' as PathOf<TState>, omitKeys(kept, theirs) as never);
+
+          return;
+        }
+      }
+
+      written = entry?.owner === owner ? JSON.stringify(pickPainted(entry.values, keys)) : undefined;
+    }
+
+    const values = pickPainted(kept, keys);
+    const serialized = JSON.stringify(values);
+    if (serialized === written) {
+      return;
+    }
+
+    written = serialized;
+    if (Object.keys(values).length === 0) {
+      clearPaintedEntry(name);
+
+      return;
+    }
+
+    if (writePaintedEntry(name, { owner, values }) === 'too-large') {
+      pConsole.warning(
+        'store',
+        `settings.paintedState holds more than a cookie can carry — the first paint uses the space's defaults for ${[...keys].join(', ')}. Declare only what the first paint shows.`,
+        { storeName: 'runtime', path: 'runtime.state', prev: undefined, next: values }
+      );
+    }
+  };
+};
+
+/** Where the browser's keys are kept: beside the space's entry, and never filed under an owner. */
+const browserEntryKey = (webId: number): string => `plitzi_${String(webId)}_state_browser`;
+
+const readBrowserEntry = (storage: Storage, key: string): unknown => {
+  try {
+    const raw = storage.getItem(key);
+
+    return raw === null ? undefined : JSON.parse(raw);
+  } catch {
+    // Not an entry of this module's at all: nothing is restored from it, and the next write replaces it.
+    return undefined;
+  }
+};
+
+/**
+ * Keeps the keys of `settings.browserState` in an entry of their own, which belongs to the browser rather than to
+ * whoever is signed in: the cookie consent was asked again every time somebody else signed in, because the guest's
+ * entry, and the previous account's, are forgotten by the next owner whole.
+ *
+ * Under the restore's gates but one — after hydration, with `keepState` on — and not waiting for auth, which does not
+ * decide whose these are: brought back once, over what the page holds; after that, a change to one rewrites the entry.
+ */
+const browserSync = <TState extends CommonState>(
+  api: { getState: () => TState; setState: (path: PathOf<TState>, value: never) => void },
+  webId: number
+): (() => void) => {
+  const key = browserEntryKey(webId);
+  let restored = false;
+  let written: string | undefined;
+
+  return () => {
+    const state = api.getState();
+    if (state.render?.isHydrating && !state.render.hydrated) {
+      return;
+    }
+
+    const settings = schemaSettings(state);
+    const keys = browserKeys(settings);
+    const storage = browserStorage(settings?.stateStorage === 'sessionStorage' ? 'session' : 'local');
+    if (!settings?.keepState || keys.size === 0 || !storage) {
+      return;
+    }
+
+    const held = state.runtime?.state;
+    const ofKeys = (from: unknown) => keysWhere(from, each => keys.has(each));
+    if (!restored) {
+      restored = true;
+      const values = ofKeys(readBrowserEntry(storage, key));
+      written = JSON.stringify(values);
+      if (
+        Object.keys(values).length > 0 &&
+        JSON.stringify({ ...ofKeys(held), ...values }) !== JSON.stringify(ofKeys(held))
+      ) {
+        // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+        // Its commit comes back through here, and finds the entry already says it.
+        api.setState('runtime.state' as PathOf<TState>, { ...(isRecord(held) ? held : {}), ...values } as never);
+
+        return;
+      }
+    }
+
+    const values = ofKeys(held);
+    const serialized = JSON.stringify(values);
+    if (serialized === written) {
+      return;
+    }
+
+    written = serialized;
+    try {
+      if (Object.keys(values).length === 0) {
+        storage.removeItem(key);
+      } else {
+        storage.setItem(key, serialized);
+      }
+    } catch {
+      pConsole.warning(
+        'store',
+        `settings.browserState could not be kept — the browser refused to store ${[...keys].join(', ')}, so the next visit starts without them.`,
+        { storeName: 'runtime', path: 'runtime.state', prev: undefined, next: values }
+      );
+    }
+  };
+};
+
+// Persists `runtime.state` to local/session storage (keyed per web), gated reactively by `schema.settings`: while
+// `keepState` is off the storage resolver returns `false` and persist skips entirely. Mounted in each app's root StoreProvider; the persist middleware
+// self-hydrates on its first commit once storage becomes resolvable (i.e. once `keepState` is turned on).
+//
+// Nothing is restored while a render is still hydrating, and that gate is the whole reason this resolver reads
+// `render` at all. What a browser kept from last visit is by definition something the server could not know, so
+// putting it into the store during the pass that has to MATCH the server's markup is a guaranteed mismatch — and React
+// answers a mismatch by discarding the entire tree it happened in, not the one text node. The dashboard's sidebar was
+// the visible version of this: the server rendered the workspace initial as "—" (it has no browser storage) and the
+// client rendered "A", and the layout was thrown away and re-rendered on every SSR page load.
+//
+// The persist middleware runs its restore in a mount effect for exactly this reason, but it ALSO retries on every
+// commit — it has to, because the setting that resolves storage arrives after the store does — and the schema is
+// seeded during the first render, so the retry fired inside the hydrating pass and defeated the mount effect. Refusing
+// a storage until `render.hydrated` closes that door here: the retry then succeeds on the first commit after
+// hydration, which is where it was always meant to happen.
+//
+// Nor is anything restored before auth has settled, for the same reason from the other side: until it knows who this
+// is, what was kept cannot be told apart from what somebody else kept (see `ownedStorage`).
+export const runtimeStatePersist = <TState extends CommonState>(webId: number): StoreMiddleware<TState> => {
+  const persist = persistMiddleware<TState>({
+    key: `plitzi_${webId}_state`,
+    // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+    paths: [KEPT_PATH] as PathOf<TState>[],
+    /**
+     * The keys a space does not keep (`keptKey`) stay out of what is written — and out of what is read back, so an entry
+     * kept before a key was left out does not bring it back — while the values they hold now survive the restore, which
+     * lands late (after hydration, once auth settles) and would otherwise put `runtime.state` back whole over them.
+     */
+    partializePath: (_path, value, state) => {
+      const kept = ownedKey(schemaSettings(state));
+
+      return isRecord(value) ? keysWhere(value, kept) : value;
+    },
+    // What was kept wins where it holds a key; what the page holds before the restore landed stays where it holds
+    // none. Read as "the kept keys come from storage alone", a page's own default written on load (the runs filter, by
+    // `onPageLoad`) was dropped whenever the visit had started on another page — its entry kept nothing of it yet — and
+    // so was a key the space added to its start after the entry was kept.
+    mergePath: (_path, persisted, current, state) => {
+      const kept = ownedKey(schemaSettings(state));
+
+      return isRecord(persisted) ? { ...keysWhere(current, () => true), ...keysWhere(persisted, kept) } : persisted;
+    },
+    storage: (state: CommonState) => {
+      const { render } = state;
+      // Only a render that came from SSR waits: a client-only one (the builder, an embed) has no markup to match and
+      // restores as soon as the setting says to.
+      if (render?.isHydrating && !render.hydrated) {
+        return false;
+      }
+
+      const settings = schemaSettings(state);
+      const owner = stateOwner(state);
+      if (!settings?.keepState || owner === undefined) {
+        return false;
+      }
+
+      const storage = browserStorage(settings.stateStorage === 'sessionStorage' ? 'session' : 'local');
+
+      return storage ? ownedStorage(storage, ownerKey(owner)) : false;
+    }
+  });
+
+  return api => {
+    const handlers = persist(api);
+    const initial = api.getState().runtime?.state;
+    let owner = stateOwner(api.getState());
+    const painted = paintedSync(api, webId);
+    const browser = browserSync(api, webId);
+
+    return {
+      ...handlers,
+      /**
+       * An account changing under a running page takes its state with it.
+       *
+       * The storage forgets another owner's entry, but the page still HOLDS the previous account's state in memory,
+       * and the next write would file it under the new one. So it goes back to what the space starts with — before the
+       * write that follows, which is why this runs first.
+       *
+       * Only when the state belonged to an ACCOUNT: another one taking over, or it signing out. The browser and the guest
+       * are nobody in particular, so there is nobody to protect the state from — a guest signing in is the same person,
+       * and what they were doing is theirs. The sign-in screen holds the address to send them back to in this state,
+       * and clearing it as their session arrived sent them to "you are signed in" instead, whenever their account
+       * details landed before the page read it.
+       */
+      onChange: change => {
+        const previous = owner;
+        const next = stateOwner(api.getState());
+        // Recorded before the reset below, whose own commit comes back through here and must find nothing to do.
+        if (next !== undefined) {
+          owner = next;
+        }
+
+        if (previous?.kind === 'account' && next !== undefined && ownerKey(next) !== ownerKey(previous)) {
+          // Without the painted keys: what the page STARTED with may have come from the previous account's cookie. With
+          // the browser's as they are now: they were nobody's to take.
+          const settings = schemaSettings(api.getState());
+          const browserKept = keysWhere(api.getState().runtime?.state, key => browserKeys(settings).has(key));
+          const fresh = isRecord(initial) ? omitKeys(initial, paintedKeys(settings)) : initial;
+          const next =
+            Object.keys(browserKept).length > 0 ? { ...(isRecord(fresh) ? fresh : {}), ...browserKept } : fresh;
+          // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+          api.setState('runtime.state' as PathOf<TState>, next as never);
+        }
+
+        handlers?.onChange?.(change);
+        painted();
+        browser();
+      }
+    };
+  };
+};

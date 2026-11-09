@@ -1,4 +1,4 @@
-import { createServer } from '@plitzi/sdk-server';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
 import { MAIL_SINK } from '../helpers/mail';
 import { PORTS } from '../launchConfig';
@@ -64,7 +64,7 @@ const lookups = {
     Promise.resolve(credentials[identifier])
 };
 
-const server = createServer({
+const server = createPlatform({
   port: PORT,
   devMode: true,
   adapters: {

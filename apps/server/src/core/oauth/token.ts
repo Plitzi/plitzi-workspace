@@ -7,7 +7,7 @@ import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthParams } from './params';
 import type { RefreshRecord } from './records';
-import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 const DEFAULT_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 30;
 

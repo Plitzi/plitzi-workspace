@@ -1,6 +1,6 @@
 import { isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { isOgType, pageAccessOf } from '@plitzi/sdk-shared/schema';
+import { isOgType, notFoundWhenRefused, pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import { readBindings, readFlows } from './bindings';
 import { baseStyle, pageStyle } from './classes';
@@ -269,6 +269,7 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
     ...(accessLevel ? { accessLevel } : {}),
     ...(access ? { access } : {}),
     ...(redirect ? { unauthorizedRedirect: redirect } : {}),
+    ...(notFoundWhenRefused(attributes) ? { whenRefused: 'notFound' as const } : {}),
     ...pageStyle(reader, page.definition.styleSelectors.base),
     ...readFlows(reader, page),
     ...(page.definition.flag ? { flag: flagSpecOf(page.definition.flag) } : {}),

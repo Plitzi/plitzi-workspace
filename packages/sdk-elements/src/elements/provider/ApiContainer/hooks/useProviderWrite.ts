@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { invalidateQueries } from '@plitzi/sdk-shared/queries';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 /** Values a write callback receives from the interaction step, minus the keys the endpoint reads itself. */
 type WriteParams = Record<string, unknown> & { action?: unknown; recordId?: string };
@@ -9,7 +10,6 @@ type WriteParams = Record<string, unknown> & { action?: unknown; recordId?: stri
 export type UseProviderWriteProps = {
   elementId: string;
   enabled: boolean;
-  actionPath?: string;
   onDone?: () => Promise<void> | void;
 };
 
@@ -23,8 +23,12 @@ export type UseProviderWriteProps = {
  * There is one callback rather than one per CRUD verb because a connector's write endpoints are named by whoever
  * wrote the manifest: `escalate` and `sendInvoice` are as legitimate as `create`, and three fixed verbs would only
  * be able to reach a connector that happened to use them.
+ *
+ * It posts where the server said its writes are (`actions.endpoint`) — its own origin or the actions' (`action.origin`),
+ * with the visitor's cookies either way.
  */
-const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone }: UseProviderWriteProps) => {
+const useProviderWrite = ({ elementId, enabled, onDone }: UseProviderWriteProps) => {
+  const [endpoint] = useCommonStore('actions.endpoint');
   const writeRecord = useCallback(
     async (params: WriteParams = {}) => {
       const { action, recordId, ...values } = params;
@@ -32,10 +36,14 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
         return undefined;
       }
 
-      const response = await fetch(actionPath, {
+      if (!endpoint) {
+        throw new Error(`Write "${action}" was not sent: this page is served without a server that takes its writes`);
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({ elementId, action, recordId, values })
       });
       if (!response.ok) {
@@ -43,7 +51,7 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
         // renews and the retry succeeds, or the visitor is signed out now instead of on the next timer.
         const reason = authFailureFromResponse(response.status, await response.json().catch(() => undefined));
         if (reason) {
-          void reportAuthFailure({ reason, url: actionPath });
+          void reportAuthFailure({ reason, url: endpoint });
         }
 
         throw new Error(`Write failed with status ${response.status}`);
@@ -58,7 +66,7 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
 
       return payload.record;
     },
-    [actionPath, elementId, enabled, onDone]
+    [endpoint, elementId, enabled, onDone]
   );
 
   return { writeRecord };

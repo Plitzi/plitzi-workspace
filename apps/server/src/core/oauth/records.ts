@@ -1,4 +1,4 @@
-import type { OAuthGrantTarget, OAuthStore, OAuthUser } from '@plitzi/sdk-shared';
+import type { OAuthGrantTarget, OAuthStore, OAuthUser } from '@plitzi/sdk-kernel/types';
 
 /** A client that registered itself through RFC 7591. Public clients only — a desktop host cannot keep a secret,
  *  so the token endpoint authenticates the exchange with PKCE instead. */

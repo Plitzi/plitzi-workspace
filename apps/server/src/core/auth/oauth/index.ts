@@ -6,7 +6,7 @@ import { OAuthFailure } from './types';
 import { createRedirectPolicy } from '../redirects';
 
 import type { OAuthFailureReason, OAuthProfile, OAuthProvider, OAuthProviderConfig } from './types';
-import type { AccountRecord } from '../api';
+import type { AccountRecord } from '@plitzi/sdk-kernel/identity';
 
 export { OAuthFailure } from './types';
 export { requestProfileJson } from './client';

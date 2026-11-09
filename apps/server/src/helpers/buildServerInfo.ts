@@ -1,9 +1,12 @@
-import { sessionCookieParams, sessionHintCookieName } from '../core/auth/session';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
+import { sessionCookieParams, sessionHintCookieName } from '@plitzi/sdk-kernel/identity';
+
 import { googleFontsUrlOf } from '../core/http/stages/googleFonts';
-import { requestOrigin } from '../core/requestParser';
 import { scriptPolicyMode } from '../modules/ssr/scriptPolicy';
 
-import type { Server, ServerSSR, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRServerConfig } from '../types';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Server, ServerSSR } from '@plitzi/sdk-shared';
 
 const getEnvironment = (env: string = 'production', server?: Record<string, unknown>): Server => {
   switch (env) {

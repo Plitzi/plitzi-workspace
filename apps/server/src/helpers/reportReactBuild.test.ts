@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { reportReactBuild } from './reportReactBuild';
-import { configureServerLog } from './serverLog';
+import { configureServerLog } from '@plitzi/sdk-kernel/log';
 
-import type { ServerLogger } from '@plitzi/sdk-shared';
+import { reportReactBuild } from './reportReactBuild';
+
+import type { ServerLogger } from '@plitzi/sdk-kernel/types';
 
 describe('reportReactBuild', () => {
   it('says once that a production server renders with the development build, and never while developing', () => {

@@ -1,0 +1,309 @@
+import { fleetStore } from '@plitzi/sdk-kernel/http';
+import { serverLog } from '@plitzi/sdk-kernel/log';
+
+import { DEFAULT_JOB_WORKERS, createActionJobs } from './jobs/jobs';
+import { DEFAULT_MAX_ATTEMPTS } from './jobs/schedules';
+import { DEFAULT_GUARDS, createRunGuards } from './runtime/guards';
+import { createKvStore } from './runtime/kvStore';
+import { resolveLimits } from './runtime/limits';
+import { createMemoryKv, KV_METHODS } from './runtime/memoryKv';
+import { namespaceKv } from './runtime/namespaceKv';
+import { createActionRunner } from './runtime/runAction';
+import { createTaskRegistry } from './tasks/registry';
+import { functionCeilings } from '../functions/config';
+import { createFunctionJobs } from '../functions/jobs';
+import { readManifest } from '../functions/manifest';
+import { createRoutes } from '../functions/routes';
+import { createSpaceRegistries, prepareFunctions } from '../functions/space';
+
+import type { ActionJobs } from './jobs/jobs';
+import type { RunGuards } from './runtime/guards';
+import type { ActionRunner } from './runtime/runAction';
+import type {
+  ActionKvAdapter,
+  ActionRunRequest,
+  ActionsConfig,
+  ActionTaskRegistry,
+  ResolvedActionLimits,
+  SpaceRevision
+} from './types';
+import type { FunctionsSource } from '../functions/build';
+import type { ManifestReading } from '../functions/manifest';
+import type { RouteHandler, RouteVisit } from '../functions/routes';
+import type { FunctionScope } from '../functions/scope';
+import type { PreparedFunctions } from '../functions/space';
+import type { JobQueue } from '../types';
+import type { ActionDocument } from '@plitzi/sdk-shared';
+import type { FunctionsDefinition } from '@plitzi/sdk-shared/functions';
+import type { ActionKvStore } from '@plitzi/sdk-shared/functions';
+
+export type ActionsModule = ActionRunner & {
+  /** The deployment's own tasks: shipped, and its native functions. */
+  registry: ActionTaskRegistry;
+  /**
+   * What a space's actions can use as of that revision: the deployment's tasks and the space's own functions — what
+   * its catalog offers, what a check checks against and what its runs run.
+   */
+  registryFor: (spaceId: number, at?: SpaceRevision) => Promise<ActionTaskRegistry>;
+  /**
+   * Whether this action runs the space's own code and no runner for it answers now: a call to it waits in the queue
+   * rather than start and fail half-way, its earlier steps done and its later ones not.
+   */
+  codeAway: (spaceId: number, document: ActionDocument, at?: SpaceRevision) => Promise<boolean>;
+  /**
+   * How many of this process's invocations no functions runner has taken yet (`FunctionRunner.waitingForRoom`): what a
+   * job worker holds back by.
+   */
+  runnerWaiting: () => number;
+  /** Whether an action runs the space's own code: a task step this server's registry does not hold. */
+  runsCode: (document: ActionDocument) => boolean;
+  /**
+   * A space's functions source, built, read and checked — ready to store, or the problems to show where they are. The
+   * one way a space's functions become storable; refused when this server has no runner. With a `scope`, a plugin's
+   * server half: its tasks named after the plugin, its routes its own.
+   */
+  prepareFunctions: (source: FunctionsSource, scope?: FunctionScope) => Promise<PreparedFunctions>;
+  /**
+   * What a space's code declares, read by every rule a saved space's functions meet — for code that is not built here:
+   * a space runtime's, described by the runtime itself when it starts. The manifest, and the problems that refuse it.
+   */
+  readManifest: (declared: unknown) => ManifestReading;
+  /**
+   * The function that answers `method path` under `/api/` for this visit — the deployment's own routes, then the space's
+   * — or none, and the page server answers as it would have.
+   */
+  routeFor: (visit: RouteVisit, method: string, path: string) => Promise<RouteHandler | undefined>;
+  guards: RunGuards;
+  /** The key/value store, namespaced to one space — the same one the `kv` tasks write through, so a rate limit the
+   *  transport keeps and a counter a flow keeps cannot end up in different places. */
+  kv: (spaceId: number) => ActionKvStore;
+  /**
+   * What this server will allow one run of that space's document to spend — the deployment's ceilings, tightened by the
+   * space's plan (`ActionsConfig.limitsFor`) and by the document.
+   */
+  limitsFor: (spaceId: number, document: ActionDocument) => Promise<ResolvedActionLimits>;
+  /**
+   * Puts the server half of a plugin this server ships in place — or takes it away, with none — while it runs: what a
+   * development server does when a plugin's `functions/` change, instead of restarting. Checked as at boot: a task not
+   * named after the plugin throws, and nothing changes.
+   */
+  setPluginFunctions: (plugin: string, definition: FunctionsDefinition | undefined) => void;
+  /**
+   * Scheduled runs: the queue, the sweep that fills it and the workers that drain it.
+   *
+   * Built but NOT started — whoever owns the process decides when background work begins, and a server nobody
+   * listened on must not be quietly claiming jobs. Absent when the deployment cannot list a space's actions, since
+   * there is then no way to know what is scheduled.
+   */
+  jobs?: ActionJobs;
+};
+
+/**
+ * The module's whole public surface: build it once from the deployment's config, then run actions through it.
+ *
+ * Constructed rather than imported piecemeal so the task registry is validated ONCE, at boot, and so the guards
+ * are a single set for the process — two instances would each think they were the only run in flight, which is
+ * the same as having no single-flight at all. Nothing outside this folder needs to know how a run is assembled.
+ */
+/**
+ * The workers of one server are one replica, so with no `kv` configured they share the primary's: a flow's counter,
+ * a webhook's rate limit, a run's single-flight key, a cancel and a replayed answer then mean the same whichever
+ * worker the request lands on — the path a deployment with its own shared store already takes. One process keeps
+ * its own map.
+ */
+const withFleetKv = (config: ActionsConfig): ActionsConfig => {
+  if (config.kv) {
+    return config;
+  }
+
+  // One store either way, made HERE: the runner, the guards and the module's own `kv` are handed the same adapter —
+  // left to default each, they made a Map apiece, and a key a flow wrote was not the key a guard or a webhook read.
+  return { ...config, kv: fleetStore<ActionKvAdapter>('actions.kv', KV_METHODS) ?? createMemoryKv() };
+};
+
+export const createActionsModule = (given: ActionsConfig): ActionsModule => {
+  const config = withFleetKv(given);
+  // The plugins' server halves this server ships: a table a development server changes as their code does.
+  const plugins = new Map(Object.entries(config.functions?.plugins ?? {}));
+  const build = (from: ReadonlyMap<string, FunctionsDefinition>): ActionTaskRegistry =>
+    createTaskRegistry(config.functions?.native, {
+      db: (config.dbDrivers?.length ?? 0) > 0,
+      plugins: Object.fromEntries(from),
+      measureNative: config.functions?.measureNative === true
+    });
+  let current = build(plugins);
+  // Handed out once and read through, so whoever holds it — a space's registry, the catalog — sees a plugin replaced.
+  const registry: ActionTaskRegistry = { get: name => current.get(name), list: () => current.list() };
+  const spaceRegistries = createSpaceRegistries(registry, config.functions);
+  const reserved = (): ReadonlySet<string> => new Set(current.list().map(task => task.namespace));
+  // Asked whenever the deployment answers it: a space's code may run in the sandbox or in a runtime of its own.
+  const registryFor = async (spaceId: number, at?: SpaceRevision): Promise<ActionTaskRegistry> => {
+    const [functions, plugins] = await Promise.all([
+      config.lookups.getFunctions?.(spaceId, at),
+      config.lookups.getPluginFunctions?.(spaceId, at)
+    ]);
+
+    return spaceRegistries.registryFor(functions, plugins);
+  };
+  // A run whose every step is the deployment's never asks for the space's functions: most runs, and no lookup.
+  const registryForRun = (request: ActionRunRequest): ActionTaskRegistry | Promise<ActionTaskRegistry> =>
+    Object.values(request.entry.document.nodes).every(
+      node => node.type !== 'task' || !node.action || registry.get(node.action)
+    )
+      ? registry
+      : registryFor(request.spaceId, request.at);
+  const runsCode = (document: ActionDocument): boolean =>
+    Object.values(document.nodes).some(node => node.type === 'task' && node.action && !registry.get(node.action));
+  const codeAway = async (spaceId: number, document: ActionDocument, at?: SpaceRevision): Promise<boolean> => {
+    if (!runsCode(document)) {
+      return false;
+    }
+
+    // The runner its code runs on: its own when it names one (a runtime), else the deployment's.
+    const runner = (await config.lookups.getFunctions?.(spaceId, at))?.runner ?? config.functions?.runner;
+
+    return runner?.reachable ? !runner.reachable(spaceId) : false;
+  };
+  // Read when a run asks: the queue is made below, from the module this runner is part of.
+  let jobsQueue: JobQueue | undefined;
+  const { realtime } = config;
+  const functionJobs = createFunctionJobs({
+    queue: () => jobsQueue,
+    config: config.functions ?? {},
+    ...(config.lookups.getFunctions ? { getFunctions: config.lookups.getFunctions } : {}),
+    // Read when a slice runs: the runner below is what makes it, and it is made with this.
+    taskContext: () => taskContext,
+    ...(realtime?.publishJob ? { publish: realtime.publishJob } : {}),
+    maxAttempts: (config.jobs === false ? undefined : config.jobs?.maxAttempts) ?? DEFAULT_MAX_ATTEMPTS
+  });
+  const { runAction, taskContext } = createActionRunner(
+    config,
+    registryForRun,
+    config.fetchImpl,
+    () => jobsQueue,
+    functionJobs
+  );
+  const routes = createRoutes({
+    config: config.functions ?? {},
+    plugins: () => plugins,
+    ...(config.lookups.getFunctions ? { getFunctions: config.lookups.getFunctions } : {}),
+    ...(config.lookups.getPluginFunctions ? { getPluginFunctions: config.lookups.getPluginFunctions } : {}),
+    taskContext
+  });
+  /**
+   * Single-flight over the store the deployment already gave the `kv` tasks — its own Redis, table or whatever it
+   * runs — because per process it is not a guarantee: the same double-click behind a load balancer lands on two
+   * replicas and both run. With none configured this is one process's Map, which is exactly right for one.
+   */
+  // A process that runs jobs carries them as calls too: unless the deployment said, it takes its job workers beside the
+  // page calls it always took — or a worker of 256 jobs at once stopped at 100, saying nothing.
+  const jobWorkers = config.jobs ? (config.jobs.workers ?? DEFAULT_JOB_WORKERS) : 0;
+  const guards = createRunGuards(
+    {
+      ...config.concurrency,
+      perProcess: config.concurrency?.perProcess ?? DEFAULT_GUARDS.perProcess + jobWorkers
+    },
+    config.kv,
+    config.idempotency
+  );
+  const kv = createKvStore(config.kv ?? createMemoryKv());
+  const limitsFor = async (spaceId: number, document: ActionDocument) =>
+    resolveLimits(config.limits, document.limits, await config.limitsFor?.(spaceId));
+  const module: ActionsModule = {
+    runAction,
+    registry,
+    registryFor,
+    codeAway,
+    runnerWaiting: () => config.functions?.runner?.waitingForRoom?.() ?? 0,
+    runsCode,
+    routeFor: routes.routeFor,
+    prepareFunctions: (source, scope) => {
+      const runner = config.functions?.runner;
+
+      return runner
+        ? prepareFunctions(source, runner, reserved(), functionCeilings(config.functions?.limits), scope)
+        : Promise.resolve({ ok: false, problems: [{ message: 'This server runs no space functions' }] });
+    },
+    readManifest: declared => readManifest(declared, reserved(), functionCeilings(config.functions?.limits)),
+    guards,
+    kv: spaceId => namespaceKv(kv, spaceId),
+    limitsFor,
+    setPluginFunctions: (plugin, definition) => {
+      const next = new Map(plugins);
+      if (definition) {
+        next.set(plugin, definition);
+      } else {
+        next.delete(plugin);
+      }
+
+      // Built first, so a plugin that does not check out throws here and leaves the running one as it was.
+      current = build(next);
+      plugins.clear();
+      next.forEach((value, key) => plugins.set(key, value));
+    }
+  };
+
+  if (config.jobs !== false && config.lookups.listActions) {
+    // Said once, at boot: a job that publishes would fail here on every attempt, and spend its CPU on each of them.
+    if (!realtime && config.jobs?.workers !== 0) {
+      serverLog.warn(
+        'Actions',
+        "This runner takes jobs and has no realtime channels: a job that publishes (`ctx.publish`, `realtime.publish`) fails on it. Give it `realtime: createActionRealtime({ getOfflineData, pubsub, kv })` with the page servers' own, or `jobs: { workers: 0 }` to leave the jobs to them"
+      );
+    }
+
+    module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups, functionJobs);
+    jobsQueue = module.jobs.queue;
+    // The door `$job:<id>` opens through: who started the job, and who its `watch` lets in.
+    const queue = module.jobs.queue;
+    realtime?.watchJobs?.((spaceId, jobId) => queue.getJob([spaceId], jobId));
+  }
+
+  return module;
+};
+
+export { ActionRunError } from './runtime/errors';
+export { ActionRefusal } from '@plitzi/sdk-shared/functions';
+export { precheckRun } from './runtime/precheck';
+export { spaceKvPatterns } from './runtime/namespaceKv';
+export { checkAction } from './runtime/check';
+export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
+export { createRunGuards, deriveRunKey } from './runtime/guards';
+export { createActionJobs, createJobWorker, createMemoryJobQueue, createScheduler } from './jobs/jobs';
+export { createMemoryKv } from './runtime/memoryKv';
+export { createRunLogger, createRejectLogger } from './runtime/runLogger';
+export { createTaskRegistry } from './tasks/registry';
+export { taskName } from './tasks/names';
+export { describeCatalog, describeTask } from './taskCatalog';
+export { handleActionCall } from './transport/callHandler';
+export { handleActionCatalog } from './transport/catalogHandler';
+export { handleActionWebhook } from './transport/webhookHandler';
+export { verifySignature } from './transport/verifySignature';
+export { handleActionCancel } from './transport/cancelHandler';
+
+export type { ActionJobs, JobWorker, JobWorkerOptions, Scheduler, SchedulerOptions, SweepResult } from './jobs/jobs';
+export type { ActiveRun, RunGuards } from './runtime/guards';
+export type { ActionTaskDescriptor } from './taskCatalog';
+export type { TaskRegistryOptions } from './tasks/registry';
+export type {
+  ActionCredential,
+  ActionDbDriver,
+  ActionEmailConfig,
+  ActionEmailDelivery,
+  ActionEmailMessage,
+  ActionEmailTransport,
+  ActionJobsConfig,
+  ActionLookups,
+  ActionRejectRecord,
+  ActionRunRecord,
+  ActionRunRequest,
+  ActionRunResult,
+  ActionsConfig,
+  ActionTask,
+  ActionTaskContext,
+  ActionTaskOrigin,
+  ActionTaskRegistry,
+  RegisteredTask,
+  ResolvedConnector
+} from './types';
+export type { ActionKvStore } from '@plitzi/sdk-shared/functions';

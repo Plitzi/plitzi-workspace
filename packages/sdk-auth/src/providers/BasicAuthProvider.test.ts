@@ -224,6 +224,54 @@ describe('BasicAuthProvider boot', () => {
     expect(provider.getState()).toBe('guest');
   });
 
+  /**
+   * The session ended on the server — signed out everywhere, revoked — while this browser kept its token and the hint:
+   * the page server rendered nobody, and standing on the stored token sent a page for signed-out visitors on to one
+   * that sent it straight back, for ever. It is asked first, and never said signed in while it is.
+   */
+  it('asks before restoring a session the server that rendered the page found nobody for', async () => {
+    document.cookie = `plitzi_auth_hint=${inSeconds(3600)}.${inSeconds(7200)}`;
+    storeSession(inSeconds(3600));
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    const states: string[] = [];
+    provider.on(event => {
+      if (event.type === 'state') {
+        states.push(event.state);
+      }
+    });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401))
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
+
+    await provider.init({ serverFoundNobody: true });
+
+    expect(states).not.toContain('authenticated');
+    expect(provider.getState()).toBe('guest');
+  });
+
+  it('restores it once asked, when the session answers', async () => {
+    document.cookie = `plitzi_auth_hint=${inSeconds(3600)}.${inSeconds(7200)}`;
+    storeSession(inSeconds(3600));
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ details: { id: 1, username: 'ada' } }));
+
+    await provider.init({ serverFoundNobody: true });
+
+    expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([plitziApi.userUrl]);
+    expect(provider.getState()).toBe('authenticated');
+  });
+
+  // A space with no hint keeps its token in the browser alone: its server never sees it, and its "nobody" says nothing.
+  it('restores without asking where no hint lets the server judge the session', async () => {
+    storeSession(inSeconds(3600));
+    const provider = new BasicAuthProvider({ ...plitziApi });
+
+    await provider.init({ serverFoundNobody: true });
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(provider.getState()).toBe('authenticated');
+  });
+
   it('trusts a server-rendered identity over everything, and stores it', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
 

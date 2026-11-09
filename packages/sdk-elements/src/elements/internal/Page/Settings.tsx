@@ -36,7 +36,7 @@ type SettingsProps = {
   layout?: string;
   layoutContainer?: string;
   accessLevel?: 'public' | 'authenticated' | '';
-  unauthorizedBehaviour?: '' | 'redirect';
+  unauthorizedBehaviour?: '' | 'redirect' | 'notFound';
   unauthorizedPageRedirect?: string;
   documentScroll?: DocumentScroll | '';
   access?: PageAccess | '';
@@ -222,8 +222,8 @@ const Settings = ({
       {permissions !== '' && (
         <Alert intent="info" solid={false} size="xs">
           <span className="text-xs">
-            Only visitors holding every one of these see this page. Anybody else is answered 401 or 403, and the server
-            never sends them its content
+            Only visitors holding every one of these see this page. Anybody else is answered 401 or 403 — or 404, if
+            Unauthorized Behaviour says Not found — and the server never sends them its content
           </span>
         </Alert>
       )}
@@ -236,7 +236,17 @@ const Settings = ({
           size="xs"
         >
           <option value="redirect">Redirect</option>
+          <option value="notFound">Not found (404)</option>
         </Select>
+      )}
+      {unauthorizedBehaviour === 'notFound' && (
+        <Alert intent="info" solid={false} size="xs">
+          <span className="text-xs">
+            Anybody this page is not for is answered as if it did not exist — the space&apos;s 404 — and is sent nothing
+            of it, not its name nor its path. For a back-office, whose refusal would tell whoever probes the path that
+            something is there
+          </span>
+        </Alert>
       )}
       {unauthorizedBehaviour === 'redirect' && (
         <Select

@@ -1,5 +1,5 @@
-import { TtlCache } from '../../helpers/cache/TtlCache';
-import { serverLog } from '../../helpers/serverLog';
+import { TtlCache } from '@plitzi/sdk-kernel/cache';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 /** Where a page's Google families are served from, on the page server's own origin. */
 export const GOOGLE_FONTS_PATH = '/_plitzi/fonts/google';
@@ -90,7 +90,7 @@ const SWEEP_MS = 60 * 60 * 1000;
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 /** The faces every space of this server uses, kept in this process — a dozen families' subsets fit many times over. */
-export const DEFAULT_GOOGLE_FONTS_MAX_BYTES = 32 * 1024 * 1024;
+const DEFAULT_GOOGLE_FONTS_MAX_BYTES = 32 * 1024 * 1024;
 
 export type GoogleFontsAnswer = { status: number; headers: Record<string, string>; body: Buffer | string };
 

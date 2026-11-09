@@ -263,6 +263,20 @@ export const targets: Target[] = [
     what: 'Scheduled and delayed jobs over a durable queue the server keeps in SQLite'
   },
   {
+    id: 'actions-on-a-worker',
+    workspace: '@plitzi/example-actions-on-a-worker',
+    command: `PORT=${String(PORTS.workerGateway)} PAGES_PORT=${String(PORTS.workerPages)} WORKER_PORT=${String(PORTS.worker)} yarn workspace @plitzi/example-actions-on-a-worker start`,
+    origin: `http://127.0.0.1:${String(PORTS.workerGateway)}`,
+    what: 'Pages on one server and their actions on a worker, one origin through a gateway'
+  },
+  {
+    id: 'actions-on-another-origin',
+    workspace: '@plitzi/example-actions-on-a-worker',
+    command: `PAGES_PORT=${String(PORTS.elsewherePages)} WORKER_PORT=${String(PORTS.elsewhereWorker)} yarn workspace @plitzi/example-actions-on-a-worker start:elsewhere`,
+    origin: `http://127.0.0.1:${String(PORTS.elsewherePages)}`,
+    what: 'The same, with the worker on an origin of its own: the pages call it there, through its CORS'
+  },
+  {
     id: 'runtime',
     workspace: '@plitzi/example-runtime',
     command: `PORT=${String(PORTS.runtime)} PULSE_SECONDS=1 yarn workspace @plitzi/example-runtime start`,

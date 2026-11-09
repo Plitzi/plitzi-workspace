@@ -162,19 +162,23 @@ describe('plitzi functions', () => {
 });
 
 describe('plitzi functions dev', () => {
-  /** The project's own sdk-server, as an install would put it: this workspace's, which `dev` then resolves from there. */
-  const installSdkServer = async () => {
+  /**
+   * The project's own sdk-actions and sdk-runtime, as an install would put them: this workspace's, which `dev` then
+   * resolves from there.
+   */
+  const installEngine = async () => {
     await fs.mkdir(path.join(project, 'node_modules', '@plitzi'), { recursive: true });
-    await fs.symlink(
-      path.join(WORKSPACE_ROOT, 'apps/server'),
-      path.join(project, 'node_modules', '@plitzi', 'sdk-server'),
-      'dir'
-    );
+    for (const [name, dir] of [
+      ['sdk-actions', 'packages/sdk-actions'],
+      ['sdk-runtime', 'packages/sdk-runtime']
+    ] as const) {
+      await fs.symlink(path.join(WORKSPACE_ROOT, dir), path.join(project, 'node_modules', '@plitzi', name), 'dir');
+    }
   };
 
-  // Loading the project's own runner — sdk-server, its bundler and an isolate — takes two seconds on a laptop alone.
+  // Loading the project's own runner — sdk-actions, its bundler and an isolate — takes two seconds on a laptop alone.
   it('runs a task from src/functions/ in an isolate, with nothing sent to the space', async () => {
-    await installSdkServer();
+    await installEngine();
     await write(
       'index.ts',
       'import { greet } from "./greet";\nexport default { tasks: [{ namespace: "hello", action: "greet", title: "Greet", params: {}, run: async ({ name }, ctx) => { ctx.log("hi"); return greet(name); } }] };'
@@ -189,13 +193,13 @@ describe('plitzi functions dev', () => {
     expect(process.exitCode).toBeUndefined();
   }, 30_000);
 
-  it('says what to install when the project has no sdk-server', async () => {
+  it('says what to install when the project has neither', async () => {
     await write('index.ts', 'export default {};');
 
     await devFunction('hello.greet', {});
 
-    expect(said.err).toContain('missing: @plitzi/sdk-server, isolated-vm, core-js');
-    expect(said.err).toContain('npm install -D @plitzi/sdk-server isolated-vm core-js');
+    expect(said.err).toContain('missing: @plitzi/sdk-actions, @plitzi/sdk-runtime, isolated-vm');
+    expect(said.err).toContain('npm install -D @plitzi/sdk-actions @plitzi/sdk-runtime isolated-vm');
     expect(said.err).toContain('POST /_action');
     expect(process.exitCode).toBe(1);
   });

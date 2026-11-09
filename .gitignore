@@ -24,3 +24,8 @@ e2e/.artifacts
 # `apps/server` ships the authoring skill too, copied from `packages/sdk-authoring` on prepack — one source, never
 # a second checked-in copy to keep in sync.
 apps/server/skills/
+
+# Local caches of the checks: ESLint (`--cache`) and tsc (`--incremental`), per package. Never committed, never
+# restored in CI — a fresh checkout checks everything.
+.eslintcache
+.tsbuildinfo/

@@ -9,6 +9,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import Label from './components/Label';
 import { VISUALLY_HIDDEN } from './components/visuallyHidden';
 import declaration from './declaration';
+import { fieldText } from './helpers/fieldText';
 import { isChecked } from './helpers/isChecked';
 import withFieldValue from './hocs/withFieldValue';
 import Checkbox from './inputs/Checkbox';
@@ -171,7 +172,7 @@ const FormControl = ({
   const focusWhenShown = autoFocus && previewMode && visible;
   const labelHidden = hideLabel && previewMode;
   const errorId = error && previewMode ? `${rootId}_${id}_error` : undefined;
-  const text = typeof value === 'string' ? value : '';
+  const text = fieldText(value);
   const checkControl = isCheck && (
     <Checkbox
       variant={subType === 'switch' ? 'switch' : 'checkbox'}

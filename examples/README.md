@@ -34,6 +34,7 @@ the rest: a space on a page of your own, and a server of your own.
 | 08 | [custom-trigger](./self-hosting/08-custom-trigger) | A trigger of your own, over a store you already run | — |
 | 09 | [schedules](./self-hosting/09-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
 | 10 | [runtime](./self-hosting/10-runtime) | A space's runtime — a task, a route and a stream held open, in one module — loaded into a server of your own | 4017 |
+| 11 | [actions-on-a-worker](./self-hosting/11-actions-on-a-worker) | Pages on one server, actions on a worker of their own — one origin through a gateway, or another | 4018 |
 
 Ordered as a space actually grows: render it on the server, give it people, give it data, let an agent edit it,
 have it do work on its own — and give it server code of its own, beside it.

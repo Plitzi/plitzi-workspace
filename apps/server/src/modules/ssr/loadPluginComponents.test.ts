@@ -7,7 +7,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { invalidatePluginComponentCache, loadPluginComponents } from './loadPluginComponents';
 import { createServer } from '../../core/createServer';
 
-import type { PluginEntry, SSRPageAdapters } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters } from '@plitzi/sdk-kernel/types';
+import type { PluginEntry } from '@plitzi/sdk-shared';
 
 let dir: string;
 

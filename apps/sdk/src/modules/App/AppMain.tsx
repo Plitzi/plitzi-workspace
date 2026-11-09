@@ -23,6 +23,7 @@ import styleUrl from '../../assets/plitzi-sdk.scss?url';
 import type { StoreApi } from '@plitzi/nexus';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
+  BadgeLinks,
   HostActions,
   AnalyticsConfig,
   Environment,
@@ -60,7 +61,7 @@ export type AppMainProps = {
   /** Set by the server that metered this render: the space has nearly spent its allowance. */
   quotaNear?: boolean;
   /** Set by the server that metered this render: the deployment's badge, on a plan that does not remove it. */
-  badge?: boolean;
+  badge?: BadgeLinks;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   /** The flags this embedding decides — see `PlitziSdkProps`. */
@@ -104,7 +105,7 @@ const AppMain = ({
   debugMode = false,
   overQuota = false,
   quotaNear = false,
-  badge = false,
+  badge,
   runStatus = false,
   inspector = false,
   analytics,

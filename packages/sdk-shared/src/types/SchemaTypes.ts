@@ -3,8 +3,8 @@ import type { ChannelDeclarations } from './RealtimeTypes';
 import type { SnippetStyle } from './SnippetTypes';
 import type { SpaceTests } from './TestTypes';
 import type { BuiltinParam } from '../authoring/paramSpec';
+import type { RuleGroup } from '../conditions/types';
 import type { ElementMotion } from '../schema/motion';
-import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 /** The `when` guard a binding, a flag rule and a sub-value are written with: part of the document, so exported with it. */
 export type { RuleGroup };

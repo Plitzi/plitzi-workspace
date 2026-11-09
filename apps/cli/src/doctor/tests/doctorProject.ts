@@ -79,10 +79,11 @@ export const install = async (): Promise<void> => {
         'dir'
       );
     } else if (name === '@plitzi/sdk-server') {
+      await installed(name, version, { './project': 'export const serveProject = () => undefined;\n' });
+    } else if (name === '@plitzi/sdk-actions') {
       await installed(name, version, {
-        './actions': 'export const MIN_SIGNING_SECRET_LENGTH = 32;\n',
-        './project': 'export const serveProject = () => undefined;\n',
-        './functions-runner':
+        '.': 'export const MIN_SIGNING_SECRET_LENGTH = 32;\n',
+        './functions':
           'export const buildFunctions = async source => {\n' +
           "  const at = Object.keys(source).find(file => source[file].includes('node:'));\n" +
           "  if (at) { throw Object.assign(new Error('refused'), { problems: [{ file: at, line: 1, message: 'node: cannot be imported' }] }); }\n" +

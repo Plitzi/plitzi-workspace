@@ -1,16 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
+import { createActionsModule } from '@plitzi/sdk-actions';
+import { functionsInHand } from '@plitzi/sdk-actions/functions';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { defineFunctions } from '@plitzi/sdk-runtime';
+import { createIsolateRunner } from '@plitzi/sdk-runtime/runner';
+
+import { createPlatform } from './platform';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
-import { createActionsModule } from '../modules/actions';
-import { defineFunctions } from '../modules/functions/contract';
-import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
-import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
-import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { SpaceFunctions } from '@plitzi/sdk-shared/functions';
 
 /**
  * A space's functions answering HTTP under `/fn/`, through the server a deployment gets: the deployment's own routes
@@ -21,7 +22,7 @@ const PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const SPACE_SOURCE = {
-  'index.ts': `import { ActionRefusal } from '@plitzi/sdk-server/functions';
+  'index.ts': `import { ActionRefusal } from '@plitzi/sdk-runtime';
 
 export default {
   routes: {
@@ -56,7 +57,7 @@ beforeAll(async () => {
   }
 
   const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: { cpuMs: 100 } };
-  server = createServer({
+  server = createPlatform({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
     action: {
@@ -110,11 +111,16 @@ describe('functions under /fn/', () => {
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
   });
 
-  it('stop a route that spins, and say only that it ran out', async () => {
+  // The code's limit, said with which: never a 503, which tells a caller to ask again and reach it again.
+  it('stop a route that spins, and say which limit it reached', async () => {
     const response = await fetch(`${BASE}/fn/spin`);
 
-    expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'This route ran out of what it may spend' });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: expect.stringMatching(
+        /^This route stopped at a limit its plan sets: Stopped after \d+ ms of CPU$/
+      ) as string
+    });
   });
 
   it('answer a refusal with its reason, and anything else thrown with nothing of what it said', async () => {

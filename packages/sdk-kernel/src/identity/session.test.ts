@@ -1,0 +1,336 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  clearSessionCookies,
+  isLocalHost,
+  parseSessionHint,
+  readSessionHint,
+  readSessionToken,
+  sessionCookieParams,
+  sessionHintValue,
+  sessionReturnTarget,
+  writeSessionCookies
+} from './session';
+
+import type { SSRRequest, SSRResponseHelpers, SSRSession } from '../types';
+
+// The mechanics of carrying a session live here rather than in the deployment, because a server that brings its own
+// user database must not also have to reinvent cookies. These tests are the contract that makes that safe to rely on.
+
+const requestFrom = (hostname: string, cookie?: string): SSRRequest =>
+  ({ hostname, headers: cookie ? { cookie } : {}, query: {} }) as unknown as SSRRequest;
+
+const responseSpy = () => {
+  const headers: Record<string, string | string[]> = {};
+
+  return {
+    res: {
+      setHeader: (name: string, value: string | string[]) => {
+        headers[name] = value;
+      }
+    } as unknown as SSRResponseHelpers,
+    cookies: () => (headers['Set-Cookie'] as string[] | undefined) ?? []
+  };
+};
+
+const inSeconds = (offset: number) => Math.floor(Date.now() / 1000) + offset;
+
+const session: SSRSession = {
+  token: 'access',
+  expiresAt: inSeconds(3600),
+  refreshToken: 'renew',
+  refreshExpiresAt: inSeconds(86400)
+};
+
+describe('session cookie defaults', () => {
+  // An app and the API it talks to are rarely the same host, so the default has to survive that: shared across
+  // sub-domains — which are one site, so `Lax` reaches them all, and another site's page never carries it.
+  it('shares the cookie across sub-domains of a real host, and keeps it off other sites', () => {
+    const params = sessionCookieParams({ hostname: 'app.example.com' });
+
+    expect(params).toMatchObject({ domain: '.example.com', secure: true, sameSite: 'lax' });
+  });
+
+  // A space shown in an iframe on another site, with its visitor's session inside: the deployment says so.
+  it('sends it from other sites only when the deployment asks', () => {
+    expect(sessionCookieParams({ hostname: 'app.example.com' }, { sameSite: 'none' })).toMatchObject({
+      secure: true,
+      sameSite: 'none'
+    });
+  });
+
+  // A domain whose owner lets another site frame it: its visitor's session has to reach the frame, there and nowhere else.
+  it('sends it from other sites on a domain that lets them frame its pages, and only over https', () => {
+    const framed = { spaceDeployment: { security: { frameAncestors: ['https://shop.example'] } } };
+
+    expect(sessionCookieParams({ hostname: 'acme.com', ctx: framed })).toMatchObject({ sameSite: 'none' });
+    expect(sessionCookieParams({ hostname: 'acme.com', ctx: { spaceDeployment: {} } })).toMatchObject({
+      sameSite: 'lax'
+    });
+    expect(sessionCookieParams({ hostname: 'localhost', ctx: framed })).toMatchObject({ sameSite: 'lax' });
+  });
+
+  // Secure over plain http is dropped by every browser, so localhost is not — and gets no Domain at all, which browsers
+  // refuse on a single-label host.
+  it('gives a local server cookies a browser will actually keep', () => {
+    const params = sessionCookieParams({ hostname: 'localhost' });
+
+    expect(params).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
+  });
+
+  // A tablet on the same Wi-Fi opens a development server by its network address, over plain http: the strict profile
+  // would be dropped there, and nobody could sign in from it.
+  it.each([
+    '192.168.1.5',
+    '10.0.0.7',
+    '172.20.1.2',
+    '169.254.3.4',
+    '100.101.102.103',
+    '[fe80::1]',
+    'fd12::4',
+    'studio.local'
+  ])('gives %s, this machine on its network, the local profile', hostname => {
+    expect(sessionCookieParams({ hostname })).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
+  });
+
+  // A public address, and a deployment's own `.local` sub-domains — siblings sharing a session over https — keep it.
+  it.each(['203.0.113.9', '172.32.0.1', 'app.example.local'])('keeps the strict profile for %s', hostname => {
+    expect(sessionCookieParams({ hostname })).toMatchObject({ secure: true, sameSite: 'lax' });
+  });
+
+  it('lets a deployment name its cookie per host, which is the part only it knows', () => {
+    const params = sessionCookieParams(
+      { hostname: 'api-dev.plitzi.com' },
+      {
+        name: hostname => (hostname.includes('-dev.') ? 'plitzi_auth_dev' : 'plitzi_auth')
+      }
+    );
+
+    expect(params.name).toBe('plitzi_auth_dev');
+  });
+
+  // An address has no registrable domain to share cookies across, so a Domain written for one would never be sent
+  // back to it and the browser would silently drop the cookie.
+  it('gives an IP host no domain at all', () => {
+    const params = sessionCookieParams({ hostname: '192.168.1.5' });
+
+    expect(params).toMatchObject({ domain: undefined });
+  });
+});
+
+describe('writing a granted session', () => {
+  it('writes the credential, the refresh half on its own path, and the readable hint', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.example.com'), res, session);
+
+    const written = cookies();
+    expect(written).toHaveLength(3);
+    expect(written[0]).toContain('plitzi_session=access');
+    expect(written[0]).toContain('HttpOnly');
+    // Confined to /auth so it never rides along on ordinary traffic — the credential that can mint new ones is
+    // the one worth stealing.
+    expect(written[1]).toContain('plitzi_session_refresh=renew');
+    expect(written[1]).toContain('Path=/auth');
+    expect(written[2]).toContain(`plitzi_session_hint=${session.expiresAt}.${session.refreshExpiresAt}`);
+    expect(written[2]).not.toContain('HttpOnly');
+  });
+
+  // The hint is what a page reads to tell "somebody is signed in here" from "nobody is", and getting its lifetime
+  // wrong breaks that in both directions: too short reports a renewable session as gone, too long sends clients to
+  // renew a credential that no longer exists.
+  it('keeps the hint alive as long as the session can still be renewed', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.example.com'), res, session);
+
+    const maxAge = (cookie: string) => Number(/Max-Age=(\d+)/.exec(cookie)?.[1]);
+    expect(maxAge(cookies()[2])).toBeGreaterThan(maxAge(cookies()[0]));
+  });
+
+  it('carries no hint beyond the expiries — it grants nothing', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.example.com'), res, session);
+
+    expect(cookies()[2]).not.toContain('access');
+    expect(cookies()[2]).not.toContain('renew');
+  });
+
+  it('writes no refresh cookie for a session that cannot be renewed', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.example.com'), res, { token: 'access', expiresAt: inSeconds(3600) });
+
+    expect(cookies()).toHaveLength(2);
+  });
+});
+
+describe('ending a session', () => {
+  it('clears every cookie the grant wrote, the readable one included', () => {
+    const { res, cookies } = responseSpy();
+
+    clearSessionCookies(requestFrom('app.example.com'), res);
+
+    expect(cookies()).toHaveLength(3);
+    expect(cookies().every(cookie => cookie.includes('Max-Age=0'))).toBe(true);
+    // A hint left behind would keep telling the next page load that somebody is signed in.
+    expect(cookies()[2]).toContain('plitzi_session_hint=');
+  });
+});
+
+describe('reading a session back', () => {
+  it('finds the credential under the name this deployment writes it with', () => {
+    const config = { name: 'plitzi_auth_dev' };
+    const { res, cookies } = responseSpy();
+    writeSessionCookies(requestFrom('api-dev.plitzi.com'), res, session, config);
+
+    const jar = cookies()
+      .map(cookie => cookie.split(';')[0])
+      .join('; ');
+
+    expect(readSessionToken(requestFrom('api-dev.plitzi.com', jar), config)).toBe('access');
+  });
+
+  it('reports nothing when the browser carries nothing', () => {
+    expect(readSessionToken(requestFrom('app.example.com'))).toBeUndefined();
+    expect(readSessionToken(requestFrom('app.example.com', 'other=1'))).toBeUndefined();
+  });
+});
+
+describe('the session hint, read on the server', () => {
+  it('reads back what the server wrote beside the session', () => {
+    const { res, cookies } = responseSpy();
+    writeSessionCookies(requestFrom('app.example.com'), res, session);
+    const jar = cookies()
+      .map(cookie => cookie.split(';')[0])
+      .join('; ');
+
+    expect(readSessionHint(requestFrom('app.example.com', jar))).toEqual({
+      expiresAt: session.expiresAt,
+      refreshExpiresAt: session.refreshExpiresAt
+    });
+  });
+
+  it('reads a session with no refresh half, and nothing from what is not a hint', () => {
+    expect(parseSessionHint(sessionHintValue(1_900_000_000))).toEqual({ expiresAt: 1_900_000_000 });
+    expect(parseSessionHint('garbage')).toBeUndefined();
+    expect(parseSessionHint(undefined)).toBeUndefined();
+  });
+});
+
+/**
+ * Where a renewal sends the browser back to. It can be another host — the pages and `/auth` often live apart — but
+ * only one the session's cookies are scoped to: no other host could have sent a browser to renew in the first place.
+ */
+describe('where a renewal sends the browser back', () => {
+  const api = requestFrom('api.acme.test');
+
+  it('takes a path on this host, and a page on any host sharing the cookie domain', () => {
+    expect(sessionReturnTarget(api, '/pricing?plan=pro')).toBe('/pricing?plan=pro');
+    expect(sessionReturnTarget(api, 'https://www.acme.test/pricing')).toBe('https://www.acme.test/pricing');
+    expect(sessionReturnTarget(api, 'https://acme.test/')).toBe('https://acme.test/');
+  });
+
+  it('sends anything else home', () => {
+    expect(sessionReturnTarget(api, 'https://evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, 'https://acme.test.evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, '//evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, '/\\evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, 'javascript:alert(1)')).toBe('/');
+    expect(sessionReturnTarget(api, undefined)).toBe('/');
+  });
+
+  it('keeps a local host to itself, which shares its cookies with nobody', () => {
+    const local = requestFrom('localhost');
+
+    expect(sessionReturnTarget(local, 'http://localhost:3000/x')).toBe('http://localhost:3000/x');
+    expect(sessionReturnTarget(local, 'http://other.localhost/x')).toBe('/');
+  });
+});
+
+// A plitzi deployment names its cookies per environment (one name per browser open, so a dev session is never sent
+// to staging) and hosts its apps on `.plitzi.local` in dev — a host the kernel's isLocalHost does not know, as it
+// recognizes only loopback and `.localhost`. So the deployment picks the local cookie name itself, while the
+// domain, Secure and SameSite policy still come from here: a real registrable host gets the strict profile even
+// when its name says local.
+describe('a plitzi deployment', () => {
+  const plitziCookieName = (hostname: string): string => {
+    if (isLocalHost(hostname) || hostname.endsWith('.plitzi.local')) {
+      return 'plitzi_auth_local';
+    }
+
+    if (hostname.includes('-stg.')) {
+      return 'plitzi_auth_stg';
+    }
+
+    if (hostname.includes('-dev.')) {
+      return 'plitzi_auth_dev';
+    }
+
+    return 'plitzi_auth';
+  };
+
+  const config = { name: plitziCookieName };
+
+  // host, expected name, expected domain, secure, sameSite
+  const deployments: Array<[string, string, string | undefined, boolean, 'lax' | 'none']> = [
+    ['localhost', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['127.0.0.1', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['::1', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['app.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['server.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['ssr.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['mcp.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'lax'],
+    ['plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    // The -stg. / -dev. naming matches hosts like app.plitzi-stg.com, not a bare stg.plitzi.com label.
+    ['stg.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['dev.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['api.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'lax'],
+    ['app.plitzi-stg.com', 'plitzi_auth_stg', '.plitzi-stg.com', true, 'lax'],
+    ['app.plitzi-dev.com', 'plitzi_auth_dev', '.plitzi-dev.com', true, 'lax'],
+    ['website.plitzi.app', 'plitzi_auth', '.plitzi.app', true, 'lax'],
+    ['192.168.1.5', 'plitzi_auth', undefined, false, 'lax']
+  ];
+
+  it.each(deployments)('derives cookies for %s', (host, name, domain, secure, sameSite) => {
+    expect(sessionCookieParams({ hostname: host }, config)).toEqual({
+      name,
+      domain,
+      secure,
+      sameSite,
+      refreshPath: '/auth',
+      hintSuffix: '_hint'
+    });
+  });
+
+  it('writes and reads back a session on the dev app host', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.plitzi.local'), res, session, config);
+
+    expect(cookies()[0]).toContain('plitzi_auth_local=access');
+    expect(cookies()[0]).toContain('Domain=.plitzi.local');
+    expect(cookies()[0]).toContain('SameSite=Lax');
+    expect(cookies()[0]).toContain('Secure');
+
+    const jar = cookies()
+      .map(cookie => cookie.split(';')[0])
+      .join('; ');
+    expect(readSessionToken(requestFrom('app.plitzi.local', jar), config)).toBe('access');
+  });
+
+  it('keeps a production session apart from a staging one in one browser', () => {
+    const { res: prod, cookies: prodCookies } = responseSpy();
+    const { res: staging, cookies: stagingCookies } = responseSpy();
+    const { res: dev, cookies: devCookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('plitzi.com'), prod, session, config);
+    writeSessionCookies(requestFrom('app.plitzi-stg.com'), staging, session, config);
+    writeSessionCookies(requestFrom('app.plitzi-dev.com'), dev, session, config);
+
+    expect(prodCookies()[0]).toContain('plitzi_auth=');
+    expect(stagingCookies()[0]).toContain('plitzi_auth_stg=');
+    expect(devCookies()[0]).toContain('plitzi_auth_dev=');
+  });
+});

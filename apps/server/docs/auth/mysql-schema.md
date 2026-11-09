@@ -4,12 +4,12 @@ What authentication and authorization need to be able to look up, as tables.
 
 There are two ways to read this document, and they are both intended:
 
-- **You are using `@plitzi/sdk-server/mysql`.** Then this is the schema it creates, and you are reading it to know
+- **You are using `@plitzi/sdk-kernel/mysql`.** Then this is the schema it creates, and you are reading it to know
   what is in your database.
 - **You already have a user table.** Then this is the *contract*: not a schema to copy, but the set of questions
   your adapters have to be able to answer. The column list is one correct answer to each — map yours onto it.
 
-Nothing outside `@plitzi/sdk-server/mysql` assumes any of this exists. The kernel only ever asks the adapters.
+Nothing outside `@plitzi/sdk-kernel/mysql` assumes any of this exists. The kernel only ever asks the adapters.
 
 ## The questions
 
@@ -48,7 +48,7 @@ schema_version   what version of this schema the database is at
 Get the full DDL from code rather than from this document, which can drift:
 
 ```ts
-import { mysqlSchemaStatements } from '@plitzi/sdk-server/mysql';
+import { mysqlSchemaStatements } from '@plitzi/sdk-kernel/mysql';
 
 console.log(mysqlSchemaStatements().join(';\n\n'));
 ```

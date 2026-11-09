@@ -89,6 +89,8 @@ export const actionLimits = z
     timeoutMs: z.number().optional(),
     streamTimeoutMs: z.number().optional(),
     maxNodes: z.number().optional(),
-    maxRequests: z.number().optional()
+    maxRequests: z.number().optional(),
+    maxResponseBytes: z.number().optional(),
+    maxRunBytes: z.number().optional()
   })
   .describe('Ceilings for one run; may only TIGHTEN what the deployment allows');

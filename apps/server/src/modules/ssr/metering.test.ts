@@ -6,13 +6,8 @@ import { TtlCache } from '../../helpers/cache';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  MeteredKind,
-  SSRMeterDecision,
-  SSRPageServerConfig,
-  SSRRequest,
-  SSRResponseHelpers
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { MeteredKind, SSRMeterDecision, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 // The render pipeline is not what these tests are about: they are about WHEN the metering adapter is called
 // and what it is told, so everything past it is stubbed down to a body.
@@ -111,14 +106,20 @@ describe('SSR page metering', () => {
 
   // A free sub-domain is no place to host a site: kept out of search results, fresh or from the cache alike.
   it('sends noindex when the adapter says the address is not one sites are hosted on', async () => {
-    meter.mockResolvedValue({ noindex: true, badge: true });
+    meter.mockResolvedValue({
+      noindex: true,
+      badge: { madeWith: 'https://plitzi.test', report: 'https://plitzi.test/report-abuse' }
+    });
     const cache = new TtlCache<CachedPage>(60_000, 10);
     const req = request();
     const fresh = response();
 
     await render(req, fresh.res, caches(cache));
     expect(fresh.headers['X-Robots-Tag']).toBe('noindex, nofollow');
-    expect(req.ctx.meter?.badge).toBe(true);
+    expect(req.ctx.meter?.badge).toEqual({
+      madeWith: 'https://plitzi.test',
+      report: 'https://plitzi.test/report-abuse'
+    });
 
     const cached = response();
     await render(request(), cached.res, caches(cache));

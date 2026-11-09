@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { createServer } from '../../createServer';
-import { unusedPort } from '../../unusedPort';
 
-import type { OfflineDataRaw, SSRServer, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../../types';
+import type { OfflineDataRaw, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * `POST /auth/exchange` on a page server with no auth kernel of its own — the one a customer's domain calls when its

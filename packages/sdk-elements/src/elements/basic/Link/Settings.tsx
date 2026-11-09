@@ -4,7 +4,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useMemo, use, useCallback, useEffect } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import IconField from '../../../components/IconField';

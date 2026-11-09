@@ -1,12 +1,11 @@
-import { camelCase, set } from '@plitzi/plitzi-ui/helpers/lodash';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
-
+import { evaluateRuleGroup } from '../conditions';
 import utility from './utility';
+import { camelCase, set } from '../helpers/lodash';
 import { checkboxParams } from './utility/checkboxParams';
 import { isTrue } from './utility/truthiness';
 
+import type { RuleValue } from '../conditions/types';
 import type { BindingCategory, Element, ElementBinding } from '../types';
-import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 const getValues = (
   dataSource: Record<string, unknown>,
@@ -141,7 +140,7 @@ const getBindingsDetails = (
     bindings[bkey].forEach((binding: ElementBinding) => {
       const { source, transformers, when, enabled = true } = binding;
       let { to: toPath } = binding;
-      if (!toPath || (when && !QueryBuilderEvaluator(when, dataSource, false, true)) || !enabled) {
+      if (!toPath || (when && !evaluateRuleGroup(when, dataSource, { whenMissing: true })) || !enabled) {
         return;
       }
 

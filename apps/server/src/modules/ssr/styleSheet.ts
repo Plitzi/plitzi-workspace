@@ -4,7 +4,9 @@ import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { styleSheetOf } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
-import type { OfflineDataRaw, SSRPageServerConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 const SHEET_PATH = new RegExp(`^${STYLE_SHEET_PATH.replace(/\//g, '\\/')}([\\w-]{1,64})\\.css$`);
 

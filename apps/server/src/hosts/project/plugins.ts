@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, unwatchFile, watch, watchFile } from 'node:fs';
 import path from 'node:path';
 
+import { loadFunctions, loadFunctionsSource } from '@plitzi/sdk-actions/functions';
 import { isFunctionsDefinitionFile, PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
@@ -14,10 +15,9 @@ import {
   VENDOR_PLUGINS_DIR
 } from '@plitzi/sdk-shared/project';
 
-import { loadFunctions, loadFunctionsSource } from '../../modules/functions/load';
-
-import type { FunctionsDefinition } from '../../modules/functions/contract';
-import type { PluginSource, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { PluginSource } from '@plitzi/sdk-shared';
+import type { FunctionsDefinition } from '@plitzi/sdk-shared/functions';
 import type { Stats } from 'node:fs';
 
 /** How often a project with no `src/plugins` looks for it — the time between `plitzi plugin add` and the page. */

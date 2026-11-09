@@ -4,15 +4,23 @@ import type { JobStatus } from './JobTypes';
 
 /**
  * A space's own functions, as everything outside the runner sees them: the builder, the CLI, the MCP and the
- * platform that stores them. The contract the code itself is written against is `@plitzi/sdk-server/functions`.
+ * platform that stores them. The contract the code itself is written against is `@plitzi/sdk-runtime`.
  */
 
 /**
- * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
- * default: CPU time, awaits not counted, and wall time, from the moment it starts. Never more than the server allows;
- * asking for more is a problem when the functions are saved.
+ * How much memory a task runs with, by name (`FUNCTION_SIZES` in `@plitzi/sdk-shared/actions`): small unless it asks
+ * for more. The runner keeps a task's memory for it whole while it runs, so a small one leaves room for many beside it;
+ * a space's plan says which sizes its tasks may ask for.
  */
-export type FunctionTimeLimits = { cpuMs?: number; wallMs?: number };
+export type FunctionSize = 'small' | 'medium' | 'large';
+
+/**
+ * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
+ * default: CPU time, awaits not counted; wall time, from the moment it starts; and its size, the memory it runs with.
+ * Never more than the space's plan or the server allows; asking for more than the server does is a problem when the
+ * functions are saved, and a size the plan does not include is refused when the task runs, naming the plan.
+ */
+export type FunctionAskedLimits = { cpuMs?: number; wallMs?: number; size?: FunctionSize };
 
 /** One task the functions declare: everything but its code — what the catalog shows and a step is drawn from. */
 export type FunctionTaskManifest = {
@@ -22,7 +30,7 @@ export type FunctionTaskManifest = {
   description?: string;
   params: Record<string, InteractionCallbackParam<Record<string, unknown>>>;
   /** What it asks for beyond the default — over what the functions ask for all of their tasks. */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
 };
 
 /** One job the functions declare (`defineFunctions({ jobs })`): everything but its code. */
@@ -95,7 +103,7 @@ export type FunctionsManifest = {
   /** The route keys, `'GET /board-assets/:board/:asset'`, as declared. */
   routes: string[];
   /** What every task and route asks for beyond the default, unless a task asks for its own. */
-  limits?: FunctionTimeLimits;
+  limits?: FunctionAskedLimits;
   /** The OAuth connections its code makes (`ctx.oauth`), by the name the code calls them. */
   oauth?: Record<string, FunctionOAuthConnection>;
   /** The jobs it runs (`ctx.jobs.start`), by name. */
@@ -118,6 +126,8 @@ export type FunctionsDraft = {
    * install them.
    */
   offer: { template: string } | null;
+  /** The sizes the space's plan lets a task ask for, smallest first: what the builder offers, the rest locked. */
+  sizes: FunctionSize[];
 };
 
 /**

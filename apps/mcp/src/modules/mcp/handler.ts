@@ -5,7 +5,7 @@ import { createMcpServer } from './server';
 import type { ResourceProxy } from './proxy';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { SSRAdapters, SSRRequest, ServerLogger } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest, ServerLogger } from '@plitzi/sdk-kernel/types';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 /** Per-request wiring the MCP service does not resolve itself: the renderer clients and the log sink. Everything

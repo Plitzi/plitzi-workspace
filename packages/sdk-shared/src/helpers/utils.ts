@@ -1,4 +1,4 @@
-import { get } from '@plitzi/plitzi-ui/helpers/lodash';
+import { get } from './lodash';
 
 import type { FC } from 'react';
 

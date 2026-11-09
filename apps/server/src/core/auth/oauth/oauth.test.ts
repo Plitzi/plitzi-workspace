@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSocialAuth } from './index';
 import { codeChallenge, consumeFlow, startFlow } from './state';
 
-import type { AccountRecord } from '../api';
+import type { AccountRecord } from '@plitzi/sdk-kernel/identity';
 
 // The authorization-code grant is protocol, not product, and these are the parts of it that are load-bearing: the
 // state that binds a callback to the browser that started it, and the redirect target that is an open redirect the

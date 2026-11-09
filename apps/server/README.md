@@ -1,11 +1,14 @@
 # @plitzi/sdk-server
 
-The page server for Plitzi spaces: server-side rendering, React Server Components, plugins, connectors and the
-HTTP kernel they run on. Ships as an HTTP/2 server by default, with support for HTTP/1.1 and HTTP/3.
+The page server for Plitzi spaces: server-side rendering, React Server Components, plugins, connectors and signing
+people in. Ships as an HTTP/2 server by default, with support for HTTP/1.1 and HTTP/3.
+
+What it is built on — the HTTP server and its pipeline, health and shutdown, checking who a request is — is
+[`@plitzi/sdk-kernel`](../../packages/sdk-kernel/README.md), which every Plitzi server process shares.
 
 This package serves **pages**. The AI surface — the MCP server, its tool engine and the draft-preview
-endpoint — lives in [`@plitzi/sdk-mcp`](../mcp/README.md), which depends on this one's narrow entries (the kernel,
-OAuth, and the renderer for draft preview alone), never the other way round. A deployment that only renders pages
+endpoint — lives in [`@plitzi/sdk-mcp`](../mcp/README.md), which runs on the kernel and depends on this one's narrow
+entries alone (OAuth, and the renderer for draft preview), never the other way round. A deployment that only renders pages
 never installs it, and never loads it.
 
 ## Installation
@@ -51,7 +54,8 @@ yarn add @plitzi/sdk-authoring   # writing spaces is its own package, and it ins
 ```ts
 // server.ts
 import { authorSpace, container, heading, link, text } from '@plitzi/sdk-authoring';
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 /** A space is a tree, some CSS and a palette. Ids, class names and the breakpoint maps are derived from it. */
 const space = authorSpace({
@@ -305,13 +309,14 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `realtime` | `{ pubsub?, path?, transport?, allowedOrigins? } \| false` | in memory, at `/_realtime`, `sse` | Realtime channels the space declares. `transport` is what pages connect with: `sse` (a stream, publishes over `POST`) or `websocket` (one socket both ways, HTTP/1.1 only; pages fall back to the stream where a socket cannot open). `allowedOrigins` lists the other origins whose pages may open a socket. `pubsub` is how messages reach other processes — `createMemoryPubSub()` (the default, across workers) or `createRedisPubSub({ publisher, subscriber })` for several replicas. `false` serves no endpoint. See [`docs/en/realtime.md`](../../docs/en/realtime.md). |
 | `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
 | `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
+| `stats` | `StatsConfig` | none | `GET /_stats` behind `secret`: the process's pool, load, outcomes and health, read by `readPools` (see [Stats](#stats-and-every-process-at-once)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
 | `logLevel` | `'silent' \| 'error' \| 'warn' \| 'info' \| 'debug'` | `info` with `devMode`, else `error` | How much the server says, for the whole process (see [Logging](#logging)). |
 | `logger` | `ServerLogger` | the console | Where it says it: one structured `ServerLogEvent` stream. `consoleLogger` prints each as one line. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
 | `workers` | `boolean \| number \| 'auto'` | `'auto'` under `NODE_ENV=production`, else `false` | How many processes serve the port: one per core, a number (lowered to the cores there are), or one. `SDK_SERVER_WORKERS` sets it when the config does not. See [Using every core](#using-every-core). |
 | `action` | `SSRActionConfig` | — | The space's server actions: the write endpoint (`path`, default `/_action`), `lookups` (`ActionLookupsConfig`: `getAction`, `getFunctions`, `getPluginFunctions`, `getData`…), `kv`, `jobs`, `limits`, `email`, `signingSecret`, `onRun` / `onReject`. Absent, the server serves reads only. See `docs/en/server-actions.md` § 13 in the workspace. |
-| `functions` | `{ native?, measureNative?, plugins?, runner?, limits? }` | — | The server's code (`FunctionsConfig` in `@plitzi/sdk-server/functions`, checked as the server starts): its own tasks and routes (`native`, from `loadFunctions`), the server halves of the plugins it ships (`plugins`, by plugin type — see [A plugin's server half](#a-plugins-server-half)), the `runner` the spaces' functions run on, and the per-invocation `limits`. `measureNative` says, once per task and limit, an invocation of `native` that spends more than a sandbox would let it — calls to `ctx`, CPU, time, the bytes it answers — never stopping it: `serveProject` turns it on, since a project's functions are a hosted space's. See `docs/en/functions.md` § 8 in the workspace. |
+| `functions` | `{ native?, measureNative?, plugins?, runner?, limits? }` | — | The server's code (`FunctionsConfig` in `@plitzi/sdk-actions/functions`, checked as the server starts): its own tasks and routes (`native`, from `loadFunctions`), the server halves of the plugins it ships (`plugins`, by plugin type — see [A plugin's server half](#a-plugins-server-half)), the `runner` the spaces' functions run on, and the per-invocation `limits`. `measureNative` says, once per task and limit, an invocation of `native` that spends more than a sandbox would let it — calls to `ctx`, CPU, time, the bytes it answers — never stopping it: `serveProject` turns it on, since a project's functions are a hosted space's. See `docs/en/functions.md` § 8 in the workspace. |
 | `connectors` | `ConnectorLookupsConfig` | — | `getConnector` and `getCredential` for the space's connectors, read by the RSC read path and the `/_action` write endpoint alike. See `docs/en/connectors.md` in the workspace. |
 | `auth` | `Auth` | — | A `createAuth(...)` result: fills the three auth adapters in and brings the cookie naming. See [User authentication](#user-authentication). |
 | `pageAuth` | `Omit<ServerAuth, 'sessionHintCookie'>` | from `auth` | What the rendered pages are told about signing in (`server.auth`): the provider and its endpoints, the hint cookie added per host. Name it when `/auth` is served by another host. |
@@ -358,7 +363,7 @@ type SSRAdapters = {
 
 - **`getOfflineData`** — returns the space snapshot (schema, plugins, styles, collections) for SSR.
 - **`getSpaceDeployment`** — resolves which space and environment to render for a given inbound request. Return `{ error: { code, message } }` to abort with an HTTP error. Optionally include `templateProps` to override template variables, or `pluginNames` to activate plugins for the space (see [Plugins](#plugins) and [Template props](#template-props)).
-- **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. Return `undefined` for unauthenticated requests. What it returns is inlined into the page — `authenticated`, `user.details`, the access token and its expiry — and that does two things: it decides page-level access for guest vs. registered users during the render, and it **saves the browser its first auth request**. The SDK adopts the inlined session on boot, stores it and schedules the renewal, rather than asking the same authority the same question a few milliseconds later. Implement this one adapter and every server-rendered page starts signed in with no round trip; `createAuth` answers it for you.
+- **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. Return `undefined` for unauthenticated requests. Its second argument is the response: a session cookie it finds over for good — revoked, ended, never a token at all, not one the refresh may still renew — it clears there (`createSessionCookies(config).clear(req, res)`), the readable hint with it, or the browser keeps believing it holds a session and a sign-in for signed-out visitors sends it round for ever. `createAuth`'s does. What it returns is inlined into the page — `authenticated`, `user.details`, the access token and its expiry — and that does two things: it decides page-level access for guest vs. registered users during the render, and it **saves the browser its first auth request**. The SDK adopts the inlined session on boot, stores it and schedules the renewal, rather than asking the same authority the same question a few milliseconds later. Implement this one adapter and every server-rendered page starts signed in with no round trip; `createAuth` answers it for you.
 - **`authenticate`** *(optional)* — called when `POST {loginPath}` is received, with the credentials already parsed from the body (a posted form or JSON), whatever fields they are. Return a session to grant one, `undefined` to refuse — and never throw for a wrong password. **Identity only**: the cookies, their lifetimes and the readable hint are the server's, which is what keeps a session established here visible to the API side and the other way round. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server answers a `303` so the view re-renders via a GET; for a fetch it answers `200` with `{ success, access_token, expire_at }` or `401` with `{ error, reason }` — never a bodyless status, which leaves a caller holding nothing. This route knows a session and not the account behind it; `createServer({ auth })` serves the same path from the auth kernel instead, which answers the full grant.
 - **`endSession`** *(optional)* — called when `POST {logoutPath}` is received. Revoke the session at the source; the server clears the cookies. Clearing them alone would leave the credential itself working for anyone who had already copied it. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
 - **`recordScriptPolicyReport`** *(optional)* — what a page's script policy refused, or would refuse while it reports (`scriptPolicy`, `trustedTypes`): for the space the report's HOST serves, never one the report names — anyone may post one — and once per space and violation every ten minutes per process, not on every page a visitor opens. Keep them (bounded) to show the space's owner what turning the policy on would stop; without it, the log alone says them.
@@ -576,6 +581,37 @@ createServer({
 });
 ```
 
+### Stats, and every process at once
+
+`/health` answers whether a process can serve; **`/_stats`** says how it is doing. Given `stats`, a page server, a worker
+or an MCP server answers `GET /_stats` behind its secret (`Authorization: Bearer <secret>`, 32 characters or more —
+refused at start otherwise): its pool and instance, its version, its load (runs in flight against its slots — `calls`,
+`renders` — CPU, memory, the event loop's p99 delay), how its runs went over the last minute, quarter and hour (failures
+and refusals by reason, p50 and p95), and `healthy` or `degraded` with why. A functions runner answers the same behind
+its protocol's secret, with its `isolates` and the protocol it speaks. Kept in memory, in one-minute buckets.
+
+```ts
+createServer({ adapters, stats: { secret: process.env.STATS_SECRET, pool: 'pages' } });
+```
+
+`readPools(source)` (`@plitzi/sdk-kernel/stats`) reads every instance's `/_stats` at once and answers one document per
+pool: each instance `healthy`, `degraded` or `down` — one that did not answer, with what its orchestrator knows of why —
+and every version they answered with, so a rolling deploy shows. The pools come from a **pool source**:
+`createLocalPoolSource([{ pool, id, url, secret }])` for processes started where they are known, or a deployment's own
+over its orchestrator. Changing a pool's size is a `PoolScaler`, a contract the kernel defines and ships none of: a
+deployment without one shows its pools read-only.
+
+```ts
+import { createLocalPoolSource, readPools } from '@plitzi/sdk-kernel/stats';
+
+const health = await readPools(
+  createLocalPoolSource([
+    { pool: 'pages', id: 'pages-1', url: 'http://10.0.0.4:8080', secret },
+    { pool: 'worker', id: 'worker-1', url: 'http://10.0.0.5:8892', secret }
+  ])
+);
+```
+
 ## Static files
 
 Map URL prefixes to local directories:
@@ -773,7 +809,8 @@ A process keeps its own pages, and its workers hear what it is told (`workers`).
 server is given what they share — and says at boot which it has:
 
 ```ts
-import { createRedisPageStore, createRedisPubSub } from '@plitzi/sdk-server';
+import { createRedisPageStore } from '@plitzi/sdk-server';
+import { createRedisPubSub } from '@plitzi/sdk-kernel/pubsub';
 
 createServer({
   cache: {
@@ -855,9 +892,9 @@ A compiled plugin is one module and its stylesheet, built as `plitzi plugin pack
 Whatever stylesheet the server writes for a plugin — compiled, copied or downloaded — goes into the `plitzi-sdk-plugin` cascade layer (`inPluginLayer` from `@plitzi/sdk-shared/style`), below the space's own: a space's classes and `customCss` win over what the plugin shipped, whatever the specificity. A `css` given as a web path (`/builder-assets/…`) is linked as it is.
 
 ```ts
-import type { SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 
-const server = createServer({
+const server = createPlatform({
   plugins: {
     // From a source file — compiled to ESM with esbuild
     'my-chart': {
@@ -972,7 +1009,7 @@ When `action` is not set, the server infers it from the `js` value:
 
 esbuild runs as a child process of its own (16–26 MiB resident). The server stops it once nothing has built for a
 minute (`ESBUILD_REST_MS`), and the next build starts it again. A server built on this package that builds with esbuild
-in the same process calls `esbuildBuild` from `@plitzi/sdk-server/kernel` instead of esbuild's `build`: a build that
+in the same process calls `esbuildBuild` from `@plitzi/sdk-kernel/build` instead of esbuild's `build`: a build that
 went to esbuild directly is not counted, and stopping the child would kill it.
 
 ### Plugin serving
@@ -1025,11 +1062,12 @@ A plugin can bring server code — its `functions/`, written as a space's functi
 corner of `kv`, none of the space's credentials, channels or data). This server's own plugins hand theirs over by type:
 
 ```ts
-import { createServer, loadFunctions } from '@plitzi/sdk-server';
+import { loadFunctions } from '@plitzi/sdk-actions/functions';
+import { createPlatform } from '@plitzi/sdk-server/platform';
 
 const [board] = await loadFunctions(new URL('./plugins/Board/functions/', import.meta.url));
 
-const server = createServer({ adapters, functions: { native, plugins: { board } } });
+const server = createPlatform({ adapters, functions: { native, plugins: { board } } });
 
 // While it runs: a server half loaded again — or, with none, taken away — without a restart.
 server.functions.setPlugin('board', board);
@@ -1087,7 +1125,8 @@ Implement `getRscData` in your adapters to serve data from the `/_rsc` endpoint.
 When `ids` is provided the client is performing a **partial refresh** — only return data for those element IDs. When `ids` is absent, return data for all elements (full fetch):
 
 ```ts
-import type { SSRAdapters, SSRRscContext, SSRRscData } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRscContext } from '@plitzi/sdk-kernel/types';
+import type { SSRRscData } from '@plitzi/sdk-shared';
 
 const getRscData = async ({ user, ids, loadOfflineData }: SSRRscContext): Promise<SSRRscData> => {
   // Only serve data when the schema has RSC enabled. `loadOfflineData` joins the read the page render already
@@ -1255,7 +1294,7 @@ The hook is backed by `RscProvider`, which fetches `/_rsc` once on mount and upd
 
 ## User authentication
 
-Sessions, in one call. `createAuth` takes what only your deployment knows — the signing secret, what you call your
+Sessions, in one call. `createAuth` takes what only your deployment knows — its signing key, what you call your
 cookies, and the store your accounts live in — and returns the whole cycle wired together.
 
 ```ts
@@ -1263,11 +1302,20 @@ import { createServer } from '@plitzi/sdk-server';
 import { createAuth } from '@plitzi/sdk-server/auth';
 
 const auth = createAuth({
-  tokens: { secret: process.env.AUTH_SECRET, issuer: 'https://acme.com', audience: ['https://acme.com'] },
+  tokens: { keys, issuer: 'https://acme.com', audience: ['https://acme.com'] },
+  secret: process.env.AUTH_SECRET, // signs the CSRF token: 32 characters or more
   cookie: { name: 'acme_session' },
   adapters: accounts
 });
+```
 
+Credentials are signed with ES256. `keys` is `{ signing: { kid, privateKey }, verifying: [{ kid, publicKey }] }`, PEM;
+`generateTokenKeys()` (`@plitzi/sdk-kernel/tokens`) makes a pair, once, for the deployment to keep (its private key as a secret). A process that only
+checks who a request is — a worker on another machine — is given `verifying` alone, and cannot mint a session even if
+it is compromised; asked to, it refuses and names the missing key. To rotate, sign with the new key and keep the old
+one's public key in `verifying` until what it signed has expired.
+
+```ts
 createServer({ port: 443, adapters: { getOfflineData, getSpaceDeployment }, auth });
 ```
 
@@ -1285,8 +1333,9 @@ server asks for, and carries the cookie naming with it — so there is no second
 every page it renders where it signs in (`server.auth`: `userProvider: 'basic'`, `loginUrl`, `userUrl`, `logoutUrl`,
 `refreshUrl` and `mfaUrl` where offered, and `sessionHintCookie` named for the host), so the space declares nothing. A
 setting the space does declare wins, and a space that names another provider ignores the server's altogether. Everything is
-still exported separately (`createTokens`, `createIdentity`, `createAuthApi`, `authRoutes`, …) for a deployment that
-wants to assemble or replace one piece.
+still exported separately for a deployment that wants to assemble or replace one piece: signing in (`createAuthApi`,
+`authRoutes`, …) here, checking who a request is in the kernel — `createTokens` in `@plitzi/sdk-kernel/tokens`,
+`createIdentity`, `createCsrf` and the session cookies in `@plitzi/sdk-kernel/identity`.
 
 Nothing here assumes a web framework: a request is `{ headers, hostname, cookies?, query?, body? }` and a response is
 anything that can carry `Set-Cookie`, both true of bare `node:http`.
@@ -1319,7 +1368,7 @@ dispatching them is yours:
 
 ```ts
 import { createAuthRouteHandlers } from '@plitzi/sdk-server/handlers';
-import { parseRequest } from '@plitzi/sdk-server/kernel';
+import { parseRequest } from '@plitzi/sdk-kernel/http';
 
 const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
 const route = routes.find(r => r.method === req.method && `/auth${r.path}` === req.path);
@@ -1365,18 +1414,19 @@ deployment (single sign-on), `resolveProvider(id, redirectUri)`, a provider reso
 `providerForEmail(email)`: which one signs an address in, what `GET /sso?email=` answers. A refusal of yours is an
 `OAuthFailure(reason, message, detail?)`: the browser lands on its target with `?error=<reason>&detail=<detail>`.
 
-### …or don't: `@plitzi/sdk-server/mysql`
+### …or don't: `@plitzi/sdk-kernel/mysql`
 
 If you are standing a user store up rather than adapting one you have, the table above is ceremony. Import the
 store instead — it is every adapter in it, already written, over tables it creates:
 
 ```ts
-import { createMysqlStore } from '@plitzi/sdk-server/mysql';
+import { createMysqlStore } from '@plitzi/sdk-kernel/mysql';
 
 const store = await createMysqlStore({ url: process.env.DATABASE_URL });
 
 const auth = createAuth({
-  tokens: { secret, issuer },
+  tokens: { keys, issuer },
+  secret,
   adapters: store.authAdapters,   // spread your own on top: { ...store.authAdapters, sendMail }
 });
 ```
@@ -1420,7 +1470,9 @@ read back, and `GET /auth/session` reports it.
 
 Behaviour you do not have to get right yourself: the credential is renewed ahead of expiry and rotated when it is;
 signing out revokes at the source rather than only clearing the browser's copy; a readable hint cookie rides beside
-the session carrying nothing but expiry timestamps, so a page can tell that nobody is signed in without a request;
+the session carrying nothing but expiry timestamps, so a page can tell that nobody is signed in without a request —
+and a page server that finds the session over (revoked, signed out everywhere) clears it with the cookie, while the
+browser asks before restoring a token its page's server found nobody for;
 and every refusal names a machine-readable `reason`, so a client can tell "renew me" from "you are gone".
 
 ### Beyond the defaults
@@ -1579,7 +1631,7 @@ Credential comparison uses `crypto.timingSafeEqual` to prevent timing attacks. I
 Register request-scoped middleware to run before the SSR renderer. Middlewares execute in the order they are declared and can short-circuit by not calling `next()`.
 
 ```ts
-import type { SSRMiddleware } from '@plitzi/sdk-shared';
+import type { SSRMiddleware } from '@plitzi/sdk-kernel/types';
 
 const corsMiddleware: SSRMiddleware = (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://app.example.com');
@@ -1693,11 +1745,12 @@ leave with it. More than one replica needs a queue and a key/value store they sh
 live in your database; for Mongo and MySQL they are already written, over the connection you already have:
 
 ```ts
-import { closeOnSignals, createServer } from '@plitzi/sdk-server';
-import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo';
+import { closeOnSignals } from '@plitzi/sdk-kernel/http';
+import { createPlatform } from '@plitzi/sdk-server/platform';
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-actions/mongo';
 
 const db = mongoClient.db('app');
-const server = createServer({
+const server = createPlatform({
   adapters,
   action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } }
 });
@@ -1713,11 +1766,84 @@ ends any other event stream, lets what is being answered finish, and cuts whatev
 (`SHUTDOWN_GRACE_MS`). A page left open on a board, or an agent's app listening, no longer holds a Ctrl+C or a
 SIGTERM until something kills the process.
 
-`@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). With no
-database at all, `kv` survives a restart in a file: `createFileKv` (`@plitzi/sdk-server/actions`, one process, JSON) or
-`createSqliteKv` (`@plitzi/sdk-server/sqlite`, any number of processes on the file). Anything
+`@plitzi/sdk-actions/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). With no
+database at all, `kv` survives a restart in a file: `createFileKv` (`@plitzi/sdk-actions`, one process, JSON) or
+`createSqliteKv` (`@plitzi/sdk-actions/sqlite`, any number of processes on the file). Anything
 else is the `JobQueue` contract written against your store — see
 [server actions § self-hosted](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/server-actions.md#13-for-a-self-hosted-deployment).
+
+## Actions apart from pages (a worker)
+
+`createServer` serves pages and nothing of the actions engine: `createPlatform` (`@plitzi/sdk-server/platform`) builds
+the engine — `action`, `functions`, `connectors`, `realtime` — and hands it to the page server, which is what one process
+serving both runs. Once visitors' calls, webhooks or jobs start to weigh, run them on a worker of their own:
+`createWorker` (`@plitzi/sdk-actions/worker`), the engine on `@plitzi/sdk-kernel` alone — no page, no RSC, no sign-in. A
+call is cheap in CPU, but one that reads a large answer holds the event loop every render in flight shares — parsing
+20 MB takes ~100 ms — and jobs run beside pages.
+
+```ts
+import { createWorker } from '@plitzi/sdk-actions/worker';
+import { createPlatform } from '@plitzi/sdk-server/platform';
+
+const engine = { action: { lookups, kv, jobs: { queue } }, realtime: { pubsub } };
+
+// The page server: renders, and runs the actions a page renders with. It sweeps schedules into the queue, but takes
+// no job from it.
+const pages = createPlatform({ adapters, auth, ...engine, action: { ...engine.action, jobs: { queue, workers: 0 } } });
+
+// The worker: `/_action` (calls, webhooks, cancels), `/fn` routes, `/_realtime`, and the jobs. Who a request is comes
+// from the same identity the page server has.
+const worker = createWorker({ adapters, identity: auth.ssrIdentityAdapters, ...engine });
+```
+
+In front of both, route a space's host by path: `/_action`, `/fn` and `/_realtime` (and what is under them) to the
+worker, everything else to the page server. The browser sees one origin, so the visitor's session and its CSRF token
+work unchanged. Give both the same `realtime.pubsub` and the same stores.
+
+A page server whose pages render no server element naming an action needs no engine at all. It is told where its pages
+call theirs, and runs nothing of it:
+
+```ts
+import { engineOnWorker } from '@plitzi/sdk-actions/worker';
+import { createServer } from '@plitzi/sdk-server';
+
+const pages = createServer({ adapters, auth, engine: engineOnWorker(engine) });
+```
+
+A page that renders a server element naming an action or a connector can have it resolved on the worker too, so the
+page server runs no action at all: give the worker a `render.secret` (32 characters or more) and the page server where
+the worker is and that secret. Each element is asked at the worker's `POST /_render`, with the visitor this server signed
+in, and comes back with its data — or its error state, a refusal in the action's own words — and the runs that fed it,
+for a page that debugs. Keep `/_render` off the path a browser reaches: the gateway sends it nothing.
+
+```ts
+const worker = createWorker({ adapters, identity, ...engine, render: { secret: RENDER_SECRET } });
+const pages = createServer({
+  adapters,
+  auth,
+  engine: engineOnWorker({ ...engine, render: { url: 'http://worker:8892', secret: RENDER_SECRET } })
+});
+```
+
+The worker may also be on an origin of its own (`https://actions.example.com`): give both `action.origin`, and the
+worker the origins of the pages that call it (`action.pageOrigins`). The pages are told the address there and call it
+with the visitor's cookies; the worker answers those origins with CORS and credentials, takes them as its own in its
+cross-site check, and refuses any other site — and refuses to start with `origin` and no `pageOrigins`. The session must
+be readable there (a cookie scoped to a parent domain both share, `authCookie.domain`), and its `getSpaceDeployment`
+sees the worker's host, not the page's. Only the actions move: a page's `/fn` routes and channels stay on its own origin.
+
+```ts
+const engine = { action: { lookups, origin: 'https://actions.example.com' } };
+
+const pages = createServer({ adapters, auth, engine: engineOnWorker(engine) });
+const worker = createWorker({
+  adapters,
+  identity: auth.ssrIdentityAdapters,
+  action: { ...engine.action, pageOrigins: ['https://www.example.com'] }
+});
+```
+
+Both ways, as three processes and as two: [`examples/self-hosting/11-actions-on-a-worker`](../../examples/self-hosting/11-actions-on-a-worker).
 
 ## Running it locally
 
@@ -1771,7 +1897,7 @@ URLs become `/sdk-assets/plitzi-sdk.js?v=<assetVersion>`. This is separate from 
 By default the server uses its built-in EJS template. You can replace it with any function that receives the template params and returns an HTML string:
 
 ```ts
-import type { SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { SSRTemplateFn } from '@plitzi/sdk-server';
 
 const templateFn: SSRTemplateFn = ({ html, offlineData, jsPath, cssPath, plugins, react, reactDom, reactDomClient, reactJsx }) => `
   <!doctype html>
@@ -1895,7 +2021,7 @@ tells a sink how severe each one is. The run and refusal loggers a deployment wi
 deployment's adapters can speak through too:
 
 ```ts
-import { serverLog } from '@plitzi/sdk-server';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 serverLog.warn('Adapters', 'space 12 has no deployment, serving main');
 ```
@@ -1950,33 +2076,43 @@ import type {
 `sessionRenewal` — and what a project types its own options with. `SSRContext` here is the request context a pipeline
 stage sees.
 
-The shapes the server shares with the SDK and `@plitzi/sdk-mcp` are `@plitzi/sdk-shared`'s:
+Each type is the package's that owns it. The page server's own configuration and what it answers are this package's;
+what every server process is built on — the request pipeline, the adapters a deployment answers and what they are
+asked with — the kernel's; what the browser reads too, `@plitzi/sdk-shared`'s:
 
 ```ts
 import type {
-  SSRAdapters,
   SSRServerConfig,
+  SSRPageServerConfig,
+  SSRServer,
+  SSRTemplateFn,
+  PluginRegistry,
+  CacheFilter,
+  CacheManager
+} from '@plitzi/sdk-server';
+import type {
+  SSRAdapters,
+  SSRPageAdapters,
   SSRRequest,
   SSRResponseHelpers,
   SSRMiddleware,
   SSRMiddlewareNext,
   SSRSpaceDeployment,
   SSRTemplateProps,
-  SSRTemplateFn,
   SSRCredential,
-  SSRUser,
   SSRHeaders,
   SSRRscContext,
+  ServerBaseConfig
+} from '@plitzi/sdk-kernel/types';
+import type {
+  SSRUser,
   SSRRscData,
-  SSRRscConfig,
-  SSRServer,
   PluginSource,
   PluginSourceFile,
   PluginSourceComponent,
   PluginAction,
-  PluginEntry,
-  PluginRegistry,
-  CacheFilter,
-  CacheManager
+  PluginEntry
 } from '@plitzi/sdk-shared';
 ```
+
+The engine's — the job queue, `EngineOptions` — are `@plitzi/sdk-actions/types`.

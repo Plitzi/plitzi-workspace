@@ -35,6 +35,29 @@ export default tsEslint.config({
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
+    // One rule evaluator for every reader: sdk-shared's (`@plitzi/sdk-shared/conditions`). plitzi-ui keeps a copy of its
+    // own, which Plitzi never reads, so the builder's preview and the server cannot decide a condition two ways.
+    '@typescript-eslint/no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: '@plitzi/plitzi-ui/QueryBuilder/evaluator',
+            message: 'Evaluate a condition with `evaluateRuleGroup` from `@plitzi/sdk-shared/conditions`.'
+          },
+          {
+            name: '@plitzi/plitzi-ui/QueryBuilder',
+            importNames: ['QueryBuilderEvaluator'],
+            message: 'Evaluate a condition with `evaluateRuleGroup` from `@plitzi/sdk-shared/conditions`.'
+          },
+          {
+            name: '@plitzi/plitzi-ui/QueryBuilder/helpers',
+            importNames: ['QueryBuilderEvaluator'],
+            message: 'Evaluate a condition with `evaluateRuleGroup` from `@plitzi/sdk-shared/conditions`.'
+          }
+        ]
+      }
+    ],
     'no-useless-assignment': 'off',
     '@typescript-eslint/no-deprecated': 'off',
     '@typescript-eslint/no-useless-default-assignment': 'off',

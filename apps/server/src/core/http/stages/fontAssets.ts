@@ -1,7 +1,8 @@
-import { serveStatic } from '../../staticFiles';
+import { serveStatic } from '@plitzi/sdk-kernel/http';
 
-import type { Stage } from '../types';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 /** Where a manifest's `hosted` paths are addressed from by default — see `fontUrlResolver`. */
 const FONTS_PREFIX = '/fonts';
@@ -13,7 +14,7 @@ const FONTS_PREFIX = '/fonts';
  * shadow that path with a directory it does not have. Served CORS-open on purpose: a font is fetched in CORS mode
  * whatever its origin, so without this a page on the space's own domain cannot use a face from this server.
  */
-export const fontAssetsStage: Stage = ctx => {
+export const fontAssetsStage: Stage<SSRContext> = ctx => {
   const dir = ctx.config.fonts?.dir;
   if (!dir || !ctx.req.path.startsWith(`${FONTS_PREFIX}/`)) {
     return false;

@@ -69,9 +69,10 @@ export type ServerSSR = {
   rscPath?: string;
   /** The payload that server already resolved for this page, so the first render costs no request. */
   rscData?: SSRRscData;
-  /** Path where this origin runs server actions. Published only by a server that mounts the endpoint: its absence
-   *  is what tells a client flow that a `serverAction` step has nowhere to run, rather than letting it fail per
-   *  click. A static export publishes nothing here and the step reports itself inert. */
+  /** Where this page runs server actions and a provider's writes: a path on its own origin, or an address on another
+   *  (`action.origin`), called with the visitor's cookies either way. Published only by a server that mounts the
+   *  endpoint: its absence is what tells a client flow that a `serverAction` step has nowhere to run, rather than
+   *  letting it fail per click. A static export publishes nothing here and the step reports itself inert. */
   actionPath?: string;
   /** Path where this origin's realtime channels answer. Published only by a server that mounts them: its absence is
    *  what keeps a `channel` element closed in the builder, an embed or a static export. */

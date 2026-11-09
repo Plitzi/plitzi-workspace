@@ -50,25 +50,26 @@ two. An outage is not replayed as a burst.
 
 ## What matters
 
-**The queue is a seam, and this example fills it.** [`src/store/queue.ts`](./src/store/queue.ts) is the
-`ActionJobQueue` contract written out in full over SQLite — the same one `sdk-server` keeps in memory by default,
-which is right for one process and silently wrong for two. Five rules make it safe to run anywhere, and each one is a
-single place in that file:
+**The queue is a seam, and this example fills it with a file.** `createSqliteJobQueue` (`@plitzi/sdk-actions/sqlite`)
+keeps the jobs and the schedules in the same SQLite file as everything else, and every replica on the file claims
+from it. The queue `@plitzi/sdk-server` keeps in memory by default is right for one process and silently wrong for
+two. The rules that make a queue safe to share are written once, in the SDK, and every stock queue — memory, file,
+SQLite, Mongo, MySQL — runs them to the letter:
 
-| Rule | Where |
+| Rule | What it stops |
 |---|---|
-| Every instant comes from the store | `storeNow` — never `Date.now()`; `settle` and `claim` take durations |
-| `enqueue` is idempotent by id | `ON CONFLICT (id) DO NOTHING`, answering whether it inserted |
-| `claim` is atomic, and it reaps | one `BEGIN IMMEDIATE` that takes due jobs AND jobs whose lease lapsed |
-| `advanceSchedule` is compare-and-set | `WHERE next_run_at = from` |
-| `cancelPending` keeps the newer of two | only what was enqueued before `olderThan` — `created_at`, then `id` |
+| `enqueue` is idempotent by id | The same fire written twice, by two replicas sweeping at once |
+| `claim` is atomic, and it reaps | Two replicas taking one job; a dead replica's job waiting forever |
+| `advanceSchedule` is compare-and-set | A schedule's next fire moved twice, so a minute is skipped or doubled |
+| `cancelPending` keeps the newer of two | An older request undoing a newer one |
 
-Against Postgres the same shape is `SELECT … FOR UPDATE SKIP LOCKED`. For Mongo and MySQL you do not write it at all —
-see [On Mongo or MySQL](#on-mongo-or-mysql) below.
+A deployment with a store of its own — Postgres, say — writes the `JobQueue` contract (`@plitzi/sdk-actions/types`)
+against it, with the same rules; `SELECT … FOR UPDATE SKIP LOCKED` is that shape there. For Mongo and MySQL you do
+not write it at all — see [On Mongo or MySQL](#on-mongo-or-mysql) below.
 
 **So is `kv`, and it is not optional past one replica.** A worker takes a job's single-flight key before running
 it, and with the default in-process Map each replica holds its own keys — so a stalled replica waking up would run
-the job a second time. `createSqliteKv` (`@plitzi/sdk-server/sqlite`) keeps them in the same file, in a table of its own.
+the job a second time. `createSqliteKv` (`@plitzi/sdk-actions/sqlite`) keeps them in the same file, in a table of its own.
 
 **Three keys wire it**, in [`src/main.ts`](./src/main.ts):
 
@@ -111,10 +112,9 @@ code; the operator's **Run again** and **Cancel** are two more actions.
 
 ## On Mongo or MySQL
 
-This example keeps its queue in a SQLite file so it runs with nothing installed, and so the adapter is there to read.
-A deployment that already runs Mongo or MySQL does not write [`src/store/queue.ts`](./src/store/queue.ts):
-`@plitzi/sdk-server` has the queue and the `kv` for both, written against the same contract and tested against the
-same rules. They use the connection you already have and keep nothing of their own — Mongo gets the
+This example keeps its queue in a SQLite file so it runs with nothing installed. A deployment that already runs Mongo
+or MySQL uses the queue and the `kv` `@plitzi/sdk-actions` has for both, written against the same contract and tested
+against the same rules. They use the connection you already have and keep nothing of their own — Mongo gets the
 indexes its queries need, MySQL gets three tables on first use.
 
 Only the two stores change in [`src/main.ts`](./src/main.ts); the actions, the tasks and the page stay as they are.
@@ -123,7 +123,7 @@ Only the two stores change in [`src/main.ts`](./src/main.ts); the actions, the t
 
 ```ts
 import { MongoClient } from 'mongodb';
-import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo';
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-actions/mongo';
 
 const client = await new MongoClient(process.env.MONGO_URL ?? 'mongodb://127.0.0.1:27017').connect();
 const db = client.db('app');
@@ -131,7 +131,7 @@ const db = client.db('app');
 const queue = createMongoJobQueue({ db }); // collections action_jobs and action_schedules
 const kv = createMongoKv({ db }); // collection action_kv
 
-// …the same createServer({ action: { lookups, kv, jobs: { queue, … } } }) as today, then:
+// …the same createPlatform({ action: { lookups, kv, jobs: { queue, … } } }) as today, then:
 closeOnSignals(server, { afterClose: () => client.close() });
 ```
 
@@ -139,7 +139,7 @@ closeOnSignals(server, { afterClose: () => client.close() });
 
 ```ts
 import mysql from 'mysql2/promise';
-import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql';
+import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-actions/mysql';
 
 const pool = mysql.createPool(process.env.DATABASE_URL ?? 'mysql://user:password@127.0.0.1:3306/app');
 

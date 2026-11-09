@@ -5,13 +5,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FileInUseError } from '@plitzi/sdk-actions';
+import { createMemoryKv } from '@plitzi/sdk-actions';
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { TEST_CERTIFICATES } from '@plitzi/sdk-kernel/testing';
 import { SPACE_FAILURE_META } from '@plitzi/sdk-shared/devTools';
 import { projectMark } from '@plitzi/sdk-shared/project';
 
-import { serveProject } from './serveProject';
+import { alreadyServed, isStartupReport, serveProject } from './serveProject';
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
-import { unusedPort } from '../../core/unusedPort';
-import { createMemoryKv } from '../../modules/actions/runtime/memoryKv';
 import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/tests/offlineData';
 
 import type { ServedProject } from './serveProject';
@@ -86,8 +88,8 @@ const ENV_KEYS = [
   'PUBLIC_URL'
 ] as const;
 
-/** The runtime's fixtures: `own`, a self-signed certificate naming nothing; `network`, one naming `studio.local`. */
-const FIXTURES = path.join(import.meta.dirname, '../../modules/runtime/tests/fixtures');
+/** Where each test's certificates are written: `own`, a self-signed one naming nothing; `network`, one naming `studio.local`. */
+let FIXTURES = '';
 
 let root: string;
 let served: ServedProject | undefined;
@@ -170,6 +172,12 @@ beforeEach(async () => {
   await write('src/data/products.json', '{ "items": [] }\n');
   await write('public/hello.txt', 'hello from public\n');
   await write('.plitzi/author.ts', AUTHOR_SCRIPT);
+  // The kernel's test pairs, as the files `.env` names.
+  FIXTURES = path.join(root, 'tmp/certificates');
+  for (const [name, pair] of Object.entries(TEST_CERTIFICATES)) {
+    await write(`tmp/certificates/${name}.key`, pair.key);
+    await write(`tmp/certificates/${name}.crt`, pair.cert);
+  }
   await write('.env', 'PLITZI_SIGNING_SECRET=secret\n');
   await write('.env.example', 'PLITZI_SIGNING_SECRET=\n');
   process.env.PORT = String(await unusedPort());
@@ -676,5 +684,21 @@ describe('serveProject — a space read from Plitzi', () => {
 
     expect(await (await fetch(`${running.url}/health`)).json()).toMatchObject({ Server: 'shop-cloud' });
     expect(existsSync(path.join(root, 'runs'))).toBe(false);
+  });
+});
+
+/** A queue's file held by another process, said when the server starts as what it is — never a stack ending on EEXIST. */
+describe('a second server of the project', () => {
+  it('is said as the project already served, and where', () => {
+    expect(isStartupReport(new FileInUseError('in use', { pid: 1, since: '2026-10-28T18:26:48.134Z' }))).toBe(true);
+    const served = new FileInUseError('in use', {
+      pid: 96869,
+      since: '2026-10-28T18:26:48.134Z',
+      serves: 'http://localhost:8080'
+    });
+    expect(alreadyServed(served)).toBe(
+      'This project is already running at http://localhost:8080 (process 96869, since 18:26 UTC).\nOpen it there — or stop it before starting another: Ctrl+C in its terminal, or plitzi server stop --port 8080.'
+    );
+    expect(alreadyServed(new FileInUseError('in use', { pid: 1, since: '?' }))).toBeUndefined();
   });
 });

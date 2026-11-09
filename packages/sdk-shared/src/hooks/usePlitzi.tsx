@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { use } from 'react';
 
-import { sharedContext } from '../helpers/sharedContext';
+import { sharedContext } from '../react/sharedContext';
 
 import type { ReactNode, RefObject } from 'react';
 

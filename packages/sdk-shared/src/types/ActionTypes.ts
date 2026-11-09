@@ -209,6 +209,14 @@ export type ActionLimits = {
    * response rather than per run, because it exists to stop one answer from being unbounded. 5 000 000 by default.
    */
   maxResponseBytes?: number;
+  /**
+   * Bytes all of one run's outbound responses may carry back together: 10 000 000 by default.
+   *
+   * `maxResponseBytes` bounds one answer; a flow that reads twenty answers just under it holds twenty of them, and a
+   * parsed answer holds several times its size in memory. Counted as the answers stream in, across every request the
+   * run makes, and refused the moment they go over — the run fails as `over_capacity`, naming this ceiling.
+   */
+  maxRunBytes?: number;
 };
 
 /**
@@ -327,6 +335,11 @@ export type ActionErrorReason =
   | 'duplicate'
   /** A concurrency or stream cap was reached. */
   | 'over_capacity'
+  /**
+   * The space's plan spent this period's allowance of runs (a paywall): refused until the period renews or the plan
+   * grows, the refusal naming which. Never retried: it would be refused again.
+   */
+  | 'quota'
   /** The run's lineage already names this action: a loop through the outside world. */
   | 'recursion'
   | 'timeout'
@@ -411,7 +424,29 @@ export type ActionRunRecord = {
   trace: InteractionNode[];
   /** Present when the run ended badly. Already redacted of credential values. */
   error?: string;
+  /** Why, when a ceiling ended it — its deadline, its step or request budget, the process's capacity. A step that threw is
+   *  `error` with no reason. */
+  reason?: ActionErrorReason;
+  /**
+   * The run ended because its own code refused (`ActionRefusal`, `refuse(…)`): an answer written for whoever asked, not
+   * a fault — `error` is that answer.
+   */
+  refused?: true;
+  /**
+   * The limit the run was stopped at, when that is what ended it — the run asked for more than it may, which is its own
+   * doing and not a fault: what a process's error rate leaves out. See {@link ActionRunLimit}.
+   */
+  limit?: ActionRunLimit;
 };
+
+/**
+ * A limit a run can be stopped at: the action's own — its deadline (`time`), its steps, its outbound requests and the
+ * bytes they answered (`response`) — those of the space's code it ran, as its runner stops it (`cpu`, `wall`, `memory`,
+ * `output`, `calls`: the runner's stop reasons), its account's CPU budget over the minute (`cpuBudget`), and its plan's
+ * allowance over the period — runs, a function's compute — spent (`quota`, a paywall).
+ */
+export type ActionRunLimit =
+  'time' | 'steps' | 'requests' | 'response' | 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'cpuBudget' | 'quota';
 
 /**
  * One step of a server action run, as a debugger may show it to anybody allowed to debug the page.

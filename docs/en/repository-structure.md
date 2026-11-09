@@ -12,14 +12,17 @@ plitzi-workspace/
 │   ├── cli/         # Scaffold projects and plugins, ship code to a space, take a space out (@plitzi/cli)
 │   └── desktop/     # Desktop client: sign in, browse your spaces, open one
 ├── packages/
+│   ├── sdk-actions/     # The actions engine and its worker: actions, the host side of functions, realtime, jobs
 │   ├── sdk-auth/
 │   ├── sdk-authoring/   # Spaces and templates written in TypeScript; the linter every writer runs
 │   ├── sdk-dev-tools/
 │   ├── sdk-elements/
 │   ├── sdk-event-bridge/
 │   ├── sdk-interactions/
+│   ├── sdk-kernel/      # What every server process is built on: the HTTP pipeline, checking who a request is
 │   ├── sdk-navigation/
 │   ├── sdk-plugins/
+│   ├── sdk-runtime/     # The contract a space's own code is written against, and what runs it with no access
 │   ├── sdk-schema/
 │   ├── sdk-shared/      # Shared ESLint, TSConfig, types, utilities
 │   ├── sdk-style/

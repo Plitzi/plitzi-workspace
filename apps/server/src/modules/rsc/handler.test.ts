@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { TtlCache } from '@plitzi/sdk-kernel/cache';
+
 import { handleRsc, withPageLocation } from './handler';
-import { TtlCache } from '../../helpers/cache/TtlCache';
 
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRRscContext } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRRequest, SSRResponseHelpers, SSRRscContext } from '@plitzi/sdk-kernel/types';
 
 const request = (query: Record<string, string>): SSRRequest => ({
   method: 'GET',

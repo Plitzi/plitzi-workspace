@@ -9,19 +9,21 @@
     ".": {
       "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./*": {
       "@plitzi/source": "./src/*/index.ts",
       "types": "./dist/*/index.d.ts",
-      "import": "./dist/*/index.mjs"
+      "import": "./dist/*/index.mjs",
+      "default": "./dist/*/index.mjs"
     }
   },
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint ./src",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint --cache --cache-location .eslintcache --cache-strategy content ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -30,6 +32,7 @@
     "build:prod": "vite build"
   },
   "dependencies": {
+    "@plitzi/nexus": "^1.4.0",
     "@plitzi/plitzi-ui": "^1.6.38",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

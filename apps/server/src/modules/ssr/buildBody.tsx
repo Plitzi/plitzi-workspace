@@ -7,14 +7,11 @@ import { prepareRender } from './prepareRender';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type {
-  Environment,
-  OfflineDataRaw,
-  SSRPageServerConfig,
-  SSRRenderResult,
-  SSRRequest,
-  SSRTemplateFn
-} from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig } from '../../types';
+import type { SSRTemplateFn } from '../../types';
+import type { PageEngine } from '@plitzi/sdk-kernel/engine';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { Environment, OfflineDataRaw, SSRRenderResult } from '@plitzi/sdk-shared';
 
 /** `cacheable` is false for a body that must not be served to anybody else: it carries this request's own runs. */
 export type BuildBodyResult = {
@@ -35,7 +32,8 @@ export const buildBody = async (
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<OfflineDataRaw>,
   metrics?: RequestMetrics,
-  offlineDataOverride?: OfflineDataRaw
+  offlineDataOverride?: OfflineDataRaw,
+  published?: PageEngine['published']
 ): Promise<BuildBodyResult> => {
   const prep = await prepareRender(
     req,
@@ -46,7 +44,8 @@ export const buildBody = async (
     pluginManager,
     offlineDataCache,
     metrics,
-    offlineDataOverride
+    offlineDataOverride,
+    published
   );
 
   const result: SSRRenderResult = {};

@@ -1,13 +1,15 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import { knowHostDeployment } from './hostDeployment';
-import { readCookies } from '../../auth/credentials';
-import { appendCookies, writeSessionCookies } from '../../auth/session';
-import { requestOrigin } from '../../requestParser';
-import { safeRedirectTarget } from '../navigation';
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
+import { safeRedirectTarget } from '@plitzi/sdk-kernel/http';
+import { readCookies } from '@plitzi/sdk-kernel/identity';
+import { appendCookies, writeSessionCookies } from '@plitzi/sdk-kernel/identity';
 
-import type { Stage } from '../types';
-import type { SSRRequest, SSRResponseHelpers, SSRSignInConfig } from '@plitzi/sdk-shared';
+import type { SSRSignInConfig } from '../../../types';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 /**
  * Signing a visitor in by redirect (`config.signIn`): out to an authorization server, back with a code, and a session
@@ -56,15 +58,20 @@ const stateCookie = (value: string, maxAge: number): string =>
 
 /**
  * The client id this host is registered under, per authorization server and redirect address. Registration is
- * idempotent there — the same metadata is the same client — so each process asks once and keeps the answer.
+ * idempotent there — the same metadata is the same client — and each one renews the registration's time to live, so a
+ * process keeps the answer only for {@link REGISTRATION_KEPT_MS} and asks again: kept for good, a registration the
+ * server lost (its store emptied or restored, or its TTL run out under a host that never asked again) answered every
+ * sign-in on this host with "Unknown client" until the process restarted.
  */
-const clients = new Map<string, Promise<string>>();
+const REGISTRATION_KEPT_MS = 10 * 60 * 1000;
+
+const clients = new Map<string, { clientId: Promise<string>; until: number }>();
 
 const clientFor = (signIn: SSRSignInConfig, redirectUri: string, hostname: string): Promise<string> => {
   const key = `${signIn.registerUrl} ${redirectUri}`;
   const known = clients.get(key);
-  if (known) {
-    return known;
+  if (known && known.until > Date.now()) {
+    return known.clientId;
   }
 
   const registering = (async () => {
@@ -86,7 +93,7 @@ const clientFor = (signIn: SSRSignInConfig, redirectUri: string, hostname: strin
 
     return body.client_id;
   })();
-  clients.set(key, registering);
+  clients.set(key, { clientId: registering, until: Date.now() + REGISTRATION_KEPT_MS });
   // A failed registration is not remembered, so the next sign-in tries again.
   registering.catch(() => clients.delete(key));
 
@@ -101,7 +108,7 @@ const redirect = (res: SSRResponseHelpers, location: string): true => {
   return true;
 };
 
-export const signInStage: Stage = async ctx => {
+export const signInStage: Stage<SSRContext> = async ctx => {
   const { config, req, res } = ctx;
   const { signIn } = config;
   if (!signIn || req.method !== 'GET') {
@@ -116,7 +123,7 @@ export const signInStage: Stage = async ctx => {
 
   const { exchangeCredential, getSpaceDeployment } = config.adapters;
   const origin = requestOrigin(req);
-  if (!exchangeCredential || !getSpaceDeployment || !origin) {
+  if (!exchangeCredential || !origin) {
     res.setStatus(404);
     res.end();
 

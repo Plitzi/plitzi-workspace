@@ -5,8 +5,8 @@ import { createOidcProvider, discoverOidc } from './oidc';
 import { fakeIssuer } from '../../tests/fakeIssuer';
 import { createSocialAuth } from '../index';
 
-import type { AccountRecord } from '../../api';
 import type { OAuthProfile } from '../types';
+import type { AccountRecord } from '@plitzi/sdk-kernel/identity';
 
 // Each test names an issuer of its own: discovery documents and key sets are kept per issuer for an hour.
 let issuers = 0;

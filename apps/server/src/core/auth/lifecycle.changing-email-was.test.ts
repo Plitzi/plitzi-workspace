@@ -1,17 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createCarriers, presentedOrigin } from '@plitzi/sdk-kernel/identity';
+import { createIdentity } from '@plitzi/sdk-kernel/identity';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+import { createTokens } from '@plitzi/sdk-kernel/tokens';
+
 import { createAuthApi } from './api';
-import { createCarriers, presentedOrigin } from './credentials';
-import { createIdentity } from './identity';
 import { actorFor, ada, body, build } from './tests/lifecycle';
-import { createTokens } from './tokens';
 import { totpCode } from './totp';
 
-import type { AccountAdapters, MfaRecord, SecurityEvent } from './api';
+import type { AccountAdapters, MfaRecord, SecurityEvent } from '@plitzi/sdk-kernel/identity';
 
 describe('changing the email that was verified', () => {
   const withVerification = (overrides: Partial<AccountAdapters> = {}) => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -91,7 +93,7 @@ describe('changing the email by confirming it', () => {
   const parked = { account: ada, email: 'elsewhere@example.test' };
 
   const withPending = (overrides: Partial<AccountAdapters> = {}) => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -234,7 +236,7 @@ describe('when the mail provider is down', () => {
    */
   it('does not fail a change that already happened', async () => {
     const onMailError = vi.fn();
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -268,7 +270,7 @@ describe('when the mail provider is down', () => {
 describe('a second factor', () => {
   const withMfa = (initial?: MfaRecord, extra: Partial<AccountAdapters> = {}) => {
     let stored = initial;
-    const tokens = createTokens({ secret: 's', issuer: 'https://acme.test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://acme.test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -479,7 +481,7 @@ describe('a second factor', () => {
 describe('security events', () => {
   const withEvents = (adapters: Partial<AccountAdapters> = {}) => {
     const seen: SecurityEvent[] = [];
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),
@@ -528,7 +530,7 @@ describe('security events', () => {
 
   /** A logging outage must not become an authentication outage. */
   it('survives a handler that throws', async () => {
-    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
     const identity = createIdentity({
       tokens,
       carriers: createCarriers(() => 'sess'),

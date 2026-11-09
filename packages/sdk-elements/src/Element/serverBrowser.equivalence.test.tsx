@@ -133,7 +133,10 @@ afterEach(() => {
 // The page server draws with lighter variants of the element's hooks (no subscription, no effect, no error boundary);
 // what hydration compares is the markup, so the two must write the same, to the character.
 describe('an element on the server and in the browser', () => {
-  it('writes the same markup', async () => {
+  // Its first draw loads the package's whole graph cold — React's server renderer, the store, sdk-shared — which takes
+  // under a second alone and measured 24 s with the workspace's every suite beside it: its own budget, so a busy machine
+  // is not read as a broken page.
+  it('writes the same markup', { timeout: 120_000 }, async () => {
     const onServer = await draw(false);
     const inBrowser = await draw(true);
 

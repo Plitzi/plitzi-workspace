@@ -9,17 +9,19 @@
     ".": {
       "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./*": {
       "@plitzi/source": "./src/*/index.ts",
       "types": "./dist/*/index.d.ts",
-      "import": "./dist/*/index.mjs"
+      "import": "./dist/*/index.mjs",
+      "default": "./dist/*/index.mjs"
     }
   },
   "scripts": {
-    "lint": "eslint ./src",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint --cache --cache-location .eslintcache --cache-strategy content ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
     "build:prod": "vite build",

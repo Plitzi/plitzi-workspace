@@ -1,4 +1,5 @@
-import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
+import { consoleLogger } from '@plitzi/sdk-kernel/log';
+import { createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

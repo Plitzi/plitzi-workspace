@@ -9,7 +9,8 @@ import { worthRetrying, writeFailed } from '../helpers';
 
 import type { QueuedChange } from '../QueueContext';
 import type { Element, Schema } from '@plitzi/sdk-shared';
-import type { BuilderMutationsMap, BuilderNetworkContextValue, BuilderQueriesMap } from '@plitzi/sdk-shared/network';
+import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared/network';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/react';
 
 export type UseQueueManagerProps = {
   delay?: number;

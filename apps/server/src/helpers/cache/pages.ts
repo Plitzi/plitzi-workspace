@@ -1,9 +1,10 @@
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 
-import { compressBody } from '../compress';
+import { compressBody } from '@plitzi/sdk-kernel/http';
 
-import type { ResolvedCompression } from '../compress';
-import type { CompressedBodies, SharedPage } from '@plitzi/sdk-shared';
+import type { SharedPage } from '../../types';
+import type { ResolvedCompression } from '@plitzi/sdk-kernel/http';
+import type { CompressedBodies } from '@plitzi/sdk-kernel/types';
 
 /**
  * A rendered page as a process keeps it: compressed once, in the encoding the server prefers, and the HTML itself only

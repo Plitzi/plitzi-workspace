@@ -1,9 +1,9 @@
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import { use, useMemo, useRef } from 'react';
 
 import { useNavigation } from '@plitzi/sdk-navigation';
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
@@ -79,7 +79,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
         return { ...acum, [name]: value };
       }
 
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, variablesWhenData));
+      const subValue = subValues.find(subValue => evaluateRuleGroup(subValue.when, variablesWhenData));
       if (subValue) {
         return { ...acum, [name]: subValue.value };
       }

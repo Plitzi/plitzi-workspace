@@ -1,7 +1,7 @@
 import { createSystem, createVirtualTypeScriptEnvironment } from '@typescript/vfs';
 import ts from 'typescript';
 
-import functionsApi from '@plitzi/sdk-server/functions-api.d.ts?raw';
+import functionsApi from '@plitzi/sdk-runtime/functions-api.d.ts?raw';
 
 import type { VirtualTypeScriptEnvironment } from '@typescript/vfs';
 
@@ -22,11 +22,11 @@ const compilerOptions: ts.CompilerOptions = {
   noEmit: true,
   skipLibCheck: true,
   types: [],
-  paths: { '@plitzi/sdk-server/functions': [CONTRACT_PATH] }
+  paths: { '@plitzi/sdk-runtime': [CONTRACT_PATH] }
 };
 
 /**
- * The TypeScript a space's functions are checked with: the libs, the contract at `@plitzi/sdk-server/functions`, and
+ * The TypeScript a space's functions are checked with: the libs, the contract at `@plitzi/sdk-runtime`, and
  * nothing else — the space's own files are added as the editor opens and changes them.
  */
 export const createFunctionsEnvironment = (): VirtualTypeScriptEnvironment => {

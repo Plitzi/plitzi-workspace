@@ -1,10 +1,11 @@
-import { refusedCrossSite } from './crossSiteWrites';
-import { knowHostDeployment } from './hostDeployment';
-import { writeSessionCookies } from '../../auth/session';
-import { readRawBody } from '../../requestParser';
+import { knowHostDeployment } from '@plitzi/sdk-kernel/deployment';
+import { refusedCrossSite } from '@plitzi/sdk-kernel/http';
+import { readRawBody } from '@plitzi/sdk-kernel/http';
+import { writeSessionCookies } from '@plitzi/sdk-kernel/identity';
 
-import type { Stage } from '../types';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRContext } from '../pageContext';
+import type { Stage } from '@plitzi/sdk-kernel/http';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 const parseBody = (req: SSRRequest): { provider?: string; token?: string } => {
   if (!req.body) {
@@ -36,7 +37,7 @@ const parseBody = (req: SSRRequest): { provider?: string; token?: string } => {
  * trusts, whether the token was minted for *this* application, and who it belongs to. This layer contributes the
  * part that is the same everywhere — reading the request, and writing the session it gets back.
  */
-export const exchangeStage: Stage = async ctx => {
+export const exchangeStage: Stage<SSRContext> = async ctx => {
   const { config, raw, req, res } = ctx;
   const exchangePath = config.exchangePath === false ? null : (config.exchangePath ?? '/auth/exchange');
   if (!exchangePath || req.method !== 'POST' || req.path !== exchangePath) {

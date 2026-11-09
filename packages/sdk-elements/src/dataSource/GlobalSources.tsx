@@ -8,7 +8,7 @@ import { useFlagResolution } from '@plitzi/sdk-shared/flags/react';
 import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
-import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
 import useRegisterSource from './useRegisterSource';
 import useResolvedVariables from './useResolvedVariables';

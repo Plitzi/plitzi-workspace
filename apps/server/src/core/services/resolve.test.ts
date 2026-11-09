@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { resolveRscEndpoint, resolveServices } from './resolve';
 
-import type { SSRAdapters, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRServerConfig } from '../../types';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 const config = (overrides: Partial<SSRServerConfig> = {}, adapters: Partial<SSRAdapters> = {}): SSRServerConfig => ({
   adapters: { getOfflineData: vi.fn(), getSpaceDeployment: vi.fn(), ...adapters },

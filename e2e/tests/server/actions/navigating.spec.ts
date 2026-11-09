@@ -12,6 +12,15 @@ import type { Page } from '@playwright/test';
 describeTarget('action-server', subject => {
   const byId = (page: Page, id: string) => page.locator(`[data-plitzi-el="${id}"]`);
 
+  /**
+   * The page, once it is the SDK's: a link clicked before it hydrates is an ordinary anchor, and the browser loads the
+   * destination as a document — no `/_rsc`, no `navigation.pending`. The server's text shows before that moment.
+   */
+  const open = async (page: Page) => {
+    await page.goto(`${subject.origin}/navigate`);
+    await expect(page.locator('[data-hydrated]')).toHaveCount(1);
+  };
+
   /** Every `/_rsc` request the page makes from here on, by the location it asks about. */
   const countRsc = (page: Page) => {
     const asked: string[] = [];
@@ -26,7 +35,7 @@ describeTarget('action-server', subject => {
   };
 
   test('a link asks the server for its destination once', async ({ page }) => {
-    await page.goto(`${subject.origin}/navigate`);
+    await open(page);
     await expect(byId(page, ACTION_IDS.navWho)).toHaveText('everyone');
     const asked = countRsc(page);
 
@@ -41,7 +50,7 @@ describeTarget('action-server', subject => {
 
   /** Two links clicked before the first answered: the page ends where the visitor ended, with that answer. */
   test('the last link clicked is the page that stays, with its own answer', async ({ page }) => {
-    await page.goto(`${subject.origin}/navigate`);
+    await open(page);
     await expect(byId(page, ACTION_IDS.navWho)).toHaveText('everyone');
 
     await byId(page, ACTION_IDS.navAna).click();
@@ -56,7 +65,7 @@ describeTarget('action-server', subject => {
 
   /** `navigation.pending` while the destination's data is on its way — what a loading bar binds to. */
   test('says a navigation is on its way while its data is', async ({ page }) => {
-    await page.goto(`${subject.origin}/navigate`);
+    await open(page);
     await expect(byId(page, ACTION_IDS.navPending)).toHaveText('false');
 
     await byId(page, ACTION_IDS.navAna).click();

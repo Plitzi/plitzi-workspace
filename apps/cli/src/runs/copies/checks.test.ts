@@ -117,16 +117,16 @@ describe('what the space’s lint passed with but warned of', () => {
 });
 
 // A copy importing `node:crypto` into its functions passed its tests under `node --test`; only its server, failing to
-// start, said so. The checks build them as the runner does, by the project's installed sdk-server.
+// start, said so. The checks build them as the runner does, by the project's installed sdk-actions.
 describe('a run’s checks of the functions', () => {
-  it('build them by the project’s sdk-server, a problem where it is — the copy’s files, the project’s modules', async () => {
+  it('build them by the project’s sdk-actions, a problem where it is — the copy’s files, the project’s modules', async () => {
     const root = await projectWith('console.log("ok · 1 pages · 0 warnings · 0 suggestions");\n');
     const copy = await projectWith('console.log("ok · 1 pages · 0 warnings · 0 suggestions");\n');
-    const server = path.join(root, 'node_modules', '@plitzi', 'sdk-server');
+    const server = path.join(root, 'node_modules', '@plitzi', 'sdk-actions');
     await fs.mkdir(server, { recursive: true });
     await fs.writeFile(
       path.join(server, 'package.json'),
-      JSON.stringify({ name: '@plitzi/sdk-server', type: 'module', exports: { './functions-runner': './runner.js' } })
+      JSON.stringify({ name: '@plitzi/sdk-actions', type: 'module', exports: { './functions': './runner.js' } })
     );
     await fs.writeFile(
       path.join(server, 'runner.js'),

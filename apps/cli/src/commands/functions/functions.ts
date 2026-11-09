@@ -376,68 +376,94 @@ export const tryFunction = async (task: string, options: FunctionsOptions): Prom
   printRun(task, reply.data);
 };
 
-/** The part of this project's `@plitzi/sdk-server/functions-runner` that `dev` uses — read, since it is the project's. */
+/** The part of this project's `@plitzi/sdk-actions/functions` that `dev` uses — read, since it is the project's. */
 type LocalFunctions = {
   load: (source: Files) => Promise<{ ok: true; tasks: string[] } | { ok: false; problems: Problem[] }>;
   tryTask: (task: string, params: Record<string, unknown>) => Promise<RunReport>;
 };
 
+/** What the project's `@plitzi/sdk-runtime/runner` makes: the isolates a space's code runs in, handed on unread. */
+type IsolateRunner = unknown;
+
 type LocalRunner = {
-  /** `dataDir` is what `ctx.data` reads; a runner from before it ignores it, and its `ctx.data` is not there. */
+  /**
+   * `runner` is what runs the code, handed in since the host and the isolates are packages apart; `dataDir` is what
+   * `ctx.data` reads.
+   */
   createLocalFunctions: (options: {
+    runner: IsolateRunner;
     credentials?: Record<string, Record<string, string>>;
     dataDir?: string;
   }) => LocalFunctions;
 };
 
+type IsolatesModule = { createIsolateRunner: (options: { concurrency: number }) => IsolateRunner };
+
 const isLocalRunner = (value: unknown): value is LocalRunner =>
   isRecord(value) && typeof value.createLocalFunctions === 'function';
 
+const isIsolatesModule = (value: unknown): value is IsolatesModule =>
+  isRecord(value) && typeof value.createIsolateRunner === 'function';
+
 /**
- * This project's own runner: `dev` runs the functions with the `@plitzi/sdk-server` the project installed, so the build,
- * the checks, the isolates and the limits are the platform's own, at the version the project is on.
+ * This project's own runner: `dev` runs the functions with the `@plitzi/sdk-actions` and the `@plitzi/sdk-runtime` the
+ * project installed, so the build, the checks, the isolates and the limits are the platform's own, at the version the
+ * project is on.
  */
 /** The install that gives a project the isolates its functions run in on the platform. */
-export const ISOLATES_INSTALL = '-D @plitzi/sdk-server isolated-vm core-js';
+export const ISOLATES_INSTALL = '-D @plitzi/sdk-actions @plitzi/sdk-runtime isolated-vm';
+
+/** What the project resolves of each: the host's local functions, and the isolates that run them. */
+export type IsolateEntries = { host?: string; isolates?: string };
 
 /**
- * What the project lacks to run its functions as the platform does, in isolates: its `@plitzi/sdk-server`'s runner,
- * and the two packages that runner loads beside it — asked from where it loads them. Empty when it has all three.
+ * What the project lacks to run its functions as the platform does, in isolates: its `@plitzi/sdk-actions`'s local
+ * functions, its `@plitzi/sdk-runtime`'s runner, and `isolated-vm` beside that runner — asked from where it loads it.
+ * Empty when it has all three.
  */
-export const isolatesMissing = (root: string): { entry?: string; missing: string[] } => {
-  let entry: string | undefined;
+export const isolatesMissing = (root: string): IsolateEntries & { missing: string[] } => {
+  const project = createRequire(path.join(root, 'package.json'));
+  const resolved = (specifier: string): string | undefined => {
+    try {
+      return project.resolve(specifier);
+    } catch {
+      // Said by whoever asks: the one way to have it is to install it.
+      return undefined;
+    }
+  };
+  const host = resolved('@plitzi/sdk-actions/functions');
+  const isolates = resolved('@plitzi/sdk-runtime/runner');
+  let vm = false;
   try {
-    entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/functions-runner');
+    vm = isolates !== undefined && Boolean(createRequire(isolates).resolve('isolated-vm'));
   } catch {
-    // Said by whoever asks: the one way to have it is to install it.
+    // Missing beside the runner, where it loads it.
   }
 
-  const beside = entry === undefined ? undefined : createRequire(entry);
   const missing = [
-    ...(entry === undefined ? ['@plitzi/sdk-server'] : []),
-    ...['isolated-vm', 'core-js'].filter(name => {
-      try {
-        beside?.resolve(name === 'core-js' ? 'core-js/actual/url' : name);
-
-        return beside === undefined;
-      } catch {
-        return true;
-      }
-    })
+    ...(host === undefined ? ['@plitzi/sdk-actions'] : []),
+    ...(isolates === undefined ? ['@plitzi/sdk-runtime'] : []),
+    ...(vm ? [] : ['isolated-vm'])
   ];
 
-  return { ...(entry === undefined ? {} : { entry }), missing };
+  return { ...(host === undefined ? {} : { host }), ...(isolates === undefined ? {} : { isolates }), missing };
 };
 
-const projectRunner = async (root: string): Promise<LocalRunner | undefined> => {
+const projectRunner = async (
+  root: string
+): Promise<{ createLocalFunctions: LocalRunner['createLocalFunctions']; runner: IsolateRunner } | undefined> => {
   // Asked before anything runs, from where the runner loads them: missing, the first task failed in the server's words
   // (a run's dev-1).
-  const { entry, missing } = isolatesMissing(root);
-  if (entry !== undefined && missing.length === 0) {
+  const { host, isolates, missing } = isolatesMissing(root);
+  if (host !== undefined && isolates !== undefined && missing.length === 0) {
     try {
-      const loaded: unknown = await import(pathToFileURL(entry).href);
-      if (isLocalRunner(loaded)) {
-        return loaded;
+      const local: unknown = await import(pathToFileURL(host).href);
+      const runtime: unknown = await import(pathToFileURL(isolates).href);
+      if (isLocalRunner(local) && isIsolatesModule(runtime)) {
+        return {
+          createLocalFunctions: local.createLocalFunctions,
+          runner: runtime.createIsolateRunner({ concurrency: 1 })
+        };
       }
     } catch {
       // Said below: what is installed is not a runner this CLI can drive.
@@ -445,7 +471,7 @@ const projectRunner = async (root: string): Promise<LocalRunner | undefined> => 
   }
 
   fail(
-    `plitzi functions dev runs them as the platform does — in isolates, within its limits — with this project’s own @plitzi/sdk-server (${missing.length > 0 ? `missing: ${missing.join(', ')}` : 'the one installed has no runner this CLI drives'}):\n` +
+    `plitzi functions dev runs them as the platform does — in isolates, within its limits — with this project’s own @plitzi/sdk-actions and @plitzi/sdk-runtime (${missing.length > 0 ? `missing: ${missing.join(', ')}` : 'the ones installed have no runner this CLI drives'}):\n` +
       `  ${projectAdd(ISOLATES_INSTALL)}\n` +
       `Without the isolates, the project’s own server (${projectRun('start')}) runs the same functions natively: call an action there with POST /_action { "actionId", "input" }.`
   );
@@ -488,13 +514,13 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
 
   const params = paramsOf(options.params);
   const root = params && (await rootOf());
-  const runner = root ? await projectRunner(root) : undefined;
-  if (!root || !runner) {
+  const installed = root ? await projectRunner(root) : undefined;
+  if (!root || !installed) {
     return;
   }
 
   // Its credentials are the project's environment (`PLITZI_CREDENTIALS`), read by the runner as the project's server reads them.
-  const local = runner.createLocalFunctions({ dataDir: path.join(root, DATA_DIR) });
+  const local = installed.createLocalFunctions({ runner: installed.runner, dataDir: path.join(root, DATA_DIR) });
   const run = async (): Promise<void> => {
     const loaded = await local.load(await readFunctionsFiles(root));
     if (!loaded.ok) {

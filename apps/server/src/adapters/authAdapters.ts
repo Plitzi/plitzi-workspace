@@ -1,4 +1,5 @@
-import type { SSRAdapters, SSRRequest, SSRSession, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest, SSRSession } from '@plitzi/sdk-kernel/types';
+import type { SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * The three adapters a page server asks about WHO a request carries, for a deployment that answers them itself.

@@ -75,7 +75,9 @@ describeTarget('auth-server', subject => {
       // redirect rule, not by anything the button knows.
       await page.getByRole('button', { name: 'Sign out' }).click();
 
-      await expect(page).toHaveURL(turnedAway);
+      // Told nowhere: the page they signed out on is the one they left, and a sign-in sending them back to it would
+      // only send them to sign in again (`signedOutHere`).
+      await expect(page).toHaveURL(`${subject.origin}/login`);
       await expect(page.getByText(editor.email)).toBeHidden();
     });
 

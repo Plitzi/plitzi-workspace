@@ -1,11 +1,11 @@
-import { requestOrigin } from '@plitzi/sdk-server/kernel';
+import { requestOrigin } from '@plitzi/sdk-kernel/http';
 
 import { connectionId } from './sign';
 import { DEFAULT_PROXY_TOOLS } from './types';
 
 import type { ResourceProxy, ResourceProxySettings } from './types';
 import type { McpProxyOptions } from '../../../options';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 
 export const PROXY_PATH = '/__proxy';
 

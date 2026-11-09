@@ -1,9 +1,8 @@
-import { get } from '@plitzi/plitzi-ui/helpers/lodash';
-
 import { serverProviderSource } from './providerWhen';
 import getBindingsDetails from '../dataSource/getBindingsDetails';
 import getSourceName from '../dataSource/helpers/getSourceName';
 import { isRecord } from '../helpers/isRecord';
+import { get } from '../helpers/lodash';
 import { templatePaths } from '../helpers/twigWrapper';
 
 import type { Element, ElementBinding } from '../types';

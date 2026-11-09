@@ -4,14 +4,15 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { createServer } from './createServer';
-import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 
-import type { Element, Schema, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../types';
+import type { Element, Schema } from '@plitzi/sdk-shared';
 
 /**
  * An address that shows nothing answers 404, never a page that says "not found" with a 200 a crawler indexes: one no

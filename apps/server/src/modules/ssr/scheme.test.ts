@@ -1,13 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
-import { unusedPort } from '../../core/unusedPort';
 
-import type { Element, Schema, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../types';
+import type { Element, Schema } from '@plitzi/sdk-shared';
 
 /**
  * A `system` theme drawn on the server as the visitor's machine asks: the scheme the browser kept, or the one Chromium

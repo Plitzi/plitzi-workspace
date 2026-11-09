@@ -14,9 +14,11 @@ import {
 } from '@plitzi/sdk-shared/store';
 
 import { actionsCallbacks } from './callbacks';
+import { deliverCall } from './deliverCall';
 import { endedStatusOf, ServerActionContext } from './ServerActionContext';
 import InteractionsContext from '../../InteractionsContext';
 
+import type { ActionResponse, Delivery } from './deliverCall';
 import type { ServerActionAnswer, RunServerAction } from './ServerActionContext';
 import type {
   ActionCallMode,
@@ -39,20 +41,6 @@ type RunParams = {
   /** What a completed run refreshes — see `writeInvalidationParams`. */
   invalidateQueries?: string;
   invalidateElements?: string[];
-};
-
-type ActionResponse = {
-  runId?: string;
-  status?: string;
-  output?: Record<string, unknown>;
-  error?: string;
-  /** The refusal's code, when its step gave one (`refuse('banned', …)`): what a flow branches on, never the words. */
-  code?: string;
-  reason?: string;
-  /** What the flow did, step by step. Sent to any page whose debugging the deployment authorizes. */
-  steps?: ActionRunStep[];
-  /** The steps WITH what each read and answered. Only ever sent to an authoring request or by a dev server. */
-  trace?: Record<string, unknown>[];
 };
 
 /**
@@ -208,6 +196,8 @@ const flowErrorOf = (actionId: string, payload: ActionResponse) => ({
  */
 const ActionInteractions = ({ children }: ActionInteractionsProps) => {
   const { useInteractions, interactionsManager } = use(InteractionsContext);
+  // Called with the visitor's cookies (`credentials: 'include'`): the endpoint may be on the actions' own origin
+  // (`action.origin`), whose CORS answers this page; on the page's origin it is what `same-origin` is.
   const [endpoint] = useCommonStore('actions.endpoint');
   /**
    * What this space can run, when something knows — the builder seeds it, a published page has nothing here.
@@ -263,7 +253,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       }
 
       const input = parseInput(params.input);
-      const body = JSON.stringify({ actionId, input, ...(idempotencyKey ? { idempotencyKey } : {}) });
+      const call = { actionId, input, ...(idempotencyKey ? { idempotencyKey } : {}) };
+      const body = JSON.stringify(call);
       /**
        * Recorded when the request is SENT, not when it answers.
        *
@@ -288,7 +279,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         if (serverRunId) {
           // The run is already marked aborted here; whether the server heard is not something the page can act on,
           // and an unhandled rejection over it is noise in somebody else's console.
-          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' }).catch(
+          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'include' }).catch(
             () => undefined
           );
         }
@@ -319,6 +310,21 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         }
       };
 
+      /**
+       * Kept in the queue: no worker or runner could run it now, and it runs as soon as one can. The run reads `queued`
+       * until then — what puts the SDK's calm "waiting" line on the page — and it is said where an author looks.
+       */
+      const onQueued = () => {
+        updateActionRun(record, { status: 'queued' });
+        pConsole.info(
+          'actions',
+          <span>
+            Server action <b>{actionId}</b> is waiting: nothing could run it now, and it runs as soon as something can
+          </span>,
+          { actionId, mode, status: 'queued' }
+        );
+      };
+
       if (mode === 'detached') {
         // Announced as it starts, not only when it fails. A detached run is invisible by construction — the flow
         // returned, the page moved on — so without this the honest answer to "did anything happen?" is a network
@@ -334,18 +340,15 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         // `keepalive` so a navigation right after "Send" does not kill the request: the flow is not waiting for
         // the answer, which is exactly when the page is most likely to move on. It caps the body at ~64KB, which
         // is a limit on INPUTS and generous for them.
-        void fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          keepalive: true,
-          signal: controller.signal,
-          body
-        })
-          .then(async response => {
-            const payload = (await response.json().catch(() => ({}))) as ActionResponse;
-            if (!response.ok) {
-              reportRefusal(response.status, payload, endpoint);
+        void deliverCall({ endpoint, call, signal: controller.signal, keepalive: true, onQueued })
+          .then(delivery => {
+            if ('unreachable' in delivery) {
+              throw delivery.unreachable;
+            }
+
+            const { status: answeredWith, payload } = delivery;
+            if (answeredWith < 200 || answeredWith >= 300) {
+              reportRefusal(answeredWith, payload, endpoint);
               settle(failedRun(payload));
               reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
 
@@ -420,7 +423,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-            credentials: 'same-origin',
+            credentials: 'include',
             signal: controller.signal,
             body
           });
@@ -523,15 +526,12 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return { accepted: true, status: 'streaming', runId, output: {} };
       }
 
-      let response: Response;
+      let delivery: Delivery;
       try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          signal: controller.signal,
-          body
-        });
+        delivery = await deliverCall({ endpoint, call, signal: controller.signal, onQueued });
+        if ('unreachable' in delivery) {
+          throw delivery.unreachable;
+        }
       } catch (error: unknown) {
         settle(aborted(controller, error));
         // A server that is down, a connection that dropped, a page kept open through a deploy. Reported like a
@@ -548,9 +548,9 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return unreachable;
       }
 
-      const payload = (await response.json().catch(() => ({}))) as ActionResponse;
-      if (!response.ok) {
-        reportRefusal(response.status, payload, endpoint);
+      const { status: answeredWith, payload } = delivery;
+      if (answeredWith < 200 || answeredWith >= 300) {
+        reportRefusal(answeredWith, payload, endpoint);
         settle(failedRun(payload));
         // As every other mode does: a flow listening on the launching element hears a refusal however it was run.
         reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
@@ -567,7 +567,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             runId: payload.runId,
             reason: payload.reason,
             error: payload.error,
-            status: String(response.status)
+            status: String(answeredWith)
           }
         );
 
@@ -628,7 +628,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       try {
         const response = await fetch(`${endpoint}/run/${params.runId}`, {
           method: 'DELETE',
-          credentials: 'same-origin'
+          credentials: 'include'
         });
         const cancelled = response.status === 204;
         // Said either way, because "nothing happened" is the same thing to look at as "it stopped": a cancel is

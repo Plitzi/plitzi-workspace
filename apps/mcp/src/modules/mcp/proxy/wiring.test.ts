@@ -8,7 +8,9 @@ import { createServer } from '../../../createServer';
 import { emptySpace } from '../helpers';
 
 import type { ResourceProxy } from './types';
-import type { Schema, SSRAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
+import type { HttpServer } from '@plitzi/sdk-kernel/http';
+import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 
 /** The blast radius of this feature, pinned. A render is a throwaway widget, so rewriting its URLs is invisible
  *  and temporary; plitzi_apply writes the user's REAL space, where a rewritten URL would be persisted into
@@ -31,7 +33,7 @@ const seedSpace = (): { schema: Schema; style: Style } => {
   return { schema: space.schema, style: space.style };
 };
 
-type Deployment = { server: SSRServer; port: number; saved: () => Schema | undefined };
+type Deployment = { server: HttpServer; port: number; saved: () => Schema | undefined };
 
 // An ephemeral port, claimed by probing one with a throwaway listener: a fixed one makes the suite fail on
 // whatever else is already holding it — including the other servers this file starts.

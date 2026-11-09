@@ -1,4 +1,4 @@
-import { serverLog } from '../../helpers/serverLog';
+import { serverLog } from '@plitzi/sdk-kernel/log';
 
 import type { Schema } from '@plitzi/sdk-shared';
 

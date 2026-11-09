@@ -11,7 +11,9 @@
     "lint": "yarn run -T eslint ."
   },
   "dependencies": {
+    "@plitzi/sdk-actions": "workspace:*",
     "@plitzi/sdk-authoring": "workspace:*",
+    "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
   },

@@ -1,12 +1,13 @@
-import { defineFunctions } from '@plitzi/sdk-server/functions';
+import { defineFunctions } from '@plitzi/sdk-runtime';
 
 import { acceptsQueuedJobs } from './actions.ts';
 import { shapeBoard } from './board.ts';
 
 import type { ActivityLog } from './store/activity.ts';
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
-import type { FunctionTask } from '@plitzi/sdk-server/functions';
-import type { ActionJobQueue, ActionJobStatus } from '@plitzi/sdk-shared';
+import type { ActionLookups } from '@plitzi/sdk-actions';
+import type { JobQueue } from '@plitzi/sdk-actions/types';
+import type { FunctionTask } from '@plitzi/sdk-runtime';
+import type { JobStatus } from '@plitzi/sdk-shared';
 
 /**
  * This deployment's own steps — its native functions (`docs/en/functions.md`), used here for the work only a
@@ -17,7 +18,7 @@ import type { ActionJobQueue, ActionJobStatus } from '@plitzi/sdk-shared';
  */
 
 type TaskDeps = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   activity: ActivityLog;
   lookups: ActionLookups;
   /** Names this process in the activity feed, so a job that moved between replicas is visible as having moved. */
@@ -70,7 +71,7 @@ const pause = (ms: number, signal: AbortSignal): Promise<void> =>
     signal.addEventListener('abort', onAbort, { once: true });
   });
 
-const STATUSES: ActionJobStatus[] = ['pending', 'running', 'succeeded', 'failed', 'dead', 'cancelled'];
+const STATUSES: JobStatus[] = ['pending', 'running', 'paused', 'succeeded', 'failed', 'dead', 'cancelled'];
 
 export const createFunctions = ({ queue, activity, lookups, replica }: TaskDeps) => {
   const note: FunctionTask<{ message: string }> = {
@@ -125,9 +126,9 @@ export const createFunctions = ({ queue, activity, lookups, replica }: TaskDeps)
       await queue.enqueue({
         id,
         spaceId: ctx.spaceId,
-        actionId,
         environment: ctx.environment,
-        trigger: 'custom',
+        // What the worker runs: this action, through its `custom` trigger — the queue's way in.
+        target: { kind: 'action', name: actionId, trigger: 'custom' },
         // The job's own id travels with it, for a flow that counts its attempts — see `flaky-sync`. An action that
         // does not declare `jobId` never sees it: undeclared input is dropped before its first step.
         input: { ...toPayload(payload), jobId: id },
@@ -207,15 +208,16 @@ export const createFunctions = ({ queue, activity, lookups, replica }: TaskDeps)
       const [at, { jobs }, waiting, done, schedules, actions, totals] = await Promise.all([
         queue.now(),
         queue.listJobs({ spaceIds, limit: 12, offset: 0 }),
-        queue.listJobs({ spaceIds, actionId: 'reminder', status: 'pending', limit: 20, offset: 0 }),
-        queue.listJobs({ spaceIds, actionId: 'reminder', status: 'succeeded', limit: 1, offset: 0 }),
+        queue.listJobs({ spaceIds, kind: 'action', name: 'reminder', status: 'pending', limit: 20, offset: 0 }),
+        queue.listJobs({ spaceIds, kind: 'action', name: 'reminder', status: 'succeeded', limit: 1, offset: 0 }),
         queue.listSchedules(spaceIds),
         lookups.listActions?.(ctx.spaceId) ?? Promise.resolve([]),
         Promise.all(STATUSES.map(status => queue.listJobs({ spaceIds, status, limit: 0, offset: 0 })))
       ]);
-      const counts: Record<ActionJobStatus, number> = {
+      const counts: Record<JobStatus, number> = {
         pending: 0,
         running: 0,
+        paused: 0,
         succeeded: 0,
         failed: 0,
         dead: 0,

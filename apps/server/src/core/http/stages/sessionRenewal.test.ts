@@ -2,15 +2,19 @@ import { request } from 'node:http';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { TEST_KEYS } from '@plitzi/sdk-kernel/testing';
+
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { offlineDataOf } from '../../../modules/ssr/tests/offlineData';
 import { createAuth } from '../../auth/createAuth';
+import { TEST_SECRET } from '../../auth/tests/keys';
 import { createServer } from '../../createServer';
-import { unusedPort } from '../../unusedPort';
 
-import type { AccountAdapters, AccountRecord } from '../../auth/api';
-import type { IdentityAdapters } from '../../auth/identity';
-import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRServer } from '../../../types';
+import type { AccountAdapters, AccountRecord } from '@plitzi/sdk-kernel/identity';
+import type { IdentityAdapters } from '@plitzi/sdk-kernel/identity';
+import type { SSRSession } from '@plitzi/sdk-kernel/types';
 
 /**
  * A page asked for by a browser whose access cookie has died while its refresh cookie lives on.
@@ -83,7 +87,8 @@ const adapters: IdentityAdapters & AccountAdapters = {
 };
 
 const auth = createAuth({
-  tokens: { secret: 'test-secret', issuer: BASE, audience: [BASE] },
+  tokens: { keys: TEST_KEYS, issuer: BASE, audience: [BASE] },
+  secret: TEST_SECRET,
   cookie: { name: 'test_session' },
   adapters
 });

@@ -1,4 +1,5 @@
-import { configStaticStage, healthStage } from '@plitzi/sdk-server/kernel';
+import { configStaticStage, healthStage } from '@plitzi/sdk-kernel/http';
+import { statsStage } from '@plitzi/sdk-kernel/stats';
 import { createOAuthGuardStage, createOAuthStage } from '@plitzi/sdk-server/oauth';
 
 import { createMcpOnlyStage, createMcpStage } from './stages/mcp';
@@ -6,9 +7,10 @@ import { previewStage } from './stages/preview';
 import { createWidgetProxyStage } from './stages/proxy';
 
 import type { McpOptions } from './options';
-import type { BaseContext, PipelineExtensions, Stage } from '@plitzi/sdk-server/kernel';
+import type { BaseContext, Stage } from '@plitzi/sdk-kernel/http';
+import type { PipelineExtensions } from '@plitzi/sdk-server';
 
-// The lean MCP-only pipeline: an optional health endpoint (k8s probes), then any static mounts the consumer
+// The lean MCP-only pipeline: an optional health endpoint (k8s probes) and its stats (`/_stats`, with `stats`), then any static mounts the consumer
 // configured, then MCP for every other request — the server owns its whole sub-domain, so MCP is served at the
 // root, not under /mcp. configStaticStage falls through (returns false) when no mount matches, so non-asset
 // requests still reach MCP. The OAuth stage claims the discovery and grant endpoints before that catch-all, and
@@ -17,6 +19,7 @@ import type { BaseContext, PipelineExtensions, Stage } from '@plitzi/sdk-server/
 // for the render App with no credential to send.
 export const buildMCPPipeline = (options: McpOptions = {}): Stage<BaseContext>[] => [
   healthStage,
+  statsStage,
   configStaticStage,
   createWidgetProxyStage(options),
   createOAuthStage(options.oauth),

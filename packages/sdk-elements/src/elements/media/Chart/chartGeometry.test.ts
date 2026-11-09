@@ -1,6 +1,38 @@
 import { describe, expect, it } from 'vitest';
 
-import { along, chartRows, chartScale, chartSlices } from './chartGeometry';
+import {
+  along,
+  axisLabelIndexes,
+  chartRows,
+  chartScale,
+  chartSegments,
+  chartSeriesOf,
+  chartSlices,
+  chartTable,
+  colorSlots,
+  lineSummary
+} from './chartGeometry';
+
+describe('a chart’s colours', () => {
+  it('keeps each series’s colour by its key while it is drawn, whatever its place, and gives a new one the first free', () => {
+    const first = colorSlots(new Map(), ['a', 'b', 'c']);
+
+    expect([...first]).toEqual([
+      ['a', 0],
+      ['b', 1],
+      ['c', 2]
+    ]);
+    // Reordered: nothing changes, and the same map is answered, so the chart renders once.
+    expect(colorSlots(first, ['c', 'a', 'b'])).toBe(first);
+
+    // `b` left and `d` came: `d` takes what nobody drawn holds; `b`, back, finds its own while it is free.
+    const second = colorSlots(first, ['c', 'd', 'a']);
+
+    expect([second.get('a'), second.get('c'), second.get('d')]).toEqual([0, 2, 1]);
+    expect(colorSlots(second, ['a', 'b', 'c']).get('b')).toBe(1);
+    expect(colorSlots(second, ['a', 'b', 'c', 'd']).get('b')).toBe(3);
+  });
+});
 
 describe('a chart’s rows', () => {
   it('reads records by their fields, plain numbers by their place, and leaves out what is no number', () => {
@@ -25,12 +57,7 @@ describe('a chart’s rows', () => {
 
 describe('a chart’s scale', () => {
   it('starts at zero and ends on a round step above the highest', () => {
-    expect(
-      chartScale([
-        { label: 'a', value: 7 },
-        { label: 'b', value: 13 }
-      ])
-    ).toEqual({
+    expect(chartScale([7, 13])).toEqual({
       min: 0,
       max: 15,
       ticks: [0, 5, 10, 15]
@@ -38,13 +65,8 @@ describe('a chart’s scale', () => {
   });
 
   it('reaches below zero for a negative value, and takes a top it is given', () => {
-    expect(
-      chartScale([
-        { label: 'a', value: -3 },
-        { label: 'b', value: 4 }
-      ]).min
-    ).toBeLessThan(0);
-    expect(chartScale([{ label: 'a', value: 42 }], 100).max).toBe(100);
+    expect(chartScale([-3, 4]).min).toBeLessThan(0);
+    expect(chartScale([42], 100).max).toBe(100);
   });
 
   it('places a value along the axis', () => {
@@ -63,6 +85,88 @@ describe('a donut’s slices', () => {
     ).toEqual([
       ['a', 0, 0.25],
       ['b', 0.25, 0.75]
+    ]);
+  });
+});
+
+describe('a chart of several series', () => {
+  it('keeps every row in its place, each series read by its field, a missing value a gap', () => {
+    expect(
+      chartTable(
+        [
+          { at: '12:00', a: 1, b: 4 },
+          { at: '12:01', b: 5 },
+          { at: '12:02', a: '3', b: 6 }
+        ],
+        'at',
+        [
+          { field: 'a', label: 'worker-1' },
+          { field: 'b', label: 'worker-2' }
+        ]
+      )
+    ).toEqual({
+      labels: ['12:00', '12:01', '12:02'],
+      titles: ['12:00', '12:01', '12:02'],
+      lines: [
+        { key: 'a', label: 'worker-1', values: [1, undefined, 3] },
+        { key: 'b', label: 'worker-2', values: [4, 5, 6] }
+      ]
+    });
+  });
+
+  it('breaks a line where a value is missing', () => {
+    expect(chartSegments([1, 2, undefined, 4]).map(segment => segment.map(point => point.index))).toEqual([
+      [0, 1],
+      [3]
+    ]);
+  });
+
+  it('writes only the labels that have room, and none left empty', () => {
+    expect(axisLabelIndexes(['a', 'b', 'c', 'd', 'e'], 20, 40)).toEqual([0, 2, 4]);
+    expect(axisLabelIndexes(['a', '', 'c'], 100)).toEqual([0, 2]);
+    // Round times every ten rows of 7px: each is 70px from the last, so every one is written.
+    expect(
+      axisLabelIndexes(
+        Array.from({ length: 31 }, (_, index) => (index % 10 === 4 ? 'x' : '')),
+        7
+      )
+    ).toEqual([4, 14, 24]);
+  });
+
+  it('sums a series up as its last value and its highest', () => {
+    expect(lineSummary([2, 9, undefined, 4, undefined])).toEqual({ last: 4, max: 9 });
+    expect(lineSummary([undefined])).toEqual({});
+  });
+});
+
+describe('the series a chart is given', () => {
+  it('reads records as bound and `field:label` as written, leaving out what names no field', () => {
+    expect(chartSeriesOf([{ field: 'cpu', label: 'CPU' }, { label: 'none' }, { field: 'mem' }])).toEqual([
+      { field: 'cpu', label: 'CPU' },
+      { field: 'mem', label: 'mem' }
+    ]);
+    expect(chartSeriesOf('cpu:CPU, mem , :x')).toEqual([
+      { field: 'cpu', label: 'CPU' },
+      { field: 'mem', label: 'mem' }
+    ]);
+  });
+});
+
+describe('a chart whose axis says less than its readout', () => {
+  it('titles each row by its own field, the axis writing only what it is given', () => {
+    const table = chartTable(
+      [
+        { tick: '12:00', at: '12:00', a: 1 },
+        { tick: '', at: '12:01', a: 2 }
+      ],
+      'tick',
+      [{ field: 'a', label: 'a' }],
+      'at'
+    );
+
+    expect([table.labels, table.titles]).toEqual([
+      ['12:00', ''],
+      ['12:00', '12:01']
     ]);
   });
 });

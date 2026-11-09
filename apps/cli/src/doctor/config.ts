@@ -395,7 +395,7 @@ const gitChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
 
 /** The minimum the project's own server holds a signing secret to — or nothing, when it cannot be asked. */
 const minimumSecret = async (root: string): Promise<number | undefined> => {
-  const actions = await projectModule(root, '@plitzi/sdk-server/actions').catch(() => undefined);
+  const actions = await projectModule(root, '@plitzi/sdk-actions').catch(() => undefined);
   const minimum = isRecord(actions) ? actions.MIN_SIGNING_SECRET_LENGTH : undefined;
 
   return typeof minimum === 'number' ? minimum : undefined;

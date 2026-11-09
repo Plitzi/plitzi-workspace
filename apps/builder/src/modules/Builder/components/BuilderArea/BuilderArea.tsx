@@ -5,14 +5,14 @@ import clsx from 'clsx';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
-import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { PluginAssetsContext } from '@plitzi/sdk-shared/plugins/react';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/react';
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema';
 import { ownHtml } from '@plitzi/sdk-shared/security';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
-import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 import { processCssTokens } from '@plitzi/sdk-style/helpers';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables';
 import AppContext from '@pmodules/App/AppContext';

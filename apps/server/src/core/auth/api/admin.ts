@@ -1,10 +1,12 @@
-import { checkPermission } from '../authorize';
+import { checkPermission } from '@plitzi/sdk-kernel/identity';
+
 import { refuse, NOT_OFFERED, LIFETIME, STATUSES, profileOf, clientOf } from './values';
 
-import type { CredentialCarrier } from '../credentials';
-import type { Actor } from '../identity';
 import type { AuthContext } from './context';
-import type { AccountStatus, AccountQuery, AuthOutcome } from './types';
+import type { AuthOutcome } from './types';
+import type { AccountStatus, AccountQuery } from '@plitzi/sdk-kernel/identity';
+import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
+import type { Actor } from '@plitzi/sdk-kernel/identity';
 
 /** What an admin does to other accounts. */
 export const adminFlows = ({

@@ -195,6 +195,7 @@ The space is not written until these are fixed.
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visible-expression` | `visible` written as an expression (`"state.plan == 'pro'"`, `"a && !b"`) — it takes a source, read as one, which resolves to nothing | `visible: { source: 'state.plan', template: "{{ state.plan == 'pro' }}" }` — or a source alone, `'state.open'`, `'!state.open'` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
+| `when-refused-conflict` | a page's `whenRefused: 'notFound'` beside `unauthorizedRedirect`, or on a page nobody is refused | keep the redirect or the not found; give the page `access` or `accessLevel: 'authenticated'` |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |
 | `withheld-page-invalid` | `settings.withheldPage` naming no page of the space, or one with an `access` of its own | the id or slug of a page every visitor may see: `withheldPage: 'no-access'` |
 

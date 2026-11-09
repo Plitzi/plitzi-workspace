@@ -4,7 +4,7 @@ import { handleAuthorizeStart, handleAuthorizeSubmit } from './authorize';
 import { renderConsentPage } from './consentPage';
 
 import type { OAuthParams } from './params';
-import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
 const CLIENT = { clientId: 'client-1', clientName: 'Some Connector', redirectUris: ['https://host.test/cb'] };
 

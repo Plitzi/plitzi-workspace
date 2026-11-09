@@ -1,0 +1,38 @@
+/**
+ * A step refusing to go on, with a reason written for whoever called — a password too easy to guess, a board that is
+ * read-only, a quota reached.
+ *
+ * What any other step throws stays in the run's record and never reaches the caller: an error can carry a query, a
+ * URL, a credential's name, and a page is shown to anybody. This one says, by its type, that its message was written
+ * to be read. A run that ends on it answers `status: 'failed'` with the message as `error`, which a page's flow reads
+ * as `{{ step.error }}` — the same place a refusal before the run began puts its own.
+ *
+ * `code` names the refusal for code that catches it (`oauth-not-connected`): what to tell apart by, never the message,
+ * which is written for a person and may change.
+ */
+export class ActionRefusal extends Error {
+  code?: string;
+
+  constructor(message: string, options?: { code?: string }) {
+    super(message);
+    this.name = 'ActionRefusal';
+    if (options?.code !== undefined) {
+      this.code = options.code;
+    }
+  }
+}
+
+/**
+ * Whether an error is a refusal — told apart by its NAME, never by `instanceof`: a functions bundle carries its own copy
+ * of the class (`functions/build.ts`), so a project's code loaded from one throws a refusal this class never made, and
+ * its reason was dropped on the way to the page.
+ */
+export const isActionRefusal = (error: unknown): error is Error =>
+  error instanceof Error && error.name === 'ActionRefusal';
+
+/** A refusal's code, when it has one that is a string — read off a refusal made by any copy of the class. */
+export const refusalCodeOf = (error: unknown): string | undefined => {
+  const code: unknown = isActionRefusal(error) && 'code' in error ? error.code : undefined;
+
+  return typeof code === 'string' ? code : undefined;
+};
