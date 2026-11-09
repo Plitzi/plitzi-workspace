@@ -1,5 +1,20 @@
 # @plitzi/sdk-mcp
 
+## 0.39.2
+
+### Patch Changes
+
+- fad1264: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [fad1264]
+  - @plitzi/plitzi-sdk@0.39.2
+  - @plitzi/sdk-server@0.39.2
+  - @plitzi/sdk-authoring@0.39.2
+  - @plitzi/sdk-kernel@0.39.2
+  - @plitzi/sdk-schema@0.39.2
+  - @plitzi/sdk-shared@0.39.2
+  - @plitzi/sdk-style@0.39.2
+
 ## 0.39.1
 
 ### Patch Changes

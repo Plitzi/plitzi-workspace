@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-server",
-  "version": "0.39.1",
+  "version": "0.39.2",
   "license": "AGPL-3.0",
   "files": [
     "dist",
@@ -97,7 +97,7 @@
     "jsonwebtoken": "^9.0.3"
   },
   "peerDependencies": {
-    "@plitzi/sdk-actions": "^0.39.1",
+    "@plitzi/sdk-actions": "^0.39.2",
     "react": "^19",
     "react-dom": "^19",
     "sharp": "^0.34.0"
