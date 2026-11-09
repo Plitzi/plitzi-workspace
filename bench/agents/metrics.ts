@@ -1,7 +1,7 @@
 import type { RunRecord } from './events';
 
 /**
- * One run, measured as RFC 0025 §5.4 measures it: whether it did the task, how it degraded — failing, hallucinating,
+ * One run, measured as the agent benchmark measures it (`bench/README.md` § Agents): whether it did the task, how it degraded — failing, hallucinating,
  * or getting there the long way — and what it cost, net of what the harness itself loads before the model reads a word.
  */
 
@@ -33,7 +33,7 @@ export interface Measure {
 
 export const measureRun = ({ record, check, overhead, ceiling }: Measure): RunMetrics => {
   const tokensIn = record.turns.reduce((total, turn) => total + turn.input, 0);
-  const tokensOut = record.turns.reduce((total, turn) => total + turn.output, 0);
+  const tokensOut = record.outputTotal ?? record.turns.reduce((total, turn) => total + turn.output, 0);
   const netTokens = Math.max(0, tokensIn - overhead * record.turns.length) + tokensOut;
   const wasted = record.turns
     .filter(turn => turn.afterRefusal)

@@ -128,25 +128,32 @@ const openCodeConfig = async (invocation: Invocation): Promise<void> => {
   await fs.writeFile(path.join(invocation.dir, 'opencode.json'), JSON.stringify(config, null, 2));
 };
 
-export const runAgent = async (invocation: Invocation): Promise<RunRecord> => {
+/** A run as measured, and the harness's own stream it was read from — kept for a run worth reading again. */
+export interface AgentRun {
+  record: RunRecord;
+  lines: string[];
+}
+
+export const runAgent = async (invocation: Invocation): Promise<AgentRun> => {
   if (invocation.context === 'none') {
     await fs.rm(path.join(invocation.dir, '.claude/skills'), { recursive: true, force: true });
   }
 
   if (invocation.model.harness === 'claude') {
-    return fromClaudeCode(await linesOf('claude', await claudeArgs(invocation), invocation.dir, invocation.timeoutMs));
+    const lines = await linesOf('claude', await claudeArgs(invocation), invocation.dir, invocation.timeoutMs);
+
+    return { record: fromClaudeCode(lines), lines };
   }
 
   await openCodeConfig(invocation);
-
-  return fromOpenCode(
-    await linesOf(
-      'opencode',
-      ['run', '--model', invocation.model.id, '--format', 'json', invocation.prompt],
-      invocation.dir,
-      invocation.timeoutMs
-    )
+  const lines = await linesOf(
+    'opencode',
+    ['run', '--model', invocation.model.id, '--format', 'json', invocation.prompt],
+    invocation.dir,
+    invocation.timeoutMs
   );
+
+  return { record: fromOpenCode(lines), lines };
 };
 
 /**
@@ -157,7 +164,7 @@ export const runAgent = async (invocation: Invocation): Promise<RunRecord> => {
 export const overheadOf = async (model: Model, scenario: Scenario, timeoutMs: number): Promise<number> => {
   const dir = await scratch('overhead');
   try {
-    const record = await runAgent({
+    const { record } = await runAgent({
       model,
       scenario,
       prompt: 'Reply with the single word: ok',

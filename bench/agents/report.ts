@@ -1,7 +1,7 @@
 import type { RunMetrics } from './metrics';
 
 /**
- * Many runs read as RFC 0025 §5.4 reads them: per configuration (a model and a context level), the three kinds of
+ * Many runs read as the agent benchmark reads them (`bench/README.md` § Agents): per configuration (a model and a context level), the three kinds of
  * degradation and the cost per verified success, held to the largest model's; and the floor — the smallest
  * configuration that is as good, and among those the cheapest.
  */
@@ -16,7 +16,10 @@ export interface RunResult {
   metrics: RunMetrics;
 }
 
-/** RFC 0025 §5.4's proposals; the first baseline's spread says whether they sit outside the noise. */
+/**
+ * The floor's tolerances. At 30 runs a configuration a rate's 95% interval is about eleven points wide — wider than
+ * `successBelow` — so they decide only with the spread beside them (`bench/README.md` § The first baseline).
+ */
 export const TOLERANCES = {
   successBelow: 0.05,
   hallucinationAbove: 0.01,
@@ -38,6 +41,21 @@ export interface ConfigurationReport {
   /** Tasks it never did, in any run. */
   neverDone: string[];
   belowFloorBecause: string[];
+  /** The spread across runs: a difference inside it is no difference. 95% Wilson intervals for the rates. */
+  spread: { success: Interval; hallucination: Interval; netTokens: Interval };
+  /** Each task as this configuration did it: what the next tool should take off the model, where it broke. */
+  tasks: TaskReport[];
+}
+
+/** Low and high, inclusive. For a rate, its 95% Wilson interval; for tokens, the run's first and third quartiles. */
+export type Interval = readonly [number, number];
+
+export interface TaskReport {
+  task: string;
+  runs: number;
+  successes: number;
+  /** Why the runs that failed did, most common first. */
+  failedBecause: { why: string; runs: number }[];
 }
 
 const median = (values: readonly number[]): number => {
@@ -46,6 +64,54 @@ const median = (values: readonly number[]): number => {
 
   return sorted.length === 0 ? 0 : sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 };
+
+const quantile = (values: readonly number[], q: number): number => {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 0) {
+    return 0;
+  }
+
+  const at = (sorted.length - 1) * q;
+  const below = Math.floor(at);
+  const above = Math.min(sorted.length - 1, below + 1);
+
+  return sorted[below] + (sorted[above] - sorted[below]) * (at - below);
+};
+
+// Wilson's interval rather than the normal one: with five runs a rate of 0% or 100% is common, and the normal interval
+// would call it certain.
+export const wilson = (hits: number, runs: number): Interval => {
+  if (runs === 0) {
+    return [0, 1];
+  }
+
+  const z = 1.96;
+  const rate = hits / runs;
+  const centre = rate + (z * z) / (2 * runs);
+  const margin = z * Math.sqrt((rate * (1 - rate)) / runs + (z * z) / (4 * runs * runs));
+  const denominator = 1 + (z * z) / runs;
+
+  return [Math.max(0, (centre - margin) / denominator), Math.min(1, (centre + margin) / denominator)];
+};
+
+const tasksOf = (runs: readonly RunResult[], tasks: readonly string[]): TaskReport[] =>
+  tasks.map(task => {
+    const ofTask = runs.filter(result => result.task === task);
+    const reasons = new Map<string, number>();
+    for (const result of ofTask) {
+      if (!result.metrics.success) {
+        const why = result.metrics.failedBecause ?? result.check.why ?? 'the check failed';
+        reasons.set(why, (reasons.get(why) ?? 0) + 1);
+      }
+    }
+
+    return {
+      task,
+      runs: ofTask.length,
+      successes: ofTask.filter(result => result.metrics.success).length,
+      failedBecause: [...reasons].map(([why, count]) => ({ why, runs: count })).sort((a, b) => b.runs - a.runs)
+    };
+  });
 
 const average = (values: readonly number[]): number =>
   values.length === 0 ? 0 : values.reduce((total, value) => total + value, 0) / values.length;
@@ -97,19 +163,27 @@ export const reportOf = (all: readonly RunResult[]): { configurations: Configura
     const wastePerTask = tasks.map(task =>
       average(runs.filter(result => result.task === task).map(result => result.metrics.wasteShare))
     );
+    const hallucinated = runs.filter(result => result.metrics.hallucinations > 0).length;
+    const tokens = runs.map(result => result.metrics.netTokens);
 
     return {
       configuration,
       runs: runs.length,
       successRate: successes.length / Math.max(1, runs.length),
-      hallucinationRate: runs.filter(result => result.metrics.hallucinations > 0).length / Math.max(1, runs.length),
+      hallucinationRate: hallucinated / Math.max(1, runs.length),
       wasteAverage: average(runs.map(result => result.metrics.wasteShare)),
       wasteWorstTask: Math.max(0, ...wastePerTask),
       costPerSuccess:
         successes.length === 0
           ? Number.POSITIVE_INFINITY
           : runs.reduce((total, result) => total + result.metrics.netTokens, 0) / successes.length,
-      neverDone: tasks.filter(task => !successes.some(result => result.task === task))
+      neverDone: tasks.filter(task => !successes.some(result => result.task === task)),
+      spread: {
+        success: wilson(successes.length, runs.length),
+        hallucination: wilson(hallucinated, runs.length),
+        netTokens: [quantile(tokens, 0.25), quantile(tokens, 0.75)]
+      },
+      tasks: tasksOf(runs, tasks)
     };
   };
 
@@ -141,24 +215,47 @@ export const reportOf = (all: readonly RunResult[]): { configurations: Configura
 
 const percent = (value: number): string => `${(value * 100).toFixed(0)}%`;
 
+const range = ([low, high]: Interval): string => `${(low * 100).toFixed(0)}–${(high * 100).toFixed(0)}`;
+
+const thousands = (value: number): string => Math.round(value).toLocaleString('en');
+
+const brokeWhere = (entry: ConfigurationReport): string[] => {
+  const broken = entry.tasks.filter(task => task.successes < task.runs);
+  if (broken.length === 0) {
+    return [];
+  }
+
+  return [
+    '',
+    `### ${entry.configuration}`,
+    '',
+    ...broken.map(
+      task =>
+        `- **${task.task}**: ${String(task.successes)}/${String(task.runs)} — ${task.failedBecause.map(reason => `${reason.why} (${String(reason.runs)})`).join('; ')}`
+    )
+  ];
+};
+
 export const reportMarkdown = (all: readonly RunResult[]): string => {
   const { configurations, floor } = reportOf(all);
   const rows = configurations.map(
     entry =>
-      `| ${entry.configuration} | ${String(entry.runs)} | ${percent(entry.successRate)} | ${percent(entry.hallucinationRate)} | ${percent(entry.wasteAverage)} (worst ${percent(entry.wasteWorstTask)}) | ${Number.isFinite(entry.costPerSuccess) ? Math.round(entry.costPerSuccess).toLocaleString('en') : '—'} | ${entry.belowFloorBecause.join('; ') || 'at or above the floor'} |`
+      `| ${entry.configuration} | ${String(entry.runs)} | ${percent(entry.successRate)} (${range(entry.spread.success)}) | ${percent(entry.hallucinationRate)} (${range(entry.spread.hallucination)}) | ${percent(entry.wasteAverage)} (worst ${percent(entry.wasteWorstTask)}) | ${Number.isFinite(entry.costPerSuccess) ? thousands(entry.costPerSuccess) : '—'} | ${thousands(entry.spread.netTokens[0])}–${thousands(entry.spread.netTokens[1])} | ${entry.belowFloorBecause.join('; ') || 'at or above the floor'} |`
   );
+  const broke = configurations.flatMap(brokeWhere);
 
   return [
     '# Agents on Plitzi — the floor',
     '',
-    `The first configuration is the reference; tolerances: success within ${percent(TOLERANCES.successBelow)}, hallucination within ${percent(TOLERANCES.hallucinationAbove)}, waste ≤ ${percent(TOLERANCES.wasteAverage)} on average and ${percent(TOLERANCES.wastePerTask)} on a task, every task done at least once; a run over ${String(TOLERANCES.ceilingTimesMedian)}× the reference's median on its task fails.`,
+    `The first configuration is the reference; tolerances: success within ${percent(TOLERANCES.successBelow)}, hallucination within ${percent(TOLERANCES.hallucinationAbove)}, waste ≤ ${percent(TOLERANCES.wasteAverage)} on average and ${percent(TOLERANCES.wastePerTask)} on a task, every task done at least once; a run over ${String(TOLERANCES.ceilingTimesMedian)}× the reference's median on its task fails. Beside each rate, its 95% interval across the runs; beside the cost, the runs' net tokens from the first to the third quartile — a difference inside them is no difference.`,
     '',
-    '| Configuration | Runs | Success | Hallucinated | Waste | Net tokens per success | Floor |',
-    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| Configuration | Runs | Success | Hallucinated | Waste | Net tokens per success | Net tokens a run | Floor |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows,
     '',
     floor
       ? `**Recommended: ${floor}** — at or above the floor, and the cheapest per verified success.`
-      : 'No configuration is at or above the floor.'
+      : 'No configuration is at or above the floor.',
+    ...(broke.length > 0 ? ['', '## Where each one broke', ...broke] : [])
   ].join('\n');
 };

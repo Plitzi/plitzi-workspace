@@ -118,15 +118,16 @@ process, ~10 MB counted as the server's.
 
 ## Agents: how small a model can work on Plitzi
 
-`yarn agents` is a different bench: not the server's hardware but the agents that write a space — RFC 0025's floor,
-the smallest model and context whose results are as good as the largest's. It spends tokens, so nothing runs without
-a model named, and it is run at milestones rather than on every change.
+`yarn agents` is a different bench: not the server's hardware but the agents that write a space. It finds **the
+floor** — the smallest model and context whose results are as good as the largest's — which is what the tools an agent
+uses are built to lower (`docs/en/agent-tooling.md` § Built for the smallest model). It spends tokens, so nothing runs
+without a model named.
 
 ```bash
 yarn agents --model claude:claude-opus-5-5 --model claude:claude-haiku-4-5-20251001 \
   --model opencode:ollama/qwen3.6:latest --dry-run       # what would run
 yarn agents --model claude:claude-haiku-4-5-20251001 --task mcp-text --runs 1
-yarn agents --model … --context none --context core --context full
+yarn agents --model … --context none --context core --context full --runs 5
 yarn agents --report <dir>                               # the report again, from results/agents/<dir>/runs.jsonl
 ```
 
@@ -134,13 +135,57 @@ yarn agents --report <dir>                               # the report again, fro
   Claude Code (`claude -p`, on the account it is signed in to), any other in OpenCode (`ollama/<model>` reaches a local
   Ollama). Each is started with nothing of the person's own setup — project settings only, no MCP server but the
   bench's, the scenario's tools only, and a shell that runs `npx plitzi` and `npm run` and nothing else.
+- **The context levels**, swept with the models: `none` (no skill), `core` (the skills as a project carries them) and
+  `full` (every reference handed over up front). A smaller context saves tokens until the model guesses what it was
+  not shown; that is part of the same curve.
 - **The tasks** (`agents/tasks.ts`): three on a space through the MCP — the MCP's dev server, serving a copy of its
-  sample per run — and three on a project through the CLI, written per run by the workspace's CLI from its catalog
+  sample per run (`apps/mcp/src/devSample.test.ts` holds it sound: a task the space cannot do is counted as the
+  agent's failure) — and three on a project through the CLI, written per run by the workspace's CLI from its catalog
   template; one after a person moved the file the change is in. Each is checked on the result: the space as saved, or
   the project's space authored again.
-- **What is measured** (`agents/metrics.ts`): success; hallucinations (a refusal naming something made up); waste (the
-  tokens of the turns after a refusal); net tokens — what a turn costs beyond the harness's own system prompt and tools,
-  measured per model on a run asked for one word; and turns.
-- **The report** (`results/agents/<date>/report.md`): per configuration, the success, hallucination and waste rates and
-  the net tokens per verified success, held to the reference within RFC 0025's tolerances; a run past three times the
-  reference's median on its task fails. The floor recommended is the cheapest configuration that holds.
+- **What is measured** (`agents/metrics.ts`), degradation in three kinds: **failure** (the task's check does not
+  hold), **hallucination** (a refusal naming something made up — a type, a field, a class, an option) and **the long
+  way round** (turns, refusals met, and the waste: the share of a run's tokens spent on the turns after a refusal).
+  Tokens are net: what a turn costs beyond the harness's own system prompt and tools, measured per model on a run
+  asked for one word. A Claude Code run's output is read from its `result`, the only event that says the whole.
+- **A ceiling per run**: three times the reference's median on that task. A run past it fails — a loop is not a slow
+  success, and without the ceiling one looping run would hide inside an average.
+- **The number that decides: net tokens per verified success** — every run's tokens over the runs the check
+  confirmed, so a cheap model that fails or loops costs more per success than a dearer one that does not.
+- **The floor** is the smallest configuration that, against the reference, succeeds no more than 5 points less,
+  hallucinates no more than 1 point more, wastes no more than 15% of a run's tokens on average and 30% on any task, and
+  did every task at least once. Among those that hold, the cheapest per verified success is the one recommended.
+- **The report** (`results/agents/<date>/report.md`): the table of every configuration with each rate's 95% interval
+  (Wilson's: with five runs, 0% and 100% are common, and the normal interval would call them certain) and the net
+  tokens a run from the first to the third quartile — a difference inside them is no difference — then, for each
+  configuration, the tasks it broke and why. Every run that failed or met a refusal keeps the harness's stream in
+  `transcripts/`, to read what it did.
+
+**The first baseline (2026-11-09, Opus 5.5 alone, 90 runs).** What it settled:
+
+- **The skills' core costs nothing on the MCP and saves nothing on a project for the largest model**: `none` and `core`
+  did every task, at 67.5k and 69.1k net tokens per success. A core is for the models below it; a run with them says
+  what it buys.
+- **Every reference handed over up front never pays**: `full` did every task, at 4.5 to 31 times the tokens of `none`
+  (316k for a page added on the MCP, 640k for one title changed in a project) — past the ceiling, so 0% verified. References stay read when a task names
+  their subject.
+- **On the MCP a turn is the cost**: ~35k net tokens each, ~19k of them the tool listing read again — a two-turn task
+  is 70k, a three-turn one 106–109k, with no refusal in 60 runs. A turn saved is worth more than any description
+  trimmed.
+- **The tolerances are below the noise at this size**: 30 runs a configuration put a 100% success rate's 95% interval
+  at 89–100, eleven points wide, against a 5-point tolerance. A difference of 5 points needs a few hundred runs a
+  configuration; until a run that size, a configuration is below the floor for what its interval says, not its rate.
+- **Two of the bench's own faults, fixed before it counted**: the dev sample dressed twelve elements in classes nothing
+  defined (a task refused by the MCP, rightly, and counted as Opus's failure), and a Claude Code run's output was read
+  from its turns, 45 tokens for 689.
+
+Not measured yet — the next run: the rungs below Opus (Sonnet, Haiku 5.5 and 4.5, an open model through Ollama), so
+the floor is a model and not only a context; and the CLI's tasks again, whose waste this run reads too high — the
+workspace's `plitzi` had lost its executable mark in a build (fixed in `apps/cli/vite.config.ts`), and the agents spent
+turns working round "Permission denied".
+
+**When it runs.** Five runs or more per task, model and context — agents are not deterministic — at milestones: a
+change to what an agent loads or calls (the MCP's tools, a skill's core, a CLI command's output) and a new model worth
+a rung. A change enters when no configuration at or above the floor does worse on any of the three kinds and some
+configuration's cost per verified success goes down. Between runs, what is free to measure is held by tests: the MCP's
+listing (`e2e/connector.test.ts`), the skills' budgets (`skills.test.ts`), each command's output on a fixture project.

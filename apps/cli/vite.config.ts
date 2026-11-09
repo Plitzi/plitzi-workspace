@@ -1,8 +1,13 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 
+import { chmod } from 'node:fs/promises';
+import path from 'node:path';
+
 import { defaultServerConditions } from 'vite';
 import { defineConfig } from 'vitest/config';
+
+import type { Plugin } from 'vite';
 
 /**
  * The workspace packages are read from their sources under test — `@plitzi/source`, which leads every one of their
@@ -14,6 +19,19 @@ const SOURCE_CONDITION = '@plitzi/source';
 const testConditions = process.env.VITEST ? [SOURCE_CONDITION, ...defaultServerConditions] : undefined;
 
 /**
+ * `bin.js` left as a program. Yarn marks a workspace's bin executable when it installs, and every build writes the file
+ * anew without the mark: after one, `plitzi` in any project that links this one answered "Permission denied" — the
+ * agent benchmark's runs spent their turns working round it. npm marks it on install, so what is published never needed
+ * this; what is built here does.
+ */
+const executableBin = (): Plugin => ({
+  name: 'plitzi-executable-bin',
+  async writeBundle(options) {
+    await chmod(path.join(options.dir ?? 'dist', 'bin.js'), 0o755);
+  }
+});
+
+/**
  * A command, not a library.
  *
  * So there are no type declarations to emit and no consumer to keep an export surface stable for: what ships is one
@@ -21,6 +39,7 @@ const testConditions = process.env.VITEST ? [SOURCE_CONDITION, ...defaultServerC
  * they are the package's own dependencies, and bundling them would ship two copies to anyone who has them already.
  */
 export default defineConfig({
+  plugins: [executableBin()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

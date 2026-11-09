@@ -238,6 +238,55 @@
           }
         },
         "cache": ".titleIcon{margin-left:10px;transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms;:where(.buttonLink:hover) &{transform:translateX(10px);}}"
+      },
+      "heroTitle": {
+        "name": "heroTitle",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "letter-spacing": "-0.02em",
+              "text-align": "center"
+            }
+          }
+        },
+        "cache": ".heroTitle{letter-spacing:-0.02em;text-align:center;}"
+      },
+      "cardTitle": {
+        "name": "cardTitle",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "margin-bottom": "8px"
+            }
+          }
+        },
+        "cache": ".cardTitle{margin-bottom:8px;}"
+      },
+      "cardText": {
+        "name": "cardText",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "opacity": "0.8"
+            }
+          }
+        },
+        "cache": ".cardText{opacity:0.8;}"
+      },
+      "rscInfo": {
+        "name": "rscInfo",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "display": "block"
+            }
+          }
+        },
+        "cache": ".rscInfo{display:block;}"
       }
     },
     "tablet": {

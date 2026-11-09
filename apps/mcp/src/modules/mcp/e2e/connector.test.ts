@@ -96,7 +96,7 @@ const widgetOperations = [
 // patches; inlined it measured ~130k more), and for the toasts' parts as `notifications` fields; the words are in the
 // guide. Set with ~0.6k of room.
 //
-// Lowered from 218.5k to 71.6k (RFC 0025): the op union is listed once, by plitzi_apply. plitzi_validate became its
+// Lowered from 218.5k to 71.6k, for small models (`docs/en/agent-tooling.md`): the op union is listed once, by plitzi_apply. plitzi_validate became its
 // `dryRun`; a saved page is seen with plitzi_look, and a batch through `look` on that same `dryRun`; plitzi_render names its operations' types only (`compactInputShape`) while plitzi_apply is listed
 // beside it. Measured at 70.9k with ~0.7k of room — the whole listing an agent loads before it does anything.
 //

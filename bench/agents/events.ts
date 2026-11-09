@@ -26,6 +26,11 @@ export interface RunRecord {
   turns: Turn[];
   tools: ToolOutcome[];
   final: string;
+  /**
+   * Every token the run wrote, when the harness says it at the end. Claude Code's turns carry the usage their message
+   * started with — a few tokens each, whatever it went on to write — and only its `result` says the whole.
+   */
+  outputTotal?: number;
 }
 
 /** What a refusal sounds like: the tool said no, in Plitzi's words or the harness's. */
@@ -73,6 +78,7 @@ export const fromClaudeCode = (lines: readonly string[]): RunRecord => {
   const counted = new Set<string>();
   let refusedLast = false;
   let final = '';
+  let outputTotal: number | undefined;
 
   for (const event of parseLines(lines)) {
     const message = isRecord(event.message) ? event.message : undefined;
@@ -115,9 +121,13 @@ export const fromClaudeCode = (lines: readonly string[]): RunRecord => {
     if (event.type === 'result' && typeof event.result === 'string') {
       final = event.result;
     }
+
+    if (event.type === 'result' && isRecord(event.usage) && typeof event.usage.output_tokens === 'number') {
+      outputTotal = event.usage.output_tokens;
+    }
   }
 
-  return { turns, tools, final };
+  return { turns, tools, final, ...(outputTotal === undefined ? {} : { outputTotal }) };
 };
 
 /** OpenCode `run --format json`: a step's tools and its text, then `step_finish` with the step's tokens. */
