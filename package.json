@@ -42,16 +42,16 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.38",
     "@plitzi/sdk-shared": "workspace:*",
-    "react-router": "^8.4.0"
+    "react-router": "^8.5.1"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@types/react": "^19.3.0",
     "eslint": "^9.39.5",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "turbo": "^2.11.9"
+    "turbo": "^2.11.10"
   },
   "engines": {
     "node": "^24.22.1 || >=26.12.1"

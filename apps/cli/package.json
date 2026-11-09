@@ -27,20 +27,20 @@
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",
     "chalk": "^6.0.1",
-    "commander": "^15.0.0",
+    "commander": "^15.1.0",
     "esbuild": "^0.28.2",
     "fflate": "^0.8.3",
-    "playwright-core": "^1.64.1"
+    "playwright-core": "^1.65.0"
   },
   "devDependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
   },
   "scripts": {
     "build:dev": "vite build --mode development",

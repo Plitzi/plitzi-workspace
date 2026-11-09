@@ -40,7 +40,7 @@
   "dependencies": {
     "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "ws": "^8.22.0"
+    "ws": "^8.22.2"
   },
   "peerDependencies": {
     "isolated-vm": "^7.0.1"
@@ -51,17 +51,17 @@
     }
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.59.4",
-    "@types/node": "^26.6.5",
+    "@microsoft/api-extractor": "^7.60.1",
+    "@types/node": "^26.6.6",
     "@types/ws": "^8.18.2",
-    "core-js": "^3.50.0",
+    "core-js": "^3.51.0",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
-    "isolated-vm": "^7.0.1",
+    "isolated-vm": "^7.0.2",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.7",
     "vite-plugin-dts": "^5.1.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }

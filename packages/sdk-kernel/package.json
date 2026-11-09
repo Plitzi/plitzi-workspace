@@ -39,8 +39,8 @@
   "dependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "jsonwebtoken": "^9.0.3",
-    "undici": "^8.12.3",
-    "ws": "^8.22.0"
+    "undici": "^8.12.4",
+    "ws": "^8.22.2"
   },
   "peerDependencies": {
     "esbuild": "^0.28.2",
@@ -56,15 +56,15 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/ws": "^8.18.2",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "mysql2": "^3.24.6",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.7",
     "vite-plugin-dts": "^5.1.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }

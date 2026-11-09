@@ -43,7 +43,7 @@
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.17",
-    "immer": "^11.1.21",
+    "immer": "^11.2.9",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.2",
     "remark-gfm": "^4.0.1"
@@ -57,7 +57,7 @@
     "eslint": "^9.39.5",
     "react": "^19.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
   }
 }

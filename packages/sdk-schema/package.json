@@ -35,12 +35,12 @@
     "@plitzi/plitzi-ui": "^1.6.38",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
-    "immer": "^11.1.21"
+    "immer": "^11.2.9"
   },
   "devDependencies": {
     "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
   }
 }
