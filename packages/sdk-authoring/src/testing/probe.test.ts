@@ -111,9 +111,9 @@ describe('probePage / hidden by the width it is drawn at', () => {
     const findings = probePage(input(['nav', 'nav-link', 'bar', 'gone']));
 
     expect(findings.hidden).toEqual([{ id: 'gone', reason: 'display:none on itself' }]);
-    // Said apart: looked at, and hidden at this width on purpose. jsdom computes no `@media` rule, so here the bar —
-    // hidden by its base rule and shown only at another width — is the one hidden; a browser hides the nav too.
-    expect(findings.byWidth).toEqual(['bar']);
+    // Said apart: looked at, and hidden at this width on purpose — the nav (and the link inside it) by the rule of the
+    // width it is drawn at, the bar by its base rule, shown only at another width.
+    expect(findings.byWidth).toEqual(['nav', 'nav-link', 'bar']);
   });
 
   // A run's sheet pane — a wrapper with no box of its own around a legend a breakpoint hides on a tablet — failed the

@@ -158,7 +158,10 @@ describeTarget('action-server', subject => {
       await page.goto(subject.origin);
       await expect(page.locator(`[data-id="${ACTION_IDS.title}"]`)).toHaveText(ACTION_OUTPUT.title);
 
+      // Gone whole: a call no worker answered is handed to the page server to keep (`/_plitzi/queued`), and left as
+      // the worker's failure when that is away too.
       await page.route('**/_action', route => route.abort());
+      await page.route('**/_plitzi/queued', route => route.abort());
       await page.getByRole('button', { name: 'Run it' }).click();
 
       await expect(page.locator(`[data-id="${ACTION_IDS.status}"]`)).toHaveText('failed');
