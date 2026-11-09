@@ -58,15 +58,20 @@ const stateCookie = (value: string, maxAge: number): string =>
 
 /**
  * The client id this host is registered under, per authorization server and redirect address. Registration is
- * idempotent there — the same metadata is the same client — so each process asks once and keeps the answer.
+ * idempotent there — the same metadata is the same client — and each one renews the registration's time to live, so a
+ * process keeps the answer only for {@link REGISTRATION_KEPT_MS} and asks again: kept for good, a registration the
+ * server lost (its store emptied or restored, or its TTL run out under a host that never asked again) answered every
+ * sign-in on this host with "Unknown client" until the process restarted.
  */
-const clients = new Map<string, Promise<string>>();
+const REGISTRATION_KEPT_MS = 10 * 60 * 1000;
+
+const clients = new Map<string, { clientId: Promise<string>; until: number }>();
 
 const clientFor = (signIn: SSRSignInConfig, redirectUri: string, hostname: string): Promise<string> => {
   const key = `${signIn.registerUrl} ${redirectUri}`;
   const known = clients.get(key);
-  if (known) {
-    return known;
+  if (known && known.until > Date.now()) {
+    return known.clientId;
   }
 
   const registering = (async () => {
@@ -88,7 +93,7 @@ const clientFor = (signIn: SSRSignInConfig, redirectUri: string, hostname: strin
 
     return body.client_id;
   })();
-  clients.set(key, registering);
+  clients.set(key, { clientId: registering, until: Date.now() + REGISTRATION_KEPT_MS });
   // A failed registration is not remembered, so the next sign-in tries again.
   registering.catch(() => clients.delete(key));
 

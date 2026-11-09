@@ -31,6 +31,10 @@ const EXPIRES_AT = Math.floor(Date.now() / 1000) + 3600;
 /** The code the stand-in hands out, and the challenge it was asked with — so a redemption can be checked by PKCE. */
 let challenge = '';
 
+/** The client id the stand-in registers this host under, and how many times it was asked to. */
+let issuedClient = 'client-1';
+let registrations = 0;
+
 const readBody = (req: IncomingMessage): Promise<string> =>
   new Promise(resolve => {
     let body = '';
@@ -66,7 +70,8 @@ beforeAll(async () => {
       const body = await readBody(req);
       res.setHeader('Content-Type', 'application/json');
       if (req.url === '/register') {
-        res.end(JSON.stringify({ client_id: 'client-1' }));
+        registrations += 1;
+        res.end(JSON.stringify({ client_id: issuedClient }));
 
         return;
       }
@@ -74,7 +79,7 @@ beforeAll(async () => {
       const params = new URLSearchParams(body);
       const verified =
         params.get('code') === 'code-1' &&
-        params.get('client_id') === 'client-1' &&
+        params.get('client_id') === issuedClient &&
         createHash('sha256')
           .update(params.get('code_verifier') ?? '')
           .digest('base64url') === challenge;
@@ -179,6 +184,32 @@ describe('GET /auth/sign-in/callback', () => {
       );
 
       expect(back.headers.get('location'), returnTo).toBe('/');
+    }
+  });
+});
+
+// Last: it leaves the stand-in registering this host under another id.
+describe('the registration a sign-in is sent with', () => {
+  /**
+   * Kept for good, a registration the authorization server lost — its store emptied or restored, its TTL run out under
+   * a host that never asked again — answered every sign-in here with "Unknown client" until the process restarted.
+   */
+  it('is asked for again after a while, so a lost one is replaced and a kept one renewed', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      await start();
+      const asked = registrations;
+      issuedClient = 'client-2';
+
+      expect((await start()).authorize.searchParams.get('client_id')).toBe('client-1');
+      expect(registrations).toBe(asked);
+
+      vi.setSystemTime(Date.now() + 10 * 60 * 1000 + 1000);
+
+      expect((await start()).authorize.searchParams.get('client_id')).toBe('client-2');
+      expect(registrations).toBe(asked + 1);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

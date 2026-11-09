@@ -183,6 +183,13 @@ space while it hydrates.
   'authenticated'`: the space's 404, and nothing of it sent — not its name nor its path (`withholdPages`), where a
   401/403 told whoever probed the path that something was there. For a back-office.
 
+- **"Sign in with Plitzi" no longer answers "Unknown client" after the authorization server loses a registration.**
+  The page server kept the client id it registered a host under for as long as the process lived, while the
+  authorization server keeps a registration 90 days from the last time it was asked — and it was never asked again. A
+  store emptied or restored, or 90 days without a restart, and every sign-in on that host failed until the process
+  restarted. A page server now registers again (idempotent) at most every ten minutes: a lost registration is replaced
+  and a kept one renewed.
+
 - **A session that ended on the server no longer sends the browser round the sign-in for ever.** Signed out everywhere,
   revoked, or the database restored, the browser kept its cookie, the readable hint and the token it stored: it took
   itself for signed in, a sign-in for signed-out visitors sent it on, and the page server sent it straight back — 271
