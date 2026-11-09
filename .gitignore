@@ -2,6 +2,9 @@ node_modules
 dist
 !src/tests
 build
+# A module called `build` is source, not output: `sdk-kernel/src/build` (esbuild for every package's build) was
+# left out of git by the rule above, and CI's clone could not build `sdk-runtime` without it.
+!**/src/build/
 .env
 yarn-error.log
 .yarn/*
