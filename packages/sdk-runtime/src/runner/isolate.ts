@@ -4,7 +4,6 @@ import { promisify } from 'node:util';
 import { cpuLimitCores } from '@plitzi/sdk-kernel/stats';
 import { changeKv, changeListEntry } from '@plitzi/sdk-shared/functions';
 import { FunctionFailure, failedAnswerOf } from '@plitzi/sdk-shared/functions';
-import { functionSizeOfMemory, largerFunctionSize } from '@plitzi/sdk-shared/functions';
 
 import { createCpuMeter } from './cpuMeter';
 import { createFunctionsDriver, describeFunctions } from './driver';
@@ -14,6 +13,9 @@ import { guestEvents } from './guest/events';
 import { guestFetch } from './guest/fetch';
 import { installGuest } from './guest/install';
 import { guestPrelude } from './prelude';
+import { createRunClock } from './runClock';
+import { createStops, failureOfStop, failureOfThrown, stopMessage } from './stops';
+import { createTurnHolder } from './turnHolder';
 import { createTurns } from './turns';
 
 import type { CpuMeter, MeteredIsolate } from './cpuMeter';
@@ -24,8 +26,7 @@ import type {
   FunctionUsage,
   FunctionLimits,
   FunctionRunner,
-  FunctionsBundle,
-  FunctionStopReason
+  FunctionsBundle
 } from '@plitzi/sdk-shared/functions';
 import type IsolatedVM from 'isolated-vm';
 
@@ -82,11 +83,6 @@ type LiveInvocation = {
   shed: (overItsOwn: boolean) => void;
 };
 
-/** Why a runner gave an invocation back that was within its own memory: the runner's, never the code's. */
-const SHED_SAID =
-  'The functions runner ran short of memory and gave this invocation back before it took the whole runner down: ' +
-  'another runner takes it';
-
 /** What reading a bundle's declaration may spend: its top level runs, and nothing else. */
 const DESCRIBE_LIMITS: FunctionLimits = { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 1_000_000, calls: 100 };
 
@@ -100,17 +96,6 @@ const describeAnswer = (call: unknown): Promise<unknown> =>
     : Promise.reject(new Error('Nothing is reachable while a bundle is read'));
 
 const WATCHDOG_MS = 5;
-/** How much of an invocation's time is the runner's before the platform is told, so its wait for the answer grows. */
-const TELL_WAITED_MS = 100;
-
-/**
- * What isolated-vm throws when a `timeout` it was given runs out. Its timeout is wall time while the isolate runs, not
- * CPU: a runner whose isolates share its CPU stretched a 5 ms route past a 100 ms "CPU limit" under load. So it is given
- * the wall limit, a backstop; the CPU limit is the watchdog's, which reads the isolate's share of the process's CPU
- * (`createCpuMeter`).
- */
-const ISOLATE_TIMEOUT = 'Script execution timed out.';
-
 /** How long code that listens to `ctx.signal` gets to stop by itself before the isolate is disposed under it. */
 const ABORT_GRACE_MS = 50;
 
@@ -148,34 +133,6 @@ const cachedDataOf = (ivm: Ivm, compiled: object): IsolatedVM.ExternalCopy<Array
   'cachedData' in compiled && compiled.cachedData instanceof ivm.ExternalCopy ? compiled.cachedData : undefined;
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/** Past its memory: how much, and the size to ask for instead — the one thing its author can change. */
-const memoryStopMessage = (memoryMb: number): string => {
-  const size = functionSizeOfMemory(memoryMb);
-  const larger = size ? largerFunctionSize(size) : undefined;
-  const ran = size ? ` (a ${size} task)` : '';
-
-  return larger
-    ? `Went over its ${String(memoryMb)} MB of memory${ran}: a task that needs more asks to be larger in its limits ({ size: '${larger}' }), as far as its plan allows`
-    : `Went over its ${String(memoryMb)} MB of memory${ran}, the most a task runs with: hold less of it at once`;
-};
-
-const stopMessage = (reason: FunctionStopReason, limits: FunctionLimits): string => {
-  switch (reason) {
-    case 'cpu':
-      return `Stopped after ${String(limits.cpuMs)} ms of CPU`;
-    case 'wall':
-      return `Did not finish within ${String(limits.wallMs)} ms`;
-    case 'memory':
-      return memoryStopMessage(limits.memoryMb);
-    case 'output':
-      return `Answered more than the ${String(limits.outputBytes)} bytes it may`;
-    case 'calls':
-      return `Made more than the ${String(limits.calls)} calls to the platform it may`;
-    case 'aborted':
-      return 'The run was aborted';
-  }
-};
 
 /**
  * The most a PBKDF2 derivation may ask for. The runner does the work, outside the isolate's clock, so each is bounded
@@ -390,14 +347,11 @@ export const createIsolateRunner = ({
 
     const isolate = new ivm.Isolate({ memoryLimit: limits.memoryMb, snapshot });
     const timers = new Set<NodeJS.Timeout>();
-    /** Why it was stopped: a limit of its own, an abort — or `shed`, given back by a runner short of memory. */
-    let stopped: FunctionStopReason | 'shed' | undefined;
+    const clock = createRunClock();
+    const turn = createTurnHolder(turns);
     let calls = 0;
-    const startedAt = Date.now();
     /** The CPU the isolate was measured at, kept as it is read: a disposed isolate has none left to ask. */
     let isolateCpuMs = 0;
-    /** What the runner spent on the run's behalf — a PBKDF2 derivation — which the isolate's clock never sees. */
-    let hostCpuMs = 0;
     /**
      * The isolate's CPU once it was ready — the guest and the bundle compiled, the first time on a runner without V8's
      * cache of them: the platform's work, not the space's code. Its time is the code's own from there.
@@ -411,104 +365,27 @@ export const createIsolateRunner = ({
       return isolateCpuMs;
     };
     /** Whether it ran since the last look: what it was measured at moved. */
-    const readCpu = (): number => (readyCpuMs === undefined ? 0 : readIsolateCpu() - readyCpuMs) + hostCpuMs;
-    /** Its share of the process's CPU from the moment it was ready (`createCpuMeter`), and what the runner spent for it. */
+    const readCpu = (): number => (readyCpuMs === undefined ? 0 : readIsolateCpu() - readyCpuMs) + clock.hostCpuMs();
     let metered: MeteredIsolate | undefined;
-    const chargedCpu = (): number => (metered?.charged() ?? 0) + hostCpuMs;
-    /** Whether its code began: what came before — the isolate made, the bundle compiled — is the platform's time. */
-    let codeBegan = false;
-    /** How long it waited on what it asked of the platform — calls, sleeps — counted once while it waits on several. */
-    let awaitedMs = 0;
-    let awaitingSince: number | undefined;
-    /**
-     * Its own time: what it waited on that it asked for, and the CPU it took — what it would take on a runner of its own.
-     * Never the runner's: a turn waited for, a place behind other isolates in isolated-vm's threads (one per core: a
-     * spinner holds one until it ends), a core it was ready for and did not get. Counted from the clock, a route that
-     * slept 200 ms on a crowded runner was stopped at its 10 s.
-     */
-    /**
-     * A sleep counts what it asked for: the timer that wakes it is the runner's, on its main thread, and a crowded runner
-     * woke a 200 ms sleep seconds late — counted, a route was stopped at its 10 s. Its lateness, of the sleeps that ended
-     * and of the ones still past their time, is the runner's.
-     */
-    let lateMs = 0;
-    const sleeping = new Set<{ from: number; wanted: number }>();
-    const lateNow = (now: number): number =>
-      [...sleeping].reduce((late, sleep) => late + Math.max(0, now - sleep.from - sleep.wanted), lateMs);
-    const ownMs = (): number => {
-      if (!codeBegan) {
-        return 0;
-      }
-
-      const now = Date.now();
-      const awaitedNow = awaitedMs + (awaitingSince === undefined ? 0 : now - awaitingSince);
-
-      return Math.max(0, awaitedNow - lateNow(now)) + chargedCpu();
-    };
-    /** The turn at running JavaScript this isolate holds, if any, and how many answers of the platform it waits for. */
-    let holding: number | undefined;
-    let awaited = 0;
     /** What its CPU read when the watchdog last looked: still, while it waits, it is not running. */
     let lastCpuMs = 0;
-    /** A turn asked for and not yet given: two answers back at once ask once. */
-    let taking: Promise<void> | undefined;
-    /** Ended: a turn handed to it after that goes straight back. */
-    let ended = false;
-    /** What of its time was the runner's, and told the platform so far: its wait for the answer grows by it. */
-    let toldWaitedMs = 0;
-    const takeTurn = async (): Promise<void> => {
-      if (holding !== undefined) {
-        return;
-      }
-
-      taking ??= turns.take().then(id => {
-        taking = undefined;
-        if (ended) {
-          turns.give(id);
-        } else {
-          holding = id;
-        }
-      });
-      await taking;
-    };
-    const giveTurn = (): void => {
-      if (holding !== undefined) {
-        turns.give(holding);
-        holding = undefined;
-      }
-    };
-    /** Something it asked of the platform, its turn given up while it waits and taken again before it hears back. */
-    const waitingOn = async <T>(work: () => Promise<T>): Promise<T> => {
-      if (awaited === 0) {
-        awaitingSince = Date.now();
-      }
-
-      awaited++;
-      giveTurn();
-      try {
-        return await work();
-      } finally {
-        awaited--;
-        if (awaited === 0 && awaitingSince !== undefined) {
-          awaitedMs += Date.now() - awaitingSince;
-          awaitingSince = undefined;
-        }
-
-        await takeTurn();
-      }
-    };
-    const stop = (reason: FunctionStopReason | 'shed'): void => {
-      stopped ??= reason;
+    const { stop, stopped } = createStops(() => {
       readCpu();
       if (!isolate.isDisposed) {
         isolate.dispose();
       }
+    });
+    /** Something it asked of the platform, its turn given up while it waits and taken again before it hears back. */
+    const waitingOn = async <T>(work: () => Promise<T>): Promise<T> => {
+      clock.waitBegins();
+      turn.give();
+      try {
+        return await work();
+      } finally {
+        clock.waitEnds();
+        await turn.take();
+      }
     };
-    /** How a stop reads to the platform: a limit of its own as itself; given back by the runner, as `busy`. */
-    const failureOf = (reason: FunctionStopReason | 'shed'): FunctionFailure =>
-      reason === 'shed'
-        ? new FunctionFailure('busy', SHED_SAID)
-        : new FunctionFailure(reason, stopMessage(reason, limits));
     const running: LiveInvocation = {
       heldBytes: (): number => {
         if (isolate.isDisposed) {
@@ -537,27 +414,20 @@ export const createIsolateRunner = ({
       const cpuMs = readCpu();
       // Its CPU is its share of what the process took (`createCpuMeter`): beside more isolates than cores, never the time
       // it waited for one.
-      if (!isolate.isDisposed && chargedCpu() > limits.cpuMs) {
-        stop('cpu');
+      const over = isolate.isDisposed ? undefined : clock.overLimit(limits);
+      if (over) {
+        stop(over);
       }
 
-      const own = ownMs();
-      if (!isolate.isDisposed && own > limits.wallMs) {
-        stop('wall');
-      }
-
-      // Every moment that was not its own — its isolate made, a turn, a place behind others, a core — is the runner's:
-      // told the platform, whose wait for the answer would otherwise run out on time the code never had.
-      const runners = Date.now() - startedAt - own;
-      if (onWaited && runners - toldWaitedMs >= TELL_WAITED_MS) {
-        onWaited(runners - toldWaitedMs);
-        toldWaitedMs = runners;
+      const untold = onWaited ? clock.untoldWaitedMs() : undefined;
+      if (onWaited && untold !== undefined) {
+        onWaited(untold);
       }
 
       // Back from one answer while it waits on others, it holds its turn though it runs nothing: given up once its CPU
       // stood still a whole look — the next answer back takes one again.
-      if (holding !== undefined && awaited > 0 && cpuMs === lastCpuMs) {
-        giveTurn();
+      if (turn.holds() && clock.waits() > 0 && cpuMs === lastCpuMs) {
+        turn.give();
       }
 
       lastCpuMs = cpuMs;
@@ -605,25 +475,18 @@ export const createIsolateRunner = ({
       global.setSync(
         '__plitziSleep',
         new ivm.Reference((ms: number): Promise<void> => {
-          // A sleep past the time it has left ends it there, by its time limit — never cut short to fit: cut, the code
-          // woke at the limit and, the watchdog a look behind, finished as if it had slept.
-          const left = limits.wallMs - ownMs();
-          const wanted = Math.max(0, ms);
-          if (wanted >= left) {
-            later(Math.max(0, left), () => stop('wall'));
+          const plan = clock.sleep(ms, limits.wallMs);
+          if (!plan.wakes) {
+            later(plan.stopInMs, () => stop('wall'));
 
             return waitingOn(() => new Promise<void>(() => undefined));
           }
 
-          const sleep = { from: Date.now(), wanted };
-          sleeping.add(sleep);
-
           return waitingOn(
             () =>
               new Promise<void>(resolve => {
-                later(wanted, () => {
-                  sleeping.delete(sleep);
-                  lateMs += Math.max(0, Date.now() - sleep.from - wanted);
+                later(plan.wanted, () => {
+                  plan.woke();
                   resolve();
                 });
               })
@@ -639,8 +502,8 @@ export const createIsolateRunner = ({
         new ivm.Reference((message: string) =>
           waitingOn(() =>
             cryptoAnswer(message, ms => {
-              hostCpuMs += ms;
-              if (chargedCpu() > limits.cpuMs) {
+              clock.chargeHost(ms);
+              if (clock.chargedCpu() > limits.cpuMs) {
                 stop('cpu');
               }
             })
@@ -668,10 +531,11 @@ export const createIsolateRunner = ({
         throw new Error(`"${specifier}" cannot be imported: a bundle is one module`);
       });
       // Ready: what runs from here — the bundle's own top level, then the call — is the code's CPU, run in its turn.
-      await takeTurn();
+      await turn.take();
       readyCpuMs = readIsolateCpu();
-      metered = cpu.meter(readIsolateCpu);
-      codeBegan = true;
+      const meter = cpu.meter(readIsolateCpu);
+      metered = meter;
+      clock.begin(() => meter.charged());
       // No timeout of isolated-vm's: it counts the clock while JavaScript runs, a core waited for included, and stopped
       // code for the runner's load. The watchdog judges its time and CPU, and disposing the isolate stops any loop.
       await module.evaluate();
@@ -688,8 +552,9 @@ export const createIsolateRunner = ({
         stop('output');
       }
 
-      if (stopped) {
-        throw failureOf(stopped);
+      const stoppedFor = stopped();
+      if (stoppedFor) {
+        throw failureOfStop(stoppedFor, limits);
       }
 
       const outcome: unknown = JSON.parse(text);
@@ -706,19 +571,11 @@ export const createIsolateRunner = ({
 
       return 'value' in outcome ? outcome.value : null;
     } catch (error) {
-      if (error instanceof FunctionFailure && !stopped) {
-        throw error;
-      }
-
-      // isolated-vm's own timeout is only ever given `wallMs`, so its error is the time limit — a synchronous stretch
-      // that outlasted it. Disposed with no reason of ours: V8 ran out of the isolate's memory and took it down itself.
-      const timedOut = error instanceof Error && error.message === ISOLATE_TIMEOUT;
-      const reason = stopped ?? (timedOut ? 'wall' : isolate.isDisposed ? 'memory' : undefined);
-      throw reason ? failureOf(reason) : new FunctionFailure('error', messageOf(error));
+      throw failureOfThrown(error, { stopped: stopped(), disposed: isolate.isDisposed, limits });
     } finally {
       live.delete(running);
       metered?.end();
-      onUsage?.({ cpuMs: Math.round(chargedCpu()), wallMs: Date.now() - startedAt, calls });
+      onUsage?.({ cpuMs: Math.round(clock.chargedCpu()), wallMs: clock.elapsedMs(), calls });
       clearInterval(watchdog);
       timers.forEach(timer => clearTimeout(timer));
       signal?.removeEventListener('abort', onAbort);
@@ -726,8 +583,7 @@ export const createIsolateRunner = ({
         isolate.dispose();
       }
 
-      ended = true;
-      giveTurn();
+      turn.end();
       release();
     }
   };

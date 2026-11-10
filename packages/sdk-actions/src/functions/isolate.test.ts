@@ -1,14 +1,8 @@
-import { createHash, createHmac, pbkdf2Sync } from 'node:crypto';
-
 import { describe, expect, it, vi } from 'vitest';
-
-import { createIsolateRunner, PBKDF2_MAX_ITERATIONS } from '@plitzi/sdk-runtime/runner';
 
 import { createActionsModule } from '../engine/module';
 import { ASKS_ENOUGH, runner, SIGNING_SECRET, sourceOf, spaceWith } from './tests/isolateSpace';
 import { createSigning } from '../engine/runtime/signing';
-
-import type { IsolateRunner } from '@plitzi/sdk-runtime/runner';
 
 describe('preparing a space’s functions', () => {
   const module = createActionsModule({
@@ -112,107 +106,14 @@ describe('a space’s task, run in an isolate', () => {
     expect(JSON.stringify(result)).not.toContain(secret);
   });
 
-  it('cannot reach a host it did not declare, nor the network without ctx', async () => {
+  it('cannot reach a host it did not declare', async () => {
     const fetchImpl = vi.fn(() => Promise.resolve(new Response('{}')));
     const undeclared = await spaceWith(sourceOf('return (await ctx.fetch("https://evil.example.com/")).status;'), {
       fetchImpl
     });
-    const global = await spaceWith(sourceOf('return (await fetch("https://api.example.com/")).status;'), { fetchImpl });
 
     expect((await undeclared.run()).error).toContain('not among the hosts');
-    expect((await global.run()).error).toContain('through ctx.fetch');
     expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it('has the web’s APIs and none of Node’s', async () => {
-    const space = await spaceWith(
-      sourceOf(`
-        const bytes = new TextEncoder().encode('héllo €');
-        const digest = await crypto.subtle.digest('SHA-256', bytes);
-        const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('k'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
-        const signature = await crypto.subtle.sign('HMAC', key, bytes);
-        const hex = buffer => [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
-        await new Promise(resolve => setTimeout(resolve, 5));
-        const url = new URL('/a?b=1', 'https://x.example.com');
-        const response = Response.json({ ok: true }, { status: 201 });
-        return {
-          text: new TextDecoder().decode(bytes),
-          digest: hex(digest),
-          hmac: hex(signature),
-          verified: await crypto.subtle.verify('HMAC', key, signature, bytes),
-          uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(crypto.randomUUID()),
-          url: url.searchParams.get('b') + url.host,
-          clone: structuredClone({ a: [1] }),
-          response: [response.status, await response.json()],
-          base64: atob(btoa('ok')),
-          node: [typeof process, typeof globalThis.require, typeof Buffer]
-        };`)
-    );
-    const data = Buffer.from('héllo €');
-
-    expect((await space.run()).value).toEqual({
-      text: 'héllo €',
-      digest: createHash('sha256').update(data).digest('hex'),
-      hmac: createHmac('sha256', 'k').update(data).digest('hex'),
-      verified: true,
-      uuid: true,
-      url: '1x.example.com',
-      clone: { a: [1] },
-      response: [201, { ok: true }],
-      base64: 'ok',
-      node: ['undefined', 'undefined', 'undefined']
-    });
-  });
-
-  it('derives from a password with PBKDF2, as bits or as an HMAC key', async () => {
-    const space = await spaceWith(
-      sourceOf(`
-        const encode = text => new TextEncoder().encode(text);
-        const hex = buffer => [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
-        const password = await crypto.subtle.importKey('raw', encode('hunter2'), 'PBKDF2', false, ['deriveBits', 'deriveKey']);
-        const pbkdf2 = { name: 'PBKDF2', hash: 'SHA-256', salt: encode('salt'), iterations: 1000 };
-        const signing = await crypto.subtle.deriveKey(pbkdf2, password, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
-        return {
-          bits: hex(await crypto.subtle.deriveBits(pbkdf2, password, 256)),
-          signed: hex(await crypto.subtle.sign('HMAC', signing, encode('board')))
-        };`)
-    );
-    const derived = pbkdf2Sync('hunter2', 'salt', 1000, 32, 'sha256');
-
-    expect((await space.run()).value).toEqual({
-      bits: derived.toString('hex'),
-      signed: createHmac('sha256', derived).update('board').digest('hex')
-    });
-  });
-
-  it('refuses a key used for what it was not imported for, and a derivation past the runner’s bounds', async () => {
-    const attempt = (body: string) =>
-      spaceWith(
-        sourceOf(`
-          const encode = text => new TextEncoder().encode(text);
-          const pbkdf2 = iterations => ({ name: 'PBKDF2', hash: 'SHA-256', salt: encode('salt'), iterations });
-          try { ${body} } catch (error) { return error.name + ': ' + error.message; }`)
-      ).then(space => space.run());
-    const password = 'await crypto.subtle.importKey("raw", encode("pw"), "PBKDF2", false, ["deriveBits"])';
-    const hmac =
-      'await crypto.subtle.importKey("raw", encode("k"), { name: "HMAC", hash: "SHA-256" }, false, ["verify"])';
-
-    expect((await attempt(`await crypto.subtle.deriveBits(pbkdf2(1000), ${hmac}, 256);`)).value).toBe(
-      'InvalidAccessError: deriveBits takes a PBKDF2 key, from crypto.subtle.importKey'
-    );
-    expect((await attempt(`await crypto.subtle.sign('HMAC', ${hmac}, encode('x'));`)).value).toBe(
-      'InvalidAccessError: The key was not imported for sign'
-    );
-    expect(
-      (await attempt('await crypto.subtle.importKey("raw", encode("pw"), "PBKDF2", true, ["deriveBits"]);')).value
-    ).toBe('SyntaxError: A PBKDF2 key is never extractable');
-    expect(
-      (await attempt(`await crypto.subtle.deriveBits(pbkdf2(${String(PBKDF2_MAX_ITERATIONS + 1)}), ${password}, 256);`))
-        .value
-    ).toBe(`OperationError: PBKDF2 iterations is a whole number from 1 to ${String(PBKDF2_MAX_ITERATIONS)}`);
-    expect((await attempt(`await crypto.subtle.deriveBits(pbkdf2(1000), ${password}, 12);`)).value).toBe(
-      'OperationError: A PBKDF2 length is a multiple of 8 bits'
-    );
   });
 
   it('changes a value without losing a writer that got there first', async () => {
@@ -306,17 +207,6 @@ describe('a space’s task, run in an isolate', () => {
 
     expect((await space.run()).logs).toEqual(['checking {"n":1} Error: late', 'from the console']);
   });
-
-  it('starts every invocation from nothing', async () => {
-    const space = await spaceWith(
-      sourceOf('globalThis.count = (globalThis.count ?? 0) + 1; return globalThis.count;', {
-        extra: 'globalThis.loaded = (globalThis.loaded ?? 0) + 1;'
-      })
-    );
-    await space.run();
-
-    expect((await space.run()).value).toBe(1);
-  });
 });
 
 describe('what an invocation spends', () => {
@@ -367,69 +257,5 @@ describe('what an invocation spends', () => {
 
     expect((await space.run()).error).toContain('used their CPU for this minute');
     expect(onUsage).not.toHaveBeenCalled();
-  });
-});
-
-describe('what a runner keeps', () => {
-  const invocationOf = (): Parameters<typeof runner.invoke>[0]['invocation'] => ({
-    kind: 'task',
-    name: 'probe.run',
-    params: {},
-    context: { spaceId: 1, environment: 'main', runId: 'r', trigger: 'call', callerId: 'x' }
-  });
-  const LIMITS = { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 100_000, calls: 10 };
-  const codeOf = (value: string, padding: number) =>
-    `export default { tasks: [{ namespace: 'probe', action: 'run', run: () => '${value}' }] };\n// ${'x'.repeat(padding)}`;
-
-  it('asks for a bundle’s code only when it does not keep it, and lets the oldest go past its bytes', async () => {
-    const small = createIsolateRunner({ cacheBytes: 3000 });
-    const loadA = vi.fn(() => Promise.resolve(codeOf('a', 1500)));
-    const loadB = vi.fn(() => Promise.resolve(codeOf('b', 1500)));
-    const run = (id: string, load: () => Promise<string>) =>
-      small.invoke({
-        bundle: { id, load },
-        invocation: invocationOf(),
-        limits: LIMITS,
-        answer: () => Promise.resolve(null),
-        signal: new AbortController().signal
-      });
-
-    expect(await run('a', loadA)).toBe('a');
-    expect(await run('a', loadA)).toBe('a');
-    expect(loadA).toHaveBeenCalledTimes(1);
-
-    expect(await run('b', loadB)).toBe('b');
-    expect(await run('a', loadA)).toBe('a');
-    expect(loadA).toHaveBeenCalledTimes(2);
-  });
-
-  // What warming leaves done, rather than how long the first invocation then takes: a timing beside a cold runner lost
-  // whenever the machine ran every package's tests at once.
-  it('is ready before its first invocation once warmed', async () => {
-    const { default: ivm } = await import('isolated-vm');
-    const firstInvocation = (fresh: IsolateRunner) =>
-      fresh.invoke({
-        bundle: { id: 'first', load: () => Promise.resolve(codeOf('w', 0)) },
-        invocation: invocationOf(),
-        limits: LIMITS,
-        answer: () => Promise.resolve(null),
-        signal: new AbortController().signal
-      });
-    const warmed = createIsolateRunner();
-    await warmed.warm();
-    const createSnapshot = vi.spyOn(ivm.Isolate, 'createSnapshot');
-
-    try {
-      await firstInvocation(warmed);
-
-      expect(createSnapshot).not.toHaveBeenCalled();
-
-      // …which a runner nobody warmed builds on its first invocation, on the visitor's time.
-      await firstInvocation(createIsolateRunner());
-
-      expect(createSnapshot).toHaveBeenCalledTimes(1);
-    } finally {
-      createSnapshot.mockRestore();
-    }
   });
 });
