@@ -279,8 +279,8 @@ Without this, another site could open a `session` channel with a visitor's sessi
   gives it a secret for publishing, and lists what was `refused` and why (`undeclared`, `unauthenticated`,
   `forbidden`, `ungranted`). All refused is a `403`. A topic let go of later — a revoked grant — is told with a
   `$revoked` message on it.
-- `POST /_realtime` `{ token, topic, type, data }` — a publish. `204`, or `401` (not this server's connection — it
-  restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
+- `POST /_realtime` `{ token, topic, type, data }` — a publish, answered by whichever replica holds the stream. `204`,
+  or `401` (no replica holds that connection — it restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
   fast), `503` (`unavailable`: the pub/sub under it did not deliver it — send it again).
 
 ### WebSocket
@@ -365,11 +365,11 @@ createActionsModule({ /* … */, kv, realtime: createActionRealtime({ getOffline
 A runner that takes jobs without it says so as it starts, naming both ways out — this one, or `jobs: { workers: 0 }` to
 leave the jobs to the page servers.
 
-**Behind a balancer.** A WebSocket needs nothing more: a page's publishes are frames on its own socket, whichever
-replica holds it. The Server-Sent Events transport needs **affinity** on the realtime path: a stream's publishes are
-`POST`s carrying the stream's token, which only the replica holding the stream knows — sent to another replica, they
-are answered `401 not_connected`. A page that falls back from a socket to the stream behind a balancer without
-affinity cannot publish.
+**Behind a balancer.** No affinity is needed. A WebSocket's publishes are frames on its own socket. A Server-Sent
+Events stream's are `POST`s carrying the stream's token, which only the replica holding the stream knows: one that
+reaches another replica is relayed over the `pubsub` to the one that holds it, and answered as that one answers its
+own — the connection's rate and presence are its. Past a short wait with no replica answering, `401 not_connected`.
+The relay needs the replicas to share the `pubsub`, as every message already does.
 
 ---
 

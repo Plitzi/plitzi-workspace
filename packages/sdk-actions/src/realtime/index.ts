@@ -4,6 +4,7 @@ import { matchChannel } from '@plitzi/sdk-shared/realtime';
 
 import { createChannelResolver } from './declarations';
 import { createRealtimeGrants } from './grants';
+import { publishFrom } from './handlers';
 import { createRealtimeHub } from './hub';
 import { publishJobView } from './jobs';
 import { createRealtimePresence } from './presence';
@@ -110,7 +111,10 @@ export const createRealtimeModule = (options: RealtimeModuleOptions): RealtimeMo
   const kv = options.kv ?? createMemoryKv();
   const retained = createRealtimeRetained(kv);
   const presence = createRealtimePresence(kv);
-  const hub = createRealtimeHub(options.pubsub ?? createMemoryPubSub(), retained, presence);
+  // Answers a publish relayed from another replica as one of its own: a page's stream and its requests may reach two.
+  const hub: RealtimeHub = createRealtimeHub(options.pubsub ?? createMemoryPubSub(), retained, presence, {
+    answer: (connection, publish) => publishFrom(hub, connection, publish)
+  });
   const resolveChannels = createChannelResolver(options.getOfflineData);
   const grants = createRealtimeGrants(kv);
   let jobLookup: JobLookup | undefined;

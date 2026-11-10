@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { JOIN_TYPE, LEAVE_TYPE, REVOKED_TYPE } from '@plitzi/sdk-shared/realtime';
 
 import { warnRealtime } from './failure';
@@ -60,6 +62,75 @@ const parse = (raw: string): RealtimeMessage | undefined => {
   }
 };
 
+/** What a relayed publish is answered with: the status, and what a refusal says. */
+export type RelayedAnswer = { status: number; error?: string; reason?: string };
+
+/**
+ * How a hub answers a page whose connection another replica holds (`ask`). Over Server-Sent Events a page publishes with
+ * a request, and with two replicas and no affinity that request reaches the one that did not open its stream — which
+ * knew nothing of its token and answered 401. Absent, a hub answers only its own connections' (a runner's, that holds
+ * none).
+ */
+export type HubRelay = {
+  /** What the replica holding the connection answers the publish with (`publishFrom`): its rate, its presence. */
+  answer: (connection: RealtimeConnection, publish: Record<string, unknown>) => Promise<RelayedAnswer>;
+  /** How long a replica waits for the one holding the token, in ms: past it, nobody does. */
+  waitMs?: number;
+};
+
+/** Every replica's: a publish whose connection the replica it reached does not hold. */
+const RELAY_REQUESTS = '$relay:publish';
+/** One replica's own: the answers to what it asked. */
+const relayReplies = (instance: string): string => `$relay:answers:${instance}`;
+const RELAY_WAIT_MS = 1500;
+/** A connection's token as `connectionFor` makes it: 24 bytes, base64url. Anything else is asked of nobody. */
+const TOKEN = /^[A-Za-z0-9_-]{32}$/;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const parseJson = (raw: string): unknown => {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+};
+
+const relayRequestOf = (
+  raw: string
+): { id: string; replyTo: string; token: string; publish: Record<string, unknown> } | undefined => {
+  const value = parseJson(raw);
+
+  return isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.replyTo === 'string' &&
+    typeof value.token === 'string' &&
+    isRecord(value.publish)
+    ? { id: value.id, replyTo: value.replyTo, token: value.token, publish: value.publish }
+    : undefined;
+};
+
+const relayReplyOf = (raw: string): { id: string; answer: RelayedAnswer } | undefined => {
+  const value = parseJson(raw);
+  if (!isRecord(value) || typeof value.id !== 'string' || !isRecord(value.answer)) {
+    return undefined;
+  }
+
+  const { status, error, reason } = value.answer;
+
+  return typeof status === 'number'
+    ? {
+        id: value.id,
+        answer: {
+          status,
+          ...(typeof error === 'string' ? { error } : {}),
+          ...(typeof reason === 'string' ? { reason } : {})
+        }
+      }
+    : undefined;
+};
+
 export type RealtimeHub = ReturnType<typeof createRealtimeHub>;
 
 /**
@@ -68,8 +139,46 @@ export type RealtimeHub = ReturnType<typeof createRealtimeHub>;
  * A hundred pages on one board are a hundred connections here and a single subscription to the adapter: a message
  * arrives once and is written to each of them. The last one to leave a topic unsubscribes it.
  */
-export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetained, presence?: RealtimePresence) => {
+export const createRealtimeHub = (
+  pubsub: PubSubAdapter,
+  retained: RealtimeRetained,
+  presence?: RealtimePresence,
+  relay?: HubRelay
+) => {
   const byToken = new Map<string, RealtimeConnection>();
+  const instance = randomUUID();
+  /** What this replica asked another, by the request's id, until it is answered or the wait runs out. */
+  const asked = new Map<string, (answer: RelayedAnswer | undefined) => void>();
+  // A subscription the bus refused is said and stands for none: the relay is down, and a page is answered 401 as before.
+  const subscribed = (topic: string, listener: (raw: string) => void): Promise<() => Promise<void>> =>
+    pubsub.subscribe(topic, listener).catch((error: unknown) => {
+      warnRealtime(`the relay of publishes between replicas could not listen on ${topic}`)(error);
+
+      return () => Promise.resolve();
+    });
+  const relaying = relay
+    ? [
+        // The replica holding the connection answers, as it answers its own; every other one hears and passes.
+        subscribed(RELAY_REQUESTS, raw => {
+          const request = relayRequestOf(raw);
+          const connection = request ? byToken.get(request.token) : undefined;
+          if (!request || !connection) {
+            return;
+          }
+
+          relay
+            .answer(connection, request.publish)
+            .then(answer => pubsub.publish(relayReplies(request.replyTo), JSON.stringify({ id: request.id, answer })))
+            .catch(warnRealtime('a publish relayed from another replica was not answered'));
+        }),
+        subscribed(relayReplies(instance), raw => {
+          const reply = relayReplyOf(raw);
+          if (reply) {
+            asked.get(reply.id)?.(reply.answer);
+          }
+        })
+      ]
+    : [];
   /** The presence topics a connection is counted on: those of a `presence: true` channel, for a page that is not watching. */
   const counted = (connection: RealtimeConnection): string[] =>
     connection.observer
@@ -192,6 +301,36 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
     find: (token: string): RealtimeConnection | undefined => byToken.get(token),
 
     /**
+     * A publish whose connection this replica does not hold, asked of the replica that does — answered as it answers its
+     * own — or `undefined` when none answers within the wait (no such connection anywhere, or no relay).
+     */
+    ask: async (token: string, publish: Record<string, unknown>): Promise<RelayedAnswer | undefined> => {
+      if (!relay || !TOKEN.test(token)) {
+        return undefined;
+      }
+
+      await Promise.all(relaying);
+      const id = randomUUID();
+
+      return new Promise<RelayedAnswer | undefined>(resolve => {
+        const done = (answer: RelayedAnswer | undefined): void => {
+          clearTimeout(timer);
+          asked.delete(id);
+          resolve(answer);
+        };
+        const timer = setTimeout(() => done(undefined), relay.waitMs ?? RELAY_WAIT_MS);
+        timer.unref();
+        asked.set(id, done);
+        pubsub
+          .publish(RELAY_REQUESTS, JSON.stringify({ id, replyTo: instance, token, publish }))
+          .catch((error: unknown) => {
+            warnRealtime('a publish could not be relayed to the replica holding its connection')(error);
+            done(undefined);
+          });
+      });
+    },
+
+    /**
      * Lets go of `topic` every connection, on every replica, that opened it with `grant` — or with any grant, naming
      * none. What stops a grant that is already in use; `grants.revoke` is what stops it being used again.
      */
@@ -254,6 +393,10 @@ export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetai
      */
     closeAll: (): void => {
       clearInterval(heartbeat);
+      asked.forEach(done => done(undefined));
+      void Promise.all(relaying)
+        .then(releases => Promise.all(releases.map(release => release())))
+        .catch(warnRealtime('the relay between replicas was not let go'));
       [...byToken.values()].forEach(connection => connection.end());
     },
 

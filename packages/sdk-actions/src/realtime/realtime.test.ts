@@ -5,7 +5,7 @@ import { createMemoryPubSub } from '@plitzi/sdk-kernel/pubsub';
 import { realtimeModuleFor } from '.';
 import { createChannelResolver } from './declarations';
 import { createRealtimeGrants } from './grants';
-import { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
+import { handleRealtimePublish, handleRealtimeSubscribe, publishFrom } from './handlers';
 import { createRealtimeHub } from './hub';
 import { createRealtimePresence } from './presence';
 import { createRealtimeRetained } from './retained';
@@ -643,5 +643,78 @@ describe('a presence channel’s count', () => {
     await check.close();
     expect(await presence.of(space, 'board:1')).toEqual([]);
     hub.closeAll();
+  });
+});
+
+/**
+ * Two replicas on one bus, and a page whose stream one opened and whose publishes the other one receives: with no
+ * affinity, a request goes where the balancer sends it. It answered 401 there (R5); relayed to the replica holding the
+ * stream, it is answered as that one answers its own — its rate and its presence there.
+ */
+describe('two replicas, a page’s stream on one and its publish on the other', () => {
+  const replicas = (waitMs = 200) => {
+    const pubsub = createMemoryPubSub();
+    const retained = createRealtimeRetained(createMemoryKv());
+    const replica = (): RealtimeHub => {
+      const hub: RealtimeHub = createRealtimeHub(pubsub, retained, undefined, {
+        answer: (connection, body) => publishFrom(hub, connection, body),
+        waitMs
+      });
+
+      return hub;
+    };
+
+    return [replica(), replica()] as const;
+  };
+
+  it('delivers it, answered by the replica holding the stream', async () => {
+    const [holding, other] = replicas();
+    const page = await connect(holding, 'board:1');
+    const listener = await connect(other, 'board:1');
+
+    expect(await publish(other, { token: page.ready?.token, topic: 'board:1', type: 'moved', data: 1 })).toBe(204);
+    await vi.waitFor(() => {
+      expect(listener.heard().map(message => message.type)).toContain('moved');
+    });
+    await Promise.all([page.close(), listener.close()]);
+  });
+
+  it('says the holding replica’s refusal, in its words', async () => {
+    const [holding, other] = replicas();
+    const page = await connect(holding, 'board:1');
+    const { res, sent } = buildRes();
+    await handleRealtimePublish({
+      req: request({}, undefined, { token: page.ready?.token, topic: 'scores:1', type: 'x' }),
+      res,
+      hub: other
+    });
+
+    expect(sent.status).toBe(403);
+    expect(sent.body).toContain('did not subscribe to');
+    await page.close();
+  });
+
+  it('holds the rate across both: the connection’s count is the holding replica’s', async () => {
+    const [holding, other] = replicas();
+    const page = await connect(holding, 'board:1');
+    const send = (hub: RealtimeHub) => publish(hub, { token: page.ready?.token, topic: 'board:1', type: 'moved' });
+
+    // `board:{id}` allows two a second.
+    expect([await send(other), await send(holding), await send(other)]).toEqual([204, 204, 429]);
+    await page.close();
+  });
+
+  it('is refused as before when no replica holds the token', async () => {
+    const [, other] = replicas(50);
+
+    expect(await publish(other, { token: 'a'.repeat(32), topic: 'board:1', type: 'moved' })).toBe(401);
+  });
+
+  it('is refused at once for what is no token, asking nobody', async () => {
+    const [, other] = replicas(10_000);
+    const started = Date.now();
+
+    expect(await publish(other, { token: 'not-a-token', topic: 'board:1', type: 'moved' })).toBe(401);
+    expect(Date.now() - started).toBeLessThan(1000);
   });
 });

@@ -350,7 +350,15 @@ const parseBody = (body: string | undefined): Partial<RealtimePublishRequest> | 
 export const handleRealtimePublish = async ({ req, res, hub }: PublishDeps): Promise<void> => {
   const body = parseBody(req.body);
   const connection = typeof body?.token === 'string' ? hub.find(body.token) : undefined;
-  if (!body || !connection) {
+  // Its stream may be open on another replica: asked there, it is answered as that replica answers its own.
+  const result = body
+    ? connection
+      ? await publishFrom(hub, connection, body)
+      : typeof body.token === 'string'
+        ? await hub.ask(body.token, { ...body })
+        : undefined
+    : undefined;
+  if (!result) {
     answer(res, {
       status: 401,
       error: 'Not connected: open /_realtime first and publish with its token',
@@ -360,7 +368,6 @@ export const handleRealtimePublish = async ({ req, res, hub }: PublishDeps): Pro
     return;
   }
 
-  const result = await publishFrom(hub, connection, body);
   if (result.status === 204) {
     res.setStatus(204);
     res.send('');
