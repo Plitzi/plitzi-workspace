@@ -11,3 +11,6 @@ const FormControl = Object.assign(BaseFormControl, {
 });
 
 export default FormControl;
+
+// What a field says it holds to a password manager: what a seed or a project hands `formControl({ autoComplete })`.
+export type { AutofillField } from './helpers/autofill';

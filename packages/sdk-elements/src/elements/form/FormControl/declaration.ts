@@ -1,6 +1,7 @@
 /** Static declaration for FormControl: type, default attributes and builder metadata. Data only, no React. */
 import { elementDeclaration } from '@plitzi/sdk-shared/authoring';
 
+import { AUTOFILL_FIELDS } from './helpers/autofill';
 import { FORM_CONTROL_SUBTYPES } from './subTypes';
 
 import type { FormControlProps } from './FormControl';
@@ -213,7 +214,9 @@ const declaration = elementDeclaration<FormControlAttributes>()({
     'matchesMessage'
   ],
   attributeValues: {
-    subType: FORM_CONTROL_SUBTYPES
+    subType: FORM_CONTROL_SUBTYPES,
+    // A flag — the browser's own guess, or off — or what the field holds, as a password manager reads it.
+    autoComplete: AUTOFILL_FIELDS
   },
   triggers: {
     onChange: {

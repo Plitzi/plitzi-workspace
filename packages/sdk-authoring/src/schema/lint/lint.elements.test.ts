@@ -241,6 +241,23 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('attribute-kind');
     });
 
+    // A flag that also takes named values: autoComplete is true, false, or what the field holds. Authoring refused the
+    // tokens as text where a boolean was read, and no password manager could be told a sign-in's fields.
+    it('takes a flag or a named value where an attribute takes both', () => {
+      const withAutoComplete = (value: unknown) =>
+        errorsOf(
+          withChange(({ schema }) => {
+            addForm(schema, { password: 'password' });
+            schema.flat.password.attributes.autoComplete = value;
+          })
+        );
+
+      expect(withAutoComplete('current-password')).not.toContain('attribute-kind');
+      expect(withAutoComplete('current-password')).not.toContain('attribute-value');
+      expect(withAutoComplete(false)).not.toContain('attribute-value');
+      expect(withAutoComplete('password-please')).toContain('attribute-value');
+    });
+
     it('element-runtime', () => {
       const documents = withChange(({ schema }) => {
         (schema.flat.feed.definition as { runtime?: string }).runtime = 'edge';

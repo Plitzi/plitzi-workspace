@@ -96,7 +96,13 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
       continue;
     }
 
-    if (Object.hasOwn(enums, name) && !(typeof value === 'string' && enums[name].includes(value))) {
+    // A flag that also takes named values (`autoComplete`: true, false, or what a field holds) takes either.
+    const flagOrNamed = typeof defaults[name] === 'boolean';
+    if (
+      Object.hasOwn(enums, name) &&
+      !(typeof value === 'string' && enums[name].includes(value)) &&
+      !(flagOrNamed && typeof value === 'boolean')
+    ) {
       // A tag is an element: a `subType` this element has not but another has is that element, not a typo of a
       // tag of this one's — an `ol` is a `list`, never the `dl` two letters away.
       const tag = name === 'subType' && typeof value === 'string' ? value : undefined;
@@ -108,7 +114,7 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
             )?.[0];
       const hint =
         owner === undefined || tag === undefined
-          ? `${(typeof value === 'string' && didYouMean(value, enums[name])) || '.'} It is one of ${enums[name].map(item => `'${item}'`).join(', ')}.`
+          ? `${(typeof value === 'string' && didYouMean(value, enums[name])) || '.'} It is ${flagOrNamed ? 'true, false, or ' : ''}one of ${enums[name].map(item => `'${item}'`).join(', ')}.`
           : `, which is what a "${owner}" renders: write \`${owner}({ subType: '${tag}' })\`${OWNER_HINT[owner] ?? '.'}`;
       ctx.error('attribute-value', `${where}: \`${name}\` is ${JSON.stringify(value)}${hint}`, element.id);
       continue;
@@ -116,7 +122,7 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
 
     const fallback = defaults[name];
     const wrongList = Array.isArray(fallback) && !Array.isArray(value);
-    const wrongFlag = typeof fallback === 'boolean' && typeof value !== 'boolean';
+    const wrongFlag = typeof fallback === 'boolean' && typeof value !== 'boolean' && !Object.hasOwn(enums, name);
     if (wrongList || wrongFlag) {
       ctx.error(
         'attribute-kind',
