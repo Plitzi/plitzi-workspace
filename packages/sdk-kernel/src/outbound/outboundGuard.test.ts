@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { assertOutboundAllowed, fetchOutbound, isBlockedHost, privateOriginsOf } from './outboundGuard';
+import { assertOutboundAllowed, connectLookup, fetchOutbound, isBlockedHost, privateOriginsOf } from './outboundGuard';
+
+import type { LookupAddress } from 'node:dns';
 
 const resolvesTo = (address: string) => () => Promise.resolve([{ address }]);
 const unresolvable = () => Promise.reject(new Error('ENOTFOUND'));
@@ -96,6 +98,26 @@ describe('assertOutboundAllowed', () => {
     await expect(
       assertOutboundAllowed(new URL('http://169.254.169.254/'), { lookup: resolvesTo('1.1.1.1') })
     ).rejects.toThrow(/not allowed/);
+  });
+
+  // Loopback or the metadata service in another notation, behind userinfo or in full-width digits: read as the URL parser
+  // reads it.
+  it('refuses a private address written in another IPv4 notation', async () => {
+    for (const spelled of [
+      'http://2130706433/',
+      'http://0x7f000001/',
+      'http://0177.0.0.1/',
+      'http://127.1/',
+      'http://0xa9.0xfe.0xa9.0xfe/',
+      'http://2852039166/',
+      'http://user:secret@127.0.0.1/',
+      'http://example.com@169.254.169.254/',
+      'http://\uff11\uff12\uff17.\uff10.\uff10.\uff11/'
+    ]) {
+      await expect(assertOutboundAllowed(new URL(spelled), { lookup: resolvesTo('1.1.1.1') }), spelled).rejects.toThrow(
+        /not allowed/
+      );
+    }
   });
 
   /**
@@ -263,5 +285,65 @@ describe('fetchOutbound', () => {
     expect(headers.has('authorization')).toBe(false);
     expect(headers.has('cookie')).toBe(false);
     expect(headers.get('x-trace')).toBe('1');
+  });
+});
+
+/**
+ * DNS rebinding: the attacker's own DNS answers a public address when the guard asks and a private one when the socket
+ * is opened a moment later. The guard judged the first; the socket must go there and nowhere else.
+ */
+describe('a guarded request connects to what was judged', () => {
+  const lookupAll = (hostname: string) =>
+    new Promise<{ error: NodeJS.ErrnoException | null; addresses: LookupAddress[] }>(resolve => {
+      connectLookup(hostname, { all: true }, (error, addresses) => {
+        resolve({ error, addresses: Array.isArray(addresses) ? addresses : [] });
+      });
+    });
+
+  it('finds the address the name was judged to, though the name answers a private one after', async () => {
+    const lookup = vi
+      .fn<(hostname: string) => Promise<{ address: string }[]>>()
+      .mockResolvedValueOnce([{ address: '93.184.216.34' }])
+      .mockResolvedValue([{ address: '127.0.0.1' }]);
+    const base = vi.fn<typeof fetch>().mockResolvedValue(new Response('ok'));
+
+    await fetchOutbound(base, new URL('https://rebind.example/'), {}, { lookup });
+
+    const dispatcher: unknown = (base.mock.calls[0]?.[1] as { dispatcher?: unknown } | undefined)?.dispatcher;
+    expect(dispatcher).toHaveProperty('dispatch');
+    await expect(lookupAll('rebind.example')).resolves.toEqual({
+      error: null,
+      addresses: [{ address: '93.184.216.34', family: 4 }]
+    });
+    expect(lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('finds nothing for a name the guard never judged, rather than asking DNS', async () => {
+    const { error, addresses } = await lookupAll('never-judged.example');
+
+    expect(error?.code).toBe('ENOTFOUND');
+    expect(addresses).toEqual([]);
+  });
+
+  it('answers one address of the family the socket asks for', async () => {
+    const base = vi.fn<typeof fetch>().mockResolvedValue(new Response('ok'));
+    const lookup = () => Promise.resolve([{ address: '2606:4700::1' }, { address: '93.184.216.34' }]);
+    await fetchOutbound(base, new URL('https://dual.example/'), {}, { lookup });
+
+    const one = await new Promise<[string | LookupAddress[], number | undefined]>(resolve => {
+      connectLookup('dual.example', { family: 4 }, (_error, address, family) => {
+        resolve([address, family]);
+      });
+    });
+
+    expect(one).toEqual(['93.184.216.34', 4]);
+  });
+
+  it("reaches the deployment's own origins as it always did", async () => {
+    const base = vi.fn<typeof fetch>().mockResolvedValue(new Response('ok'));
+
+    await fetchOutbound(base, new URL('http://minio:9000/bucket/a'), {}, { privateOrigins: ['http://minio:9000'] });
+
+    expect(base.mock.calls[0]?.[1]).not.toHaveProperty('dispatcher');
   });
 });

@@ -112,8 +112,18 @@ export const watchConnections = (server: PrimaryServer) => {
         });
         // A WebSocket, like an event stream, has nothing left to finish: it is told the server is going away (1001)
         // and closed, rather than held for the whole grace — the ten seconds a `--watch` restart waited on a page left
-        // open. Its client reconnects to the server that comes up next.
-        websockets.forEach(socket => socket.end(GOING_AWAY));
+        // open. Its client reconnects to the server that comes up next. One the server already ended — an upgrade it
+        // refused, its client still holding on — has said its last word: written to again it raised an error nobody
+        // heard, mid-shutdown, so it is closed once that word is out.
+        websockets.forEach(socket => {
+          if (!socket.writableEnded) {
+            socket.end(GOING_AWAY);
+          } else if (socket.writableFinished) {
+            socket.destroy();
+          } else {
+            socket.once('finish', () => socket.destroy());
+          }
+        });
       })
   };
 };

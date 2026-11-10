@@ -72,6 +72,36 @@ describe('watchConnections().drain', () => {
     sockets.close();
   });
 
+  /**
+   * An upgrade refused (a 401 written with `socket.end`) by a client that never lets go: the socket is ended and still
+   * open. Told the server was going away as well, it was written to after its end — an `error` no one listens to, an
+   * uncaught exception in the middle of the shutdown — and it held the shutdown for the whole grace.
+   */
+  it('closes an upgrade it refused once its refusal is out, and writes nothing after it', async () => {
+    const { server, connections, url } = await serve(() => undefined);
+    const errors: Error[] = [];
+    server.on('upgrade', (_request, socket: net.Socket) => {
+      socket.on('error', error => errors.push(error));
+      socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+    });
+    const { port } = new URL(url);
+    const client = net.connect(Number(port), '127.0.0.1');
+    let heard = '';
+    client.on('data', data => {
+      heard += String(data);
+    });
+    // Its end heard and ignored: a client that keeps its half of the connection open.
+    client.on('end', () => undefined);
+    const answered = new Promise<void>(resolve => client.once('end', () => resolve()));
+    client.write('GET / HTTP/1.1\r\nhost: localhost\r\nupgrade: websocket\r\nconnection: Upgrade\r\n\r\n');
+    await answered;
+
+    expect(await elapsed(connections.drain('test', 5000))).toBeLessThan(1000);
+    expect(errors).toEqual([]);
+    expect(heard).toContain('401 Unauthorized');
+    client.destroy();
+  });
+
   it('cuts what is still open once the grace runs out', async () => {
     let received: () => void = () => undefined;
     const arrived = new Promise<void>(resolve => {

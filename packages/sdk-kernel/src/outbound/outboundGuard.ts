@@ -1,6 +1,9 @@
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
 
+import type { LookupAddress, LookupAllOptions, LookupOneOptions } from 'node:dns';
+import type { Dispatcher } from 'undici';
+
 /**
  * Where a customer-authored request may go.
  *
@@ -136,9 +139,11 @@ export const privateOriginsOf = (origins: readonly string[] | undefined): string
  * spelled like.
  *
  * A name that does not resolve is ALLOWED through: there is nothing to judge, and the request is about to fail on
- * its own with a better error than this could give. What remains open is DNS rebinding — an attacker's own server
- * answering a public address here and a private one when the socket is opened a moment later — which is closed
- * only by resolving and connecting to the same address, and that belongs in the transport rather than here.
+ * its own with a better error than this could give.
+ *
+ * Judging the answer is half of it: the transport would resolve the name again when it opens the socket, and an
+ * attacker's own DNS can answer a public address here and a private one a moment later (DNS rebinding). So what was
+ * judged is kept (`vetted`), and `fetchOutbound` connects to it and to nothing else.
  */
 export const assertOutboundAllowed = async (
   url: URL,
@@ -156,9 +161,10 @@ export const assertOutboundAllowed = async (
     throw new Error('Request host is not allowed');
   }
 
+  const hostname = url.hostname.replace(/^\[|\]$/g, '');
   let addresses: { address: string }[];
   try {
-    addresses = await lookup(url.hostname.replace(/^\[|\]$/g, ''));
+    addresses = await lookup(hostname);
   } catch {
     return;
   }
@@ -166,7 +172,83 @@ export const assertOutboundAllowed = async (
   if (addresses.some(({ address }) => isBlockedHost(address))) {
     throw new Error('Request host is not allowed');
   }
+
+  vet(hostname, addresses);
 };
+
+/**
+ * The addresses each name was judged to, for the moment between the judging and the socket. Seconds, not the
+ * record's TTL: the connection is opened right after, and a pooled one is never looked up again.
+ */
+const VETTED_FOR_MS = 30_000;
+
+const vetted = new Map<string, { addresses: LookupAddress[]; until: number }>();
+
+const vet = (hostname: string, addresses: { address: string }[]) => {
+  const now = Date.now();
+  vetted.forEach((entry, name) => {
+    if (entry.until <= now) {
+      vetted.delete(name);
+    }
+  });
+
+  vetted.set(hostname.toLowerCase(), {
+    addresses: addresses.map(({ address }) => ({ address, family: isIP(address) === 6 ? 6 : 4 })),
+    until: now + VETTED_FOR_MS
+  });
+};
+
+type LookupCallback = (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void;
+
+/**
+ * How a guarded request's socket finds its peer: among the addresses the name was judged to, never by asking DNS
+ * again. A name nobody judged — one that did not resolve when it was — is not found, rather than resolved now.
+ */
+export const connectLookup = (
+  hostname: string,
+  options: LookupOneOptions | LookupAllOptions,
+  callback: LookupCallback
+): void => {
+  const entry = vetted.get(hostname.toLowerCase());
+  const family = options.family === 'IPv4' ? 4 : options.family === 'IPv6' ? 6 : options.family;
+  const addresses = (entry && entry.until > Date.now() ? entry.addresses : []).filter(
+    address => !family || address.family === family
+  );
+  if (addresses.length === 0) {
+    const error: NodeJS.ErrnoException = new Error(
+      `getaddrinfo ENOTFOUND ${hostname} (not judged by the outbound guard)`
+    );
+    error.code = 'ENOTFOUND';
+    callback(error, []);
+
+    return;
+  }
+
+  if (options.all) {
+    callback(null, addresses);
+
+    return;
+  }
+
+  const [first] = addresses;
+  callback(null, first.address, first.family);
+};
+
+let pinned: Promise<Dispatcher> | undefined;
+
+/**
+ * The transport of every guarded request: Node's own `fetch`, whose sockets look their peer up in `connectLookup`.
+ *
+ * `undici` is imported when the first guarded request is sent, never with the module — loading the package installs
+ * a global dispatcher of its own, and every other `fetch` of the process must stay Node's. Its `Agent` speaks undici 8's
+ * handler interface and Node's `fetch` undici 7's, hence the wrapper; HTTP/1.1 only, as Node's `fetch` reaches a host
+ * (an answer over h2 reached it without its `content-encoding`, and nothing decoded it).
+ */
+const pinnedDispatcher = (): Promise<Dispatcher> =>
+  (pinned ??= import('undici').then(
+    ({ Agent, Dispatcher1Wrapper }) =>
+      new Dispatcher1Wrapper(new Agent({ allowH2: false, connect: { lookup: connectLookup } }))
+  ));
 
 const MAX_REDIRECTS = 5;
 
@@ -210,7 +292,8 @@ const redirectedInit = (init: RequestInit, status: number, crossOrigin: boolean)
  * therefore taken manually and each destination is checked before anything is sent to it.
  *
  * `base` is the caller's own transport — the action runner's is budgeted and capped — so every hop is also counted
- * against whatever that transport enforces.
+ * against whatever that transport enforces. It hands `init` on to Node's `fetch` as it got it: the `dispatcher` in it
+ * is what connects each hop to the addresses that were judged.
  */
 export const fetchOutbound = async (
   base: typeof fetch,
@@ -224,7 +307,10 @@ export const fetchOutbound = async (
   for (let hop = 0; ; hop += 1) {
     await assertOutboundAllowed(target, options);
 
-    const response = await base(target.toString(), { ...request, redirect: 'manual' });
+    // The deployment's own origins are reached as it reaches them (a runtime's route inside, a local S3): only what
+    // was judged by its addresses is held to them.
+    const pin = options.privateOrigins?.includes(target.origin) ? {} : { dispatcher: await pinnedDispatcher() };
+    const response = await base(target.toString(), { ...request, ...pin, redirect: 'manual' });
     const location = response.headers.get('location');
     if (!REDIRECT_STATUSES.includes(response.status) || !location) {
       return response;
