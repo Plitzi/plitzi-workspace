@@ -115,13 +115,3 @@ Read [`00-how-to-work.md`](00-how-to-work.md) first. Paths are relative to the r
 - **Verify:** the new e2e; `yarn test:e2e` whole; **the whole visual suite** (`yarn visual`) — every signed-in journey
   writes; the builder saving a change on the visual stack; `plitzi login` and `plitzi space push` (bearer) still work.
 - **Stop and ask if:** a first-party caller cannot send the header (a plugin from a CDN, a form post) — say which.
-
-## T0.14 — The throttle's counts shared between replicas
-
-- **Done (2026-11-10)** in `@plitzi/sdk-server`: the policy (`createRateLimit`) over a store of counts — memory by
-  default, or `redisThrottleCounts(redis, { prefix })`, each attempt one Lua script (atomic: a burst cannot read an
-  empty window together). Held by `throttle.test.ts` and `throttle.redis.integration.test.ts` (both stores, and two
-  replicas on one Redis refusing the eleventh failure).
-- **Left** (after the release): `plitzi-sdk-server`'s `services/auth/plitziAuth.ts` passes
-  `api.rateLimit: createRateLimit({ counts: redisThrottleCounts(getRedis().client, { prefix }) })`, the prefix a builder
-  of `services/redis/cacheKeys.ts` with a `{hash tag}`.

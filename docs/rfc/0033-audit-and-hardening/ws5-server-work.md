@@ -43,15 +43,6 @@ A regression here needs a test that would have caught it, proven on the old code
 - **Verify:** the contract green for the three runners and the test runner; `yarn turbo run test
   --filter=@plitzi/sdk-actions --filter=@plitzi/sdk-runtime`; the server's e2e in the split topology.
 
-## T5.5 — Realtime across replicas
-
-- **Done (2026-11-10)** in `@plitzi/sdk-actions`: `handleRealtimePublish` asks `hub.ask(token, …)` when the stream
-  is not this replica's; the hub that holds it answers through `publishFrom` (rate, presence) over the shared pubsub.
-  `docs/en/realtime.md` no longer asks for affinity.
-- **Left, after the release:** the split-topology e2e in `plitzi-sdk-server` — two page-server processes (booted as
-  `resilience/two-replicas` boots workers), a stream on one and its publish on the other, over SSE and over
-  WebSocket — and `visual/pizarra.spec.ts`.
-
 ## T5.6 — Work set aside is said
 
 - **Done** 2026-11-10: `notePausedWork` records the period's first refusal and emails the owners once; the alerts
