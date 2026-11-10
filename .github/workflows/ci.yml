@@ -62,6 +62,11 @@ jobs:
       - name: Only exported paths
         run: yarn check:specifiers
 
+      # Every eslint-disable, any and `as unknown as` a package ships, held to exceptions.json: a new one says why, or
+      # does not land; one removed lowers the table.
+      - name: Exceptions counted
+        run: yarn check:exceptions
+
       # What importing @plitzi/sdk-server loads of Plitzi's packages, held to a budget: every server pays it at start.
       - name: Server footprint
         run: yarn check:server-footprint
@@ -87,6 +92,24 @@ jobs:
   #
   # `--only` because these tasks need nothing of each other: without it `dependsOn: ^lint` in turbo.json pulls every
   # dependency's lint into each part, and the shared packages were checked in all three.
+  # Every dependency, transitive ones included, against the registry's advisories: a high or critical one fails the
+  # run, so it is never published. It reads the lockfile alone — no install, no cache. An advisory with no fix yet is
+  # ignored by its id in `.yarnrc.yml` (`npmAuditIgnoreAdvisories`), with its reason and a date to look again.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Yarn Audit
+        run: yarn npm audit --all --recursive --severity high --no-deprecations
+
   checks:
     needs: build
     runs-on: ubuntu-latest
@@ -276,7 +299,7 @@ jobs:
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
     # Not `e2e`: it does not run on a release event, and a job that waits on a skipped one never starts.
-    needs: [checks, test]
+    needs: [checks, test, audit]
     runs-on: ubuntu-latest
     strategy:
       matrix:

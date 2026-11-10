@@ -1,0 +1,33 @@
+# What a person gets from `plitzi create` today, with the published CLI: made, installed and audited every night. The
+# advisories of a new project are its tools' — they change on the registry, not in this repository — so the check runs
+# on a schedule and never blocks a pull request (it needs the network and the published packages).
+
+name: new-project
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [server, client]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Create a project
+        run: npx --yes @plitzi/cli@latest create "$RUNNER_TEMP/project" --mode ${{ matrix.mode }} --source local --package-manager npm
+
+      # Moderate and up: the first words of `create` were "10 moderate severity vulnerabilities", one advisory of its
+      # tools counted ten times. A new one is moved past in the scaffold (`ADVISED_OVERRIDES`, apps/cli/src/scaffold).
+      - name: Audit it
+        working-directory: ${{ runner.temp }}/project
+        run: npm audit --audit-level=moderate

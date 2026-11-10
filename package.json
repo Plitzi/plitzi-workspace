@@ -25,6 +25,7 @@
     "build:prod": "turbo build:prod",
     "check:dist-exports": "node packages/sdk-shared/scripts/checkDistExports.mjs",
     "check:specifiers": "node packages/sdk-shared/scripts/checkSpecifiers.mjs",
+    "check:exceptions": "node packages/sdk-shared/scripts/checkExceptions.mjs",
     "check:server-footprint": "node apps/server/scripts/checkFootprint.mjs",
     "build:prod-watch": "turbo build:prod-watch --parallel --concurrency=20",
     "build:prod-measure": "turbo build:prod-measure --parallel --concurrency=20",
