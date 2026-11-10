@@ -92,6 +92,9 @@ An authored request connects to the address its name was judged to, and the advi
   `one-time-code`, `email`… (`AUTOFILL_FIELDS`) — beside `true` and `false`. A password field said `off` on every space,
   so no password manager filled a sign-in or offered to save a new password: left on `true` it is now the account's
   `current-password`. Nothing is filled in the builder's canvas.
+- sdk-authoring takes those tokens: an attribute whose default is a flag and that declares named values is either, and
+  its refusal says both. Before, `formControl({ autoComplete: 'current-password' })` was refused as text where a boolean
+  was read. The type is `AutofillField`, from `@plitzi/sdk-elements/elements/form/FormControl`.
 
 ## Dependencies
 
