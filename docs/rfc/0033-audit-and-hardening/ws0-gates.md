@@ -4,91 +4,6 @@ Read [`00-how-to-work.md`](00-how-to-work.md) first. Paths are relative to the r
 
 ---
 
-## T0.1 — `xmldom` out
-
-- **Repo:** `plitzi-sdk-server`. **Finding:** G1. **Size:** S.
-- **Why:** `xmldom@0.6.0` (unscoped, abandoned) has 1 critical and 12 high advisories and parses HTML users bring in.
-- **Read first:** `src/services/transformers/helpers/HtmlParser/HtmlParser.ts` (its only import: `import { DOMParser }
-  from 'xmldom'`, used at one `new DOMParser()`); the tests beside `src/services/transformers`; `package.json`
-  (`xmldom`, `@types/xmldom`).
-- **Steps:**
-  1. Step 0: `grep -rn "xmldom" src prisma scripts test` — confirm `HtmlParser.ts` is the only user.
-  2. Before changing anything, add a test beside the parser with inputs shaped like the advisories: 5,000 nested
-     elements, one element with 5,000 repeated attributes, unclosed tags repeated 5,000 times. Assert each parses (or is
-     refused) in under 1 s. Run it on the current code and record the timings.
-  3. Replace the dependency with `@xmldom/xmldom` at its latest release (same `DOMParser` API). Remove `xmldom` and
-     `@types/xmldom` (the scoped package ships its types). `yarn install`.
-  4. If `yarn install` fails with `YN0071`, `yarn dedupe <pkg>` (see AGENTS.md § portals).
-  5. Run the transformer tests and your new test.
-- **Do not:** swap the parser for a different library (the tree shape the transformer walks would change); loosen the
-  new test's bound to make it pass.
-- **Verify:** `yarn npm audit --all --recursive --severity high | grep -i xmldom` prints nothing;
-  `yarn vitest run src/services/transformers`; `yarn typecheck`; `yarn lint`.
-- **Done when:** no `xmldom` advisory; the transformer's existing tests unchanged and green; the new test green.
-- **Stop and ask if:** the scoped package parses one of the existing fixtures differently.
-
-## T0.2 — `handlebars` out or current
-
-- **Repo:** `plitzi-sdk-server`. **Finding:** G2. **Size:** S–M.
-- **Why:** `hbs@4.4.0` pulls `handlebars` ≤ 4.7.9 (2 critical advisories). It renders the static deploy's page.
-- **Read first:** `src/services/deployment/helpers/HandlebarsWrapper.ts`, `src/services/deployment/templates/index.hbs`,
-  the two tests under `src/services/deployment`.
-- **Steps:**
-  1. Step 0: list what the template uses — `grep -n "{{" src/services/deployment/templates/index.hbs`. Note every
-     helper, partial, block (`{{#if}}`, `{{#each}}`) and triple-stash (`{{{ }}}`).
-  2. Take a snapshot first: a test that renders the template with a fixture and stores the bytes.
-  3. If the template only substitutes known fields (no helpers, no partials): write the render as a typed function
-     (escaped by default, raw only for the fields that are triple-stash today, each named in a comment) and delete
-     `hbs` from `package.json`. Otherwise: depend on `handlebars` directly at a release with no advisory and remove
-     `hbs`.
-  4. The snapshot must match byte for byte.
-- **Do not:** change what the deployed page contains; un-escape a field that is escaped today.
-- **Verify:** `yarn npm audit --all --recursive --severity high | grep -iE "handlebars|hbs"` prints nothing;
-  `yarn vitest run src/services/deployment`.
-- **Done when:** the snapshot is identical and no advisory names `hbs` or `handlebars`.
-
-## T0.3 — The rest of the advisories
-
-- **Repos:** `plitzi-sdk-server`, `plitzi-workspace`. **Finding:** G3. **Size:** S.
-- **Steps:** in each repository run `yarn npm audit --all --recursive --severity moderate` and keep the output. For
-  each package (`body-parser`, `qs`, `fast-uri`, `ip-address`, `minimatch`, `zod`, `launch-editor`, `eslint`, …):
-  `yarn up <pkg>` when a direct dependency; `yarn dedupe <pkg>` when transitive; a `resolutions` entry **only** when
-  neither works, with a comment naming the advisory id and the date. Re-run the audit.
-- **Do not:** bump a major version of a direct dependency in this task (Express, Apollo, Prisma…): say it in "Not done".
-- **Verify:** `yarn npm audit --all --recursive --severity high` exits 0 in both; `yarn typecheck`, `yarn lint`,
-  `yarn test` in both.
-- **Done when:** no high or critical advisory in either repository.
-
-## T0.4 — Audit in CI
-
-- **Repos:** both (`.github/workflows/deployment.yml`, `.github/workflows/ci.yml`). **Finding:** G4. **Size:** S.
-- **Depends on:** T0.1–T0.3 (the job must start green).
-- **Steps:** add a job `audit` that installs and runs `yarn npm audit --all --recursive --severity high`. For an
-  advisory with no fix, pass `--exclude <advisory-id>` and list it in one file `audit-exceptions.md` at the repository
-  root: id, package, why it cannot be fixed, the date to look again. The job fails if that file names an id the
-  command no longer needs.
-- **Verify:** push a branch that adds a known-vulnerable version to `package.json`; the job fails. Remove it.
-- **Done when:** the job is required in both workflows and green on `main`.
-
-## T0.5 — The image says what it was built from
-
-- **Repo:** `plitzi-sdk-server` (and the build of `apps/sdk` in `plitzi-workspace` if a marker must be emitted).
-  **Finding:** P0. **Size:** S.
-- **Why:** `yarn docker:up` built an image from a development build of the SDK (2,474 KB unminified) and said nothing.
-- **Read first:** `scripts/docker-workspace.ts` (it copies each portal's `dist`), `package.json` (`docker:up`).
-- **Steps:**
-  1. Step 0: with a portal in place (ask for one), run `yarn build:dev` in the workspace and look at
-     `node_modules/@plitzi/plitzi-sdk/dist/plitzi-sdk.js`: find what tells a development build from a production one
-     without guessing by size. If nothing does, make `apps/sdk`'s build write its mode into a small manifest in `dist`
-     (one field), in `plitzi-workspace`.
-  2. In `docker-workspace.ts`, before copying a portal's `dist`: read the mode. Development → stop with the fix:
-     "`<package>`'s dist is a development build; run `yarn build:prod && yarn build-vendor:prod` in plitzi-workspace,
-     or pass `--dev` to build the image from it". With `--dev`: go on and print one line that says so.
-  3. Unit-test the check with two fixture manifests.
-- **Do not:** silently rebuild the workspace from this script.
-- **Verify:** `yarn vitest run scripts`; by hand: `yarn docker:up` over a `build:dev` stops and names the command.
-- **Done when:** a development build cannot enter the image unsaid.
-
 ## T0.6 — Server CI runs what protects
 
 - **Repo:** `plitzi-sdk-server`. **Finding:** G5. **Size:** L.
@@ -113,7 +28,7 @@ Read [`00-how-to-work.md`](00-how-to-work.md) first. Paths are relative to the r
      no page.
   3. Write above the table what a budget is and the rule: lowered when beaten, never raised without the reason in the
      diff — the same words as `wasted`.
-- **Do not:** measure on a stack that carries a development build (T0.5): the figures would be double.
+- **Do not:** measure on a stack that carries a development build (the image now refuses one unless `PLITZI_DEV_BUILD=1`): the figures would be double.
 - **Verify:** `yarn visual:up`, then `yarn playwright test visual/screens.spec.ts`; run it twice — the figures must be
   stable within the 5 %.
 - **Done when:** every key screen has a budget; RFC § 5's rows are its first entries.
@@ -154,36 +69,6 @@ Read [`00-how-to-work.md`](00-how-to-work.md) first. Paths are relative to the r
 - **Verify:** twenty full `yarn test:e2e` runs in a row, each beside a second run, all green (script it; keep the log
   in `tmp/logs/`); the three visual tests ten times each beside the full suite.
 - **Done when:** the cause of each is named in the pull request and the runs are green.
-
-## T0.10 — Every route names its guard
-
-- **Repo:** `plitzi-sdk-server`. **Finding:** G7. **Size:** S.
-- **Read first:** `src/services/api/index.ts` (the mount table; `authMiddleware(apiAuthPolicy, 'error')` and
-  `originGuard('error')` are global), `src/services/auth/index.ts` (the guards: `requireSpacePermission`,
-  `requireWorkspaceMember`, `requireSpaceMember`, `requirePermission`, `requireCapability`, `authenticated`).
-- **Steps:**
-  1. Write a test that walks the routers from `src/services/api/index.ts` (follow `router.use('/prefix', child)`),
-     lists every `router.<method>('<path>', …)` and asserts each either names a guard in its declaration, is under a
-     `router.use(<guard>)` or a guarded mount, or is in a `PUBLIC_ROUTES` list **with a reason per entry** (the
-     collector, the billing webhook — signature inside, the fonts catalogue, an invitation by its token, the runtime's
-     bundle — its own secret).
-  2. The ten routes that check `req.user` by hand (`account/index.ts`, `devices/index.ts`, `profile/index.ts`) take
-     the `authenticated` guard; remove the hand-written `if (!userId) return res.status(401)…`.
-- **Do not:** change what any route answers; `/spaces/:spaceId/...` routes use `requireSpacePermission` or
-  `requireSpaceMember`, never `requirePermission` + `requireSpaceMember` (AGENTS.md).
-- **Verify:** the test; `yarn test:e2e` (the routes' own suites); add a throw-away route with no guard and see the
-  test fail, then remove it.
-- **Done when:** the test is in the unit run and the allow-list has a reason on every line.
-
-## T0.11 — A new project installs clean
-
-- **Repo:** `plitzi-workspace` (`apps/cli/src/scaffold`). **Finding:** G8. **Size:** S.
-- **Steps:** make a project (`node apps/cli/dist/bin.js create /tmp/<dir> --mode server --source local
-  --package-manager npm`), run `npm audit` in it, and move the scaffold's dependency ranges (or add `overrides` the
-  scaffold writes) off each advised version. Add a nightly check (not per pull request — it needs the network) that
-  makes a project and runs `npm audit --audit-level=moderate`.
-- **Verify:** a fresh `create` ends with no advisory line.
-- **Done when:** the nightly check exists and passes.
 
 ## T0.12 — The edge leaves the HTML alone
 
@@ -231,38 +116,12 @@ Read [`00-how-to-work.md`](00-how-to-work.md) first. Paths are relative to the r
   writes; the builder saving a change on the visual stack; `plitzi login` and `plitzi space push` (bearer) still work.
 - **Stop and ask if:** a first-party caller cannot send the header (a plugin from a CDN, a form post) — say which.
 
-## T0.14 — A throttle a stranger cannot use
+## T0.14 — The throttle's counts shared between replicas
 
-- **Repo:** `plitzi-workspace` (`apps/server/src/core/auth/throttle.ts`, `…/api/session.ts:78`), wired in
-  `plitzi-sdk-server`. **Finding:** S2. **Size:** M.
-- **Why:** sign-in is limited by the username alone (10 in 5 min, per replica's memory): a stranger locks an account
-  out, and one password tried over many usernames is never slowed.
-- **Steps:**
-  1. Count two things apart: failures **from an address** (any usernames) and failures **for an account from an
-     address**. An account's limit refuses only the addresses that failed; its owner signs in from another.
-  2. The address comes from the request's carrier as the kernel already resolves it behind a proxy
-     (`grep -rn "carrier" packages/sdk-kernel/src/identity`); never read `x-forwarded-for` yourself.
-  3. The counters behind the seam the kernel has for a shared store; the hosted platform passes Redis (keys through
-     `src/services/redis/cacheKeys.ts` — AGENTS.md).
-  4. Clocks injected in the tests.
-- **Verify:** tests: ten failures from address A do not refuse the right password from address B; one password over
-  fifty usernames from A is refused from the limit on; a window passing lets A in again. `yarn test` in the
-  workspace, `yarn test:e2e` in the server.
-- **Do not:** lock an account for everyone; trust a client-sent address.
-
-## T0.15 — Small doors
-
-- **Repo:** `plitzi-sdk-server`. **Findings:** S3, S4, S5, S6. **Size:** S.
-- **Steps:**
-  1. **CORS:** `src/services/express/index.ts` answers any `Origin` with itself. Answer `Access-Control-Allow-Origin`
-     only for the deployment's own origins (the list the origin guard uses), with `Vary: Origin`; nothing for others.
-     Check the public endpoints that must answer any origin (the analytics collector, `/_plitzi/…` on a space's host)
-     keep doing so — they are separate mounts.
-  2. **GraphQL:** measure the builder's largest real query (depth, aliases) from its source
-     (`apps/builder/src` — `grep -rn "gql\`"`), then set a depth and alias limit above it in
-     `src/services/graphql/index.ts`, refused with a message that names the limit.
-  3. **Names:** workspaces, teams and spaces refuse a name over 80 characters or holding `<`, `>` or a control
-     character, with the fix in the message — one shared validator.
-  4. **Ids:** a space id past the integer's range answers 404 like any unknown id, not 500
-     (`GET /spaces/99999999999999999999`).
-- **Verify:** four e2e tests, each failing before the change; `yarn test:e2e`.
+- **Done (2026-11-10)** in `@plitzi/sdk-server`: the policy (`createRateLimit`) over a store of counts — memory by
+  default, or `redisThrottleCounts(redis, { prefix })`, each attempt one Lua script (atomic: a burst cannot read an
+  empty window together). Held by `throttle.test.ts` and `throttle.redis.integration.test.ts` (both stores, and two
+  replicas on one Redis refusing the eleventh failure).
+- **Left** (after the release): `plitzi-sdk-server`'s `services/auth/plitziAuth.ts` passes
+  `api.rateLimit: createRateLimit({ counts: redisThrottleCounts(getRedis().client, { prefix }) })`, the prefix a builder
+  of `services/redis/cacheKeys.ts` with a `{hash tag}`.

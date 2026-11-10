@@ -16,35 +16,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 
 ---
 
-## T2.1 — A menu on a phone
-
-- **Finding:** W2. **Size:** M. **With T2.28** (the same bar; whoever takes the second reads the first's work).
-- **Read first:** `website/landing/site.ts` and `website/landing/nav.ts` (the public frame and its bar — `site.ts`
-  has no imports on purpose: AGENTS.md § "The website's public pages sit in `inSite`"); how the docs space does its
-  phone menu (`docs/shell/`), which already works.
-- **Steps:** under the width where the bar's items stop fitting (T2.28 sets it), the bar shows the mark, **Start
-  free** and a menu button; the menu lists Product, Showcase, Templates, Pricing, Docs, CLI, Agents, the community
-  links, Sign in and the theme. It is a disclosure: the button has `aria-expanded` and `aria-controls`; focus moves
-  into it and stays inside while open; Escape and a click outside close it and return focus to the button; the page
-  behind does not scroll.
-- **Do not:** hide **Start free** inside the menu; build it as a plugin (CDN plugins are not drawn on the server).
-- **Verify:** a `@responsive` step in `visual/website.spec.ts`: open the menu at 390, reach `/pricing` through it,
-  assert the button's name and state as the accessibility tree gives them (`yarn shot <space> / --view accessibility`
-  shows the tree).
-- **Done when:** every section is reachable from the bar at 320, 390 and 768.
-
-## T2.2 — Showcase cards
-
-- **Finding:** W3. **Size:** S.
-- **Read first:** `website/landing/sections/showcase.ts` — line ~242: `variants: { lead: { desktop: { gridColumn:
-  'span 2' }, tablet: { gridColumn: 'span 2' }, mobile: {} } }`, and the grid's own `mobile` (one column).
-- **Steps:** Step 0: confirm the cause in the browser at 390 — the lead card keeps `gridColumn: span 2` from
-  `desktop` (a style's `mobile` is laid over `desktop` alone), which makes an implicit second column and stretches
-  the rows. Say `gridColumn` again for `mobile`. Decide whether three or five cards show on a phone and say why in a
-  comment.
-- **Verify:** a `@responsive` step measuring, for each card at 390, the gap between its last content and its "Open it
-  live" link: ≤ 32 px.
-
 ## T2.3 — Nothing clipped
 
 - **Finding:** W4. **Size:** M.
@@ -85,30 +56,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   with a caption beside it that says what it shows. Add two ratchets to `visual/screens.spec.ts`: controls under 44 px
   on a phone (links inside a paragraph excepted), text nodes under 12 px outside `aria-hidden`.
 - **Verify:** both counts 0 on the public pages at 390.
-
-## T2.6 — The cookie notice
-
-- **Finding:** W8. **Size:** S.
-- **Read first:** `website/cookieConsent.ts`; the consent is painted state (`CONSENT_STATE` in `website/index.ts`).
-- **Steps:** on a phone: a bar along the bottom — one line, "Accept all" and "Only necessary", "Settings" as a link;
-  on a desktop: a card in a corner that never covers a page's first control. It covers today: the plan summary on
-  `/pricing`, the studio on the phone home, the send button of `/report-abuse`, lists in the console.
-- **Do not:** change what consent means or how it is kept.
-- **Verify:** a test that on first load of `/`, `/pricing` and `/report-abuse`, at 1440 and 390, the page's primary
-  control is not under the notice (`elementFromPoint` at the control's centre is the control).
-
-## T2.7 — Proof that holds
-
-- **Findings:** W9, W10. **Decided:** D4 (yes: threshold and "Recommended"), D5 (the plan is **"Free"**, with its
-  line "Free, for good"). **Size:** S.
-- **Read first:** `brand/community.ts` (the `github-stars` action answers `stars` and `hasStars`),
-  `website/landing/sections/pricing.ts` (line ~192 `name: 'Solo'`, line ~245 `'Most chosen'`),
-  `src/services/pricing/plans.ts` (the one place for plans).
-- **Steps:** the star count shows from a threshold (D4: 250) — below it the button reads "Star on GitHub" with no
-  number, in all four places; "Most chosen" → "Recommended"; the home's plan names come from `src/services/pricing`
-  like `/pricing`'s, so "Solo" becomes "Free" (D5).
-- **Verify:** a test that the home's pricing section and `/pricing` name the same plans, read from the authored
-  documents; `website/landing.test.ts`.
 
 ## T2.8 — `/pricing`
 
@@ -258,14 +205,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   no assistant; a seeded space that blocks one kind lists only that kind's agents; `/llms.txt` answers on both hosts;
   a sitemap test; `yarn vitest run prisma/seeds/spaces/platform/docs`.
 
-## T2.19 — A builder that cannot open says where to go
-
-- **Repo:** `plitzi-workspace` (`apps/builder`), shown from the console. **Finding:** W32. **Size:** S.
-- **Steps:** the builder's refusal states — not signed in, no access to the space, a credential the server no longer
-  takes — each as a page with the reason in plain words and its way out (sign in, back to the console). Today:
-  the bare words "Authentication required".
-- **Verify:** a test of each state in the builder's own suite; one visual step.
-
 ## T2.20 — Emails worth opening
 
 - **Finding:** W35. **Size:** M.
@@ -308,16 +247,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   in authoring when a page's text and its language clearly disagree is a platform idea — propose it, do not build it
   here. The home's first paragraph takes the docs' sentence ("a platform for building websites and web apps…").
 - **Verify:** neither page over 6,000 px; `lang="es"` on Ceniza's pages; the docs' tests.
-
-## T2.23 — Sessions with an end
-
-- **Repos:** `plitzi-workspace` (the kernel's sessions), `plitzi-sdk-server` (`src/services/api/auth/accountAdapters.ts`).
-  **Finding:** W42. **Size:** S.
-- **Steps:** Step 0: confirm that a sign-in adds a session and only expired ones are removed (`accountAdapters.ts`
-  ~line 131–160). Then a cap on an account's live sessions (the oldest end first when a new one passes it; the cap a
-  setting), and the devices page says how many it shows of how many. The September probe account in development's
-  database is the maintainer's to remove — list it in the pull request, do not delete it.
-- **Verify:** an e2e: a sign-in past the cap ends the oldest session; `visual/auth.spec.ts`'s devices journey.
 
 ## T2.24 — A scale for type, radii and the three colours
 

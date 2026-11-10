@@ -53,16 +53,6 @@ example to fit; the MCP's budget is watched, never met by dropping a field an ag
   `plitzi doctor` and the MCP's first answer say when they are behind.
 - **Verify:** an e2e with a client one minor behind (accepted, told) and one below the floor (refused, with the fix).
 
-## T4.4 — A budget per tool
-
-- **Finding:** A4. **Size:** S.
-- **Read first:** `apps/mcp/src/modules/mcp/tests/tools.test.ts` (the listing's budget),
-  `apps/mcp/src/modules/mcp/resources/primer.ts` (`SPACE_BUDGET`).
-- **Steps:** for the fixture spaces, measure each tool's answer (`plitzi_read`, `plitzi_look`, `plitzi_search`,
-  `plitzi_activity`, `plitzi_render`, `plitzi_test`, `plitzi_describe_operation`) in tokens and add a ratchet per tool.
-  Where an answer is large, lower the **default depth** and say how to ask for more — never drop a field.
-- **Verify:** the table and its test; `docs/en/mcp.md` states the defaults.
-
 ## T4.5 — A write sent twice
 
 - **Finding:** A5. **Size:** M.
@@ -91,15 +81,6 @@ example to fit; the MCP's budget is watched, never met by dropping a field an ag
   snippet where it takes its own shapes today (`authorSnippet` exists), its `AI*` shapes kept for reading.
 - **Deliver:** the table and the proposal in RFC § 8. Nothing changed.
 
-## T4.8 — The harness out of a lone agent's way
-
-- **Finding:** A7. **Size:** S. **With T3.11.**
-- **Steps:** `plitzi --help` names `run` and `task` in one line each and leaves their 48 commands to
-  `plitzi run --help` (10 KB today); the lone agent's `SKILL.md` keeps its one paragraph on teams and does not load
-  the run references. Measure the bytes of help and skill a lone agent reads in a first session, before and after.
-- **Do not:** remove a command or change one's name.
-- **Verify:** `apps/cli/src/program.test.ts`, `commandHints.test.ts`; the figures.
-
 ## T4.9 — The run skills, on a diet
 
 - **Findings:** A8, A9. **Size:** L. **After T4.1** (the score is the proof).
@@ -118,22 +99,3 @@ example to fit; the MCP's budget is watched, never met by dropping a field an ag
   5. Never remove an example to fit (the maintainer's rule: quality before budget).
 - **Verify:** `runs-lead.md` under 3,500 tokens; `apps/cli/src/runs/runs-lead.test.ts` and
   `runs/tasks/runs-reviewers.test.ts` green; T4.1's score as a team **no lower** than before, on two runs.
-
-## T4.10 — Skills held to the CLI
-
-- **Finding:** A10. **Size:** S.
-- **Steps:** a test that reads every `plitzi …` command written in any skill or reference
-  (`apps/cli/skills`, `packages/sdk-authoring/skills`, `apps/mcp/skills`) and asks the built CLI for its `--help`
-  (the command path must exist); a test that every skill's frontmatter `description` is at most 1,024 characters.
-  Fix what they find: `plitzi-cli`'s description is 1,221 characters; `plugins.md` says `add plugin <name>` (it is
-  `plitzi plugin add`).
-- **Verify:** the tests fail on `main` and pass after.
-
-## T4.11 — `verify` on a cold project
-
-- **Finding:** A11. **Size:** S.
-- **Steps:** `plitzi verify`'s last check (`pages`) needs a server and fails on a new project until `npm start` is run
-  by hand. When nothing serves the project, `verify` serves it itself for the check — as `page check` does for a
-  run's copy — stops it after, and says it did. `--no-pages` stays.
-- **Do not:** leave a server running; kill by name (the project's server is stopped with `plitzi server stop`).
-- **Verify:** on a fresh `plitzi create`, `plitzi verify` passes with no other command; the CLI's tests.

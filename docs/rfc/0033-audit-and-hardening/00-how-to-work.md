@@ -6,12 +6,12 @@ folder, one file per workstream:
 
 | File | Tasks |
 |---|---|
-| [`ws0-gates.md`](ws0-gates.md) | T0.1–T0.15 — advisories, CI, budgets, flaky tests, security doors |
+| [`ws0-gates.md`](ws0-gates.md) | T0.6–T0.14 — CI, budgets, flaky tests, security doors |
 | [`ws1-page-weight.md`](ws1-page-weight.md) | T1.1–T1.7 — the space document, the SDK bundle, icons, styles, shift |
 | [`ws2-website-and-sign-in.md`](ws2-website-and-sign-in.md) | T2.1–T2.28 — the `website`, `auth` and `docs` seeds, the builder's bar |
-| [`ws3-code.md`](ws3-code.md) | T3.1–T3.15 — tests where the code is, closures, pools, nexus |
+| [`ws3-code.md`](ws3-code.md) | T3.2–T3.15 — closures, pools, nexus |
 | [`ws4-agents-surface.md`](ws4-agents-surface.md) | T4.1–T4.11 — authoring, MCP, CLI, skills |
-| [`ws5-server-work.md`](ws5-server-work.md) | T5.1–T5.13 — sandbox, runners, load, traces, the cluster |
+| [`ws5-server-work.md`](ws5-server-work.md) | T5.2–T5.13 (not T5.7, T5.10) — load, runners, traces, the cluster |
 | [`ws6-product.md`](ws6-product.md) | T6.1–T6.8 — funnel, trust pages, SEO, docs, console |
 
 ## 1. Before the first line of code

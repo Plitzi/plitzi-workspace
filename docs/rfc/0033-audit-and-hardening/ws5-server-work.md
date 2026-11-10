@@ -9,25 +9,6 @@ A regression here needs a test that would have caught it, proven on the old code
 
 ---
 
-## T5.1 — The sandbox, attacked
-
-- **Repo:** `plitzi-workspace` — `packages/sdk-runtime`. **Finding:** R1. **Size:** L. **After T3.1.**
-- **Steps:** a suite owned by the runner's package, one named case per attempt, each ending in the stop reason or the
-  refusal the contract names:
-  - reaching the host's globals through prototypes, constructors of host-made values, thrown errors and their stacks;
-  - holding or calling the runner's callback references after they were taken off the global;
-  - memory: a growing string, an `ArrayBuffer`, an array, a catastrophic regular expression;
-  - time: a tight loop, a flood of timers, a flood of microtasks, a sleep past the wall limit;
-  - calls past the plan's count;
-  - `fetch` to a host not declared; through a redirect to one; to an address written in decimal, hex, octal, mapped
-    IPv6, with userinfo, in full-width digits; to a name that resolves inside (the kernel's `outboundGuard` already
-    refuses these — the test pins it from the guest's side);
-  - a second invocation reading anything the first left;
-  - the bundle's top level doing any of the above while it is read.
-- **Do not:** weaken a limit to make a case pass; publish what you find.
-- **If a case gets through:** stop. Tell the maintainer privately, with the case. Fix first, describe after.
-- **Verify:** the suite runs with `sdk-runtime` alone (`yarn turbo run test --filter=@plitzi/sdk-runtime`).
-
 ## T5.2 — The load round, kept
 
 - **Repo:** `plitzi-sdk-server`. **Finding:** R2. **Size:** M.
@@ -62,40 +43,21 @@ A regression here needs a test that would have caught it, proven on the old code
 - **Verify:** the contract green for the three runners and the test runner; `yarn turbo run test
   --filter=@plitzi/sdk-actions --filter=@plitzi/sdk-runtime`; the server's e2e in the split topology.
 
-## T5.4 — Run records that are not lost quietly
-
-- **Repo:** `plitzi-sdk-server` — `src/services/actionRuns/batch.ts`. **Finding:** R4. **Size:** M.
-- **Steps:** records are written in bursts every 100 ms; a failed burst logs how many it lost. Keep a failed burst
-  and retry it with back-off, up to a bound of records and of minutes (both settings); past the bound, count the loss
-  in the process's stats and show it in **Back-office → Health**. Clocks injected.
-- **Do not:** make a run wait for its own record; grow memory without a bound.
-- **Verify:** `yarn vitest run src/services/actionRuns` — a store that fails three times loses nothing; one that
-  fails for ever reports the number; the bound holds.
-
 ## T5.5 — Realtime across replicas
 
-- **Repo:** `plitzi-sdk-server` (and `plitzi-workspace` if the cause is the mechanism's). **Finding:** R5. **Size:** M.
-- **Steps:** open since September: with two page-server replicas and no affinity, realtime over SSE answered 401 on
-  the other replica. Reproduce in the split-topology e2e with two page servers, over SSE and over WebSocket. If it
-  still fails: the channel's grant is checked against the shared store, not the replica's memory.
-- **Verify:** the e2e, green on both transports; `visual/pizarra.spec.ts`.
-- **If it no longer reproduces:** keep the e2e and close the finding.
+- **Done (2026-11-10)** in `@plitzi/sdk-actions`: `handleRealtimePublish` asks `hub.ask(token, …)` when the stream
+  is not this replica's; the hub that holds it answers through `publishFrom` (rate, presence) over the shared pubsub.
+  `docs/en/realtime.md` no longer asks for affinity.
+- **Left, after the release:** the split-topology e2e in `plitzi-sdk-server` — two page-server processes (booted as
+  `resilience/two-replicas` boots workers), a stream on one and its publish on the other, over SSE and over
+  WebSocket — and `visual/pizarra.spec.ts`.
 
 ## T5.6 — Work set aside is said
 
-- **Repo:** `plitzi-sdk-server`. **Finding:** R6. **Size:** M.
-- **Steps:** Step 0: what the owner of a space is shown and sent when runs are refused for quota (402) or jobs are
-  set aside. If nothing reaches them unasked: one calm notice on the console's home ("Needs attention" already
-  exists) and one email per period — amber, not red; titles not ids; and **say what is not affected** (pages keep
-  being served).
-- **Verify:** a visual step for the notice; an e2e that the email is sent once per period, not per run.
-
-## T5.7 — Pools: mechanism or data
-
-- **Repo:** `plitzi-sdk-server` — `src/services/pools/` (8,004 lines). **Finding:** R7. **Size:** S. **No code.**
-- **Deliver:** in RFC § 8, a table of each file of `services/pools` by who needs it — any deployment (mechanism:
-  belongs in the packages) or Plitzi's own (data and policy: stays) — against what RFC 0032 § 7 already moved, with a
-  recommendation. The maintainer decides; nothing moves in this task.
+- **Done** 2026-11-10: `notePausedWork` records the period's first refusal and emails the owners once; the alerts
+  answer `pausedWork` and `setAside`, and the home draws them amber with what is not affected.
+- **Left:** a visual step (`screens.spec.ts`' home journey) with a space past its allowance and a job set aside: both
+  rows drawn, in light and dark, at desktop and 390 px.
 
 ## T5.8 — One trace for a run
 
@@ -116,22 +78,6 @@ A regression here needs a test that would have caught it, proven on the old code
   each a module with injected clocks and its tests; the two functions compose them.
 - **Verify:** their suites unchanged and green (`worker.test.ts`, `worker.capacity.test.ts`, `worker.slices.test.ts`,
   the `runAction.*.test.ts` files); the job-queue contract; a load round within its band (T5.2).
-
-## T5.10 — One resolution, one connection
-
-- **Repo:** `plitzi-workspace` — `packages/sdk-kernel/src/outbound/outboundGuard.ts`. **Finding:** R10. **Size:** M.
-- **Why:** the guard judges the addresses a name resolves to, then the transport resolves the name again — DNS
-  rebinding is open, and the file says so. It matters most at the worker, which makes the requests a space's steps
-  author and shares a namespace with the databases (PL3).
-- **Steps:** the guarded request connects to the address it judged: a dispatcher whose `connect.lookup` answers only
-  the vetted addresses, for the first request and for every redirect (each redirect is judged again — keep that).
-  Every authored request goes through it: functions' `fetch`, connectors, the `http.request` step
-  (`grep -rn "assertOutboundAllowed" packages apps`). A lint rule refuses a bare `fetch` to an authored host in those
-  modules.
-- **Do not:** set a global dispatcher that changes other requests (read AGENTS.md § undici import side effect in the
-  maintainer's notes if you touch `undici`); break `privateOrigins`.
-- **Verify:** a test with a resolver that answers a public address at the check and a private one at the connection:
-  refused. The kernel's outbound tests; the engine's `http` task tests.
 
 ## T5.11 — Backups somewhere else, and a restore with a date
 

@@ -28,42 +28,6 @@ watch server, never a development build.
 
 ---
 
-## T1.1 — Design note, with figures
-
-- **Repos:** `plitzi-workspace` (`apps/sdk`, `apps/server`), the RFC. **Size:** M. **Writes no product code.**
-- **Read first:** `apps/server/src/modules/ssr/spaceDocument.ts` (how the document served at
-  `/_plitzi/space/<hash>.json` is built and named); how the SDK loads it and moves between pages
-  (`grep -rn "_plitzi/space" apps/sdk/src packages/sdk-shared/src packages/sdk-navigation/src`); `apps/sdk/vite.config.ts`
-  and `vite.vendor.config.ts` (what is in `plitzi-sdk.js` and in the vendor file); the element registry
-  (`packages/sdk-elements/src/elements`).
-- **Steps:**
-  1. **The bundle.** `yarn build:prod-analyze` in `apps/sdk`. Table: each package and each element (or family) with
-     its minified and compressed size, largest first. Mark which elements nearly every page uses (container, heading,
-     paragraph, text, link, image, button) against the rest.
-  2. **The document.** For three spaces — the website, the docs, one showcase space — and three pages of each: the
-     bytes of the whole document, of the page's own subtree (the page element and its descendants in `schema.flat`),
-     of the components and layouts that page uses, and of what every page needs (definition, settings, variables, the
-     page list). The RFC already has the website's per-page figures (pricing 691 KB, home 525 KB, a legal page 9 KB).
-  3. **What the server knows at render.** List what the page server holds when it renders a page: the page, the
-     element types it drew, the components it expanded. That is what makes `modulepreload` and an inlined page part
-     possible.
-  4. **Every way a space reaches a browser today**, as a table: through the page server (SSR, then hydration);
-     through the SDK alone in the browser (`--mode client`, the public `Space` query, `/_plitzi/space.json`); in the
-     builder; through the MCP. For each: which request carries the document, who caches it, what invalidates it. D1
-     says the second row must not change — the note must show that the design leaves it byte for byte as it is.
-  5. **Navigation today, measured:** from a click on a link to the next page painted, between two pages of the
-     website and of one showcase space, with a page server and without — median and p95 of twenty. This is the bar
-     T1.2 must not pass.
-  6. **Write RFC § 8** with: the tables; **contract A — the document's parts**: what the shell holds; **what a
-     layout's part holds** (layouts are parts of their own, shared by the pages that use them) and how a page's part
-     names the layouts it needs; what a page's part holds; how each is named by its content; how access is checked for
-     a guarded page's part (D2); how the parts of the page being rendered reach the first paint; what is prefetched
-     and when; what the builder, the MCP and the SDK-alone path read — the whole, unchanged; **contract B — the
-     bundle's chunks** (the core's list, one chunk per heavy element or family, how the server names the chunks a page
-     needs); the open questions for the maintainer.
-- **Done when:** § 8 holds both contracts, the table of step 4 and the figures of step 5.
-- **Do not:** start implementing; propose a split that needs a request per element.
-
 ## T1.2 — The space document in parts
 
 - **Repos:** `plitzi-workspace` (`apps/server`, `apps/sdk`, `packages/sdk-schema`). **Finding:** P1. **Size:** L.
