@@ -4,14 +4,22 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, use, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
-import { DEFAULT_FAVICON, spaceIdentity, spaceIdentityProblems } from '@plitzi/sdk-shared/schema';
+import {
+  AI_CRAWLER_KIND_LABEL,
+  AI_CRAWLER_KINDS,
+  AI_CRAWLERS,
+  DEFAULT_FAVICON,
+  isAiCrawlerKind,
+  spaceIdentity,
+  spaceIdentityProblems
+} from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Notice from '@pmodules/App/components/Notice';
 
 import ViewPage from '../../components/ViewPage';
 import ViewSection from '../../components/ViewSection';
 
-import type { SpaceIdentity } from '@plitzi/sdk-shared/schema';
+import type { AiCrawlerKind, SpaceIdentity } from '@plitzi/sdk-shared/schema';
 import type { ChangeEvent } from 'react';
 
 /** The identity settings edited as one line of text each. */
@@ -28,7 +36,10 @@ const SharingSettings = () => {
   const { eventBridge } = use(EventBridgeContext);
   const [identity, setIdentity] = useState<SpaceIdentity>(() => spaceIdentity(settings));
   const [robotsTxt, setRobotsTxt] = useState(settings.robotsTxt ?? '');
-  const [blockAiCrawlers, setBlockAiCrawlers] = useState(settings.blockAiCrawlers === true);
+  const [securityTxt, setSecurityTxt] = useState(settings.securityTxt ?? '');
+  const [blockAiCrawlers, setBlockAiCrawlers] = useState<AiCrawlerKind[]>(() =>
+    Array.isArray(settings.blockAiCrawlers) ? settings.blockAiCrawlers.filter(isAiCrawlerKind) : []
+  );
   const light =
     typeof identity.themeColor === 'object' ? (identity.themeColor.light ?? '') : (identity.themeColor ?? '');
   const dark = typeof identity.themeColor === 'object' ? (identity.themeColor.dark ?? '') : '';
@@ -86,13 +97,24 @@ const SharingSettings = () => {
     [save]
   );
 
-  // Off is the setting left out — nobody kept out — never a `false` the document carries for nothing.
-  const handleAiCrawlers = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setBlockAiCrawlers(event.target.checked);
-      save('blockAiCrawlers', event.target.checked ? true : undefined);
+  const handleSecurity = useCallback(
+    (value: string) => {
+      setSecurityTxt(value);
+      save('securityTxt', value === '' ? undefined : value);
     },
     [save]
+  );
+
+  // Each kind its owner's to decide (D10). None kept out is the setting left out, never an empty list carried for nothing.
+  const handleAiCrawlers = useCallback(
+    (kind: AiCrawlerKind) => (event: ChangeEvent<HTMLInputElement>) => {
+      const next = AI_CRAWLER_KINDS.filter(each =>
+        each === kind ? event.target.checked : blockAiCrawlers.includes(each)
+      );
+      setBlockAiCrawlers(next);
+      save('blockAiCrawlers', next.length > 0 ? next : undefined);
+    },
+    [blockAiCrawlers, save]
   );
 
   return (
@@ -181,18 +203,32 @@ const SharingSettings = () => {
           value={robotsTxt}
           onChange={handleRobots}
         />
-        <Checkbox
+        {AI_CRAWLER_KINDS.map(kind => (
+          <Checkbox
+            key={kind}
+            size="sm"
+            name={`blockAiCrawlers-${kind}`}
+            type="checkbox"
+            checked={blockAiCrawlers.includes(kind)}
+            onChange={handleAiCrawlers(kind)}
+            label={`Keep out: ${AI_CRAWLER_KIND_LABEL[kind].toLowerCase()} (${AI_CRAWLERS[kind].slice(0, 3).join(', ')}…)`}
+          />
+        ))}
+        <TextArea
           size="sm"
-          name="blockAiCrawlers"
-          type="checkbox"
-          checked={blockAiCrawlers}
-          onChange={handleAiCrawlers}
-          label="Keep AI crawlers out (GPTBot, ClaudeBot, Google-Extended…) — search engines keep reading"
+          name="securityTxt"
+          label="security.txt"
+          placeholder={'Contact: mailto:security@example.com\nExpires: 2027-12-31T23:00:00.000Z'}
+          rows={3}
+          value={securityTxt}
+          onChange={handleSecurity}
         />
         <Notice tone="info">
-          Left empty, crawlers may read every page. A page kept out of search says so itself, with its robots under SEO.
-          The site answers /sitemap.xml with its public pages — the map of pages marks the ones left out — and
-          robots.txt names it.
+          Search engines keep reading whatever is ticked here. Left empty, crawlers may read every page. A page kept out
+          of search says so itself, with its robots under SEO. The site answers /sitemap.xml with its public pages — the
+          map of pages marks the ones left out — and robots.txt names it. security.txt is where whoever finds a flaw in
+          the site writes to you, served at /.well-known/security.txt; left empty, that address answers that the site
+          publishes none.
         </Notice>
       </ViewSection>
     </ViewPage>

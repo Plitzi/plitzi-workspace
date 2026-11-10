@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { unusedPort } from '@plitzi/sdk-kernel/http';
+import { AI_CRAWLERS } from '@plitzi/sdk-shared/schema';
 
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../createServer';
-import { AI_CRAWLERS, DEFAULT_ROBOTS_TXT } from './robotsTxt';
+import { DEFAULT_ROBOTS_TXT } from './robotsTxt';
 
 import type { SSRServer } from '../../types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -59,16 +60,28 @@ describe('a space’s /robots.txt', () => {
     expect(await (await fetch(`${base}/robots.txt`)).text()).toBe(`${own}\n`);
   });
 
-  it('keeps every AI crawler out when the space says so, and search engines in', async () => {
-    const base = await serve({ customCss: '', blockAiCrawlers: true });
+  it('keeps out every AI crawler of the kinds the space names, and search engines in', async () => {
+    const base = await serve({ customCss: '', blockAiCrawlers: ['training', 'assistants', 'search'] });
     const text = await (await fetch(`${base}/robots.txt`)).text();
 
     expect(text.startsWith(DEFAULT_ROBOTS_TXT)).toBe(true);
-    for (const agent of AI_CRAWLERS) {
+    for (const agent of Object.values(AI_CRAWLERS).flat()) {
       expect(text).toContain(`User-agent: ${agent}\nDisallow: /`);
     }
 
     expect(text).not.toContain('Googlebot');
+  });
+
+  // One switch for all of them kept assistants out of a site whose owner only meant not to train a model (D10).
+  it('keeps out only the kind it names: a site that refuses training is still read for a person who asked', async () => {
+    const base = await serve({ customCss: '', blockAiCrawlers: ['training'] });
+    const text = await (await fetch(`${base}/robots.txt`)).text();
+
+    expect(text).toContain('User-agent: GPTBot\nDisallow: /');
+    expect(text).toContain('User-agent: ClaudeBot\nDisallow: /');
+    for (const agent of [...AI_CRAWLERS.assistants, ...AI_CRAWLERS.search]) {
+      expect(text).not.toContain(`User-agent: ${agent}`);
+    }
   });
 
   it('lets crawlers read everything when the space says nothing', async () => {
@@ -77,6 +90,27 @@ describe('a space’s /robots.txt', () => {
     expect(await (await fetch(`${base}/robots.txt`)).text()).toBe(
       `${DEFAULT_ROBOTS_TXT}\nSitemap: ${base}/sitemap.xml\n`
     );
+  });
+});
+
+/** A researcher who found a flaw reads where to write: the space's own words, or a 404 — never words it did not give. */
+describe('a space’s /.well-known/security.txt', () => {
+  it('answers the space’s own text, as plain text', async () => {
+    const own = 'Contact: mailto:security@example.com\nExpires: 2027-11-10T00:00:00.000Z';
+    const base = await serve({ customCss: '', securityTxt: own });
+    const res = await fetch(`${base}/.well-known/security.txt`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/plain');
+    expect(await res.text()).toBe(`${own}\n`);
+  });
+
+  it('answers 404 for a space that says nothing, never its page', async () => {
+    const base = await serve({ customCss: '' });
+    const res = await fetch(`${base}/.well-known/security.txt`);
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-type')).toContain('text/plain');
   });
 });
 

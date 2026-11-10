@@ -4,6 +4,7 @@ import type { SnippetStyle } from './SnippetTypes';
 import type { SpaceTests } from './TestTypes';
 import type { BuiltinParam } from '../authoring/paramSpec';
 import type { RuleGroup } from '../conditions/types';
+import type { AiCrawlerKind } from '../schema/aiCrawlers';
 import type { ElementMotion } from '../schema/motion';
 
 /** The `when` guard a binding, a flag rule and a sub-value are written with: part of the document, so exported with it. */
@@ -275,11 +276,18 @@ export type Schema = {
      */
     robotsTxt?: string;
     /**
-     * Keeps the crawlers that gather pages to train AI models (`AI_CRAWLERS`: GPTBot, ClaudeBot, Google-Extended…) out of
-     * the whole site: `/robots.txt` says `Disallow: /` to each, after whatever `robotsTxt` says. Search engines keep
-     * reading it. Left out, nobody is kept out.
+     * The site's `/.well-known/security.txt` (RFC 9116), as a researcher who found a flaw reads it: where to write
+     * (`Contact:`), until when the text holds (`Expires:`), and anything else the RFC names. Left out, the address answers
+     * 404 — a site that says nothing is not given words it did not write.
      */
-    blockAiCrawlers?: boolean;
+    securityTxt?: string;
+    /**
+     * The kinds of AI crawler kept out of the whole site, each its owner's to decide (`AI_CRAWLERS`): `training` (GPTBot,
+     * ClaudeBot, Google-Extended…), `assistants` fetching a page for a person (ChatGPT-User, Claude-User…) and AI
+     * `search` indexes (OAI-SearchBot, PerplexityBot…). `/robots.txt` says `Disallow: /` to each agent of each kind named,
+     * after whatever `robotsTxt` says. Search engines keep reading it. Left out, nobody is kept out.
+     */
+    blockAiCrawlers?: AiCrawlerKind[];
     /**
      * A move from page to page drawn as one view becoming the next (the browser's view transitions): the pages cross-fade,
      * and an element named the same on both by CSS — `view-transition-name: fighter-portrait` — moves from where it was

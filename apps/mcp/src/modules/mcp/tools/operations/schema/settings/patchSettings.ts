@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { NOTIFICATIONS_FIELDS, splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-authoring';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
+import { AI_CRAWLER_KINDS } from '@plitzi/sdk-shared/schema';
 import { spaceIdentity, spaceIdentityProblems, withheldPageOf } from '@plitzi/sdk-shared/schema';
 
 import { empty, fail } from '../../../../helpers';
@@ -91,7 +92,11 @@ export const patchSettingsOp = z
       .union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() })])
       .optional(),
     robotsTxt: z.string().optional(),
-    blockAiCrawlers: z.boolean().optional().describe('robots.txt bars AI-training crawlers'),
+    securityTxt: z.string().optional().describe('/.well-known/security.txt, as written (RFC 9116: Contact, Expires)'),
+    blockAiCrawlers: z
+      .array(z.enum(AI_CRAWLER_KINDS))
+      .optional()
+      .describe('AI crawlers robots.txt keeps out, by kind: training, assistants (fetching for a person), search'),
     viewTransitions: z.boolean().optional(),
     withheldPage: z
       .string()

@@ -13,6 +13,7 @@ export const SCHEMA_SETTINGS = [
   'paintedState',
   'browserState',
   'robotsTxt',
+  'securityTxt',
   'blockAiCrawlers',
   'viewTransitions',
   'siteName',

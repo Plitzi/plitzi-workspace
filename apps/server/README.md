@@ -669,9 +669,12 @@ some visitors may read in it: that is served by a server action whose `access` c
 
 Every space answers its own `/robots.txt` and `/sitemap.xml`, at the address it is asked on — its own domain or another:
 
-- `/robots.txt` is the space's `settings.robotsTxt` (`User-agent: *` / `Allow: /` when it says none), then — with
-  `settings.blockAiCrawlers: true` — a `Disallow: /` for each crawler that trains AI models (`AI_CRAWLERS`), then
+- `/robots.txt` is the space's `settings.robotsTxt` (`User-agent: *` / `Allow: /` when it says none), then a
+  `Disallow: /` for each AI crawler of the kinds the space keeps out — `settings.blockAiCrawlers: ['training',
+  'assistants', 'search']`, any of them (`AI_CRAWLERS` in `@plitzi/sdk-shared/schema`) — then
   `Sitemap: <origin>/sitemap.xml` unless its own text names a sitemap.
+- `/.well-known/security.txt` is the space's `settings.securityTxt` as written (RFC 9116: `Contact:`, `Expires:`), and
+  404 when it says none — the rest of `/.well-known/` stays reserved.
 - `/sitemap.xml` lists every page a search engine may read (`sitemapPaths` in `@plitzi/sdk-shared/navigation`): not a
   page only signed-in visitors or a role may open, one whose slug takes a parameter or is `*`, one that says `noindex` or
   one behind a feature flag.
@@ -1323,7 +1326,7 @@ There is no third argument for the security-relevant parts, on purpose: password
 is rate-limited in memory, mailed links expire, and CSRF is on. Each of those used to be an option with no default —
 which meant the ordinary deployment went without, because nobody configures what they have not read about. Supply
 `api.hashPassword`/`verifyPassword` to keep an existing algorithm (a store of bcrypt hashes needs bcrypt), and
-`api.rateLimit` to put one counter behind a fleet. Name the terms accounts are opened under — `api.terms: { version }`
+`api.rateLimit: createRateLimit({ counts: redisThrottleCounts(redis) })` to give several replicas one count. Name the terms accounts are opened under — `api.terms: { version }`
 — and `/auth/signup` refuses a sign-up without `acceptedTerms: true` (400, `field: 'acceptedTerms'`) and hands
 `createAccount` the version accepted and when (`termsAccepted`), for the account store to keep; named none, sign-up asks
 for nothing more.
@@ -1481,7 +1484,7 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 |---|---|
 | `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host: this machine — loopback, a `.localhost` name, a private network address, its mDNS name (`studio.local`), as a phone on the Wi-Fi opens it over http — gets `SameSite=Lax` with no `Secure` and no `Domain`; any other host `SameSite=Lax; Secure`, shared across its sub-domains — which are one site, so `Lax` reaches them all. `sameSite: 'none'` for a deployment whose pages need the session inside another site's page (a space in an iframe there); a domain that lets other sites frame it (`security.frameAncestors` of its deployment) gets it on that host alone, over https. A deployment that serves spaces of different people on sub-domains of one domain (`*.plitzi.app`) answers `domain` per host — its own hosts `registrableDomain(hostname)`, a space's host `undefined` — or one space's visitor session reaches every other's |
 | `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
-| `api.rateLimit` | May this attempt proceed? **Defaults to an in-memory sliding window**, so no deployment is unthrottled by omission; supply one to put a single counter behind a whole fleet. Called before the password is checked, so a throttled attempt costs no hash |
+| `api.rateLimit` | May this attempt proceed? **Defaults to an in-memory sliding window**, so no deployment is unthrottled by omission. Sign-in is counted three ways — the account from one address (10 in 5 min), the address over any accounts (30), the account from anywhere (100) — so a stranger cannot lock an owner out and a sprayed password is still slowed. Several replicas share one count with `createRateLimit({ counts: redisThrottleCounts(redis, { prefix }) })` (`@plitzi/sdk-server/auth`): `redis` is anything with ioredis's `eval`, each attempt one script over its counts — atomic, so a burst sent at once cannot read an empty window together — and `prefix` keeps a `{hash tag}` on a Redis Cluster. Called before the password is checked, so a throttled attempt costs no hash |
 | `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
 | `api.impersonationPermission` | The capability it takes to obtain a session **as** another account, and the switch that offers the flow at all — **absent, there is no impersonation**. Its own permission on purpose: suspending an account and becoming one are not the same grant |
 | `api.onEvent` | Every act worth recording — sign-ins, failures, password changes, admin actions — as a `SecurityEvent`. An audit trail, a webhook and an alert are the same feed. Never awaited and never able to fail a request |

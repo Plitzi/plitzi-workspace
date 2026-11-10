@@ -153,6 +153,33 @@ describe('a page that answers as if it did not exist to whoever it is not for', 
     expect(signedIn.schema).toBe(space);
     expect(mayReceive(signedIn.kept, undefined)).toBe(false);
   });
+
+  // A console page redirects a signed-out visitor to sign in — and its whole content was still in the space they were
+  // sent: a visitor of a public page downloaded every page of the dashboard (D2).
+  it('keeps a page that sends the signed out to sign in from them, the page and its redirect kept', () => {
+    const space = schema();
+    space.flat.staff = element(
+      'staff',
+      'staff',
+      {
+        slug: 'staff',
+        accessLevel: 'authenticated',
+        unauthorizedBehaviour: 'redirect',
+        unauthorizedPageRedirect: 'home'
+      },
+      ['secret']
+    );
+
+    const signedOut = withholdPages(space, undefined);
+    expect(signedOut.withheld).toEqual(['staff']);
+    expect(signedOut.schema.pages).toContain('staff');
+    expect(signedOut.schema.flat.staff.attributes).toMatchObject({
+      withheld: 'unauthenticated',
+      unauthorizedBehaviour: 'redirect'
+    });
+    expect(JSON.stringify(signedOut.schema)).not.toContain('The release checklist');
+    expect(withholdPages(space, { permissions: [] }).schema).toBe(space);
+  });
 });
 
 describe('the page a space draws in place of one withheld', () => {

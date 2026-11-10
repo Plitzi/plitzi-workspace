@@ -100,11 +100,11 @@ export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSch
   for (const pageId of schema.pages) {
     const attributes = (schema.flat[pageId] as Element | undefined)?.attributes;
     const hides = notFoundWhenRefused(attributes);
-    // A page for signed-in visitors that answers as if it did not exist is kept from the signed out as one for some
-    // permissions is: any session, none of them.
+    // A page for signed-in visitors is kept from the signed out as one for some permissions is: any session, none of
+    // them (D2). Only the ones that answer as if they did not exist were, and a visitor of `/terms` downloaded the
+    // console's pages — 300 KB of one of them — that their own visit redirects away from.
     const access =
-      pageAccessOf(attributes) ??
-      (hides && attributes?.accessLevel === 'authenticated' ? { permissions: [] } : undefined);
+      pageAccessOf(attributes) ?? (attributes?.accessLevel === 'authenticated' ? { permissions: [] } : undefined);
     if (!access) {
       continue;
     }

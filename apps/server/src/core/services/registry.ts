@@ -6,6 +6,7 @@ import { statsStage } from '@plitzi/sdk-kernel/stats';
 
 import { robotsTxtStage } from './robotsTxt';
 import { rscStage } from './rsc';
+import { securityTxtStage } from './securityTxt';
 import { sitemapXmlStage } from './sitemapXml';
 import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
@@ -38,6 +39,8 @@ export const buildPagePipeline = (
     publicDirStage,
     defaultFaviconStage,
     cspReportStage,
+    // Before the reservation of `/.well-known/` (which answers 404 for the rest of it): the one file of it a space says.
+    ...(services.ssr ? [securityTxtStage] : []),
     wellKnownStage,
     pluginAssetsStage,
     fontAssetsStage,
