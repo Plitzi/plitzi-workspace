@@ -28,8 +28,9 @@ const ZoomButtons = () => {
   }, [displayMode]);
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="inline text-xs font-bold whitespace-nowrap">{Math.floor(width / zoom)} PX</div>
+    <div className="flex items-center gap-2 2xl:gap-4">
+      {/* The canvas's width in pixels, from 1,536 px up: a reading, and the room Publish needed under it. */}
+      <div className="hidden text-xs font-bold whitespace-nowrap 2xl:inline">{Math.floor(width / zoom)} PX</div>
       <Select size="xs" className="w-20" value={zoom.toFixed(1)} onChange={handleChange}>
         {zooms.map(({ label, value }) => (
           <option key={value} value={value}>

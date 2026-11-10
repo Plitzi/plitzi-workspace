@@ -176,14 +176,20 @@ const AppHeader = () => {
 
   return (
     <div
+      id="builder-header"
       className={clsx(
         'flex h-12 items-center justify-between gap-3 border-b border-gray-300 bg-white px-4 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'
       )}
     >
-      <div className="flex h-full items-center gap-3">
+      {/*
+        The bar needed 1,564 px, and Snapshot and Publish went past the window from 1440 down. They never leave now: the
+        actions do not shrink, and where the window is still too narrow it is the left side — the page, the search, the
+        history, the views — that gives way, scrolling inside itself. Nothing is taken out of the bar.
+      */}
+      <div className="flex h-full min-w-0 shrink [scrollbar-width:none] items-center gap-3 overflow-x-auto overflow-y-hidden">
         <div
           className={clsx(
-            'bg-grayviolet-200 flex h-8 w-20 items-center justify-between rounded-lg pr-2 pl-3 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+            'bg-grayviolet-200 flex h-8 w-20 shrink-0 items-center justify-between rounded-lg pr-2 pl-3 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
           )}
           id="plitzi-logo"
         >
@@ -197,11 +203,11 @@ const AppHeader = () => {
         <HistoryButtons />
         <ViewButtons />
       </div>
-      <div className="flex h-full items-center gap-4">
+      <div className="flex h-full shrink-0 items-center gap-2 2xl:gap-4">
         <DisplayModeButtons />
         <ZoomButtons />
       </div>
-      <div className="flex h-full items-center gap-3">
+      <div className="flex h-full shrink-0 items-center gap-2 2xl:gap-3">
         <div className="flex items-center gap-1">
           {collaborators.map(collaborator => {
             const {
@@ -250,10 +256,14 @@ const AppHeader = () => {
             id="header-export"
             size="sm"
             title="Export: a copy of this space as JSON, or as the code that authors it."
+            aria-label="Export"
             onClick={handleClickExport}
             intent="secondary"
+            iconPlacement="before"
           >
-            Export
+            {/* Its icon, and its name beside it from 1,536 px up; under it its name stays its title and accessible name. */}
+            <Button.Icon icon="fa-solid fa-download" />
+            <span className="hidden 2xl:inline">Export</span>
           </Button>
           {publishes && (
             <Button

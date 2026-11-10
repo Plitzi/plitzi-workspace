@@ -337,7 +337,7 @@ const GeneralSettings = () => {
         </Select>
       </ViewSection>
       <ViewSection title="Style">
-        <Notice tone="info">Keep on mind that changing this can impact your style</Notice>
+        <Notice tone="info">Keep in mind that changing this can impact your style</Notice>
         <Select
           size="sm"
           name="mode"

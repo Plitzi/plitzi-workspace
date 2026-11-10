@@ -27,7 +27,8 @@ const figure = (entry: QuotaReading) => (
   <span className="font-medium">
     {format(entry.used)}
     {!entry.unlimited && <span className="opacity-60">/{format(entry.quota)}</span>}
-    <span className="font-normal opacity-60"> elements</span>
+    {/* The word from 1,536 px up; under it the figure beside its cubes, the meter's title saying what it counts. */}
+    <span className="hidden font-normal opacity-60 2xl:inline"> elements</span>
   </span>
 );
 

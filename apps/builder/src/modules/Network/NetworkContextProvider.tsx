@@ -9,8 +9,10 @@ import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/gra
 import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 
+import BuilderRefusal, { refusalOf } from './components/BuilderRefusal';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
+import type { BuilderRefusal as BuilderRefusalReason } from './components/BuilderRefusal';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type { Server, ComponentDefinition, Environment } from '@plitzi/sdk-shared';
 import type { BuilderQueriesMap, BuilderMutationsMap, SpaceEventMap } from '@plitzi/sdk-shared/network';
@@ -39,7 +41,7 @@ const NetworkContextProvider = ({
   const client = useApolloClient();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<BuilderRefusalReason | undefined>(undefined);
   const { registerDefinition } = use(ComponentContext);
   const [internalData, setInternalData] = useState({} as NetworkInternalContextValue);
 
@@ -160,7 +162,7 @@ const NetworkContextProvider = ({
       if (response.success && response.result) {
         const { Space } = response.result;
         if (!Space) {
-          setError('Space Not Found');
+          setError(refusalOf('Space Not Found'));
           setLoading(false);
 
           return;
@@ -179,17 +181,18 @@ const NetworkContextProvider = ({
         });
       }
     } catch (e: unknown) {
-      if ((e as Error).message === 'Failed to fetch') {
-        setError('Service not available');
-      } else if ('statusCode' in (e as Record<string, unknown>) && (e as Record<string, unknown>).statusCode === 401) {
-        setError('Access not authorized');
-      } else {
-        setError((e as Error).message);
-      }
+      setError(refusalOf(e));
     } finally {
       setLoading(false);
     }
   }, [environment, query, registerDefinition]);
+
+  // Asked again from the refusal (`Try again`): the load as it ran the first time.
+  const handleRetry = useCallback(() => {
+    setError(undefined);
+    setLoading(true);
+    void initQuery();
+  }, [initQuery]);
 
   useEffect(() => {
     void initQuery();
@@ -221,7 +224,7 @@ const NetworkContextProvider = ({
   );
 
   if (error) {
-    return <div>{error}</div>;
+    return <BuilderRefusal refusal={error} onRetry={handleRetry} />;
   }
 
   if (loading) {
