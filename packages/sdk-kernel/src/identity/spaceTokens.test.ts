@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createSpaceTokenApi } from './spaceTokens';
 import { TEST_KEYS } from '../testing/keys';
-import { createTokens } from '../tokens/tokens';
+import { createTokens, generateTokenKeys } from '../tokens/tokens';
 
 import type { SpaceTokenAdapters, SpaceTokenRecord } from './spaceTokens';
 
@@ -95,6 +95,19 @@ describe('reading the public credential', () => {
 
     expect(body.token).not.toBe(stale.token);
     expect(body.domains).toEqual(origins);
+    expect(tokens.verifySpaceToken(body.token).ok).toBe(true);
+  });
+
+  // The deployment changed its key pair: the stored credential is a JWT none of its keys checks, and nothing but this
+  // read can hand the site a working one.
+  it('rotates one signed under keys this deployment no longer holds', async () => {
+    const retired = createTokens({ keys: generateTokenKeys('retired'), issuer: 'https://this.test' });
+    const stale = record({ token: retired.generateSpaceToken(42, [PLATFORM], 'render') });
+    const { api } = build([stale]);
+
+    const body = bodyOf(await api.read(context));
+
+    expect(body.token).not.toBe(stale.token);
     expect(tokens.verifySpaceToken(body.token).ok).toBe(true);
   });
 

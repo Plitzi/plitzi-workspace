@@ -169,6 +169,13 @@ const claimToSpaceScope: Partial<Record<string, SpaceScope>> = {
 // re-mintable) rather than as garbage.
 const isLegacyShape = (payload: Record<string, unknown>): boolean => 'data' in payload || 'version' in payload;
 
+/** Whether a value is a JWT at all — a header and a payload that read as JSON objects — whoever signed it. */
+const isJwt = (token: string): boolean => {
+  const decoded = jwt.decode(token, { complete: true });
+
+  return decoded !== null && typeof decoded.payload === 'object';
+};
+
 const subjectId = (payload: { sub?: unknown }): number | undefined => {
   if (typeof payload.sub !== 'string') {
     return undefined;
@@ -382,13 +389,21 @@ export const createTokens = (config: TokenConfig) => {
 
     /**
      * A token that no longer verifies for any reason the issuer can fix by re-minting — expiry, a pre-registered-
-     * claims shape, or an issuer from a deployment this one is not. Used by the endpoints that hand tokens back
-     * out, so a caller never has to know why.
+     * claims shape, an issuer from a deployment this one is not, or a key pair this one no longer holds. Used by the
+     * endpoints that hand tokens back out, so a caller never has to know why.
+     *
+     * A credential signed under keys rotated away from reads as `malformed` to `verify` (a `kid` it does not list, a
+     * signature it cannot check) — and so did every stored one after a deployment changed its pair, none re-minted. It
+     * is told from garbage by being a JWT at all: what never was one is not re-minted, or storing nonsense in a row would
+     * be a way to be handed a working credential.
      */
     needsRotation: (token: string): boolean => {
       const result = verify(token);
+      if (result.ok) {
+        return false;
+      }
 
-      return !result.ok && result.reason !== 'malformed';
+      return result.reason !== 'malformed' || isJwt(token);
     },
 
     /** Undefined for a credential that never expires, which is what a host should read as "no renewal needed". */

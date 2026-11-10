@@ -246,6 +246,26 @@ describe('credentials', () => {
 
     expect(needsRotation(foreign)).toBe(true);
   });
+
+  // A deployment changed its key pair, and every credential it had stored read as `malformed` and was never re-minted:
+  // each thumbnail refused, each page's analytics key refused. A JWT signed under keys it no longer holds — another
+  // `kid`, or the shared secret that came before the pair — is its own to re-mint; garbage still is not.
+  it('rotates a credential signed under keys this deployment no longer holds, but not garbage', () => {
+    const retired = createTokens({
+      keys: generateTokenKeys('k0'),
+      issuer: ISSUER,
+      audience: ['https://api.this.test']
+    });
+    const beforeThePair = jwt.sign({ iss: ISSUER, sub: '42', scope: 'space:render', origins: [] }, 'a-shared-secret', {
+      algorithm: 'HS256'
+    });
+
+    expect(verifySpaceToken(retired.generateSpaceToken(42, []))).toEqual({ ok: false, reason: 'malformed' });
+    expect(needsRotation(retired.generateSpaceToken(42, []))).toBe(true);
+    expect(needsRotation(beforeThePair)).toBe(true);
+    expect(needsRotation('not-a-jwt')).toBe(false);
+    expect(needsRotation('not-a-token-this-server-minted')).toBe(false);
+  });
 });
 
 // RFC 0032 D15: a credential is checked with a public key, so a process that only checks holds nothing that mints one.
