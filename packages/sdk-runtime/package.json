@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-runtime",
-  "version": "0.39.2",
+  "version": "0.39.3",
   "license": "AGPL-3.0",
   "description": "The contract a space's own code is written against, and what runs it with no access: the functions runner, its isolates, and the host of a space's runtime.",
   "files": [

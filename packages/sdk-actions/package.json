@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-actions",
-  "version": "0.39.2",
+  "version": "0.39.3",
   "license": "AGPL-3.0",
   "description": "The actions engine: server actions, a space's functions and runtimes as the platform holds them, the connectors, realtime, jobs, and the stock queues and stores. What a worker runs; what a page server is handed.",
   "files": [
