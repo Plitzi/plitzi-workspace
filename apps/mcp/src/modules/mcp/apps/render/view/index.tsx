@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- one bundled entry: components cannot move out. */
 import { useApp, useHostStyles } from '@modelcontextprotocol/ext-apps/react';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 import { Component, useEffect, useRef, useState } from 'react';

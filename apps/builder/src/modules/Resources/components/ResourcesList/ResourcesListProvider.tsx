@@ -28,7 +28,7 @@ const ResourcesListProvider = ({ children }: ResourcesListProviderProps) => {
   return <ResourcesListContext value={contextValue}>{children}</ResourcesListContext>;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components -- the provider and the context it fills are one module: whoever reads the list imports both from it
 export { ResourcesListContext };
 
 export default ResourcesListProvider;

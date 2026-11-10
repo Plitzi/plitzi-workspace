@@ -12,8 +12,6 @@ import StepWhen from './steps/StepWhen';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, ElementBinding, SourceField, SourceMeta } from '@plitzi/sdk-shared';
-
-// eslint-disable-next-line react-refresh/only-export-components
 export const bindingForm = z.object({
   id: z.string(),
   source: z.string(),

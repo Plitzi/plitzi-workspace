@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useState } from 'react';

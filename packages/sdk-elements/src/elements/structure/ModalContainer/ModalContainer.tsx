@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import OverlayShell from '../Overlay/OverlayShell';

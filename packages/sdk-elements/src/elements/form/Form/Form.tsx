@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { produce } from 'immer';

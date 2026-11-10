@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

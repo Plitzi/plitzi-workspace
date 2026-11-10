@@ -1,0 +1,107 @@
+{
+  "apps/builder": {
+    "disable": 26,
+    "any": 3,
+    "unknownAs": 5
+  },
+  "apps/cli": {
+    "disable": 5,
+    "any": 14,
+    "unknownAs": 1
+  },
+  "apps/desktop": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "apps/mcp": {
+    "disable": 2,
+    "any": 3,
+    "unknownAs": 4
+  },
+  "apps/sdk": {
+    "disable": 6,
+    "any": 4,
+    "unknownAs": 2
+  },
+  "apps/server": {
+    "disable": 2,
+    "any": 1,
+    "unknownAs": 0
+  },
+  "packages/sdk-actions": {
+    "disable": 0,
+    "any": 4,
+    "unknownAs": 0
+  },
+  "packages/sdk-auth": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-authoring": {
+    "disable": 1,
+    "any": 14,
+    "unknownAs": 3
+  },
+  "packages/sdk-dev-tools": {
+    "disable": 1,
+    "any": 3,
+    "unknownAs": 0
+  },
+  "packages/sdk-elements": {
+    "disable": 11,
+    "any": 4,
+    "unknownAs": 5
+  },
+  "packages/sdk-event-bridge": {
+    "disable": 2,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-interactions": {
+    "disable": 3,
+    "any": 1,
+    "unknownAs": 0
+  },
+  "packages/sdk-kernel": {
+    "disable": 2,
+    "any": 2,
+    "unknownAs": 5
+  },
+  "packages/sdk-navigation": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-plugins": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-runtime": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-schema": {
+    "disable": 8,
+    "any": 0,
+    "unknownAs": 0
+  },
+  "packages/sdk-shared": {
+    "disable": 56,
+    "any": 16,
+    "unknownAs": 11
+  },
+  "packages/sdk-style": {
+    "disable": 3,
+    "any": 1,
+    "unknownAs": 1
+  },
+  "packages/sdk-variables": {
+    "disable": 0,
+    "any": 0,
+    "unknownAs": 0
+  }
+}

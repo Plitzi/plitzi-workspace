@@ -13,8 +13,6 @@ import VersionContents from '../../components/VersionContents';
 
 import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
-
-// eslint-disable-next-line react-refresh/only-export-components
 export const deployFormSchema = z.object({
   environment: z.enum(['main', 'production', 'staging', 'development']),
   domain: z.string().min(3, 'Domain must have at least 3 characters'),

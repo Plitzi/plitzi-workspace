@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

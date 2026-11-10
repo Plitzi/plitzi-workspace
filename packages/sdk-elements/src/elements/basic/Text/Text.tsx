@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
 

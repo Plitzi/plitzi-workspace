@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-
 import ListBasic from './modes/ListBasic';
 import ListControlled from './modes/ListControlled';
 import withElement from '../../../Element/hocs/withElement';

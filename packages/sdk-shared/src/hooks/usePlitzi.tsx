@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components -- the hook, its provider and its context are one public module (`@plitzi/sdk-shared/hooks`) */
 import { use } from 'react';
 
 import { sharedContext } from '../react/sharedContext';

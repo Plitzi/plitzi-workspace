@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-
 import { startTransition, useCallback, useEffect, useState } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 

@@ -9,8 +9,6 @@ const Form = Object.assign(BaseForm, {
   ...declaration,
   content: { ...declaration.content, market: { ...declaration.content.market, icon: <FormIcon /> } }
 });
-
-// eslint-disable-next-line react-refresh/only-export-components
 export * from './Form';
 
 export default Form;

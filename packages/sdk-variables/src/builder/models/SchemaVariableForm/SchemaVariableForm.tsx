@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch, useFieldArray } from '@plitzi/plitzi-ui/Form';

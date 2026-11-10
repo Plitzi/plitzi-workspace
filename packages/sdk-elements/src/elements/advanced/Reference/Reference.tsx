@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-
 import clsx from 'clsx';
 import { useId, useMemo } from 'react';
 

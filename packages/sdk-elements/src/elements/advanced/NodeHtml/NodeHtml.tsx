@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import clsx from 'clsx';
 import { useMemo } from 'react';

@@ -71,8 +71,6 @@ const PlitziSdk = ({ ref, className, spaceKey, environment = 'main', offlineData
     </RootElement>
   );
 };
-
-// eslint-disable-next-line react-refresh/only-export-components
 export default withElement(PlitziSdk);
 
 export { PlitziSdk };

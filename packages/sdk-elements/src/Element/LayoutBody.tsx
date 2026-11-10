@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components -- the layout body and the hook that reads it are one module: a layout imports both from it */
 import { use, useCallback, useLayoutEffect, useState, useSyncExternalStore } from 'react';
 
 import { sharedContext } from '@plitzi/sdk-shared/react';

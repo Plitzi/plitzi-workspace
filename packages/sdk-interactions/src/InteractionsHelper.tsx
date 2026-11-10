@@ -373,7 +373,7 @@ const flowTrigger = async (
   storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), hostElementId);
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components -- `flowTrigger` is part of the helper the package exports whole; it is no component
 export { flowTrigger };
 
 const InteractionsHelper = { flowTrigger };
