@@ -8,7 +8,7 @@ import {
 } from '@plitzi/sdk-kernel/identity';
 import { serverLog } from '@plitzi/sdk-kernel/log';
 
-import { createMemoryRateLimit, fleetRateLimit } from '../throttle';
+import { createRateLimit, fleetRateLimit } from '../throttle';
 import { normalizeRecoveryCode } from '../totp';
 import { refuse, now, clientOf } from './values';
 
@@ -46,7 +46,7 @@ export const createAuthContext = ({
     adminPermission = 'userManage',
     impersonationPermission,
     password: policy = {},
-    rateLimit = fleetRateLimit() ?? createMemoryRateLimit(),
+    rateLimit = fleetRateLimit() ?? createRateLimit(),
     onMailError,
     onEvent,
     mfaIssuer,

@@ -13,7 +13,7 @@ import { runsFleetJobs } from '@plitzi/sdk-kernel/http';
 import { consoleLogger } from '@plitzi/sdk-kernel/log';
 
 import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../../modules/ssr/preview';
-import { createMemoryRateLimit, fleetRateLimit } from '../../auth/throttle';
+import { createRateLimit, fleetRateLimit } from '../../auth/throttle';
 import { createPlatform } from '../../platform';
 
 import type { WorkersOption } from '@plitzi/sdk-kernel/http';
@@ -83,7 +83,7 @@ const server = createPlatform({
 });
 // Built after the server, in every process alike, so its stores are the same ones in all of them.
 const actions = createActionsModule({ lookups, jobs: {} });
-const rateLimit = fleetRateLimit() ?? createMemoryRateLimit();
+const rateLimit = fleetRateLimit() ?? createRateLimit();
 // The page server's own is out of reach behind `createServer`; this one is made the way it makes it.
 const drafts = fleetStore<DraftStore>('ssr.drafts', DRAFT_STORE_METHODS) ?? createMemoryDraftStore();
 

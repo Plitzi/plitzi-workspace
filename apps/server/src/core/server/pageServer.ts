@@ -23,7 +23,7 @@ import { renderLimitOf } from '../../modules/ssr/renderTurns';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { watchPluginSources } from '../../plugins/watch';
-import { createMemoryRateLimit, RATE_LIMIT_METHODS } from '../auth/throttle';
+import { createRateLimit, RATE_LIMIT_METHODS } from '../auth/throttle';
 import { createLivePages } from '../http/stages/livePages';
 import { buildPagePipeline } from '../services/registry';
 
@@ -170,7 +170,7 @@ export const createPageServer = (
     fleetStores: {
       ...engine?.fleetStores,
       'ssr.drafts': hostable(createMemoryDraftStore, DRAFT_STORE_METHODS),
-      'auth.rateLimit': hostable(() => ({ check: createMemoryRateLimit() }), RATE_LIMIT_METHODS)
+      'auth.rateLimit': hostable(() => ({ check: createRateLimit() }), RATE_LIMIT_METHODS)
     },
     // Every realtime connection told to go the moment the server stops taking new ones: an open socket or stream never
     // ends on its own, and would hold the shutdown until the grace cut it.

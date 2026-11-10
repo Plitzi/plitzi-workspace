@@ -33,7 +33,8 @@ export { isDocumentNavigation, renewForNavigation } from './core/auth/renewal';
 export type { RenewalOptions } from './core/auth/renewal';
 export type { RedirectPolicyConfig } from './core/auth/redirects';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
-export { createMemoryRateLimit } from './core/auth/throttle';
+export { createRateLimit, memoryThrottleCounts, redisThrottleCounts } from './core/auth/throttle';
+export type { ThrottleCounter, ThrottleCounts, ThrottleRedis, ThrottleVerdict } from './core/auth/throttle';
 export {
   generateRecoveryCodes,
   generateTotpSecret,

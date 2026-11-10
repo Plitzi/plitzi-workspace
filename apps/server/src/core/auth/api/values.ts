@@ -5,13 +5,26 @@ import type { AccountRecord, SessionClient, AccountStatus } from '@plitzi/sdk-ke
 import type { CredentialCarrier } from '@plitzi/sdk-kernel/identity';
 import type { AuthFailure } from '@plitzi/sdk-kernel/identity';
 
+/**
+ * The address a request came from: what the host resolved (`req.ip` behind its `trust proxy`), else what the proxy in
+ * front says — `X-Forwarded-For` and the headers an edge sets in its place. The same reading for a session's device
+ * and for the sign-in throttle, on any edge (a load balancer, a CDN, an ingress) and with none.
+ */
+export const addressOf = (carrier?: CredentialCarrier): string | undefined => {
+  if (!carrier) {
+    return undefined;
+  }
+
+  return carrier.ip || forwardedIp(carrier.headers) || undefined;
+};
+
 export const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined => {
   if (!carrier) {
     return undefined;
   }
 
   const userAgent = carrier.headers['user-agent'];
-  const ip = carrier.ip || forwardedIp(carrier.headers);
+  const ip = addressOf(carrier);
   const client: SessionClient = {
     ...(typeof userAgent === 'string' && userAgent ? { userAgent } : {}),
     ...(ip ? { ip } : {}),
