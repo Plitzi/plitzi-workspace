@@ -8,8 +8,10 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectHere } from './existingProject';
 import { playSpaceTests, spaceTestsText } from './spaceTests';
+import { serveCopy } from '../../runs/copies/acceptance';
 import { USAGE_OFF } from '../../runs/core/usage';
 import { projectRun } from '../../scaffold/packageManager';
+import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from '../page/check';
 
 import type { ExistingProject } from './existingProject';
@@ -306,7 +308,7 @@ export const unservedProblem = (reports: readonly CheckReport[]): string | undef
   return silent && reports.every(unanswered) ? `${silent.message} — ${NOT_STARTED}` : undefined;
 };
 
-const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { problem: string }> => {
+const pagesChecked = async (project: ExistingProject, url?: string): Promise<PagesChecked | { problem: string }> => {
   const found = await staticPaths(project.root);
   if ('problem' in found) {
     return found;
@@ -315,7 +317,10 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
   const { paths, schemes } = found;
   // Every theme the space can be painted in: a colour fixed for the light one is unreadable in the dark one, and a
   // visitor whose system is dark sees that one.
-  const inEveryTheme = async (routes: string[], account?: Account): Promise<CheckReport[] | { problem: string }> => {
+  const inEveryTheme = async (
+    routes: string[],
+    account?: Account
+  ): Promise<CheckReport[] | { problem: string; unserved?: true }> => {
     const all: CheckReport[] = [];
     for (const scheme of schemes) {
       const reports = await checkRoutes(project, routes, {
@@ -323,8 +328,14 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
         asked: { state: false, elements: [] },
         ssr: false,
         scheme,
-        ...(account ? { account } : {})
+        ...(account ? { account } : {}),
+        ...(url ? { url } : {})
       });
+      // Nothing serves the project, and none was served for the check yet: it is, below.
+      if ('problem' in reports && reports.unserved && !url) {
+        return { problem: reports.problem, unserved: true };
+      }
+
       // The problem names its own fix — start the project, install Chromium: what is verify's to add is the rest.
       if ('problem' in reports) {
         return { problem: `${reports.problem} — then verify again, or --no-pages to leave them` };
@@ -337,13 +348,17 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
   };
 
   const reports = await inEveryTheme(paths);
+  if ('problem' in reports && reports.unserved) {
+    return servedForTheCheck(project, reports.problem);
+  }
+
   if ('problem' in reports) {
     return reports;
   }
 
   const unserved = unservedProblem(reports);
   if (unserved) {
-    return { problem: unserved };
+    return url ? { problem: unserved } : servedForTheCheck(project, unserved);
   }
 
   const sentAway = [...new Set(reports.filter(redirected).map(report => report.path))];
@@ -365,6 +380,37 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
     as: account.username,
     checks: signedIn.filter(report => !unchecked(report)).length
   });
+};
+
+/**
+ * Nothing served the project — a new one, `npm start` not run: it is served here for its page checks, as a run's copy
+ * is (`serveCopy`, which leaves a server of the person's own running and uses it), stopped after, and said. `verify` on
+ * a fresh project ended on its last check until a server was started by hand.
+ */
+const servedForTheCheck = async (
+  project: ExistingProject,
+  unserved: string
+): Promise<PagesChecked | { problem: string }> => {
+  const served = await serveCopy(
+    project.root,
+    project.root,
+    path.join(project.root, PROJECT_TMP, 'plitzi-cache', 'verify'),
+    {
+      again: 'verify again'
+    }
+  );
+  if ('problem' in served) {
+    return { problem: `${unserved}; serving it for the check failed too: ${served.problem}` };
+  }
+
+  process.stderr.write(
+    chalk.dim(`· nothing served the project: served it on :${String(served.port)} for its pages, stopped after\n`)
+  );
+  try {
+    return await pagesChecked(project, served.url);
+  } finally {
+    served.stop();
+  }
 };
 
 const summary = (

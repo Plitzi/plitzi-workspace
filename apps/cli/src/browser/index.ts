@@ -425,7 +425,7 @@ export const projectOrigin = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string
-): Promise<{ origin: string } | { problem: string }> => {
+): Promise<{ origin: string } | { problem: string; unserved?: true }> => {
   if (url !== undefined) {
     return givenOrigin(url);
   }
@@ -453,6 +453,8 @@ export const projectOrigin = async (
   // run's work (`run preview --copy`) has no server until one is started in it.
   if (!isRecord(health)) {
     return {
+      // Nothing serves the folder: what a command that can serve it for itself (`verify`) reads to do so.
+      unserved: true,
       problem: `No Plitzi server answers on port ${port} for ${root}${server.port === undefined ? ` — no ${projectRun('start')} of this folder recorded where it serves` : ` — where its last ${projectRun('start')} served (${DEV_SERVER_FILE})`}. Start it here: ${projectRun('start')} — wherever it serves, it writes it to ${DEV_SERVER_FILE} and this finds it`
     };
   }

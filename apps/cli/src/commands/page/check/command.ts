@@ -201,7 +201,7 @@ export const checkRoutes = async (
     fresh?: boolean;
   } & Pick<VisitView, 'scheme' | 'presence' | 'timezone' | 'conditions' | 'standIns' | 'height'> &
     Visitor
-): Promise<CheckReport[] | { problem: string }> => {
+): Promise<CheckReport[] | { problem: string; unserved?: true }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = await originHere(project.root, plitzi, options.url);
   if ('problem' in where) {

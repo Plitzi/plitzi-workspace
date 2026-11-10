@@ -134,11 +134,24 @@ export const detectManagerVersion = (manager: PackageManager, cwd: string): stri
  * pnpm runs no install script it was not told to, and it stops the install over one it skipped: esbuild's checks
  * the native binary the page server compiles plugins with. The release-age exemption is Yarn's, for the same reason.
  */
+/**
+ * Versions a new project's tree is moved to, past an advisory its own tools pull in with no fixed release in range:
+ * `minimatch` ≤ 11.0.0 (a glob that amplifies into a denial of service — moderate), through `eslint` and `typescript-eslint`, which ask
+ * for `^10`. `create` ended on "10 moderate severity vulnerabilities", one advisory counted ten times. 11 is a drop-in
+ * for what they use; lint, typecheck and `verify` checked on it. Removed once they ask for 11 themselves.
+ */
+export const ADVISED_OVERRIDES: Record<string, string> = { minimatch: '^11.0.1' };
+
 const PNPM_WORKSPACE = `allowBuilds:
   esbuild: true
 
 minimumReleaseAgeExclude:
   - '@plitzi/*'
+
+overrides:
+${Object.entries(ADVISED_OVERRIDES)
+  .map(([name, range]) => `  ${name}: '${range}'`)
+  .join('\n')}
 `;
 
 export const managerFiles = (manager: PackageManager, version?: string): ProjectFiles => {
@@ -154,11 +167,15 @@ export const managerFiles = (manager: PackageManager, version?: string): Project
 };
 
 /**
- * What npm reads from `package.json` itself: which dependencies may run install scripts.
- *
- * npm 11 lists every unreviewed one on each install and says a later release will block them. esbuild's script
- * checks its native binary; fsevents is flagged only for the `binding.gyp` it ships beside a prebuilt binary, so
- * refusing it changes nothing and says so. Other managers ignore the field.
+ * What each manager reads from `package.json` itself. npm: which dependencies may run install scripts — npm 11 lists
+ * every unreviewed one on each install and says a later release will block them; esbuild's script checks its native
+ * binary, fsevents is flagged only for the `binding.gyp` it ships beside a prebuilt binary, so refusing it changes
+ * nothing and says so. npm and Yarn: `ADVISED_OVERRIDES`, under each one's name for it (pnpm's are in its
+ * `pnpm-workspace.yaml`).
  */
 export const managerPackageFields = (manager: PackageManager): Record<string, unknown> =>
-  manager === 'npm' ? { allowScripts: { esbuild: true, fsevents: false } } : {};
+  manager === 'npm'
+    ? { allowScripts: { esbuild: true, fsevents: false }, overrides: ADVISED_OVERRIDES }
+    : manager === 'yarn'
+      ? { resolutions: ADVISED_OVERRIDES }
+      : {};

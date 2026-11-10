@@ -237,6 +237,17 @@ describe('the scaffold', () => {
     expect(scaffold(answers({ packageManager: 'npm' }))['pnpm-workspace.yaml']).toBeUndefined();
   });
 
+  /** A new project installs with no advisory line: what its tools pull in is moved past one, under each manager. */
+  it('moves the advised packages past their advisory under each manager', () => {
+    const npm = JSON.parse(scaffold(answers({ packageManager: 'npm' }))['package.json']) as { overrides?: unknown };
+    const yarn = JSON.parse(scaffold(answers({ packageManager: 'yarn' }))['package.json']) as { resolutions?: unknown };
+    const pnpm = scaffold(answers({ packageManager: 'pnpm' }));
+
+    expect(npm.overrides).toEqual({ minimatch: '^11.0.1' });
+    expect(yarn.resolutions).toEqual({ minimatch: '^11.0.1' });
+    expect(pnpm['pnpm-workspace.yaml']).toContain("overrides:\n  minimatch: '^11.0.1'");
+  });
+
   /** Verified against Yarn 4.9.4, which refuses the whole `.yarnrc.yml` over a setting it does not know. */
   it('writes the Yarn age-gate exemption only for a Yarn that has the gate', () => {
     const rc = (managerVersion?: string): string =>

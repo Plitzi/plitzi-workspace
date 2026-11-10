@@ -3,7 +3,7 @@
 ## Elements of your own (`plugin add`)
 
 A plugin is a React component the space renders — a map, a chart, a seat picker: whatever is not text in a box. **Never
-start one from a blank file**: `add plugin <name>` writes it in the shape the platform, the builder and the linter all
+start one from a blank file**: `plugin add <name>` writes it in the shape the platform, the builder and the linter all
 read.
 
 ```bash

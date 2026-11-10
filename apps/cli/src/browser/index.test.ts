@@ -66,6 +66,7 @@ describe('projectOrigin', () => {
     const root = await projectAt();
 
     expect(await projectOrigin(root, undefined)).toEqual({
+      unserved: true,
       problem: `No Plitzi server answers on port 8080 for ${root} — no npm start of this folder recorded where it serves. Start it here: npm start — wherever it serves, it writes it to tmp/dev-server.json and this finds it`
     });
   });

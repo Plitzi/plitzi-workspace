@@ -44,7 +44,7 @@ export const originHere = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string
-): Promise<Served | { problem: string }> => {
+): Promise<Served | { problem: string; unserved?: true }> => {
   const found = await servedHere(root, project, url);
   if (!('problem' in found)) {
     sayStale(await readHealth(found.origin));
@@ -76,7 +76,7 @@ const servedHere = async (
   root: string,
   project: PlitziProject | undefined,
   url?: string
-): Promise<Served | { problem: string }> => {
+): Promise<Served | { problem: string; unserved?: true }> => {
   const copy = url === undefined ? copyOf(root) : undefined;
   if (!copy) {
     return projectOrigin(root, project, url);

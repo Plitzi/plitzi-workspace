@@ -1,16 +1,15 @@
 ---
 name: plitzi-cli
 description: >-
-  Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
-  generates: scaffold a project that renders a space, add plugins to it or build a plugin package, pack, upload and
-  install one, edit a space's functions, take a space on Plitzi out as a self-hosted project and back (`create --from`,
-  `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), follow
-  what each save does (`space watch`) and what others do on the space (`space activity`), and write a report to Plitzi
-  of what broke, misled or cost time (`feedback`). Use whenever the task is to start a Plitzi project, create or change
-  a plugin, pack, upload or install one, pull/push/try a space's functions, work out which space the CLI is connected to — or when the person asks for a report, feedback or a list of what
-  went wrong with Plitzi. Multi-agent mode — a team of agents, several or parallel agents, subagents at once, agent
-  orchestration or a swarm, in any language ("con un equipo de agentes", "varios agentes en paralelo"): `run start`,
-  then `run`, `task` — only when the person asks for it. Not for editing a space on Plitzi itself: the Plitzi MCP's.
+  Use the Plitzi command line (@plitzi/cli: `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
+  generates. Use it to start a Plitzi project that renders a space; add, build, pack, upload or install a plugin; pull,
+  push or try a space's functions; take a space out as a self-hosted project and back (`create --from`, `space pull`,
+  `space push`); check a project (`doctor`, `space lint`); follow saves and others' edits (`space watch`, `space
+  activity`); work out which space the CLI is connected to; and write Plitzi a report of what broke, misled or cost
+  time (`feedback`) whenever the person asks for a report or a list of what went wrong. Multi-agent mode — a team of
+  agents, parallel agents, subagents, orchestration or a swarm, in any language ("con un equipo de agentes", "varios
+  agentes en paralelo"): `run start`, then `run`, `task`, only when the person asks for it. Not for editing a space on
+  Plitzi itself: that is the Plitzi MCP's.
 ---
 
 # The Plitzi CLI

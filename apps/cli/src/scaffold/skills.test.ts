@@ -101,4 +101,24 @@ describe('the skills a project carries', () => {
 
     expect(over).toEqual([]);
   });
+
+  /**
+   * The skills format allows a description of 1,024 characters: a harness may cut a longer one, or refuse the skill. The
+   * description is what decides whether the skill is loaded at all, so it is the one text that may not be cut.
+   */
+  it('describe themselves within the 1,024 characters the format allows', () => {
+    const over = pages
+      .filter(([path]) => path.endsWith('/SKILL.md'))
+      .flatMap(([path, content]) => {
+        const front = /^---\n([\s\S]*?)\n---/.exec(content)?.[1] ?? '';
+        const folded = /(?:^|\n)description:[ \t]*(?:>-?)?([\s\S]*?)(?=\n[a-z-]+:|$)/.exec(front)?.[1] ?? '';
+        const description = folded.replace(/\s+/g, ' ').trim();
+
+        return description.length > 1024 || description === ''
+          ? [`${path}: ${String(description.length)} characters`]
+          : [];
+      });
+
+    expect(over).toEqual([]);
+  });
 });
