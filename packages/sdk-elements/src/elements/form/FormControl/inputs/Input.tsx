@@ -16,7 +16,8 @@ export type InputProps = {
   placeholder?: string;
   value?: string;
   type?: string;
-  autoComplete?: boolean;
+  /** The `autocomplete` attribute as it is written: `off`, `on` or a token (`autocompleteOf`). */
+  autoComplete?: string;
   /** Takes the focus while true: as it becomes true, whether on mount or as the field is shown again. */
   autoFocus?: boolean;
   required?: boolean;
@@ -46,7 +47,7 @@ const Input = ({
   placeholder = '',
   value = '',
   type = 'text',
-  autoComplete = false,
+  autoComplete = 'off',
   autoFocus = false,
   required = true,
   maxLength = 0,
@@ -103,7 +104,7 @@ const Input = ({
         min={type === 'number' && min !== '' ? min : undefined}
         max={type === 'number' && max !== '' ? max : undefined}
         step={type === 'number' && step !== '' ? step : undefined}
-        autoComplete={autoComplete ? 'on' : 'off'}
+        autoComplete={autoComplete}
         disabled={disabled}
         readOnly={readOnly}
         onChange={onChange}

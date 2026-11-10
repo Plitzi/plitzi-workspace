@@ -8,6 +8,7 @@ import { fieldText } from './helpers/fieldText';
 import { hasFormat } from './helpers/validateField';
 import { SUBTYPE_LABELS, TYPED_SUBTYPES } from './subTypes';
 
+import type { AutofillField } from './helpers/autofill';
 import type { FormControlSubType } from './subTypes';
 import type { ChangeEvent } from 'react';
 
@@ -18,7 +19,7 @@ type SettingsProps = {
   hideLabel?: boolean;
   placeholder?: string;
   accept?: string;
-  autoComplete?: boolean;
+  autoComplete?: boolean | AutofillField;
   autoFocus?: boolean;
   defaultValue?: string | number;
   options?: string[];
@@ -223,7 +224,12 @@ const Settings = ({
         <TextArea value={fieldText(defaultValue)} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
       )}
       {subType === 'text' && (
-        <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />
+        <Checkbox
+          checked={autoComplete !== false}
+          label="Auto Complete"
+          onChange={handleChangeAutoComplete}
+          size="xs"
+        />
       )}
       {isTyped && <Checkbox checked={readOnly} label="Read Only" onChange={handleChangeReadOnly} size="xs" />}
       <Checkbox checked={autoFocus} label="Focus When Shown" onChange={handleChangeAutoFocus} size="xs" />

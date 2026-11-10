@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 import { use, useCallback, useEffect } from 'react';
 
@@ -9,6 +8,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import Label from './components/Label';
 import { VISUALLY_HIDDEN } from './components/visuallyHidden';
 import declaration from './declaration';
+import { autocompleteOf } from './helpers/autofill';
 import { fieldText } from './helpers/fieldText';
 import { isChecked } from './helpers/isChecked';
 import withFieldValue from './hocs/withFieldValue';
@@ -23,6 +23,7 @@ import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { AutofillField } from './helpers/autofill';
 import type { FormControlSubType } from './subTypes';
 import type { FormContextValue } from '../Form';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
@@ -43,7 +44,12 @@ export type FormControlProps = {
   placeholder: string;
   /** A `file` field's offer, as the browser reads `accept`: `image/png,image/jpeg`, `.pdf`. `''` for any file. */
   accept: string;
-  autoComplete: boolean;
+  /**
+   * What the browser may fill in: `true` lets it decide (on a password field, the account's current password), `false`
+   * asks it not to, and a token names what the field holds — `username`, `new-password`, `one-time-code`, `email`…
+   * (`AUTOFILL_FIELDS`), which is what a password manager reads to fill a sign-in and to save a new password.
+   */
+  autoComplete: boolean | AutofillField;
   /**
    * Takes the focus as it appears — a search box opened by a shortcut is typed into at once. With the control's
    * container shown only while wanted (`loadStrategy: 'visible'`), it appears each time it is opened.
@@ -246,7 +252,7 @@ const FormControl = ({
           fieldClassName={styleSelectors.field}
           iconClassName={styleSelectors.icon}
           placeholder={placeholder}
-          autoComplete={subType !== 'password' ? autoComplete : false}
+          autoComplete={autocompleteOf(autoComplete, subType, previewMode !== false)}
           autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
