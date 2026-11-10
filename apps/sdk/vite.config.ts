@@ -164,6 +164,25 @@ function iconsPlugin(): Plugin {
   };
 }
 
+/**
+ * `dist/build.json` says which mode built the bundle beside it. A development build is three times the size of a
+ * production one and nothing else gives it away — a server image built from one (`yarn docker:up` over a portal)
+ * served it as production and said nothing, so whatever packs this `dist` reads the mode here instead of guessing.
+ */
+function buildModePlugin(devMode: boolean): Plugin {
+  return {
+    name: 'plitzi-build-mode',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'build.json',
+        source: `${JSON.stringify({ mode: devMode ? 'development' : 'production' })}\n`
+      });
+    }
+  };
+}
+
 function renameCssPlugin(): Plugin {
   return {
     name: 'vite-plugin-rename-css',
@@ -331,6 +350,7 @@ export default defineConfig(({ mode, command }) => {
       command === 'build' && ejsPlugin(devMode),
       iconsPlugin(),
       command === 'build' && renameCssPlugin(),
+      buildModePlugin(devMode),
       command === 'build' && devToolsChunkPlugin(),
       !isWatch &&
         viteCompression({
