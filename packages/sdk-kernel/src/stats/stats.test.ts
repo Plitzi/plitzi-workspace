@@ -203,6 +203,15 @@ describe('/_stats and the pools', () => {
     expect(await read.json()).toMatchObject({ pool: 'pages', instance: 'p-1', outcomes: { '1m': { runs: 1 } } });
   });
 
+  it('answers its stats as Prometheus metrics, to its secret alone', async () => {
+    const refused = await fetch(`${origin}/_stats/metrics`);
+    const read = await fetch(`${origin}/_stats/metrics`, { headers: { authorization: `Bearer ${SECRET}` } });
+
+    expect(refused.status).toBe(401);
+    expect(read.headers.get('content-type')).toBe('text/plain; version=0.0.4; charset=utf-8');
+    expect(await read.text()).toContain('plitzi_process_runs{pool="pages",process="p-1",window="1m"} 1');
+  });
+
   it('reads every pool, and an instance that does not answer is down with why', async () => {
     const source = createLocalPoolSource([
       { pool: 'pages', id: 'p-1', url: origin, secret: SECRET },

@@ -6,6 +6,13 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Kernel
 
+- `GET /_stats/metrics` answers a process's stats as Prometheus metrics, behind the same stats secret as `/_stats`:
+  its work over the last minute, quarter and hour (`plitzi_process_runs`, `_run_failures`, `_run_limits`,
+  `_refusals`, `_run_p95_seconds`, by `window`), its slots, CPU, memory and event-loop lag, and its health — labelled
+  by `pool` and `process` (not `instance`, which a scraper keeps for the address). Every server built on the kernel
+  answers it, the functions runner too. `stats.gauges` adds a deployment's own figures after them, read when a scraper
+  asks; one that rejects or names what Prometheus refuses is said in the log and as `plitzi_stats_gauges_failed`, and
+  the process's figures are answered all the same.
 - `fetchOutbound` closes DNS rebinding: every hop's socket connects to the addresses the guard judged the name to, and
   never resolves it again — a name whose DNS answered a public address to the guard and a private one a moment later
   reached the private one. A name the guard could not resolve is not found when the socket opens, rather than resolved

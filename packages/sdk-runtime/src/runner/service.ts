@@ -5,9 +5,12 @@ import { WebSocketServer } from 'ws';
 import { SHUTDOWN_GRACE_MS, bearerMatches, frameText, shutdownOf, watchConnections } from '@plitzi/sdk-kernel/http';
 import { logQueryOf, readLogTail, serverLog } from '@plitzi/sdk-kernel/log';
 import {
+  METRICS_CONTENT_TYPE,
   STATS_LOGS_PATH,
+  STATS_METRICS_PATH,
   STATS_PATH,
   createStatsRecorder,
+  metricsText,
   sampleProcessMemory,
   withStopping
 } from '@plitzi/sdk-kernel/stats';
@@ -608,6 +611,21 @@ export const startFunctionsRunnerService = async ({
     }
 
     const asked = new URL(req.url ?? '/', 'http://runner');
+    if (req.method === 'GET' && asked.pathname === STATS_METRICS_PATH) {
+      const allowed = bearerMatches(req.headers.authorization, secret);
+      res.writeHead(allowed ? 200 : 401, {
+        'content-type': allowed ? METRICS_CONTENT_TYPE : 'application/json; charset=utf-8',
+        'cache-control': 'no-store'
+      });
+      res.end(
+        allowed
+          ? metricsText(withStopping(recorder.snapshot(), stopping))
+          : JSON.stringify({ error: `${asked.pathname} is read with the runner's secret` })
+      );
+
+      return;
+    }
+
     if (req.method === 'GET' && (asked.pathname === STATS_PATH || asked.pathname === STATS_LOGS_PATH)) {
       const allowed = bearerMatches(req.headers.authorization, secret);
       res.writeHead(allowed ? 200 : 401, {

@@ -141,6 +141,15 @@ describe('who reaches the runner', () => {
     expect((await fetch(`http://${address}/_stats`, { headers: { authorization: `Bearer ${SECRET}` } })).status).toBe(
       200
     );
+    const metrics = await fetch(`http://${address}/_stats/metrics`, { headers: { authorization: `Bearer ${SECRET}` } });
+    expect([metrics.status, metrics.headers.get('content-type')]).toEqual([
+      200,
+      'text/plain; version=0.0.4; charset=utf-8'
+    ]);
+    expect(await metrics.text()).toMatch(
+      /^plitzi_process_health\{pool="runner",process="[^"]+",status="healthy"\} 1$/m
+    );
+    expect((await fetch(`http://${address}/_stats/metrics`)).status).toBe(401);
     await expect(connect(address, 'not-the-secret-not-the-secret-not').opened).rejects.toThrow('HTTP 401');
   });
 });

@@ -13,7 +13,16 @@ export type StatsConfig = {
   /** This instance's name in its pool. Defaults to the host's name and the process id. */
   instance?: string;
   thresholds?: StatsThresholds;
+  /**
+   * The deployment's own figures, said after the process's on `/_stats/metrics` — a queue's depth, its oldest wait —
+   * read when a scraper asks. One that rejects, or names what Prometheus refuses, is said in the log and as
+   * `plitzi_stats_gauges_failed`; the process's own figures are answered all the same.
+   */
+  gauges?: () => Promise<StatsGauge[]>;
 };
+
+/** One figure as `/_stats/metrics` says it: a Prometheus gauge, its value now and its labels. */
+export type StatsGauge = { name: string; help: string; value: number; labels?: Record<string, string> };
 
 /** Where `degraded` starts. Each is checked against the last fifteen minutes, and the slots and the lag as they are now. */
 export type StatsThresholds = {

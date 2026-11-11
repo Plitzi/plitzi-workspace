@@ -1,6 +1,6 @@
 import { buildResponseHelpers } from './buildResponseHelpers';
 import { resolveCompression } from './compress';
-import { STATS_LOGS_PATH, STATS_PATH } from './probes';
+import { STATS_LOGS_PATH, STATS_METRICS_PATH, STATS_PATH } from './probes';
 import { clientIp, parseRequest } from './requestParser';
 import { applySecurityHeaders } from './securityHeaders';
 import { socketResponse } from './socketResponse';
@@ -93,14 +93,18 @@ const runPipeline = async <C extends BaseContext>(
   const logRequest = (error?: unknown): void => {
     const status = statusOf(rawRes, res);
     const failed = !!error || status >= 500;
-    // A probe — a reader's `/_stats`, an orchestrator's `/health` — asks every few seconds: answered, it is `debug`,
+    // A probe — a reader's `/_stats`, a scraper's `/_stats/metrics`, an orchestrator's `/health` — asks every few seconds: answered, it is `debug`,
     // or it buries every other line; refused or failing (a secret that is not this one, a store gone), it is said.
     // A reader of the log itself is never kept in it: it would fill it with itself.
     if (req.path === STATS_LOGS_PATH && status < 400) {
       return;
     }
 
-    const probe = status < 400 && (req.path === STATS_PATH || req.path === (ctx.config.health?.path ?? '/health'));
+    const probe =
+      status < 400 &&
+      (req.path === STATS_PATH ||
+        req.path === STATS_METRICS_PATH ||
+        req.path === (ctx.config.health?.path ?? '/health'));
     const level = failed ? 'error' : probe ? 'debug' : 'info';
     const event: ServerLogEvent = {
       kind: 'request',
