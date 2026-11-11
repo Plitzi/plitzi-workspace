@@ -56,6 +56,9 @@ An authored request connects to the address its name was judged to, and the advi
 
 - The `plitzi-cli` skill's description fits the 1,024 characters the skills format allows (it was 1,221), held by a
   test; `plugins.md` names `plugin add`, not the `add plugin` that no longer exists.
+- Every command starts ~13 % sooner (`plitzi --version` 95 → 82 ms, median of ten): the bundle carried a second copy of
+  `@plitzi/sdk-authoring` — its `node` entry and the chunks it shares with the root, 1 MB compiled again on every start
+  beside the one loaded from `node_modules`. Only the package's root was marked external; its subpaths are too now.
 - `plitzi verify` on a project nothing serves serves it for its page checks and stops it after, and says so: on a fresh
   `create` it passed every check but the last until `npm start` was run by hand.
 - A new project installs with no advisory: the scaffold moves `minimatch` past its advisory (`overrides` for npm,

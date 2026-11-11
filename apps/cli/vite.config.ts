@@ -47,7 +47,9 @@ export default defineConfig({
     // `bin` turns the compile cache on before the CLI's code is read; `index` is the CLI.
     lib: { entry: { bin: './src/bin.ts', index: './src/index.ts' }, formats: ['es'] },
     rollupOptions: {
-      external: ['chalk', 'commander', 'esbuild', 'fflate', 'playwright-core', '@plitzi/sdk-authoring', /^node:/],
+      // A package's subpaths too (`@plitzi/sdk-authoring/node`): naming the root alone bundled the subpaths' code — 1 MB,
+      // a second copy of the modules the root loads from `node_modules`, compiled again on every start.
+      external: [/^(chalk|commander|esbuild|fflate|playwright-core|@plitzi\/sdk-authoring)(\/|$)/, /^node:/],
       output: { entryFileNames: '[name].js', banner: '#!/usr/bin/env node' }
     },
     minify: false,
