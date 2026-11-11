@@ -3,10 +3,10 @@ import fs from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
+import { taskPaths } from '../../core/paths';
+import { readRequests, viewTask } from '../../core/taskStore';
 import { makeBench, readInCopy, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { taskPaths } from '../core/paths';
-import { readRequests, viewTask } from '../core/taskStore';
 import { loadRun, readApproved } from '../run';
 import { messagesOf } from '../talk/messages';
 import {

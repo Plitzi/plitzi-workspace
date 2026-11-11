@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { agentScratch } from '../core/paths';
+import { agentScratch } from '../../core/paths';
 
-import type { RunPaths } from '../core/paths';
+import type { RunPaths } from '../../core/paths';
 
 /**
  * Who is still there: an agent waiting for work writes nothing to the run's log — a wait is said once — so the log

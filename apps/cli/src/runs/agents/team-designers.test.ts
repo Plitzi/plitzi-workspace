@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { openRun } from '../run';
-import { completeTask, nextTask, reviewTask, takeNext, takeTask } from '../tasks';
-import { setTeamAgent } from './team';
 import { takeOnRead } from '../../commands/runs/review/takeOnRead';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, designed, makeBench, writeInCopy } from '../../tests/runProject';
 import { teamSteps } from '../../tests/teamSteps';
+import { openRun } from '../run';
+import { completeTask, nextTask, reviewTask, takeNext, takeTask } from '../tasks';
 
 import type { Bench } from '../../tests/runProject';
 

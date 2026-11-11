@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { expectedIds } from './expectations';
-import { shellCommands } from '../core/shell';
+import { expectedIds } from '../../core/expectations';
+import { shellCommands } from '../../core/shell';
 
-import type { PlannedTask } from '../core/model';
+import type { PlannedTask } from '../../core/model';
 
 /**
  * Where the elements a task's checks read are written, held to the task's files: a run's t-result-card was

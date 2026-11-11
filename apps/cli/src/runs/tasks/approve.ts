@@ -2,19 +2,19 @@ import path from 'node:path';
 
 import { at } from './common';
 import { textOf } from './context';
+import { fingerprint, readOptional, writeJson } from '../../core/files';
+import { entryOf } from '../../core/model';
+import { under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { getBlob, putBlob, withLock } from '../../core/store';
 import { failsWithout } from '../copies/checks';
 import { checkVersions } from '../copies/materialise';
 import { mergeLines } from '../copies/merge3';
-import { fingerprint, readOptional, writeJson } from '../core/files';
-import { entryOf } from '../core/model';
-import { under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { getBlob, putBlob, withLock } from '../core/store';
 import { readApproved } from '../run';
 
+import type { ApprovedManifest, ProjectChange, SharedRequest, TaskStart } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { CheckResult, CheckStep } from '../copies/checks';
-import type { ApprovedManifest, ProjectChange, SharedRequest, TaskStart } from '../core/model';
-import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

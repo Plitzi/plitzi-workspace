@@ -7,20 +7,20 @@ import { at, broughtText, findTask, refreshCopy } from './common';
 import { besideHint, partnerFor, reviewedBeside, writtenSince } from './pairApproval';
 import { approveResearch, dropProposal } from './research';
 import { assertStepReviewer, letGoStep, nextStep, reviewSteps, reviewTeamOf } from './reviews';
+import { writeJson } from '../../core/files';
+import { taskPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
+import { keepFiles, withLock } from '../../core/store';
+import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../../core/taskStore';
 import { isPrincipal } from '../agents/leads';
 import { failingLines } from '../copies/checks';
-import { writeJson } from '../core/files';
-import { taskPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { keepFiles, withLock } from '../core/store';
-import { DEFAULTS, readRequests, readStart, updateState, viewTask } from '../core/taskStore';
-import { isResearch } from '../plan/spike';
 import { logSpent } from '../report/spent';
 import { assertStatus, loadRun, logRun, recordBrake, requireNoTask } from '../run';
 import { agentAddress, LEAD, markRead, messagesOf, sendMessage, unreadFor } from '../talk/messages';
 
-import type { ProjectChange, ReviewComment, TaskState } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { ProjectChange, ReviewComment, TaskState } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

@@ -1,4 +1,4 @@
-import { RunRefusal } from '../../../runs/core/refusal';
+import { RunRefusal } from '../../../core/refusal';
 
 /** What one path of a look may say for itself, as the look's own flags say it for every path. */
 export interface PathVisitor {

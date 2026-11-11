@@ -1,4 +1,4 @@
-import { UNNAMED } from '../agents/identity';
+import { UNNAMED } from '../../core/agentNames';
 import { stoppedAgents } from '../agents/onDemand';
 
 /**

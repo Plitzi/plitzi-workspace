@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { STARTER_TEAM } from '../../runs/agents/team';
-import { REFUSAL_EXIT_CODES } from '../../runs/core/refusal';
+import { REFUSAL_EXIT_CODES } from '../../core/refusal';
+import { STARTER_TEAM } from '../../core/team';
 import { plitzi } from '../../tests/plitziProcess';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 

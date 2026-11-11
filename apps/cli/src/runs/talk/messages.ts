@@ -3,11 +3,12 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { createExclusive, readJson, writeJson } from '../core/files';
-import { taskPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
+import { createExclusive, readJson, writeJson } from '../../core/files';
+import { taskPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
 
-import type { LoadedRun, RunContext } from '../run/context';
+import type { LoadedRun } from '../../core/record';
+import type { RunContext } from '../run/context';
 
 /**
  * The lead and the agents talking while a task is worked: an agent asks when it is stuck (`task tell --ask`), the

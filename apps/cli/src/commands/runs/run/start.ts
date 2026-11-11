@@ -2,11 +2,11 @@ import chalk from 'chalk';
 
 import { runOpen } from './plan';
 import { launchBrowser } from '../../../browser';
-import { HARNESSES, isHarness } from '../../../runs/agents/agentPrompt';
+import { exists } from '../../../core/files';
+import { HARNESSES, isHarness } from '../../../core/harnesses';
+import { ID, runPaths } from '../../../core/paths';
+import { readTeam, SCOUT, startedAgents } from '../../../core/team';
 import { onPath } from '../../../runs/agents/launchAgent';
-import { readTeam, SCOUT, startedAgents } from '../../../runs/agents/team';
-import { exists } from '../../../runs/core/files';
-import { ID, runPaths } from '../../../runs/core/paths';
 import { runReportDir } from '../../../runs/report/reports';
 import { projectDlx } from '../../../scaffold/packageManager';
 import { projectHere } from '../../project/existingProject';

@@ -6,8 +6,8 @@ import { runSteps } from '../../tests/runSteps';
 import { extendRun } from '../plan/extend';
 import { completeTask, reviewTask } from '../tasks';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 let bench: Bench;
 

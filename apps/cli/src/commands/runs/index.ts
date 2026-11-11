@@ -1,6 +1,6 @@
 /**
  * `plitzi run` and `plitzi task`: several agents on one project, each in a copy of it, merged once by a
- * person. Every command answers `--json` for a harness and leaves a distinct exit code per refusal (`runs/core/refusal.ts`);
+ * person. Every command answers `--json` for a harness and leaves a distinct exit code per refusal (`core/refusal.ts`);
  * a person's command asks them to type the run's name in their own terminal, and is refused anywhere else.
  */
 
@@ -9,6 +9,7 @@ export { runAllowFinish, runAmend, runOpen, runPlan, runRehearse, runSettle } fr
 export type { PlanOptions } from './run/plan';
 export { runTeam, runTeamOptions, runTeamSet, runTeamUnset } from './run/team';
 export { runMonitor } from './monitor/monitor';
+export type { MonitorOptions } from './monitor/monitor';
 export { runUpgrade } from './run/upgrade';
 export type { UpgradeRunOptions } from './run/upgrade';
 export { runBench, runCopy, runKeep, runPreview, runReport, runShow, runStatus, runWatch } from './run/watch';
@@ -54,6 +55,9 @@ export {
   taskTell
 } from './task/talk';
 export type { AnswerOptions, ProposeOptions } from './task/talk';
+export { runAgent } from './run/agent';
+export { runAllow, runHold } from './run/holds';
+export { runStart } from './run/start';
 export { runReference } from './run/reference';
 export type { ReferenceOptions } from './run/reference';
 export { runLook } from './look/runLook';

@@ -1,13 +1,13 @@
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { isNotFoundPage, meantOnPage, pageFor } from '../../commands/page/check';
-import { loadProjectSpace } from '../../commands/project/projectSpace';
-import { readExpectation } from '../../options';
-import { acceptanceText } from '../core/model';
-import { shellCommands } from '../core/shell';
+import { isNotFoundPage, meantOnPage, pageFor } from '../commands/page/check';
+import { loadProjectSpace } from '../commands/project/projectSpace';
+import { readExpectation } from '../options';
+import { acceptanceText } from './model';
+import { shellCommands } from './shell';
 
-import type { PlannedTask } from '../core/model';
+import type { PlannedTask } from './model';
 import type { SpaceHandles } from '@plitzi/sdk-authoring';
 import type { Schema } from '@plitzi/sdk-shared';
 

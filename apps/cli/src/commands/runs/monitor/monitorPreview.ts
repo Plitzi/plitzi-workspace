@@ -2,11 +2,11 @@ import fs from 'node:fs/promises';
 import { stripVTControlCharacters } from 'node:util';
 
 import { openBrowser } from '../../../account/oauth';
-import { answering, portOr } from '../../../runs/copies/acceptance';
+import { answering, portOr } from '../../../copies/acceptance';
+import { runPaths } from '../../../core/paths';
+import { isRunRefusal } from '../../../core/refusal';
 import { startPreview } from '../../../runs/copies/preview';
 import { stopServedPreview } from '../../../runs/copies/previewRecord';
-import { runPaths } from '../../../runs/core/paths';
-import { isRunRefusal } from '../../../runs/core/refusal';
 
 import type { Preview } from '../../../runs/copies/preview';
 import type { RunContext } from '../../../runs/run';

@@ -6,10 +6,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { writeLaunch } from './launch';
 import { holdNotices, limitLineIn, quickEndsOf, resetOf, startHolds } from './startHold';
-import { agentScratch, runPaths } from '../core/paths';
+import { agentScratch, runPaths } from '../../core/paths';
 
 import type { Launch } from './launch';
-import type { RunPaths } from '../core/paths';
+import type { RunPaths } from '../../core/paths';
 
 // Claude Code past its 5-hour limit ended every agent as it started, and a run's keeper started its eight 4379 times in
 // 40 minutes (the maintainer: "cuando el harness llega al límite, el monitor se vuelve loco").

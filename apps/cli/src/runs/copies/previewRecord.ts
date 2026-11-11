@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readJson } from '../core/files';
+import { readJson } from '../../core/files';
 
-import type { RunPaths } from '../core/paths';
+import type { RunPaths } from '../../core/paths';
 import type { LoadedRun } from '../run';
 
 /** Where a run's preview says it serves — its process and port — while it runs (`plitzi run preview`). */

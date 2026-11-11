@@ -2,10 +2,11 @@ import { execFile } from 'node:child_process';
 import path from 'node:path';
 
 import { NOTE_LINE } from './lookText';
-import { answering, freePort } from '../../../runs/copies/acceptance';
-import { previewDir, startPreview } from '../../../runs/copies/preview';
+import { answering, freePort } from '../../../copies/acceptance';
+import { previewDir } from '../../../core/paths';
+import { RunRefusal } from '../../../core/refusal';
+import { startPreview } from '../../../runs/copies/preview';
 import { previewPort } from '../../../runs/copies/previewRecord';
-import { RunRefusal } from '../../../runs/core/refusal';
 import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import {
   acceptanceAddresses,

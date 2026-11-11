@@ -2,9 +2,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { Team } from '../runs/agents/team';
+import type { Acceptance, RunPlan } from '../core/model';
+import type { Team } from '../core/team';
 import type { CheckResult, CheckRunner } from '../runs/copies/checks';
-import type { Acceptance, RunPlan } from '../runs/core/model';
 import type { RunContext } from '../runs/run';
 
 /**

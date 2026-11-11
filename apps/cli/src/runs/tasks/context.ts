@@ -1,21 +1,21 @@
 import { currentVersion, findTask } from './common';
 import { restrictionsOn } from './restrictions';
+import { readOptional } from '../../core/files';
+import { acceptanceText } from '../../core/model';
+import { under } from '../../core/paths';
+import { isResearch, roleOf } from '../../core/spike';
+import { getBlob } from '../../core/store';
+import { readStart, viewTask } from '../../core/taskStore';
 import { unifiedDiff } from '../../fix/diff';
 import { PROJECT_NOTES } from '../../scaffold/paths';
-import { readOptional } from '../core/files';
-import { acceptanceText } from '../core/model';
-import { under } from '../core/paths';
-import { getBlob } from '../core/store';
-import { readStart, viewTask } from '../core/taskStore';
 import { readingFor } from '../plan/reading';
-import { isResearch, roleOf } from '../plan/spike';
 import { loadRun, readApproved } from '../run';
 import { agreementsOf, proposalsOf } from '../talk/agreements';
 import { runNotesOf } from '../talk/messages';
 
-import type { ReviewComment, RunTask, TaskState } from '../core/model';
-import type { TaskView } from '../core/taskStore';
-import type { Finding } from '../plan/spike';
+import type { ReviewComment, RunTask, TaskState } from '../../core/model';
+import type { Finding } from '../../core/spike';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 import type { ProposalView } from '../talk/agreements';
 

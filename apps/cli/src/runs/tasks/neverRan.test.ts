@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { caughtBy, provedBy } from '.';
 
-import type { AcceptanceResult } from '../core/model';
+import type { AcceptanceResult } from '../../core/model';
 
 const result = (ok: boolean, output: string[] = []): AcceptanceResult => ({
   said: 'The panel lists the storms',

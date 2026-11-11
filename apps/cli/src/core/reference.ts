@@ -3,14 +3,14 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readOptional } from '../core/files';
-import { isNumber, isString } from '../core/guards';
-import { isRunPlan } from '../core/model';
-import { copyOf, runPaths } from '../core/paths';
-import { activeRuns } from '../run';
+import { readOptional } from './files';
+import { isNumber, isString } from './guards';
+import { isRunPlan } from './model';
+import { copyOf, runPaths } from './paths';
+import { activeRuns } from './record';
 
-import type { Scheme } from '../../browser';
-import type { RunPlan } from '../core/model';
+import type { Scheme } from '../browser';
+import type { RunPlan } from './model';
 import type { PageDecoration, PageText } from '@plitzi/sdk-authoring';
 
 /**

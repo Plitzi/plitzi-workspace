@@ -2,15 +2,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { proposalsOf } from './agreements';
-import { createExclusive } from '../core/files';
-import { taskPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { updateState, viewTask } from '../core/taskStore';
+import { createExclusive } from '../../core/files';
+import { taskPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { updateState, viewTask } from '../../core/taskStore';
 import { assertStatus, loadRun, logRun } from '../run';
 import { assertNoWaitCycle, cleanPath, findTask, holderOf, holderOrCoordinator } from '../tasks';
 
 import type { ProposalView } from './agreements';
-import type { Proposal, ProposalAnswer } from '../core/model';
+import type { Proposal, ProposalAnswer } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

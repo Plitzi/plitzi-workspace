@@ -1,25 +1,18 @@
 import path from 'node:path';
 
 import { isPrincipal } from './leads';
-import { DEVELOPER, SCOUT, TESTER } from './team';
+import { DEVELOPER, SCOUT, TESTER } from '../../core/team';
 import { projectRun } from '../../scaffold/packageManager';
 import { SKILLS_ROOT } from '../../scaffold/skills';
 
-import type { Effort, StartedAgent } from './team';
+import type { Harness } from '../../core/harnesses';
+import type { Effort, StartedAgent } from '../../core/team';
 
 /**
  * What an agent of a run is started with: who it is, where it works and the run's protocol in short — the skills say it
  * whole. Every run so far had its lead write these by hand (a run's dev-1 and design-1, a page each): a person
  * new to Plitzi had nothing to start an agent with. `plitzi run agent <name>` writes it, and starts it when asked.
  */
-
-/** The harnesses an agent is started in headless — each a command line of its own. */
-export const HARNESSES = ['claude', 'codex', 'opencode'] as const;
-
-export type Harness = (typeof HARNESSES)[number];
-
-export const isHarness = (value: unknown): value is Harness =>
-  typeof value === 'string' && (HARNESSES as readonly string[]).includes(value);
 
 export interface PromptFor {
   /** The agent, as the team names it — or `lead`. */

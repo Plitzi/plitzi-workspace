@@ -5,23 +5,23 @@ import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 import { spareTests } from './spareTests';
 import { takeTask } from './take';
+import { stopListenersUnder } from '../../copies/processes';
+import { foldersUnsaid } from '../../copies/processTable';
+import { writeJson } from '../../core/files';
+import { RunRefusal } from '../../core/refusal';
+import { roleOf } from '../../core/spike';
+import { withLock } from '../../core/store';
+import { cutTask, lockedFiles, updateState, viewTask } from '../../core/taskStore';
+import { readTeam, startedAgents } from '../../core/team';
 import { requireLead } from '../agents/leads';
-import { readTeam, startedAgents } from '../agents/team';
 import { syncPreview } from '../copies/preview';
-import { stopListenersUnder } from '../copies/processes';
-import { foldersUnsaid } from '../copies/processTable';
-import { writeJson } from '../core/files';
-import { RunRefusal } from '../core/refusal';
-import { withLock } from '../core/store';
-import { cutTask, lockedFiles, updateState, viewTask } from '../core/taskStore';
-import { roleOf } from '../plan/spike';
 import { writesTests } from '../plan/tests';
 import { assertStatus, loadRun, logRun, readApproved, requireNoTask } from '../run';
 import { AGENT, agentAddress, LEAD, sendMessage } from '../talk/messages';
 
 import type { TakenTask } from './take';
-import type { ApprovedFile, RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { ApprovedFile, RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

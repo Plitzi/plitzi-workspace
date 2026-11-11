@@ -4,13 +4,14 @@ import chalk from 'chalk';
 
 import { briefText, readBrief } from './brief';
 import { shownText } from './show';
+import { acceptanceText } from '../../../core/model';
+import { copyOf } from '../../../core/paths';
+import { isResearch, roleOf } from '../../../core/spike';
+import { DESIGN_LOOK, DESIGNER } from '../../../core/team';
+import { answerParts } from '../../../core/usage';
 import { FOLLOW_MS } from '../../../options';
 import { isPrincipal } from '../../../runs/agents/leads';
-import { DESIGN_LOOK, DESIGNER } from '../../../runs/agents/team';
 import { failingLines } from '../../../runs/copies/checks';
-import { acceptanceText } from '../../../runs/core/model';
-import { copyOf } from '../../../runs/core/paths';
-import { answerParts } from '../../../runs/core/usage';
 import { LARGE_OUTPUT } from '../../../runs/findings/cost';
 import {
   acceptanceAccount,
@@ -20,7 +21,6 @@ import {
   filledPattern
 } from '../../../runs/plan/pagesOf';
 import { DESIGN_READING } from '../../../runs/plan/reading';
-import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { EVERYONE } from '../../../runs/talk/messages';
 import { nextTask, takeNext, takeTask } from '../../../runs/tasks';
 import { showTask } from '../../../runs/view/show';
@@ -31,7 +31,7 @@ import { act, runOf } from '../shell';
 import { BEFORE_STOP, messageLines } from '../text';
 
 import type { Brief } from './brief';
-import type { RunTask } from '../../../runs/core/model';
+import type { RunTask } from '../../../core/model';
 import type { Message } from '../../../runs/talk/messages';
 import type { NextTask, TakenTask } from '../../../runs/tasks';
 import type { TaskShown } from '../../../runs/view/show';

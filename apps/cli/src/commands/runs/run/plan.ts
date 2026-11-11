@@ -5,9 +5,11 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { issueToken } from '../../../runs/agents/identity';
-import { ensureKeeper, keeperText, leadStartText } from '../../../runs/agents/keeper';
-import { sessionOfProcess } from '../../../runs/agents/session';
+import { writeJson } from '../../../core/files';
+import { runPaths } from '../../../core/paths';
+import { RunRefusal } from '../../../core/refusal';
+import { sessionOfProcess } from '../../../core/session';
+import { isResearch, opensOnResearch, roleOf, SCOPE_SPIKE, scopePlan } from '../../../core/spike';
 import {
   heldRoles,
   ensureTeam,
@@ -20,17 +22,15 @@ import {
   SCOUT,
   teamTakes,
   TESTER
-} from '../../../runs/agents/team';
-import { writeJson } from '../../../runs/core/files';
-import { runPaths } from '../../../runs/core/paths';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { usageCaller } from '../../../runs/core/usage';
+} from '../../../core/team';
+import { usageCaller } from '../../../core/usage';
+import { issueToken } from '../../../runs/agents/identity';
+import { ensureKeeper, keeperText, leadStartText } from '../../../runs/agents/keeper';
 import { amendRun } from '../../../runs/plan/amend';
 import { backlogOfPlan, backlogText } from '../../../runs/plan/backlog';
 import { atPace } from '../../../runs/plan/estimate';
 import { extendRun, seeStage } from '../../../runs/plan/extend';
 import { oneMoreTester, rehearsalText, rehearse } from '../../../runs/plan/rehearse';
-import { isResearch, opensOnResearch, roleOf, SCOPE_SPIKE, scopePlan } from '../../../runs/plan/spike';
 import { tryLinesOnProject } from '../../../runs/plan/tryLines';
 import { triedText } from '../../../runs/plan/tryLines';
 import { ledBefore } from '../../../runs/report/ledBefore';
@@ -52,8 +52,8 @@ import { planSkills } from '../../project/upgrade';
 import { act, opener, runOf, tokenTask } from '../shell';
 import { list, pacedText } from '../text';
 
-import type { Team } from '../../../runs/agents/team';
-import type { RunRecord, RunTask } from '../../../runs/core/model';
+import type { RunRecord, RunTask } from '../../../core/model';
+import type { Team } from '../../../core/team';
 import type { Extended } from '../../../runs/plan/extend';
 import type { RunContext } from '../../../runs/run';
 import type { RunCommandOptions } from '../shell';

@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leadItems } from './leadWatch';
 import { agentsNeeded } from './onDemand';
-import { readTeam, startedAgents } from './team';
+import { viewTask } from '../../core/taskStore';
+import { readTeam, startedAgents } from '../../core/team';
 import { researchSteps } from '../../tests/research';
 import { reviewerSteps, SCOUT, team, TESTERS } from '../../tests/reviewerSteps';
 import { benchPlan, designed, makeBench, proven, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { copyRunWork } from '../copies/runCopy';
-import { viewTask } from '../core/taskStore';
 import { extendRun } from '../plan/extend';
 import { checkPlanFile, loadRun, logRun, openRun, readRunLog } from '../run';
 import { askLead, messageTasks, tellLeadAbout } from '../talk/talk';
@@ -19,8 +19,8 @@ import { completeTask, escalateReview, nextTask, reviewTask, takeNext, unblockTa
 import { bottlenecks } from '../view/bottlenecks';
 import { viewRun } from '../view/view';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 /**
  * The lead as manager, where the team's roles meet: a review no tester may take, a question open at a review, an

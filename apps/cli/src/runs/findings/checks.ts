@@ -1,9 +1,9 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { clock, evidenceOf, strings, text } from './types';
+import { brokenNamedIn } from '../../core/acceptedOn';
 import { projectRun } from '../../scaffold/packageManager';
 import { BUSY_TIMEOUTS } from '../copies/busy';
-import { brokenNamedIn } from '../core/acceptedOn';
 
 import type { Finding, LogEntry } from './types';
 

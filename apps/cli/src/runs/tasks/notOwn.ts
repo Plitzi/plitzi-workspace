@@ -7,9 +7,9 @@ import { checkVersions } from '../copies/materialise';
 import { openUnanswered } from '../copies/unansweredLines';
 import { logRun, readApproved, readRunLog } from '../run';
 
+import type { AcceptanceResult } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { CheckResult, CheckStep } from '../copies/checks';
-import type { AcceptanceResult } from '../core/model';
-import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

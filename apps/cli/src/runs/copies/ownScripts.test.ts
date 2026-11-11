@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ownScriptNotices, ownScriptsIn } from './ownScripts';
 
-import type { RunPlan } from '../core/model';
+import type { RunPlan } from '../../core/model';
 
 // The lead's acceptance checked a carousel and five article pages with two scripts of its own, unseen.
 describe('an acceptance line checked by a script of one’s own', () => {

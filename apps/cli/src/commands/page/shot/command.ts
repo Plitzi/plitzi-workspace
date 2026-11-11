@@ -24,8 +24,8 @@ import { atNoWidthRead, clickThrough, interactionSteps, picturesTheScreen, playS
 import { MOVING_PERCENT } from './types';
 import { visitorsOn } from './visitors';
 import { dataUrl, projectOrigin, VIEW_HEIGHT } from '../../../browser';
-import { copyOf, runPaths } from '../../../runs/core/paths';
-import { keptPage } from '../../../runs/plan/reference';
+import { copyOf, runPaths } from '../../../core/paths';
+import { keptPage } from '../../../core/reference';
 import { PROJECT_TMP } from '../../../scaffold/paths';
 import { projectHere } from '../../project/existingProject';
 import { fail } from '../../shared/terminal';

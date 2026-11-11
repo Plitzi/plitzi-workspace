@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { isRunRefusal } from '../../core/refusal';
 import {
   heldRoles,
   readTeam,
@@ -19,9 +20,8 @@ import {
   TEAM_SCHEMA,
   teamSize,
   unsetTeamAgent
-} from './team';
+} from '../../core/team';
 import { CLI_ROOT } from '../../tests/roots';
-import { isRunRefusal } from '../core/refusal';
 
 let root: string;
 

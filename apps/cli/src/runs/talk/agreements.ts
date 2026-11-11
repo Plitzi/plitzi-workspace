@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { readJson } from '../core/files';
-import { isProposal, isProposalAnswer } from '../core/model';
-import { taskPaths } from '../core/paths';
+import { readJson } from '../../core/files';
+import { isProposal, isProposalAnswer } from '../../core/model';
+import { taskPaths } from '../../core/paths';
 
-import type { Proposal, ProposalAnswer } from '../core/model';
+import type { Proposal, ProposalAnswer } from '../../core/model';
 import type { LoadedRun } from '../run';
 
 /**

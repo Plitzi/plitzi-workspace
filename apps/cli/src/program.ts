@@ -32,15 +32,14 @@ import packSourceCommand from './commands/source/packSource';
 import { activity } from './commands/space/activity';
 import { explainCommand } from './commands/space/explain';
 import { fix } from './commands/space/fix';
-import { spaceImpact, spaceOverview } from './commands/space/overview';
 import { pull, PULL_PARTS, pullParts } from './commands/space/pull';
 import { push, PUSH_PARTS } from './commands/space/push';
 import { watchPass, watchSpace } from './commands/space/watch';
+import { acceptTokenEverywhere } from './core/usage';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
 import { count, positiveInteger, swallowedFlag } from './options';
-import { acceptTokenEverywhere } from './runs/core/usage';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { projectExec, projectRun } from './scaffold/packageManager';
 import { CLI_VERSION } from './scaffold/project';
@@ -70,6 +69,12 @@ import type { WatchOptions } from './commands/space/watch';
 import type { DoctorOptions } from './doctor';
 import type { FeedbackOptions } from './feedback';
 import type { LintOptions } from './lint';
+
+/**
+ * `space overview` and `space impact` answer through the run's commands' shell (`commands/runs/shell.ts`), which reads
+ * the harness: loaded when one of them runs, as the run's own commands are.
+ */
+const overview = () => import('./commands/space/overview');
 
 /** A flag given more than once, as the list of every value. */
 const collect = (value: string, previous: string[]): string[] => [...previous, value];
@@ -518,14 +523,16 @@ export const buildProgram = (): Command => {
     )
     .argument('[unit]', 'One unit whole — every file it owns and shares: src/space/pages/room.ts, src/plugins/Chat/')
     .option('--json', 'One object, for a tool or an agent')
-    .action((unit: string | undefined, options: RunCommandOptions) => spaceOverview(unit, options));
+    .action(async (unit: string | undefined, options: RunCommandOptions) =>
+      (await overview()).spaceOverview(unit, options)
+    );
 
   spaceGroup
     .command('impact')
     .description('What depends on a file, all the way back: the files that import it and the units it touches')
     .argument('<file>', 'The project file')
     .option('--json', 'One object, for a tool or an agent')
-    .action((file: string, options: RunCommandOptions) => spaceImpact(file, options));
+    .action(async (file: string, options: RunCommandOptions) => (await overview()).spaceImpact(file, options));
 
   spaceGroup
     .command('activity')

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { teamNotices } from './teamNotices';
 
-import type { Team } from './team';
-import type { RunTask } from '../core/model';
+import type { RunTask } from '../../core/model';
+import type { Team } from '../../core/team';
 
 const card = (id: string, dependsOn: string[] = []): RunTask => ({
   id,

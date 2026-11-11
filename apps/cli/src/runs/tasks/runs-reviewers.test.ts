@@ -17,6 +17,9 @@ import {
 } from '.';
 import { REVIEW_QUEUE_MS, takeOnLook } from './reviews';
 import { startLines } from '../../commands/runs/run/plan';
+import { scopePlan, SCOPE_SPIKE } from '../../core/spike';
+import { viewTask } from '../../core/taskStore';
+import { readTeam, setTeamAgent, skillProblems, STARTER_TEAM, startedAgents, teamProblems } from '../../core/team';
 import { researchSteps } from '../../tests/research';
 import { reviewerSteps, SCOUT, scripted, team, TESTERS } from '../../tests/reviewerSteps';
 import { benchPlan, designed, makeBench, provenPlan, writeInCopy } from '../../tests/runProject';
@@ -24,11 +27,8 @@ import { runSteps } from '../../tests/runSteps';
 import { agentPrompt } from '../agents/agentPrompt';
 import { leadItems } from '../agents/leadWatch';
 import { agentsNeeded } from '../agents/onDemand';
-import { readTeam, setTeamAgent, skillProblems, STARTER_TEAM, startedAgents, teamProblems } from '../agents/team';
-import { viewTask } from '../core/taskStore';
 import { amendRun } from '../plan/amend';
 import { extendRun, seeStage } from '../plan/extend';
-import { scopePlan, SCOPE_SPIKE } from '../plan/spike';
 import { loadRun, logRun, openRun } from '../run';
 import { messagesOf, openQuestions, unreadFor } from '../talk/messages';
 import { messageTasks, noteRun } from '../talk/talk';
@@ -36,8 +36,8 @@ import { bottlenecks } from '../view/bottlenecks';
 import { notLookedAtYet } from '../view/lookedAt';
 import { viewRun } from '../view/view';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 /**
  * One lead, the manager: testers review every task — the task's approval — a scout finds out the spikes, and the lead

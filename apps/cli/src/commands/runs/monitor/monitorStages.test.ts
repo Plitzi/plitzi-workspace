@@ -6,7 +6,7 @@ import { flowStages } from './monitorFlow';
 import { initialUi, roundOf } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
-import { runPaths } from '../../../runs/core/paths';
+import { runPaths } from '../../../core/paths';
 import { logRun, openRun } from '../../../runs/run';
 import { completeTask, reviewTask } from '../../../runs/tasks';
 import { monitorRun } from '../../../runs/view/monitor';

@@ -4,14 +4,14 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { addBacklogItem } from './backlog';
-import { checkedAfter } from './expectations';
 import { checkPlan, findCycle, PlanRefusal } from './plan';
 import { runPlanProblems } from './planProblems';
+import { readOwnership } from '../../copies/ownership';
+import { checkedAfter } from '../../core/expectations';
+import { RUNS_DIR, runPaths } from '../../core/paths';
+import { isRunRefusal } from '../../core/refusal';
 import { benchPlan, designed, makeBench, teamFor, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { readOwnership } from '../copies/ownership';
-import { RUNS_DIR, runPaths } from '../core/paths';
-import { isRunRefusal } from '../core/refusal';
 import { loadRun, openRun } from '../run';
 import { abortRun } from '../run/abort';
 import { EVERYONE, messagesOf } from '../talk/messages';

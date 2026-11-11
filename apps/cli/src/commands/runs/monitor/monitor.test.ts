@@ -10,7 +10,7 @@ import { initialUi, roundOf } from './monitorModel';
 import { shimmer } from './monitorOverview';
 import { monitorScreen, waitingScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
-import { runPaths } from '../../../runs/core/paths';
+import { runPaths } from '../../../core/paths';
 import { extendRun } from '../../../runs/plan/extend';
 import { logRun, stopRun } from '../../../runs/run';
 import { askLead, messageTasks, noteRun, tellLead } from '../../../runs/talk/talk';
@@ -22,7 +22,7 @@ import { runSteps } from '../../../tests/runSteps';
 
 import type { MonitorUi, PreviewShown } from './monitorModel';
 import type { Screen } from './monitorScreen';
-import type { RunPlan } from '../../../runs/core/model';
+import type { RunPlan } from '../../../core/model';
 import type { FeedLine, Monitored } from '../../../runs/view/monitor';
 import type { TaskLine } from '../../../runs/view/view';
 import type { Bench } from '../../../tests/runProject';

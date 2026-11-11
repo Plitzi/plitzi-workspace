@@ -1,7 +1,7 @@
+import { runPaths } from '../../../core/paths';
+import { RunRefusal } from '../../../core/refusal';
+import { runChanged } from '../../../core/runChanged';
 import { durationText, FOLLOW_MS } from '../../../options';
-import { runPaths } from '../../../runs/core/paths';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { runChanged } from '../../../runs/core/runChanged';
 import {
   addBacklogItem,
   BACKLOG_FILE,
@@ -21,7 +21,7 @@ import { blockTask, followWait, noteTask } from '../../../runs/tasks';
 import { act, either, finishedRun, holder, projectCaller, runIfOpen, runOf, taskOf } from '../shell';
 import { exchangeLines, messageLines } from '../text';
 
-import type { BLOCK_NEEDS } from '../../../runs/core/model';
+import type { BLOCK_NEEDS } from '../../../core/model';
 import type { PlitziHow } from '../../../runs/findings/plitziClass';
 import type { BacklogItem } from '../../../runs/plan/backlog';
 import type { RunContext } from '../../../runs/run';

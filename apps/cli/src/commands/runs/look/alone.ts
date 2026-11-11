@@ -4,7 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PREVIEW_FILE_ENV, PREVIEW_SLUG } from '@plitzi/sdk-shared/project';
 
-import { RunRefusal } from '../../../runs/core/refusal';
+import { RunRefusal } from '../../../core/refusal';
 
 /**
  * `task look --alone <element> [--with <json>]…`: one element of the space drawn alone — a component with its props, a

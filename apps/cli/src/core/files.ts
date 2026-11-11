@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { isSecretFile, NOT_COPIED_DIRS, SERVED_DIRS, under } from './paths';
 import { RunRefusal } from './refusal';
-import { digest } from '../../commands/project/spaceOrigin';
-import { isTextFile } from '../../scaffold/fromSpace';
+import { digest } from '../commands/project/spaceOrigin';
+import { isTextFile } from '../scaffold/fromSpace';
 
 /**
  * The run's file primitives: every write atomic (a temp file beside it, then a rename), every claim exclusive (`wx`, the

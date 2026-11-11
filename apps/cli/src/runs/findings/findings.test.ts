@@ -8,13 +8,13 @@ import { indicatorsOf, liveFindings, runFindings } from './index';
 import { afterStop, twoSessions, twoTasks } from './sessions';
 import { groupAlike } from './words';
 import { saidFindings, workaroundFindings } from './workarounds';
+import { breaksApprovedText, brokenNamedIn, notHoldingText } from '../../core/acceptedOn';
 import { ranAs } from '../../tests/ranAs';
 import { BUSY_TIMEOUTS } from '../copies/busy';
-import { breaksApprovedText, brokenNamedIn, notHoldingText } from '../core/acceptedOn';
 
 import type { LogEntry } from './types';
-import type { RunTask } from '../core/model';
-import type { UsageLine } from '../core/usage';
+import type { RunTask } from '../../core/model';
+import type { UsageLine } from '../../core/usage';
 import type { TaskRoundReport } from '../report/taskReports';
 
 /** A run's records as two of them were, reduced to what each pattern is read from. */

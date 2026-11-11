@@ -1,14 +1,14 @@
 import { at, changedInCopy, findTask } from './common';
 import { assertStepReviewer, reviewSteps, reviewTeamOf } from './reviews';
-import { exists, fingerprint, writeJson } from '../core/files';
-import { under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { keepFiles } from '../core/store';
-import { readRequests, readStart, viewTask } from '../core/taskStore';
+import { exists, fingerprint, writeJson } from '../../core/files';
+import { under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { keepFiles } from '../../core/store';
+import { readRequests, readStart, viewTask } from '../../core/taskStore';
 import { LEAD, messagesOf } from '../talk/messages';
 
-import type { ReviewComment, TaskStart } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { ReviewComment, TaskStart } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

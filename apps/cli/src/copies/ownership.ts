@@ -2,12 +2,12 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import { fileImports } from '../../pack/source';
-import { loadTypeScript } from '../../projectTypeScript';
-import { projectAdd } from '../../scaffold/packageManager';
-import { ACTIONS_ENTRY, FUNCTIONS_DIR, PLUGINS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from '../../scaffold/paths';
 import { exists } from '../core/files';
 import { projectPath, under } from '../core/paths';
+import { fileImports } from '../pack/source';
+import { loadTypeScript } from '../projectTypeScript';
+import { projectAdd } from '../scaffold/packageManager';
+import { ACTIONS_ENTRY, FUNCTIONS_DIR, PLUGINS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from '../scaffold/paths';
 
 import type TypeScript from 'typescript';
 

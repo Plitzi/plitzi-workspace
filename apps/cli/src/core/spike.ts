@@ -1,9 +1,9 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { DEVELOPER, SCOUT } from '../agents/team';
-import { isString } from '../core/guards';
+import { isString } from './guards';
+import { DEVELOPER, SCOUT } from './team';
 
-import type { TaskState } from '../core/model';
+import type { TaskState } from './model';
 
 /**
  * A research card (a spike): what is read before a plan is written — a card like any on the board, taken by a scout (the

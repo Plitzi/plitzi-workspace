@@ -2,14 +2,14 @@ import fs from 'node:fs/promises';
 
 import { teamFor } from './runProject';
 import { benchPlan, writeInCopy } from './runProject';
-import { isRunRefusal } from '../runs/core/refusal';
+import { isRunRefusal } from '../core/refusal';
 import { writeSummary } from '../runs/report/report';
 import { openRun } from '../runs/run';
 import { completeTask, reviewTask, takeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
-import type { RunPlan } from '../runs/core/model';
-import type { RefusalCode } from '../runs/core/refusal';
+import type { RunPlan } from '../core/model';
+import type { RefusalCode } from '../core/refusal';
 import type { Experience } from '../runs/report/experience';
 import type { RunContext } from '../runs/run';
 

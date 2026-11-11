@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildReport, reportText, writeSummary } from '../report/report';
-import { loadRun, openRun } from '../run';
-import { scopePlan } from './spike';
 import { flowStages } from '../../commands/runs/monitor/monitorFlow';
 import { heldNow } from '../../commands/runs/shell';
+import { scopePlan } from '../../core/spike';
 import { scripted } from '../../tests/reviewerSteps';
 import { benchPlan, makeBench, proven, writeInCopy } from '../../tests/runProject';
 import { LEAD_SAID, runSteps } from '../../tests/runSteps';
 import { leadItems } from '../agents/leadWatch';
+import { buildReport, reportText, writeSummary } from '../report/report';
+import { loadRun, openRun } from '../run';
 import { completeResearch, completeTask, escalateReview, nextTask, reviewTask, takeNext } from '../tasks';
 import { monitorRun } from '../view/monitor';
 import { viewRun } from '../view/view';

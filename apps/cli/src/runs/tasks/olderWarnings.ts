@@ -1,6 +1,6 @@
 import { digestsOf } from './approve';
+import { viewTask } from '../../core/taskStore';
 import { checkVersions } from '../copies/materialise';
-import { viewTask } from '../core/taskStore';
 import { readApproved, readRunLog } from '../run';
 import { logNotice, noticesIn } from '../talk/notices';
 

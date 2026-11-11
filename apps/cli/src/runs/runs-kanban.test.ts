@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leadItems, wakesLead } from './agents/leadWatch';
-import { setTeamAgent } from './agents/team';
+import { setTeamAgent } from '../core/team';
 import { finishRun } from './copies/merge';
 import { addBacklogItem, openBacklog, readBacklog } from './plan/backlog';
-import { scopePlan, SCOPE_SPIKE } from './plan/spike';
+import { scopePlan, SCOPE_SPIKE } from '../core/spike';
 import { settleFinding } from './report/settle';
 import { openRun } from './run';
 import { completeTask, reviewTask, takeNext, takeTask } from './tasks';

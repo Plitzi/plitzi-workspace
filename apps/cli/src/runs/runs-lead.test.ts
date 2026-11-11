@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { waitForLead } from './agents/leadWatch';
 import { finishRun } from './copies/merge';
-import { readOwnership } from './copies/ownership';
-import { runPaths } from './core/paths';
+import { readOwnership } from '../copies/ownership';
+import { runPaths } from '../core/paths';
 import { amendRun } from './plan/amend';
 import { extendRun, seeStage } from './plan/extend';
 import { checkPlan } from './plan/plan';
@@ -27,7 +27,7 @@ import { runsState, viewRun } from './view/view';
 import { benchPlan, makeBench, readInCopy, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
 
-import type { RunPlan } from './core/model';
+import type { RunPlan } from '../core/model';
 import type { Bench } from '../tests/runProject';
 
 /** The lead’s plan as the run goes: its primer, its pace, a stage stacked on it, who finishes it, files too long, amendments. */

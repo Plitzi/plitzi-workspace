@@ -1,33 +1,6 @@
 import { Option } from 'commander';
 
-import {
-  claimCommand,
-  taskAnswer,
-  taskCheck,
-  taskProve,
-  taskComplete,
-  taskFound,
-  taskContextCommand,
-  taskShow,
-  taskTell,
-  taskDiscard,
-  taskInbox,
-  taskLeave,
-  taskLook,
-  taskMessage,
-  taskNext,
-  taskProgress,
-  taskPropose,
-  taskProposals,
-  taskReassign,
-  taskProposeShared,
-  taskEscalate,
-  taskReview,
-  taskRevert,
-  taskRun,
-  taskTake,
-  taskUnblock
-} from '..';
+import { runCommands } from './commands';
 import {
   AGENT_OPTION,
   EASE_OPTION,
@@ -42,8 +15,8 @@ import {
   RUN_OPTION,
   TOKEN_OPTION
 } from './options';
+import { BLOCK_NEEDS } from '../../../core/model';
 import { count, duration, durationText, FOLLOW_MS, fraction } from '../../../options';
-import { BLOCK_NEEDS } from '../../../runs/core/model';
 import { projectExec } from '../../../scaffold/packageManager';
 import { groupHelp } from '../../register/helpGroups';
 import { withVisitorOptions } from '../../register/options';
@@ -115,10 +88,11 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         task: string | undefined,
         options: RunCommandOptions & { role?: string; wait: boolean; peek?: boolean; timeout?: number }
-      ) => (task === undefined ? taskNext(options) : taskTake(task, options))
+      ) =>
+        task === undefined ? (await runCommands()).taskNext(options) : (await runCommands()).taskTake(task, options)
     );
 
   taskGroup
@@ -142,7 +116,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((files: string[], options: ClaimOptions) => claimCommand(files, options));
+    .action(async (files: string[], options: ClaimOptions) => (await runCommands()).claimCommand(files, options));
 
   taskGroup
     .command('discard')
@@ -150,7 +124,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .argument('<files...>', 'The project files')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((files: string[], options: RunCommandOptions) => taskDiscard(files, options));
+    .action(async (files: string[], options: RunCommandOptions) => (await runCommands()).taskDiscard(files, options));
 
   taskGroup
     .command('progress')
@@ -161,7 +135,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option('--step <step>', 'What it is on: "page 3 of 5"')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { fraction?: number; step?: string }) => taskProgress(options));
+    .action(async (options: RunCommandOptions & { fraction?: number; step?: string }) =>
+      (await runCommands()).taskProgress(options)
+    );
 
   taskGroup
     .command('unblock')
@@ -170,7 +146,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option('--answer <text>', 'What it waited for, said to the task: it reaches its agent with its next command')
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { answer?: string }) => taskUnblock(task, options));
+    .action(async (task: string, options: RunCommandOptions & { answer?: string }) =>
+      (await runCommands()).taskUnblock(task, options)
+    );
 
   taskGroup
     .command('propose')
@@ -192,12 +170,12 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string | undefined, options: ProposeOptions) =>
+    .action(async (task: string | undefined, options: ProposeOptions) =>
       options.file !== undefined
-        ? taskProposeShared(task, options)
+        ? (await runCommands()).taskProposeShared(task, options)
         : task === undefined
-          ? taskProposals(options)
-          : taskPropose(task, options)
+          ? (await runCommands()).taskProposals(options)
+          : (await runCommands()).taskPropose(task, options)
     );
 
   taskGroup
@@ -214,7 +192,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((proposal: string, options: AnswerOptions) => taskAnswer(proposal, options));
+    .action(async (proposal: string, options: AnswerOptions) => (await runCommands()).taskAnswer(proposal, options));
 
   taskGroup
     .command('check')
@@ -232,8 +210,8 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { acceptance?: boolean; fix?: boolean; fresh?: boolean }) =>
-      taskCheck(options)
+    .action(async (options: RunCommandOptions & { acceptance?: boolean; fix?: boolean; fresh?: boolean }) =>
+      (await runCommands()).taskCheck(options)
     );
 
   taskGroup
@@ -257,7 +235,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((named: string | undefined, options: ProveOptions) => taskProve(named, options));
+    .action(async (named: string | undefined, options: ProveOptions) =>
+      (await runCommands()).taskProve(named, options)
+    );
 
   taskGroup
     .command('run')
@@ -271,7 +251,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((command: string, options: RunCommandOptions) => taskRun(command, options));
+    .action(async (command: string, options: RunCommandOptions) => (await runCommands()).taskRun(command, options));
 
   taskGroup
     .command('complete')
@@ -316,7 +296,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         task: string | undefined,
         options: RunCommandOptions & {
           knownFailure?: string;
@@ -328,8 +308,8 @@ export const registerTaskGroup = (program: Command): Command => {
         } & ExperienceFlags
       ) =>
         options.found === undefined && options.tasks === undefined && options.closes === undefined
-          ? taskComplete(task, options)
-          : taskFound(task, options)
+          ? (await runCommands()).taskComplete(task, options)
+          : (await runCommands()).taskFound(task, options)
     );
 
   taskGroup
@@ -369,7 +349,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string | undefined, options: TellOptions) => taskTell(text ?? '', options));
+    .action(async (text: string | undefined, options: TellOptions) =>
+      (await runCommands()).taskTell(text ?? '', options)
+    );
 
   taskGroup
     .command('message')
@@ -386,8 +368,11 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (task: string, text: string | undefined, options: RunCommandOptions & { replyTo?: string; standing?: boolean }) =>
-        taskMessage(task, text ?? '', options)
+      async (
+        task: string,
+        text: string | undefined,
+        options: RunCommandOptions & { replyTo?: string; standing?: boolean }
+      ) => (await runCommands()).taskMessage(task, text ?? '', options)
     );
 
   withVisitorOptions(
@@ -450,7 +435,9 @@ export const registerTaskGroup = (program: Command): Command => {
       .option(...RUN_OPTION)
       .option(...JSON_OPTION),
     { url: false }
-  ).action((task: string, paths: string[], options: LookOptions) => taskLook(task, paths, options));
+  ).action(async (task: string, paths: string[], options: LookOptions) =>
+    (await runCommands()).taskLook(task, paths, options)
+  );
 
   taskGroup
     .command('inbox')
@@ -461,7 +448,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { all?: boolean; follow?: boolean; timeout?: number }) => taskInbox(options));
+    .action(async (options: RunCommandOptions & { all?: boolean; follow?: boolean; timeout?: number }) =>
+      (await runCommands()).taskInbox(options)
+    );
 
   taskGroup
     .command('show')
@@ -489,11 +478,11 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         task: string | undefined,
         files: string[],
         options: RunCommandOptions & { full?: boolean; diff?: boolean; merged?: boolean }
-      ) => taskShow(task, files, options)
+      ) => (await runCommands()).taskShow(task, files, options)
     );
 
   taskGroup
@@ -532,10 +521,10 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: ReviewOptions) =>
+    .action(async (task: string, options: ReviewOptions) =>
       options.escalate === undefined
-        ? taskReview(task, options)
-        : taskEscalate(task, { ...options, escalate: options.escalate })
+        ? (await runCommands()).taskReview(task, options)
+        : (await runCommands()).taskEscalate(task, { ...options, escalate: options.escalate })
     );
 
   taskGroup
@@ -551,8 +540,8 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { reason?: string; to?: string }) =>
-      taskReassign(task, options)
+    .action(async (task: string, options: RunCommandOptions & { reason?: string; to?: string }) =>
+      (await runCommands()).taskReassign(task, options)
     );
 
   taskGroup
@@ -564,7 +553,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option('--why <why>', 'Why (required): what the report says of it — the platform’s, decided with the person…')
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { why?: string }) => taskLeave(task, options));
+    .action(async (task: string, options: RunCommandOptions & { why?: string }) =>
+      (await runCommands()).taskLeave(task, options)
+    );
 
   taskGroup
     .command('revert')
@@ -574,7 +565,9 @@ export const registerTaskGroup = (program: Command): Command => {
     .option('--reason <why>', 'Why (required): kept in its notes, and said to whoever takes it again')
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { reason?: string }) => taskRevert(task, options));
+    .action(async (task: string, options: RunCommandOptions & { reason?: string }) =>
+      (await runCommands()).taskRevert(task, options)
+    );
 
   taskGroup
     .command('context')
@@ -593,8 +586,8 @@ export const registerTaskGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string | undefined, options: RunCommandOptions & { files?: boolean; again?: boolean }) =>
-      taskContextCommand(task, options)
+    .action(async (task: string | undefined, options: RunCommandOptions & { files?: boolean; again?: boolean }) =>
+      (await runCommands()).taskContextCommand(task, options)
     );
 
   groupHelp(taskGroup, TASK_HELP);

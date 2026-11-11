@@ -1,42 +1,6 @@
 import { Option } from 'commander';
 
-import {
-  runAbort,
-  runAttach,
-  runCanWrite,
-  runContinue,
-  runFinish,
-  runOpen,
-  runPlan,
-  runRehearse,
-  runLook,
-  runCopy,
-  runPreview,
-  runBench,
-  runReport,
-  runRelease,
-  runResolve,
-  runRestore,
-  runResume,
-  runShow,
-  runStatus,
-  runStop,
-  runMonitor,
-  runUpgrade,
-  runWatch,
-  runKeep,
-  runAllowFinish,
-  runAmend,
-  runTeam,
-  runTeamOptions,
-  runTeamSet,
-  runTeamUnset,
-  runSettle,
-  runBacklog,
-  runFeedback,
-  runNotice,
-  runReference
-} from '..';
+import { runCommands } from './commands';
 import { registerHolds } from './holds';
 import {
   AGENT_OPTION,
@@ -55,11 +19,10 @@ import { duration, FOLLOW_MS, names, pagePaths, positiveInteger, wholeNumber } f
 import { PLITZI_HOW_MEANS, PLITZI_HOWS } from '../../../runs/findings/plitziClass';
 import { groupHelp } from '../../register/helpGroups';
 import { fail } from '../../shared/terminal';
-import { runAgent } from '../run/agent';
-import { runStart } from '../run/start';
 
 import type {
   FinishOptions,
+  MonitorOptions,
   PlanOptions,
   PreviewOptions,
   ReferenceOptions,
@@ -122,7 +85,7 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((ask: string, options: StartOptions) => runStart(ask, options));
+    .action(async (ask: string, options: StartOptions) => (await runCommands()).runStart(ask, options));
 
   runGroup
     .command('agent')
@@ -135,7 +98,7 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((name: string, options: AgentOptions) => runAgent(name, options));
+    .action(async (name: string, options: AgentOptions) => (await runCommands()).runAgent(name, options));
 
   const team = runGroup
     .command('team')
@@ -143,7 +106,7 @@ export const registerRunGroup = (program: Command): Command => {
       'Who works this project’s runs — .plitzi/team.json, the project’s: the lead and each agent, its roles, how many and its model'
     )
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions) => runTeam(options));
+    .action(async (options: RunCommandOptions) => (await runCommands()).runTeam(options));
 
   team
     .command('set')
@@ -179,7 +142,7 @@ export const registerRunGroup = (program: Command): Command => {
       'A markdown file of the project its agents read first — what a role of your own does: .claude/skills/accessibility/SKILL.md'
     )
     .option(...JSON_OPTION)
-    .action((name: string, options: TeamSetOptions) => runTeamSet(name, options));
+    .action(async (name: string, options: TeamSetOptions) => (await runCommands()).runTeamSet(name, options));
 
   team
     .command('options')
@@ -197,14 +160,14 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--start-grace <minutes>', 'How long an agent just started may say nothing (1 to 30) — none: 3')
     .option('--fresh-context-at <tokens>', 'The context past which a "context" session starts fresh — none: 250000')
     .option(...JSON_OPTION)
-    .action((options: TeamOptionsFlags) => runTeamOptions(options));
+    .action(async (options: TeamOptionsFlags) => (await runCommands()).runTeamOptions(options));
 
   team
     .command('unset')
     .description('Take an agent out of the team — or, for lead, the lead’s own model')
     .argument('<name>', 'The agent, or lead')
     .option(...JSON_OPTION)
-    .action((name: string, options: RunCommandOptions) => runTeamUnset(name, options));
+    .action(async (name: string, options: RunCommandOptions) => (await runCommands()).runTeamUnset(name, options));
 
   runGroup
     .command('open')
@@ -239,15 +202,15 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         file: string,
         options: PlanOptions & { dryRun?: boolean; rehearse?: boolean; review?: number; lines?: boolean }
       ) =>
         options.rehearse === true
-          ? runRehearse(file, options)
+          ? (await runCommands()).runRehearse(file, options)
           : options.dryRun === true
-            ? runPlan(file, options)
-            : runOpen(file, options)
+            ? (await runCommands()).runPlan(file, options)
+            : (await runCommands()).runOpen(file, options)
     );
 
   runGroup
@@ -258,7 +221,9 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('[run]', 'The run — the only open one when left out')
     .option('--all', 'Every run not yet written into the project, not one')
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions & { all?: boolean }) => runStatus(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions & { all?: boolean }) =>
+      (await runCommands()).runStatus(run, options)
+    );
 
   runGroup
     .command('settle')
@@ -272,7 +237,9 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((finding: string, options: RunCommandOptions & { note: string }) => runSettle(finding, options));
+    .action(async (finding: string, options: RunCommandOptions & { note: string }) =>
+      (await runCommands()).runSettle(finding, options)
+    );
 
   runGroup
     .command('reference')
@@ -283,7 +250,7 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((options: ReferenceOptions) => runReference(options));
+    .action(async (options: ReferenceOptions) => (await runCommands()).runReference(options));
 
   runGroup
     .command('notice')
@@ -306,8 +273,8 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...RUN_OPTION)
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((text: string, options: RunCommandOptions & { on?: string; plitzi?: PlitziHow; withdraw?: string }) =>
-      runNotice(text, options)
+    .action(async (text: string, options: RunCommandOptions & { on?: string; plitzi?: PlitziHow; withdraw?: string }) =>
+      (await runCommands()).runNotice(text, options)
     );
 
   runGroup
@@ -321,11 +288,11 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--all', 'The closed items too')
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         action: string | undefined,
         id: string | undefined,
         options: RunCommandOptions & { note?: string; all?: boolean }
-      ) => runBacklog(action, id, options)
+      ) => (await runCommands()).runBacklog(action, id, options)
     );
 
   runGroup
@@ -347,12 +314,12 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((first: string | undefined, file: string | undefined, options: AmendOptions) =>
+    .action(async (first: string | undefined, file: string | undefined, options: AmendOptions) =>
       file !== undefined
-        ? runAmend(first, file, options)
+        ? (await runCommands()).runAmend(first, file, options)
         : first !== undefined && (first.endsWith('.json') || first.includes('/'))
-          ? runAmend(undefined, first, options)
-          : runAmend(first, undefined, options)
+          ? (await runCommands()).runAmend(undefined, first, options)
+          : (await runCommands()).runAmend(first, undefined, options)
     );
 
   runGroup
@@ -368,7 +335,7 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option('--theme <theme>', 'light or dark — the terminal’s own background when left out')
     .option('--advanced', 'Opens advanced — the views, the whole activity, the spend — rather than simple (m switches)')
-    .action((run: string | undefined, options: Parameters<typeof runMonitor>[1]) => runMonitor(run, options));
+    .action(async (run: string | undefined, options: MonitorOptions) => (await runCommands()).runMonitor(run, options));
 
   runGroup
     .command('watch')
@@ -384,7 +351,7 @@ export const registerRunGroup = (program: Command): Command => {
       FOLLOW_MS
     )
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
+    .action(async (run: string | undefined, options: WatchRunOptions) => (await runCommands()).runWatch(run, options));
 
   runGroup
     .command('keep', { hidden: true })
@@ -394,7 +361,7 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('[run]', 'The run')
     .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runKeep(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions) => (await runCommands()).runKeep(run, options));
 
   runGroup
     // A hook's question, not an agent's: kept out of the help an agent reads (a run's agents never asked it).
@@ -406,7 +373,9 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--task <task>', 'The task asking, when it has no token at hand')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((file: string, options: RunCommandOptions & { task?: string }) => runCanWrite(file, options));
+    .action(async (file: string, options: RunCommandOptions & { task?: string }) =>
+      (await runCommands()).runCanWrite(file, options)
+    );
 
   runGroup
     .command('stop')
@@ -418,7 +387,9 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...AGENT_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions & { force?: boolean }) => runStop(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions & { force?: boolean }) =>
+      (await runCommands()).runStop(run, options)
+    );
 
   runGroup
     .command('upgrade')
@@ -432,7 +403,9 @@ export const registerRunGroup = (program: Command): Command => {
       'How long to wait for the tasks in hand (90s, 8m, 1h; a number is minutes)',
       duration
     )
-    .action((run: string | undefined, options: UpgradeRunOptions) => runUpgrade(run, options));
+    .action(async (run: string | undefined, options: UpgradeRunOptions) =>
+      (await runCommands()).runUpgrade(run, options)
+    );
 
   registerHolds(runGroup);
 
@@ -442,7 +415,9 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('[run]', 'The run')
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runResume(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions) =>
+      (await runCommands()).runResume(run, options)
+    );
 
   runGroup
     .command('finish')
@@ -467,10 +442,10 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--no-lead-finishes', 'A person’s: take that back — a person writes the run into the project')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: FinishOptions & { leadFinishes?: boolean }) =>
+    .action(async (run: string | undefined, options: FinishOptions & { leadFinishes?: boolean }) =>
       options.leadFinishes === undefined
-        ? runFinish(run, options)
-        : runAllowFinish(run, { ...options, revoke: !options.leadFinishes })
+        ? (await runCommands()).runFinish(run, options)
+        : (await runCommands()).runAllowFinish(run, { ...options, revoke: !options.leadFinishes })
     );
 
   runGroup
@@ -481,7 +456,7 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('[run]', 'The run')
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runLook(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions) => (await runCommands()).runLook(run, options));
 
   runGroup
     .command('preview')
@@ -497,8 +472,10 @@ export const registerRunGroup = (program: Command): Command => {
     )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: PreviewOptions) =>
-      options.copy === undefined ? runPreview(run, options) : runCopy(run, options)
+    .action(async (run: string | undefined, options: PreviewOptions) =>
+      options.copy === undefined
+        ? (await runCommands()).runPreview(run, options)
+        : (await runCommands()).runCopy(run, options)
     );
 
   runGroup
@@ -529,7 +506,7 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
     .action(
-      (
+      async (
         run: string | undefined,
         options: RunCommandOptions & {
           summary?: string;
@@ -539,10 +516,10 @@ export const registerRunGroup = (program: Command): Command => {
         } & ExperienceFlags
       ) =>
         options.bench === true
-          ? runBench(options)
+          ? (await runCommands()).runBench(options)
           : options.plitzi === true
-            ? runFeedback(run, options)
-            : runReport(run, options)
+            ? (await runCommands()).runFeedback(run, options)
+            : (await runCommands()).runReport(run, options)
     );
 
   runGroup
@@ -557,8 +534,10 @@ export const registerRunGroup = (program: Command): Command => {
       'With a file: project, run, merge (both changes line by line, when they touch different lines), or the path of a file holding the version to keep'
     )
     .option(...JSON_OPTION)
-    .action((run: string, file: string | undefined, options: RunCommandOptions & { take?: string }) =>
-      file === undefined ? runContinue(run, options) : runResolve(run, file, options)
+    .action(async (run: string, file: string | undefined, options: RunCommandOptions & { take?: string }) =>
+      file === undefined
+        ? (await runCommands()).runContinue(run, options)
+        : (await runCommands()).runResolve(run, file, options)
     );
 
   runGroup
@@ -566,7 +545,9 @@ export const registerRunGroup = (program: Command): Command => {
     .description('End the run writing nothing into the project, and remove it with its agents’ work — a person’s')
     .argument('[run]', 'The run')
     .option(...JSON_OPTION)
-    .action((run: string | undefined, options: RunCommandOptions) => runAbort(run, options));
+    .action(async (run: string | undefined, options: RunCommandOptions) =>
+      (await runCommands()).runAbort(run, options)
+    );
 
   runGroup
     .command('show')
@@ -581,7 +562,7 @@ export const registerRunGroup = (program: Command): Command => {
       'Put the project file back from a backup — base (when the run opened, when left out) or a merge (before it): a person’s'
     )
     .option(...JSON_OPTION)
-    .action((run: string | undefined, file: string | undefined, options: ShowOptions) => {
+    .action(async (run: string | undefined, file: string | undefined, options: ShowOptions) => {
       // Read as "show the run" by a run's tester, twice in two runs: what it shows is a file, and the run is its status.
       if (run === undefined || file === undefined) {
         fail(
@@ -592,8 +573,11 @@ export const registerRunGroup = (program: Command): Command => {
       }
 
       return options.restore === undefined
-        ? runShow(run, file, options)
-        : runRestore(run, file, { ...options, from: options.restore === true ? 'base' : options.restore });
+        ? (await runCommands()).runShow(run, file, options)
+        : (await runCommands()).runRestore(run, file, {
+            ...options,
+            from: options.restore === true ? 'base' : options.restore
+          });
     });
 
   runGroup
@@ -606,8 +590,8 @@ export const registerRunGroup = (program: Command): Command => {
     .option('--release', 'The other way: let the run go from this machine, so another can attach to it')
     .option(...AGENT_OPTION)
     .option(...JSON_OPTION)
-    .action((run: string, options: RunCommandOptions & { takeOver?: boolean; release?: boolean }) =>
-      options.release ? runRelease(run, options) : runAttach(run, options)
+    .action(async (run: string, options: RunCommandOptions & { takeOver?: boolean; release?: boolean }) =>
+      options.release ? (await runCommands()).runRelease(run, options) : (await runCommands()).runAttach(run, options)
     );
 
   groupHelp(runGroup, RUN_HELP, RUN_INTERNAL);

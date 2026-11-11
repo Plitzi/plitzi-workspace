@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 
 import chalk from 'chalk';
 
-import { isRunRefusal } from '../../../runs/core/refusal';
+import { isRunRefusal } from '../../../core/refusal';
 import { requirePerson, resumeRun, stopRun, writingTasks } from '../../../runs/run';
 import { contextFor, runOf } from '../shell';
 

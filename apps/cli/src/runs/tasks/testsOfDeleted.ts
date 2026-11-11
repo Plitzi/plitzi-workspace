@@ -1,10 +1,10 @@
-import { writeJson } from '../core/files';
-import { taskPaths } from '../core/paths';
-import { viewTask } from '../core/taskStore';
+import { writeJson } from '../../core/files';
+import { taskPaths } from '../../core/paths';
+import { viewTask } from '../../core/taskStore';
 import { logRun, readApproved } from '../run';
 import { LEAD, sendMessage } from '../talk/messages';
 
-import type { Acceptance } from '../core/model';
+import type { Acceptance } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

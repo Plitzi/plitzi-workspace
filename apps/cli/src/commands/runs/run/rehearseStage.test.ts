@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { REFUSAL_EXIT_CODES } from '../../../runs/core/refusal';
+import { REFUSAL_EXIT_CODES } from '../../../core/refusal';
 import { plitzi } from '../../../tests/plitziProcess';
 import { benchPlan, makeBench } from '../../../tests/runProject';
 import { runSteps } from '../../../tests/runSteps';

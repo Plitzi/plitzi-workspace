@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { keptToExpectations, keptToParts, keptToReference } from './apart';
 import { answeredImage, HOST_TROUBLE, throttledImage } from './inspect';
-import { runPaths } from '../../../runs/core/paths';
-import { keptName } from '../../../runs/plan/reference';
+import { runPaths } from '../../../core/paths';
+import { keptName } from '../../../core/reference';
 import { benchPlan, makeBench } from '../../../tests/runProject';
 import { runSteps } from '../../../tests/runSteps';
 
 import type { CheckReport } from './types';
-import type { KeptPage } from '../../../runs/plan/reference';
+import type { KeptPage } from '../../../core/reference';
 import type { Bench } from '../../../tests/runProject';
 
 const report = (issues: CheckReport['issues']): CheckReport => ({

@@ -4,12 +4,12 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { STARTING_MS } from './onDemand';
+import { viewTask } from '../../core/taskStore';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { viewTask } from '../core/taskStore';
 import { loadRun, logRun, openRun } from '../run';
 import { blockTask, completeTask, nextTask, reviewTask, takeTask, unblockTask } from '../tasks';
-import { setTeamAgent } from './team';
 import { takeStep } from '../tasks/reviews';
 import { monitorRun } from '../view/monitor';
 import { viewRun } from '../view/view';

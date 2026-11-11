@@ -6,8 +6,8 @@ import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { assertRoles, cliFile, commandAs, identifiedAgents, identify, issueToken, tokenFile } from './identity';
+import { runPaths } from '../../core/paths';
 import { makeBench } from '../../tests/runProject';
-import { runPaths } from '../core/paths';
 
 import type { Claim } from './identity';
 import type { Bench } from '../../tests/runProject';

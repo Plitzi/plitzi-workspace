@@ -1,8 +1,8 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { ID } from '../core/paths';
+import { ID } from './paths';
 
-import type { Acceptance, PlannedTask, RunPlan } from '../core/model';
+import type { Acceptance, PlannedTask, RunPlan } from './model';
 
 /**
  * What the job asks, piece by piece — a page, a section, a tool a visitor would miss — listed before the plan, so what

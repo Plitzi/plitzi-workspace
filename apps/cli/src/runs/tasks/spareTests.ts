@@ -1,8 +1,8 @@
-import { DEVELOPER, readTeam, startedAgents, TESTER } from '../agents/team';
+import { DEVELOPER, readTeam, startedAgents, TESTER } from '../../core/team';
 import { testWriters, writesTests } from '../plan/tests';
 
-import type { RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun } from '../run';
 
 /**

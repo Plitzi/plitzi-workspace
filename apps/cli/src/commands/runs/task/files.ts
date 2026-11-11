@@ -1,5 +1,5 @@
+import { isRunRefusal, RunRefusal } from '../../../core/refusal';
 import { durationText, FOLLOW_MS } from '../../../options';
-import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
 import {
   claimFile,
   claims,

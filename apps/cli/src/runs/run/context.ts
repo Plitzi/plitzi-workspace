@@ -1,9 +1,9 @@
-import { RunRefusal } from '../core/refusal';
+import { RunRefusal } from '../../core/refusal';
 import { LEAD } from '../talk/messages';
 
+import type { Quality } from '../../core/model';
+import type { RunReader } from '../../core/record';
 import type { CheckRunner } from '../copies/checks';
-import type { Quality, RunPlan, RunRecord, RunTask } from '../core/model';
-import type { RunPaths } from '../core/paths';
 import type { HarnessUsage } from '../harness';
 
 /**
@@ -13,11 +13,7 @@ import type { HarnessUsage } from '../harness';
 /** Asks a person to confirm `action` on `runId`, by typing the run's name; false when no person can be asked here. */
 export type PersonGate = (runId: string, action: string) => Promise<boolean>;
 
-export interface RunContext {
-  root: string;
-  now: () => Date;
-  machine: string;
-  cli: string;
+export interface RunContext extends RunReader {
   /** The caller's task token: an agent working a task. A person, or the lead, has none. */
   token?: string;
   /**
@@ -25,8 +21,6 @@ export interface RunContext {
    * it ran the checks in met getcwd errors on its next command. Not said: none is spared.
    */
   cwd?: string;
-  /** Who is calling, for the log: an agent's name, or `person`. */
-  agent: string;
   /** The level the caller was started at (`--quality`, `PLITZI_QUALITY`): it is handed tasks of it or below. */
   quality?: Quality;
   person: PersonGate;
@@ -42,7 +36,7 @@ export interface RunContext {
    */
   context?: () => Promise<number | undefined>;
   /**
-   * The caller's harness session (`agents/session.ts`): what a stop said with the answer that ended a piece of work is
+   * The caller's harness session (`core/session.ts`): what a stop said with the answer that ended a piece of work is
    * kept by, so the same session asking again is told again. Not said: none told apart, every one answered.
    */
   session?: () => string | undefined;
@@ -56,13 +50,6 @@ export interface RunContext {
     sessions: string[];
     processes: string[];
   }) => Promise<HarnessUsage | undefined>;
-}
-
-export interface LoadedRun {
-  paths: RunPaths;
-  plan: RunPlan;
-  record: RunRecord;
-  tasks: RunTask[];
 }
 
 /** A person's action: refused with a task's token, and without a person at the terminal to confirm it. */

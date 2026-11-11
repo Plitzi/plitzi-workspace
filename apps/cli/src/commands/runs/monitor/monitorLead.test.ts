@@ -2,10 +2,10 @@ import fs from 'node:fs/promises';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { runPaths } from '../../../core/paths';
+import { viewTask } from '../../../core/taskStore';
+import { setTeamAgent } from '../../../core/team';
 import { waitForLead } from '../../../runs/agents/leadWatch';
-import { setTeamAgent } from '../../../runs/agents/team';
-import { runPaths } from '../../../runs/core/paths';
-import { viewTask } from '../../../runs/core/taskStore';
 import { loadRun } from '../../../runs/run';
 import { completeTask, findTask } from '../../../runs/tasks';
 import { takeOnLook } from '../../../runs/tasks/reviews';

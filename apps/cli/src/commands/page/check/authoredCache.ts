@@ -6,7 +6,7 @@ import { buildHandles } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { copyOf } from '../../../runs/core/paths';
+import { copyOf } from '../../../core/paths';
 import { CLI_VERSION } from '../../../scaffold/project';
 
 import type { Authored } from './space';

@@ -5,7 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { RUNS_DIR } from './paths';
 import { RunRefusal } from './refusal';
-import { projectDlx } from '../../scaffold/packageManager';
+import { projectDlx } from '../scaffold/packageManager';
 
 /**
  * A run's files are written by one CLI and may be read by another — an upgrade while it is open. Every change to what a

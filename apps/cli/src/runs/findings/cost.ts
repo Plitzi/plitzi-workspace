@@ -3,7 +3,7 @@ import { kindOf } from '../harness';
 import { tokensText } from '../report/runMetrics';
 
 import type { Finding } from './types';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 import type { RepeatedCall } from '../report/runMetrics';
 import type { TaskRoundReport } from '../report/taskReports';
 

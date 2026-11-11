@@ -3,12 +3,16 @@
 How `plitzi run` and `plitzi task` keep several agents — the subagents of one harness, or harnesses of different kinds —
 from stepping on each other on one project, and why nothing they do can leave it broken. How to use them is the CLI's
 README and the `plitzi-cli` skill (`reference/runs.md`, every agent's; `reference/runs-lead.md`, the lead's); this page is for whoever changes them. The code is
-`apps/cli/src/runs/` — by concern: `plan/` (a plan, its stages, the backlog), `agents/` (the team, launching, the lead's
-watch), `tasks/` (a card's life: taken, checked, completed, reviewed), `copies/` (each task's copy: served, checked,
-merged), `talk/` (messages, proposals, notices), `view/` (what the lead and the monitor read), `report/` (what a run
-leaves), `core/` (the records: store, paths, model), `findings/`, `harness/` and `run/` — and the commands
-`apps/cli/src/commands/runs/`, by what they serve: `run/`, `task/`, `review/`, `look/`, `monitor/` (registered in
-`commands/runs/register/`).
+`apps/cli/src/runs/` — the harness, by concern: `plan/` (a plan, its stages, the backlog), `agents/` (launching, the
+lead's watch), `tasks/` (a card's life: taken, checked, completed, reviewed), `copies/` (each task's copy: checked,
+merged, previewed), `talk/` (messages, proposals, notices), `view/` (what the lead and the monitor read), `report/` (what
+a run leaves), `findings/`, `harness/` and `run/` — and the commands `apps/cli/src/commands/runs/`, by what they serve:
+`run/`, `task/`, `review/`, `look/`, `monitor/` (registered in `commands/runs/register/`). What a command of one agent
+reads of a run lives outside it: `src/core/` (the records — store, paths, model, the run's record, the team file, the
+plan's expectations and reference pages) and `src/copies/` (a project or a copy served, its processes, who owns a file).
+The harness is loaded by the run's commands alone, in a chunk of its own (`register/commands.ts`): a lint rule
+(`import/no-restricted-paths`) keeps every other folder from importing `src/runs/`, and `harnessChunk.test.ts` holds
+what a command loads before it runs.
 
 ## The line
 

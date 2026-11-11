@@ -1,5 +1,5 @@
-import { readTeam, SCOUT, startedAgents, TESTER } from './team';
-import { RunRefusal } from '../core/refusal';
+import { RunRefusal } from '../../core/refusal';
+import { readTeam, SCOUT, startedAgents, TESTER } from '../../core/team';
 import { LEAD } from '../talk/messages';
 
 import type { RunContext } from '../run/context';

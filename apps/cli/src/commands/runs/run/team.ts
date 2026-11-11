@@ -1,3 +1,4 @@
+import { RunRefusal } from '../../../core/refusal';
 import {
   EFFORTS,
   isEffort,
@@ -14,11 +15,10 @@ import {
   teamSize,
   TESTER,
   unsetTeamAgent
-} from '../../../runs/agents/team';
-import { RunRefusal } from '../../../runs/core/refusal';
+} from '../../../core/team';
 import { act, projectCaller } from '../shell';
 
-import type { Effort, SessionMode, TeamChange, TeamOptions, TeamOptionsChange } from '../../../runs/agents/team';
+import type { Effort, SessionMode, TeamChange, TeamOptions, TeamOptionsChange } from '../../../core/team';
 import type { RunCommandOptions } from '../shell';
 
 /**

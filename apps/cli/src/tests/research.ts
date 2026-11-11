@@ -1,4 +1,4 @@
-import { viewTask } from '../runs/core/taskStore';
+import { viewTask } from '../core/taskStore';
 import { loadRun } from '../runs/run';
 import { completeResearch, findTask, reportProgress, reviewTask } from '../runs/tasks';
 

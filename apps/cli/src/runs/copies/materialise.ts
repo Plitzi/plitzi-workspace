@@ -4,13 +4,21 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { checkAcceptance } from './acceptance';
-import { cloneFiles, cloneServed, fingerprint, isCopied, projectFiles, readOptional, writeJson } from '../core/files';
-import { isSecretFile, under } from '../core/paths';
-import { placeVersion } from '../core/store';
+import { checkAcceptance } from '../../copies/acceptance';
+import {
+  cloneFiles,
+  cloneServed,
+  fingerprint,
+  isCopied,
+  projectFiles,
+  readOptional,
+  writeJson
+} from '../../core/files';
+import { isSecretFile, under } from '../../core/paths';
+import { placeVersion } from '../../core/store';
 
 import type { CheckOptions, CheckResult } from './checks';
-import type { AcceptanceResult } from '../core/model';
+import type { AcceptanceResult } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

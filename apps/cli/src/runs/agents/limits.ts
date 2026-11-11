@@ -1,4 +1,4 @@
-import { SCOPE_SPIKE } from '../plan/spike';
+import { SCOPE_SPIKE } from '../../core/spike';
 
 /**
  * How long a piece of a run's work goes before something is likely wrong (the maintainer: "si una tarea demora más de 10

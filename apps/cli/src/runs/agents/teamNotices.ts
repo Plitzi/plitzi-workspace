@@ -1,9 +1,9 @@
-import { DESIGNER, DEVELOPER, SCOUT, startedAgents } from './team';
-import { isResearch } from '../plan/spike';
+import { isResearch } from '../../core/spike';
+import { DESIGNER, DEVELOPER, SCOUT, startedAgents } from '../../core/team';
 import { reviewedAsUi } from '../plan/uiFiles';
 
-import type { Team } from './team';
-import type { RunPlan } from '../core/model';
+import type { RunPlan } from '../../core/model';
+import type { Team } from '../../core/team';
 
 /** What `run open --dry-run` says of the team beside the work: too big for it, or too few designers for the UI it changes. */
 

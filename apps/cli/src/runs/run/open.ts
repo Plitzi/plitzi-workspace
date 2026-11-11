@@ -5,26 +5,26 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject, takeInputs } from './claim';
 import { requireNoTask, requirePerson } from './context';
-import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
-import { ensureTeam, teamSize } from '../agents/team';
-import { readOwnership } from '../copies/ownership';
-import { readOptional, writeAtomic, writeJson } from '../core/files';
-import { isRunPlan } from '../core/model';
-import { runPaths, runsDir, taskPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { keepFiles } from '../core/store';
+import { readOwnership } from '../../copies/ownership';
+import { readOptional, writeAtomic, writeJson } from '../../core/files';
+import { isRunPlan } from '../../core/model';
+import { runPaths, runsDir, taskPaths } from '../../core/paths';
+import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from '../../core/record';
+import { RunRefusal } from '../../core/refusal';
+import { startingState } from '../../core/spike';
+import { keepFiles } from '../../core/store';
+import { ensureTeam, teamSize } from '../../core/team';
 import { LARGE_OUTPUT } from '../findings/cost';
 import { checkPlan, PlanRefusal } from '../plan/plan';
 import { runPlanProblems } from '../plan/planProblems';
-import { startingState } from '../plan/spike';
 import { runReportDir } from '../report/reports';
 import { EVERYONE, LEAD, sendMessage } from '../talk/messages';
 
 import type { RunContext } from './context';
-import type { Team } from '../agents/team';
-import type { Ownership } from '../copies/ownership';
-import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest } from '../core/model';
-import type { RunPaths } from '../core/paths';
+import type { Ownership } from '../../copies/ownership';
+import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest } from '../../core/model';
+import type { RunPaths } from '../../core/paths';
+import type { Team } from '../../core/team';
 import type { CheckedPlan } from '../plan/plan';
 
 /**

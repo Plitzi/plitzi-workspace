@@ -4,8 +4,8 @@ import { openRun } from '../runs/run';
 import { completeTask } from '../runs/tasks';
 
 import type { Bench } from './runProject';
-import type { Team, TeamAgent } from '../runs/agents/team';
-import type { RunPlan } from '../runs/core/model';
+import type { RunPlan } from '../core/model';
+import type { Team, TeamAgent } from '../core/team';
 
 /** Scripted agents, each one session the test drives: a fresh start between pieces has tests of its own. */
 export const scripted = (agent: TeamAgent): TeamAgent => ({ ...agent, session: 'keep' });

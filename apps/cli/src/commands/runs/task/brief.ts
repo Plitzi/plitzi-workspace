@@ -4,14 +4,14 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { namesServedCopy } from '../../../copies/acceptance';
+import { acceptanceText } from '../../../core/model';
+import { runPaths } from '../../../core/paths';
+import { sessionOfProcess } from '../../../core/session';
+import { isResearch, roleOf } from '../../../core/spike';
+import { answerParts } from '../../../core/usage';
 import { MAX_LINES } from '../../../lint/rules/fileTooLong';
-import { sessionOfProcess } from '../../../runs/agents/session';
-import { namesServedCopy } from '../../../runs/copies/acceptance';
-import { acceptanceText } from '../../../runs/core/model';
-import { runPaths } from '../../../runs/core/paths';
-import { answerParts } from '../../../runs/core/usage';
 import { importedApis } from '../../../runs/plan/moduleApis';
-import { isResearch, roleOf } from '../../../runs/plan/spike';
 import { logRun, readRunLog } from '../../../runs/run';
 import { taskContext } from '../../../runs/tasks';
 import { projectRun } from '../../../scaffold/packageManager';
@@ -19,7 +19,7 @@ import { describeData } from '../../project/data';
 import { act, either } from '../shell';
 import { nearLimit } from '../text';
 
-import type { Finding } from '../../../runs/plan/spike';
+import type { Finding } from '../../../core/spike';
 import type { RunContext } from '../../../runs/run';
 import type { TaskContext } from '../../../runs/tasks';
 import type { RunCommandOptions } from '../shell';

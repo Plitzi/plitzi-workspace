@@ -1,12 +1,12 @@
 import { PLUGINS_DIR, PUBLIC_DIR, SOURCE_DIR, SPACE_DIR } from '@plitzi/sdk-shared/project';
 
-import { authoredHandles } from './expectations';
-import { impactOf, readOwnership } from '../copies/ownership';
-import { acceptanceText } from '../core/model';
-import { shellCommands } from '../core/shell';
+import { impactOf, readOwnership } from '../../copies/ownership';
+import { authoredHandles } from '../../core/expectations';
+import { acceptanceText } from '../../core/model';
+import { shellCommands } from '../../core/shell';
 
-import type { Acceptance } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { Acceptance } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 
 /**
  * The pages a task's files are drawn at, for a look at it (`task look`, a designer's review): each file's page is the

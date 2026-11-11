@@ -4,26 +4,26 @@ import path from 'node:path';
 import { namedNotClosed, notOpen, openBacklog, stackableBacklog } from './backlog';
 import { elementFileNotices } from './elementFiles';
 import { estimate, pacedEstimate, withPace } from './estimate';
-import { expectationNotices, notFoundNotices } from './expectations';
-import { inventoryLeftOut, inventoryProblems } from './inventory';
 import { unmeasuredNotices } from './measuredValues';
 import { sizeNotices, suiteNotices } from './planNotices';
-import { isResearch, roleOf } from './spike';
 import { existingTests, testSetupOf, testsImporting, withTestTasks } from './tests';
 import { byUrgency } from './urgency';
-import { roleProblems, skillProblems, takersOf, teamSize, teamTakes, TESTER } from '../agents/team';
+import { expandFiles, sharedReached } from '../../copies/ownership';
+import { expectationNotices, notFoundNotices } from '../../core/expectations';
+import { exists } from '../../core/files';
+import { inventoryLeftOut, inventoryProblems } from '../../core/inventory';
+import { ID, isSecretFile, NOT_TASK_DIRS, under } from '../../core/paths';
+import { isResearch, roleOf } from '../../core/spike';
+import { roleProblems, skillProblems, takersOf, teamSize, teamTakes, TESTER } from '../../core/team';
 import { teamNotices } from '../agents/teamNotices';
 import { acceptanceProblems } from '../copies/acceptanceProblems';
-import { expandFiles, sharedReached } from '../copies/ownership';
 import { ownScriptNotices } from '../copies/ownScripts';
-import { exists } from '../core/files';
-import { ID, isSecretFile, NOT_TASK_DIRS, under } from '../core/paths';
 import { sharedLookNotices } from '../talk/lookNotices';
 
 import type { PlanEstimate } from './estimate';
-import type { Team } from '../agents/team';
-import type { Ownership } from '../copies/ownership';
-import type { Acceptance, Quality, RunPlan, RunTask, TaskState } from '../core/model';
+import type { Ownership } from '../../copies/ownership';
+import type { Acceptance, Quality, RunPlan, RunTask, TaskState } from '../../core/model';
+import type { Team } from '../../core/team';
 
 const assemblesFolderOf = (importer: string, file: string): boolean =>
   /^index\.[cm]?[jt]sx?$/.test(path.basename(importer)) && path.dirname(importer) === path.dirname(file);

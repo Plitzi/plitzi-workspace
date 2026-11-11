@@ -59,6 +59,10 @@ An authored request connects to the address its name was judged to, and the advi
 - Every command starts ~13 % sooner (`plitzi --version` 95 → 82 ms, median of ten): the bundle carried a second copy of
   `@plitzi/sdk-authoring` — its `node` entry and the chunks it shares with the root, 1 MB compiled again on every start
   beside the one loaded from `node_modules`. Only the package's root was marked external; its subpaths are too now.
+- A command of one agent no longer loads the multi-agent harness: `plitzi run`, `plitzi task`, `space overview` and
+  `space impact` load it when one of them runs, from a chunk of its own. What a start reads went from 3.9 MB to 1.7 MB
+  — `plitzi --version` 95 → 79 ms and `plitzi explain` 92 → 79 ms with the change above; a run's commands start as
+  before. No command's output or options changed.
 - `plitzi verify` on a project nothing serves serves it for its page checks and stops it after, and says so: on a fresh
   `create` it passed every check but the last until `npm start` was run by hand.
 - A new project installs with no advisory: the scaffold moves `minimatch` past its advisory (`overrides` for npm,

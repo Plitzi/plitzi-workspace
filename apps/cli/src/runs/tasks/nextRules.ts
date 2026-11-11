@@ -2,17 +2,17 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { reviewRolesOf, reviewSteps, reviewTeamOf } from './reviews';
+import { createExclusive } from '../../core/files';
+import { agentScratch } from '../../core/paths';
+import { viewTask } from '../../core/taskStore';
+import { DEFAULT_SESSION, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../../core/team';
 import { isPrincipal } from '../agents/leads';
 import { freeBaseAgents, runningAgents } from '../agents/onDemand';
 import { PRESENCE_STALE_MS, presentAt } from '../agents/presence';
-import { DEFAULT_SESSION, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../agents/team';
 import { isWorked } from '../agents/worked';
-import { createExclusive } from '../core/files';
-import { agentScratch } from '../core/paths';
-import { viewTask } from '../core/taskStore';
 import { loadRun, logRun, readRunLog } from '../run';
 
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /** What `task next` weighs beside the work itself: who of the team goes first, who is spare, and how a wait is said. */

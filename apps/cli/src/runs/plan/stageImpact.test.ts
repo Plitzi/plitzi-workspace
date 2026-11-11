@@ -8,8 +8,8 @@ import { runSteps } from '../../tests/runSteps';
 import { loadRun } from '../run';
 
 import type { RunTaskNow } from './stageImpact';
+import type { TaskStatus } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { TaskStatus } from '../core/model';
 
 // A change the person asks mid-run lands on what the run has — the lead plans for it before, never at complete.
 const task = (

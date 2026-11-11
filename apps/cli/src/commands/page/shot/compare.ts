@@ -20,7 +20,7 @@ import { putIn, stateText } from '../measureState';
 
 import type { CompareReport, RegionChange, Taken, View } from './types';
 import type { Browser } from '../../../browser';
-import type { KeptPage } from '../../../runs/plan/reference';
+import type { KeptPage } from '../../../core/reference';
 import type { Pair } from '../measure';
 import type {
   DecorationKind,

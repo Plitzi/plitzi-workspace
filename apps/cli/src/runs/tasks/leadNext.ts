@@ -1,15 +1,15 @@
 import { reviewOffer } from './reviewOffer';
 import { reviewFor, reviewTeamOf } from './reviews';
+import { asksLead } from '../../core/model';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
 import { isPrincipal, scoutsOf } from '../agents/leads';
 import { isWorked } from '../agents/worked';
-import { asksLead } from '../core/model';
-import { RunRefusal } from '../core/refusal';
-import { isResearch } from '../plan/spike';
 import { byUrgency } from '../plan/urgency';
 import { LEAD } from '../talk/messages';
 import { notLookedAtYet } from '../view/lookedAt';
 
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 import type { NextTask } from './next';
 import type { Message } from '../talk/messages';

@@ -2,7 +2,7 @@ import { waitingText } from './view';
 import { projectRun } from '../../scaffold/packageManager';
 
 import type { RunView, TaskLine } from './view';
-import type { TaskStatus } from '../core/model';
+import type { TaskStatus } from '../../core/model';
 
 /** A run in words: the board of its tasks, and the run as `plitzi run watch` and `run status` print it. */
 

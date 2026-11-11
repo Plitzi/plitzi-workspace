@@ -1,8 +1,8 @@
 import path from 'node:path';
 
-import { shellCommands } from '../core/shell';
+import { shellCommands } from '../../core/shell';
 
-import type { RunPlan } from '../core/model';
+import type { RunPlan } from '../../core/model';
 
 /**
  * The scripts of a lead's own an acceptance line runs — `node checks/moves.mjs`, `python3 probe.py` — where a Plitzi

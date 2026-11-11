@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runPlanProblems } from './planProblems';
+import { runPaths } from '../../core/paths';
 import {
   keptName,
   keptPage,
@@ -11,12 +12,11 @@ import {
   referencePages,
   unnamedSections,
   wrapsAsReference
-} from './reference';
+} from '../../core/reference';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
 
-import type { KeptPage } from './reference';
+import type { KeptPage } from '../../core/reference';
 import type { Bench } from '../../tests/runProject';
 
 let bench: Bench;

@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createExclusive, fingerprint } from './files';
-import { copyOf, runPaths, runProjectOf, taskPaths } from './paths';
-import { placeVersion } from './store';
+import { createExclusive, fingerprint } from '../../core/files';
+import { copyOf, runPaths, runProjectOf, taskPaths } from '../../core/paths';
+import { placeVersion } from '../../core/store';
 import { makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { claimFile, releaseFile, waitForFile } from '../tasks';

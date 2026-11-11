@@ -8,7 +8,7 @@ import { checkAccount, projectAccount, saySignedIn, signInAs, signInWhereSent } 
 import { noPageAt, pageFor } from './check/space';
 import { awaitHydration } from './hydration';
 import { conditionsText } from '../../browser/conditions';
-import { authoredSpace } from '../../runs/plan/expectations';
+import { authoredSpace } from '../../core/expectations';
 import { projectRun } from '../../scaffold/packageManager';
 import { conditionsOf } from '../register/options';
 import { fail, unanswered } from '../shared/terminal';

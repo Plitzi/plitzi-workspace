@@ -4,11 +4,11 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { askStandings } from './askStandings';
 import { launchAsked } from './keeper';
+import { readJson, writeJson } from '../../core/files';
+import { runPaths } from '../../core/paths';
+import { isRunRefusal } from '../../core/refusal';
+import { runChanged } from '../../core/runChanged';
 import { FOLLOW_MS } from '../../options';
-import { readJson, writeJson } from '../core/files';
-import { runPaths } from '../core/paths';
-import { isRunRefusal } from '../core/refusal';
-import { runChanged } from '../core/runChanged';
 import { clock } from '../findings/types';
 import { loadRun } from '../run';
 import { LEAD, markRead, messagesOf } from '../talk/messages';

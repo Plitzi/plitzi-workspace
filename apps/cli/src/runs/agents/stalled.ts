@@ -1,7 +1,7 @@
 import { isWorked } from './worked';
-import { roleOf } from '../plan/spike';
+import { roleOf } from '../../core/spike';
 
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 import type { HeldFile } from '../tasks';
 import type { Attention } from '../view/view';
 

@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 
-import { HARNESSES } from '../../../runs/agents/agentPrompt';
+import { HARNESSES } from '../../../core/harnesses';
+import { readTeam } from '../../../core/team';
 import { harnessOf, launchAgent, launchHarness, promptAgent } from '../../../runs/agents/launchAgent';
-import { readTeam } from '../../../runs/agents/team';
 import { act, runOf } from '../shell';
 
 import type { NoResume } from '../../../runs/agents/launch';

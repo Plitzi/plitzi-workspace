@@ -4,15 +4,15 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { lockfileManager } from '../../commands/project/existingProject';
+import { projectFiles } from '../../core/files';
+import { DEVELOPER, TESTER } from '../../core/team';
 import { execCommand } from '../../scaffold/packageManager';
 import { SERVE_SCRIPTS } from '../../scaffold/paths';
-import { DEVELOPER, TESTER } from '../agents/team';
 import { workedBy } from '../agents/worked';
-import { projectFiles } from '../core/files';
 
+import type { Acceptance, PlannedTask, RunPlan, RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { PackageManager } from '../../scaffold/types';
-import type { Acceptance, PlannedTask, RunPlan, RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
 
 /**
  * A tester in the team: every developer task gets a task of its tests, after it — `<id>-tests`, a developer's that

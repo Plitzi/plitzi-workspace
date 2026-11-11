@@ -4,13 +4,13 @@ import path from 'node:path';
 import { closest } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { HARNESSES, isHarness } from './agentPrompt';
-import { formattedJson } from '../../scaffold/formattedJson';
-import { QUALITIES } from '../core/model';
-import { RunRefusal } from '../core/refusal';
+import { HARNESSES, isHarness } from './harnesses';
+import { QUALITIES } from './model';
+import { RunRefusal } from './refusal';
+import { formattedJson } from '../scaffold/formattedJson';
 
-import type { Harness } from './agentPrompt';
-import type { Quality, RunPlan } from '../core/model';
+import type { Harness } from './harnesses';
+import type { Quality, RunPlan } from './model';
 
 /**
  * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team

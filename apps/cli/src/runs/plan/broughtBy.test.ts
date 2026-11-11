@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { broughtBy } from './plan';
 
-import type { Ownership } from '../copies/ownership';
+import type { Ownership } from '../../copies/ownership';
 
 // A stage of 8 files opened with 12: the scout read the four a page's unit brought as added for no reason.
 describe('the files a task holds beyond those it names', () => {

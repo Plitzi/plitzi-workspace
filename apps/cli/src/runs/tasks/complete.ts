@@ -11,18 +11,13 @@ import { awaitingUse, keepOlderWarnings, warningsAgainstRun } from './olderWarni
 import { othersHeld } from './othersHeld';
 import { reviewAtComplete, reviewSteps, reviewTeamOf, stepsLeftOut } from './reviews';
 import { isNotice } from '../../commands/project/verify';
-import { unifiedDiff } from '../../fix/diff';
-import { projectExec } from '../../scaffold/packageManager';
-import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../copies/acceptance';
-import { failsWithout, ownFailing } from '../copies/checks';
-import { mergeLines } from '../copies/merge3';
-import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
-import { breaksApprovedText } from '../core/acceptedOn';
-import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../core/files';
-import { entryOf } from '../core/model';
-import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { keepFiles, putBlob, withLock } from '../core/store';
+import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../../copies/acceptance';
+import { breaksApprovedText } from '../../core/acceptedOn';
+import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../../core/files';
+import { entryOf } from '../../core/model';
+import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { keepFiles, putBlob, withLock } from '../../core/store';
 import {
   appendLog,
   lockedFiles,
@@ -33,7 +28,12 @@ import {
   updateState,
   viewTask,
   writeRequest
-} from '../core/taskStore';
+} from '../../core/taskStore';
+import { unifiedDiff } from '../../fix/diff';
+import { projectExec } from '../../scaffold/packageManager';
+import { failsWithout, ownFailing } from '../copies/checks';
+import { mergeLines } from '../copies/merge3';
+import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
 import { crossed, longFilesIn, longFileText } from '../plan/longFiles';
 import { logSpent } from '../report/spent';
 import { keepTaskReport } from '../report/taskReports';
@@ -43,9 +43,9 @@ import { handOver } from '../talk/handOver';
 import { agentAddress, asksStandingOnly, LEAD, markRead, unreadForHolder } from '../talk/messages';
 
 import type { Brought } from './common';
+import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { CheckResult, CheckStep } from '../copies/checks';
-import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../core/model';
-import type { TaskView } from '../core/taskStore';
 import type { Experience } from '../report/experience';
 import type { LoadedRun, RunContext } from '../run';
 import type { Message } from '../talk/messages';

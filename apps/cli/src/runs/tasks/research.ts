@@ -7,20 +7,20 @@ import { closeApproved } from './closeApproved';
 import { at, findTask, holderOf } from './common';
 import { readyWhatWaited, sayIfAllDone } from './handOn';
 import { reviewAtComplete } from './reviews';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
+import { updateState, viewTask } from '../../core/taskStore';
 import { isPrincipal, requireLead } from '../agents/leads';
-import { RunRefusal } from '../core/refusal';
-import { updateState, viewTask } from '../core/taskStore';
 import { notOpen } from '../plan/backlog';
 import { extendRun, seeStage } from '../plan/extend';
 import { uncheckedOf } from '../plan/plan';
-import { isResearch } from '../plan/spike';
 import { logSpent } from '../report/spent';
 import { assertStatus, loadRun, logRun, readPlanFile } from '../run';
 
 import type { ReviewedTask } from './review';
-import type { TaskStatus } from '../core/model';
-import type { TaskView } from '../core/taskStore';
-import type { Finding } from '../plan/spike';
+import type { TaskStatus } from '../../core/model';
+import type { Finding } from '../../core/spike';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

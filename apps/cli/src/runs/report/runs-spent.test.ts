@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openRun, readRunLog, loadRun } from '../run';
 import { spentOf, spentPerMinute } from './spent';
+import { scopePlan, SCOPE_SPIKE } from '../../core/spike';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
-import { scopePlan, SCOPE_SPIKE } from '../plan/spike';
 import { completeResearch, completeTask, reviewTask, takeTask } from '../tasks';
 
 import type { Bench } from '../../tests/runProject';

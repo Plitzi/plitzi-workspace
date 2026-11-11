@@ -1,15 +1,17 @@
-import { DEVELOPER, readTeam, startedAgents, TESTER } from '../agents/team';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
+import { updateState, viewTask } from '../../core/taskStore';
+import { DEVELOPER, readTeam, startedAgents, TESTER } from '../../core/team';
 import { workedBy } from '../agents/worked';
-import { RunRefusal } from '../core/refusal';
-import { updateState, viewTask } from '../core/taskStore';
-import { isResearch } from '../plan/spike';
 import { byUrgency } from '../plan/urgency';
 import { LEAD } from '../talk/messages';
 
-import type { StartedAgent, Team } from '../agents/team';
-import type { RunTask, TaskState } from '../core/model';
-import type { TaskView } from '../core/taskStore';
-import type { LoadedRun, RunContext } from '../run/context';
+import type { ReviewState } from '../../core/model';
+import type { RunTask, TaskState } from '../../core/model';
+import type { LoadedRun } from '../../core/record';
+import type { TaskView } from '../../core/taskStore';
+import type { StartedAgent, Team } from '../../core/team';
+import type { RunContext } from '../run/context';
 
 /**
  * A card's review, one kind for every card — the run is a kanban: its reviews are the roles its card names, in
@@ -22,26 +24,6 @@ import type { LoadedRun, RunContext } from '../run/context';
 
 /** The role a card is reviewed by when it names none: a tester — the lead, in a team without one. */
 export const DEFAULT_REVIEW_ROLE = TESTER;
-
-/** A card's review where it stands: its round, the step it waits for, who took that step. */
-export interface ReviewState {
-  round: number;
-  /** The step of the card's review (`reviewSteps`) that waits to be said. */
-  step: number;
-  /** Who took this step, and when: the step is theirs to say for `stepTimeOf` it. */
-  by?: string;
-  at?: string;
-  /** When this step came due: what a wait for it is counted from. */
-  since: string;
-  /** Who said each step the round before, by step: offered that step first (it knows what it asked). */
-  before?: string[];
-  /** Taken as its reviewer's first review of the run: its time holds the reading it asks for first. */
-  first?: true;
-  /** A command of its reviewer at it, running since then: its time does not run meanwhile (`holdWhileBusy`). */
-  busy?: string;
-  /** The time its reviewer's commands at it ran, in ms: given back to the step's time once each ended. */
-  credited?: number;
-}
 
 /** Who of the team reviews, by role — the agents the team starts, and its developers among them. */
 export interface ReviewTeam {

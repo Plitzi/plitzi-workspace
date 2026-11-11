@@ -5,7 +5,8 @@
  */
 
 export { requireNoTask, requirePerson, requirePrincipal } from './context';
-export type { LoadedRun, PersonGate, RunContext } from './context';
+export type { PersonGate, RunContext } from './context';
+export type { LoadedRun, RunReader } from '../../core/record';
 export {
   activeRuns,
   assertStatus,
@@ -24,8 +25,8 @@ export {
   runIds,
   samePinned,
   updateRecord
-} from './record';
-export type { LoadOptions } from './record';
+} from '../../core/record';
+export type { LoadOptions } from '../../core/record';
 export { assertNoOtherRun, handedInputs, inputOf, removeRun, takeInputs, withInputs } from './claim';
 export type { RemovedInputs } from './claim';
 export {

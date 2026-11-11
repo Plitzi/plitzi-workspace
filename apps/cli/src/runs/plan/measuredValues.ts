@@ -1,6 +1,6 @@
-import { acceptanceText } from '../core/model';
+import { acceptanceText } from '../../core/model';
 
-import type { PlannedTask } from '../core/model';
+import type { PlannedTask } from '../../core/model';
 
 /**
  * A copy's values measured, never typed from a guess: a run's lead wrote the VS sizes of /combates as

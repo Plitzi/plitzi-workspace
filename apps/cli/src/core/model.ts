@@ -1,14 +1,13 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { isBrakeEvent, isCompletions } from './brake';
 import { isDigest, isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from './guards';
-import { isBrakeEvent, isCompletions } from '../agents/brake';
-import { isInventoryItem } from '../plan/inventory';
-import { isFinding } from '../plan/spike';
+import { isInventoryItem } from './inventory';
+import { isFinding } from './spike';
 
-import type { BrakeEvent } from '../agents/brake';
-import type { InventoryItem } from '../plan/inventory';
-import type { Finding } from '../plan/spike';
-import type { ReviewState } from '../tasks/reviews';
+import type { BrakeEvent } from './brake';
+import type { InventoryItem } from './inventory';
+import type { Finding } from './spike';
 
 /**
  * What each file of a run holds, with the guard every read is held to. Every time is ISO 8601 in UTC.
@@ -318,6 +317,26 @@ export interface KnownFailure {
   /** The run's work fails the same way without this task: not its doing, and nothing it can fix in its files. */
   preexisting?: boolean;
   at: string;
+}
+
+/** A card's review where it stands: its round, the step it waits for, who took that step. */
+export interface ReviewState {
+  round: number;
+  /** The step of the card's review (`reviewSteps`) that waits to be said. */
+  step: number;
+  /** Who took this step, and when: the step is theirs to say for `stepTimeOf` it. */
+  by?: string;
+  at?: string;
+  /** When this step came due: what a wait for it is counted from. */
+  since: string;
+  /** Who said each step the round before, by step: offered that step first (it knows what it asked). */
+  before?: string[];
+  /** Taken as its reviewer's first review of the run: its time holds the reading it asks for first. */
+  first?: true;
+  /** A command of its reviewer at it, running since then: its time does not run meanwhile (`holdWhileBusy`). */
+  busy?: string;
+  /** The time its reviewer's commands at it ran, in ms: given back to the step's time once each ended. */
+  credited?: number;
 }
 
 /** `state.json`: a task's state and notes. */

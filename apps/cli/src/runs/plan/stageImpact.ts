@@ -1,4 +1,4 @@
-import type { PlannedTask, TaskStatus } from '../core/model';
+import type { PlannedTask, TaskStatus } from '../../core/model';
 
 /**
  * What a stage's new work reaches of the run's own, said before it is stacked (`run open <stage>`, `--dry-run` first): a

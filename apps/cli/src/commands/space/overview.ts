@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
-import { expandFiles, impactOf, readOwnership } from '../../runs/copies/ownership';
-import { RunRefusal } from '../../runs/core/refusal';
+import { expandFiles, impactOf, readOwnership } from '../../copies/ownership';
+import { RunRefusal } from '../../core/refusal';
 import { act } from '../runs/shell';
 import { list } from '../runs/text';
 

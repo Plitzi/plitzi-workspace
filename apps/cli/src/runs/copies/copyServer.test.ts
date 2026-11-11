@@ -6,14 +6,14 @@ import { stripVTControlCharacters } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { answering, freePort } from './acceptance';
-import { originHere, sayStale } from './copyServer';
-import { keepServer, keptServer, markPreviewed, stopKept } from './lingering';
 import { notServed, startTaskPreview } from './preview';
-import { descendantsOf } from './processes';
+import { answering, freePort } from '../../copies/acceptance';
+import { originHere, sayStale } from '../../copies/copyServer';
+import { keepServer, keptServer, markPreviewed, stopKept } from '../../copies/lingering';
+import { descendantsOf } from '../../copies/processes';
+import { runPaths, taskPaths } from '../../core/paths';
 import { makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths, taskPaths } from '../core/paths';
 
 import type { Bench } from '../../tests/runProject';
 

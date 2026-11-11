@@ -1,8 +1,8 @@
-import { UNNAMED } from '../agents/identity';
+import { UNNAMED } from '../../core/agentNames';
 import { isApproval } from '../run';
 
 import type { CommandPath } from '../../commandPath';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 
 /**
  * A run measured from its own records — its activity, the usage each command kept, the messages — as the lead measured

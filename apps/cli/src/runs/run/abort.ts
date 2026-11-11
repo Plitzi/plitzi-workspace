@@ -1,7 +1,7 @@
 import { removeRun } from './claim';
 import { requirePerson } from './context';
-import { loadRun, readApproved } from './record';
 import { stopKeptBrowser } from '../../browser/keptBrowser';
+import { loadRun, readApproved } from '../../core/record';
 import { keepLeadCli } from '../agents/identity';
 import { keepNotices } from '../plan/backlog';
 import { leaveReport } from '../report/leaveReport';

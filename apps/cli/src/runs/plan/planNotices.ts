@@ -1,9 +1,9 @@
 import { scriptsOf } from '../../commands/project/verify';
+import { runsSuite } from '../../copies/acceptance';
 import { projectExec } from '../../scaffold/packageManager';
 import { SCOPE_LIMIT_MINUTES, WORK_LIMIT_MINUTES, workLimitOf } from '../agents/limits';
-import { runsSuite } from '../copies/acceptance';
 
-import type { RunTask } from '../core/model';
+import type { RunTask } from '../../core/model';
 
 /** What `run open --dry-run` says of a plan's size and checks, against the time a piece of work and a check should take. */
 

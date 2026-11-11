@@ -1,5 +1,5 @@
-import type { TaskStatus } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { TaskStatus } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 
 /**
  * What a task is being worked in, its agent on it: at work, or sent back to it — what counts toward the agents at work,

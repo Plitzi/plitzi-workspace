@@ -14,9 +14,10 @@ import {
   stepTimeOf
 } from './reviews';
 
-import type { ReviewState, ReviewTeam } from './reviews';
-import type { RunTask, TaskState } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { ReviewTeam } from './reviews';
+import type { ReviewState } from '../../core/model';
+import type { RunTask, TaskState } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 
 // The run is a kanban — one review for every card, its steps the roles its card names, in order.
 

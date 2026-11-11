@@ -1,4 +1,4 @@
-import { DESIGNER, DEVELOPER, TESTER } from '../agents/team';
+import { DESIGNER, DEVELOPER, TESTER } from '../../core/team';
 
 /**
  * What a person sees: the space's document — pages, layouts, components, the theme — and what a plugin draws, its

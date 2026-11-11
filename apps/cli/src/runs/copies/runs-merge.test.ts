@@ -4,10 +4,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { continueRun, finishRun, resolveFile, restoreFile, showVersion } from './merge';
+import { writeAtomic } from '../../core/files';
+import { BACKUPS_DIR, RUNS_DIR, runPaths } from '../../core/paths';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { writeAtomic } from '../core/files';
-import { BACKUPS_DIR, RUNS_DIR, runPaths } from '../core/paths';
 import { runReportDir } from '../report/reports';
 import { readRunLog } from '../run';
 import { abortRun } from '../run/abort';

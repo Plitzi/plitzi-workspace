@@ -3,11 +3,11 @@ import path from 'node:path';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { failedWhy } from '../../commands/project/verify';
-import { checkAcceptance, sayLines } from '../copies/acceptance';
+import { checkAcceptance, sayLines } from '../../copies/acceptance';
 import { acceptanceOnResult } from '../copies/materialise';
 import { readApproved } from '../run';
 
-import type { AcceptanceResult, RunPlan, RunTask } from '../core/model';
+import type { AcceptanceResult, RunPlan, RunTask } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

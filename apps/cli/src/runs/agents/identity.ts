@@ -4,13 +4,14 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { readTeam, startedAgents } from './team';
-import { createExclusive, readJson, writeAtomic } from '../core/files';
-import { RUNS_OVER_DIR } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
+import { AGENT_TOKEN, UNNAMED } from '../../core/agentNames';
+import { createExclusive, readJson, writeAtomic } from '../../core/files';
+import { RUNS_OVER_DIR } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { readTeam, startedAgents } from '../../core/team';
 import { LEAD } from '../talk/messages';
 
-import type { RunPaths } from '../core/paths';
+import type { RunPaths } from '../../core/paths';
 
 /**
  * Who calls a run's command, proved by a token rather than said: a name is anyone's to type. A name said, or none, was
@@ -21,14 +22,8 @@ import type { RunPaths } from '../core/paths';
  * a name that has one is refused without it, and a token is refused under another's name.
  */
 
-/** An agent's token: its run, its name, its secret — told apart from a task's (`<run>.<task>.<secret>`) by the `@`. */
-export const AGENT_TOKEN = /^([a-z0-9][a-z0-9_-]*)\.@([a-z0-9][a-z0-9_-]*)\.([0-9a-f]{32})$/;
-
 /** A name an agent may go by: what a folder can be named, and a person can type. */
 const NAME = /^[a-z][a-z0-9_-]{0,63}$/;
-
-/** Who reads what anyone may read, saying nothing of itself (`runOf`'s `anyone`): no lead, no agent. */
-export const UNNAMED = 'unnamed';
 
 /** Names no agent takes: a person is one at a terminal, and the others are what the CLI calls a caller it cannot name. */
 const RESERVED = new Set(['person', 'agent', UNNAMED]);

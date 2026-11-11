@@ -16,12 +16,12 @@ import {
   previewedServer,
   previewServerLog
 } from './lingering';
-import { projectOrigin, readHealth } from '../../browser';
-import { projectRun } from '../../scaffold/packageManager';
-import { DEV_SERVER_FILE } from '../../scaffold/paths';
+import { projectOrigin, readHealth } from '../browser';
 import { copyOf, runPaths, taskPaths } from '../core/paths';
+import { projectRun } from '../scaffold/packageManager';
+import { DEV_SERVER_FILE } from '../scaffold/paths';
 
-import type { PlitziProject } from '../../commands/project/existingProject';
+import type { PlitziProject } from '../commands/project/existingProject';
 
 /**
  * Where a page of the project here is served for a check or a picture — and, in a task's copy whose own server is not

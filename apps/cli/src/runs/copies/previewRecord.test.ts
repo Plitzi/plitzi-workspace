@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { previewEnded, previewEndedFile, previewRecord, stopServedPreview } from './previewRecord';
-import { runPaths } from '../core/paths';
+import { runPaths } from '../../core/paths';
 
 import type { LoadedRun } from '../run';
 

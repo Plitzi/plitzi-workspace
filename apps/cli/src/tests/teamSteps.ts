@@ -1,7 +1,7 @@
 import { writeInCopy } from './runProject';
-import { taskPaths } from '../runs/core/paths';
-import { isRunRefusal } from '../runs/core/refusal';
-import { readState } from '../runs/core/taskStore';
+import { taskPaths } from '../core/paths';
+import { isRunRefusal } from '../core/refusal';
+import { readState } from '../core/taskStore';
 import { loadRun } from '../runs/run';
 import { completeTask, takeTask } from '../runs/tasks';
 

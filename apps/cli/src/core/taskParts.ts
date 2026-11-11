@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { locatedSpace } from '../../commands/element/where';
+import { locatedSpace } from '../commands/element/where';
 
 /**
  * What of a page a task writes, read off its copy's space: the elements its files write, the outermost of them — what

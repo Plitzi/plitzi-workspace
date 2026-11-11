@@ -6,11 +6,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { keepOnce, keeperText, leadStartText, openKeeperLog } from './keeper';
 import { STARTING_MS } from './onDemand';
-import { setTeamAgent } from './team';
+import { runPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
 import { openRun, stopRun } from '../run';
 import { abortRun } from '../run/abort';
 import { completeTask, nextTask, takeTask } from '../tasks';

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { healthOn, servesFolder, stoppedAnswering } from '../../browser/health';
+import { healthOn, servesFolder, stoppedAnswering } from '../browser/health';
 
 /**
  * A copy's server kept a while after the command that served it: an agent pictures its page again and again, and each

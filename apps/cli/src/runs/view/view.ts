@@ -1,6 +1,12 @@
 import path from 'node:path';
 
 import { bottlenecks } from './bottlenecks';
+import { fingerprint } from '../../core/files';
+import { asksLead } from '../../core/model';
+import { under } from '../../core/paths';
+import { isResearch, roleOf } from '../../core/spike';
+import { isDisconnected, readStart, viewTask } from '../../core/taskStore';
+import { readTeam, SCOUT, startedAgents, TESTER } from '../../core/team';
 import { projectExec } from '../../scaffold/packageManager';
 import { identifiedAgents } from '../agents/identity';
 import { longTaskAttention } from '../agents/longTask';
@@ -8,17 +14,11 @@ import { agentsNeeded } from '../agents/onDemand';
 import { agentsNow } from '../agents/running';
 import { heldAhead, lockHolder, stalled } from '../agents/stalled';
 import { holdDoing, holdNotices, startHolds } from '../agents/startHold';
-import { readTeam, SCOUT, startedAgents, TESTER } from '../agents/team';
 import { isWorked } from '../agents/worked';
 import { previewEnded, previewPort } from '../copies/previewRecord';
 import { leftInTmp } from '../copies/strays';
-import { fingerprint } from '../core/files';
-import { asksLead } from '../core/model';
-import { under } from '../core/paths';
-import { isDisconnected, readStart, viewTask } from '../core/taskStore';
 import { liveAttention } from '../findings/live';
 import { stackableBacklog } from '../plan/backlog';
-import { isResearch, roleOf } from '../plan/spike';
 import { chainMinutes, urgencies } from '../plan/urgency';
 import { readHistory } from '../report/history';
 import { settledFindings } from '../report/settled';
@@ -29,8 +29,8 @@ import { allLocks, requestsOf } from '../tasks';
 import { workedMs } from '../tasks/keepAlive';
 import { leadStepWhy, reviewSteps, reviewTeamOfAgents, stepReviewers, stepRole } from '../tasks/reviews';
 
-import type { Needs, Priority, RunRecord, TaskState, TaskStatus, Waiting } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { Needs, Priority, RunRecord, TaskState, TaskStatus, Waiting } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { RunContext } from '../run';
 
 /** How much of a message the run's view shows: one too long to scan is cut, and says where it is whole. */

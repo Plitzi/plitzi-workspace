@@ -7,15 +7,15 @@ import { amendRun } from './amend';
 import { addBacklogItem } from './backlog';
 import { extendRun } from './extend';
 import { checkPlan } from './plan';
-import { scopePlan, SCOPE_SPIKE } from './spike';
 import { flowStages } from '../../commands/runs/monitor/monitorFlow';
+import { readOwnership } from '../../copies/ownership';
+import { taskPaths } from '../../core/paths';
+import { scopePlan, SCOPE_SPIKE } from '../../core/spike';
+import { readState } from '../../core/taskStore';
 import { researchSteps } from '../../tests/research';
 import { SCOUT, team, TESTERS } from '../../tests/reviewerSteps';
 import { benchPlan, makeBench, proven, teamFor } from '../../tests/runProject';
 import { refusal, runSteps } from '../../tests/runSteps';
-import { readOwnership } from '../copies/ownership';
-import { taskPaths } from '../core/paths';
-import { readState } from '../core/taskStore';
 import { auditRun } from '../report/audit';
 import { loadRun, openRun } from '../run';
 import { messagesOf } from '../talk/messages';
@@ -24,8 +24,8 @@ import { monitorRun } from '../view/monitor';
 import { showTask } from '../view/show';
 import { viewRun } from '../view/view';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 let bench: Bench;
 

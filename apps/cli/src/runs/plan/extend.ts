@@ -1,24 +1,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { coversOf } from './inventory';
 import { unmeasuredNotices } from './measuredValues';
 import { checkPlan, PlanRefusal } from './plan';
 import { runGraph } from './runGraph';
 import { tasksNow } from './runImpact';
-import { isResearch, startingState } from './spike';
 import { stageImpact } from './stageImpact';
 import { tryLines } from './tryLines';
+import { readOwnership } from '../../copies/ownership';
+import { fingerprint, readJson, writeAtomic, writeJson } from '../../core/files';
+import { coversOf } from '../../core/inventory';
+import { isBaseManifest } from '../../core/model';
+import { lockFile, taskPaths, under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch, startingState } from '../../core/spike';
+import { keepFiles } from '../../core/store';
+import { readStart, viewTask } from '../../core/taskStore';
+import { ensureTeam, teamSize } from '../../core/team';
 import { requireLead } from '../agents/leads';
-import { ensureTeam, teamSize } from '../agents/team';
 import { materialise } from '../copies/materialise';
-import { readOwnership } from '../copies/ownership';
-import { fingerprint, readJson, writeAtomic, writeJson } from '../core/files';
-import { isBaseManifest } from '../core/model';
-import { lockFile, taskPaths, under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { keepFiles } from '../core/store';
-import { readStart, viewTask } from '../core/taskStore';
 import {
   assertStatus,
   handedInputs,
@@ -39,8 +39,8 @@ import type { CheckedPlan } from './plan';
 import type { RunGraph } from './runGraph';
 import type { LoadedRun, RunContext } from '../run';
 import type { TriedLine } from './tryLines';
-import type { RunPlan, RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { RunPlan, RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 
 /**
  * `plitzi run open` on an open run: the next plan stacked on an open run — begun where the run's work is, its tasks' copies made

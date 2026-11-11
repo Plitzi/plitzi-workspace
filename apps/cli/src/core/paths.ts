@@ -11,7 +11,7 @@ import {
   REPORTS_DIR,
   RUNS_DIR,
   VENDOR_PLUGINS_DIR
-} from '../../scaffold/paths';
+} from '../scaffold/paths';
 
 /**
  * Where a run keeps what it owns: under the project's `tmp/`, which the project already keeps out of git, the lint, the
@@ -147,6 +147,9 @@ export const RUN_COPY_MARK = '.plitzi-run-copy';
 export const FULL_REPORT_FILE = 'report-full.md';
 
 export const runPaths = (root: string, runId: string): RunPaths => runPathsIn(root, path.join(runsDir(root), runId));
+
+/** Where a run's preview materialises its approved work: what `page check --url` finds a preview's space by. */
+export const previewDir = (paths: { cache: string }): string => path.join(paths.cache, 'preview');
 
 /**
  * A run's paths in a folder of its own: the run's while it is open (`runPaths`), and the records its report keeps once

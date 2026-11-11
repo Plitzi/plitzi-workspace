@@ -4,8 +4,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { finishRun } from './merge';
-import { readOwnership } from './ownership';
 import { syncPreview } from './preview';
+import { readOwnership } from '../../copies/ownership';
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';

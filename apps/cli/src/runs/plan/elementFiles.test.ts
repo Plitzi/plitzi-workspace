@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkedElements, elementFileNotices } from './elementFiles';
 import { makeBench } from '../../tests/runProject';
 
+import type { PlannedTask } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { PlannedTask } from '../core/model';
 
 let bench: Bench;
 

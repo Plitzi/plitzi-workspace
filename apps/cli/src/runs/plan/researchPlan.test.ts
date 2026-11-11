@@ -8,9 +8,9 @@ import { benchPlan, makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
 import { checkPlanFile } from '../run';
 
+import type { PlannedTask, RunPlan } from '../../core/model';
+import type { Team } from '../../core/team';
 import type { Bench } from '../../tests/runProject';
-import type { Team } from '../agents/team';
-import type { PlannedTask, RunPlan } from '../core/model';
 
 let bench: Bench;
 

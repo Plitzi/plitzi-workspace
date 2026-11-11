@@ -3,17 +3,16 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { RUN_REPORTS_DIR } from '../../scaffold/paths';
-import { readJson, readOptional, writeJson } from '../core/files';
-import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from '../core/model';
-import { ID, runPaths, runPathsIn, runsDir } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { withLock } from '../core/store';
-import { appendLog, readTasks } from '../core/taskStore';
+import { readJson, readOptional, writeJson } from './files';
+import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from './model';
+import { ID, runPaths, runPathsIn, runsDir } from './paths';
+import { RunRefusal } from './refusal';
+import { withLock } from './store';
+import { appendLog, readTasks } from './taskStore';
+import { RUN_REPORTS_DIR } from '../scaffold/paths';
 
-import type { LoadedRun, RunContext } from './context';
-import type { ApprovedManifest, BaseManifest, Pinned, RunRecord, SharedManifest } from '../core/model';
-import type { RunPaths } from '../core/paths';
+import type { ApprovedManifest, BaseManifest, Pinned, RunPlan, RunRecord, RunTask, SharedManifest } from './model';
+import type { RunPaths } from './paths';
 
 /**
  * A run's record and manifests, read and written under its lock: loaded with the versions it was pinned to, its
@@ -94,6 +93,27 @@ export const pinDifference = async (
   return { stops: changes.filter(isStop), carried: changes.filter(change => !isStop(change)) };
 };
 
+/**
+ * What reading a run's record and writing its log ask of whoever acts on it: the rest of who that is — a token, a
+ * person to confirm, the checks — is the harness's (`RunContext`, `runs/run/context.ts`).
+ */
+export interface RunReader {
+  root: string;
+  now: () => Date;
+  machine: string;
+  cli: string;
+  /** Who is calling, for the log: an agent's name, or `person`. */
+  agent: string;
+}
+
+/** A run, loaded: its folders, its plan, its record and its tasks — what every step of it reads. */
+export interface LoadedRun {
+  paths: RunPaths;
+  plan: RunPlan;
+  record: RunRecord;
+  tasks: RunTask[];
+}
+
 /** What changed between two pins, a line each: `@plitzi/cli 0.38.1 → 0.38.2`. */
 export const pinnedChanges = (was: Pinned, now: Pinned): string[] => {
   const changes = was.cli === now.cli ? [] : [`@plitzi/cli ${was.cli} → ${now.cli}`];
@@ -129,7 +149,7 @@ export interface LoadOptions {
   anyVersion?: boolean;
 }
 
-export const loadRun = async (ctx: RunContext, runId: string, options: LoadOptions = {}): Promise<LoadedRun> => {
+export const loadRun = async (ctx: RunReader, runId: string, options: LoadOptions = {}): Promise<LoadedRun> => {
   if (!ID.test(runId)) {
     throw new RunRefusal('invalid', `"${runId}" is not a run's name: lowercase letters, digits, - and _`);
   }
@@ -208,7 +228,7 @@ export const loadKeptRun = async (root: string, runId: string): Promise<LoadedRu
 
 /** Changes the run's record under its merge lock: one writer at a time, whoever it is. */
 export const updateRecord = async (
-  ctx: RunContext,
+  ctx: RunReader,
   paths: RunPaths,
   change: (record: RunRecord) => RunRecord
 ): Promise<RunRecord> =>
@@ -257,7 +277,7 @@ export const readRunLog = async (paths: RunPaths): Promise<Record<string, unknow
   });
 };
 
-export const logRun = (ctx: RunContext, paths: RunPaths, entry: Record<string, unknown>): Promise<void> =>
+export const logRun = (ctx: RunReader, paths: RunPaths, entry: Record<string, unknown>): Promise<void> =>
   appendLog(paths.log, { at: ctx.now().toISOString(), by: ctx.agent, ...entry });
 
 /** Refuses what a run's status does not allow, naming the status — `allowed` says what may go on. */

@@ -6,8 +6,8 @@ import { runSteps } from '../../tests/runSteps';
 import { loadRun } from '../run';
 import { readInbox } from '../talk/talk';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 let bench: Bench;
 

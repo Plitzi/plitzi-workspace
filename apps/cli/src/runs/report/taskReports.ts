@@ -4,15 +4,15 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { isExperience } from './experience';
-import { writeJson } from '../core/files';
-import { tasksDir } from '../core/paths';
-import { readUsage } from '../core/usage';
+import { writeJson } from '../../core/files';
+import { tasksDir } from '../../core/paths';
+import { readUsage } from '../../core/usage';
 import { harnessUsage } from '../harness';
 import { readRunLog } from '../run';
 
 import type { Experience } from './experience';
 import type { CommandPath } from '../../commandPath';
-import type { TaskPaths } from '../core/paths';
+import type { TaskPaths } from '../../core/paths';
 import type { HarnessUsage } from '../harness';
 import type { LoadedRun } from '../run';
 

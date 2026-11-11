@@ -7,7 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { createExclusive, exists, readOptional, writeAtomic } from './files';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
-import { digest } from '../../commands/project/spaceOrigin';
+import { digest } from '../commands/project/spaceOrigin';
 
 import type { RunPaths } from './paths';
 

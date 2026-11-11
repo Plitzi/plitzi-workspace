@@ -1,7 +1,7 @@
+import { isResearch, roleOf } from '../../core/spike';
+import { SCOUT, TESTER } from '../../core/team';
 import { busyIn } from '../agents/onDemand';
-import { SCOUT, TESTER } from '../agents/team';
 import { isWorked } from '../agents/worked';
-import { isResearch, roleOf } from '../plan/spike';
 import { LEAD } from '../talk/messages';
 import {
   REVIEW_QUEUE_MS,
@@ -16,9 +16,9 @@ import {
 } from '../tasks/reviews';
 
 import type { Attention } from './view';
-import type { StartedAgent } from '../agents/team';
-import type { RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
+import type { StartedAgent } from '../../core/team';
 
 /** Where a task another waits for is held past its work — in a review, sent back, blocked — or nothing while it is worked. */
 const heldIn = (view: TaskView): string | undefined =>

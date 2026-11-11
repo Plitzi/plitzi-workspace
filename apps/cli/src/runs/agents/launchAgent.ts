@@ -4,27 +4,28 @@ import { closeSync, constants, openSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { agentPrompt, harnessCommand, HARNESSES, isHarness } from './agentPrompt';
+import { agentPrompt, harnessCommand } from './agentPrompt';
 import { issueToken, tokenFile, writeCli } from './identity';
 import { isRunning, readLaunch, resumable, reworkSession, writeLaunch } from './launch';
 import { isPrincipal, scoutsOf, testersReview } from './leads';
-import { FRESH_CONTEXT_AT, leadStart, readTeam, startedAgents } from './team';
-import { agentScratch, runPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
+import { quickEndsOf } from './startHold';
+import { HARNESSES, isHarness } from '../../core/harnesses';
+import { agentScratch, runPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { SESSION_ENV } from '../../core/session';
+import { opensOnResearch } from '../../core/spike';
+import { withLock } from '../../core/store';
+import { viewTask } from '../../core/taskStore';
+import { FRESH_CONTEXT_AT, leadStart, readTeam, startedAgents } from '../../core/team';
 import { harnessUsage } from '../harness';
 import { loadRun, logRun, readRunLog } from '../run';
-import { SESSION_ENV } from './session';
-import { quickEndsOf } from './startHold';
-import { withLock } from '../core/store';
-import { viewTask } from '../core/taskStore';
-import { opensOnResearch } from '../plan/spike';
 
-import type { Harness } from './agentPrompt';
 import type { NoResume } from './launch';
-import type { RunPaths } from '../core/paths';
+import type { Harness } from '../../core/harnesses';
+import type { RunPaths } from '../../core/paths';
+import type { Team } from '../../core/team';
+import type { StartedAgent } from '../../core/team';
 import type { RunContext } from '../run';
-import type { Team } from './team';
-import type { StartedAgent } from './team';
 
 /**
  * An agent of the run's team, prepared — its token, its own CLI, its prompt in its scratch — and started headless in a

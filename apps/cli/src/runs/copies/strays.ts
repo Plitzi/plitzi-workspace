@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { readOptional, writeJson } from '../../core/files';
+import { TOOL_TMP } from '../../core/paths';
+import { readTeam, startedAgents } from '../../core/team';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { isPrincipal } from '../agents/leads';
-import { readTeam, startedAgents } from '../agents/team';
-import { readOptional, writeJson } from '../core/files';
-import { TOOL_TMP } from '../core/paths';
 import { agentAddress, sendMessage } from '../talk/messages';
 
-import type { RunRecord } from '../core/model';
+import type { RunRecord } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

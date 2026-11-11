@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { harnessOf, runMetrics } from './runMetrics';
 import { ranAs } from '../../tests/ranAs';
 
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 
 const T = (minutes: number): string => new Date(Date.UTC(2026, 9, 21, 23, 0) + minutes * 60_000).toISOString();
 

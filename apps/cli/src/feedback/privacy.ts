@@ -6,7 +6,7 @@ import { AUTHORING_CODES } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectSpace } from '../commands/page/check/space';
-import { REFUSAL_EXIT_CODES } from '../runs/core/refusal';
+import { REFUSAL_EXIT_CODES } from '../core/refusal';
 
 /**
  * What a report to Plitzi leaves out — `plitzi feedback`'s and a run's `feedback.md` alike: nothing of the person, and

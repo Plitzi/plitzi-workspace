@@ -1,19 +1,19 @@
 import { commandDoing, doingOf, statusOf } from './agentDoing';
 import { feedOf, glimpse, SHORT, textOf } from './feedLine';
 import { viewRun } from './view';
+import { runPaths } from '../../core/paths';
+import { choiceText, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../../core/team';
+import { readUsage } from '../../core/usage';
 import { leadWatching } from '../agents/leadWatch';
 import { stoppedAgents } from '../agents/onDemand';
 import { presentAt, PRESENCE_STALE_MS } from '../agents/presence';
-import { choiceText, FRESH_CONTEXT_AT, readTeam, startedAgents } from '../agents/team';
 import { isWorked } from '../agents/worked';
-import { runPaths } from '../core/paths';
-import { readUsage } from '../core/usage';
 import { spentOf, spentPerMinute, SPEND_MINUTES } from '../report/spent';
 import { isApproval, loadRun, readRunLog, runIds } from '../run';
 import { LEAD, messagesOf, openQuestions } from '../talk/messages';
 
 import type { RunView, TaskLine } from './view';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 import type { Spent } from '../report/spent';
 import type { RunContext } from '../run';
 

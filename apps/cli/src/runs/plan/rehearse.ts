@@ -1,11 +1,11 @@
-import { isResearch } from './spike';
-import { roleOf } from './spike';
 import { byUrgency, chainMinutes } from './urgency';
-import { DEVELOPER, TESTER } from '../agents/team';
-import { inPageFolder } from '../copies/ownership';
+import { inPageFolder } from '../../copies/ownership';
+import { isResearch } from '../../core/spike';
+import { roleOf } from '../../core/spike';
+import { DEVELOPER, TESTER } from '../../core/team';
 
-import type { Ownership } from '../copies/ownership';
-import type { RunTask } from '../core/model';
+import type { Ownership } from '../../copies/ownership';
+import type { RunTask } from '../../core/model';
 
 /**
  * `plitzi run open --dry-run --rehearse`: a plan played out before any agent starts — every agent taking the best task it may

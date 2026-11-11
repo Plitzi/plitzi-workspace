@@ -2,7 +2,7 @@ import { readClaude } from './claude';
 import { readCodex } from './codex';
 import { readOpenCode } from './opencode';
 import { usageOf } from './types';
-import { sessionOfProcess } from '../agents/session';
+import { sessionOfProcess } from '../../core/session';
 
 import type { HarnessUsage, SessionRead } from './types';
 

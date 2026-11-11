@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { completeTask, findTask } from '.';
 import { holdWhileBusy, stepTimedOut, stepTimeOf, takeOnLook } from './reviews';
+import { viewTask } from '../../core/taskStore';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { setTeamAgent } from '../agents/team';
-import { viewTask } from '../core/taskStore';
 import { loadRun, openRun } from '../run';
 
 import type { Bench } from '../../tests/runProject';

@@ -1,9 +1,9 @@
 import { clock, evidenceOf } from './types';
-import { REFUSAL_EXIT_CODES } from '../core/refusal';
+import { REFUSAL_EXIT_CODES } from '../../core/refusal';
 import { isVerdict } from '../report/taskReports';
 
 import type { Finding } from './types';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 
 /**
  * Commands that failed, grouped by why (`UsageLine.error`) — a failure that is a check's verdict on the work left out:

@@ -1,18 +1,18 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { fingerprint, projectFiles, readOptional, writeJson } from '../../core/files';
+import { entryOf } from '../../core/model';
+import { projectPath, under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { getBlob, placeVersion, putBlob } from '../../core/store';
+import { readStart, revokedTokens, tokenPrint, viewTask } from '../../core/taskStore';
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
 import { mergeLines } from '../copies/merge3';
-import { fingerprint, projectFiles, readOptional, writeJson } from '../core/files';
-import { entryOf } from '../core/model';
-import { projectPath, under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { getBlob, placeVersion, putBlob } from '../core/store';
-import { readStart, revokedTokens, tokenPrint, viewTask } from '../core/taskStore';
 import { readApproved } from '../run';
 
-import type { ApprovedManifest, RunTask, TaskStart } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { ApprovedManifest, RunTask, TaskStart } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

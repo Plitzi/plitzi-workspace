@@ -1,12 +1,12 @@
+import { fingerprint, readOptional } from '../../core/files';
+import { under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
+import { getBlob } from '../../core/store';
+import { readStart, viewTask } from '../../core/taskStore';
 import { unifiedDiff } from '../../fix/diff';
 import { isPrincipal } from '../agents/leads';
-import { fingerprint, readOptional } from '../core/files';
-import { under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { getBlob } from '../core/store';
-import { readStart, viewTask } from '../core/taskStore';
 import { LARGE_OUTPUT } from '../findings/cost';
-import { isResearch } from '../plan/spike';
 import { loadRun, readApproved, readBase } from '../run';
 import { proposalsOf } from '../talk/agreements';
 import { LEAD, markRead, messagesOf } from '../talk/messages';
@@ -14,12 +14,12 @@ import { notReviewedIn } from '../tasks';
 import { requestsShown } from '../tasks/context';
 import { mergedFile, mergedVersion } from '../tasks/mergedVersion';
 
-import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from '../core/model';
-import type { Finding } from '../plan/spike';
+import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from '../../core/model';
+import type { ReviewState } from '../../core/model';
+import type { Finding } from '../../core/spike';
 import type { LoadedRun, RunContext } from '../run';
 import type { ProposalView } from '../talk/agreements';
 import type { Message } from '../talk/messages';
-import type { ReviewState } from '../tasks/reviews';
 
 /**
  * `plitzi task show`: one task as its lead reviews it — what it was asked, what it changed (each file's diff against

@@ -6,11 +6,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { claudeSessionFile, isRunning, readLaunch } from './launch';
 import { launchAgent, launchHarness } from './launchAgent';
-import { openRun, readRunLog } from '../run';
-import { setTeamAgent } from './team';
+import { runPaths } from '../../core/paths';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
+import { openRun, readRunLog } from '../run';
 import { completeTask, reviewTask } from '../tasks';
 
 import type { Bench } from '../../tests/runProject';

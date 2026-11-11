@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { liveVerb } from './monitorModel';
-import { runPaths } from '../../../runs/core/paths';
+import { runPaths } from '../../../core/paths';
 import { logRun, openRun } from '../../../runs/run';
 import { completeTask, takeNext } from '../../../runs/tasks';
 import { monitorRun } from '../../../runs/view/monitor';
@@ -9,7 +9,7 @@ import { SCOUT, team, TESTERS } from '../../../tests/reviewerSteps';
 import { benchPlan, makeBench, writeInCopy } from '../../../tests/runProject';
 import { runSteps } from '../../../tests/runSteps';
 
-import type { RunPlan } from '../../../runs/core/model';
+import type { RunPlan } from '../../../core/model';
 import type { Bench } from '../../../tests/runProject';
 
 let bench: Bench;

@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { STARTER_TEAM } from '../../runs/agents/team';
-import { COPY_TASK_FILE } from '../../runs/core/paths';
+import { COPY_TASK_FILE } from '../../core/paths';
+import { STARTER_TEAM } from '../../core/team';
 import { plitzi } from '../../tests/plitziProcess';
 import { benchPlan, makeBench } from '../../tests/runProject';
 

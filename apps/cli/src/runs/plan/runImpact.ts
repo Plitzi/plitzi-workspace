@@ -2,13 +2,13 @@ import fs from 'node:fs/promises';
 
 import { runGraph } from './runGraph';
 import { stageImpact } from './stageImpact';
+import { viewTask } from '../../core/taskStore';
 import { materialise } from '../copies/materialise';
-import { viewTask } from '../core/taskStore';
 import { readApproved } from '../run';
 
 import type { RunTaskNow } from './stageImpact';
-import type { PlannedTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { PlannedTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /** The run's tasks as `stageImpact` weighs them: each where it stands, and who is at it. */

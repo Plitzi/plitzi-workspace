@@ -5,7 +5,7 @@ import { onKey } from './monitorInput';
 import { initialUi } from './monitorModel';
 import { monitorScreen } from './monitorScreen';
 import { THEMES } from './monitorTheme';
-import { setTeamAgent } from '../../../runs/agents/team';
+import { setTeamAgent } from '../../../core/team';
 import { loadRun, openRun } from '../../../runs/run';
 import { monitorRun } from '../../../runs/view/monitor';
 import { benchPlan, makeBench } from '../../../tests/runProject';

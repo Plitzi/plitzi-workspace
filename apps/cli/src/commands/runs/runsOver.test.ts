@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { runPaths } from '../../core/paths';
 import { issueToken, leadCliOver } from '../../runs/agents/identity';
 import { finishRun } from '../../runs/copies/merge';
-import { runPaths } from '../../runs/core/paths';
 import { feedbackFile } from '../../runs/report/feedback';
 import { LEAD } from '../../runs/talk/messages';
 import { plitzi } from '../../tests/plitziProcess';

@@ -4,11 +4,11 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { AGENT_TOKEN, UNNAMED } from './agentNames';
 import { activeRunFile, COPY_TASK_FILE, copyOf, RECORD_FILE, runPaths } from './paths';
-import { AGENT_TOKEN, UNNAMED } from '../agents/identity';
-import { sessionOfProcess } from '../agents/session';
+import { sessionOfProcess } from './session';
 
-import type { CommandPath } from '../../commandPath';
+import type { CommandPath } from '../commandPath';
 import type { Command } from 'commander';
 
 /**

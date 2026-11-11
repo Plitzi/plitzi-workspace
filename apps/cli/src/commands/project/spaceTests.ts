@@ -13,7 +13,7 @@ import {
 import { projectHere } from './existingProject';
 import { loadProjectSpace } from './projectSpace';
 import { launchBrowser, openProjectPage, VIEW_HEIGHT } from '../../browser';
-import { originHere } from '../../runs/copies/copyServer';
+import { originHere } from '../../copies/copyServer';
 import { unanswered } from '../shared/terminal';
 
 import type { ExistingProject } from './existingProject';

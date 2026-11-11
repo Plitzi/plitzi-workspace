@@ -2,10 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { notOpen } from './backlog';
-import { coversOf, inventoryProblems } from './inventory';
-import { acceptanceText } from '../core/model';
-import { taskPaths } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
+import { readOptional, writeAtomic, writeJson } from '../../core/files';
+import { coversOf, inventoryProblems } from '../../core/inventory';
+import { acceptanceText } from '../../core/model';
+import { taskPaths } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { withLock } from '../../core/store';
+import { updateState, viewTask } from '../../core/taskStore';
 import {
   assertStatus,
   handedInputs,
@@ -20,17 +23,14 @@ import {
   withInputs
 } from '../run';
 import { impactOnRun } from './runImpact';
-import { PLAN_FINDING } from './spike';
+import { PLAN_FINDING } from '../../core/spike';
 import { requireLead } from '../agents/leads';
 import { acceptanceProblems } from '../copies/acceptanceProblems';
-import { readOptional, writeAtomic, writeJson } from '../core/files';
-import { withLock } from '../core/store';
-import { updateState, viewTask } from '../core/taskStore';
 import { EVERYONE, LEAD, sendMessage } from '../talk/messages';
 
-import type { PlannedTask, RunPlan, RunTask } from '../core/model';
+import type { PlannedTask, RunPlan, RunTask } from '../../core/model';
+import type { Finding } from '../../core/spike';
 import type { LoadedRun, RunContext } from '../run';
-import type { Finding } from './spike';
 
 /** What keeps `task`'s new dependencies from holding: one the run has not, itself, or a circle back to it. */
 const dependsOnProblems = (task: PlannedTask, inRun: readonly RunTask[], planned: readonly PlannedTask[]): string[] => {

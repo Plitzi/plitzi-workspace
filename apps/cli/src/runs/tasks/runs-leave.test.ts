@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leaveTask } from './leave';
+import { viewTask } from '../../core/taskStore';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { finishRun } from '../copies/merge';
-import { viewTask } from '../core/taskStore';
 import { loadRun, openRun } from '../run';
 import { nextTask, takeTask } from '../tasks';
 

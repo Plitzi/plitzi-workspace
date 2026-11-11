@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { combineExperience, experienceFrom, experienceText } from './experience';
-import { isRunRefusal } from '../core/refusal';
+import { isRunRefusal } from '../../core/refusal';
 
 import type { Experience } from './experience';
 import type { TaskRoundReport } from './taskReports';

@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { checkPlan } from './plan';
 import { oneMoreTester, rehearsalText, rehearse } from './rehearse';
+import { readOwnership } from '../../copies/ownership';
 import { benchPlan, makeBench, teamFor } from '../../tests/runProject';
-import { readOwnership } from '../copies/ownership';
 
 import type { RehearsalOptions } from './rehearse';
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 let bench: Bench;
 

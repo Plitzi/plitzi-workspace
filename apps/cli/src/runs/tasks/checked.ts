@@ -4,15 +4,15 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { CLI_VERSION } from '../../scaffold/project';
-import { fingerprint, writeJson } from '../core/files';
-import { under } from '../core/paths';
-import { readApproved } from '../run';
 import { digestsOf } from './approve';
+import { fingerprint, writeJson } from '../../core/files';
+import { under } from '../../core/paths';
+import { CLI_VERSION } from '../../scaffold/project';
+import { readApproved } from '../run';
 
+import type { AcceptanceResult, RunTask } from '../../core/model';
+import type { TaskPaths } from '../../core/paths';
 import type { CheckResult } from '../copies/checks';
-import type { AcceptanceResult, RunTask } from '../core/model';
-import type { TaskPaths } from '../core/paths';
 import type { LoadedRun } from '../run';
 
 /**

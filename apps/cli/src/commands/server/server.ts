@@ -8,9 +8,9 @@ import { PROJECT_STATE, PROJECT_TMP, projectMark } from '@plitzi/sdk-shared/proj
 
 import { readHealth } from '../../browser';
 import { markOf } from '../../browser/health';
-import { listenerOn, listenersUnder, stopListener } from '../../runs/copies/processes';
-import { foldersUnsaid, listeningPorts } from '../../runs/copies/processTable';
-import { copyOf } from '../../runs/core/paths';
+import { listenerOn, listenersUnder, stopListener } from '../../copies/processes';
+import { foldersUnsaid, listeningPorts } from '../../copies/processTable';
+import { copyOf } from '../../core/paths';
 import { projectHere } from '../project/existingProject';
 import { fail } from '../shared/terminal';
 

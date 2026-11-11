@@ -7,7 +7,11 @@ import { parseEnv } from 'node:util';
 import { STATE_DIR_ENV } from '@plitzi/sdk-shared/project';
 import { RUN_REPORTS_ENV, RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
-import { answering, ownServer, serveCopy } from './acceptance';
+import { alive, isPreview, previewEndedFile, previewPort, previewRecord } from './previewRecord';
+import { handReports, reportsDir } from './reports';
+import { approvedCopy } from './runCopy';
+import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
+import { answering, ownServer, serveCopy } from '../../copies/acceptance';
 import {
   canLinger,
   keepServer,
@@ -16,24 +20,20 @@ import {
   previewServerLog,
   touchKept,
   unmarkPreviewed
-} from './lingering';
-import { alive, isPreview, previewEndedFile, previewPort, previewRecord } from './previewRecord';
-import { stopTree } from './processes';
-import { handReports, reportsDir } from './reports';
-import { approvedCopy } from './runCopy';
-import { failedWhy, scriptsOf, tail } from '../../commands/project/verify';
+} from '../../copies/lingering';
+import { stopTree } from '../../copies/processes';
+import { fingerprint, readJson, readOptional, writeAtomic, writeJson } from '../../core/files';
+import { previewDir, taskPaths, under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { placeVersion } from '../../core/store';
+import { viewTask } from '../../core/taskStore';
 import { SERVE_SCRIPTS } from '../../scaffold/paths';
-import { fingerprint, readJson, readOptional, writeAtomic, writeJson } from '../core/files';
-import { taskPaths, under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { placeVersion } from '../core/store';
-import { viewTask } from '../core/taskStore';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from '../run';
 import { digestsOf } from '../tasks/approve';
 import { materialiseMerged, mergedVersion } from '../tasks/mergedVersion';
 import { monitorRun } from '../view/monitor';
 
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 import type { Monitored } from '../view/monitor';
 import type { TaskLine } from '../view/view';
@@ -46,8 +46,6 @@ import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
  * are until the final merge. The `.env` is read from the project and handed to the server, never copied into the run.
  */
 
-/** Where a run's preview materialises its approved work: what `page check --url` finds a preview's space by. */
-export const previewDir = (paths: { cache: string }): string => path.join(paths.cache, 'preview');
 /** The run as the preview's page shows it in its dev tools (`RUN_STATUS_PATH`), written as it goes. */
 const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
 

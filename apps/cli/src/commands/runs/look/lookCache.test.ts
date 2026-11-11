@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { keepLook, keptLook, LOOKED_FOR_MS, lookKey, pagesLooked } from './lookParts';
-import { runPaths, taskPaths } from '../../../runs/core/paths';
+import { runPaths, taskPaths } from '../../../core/paths';
 import { lookedAmong } from '../../../runs/plan/pagesOf';
 import { openRun } from '../../../runs/run';
 import { completeTask, takeTask } from '../../../runs/tasks';

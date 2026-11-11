@@ -12,7 +12,30 @@ export default tsEslint.config({
     }
   },
   plugins: { import: importPlugin },
+  // `no-restricted-paths` judges an import by the file it resolves to: the CLI's relative imports name no extension.
+  settings: { 'import/resolver': { node: { extensions: ['.ts', '.tsx', '.js', '.mjs'] } } },
   rules: {
+    // The harness — `src/runs/`, what several agents on one project run on — is loaded by the run's commands alone
+    // (`commands/runs/`, through `register/commands.ts`), in a chunk of its own: a command of one agent never reads it.
+    // What both use lives outside it (`core/`, `copies/`). `import()` counts as an import.
+    'import/no-restricted-paths': [
+      'error',
+      {
+        basePath: import.meta.dirname,
+        zones: [
+          {
+            target: [
+              'src/!(*.test).ts',
+              'src/!(runs|tests|commands)/**/!(*.test).ts',
+              'src/commands/!(runs)/**/!(*.test).ts'
+            ],
+            from: 'src/runs',
+            message:
+              'The harness is loaded by the run commands alone (commands/runs). Move what this needs out of src/runs — to core/ or copies/ — or load it from commands/runs.'
+          }
+        ]
+      }
+    ],
     'import/order': [
       'error',
       {

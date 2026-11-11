@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { keptPlan } from './plan';
-import { runPaths } from '../../../runs/core/paths';
+import { runPaths } from '../../../core/paths';
 
 const roots: string[] = [];
 

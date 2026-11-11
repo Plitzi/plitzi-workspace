@@ -1,16 +1,17 @@
 import path from 'node:path';
 
 import { approvedText, notReviewedText } from './reviewText';
-import { DESIGNER, readTeam } from '../../../runs/agents/team';
-import { answering, freePort } from '../../../runs/copies/acceptance';
-import { readOwnership } from '../../../runs/copies/ownership';
+import { answering, freePort } from '../../../copies/acceptance';
+import { readOwnership } from '../../../copies/ownership';
+import { inTurns } from '../../../core/inTurns';
+import { runPaths, taskPaths } from '../../../core/paths';
+import { RunRefusal } from '../../../core/refusal';
+import { withLock } from '../../../core/store';
+import { findingsOf, lookClips, taskParts } from '../../../core/taskParts';
+import { viewTask } from '../../../core/taskStore';
+import { DESIGNER, readTeam } from '../../../core/team';
+import { errorLine } from '../../../core/usage';
 import { notServed, startBeforePreview, startTaskPreview } from '../../../runs/copies/preview';
-import { inTurns } from '../../../runs/core/inTurns';
-import { runPaths, taskPaths } from '../../../runs/core/paths';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { withLock } from '../../../runs/core/store';
-import { viewTask } from '../../../runs/core/taskStore';
-import { errorLine } from '../../../runs/core/usage';
 import {
   acceptanceAccount,
   acceptanceAddresses,
@@ -22,7 +23,6 @@ import {
   pagesOf,
   pagesToLook
 } from '../../../runs/plan/pagesOf';
-import { findingsOf, lookClips, taskParts } from '../../../runs/plan/taskParts';
 import { loadRun, logRun } from '../../../runs/run';
 import { findTask, notReviewedIn, reviewTask, stopAfterPiece } from '../../../runs/tasks';
 import { reviewSteps, reviewTeamOf } from '../../../runs/tasks/reviews';

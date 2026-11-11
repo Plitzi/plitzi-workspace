@@ -4,10 +4,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openRun } from '.';
+import { runPaths } from '../../core/paths';
 import { ranAs } from '../../tests/ranAs';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { LEAD_SAID, runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
 import { writeSummary } from '../report/report';
 import { settleFinding } from '../report/settle';
 

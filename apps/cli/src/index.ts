@@ -1,8 +1,8 @@
 import { commandPath } from './commandPath';
+import { startUsage } from './core/usage';
 import { unglued } from './glued';
 import { bestEffortTypeOfService } from './http';
 import { buildProgram } from './program';
-import { startUsage } from './runs/core/usage';
 
 bestEffortTypeOfService();
 const program = buildProgram();

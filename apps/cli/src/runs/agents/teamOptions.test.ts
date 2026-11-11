@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { readTeam, setTeamOptions, TEAM_FILE } from './team';
+import { readTeam, setTeamOptions, TEAM_FILE } from '../../core/team';
 import { makeBench } from '../../tests/runProject';
 
 import type { Bench } from '../../tests/runProject';

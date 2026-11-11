@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { writtenByAnother } from './compat';
-import { activeRunFile, runPaths, runsDir } from './paths';
-import { RunRefusal } from './refusal';
+import { writtenByAnother } from '../../core/compat';
+import { activeRunFile, runPaths, runsDir } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
 import { CLI_VERSION } from '../../scaffold/project';
 import { SRC_ROOT } from '../../tests/roots';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';

@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { RunRefusal } from '../../../runs/core/refusal';
+import { RunRefusal } from '../../../core/refusal';
 import { caughtBy, checkBefore, checkMutant, failureText, noTestBefore, provedBy } from '../../../runs/tasks';
 import { act, either } from '../shell';
 import { whileReviewing } from './takeOnRead';

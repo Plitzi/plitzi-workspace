@@ -1,8 +1,8 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { isInventoryItem } from './inventory';
-import { isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from '../core/guards';
-import { isAcceptance, isPriority, PRIORITIES, QUALITIES } from '../core/model';
+import { isNumber, isSiteAddress, isString, isStrings, oneOf, optional } from '../../core/guards';
+import { isInventoryItem } from '../../core/inventory';
+import { isAcceptance, isPriority, PRIORITIES, QUALITIES } from '../../core/model';
 
 const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
 

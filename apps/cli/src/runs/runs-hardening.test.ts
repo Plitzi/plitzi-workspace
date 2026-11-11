@@ -4,10 +4,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { setTeamAgent } from './agents/team';
+import { setTeamAgent } from '../core/team';
 import { finishRun } from './copies/merge';
-import { readOwnership } from './copies/ownership';
-import { runPaths } from './core/paths';
+import { readOwnership } from '../copies/ownership';
+import { runPaths } from '../core/paths';
 import { amendRun } from './plan/amend';
 import { checkPlan, PlanRefusal } from './plan/plan';
 import { writeSummary } from './report/report';

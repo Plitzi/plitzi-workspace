@@ -5,10 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { allowAgents, holdAgents } from './holdAgents';
 import { keepOnce } from './keeper';
-import { setTeamAgent } from './team';
+import { isRunRefusal } from '../../core/refusal';
+import { setTeamAgent } from '../../core/team';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { isRunRefusal } from '../core/refusal';
 import { openRun } from '../run';
 import { viewRun } from '../view/view';
 

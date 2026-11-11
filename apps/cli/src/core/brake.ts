@@ -1,6 +1,6 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { isNumber, isString, oneOf } from '../core/guards';
+import { isNumber, isString, oneOf } from './guards';
 
 /** How a completion ended, as the automatic brake counts it. */
 export const BRAKE_KINDS = ['completed', 'refused', 'checks-failed', 'conflict'] as const;

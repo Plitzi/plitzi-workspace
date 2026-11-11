@@ -1,6 +1,6 @@
-import { PRIORITIES } from '../core/model';
+import { PRIORITIES } from '../../core/model';
 
-import type { Priority, RunTask } from '../core/model';
+import type { Priority, RunTask } from '../../core/model';
 
 /** A priority as a number to sort by: the lower, the sooner. */
 export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;

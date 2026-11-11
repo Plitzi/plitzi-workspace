@@ -4,17 +4,17 @@ import { readyWhatWaited, sayIfAllDone, statesOf } from './handOn';
 import { grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 import { trimTestsOfDeleted } from './testsOfDeleted';
+import { isWithin } from '../../core/paths';
+import { withLock } from '../../core/store';
+import { lockedFiles, revokeOwner, updateState } from '../../core/taskStore';
 import { syncPreview } from '../copies/preview';
-import { isWithin } from '../core/paths';
-import { withLock } from '../core/store';
-import { lockedFiles, revokeOwner, updateState } from '../core/taskStore';
 import { logSpent } from '../report/spent';
 import { loadRun, logRun, readApproved } from '../run';
 import { proposalsOf } from '../talk/agreements';
 import { LEAD, sendMessage } from '../talk/messages';
 
 import type { ReviewedTask } from './review';
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /** What an approval brought into the run's work, as `closeApproved` says it. */

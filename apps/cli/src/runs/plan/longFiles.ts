@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { projectPath } from '../../core/paths';
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
-import { projectPath } from '../core/paths';
 
 /**
  * The files a task makes too long to read whole — past the space's lint's `file-too-long` (`MAX_LINES` lines that say

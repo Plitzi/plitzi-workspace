@@ -10,15 +10,15 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, SCHEMES } from '../../../browser';
+import { keptName, REFERENCE_WIDTHS, referencePages, unnamedSections } from '../../../core/reference';
+import { RunRefusal } from '../../../core/refusal';
 import { requireLead } from '../../../runs/agents/leads';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { keptName, REFERENCE_WIDTHS, referencePages, unnamedSections } from '../../../runs/plan/reference';
 import { loadRun, logRun } from '../../../runs/run';
 import { projectSpace } from '../../page/check/space';
 import { pictureAnswered } from '../../page/shot/remote';
 import { act, runOf } from '../shell';
 
-import type { KeptPage } from '../../../runs/plan/reference';
+import type { KeptPage } from '../../../core/reference';
 import type { RunCommandOptions } from '../shell';
 
 /** How long to wait between the pages of the site kept, and before each try again of one it turned away. */

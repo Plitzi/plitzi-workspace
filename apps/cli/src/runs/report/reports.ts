@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { FULL_REPORT_FILE } from '../../core/paths';
 import { RUN_REPORTS_DIR } from '../../scaffold/paths';
-import { FULL_REPORT_FILE } from '../core/paths';
 
 /**
  * A run's reports, kept in the project as it ends (`.plitzi/plitzi-reports/runs/<run>/`) and committed with it: what its

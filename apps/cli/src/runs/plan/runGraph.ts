@@ -5,8 +5,8 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { testsImporting } from './tests';
-import { readOwnership } from '../copies/ownership';
-import { projectFiles } from '../core/files';
+import { readOwnership } from '../../copies/ownership';
+import { projectFiles } from '../../core/files';
 
 /**
  * What imports what in the run's approved work, and which tests — what a stage's or an amendment's tasks reach of the

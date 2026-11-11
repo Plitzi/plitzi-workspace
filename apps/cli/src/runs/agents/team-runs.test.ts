@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leadItems } from './leadWatch';
-import { readTeam, setTeamAgent, TEAM_FILE } from './team';
+import { taskPaths } from '../../core/paths';
+import { readState } from '../../core/taskStore';
+import { readTeam, setTeamAgent, TEAM_FILE } from '../../core/team';
 import { benchPlan, designed, makeBench, writeInCopy } from '../../tests/runProject';
 import { teamSteps } from '../../tests/teamSteps';
-import { taskPaths } from '../core/paths';
-import { readState } from '../core/taskStore';
 import { testFilesFor } from '../plan/tests';
 import { buildReport } from '../report/report';
 import { checkPlanFile, loadRun, openRun, readRunLog } from '../run';

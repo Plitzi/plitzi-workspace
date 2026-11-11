@@ -7,18 +7,18 @@ import { whoseChanges } from './complete';
 import { fixChanged } from './fix';
 import { keepAlive, oneCheckAtATime } from './keepAlive';
 import { againstRunWork, stepsNotOwn, tellUnanswered } from './notOwn';
+import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../../copies/acceptance';
+import { readStart } from '../../core/taskStore';
+import { failureLines } from '../../core/usage';
 import { LINT_CACHE_FILE } from '../../scaffold/paths';
-import { checkAcceptance, letGo, sayLines, serveForAcceptance } from '../copies/acceptance';
 import { backupFiles, backupText, tellLeftInTmp } from '../copies/strays';
-import { readStart } from '../core/taskStore';
-import { failureLines } from '../core/usage';
 import { crossed, longFilesIn, longFileText } from '../plan/longFiles';
 import { assertStatus, loadRun, logRun, readRunLog } from '../run';
 import { handOver } from '../talk/handOver';
 
 import type { Brought } from './common';
+import type { AcceptanceResult } from '../../core/model';
 import type { CheckResult } from '../copies/checks';
-import type { AcceptanceResult } from '../core/model';
 import type { RunContext } from '../run';
 import type { Message } from '../talk/messages';
 

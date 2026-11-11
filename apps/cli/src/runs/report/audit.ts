@@ -1,4 +1,4 @@
-import { viewTask } from '../core/taskStore';
+import { viewTask } from '../../core/taskStore';
 import { clock, evidenceOf, text } from '../findings/types';
 import { readRunLog } from '../run';
 

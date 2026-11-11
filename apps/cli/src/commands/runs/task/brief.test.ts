@@ -3,7 +3,7 @@ import { stripVTControlCharacters } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { briefOf, primerMark, readInSession } from './brief';
-import { setTeamAgent } from '../../../runs/agents/team';
+import { setTeamAgent } from '../../../core/team';
 import { openRun } from '../../../runs/run';
 import { completeTask, noteTask, reviewTask, taskContext } from '../../../runs/tasks';
 import { benchPlan, makeBench, writeInCopy } from '../../../tests/runProject';

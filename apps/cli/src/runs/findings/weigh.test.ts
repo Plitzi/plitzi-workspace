@@ -4,7 +4,7 @@ import { commandNamed, weighedText, weightOf, withReach } from './weigh';
 import { ranAs } from '../../tests/ranAs';
 
 import type { Finding } from './types';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 
 const use = (by: string, command: string, code = 0): UsageLine => ({
   at: '2026-10-28T10:00:00.000Z',

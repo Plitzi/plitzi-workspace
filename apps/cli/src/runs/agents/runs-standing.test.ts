@@ -4,19 +4,19 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { leadItems, waitForLead } from './leadWatch';
+import { runPaths } from '../../core/paths';
 import { ranAs } from '../../tests/ranAs';
 import { SCOUT, team, TESTERS } from '../../tests/reviewerSteps';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
 import { openRun, loadRun } from '../run';
 import { messagesOf } from '../talk/messages';
 import { askLead, messageTasks, tellLead, tellLeadAbout, unheardOf } from '../talk/talk';
 import { reportProgress, takeNext } from '../tasks';
 import { viewRun } from '../view/view';
 
+import type { RunPlan } from '../../core/model';
 import type { Bench } from '../../tests/runProject';
-import type { RunPlan } from '../core/model';
 
 /**
  * A task that takes long wakes the lead, which asks where it stands; its agent answers whole — how far, how long still,

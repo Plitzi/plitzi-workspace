@@ -1,8 +1,8 @@
-import { roleOf } from './spike';
 import { chainMinutes } from './urgency';
+import { roleOf } from '../../core/spike';
 import { readHistory } from '../report/history';
 
-import type { RunTask } from '../core/model';
+import type { RunTask } from '../../core/model';
 import type { History } from '../report/history';
 
 /** How long a plan takes, and with how many agents at once: what `run open --dry-run` says, and a person confirms. */

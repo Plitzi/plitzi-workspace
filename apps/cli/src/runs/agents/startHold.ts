@@ -1,9 +1,9 @@
 import { readLaunch } from './launch';
 import { lastLineOf, sessionOf } from './sessionEnd';
 
-import type { Harness } from './agentPrompt';
 import type { Launch } from './launch';
-import type { RunPaths } from '../core/paths';
+import type { Harness } from '../../core/harnesses';
+import type { RunPaths } from '../../core/paths';
 
 /**
  * An agent whose harness ends as it starts is not started again in a loop: a run's keeper started its eight agents 4379

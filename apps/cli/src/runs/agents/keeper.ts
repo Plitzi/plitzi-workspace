@@ -6,12 +6,12 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { askStandings } from './askStandings';
 import { harnessOf, launchAgent } from './launchAgent';
-import { readJson, writeJson } from '../core/files';
-import { runPaths } from '../core/paths';
-import { isRunRefusal } from '../core/refusal';
-import { runChanged } from '../core/runChanged';
+import { readJson, writeJson } from '../../core/files';
+import { runPaths } from '../../core/paths';
+import { isRunRefusal } from '../../core/refusal';
+import { runChanged } from '../../core/runChanged';
+import { readTeam } from '../../core/team';
 import { loadRun } from '../run';
-import { readTeam } from './team';
 import { viewRun } from '../view/view';
 
 import type { RunContext } from '../run';

@@ -1,7 +1,7 @@
 import { isWorked } from './worked';
-import { isResearch } from '../plan/spike';
+import { isResearch } from '../../core/spike';
 
-import type { TaskView } from '../core/taskStore';
+import type { TaskView } from '../../core/taskStore';
 
 /**
  * What an agent has in hand — a card at work (research too), a step of a review — read one way for every kind: the

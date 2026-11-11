@@ -1,11 +1,11 @@
 import { isRunning, processTable, readLaunch, startedWithin } from './launch';
 import { runningAgents } from './onDemand';
-import { startedAgents } from './team';
-import { DEFAULTS } from '../core/taskStore';
+import { DEFAULTS } from '../../core/taskStore';
+import { startedAgents } from '../../core/team';
 
-import type { Team } from './team';
-import type { RunPaths } from '../core/paths';
-import type { TaskView } from '../core/taskStore';
+import type { RunPaths } from '../../core/paths';
+import type { TaskView } from '../../core/taskStore';
+import type { Team } from '../../core/team';
 
 /** Which agents of a run are running now — what the lead's view and a gentle stop (`run upgrade`) both read. */
 export interface AgentsNow {

@@ -10,14 +10,14 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { keepNamedFiles } from './keptFiles';
 import { stopKept } from './lingering';
 import { guardServer, listenersUnder, stopListener, stopTree, TREE } from './processes';
-import { healthOn, servesFolder, stoppedAnswering } from '../../browser/health';
-import { runScript, scriptsOf, tail } from '../../commands/project/verify';
-import { UNANSWERED_EXIT } from '../../commands/shared/terminal';
-import { projectRun } from '../../scaffold/packageManager';
-import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../../scaffold/paths';
-import { SERVE_SCRIPTS } from '../../scaffold/paths';
+import { healthOn, servesFolder, stoppedAnswering } from '../browser/health';
+import { runScript, scriptsOf, tail } from '../commands/project/verify';
+import { UNANSWERED_EXIT } from '../commands/shared/terminal';
 import { inTurns } from '../core/inTurns';
 import { withLock } from '../core/store';
+import { projectRun } from '../scaffold/packageManager';
+import { DEV_SERVER_FILE, PROJECT_TMP, SERVER_RECORD_ENV } from '../scaffold/paths';
+import { SERVE_SCRIPTS } from '../scaffold/paths';
 
 import type { Acceptance, AcceptanceResult } from '../core/model';
 

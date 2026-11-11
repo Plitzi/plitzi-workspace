@@ -1,10 +1,10 @@
-import { namesServedCopy } from './acceptance';
 import { scriptsOf } from '../../commands/project/verify';
+import { namesServedCopy } from '../../copies/acceptance';
+import { acceptanceText } from '../../core/model';
+import { shellCommands } from '../../core/shell';
 import { SERVE_SCRIPTS } from '../../scaffold/paths';
-import { acceptanceText } from '../core/model';
-import { shellCommands } from '../core/shell';
 
-import type { RunPlan } from '../core/model';
+import type { RunPlan } from '../../core/model';
 
 /** What would make a task's acceptance unworkable, said by `run open --dry-run` and `run amend` before any agent meets it. */
 

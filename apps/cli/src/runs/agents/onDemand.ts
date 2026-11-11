@@ -1,15 +1,15 @@
 import { holdsOf } from './held';
 import { commandAs } from './identity';
-import { TESTER } from './team';
 import { isWorked } from './worked';
-import { roleOf } from '../plan/spike';
+import { roleOf } from '../../core/spike';
+import { TESTER } from '../../core/team';
 import { testWriters, writesTests } from '../plan/tests';
 import { LEAD } from '../talk/messages';
 import { reviewSteps, reviewTeamOfAgents, stepQueued, stepReviewers, stepRole } from '../tasks/reviews';
 
-import type { StartedAgent } from './team';
-import type { RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
+import type { StartedAgent } from '../../core/team';
 import type { Attention } from '../view/view';
 
 /**

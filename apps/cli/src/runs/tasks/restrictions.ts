@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { exists } from '../core/files';
+import { exists } from '../../core/files';
 
 /**
  * What the project's lint forbids in a task's files, with the words its config gives — read from the config ESLint

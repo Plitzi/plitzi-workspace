@@ -1,5 +1,5 @@
+import { runCommands } from './commands';
 import { JSON_OPTION, RUN_OPTION, TOKEN_OPTION } from './options';
-import { runAllow, runHold } from '../run/holds';
 
 import type { RunCommandOptions } from '../shell';
 import type { Command } from 'commander';
@@ -15,7 +15,7 @@ export const registerHolds = (runGroup: Command): void => {
     .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((agents: string[], options: RunCommandOptions) => runHold(agents, options));
+    .action(async (agents: string[], options: RunCommandOptions) => (await runCommands()).runHold(agents, options));
 
   runGroup
     .command('allow')
@@ -26,5 +26,5 @@ export const registerHolds = (runGroup: Command): void => {
     .option(...RUN_OPTION)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((agents: string[], options: RunCommandOptions) => runAllow(agents, options));
+    .action(async (agents: string[], options: RunCommandOptions) => (await runCommands()).runAllow(agents, options));
 };

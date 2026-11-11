@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { benchOf, readBench } from './bench';
 import { writeFeedback } from './feedback';
-import { writeAtomic } from '../core/files';
+import { writeAtomic } from '../../core/files';
 import { keepScratch } from '../findings';
 import { rememberPace } from './history';
 import { buildReport, readSummary, reportText } from './report';

@@ -3,9 +3,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amendRun } from './amend';
-import { expectedIds, madeTwice, partIdsOf } from './expectations';
 import { extendRun, stackedGoal } from './extend';
 import { meantOnPage } from '../../commands/page/check';
+import { expectedIds, madeTwice, partIdsOf } from '../../core/expectations';
 import { benchPlan, makeBench } from '../../tests/runProject';
 import { loadRun, openRun } from '../run';
 
@@ -133,7 +133,7 @@ describe('a check as any shell runs it', () => {
   });
 
   it('has the copy served written in, and knows a Playwright spec needs it served', async () => {
-    const { namesServedCopy, servesCopy, withServedValues } = await import('../copies/acceptance');
+    const { namesServedCopy, servesCopy, withServedValues } = await import('../../copies/acceptance');
     const values = { PLITZI_URL: 'http://127.0.0.1:8211', PLITZI_PORT: '8211' };
 
     expect(withServedValues('plitzi page check / --url $PLITZI_URL && echo ${PLITZI_PORT} $HOME', values)).toBe(

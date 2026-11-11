@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { openPage } from '@plitzi/sdk-authoring';
 
 import { projectSettling } from '../../../browser';
-import { runProjectOf } from '../../../runs/core/paths';
+import { runProjectOf } from '../../../core/paths';
 import { projectSettings } from '../../project/projectSettings';
 import { shellWord } from '../../shared/terminal';
 

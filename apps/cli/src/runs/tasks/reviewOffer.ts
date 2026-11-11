@@ -1,15 +1,15 @@
 import { askedOf } from './nextRules';
 import { changesBlock } from './review';
 import { reviewSteps, stepTimeOf, takeStep } from './reviews';
-import { DEFAULT_DESIGN_REVIEW, DESIGNER, readTeam } from '../agents/team';
+import { DEFAULT_DESIGN_REVIEW, DESIGNER, readTeam } from '../../core/team';
 import { changesNoPage, reviewPages } from '../plan/pagesOf';
 import { logRun, readRunLog } from '../run';
 import { agentAddress, LEAD, messagesOf, sendMessage } from '../talk/messages';
 
 import type { MergedNow } from './mergedNow';
 import type { ReviewTeam } from './reviews';
-import type { AcceptanceResult, Quality, RunTask } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { AcceptanceResult, Quality, RunTask } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

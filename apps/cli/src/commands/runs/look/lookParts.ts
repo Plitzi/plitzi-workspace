@@ -7,10 +7,10 @@ import chalk from 'chalk';
 import { audienceAt } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { writeJson } from '../../../runs/core/files';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { viewTask } from '../../../runs/core/taskStore';
-import { authoredSpace } from '../../../runs/plan/expectations';
+import { authoredSpace } from '../../../core/expectations';
+import { writeJson } from '../../../core/files';
+import { RunRefusal } from '../../../core/refusal';
+import { viewTask } from '../../../core/taskStore';
 import { examplePaths } from '../../../runs/plan/pagesOf';
 import { loadRun } from '../../../runs/run';
 import { findTask } from '../../../runs/tasks';

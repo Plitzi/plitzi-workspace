@@ -6,16 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { leadItems } from './leadWatch';
 import { reusedServerText, slowLineText } from '../../commands/runs/text';
+import { runsSuite, SLOW_LINE_MS } from '../../copies/acceptance';
 import { benchPlan, makeBench, writeInCopy } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runsSuite, SLOW_LINE_MS } from '../copies/acceptance';
 import { checkPlanFile, openRun } from '../run';
 import { completeTask, reviewTask } from '../tasks';
 import { keepAlive, KEEP_ALIVE_MS } from '../tasks/keepAlive';
 import { viewRun } from '../view/view';
 
+import type { TaskView } from '../../core/taskStore';
 import type { Bench } from '../../tests/runProject';
-import type { TaskView } from '../core/taskStore';
 
 /**
  * The time a run's work takes, held to the maintainer's rule: a piece past 10 minutes is likely wrong, a check takes minutes at

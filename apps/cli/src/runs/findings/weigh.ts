@@ -1,5 +1,5 @@
 import type { Finding } from './types';
-import type { UsageLine } from '../core/usage';
+import type { UsageLine } from '../../core/usage';
 
 /**
  * How much a finding weighs, in figures read off the run: how often it was met, in how many runs, and how much of the

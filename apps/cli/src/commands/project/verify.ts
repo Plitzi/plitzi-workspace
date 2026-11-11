@@ -8,8 +8,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectHere } from './existingProject';
 import { playSpaceTests, spaceTestsText } from './spaceTests';
-import { serveCopy } from '../../runs/copies/acceptance';
-import { USAGE_OFF } from '../../runs/core/usage';
+import { serveCopy } from '../../copies/acceptance';
+import { USAGE_OFF } from '../../core/usage';
 import { projectRun } from '../../scaffold/packageManager';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from '../page/check';

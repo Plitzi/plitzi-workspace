@@ -16,9 +16,7 @@ const named = (command: Command, name: string): Command | undefined =>
 
 /** `plitzi <command> [<subcommand>]` as written in inline code and in code blocks: the words, not their arguments. */
 const commandsIn = (markdown: string): string[][] =>
-  [...markdown.matchAll(/(?:^|[`\s$])plitzi ((?:[a-z][a-z-]*)(?: [a-z][a-z-]*)?)/gm)].map(match =>
-    match[1].split(' ')
-  );
+  [...markdown.matchAll(/(?:^|[`\s$])plitzi ((?:[a-z][a-z-]*)(?: [a-z][a-z-]*)?)/gm)].map(match => match[1].split(' '));
 
 describe('the commands the skills write', () => {
   const program = buildProgram();

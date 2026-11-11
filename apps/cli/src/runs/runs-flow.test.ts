@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { identify } from './agents/identity';
 import { finishRun } from './copies/merge';
-import { getBlob } from './core/store';
+import { getBlob } from '../core/store';
 import { openBacklog } from './plan/backlog';
 import { readBench } from './report/bench';
 import { writeSummary } from './report/report';

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { either, heldNow, inHand, ownTask } from './shell';
-import { setTeamAgent } from '../../runs/agents/team';
+import { setTeamAgent } from '../../core/team';
 import { openRun } from '../../runs/run';
 import { completeTask, takeNext } from '../../runs/tasks';
 import { benchPlan, designed, makeBench, writeInCopy } from '../../tests/runProject';

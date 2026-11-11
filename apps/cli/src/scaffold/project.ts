@@ -29,7 +29,7 @@ import {
   DEV_SCRIPT,
   START_SCRIPT
 } from './paths';
-import { STARTER_TEAM, TEAM_FILE } from '../runs/agents/team';
+import { STARTER_TEAM, TEAM_FILE } from '../core/team';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 

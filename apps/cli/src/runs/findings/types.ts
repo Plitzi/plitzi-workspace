@@ -1,7 +1,7 @@
 import type { PlitziHow } from './plitziClass';
 import type { FindingReach } from './weigh';
-import type { RunTask } from '../core/model';
-import type { UsageLine } from '../core/usage';
+import type { RunTask } from '../../core/model';
+import type { UsageLine } from '../../core/usage';
 import type { TaskRoundReport } from '../report/taskReports';
 
 /**

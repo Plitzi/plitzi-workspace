@@ -3,8 +3,8 @@ import { mergedVersion } from './mergedVersion';
 import { failsWithout, ownFailingLines } from '../copies/checks';
 import { checkVersions } from '../copies/materialise';
 
+import type { TaskView } from '../../core/taskStore';
 import type { CheckStep } from '../copies/checks';
-import type { TaskView } from '../core/taskStore';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

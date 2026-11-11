@@ -8,7 +8,7 @@ import { actingSteps, playedOn } from './shot/steps';
 import { openVisit, visitorBrowser, visitViewOf } from './visit';
 import { VIEW_HEIGHT } from '../../browser';
 import { keptOutline } from '../../browser/keptBrowser';
-import { originHere } from '../../runs/copies/copyServer';
+import { originHere } from '../../copies/copyServer';
 import { projectHere } from '../project/existingProject';
 import { fail, unanswered } from '../shared/terminal';
 

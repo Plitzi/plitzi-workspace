@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 
-import { acceptanceText } from '../../../runs/core/model';
-import { RunRefusal } from '../../../runs/core/refusal';
-import { roleOf } from '../../../runs/plan/spike';
+import { acceptanceText } from '../../../core/model';
+import { RunRefusal } from '../../../core/refusal';
+import { roleOf } from '../../../core/spike';
 import { FILE_FROM_TEXT, FROM_TEXT, showMergedFile, showTask, showTaskFile } from '../../../runs/view/show';
 import { takeOnRead } from '../review/takeOnRead';
 import { act, ownTask, runOf } from '../shell';

@@ -13,10 +13,10 @@ import { initialUi, keptBack, LIVE_VERB } from './monitorModel';
 import { PREVIEW_LINES, previewControl } from './monitorPreview';
 import { monitorScreen, paletteFor, waitingScreen } from './monitorScreen';
 import { THEMES, themeOfBackground } from './monitorTheme';
+import { runPaths } from '../../../core/paths';
+import { isRunRefusal, RunRefusal } from '../../../core/refusal';
+import { setTeamAgent, TEAM_FILE } from '../../../core/team';
 import { readLaunch } from '../../../runs/agents/launch';
-import { setTeamAgent, TEAM_FILE } from '../../../runs/agents/team';
-import { runPaths } from '../../../runs/core/paths';
-import { isRunRefusal, RunRefusal } from '../../../runs/core/refusal';
 import { recentMoments } from '../../../runs/harness/moments';
 import { activeRuns, runIds } from '../../../runs/run';
 import { monitorRun } from '../../../runs/view/monitor';
@@ -106,10 +106,9 @@ const copyText = (text: string): void => {
   process.stdout.write(`\x1b]52;c;${Buffer.from(text).toString('base64')}\x07`);
 };
 
-export const runMonitor = async (
-  runId: string | undefined,
-  options: RunCommandOptions & { interval?: number; theme?: string; advanced?: boolean }
-): Promise<void> => {
+export type MonitorOptions = RunCommandOptions & { interval?: number; theme?: string; advanced?: boolean };
+
+export const runMonitor = async (runId: string | undefined, options: MonitorOptions): Promise<void> => {
   if (!process.stdout.isTTY || !process.stdin.isTTY) {
     const refused = new RunRefusal(
       'invalid',

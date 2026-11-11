@@ -5,13 +5,13 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { isHarness } from './agentPrompt';
 import { lastSessionLine } from './sessionEnd';
-import { agentScratch } from '../core/paths';
-import { DEFAULTS } from '../core/taskStore';
+import { isHarness } from '../../core/harnesses';
+import { agentScratch } from '../../core/paths';
+import { DEFAULTS } from '../../core/taskStore';
 
-import type { Harness } from './agentPrompt';
-import type { RunPaths } from '../core/paths';
+import type { Harness } from '../../core/harnesses';
+import type { RunPaths } from '../../core/paths';
 
 /**
  * What `run agent --launch` keeps of an agent it started, beside its prompt (`scratch/<agent>/agent.json`): its process,

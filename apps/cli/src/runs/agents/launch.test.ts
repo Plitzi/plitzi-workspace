@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { tokenFile } from './identity';
 import { claudeSessionFile, isRunning, resumable, reworkSession, startedWithin } from './launch';
 import { agentEnv } from './launchAgent';
-import { runPaths } from '../core/paths';
-import { DEFAULTS } from '../core/taskStore';
+import { runPaths } from '../../core/paths';
+import { DEFAULTS } from '../../core/taskStore';
 
 import type { Launch } from './launch';
 

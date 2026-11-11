@@ -2,7 +2,7 @@ import { listedTasks } from './monitorBoard';
 import { inEmergency } from './monitorEmergency';
 import { VIEWS } from './monitorModel';
 import { SPEND_SORTS } from './monitorSpend';
-import { noneOfText } from '../../../runs/agents/team';
+import { noneOfText } from '../../../core/team';
 
 import type { Need } from './monitorAttention';
 import type { PaletteAction, PaletteItem } from './monitorDialogs';

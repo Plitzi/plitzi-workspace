@@ -2,15 +2,15 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { isResearch } from './spike';
+import { readJson, writeAtomic } from '../../core/files';
+import { acceptanceText } from '../../core/model';
+import { RunRefusal } from '../../core/refusal';
+import { isResearch } from '../../core/spike';
+import { viewTask } from '../../core/taskStore';
 import { formattedJson } from '../../scaffold/formattedJson';
-import { readJson, writeAtomic } from '../core/files';
-import { acceptanceText } from '../core/model';
-import { RunRefusal } from '../core/refusal';
-import { viewTask } from '../core/taskStore';
 import { noticesOf } from '../talk/notices';
 
-import type { RunTask } from '../core/model';
+import type { RunTask } from '../../core/model';
 import type { LoadedRun, RunContext } from '../run';
 
 /**

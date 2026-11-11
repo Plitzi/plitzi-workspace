@@ -1,11 +1,11 @@
 import path from 'node:path';
 
-import { readJson, writeJson } from '../core/files';
-import { isTaskProgress } from '../core/model';
-import { withLock } from '../core/store';
+import { readJson, writeJson } from '../../core/files';
+import { isTaskProgress } from '../../core/model';
+import { withLock } from '../../core/store';
 
-import type { TaskProgress } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { TaskProgress } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 
 /** How often a long check gives its task's sign of life: well inside what reads "no signal". */
 export const KEEP_ALIVE_MS = 60_000;

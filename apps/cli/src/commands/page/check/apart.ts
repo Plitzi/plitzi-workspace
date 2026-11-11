@@ -2,13 +2,13 @@ import fs from 'node:fs/promises';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { copyOf, runPaths, taskPaths } from '../../../runs/core/paths';
-import { readTasks } from '../../../runs/core/taskStore';
-import { labelsWrappedInReference, wrapsAsReference } from '../../../runs/plan/reference';
-import { taskParts } from '../../../runs/plan/taskParts';
+import { copyOf, runPaths, taskPaths } from '../../../core/paths';
+import { labelsWrappedInReference, wrapsAsReference } from '../../../core/reference';
+import { taskParts } from '../../../core/taskParts';
+import { readTasks } from '../../../core/taskStore';
 
 import type { CheckIssue, CheckReport } from './types';
-import type { TaskParts } from '../../../runs/plan/taskParts';
+import type { TaskParts } from '../../../core/taskParts';
 
 /**
  * A page checked inside a task's copy is held to that task's part of it: a finding on an element another task writes —

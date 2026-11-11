@@ -1,4 +1,4 @@
-import { RunRefusal } from '../../../runs/core/refusal';
+import { RunRefusal } from '../../../core/refusal';
 import { escalateReview, stopAfterPiece } from '../../../runs/tasks';
 import { act, runOf } from '../shell';
 import { pieceEnd } from '../text';

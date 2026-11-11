@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { unmeasuredNotices } from './measuredValues';
 
-import type { PlannedTask } from '../core/model';
+import type { PlannedTask } from '../../core/model';
 
 const task = (id: string, acceptance: PlannedTask['acceptance']): PlannedTask => ({
   id,

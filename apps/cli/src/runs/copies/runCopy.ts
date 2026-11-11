@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { cloneFiles, isCopied, projectFiles } from '../core/files';
-import { agentScratch, RUN_COPY_MARK, under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { placeVersion } from '../core/store';
+import { cloneFiles, isCopied, projectFiles } from '../../core/files';
+import { agentScratch, RUN_COPY_MARK, under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { placeVersion } from '../../core/store';
 import { loadRun, readApproved } from '../run';
 
 import type { LoadedRun, RunContext } from '../run';

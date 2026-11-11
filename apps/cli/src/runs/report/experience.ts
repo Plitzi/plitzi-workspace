@@ -1,4 +1,4 @@
-import { RunRefusal } from '../core/refusal';
+import { RunRefusal } from '../../core/refusal';
 import { isPlitziHow } from '../findings/plitziClass';
 import { groupAlike } from '../findings/words';
 

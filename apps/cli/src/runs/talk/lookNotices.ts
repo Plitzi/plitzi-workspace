@@ -1,4 +1,4 @@
-import type { PlannedTask } from '../core/model';
+import type { PlannedTask } from '../../core/model';
 
 /**
  * One section's dress proved by two tasks: what one task's look needs is drawn in the other's files, and one waits for

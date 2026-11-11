@@ -4,18 +4,18 @@ import path from 'node:path';
 import { findTask } from './common';
 import { neverRan, portBusy } from './neverRan';
 import { writtenSince } from './pairApproval';
-import { checkAcceptance, ranNoTest, sayLines } from '../copies/acceptance';
+import { checkAcceptance, ranNoTest, sayLines } from '../../copies/acceptance';
+import { exists } from '../../core/files';
+import { acceptanceText } from '../../core/model';
+import { under } from '../../core/paths';
+import { RunRefusal } from '../../core/refusal';
+import { readStart, viewTask } from '../../core/taskStore';
 import { SERVED_STATUSES } from '../copies/preview';
 import { approvedCopy } from '../copies/runCopy';
-import { exists } from '../core/files';
-import { acceptanceText } from '../core/model';
-import { under } from '../core/paths';
-import { RunRefusal } from '../core/refusal';
-import { readStart, viewTask } from '../core/taskStore';
 import { loadRun } from '../run';
 
-import type { Acceptance, AcceptanceResult } from '../core/model';
-import type { TaskView } from '../core/taskStore';
+import type { Acceptance, AcceptanceResult } from '../../core/model';
+import type { TaskView } from '../../core/taskStore';
 import type { RunContext } from '../run';
 
 /**

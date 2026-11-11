@@ -6,8 +6,8 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
-import { copyOf } from '../runs/core/paths';
-import { USAGE_OFF } from '../runs/core/usage';
+import { copyOf } from '../core/paths';
+import { USAGE_OFF } from '../core/usage';
 
 import type { Scheme } from './index';
 import type { StateAsked } from '../commands/page/measureState';

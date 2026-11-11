@@ -18,8 +18,8 @@ import { visitorsOn } from './shot/visitors';
 import { noPageNote, openVisit, visitorBrowser, visitViewOf, zoneNote } from './visit';
 import { VIEW_HEIGHT } from '../../browser';
 import { keptMeasure } from '../../browser/keptBrowser';
-import { originHere } from '../../runs/copies/copyServer';
-import { authoredHandles } from '../../runs/plan/expectations';
+import { originHere } from '../../copies/copyServer';
+import { authoredHandles } from '../../core/expectations';
 import { projectHere } from '../project/existingProject';
 import { fail, unanswered, UNANSWERED_EXIT } from '../shared/terminal';
 

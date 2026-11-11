@@ -2,11 +2,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { runsSuite, SUITE_LOCK, suiteScripts } from './acceptance';
 import { runScript, tail } from '../../commands/project/verify';
+import { runsSuite, SUITE_LOCK, suiteScripts } from '../../copies/acceptance';
+import { withLock } from '../../core/store';
+import { viewTask } from '../../core/taskStore';
 import { isWorked } from '../agents/worked';
-import { withLock } from '../core/store';
-import { viewTask } from '../core/taskStore';
 import { loadRun } from '../run';
 import { readInbox } from '../talk/talk';
 import { keepAlive } from '../tasks/keepAlive';

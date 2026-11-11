@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { auditRun } from './audit';
+import { runPaths } from '../../core/paths';
 import { makeBench } from '../../tests/runProject';
 import { runSteps } from '../../tests/runSteps';
-import { runPaths } from '../core/paths';
 import { loadRun } from '../run';
 
 import type { Bench } from '../../tests/runProject';

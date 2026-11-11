@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { shot } from './command';
 import { eachOut } from './output';
-import { originHere } from '../../../runs/copies/copyServer';
-import { copyOf } from '../../../runs/core/paths';
+import { originHere } from '../../../copies/copyServer';
+import { copyOf } from '../../../core/paths';
 import { projectHere } from '../../project/existingProject';
 import { fail, UNANSWERED_EXIT } from '../../shared/terminal';
 

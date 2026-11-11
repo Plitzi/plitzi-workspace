@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { estimate, withPace } from './estimate';
 
-import type { RunTask } from '../core/model';
+import type { RunTask } from '../../core/model';
 
 /** A task of this many minutes, waiting on none: what an estimate reads of one. */
 const task = (id: string, estimateMinutes: number): RunTask => ({

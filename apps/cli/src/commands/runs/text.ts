@@ -2,8 +2,8 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { SLOW_LINE_MS } from '../../copies/acceptance';
 import { MAX_LINES } from '../../lint/rules/fileTooLong';
-import { SLOW_LINE_MS } from '../../runs/copies/acceptance';
 import { failedWhy } from '../project/verify';
 
 import type { CheckStep } from '../../runs/copies/checks';
