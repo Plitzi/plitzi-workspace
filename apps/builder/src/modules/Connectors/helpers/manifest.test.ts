@@ -57,7 +57,10 @@ describe('a section said on its collapsed header', () => {
 
   it('counts the endpoints, the paging by its name, the operators and the media address', () => {
     const full = manifest({
-      endpoints: { read: { list: { path: '/a' }, one: { path: '/b' } }, write: { create: { path: '/c', method: 'POST' } } },
+      endpoints: {
+        read: { list: { path: '/a' }, one: { path: '/b' } },
+        write: { create: { path: '/c', method: 'POST' } }
+      },
       pagination: 'page',
       operators: { eq: '{{field}}={{value}}', gt: '', lt: '', in: '' },
       media: { baseUrl: 'https://media.example.com' }
