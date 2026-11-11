@@ -81,6 +81,8 @@ export type SSRTemplateProps = {
   title?: string;
   /** Meta description for the document, and the share-preview text derived from it. */
   description?: string;
+  /** The page's JSON-LD, each object as the text of its `<script type="application/ld+json">`, escaped for the tag. */
+  structuredData?: string[];
   /**
    * The head's tags besides the title and the JSON-LD — description, robots, Open Graph and card, the canonical
    * address, the icon, the browser's colour, the language — as `pageHeadTags` decides them. The server's own.

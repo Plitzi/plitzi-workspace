@@ -40,6 +40,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- A page's head reads `navigation.origin` on the server too: its JSON-LD, title, description and picture are templates
+  over the page's context, which had the route and query but not the origin — a JSON-LD `url` of
+  `{{ navigation.origin }}/` arrived as `/`, which no search engine takes as an address. It is the request's origin,
+  as the browser's `navigation.origin` says it. `SSRTemplateProps` declares the `structuredData` the template writes.
 - A page's writes to the deployment's own APIs echo the CSRF token they ask for. Given `rsc.visitorCredentials.csrfPath`
   (where each API hands one out, `'/auth/csrf'`), the pages of the spaces trusted with their visitors' sessions are
   told those APIs and the cookie each keeps the token in (`<meta name="plitzi-csrf">`), and every write they send there

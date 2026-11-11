@@ -134,7 +134,15 @@ export const hasServerElements = (
 ): boolean => collectServerElements(schema, pageId, undefined, flags).length > 0;
 
 /** Where the visitor is: what a template on the server reads beside the page's data, as `navigation`. */
-export type ServerNavigation = { routeParams: Record<string, unknown>; queryParams: Record<string, unknown> };
+export type ServerNavigation = {
+  routeParams: Record<string, unknown>;
+  queryParams: Record<string, unknown>;
+  /**
+   * The page's own origin, as the browser's `navigation.origin` says it: an absolute address a page's JSON-LD or picture
+   * writes as `{{ navigation.origin }}/…`. Absent when the request names no host it can be built from.
+   */
+  origin?: string;
+};
 
 /**
  * The server provider of a page whose answer says the address shows nothing — its `notFound`, a template against

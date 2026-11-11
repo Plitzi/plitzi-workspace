@@ -225,7 +225,12 @@ export const prepareRender = async (
         ? { serverData: {} }
         : undefined;
 
-  const navigation = { routeParams: pageMatch?.routeParams ?? {}, queryParams: req.query };
+  const origin = requestOrigin(req);
+  const navigation = {
+    routeParams: pageMatch?.routeParams ?? {},
+    queryParams: req.query,
+    ...(origin === '' ? {} : { origin })
+  };
   // What the page's own templates read: its server providers have answered by now.
   const pageContext = pageServerContext(serverElements, rscData?.serverData ?? {}, navigation);
   // A title written as a template says the record the page shows.
@@ -482,7 +487,6 @@ export const prepareRender = async (
   // What a link preview reads of the page — its words as the deployment and the page say them, its picture, its own
   // address — and the space's icon and language: written into the head, which a preview reads without running the page.
   const deploymentProps = req.ctx.spaceDeployment?.templateProps;
-  const origin = requestOrigin(req);
   const head = pageHeadTags(
     {
       title: pageSeo.title ?? deploymentProps?.title ?? DEFAULT_TITLE,

@@ -41,7 +41,10 @@ const offlineData = (
         home: page('home', '', ['homeText'], {
           seoEnabled: true,
           seoPageTitle: 'Home — test space',
-          seoPageDescription: 'What the home page says about itself.'
+          seoPageDescription: 'What the home page says about itself.',
+          seoStructuredData: [
+            { '@context': 'https://schema.org', '@type': 'Organization', url: '{{ navigation.origin }}/' }
+          ]
         }),
         homeText: element('homeText', [], homeRuntime),
         blog: page('blog', 'blog/{{slug}}', ['blogApi']),
@@ -75,7 +78,7 @@ const request = (path: string, query: Record<string, string> = {}, cookie?: stri
     url: path,
     protocol: 'https',
     hostname: 'x.test',
-    headers: cookie ? { cookie } : {},
+    headers: { host: 'x.test', ...(cookie ? { cookie } : {}) },
     query,
     ctx: { spaceDeployment: { spaceId: 42, environment: 'production', revision: 0 } }
   }) as unknown as SSRRequest;
@@ -289,6 +292,14 @@ describe('prepareRender / the document the crawler reads', () => {
     const { templateParams } = await render('/', { rsc: { enabled: false } });
 
     expect(templateParams.title).toBe('Home — test space');
+  });
+
+  it("writes the page's own origin where its JSON-LD reads `navigation.origin`, as the browser would", async () => {
+    const { templateParams } = await render('/');
+
+    expect(templateParams.structuredData).toEqual([
+      '{"@context":"https://schema.org","@type":"Organization","url":"https://x.test/"}'
+    ]);
   });
 
   it('leaves a URL that matches no page on the fallback', async () => {
