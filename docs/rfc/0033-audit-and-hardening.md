@@ -134,7 +134,8 @@ Nothing open.
   that exists, `plitzi-platform` pushed and the app released with the chart's PodMonitors, then each rule fired once
   on purpose and received at both (`cluster/docs/08-observability.md` § Alerts). Neither `promtool` nor `amtool` was on
   the machine that wrote them: the rules and the config were checked by `make test`, not by Prometheus's own tools.
-- **W1, W26:** the final legal text from counsel, its placeholders filled (the company's name, address and
+- **W1, W26:** written as far as it goes without counsel (2026-11-11: the processor's terms, a consumer's withdrawal,
+  agents, export, security and retention); then the final legal text from counsel, its placeholders filled (the company's name, address and
   registration, the governing law); the draft notice out; `TERMS_VERSION` moved.
 - **X3:** how many plans are sold at all is a product decision; D6 settled only how `/pricing` opens.
 - **X6 / D9:** `AI_ENABLED` by default.
