@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { createEvent, fireEvent, render, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -336,6 +336,47 @@ describe('RootElement', () => {
         fireEvent.click(getByText('press'));
 
         expect(ownClick).toHaveBeenCalledTimes(1);
+      });
+
+      // A link's click is the link's to settle: the console's Docs link carried a flow that closes a phone's menu, and
+      // the flow cancelled the browser following it to another site — the link went nowhere.
+      describe('a link that carries a click flow', () => {
+        const clicked = () =>
+          interactionsManager.interactionTrigger.mock.calls
+            .filter(([, action]) => action === 'onClick')
+            .map(([id]) => id as string);
+
+        const linkWithFlow = (href: string) =>
+          render(
+            <StoreProvider value={{ runtime: { sources: {} } }}>
+              <ElementContext
+                value={fullContext({ id: 'docs', traceId: 'docs', definition: clickable('docs', false) })}
+              >
+                <RootElement tag="a" href={href}>
+                  Docs
+                </RootElement>
+              </ElementContext>
+            </StoreProvider>
+          );
+
+        it('is still followed where it leads, and its flow runs', () => {
+          const { getByText } = linkWithFlow('https://docs.example.com/');
+          const click = createEvent.click(getByText('Docs'));
+
+          fireEvent(getByText('Docs'), click);
+
+          expect(click.defaultPrevented).toBe(false);
+          expect(clicked()).toEqual(['docs']);
+        });
+
+        it('stays where it is when it leads nowhere — a link written as a button', () => {
+          const { getByText } = linkWithFlow('#');
+          const click = createEvent.click(getByText('Docs'));
+
+          fireEvent(getByText('Docs'), click);
+
+          expect(click.defaultPrevented).toBe(true);
+        });
       });
     });
   });

@@ -57,6 +57,14 @@ export type RootElementInteractions = {
   nodeRef: RefObject<HTMLElement | null>;
 };
 
+/** Whether the click lands on a link that goes somewhere: an `href` that is not empty nor `#`. */
+const leadsSomewhere = (e: MouseEvent): boolean => {
+  const target = e.currentTarget;
+  const href = target instanceof HTMLAnchorElement ? target.getAttribute('href') : null;
+
+  return href !== null && href !== '' && href !== '#';
+};
+
 // Interactions branch of RootElement, wires native events + the interaction rule engine and computes the element's
 // internal class names. Extracted as a hook so RootElement stays a single flat component (custom hooks add no level to
 // the React DevTools tree); only called under an interactions provider, so its hooks run as if unconditional.
@@ -91,7 +99,10 @@ const useRootElementInteractions = ({
       originalCallback?: (e: MouseEvent) => unknown,
       propagateEvent = false
     ) => {
-      if (!propagateEvent) {
+      // A link that leads somewhere settles its own click — its component navigates in place, or the browser follows it
+      // to another site — and the flow runs beside it. Cancelled here, a link carrying a flow went nowhere (the
+      // console's Docs link, whose flow closes a phone's menu). A link that leads nowhere (`#`) is a button: cancelled.
+      if (!propagateEvent && !leadsSomewhere(e)) {
         e.preventDefault();
       }
 

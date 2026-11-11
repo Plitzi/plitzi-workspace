@@ -200,6 +200,9 @@ An authored request connects to the address its name was judged to, and the advi
 - sdk-authoring takes those tokens: an attribute whose default is a flag and that declares named values is either, and
   its refusal says both. Before, `formControl({ autoComplete: 'current-password' })` was refused as text where a boolean
   was read. The type is `AutofillField`, from `@plitzi/sdk-elements/elements/form/FormControl`.
+- A link that carries a click flow is still followed: the flow's trigger cancelled the browser's default, so a link to
+  another site with a flow on it went nowhere. A link with an `href` settles its own click; one that leads nowhere
+  (`#`, empty) is cancelled as before.
 - A Markdown table's body cells carry their column's heading as `data-label`, so a space's style can lay a row out as
   label and value where its columns do not fit (`td::before { content: attr(data-label) }`); nothing changes until a
   style reads it.
