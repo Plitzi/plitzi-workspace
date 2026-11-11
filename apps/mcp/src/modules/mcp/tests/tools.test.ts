@@ -183,6 +183,36 @@ describe('MCP plitzi_look tool', () => {
     expect(image).toMatchObject({ type: 'image', data: 'AAAA', mimeType: 'image/png' });
   });
 
+  // The renderer's address names no space, and a draft is served only where its space is named: in a cluster every
+  // picture was the renderer's 404, and the look answered the HTML instead.
+  it('has the browser present the space’s credential, when the host has one', async () => {
+    const asked: string[] = [];
+    const screenshot = {
+      capture: ({ pagePath }: { pagePath: string }) => {
+        asked.push(pagePath);
+
+        return Promise.resolve({
+          ok: true as const,
+          images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }]
+        });
+      }
+    };
+    await screenshotToolDef()?.execute(
+      { view: 'image' },
+      {
+        space: buildSpace(),
+        env: 'main',
+        persisters: {},
+        spaceId: 1,
+        preview: okPreview,
+        screenshot,
+        renderCredential: () => Promise.resolve('pk_space one')
+      }
+    );
+
+    expect(asked).toEqual(['/?access-token=pk_space%20one']);
+  });
+
   it('falls back to the HTML preview with a warning when the browser service fails', async () => {
     const screenshot = {
       capture: () => Promise.resolve({ ok: false as const, error: 'SCREENSHOT_UNREACHABLE', message: 'pod down' })

@@ -223,6 +223,12 @@ export type SSRAdapters = {
    * test's result, or why none was run there. When omitted, an agent's e2e tests are said as not run.
    */
   runE2eTests?: (spaceId: number, ids: readonly string[]) => Promise<{ results: unknown[] } | { notRun: string }>;
+  /**
+   * The space's own render credential (its public key), which a browser rendering a draft of it presents: the
+   * renderer's address names no space, and a draft is served only where its space is named. Absent, a look's picture
+   * is taken without it — which works only when the renderer's address is the space's own host.
+   */
+  getRenderCredential?: (spaceId: number) => Promise<string | undefined>;
   /** The space's own data: the draft's JSON files its server providers read (`/data/<file>`), and which copy they are.
    *  When omitted, the MCP offers no data resource and refuses the data ops. */
   getData?: (spaceId: number) => Promise<DataDraft | undefined>;

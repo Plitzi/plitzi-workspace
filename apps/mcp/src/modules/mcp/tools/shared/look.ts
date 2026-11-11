@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { SPACE_TOKEN_PARAM } from '@plitzi/sdk-kernel/identity';
+
+import { agentHtml } from './agentHtml';
 import { unnamedControls } from '../../accessibilityOutline';
 
 import type { AccessibilityOutline, CaptureView, ScreenshotImage, Viewport } from '../../types';
@@ -104,7 +107,7 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
 
   const facts = { pageRef: page, pagePath: rendered.pagePath, stateVersion: rendered.stateVersion };
   if (request.view === 'html') {
-    return { meta: { ...facts, html: rendered.html }, images: [] };
+    return { meta: { ...facts, html: agentHtml(rendered.html) }, images: [] };
   }
 
   // Degrade rather than fail: with no browser wired the HTML still says what the page holds.
@@ -117,15 +120,20 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
           request.view === 'image'
             ? 'The screenshot service is not configured; returning the HTML preview instead.'
             : 'No browser is configured, so the accessibility tree cannot be read; returning the HTML preview instead. Its roles and names are in the markup: every button, link and field needs words, every image an `alt`.',
-        html: rendered.html
+        html: agentHtml(rendered.html)
       },
       images: []
     };
   }
 
   const viewports = resolveViewports(request.viewport);
+  // The browser goes to the renderer, whose address names no space, and a draft is served only where its space is
+  // named: it presents the space's own credential, as a thumbnail does.
+  const credential = await ctx.renderCredential?.();
   const shot = await ctx.screenshot.capture({
-    pagePath: rendered.pagePath,
+    pagePath: credential
+      ? `${rendered.pagePath}${rendered.pagePath.includes('?') ? '&' : '?'}${SPACE_TOKEN_PARAM}=${encodeURIComponent(credential)}`
+      : rendered.pagePath,
     token: rendered.token,
     viewports,
     fullPage: request.fullPage,
@@ -142,7 +150,7 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
         warning: 'SCREENSHOT_UNAVAILABLE',
         message: `The screenshot service failed (${shot.message}); returning the HTML preview instead.`,
         hint: 'The dedicated browser service is down or unreachable. Inspect the HTML, or retry later.',
-        html: fallback.ok ? fallback.html : ''
+        html: fallback.ok ? agentHtml(fallback.html) : ''
       },
       images: []
     };

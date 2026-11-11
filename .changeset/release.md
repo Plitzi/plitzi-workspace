@@ -116,6 +116,11 @@ An authored request connects to the address its name was judged to, and the advi
 - A page wears classes of its own: `upsertPage { style: { base: [...] } }` gives its root what a class says (its
   background, its padding), checked as an element's classes are. There was no way to over the MCP. The element tools
   named on a page point at it, and their refusals carry a code like every other tool's.
+- `plitzi_look` takes its picture where it can: the browser presents the space's credential (a host's
+  `getRenderCredential`) — the renderer's address names no space, a draft is served only where its space is named,
+  and in a cluster every look was the renderer's 404 and answered the HTML instead. And the HTML a look answers is the
+  markup, without the hydration payload, scripts and stylesheets, cut at 100 KB saying where: a look at Plitzi's
+  pricing page answered 3 MB — 923,000 tokens.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.

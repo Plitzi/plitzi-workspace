@@ -160,7 +160,8 @@ export const createMcpServer = async ({
     tryFunction,
     runE2eTests,
     saveData,
-    getActivity
+    getActivity,
+    getRenderCredential
   } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
   const write: SSRWriteContext = {
@@ -220,6 +221,7 @@ export const createMcpServer = async ({
       ? { tryFunction: (task, params) => tryFunction(requireWritableSpaceId(), task, params, write) }
       : {}),
     ...(runE2eTests ? { runE2eTests: (ids: readonly string[]) => runE2eTests(requireTestableSpaceId(), ids) } : {}),
+    ...(getRenderCredential ? { renderCredential: () => getRenderCredential(requireSpaceId()) } : {}),
     // The agent's own writes are recorded as the MCP's, for the member it acts for (see `SSRWriteContext`).
     ...(getActivity
       ? {
