@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { cloneAtPath, cloneObject } from './cloneDeep';
 import { has } from './has';
 import { toPath } from './shared';
@@ -46,7 +44,7 @@ export function omit<T extends Record<string, unknown>>(obj: T, paths?: Path | r
     for (const key of shallowKeys) {
       if (Object.prototype.hasOwnProperty.call(result, key)) {
         cloned ??= cloneObject(result);
-        delete (cloned as Record<string, unknown>)[key];
+        Reflect.deleteProperty(cloned, key);
       }
     }
 
@@ -76,7 +74,7 @@ export function omit<T extends Record<string, unknown>>(obj: T, paths?: Path | r
     if (current && typeof current === 'object') {
       const keyToDelete = keys[keys.length - 1];
       if (Object.prototype.hasOwnProperty.call(current, keyToDelete)) {
-        delete (current as Record<string, unknown>)[keyToDelete];
+        Reflect.deleteProperty(current, keyToDelete);
       }
     }
 

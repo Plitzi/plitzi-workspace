@@ -1,25 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { toPath } from './shared';
 
 import type { Path } from './shared';
 
-export function has(obj: Record<string, any> | null | undefined, path: Path): boolean {
-  if (obj === null) {
-    return false;
-  }
+const holds = (value: unknown): value is object =>
+  (typeof value === 'object' && value !== null) || typeof value === 'function';
 
-  const parts = toPath(path);
-  let current: any = obj;
-  for (const key of parts) {
-    if (current == null || !(key in current)) {
+/** Whether every key of the path is there, own or inherited — a value that holds no keys holds none of them. */
+export function has(obj: object | null | undefined, path: Path): boolean {
+  let current: unknown = obj;
+  for (const key of toPath(path)) {
+    if (!holds(current) || !(key in current)) {
       return false;
     }
 
-    current = current[key];
+    current = Reflect.get(current, key);
   }
 
-  return true;
+  return holds(obj);
 }

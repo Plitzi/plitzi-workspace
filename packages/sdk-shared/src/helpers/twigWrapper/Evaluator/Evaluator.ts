@@ -205,12 +205,12 @@ class Evaluator {
 
     // Primitives: fast path (most common).
     if (value !== null && value !== undefined && typeof value !== 'object') {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- never an object here: a primitive's own text
       return String(value);
     }
 
     if (node.raw) {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- raw prints the value as its text, an object included, as Twig does
       return value === null || value === undefined ? '' : String(value);
     }
 
@@ -348,7 +348,7 @@ class Evaluator {
       return '';
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Twig prints any value as JavaScript's String does, an object included
     return String(value);
   }
 
@@ -356,7 +356,7 @@ class Evaluator {
     let value = initial;
     for (const call of calls) {
       const fn = filters[call.name];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- a filter named in a template may not exist: the Record's index type says it always does
       if (fn !== undefined) {
         value = fn(value, call.args.length === 0 ? NO_ARGS : this.evalArgs(call.args));
       }
@@ -419,7 +419,7 @@ class Evaluator {
         let out = '';
         for (let i = 0; i < len; i++) {
           const v = this.evalExpression(parts[i]);
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string -- `~` joins its parts as text, objects included, as Twig does
           out += v === null || v === undefined ? '' : String(v);
         }
 
@@ -508,7 +508,7 @@ class Evaluator {
       return undefined;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- a member's key is read as text, as JavaScript indexes an object
     return (target as Record<string, unknown>)[String(key)];
   }
 

@@ -38,7 +38,7 @@ export const serializeValue = (value: unknown): string => {
     return JSON.stringify(value);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Twig prints any value as JavaScript's String does, an object included
   return String(value);
 };
 
@@ -88,7 +88,7 @@ export const renderSimpleTokens = (entry: CacheEntry, context: Record<string, un
       const trimmed = token.content.trim();
       const value =
         token.content.indexOf('.') === -1 ? resolveSimplePath(context, trimmed) : resolveDottedPath(context, trimmed);
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- raw prints the value as its text, an object included, as Twig does
       output += token.raw ? (value === null || value === undefined ? '' : String(value)) : serializeValue(value);
     }
   }

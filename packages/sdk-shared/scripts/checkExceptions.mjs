@@ -23,6 +23,10 @@ const KINDS = {
   unknownAs: /\bas unknown as\b/g
 };
 
+// What a type is written in, not what a comment says: "the other way: any difference" is prose, not an `any`. A line
+// comment starts at `//` not preceded by `:` (an address in a string keeps its `://`).
+const codeOf = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
 const filesOf = dir =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     if (SKIP.has(entry.name)) {
@@ -49,8 +53,10 @@ export const countExceptions = () => {
       const total = { disable: 0, any: 0, unknownAs: 0 };
       for (const file of filesOf(src)) {
         const text = fs.readFileSync(file, 'utf8');
+        const code = codeOf(text);
         for (const [kind, pattern] of Object.entries(KINDS)) {
-          total[kind] += text.match(pattern)?.length ?? 0;
+          // A disable is a comment by its nature; every other exception is counted in the code alone.
+          total[kind] += (kind === 'disable' ? text : code).match(pattern)?.length ?? 0;
         }
       }
 

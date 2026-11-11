@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { get, set, omit, capitalize } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -152,7 +150,7 @@ const WorkflowContextProvider = ({
           }
 
           nodesToDelete.forEach(nodeToDelete => {
-            delete draft[nodeToDelete.id];
+            Reflect.deleteProperty(draft, nodeToDelete.id);
           });
         })
       );

@@ -66,7 +66,7 @@ class ParseContext {
 
   advance(): Token | undefined {
     const token = this.tokens[this.pos];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- a position past the end reads undefined: the array's type says it never does
     if (token) {
       this.pos++;
     }

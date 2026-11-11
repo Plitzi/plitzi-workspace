@@ -10,3 +10,9 @@ export type TwigFilter = (value: unknown, args: readonly unknown[]) => unknown;
 export const ARROW_PARAMS = Symbol('twigArrowParams');
 
 export type ArrowCallback = ((...args: unknown[]) => unknown) & { [ARROW_PARAMS]?: number };
+
+/** A piped value that is a list, typed as one whose items are not known yet: `Array.isArray` alone says `any[]`. */
+export const isList = (value: unknown): value is unknown[] => Array.isArray(value);
+
+/** An argument that is an arrow the Evaluator made: what a filter calls with the items. */
+export const isCallback = (value: unknown): value is ArrowCallback => typeof value === 'function';

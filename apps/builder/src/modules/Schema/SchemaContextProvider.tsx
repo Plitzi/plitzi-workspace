@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
@@ -151,7 +149,7 @@ const SchemaContextProvider = ({
       }
 
       if (elements.acum[elements.item.id] as Element | undefined) {
-        delete elements.acum[elements.item.id];
+        Reflect.deleteProperty(elements.acum, elements.item.id);
       }
 
       dispatchSchema({

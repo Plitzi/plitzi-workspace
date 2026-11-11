@@ -1,132 +1,112 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { toPath } from './shared';
 
 import type { Path } from './shared';
 
-export function cloneDeep<T>(value: T, seen = new WeakMap<object, any>()): T {
-  // Primitives
+const cloneValue = (value: unknown, seen: WeakMap<object, unknown>): unknown => {
   if (value === null || typeof value !== 'object') {
     return value;
   }
 
-  // Handle cycles
+  // A value met before is its clone again: a cycle stays a cycle, and a shared part stays shared.
   if (seen.has(value)) {
     return seen.get(value);
   }
 
-  // Handle Date
   if (value instanceof Date) {
-    return new Date(value.getTime()) as T;
+    return new Date(value.getTime());
   }
 
-  // Handle RegExp
   if (value instanceof RegExp) {
-    return new RegExp(value.source, value.flags) as T;
+    return new RegExp(value.source, value.flags);
   }
 
-  // Handle Map
   if (value instanceof Map) {
-    const m = new Map<any, any>();
-    seen.set(value, m);
-    value.forEach((v, k) => m.set(k, cloneDeep(v, seen)));
-    return m as unknown as T;
+    const map = new Map<unknown, unknown>();
+    seen.set(value, map);
+    value.forEach((item: unknown, key: unknown) => map.set(key, cloneValue(item, seen)));
+
+    return map;
   }
 
-  // Handle Set
   if (value instanceof Set) {
-    const s = new Set<any>();
-    seen.set(value, s);
-    value.forEach(v => s.add(cloneDeep(v, seen)));
+    const set = new Set<unknown>();
+    seen.set(value, set);
+    value.forEach((item: unknown) => set.add(cloneValue(item, seen)));
 
-    return s as unknown as T;
+    return set;
   }
 
-  // Handle typed arrays (Uint8Array, Int16Array, etc.)
-  if (ArrayBuffer.isView(value)) {
-    // For DataView, just clone the buffer
-    if (value instanceof DataView) {
-      const cloned = new DataView(cloneDeep(value.buffer, seen), value.byteOffset, value.byteLength);
-      seen.set(value, cloned);
-
-      return cloned as T;
-    }
-
-    // For TypedArrays
-    const ctor = (value as any).constructor;
-    // .slice() returns a copy for typed arrays
-    const cloned = new ctor((value as any).buffer.slice(0), (value as any).byteOffset, (value as any).length);
-    seen.set(value, cloned);
-
-    return cloned as T;
-  }
-
-  // Handle ArrayBuffer
   if (value instanceof ArrayBuffer) {
     const cloned = value.slice(0);
     seen.set(value, cloned);
 
-    return cloned as T;
+    return cloned;
   }
 
-  // Handle Array
+  // A DataView over a copy of its buffer — the buffer cloned once if other views share it.
+  if (value instanceof DataView) {
+    const buffer = cloneValue(value.buffer, seen);
+    const cloned = buffer instanceof ArrayBuffer ? new DataView(buffer, value.byteOffset, value.byteLength) : value;
+    seen.set(value, cloned);
+
+    return cloned;
+  }
+
+  // A typed array copies itself (`slice`), in its own realm and of its own kind.
+  if (ArrayBuffer.isView(value)) {
+    const slice: unknown = Reflect.get(value, 'slice');
+    const cloned: unknown = typeof slice === 'function' ? Reflect.apply(slice, value, []) : value;
+    seen.set(value, cloned);
+
+    return cloned;
+  }
+
   if (Array.isArray(value)) {
-    const arr: Array<unknown> = [];
-    seen.set(value, arr);
-    (value as Array<unknown>).forEach((v, i) => (arr[i] = cloneDeep(v, seen)));
+    const list: unknown[] = [];
+    seen.set(value, list);
+    value.forEach((item: unknown, index) => (list[index] = cloneValue(item, seen)));
 
-    return arr as unknown as T;
+    return list;
   }
 
-  // Handle objects with prototype
-  const proto = Object.getPrototypeOf(value);
-  const cloned: T = Object.create(proto);
+  // Any other object keeps its prototype, and its own enumerable keys are cloned onto it.
+  const cloned: object = Object.create(Reflect.getPrototypeOf(value)) as object;
   seen.set(value, cloned);
-  for (const key in value) {
-    if (Object.prototype.hasOwnProperty.call(value, key)) {
-      (cloned as any)[key] = cloneDeep((value as any)[key], seen);
-    }
+  for (const key of Object.keys(value)) {
+    Reflect.set(cloned, key, cloneValue(Reflect.get(value, key), seen));
   }
 
   return cloned;
-}
+};
 
-export const cloneObject = <T>(obj: T) => Object.assign(Object.create(Object.getPrototypeOf(obj)), obj) as T;
+// A clone has its source's type: the one place that says so.
+export const cloneDeep = <T>(value: T): T => cloneValue(value, new WeakMap()) as T;
+
+// A copy keeps its source's prototype and own keys, so it has its source's type.
+export const cloneObject = <T extends object>(obj: T): T =>
+  Object.assign<object, T>(Object.create(Reflect.getPrototypeOf(obj)) as object, obj);
+
+const shallow = <T extends object>(value: T): T => (Array.isArray(value) ? ([...value] as T) : cloneObject<T>(value));
 
 /**
  * Clones only the necessary path (structural sharing).
  * Useful for immutable operations like omit without cloning the entire object.
  */
-export function cloneAtPath<T extends Record<string, any>>(obj: T, path: Path): T {
-  const keys = toPath(path);
-  const rootClone: T = (Array.isArray(obj) ? [...obj] : cloneObject<T>(obj)) as T;
-  if (!keys.length) {
-    // Shallow clone root
-    return rootClone;
-  }
-
-  // Clone root
-
-  let currentOriginal: any = obj;
-  let currentClone: any = rootClone;
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    const nextOriginal = currentOriginal?.[key];
+export function cloneAtPath<T extends object>(obj: T, path: Path): T {
+  const rootClone = shallow(obj);
+  let currentOriginal: unknown = obj;
+  let currentClone: object = rootClone;
+  for (const key of toPath(path)) {
+    const nextOriginal: unknown =
+      typeof currentOriginal === 'object' && currentOriginal !== null ? Reflect.get(currentOriginal, key) : undefined;
     if (!nextOriginal || typeof nextOriginal !== 'object') {
-      currentClone[key] = nextOriginal;
+      Reflect.set(currentClone, key, nextOriginal);
       break;
     }
 
-    // Clone current branch preserving prototype
-    const nextClone = Array.isArray(nextOriginal) ? [...nextOriginal] : cloneObject(nextOriginal);
-    currentClone[key] = nextClone;
-
-    // move pointers to next level
+    // Clone current branch preserving prototype, and move both pointers a level down.
+    const nextClone = shallow(nextOriginal);
+    Reflect.set(currentClone, key, nextClone);
     currentOriginal = nextOriginal;
     currentClone = nextClone;
   }

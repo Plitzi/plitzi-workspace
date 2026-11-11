@@ -1,4 +1,5 @@
 import { base64ToUtf8, md5Hex, utf8ToBase64 } from './hashing';
+import { isList } from './types';
 import { toStr } from './values';
 
 import type { TwigFilter } from './types';
@@ -10,7 +11,7 @@ export const miscFilters: Record<string, TwigFilter> = {
       return encodeURIComponent(value);
     }
 
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    if (value !== null && typeof value === 'object' && !isList(value)) {
       return new URLSearchParams(
         Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, toStr(v)]))
       ).toString();
@@ -130,8 +131,7 @@ export const whitespaceFilters: Record<string, TwigFilter> = {
 export const randomFilters: Record<string, TwigFilter> = {
   // `| random` — returns a random element from an array or a random character from a string.
   random: value => {
-    if (Array.isArray(value)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (isList(value)) {
       return value.length > 0 ? value[Math.floor(Math.random() * value.length)] : undefined;
     }
     if (typeof value === 'string') {

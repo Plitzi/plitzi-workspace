@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
@@ -273,7 +271,7 @@ class InteractionsManager implements InteractionsManagerApi {
         {}
       );
     } else {
-      delete this.callbacksAvailables[id];
+      Reflect.deleteProperty(this.callbacksAvailables, id);
     }
 
     if (Object.keys(triggers).length > 0) {
@@ -294,10 +292,10 @@ class InteractionsManager implements InteractionsManagerApi {
     }
 
     this.eventBridge.off('interaction', id as EventBridgeEvent);
-    delete this.subscriptors[id];
+    Reflect.deleteProperty(this.subscriptors, id);
     this.dropParked(id);
     if (this.callbacksAvailables[id] as Record<string, InteractionCallback> | undefined) {
-      delete this.callbacksAvailables[id];
+      Reflect.deleteProperty(this.callbacksAvailables, id);
     }
 
     this.touch();

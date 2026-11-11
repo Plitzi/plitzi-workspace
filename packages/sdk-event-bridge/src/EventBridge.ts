@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { pConsole } from '@plitzi/sdk-shared/devTools';
 
 import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
@@ -101,13 +99,13 @@ class EventBridge<T = unknown> {
     }
 
     if (this.events[module][event]?.length === 0) {
-      delete this.events[module][event];
+      Reflect.deleteProperty(this.events[module], event);
       const left = (this.counts.get(module) ?? 1) - 1;
       if (left > 0) {
         this.counts.set(module, left);
       } else {
         this.counts.delete(module);
-        delete this.events[module];
+        Reflect.deleteProperty(this.events, module);
       }
     }
   }
@@ -202,7 +200,7 @@ class EventBridge<T = unknown> {
       return;
     }
 
-    delete this.events[module];
+    Reflect.deleteProperty(this.events, module);
     this.counts.delete(module);
   }
 

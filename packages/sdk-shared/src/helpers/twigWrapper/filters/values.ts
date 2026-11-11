@@ -16,7 +16,7 @@ export const compareValues = (a: unknown, b: unknown): number => {
     return a - b;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- values of mixed kinds compare as their text, as Twig sorts them
   return String(a).localeCompare(String(b));
 };
 
@@ -34,7 +34,7 @@ export const toStr = (value: unknown): string => {
     return '';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Twig prints any value as JavaScript's String does, an object included
   return String(value);
 };
 

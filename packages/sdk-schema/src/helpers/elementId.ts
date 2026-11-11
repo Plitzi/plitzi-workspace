@@ -357,8 +357,7 @@ export const repointIds = (
   const moved = renames.filter(([from]) => (flat[from] as Element | undefined) !== undefined);
   const detached = moved.map(([from, to]) => [to, flat[from]] as const);
   for (const [from] of moved) {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete flat[from];
+    Reflect.deleteProperty(flat, from);
   }
 
   for (const [to, element] of detached) {

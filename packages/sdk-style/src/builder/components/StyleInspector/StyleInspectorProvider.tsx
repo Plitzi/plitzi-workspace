@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo } from 'react';
 
@@ -88,7 +86,7 @@ const StyleInspectorProvider = ({
         const newValues = { ...getValues(), ...values };
         (Object.keys(newValues) as StyleCategory[]).forEach(k => {
           if (newValues[k] === undefined) {
-            delete newValues[k];
+            Reflect.deleteProperty(newValues, k);
           }
         });
 

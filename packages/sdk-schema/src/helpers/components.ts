@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { jsonCopy } from '@plitzi/sdk-shared/history';
 
 import { isValidElementId, repointIds, uniqueElementId } from './elementId';
@@ -233,7 +232,7 @@ export const addComponent = (
   }
 
   for (const id of Object.keys(flat)) {
-    delete tree.flat[id];
+    Reflect.deleteProperty(tree.flat, id);
   }
 
   tree.flat[instanceId] = instanceFor(declared, instanceId, element);
@@ -268,7 +267,7 @@ export const removeComponent = (
     return false;
   }
 
-  delete schema.components[componentId];
+  Reflect.deleteProperty(schema.components, componentId);
 
   return true;
 };
@@ -332,7 +331,7 @@ export const detachInstance = (schema: ElementDocument, instanceId: Element['id'
   }
 
   Object.assign(tree.flat, copies);
-  delete tree.flat[instanceId];
+  Reflect.deleteProperty(tree.flat, instanceId);
   parent.definition.items = parent.definition.items.map(id => (id === instanceId ? root.id : id));
 
   return root.id;

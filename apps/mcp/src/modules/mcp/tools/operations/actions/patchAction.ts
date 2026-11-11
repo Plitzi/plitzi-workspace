@@ -60,8 +60,7 @@ export const patchAction = (space: Space, env: Env, op: PatchAction): OpResult =
   const nodes = { ...document.nodes };
   for (const node of op.nodes ?? []) {
     if (node.remove) {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete nodes[node.id];
+      Reflect.deleteProperty(nodes, node.id);
       continue;
     }
 

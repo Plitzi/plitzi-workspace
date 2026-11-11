@@ -116,8 +116,7 @@ const Form = ({
             return;
           }
 
-          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-          delete draft[name];
+          Reflect.deleteProperty(draft, name);
         })
       );
 

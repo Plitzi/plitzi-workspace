@@ -62,7 +62,7 @@ export const makeId = (length: number, includeMayus = true, includeNumbers = tru
 };
 
 export function getKeyDecoded(webKey: string, asWebId: true): number;
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- the caller names the shape of the decoded payload: T is written once on purpose
 export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: false): T;
 export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T | number {
   if (!webKey) {

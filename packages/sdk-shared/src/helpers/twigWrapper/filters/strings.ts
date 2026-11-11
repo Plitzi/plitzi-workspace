@@ -1,4 +1,5 @@
 import { wrapRaw } from './raw';
+import { isList } from './types';
 import { isEmpty, toJson, toStr } from './values';
 
 import type { TwigFilter } from './types';
@@ -115,7 +116,7 @@ export const stringOperationFilters: Record<string, TwigFilter> = {
     }
 
     const [first] = args;
-    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+    if (typeof first === 'object' && first !== null && !isList(first)) {
       const pairs = new Map(Object.entries(first).filter(([key]) => key !== ''));
       if (pairs.size === 0) {
         return value;
@@ -143,8 +144,7 @@ export const stringOperationFilters: Record<string, TwigFilter> = {
       return value.slice(start, end);
     }
 
-    if (Array.isArray(value)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (isList(value)) {
       return value.slice(start, end);
     }
 
@@ -153,15 +153,14 @@ export const stringOperationFilters: Record<string, TwigFilter> = {
   // `| split(',')` — splits a string into an array.
   split: (value, args) => (typeof value === 'string' && args.length > 0 ? value.split(toStr(args[0])) : value),
   // `| join(', ')` — joins an array into a string.
-  join: (value, args) => (Array.isArray(value) ? value.join(args.length === 0 ? '' : toStr(args[0])) : value),
+  join: (value, args) => (isList(value) ? value.join(args.length === 0 ? '' : toStr(args[0])) : value),
   // `| reverse` — reverses a string or array.
   reverse: value => {
     if (typeof value === 'string') {
       return value.split('').reverse().join('');
     }
 
-    if (Array.isArray(value)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+    if (isList(value)) {
       return [...value].reverse();
     }
 
@@ -171,7 +170,7 @@ export const stringOperationFilters: Record<string, TwigFilter> = {
 
 export const stringQueryFilters: Record<string, TwigFilter> = {
   length: value => {
-    if (typeof value === 'string' || Array.isArray(value)) {
+    if (typeof value === 'string' || isList(value)) {
       return value.length;
     }
 
@@ -191,8 +190,7 @@ export const stringQueryFilters: Record<string, TwigFilter> = {
       return value.length > 0 ? value[0] : '';
     }
 
-    if (Array.isArray(value)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (isList(value)) {
       return value.length > 0 ? value[0] : undefined;
     }
 
@@ -204,8 +202,7 @@ export const stringQueryFilters: Record<string, TwigFilter> = {
       return value.length > 0 ? value[value.length - 1] : '';
     }
 
-    if (Array.isArray(value)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (isList(value)) {
       return value.length > 0 ? value[value.length - 1] : undefined;
     }
 
@@ -223,7 +220,7 @@ export const stringQueryFilters: Record<string, TwigFilter> = {
       return value.includes(toStr(needle));
     }
 
-    if (Array.isArray(value)) {
+    if (isList(value)) {
       return value.includes(needle);
     }
 

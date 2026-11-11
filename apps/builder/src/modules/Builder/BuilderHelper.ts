@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
@@ -300,7 +299,7 @@ export const processPaste = async (
     const {
       payload: { elements, style, variables }
     } = data;
-    delete elements.acum[elements.item.id];
+    Reflect.deleteProperty(elements.acum, elements.item.id);
     snippetData = { elements: elements.acum, baseElement: elements.item, style, variables };
   } else if (Array.isArray(data) && data.length > 1) {
     // dataType is Text

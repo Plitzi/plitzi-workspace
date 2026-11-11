@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import processSelector from '../helpers/processSelector';
@@ -105,7 +104,7 @@ class StyleMap {
         return false;
       }
 
-      delete this.platform[displayMode][selector];
+      Reflect.deleteProperty(this.platform[displayMode], selector);
 
       return true;
     }
@@ -114,7 +113,7 @@ class StyleMap {
     (Object.keys(this.platform) as DisplayMode[]).forEach(displayMode => {
       if (this.platform[displayMode][selector] as StyleItem | undefined) {
         found = true;
-        delete this.platform[displayMode][selector];
+        Reflect.deleteProperty(this.platform[displayMode], selector);
       }
     });
 
@@ -198,9 +197,9 @@ class StyleMap {
       return false;
     }
 
-    delete styleItem.variables[category][name];
+    Reflect.deleteProperty(styleItem.variables[category], name);
     if (Object.keys(styleItem.variables[category]).length === 0) {
-      delete styleItem.variables[category];
+      Reflect.deleteProperty(styleItem.variables, category);
     }
 
     if (Object.keys(styleItem.variables).length === 0) {
@@ -265,9 +264,9 @@ class StyleMap {
       return false;
     }
 
-    delete this.variables[category][name];
+    Reflect.deleteProperty(this.variables[category], name);
     if (Object.keys(this.variables[category]).length === 0) {
-      delete this.variables[category];
+      Reflect.deleteProperty(this.variables, category);
     }
 
     return true;

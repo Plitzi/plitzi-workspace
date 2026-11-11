@@ -1,3 +1,4 @@
+import { isCallback, isList } from './types';
 import { toStr } from './values';
 
 import type { TwigFilter } from './types';
@@ -5,7 +6,7 @@ import type { TwigFilter } from './types';
 export const objectFilters: Record<string, TwigFilter> = {
   // `| without('key1', 'key2')` — returns object without specified keys.
   without: (value, args) => {
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    if (value === null || typeof value !== 'object' || isList(value)) {
       return value;
     }
     const keys = args.map(toStr);
@@ -19,7 +20,7 @@ export const objectFilters: Record<string, TwigFilter> = {
   },
   // `| only('key1', 'key2')` — returns object with only specified keys.
   only: (value, args) => {
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    if (value === null || typeof value !== 'object' || isList(value)) {
       return value;
     }
     const keys = args.map(toStr);
@@ -36,13 +37,12 @@ export const objectFilters: Record<string, TwigFilter> = {
 export const queryFilters: Record<string, TwigFilter> = {
   // `| find(callback)` or `| find('key', value)` — finds first array element matching criteria.
   find: (value, args) => {
-    if (!Array.isArray(value) || args.length === 0) {
+    if (!isList(value) || args.length === 0) {
       return undefined;
     }
 
     const callback = args[0];
-    if (typeof callback === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    if (isCallback(callback)) {
       return value.find((item, index) => callback(item, index));
     }
 
@@ -52,7 +52,6 @@ export const queryFilters: Record<string, TwigFilter> = {
 
     const key = toStr(callback);
     const target = args[1];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value.find(item => {
       if (item !== null && typeof item === 'object') {
         return (item as Record<string, unknown>)[key] === target;
@@ -62,7 +61,7 @@ export const queryFilters: Record<string, TwigFilter> = {
   },
   // `| pluck('key')` — extracts all values for a given key from an array of objects.
   pluck: (value, args) => {
-    if (!Array.isArray(value) || args.length === 0) {
+    if (!isList(value) || args.length === 0) {
       return value;
     }
     const key = toStr(args[0]);
@@ -72,26 +71,25 @@ export const queryFilters: Record<string, TwigFilter> = {
     );
   },
   // `| unique` — removes duplicates from an array.
-  unique: value => (Array.isArray(value) ? [...new Set(value)] : value),
+  unique: value => (isList(value) ? [...new Set(value)] : value),
   // `| flatten` — flattens a nested array by one level.
   flatten: value => {
-    return Array.isArray(value) ? value.flat() : value;
+    return isList(value) ? value.flat() : value;
   },
   // `| sum` — sums all numeric values in an array.
   sum: value => {
-    if (!Array.isArray(value)) {
+    if (!isList(value)) {
       return value;
     }
     return value.reduce<number>((acc, item) => acc + (typeof item === 'number' ? item : 0), 0);
   },
   // `| chunk(size)` — splits array into chunks of given size.
   chunk: (value, args) => {
-    if (!Array.isArray(value) || args.length === 0) {
+    if (!isList(value) || args.length === 0) {
       return value;
     }
     const size = Number(args[0]);
     if (size <= 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return value;
     }
     const chunks: unknown[][] = [];
@@ -102,14 +100,14 @@ export const queryFilters: Record<string, TwigFilter> = {
   },
   // `| index_by(key)` — reindexes an array of objects by a key.
   index_by: (value, args) => {
-    if (!Array.isArray(value) || args.length === 0) {
+    if (!isList(value) || args.length === 0) {
       return value;
     }
     const key = toStr(args[0]);
     const result: Record<string, unknown> = {};
     for (const item of value) {
       if (item !== null && typeof item === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- a key is the item's field as text, as Twig keys an object
         const k = String((item as Record<string, unknown>)[key] ?? '');
         result[k] = item;
       }
@@ -118,14 +116,14 @@ export const queryFilters: Record<string, TwigFilter> = {
   },
   // `| group_by(key)` — groups array elements by a key.
   group_by: (value, args) => {
-    if (!Array.isArray(value) || args.length === 0) {
+    if (!isList(value) || args.length === 0) {
       return value;
     }
     const key = toStr(args[0]);
     const result: Record<string, unknown[]> = {};
     for (const item of value) {
       if (item !== null && typeof item === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- a key is the item's field as text, as Twig keys an object
         const k = String((item as Record<string, unknown>)[key] ?? '');
         result[k] = result[k] ?? [];
         result[k].push(item);

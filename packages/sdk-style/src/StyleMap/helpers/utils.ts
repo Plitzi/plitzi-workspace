@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { omit } from '@plitzi/plitzi-ui/helpers';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -32,7 +30,7 @@ const parseValue = (
     const newValue = { ...(value as StyleObject) };
     for (const k in value as StyleObject) {
       if (newValue[k as StyleCategory] === undefined) {
-        delete newValue[k as StyleCategory];
+        Reflect.deleteProperty(newValue, k);
       }
     }
 

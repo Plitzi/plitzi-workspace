@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 import { calculateInheriting } from '@plitzi/sdk-style/helpers';
@@ -261,7 +259,7 @@ class FlatMap {
     result.item = acum[mapIds[elementId]];
 
     if (excludeRoot) {
-      delete result.acum[mapIds[elementId]];
+      Reflect.deleteProperty(result.acum, mapIds[elementId]);
     }
 
     // Dropped onto an element that holds no children, the copy goes beside it instead.
@@ -288,7 +286,7 @@ class FlatMap {
     }
 
     for (const id of descendants(this.flat, elementId)) {
-      delete this.flat[id];
+      Reflect.deleteProperty(this.flat, id);
     }
 
     const parent = element.definition.parentId
@@ -298,7 +296,7 @@ class FlatMap {
       parent.definition.items = parent.definition.items.filter(id => id !== elementId);
     }
 
-    delete this.flat[elementId];
+    Reflect.deleteProperty(this.flat, elementId);
 
     return true;
   };
@@ -420,7 +418,7 @@ class FlatMap {
     delete elements.acum[elements.item.id].definition.parentId;
 
     if (excludeRoot) {
-      delete elements.acum[elements.item.id];
+      Reflect.deleteProperty(elements.acum, elements.item.id);
     }
 
     // Remove duplicated variables

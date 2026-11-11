@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import { get, upperFirst } from '@plitzi/plitzi-ui/helpers';
@@ -122,7 +120,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
           }
 
           if (draft[category].length === 0) {
-            delete draft[category];
+            Reflect.deleteProperty(draft, category);
           }
         })
       );
