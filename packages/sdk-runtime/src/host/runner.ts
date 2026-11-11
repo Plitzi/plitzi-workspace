@@ -18,6 +18,9 @@ import type { FunctionRunner, StreamedRouteAnswer } from '@plitzi/sdk-shared/fun
  *
  * The bundle a request names is not asked for: the code is the one this runtime was started with.
  */
+/** How long code that listens to `ctx.signal` gets to stop by itself once aborted — the sandbox's own grace. */
+const ABORT_GRACE_MS = 50;
+
 export const createRuntimeRunner = (definition: FunctionsDefinition = {}): FunctionRunner => ({
   describe: () => Promise.resolve(describeFunctions(definition)),
   invoke: async ({ invocation, answer, signal, onUsage }) => {
@@ -56,11 +59,16 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
       changeListEntry,
       refusal: message => new ActionRefusal(message)
     });
-    // Aborted, the invocation ends whatever the code waits on: what the platform stopped is not waited for here either.
+    // Aborted, the code is told through its `ctx.signal` and given its grace — a job's slice its `graceMs` to save, any
+    // other a moment, as the sandbox gives them — and then the invocation ends, whatever the code still waits on.
+    const graceMs = invocation.kind === 'job' ? invocation.graceMs : ABORT_GRACE_MS;
     let stop: (() => void) | undefined;
+    let cut: ReturnType<typeof setTimeout> | undefined;
     const aborted = new Promise<never>((_resolve, reject) => {
       stop = () => {
-        reject(new FunctionFailure('aborted', typeof signal.reason === 'string' ? signal.reason : 'Aborted'));
+        cut = setTimeout(() => {
+          reject(new FunctionFailure('aborted', typeof signal.reason === 'string' ? signal.reason : 'Aborted'));
+        }, graceMs);
       };
       if (signal.aborted) {
         stop();
@@ -82,6 +90,7 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
       // Every way it fails is one of the protocol's: the code's own error is `error`, with its words.
       throw new FunctionFailure('error', error instanceof Error ? error.message : String(error));
     } finally {
+      clearTimeout(cut);
       if (stop) {
         signal.removeEventListener('abort', stop);
       }
