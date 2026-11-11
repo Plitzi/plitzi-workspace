@@ -456,7 +456,10 @@ const doctorFix = async (root: string): Promise<string> =>
 export const upgrade = async (parts: readonly string[], options: UpgradeOptions): Promise<void> => {
   const unknown = parts.filter(part => !(UPGRADE_PARTS as readonly string[]).includes(part));
   if (unknown.length > 0) {
-    fail(`Not a part of a project to upgrade: ${unknown.join(', ')}. The parts are ${UPGRADE_PARTS.join(', ')}.`);
+    fail(
+      'bad-value',
+      `Not a part of a project to upgrade: ${unknown.join(', ')}. The parts are ${UPGRADE_PARTS.join(', ')}.`
+    );
 
     return;
   }
@@ -481,6 +484,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const openRuns = write && pinned.length > 0 ? await activeRuns(root) : [];
   if (openRuns.length > 0 && !options.withOpenRuns) {
     fail(
+      'in-use',
       `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now: its ${pinned.join(', ')} would change under them. Finish, abort or purge them first (plitzi run status --all) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions. The skills alone are upgraded under an open run: plitzi upgrade skills --write.`
     );
 
@@ -492,6 +496,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   if (!plitzi && (wanted.has('files') || wanted.has('packages'))) {
     fail(
+      'not-a-project',
       'Its files and package.json are those of a project `plitzi create` wrote, and this is not one: `plitzi upgrade skills migrations` brings up the rest.'
     );
 
@@ -503,6 +508,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const older = plitzi && (wanted.has('files') || wanted.has('packages')) ? await blockingLegacy(root) : [];
   if (older.length > 0) {
     fail(
+      'old-layout',
       `This project is laid out as an older CLI laid it out (${older.map(place => place.found).join(', ')}), and its files would be written for another project.\n` +
         `Move it first — ${await doctorFix(root)} moves it, every import following — then upgrade.`
     );

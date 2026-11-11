@@ -18,7 +18,7 @@ export type DeletePage = z.infer<typeof deletePageOp>;
 export const deletePage = (space: Space, env: Env, op: DeletePage): OpResult => {
   const page = findPageByRef(space.schema, op.ref);
   if (!page) {
-    return fail('ref', `Page "${op.ref}" not found`, 'Read the pages resource for valid refs');
+    return fail('missing', 'ref', `Page "${op.ref}" not found`, 'Read the pages resource for valid refs');
   }
 
   const removedIds = descendants(space.schema.flat, page.id);

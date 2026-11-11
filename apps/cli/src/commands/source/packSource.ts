@@ -26,7 +26,7 @@ export interface PackSourceOptions extends DryRunOptions {
 const packSourceCommand = async (entries: string[], options: PackSourceOptions): Promise<void> => {
   const root = options.root ? path.resolve(options.root) : (await findProject(process.cwd()))?.root;
   if (!root) {
-    fail('plitzi source pack packs a project’s source, and there is no package.json here or above.');
+    fail('not-a-project', 'plitzi source pack packs a project’s source, and there is no package.json here or above.');
 
     return;
   }
@@ -57,7 +57,7 @@ const packSourceCommand = async (entries: string[], options: PackSourceOptions):
         chalk.dim(` — ${path.relative(process.cwd(), out)} (${(bytes.byteLength / 1024).toFixed(0)} KB)`)
     );
   } catch (error) {
-    fail(error instanceof Error ? error.message : String(error));
+    fail('does-not-build', error instanceof Error ? error.message : String(error));
   }
 };
 

@@ -1,5 +1,6 @@
 import type { DocumentScroll, NotificationsSpec, CssProps } from '@plitzi/sdk-authoring';
 import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
 
 export type Env = Environment;
 
@@ -321,6 +322,8 @@ export interface AISettings {
 }
 
 export interface ValidationError {
+  /** Why, as a code of the one list the CLI's refusals share (`plitzi explain <code>`). */
+  code: RefusalCode;
   path: string;
   message: string;
   hint: string;

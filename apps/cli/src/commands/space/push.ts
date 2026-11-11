@@ -273,7 +273,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   if (asked.length > 0) {
     const unknown = asked.filter(part => !isPart(part));
     if (unknown.length > 0) {
-      fail(`plitzi space push sends ${PUSH_PARTS.join(', ')} — not ${unknown.join(', ')}.`);
+      fail('bad-value', `plitzi space push sends ${PUSH_PARTS.join(', ')} — not ${unknown.join(', ')}.`);
 
       return undefined;
     }
@@ -281,6 +281,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
     const missing = asked.filter(isPart).filter(part => !found.some(item => item.part === part));
     if (missing.length > 0) {
       fail(
+        'missing',
         `This project has no ${missing.join(', ')} to push — ${missing.map(part => `${part}: ${WHERE_PART[part]}`).join('; ')}.`
       );
 
@@ -291,7 +292,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   }
 
   if (found.length === 0) {
-    fail('This project has nothing to push: no src/space/, src/functions/, runtime or plugin.');
+    fail('missing', 'This project has nothing to push: no src/space/, src/functions/, runtime or plugin.');
 
     return undefined;
   }
@@ -359,7 +360,7 @@ const pushPlugin = async (
       throw error;
     }
 
-    fail(error.message);
+    fail('does-not-build', error.message);
 
     return 'failed';
   }
@@ -502,13 +503,13 @@ const recordPush = async (
 export const push = async (asked: string[], options: PushOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    fail('There is no package.json here or above: run plitzi space push in the project to send.');
+    fail('not-a-project', 'There is no package.json here or above: run plitzi space push in the project to send.');
 
     return;
   }
 
   if (project.plitzi?.kind === 'plugin') {
-    fail('This is a plugin package: plitzi plugin pack and plitzi plugin upload put it on a space.');
+    fail('not-a-project', 'This is a plugin package: plitzi plugin pack and plitzi plugin upload put it on a space.');
 
     return;
   }
@@ -517,6 +518,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   const origin = await readOrigin(root);
   if (origin && origin.version.environment !== 'main') {
     fail(
+      'not-allowed',
       `This project follows ${versionLabel(origin.version)} of ${origin.space.name}, and a push writes the draft.\n` +
         'Follow the draft first: plitzi space pull --environment main.'
     );
@@ -539,7 +541,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
       name: space.name
     });
     if (!exported.ok) {
-      fail(exported.error);
+      fail(exported.code, exported.error);
 
       return;
     }
@@ -594,7 +596,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
     if (!target) {
       const listed = await listCdns(connection, space);
       if (!listed.ok) {
-        fail(listed.error);
+        fail(listed.code, listed.error);
 
         return undefined;
       }

@@ -37,6 +37,7 @@ export const patchBinding = (space: Space, env: Env, op: PatchBinding): OpResult
   const binding = list?.find(b => (op.id ? b.id === op.id : b.to === op.to));
   if (!binding) {
     return fail(
+      'missing',
       'to',
       `No ${op.category} binding matching "${op.id ?? op.to}" on "${op.ref}"`,
       'Use upsertBinding to add it'

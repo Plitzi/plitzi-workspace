@@ -273,6 +273,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
   const project = await findProject(process.cwd());
   if (!project) {
     fail(
+      'not-a-project',
       'plitzi plugin add adds an element to a project, and there is no package.json here or above. ' +
         'For a plugin of its own, run plitzi create <folder> --plugin.'
     );
@@ -281,28 +282,34 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
   }
 
   if (namesGiven.length > 1 && (options.title !== undefined || options.description !== undefined)) {
-    fail('--title and --description describe one element: add several without them, or one at a time.');
+    fail(
+      'wrong-options',
+      '--title and --description describe one element: add several without them, or one at a time.'
+    );
 
     return;
   }
 
   const { shape, problem: shapeProblem } = shapeFromFlags(options);
   if (shapeProblem ?? (shape && namesGiven.length > 1)) {
-    fail(shapeProblem ?? '--prop, --trigger, --callback and --headless shape one element: add them one at a time.');
+    fail(
+      'wrong-options',
+      shapeProblem ?? '--prop, --trigger, --callback and --headless shape one element: add them one at a time.'
+    );
 
     return;
   }
 
   const refusedServer = options.server ? serverProblem(project) : undefined;
   if (refusedServer) {
-    fail(refusedServer);
+    fail('not-a-project', refusedServer);
 
     return;
   }
 
   const givenProblem = namesGiven.length > 0 ? namesProblem(namesGiven) : undefined;
   if (givenProblem) {
-    fail(givenProblem);
+    fail('bad-value', givenProblem);
 
     return;
   }
@@ -354,7 +361,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     });
     for (const { target } of planned) {
       if (!options.force && !(await isEmpty(target))) {
-        fail(`${target} is not empty. Pass --force to write into it anyway.`);
+        fail('exists', `${target} is not empty. Pass --force to write into it anyway.`);
 
         return;
       }

@@ -28,7 +28,7 @@ export const describeOperation = (type: string | undefined): Record<string, unkn
     const nearest = closest(type, types);
 
     return {
-      error: 'UNKNOWN_OPERATION',
+      error: 'missing',
       message: `There is no "${type}" operation${nearest ? ` — did you mean "${nearest}"?` : ''}`,
       ...(nearest ? { describe: { type: nearest } } : {}),
       types

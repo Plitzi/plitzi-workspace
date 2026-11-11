@@ -337,6 +337,7 @@ export const spaceProject = async (
   const legacy = await blockingLegacy(project.root);
   if (legacy.length > 0) {
     fail(
+      'old-layout',
       `The project is laid out as an older CLI left it (${legacy.map(place => place.found).join(', ')}): \`plitzi doctor --fix\` moves it to where lint reads the space, ${SPACE_DIR}/.`
     );
 
@@ -345,6 +346,7 @@ export const spaceProject = async (
 
   if (project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail(
+      'not-a-project',
       `${command} reads a space written in the project — ${SPACE_ENTRY}, as \`plitzi create --source local\` writes it. A space kept on Plitzi is read in the builder or over the MCP, and followed with \`plitzi space activity\`.`
     );
 

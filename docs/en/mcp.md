@@ -101,7 +101,7 @@ calls as a small one:
 | `plitzi_read` | Read several resources at once by URI |
 | `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with its `effects` (every change it made, read off the space before and after — a batch that changed nothing, or a store with nothing to save it in, is said first) and its suggestions. A store the batch left as it was is not written: a write sent again — a retry after a timeout — changes nothing, adds nothing to the history, and says `Nothing changed`; a delete sent again is refused, its element already gone. `dryRun` checks it without saving, `look` renders the page as the batch leaves it |
 | `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered with its `effects`, whether it was `saved`, and what was already so; classes are added or removed, the rest kept. A class it does not wear cannot be taken off, nor a value written under a binding |
-| `plitzi_describe_operation` | One operation's schema by its type, or every type there is. A field an operation does not have is refused naming the one meant; the same batch refused twice is not run again (`REPEATED_BATCH`) |
+| `plitzi_describe_operation` | One operation's schema by its type, or every type there is. A field an operation does not have is refused naming the one meant; the same batch refused twice is not run again (`repeated`) |
 | `plitzi_look` | See a saved page: its accessibility outline (default), its HTML, or an image |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
@@ -137,6 +137,10 @@ service for an image or an outline); where they are missing, it says so instead 
 - **An agent is held to the same rules as the builder.** A save runs the same linter every writer of a space runs.
   Anything an edit would break is refused, and so is a problem already present in an element the batch touches, so an
   agent cannot build on top of it. It fixes the problem in the same batch; the refusal says exactly what to change.
+- **Every refusal has a code and a step.** Each error of a refused batch carries a `code` of the list the CLI's
+  commands share ([refusals](./refusals.md)), its `path` and a `hint` that names what to do — never an empty one or a
+  "nothing to delete": a delete of what is not there is refused as `missing`, so a mistyped name is never read as
+  done. A tool that cannot act at all answers `{ error: <code>, message }` from the same list.
 - **Secrets never reach the agent.** It writes [connector](./connectors.md) manifests and
   [server actions](./server-actions.md) that *name* a credential; the space owner attaches the secret in the builder.
   An integration an agent builds saves without one and works once the owner adds it.

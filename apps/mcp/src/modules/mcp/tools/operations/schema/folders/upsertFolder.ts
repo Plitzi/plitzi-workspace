@@ -27,7 +27,12 @@ export const upsertFolder = (space: Space, env: Env, op: UpsertFolder): OpResult
   if (op.parentId !== undefined && op.parentId !== null) {
     const parent = findFolderByRef(space.schema, op.parentId);
     if (!parent) {
-      return fail('parentId', `Parent folder "${op.parentId}" not found`, 'Create it with upsertFolder first');
+      return fail(
+        'missing',
+        'parentId',
+        `Parent folder "${op.parentId}" not found`,
+        'Create it with upsertFolder first'
+      );
     }
 
     parentId = parent.id;

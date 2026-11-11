@@ -25,12 +25,18 @@ export type UpsertFlag = z.infer<typeof upsertFlagOp>;
 
 export const upsertFlag = (space: Space, env: Env, op: UpsertFlag): OpResult => {
   if (!isFlagName(op.name)) {
-    return fail('name', `"${op.name}" is not a flag name`, 'Letters, digits and "_", starting with a letter or "_"');
+    return fail(
+      'bad-value',
+      'name',
+      `"${op.name}" is not a flag name`,
+      'Letters, digits and "_", starting with a letter or "_"'
+    );
   }
 
   const flag = { ...(op.description ? { description: op.description } : {}), value: op.value, rules: op.rules ?? [] };
   if (!isSchemaFlag(flag)) {
     return fail(
+      'bad-value',
       'rules',
       'A rule is { when: { combinator, rules: [...] }, value: true | false }',
       'Fix the rule groups'

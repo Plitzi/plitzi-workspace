@@ -346,7 +346,7 @@ const contextOf = async (): Promise<DoctorContext | undefined> => {
 
   const context = await projectContext(project);
   if ('problem' in context) {
-    fail(context.problem);
+    fail('not-a-project', context.problem);
 
     return undefined;
   }

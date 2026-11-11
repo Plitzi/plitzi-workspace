@@ -439,14 +439,17 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
 
   const steps = actingSteps(options.steps, 'page outline', { others: false, widths: options.width ?? [1440] });
   if ('problem' in steps) {
-    fail(`${steps.problem}.`);
+    fail('bad-value', `${steps.problem}.`);
 
     return;
   }
 
   // A visitor's steps make what they make on the project's page: the other site has no such data to make.
   if (steps.length > 0 && target !== undefined) {
-    fail('--steps plays on the project’s page: leave out --compare, or open the other site’s with --click.');
+    fail(
+      'wrong-options',
+      '--steps plays on the project’s page: leave out --compare, or open the other site’s with --click.'
+    );
 
     return;
   }
@@ -470,7 +473,8 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
     ): void => {
       if ('problem' in read) {
         // A part or a reading this page refuses is the asker's; the other site not answering a click is the site's.
-        (read.phase === 'part' || (read.phase === 'read' && target === undefined) ? fail : unanswered)(
+        fail(
+          read.phase === 'part' || (read.phase === 'read' && target === undefined) ? 'missing' : 'unanswered',
           read.phase === 'read' ? `${read.problem} on ${url}` : read.problem
         );
 
@@ -544,7 +548,7 @@ export const outline = async (route: string, options: OutlineOptions): Promise<v
 
       const notPlayed = await playedOn(opened.page, steps);
       if (notPlayed) {
-        fail(`--steps: ${notPlayed.problem}.`);
+        fail('failed', `--steps: ${notPlayed.problem}.`);
 
         return;
       }

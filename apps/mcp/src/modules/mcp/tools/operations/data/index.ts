@@ -21,7 +21,12 @@ export type UpsertDataFile = z.infer<typeof upsertDataFileOp>;
 export type DeleteDataFile = z.infer<typeof deleteDataFileOp>;
 
 const unavailable = (): OpResult =>
-  fail('type', 'This deployment keeps no space data', 'Read the data through a connector or a server action instead');
+  fail(
+    'not-allowed',
+    'type',
+    'This deployment keeps no space data',
+    'Read the data through a connector or a server action instead'
+  );
 
 /**
  * The data is one store of files, saved whole: an op edits the draft's copy, and the batch saves the files it leaves —
@@ -37,6 +42,7 @@ export const upsertDataFile = (space: Space, env: Env, op: UpsertDataFile): OpRe
     JSON.parse(op.content);
   } catch (error) {
     return fail(
+      'bad-value',
       'content',
       `"${op.path}" is not JSON: ${error instanceof Error ? error.message : String(error)}`,
       'Write the whole file as JSON text — an object or a list'
@@ -60,6 +66,7 @@ export const deleteDataFile = (space: Space, env: Env, op: DeleteDataFile): OpRe
 
   if (!Object.hasOwn(space.data.files, op.path)) {
     return fail(
+      'missing',
       'path',
       `The data has no file "${op.path}"`,
       `Read ${dataUri(env)} for the files it has`,

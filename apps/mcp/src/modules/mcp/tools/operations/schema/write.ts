@@ -40,7 +40,9 @@ export const guardNewRef = (space: Space, ref: string, field: string): OpResult 
     return null;
   }
 
-  return isValidElementId(ref) ? fail(field, conflict, TAKEN_HINT) : fail(field, conflict, ID_REF_HINT);
+  return isValidElementId(ref)
+    ? fail('exists', field, conflict, TAKEN_HINT)
+    : fail('bad-value', field, conflict, ID_REF_HINT);
 };
 
 // URI builders are the single source of truth in helpers/uris; re-exported here so the element-schema handlers
@@ -154,6 +156,7 @@ export const resolveElement = (
   if (!page) {
     return {
       error: fail(
+        'missing',
         'pageRef',
         `Page or layout "${pageRef}" not found`,
         `Read plitzi://schema/${env}/pages for valid refs — a layout shell is named there too`
@@ -164,7 +167,12 @@ export const resolveElement = (
   const el = resolveRef(space.schema, page, ref);
   if (!el || el.id === page.id) {
     return {
-      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Name an element this page holds')
+      error: fail(
+        'missing',
+        'ref',
+        `Element "${ref}" not found in page "${pageRef}"`,
+        'Name an element this page holds'
+      )
     };
   }
 

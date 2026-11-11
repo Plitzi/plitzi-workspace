@@ -60,12 +60,14 @@ const unchanged = (before: unknown, after: unknown, skip?: string[]): boolean =>
 const functionsErrors = (saved: Exclude<FunctionsSaveResult, { ok: true }>, env: Env): ValidationError[] =>
   'problems' in saved
     ? saved.problems.map(problem => ({
+        code: 'bad-value',
         path: problem.file ? `functions/${problem.file}${problem.line ? `:${String(problem.line)}` : ''}` : 'functions',
         message: problem.message,
         hint: `Fix it with upsertFunctionFile; read ${functionFileUri(env, problem.file ?? 'index.ts')} for the file`
       }))
     : [
         {
+          code: 'changed-since',
           path: 'functions',
           message: saved.refusal.error,
           hint: `Read ${functionsUri(env)} again and redo the change on the current files`
@@ -75,12 +77,14 @@ const functionsErrors = (saved: Exclude<FunctionsSaveResult, { ok: true }>, env:
 const dataErrors = (saved: Exclude<DataSaveResult, { ok: true }>, env: Env): ValidationError[] =>
   'problems' in saved
     ? saved.problems.map(problem => ({
+        code: 'bad-value',
         path: `data/${problem.file}`,
         message: problem.message,
         hint: `Fix it with upsertDataFile, or deleteDataFile; read ${dataFileUri(env, problem.file)} for the file`
       }))
     : [
         {
+          code: 'changed-since',
           path: 'data',
           message: saved.refusal.error,
           hint: `Read ${dataUri(env)} again and redo the change on the current files`

@@ -53,6 +53,7 @@ export const patchConnector = (space: Space, env: Env, op: PatchConnector): OpRe
   const entry = findConnectorEntry(space, op.ref);
   if (!entry) {
     return fail(
+      'missing',
       'ref',
       `Connector "${op.ref}" does not exist`,
       `Create it with upsertConnector, or read ${connectorsUri(env)} for the connectors this space has`,
@@ -108,6 +109,7 @@ export const patchConnector = (space: Space, env: Env, op: PatchConnector): OpRe
   // behind that is removing the connector, which deleteConnector does explicitly.
   if (nextRead && Object.keys(nextRead).length === 0) {
     return fail(
+      'bad-value',
       'endpoints.read',
       `This would leave connector "${op.ref}" with no read endpoint`,
       'A connector needs at least one read endpoint to feed an element. Delete the connector if that is the intent'

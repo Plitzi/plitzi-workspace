@@ -85,6 +85,7 @@ export const requestExport = async (
 
     return {
       ok: false,
+      code: 'missing',
       error: `No space you can reach is ${name}${who.ok ? ` — you are signed in as ${who.value}` : ''}${said ? ` (the platform said: ${said})` : ''}. One of another workspace is reached signed in as one of its members: plitzi logout, then plitzi login as one.`
     };
   }
@@ -93,7 +94,11 @@ export const requestExport = async (
     403: `You may not take ${name} out: it takes being able to change it — its owner, an administrator or a writer.`
   };
 
-  return { ok: false, error: why[status] ?? said ?? `The platform would not hand ${name} over (${String(status)}).` };
+  return {
+    ok: false,
+    code: status === 403 ? 'not-allowed' : 'refused-by-platform',
+    error: why[status] ?? said ?? `The platform would not hand ${name} over (${String(status)}).`
+  };
 };
 
 /**
@@ -113,7 +118,7 @@ export const fetchExport = async (
   console.log(`\nTaking ${chalk.bold(name)} (${versionLabel(version)}) out of ${api}…`);
   const exported = await requestExport(connection, from, { source, version, name });
   if (!exported.ok) {
-    fail(exported.error);
+    fail(exported.code, exported.error);
 
     return undefined;
   }

@@ -111,6 +111,7 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
   const candidates = await elementFolders(project);
   if (candidates.length === 0) {
     fail(
+      'missing',
       'No element to pack: name its folder (plitzi plugin pack src/components/SeatPicker), or add one with ' +
         'plitzi plugin add.'
     );
@@ -140,7 +141,10 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
 const packPluginCommand = async (foldersGiven: string[], options: PackPluginOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    fail('plitzi plugin pack packs a plugin of a project, and there is no package.json here or above.');
+    fail(
+      'not-a-project',
+      'plitzi plugin pack packs a plugin of a project, and there is no package.json here or above.'
+    );
 
     return;
   }
@@ -227,7 +231,7 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
       throw error;
     }
 
-    fail(error.message);
+    fail('does-not-build', error.message);
   }
 };
 

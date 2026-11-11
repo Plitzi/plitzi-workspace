@@ -32,14 +32,14 @@ export const resourceErrorMessage = (env: Env, uri: string): string => {
   const knownShape = itemTemplates(env).some(tpl => canonical.startsWith(tpl.slice(0, tpl.lastIndexOf('/') + 1)));
   if (knownShape) {
     return JSON.stringify({
-      error: 'NOT_FOUND',
+      error: 'missing',
       message: `No resource at '${uri}'. Its shape is valid but the ref does not resolve.`,
       hint: 'It may have been deleted or your URI is stale. Re-list the parent resource (pages/definitions) to refresh.'
     });
   }
 
   return JSON.stringify({
-    error: 'MALFORMED_URI',
+    error: 'bad-value',
     message: `'${uri}' matches no resource template.`,
     hint: 'Do not hand-build element URIs — take the ready-made uri from plitzi_search or a write response.',
     validTemplates: [primerUri(env), ...itemTemplates(env)]

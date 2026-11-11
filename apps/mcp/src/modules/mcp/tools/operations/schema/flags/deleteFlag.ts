@@ -15,7 +15,7 @@ export type DeleteFlag = z.infer<typeof deleteFlagOp>;
 export const deleteFlag = (space: Space, env: Env, op: DeleteFlag): OpResult => {
   const flags = space.schema.flags ?? {};
   if (!Object.hasOwn(flags, op.name)) {
-    return fail('name', `The space declares no flag "${op.name}"`, `Read ${flagsUri(env)}`);
+    return fail('missing', 'name', `The space declares no flag "${op.name}"`, `Read ${flagsUri(env)}`);
   }
 
   const { [op.name]: _removed, ...rest } = flags;

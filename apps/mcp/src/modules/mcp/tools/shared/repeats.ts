@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
+
 /**
  * The same batch refused again — an agent going round in circles, which a model is not trusted to notice. Counted per
  * process, as a hint and never a lock: a call that lands on another worker only loses the hint.
@@ -44,6 +46,6 @@ export const AGAIN =
   'ask the person what they meant.';
 
 export const REPEATED = {
-  error: 'REPEATED_BATCH',
+  error: 'repeated',
   message: 'This exact batch was refused twice, and was not run again. Change what the errors named, or ask the person.'
-};
+} satisfies { error: RefusalCode; message: string };

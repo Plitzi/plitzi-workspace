@@ -111,7 +111,7 @@ const refusalOf = (name: string, errors: readonly { text: string }[]): string =>
  */
 export const addFunctionsPackage = async (name: string, options: DryRunOptions): Promise<void> => {
   if (!PACKAGE_NAME.test(name)) {
-    fail(`"${name}" is not a package's name — ical.js, @scope/name.`);
+    fail('bad-value', `"${name}" is not a package's name — ical.js, @scope/name.`);
 
     return;
   }
@@ -129,7 +129,10 @@ export const addFunctionsPackage = async (name: string, options: DryRunOptions):
     try {
       entry = createRequire(path.join(root, 'package.json')).resolve(`${name}/package.json`);
     } catch {
-      fail(`${name} is not installed in this project: install it first (${projectAdd(`-D ${name}`)}), then add it.`);
+      fail(
+        'missing',
+        `${name} is not installed in this project: install it first (${projectAdd(`-D ${name}`)}), then add it.`
+      );
 
       return;
     }
@@ -142,7 +145,7 @@ export const addFunctionsPackage = async (name: string, options: DryRunOptions):
   }
 
   if ('errors' in built) {
-    fail(refusalOf(name, built.errors));
+    fail('does-not-build', refusalOf(name, built.errors));
 
     return;
   }
@@ -150,6 +153,7 @@ export const addFunctionsPackage = async (name: string, options: DryRunOptions):
   const bytes = Buffer.byteLength(built.code);
   if (bytes > MAX_FUNCTIONS_BYTES) {
     fail(
+      'not-allowed',
       `${name} is ${String(Math.round(bytes / 1024))} KB bundled, and a space's functions are at most ${String(MAX_FUNCTIONS_BYTES / 1000)} KB built, all of it: look for a smaller one, or import less of it.`
     );
 

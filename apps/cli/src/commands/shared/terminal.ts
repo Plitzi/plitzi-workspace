@@ -4,19 +4,16 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { REFUSALS } from '@plitzi/sdk-shared/refusals';
+
 import type { PackageManager } from '../../scaffold';
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
 import type readline from 'node:readline/promises';
 
 /**
  * What every command shares with the person running it: whether anybody is there, how a choice is put to them, and
  * what happens when nobody is.
  */
-
-/** Why a command stopped, to stderr, and the exit code that says it did. */
-export const fail = (problem: string): void => {
-  console.error(chalk.red(problem));
-  process.exitCode = 1;
-};
 
 /**
  * A page command's exit when it could not answer what it was asked — nothing served, a browser that did not start, the
@@ -27,8 +24,18 @@ export const UNANSWERED_EXIT = 2;
 
 /** Why a page command could not answer, to stderr, and {@link UNANSWERED_EXIT}. */
 export const unanswered = (problem: string): void => {
+  fail('unanswered', problem);
+};
+
+/**
+ * Why a command stopped, to stderr, with its code and what to do next — the code's own step unless this refusal knows a
+ * better one — and the exit code that says it did. Every refusal of a command goes through here or {@link unanswered},
+ * so none is said without a code and a next step (`docs/en/refusals.md`).
+ */
+export const fail = (code: RefusalCode, problem: string, next: string = REFUSALS[code].next): void => {
   console.error(chalk.red(problem));
-  process.exitCode = UNANSWERED_EXIT;
+  console.error(chalk.dim(`  Next (${code}): ${next}`));
+  process.exitCode = code === 'unanswered' ? UNANSWERED_EXIT : 1;
 };
 
 /** A choice among a fixed few, put to the person as the flag that would have answered it. */
@@ -69,7 +76,8 @@ export const refuseWithoutTerminal = (
   });
 
   const flags = questions.map(({ flag }) => `${flag} <their answer>`).join(' ');
-  console.error(`\nThen run the same command again with their answers: ${flags}`);
+  const code: RefusalCode = 'nobody-to-ask';
+  console.error(chalk.dim(`\n  Next (${code}): run the same command again with their answers: ${flags}`));
   process.exitCode = 1;
 };
 

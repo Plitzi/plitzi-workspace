@@ -40,7 +40,12 @@ export const patchInteractionNode = (space: Space, env: Env, op: PatchInteractio
 
   const node = found.el.definition.interactions?.[op.nodeId];
   if (!node) {
-    return fail('nodeId', `Interaction node "${op.nodeId}" not found on "${op.ref}"`, 'Read the element to list nodes');
+    return fail(
+      'missing',
+      'nodeId',
+      `Interaction node "${op.nodeId}" not found on "${op.ref}"`,
+      'Read the element to list nodes'
+    );
   }
 
   if (op.title !== undefined) {

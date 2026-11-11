@@ -18,6 +18,7 @@ const checkManifest = (manifest: unknown, base: string, ctx: ValidationCtx): voi
   const report = validateConnectorManifest(manifest);
   for (const issue of report.errors) {
     ctx.errors.push({
+      code: 'bad-value',
       path: issue.path ? `${base}.${issue.path}` : base,
       message: issue.message,
       hint: issue.hint ?? 'Read plitzi://guide (Connectors) for the manifest shape'
@@ -121,6 +122,7 @@ export const checkProviderElement = (
   const reads = Object.keys(entry.manifest.endpoints.read);
   if (endpoint !== undefined && !reads.includes(endpoint)) {
     ctx.errors.push({
+      code: 'missing',
       path: `${base}.props.endpoint`,
       message: `Connector "${connectorId}" has no read endpoint named "${endpoint}"`,
       hint: 'Name one the connector declares, or add it with patchConnector',
@@ -143,6 +145,7 @@ export const checkProviderElement = (
     const operator = asString((filter as { operator?: unknown }).operator);
     if (operator !== undefined && !operators.includes(operator)) {
       ctx.errors.push({
+        code: 'missing',
         path: `${base}.props.filters[${i}].operator`,
         message: `Connector "${connectorId}" declares no operator "${operator}", so this filter is dropped and the query returns unfiltered records`,
         hint: 'Use an operator the connector declares, or add it with patchConnector',

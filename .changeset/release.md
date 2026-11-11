@@ -63,6 +63,11 @@ An authored request connects to the address its name was judged to, and the advi
   `space impact` load it when one of them runs, from a chunk of its own. What a start reads went from 3.9 MB to 1.7 MB
   — `plitzi --version` 95 → 79 ms and `plitzi explain` 92 → 79 ms with the change above; a run's commands start as
   before. No command's output or options changed.
+- Every refusal of a command says its code and the step to take, on a line under the problem — `Next (exists): choose
+  another name or place…` — from one list the MCP shares (`@plitzi/sdk-shared/refusals`, `docs/en/refusals.md`),
+  which `plitzi explain <code>` answers along with a run's refusal codes. A command that could not answer because
+  nothing did (`unanswered`) exits 2 wherever it is raised: `page shot` with no server exited 1, as if the page were
+  wrong.
 - `plitzi verify` on a project nothing serves serves it for its page checks and stops it after, and says so: on a fresh
   `create` it passed every check but the last until `npm start` was run by hand.
 - A new project installs with no advisory: the scaffold moves `minimatch` past its advisory (`overrides` for npm,
@@ -76,6 +81,16 @@ An authored request connects to the address its name was judged to, and the advi
   nothing: a store a batch left as it was is no longer saved. Every write the MCP sent was saved even when it changed
   nothing, so a retried `plitzi_set_attributes`, `plitzi_apply` or `plitzi_add_page` added a second entry to the space's
   history (two, with a class in it) for an edit nobody made. The answer says `Nothing changed`, as it did.
+- Every error of a refused batch carries a `code` from the list the CLI shares, beside its `path` and `hint`, and a
+  tool that cannot act answers with one of the same codes: `UNKNOWN_OPERATION` is `missing`, `REPEATED_BATCH`
+  `repeated`, `PREVIEW_UNAVAILABLE` `not-allowed`, a resource's `NOT_FOUND` and `MALFORMED_URI` `missing` and
+  `bad-value`, the preview's `NO_DATA` and `INVALID_OPERATIONS` `missing` and `bad-value`.
+- A delete of what the space does not have is refused (`missing`) for every kind: a variable, a class, a global or id
+  style, a token and a font answered `Nothing changed` and counted it deleted, so a mistyped name read as done. Hints
+  that named no step (`Nothing to delete`, an empty one for an invalid action) name one.
+- An id style is checked as a class is — an unknown CSS property is refused with the nearest one — and a token's name
+  must be one `var()` can read: `upsertIdStyle` wrote any property, and `upsertStyleVariable { name: "brand primary" }`
+  wrote `--brand primary`.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.
@@ -127,6 +142,10 @@ An authored request connects to the address its name was judged to, and the advi
   tree: no high or critical advisory is left, and CI's `audit` job holds it there.
 
 ## To do when you upgrade
+
+- A client that read the MCP's error names reads the codes of `@plitzi/sdk-shared/refusals` (above); a host that builds
+  a `ValidationError` or a `PreviewResult` gives it a `code` (`RefusalCode`). The CLI's `fail(problem)` is
+  `fail(code, problem, next?)`.
 
 - `createMemoryRateLimit()` → `createRateLimit()`. A deployment of several replicas passes
   `api.rateLimit: createRateLimit({ counts: redisThrottleCounts(redis, { prefix: '{auth-throttle}:' }) })`.

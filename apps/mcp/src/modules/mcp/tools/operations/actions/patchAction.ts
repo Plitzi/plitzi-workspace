@@ -48,6 +48,7 @@ export const patchAction = (space: Space, env: Env, op: PatchAction): OpResult =
   const entry = findActionEntry(space, op.ref);
   if (!entry) {
     return fail(
+      'missing',
       'ref',
       `Action "${op.ref}" does not exist`,
       `Create it with upsertAction, or read ${actionsUri(env)} for the actions this space has`,
@@ -98,7 +99,13 @@ export const patchAction = (space: Space, env: Env, op: PatchAction): OpResult =
   // removing the step that returned the output is the obvious way to break a flow one field at a time.
   const report = validateActionDocument(patched);
   if (!report.valid) {
-    return fail('nodes', `Invalid action: ${report.errors.map(issue => issue.message).join('; ')}`, '', []);
+    return fail(
+      'bad-value',
+      'nodes',
+      `Invalid action: ${report.errors.map(issue => issue.message).join('; ')}`,
+      'Fix each step the message names: plitzi_describe_operation { type: "patchAction" } shows the fields a step takes',
+      []
+    );
   }
 
   entry.document = patched;

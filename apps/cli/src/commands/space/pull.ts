@@ -168,6 +168,7 @@ export const pullParts = async (parts: readonly string[], options: PullOptions):
   const unknown = parts.filter(part => !(PULL_PARTS as readonly string[]).includes(part));
   if (unknown.length > 0) {
     fail(
+      'bad-value',
       `plitzi space pull brings ${PULL_PARTS.join(', ')} alone — not ${unknown.join(', ')}: leave the parts out to bring the whole space.`
     );
 
@@ -176,6 +177,7 @@ export const pullParts = async (parts: readonly string[], options: PullOptions):
 
   if (options.environment !== undefined || options.revision !== undefined) {
     fail(
+      'wrong-options',
       'The functions are pulled from the draft: leave out --environment and --revision (they choose the version the whole space follows).'
     );
 
@@ -191,6 +193,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
   const origin = await readOrigin(root);
   if (!origin) {
     fail(
+      'not-a-project',
       'This project was not made from a space: there is no .plitzi/space.json here. plitzi create --from <space> makes one.'
     );
 
@@ -204,7 +207,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
 
   const asked = versionToPull(options, origin.version);
   if (!asked.ok) {
-    fail(asked.error);
+    fail('bad-value', asked.error);
 
     return;
   }
@@ -293,6 +296,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
 
   if (conflicts.length > 0 && !options.force) {
     fail(
+      'changed-since',
       `Nothing was pulled: these changed here and on ${origin.space.name} too:${list(conflicts)}\n` +
         'Commit or set aside the changes here and pull again, or pass --force to take the space’s copy of them.'
     );

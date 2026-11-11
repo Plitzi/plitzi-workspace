@@ -485,7 +485,10 @@ export const measure = async (route: string, elements: string[], options: Measur
   const pairs = [...named, ...forRelations].map(pairOf);
   if (options.there !== undefined) {
     if (pairs.length !== 1) {
-      fail('--there names the other page’s element of one element asked: for several, write each as "ours => theirs"');
+      fail(
+        'bad-value',
+        '--there names the other page’s element of one element asked: for several, write each as "ours => theirs"'
+      );
 
       return;
     }
@@ -497,6 +500,7 @@ export const measure = async (route: string, elements: string[], options: Measur
   // and a focus at once are no state a visitor reaches.
   if ([options.hover, options.focus, options.press].filter(each => each !== undefined).length > 1) {
     fail(
+      'wrong-options',
       'One hovered, focused or held down at a time: --hover, --focus or --press — after --click … when it is inside what they open'
     );
 
@@ -521,6 +525,7 @@ export const measure = async (route: string, elements: string[], options: Measur
   const target = options.compare === undefined ? undefined : otherPageAt(route, options.compare);
   if (options.each && target) {
     fail(
+      'wrong-options',
       '--each measures this page’s copies of an element: the other page’s are other copies — measure them without --compare'
     );
 
@@ -529,6 +534,7 @@ export const measure = async (route: string, elements: string[], options: Measur
 
   if (options.same && !target) {
     fail(
+      'wrong-options',
       `--same holds properties to another page: give it --compare <that page> — to print only some of this page's, --only ${options.same.join(',')}`
     );
 
@@ -537,7 +543,7 @@ export const measure = async (route: string, elements: string[], options: Measur
 
   const steps = actingSteps(options.steps, 'page measure', { widths: options.width ?? [1440] });
   if ('problem' in steps) {
-    fail(`${steps.problem}.`);
+    fail('bad-value', `${steps.problem}.`);
 
     return;
   }
@@ -545,6 +551,7 @@ export const measure = async (route: string, elements: string[], options: Measur
   // What this page's visitor does before it is measured: the other page is another site, with no such data to make.
   if (steps.length > 0 && target) {
     fail(
+      'wrong-options',
       '--steps makes data on this page before it is measured: leave out --compare, or put the other page in its state with --click'
     );
 
@@ -581,6 +588,7 @@ export const measure = async (route: string, elements: string[], options: Measur
     const unknown = asksExtra(extra) ? await unknownProperties(browser, extra) : [];
     if (unknown.length > 0) {
       fail(
+        'bad-value',
         `${unknown.join(', ')}: no CSS ${unknown.length === 1 ? 'property' : 'properties'} this browser knows — --only and --same take a property by the name CSS gives it (overflow-x, scroll-snap-align), a pseudo-element's as after:<property>`
       );
 

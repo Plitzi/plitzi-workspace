@@ -206,6 +206,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail(
+      'not-a-project',
       'Run this in a project whose space is written in it (`src/space/`): one kept on Plitzi is fixed in the builder.'
     );
 
@@ -214,7 +215,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
 
   const loaded = await loadProjectSpace(project.root);
   if ('problem' in loaded) {
-    fail(loaded.problem);
+    fail('does-not-build', loaded.problem);
 
     return;
   }
@@ -230,7 +231,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
   }
 
   if ('problem' in plan) {
-    fail(`Nothing to plan: ${plan.problem}. \`${projectRun('author')}\` says what to change first.`);
+    fail('does-not-build', `Nothing to plan: ${plan.problem}. \`${projectRun('author')}\` says what to change first.`);
 
     return;
   }
@@ -277,7 +278,10 @@ export const fix = async (options: FixOptions): Promise<void> => {
     refused.push(...blamed.map(entry => ({ fix: entry, why })));
     const rest = attempt.written.filter(entry => !blamed.includes(entry));
     if (blamed.length === 0 || rest.length === 0) {
-      fail(['Nothing was written — the source is as it was:', ...reasons.map(reason => `  - ${reason}`)].join('\n'));
+      fail(
+        'failed',
+        ['Nothing was written — the source is as it was:', ...reasons.map(reason => `  - ${reason}`)].join('\n')
+      );
       console.log(leftText([...edited.left, ...refused]).join('\n'));
 
       return;

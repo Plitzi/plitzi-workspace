@@ -109,7 +109,7 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
   }
 
   if (problems.length > 0) {
-    fail(['Not ready for a run yet:', ...problems.map(each => `  - ${each}`)].join('\n'));
+    fail('not-a-project', ['Not ready for a run yet:', ...problems.map(each => `  - ${each}`)].join('\n'));
 
     return;
   }
@@ -125,7 +125,7 @@ export const runStart = async (ask: string, options: StartOptions): Promise<void
           async id => (await exists(runReportDir(here.root, id))) || (await exists(runPaths(here.root, id).dir))
         ));
   if (run === undefined) {
-    fail(`Name the run: the ask has no word a name is made of — plitzi run start "${ask}" --run <name>`);
+    fail('bad-value', `Name the run: the ask has no word a name is made of — plitzi run start "${ask}" --run <name>`);
 
     return;
   }

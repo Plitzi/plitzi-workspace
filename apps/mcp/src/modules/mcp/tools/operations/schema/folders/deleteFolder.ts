@@ -17,7 +17,7 @@ export const deleteFolder = (space: Space, env: Env, op: DeleteFolder): OpResult
   const folders = pageFoldersOf(space.schema);
   const folder = findFolderByRef(space.schema, op.ref);
   if (!folder) {
-    return fail('ref', `Folder "${op.ref}" not found`, 'Read plitzi://folders for valid refs');
+    return fail('missing', 'ref', `Folder "${op.ref}" not found`, 'Read plitzi://folders for valid refs');
   }
 
   // Promote the folder's contents one level up: child folders and its pages move to its parent (or the root).

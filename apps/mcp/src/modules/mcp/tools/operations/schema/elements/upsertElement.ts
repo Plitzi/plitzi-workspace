@@ -31,6 +31,7 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
   const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
     return fail(
+      'missing',
       'pageRef',
       `Page or layout "${op.pageRef}" not found`,
       'Read plitzi://schema/' + env + '/pages for valid refs'
@@ -98,7 +99,12 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
   if (op.parentRef) {
     const anchor = resolveRef(space.schema, page, op.parentRef);
     if (!anchor) {
-      return fail('parentRef', `Parent "${op.parentRef}" not found in page "${op.pageRef}"`, 'Use an existing ref');
+      return fail(
+        'missing',
+        'parentRef',
+        `Parent "${op.parentRef}" not found in page "${op.pageRef}"`,
+        'Use an existing ref'
+      );
     }
 
     anchorId = anchor.id;
@@ -107,6 +113,7 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
 
   if (!createElement(space, page, op.element, anchorId, drop)) {
     return fail(
+      'bad-value',
       'parentRef',
       `"${op.element.ref}" cannot be placed ${op.position ?? 'inside'} "${op.parentRef ?? op.pageRef}"`,
       'An element goes inside an element that holds children, or before/after one that has a parent — a page has no siblings.'

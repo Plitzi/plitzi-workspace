@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { guardKind, idsUri, idUri, MODES } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -20,6 +20,10 @@ export const deleteIdStyle = (space: Space, env: Env, op: DeleteIdStyle): OpResu
   const guard = guardKind(space.style, op.targetId, 'id');
   if (guard) {
     return guard;
+  }
+
+  if (!MODES.some(mode => Object.hasOwn(space.style.platform[mode], op.targetId))) {
+    return fail('missing', 'targetId', `No id rule for "${op.targetId}"`, `Read ${idsUri(env)} for what there is`);
   }
 
   for (const mode of MODES) {

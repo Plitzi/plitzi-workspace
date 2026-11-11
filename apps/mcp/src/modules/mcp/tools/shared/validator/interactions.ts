@@ -181,6 +181,7 @@ export const checkInteractionNode = (
   // shaped like any other step, so nothing but this says so — and the mirror check lives in the action validator.
   if (node.nodeType === 'task') {
     ctx.errors.push({
+      code: 'not-allowed',
       path: `${base}.nodeType`,
       message: `Step "${node.action}" is a server task, which cannot run in a page flow`,
       hint: 'Put it in a server action (upsertAction) and call that action from this flow'

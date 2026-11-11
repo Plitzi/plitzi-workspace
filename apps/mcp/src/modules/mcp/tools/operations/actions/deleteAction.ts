@@ -21,6 +21,7 @@ export const deleteAction = (space: Space, env: Env, op: DeleteAction): OpResult
   const entry = findActionEntry(space, op.ref);
   if (!entry) {
     return fail(
+      'missing',
       'ref',
       `Action "${op.ref}" does not exist`,
       `Read ${actionsUri(env)} for the actions this space has`,

@@ -25,6 +25,7 @@ export const checkCss = (
   // A shorthand whose longhands a bare var() hides is refused as authoring refuses it: expanded, it was a guess.
   for (const ambiguous of ambiguousShorthands(declared)) {
     ctx.errors.push({
+      code: 'bad-value',
       path: `${path}.${ambiguous.property}`,
       message: `"${ambiguous.property}: ${ambiguous.value}" cannot be expanded: what the variable holds decides which longhand it is`,
       hint: `Name the longhand it is: ${ambiguous.fix}`
@@ -37,6 +38,7 @@ export const checkCss = (
     if (!isCssProperty(key)) {
       const suggestion = suggestCssProperty(key);
       ctx.errors.push({
+        code: 'bad-value',
         path: `${path}.${key}`,
         message: `Unknown CSS property "${key}"`,
         hint: suggestion

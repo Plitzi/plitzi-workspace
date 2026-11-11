@@ -86,6 +86,7 @@ export const cert = async (options: CertOptions): Promise<void> => {
   const authority = await authorityFolder();
   if (authority === undefined) {
     fail(
+      'missing',
       `mkcert is not installed: it makes the certificate, and the authority your devices trust. Install it — ${
         INSTALL_MKCERT[process.platform] ?? 'see https://github.com/FiloSottile/mkcert'
       } — and run plitzi cert again.`
@@ -102,7 +103,7 @@ export const cert = async (options: CertOptions): Promise<void> => {
   try {
     await run('mkcert', ['-cert-file', TLS_CERT_FILE, '-key-file', TLS_KEY_FILE, ...names], { cwd: root });
   } catch (error) {
-    fail(`mkcert could not make the certificate: ${error instanceof Error ? error.message : String(error)}`);
+    fail('failed', `mkcert could not make the certificate: ${error instanceof Error ? error.message : String(error)}`);
 
     return;
   }

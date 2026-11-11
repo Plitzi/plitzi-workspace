@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { defsUri, defUri, guardKind, MODES } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -17,6 +17,10 @@ export const deleteDefinition = (space: Space, env: Env, op: DeleteDefinition): 
   const guard = guardKind(space.style, op.ref, 'class');
   if (guard) {
     return guard;
+  }
+
+  if (!MODES.some(mode => Object.hasOwn(space.style.platform[mode], op.ref))) {
+    return fail('missing', 'ref', `No class "${op.ref}"`, `Read ${defsUri(env)} for what there is`);
   }
 
   for (const mode of MODES) {

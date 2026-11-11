@@ -107,13 +107,13 @@ export const importPage = async (address: string, options: ImportOptions): Promi
   try {
     url = new URL(address);
   } catch {
-    fail(`${address} is not a URL: give the whole address, https://example.com/page.`);
+    fail('bad-value', `${address} is not a URL: give the whole address, https://example.com/page.`);
 
     return;
   }
 
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-    fail(`${address} is not a web page: only http and https addresses are imported.`);
+    fail('bad-value', `${address} is not a web page: only http and https addresses are imported.`);
 
     return;
   }
@@ -126,14 +126,14 @@ export const importPage = async (address: string, options: ImportOptions): Promi
   const out = options.out ?? 'src/imported';
   const target = path.resolve(project.root, out);
   if (path.relative(project.root, target).startsWith('..')) {
-    fail(`${out} is outside the project: the import is written inside it.`);
+    fail('bad-value', `${out} is outside the project: the import is written inside it.`);
 
     return;
   }
 
   const existing = await filesUnder(target);
   if (existing.length > 0 && !options.force) {
-    fail(`${out} already has files: choose another --out, or --force to write over them.`);
+    fail('exists', `${out} already has files: choose another --out, or --force to write over them.`);
 
     return;
   }
@@ -143,7 +143,7 @@ export const importPage = async (address: string, options: ImportOptions): Promi
   const ownership = await siteOwnership(url, options);
   if (!ownership.ok) {
     if (ownership.problem) {
-      fail(ownership.problem);
+      fail('not-allowed', ownership.problem);
     }
 
     return;
@@ -166,7 +166,7 @@ export const importPage = async (address: string, options: ImportOptions): Promi
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
-    fail(browser.problem);
+    fail('unanswered', browser.problem);
 
     return;
   }
@@ -176,7 +176,7 @@ export const importPage = async (address: string, options: ImportOptions): Promi
     for (const width of widths) {
       const result = await measure(browser, url.href, width, 'light');
       if ('problem' in result) {
-        fail(result.problem);
+        fail('failed', result.problem);
 
         return;
       }

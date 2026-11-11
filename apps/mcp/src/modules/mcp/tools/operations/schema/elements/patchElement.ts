@@ -61,6 +61,7 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
   const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
     return fail(
+      'missing',
       'pageRef',
       `Page or layout "${op.pageRef}" not found`,
       'Read plitzi://schema/' + env + '/pages for valid refs'
@@ -70,6 +71,7 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
   const el = resolveRef(space.schema, page, op.ref);
   if (!el || el.id === page.id) {
     return fail(
+      'missing',
       'ref',
       `Element "${op.ref}" not found in page "${op.pageRef}"`,
       'patchElement only updates an existing element; use upsertElement to create one'

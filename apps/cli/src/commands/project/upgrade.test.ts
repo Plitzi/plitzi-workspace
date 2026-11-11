@@ -628,7 +628,8 @@ describe('plitzi upgrade', () => {
     });
     await upgrade(['files'], {});
 
-    expect(String(said.mock.calls.at(1)?.[0])).toContain('Move it first — npx plitzi doctor --fix moves it');
+    // Each refusal is two lines, the problem and its next step: the second refusal's problem is the third.
+    expect(String(said.mock.calls.at(2)?.[0])).toContain('Move it first — npx plitzi doctor --fix moves it');
     process.exitCode = undefined;
   });
 

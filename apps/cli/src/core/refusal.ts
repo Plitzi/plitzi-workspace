@@ -24,8 +24,10 @@ export const REFUSAL_EXIT_CODES = {
 
 export type RefusalCode = keyof typeof REFUSAL_EXIT_CODES;
 
+const isRunRefusalCode = (name: string): name is RefusalCode => Object.hasOwn(REFUSAL_EXIT_CODES, name);
+
 /** What the harness does on each code: printed with the refusal, so the answer carries the next step. */
-const NEXT_STEP: Record<RefusalCode, string> = {
+export const RUN_REFUSAL_NEXT_STEPS: Readonly<Record<RefusalCode, string>> = {
   claimed: 'take another ready task (plitzi task next), or wait for the file (plitzi task claim <file> --wait)',
   waiting: 'take another ready task meanwhile; the file comes to this task when its holder is approved',
   reassigned: 'stop working on this task: it is no longer yours',
@@ -50,6 +52,12 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   identity:
     'pass your own token (--token): the one your first command on the run printed, kept in its scratch/<you>/token — never another’s'
 };
+
+/** Every refusal of a run, with its exit code and its next step: what `plitzi explain` and `docs/en/refusals.md` list. */
+export const runRefusals = (): { code: RefusalCode; exitCode: number; next: string }[] =>
+  Object.keys(REFUSAL_EXIT_CODES)
+    .filter(isRunRefusalCode)
+    .map(code => ({ code, exitCode: REFUSAL_EXIT_CODES[code], next: RUN_REFUSAL_NEXT_STEPS[code] }));
 
 export interface RefusalDetail {
   file?: string;
@@ -83,7 +91,7 @@ export class RunRefusal extends Error {
   }
 
   get next(): string {
-    return this.detail.next ?? NEXT_STEP[this.code];
+    return this.detail.next ?? RUN_REFUSAL_NEXT_STEPS[this.code];
   }
 
   toJSON(): Record<string, unknown> {

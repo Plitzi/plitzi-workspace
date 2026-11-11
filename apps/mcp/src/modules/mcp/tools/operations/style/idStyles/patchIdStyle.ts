@@ -31,6 +31,7 @@ export const patchIdStyle = (space: Space, env: Env, op: PatchIdStyle): OpResult
   const existing = idStyleToAI(space.style, op.targetId);
   if (!existing) {
     return fail(
+      'missing',
       'targetId',
       `No id rule for "${op.targetId}"`,
       'patchIdStyle only updates an existing id rule; use upsertIdStyle to create one'

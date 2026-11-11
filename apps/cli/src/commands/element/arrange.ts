@@ -65,7 +65,7 @@ interface Located {
 const locate = async (elementId: string, command: string[]): Promise<Located | undefined> => {
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
-    fail('Run this in a project whose space is written in it (`src/space/`).');
+    fail('not-a-project', 'Run this in a project whose space is written in it (`src/space/`).');
 
     return undefined;
   }
@@ -73,7 +73,7 @@ const locate = async (elementId: string, command: string[]): Promise<Located | u
   // Refused again with the same arguments: the answer will not change, and the next attempt should not be this one.
   const refuse = async (problem: string): Promise<void> => {
     const before = await noteRefused(project.root, command);
-    fail(before > 0 ? `${problem}\n${AGAIN}` : problem);
+    fail('bad-value', before > 0 ? `${problem}\n${AGAIN}` : problem);
   };
 
   const elements = await locatedSpace(project.root);
@@ -382,13 +382,19 @@ export const move = async (elementId: string, options: MoveOptions): Promise<voi
   const side = options.before ? 'before' : options.after ? 'after' : undefined;
   const siblingId = options.before ?? options.after;
   if (!side || !siblingId || (options.before && options.after)) {
-    fail('Say where it goes, one way: --before <id> or --after <id> — an element of the same list of children.');
+    fail(
+      'wrong-options',
+      'Say where it goes, one way: --before <id> or --after <id> — an element of the same list of children.'
+    );
 
     return;
   }
 
   if (siblingId === elementId) {
-    fail(`${elementId} beside itself is where it already is: --before or --after names another element of its list.`);
+    fail(
+      'bad-value',
+      `${elementId} beside itself is where it already is: --before or --after names another element of its list.`
+    );
 
     return;
   }

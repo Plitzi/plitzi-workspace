@@ -44,6 +44,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
   const flags = routes.filter(route => route.startsWith('-'));
   if (flags.length > 0) {
     fail(
+      'bad-value',
       `${flags.join(', ')} ${flags.length === 1 ? 'is' : 'are'} not a page's path: options after \`--\` are read as paths. Leave the \`--\` out (\`${projectExec('plitzi page check /x --width 1440,390')}\`); it belongs only after \`${projectRun('check')}\`.`
     );
 
@@ -51,13 +52,14 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
   }
 
   if (options.click && options.hover) {
-    fail('One interaction a check: --click an element, or --hover one — two checks for both.');
+    fail('wrong-options', 'One interaction a check: --click an element, or --hover one — two checks for both.');
 
     return;
   }
 
   if ((options.click || options.hover) && routes.length > 1) {
     fail(
+      'wrong-options',
       `--${options.click ? 'click clicks' : 'hover points at'} one element of one page: ${String(routes.length)} were named.`
     );
 
@@ -66,7 +68,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
 
   const steps = actingSteps(options.steps, 'page check', { others: false, widths: options.width ?? [1440, 390] });
   if ('problem' in steps) {
-    fail(`${steps.problem}.`);
+    fail('bad-value', `${steps.problem}.`);
 
     return;
   }

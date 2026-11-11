@@ -101,6 +101,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const external = route !== undefined && /^https?:\/\//.test(route);
   if (external && (options.as !== undefined || options.compare)) {
     fail(
+      'wrong-options',
       `${route} is another site: pictured as anyone sees it — leave out --as and --compare (compare from your page).`
     );
 
@@ -111,7 +112,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     ? { origin: undefined }
     : await projectOrigin(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined, options.url);
   if ('problem' in where) {
-    fail(where.problem);
+    fail('unanswered', where.problem);
 
     return;
   }
@@ -125,7 +126,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
   if (options.fill && options.steps !== undefined) {
     await browser.close();
-    fail('`--steps` is the whole interaction: write the fields in it (type <element> <text>) rather than --fill.');
+    fail(
+      'wrong-options',
+      '`--steps` is the whole interaction: write the fields in it (type <element> <text>) rather than --fill.'
+    );
 
     return;
   }
@@ -134,6 +138,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (split) {
     await browser.close();
     fail(
+      'bad-value',
       `--fill ${split.element}: a value with ";" or a new line is written in --steps instead (type <element> <text>).`
     );
 
@@ -148,7 +153,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const { hover } = options;
   if (hover !== undefined && (options.steps !== undefined || options.compare)) {
     await browser.close();
-    fail('`--hover` is played as steps: leave out --steps (write `hover <element>` in them) and --compare.');
+    fail(
+      'wrong-options',
+      '`--hover` is played as steps: leave out --steps (write `hover <element>` in them) and --compare.'
+    );
 
     return;
   }
@@ -167,7 +175,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       : options.steps);
   if (options.steps !== undefined && script === undefined) {
     await browser.close();
-    fail(`${options.steps.slice(1)} cannot be read: --steps @<file> names a file of steps.`);
+    fail('unreadable', `${options.steps.slice(1)} cannot be read: --steps @<file> names a file of steps.`);
 
     return;
   }
@@ -175,7 +183,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const steps = script === undefined ? undefined : parseSteps(script, options.every ?? 500);
   if (steps && 'problem' in steps) {
     await browser.close();
-    fail(`--steps: ${steps.problem}.`);
+    fail('bad-value', `--steps: ${steps.problem}.`);
 
     return;
   }
@@ -183,7 +191,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const nowhere = steps ? atNoWidthRead(steps, [options.width ?? SHOT_WIDTH]) : undefined;
   if (nowhere) {
     await browser.close();
-    fail(`--steps: ${nowhere}.`);
+    fail('bad-value', `--steps: ${nowhere}.`);
 
     return;
   }
@@ -192,7 +200,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     await browser.close();
     // Named by what was given: a `--fill` is played as steps too, and a run's designer was told of a --steps it never wrote.
     const given = options.steps !== undefined ? '`--steps`' : '`--fill`, played as steps,';
-    fail(`${given} is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.`);
+    fail(
+      'wrong-options',
+      `${given} is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.`
+    );
 
     return;
   }
@@ -200,6 +211,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (options.compare && clicks.length > 0 && (options.within || (options.frames ?? 0) > 1 || options.sheet)) {
     await browser.close();
     fail(
+      'wrong-options',
       '`--click` with `--compare` sets the screens of both side by side once clicked: leave out --within, --frames and --sheet.'
     );
 
@@ -209,6 +221,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (options.sheet && clicks.length === 0 && (options.frames ?? 0) <= 1 && options.steps === undefined) {
     await browser.close();
     fail(
+      'wrong-options',
       '`--sheet` lays out the pictures a --click, --frames or --steps takes: with none of them, there is one picture and no sheet.'
     );
 
@@ -219,6 +232,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (fromLoad && ((options.frames ?? 0) <= 1 || clicks.length > 0 || options.compare)) {
     await browser.close();
     fail(
+      'wrong-options',
       '`--from load` starts --frames as the HTML arrives, for what plays while the page loads: give it --frames, and leave out --click and --compare.'
     );
 
@@ -228,6 +242,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (fromLoad && !options.within && !options.scrollTo && !options.viewport) {
     await browser.close();
     fail(
+      'wrong-options',
       '`--from load` pictures the screen as the page arrives, never the whole page — unrolling it waits for it to settle: add --viewport or --within.'
     );
 
@@ -237,6 +252,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (options.compare && (options.scrollTo || options.viewport)) {
     await browser.close();
     fail(
+      'wrong-options',
       '`--compare` sets the whole page beside the other site, section by section: leave out --scroll-to and --viewport (--within <section> keeps one section of the report).'
     );
 
@@ -248,6 +264,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   if (options.within?.includes('=>')) {
     await browser.close();
     fail(
+      'wrong-options',
       `--within names this page's element alone — ${options.within.split('=>')[0]?.trim() ?? ''} — the other site's is found by lining the pages up. To set one element beside its counterpart by name, measure it: page measure <path> "${options.within}" --compare <url>.`
     );
 
@@ -309,7 +326,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         ? await pictureOf(browser, pathname, view)
         : await pictureOf(browser, `${where.origin}${pathname}`, view, where.origin);
     if ('problem' in taken) {
-      fail(taken.problem);
+      fail('failed', taken.problem);
 
       return;
     }
@@ -348,7 +365,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     // compared where it is — a panel of a page, a card — where only the landmarks could be named (a run's pills).
     const clipped = section === undefined ? undefined : await clipRegion(taken.page, regions, section);
     if (clipped && 'problem' in clipped) {
-      fail(clipped.problem);
+      fail('missing', clipped.problem);
 
       return;
     }
@@ -380,7 +397,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
           ? await compareAfterClicks(browser, taken, target, view, clicks.map(pairOf), base)
           : undefined;
       if (clickedBeside && 'problem' in clickedBeside) {
-        fail(clickedBeside.problem);
+        fail('failed', clickedBeside.problem);
 
         return;
       }
@@ -389,7 +406,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         ? await compareLocalParts(browser, taken, target, view, parts, base, otherPart)
         : undefined;
       if (local && 'problem' in local) {
-        fail(local.problem);
+        fail('failed', local.problem);
 
         return;
       }
@@ -407,7 +424,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
                 cutSections: section === undefined
               });
       if (compared && 'problem' in compared) {
-        fail(compared.problem);
+        fail('failed', compared.problem);
 
         return;
       }
@@ -421,6 +438,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         const kept = compared.regions.filter(each => matchesSection(each, section));
         if (kept.length === 0) {
           fail(
+            'missing',
             `--within ${section} is none of the sections compared: ${compared.regions.map(each => (each.element ? `${each.name} (${each.element})` : each.name)).join(', ') || 'the page has no named section'} — name one of them, by its id or its element's`
           );
 
@@ -482,7 +500,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
             });
       const played = await playSteps(taken, how, steps, visitors).finally(() => visitors?.close());
       if ('problem' in played) {
-        fail(played.problem);
+        fail('failed', played.problem);
 
         return;
       }
@@ -492,7 +510,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     } else if (clicks.length > 0 && !options.compare) {
       const played = await clickThrough(taken, how, clicks, { frames, every });
       if ('problem' in played) {
-        fail(played.problem);
+        fail('failed', played.problem);
 
         return;
       }
@@ -559,7 +577,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         process.exitCode = 1;
       }
     } else if (options.dress !== undefined && options.dress !== false) {
-      fail('--dress says what a comparison found: give it --compare <the other page>');
+      fail('wrong-options', '--dress says what a comparison found: give it --compare <the other page>');
 
       return;
     }

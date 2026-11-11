@@ -112,14 +112,14 @@ const taskList = (draft: Pick<Draft, 'manifest'>): string =>
 const readDraft = async (connection: Connection, spaceId: number): Promise<Draft | undefined> => {
   const answered = await authorizedRequest<Draft & { error?: string }>(connection, `/spaces/${spaceId}/functions`);
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return undefined;
   }
 
   const { reply } = answered.value;
   if (reply.status !== 200) {
-    fail(reply.data.error ?? `Could not read the space’s functions (${reply.status}).`);
+    fail('refused-by-platform', reply.data.error ?? `Could not read the space’s functions (${reply.status}).`);
 
     return undefined;
   }
@@ -137,13 +137,17 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
   const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
   const unpushed = state ? changedFiles(local, state.files) : Object.keys(local);
   if (!options.force && (state?.space ?? connection.space.id) !== connection.space.id) {
-    fail(`${FUNCTIONS_DIR}/ is a copy of another space’s. Pull into another project, or pass --force to replace it.`);
+    fail(
+      'exists',
+      `${FUNCTIONS_DIR}/ is a copy of another space’s. Pull into another project, or pass --force to replace it.`
+    );
 
     return;
   }
 
   if (!options.force && unpushed.length) {
     fail(
+      'exists',
       `Pulling would overwrite what is not pushed yet: ${unpushed.join(', ')}.\n` +
         'Push it first, or pass --force to throw it away.'
     );
@@ -216,6 +220,7 @@ export const pushFunctionsOf = async (
   const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
   if (!Object.keys(local).some(isFunctionsDefinitionFile)) {
     fail(
+      'missing',
       `There is no file at the top of ${FUNCTIONS_DIR}/ here: each exports a definition of the space’s functions by default. Pull them, or write one.`
     );
 
@@ -235,7 +240,7 @@ export const pushFunctionsOf = async (
     }
 
     if (Object.keys(draft.files).length && !force) {
-      fail(`${space.name} already has functions. Pull them first: plitzi space pull functions.`);
+      fail('exists', `${space.name} already has functions. Pull them first: plitzi space pull functions.`);
 
       return 'failed';
     }
@@ -267,7 +272,7 @@ export const pushFunctionsOf = async (
     body: JSON.stringify({ files: local, base })
   });
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return 'failed';
   }
@@ -282,6 +287,7 @@ export const pushFunctionsOf = async (
   // A 409 is also a space with no private bucket for its code (`limit: 'storage'`): only `version` is a newer copy.
   if (reply.status === 409 && reply.data.refusal?.limit === 'version') {
     fail(
+      'changed-since',
       `${space.name}’s functions changed since your pull — in the builder, or from another copy. ` +
         'Keep your changes aside, pull, and apply them again.'
     );
@@ -290,7 +296,10 @@ export const pushFunctionsOf = async (
   }
 
   if (reply.status !== 200 || !reply.data.version) {
-    fail(reply.data.refusal?.error ?? reply.data.error ?? `The functions were not saved (${reply.status}).`);
+    fail(
+      'refused-by-platform',
+      reply.data.refusal?.error ?? reply.data.error ?? `The functions were not saved (${reply.status}).`
+    );
 
     return 'failed';
   }
@@ -315,7 +324,7 @@ const printRun = (task: string, report: RunReport): void => {
   const took = step ? `${String(step.endTime - step.startTime)} ms` : '';
   step?.logs?.forEach(line => console.log(chalk.dim(`log  ${line}`)));
   if (step?.error) {
-    fail(`${task} failed after ${took}: ${step.error}`);
+    fail('failed', `${task} failed after ${took}: ${step.error}`);
 
     return;
   }
@@ -335,7 +344,7 @@ const paramsOf = (given: string | undefined): Record<string, unknown> | undefine
     // Said below, the same as a value that parsed but is not an object.
   }
 
-  fail('--params is a JSON object of the task’s params, by name: --params \'{"name":"Ada"}\'');
+  fail('bad-value', '--params is a JSON object of the task’s params, by name: --params \'{"name":"Ada"}\'');
 
   return undefined;
 };
@@ -361,14 +370,14 @@ export const tryFunction = async (task: string, options: FunctionsOptions): Prom
     }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return;
   }
 
   const { reply } = answered.value;
   if (reply.status !== 200) {
-    fail(reply.data.error ?? `The task could not be tried (${reply.status}).`);
+    fail('refused-by-platform', reply.data.error ?? `The task could not be tried (${reply.status}).`);
 
     return;
   }
@@ -471,6 +480,7 @@ const projectRunner = async (
   }
 
   fail(
+    'missing',
     `plitzi functions dev runs them as the platform does — in isolates, within its limits — with this project’s own @plitzi/sdk-actions and @plitzi/sdk-runtime (${missing.length > 0 ? `missing: ${missing.join(', ')}` : 'the ones installed have no runner this CLI drives'}):\n` +
       `  ${projectAdd(ISOLATES_INSTALL)}\n` +
       `Without the isolates, the project’s own server (${projectRun('start')}) runs the same functions natively: call an action there with POST /_action { "actionId", "input" }.`
@@ -530,7 +540,7 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
     }
 
     if (!loaded.tasks.includes(task)) {
-      fail(`${FUNCTIONS_DIR}/ declares no task ${task}. It declares: ${loaded.tasks.join(', ') || 'none'}.`);
+      fail('missing', `${FUNCTIONS_DIR}/ declares no task ${task}. It declares: ${loaded.tasks.join(', ') || 'none'}.`);
 
       return;
     }

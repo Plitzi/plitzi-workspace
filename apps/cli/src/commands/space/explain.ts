@@ -11,9 +11,11 @@ import {
   searchWords
 } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
+import { REFUSALS } from '@plitzi/sdk-shared/refusals';
 import { SCHEMA_SETTINGS } from '@plitzi/sdk-shared/schema';
 
 import { apiDeclarations, apiIndex, apiText, memberDeclarations } from './apiDeclarations';
+import { runRefusals } from '../../core/refusal';
 import { LINT_RULES } from '../../lint/catalog';
 import { PAGE_CHECK_CODES } from '../page/check/codes';
 import { findProject } from '../project/existingProject';
@@ -128,10 +130,11 @@ export const searchAll = (
 export interface CheckCodeExplanation {
   kind: 'code';
   name: string;
-  codeKind: 'error' | 'warning';
+  codeKind: 'error' | 'warning' | 'refusal';
   means: string;
   fix: string;
-  checkedBy: 'plitzi space lint' | 'the project layout' | 'plitzi page check';
+  checkedBy:
+    'plitzi space lint' | 'the project layout' | 'plitzi page check' | 'a command or an MCP tool' | 'a run’s commands';
 }
 
 const PAGE_CHECK_FIX =
@@ -161,6 +164,29 @@ const CHECK_CODES: ReadonlyMap<string, CheckCodeExplanation> = new Map([
   ...Object.entries(PAGE_CHECK_CODES).map(([name, means]): [string, CheckCodeExplanation] => [
     name,
     { kind: 'code', name, codeKind: 'error', means, fix: PAGE_CHECK_FIX, checkedBy: 'plitzi page check' }
+  ]),
+  // Why a command or a tool did not do what it was asked: the step is the code's, unless its refusal names a better one.
+  ...Object.entries(REFUSALS).map(([name, refusal]): [string, CheckCodeExplanation] => [
+    name,
+    {
+      kind: 'code',
+      name,
+      codeKind: 'refusal',
+      means: refusal.means,
+      fix: refusal.next,
+      checkedBy: 'a command or an MCP tool'
+    }
+  ]),
+  ...runRefusals().map(({ code, exitCode, next }): [string, CheckCodeExplanation] => [
+    code,
+    {
+      kind: 'code',
+      name: code,
+      codeKind: 'refusal',
+      means: `a run refused the command, which exits ${String(exitCode)}`,
+      fix: next,
+      checkedBy: 'a run’s commands'
+    }
   ])
 ]);
 
@@ -214,6 +240,7 @@ export const explainCommand = async (
     );
     if (hits.length === 0) {
       fail(
+        'missing',
         `Nothing Plitzi has is described by "${words}" — other words, or what there is: --list ${kinds}, tasks. Something Plitzi should have: say it (plitzi run notice --plitzi no-way "…", in a run).`
       );
 
@@ -237,7 +264,7 @@ export const explainCommand = async (
     const project = await findProject(process.cwd());
     const read = await serverTasks(project?.root ?? process.cwd());
     if ('problem' in read) {
-      fail(`No server steps to list: ${read.problem}.`);
+      fail('missing', `No server steps to list: ${read.problem}.`);
 
       return;
     }
@@ -268,6 +295,7 @@ export const explainCommand = async (
     const kind = explainKindOf(options.list);
     if (!kind) {
       fail(
+        'bad-value',
         `--list takes ${kinds}, tasks (a server action's steps), types (the authoring package's), not "${options.list}".`
       );
 
@@ -292,7 +320,7 @@ export const explainCommand = async (
   }
 
   if (!name) {
-    fail(`Name what to explain — plitzi explain container — or list a kind: --list ${kinds}.`);
+    fail('wrong-options', `Name what to explain — plitzi explain container — or list a kind: --list ${kinds}.`);
 
     return;
   }
@@ -406,6 +434,7 @@ export const explainCommand = async (
     }
 
     fail(
+      'missing',
       [
         `"${name}" is no element, step, trigger, code, transformer, helper, template filter, template function or global source, no step of a server action, no action of the project, nor an export of a @plitzi package installed here, and no passage of the skills says it. See what there is: --list ${kinds}, tasks.`,
         ...('problem' in actions ? [`The project's actions could not be read: ${actions.problem}`] : []),

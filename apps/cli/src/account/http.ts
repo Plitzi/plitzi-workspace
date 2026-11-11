@@ -2,6 +2,8 @@ import tls from 'node:tls';
 
 import { isPlanRefusal } from '@plitzi/sdk-shared/network';
 
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
+
 /**
  * The CLI's requests to the platform, and what it says when one never arrives.
  *
@@ -28,7 +30,7 @@ export const trustSystemCertificates = (): void => {
 };
 
 /** A call that answered — with whatever status — or has something specific to say about why it did not. */
-export type Reply<T> = { ok: true; status: number; data: T } | { ok: false; error: string };
+export type Reply<T> = { ok: true; status: number; data: T } | { ok: false; code: RefusalCode; error: string };
 
 /**
  * Why a request never reached anyone, in words somebody can act on.
@@ -51,7 +53,7 @@ export const requestJson = async <T>(url: string, init: RequestInit = {}): Promi
   try {
     response = await fetch(url, init);
   } catch (error) {
-    return { ok: false, error: unreachable(url, error) };
+    return { ok: false, code: 'unanswered', error: unreachable(url, error) };
   }
 
   const text = await response.text();
@@ -59,13 +61,21 @@ export const requestJson = async <T>(url: string, init: RequestInit = {}): Promi
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
-    return { ok: false, error: `${new URL(url).pathname} answered ${response.status}, and not with JSON.` };
+    return {
+      ok: false,
+      code: 'refused-by-platform',
+      error: `${new URL(url).pathname} answered ${response.status}, and not with JSON.`
+    };
   }
 
   // A plan that does not include what was asked — said as the server says it, with the plan and the link, whatever
   // command asked: no command carries a plan of its own, and a self-hosted server never answers one.
   if (isPlanRefusal(data)) {
-    return { ok: false, error: data.error.includes(data.upgradeUrl) ? data.error : `${data.error} ${data.upgradeUrl}` };
+    return {
+      ok: false,
+      code: 'not-allowed',
+      error: data.error.includes(data.upgradeUrl) ? data.error : `${data.error} ${data.upgradeUrl}`
+    };
   }
 
   // The platform's JSON, read for the fields each caller names: every one is checked where it is used.

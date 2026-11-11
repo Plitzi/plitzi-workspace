@@ -232,12 +232,12 @@ describe('MCP batch read (many uris in one call)', () => {
     expect(res.results[0].stateVersion).toMatch(/^[a-f0-9]{12}$/);
     expect((res.results[0].data as AIElementDetail).ref).toBe('c1');
     expect(res.results[1].data).toBeUndefined();
-    expect(res.results[1].error).toBe('NOT_FOUND');
+    expect(res.results[1].error).toBe('missing');
   });
 
   it('flags a malformed uri without failing the whole batch', () => {
     const res = read({ uris: ['not-a-real-uri', 'plitzi://schema/main/elements/c1'] }, buildSpace(), 'main');
-    expect(res.results[0].error).toBe('MALFORMED_URI');
+    expect(res.results[0].error).toBe('bad-value');
     expect((res.results[1].data as AIElementDetail).ref).toBe('c1');
   });
 });
@@ -327,7 +327,7 @@ describe('MCP URI aliases under schema root', () => {
     const parsed = JSON.parse(resourceErrorMessage('main', 'plitzi://schema/main/definitions/ghost')) as {
       error: string;
     };
-    expect(parsed.error).toBe('NOT_FOUND');
+    expect(parsed.error).toBe('missing');
   });
 });
 
@@ -472,7 +472,7 @@ describe('MCP resource error messages (I2)', () => {
   it('teaches valid templates for a malformed URI shape', () => {
     const msg = resourceErrorMessage('main', 'plitzi://schema/main/element/home/c1');
     const parsed = JSON.parse(msg) as { error: string; validTemplates: string[] };
-    expect(parsed.error).toBe('MALFORMED_URI');
+    expect(parsed.error).toBe('bad-value');
     expect(parsed.validTemplates).toContain('plitzi://schema/main/elements/{ref}');
   });
 
@@ -480,7 +480,7 @@ describe('MCP resource error messages (I2)', () => {
     const parsed = JSON.parse(resourceErrorMessage('main', 'plitzi://schema/main/elements/ghost')) as {
       error: string;
     };
-    expect(parsed.error).toBe('NOT_FOUND');
+    expect(parsed.error).toBe('missing');
   });
 });
 

@@ -79,10 +79,10 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
   const unusedPlugins = {} as Parameters<typeof createPreview>[3];
   const unusedCaches = {} as Parameters<typeof createPreview>[4];
 
-  it('reports NO_DATA when the space has no offline data', async () => {
+  it('refuses with missing when the space has no offline data', async () => {
     const res = await createPreview({ spaceId: 1 }, configWith(undefined), unusedRender, unusedPlugins, unusedCaches);
     expect(res.ok).toBe(false);
-    expect(res).toMatchObject({ error: 'NO_DATA' });
+    expect(res).toMatchObject({ error: 'missing' });
   });
 
   it('rejects unapplicable operations with teachable errors, before any render', async () => {
@@ -99,7 +99,7 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
     );
     expect(res.ok).toBe(false);
     if (!res.ok) {
-      expect(res.error).toBe('INVALID_OPERATIONS');
+      expect(res.error).toBe('bad-value');
       expect(res.errors?.length).toBeGreaterThan(0);
     }
   });
@@ -138,11 +138,11 @@ describe('MCP plitzi_look tool', () => {
     expect(previewToolDef()?.access).toBe('read');
   });
 
-  it('reports PREVIEW_UNAVAILABLE when no preview client is wired', async () => {
+  it('refuses with not-allowed when no preview client is wired', async () => {
     const res = (await previewToolDef()?.execute({}, { space: buildSpace(), env: 'main', persisters: {} })) as {
       error?: string;
     };
-    expect(res.error).toBe('PREVIEW_UNAVAILABLE');
+    expect(res.error).toBe('not-allowed');
   });
 
   it('forwards to the preview client and returns its html + meta', async () => {

@@ -30,7 +30,12 @@ export const deleteBinding = (space: Space, env: Env, op: DeleteBinding): OpResu
   const list = bindings?.[op.category];
   const index = list ? list.findIndex(b => (op.id ? b.id === op.id : b.to === op.to)) : -1;
   if (!bindings || !list || index < 0) {
-    return fail('to', `No ${op.category} binding matching "${op.id ?? op.to}" on "${op.ref}"`, 'Nothing to delete');
+    return fail(
+      'missing',
+      'to',
+      `No ${op.category} binding matching "${op.id ?? op.to}" on "${op.ref}"`,
+      'Read the element to list its bindings, and name one of them'
+    );
   }
 
   list.splice(index, 1);

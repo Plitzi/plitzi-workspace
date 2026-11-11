@@ -242,7 +242,7 @@ export const coveredByWorkspace = (project: ExistingProject, dir: string): boole
 export const projectHere = async (what: string): Promise<ExistingProject | undefined> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    fail(`There is no package.json here or above: run this in the project ${what}.`);
+    fail('not-a-project', `There is no package.json here or above: run this in the project ${what}.`);
   }
 
   return project;

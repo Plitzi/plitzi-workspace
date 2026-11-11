@@ -163,7 +163,7 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
       ? undefined
       : (pluginNameProblem(nameGiven) ?? elementListProblem(pluginNames(nameGiven).base, othersGiven ?? []));
   if (nameProblem) {
-    fail(nameProblem);
+    fail('bad-value', nameProblem);
 
     return;
   }
@@ -227,7 +227,7 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
 
     const wasEmpty = await isEmpty(target);
     if (!options.force && !wasEmpty) {
-      fail(`${target} is not empty. Pass --force to write into it anyway.`);
+      fail('exists', `${target} is not empty. Pass --force to write into it anyway.`);
 
       return;
     }
@@ -271,7 +271,10 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
     const wantsInstall = options.install !== false && !unlisted;
     const installed = wantsInstall && (await install(packageManager, target));
     if (wantsInstall && !installed) {
-      fail(`\n\`${installCommand(packageManager)}\` failed. The plugin is written; the reason is in the output above.`);
+      fail(
+        'does-not-build',
+        `\n\`${installCommand(packageManager)}\` failed. The plugin is written; the reason is in the output above.`
+      );
       console.error(chalk.dim(INSTALL_HINTS[packageManager]));
     }
 

@@ -88,7 +88,10 @@ const chooseZip = async (given: string | undefined): Promise<string | undefined>
   const project = await findProject(process.cwd());
   const zips = project ? await packedZips(project.root) : [];
   if (zips.length === 0) {
-    fail('No packed plugin here. Build one with plitzi plugin pack, or name it: plitzi plugin upload <file.zip>.');
+    fail(
+      'missing',
+      'No packed plugin here. Build one with plitzi plugin pack, or name it: plitzi plugin upload <file.zip>.'
+    );
 
     return undefined;
   }
@@ -149,7 +152,7 @@ export const chooseTarget = async (
   spaceName: string
 ): Promise<Target | undefined> => {
   if (givenCdn && !cdns.some(cdn => cdn.identifier === givenCdn)) {
-    fail(`${spaceName} has no CDN "${givenCdn}". Its CDNs: ${cdns.map(cdn => cdn.identifier).join(', ')}.`);
+    fail('missing', `${spaceName} has no CDN "${givenCdn}". Its CDNs: ${cdns.map(cdn => cdn.identifier).join(', ')}.`);
 
     return undefined;
   }
@@ -160,13 +163,16 @@ export const chooseTarget = async (
   if (givenBucket) {
     const named = candidates.find(({ bucket }) => bucket.identifier === givenBucket);
     if (!named) {
-      fail(`${spaceName} has no bucket "${givenBucket}"${givenCdn ? ` in the CDN "${givenCdn}"` : ''}.`);
+      fail('missing', `${spaceName} has no bucket "${givenBucket}"${givenCdn ? ` in the CDN "${givenCdn}"` : ''}.`);
 
       return undefined;
     }
 
     if (named.bucket.visibility === 'private') {
-      fail(`"${givenBucket}" is a private bucket: it has no public address, so no page could load a plugin from it.`);
+      fail(
+        'not-allowed',
+        `"${givenBucket}" is a private bucket: it has no public address, so no page could load a plugin from it.`
+      );
 
       return undefined;
     }
@@ -176,7 +182,10 @@ export const chooseTarget = async (
 
   const targets = candidates.filter(({ bucket }) => bucket.visibility === 'public');
   if (targets.length === 0) {
-    fail(`${spaceName} has no public bucket to put a plugin in. Add one to a CDN in the builder, under Resources.`);
+    fail(
+      'missing',
+      `${spaceName} has no public bucket to put a plugin in. Add one to a CDN in the builder, under Resources.`
+    );
 
     return undefined;
   }
@@ -228,7 +237,11 @@ export const listCdns = async (
 
   const { reply } = listed.value;
   if (reply.status !== 200) {
-    return { ok: false, error: reply.data.error ?? `Could not list ${space.name}'s CDNs (${reply.status}).` };
+    return {
+      ok: false,
+      code: 'refused-by-platform',
+      error: reply.data.error ?? `Could not list ${space.name}'s CDNs (${reply.status}).`
+    };
   }
 
   return { ok: true, value: { connection: listed.value.connection, cdns: reply.data.cdns ?? [] } };
@@ -251,7 +264,10 @@ export const uploadZip = async (
 ): Promise<PushOutcome> => {
   const manifest = manifestOf(zip);
   if (!manifest) {
-    fail(`${filename} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi plugin pack.`);
+    fail(
+      'bad-value',
+      `${filename} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi plugin pack.`
+    );
 
     return 'failed';
   }
@@ -280,20 +296,20 @@ export const uploadZip = async (
     body: new Uint8Array(zip)
   });
   if (!uploaded.ok) {
-    fail(uploaded.error);
+    fail(uploaded.code, uploaded.error);
 
     return 'failed';
   }
 
   const { status, data } = uploaded.value.reply;
   if (status === 413) {
-    fail(`${filename} is larger than ${connection.api} accepts.`);
+    fail('refused-by-platform', `${filename} is larger than ${connection.api} accepts.`);
 
     return 'failed';
   }
 
   if (status !== 201) {
-    fail(data.error ?? `The upload was refused (${status}).`);
+    fail('refused-by-platform', data.error ?? `The upload was refused (${status}).`);
 
     return 'failed';
   }
@@ -323,13 +339,14 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
   try {
     zip = await fs.readFile(zipPath);
   } catch {
-    fail(`Could not read ${zipPath}.`);
+    fail('unreadable', `Could not read ${zipPath}.`);
 
     return;
   }
 
   if (!manifestOf(zip)) {
     fail(
+      'bad-value',
       `${path.basename(zipPath)} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi plugin pack.`
     );
 
@@ -344,7 +361,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
   const { space } = connection;
   const listed = await listCdns(connection, space);
   if (!listed.ok) {
-    fail(listed.error);
+    fail(listed.code, listed.error);
 
     return;
   }

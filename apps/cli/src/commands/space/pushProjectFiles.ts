@@ -72,7 +72,7 @@ export const pushDataOf = async (
     body: JSON.stringify({ files, ...(base && !force ? { base } : {}) })
   });
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return { outcome: 'failed' };
   }
@@ -80,6 +80,7 @@ export const pushDataOf = async (
   const { status, data } = answered.value.reply;
   if (status === 422 && data.problems) {
     fail(
+      'refused-by-platform',
       `${space.name} would not take the data:${data.problems.map(problem => `\n  ${DATA_DIR}/${problem.file} ${problem.message}`).join('')}`
     );
 
@@ -89,6 +90,7 @@ export const pushDataOf = async (
   // A 409 is also a space with nowhere to keep its data (`limit: 'storage'`): only `version` is another copy's push.
   if (status === 409 && base && data.refusal?.limit === 'version') {
     fail(
+      'changed-since',
       `${space.name}’s data changed since this project last had it — pushed from another copy.\n` +
         'Pull first (plitzi space pull) and push again, or pass --force to replace it with this project’s.'
     );
@@ -97,7 +99,7 @@ export const pushDataOf = async (
   }
 
   if (status !== 200 || !data.version) {
-    fail(data.refusal?.error ?? data.error ?? `The data was not pushed (${String(status)}).`);
+    fail('refused-by-platform', data.refusal?.error ?? data.error ?? `The data was not pushed (${String(status)}).`);
 
     return { outcome: 'failed' };
   }
@@ -145,14 +147,14 @@ export const pushFilesOf = async (
       }
     );
     if (!answered.ok) {
-      fail(answered.error);
+      fail(answered.code, answered.error);
 
       return { outcome: 'failed', uploaded };
     }
 
     const { status, data } = answered.value.reply;
     if (status !== 201 || !data.url) {
-      fail(`${file} was not put on the CDN: ${data.error ?? String(status)}`);
+      fail('refused-by-platform', `${file} was not put on the CDN: ${data.error ?? String(status)}`);
 
       return { outcome: 'failed', uploaded };
     }

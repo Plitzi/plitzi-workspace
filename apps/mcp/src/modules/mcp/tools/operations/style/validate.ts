@@ -40,6 +40,7 @@ const pseudoProblem = (path: string, name: string, part: PseudoPartInput): OpRes
     const bare = name.replace(/^:+/, '');
 
     return fail(
+      'bad-value',
       path,
       `"${name}" is not a pseudo-element a class dresses`,
       isStylePseudo(bare) ? `Write it without the colons: "${bare}".` : `Use one of ${STYLE_PSEUDOS.join(', ')}.`,
@@ -53,6 +54,7 @@ const pseudoProblem = (path: string, name: string, part: PseudoPartInput): OpRes
       if (property === 'content') {
         if (!CONTENT_PSEUDOS.includes(name)) {
           return fail(
+            'bad-value',
             path,
             `content on ::${name} draws nothing`,
             `Only ${CONTENT_PSEUDOS.map(pseudo => `::${pseudo}`).join(', ')} take one.`
@@ -61,6 +63,7 @@ const pseudoProblem = (path: string, name: string, part: PseudoPartInput): OpRes
 
         if (!isContentValue(String(value))) {
           return fail(
+            'bad-value',
             path,
             `content: ${String(value)} on ::${name} is not text CSS can read, so nothing is drawn`,
             `Write the text in quotes inside the string — "\\"${String(value)}\\"" — and an empty box as "\\"\\""; counter(), attr() and url() are written as they are.`
@@ -72,6 +75,7 @@ const pseudoProblem = (path: string, name: string, part: PseudoPartInput): OpRes
 
       if (!pseudoHonours(name, property)) {
         return fail(
+          'bad-value',
           path,
           `${property} on ::${name} is dropped by every browser`,
           `::${name} honours ${(PSEUDO_PROPERTIES[name] ?? []).join(', ')}; style the element itself for the rest.`
@@ -82,6 +86,7 @@ const pseudoProblem = (path: string, name: string, part: PseudoPartInput): OpRes
 
   if (GENERATED_PSEUDOS.includes(name) && !rules.some(rule => Object.hasOwn(rule, 'content'))) {
     return fail(
+      'bad-value',
       path,
       `::${name} has no content, so nothing is drawn`,
       'Give it one: content "\\"\\"" for an empty box.'
@@ -118,6 +123,7 @@ const slotProblem = (path: string, slot: DefinitionSlotInput): OpResult | null =
   for (const [key, condition] of Object.entries(slot.conditions ?? {})) {
     if (!canonicalCondition(key)) {
       return fail(
+        'bad-value',
         `${path}conditions.${key}`,
         `"${key}" is not a condition a class's rules can hold under`,
         CONDITION_HINT

@@ -112,6 +112,7 @@ export const serverStop = async (options: ServerStopOptions): Promise<void> => {
     );
     const there = copy ? undefined : listenerOn(options.port);
     fail(
+      'in-use',
       copy
         ? `Port ${String(options.port)} is served from ${copy.cwd} — a run's copy, its agent's: stopped from there (cd ${copy.cwd} && plitzi server stop --port ${String(options.port)}), never from the project. A preview of a task stops by itself once the task is done.`
         : there
@@ -189,6 +190,7 @@ export const serverReset = async (options: ServerResetOptions): Promise<void> =>
   const inCopy = copyOf(realpathSync(project.root)) !== undefined;
   if (running.length > 0 && !inCopy) {
     fail(
+      'in-use',
       `A server of this folder is running on ${running.map(each => `:${String(each.port)}`).join(', ')} and holds ${PROJECT_STATE}/ open — it would write it back. Stop it first (plitzi server stop), then reset.`
     );
 
@@ -203,6 +205,7 @@ export const serverReset = async (options: ServerResetOptions): Promise<void> =>
   const stopped = running.length > 0 ? await stoppedWithin(realpathSync(project.root), 10_000) : true;
   if (!stopped) {
     fail(
+      'in-use',
       `The copy's server on ${running.map(each => `:${String(each.port)}`).join(', ')} did not stop within 10 seconds: ${PROJECT_STATE}/ is left as it is — run plitzi server reset again in a moment.`
     );
 

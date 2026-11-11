@@ -200,6 +200,7 @@ const expandNode = (node: TemplateElement, row: Row, suffix: string, state: Expa
 };
 
 const rowError = (index: number, message: string, hint: string): ValidationError => ({
+  code: 'bad-value',
   path: `items[${index}]`,
   message,
   hint
@@ -254,6 +255,7 @@ export const expandRepeat = (op: RepeatElement): { element?: ElementInput; error
     return {
       errors: [
         {
+          code: 'bad-value',
           path: 'items',
           message: `This repeat expands to ${total} rows (max ${MAX_ROWS})`,
           hint: 'Shorten the lists, or split the widget into several repeats.'

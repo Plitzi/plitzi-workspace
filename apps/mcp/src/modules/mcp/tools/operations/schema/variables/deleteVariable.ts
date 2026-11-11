@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { schemaVarsUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -14,7 +14,16 @@ export const deleteVariableOp = z
 export type DeleteVariable = z.infer<typeof deleteVariableOp>;
 
 export const deleteVariable = (space: Space, env: Env, op: DeleteVariable): OpResult => {
-  space.schema.variables = space.schema.variables.filter(v => v.name !== op.name);
+  if (!space.schema.variables.some(variable => variable.name === op.name)) {
+    return fail(
+      'missing',
+      'name',
+      `No variable "${op.name}"`,
+      `Read ${schemaVarsUri(env)} for the variables the space has`
+    );
+  }
+
+  space.schema.variables = space.schema.variables.filter(variable => variable.name !== op.name);
 
   return { ...empty(), deleted: 1, staleResources: [schemaVarsUri(env)] };
 };

@@ -53,7 +53,7 @@ export const createPreview = async (
   if (!offlineData) {
     return {
       ok: false,
-      error: 'NO_DATA',
+      error: 'missing',
       message: `No offline data for space ${body.spaceId} (${env}${revision ? ` revision ${revision}` : ''}).`
     };
   }
@@ -70,7 +70,7 @@ export const createPreview = async (
     if (!batch.ok) {
       return {
         ok: false,
-        error: 'INVALID_OPERATIONS',
+        error: 'bad-value',
         message: 'The operations were refused, as plitzi_apply would refuse them.',
         errors: batch.errors
       };

@@ -100,6 +100,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
   const props = parseProps(op.props);
   if ('error' in props) {
     return fail(
+      'bad-value',
       'props',
       props.error,
       'A prop is { type: "text" | "textarea" | "number" | "boolean" | "select" | "scalar" | "json", description, required?, default?, options? }'
@@ -110,12 +111,18 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
   const existing = componentNamed(schema, op.ref);
   if (existing) {
     if (op.fromRef) {
-      return fail('fromRef', `Component "${op.ref}" already exists`, 'fromRef makes a NEW component; pick another ref');
+      return fail(
+        'exists',
+        'fromRef',
+        `Component "${op.ref}" already exists`,
+        'fromRef makes a NEW component; pick another ref'
+      );
     }
 
     const problem = declarationProblem({ ...existing, ...declaration }, existing.flat);
     if (problem || !updateComponent(schema, op.ref, { ...existing, ...declaration })) {
       return fail(
+        'bad-value',
         'props',
         problem ?? `Component "${op.ref}" refused the declaration`,
         'Name props as {{ props.<name> }} reads them, and slots as elements of the tree'
@@ -126,7 +133,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
   }
 
   if (!isValidElementId(op.ref)) {
-    return fail('ref', `"${op.ref}" is not a name a component can have`, ID_REF_HINT);
+    return fail('bad-value', 'ref', `"${op.ref}" is not a name a component can have`, ID_REF_HINT);
   }
 
   if (op.fromRef) {
@@ -134,6 +141,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
     const element = tree?.flat[op.fromRef];
     if (!tree || !element?.definition.parentId) {
       return fail(
+        'bad-value',
         'fromRef',
         `"${op.fromRef}" is not an element inside a page, a layout or a component`,
         'A page or a layout is a root, not a subtree — name an element inside one'
@@ -142,6 +150,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
 
     if (!op.instanceRef) {
       return fail(
+        'wrong-options',
         'instanceRef',
         'fromRef needs the name of the instance that takes the element’s place',
         'e.g. instanceRef: "hero-card"'
@@ -161,6 +170,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
     const problem = declarationProblem(declaration, subtree);
     if (problem || !addComponent(schema, component, { elementId: op.fromRef, instanceId: op.instanceRef })) {
       return fail(
+        'bad-value',
         'props',
         problem ?? `"${op.fromRef}" could not be made a component`,
         'Slots name elements inside fromRef'
@@ -199,6 +209,7 @@ export const upsertComponent = (space: Space, env: Env, op: UpsertComponent): Op
   const problem = declarationProblem(declaration, component.flat);
   if (problem || !addComponent(schema, component)) {
     return fail(
+      'bad-value',
       'props',
       problem ?? `Component "${op.ref}" could not be declared`,
       'A new component has one element yet — its root; add the rest with upsertElement { pageRef: "<ref>" } first, then name slots'

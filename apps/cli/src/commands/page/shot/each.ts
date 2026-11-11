@@ -33,6 +33,7 @@ export const shotEach = async (routes: readonly string[], options: ShotEachOptio
   const externals = pages.filter(route => route !== undefined && /^https?:\/\//.test(route));
   if (externals.length > 0 && externals.length < pages.length) {
     fail(
+      'wrong-options',
       `${externals.join(', ')} ${externals.length === 1 ? 'is another site' : 'are other sites'}: picture another site's pages in a command of their own, apart from the project's.`
     );
 
@@ -47,7 +48,7 @@ export const shotEach = async (routes: readonly string[], options: ShotEachOptio
       ? await originHere(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined)
       : undefined;
   if (served && 'problem' in served) {
-    fail(served.problem);
+    fail('unanswered', served.problem);
 
     return;
   }
@@ -94,6 +95,7 @@ export const shotEach = async (routes: readonly string[], options: ShotEachOptio
         }
 
         fail(
+          'bad-value',
           `${each.route} at ${String(each.width)} px is too large a picture for the browser to take${rest.scale !== undefined && rest.scale > 1 ? ` at --scale ${String(rest.scale)}` : ''}: a lower --scale, --viewport (its first screen), or --within <element> (one part)`
         );
         process.exitCode = UNANSWERED_EXIT;

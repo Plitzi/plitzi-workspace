@@ -68,6 +68,7 @@ export const guardKind = (style: Style, ref: string, want: TagType): OpResult | 
   }
 
   return fail(
+    'exists',
     KIND_FIELD[want],
     `"${ref}" is already ${KIND_LABEL[clash.type]}; it cannot be edited as ${KIND_LABEL[want]}`,
     `Edit it with ${KIND_TOOL[clash.type]}, or choose a different ${KIND_FIELD[want]}.`

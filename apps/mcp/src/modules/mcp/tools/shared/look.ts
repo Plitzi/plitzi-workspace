@@ -84,7 +84,7 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
   if (!ctx.preview || ctx.spaceId === undefined) {
     return {
       refused: {
-        error: 'PREVIEW_UNAVAILABLE',
+        error: 'not-allowed',
         message: 'Visual preview is not enabled on this server.',
         hint: 'Preview needs the SSR render service; it is unavailable in MCP-only mode.'
       }

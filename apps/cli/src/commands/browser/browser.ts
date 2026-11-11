@@ -30,7 +30,7 @@ export const browserStatus = async (options: { json?: boolean }): Promise<void> 
   }
 
   if ('problem' in inUse) {
-    fail(inUse.problem);
+    fail('in-use', inUse.problem);
 
     return;
   }
@@ -55,14 +55,17 @@ export const browserInstall = async (): Promise<void> => {
     child.on('exit', exit => resolve(exit ?? 1));
   });
   if (code !== 0) {
-    fail(`Chromium was not downloaded (the installer exited with ${String(code)}): try again, or install Chrome`);
+    fail(
+      'failed',
+      `Chromium was not downloaded (the installer exited with ${String(code)}): try again, or install Chrome`
+    );
 
     return;
   }
 
   const inUse = await browserInUse();
   if ('problem' in inUse) {
-    fail(inUse.problem);
+    fail('in-use', inUse.problem);
 
     return;
   }

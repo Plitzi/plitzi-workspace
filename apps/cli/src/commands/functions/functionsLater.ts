@@ -68,7 +68,10 @@ const answerFor = async (root: string, id: string): Promise<Record<string, unkno
 
 export const functionsLater = async (key: string | undefined, options: FunctionsLaterOptions): Promise<void> => {
   if (options.now === true && key === undefined) {
-    fail('--now starts one run set for later: name it by its key — plitzi functions later <key> --now');
+    fail(
+      'wrong-options',
+      '--now starts one run set for later: name it by its key — plitzi functions later <key> --now'
+    );
 
     return;
   }
@@ -89,6 +92,7 @@ export const functionsLater = async (key: string | undefined, options: Functions
   if (answer === undefined) {
     await fs.rm(asked, { force: true });
     fail(
+      'unanswered',
       `The project’s server did not answer: it holds the runs set for later while it is served — ${projectRun('start')} (a task’s copy: its own server, started by its checks or by you in it)`
     );
 
@@ -96,7 +100,7 @@ export const functionsLater = async (key: string | undefined, options: Functions
   }
 
   if (typeof answer.problem === 'string') {
-    fail(`${answer.problem}.`);
+    fail('refused-by-platform', `${answer.problem}.`);
 
     return;
   }

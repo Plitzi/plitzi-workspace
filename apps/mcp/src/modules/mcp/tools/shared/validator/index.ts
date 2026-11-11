@@ -46,6 +46,8 @@ import type { ComponentCatalog } from '@plitzi/sdk-kernel/types';
 
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
 
+const TOKEN_NAME = /^[A-Za-z0-9_-]+$/;
+
 /** The element type that reads through a connector. Only this one carries the connector attributes, so only it is
  *  worth cross-checking against the connector store. */
 const PROVIDER_TYPE = 'apiContainer';
@@ -148,6 +150,7 @@ export const validateOperations = (
       if (!classes.has(name)) {
         const nearest = closest(name, classes);
         ctx.errors.push({
+          code: 'missing',
           path: at,
           message: `"${name}" is not a class of the space${nearest ? ` — did you mean "${nearest}"?` : ''}`,
           hint: 'Name one of plitzi://definitions/{env}, or declare it earlier in the batch with upsertDefinition'
@@ -162,6 +165,7 @@ export const validateOperations = (
 
   if (ops.length > MAX_OPS) {
     ctx.errors.push({
+      code: 'bad-value',
       path: 'operations',
       message: `Batch has ${ops.length} operations (max ${MAX_OPS})`,
       hint: `Split into batches of at most ${MAX_OPS}`
@@ -196,6 +200,7 @@ export const validateOperations = (
           ...Object.keys(space.schema.components)
         ];
         ctx.errors.push({
+          code: 'missing',
           path: `${base}.pageRef`,
           message: `Page, layout or component "${op.pageRef}" does not exist`,
           hint: 'Use an existing page, layout or component ref, or create it earlier in the same batch',
@@ -242,6 +247,7 @@ export const validateOperations = (
         const entries = Object.entries(op.definitions);
         if (entries.length === 0) {
           ctx.errors.push({
+            code: 'wrong-options',
             path: `${base}.definitions`,
             message: 'This operation declares no classes',
             hint: 'Key each class by its name: { "definitions": { "card": { "desktop": { … } } } }'
@@ -284,6 +290,20 @@ export const validateOperations = (
       case 'deleteGlobalStyle':
         checkRef(op.componentType, `${base}.componentType`, ctx);
         break;
+      case 'upsertIdStyle':
+      case 'patchIdStyle': {
+        const { type, targetId, slots, ...slot } = op;
+        checkRef(targetId, `${base}.targetId`, ctx);
+        checkSlotCss(slot, base, ctx);
+        for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
+          checkSlotCss(slotDef, `${base}.slots.${slotName}`, ctx);
+        }
+
+        break;
+      }
+      case 'deleteIdStyle':
+        checkRef(op.targetId, `${base}.targetId`, ctx);
+        break;
       case 'upsertPage':
         checkRef(op.ref, `${base}.ref`, ctx);
         // Nudge toward giving a new page an explicit slug (good practice: a clean, stable route). Only on create,
@@ -301,6 +321,7 @@ export const validateOperations = (
         if (typeof op.folder === 'string' && op.folder !== '') {
           if (!findFolderByRef(space.schema, op.folder) && !batchFolders.has(op.folder)) {
             ctx.errors.push({
+              code: 'missing',
               path: `${base}.folder`,
               message: `Folder "${op.folder}" does not exist`,
               hint: 'Create it with upsertFolder earlier in the same batch, or read plitzi://folders for valid refs',
@@ -317,6 +338,7 @@ export const validateOperations = (
           const parent = findFolderByRef(space.schema, op.parentId);
           if (!parent && !batchFolders.has(op.parentId)) {
             ctx.errors.push({
+              code: 'missing',
               path: `${base}.parentId`,
               message: `Parent folder "${op.parentId}" does not exist`,
               hint: 'Create the parent with upsertFolder first, or read plitzi://folders for valid refs',
@@ -331,6 +353,7 @@ export const validateOperations = (
             (parent && folderAncestorIds(pageFoldersOf(space.schema), parent.id).includes(selfId))
           ) {
             ctx.errors.push({
+              code: 'bad-value',
               path: `${base}.parentId`,
               message: `Folder "${op.ref}" cannot be nested under itself or one of its descendants`,
               hint: 'Choose a parent that is not this folder or below it'
@@ -349,8 +372,19 @@ export const validateOperations = (
         break;
       case 'upsertStyleVariable':
       case 'deleteStyleVariable':
+        // A token is written as `--<name>`: a name with a space or a dot is no custom property a rule can read.
+        if (!TOKEN_NAME.test(op.name)) {
+          ctx.errors.push({
+            code: 'bad-value',
+            path: `${base}.name`,
+            message: `"${op.name}" is not a token name: it is written as --${op.name}, which no var() can read`,
+            hint: 'Letters, digits, "-" and "_", without the -- prefix: "brand-primary"'
+          });
+        }
+
         if (!STYLE_CATEGORIES.includes(op.category)) {
           ctx.errors.push({
+            code: 'bad-value',
             path: `${base}.category`,
             message: `Unknown style-variable category "${op.category}"`,
             hint: 'Use one of the valid categories',
@@ -400,6 +434,7 @@ export const validateOperations = (
 
             if (!isValidElementId(node.id)) {
               ctx.errors.push({
+                code: 'bad-value',
                 path: `${base}.nodes[${n}].id`,
                 message: `"${node.id}" is not a valid step name`,
                 hint: 'Letters, numbers, hyphens and underscores, starting with a letter. A later step reads this one as {{ <id>.field }}, so a dot would split that path'
@@ -408,6 +443,7 @@ export const validateOperations = (
 
             if (named.has(node.id)) {
               ctx.errors.push({
+                code: 'exists',
                 path: `${base}.nodes[${n}].id`,
                 message: `Two steps of this flow are called "${node.id}"`,
                 hint: 'A flow is keyed by step id, so the second would replace the first. Name them apart'
@@ -465,6 +501,7 @@ export const validateOperations = (
           (op[setting] ?? []).forEach((key, index) => {
             if (key.trim() === '' || key.includes('.')) {
               ctx.errors.push({
+                code: 'bad-value',
                 path: `${base}.${setting}[${index}]`,
                 message: `"${key}" is not a top-level state key: no dots, not empty`,
                 hint: `Name the key setState writes — "${key.split('.')[0] || 'tourStep'}" covers everything under it`
@@ -476,6 +513,7 @@ export const validateOperations = (
         (op.paintedState ?? []).forEach((key, index) => {
           if (op.transientState?.includes(key)) {
             ctx.errors.push({
+              code: 'wrong-options',
               path: `${base}.paintedState[${index}]`,
               message: `"${key}" is in both paintedState and transientState`,
               hint: 'A painted key is kept so the server can draw with it; a transient one never is — remove it from one'
@@ -485,6 +523,7 @@ export const validateOperations = (
         (op.browserState ?? []).forEach((key, index) => {
           if (op.transientState?.includes(key)) {
             ctx.errors.push({
+              code: 'wrong-options',
               path: `${base}.browserState[${index}]`,
               message: `"${key}" is in both browserState and transientState`,
               hint: 'A key of the browser’s is a kept one that no change of account takes away; a transient one is never kept — remove it from one'
@@ -496,6 +535,7 @@ export const validateOperations = (
         checkRef(op.ref, `${base}.ref`, ctx);
         if (Boolean(op.flowId) === Boolean(op.nodeId)) {
           ctx.errors.push({
+            code: 'wrong-options',
             path: `${base}.nodeId`,
             message: 'Provide exactly one of flowId or nodeId',
             hint: 'flowId removes a whole flow; nodeId removes a single step'

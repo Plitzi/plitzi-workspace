@@ -217,6 +217,7 @@ export const dataDescribe = async (file: string, options: DataDescribeOptions): 
       : [];
     const nearest = closest(path.basename(file), beside);
     fail(
+      missing ? 'missing' : 'unreadable',
       missing
         ? `${file} does not exist${nearest ? ` — did you mean ${path.join(path.dirname(file), nearest)}?` : beside.length > 0 ? `: the JSON there is ${beside.join(', ')}` : '.'}`
         : `${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`

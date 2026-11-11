@@ -229,7 +229,10 @@ export const visitorAsked = async (
   if (options.as !== undefined) {
     const account = await checkAccount(root, options.as);
     if (account === undefined || 'problem' in account) {
-      fail(`--as ${account === undefined ? `${options.as}: no account to sign in as` : account.problem}.`);
+      fail(
+        account === undefined ? 'missing' : 'signed-out',
+        `--as ${account === undefined ? `${options.as}: no account to sign in as` : account.problem}.`
+      );
 
       return null;
     }

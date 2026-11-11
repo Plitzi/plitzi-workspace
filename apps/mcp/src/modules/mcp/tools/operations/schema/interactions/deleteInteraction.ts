@@ -40,6 +40,7 @@ const removeFlow = (interactions: Record<string, ElementInteraction>, flowId: st
 export const deleteInteraction = (space: Space, env: Env, op: DeleteInteraction): OpResult => {
   if (Boolean(op.flowId) === Boolean(op.nodeId)) {
     return fail(
+      'wrong-options',
       'nodeId',
       'Provide exactly one of flowId or nodeId',
       'flowId removes a whole flow; nodeId removes a step'
@@ -53,7 +54,12 @@ export const deleteInteraction = (space: Space, env: Env, op: DeleteInteraction)
 
   const interactions = found.el.definition.interactions;
   if (!interactions) {
-    return fail('ref', `Element "${op.ref}" has no interactions`, 'Nothing to delete');
+    return fail(
+      'missing',
+      'ref',
+      `Element "${op.ref}" has no interactions`,
+      'Check the ref: read the element to see the flows it holds'
+    );
   }
 
   let deleted = 0;
@@ -62,6 +68,7 @@ export const deleteInteraction = (space: Space, env: Env, op: DeleteInteraction)
   } else if (op.nodeId) {
     if (!(op.nodeId in interactions)) {
       return fail(
+        'missing',
         'nodeId',
         `Interaction node "${op.nodeId}" not found on "${op.ref}"`,
         'Read the element to list nodes'
@@ -88,7 +95,12 @@ export const deleteInteraction = (space: Space, env: Env, op: DeleteInteraction)
   }
 
   if (deleted === 0) {
-    return fail('flowId', `No interaction matching "${op.flowId ?? op.nodeId}" on "${op.ref}"`, 'Nothing to delete');
+    return fail(
+      'missing',
+      'flowId',
+      `No interaction matching "${op.flowId ?? op.nodeId}" on "${op.ref}"`,
+      'Read the element to list its flows and their nodes, and name one of them'
+    );
   }
 
   if (Object.keys(interactions).length === 0) {

@@ -8,13 +8,19 @@ export const REF_RE = /^[a-zA-Z0-9._-]+$/;
 
 export const checkRef = (ref: string, path: string, ctx: ValidationCtx): void => {
   if (!ref || ref.trim().length === 0) {
-    ctx.errors.push({ path, message: 'Ref must not be empty', hint: 'Use a semantic name like "hero.title"' });
+    ctx.errors.push({
+      code: 'bad-value',
+      path,
+      message: 'Ref must not be empty',
+      hint: 'Use a semantic name like "hero.title"'
+    });
 
     return;
   }
 
   if (!REF_RE.test(ref)) {
     ctx.errors.push({
+      code: 'bad-value',
       path,
       message: `Ref "${ref}" has invalid characters`,
       hint: 'Allowed characters: letters, numbers, dot, hyphen, underscore'
@@ -28,6 +34,7 @@ export const checkIdRef = (ref: string, path: string, ctx: ValidationCtx): void 
   checkRef(ref, path, ctx);
   if (ref && REF_RE.test(ref) && !isValidElementId(ref)) {
     ctx.errors.push({
+      code: 'bad-value',
       path,
       message: `"${ref}" is not a valid element name`,
       hint:

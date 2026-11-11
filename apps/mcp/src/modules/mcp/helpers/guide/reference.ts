@@ -132,7 +132,7 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   type, every operation type there is. Ask for the one you are writing instead of guessing a field: a field an
   operation does not have is refused naming the one meant (\`"prop" (did you mean "props"?)\`), and a type spelt with
   other capitals is read as the catalog spells it and said in \`warnings\`. The same batch refused twice is not run a
-  third time (\`REPEATED_BATCH\`) — change what the errors name, or ask the person.
+  third time (\`repeated\`) — change what the errors name, or ask the person.
 - \`plitzi_search\` — find elements (and pages/definitions) across the space.
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
@@ -142,7 +142,7 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   with no name listed in \`unnamed\`, as text and far cheaper than an image; \`"html"\` its markup; \`"image"\` a PNG,
   the way to SEE overflow and misalignment (desktop, mobile or \`both\`); \`"both"\` image and outline. A change not
   saved yet is seen with \`plitzi_apply\`'s \`dryRun\` and \`look\`, the same views. It needs the SSR render service
-  (\`PREVIEW_UNAVAILABLE\` without it); without a browser, an image or an outline falls back to the HTML, said.
+  (refused \`not-allowed\` without it); without a browser, an image or an outline falls back to the HTML, said.
 - \`plitzi_activity { after, wait }\` — what happened on the space since you last looked: the draft changed (a person
   in the builder, another agent, the autofix — \`seq\` is its place in \`plitzi://changes/{env}\`), a version went
   out, a server action failed or was refused. The first call, without \`after\`, answers the latest and a \`cursor\`;

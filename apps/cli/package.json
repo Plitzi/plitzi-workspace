@@ -46,6 +46,7 @@
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
     "lint": "TIMING=1 eslint --cache --cache-location .eslintcache --cache-strategy content ./src",
+    "generate:refusals": "vitest run src/core/refusals.test.ts --update=all",
     "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tsbuildinfo/app.tsbuildinfo",
     "test": "vitest run",
     "cli": "node --import tsx src/index.ts"

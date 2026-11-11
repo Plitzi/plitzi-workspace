@@ -77,6 +77,6 @@ describe('the same batch refused again', () => {
     expect(first.errors?.length).toBeGreaterThan(0);
     expect(first.again).toBeUndefined();
     expect(second.again).toContain('Sending it again will not change the answer');
-    expect(third.error).toBe('REPEATED_BATCH');
+    expect(third.error).toBe('repeated');
   });
 });

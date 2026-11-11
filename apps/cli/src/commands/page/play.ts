@@ -436,7 +436,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
 
   const steps = stepsOf(options);
   if ('problem' in steps) {
-    fail(steps.problem);
+    fail('bad-value', steps.problem);
 
     return;
   }
@@ -444,7 +444,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
   // Where it starts: the page given — or the one a journey opens on, played first.
   const start = await playStart(project, given, options);
   if ('problem' in start) {
-    fail(start.problem);
+    fail('bad-value', start.problem);
 
     return;
   }
@@ -452,7 +452,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
   const { route, journey: fromJourney } = start;
   const same = (options.same ?? []).filter((each): each is PlaySame => (PLAY_SAME as readonly string[]).includes(each));
   if (options.same && same.length !== options.same.length) {
-    fail(`--same takes ${PLAY_SAME.join(', ')}: what moved, what is shown, what takes a press.`);
+    fail('bad-value', `--same takes ${PLAY_SAME.join(', ')}: what moved, what is shown, what takes a press.`);
 
     return;
   }
@@ -463,6 +463,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
   );
   if (ours && options.compare) {
     fail(
+      'wrong-options',
       `${stepText(ours)}: a step another account plays, or an action, reaches this project's own server — play it without --compare`
     );
 
@@ -470,7 +471,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
   }
 
   if (same.length > 0 && !options.compare) {
-    fail('--same holds the interaction to another page: give it --compare <that page>.');
+    fail('wrong-options', '--same holds the interaction to another page: give it --compare <that page>.');
 
     return;
   }
@@ -521,7 +522,7 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
         : undefined;
       if (unheld !== undefined) {
         await ours.page.close();
-        fail(unheld);
+        fail('failed', unheld);
 
         return;
       }
@@ -601,7 +602,8 @@ export const play = async (given: string | undefined, options: PlayOptions): Pro
       await ours.page.close();
       await theirs?.page.close();
       if ('problem' in outcome) {
-        (outcome.side === 'there' ? unanswered : fail)(
+        fail(
+          outcome.side === 'there' ? 'unanswered' : 'failed',
           [
             failedAtText(width, outcome.problem, results.length, steps),
             ...(outcome.pictured.length > 0

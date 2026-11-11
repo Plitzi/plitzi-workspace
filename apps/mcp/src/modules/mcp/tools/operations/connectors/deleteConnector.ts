@@ -21,6 +21,7 @@ export const deleteConnector = (space: Space, env: Env, op: DeleteConnector): Op
   const entry = findConnectorEntry(space, op.ref);
   if (!entry) {
     return fail(
+      'missing',
       'ref',
       `Connector "${op.ref}" does not exist`,
       `Read ${connectorsUri(env)} for the connectors this space has`,

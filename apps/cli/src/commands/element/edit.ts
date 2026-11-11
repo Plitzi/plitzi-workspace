@@ -118,7 +118,7 @@ export const parseSets = (
 export const edit = async (elementId: string, options: EditOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
-    fail('Run this in a project whose space is written in it (`src/space/`).');
+    fail('not-a-project', 'Run this in a project whose space is written in it (`src/space/`).');
 
     return;
   }
@@ -127,7 +127,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   const refuse = async (problem: string): Promise<void> => {
     const command = ['edit', elementId, ...(options.set ?? []), ...(options.remove ?? []).map(key => `-${key}`)];
     const before = await noteRefused(project.root, command);
-    fail(before > 0 ? `${problem}\n${AGAIN}` : problem);
+    fail('bad-value', before > 0 ? `${problem}\n${AGAIN}` : problem);
   };
 
   if (!options.set?.length && !options.remove?.length) {

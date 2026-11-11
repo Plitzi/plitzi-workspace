@@ -25,17 +25,27 @@ export type MoveElement = z.infer<typeof moveElementOp>;
 export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult => {
   const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page or layout "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
+    return fail(
+      'missing',
+      'pageRef',
+      `Page or layout "${op.pageRef}" not found`,
+      'Read the pages resource for valid refs'
+    );
   }
 
   const el = resolveRef(space.schema, page, op.ref);
   const anchor = resolveRef(space.schema, page, op.toParentRef);
   if (!el || el.id === page.id) {
-    return fail('ref', `Element "${op.ref}" not found`, 'Read the page resource for valid refs');
+    return fail('missing', 'ref', `Element "${op.ref}" not found`, 'Read the page resource for valid refs');
   }
 
   if (!anchor) {
-    return fail('toParentRef', `Target "${op.toParentRef}" not found`, 'Read the page resource for valid refs');
+    return fail(
+      'missing',
+      'toParentRef',
+      `Target "${op.toParentRef}" not found`,
+      'Read the page resource for valid refs'
+    );
   }
 
   // `from` is where the element sits now; the move itself — and its refusal to put a subtree inside itself — is the
@@ -48,6 +58,7 @@ export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult =
   );
   if (!moved) {
     return fail(
+      'bad-value',
       'toParentRef',
       `"${op.ref}" cannot move ${op.position} "${op.toParentRef}"`,
       'An element cannot move inside itself or one of its own descendants, and before/after needs an anchor that has a parent.'

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { styleCategory } from '../shared';
 import { styleVarsUri, styleVarUri } from '../write';
 
@@ -20,9 +20,16 @@ export type DeleteStyleVariable = z.infer<typeof deleteStyleVariableOp>;
 
 export const deleteStyleVariable = (space: Space, env: Env, op: DeleteStyleVariable): OpResult => {
   const group = space.style.variables[op.category];
-  if (group) {
-    Reflect.deleteProperty(group, op.name);
+  if (!group || !Object.hasOwn(group, op.name)) {
+    return fail(
+      'missing',
+      'name',
+      `No ${op.category} token "${op.name}"`,
+      `Read ${styleVarUri(env, op.category)} for the tokens of that category`
+    );
   }
+
+  Reflect.deleteProperty(group, op.name);
 
   return { ...empty(), deleted: 1, staleResources: [styleVarUri(env, op.category), styleVarsUri(env)] };
 };

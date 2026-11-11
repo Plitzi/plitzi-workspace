@@ -20,7 +20,7 @@ export type DeleteLayout = z.infer<typeof deleteLayoutOp>;
 export const deleteLayout = (space: Space, env: Env, op: DeleteLayout): OpResult => {
   const layout = findLayoutByRef(space.schema, op.ref);
   if (!layout) {
-    return fail('ref', `Layout "${op.ref}" not found`, `Read plitzi://schema/${env}/layouts for valid refs`);
+    return fail('missing', 'ref', `Layout "${op.ref}" not found`, `Read plitzi://schema/${env}/layouts for valid refs`);
   }
 
   /**
@@ -33,6 +33,7 @@ export const deleteLayout = (space: Space, env: Env, op: DeleteLayout): OpResult
   const inUse = pagesUsingLayout(space.schema, layout.id);
   if (inUse.length > 0) {
     return fail(
+      'in-use',
       'ref',
       `Layout "${op.ref}" is still used by ${inUse.length} page(s): ${inUse.map(page => page.id).join(', ')}`,
       'Detach them first with upsertPage { layout: null }, or point them at another shell'

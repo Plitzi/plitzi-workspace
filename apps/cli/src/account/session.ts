@@ -5,6 +5,7 @@ import { renewGrant, revokeGrant, signInThroughBrowser } from './oauth';
 import type { ConnectedSpace, Connection } from './connection';
 import type { Reply } from './http';
 import type { Grant } from './oauth';
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
 
 /**
  * The connection in use: made in the browser, renewed on its own, and ended when the platform says it has ended.
@@ -14,7 +15,7 @@ import type { Grant } from './oauth';
  * is never about permissions (that is 403), so it means exactly one thing, that the credential no longer works.
  */
 
-export type Outcome<T> = { ok: true; value: T } | { ok: false; error: string };
+export type Outcome<T> = { ok: true; value: T } | { ok: false; code: RefusalCode; error: string };
 
 /** Renewed this long before it expires, so a session is not handed to a request it will not outlive. */
 const RENEW_MARGIN_SECONDS = 60;
@@ -44,7 +45,11 @@ const spaceOfGrant = async (api: string, grant: Grant): Promise<Outcome<Connecte
 
   const space = reply.data.space;
   if (reply.status !== 200 || typeof space?.id !== 'number' || typeof space.permanentUrl !== 'string') {
-    return { ok: false, error: `The space you chose could not be read (${reply.status}).` };
+    return {
+      ok: false,
+      code: 'refused-by-platform',
+      error: `The space you chose could not be read (${reply.status}).`
+    };
   }
 
   return {
@@ -71,7 +76,7 @@ export const connect = async (api: string, { scope, open }: ConnectOptions): Pro
         ? 'Nothing came back from the browser in five minutes. Run the command again when you are ready.'
         : (signedIn.error ?? 'The platform refused the sign-in.');
 
-    return { ok: false, error };
+    return { ok: false, code: signedIn.reason === 'unreachable' ? 'unanswered' : 'signed-out', error };
   }
 
   const { grant } = signedIn;
@@ -123,10 +128,10 @@ const renew = async (connection: Connection): Promise<Outcome<Connection>> => {
   if (renewed.reason === 'refused') {
     await forgetConnection();
 
-    return { ok: false, error: ended(connection) };
+    return { ok: false, code: 'signed-out', error: ended(connection) };
   }
 
-  return { ok: false, error: renewed.error ?? `Could not reach ${connection.api}.` };
+  return { ok: false, code: 'unanswered', error: renewed.error ?? `Could not reach ${connection.api}.` };
 };
 
 const nearlyExpired = (grant: Grant): boolean =>
@@ -182,7 +187,7 @@ export const authorizedRequest = async <T>(
   if (second.status === 401) {
     await forgetConnection();
 
-    return { ok: false, error: ended(connection) };
+    return { ok: false, code: 'signed-out', error: ended(connection) };
   }
 
   return { ok: true, value: { connection: renewed.value, reply: second } };

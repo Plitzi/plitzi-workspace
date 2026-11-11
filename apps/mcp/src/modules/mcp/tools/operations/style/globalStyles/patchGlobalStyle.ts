@@ -31,6 +31,7 @@ export const patchGlobalStyle = (space: Space, env: Env, op: PatchGlobalStyle): 
   const existing = globalStyleToAI(space.style, op.componentType);
   if (!existing) {
     return fail(
+      'missing',
       'componentType',
       `No global style for "${op.componentType}"`,
       'patchGlobalStyle only updates an existing global; use upsertGlobalStyle to create one'

@@ -52,7 +52,7 @@ export const upsertFont = (space: Space, env: Env, op: UpsertFont): OpResult => 
       throw err;
     }
 
-    return fail('font', err.message, 'Fix the field the message names and send the operation again.');
+    return fail('bad-value', 'font', err.message, 'Fix the field the message names and send the operation again.');
   }
 
   const fonts = (space.style.fonts ??= []);

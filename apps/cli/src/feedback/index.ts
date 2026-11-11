@@ -134,14 +134,14 @@ export const reportTexts = (page: string): { texts: string[]; shared: string[] }
 const checkReport = async (file: string, json: boolean): Promise<void> => {
   const page = await fs.readFile(file, 'utf-8').catch(() => undefined);
   if (page === undefined) {
-    fail(`${file} cannot be read: name the report.html plitzi feedback wrote.`);
+    fail('unreadable', `${file} cannot be read: name the report.html plitzi feedback wrote.`);
 
     return;
   }
 
   const read = reportTexts(page);
   if ('problem' in read) {
-    fail(`${file}: ${read.problem}.`);
+    fail('unreadable', `${file}: ${read.problem}.`);
 
     return;
   }
@@ -177,7 +177,10 @@ export const feedback = async (options: FeedbackOptions): Promise<void> => {
   const previous = options.previous ?? [];
   const wrong = previous.filter(url => !ARTIFACT_URL.test(url));
   if (wrong.length > 0) {
-    fail(`--previous takes the link of an earlier report, a claude.ai artifact: ${wrong.join(', ')} is not one.`);
+    fail(
+      'bad-value',
+      `--previous takes the link of an earlier report, a claude.ai artifact: ${wrong.join(', ')} is not one.`
+    );
 
     return;
   }

@@ -68,6 +68,7 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   }
 
   fail(
+    'missing',
     `plitzi space push runtime packs the runtime with this project’s own @plitzi/sdk-actions, and none is installed:\n  ${projectAdd('@plitzi/sdk-actions')}`
   );
 
@@ -90,7 +91,10 @@ export const pushRuntimeOf = async (
   try {
     await fs.access(entry);
   } catch {
-    fail(`There is no ${path.relative(root, entry)}: the module whose default export is defineRuntime({ start }).`);
+    fail(
+      'missing',
+      `There is no ${path.relative(root, entry)}: the module whose default export is defineRuntime({ start }).`
+    );
 
     return 'failed';
   }
@@ -104,7 +108,7 @@ export const pushRuntimeOf = async (
   try {
     bytes = await packer.packRuntime(entry);
   } catch (error) {
-    fail(`It does not pack: ${error instanceof Error ? error.message : String(error)}`);
+    fail('does-not-build', `It does not pack: ${error instanceof Error ? error.message : String(error)}`);
 
     return 'failed';
   }
@@ -123,14 +127,14 @@ export const pushRuntimeOf = async (
     { method: 'PUT', headers: { 'content-type': 'application/octet-stream' }, body: new Uint8Array(bytes) }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return 'failed';
   }
 
   const { reply } = answered.value;
   if (reply.status !== 200 || !reply.data.digest) {
-    fail(reply.data.error ?? `The runtime was not kept (${String(reply.status)}).`);
+    fail('refused-by-platform', reply.data.error ?? `The runtime was not kept (${String(reply.status)}).`);
 
     return 'failed';
   }
@@ -165,14 +169,14 @@ const readRuntime = async (
     error?: string;
   }>(connection, `/spaces/${String(spaceId)}/runtime`);
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return undefined;
   }
 
   const { reply } = answered.value;
   if (reply.status !== 200) {
-    fail(reply.data.error ?? `Could not read the runtime (${String(reply.status)}).`);
+    fail('refused-by-platform', reply.data.error ?? `Could not read the runtime (${String(reply.status)}).`);
 
     return undefined;
   }
@@ -258,7 +262,7 @@ export const powerRuntime = async (power: 'start' | 'stop', options: RuntimeOpti
     { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ environment }) }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return;
   }
@@ -266,6 +270,7 @@ export const powerRuntime = async (power: 'start' | 'stop', options: RuntimeOpti
   const { reply } = answered.value;
   if (reply.status !== 204) {
     fail(
+      'refused-by-platform',
       reply.data.error ?? `The runtime was not ${power === 'start' ? 'started' : 'stopped'} (${String(reply.status)}).`
     );
 
@@ -301,14 +306,14 @@ export const setRuntimeSize = async (size: string, options: RuntimeOptions & { e
     { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size, environment }) }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return;
   }
 
   const { reply } = answered.value;
   if (reply.status !== 204) {
-    fail(reply.data.error ?? `The size was not changed (${String(reply.status)}).`);
+    fail('refused-by-platform', reply.data.error ?? `The size was not changed (${String(reply.status)}).`);
 
     return;
   }
@@ -354,14 +359,14 @@ export const setRuntimeVariable = async (name: string, value: string | undefined
     { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ value: given }) }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return;
   }
 
   const { reply } = answered.value;
   if (reply.status !== 204) {
-    fail(reply.data.error ?? `${name} was not set (${String(reply.status)}).`);
+    fail('refused-by-platform', reply.data.error ?? `${name} was not set (${String(reply.status)}).`);
 
     return;
   }
@@ -389,7 +394,7 @@ export const unsetRuntimeVariable = async (name: string, options: RuntimeOptions
     { method: 'DELETE' }
   );
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return;
   }

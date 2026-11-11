@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { fontsUri, fontUri } from '../../../../helpers/uris';
 
 import type { OpResult, Space } from '../../../../helpers';
@@ -19,7 +19,12 @@ export const deleteFont = (space: Space, env: Env, op: DeleteFont): OpResult => 
   const fonts = space.style.fonts ?? [];
   const index = fonts.findIndex(item => item.family === op.family);
   if (index === -1) {
-    return empty();
+    return fail(
+      'missing',
+      'family',
+      `The space has no font "${op.family}"`,
+      `Read ${fontsUri(env)} for the fonts it has`
+    );
   }
 
   fonts.splice(index, 1);

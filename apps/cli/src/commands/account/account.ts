@@ -36,7 +36,7 @@ const openInBrowser = (url: string): void => {
 export const apiFor = async (options: AccountOptions): Promise<string | undefined> => {
   const api = resolveApi(options.api, await readConnection());
   if (!api) {
-    fail(`"${options.api ?? process.env.PLITZI_API_URL ?? ''}" is not an address.`);
+    fail('bad-value', `"${options.api ?? process.env.PLITZI_API_URL ?? ''}" is not an address.`);
   }
 
   return api;
@@ -54,7 +54,11 @@ export const whoIs = async (connection: Connection): Promise<Outcome<string>> =>
 
   const { reply } = answered.value;
   if (reply.status !== 200) {
-    return { ok: false, error: `${connection.api} would not say who you are (${reply.status}).` };
+    return {
+      ok: false,
+      code: 'refused-by-platform',
+      error: `${connection.api} would not say who you are (${reply.status}).`
+    };
   }
 
   return { ok: true, value: reply.data.details?.email || reply.data.details?.username || 'you' };
@@ -85,7 +89,7 @@ export const login = async (options: AccountOptions): Promise<void> => {
   const previous = await readConnection();
   const connected = await connect(api, { open: openInBrowser });
   if (!connected.ok) {
-    fail(connected.error);
+    fail(connected.code, connected.error);
 
     return;
   }
@@ -112,20 +116,20 @@ export const whoami = async (options: WhoamiOptions): Promise<void> => {
 
   const current = await currentConnection(api);
   if (!current.ok) {
-    fail(current.error);
+    fail(current.code, current.error);
 
     return;
   }
 
   if (!current.value) {
-    fail(`Not signed in to ${api}. Sign in with plitzi login.`);
+    fail('signed-out', `Not signed in to ${api}. Sign in with plitzi login.`);
 
     return;
   }
 
   const who = await whoIs(current.value);
   if (!who.ok) {
-    fail(who.error);
+    fail(who.code, who.error);
 
     return;
   }
@@ -155,7 +159,7 @@ export const whoami = async (options: WhoamiOptions): Promise<void> => {
 const chooseSpace = async (api: string): Promise<Outcome<Connection>> => {
   const connected = await connect(api, { scope: 'space', open: openInBrowser });
   if (connected.ok && !connected.value.space) {
-    return { ok: false, error: 'No space was chosen.' };
+    return { ok: false, code: 'missing', error: 'No space was chosen.' };
   }
 
   return connected;
@@ -169,7 +173,7 @@ export const space = async (options: AccountOptions): Promise<void> => {
 
   const connected = await chooseSpace(api);
   if (!connected.ok) {
-    fail(connected.error);
+    fail(connected.code, connected.error);
 
     return;
   }
@@ -185,7 +189,7 @@ export const space = async (options: AccountOptions): Promise<void> => {
 export const connectionWithSpace = async (api: string, doing = 'to work in'): Promise<Connection | undefined> => {
   const current = await currentConnection(api);
   if (!current.ok) {
-    fail(current.error);
+    fail(current.code, current.error);
 
     return undefined;
   }
@@ -197,7 +201,7 @@ export const connectionWithSpace = async (api: string, doing = 'to work in'): Pr
   console.error(current.value ? `\nChoose the space ${doing}.` : `\nSign in, and choose the space ${doing}.`);
   const chosen = await chooseSpace(api);
   if (!chosen.ok) {
-    fail(chosen.error);
+    fail(chosen.code, chosen.error);
 
     return undefined;
   }
@@ -219,7 +223,7 @@ export const signedIn = async (api: string, doing: string): Promise<Connection |
   console.error(`\nSign in ${doing}.`);
   const connected = await connect(api, { open: openInBrowser });
   if (!connected.ok) {
-    fail(connected.error);
+    fail(connected.code, connected.error);
 
     return undefined;
   }

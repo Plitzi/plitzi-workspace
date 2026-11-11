@@ -566,6 +566,7 @@ export const registerRunGroup = (program: Command): Command => {
       // Read as "show the run" by a run's tester, twice in two runs: what it shows is a file, and the run is its status.
       if (run === undefined || file === undefined) {
         fail(
+          'wrong-options',
           `run show reads one file the run keeps: plitzi run show ${run ?? '<run>'} <file> [--version run|base|project] — the run as it stands is plitzi run status${run === undefined ? '' : ` ${run}`}`
         );
 

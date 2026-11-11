@@ -90,7 +90,13 @@ export const upsertAction = (space: Space, env: Env, op: UpsertAction): OpResult
   // broke while it can still fix it, rather than storing a flow the runner refuses when a visitor clicks.
   const report = validateActionDocument(document);
   if (!report.valid) {
-    return fail('nodes', `Invalid action: ${report.errors.map(issue => issue.message).join('; ')}`, '', []);
+    return fail(
+      'bad-value',
+      'nodes',
+      `Invalid action: ${report.errors.map(issue => issue.message).join('; ')}`,
+      'Fix each step the message names: plitzi_describe_operation { type: "upsertAction" } shows the fields a step takes',
+      []
+    );
   }
 
   const existing = findActionEntry(space, op.ref);

@@ -176,7 +176,7 @@ export const pushSpaceOf = async (
 ): Promise<SpacePush> => {
   const project = await loadProjectSpace(root);
   if ('problem' in project) {
-    fail(project.problem);
+    fail('does-not-build', project.problem);
 
     return { outcome: 'failed' };
   }
@@ -187,6 +187,7 @@ export const pushSpaceOf = async (
     documents = { schema, style };
   } catch (error) {
     fail(
+      'does-not-build',
       `The space does not author, so nothing was pushed — ${projectRun('author')} says why:\n${String(error instanceof Error ? error.message : error)}`
     );
 
@@ -196,7 +197,7 @@ export const pushSpaceOf = async (
   const [actions, connectors] = await Promise.all([projectActions(root), projectConnectors(root)]);
   for (const read of [actions, connectors]) {
     if (read && 'problem' in read) {
-      fail(read.problem);
+      fail('does-not-build', read.problem);
 
       return { outcome: 'failed' };
     }
@@ -228,7 +229,7 @@ export const pushSpaceOf = async (
     body
   });
   if (!answered.ok) {
-    fail(answered.error);
+    fail(answered.code, answered.error);
 
     return { outcome: 'failed' };
   }
@@ -236,6 +237,7 @@ export const pushSpaceOf = async (
   const { status, data } = answered.value.reply;
   if (status === 409) {
     fail(
+      data.refusal?.code === 'DRAFT_NOT_EMPTY' ? 'exists' : 'changed-since',
       data.refusal?.code === 'DRAFT_NOT_EMPTY'
         ? `${space.name} already holds work of its own, and this project never had it: pushing would replace it.\n` +
             `Take it out first (plitzi create --from ${space.permanentUrl}), or pass --force to replace it with this project.`
@@ -247,13 +249,16 @@ export const pushSpaceOf = async (
   }
 
   if (status === 422 && data.problems) {
-    fail(`${space.name} would not take the space as it is:${data.problems.map(problem => `\n  ${problem}`).join('')}`);
+    fail(
+      'refused-by-platform',
+      `${space.name} would not take the space as it is:${data.problems.map(problem => `\n  ${problem}`).join('')}`
+    );
 
     return { outcome: 'failed' };
   }
 
   if (status !== 200 || !data.draft) {
-    fail(data.error ?? `The space was not pushed (${String(status)}).`);
+    fail('refused-by-platform', data.error ?? `The space was not pushed (${String(status)}).`);
 
     return { outcome: 'failed' };
   }

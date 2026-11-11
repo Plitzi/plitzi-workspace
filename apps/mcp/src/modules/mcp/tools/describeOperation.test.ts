@@ -22,7 +22,7 @@ describe('plitzi_describe_operation', () => {
     const answer = describeOperation('upsertElemnt');
 
     expect(answer).toMatchObject({
-      error: 'UNKNOWN_OPERATION',
+      error: 'missing',
       message: 'There is no "upsertElemnt" operation — did you mean "upsertElement"?',
       describe: { type: 'upsertElement' }
     });

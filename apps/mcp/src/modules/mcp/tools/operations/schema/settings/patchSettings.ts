@@ -158,6 +158,7 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
     const [problem] = declaration === null ? [] : channelProblems(pattern, declaration);
     if (problem) {
       return fail(
+        'bad-value',
         `channels["${pattern}"]`,
         `Channel "${pattern}": ${problem}.`,
         'Fix the pattern or declaration and send it again'
@@ -168,7 +169,7 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
   // What a head reads of the site, held as authoring and the builder hold it: a bare file name is a tab with no icon.
   const [identityProblem] = spaceIdentityProblems(spaceIdentity({ ...space.schema.settings, ...patch }));
   if (identityProblem) {
-    return fail('settings', identityProblem, 'Fix the field and send it again');
+    return fail('bad-value', 'settings', identityProblem, 'Fix the field and send it again');
   }
 
   // zod omits absent optional keys, so Object.entries yields only the fields the agent actually sent.
@@ -188,6 +189,7 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
     } catch (error) {
       // authoring's own check: a value that is not one CSS value would end the rule early.
       return fail(
+        'bad-value',
         'notifications',
         error instanceof Error ? error.message : String(error),
         'Write one CSS value per field — a colour, a length or a token like var(--card)'
@@ -199,6 +201,7 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
     delete next.withheldPage;
   } else if (next.withheldPage !== undefined && withheldPageOf({ ...space.schema, settings: next }) === undefined) {
     return fail(
+      'bad-value',
       'withheldPage',
       `withheldPage "${next.withheldPage}" is no page of the space, or one with an access of its own — withheld from the visitor it is drawn for.`,
       'Name the id of a page every visitor may see, or "" for the platform\'s words'

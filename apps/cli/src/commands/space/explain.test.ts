@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPLAIN_KINDS, explainList } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
+import { REFUSALS } from '@plitzi/sdk-shared/refusals';
 
 import { explainCommand, searchAll } from './explain';
+import { runRefusals } from '../../core/refusal';
 import { LINT_RULES } from '../../lint/catalog';
 import { PAGE_CHECK_CODES } from '../page/check/codes';
 
@@ -91,7 +93,9 @@ describe('plitzi explain', () => {
       explainList('code').map(entry => entry.name),
       Object.keys(LINT_RULES),
       Object.keys(PROJECT_LAYOUT_CODES),
-      Object.keys(PAGE_CHECK_CODES)
+      Object.keys(PAGE_CHECK_CODES),
+      Object.keys(REFUSALS),
+      runRefusals().map(each => each.code)
     ];
 
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));

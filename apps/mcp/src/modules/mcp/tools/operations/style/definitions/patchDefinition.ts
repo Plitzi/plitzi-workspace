@@ -31,6 +31,7 @@ export const patchDefinition = (space: Space, env: Env, op: PatchDefinition): Op
   const existing = definitionToAI(space.style, op.ref);
   if (!existing) {
     return fail(
+      'missing',
       'ref',
       `Definition "${op.ref}" not found`,
       'patchDefinition only updates an existing definition; use upsertDefinition to create one'

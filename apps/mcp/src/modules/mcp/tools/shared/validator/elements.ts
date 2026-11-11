@@ -87,6 +87,7 @@ export const checkRawMarkup = (
   for (const [key, value] of Object.entries(props)) {
     if (typeof value === 'string' && EXECUTABLE_MARKUP.test(value)) {
       ctx.errors.push({
+        code: 'not-allowed',
         path: `${path}.props.${key}`,
         message: `Executable markup in a "${type}" prop is not allowed in a widget`,
         hint:
@@ -107,6 +108,7 @@ export const checkElementInput = (element: ElementInput, path: string, ctx: Vali
   checkIdRef(element.ref, `${path}.ref`, ctx);
   if (seen.has(element.ref)) {
     ctx.errors.push({
+      code: 'exists',
       path: `${path}.ref`,
       message: `Duplicate ref "${element.ref}" in this batch`,
       hint: 'Use a unique ref'
@@ -117,6 +119,7 @@ export const checkElementInput = (element: ElementInput, path: string, ctx: Vali
 
   if (!element.type) {
     ctx.errors.push({
+      code: 'wrong-options',
       path: `${path}.type`,
       message: 'Element type is required',
       hint: 'Read plitzi://types for known types'

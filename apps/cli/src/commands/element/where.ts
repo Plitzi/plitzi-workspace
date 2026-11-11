@@ -530,7 +530,7 @@ const whereText = (answer: WhereAnswer): string => {
 export const where = async (query: string, options: WhereOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
-    fail('Run this in a project whose space is written in it (`src/space/`).');
+    fail('not-a-project', 'Run this in a project whose space is written in it (`src/space/`).');
 
     return;
   }

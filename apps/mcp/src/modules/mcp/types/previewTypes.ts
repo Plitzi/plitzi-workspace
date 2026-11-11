@@ -1,5 +1,6 @@
 import type { ValidationError } from './aiSchema';
 import type { Operation } from '../tools/operations';
+import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
 
 // Shared I/O for the draft-preview path. Lives on the MCP side (it references the MCP write vocabulary and
 // error shape); the SSR endpoint that renders a draft and the MCP tools that request one both import it here,
@@ -40,7 +41,7 @@ export type PreviewRequestBody = {
 export type PreviewResult =
   // `html` is empty when the request asked for `includeHtml: false` — the token and the path are what it wanted.
   | { ok: true; token?: string; pagePath: string; html: string; stateVersion: string; expiresInMs?: number }
-  | { ok: false; error: string; message: string; errors?: ValidationError[] };
+  | { ok: false; error: RefusalCode; message: string; errors?: ValidationError[] };
 
 /** How the MCP tools reach the renderer. The consumer injects an implementation (an HTTP client to the SSR
  *  `/preview` endpoint, or an in-process call when co-located); absent means preview is not wired. */

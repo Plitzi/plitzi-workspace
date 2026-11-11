@@ -276,7 +276,7 @@ export const watchSpace = async (options: WatchOptions): Promise<void> => {
   const { root } = project;
   const first = await passAfresh(root);
   if (!('authors' in first)) {
-    fail(`The space could not be read: ${first.problem}`);
+    fail('does-not-build', `The space could not be read: ${first.problem}`);
 
     return;
   }

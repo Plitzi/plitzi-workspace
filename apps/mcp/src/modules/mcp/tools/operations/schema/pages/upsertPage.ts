@@ -89,6 +89,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       const resolved = findFolderByRef(space.schema, op.folder);
       if (!resolved) {
         return fail(
+          'missing',
           'folder',
           `Folder "${op.folder}" not found`,
           'Create it with upsertFolder, or read plitzi://folders'
@@ -113,6 +114,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       layoutValue = '';
     } else if (!findLayoutByRef(space.schema, op.layout)) {
       return fail(
+        'missing',
         'layout',
         `Layout "${op.layout}" not found`,
         'Create it with upsertLayout, or read plitzi://schema/' + env + '/layouts'
@@ -131,6 +133,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       const shell = shellRef ? findLayoutByRef(space.schema, shellRef) : undefined;
       if (!shell) {
         return fail(
+          'wrong-options',
           'layoutContainer',
           'A slot needs a layout to be part of',
           'Pass `layout` in the same op (or set it first) so the slot can be checked against that shell'
@@ -139,6 +142,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
 
       if (!resolveRef(space.schema, shell, op.layoutContainer)) {
         return fail(
+          'bad-value',
           'layoutContainer',
           `"${op.layoutContainer}" is not an element of layout "${shell.id}"`,
           `Read plitzi://schema/${env}/pages/${shell.id} and name a container from that tree`

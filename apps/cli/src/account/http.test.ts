@@ -23,7 +23,7 @@ describe('requestJson', () => {
 
     const reply = await requestJson('https://api.plitzi.com/spaces/7/import');
 
-    expect(reply).toEqual({ ok: false, error: expect.stringContaining(upgradeUrl) as unknown });
+    expect(reply).toEqual({ ok: false, code: 'not-allowed', error: expect.stringContaining(upgradeUrl) as unknown });
     expect(!reply.ok && reply.error).toContain('included in the Site plan');
   });
 
@@ -35,7 +35,11 @@ describe('requestJson', () => {
       requires: 'App',
       upgradeUrl: 'https://p'
     });
-    expect(await requestJson('https://api.plitzi.com/x')).toEqual({ ok: false, error: 'Not on this plan. https://p' });
+    expect(await requestJson('https://api.plitzi.com/x')).toEqual({
+      ok: false,
+      code: 'not-allowed',
+      error: 'Not on this plan. https://p'
+    });
 
     answering(404, { error: 'Not found' });
     expect(await requestJson('https://api.plitzi.com/x')).toEqual({

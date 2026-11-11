@@ -55,7 +55,7 @@ export type McpOptions = {
   proxy?: McpProxyOptions;
   /** For an MCP server that runs separately from the renderer (the CLIENT side): where to reach the SSR
    *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
-   *  absent → those tools report PREVIEW_UNAVAILABLE. */
+   *  absent → those tools refuse with `not-allowed`. */
   previewClient?: { url: string; secret?: string };
   /** Dedicated headless-browser service a look renders an image or an accessibility outline through (off unless
    *  set). `serviceUrl` is the browser service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the

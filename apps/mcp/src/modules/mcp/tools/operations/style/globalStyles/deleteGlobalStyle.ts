@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { empty, fail } from '../../../../helpers';
 import { globalsUri, globalUri, guardKind, MODES } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -20,6 +20,15 @@ export const deleteGlobalStyle = (space: Space, env: Env, op: DeleteGlobalStyle)
   const guard = guardKind(space.style, op.componentType, 'element');
   if (guard) {
     return guard;
+  }
+
+  if (!MODES.some(mode => Object.hasOwn(space.style.platform[mode], op.componentType))) {
+    return fail(
+      'missing',
+      'componentType',
+      `No global style for "${op.componentType}"`,
+      `Read ${globalsUri(env)} for what there is`
+    );
   }
 
   for (const mode of MODES) {

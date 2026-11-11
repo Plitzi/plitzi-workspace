@@ -96,13 +96,14 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   const plitzi = project?.plitzi?.kind === 'project' ? project.plitzi : undefined;
   if (!project || !plitzi) {
-    fail('plitzi runtime add adds to a project plitzi create wrote, and this is not one.');
+    fail('not-a-project', 'plitzi runtime add adds to a project plitzi create wrote, and this is not one.');
 
     return;
   }
 
   if (plitzi.mode !== 'server') {
     fail(
+      'not-a-project',
       'A runtime runs beside a server, and this project has none (`--mode client`): its code would run nowhere here.'
     );
 
@@ -115,7 +116,7 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
     () => false
   );
   if (exists && !options.force) {
-    fail(`${RUNTIME_ENTRY} is already there: it is the project's runtime. Pass --force to write over it.`);
+    fail('exists', `${RUNTIME_ENTRY} is already there: it is the project's runtime. Pass --force to write over it.`);
 
     return;
   }

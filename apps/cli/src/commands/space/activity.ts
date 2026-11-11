@@ -112,7 +112,7 @@ export const followActivity = async (
     });
     if ('problem' in read) {
       if (!read.transient) {
-        fail(read.problem);
+        fail('refused-by-platform', read.problem);
 
         return;
       }
@@ -146,7 +146,7 @@ export const activity = async (options: ActivityOptions): Promise<void> => {
     mine: Boolean(options.mine)
   });
   if ('problem' in first) {
-    fail(first.problem);
+    fail('refused-by-platform', first.problem);
 
     return;
   }

@@ -152,6 +152,7 @@ export const lintDraft = (draft: Space, ops: Operation[], before?: Space): Valid
       : () => false;
 
   const toError = (issue: LintIssue): ValidationError => ({
+    code: 'bad-value',
     path: issue.elementId ? `element "${issue.elementId}"` : 'schema',
     message: preExisting(issue)
       ? `Pre-existing malformation in element "${issue.elementId ?? ''}": ${said(issue)}`

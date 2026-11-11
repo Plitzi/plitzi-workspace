@@ -136,7 +136,12 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
     case 'deleteDataFile':
       return data.deleteDataFile(space, env, op);
     default:
-      return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
+      return fail(
+        'missing',
+        'type',
+        `Unknown operation "${(op as { type: string }).type}"`,
+        'plitzi_describe_operation lists every operation type'
+      );
   }
 };
 

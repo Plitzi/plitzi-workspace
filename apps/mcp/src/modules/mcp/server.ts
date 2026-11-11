@@ -41,7 +41,7 @@ declare const VERSION: string;
 export interface McpServerContext {
   adapters: SSRAdapters;
   getGrant: () => Promise<SSRGrant | undefined>;
-  /** How a look (plitzi_look, plitzi_apply's `look`) reaches the renderer. Absent → it reports PREVIEW_UNAVAILABLE, so an
+  /** How a look (plitzi_look, plitzi_apply's `look`) reaches the renderer. Absent → it refuses with `not-allowed`, so an
    *  MCP-only deployment without a renderer still runs every other tool. */
   preview?: PreviewClient;
   /** The dedicated browser service a look takes an image or an accessibility outline with. Absent → a look answers

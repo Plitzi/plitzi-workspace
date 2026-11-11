@@ -26,12 +26,12 @@ export const createHttpPreviewClient = ({
         body: JSON.stringify(body)
       });
     } catch (err) {
-      return { ok: false, error: 'PREVIEW_UNREACHABLE', message: `Preview endpoint unreachable: ${String(err)}` };
+      return { ok: false, error: 'unanswered', message: `Preview endpoint unreachable: ${String(err)}` };
     }
 
     // 422 carries a structured PreviewResult (validation/apply errors) — read it as such; other non-2xx do not.
     if (!res.ok && res.status !== 422) {
-      return { ok: false, error: 'PREVIEW_REQUEST_FAILED', message: `Preview endpoint returned ${res.status}.` };
+      return { ok: false, error: 'unanswered', message: `Preview endpoint returned ${res.status}.` };
     }
 
     return (await res.json()) as PreviewResult;

@@ -212,7 +212,7 @@ the tools carry the work a rule can do, and every surface an agent reads is held
   (`'Heading'` for `'heading'`, said as a warning — authoring corrects aloud, never silently), fixed in one retry where
   it does not: every problem at once, each with the corrected call. A batch refused again is told that sending it
   once more will not change the answer — change what the errors name, or ask the person — and a third identical one
-  is not run (`REPEATED_BATCH`): a model is not trusted to notice it is going round in circles.
+  is not run (`repeated`): a model is not trusted to notice it is going round in circles.
 - **A write proves itself.** Every tool that changes the space answers with the check of what it changed, so "done"
   is the check being clean, never the agent saying so.
 - **Bounded, and ending with the next step.** Every output has a ceiling and a cursor for the rest, so none overflows a
