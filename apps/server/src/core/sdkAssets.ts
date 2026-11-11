@@ -5,6 +5,8 @@ import path from 'node:path';
 /** Where the rendered page is told to fetch the SDK bundle from. Emitted by the render, so it is also served. */
 export const SDK_ASSETS_PREFIX = '/sdk-assets';
 
+let resolvedSdkDir: { dir: string | undefined } | undefined;
+
 /**
  * The SDK's built output, resolved through the module system rather than guessed from `process.cwd()`.
  *
@@ -17,14 +19,21 @@ export const SDK_ASSETS_PREFIX = '/sdk-assets';
  * Returns undefined if the SDK is not installed, which is legitimate: a server rendering `ssrOnly` pages, or one
  * whose deployment serves the bundle from a CDN, needs none of this.
  */
+// Once a process: where the SDK is installed cannot change while it runs, and resolving it is a module lookup — read on
+// every render (the page's icon faces), it was a part of each render's CPU.
 export const resolveSdkAssetsDir = (): string | undefined => {
+  if (resolvedSdkDir) {
+    return resolvedSdkDir.dir;
+  }
+
   try {
     const require = createRequire(import.meta.url);
-
-    return path.dirname(require.resolve('@plitzi/plitzi-sdk/plitzi-sdk.css'));
+    resolvedSdkDir = { dir: path.dirname(require.resolve('@plitzi/plitzi-sdk/plitzi-sdk.css')) };
   } catch {
-    return undefined;
+    resolvedSdkDir = { dir: undefined };
   }
+
+  return resolvedSdkDir.dir;
 };
 
 /**
