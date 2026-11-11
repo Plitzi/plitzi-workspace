@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 
 import { markdownComponents } from './helpers/markdownComponents';
 import { rehypeHeadingAnchors } from './helpers/rehypeHeadingAnchors';
+import { rehypeTableLabels } from './helpers/rehypeTableLabels';
 import { keptByText } from '../../Element/helpers/keptByText';
 
 import type { MarkdownClassNames } from './helpers/markdownParts';
@@ -95,7 +96,7 @@ const MarkdownDocument = ({
 
     const made = markdownTree({
       remarkPlugins,
-      rehypePlugins: headingAnchor ? [rehypeHeadingAnchors(headingAnchor)] : [],
+      rehypePlugins: headingAnchor ? [rehypeTableLabels, rehypeHeadingAnchors(headingAnchor)] : [rehypeTableLabels],
       components: markdownComponents({ classNames, headingLinks, wrapLines, showLineNumbers }),
       children
     });

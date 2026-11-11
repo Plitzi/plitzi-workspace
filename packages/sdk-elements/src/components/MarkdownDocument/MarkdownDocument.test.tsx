@@ -169,6 +169,18 @@ describe('MarkdownDocument', () => {
       expect(classOf('.markdown-code-copy')).toBe('markdown-code-copy doc-codeBlockCopy');
     });
 
+    // A row laid out as label and value on a phone needs each cell to know its column: the cookie table's third column
+    // ran off a 390 px screen.
+    it("names every body cell after its column's heading", () => {
+      const { container } = render(
+        <MarkdownDocument>{'| Name | Purpose |\n| - | - |\n| theme | Remembers it |\n| flags | Keeps them |'}</MarkdownDocument>
+      );
+      const labels = [...container.querySelectorAll('td')].map(cell => cell.getAttribute('data-label'));
+
+      expect(labels).toEqual(['Name', 'Purpose', 'Name', 'Purpose']);
+      expect(container.querySelector('th')?.getAttribute('data-label')).toBeNull();
+    });
+
     it('reaches every part it names', () => {
       const { container } = render(
         <MarkdownDocument classNames={classNames} headingAnchor={text => text.toLowerCase()}>
