@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import { authorSnippet } from '@plitzi/sdk-authoring';
-import { documentIds, FlatMap } from '@plitzi/sdk-schema';
+import { descendants, documentIds, FlatMap } from '@plitzi/sdk-schema';
 
-import { empty, fail, findRootByRef, indexAddElement, resolveRef } from '../../../../helpers';
+import { empty, fail, findRootByRef, indexAddElement, indexRemoveElements, resolveRef } from '../../../../helpers';
 import { defsUri, MODES } from '../../style/write';
 import { position } from '../shared';
 import { DROP_POSITION, pageUri } from '../write';
@@ -14,6 +14,7 @@ import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
 import type { Env } from '../../../../types';
 import type { ElementSpec, SnippetSpec } from '@plitzi/sdk-authoring';
+import type { DropPosition, Element } from '@plitzi/sdk-shared';
 
 export const addSpecOp = z
   .object({
@@ -21,6 +22,10 @@ export const addSpecOp = z
     pageRef: z.string().describe('The page or layout'),
     parentRef: z.string().optional().describe('The element it goes relative to; the page when left out'),
     position: position.optional(),
+    replaces: z
+      .string()
+      .optional()
+      .describe('An element it takes the place of, with all under it: their ids are free for the spec to name again'),
     spec: z
       .record(z.string(), z.unknown())
       .describe(
@@ -32,7 +37,9 @@ export const addSpecOp = z
       .optional()
       .describe('The classes it names, as `styles(name, { … })` takes them')
   })
-  .describe("An element tree in the authoring skill's vocabulary, with the classes it names; every id must be new");
+  .describe(
+    "An element tree in the authoring skill's vocabulary, with the classes it names; every id new, or one `replaces` frees"
+  );
 
 export type AddSpec = z.infer<typeof addSpecOp>;
 
@@ -63,6 +70,67 @@ export const authorSpec = (
   }
 };
 
+type Placement = { anchor: string; drop: DropPosition; replaced: Element[] } | { error: OpResult };
+
+/**
+ * Where the tree goes: relative to `parentRef`, or in the place of what `replaces` names — after the sibling before it,
+ * before the one after it, or inside its parent when it had none — with that element and all under it, which go.
+ */
+const placementOf = (space: Space, page: Element, op: AddSpec): Placement => {
+  if (op.replaces === undefined) {
+    const anchor = op.parentRef === undefined ? page : resolveRef(space.schema, page, op.parentRef);
+    if (!anchor) {
+      return {
+        error: fail(
+          'missing',
+          'parentRef',
+          `"${op.parentRef ?? ''}" is no element of "${op.pageRef}"`,
+          'Use an existing ref'
+        )
+      };
+    }
+
+    return { anchor: anchor.id, drop: DROP_POSITION[op.position ?? 'inside'], replaced: [] };
+  }
+
+  if (op.parentRef !== undefined || op.position !== undefined) {
+    return {
+      error: fail(
+        'bad-value',
+        'replaces',
+        'A tree that replaces an element takes its place: `parentRef` and `position` would name another',
+        'Leave them out, or leave out `replaces` to add the tree beside it'
+      )
+    };
+  }
+
+  const old = resolveRef(space.schema, page, op.replaces);
+  const parent = old?.definition.parentId === undefined ? undefined : space.schema.flat[old.definition.parentId];
+  if (!old || old.id === page.id || !parent) {
+    return {
+      error: fail(
+        'missing',
+        'replaces',
+        `"${op.replaces}" is no element of "${op.pageRef}"`,
+        'Read the page resource for valid refs'
+      )
+    };
+  }
+
+  const replaced = [old, ...descendants(space.schema.flat, old.id).map(id => space.schema.flat[id])];
+  const siblings = parent.definition.items ?? [];
+  const at = siblings.indexOf(old.id);
+  if (at > 0) {
+    return { anchor: siblings[at - 1], drop: 'bottom', replaced };
+  }
+
+  if (at >= 0 && at < siblings.length - 1) {
+    return { anchor: siblings[at + 1], drop: 'top', replaced };
+  }
+
+  return { anchor: parent.id, drop: 'inside', replaced };
+};
+
 export const addSpec = (space: Space, env: Env, op: AddSpec): OpResult => {
   const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
@@ -74,14 +142,9 @@ export const addSpec = (space: Space, env: Env, op: AddSpec): OpResult => {
     );
   }
 
-  const anchor = op.parentRef === undefined ? page : resolveRef(space.schema, page, op.parentRef);
-  if (!anchor) {
-    return fail(
-      'missing',
-      'parentRef',
-      `"${op.parentRef ?? ''}" is no element of "${op.pageRef}"`,
-      'Use an existing ref'
-    );
+  const target = placementOf(space, page, op);
+  if ('error' in target) {
+    return target.error;
   }
 
   const authoring = authorSpec(op);
@@ -93,7 +156,8 @@ export const addSpec = (space: Space, env: Env, op: AddSpec): OpResult => {
   const fragment = authored.snippet.schema.flat;
   const rootId = authored.snippet.definition.baseElementId;
   const taken = documentIds(space.schema);
-  const clashing = Object.keys(fragment).filter(id => taken.has(id));
+  const freed = new Set(target.replaced.map(element => element.id));
+  const clashing = Object.keys(fragment).filter(id => taken.has(id) && !freed.has(id));
   if (clashing.length > 0) {
     return fail(
       'exists',
@@ -104,12 +168,17 @@ export const addSpec = (space: Space, env: Env, op: AddSpec): OpResult => {
   }
 
   const root = fragment[rootId];
-  const drop = DROP_POSITION[op.position ?? 'inside'];
   for (const element of Object.values(fragment)) {
     element.definition.rootId = page.id;
   }
 
-  if (!new FlatMap({ flat: space.schema.flat }).addElement(root, anchor.id, drop)) {
+  const flatMap = new FlatMap({ flat: space.schema.flat });
+  if (target.replaced.length > 0) {
+    flatMap.removeElement(target.replaced[0].id);
+    indexRemoveElements(space.schema, target.replaced);
+  }
+
+  if (!flatMap.addElement(root, target.anchor, target.drop)) {
     return fail(
       'bad-value',
       'parentRef',
@@ -140,6 +209,7 @@ export const addSpec = (space: Space, env: Env, op: AddSpec): OpResult => {
   return {
     ...empty(),
     created: Object.keys(fragment).length,
+    ...(target.replaced.length > 0 ? { deleted: 1 } : {}),
     elementRefs: Object.keys(fragment),
     staleResources: [pageUri(env, op.pageRef), ...(declared.length > 0 ? [defsUri(env)] : [])]
   };

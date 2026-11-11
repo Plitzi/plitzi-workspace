@@ -140,7 +140,9 @@ An authored request connects to the address its name was judged to, and the advi
 - `plitzi_apply` takes an element tree written as the authoring skill writes one — `addSpec { pageRef, parentRef,
   spec, classes }`, the JSON `container({ … })` returns and the classes it names — checked by authoring itself, so its
   refusals and warnings are the ones a project's `plitzi doctor` gives. An agent writes one vocabulary in a project and
-  over the MCP; a name the space already has is refused (`exists`).
+  over the MCP; a name the space already has is refused (`exists`). With `replaces: ref` in place of `parentRef` the
+  tree takes that element's place, and it and all under it go — the spec may name their ids again, so an element is
+  rewritten in the words it was written in. The MCP's own element operations are unchanged.
 - A look or a preview at a page the space does not have is refused (`missing`, with the nearest page) instead of
   drawing its home: `plitzi_look { pageRef: "dashboard" }` on a space without one answered the home as that page, and a
   thumbnail of a page since removed was the home's.
