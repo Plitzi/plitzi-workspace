@@ -29,7 +29,7 @@ import { scriptTemplateParams } from './scriptPolicy';
 import { publishSpaceDocument } from './spaceDocument';
 import { googleFontsUrlOf } from '../../core/http/stages/googleFonts';
 import { imagesPathOf } from '../../core/http/stages/images';
-import { pageAssets } from '../../core/sdkAssets';
+import { pageAssets, resolveSdkAssetsDir } from '../../core/sdkAssets';
 import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
@@ -39,6 +39,8 @@ import { requestPaintedState } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 import { visitorScheme } from '../../helpers/visitorScheme';
+import { iconGlyphsAt } from '../icons/glyphs';
+import { iconFacesCss, spaceIconsOf } from '../icons/spaceIcons';
 import { matchRscPage } from '../rsc/matchRscPage';
 
 import type { ComponentProps } from './Component';
@@ -362,6 +364,10 @@ export const prepareRender = async (
   const linkStyle = offlineDataOverride === undefined && !spaceToken && config.templateFn === undefined;
   // Rendered from the document the page is sent, so the server draws the `<link>` the browser hydrates.
   const document = offlineData !== undefined ? spaceDocument(offlineData, { linkStyle }) : undefined;
+  // The glyphs the space names, as faces of their own — asked for by the host, like the stylesheet, so only where it
+  // is linked; elsewhere the page draws its icons from the whole font.
+  const sdkDir = linkStyle && rawOfflineData ? resolveSdkAssetsDir() : undefined;
+  const spaceIcons = sdkDir && rawOfflineData ? spaceIconsOf(rawOfflineData, iconGlyphsAt(sdkDir)) : undefined;
   const publishedDocument =
     document !== undefined &&
     offlineDataOverride === undefined &&
@@ -513,6 +519,7 @@ export const prepareRender = async (
       jsPath: assets.jsPath,
       cssPath: assets.cssPath,
       iconsCssPath: sdkIconsStylePath,
+      ...(spaceIcons ? { iconFaces: iconFacesCss(spaceIcons) } : {}),
       spaceDocumentPath,
       styleSheetPath: document?.data.style.cacheHref,
       react: vendorJs,

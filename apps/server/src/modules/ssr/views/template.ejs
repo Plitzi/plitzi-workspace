@@ -92,6 +92,10 @@
     <% if (locals.iconsCssPath) { %>
     <link href="<%= locals.iconsCssPath %>" rel="stylesheet" />
     <% } %>
+    <%# The space's own glyphs, after the whole font's faces: what is in their range is fetched from them alone. %>
+    <% if (locals.iconFaces) { %>
+    <style data-plitzi-icons><%- locals.iconFaces %></style>
+    <% } %>
 
     <% if (!locals.ssrOnly) { %>
     <%#

@@ -91,6 +91,11 @@ export type SSRTemplateProps = {
   /** Font Awesome's rules, after `cssPath`; its fonts are files beside it, fetched only for a style the page uses. */
   iconsCssPath?: string;
   /**
+   * The space's own icon faces — the glyphs it names, cut from the whole font (`/_plitzi/icons/`) — declared after
+   * `iconsCssPath`'s, so a glyph in their range is fetched from them and any other from the whole font.
+   */
+  iconFaces?: string;
+  /**
    * Where the page fetches the space from, when it travels beside the document rather than in its payload: the
    * page preloads it, and the bootstrap reads it before hydrating.
    */

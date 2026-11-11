@@ -40,6 +40,11 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- A page fetches the icons its space names, not the whole font: the head declares them as faces of their own after Font
+  Awesome's (`/_plitzi/icons/<hash>-<face>.woff2`, with their `unicode-range`), cut from the font on the first request
+  for them and kept for good. Plitzi's website names 110 glyphs: 9 KB, where the solid face is 119 KB. An icon named
+  only by data read at run time is drawn from the whole font, declared before them, as it was. A deployment that
+  bundles the server keeps `subset-font` out of the bundle (it reads its WebAssembly beside itself).
 - Realtime over Server-Sent Events works behind a balancer with no affinity. A page publishes with `POST /_realtime`
   and its stream's token, which only the replica holding the stream knew: one that reached another replica was
   answered `401 not_connected`. It is relayed over the shared `pubsub` to the replica holding the stream and answered

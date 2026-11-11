@@ -4,6 +4,7 @@ import { createMiddlewaresStage } from '@plitzi/sdk-kernel/http';
 import { configStaticStage, publicDirStage, wellKnownStage } from '@plitzi/sdk-kernel/http';
 import { statsStage } from '@plitzi/sdk-kernel/stats';
 
+import { iconFacesStage } from './iconFaces';
 import { robotsTxtStage } from './robotsTxt';
 import { rscStage } from './rsc';
 import { securityTxtStage } from './securityTxt';
@@ -75,6 +76,7 @@ export const buildPagePipeline = (
   if (services.ssr) {
     stages.push(spaceDocumentStage);
     stages.push(styleSheetStage);
+    stages.push(iconFacesStage);
     stages.push(robotsTxtStage);
     stages.push(sitemapXmlStage);
   }

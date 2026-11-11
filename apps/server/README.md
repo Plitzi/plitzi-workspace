@@ -400,7 +400,8 @@ are built in and a fourth is `(req) => …` of your own, which is how a deployme
 its proxy sets or by a table nobody else has still gets everything below.
 
 **A space is chosen by host or credential, never by the page's path or query.** `getSpaceDeployment` is asked on every
-request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_plitzi/style/<hash>.css`, `/_action`,
+request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_plitzi/style/<hash>.css`,
+`/_plitzi/icons/…`, `/_action`,
 `/fn/…`, `/_realtime` — carries
 nothing of the page's address but its host: a space chosen by `?space=` or `/s/<id>/` renders its first page and then
 loses everything it asks for. Many spaces on one server are a sub-domain each (`wildcardSubdomain`).
@@ -790,6 +791,18 @@ in the page where no other request could answer for it — a draft preview, a sp
 deployment's own `templateFn`, which does not know to link it, and when a `{{ token }}` in it is replaced by the
 variables as each request resolves them. A client-side render (no SSR) receives the stylesheet as it always did, and
 draws it; a page whose stylesheet the browser comes to draw itself (new documents in place) drops the linked copy.
+
+### The space's icons, cut from the font
+
+A page draws its icons from Font Awesome's faces (`plitzi-sdk-icons.css`, its fonts beside it), whose solid face alone
+is 119 KB. Where the stylesheet is linked, the head also declares the glyphs the space names as faces of their own,
+after the whole font's — `@font-face { …; src: url(/_plitzi/icons/<hash>-solid.woff2); unicode-range: … }` — so the
+browser fetches those few glyphs and nothing else: Plitzi's website names 110, 9 KB. A glyph is named wherever the
+document says it (an attribute, a component's props, both sides of a binding's template); one named only by data the
+space reads at run time is drawn from the whole font, which stays declared before them. The faces are cut on the first
+request for them (`subset-font`, loaded only then), answered by any replica from the space as the request resolves it,
+kept for good under their name; an older name answers the space's glyphs as they are, `no-store`. A bundler that
+leaves out what loads its own files keeps `subset-font` out too: it reads its WebAssembly beside itself.
 
 ### A proxy in front of it
 
