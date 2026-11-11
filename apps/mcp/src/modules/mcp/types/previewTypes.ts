@@ -16,6 +16,8 @@ export type PreviewRequestBody = {
    */
   revision?: number;
   pageRef?: string;
+  /** The values of the page's route parameters — `{ spaceId: "42" }` for a page at `:spaceId` — each one required. */
+  routeParams?: Record<string, string>;
   operations?: Operation[];
   /**
    * Whether the response should carry the rendered HTML. Default true.
@@ -40,7 +42,19 @@ export type PreviewRequestBody = {
 
 export type PreviewResult =
   // `html` is empty when the request asked for `includeHtml: false` — the token and the path are what it wanted.
-  | { ok: true; token?: string; pagePath: string; html: string; stateVersion: string; expiresInMs?: number }
+  | {
+      ok: true;
+      token?: string;
+      pagePath: string;
+      html: string;
+      stateVersion: string;
+      expiresInMs?: number;
+      /**
+       * Set when the page is for signed-in visitors alone. A preview is drawn as a signed-out visitor sees it, so what
+       * it shows at that address is what they are sent to — said beside it, never passed off as the page.
+       */
+      signedInOnly?: true;
+    }
   | { ok: false; error: RefusalCode; message: string; errors?: ValidationError[] };
 
 /** How the MCP tools reach the renderer. The consumer injects an implementation (an HTTP client to the SSR

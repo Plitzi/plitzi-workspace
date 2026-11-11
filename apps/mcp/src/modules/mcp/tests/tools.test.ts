@@ -118,6 +118,56 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
     expect(res).toEqual({ ok: false, error: 'missing', message: 'The space has no page "hom" — did you mean "home"?' });
   });
 
+  // A space's record page — `/spaces/:spaceId`, for signed-in visitors — was opened at `/:spaceId`: its folder left
+  // out, its parameter not filled, every look the space's 404 and its hint blaming the browser.
+  describe('a page in a folder, at a path with a parameter, for signed-in visitors', () => {
+    const withRecordPage = () => {
+      const space = buildSpace();
+      space.schema.flat.record = {
+        id: 'record',
+        attributes: { slug: ':spaceId', name: 'Record', folder: 'spaces', accessLevel: 'authenticated' },
+        definition: { rootId: 'record', label: 'Page', type: 'page', items: [], styleSelectors: { base: '' } }
+      };
+      space.schema.pages = [...space.schema.pages, 'record'];
+      space.schema.pageFolders = [{ id: 'spaces', name: 'Spaces', slug: 'spaces' }];
+
+      return { schema: space.schema, style: space.style };
+    };
+    const previewOf = (body: Parameters<typeof createPreview>[0]) =>
+      createPreview(body, configWith(withRecordPage()), unusedRender, unusedPlugins, unusedCaches);
+
+    it('refuses a parameter not given, naming it', async () => {
+      expect(await previewOf({ spaceId: 1, pageRef: 'record', includeHtml: false })).toEqual({
+        ok: false,
+        error: 'missing',
+        message: '"record" is at /spaces/:spaceId: give routeParams its spaceId — { "spaceId": "…" }'
+      });
+    });
+
+    it('opens it at its folder’s path with the parameter filled, and says a look sees it signed out', async () => {
+      const res = await previewOf({
+        spaceId: 1,
+        pageRef: 'record',
+        routeParams: { spaceId: '42' },
+        includeHtml: false
+      });
+
+      expect(res).toMatchObject({ ok: true, pagePath: '/spaces/42', signedInOnly: true });
+    });
+
+    it('refuses route parameters that are not strings', async () => {
+      const res = await previewOf({
+        spaceId: 1,
+        pageRef: 'record',
+        // What a caller of the HTTP endpoint may send: the body is JSON, typed only by what it was meant to be.
+        routeParams: { spaceId: 42 } as unknown as Record<string, string>,
+        includeHtml: false
+      });
+
+      expect(res).toMatchObject({ ok: false, error: 'bad-value' });
+    });
+  });
+
   // A caller on the way to a screenshot reads the token and the path, never the HTML: the browser renders the
   // same draft again from the token, so rendering it here would be the second of two server renders per image.
   it('skips the render for includeHtml:false, and still mints the token and the path', async () => {

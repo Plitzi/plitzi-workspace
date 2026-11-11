@@ -46,6 +46,11 @@ const CAPTURES: Record<Exclude<LookView, 'html'>, CaptureView[]> = {
 
 export const pageRef = z.string().optional().describe('The page, by name; defaults to the space default page');
 
+export const routeParams = z
+  .record(z.string(), z.string())
+  .optional()
+  .describe('The values of the page’s route parameters: { "spaceId": "42" } for a page at `:spaceId`');
+
 export const viewport = z
   .enum(['desktop', 'mobile', 'both'])
   .optional()
@@ -68,8 +73,14 @@ const ACCESSIBILITY_HINT =
   '`label`; a field: `label` (with `hideLabel` to keep it out of sight); an image: `alt`, or `decorative: true`; an ' +
   'icon that means something alone: `label`. `line` is where it sits in the outline.';
 
+// A look has no session: a page for signed-in visitors is drawn as one signed out reaches its address.
+const SIGNED_OUT_NOTE = (page: string): string =>
+  `"${page}" is for signed-in visitors, and a look is signed out: what it shows is where a signed-out visitor is sent ` +
+  '— the page beside it at that address, or the sign-in';
+
 type LookRequest = {
   pageRef?: string;
+  routeParams?: Record<string, string>;
   /** A batch to render without saving it; left out, what is saved. */
   operations?: Operation[];
   view: LookView;
@@ -94,7 +105,13 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
     };
   }
 
-  const draft = { spaceId: ctx.spaceId, env: ctx.env, pageRef: request.pageRef, operations: request.operations };
+  const draft = {
+    spaceId: ctx.spaceId,
+    env: ctx.env,
+    pageRef: request.pageRef,
+    ...(request.routeParams ? { routeParams: request.routeParams } : {}),
+    operations: request.operations
+  };
   const page = request.pageRef ?? 'default';
 
   // On the way to an image the HTML is dead weight: the browser renders the same draft again from the token, so
@@ -105,7 +122,12 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
     return { refused: rendered };
   }
 
-  const facts = { pageRef: page, pagePath: rendered.pagePath, stateVersion: rendered.stateVersion };
+  const facts = {
+    pageRef: page,
+    pagePath: rendered.pagePath,
+    stateVersion: rendered.stateVersion,
+    ...(rendered.signedInOnly ? { note: SIGNED_OUT_NOTE(page) } : {})
+  };
   if (request.view === 'html') {
     return { meta: { ...facts, html: agentHtml(rendered.html) }, images: [] };
   }
@@ -149,7 +171,10 @@ export const lookAt = async (ctx: ToolContext, request: LookRequest): Promise<Lo
         ...facts,
         warning: 'SCREENSHOT_UNAVAILABLE',
         message: `The screenshot service failed (${shot.message}); returning the HTML preview instead.`,
-        hint: 'The dedicated browser service is down or unreachable. Inspect the HTML, or retry later.',
+        hint:
+          shot.error === 'RENDER_FAILED'
+            ? 'The page itself answered an error, not the browser: read the HTML below for what it says'
+            : 'The dedicated browser service is down or unreachable. Inspect the HTML, or retry later.',
         html: fallback.ok ? agentHtml(fallback.html) : ''
       },
       images: []

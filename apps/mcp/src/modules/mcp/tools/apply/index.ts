@@ -8,7 +8,7 @@ import { dataFileUri, dataUri, functionFileUri, functionsUri } from '../../helpe
 import { environment, operations } from '../operations';
 import { draftBatch } from '../shared/draftBatch';
 import { effectsOf } from '../shared/effects';
-import { fullPage, lookAt, pageRef, viewport } from '../shared/look';
+import { fullPage, lookAt, pageRef, routeParams, viewport } from '../shared/look';
 import { AGAIN, REPEATED, batchKey, forgetRefused, noteRefused, timesRefused } from '../shared/repeats';
 import { defineTool, imageResult } from '../shared/tool';
 
@@ -39,6 +39,7 @@ export const applyShape = {
         'an image), "both" image and outline. Check, look and then save with the same operations — written once.'
     ),
   pageRef,
+  routeParams,
   viewport,
   fullPage
 };
@@ -318,6 +319,7 @@ export const applyTool = defineTool({
 
     const look = await lookAt(ctx, {
       pageRef: input.pageRef,
+      routeParams: input.routeParams,
       operations: result.dryRun ? input.operations : undefined,
       view: input.look,
       viewport: input.viewport,

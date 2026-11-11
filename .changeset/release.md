@@ -128,6 +128,11 @@ An authored request connects to the address its name was judged to, and the advi
 - A look or a preview at a page the space does not have is refused (`missing`, with the nearest page) instead of
   drawing its home: `plitzi_look { pageRef: "dashboard" }` on a space without one answered the home as that page, and a
   thumbnail of a page since removed was the home's.
+- A look opens a page where a link to it goes — its folders' slugs before its own — and takes the values of its route
+  parameters (`routeParams: { spaceId: "42" }`, on `plitzi_look` and `plitzi_apply`'s `look`); a parameter not given
+  is refused naming it. A page in a folder, or at `:spaceId`, was opened at its bare slug, and every look at it was the
+  space's 404 — said as the browser service being down. A page that answers an error now says it is the page. A look
+  at a page for signed-in visitors says it is signed out: what it shows is where they are sent.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.

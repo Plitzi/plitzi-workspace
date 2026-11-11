@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
-import { fullPage, lookAt, pageRef, viewport } from './shared/look';
+import { fullPage, lookAt, pageRef, routeParams, viewport } from './shared/look';
 import { defineTool, imageResult } from './shared/tool';
 
 export const lookShape = {
   pageRef,
+  routeParams,
   view: z
     .enum(['accessibility', 'html', 'image', 'both'])
     .optional()

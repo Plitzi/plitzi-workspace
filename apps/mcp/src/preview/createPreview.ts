@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { closest } from '@plitzi/sdk-authoring';
 import { buildBody } from '@plitzi/sdk-server/ssr';
+import { getPageFullPath, getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import { computeVersion, findPageByRef, getPageElements } from '../modules/mcp/helpers';
 import { draftBatch } from '../modules/mcp/tools/shared/draftBatch';
@@ -12,26 +13,55 @@ import type { SSRPageServerConfig, SSRTemplateFn } from '@plitzi/sdk-server';
 import type { PluginManager, ServerCaches } from '@plitzi/sdk-server/ssr';
 import type { Environment, Schema } from '@plitzi/sdk-shared';
 
+/** A route parameter, as a slug spells it: `:spaceId` or `{{spaceId}}`. */
+const ROUTE_PARAM = /:([A-Za-z0-9_-]+)|{{\s*([A-Za-z0-9_-]+)\s*}}/g;
+
+type ResolvedPage = { path: string; signedInOnly: boolean } | { refused: string };
+
 /**
- * The address of the page asked for, or why there is none: a page the space does not have is refused, never drawn
- * as its home — a look at it answered the home as that page.
+ * The address of the page asked for — its folders' slugs before its own, as a link to it resolves, its parameters
+ * filled — or why there is none. A page the space does not have is refused, never drawn as its home, and a page whose
+ * path takes a parameter not given is refused naming it, never opened at its pattern (the space's 404).
  */
-const resolvePagePath = (schema: Schema, pageRef?: string): { path: string } | { refused: string } => {
+const resolvePage = (schema: Schema, pageRef?: string, routeParams: Record<string, string> = {}): ResolvedPage => {
   const pages = getPageElements(schema);
   const page = pageRef ? findPageByRef(schema, pageRef) : (pages.find(p => p.attributes.default) ?? pages[0]);
-  if (pageRef && !page) {
-    const nearest = closest(
-      pageRef,
-      pages.map(p => p.id)
-    );
+  if (!page) {
+    const nearest = pageRef
+      ? closest(
+          pageRef,
+          pages.map(p => p.id)
+        )
+      : undefined;
 
-    return { refused: `The space has no page "${pageRef}"${nearest ? ` — did you mean "${nearest}"?` : ''}` };
+    return {
+      refused: pageRef
+        ? `The space has no page "${pageRef}"${nearest ? ` — did you mean "${nearest}"?` : ''}`
+        : 'The space has no page to draw'
+    };
   }
 
-  const slug = page && typeof page.attributes.slug === 'string' ? page.attributes.slug : '';
+  const pattern = getPageFullPath(schema.flat, schema.pageFolders, page.id, true);
+  const missing = getSlugParams(pattern).filter(name => !routeParams[name]);
+  if (missing.length > 0) {
+    return {
+      refused: `"${page.id}" is at ${pattern}: give routeParams its ${missing.join(', ')} — { ${missing.map(name => `"${name}": "…"`).join(', ')} }`
+    };
+  }
 
-  return { path: slug.startsWith('/') ? slug : `/${slug}` };
+  return {
+    path: pattern.replace(ROUTE_PARAM, (_, colon?: string, braces?: string) =>
+      encodeURIComponent(routeParams[colon ?? braces ?? ''] ?? '')
+    ),
+    signedInOnly: page.attributes.accessLevel === 'authenticated'
+  };
 };
+
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.values(value).every(entry => typeof entry === 'string');
 
 const syntheticRequest = (pagePath: string): SSRRequest => ({
   method: 'GET',
@@ -93,7 +123,11 @@ export const createPreview = async (
     draftOffline = { ...offlineData, schema: batch.draft.schema, style: batch.draft.style };
   }
 
-  const resolved = resolvePagePath(draftOffline.schema, body.pageRef);
+  if (body.routeParams !== undefined && !isStringRecord(body.routeParams)) {
+    return { ok: false, error: 'bad-value', message: 'routeParams is an object of strings: { "spaceId": "42" }' };
+  }
+
+  const resolved = resolvePage(draftOffline.schema, body.pageRef, body.routeParams);
   if ('refused' in resolved) {
     return { ok: false, error: 'missing', message: resolved.refused };
   }
@@ -138,6 +172,7 @@ export const createPreview = async (
     pagePath,
     html: html ?? '',
     stateVersion: computeVersion(draftOffline),
-    ...(token ? { expiresInMs: ttlMs } : {})
+    ...(token ? { expiresInMs: ttlMs } : {}),
+    ...(resolved.signedInOnly ? { signedInOnly: true as const } : {})
   };
 };

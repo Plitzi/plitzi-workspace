@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
 import { applyTool } from '../tools/apply';
+import { lookTool } from '../tools/look';
 
 import type { Operation } from '../tools';
 import type { ToolContext } from '../tools/shared/tool';
@@ -90,5 +91,64 @@ describe('plitzi_apply with look', () => {
     expect(result.errors?.length).toBeGreaterThan(0);
     expect(result.look).toBeUndefined();
     expect(rendered).toEqual([]);
+  });
+});
+
+describe('plitzi_look at a page a look cannot see as its visitors do', () => {
+  const seeing = (rendered: { signedInOnly?: true }, shot: { ok: true } | { ok: false; error: string }) => {
+    const sent: PreviewRequestBody[] = [];
+    const ctx: ToolContext = {
+      space: buildSpace(),
+      env: 'main',
+      persisters: {},
+      spaceId: 1,
+      preview: {
+        render: body => {
+          sent.push(body);
+
+          return Promise.resolve({
+            ok: true,
+            pagePath: '/spaces/42',
+            html: '<main/>',
+            stateVersion: 'v1',
+            ...rendered
+          });
+        }
+      },
+      screenshot: {
+        capture: () =>
+          Promise.resolve(
+            shot.ok
+              ? { ok: true, images: [], accessibility: [{ label: 'desktop', outline: '- main' }] }
+              : { ok: false, error: shot.error, message: 'The page answered 404.' }
+          )
+      }
+    };
+
+    return { ctx, sent };
+  };
+
+  // A signed-in page looked at signed out showed the page beside it at that address, answered as the page asked for.
+  it('says it is seen signed out, and hands the renderer the route parameters', async () => {
+    const { ctx, sent } = seeing({ signedInOnly: true }, { ok: true });
+    const answer = await lookTool.execute({ pageRef: 'record', routeParams: { spaceId: '42' } }, ctx);
+
+    expect(sent[0]).toMatchObject({ pageRef: 'record', routeParams: { spaceId: '42' } });
+    expect(answer).toMatchObject({
+      note:
+        '"record" is for signed-in visitors, and a look is signed out: what it shows is where a signed-out visitor is ' +
+        'sent — the page beside it at that address, or the sign-in'
+    });
+  });
+
+  // The page's own 404 was said as the browser service being down.
+  it('says a page that answered an error is the page, not the browser', async () => {
+    const { ctx } = seeing({}, { ok: false, error: 'RENDER_FAILED' });
+    const answer = await lookTool.execute({ pageRef: 'record', routeParams: { spaceId: '42' } }, ctx);
+
+    expect(answer).toMatchObject({
+      warning: 'SCREENSHOT_UNAVAILABLE',
+      hint: 'The page itself answered an error, not the browser: read the HTML below for what it says'
+    });
   });
 });
