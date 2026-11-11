@@ -1,5 +1,9 @@
 # RFC 0033 — WS4 briefs: authoring, MCP, CLI, skills
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read [`00-how-to-work.md`](00-how-to-work.md) first, then `plitzi-workspace/docs/en/improving-the-cli.md` — its rule
 governs this workstream: **the CLI gets better by fewer surprises, not more features**; a finding from a run is a
 fact, not yet a task. Repository: `plitzi-workspace` unless said.
@@ -32,54 +36,12 @@ example to fit; the MCP's budget is watched, never met by dropping a field an ag
 - **Verify:** two scheduled runs on the same commit agree within the noise; a deliberately broken CLI command lowers
   the score and the report names it.
 
-## T4.2 — Every refusal has a code and a fix
-
-- **Finding:** A2. **Size:** M.
-- **Read first:** `packages/sdk-authoring/src/silentCases.test.ts` and `src/schema/codes/` (authoring's way);
-  the CLI's refusals (`grep -rn "Refused (" apps/cli/src | head`, `REFUSAL_EXIT_CODES`); the MCP's teachable errors
-  (`apps/mcp/src/modules/mcp/tests/cheapMistakes.test.ts`, `tools/shared/`).
-- **Steps:** a test per surface that enumerates the refusals it can give — by their constructors or a registry, not
-  by grepping strings — and asserts each has a code from the shared list and a sentence naming what to do next. A
-  refusal with no fix fails. Generate the list of codes into `docs/en` from the same source (one owner per fact).
-- **Verify:** add a refusal with no fix; the test fails; remove it.
-
-## T4.3 — Versions out of step
-
-- **Finding:** A3. **Size:** M.
-- **Steps:** Step 0: what each surface sends of its version today and what the server does with it
-  (`grep -rn "version-mismatch\|x-plitzi-version\|clientVersion" apps packages`; the CLI has a `version-mismatch`
-  refusal for runs). Then one rule: the server names the oldest client it accepts per surface (CLI, MCP session,
-  builder); older is refused with the command that upgrades; a client one minor behind is accepted and told once.
-  `plitzi doctor` and the MCP's first answer say when they are behind.
-- **Verify:** an e2e with a client one minor behind (accepted, told) and one below the floor (refused, with the fix).
-
-## T4.5 — A write sent twice
-
-- **Finding:** A5. **Size:** M.
-- **Steps:** Step 0: send each MCP write (`plitzi_apply`, `plitzi_set_attributes`, `plitzi_set_classes`,
-  `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page`) twice with the same arguments in a test and
-  read the history: one change or two? For each that applies twice: an operation id from the client, remembered for a
-  few minutes, answers the first result. `space push` already has its digest and 409s — leave it.
-- **Verify:** a test per write: sent twice, one change in the history; an upsert that is naturally idempotent is
-  listed as such, with its test.
-
 ## T4.6 — What a refusal cost
 
 - **Finding:** A1. **Size:** S. **After T4.1 has two weeks of results. Changes no code.**
 - **Steps:** from T4.1's records: the ten refusals and lints agents met most, and for each whether the next call
   fixed it (the message was enough) or not. Those that were not go through `improving-the-cli.md`'s line — is it
   Plitzi's to change? — and become tasks only then. Deliver a list with counts.
-
-## T4.7 — One vocabulary, measured before decided
-
-- **Finding:** A6. **Size:** M. **Writes no product code.**
-- **Steps:** for ten capabilities — an element; a class with states; a binding; a flow; a page; a component; a flag;
-  an action; a function file; a setting — write side by side how each is said as a builder mutation
-  (`plitzi-sdk-server/src/services/graphql/schema/mutations`), an MCP operation (`apps/mcp/src/modules/mcp/tools/operations`,
-  the `AI*` types in `…/types`) and an authoring spec (`packages/sdk-authoring`). Count what each surface's skill
-  spends teaching it (tokens). Then the proposal the figures support — most likely the MCP accepting an authoring
-  snippet where it takes its own shapes today (`authorSnippet` exists), its `AI*` shapes kept for reading.
-- **Deliver:** the table and the proposal in RFC § 8. Nothing changed.
 
 ## T4.9 — The run skills, on a diet
 

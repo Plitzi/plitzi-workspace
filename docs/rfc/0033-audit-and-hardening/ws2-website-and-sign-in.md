@@ -1,5 +1,9 @@
 # RFC 0033 — WS2 briefs: the website, the sign-in, the console, the docs
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read [`00-how-to-work.md`](00-how-to-work.md) first — **§ 4 "Changing a seed without breaking it" is the procedure of
 every brief here** and is not repeated in each. Unless a brief says otherwise:
 
@@ -15,59 +19,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 - **To find an element** the capture named: `grep -rn "'<data-plitzi-el name>'" prisma/seeds/spaces/platform`.
 
 ---
-
-## T2.3 — Nothing clipped
-
-- **Finding:** W4. **Size:** M.
-- **Where:** the roles table in `website/landing/sections/collab.ts` ("…its spaces and its pla"); the functions
-  snippet in `sections/capabilities.ts` / `sections/backend.ts`; the cookie policy's table (`landing/legal/cookies.ts`,
-  styled by `landing/legal/kit.ts` and the markdown table's classes).
-- **Steps:** the roles table wraps its text or stacks label over value under 600 px; code samples scroll sideways
-  inside their own box, with a visible fade or edge so the reader knows; the markdown table becomes rows of label and
-  value under 600 px — put that in `brand/` so the docs gain it too.
-- **Verify:** a `@responsive` check on `/`, `/pricing`, `/cookies`, `/terms`: no text node's box crosses the right
-  edge of its nearest scroll container unless that container scrolls sideways.
-
-## T2.4 — The home on a phone
-
-- **Finding:** W5. **Decided (D3):** fold, never cut — **no content is lost**, and it must still look good and work.
-  **Size:** M.
-- **Read first:** `website/landing/index.ts` (the thirteen bands in order), `sections/story.ts` (§ 01, the sticky
-  stage), `sections/capabilities.ts` (§ 04, nine cards).
-- **Steps:** under the tablet width: § 01 drops the sticky stage — each step carries its own picture, no empty scroll
-  between steps (today ~450 px each); § 04's nine cards become a sideways scroller with snap: each card a full width
-  minus a peek of the next, every card reachable by touch **and** by keyboard, the scroller labelled, its position
-  shown (dots or "3 of 9"). Every card keeps all of its text and its mock-up. Measure the page's height before and
-  after.
-- **Do not:** remove a band, a card, a sentence or a mock-up; hide content behind a control that a search engine or
-  a screen reader cannot open; change the desktop render (diff at 1440 and 1024 must be empty).
-- **Verify:** home height at 390 ≤ 16,000 px (RFC § 5), as a ratchet in `visual/screens.spec.ts`; a test that every
-  text node of the desktop home is in the phone's document; screenshots of the two folded sections at 390 in both
-  themes **in the pull request, for the maintainer to look at** — "looks good" is his call, not a metric.
-- **Stop and ask if:** 16,000 px cannot be reached without losing content — say what the page measures with
-  everything kept, and let the maintainer move the target.
-
-## T2.5 — Sizes that can be touched and read
-
-- **Findings:** W6, W7, DS8. **Size:** M. **After T2.24** (the scale) if both are open.
-- **Steps:** on a phone, bar links, footer links, chips and the terms checkbox get a 44 px target (padding or
-  min-height, not larger type); footer links are 16 px tall today. Text under 12 px: raise it, or — where it is a
-  picture of a product (the hero's studio, the mock-ups) — put the mock-up in an element marked `aria-hidden="true"`
-  with a caption beside it that says what it shows. Add two ratchets to `visual/screens.spec.ts`: controls under 44 px
-  on a phone (links inside a paragraph excepted), text nodes under 12 px outside `aria-hidden`.
-- **Verify:** both counts 0 on the public pages at 390.
-
-## T2.8 — `/pricing`
-
-- **Finding:** W11. **Decided (D6):** whatever serves the visitor best — three plans in full first, the rest one
-  click away, the configurator below. If, building it, another order clearly reads better, show both to the
-  maintainer rather than choosing alone. **Size:** M. **After T1.7** if both are open (the same file).
-- **Read first:** `website/landing/pricingPage.ts`, `pricingChooser.ts`, `pricingFigures.ts`.
-- **Steps:** the page opens on three plans in full (Free, Site, App) with the rest one click away; the configurator
-  stays below; headings in order (`h1` → `h2` → `h3`; today `h1` → `h3`); on a phone the summary of what was chosen is
-  visible while choosing without lying over the rows (RS3 is T2.28's — coordinate).
-- **Verify:** the accessibility tree's outline; a `@responsive` step picks a plan and reads its monthly price without
-  scrolling back.
 
 ## T2.9 — Templates
 
@@ -120,16 +71,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 - **Verify:** a test that the three platform spaces' bars and the builder's bar draw the same mark; both themes;
   render diff of the console's and the back-office's header.
 
-## T2.13 — The console on a phone
-
-- **Findings:** W19, W21, W22. **Size:** M.
-- **Read first:** `website/layouts/sidebar.ts`, `layouts/navGroup.ts` (the console's frame), `pages/workspace-audit.ts`.
-- **Steps:** the phone's header in two rows (today three: 170 px), with a menu that names every section whole (today
-  "Automa…" is cut); the audit log in pages of 50 using the cursor its API already has (today one page of 7,068 px,
-  13,745 px on a phone); the builder opened under 900 px says it needs a wider screen and offers the space's page and
-  its console (that notice is in the console's `space-record-builder.ts` page, before the builder loads).
-- **Verify:** `@responsive` steps in `visual/website.spec.ts` for the menu and the audit log; the notice at 390.
-
 ## T2.14 — Shift, signed in
 
 - **Finding:** W20. **Size:** M.
@@ -138,16 +79,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   Re-measure first — the home's figure may be a development build's, like the public home's. Reserve what moves.
   Pools: draw only the open tab's content (`pages/admin/pools*.ts`).
 - **Verify:** each ≤ 0.1 in T0.7's table; Pools under 2,500 nodes on its first tab.
-
-## T2.15 — What the demo shows
-
-- **Findings:** W23, W24. **Size:** S–M.
-- **Steps:** W23: an ordinary account's home carries ten back-office addresses in its markup (hidden by `shownTo:
-  staffOnly` in `layouts/sidebar.ts`). Make them absent, not hidden, for who may not open them — the `visible` rule
-  resolved on the server; check how `staffOnly` is written in `layouts/navGroup.ts`. W24: "Coming Soon Demo" is the
-  space the builder's screenshot opens on; replace it with a space that looks like the templates beside it, or point
-  the screenshot at a better seeded space — **ask before deleting a seeded space**.
-- **Verify:** as `elena` on the visual stack, `curl` of the home holds no `/admin` address; the builder's visual test.
 
 ## T2.16 — Landmarks and a skip link
 
@@ -205,21 +136,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   no assistant; a seeded space that blocks one kind lists only that kind's agents; `/llms.txt` answers on both hosts;
   a sitemap test; `yarn vitest run prisma/seeds/spaces/platform/docs`.
 
-## T2.20 — Emails worth opening
-
-- **Finding:** W35. **Size:** M.
-- **Read first:** `src/services/api/email/BrevoProvider.ts` (`renderTemplate`, the ten templates inline, escaped by
-  `escapeHtml`), `email/index.ts` (`SUBJECTS`, `REDEEM`, `withRedemptionLink`), `email/EmailProvider.ts`.
-- **Steps:** move the ten templates out of the provider into one module the mail seam reads (a self-hoster's
-  provider gets them too — if that module belongs in `@plitzi/sdk-server`, show the evidence first); each with a
-  layout (the mark, a footer naming the address it was sent to and why), a plain-text part, `lang`, both colour
-  schemes; subjects in one case (sentence case); the welcome's "amazing websites" line rewritten in the product's
-  voice. The provider only sends (`htmlContent` **and** `textContent`).
-- **Do not:** stop escaping interpolated values; put a destination nobody vetted into a link (`redirect` never
-  reaches a template).
-- **Verify:** `yarn vitest run src/services/api/email`: each template renders to HTML and text, with a markup payload
-  as the username shown as text; one journey in `visual/auth.spec.ts` reads the mail in Mailpit.
-
 ## T2.21 — The builder's bar and rail
 
 - **Repo:** `plitzi-workspace` — `apps/builder/src/modules/App/components/AppHeader/AppHeader.tsx` and
@@ -248,25 +164,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   here. The home's first paragraph takes the docs' sentence ("a platform for building websites and web apps…").
 - **Verify:** neither page over 6,000 px; `lang="es"` on Ceniza's pages; the docs' tests.
 
-## T2.24 — A scale for type, radii and the three colours
-
-- **Findings:** DS1, DS2, DS3. **Size:** L.
-- **Read first:** `brand/index.ts`, `brand/styles.ts` (tokens, type, element defaults), `website/styles.ts` (2,433
-  lines of classes), `auth/theme.ts`, `website/style.test.ts` (it enforces both themes).
-- **Steps:**
-  1. In `brand/`: eight type steps (no half pixels — today 12.5, 11.5, 13.5, 14.5, 10.5 are in use), four radii and
-     the pill, written once as tokens.
-  2. Three text tokens that pass AA on their grounds: the success green **as text on light** (`#12a150` measures
-     3.0–3.4 today), the violet **as text on dark** (`#6e52f7`: 3.6–4.0), the muted grey in both (`#6b7280`: 4.44 on
-     light, 3.9 on dark). Keep the fills. The required asterisk (`#ff0000`) and the hero's code colour move onto tokens.
-  3. Move every class of the three platform spaces onto the scale, one space at a time, each by render diff. A size
-     that changes by a pixel is expected; a layout that moves is a bug.
-  4. Raise the suite's contrast check from 3:1 to AA (4.5:1, 3:1 for large text) and add two ratchets per page:
-     distinct font sizes and distinct radii.
-- **Do not:** change a colour's meaning; touch the artwork that is fixed across themes (hero, closing band, footer).
-- **Verify:** under 10 sizes and 5 radii per page; no text under AA in either theme; `website/style.test.ts`;
-  the whole of `visual/website.spec.ts`.
-
 ## T2.25 — One voice for the brand
 
 - **Findings:** DS4, DS5, W18. **Size:** M. **After T2.12 and T2.24.**
@@ -276,25 +173,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   mock-up (27 text nodes under 12 px).
 - **Verify:** mono under 15 % of the home's text nodes (count as the design pass did: text nodes by computed
   `font-family`); one treatment on every `h1`.
-
-## T2.26 — Covers that sell
-
-- **Findings:** DS6, W12. **Size:** M.
-- **Read first:** how a template's and a space's thumbnail is made (`src/services/preview/`, `docs/screenshot-service.md`,
-  `src/services/templates/`).
-- **Steps:** a cover per template made at publish: the page's first screen at a crop where its smallest text is
-  readable at the card's size, or a designed card from the template's palette, name and category when the first
-  screen is nearly empty. The same crop rule for a space's Overview picture (today cut mid-sentence).
-- **Verify:** no two cards alike in the gallery; a test measures the smallest type in a cover at the card's width.
-
-## T2.27 — The console's finish
-
-- **Finding:** DS7. **Size:** S.
-- **Steps:** on a phone every card of the console's home has the same gutter (Traffic and Needs attention run edge to
-  edge today — `website/pages/home-authenticated.ts`); the roles' permissions (`pages/workspace-roles.ts`) as the
-  form's own checkboxes with labels at full contrast and the title next to its first line; a first-run home that
-  shows what to do instead of placeholder cards (`website/homeChecklist.ts` exists — read it first).
-- **Verify:** a `@responsive` test of the gutters; the roles page in the suite's contrast check.
 
 ## T2.28 — The widths between
 

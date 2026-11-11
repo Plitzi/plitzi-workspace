@@ -1,5 +1,9 @@
 # RFC 0033 — WS5 briefs: actions, functions, runtimes, the cluster
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read [`00-how-to-work.md`](00-how-to-work.md) first. What must not be undone (RFC § 3.6): one isolate per invocation
 with its own limits; admission by memory and CPU; a fair share per space; quotas as a paywall, never a silent drop;
 light work never waits behind heavy; "Running" means running. The maintainer's rule for this area: **it must not fail
@@ -42,13 +46,6 @@ A regression here needs a test that would have caught it, proven on the old code
   (`sdk-shared/functions`).
 - **Verify:** the contract green for the three runners and the test runner; `yarn turbo run test
   --filter=@plitzi/sdk-actions --filter=@plitzi/sdk-runtime`; the server's e2e in the split topology.
-
-## T5.6 — Work set aside is said
-
-- **Done** 2026-11-10: `notePausedWork` records the period's first refusal and emails the owners once; the alerts
-  answer `pausedWork` and `setAside`, and the home draws them amber with what is not affected.
-- **Left:** a visual step (`screens.spec.ts`' home journey) with a space past its allowance and a job set aside: both
-  rows drawn, in light and dark, at desktop and 390 px.
 
 ## T5.8 — One trace for a run
 

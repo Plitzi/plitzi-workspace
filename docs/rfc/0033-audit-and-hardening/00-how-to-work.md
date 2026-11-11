@@ -1,5 +1,9 @@
 # RFC 0033 — how an agent works a task
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read this whole page before any task of RFC 0033. The RFC ([`../0033-audit-and-hardening.md`](../0033-audit-and-hardening.md))
 holds the findings and one row per task; **the row is a summary, the brief is the instruction**. Briefs are in this
 folder, one file per workstream:

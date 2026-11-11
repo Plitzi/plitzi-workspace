@@ -1,5 +1,9 @@
 # RFC 0033 — WS1 briefs: page weight
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read [`00-how-to-work.md`](00-how-to-work.md) first. **These are platform changes by design** (RFC § 3.2): every space
 gains. The evidence the maintainer asked to see first is the RFC's table for `/terms` — 0.9 MB for 9 KB of content.
 
@@ -89,55 +93,6 @@ watch server, never a development build.
   workspace's e2e (`yarn e2e:ci`); in the server, `yarn playwright test visual/` whole; hydration time of the
   signed-in dashboard before and after (three runs, production); T0.7's `scriptKb` for `/terms` ≤ 150 KB.
 - **Stop and ask if:** a chunk boundary forces a plugin's bundle format to change.
-
-## T1.4 — Icons by use
-
-- **Repos:** `plitzi-workspace` (`apps/sdk` — `plitzi-sdk-icons.css` and `webfonts/`; the Icon element in
-  `packages/sdk-elements`; `apps/server`). **Finding:** P3. **Size:** M.
-- **Steps:**
-  1. Step 0: how an icon is named in a space today (a Font Awesome class in an attribute?) and where else icons come
-     from (a plugin's declaration, the SDK's own UI). `grep -rn "fa-" packages/sdk-elements/src | head`.
-  2. At publish (and on a draft's first render, cached by the document's hash): collect the icons the space names —
-     its documents and its plugins' declared icons — and emit either a subset font or an SVG sprite with only those,
-     content-named, linked from the page.
-  3. The whole fonts stay available to the builder (the icon picker needs every glyph) and are never linked from a
-     published page.
-  4. An icon chosen in the builder appears on the page with no step the author must know: the subset is derived on
-     save.
-- **Do not:** change how an author names an icon; drop icons a plugin draws from its own bundle.
-- **Verify:** a test: a space with three icons links a file under 15 KB holding exactly those; a visual diff of the
-  website's and one showcase's pages shows no missing icon; T0.7's `fontKb`.
-- **Stop and ask if:** an icon's name is computed at runtime (a binding) and cannot be known at publish — then say
-  how many spaces do it before choosing a fallback.
-
-## T1.5 — One stylesheet, said once
-
-- **Repo:** `plitzi-workspace` (`apps/server`, the SSR head). **Finding:** P4. **Size:** M.
-- **Steps:**
-  1. Step 0: fetch `/terms` and name what the 62 KB of inline `<style>` is: which rules, from where (the SDK's CSS,
-     the space's tokens, element defaults, critical rules), and which of them the linked `/_plitzi/style/<hash>.css`
-     repeats. A table in the pull request.
-  2. Keep inline only what paints the first screen and must not wait (tokens, the theme class, layout of the shell);
-     move the rest to the linked sheet; remove what is in both.
-- **Do not:** cause a flash of unstyled content or of the wrong theme — `visual/website.spec.ts`'s theme tests sample
-  every paint from the first frame.
-- **Verify:** inline style on `/terms` ≤ 15 KB; the theme and flicker tests; T0.7's `documentKb`.
-
-## T1.6 — Shift
-
-- **Repos:** the seeds first (`plitzi-sdk-server`), the platform only if the cause is general. **Findings:** W13, W34.
-  **Size:** M. **Visual lane.**
-- **Facts:** `/templates` shifts 0.33–0.35 locally and on the dev cluster; the home's 0.18 was a development build's
-  (0.001 on the cluster). Signed-in screens are T2.14's.
-- **Steps:**
-  1. On a production build, record `layout-shift` entries **with their sources** (`entry.sources[].node`) for
-     `/templates` at 1440 and 390. Name the node that moves and what pushes it.
-  2. If the cause is the gallery's cards arriving after the first paint: reserve the grid's height (a skeleton with
-     the final row heights) or render the list on the server (`runtime: 'server'` — read AGENTS.md § "A platform
-     page's provider asked on the server as its visitor" for what that requires).
-  3. If the cause is general (any provider's list arriving in the browser shifts what is below it), stop and show the
-     maintainer the evidence before changing an element.
-- **Verify:** shift ≤ 0.1 on `/templates` at both widths, in T0.7's table; render diff of the page.
 
 ## T1.7 — A heavy page is said
 

@@ -1,5 +1,9 @@
 # RFC 0033 — WS6 briefs: product
 
+> Section numbers here are the full RFC's, `git show c29db583b:docs/rfc/0033-audit-and-hardening.md`: its § 3 holds the
+> findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
+> has shipped: what it made is in the code.
+
 Read [`00-how-to-work.md`](00-how-to-work.md) first, and for T6.5–T6.8 the RFC § 3.1.3 — its table is what these
 tasks build. Repository: `plitzi-sdk-server` unless said. Seed work follows `00-how-to-work.md` § 4 and takes the
 visual lane. These land **after** the faults of WS2: polish over a broken bar is wasted.
