@@ -2,6 +2,9 @@ import { ServerError } from '@apollo/client';
 import { ErrorLink } from '@apollo/client/link/error';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
+import { hearPlatform } from './platformVersion';
 
 const parseBody = (bodyText: string): unknown => {
   try {
@@ -24,7 +27,19 @@ export const createAuthFailureLink = (uri?: string): ErrorLink =>
       return;
     }
 
-    const reason = authFailureFromResponse(error.statusCode, parseBody(error.bodyText));
+    const body = parseBody(error.bodyText);
+    // Older than the platform takes: no request of this builder will be answered until it is reloaded.
+    if (error.statusCode === 426) {
+      hearPlatform({
+        kind: 'outdated',
+        message:
+          isRecord(body) && typeof body.error === 'string' ? body.error : 'This builder is older than Plitzi takes.'
+      });
+
+      return;
+    }
+
+    const reason = authFailureFromResponse(error.statusCode, body);
     if (reason) {
       void reportAuthFailure({ reason, url: uri });
     }

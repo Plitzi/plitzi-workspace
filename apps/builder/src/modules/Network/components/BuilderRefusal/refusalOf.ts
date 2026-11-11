@@ -1,5 +1,5 @@
 /** Why the builder could not open its space, as the person reads it: what happened, what to do, and the way out. */
-export type BuilderRefusalKind = 'signedOut' | 'notFound' | 'unreachable' | 'other';
+export type BuilderRefusalKind = 'signedOut' | 'notFound' | 'unreachable' | 'outdated' | 'other';
 
 export type BuilderRefusal = { kind: BuilderRefusalKind; title: string; description: string };
 
@@ -19,6 +19,16 @@ export const refusalOf = (error: unknown): BuilderRefusal => {
       kind: 'unreachable',
       title: 'The builder cannot reach Plitzi',
       description: 'Nothing answered: the network, or the platform, is down for now. Your work is kept on the server.'
+    };
+  }
+
+  // Plitzi was released since this page was opened, past what it still takes from an older builder.
+  if (status === 426) {
+    return {
+      kind: 'outdated',
+      title: 'Plitzi was updated',
+      description:
+        'This builder is older than Plitzi takes now. Reload the page to load the current one: nothing you saved is lost.'
     };
   }
 

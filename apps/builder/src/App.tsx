@@ -64,6 +64,7 @@ import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@p
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { type BuilderState } from '@plitzi/sdk-shared';
+import { CLIENT_HEADER, clientHeaderValue } from '@plitzi/sdk-shared/clients';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared/devTools';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/store';
@@ -73,6 +74,7 @@ import { ThemeProvider } from '@plitzi/sdk-shared/theme/react';
 import AppMain from '@pmodules/App/AppMain';
 import { createAuthFailureLink } from '@pmodules/Network/helpers/authFailureLink';
 import customFetch from '@pmodules/Network/helpers/customFetch';
+import { versionedFetch } from '@pmodules/Network/helpers/platformVersion';
 import { createStripTypenameLink } from '@pmodules/Network/helpers/stripTypename';
 
 import { getEnvironmentServer } from './config';
@@ -213,14 +215,14 @@ const App = (props: AppProps) => {
       }
 
       const cache = new InMemoryCache();
-      const httpWithUploadLink = new UploadHttpLink({ uri: server.serverUrl, fetch: customFetch });
+      const httpWithUploadLink = new UploadHttpLink({ uri: server.serverUrl, fetch: versionedFetch(customFetch) });
       const authLink = new SetContextLink(prev => {
         const base = (prev.headers ?? {}) as Record<string, string>;
         const headers: Record<string, string> = {
           ...base,
           'plitzi-instance-id': instanceId,
           'plitzi-access-token': userKey,
-          'sdk-version': packageSettings.version,
+          [CLIENT_HEADER]: clientHeaderValue('builder', packageSettings.version),
           'Apollo-Require-Preflight': 'true'
         };
 

@@ -4,13 +4,16 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
+import { behindText } from '@plitzi/sdk-shared/clients';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 
 import BuilderRefusal, { refusalOf } from './components/BuilderRefusal';
+import { onPlatformVersion } from './helpers/platformVersion';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
+import packageSettings from '../../../package.json';
 
 import type { BuilderRefusal as BuilderRefusalReason } from './components/BuilderRefusal';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
@@ -203,6 +206,26 @@ const NetworkContextProvider = ({
     (message: ReactNode, appeareance?: 'info' | 'success' | 'warning' | 'error' | 'default') => {
       addToast(message, { appeareance, autoDismiss: true, placement: 'top-right' });
     },
+    [addToast]
+  );
+
+  // What the platform says of this builder: behind it, a toast once that a reload brings the current one; older than it
+  // takes, the builder stops here — no request of it would be answered.
+  useEffect(
+    () =>
+      onPlatformVersion(heard => {
+        if (heard.kind === 'outdated') {
+          setError(refusalOf({ statusCode: 426, message: heard.message }));
+
+          return;
+        }
+
+        addToast(behindText('builder', packageSettings.version, heard.current), {
+          appeareance: 'info',
+          autoDismiss: false,
+          placement: 'top-right'
+        });
+      }),
     [addToast]
   );
 

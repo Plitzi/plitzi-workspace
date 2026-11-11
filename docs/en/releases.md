@@ -21,6 +21,25 @@ short:** a change is one or two lines — what changed and, for a break, what to
 never its story or its edge cases, which the README and `docs/en` own. Fold a fix into the feature it belongs to
 rather than adding a bullet.
 
+## A client out of step with the platform
+
+The CLI and the builder say which they are on every request (`x-plitzi-client: cli/0.39.3`), and a platform judges
+them against its own version — every `@plitzi/*` package has it (`@plitzi/sdk-shared/clients`):
+
+- **As new as the platform, or a patch behind**: answered as any request. A request that names no client — a browser,
+  a script, a page — is too.
+- **A minor behind, not older than the oldest it takes**: answered, with the platform's version
+  (`x-plitzi-current`). The CLI says it once for each version of the platform and keeps it, so `plitzi doctor` says it
+  again (`cli-behind-platform`); the builder shows it once, as a toast.
+- **Older than the oldest a surface takes**: refused, `426` with `{ code: 'outdated', error, upgrade }`, before
+  anything it sent is read — the CLI as the refusal `outdated` (`docs/en/refusals.md`), the builder as a screen whose
+  one way on is **Reload**.
+
+The oldest of each is a deployment's (`CLIENT_OLDEST_CLI`, `CLIENT_OLDEST_BUILDER`); by default the minor before the
+platform's own. A release that changes what the platform answers so that an older client would write it wrong moves
+the floor to itself. The MCP has no client of Plitzi's to judge: it is the platform, and the agent's harness is not
+versioned with it.
+
 ## A change a project's source has to follow
 
 A release that renames a name, moves an import or flips a default that a project's own source counts on ships its

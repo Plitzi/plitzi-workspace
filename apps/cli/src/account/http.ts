@@ -1,6 +1,11 @@
 import tls from 'node:tls';
 
+import { CLIENT_HEADER, clientHeaderValue, CURRENT_HEADER } from '@plitzi/sdk-shared/clients';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { isPlanRefusal } from '@plitzi/sdk-shared/network';
+
+import { tellBehind } from './behind';
+import { CLI_VERSION } from '../scaffold/project';
 
 import type { RefusalCode } from '@plitzi/sdk-shared/refusals';
 
@@ -49,9 +54,12 @@ export const unreachable = (url: string, error: unknown): string => {
 export const requestJson = async <T>(url: string, init: RequestInit = {}): Promise<Reply<T>> => {
   trustSystemCertificates();
 
+  // Every request says which CLI it is: the platform refuses one older than it takes, and tells one behind it.
+  const headers = new Headers(init.headers);
+  headers.set(CLIENT_HEADER, clientHeaderValue('cli', CLI_VERSION));
   let response: Response;
   try {
-    response = await fetch(url, init);
+    response = await fetch(url, { ...init, headers });
   } catch (error) {
     return { ok: false, code: 'unanswered', error: unreachable(url, error) };
   }
@@ -66,6 +74,15 @@ export const requestJson = async <T>(url: string, init: RequestInit = {}): Promi
       code: 'refused-by-platform',
       error: `${new URL(url).pathname} answered ${response.status}, and not with JSON.`
     };
+  }
+
+  if (response.status === 426 && isRecord(data) && data.code === 'outdated' && typeof data.error === 'string') {
+    return { ok: false, code: 'outdated', error: data.error };
+  }
+
+  const current = response.headers.get(CURRENT_HEADER);
+  if (current) {
+    await tellBehind(new URL(url).origin, current);
   }
 
   // A plan that does not include what was asked — said as the server says it, with the plan and the link, whatever

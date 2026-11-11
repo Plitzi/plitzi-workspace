@@ -68,6 +68,9 @@ An authored request connects to the address its name was judged to, and the advi
   which `plitzi explain <code>` answers along with a run's refusal codes. A command that could not answer because
   nothing did (`unanswered`) exits 2 wherever it is raised: `page shot` with no server exited 1, as if the page were
   wrong.
+- A CLI out of step with the platform is told: one a minor behind is answered and told once for each version of the
+  platform (and `plitzi doctor` says it again, `cli-behind-platform`); one older than the platform takes is refused
+  (`outdated`) with the step that upgrades it. The CLI says its version on every request (`x-plitzi-client`).
 - `plitzi verify` on a project nothing serves serves it for its page checks and stops it after, and says so: on a fresh
   `create` it passed every check but the last until `npm start` was run by hand.
 - A new project installs with no advisory: the scaffold moves `minimatch` past its advisory (`overrides` for npm,
@@ -104,6 +107,9 @@ An authored request connects to the address its name was judged to, and the advi
   px). Under 1,536 px the search and Export are their icons (their names kept as title and accessible name), the
   element count its figure, the canvas's width reading left out; the actions never shrink, and where the window is still
   too narrow the left side scrolls inside itself. Nothing is taken out of the bar (`e2e/tests/builder/bar.spec.ts`).
+- A builder left open across a release says so: a toast once when the platform is newer, and a **Reload** screen
+  when it is older than the platform takes — where its requests would have failed one by one. It says its version as
+  `x-plitzi-client`, in place of the `sdk-version` header nothing read.
 - Deleting a class in the Style Manager takes it out of every element that wears it and keeps the element's other
   classes: an element on `card primary` kept `primary` when `primary` was deleted — a class the space no longer had —
   and only an element on `primary` alone lost it.
@@ -140,6 +146,13 @@ An authored request connects to the address its name was judged to, and the advi
 
 - `body-parser` 2.4, `qs` 6.17, `fast-uri` 3.1.9, `ip-address` 10.7.6, `zod` 4.6.7 and `launch-editor` 2.14.2 in the
   tree: no high or critical advisory is left, and CI's `audit` job holds it there.
+
+## Clients and versions
+
+- The platform judges the CLI and the builder by the version they say (`@plitzi/sdk-shared/clients`: `judgeClient`,
+  `CLIENT_HEADER`, `CURRENT_HEADER`): `426 outdated` below the oldest a surface takes, `x-plitzi-current` on an answer
+  to one behind. A deployment names each floor; Plitzi's default is the minor before its own
+  (`CLIENT_OLDEST_CLI`, `CLIENT_OLDEST_BUILDER`).
 
 ## To do when you upgrade
 

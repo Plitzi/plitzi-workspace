@@ -9,6 +9,7 @@ const ICON: Record<Refusal['kind'], string> = {
   signedOut: 'fa-solid fa-right-to-bracket',
   notFound: 'fa-solid fa-folder-open',
   unreachable: 'fa-solid fa-plug-circle-xmark',
+  outdated: 'fa-solid fa-rotate',
   other: 'fa-solid fa-triangle-exclamation'
 };
 
@@ -21,7 +22,7 @@ export type BuilderRefusalProps = { refusal: Refusal; onRetry: () => void };
  * sign in, and back here after.
  */
 const BuilderRefusal = ({ refusal, onRetry }: BuilderRefusalProps) => {
-  const handleSignIn = useCallback(() => {
+  const handleReload = useCallback(() => {
     window.location.reload();
   }, []);
   const handleBack = useCallback(() => {
@@ -36,8 +37,13 @@ const BuilderRefusal = ({ refusal, onRetry }: BuilderRefusalProps) => {
         description={refusal.description}
         action={
           <>
+            {refusal.kind === 'outdated' && (
+              <Button size="sm" onClick={handleReload}>
+                Reload
+              </Button>
+            )}
             {refusal.kind === 'signedOut' && (
-              <Button size="sm" onClick={handleSignIn}>
+              <Button size="sm" onClick={handleReload}>
                 Sign in again
               </Button>
             )}

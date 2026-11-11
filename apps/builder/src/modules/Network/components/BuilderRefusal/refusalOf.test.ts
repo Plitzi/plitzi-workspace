@@ -8,6 +8,16 @@ describe('why the builder could not open its space', () => {
     expect(refusalOf(new Error('Authentication required')).kind).toBe('signedOut');
   });
 
+  // A tab left open across a release past what the platform still takes: a reload loads the current builder.
+  it('reads a builder older than the platform takes as one to reload, before its words', () => {
+    expect(
+      refusalOf(Object.assign(new Error('This builder is 0.1.0, and the platform…'), { statusCode: 426 }))
+    ).toMatchObject({
+      kind: 'outdated',
+      title: 'Plitzi was updated'
+    });
+  });
+
   it('reads a space out of reach as not one the person can open', () => {
     expect(refusalOf('Space Not Found').kind).toBe('notFound');
   });

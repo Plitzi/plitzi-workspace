@@ -30,6 +30,7 @@ What a space’s document is refused for is authoring’s, and listed with it in
 | `unanswered` | nothing answered: a server not running, an address nothing serves, a browser that did not start | start what the message names (npm start, plitzi server) or install it (plitzi browser install); plitzi doctor checks the machine | the CLI, the MCP |
 | `nobody-to-ask` | a choice that belongs to a person, and nobody is at the terminal to make it | ask the person each question the message lists, then run the command again with their answers | the CLI |
 | `in-use` | what would be removed or changed is still used, or still running | stop or repoint what uses it first: the message names each | the CLI, the MCP |
+| `outdated` | this client is older than the oldest the platform takes | in a project, plitzi upgrade packages (the CLI is one of them); elsewhere, npx @plitzi/cli@latest — then run the command again | the CLI |
 | `repeated` | the same call was refused twice before and was not run again: the answer would not change | change what the errors named — plitzi_describe_operation gives an operation’s fields — or ask the person what they meant | the MCP |
 | `failed` | what the command ran failed on its own: a task, a step, an install | read the failure the message carries, fix it in the project, and run the command again | the CLI |
 

@@ -95,6 +95,11 @@ export const REFUSALS = {
     next: 'stop or repoint what uses it first: the message names each',
     surfaces: ['cli', 'mcp']
   },
+  outdated: {
+    means: 'this client is older than the oldest the platform takes',
+    next: 'in a project, plitzi upgrade packages (the CLI is one of them); elsewhere, npx @plitzi/cli@latest — then run the command again',
+    surfaces: ['cli']
+  },
   repeated: {
     means: 'the same call was refused twice before and was not run again: the answer would not change',
     next: 'change what the errors named — plitzi_describe_operation gives an operation’s fields — or ask the person what they meant',

@@ -1,11 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { CLIENT_UPGRADE } from '@plitzi/sdk-shared/clients';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { editManifest, keepFolder } from './repairs';
 import { sayer } from './types';
 import { compareVersions, floorOf, floorOnLine, satisfies, versionOf, versionText } from './versions';
+import { readBehind } from '../account/behind';
 import { localPackages } from '../commands/project/localPackages';
 import { planPackages } from '../commands/project/upgrade';
 import { installCommand, LOCKFILES } from '../scaffold';
@@ -581,6 +583,21 @@ const lockfileChecks = async (context: DoctorContext): Promise<Finding[]> => {
   return findings;
 };
 
+/** The platform this CLI last spoke to said it is behind: said again here while it holds (`account/behind.ts`). */
+const platformChecks = async (): Promise<Finding[]> => {
+  const behind = await readBehind();
+
+  return behind
+    ? [
+        say.warning(
+          'cli-behind-platform',
+          `${behind.api} is on Plitzi ${behind.current}, and this CLI is ${CLI_VERSION}: what it sends is older than what the platform writes.`,
+          { fix: CLIENT_UPGRADE.cli }
+        )
+      ]
+    : [];
+};
+
 export const checkPackages: Check = async context => {
   const scaffold: unknown = JSON.parse(packageJson(context.answers));
   const ours = isRecord(scaffold)
@@ -596,6 +613,7 @@ export const checkPackages: Check = async context => {
     ...scriptEnvChecks(context),
     ...sdkVersionChecks(context, sdk),
     ...(await installChecks(context, sdk)),
-    ...(await lockfileChecks(context))
+    ...(await lockfileChecks(context)),
+    ...(await platformChecks())
   ];
 };

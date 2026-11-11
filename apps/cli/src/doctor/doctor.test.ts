@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { CLIENT_UPGRADE } from '@plitzi/sdk-shared/clients';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { doctor } from '.';
@@ -24,9 +25,10 @@ import {
   doctorProjectEachTest,
   write
 } from './tests/doctorProject';
+import { configDir } from '../account/connection';
 import create from '../commands/project/create';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/project/scaffoldRecord';
-import { NODE_ENGINES } from '../scaffold/project';
+import { CLI_VERSION, NODE_ENGINES } from '../scaffold/project';
 
 // The doctor says which browser opens pages by starting one; these tests examine projects, not the machine's browsers.
 vi.mock('../commands/browser/browser', () => ({
@@ -399,6 +401,24 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
       fix: expect.stringContaining('node --import @plitzi/sdk-server/env') as unknown
     });
     expect(findingOf(report, 'script-env-unread')).toBeUndefined();
+  });
+
+  // The platform said this CLI is behind it (`account/behind.ts`): doctor says it again, with the step, while it holds.
+  it('says the platform last spoken to is ahead of this CLI', async () => {
+    expect(findingOf(await run(), 'cli-behind-platform')).toBeUndefined();
+
+    const kept = path.join(configDir(), 'platform.json');
+    await fs.mkdir(configDir(), { recursive: true });
+    await fs.writeFile(kept, JSON.stringify({ api: 'https://api.plitzi.com', current: '99.0.0', cli: CLI_VERSION }));
+    try {
+      expect(findingOf(await run(), 'cli-behind-platform')).toMatchObject({
+        severity: 'warning',
+        message: expect.stringContaining('https://api.plitzi.com is on Plitzi 99.0.0') as unknown,
+        fix: CLIENT_UPGRADE.cli
+      });
+    } finally {
+      await fs.rm(kept, { force: true });
+    }
   });
 
   it('fails on warnings only with --strict', async () => {
