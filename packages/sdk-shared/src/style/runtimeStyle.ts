@@ -30,7 +30,10 @@ export const styleSheetLinkable = (cache: string): boolean => cache !== '' && !c
 
 /**
  * The stylesheet's text: the cache in the runtime layer, with the layers' order said first — the file may be the first
- * thing on the page to name them, and a plugin's stylesheet arriving later would otherwise take a layer above it.
+ * thing on the page to name them, and a plugin's stylesheet arriving later would otherwise take a layer above it — and
+ * the space's custom CSS after it, in the order the page drew them: the same on every page and for every visitor, it
+ * was most of what a page carried inline (44 KB of Plitzi's website's every page) and is kept by the browser with the
+ * rest. The page then carries the variables alone, which a request resolves.
  */
-export const styleSheetCss = (cache: string): string =>
-  `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${cache}}`;
+export const styleSheetCss = (cache: string, customCss = ''): string =>
+  `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${customCss ? `${cache}\n${customCss}` : cache}}`;

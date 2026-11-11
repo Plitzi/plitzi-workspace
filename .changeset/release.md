@@ -57,6 +57,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## SDK
 
+- A server-rendered page carries the space's variables alone inline: its custom CSS goes in the stylesheet it links
+  (`/_plitzi/style/<hash>.css`) after the compiled rules, as the page drew them, and the browser keeps it with them.
+  It was most of every page's HTML — Plitzi's website carried 44.7 KB of it on each, and `/terms` is 89 → 45 KB.
+  A page that cannot link its stylesheet (a draft, a space named by a token) carries both as before.
 - The build writes `dist/build.json` with the mode it was made in (`{ "mode": "production" }`): what packs the `dist` —
   a server image — reads it rather than guessing a development build by its size.
 - A selector's colour variable given as one value (`'#05f'`, not `{ light, dark, default }`) is written as that value,

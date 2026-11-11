@@ -61,7 +61,7 @@ export const styleSheetOf = (offlineData: OfflineDataRaw): StyleSheet | undefine
     return undefined;
   }
 
-  const css = styleSheetCss(offlineData.style.cache);
+  const css = styleSheetCss(offlineData.style.cache, offlineData.schema.settings.customCss);
   const hash = digest(css);
   const sheet = { css, hash, href: styleSheetHref(hash), compressed: {} };
   sheets.set(offlineData.style, sheet);
@@ -94,8 +94,14 @@ export const spaceDocument = (offlineData: OfflineDataRaw, { linkStyle = true }:
   }
 
   const sheet = linkStyle ? styleSheetOf(offlineData) : undefined;
+  // Linked, the file holds the compiled rules and the custom CSS: the document the page draws and hydrates carries
+  // neither, so the server and the browser leave both out of the page alike.
   const data = sheet
-    ? { ...offlineData, style: { ...offlineData.style, cache: '', cacheHref: sheet.href } }
+    ? {
+        ...offlineData,
+        schema: { ...offlineData.schema, settings: { ...offlineData.schema.settings, customCss: '' } },
+        style: { ...offlineData.style, cache: '', cacheHref: sheet.href }
+      }
     : offlineData;
   const json = escapeJson(JSON.stringify(data));
   const document: SpaceDocument = { json, hash: digest(json), data };
