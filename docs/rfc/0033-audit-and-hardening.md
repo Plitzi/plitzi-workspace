@@ -477,7 +477,7 @@ Every task: both themes, 1440 and 390, `yarn vitest run prisma/seeds/spaces/plat
 | **T4.3** Versions out of step | A3 | Done 2026-11-11. Step 0: no surface said its version and the server judged none — the builder sent `sdk-version`, which nothing read. Now the CLI and the builder say `x-plitzi-client: <surface>/<version>` on every request, and every role of the platform judges it (`@plitzi/sdk-shared/clients`, the middleware in `plitzi-sdk-server`'s `services/express`) against its own version — every `@plitzi/*` package has it: a patch behind is current; a minor behind is answered with `x-plitzi-current`, which the CLI says once for each platform version and keeps for `plitzi doctor` (`cli-behind-platform`), and the builder shows once as a toast; below the floor (`CLIENT_OLDEST_CLI` / `_BUILDER`, by default the minor before the platform's) is `426 { code: 'outdated', error, upgrade }` before anything sent is read — the CLI's refusal `outdated`, the builder's **Reload** screen. The MCP has no client of Plitzi's to judge: it is the platform. `docs/en/releases.md` § A client out of step | An e2e with a client one minor behind (accepted, told) and one below the floor (refused, with the fix): `test/e2e/flows/clients/client-versions.e2e.test.ts`, the API and the GraphQL role | M |
 | **T4.4** A budget per tool | A4 | Done 2026-11-10 for what answers from the space alone: the primer, a page, an element, the definitions, types, interactions, the searches and `plitzi_describe_operation`, each held to a ceiling on `largeSpace(30, 100, 200)` (`apps/mcp/src/modules/mcp/tests/answerBudgets.ts`), the defaults in `docs/en/mcp.md`. Left: `plitzi_render` (a fixed widget), and `plitzi_look`, `plitzi_activity` and `plitzi_test`, measured where the render, the history and a runner answer (`plitzi-sdk-server`'s e2e) | Their ceilings, in the same table | S |
 | **T4.5** A write sent twice | A5 | Done 2026-11-11. Sent twice, none of the writes applied twice — every one is an upsert or a patch by a ref the call names (`place_component` and `add_page` require one), `repeatElement` by its wrapper's ref, `moveElement` to a place — but every second call was written again: a store was saved whenever a batch touched it, changed or not, one entry more in the history each time (two with a class). `apply` now writes a store only when the batch left it different (`unchanged`, every store: functions, data, schema, style, connector and action rows). No operation id was needed. A delete sent again is refused, its element gone — a refusal, not a silent no-op, so a mistyped ref is not taken for done. Found beside it: the element tools named a page as `There is no element "home" — did you mean "home"?`; they say it is a page now. Left for the maintainer: a page root's classes have no MCP write at all (`upsertPage` takes no style) | A test that sends each write twice and finds one change in the history | M |
-| **T4.7** One vocabulary, measured before decided | A6 | A note, no code: for ten capabilities (an element, a class with states, a binding, a flow, a page, a component, a flag, an action, a function file, a setting), how each is said in a builder mutation, an MCP operation and an authoring spec, and what each surface's skill spends teaching it. Then the proposal the figures support — most likely the MCP taking an authoring snippet where it takes its own shapes today (`authorSnippet` exists), its `AI*` shapes kept for reading | The table and the proposal in § 8; nothing changed | M |
+| **T4.7** One vocabulary, measured before decided | A6 | Done 2026-11-11: the table and the proposal are § 8.4 — the MCP to take an authoring element spec for an element, its class, a binding and a flow (≈ 3,400 tokens of operation schema today, in a vocabulary of its own), its own shapes kept for reading; the maintainer's call, measured by T4.1 first. Nothing changed | The table and the proposal in § 8; nothing changed | M |
 | **T4.9** The run skills, on a diet | A8, A9 | For every sentence of `runs.md`, `runs-lead.md`, `runs-plan.md`, `runs-review.md`, `runs-designer.md` and `runs-scout.md`: is it enforced by a refusal, said by a command when it matters (`--dry-run`, `task next`, `run watch`), or only here? The first two leave the skill — the command teaches it. What stays is ordered by how often runs met it (the reports' findings), one rule a line, with a glossary of the run's words opening `runs.md`. Then T4.1's score, as a team, before and after | `runs-lead.md` under 3,500 tokens; a test lists each rule taken out beside the refusal or output that carries it; the team's score no lower | L |
 | **T4.6** What a refusal cost | A1 | From T4.1's records: the ten refusals and lints agents meet most, and for each whether the message alone was enough (the next call fixed it). The ones that were not go through `improving-the-cli.md`'s line — a task only when it is Plitzi's | A list with counts; no change made by this task | S |
 
@@ -541,7 +541,7 @@ is [`0033-audit-and-hardening/00-how-to-work.md`](0033-audit-and-hardening/00-ho
 | 4 | T1.5–T1.7, T3.6–T3.8, T3.11, T5.12, T5.13, T5.3, T5.6, T5.8, T5.9, T6.1–T6.3 | Yes, the visual lane apart |
 | 5 | T4.6, T4.9, T6.4–T6.8 | After their inputs exist |
 
-## 8. Design notes (written by T1.1 and T5.7)
+## 8. Design notes (written by T1.1, T5.7 and T4.7)
 
 ### 8.1 What a page downloads (T1.1, measured 2026-11-10)
 
@@ -617,6 +617,44 @@ running workers and runners beside the page server; *Plitzi's* is the back-offic
 workers scale and route as Plitzi's do without copying them; `local.ts` follows once they do, since it composes them.
 `k8s.ts` stays until the chart is the packages' too. Everything from `knobs.ts` down is the back-office's, and stays
 here. Nothing is moved by this note.
+
+### 8.4 One vocabulary, measured (T4.7, 2026-11-11)
+
+How each of ten capabilities is said on the three surfaces that write a space, and what an agent loads to say it. The
+MCP's figure is the JSON schema `plitzi_describe_operation` answers for the operation (bytes; ~4 a token); the
+authoring skill's is the reference page that teaches it (`packages/sdk-authoring/skills/plitzi-authoring`). The
+builder's mutations (`plitzi-sdk-server/src/services/graphql/schema/mutations`) are taught to no agent: a person drives
+them through the builder.
+
+| Capability | Builder mutation | MCP operation (schema) | Authoring spec (reference) |
+|---|---|---|---|
+| An element | `SpaceAddElement(elements: JSON, parentId)` — the stored flat element | `upsertElement { pageRef, element: { ref, type, props, style, … } }` (3.3 KB); `patchElement` 3.2 | `text()`, `container()`… factories, attributes and `id`, `class`, `css`, `bind`, `flows`, `visible` (`elements-and-styles.md` 12.1 KB, half of it) |
+| A class with states | `StyleAddSelector(name, style: JSON)` — the stored block, rules under `default` | `upsertDefinition { ref, desktop, tablet, mobile, states, variants }` (3.3 KB); `upsertDefinitions` 3.5 | `styles(name, { css, states, variants })`, camelCase and numbers as px (same page, the other half) |
+| A binding | inside `SpaceUpdateElement(element: JSON)` — `definition.bindings` | `upsertBinding { pageRef, ref, category, binding }` (3.3 KB); `patchBinding` 3.0 | `from`, `bind`, `bindTemplate`, `variantFrom` on the element (`data-and-visibility.md` 13.1 KB) |
+| A flow | inside the element JSON — `definition.interactions`, a graph of nodes | `upsertInteractionFlow { pageRef, ref, nodes }` (3.7 KB); `patchInteractionNode` 3.1 | `flows: [[onClick(), setState(…)]]` on the element (`flows.md` 13.7 KB) |
+| A page | `SpaceAddPage(name, slug, …)` | `upsertPage { ref, slug, layout, … }` (1.9 KB) | `pages: [{ id, name, slug, layout, body }]`, `pageFamily` (`structure.md` 7.9 + `layouts.md` 10.7 KB) |
+| A component | `SpaceAddComponent(component: JSON)` | `upsertComponent { ref, label, props }` (0.8 KB) + `plitzi_place_component` | `components: [{ id, props, slots, root }]`, `component(id, { props })` (`components.md` 5.9 KB) |
+| A flag | `SpaceSetFlag(name, flag: JSON)` | `upsertFlag { name, value, rules }` (2.1 KB) | `flags: { beta: { description, value, rules } }` (`feature-flags.md` 4.5 KB) |
+| An action | `SpaceAddAction(name, document: JSON)` — the graph | `upsertAction { ref, name, nodes }` (3.2 KB) | `defineAction({ … })` in the project (`docs/en/server-actions.md` § 2) |
+| A function file | `SpaceSaveFunctions(files: JSON)` — the whole store | `upsertFunctionFile { path, content }` (0.5 KB) | a file of `src/functions/` — no spec: the file is the vocabulary |
+| A setting | `SpaceUpdateSettings(settings: JSON)` | `patchSettings { … }` (4.7 KB) | `SpaceSpec.settings` |
+
+**What the figures say.** The builder speaks the stored shape and is nobody's to learn; the two an agent learns are the
+MCP's operations and authoring's specs, and they say the same thing twice. The element-level four — an element, its
+class, a binding, a flow — are where they differ most and cost most: an agent writing one element with a class, a
+binding and a flow over the MCP loads ~13.5 KB of operation schemas (≈ 3,400 tokens) in a vocabulary of its own (refs,
+`style.base`, `nodes` with `nodeType`), beside a guide of 113 KB; the same agent in a project has learned
+authoring's factories from a skill of 256 KB (51 KB of it the errors catalogue). The page, component, flag, action and
+file operations are short and close to authoring's already (a file is a file; a flag is the same object in both).
+
+**The proposal.** The MCP takes an authoring element spec where it takes its own shapes for the element-level four —
+`upsertElement { pageRef, parentRef?, spec }`, `spec` being the JSON an `ElementSpec` is (the factories' output: `type`,
+attributes, `class`/`css`, `bind`, `flows`, `visible`, `children`), authored through `authorSnippet`, which exists and
+holds the same catalogues and checks; the class is a `styles()` declaration in the same batch. One vocabulary is then
+taught once — the skill's — and the MCP's guide points at it; the operations' own shapes stay for reading
+(`plitzi://schema/…` answers what the builder stores) and for what has no authoring form (moving, patching one
+attribute). Its cost to be measured, not assumed, before the MCP's shapes are retired: T4.1's score on the
+element-level tasks, both ways. Not started: it changes the MCP's contract, the maintainer's call.
 
 ## 9. Not an agent's, tracked here
 
