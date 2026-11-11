@@ -100,6 +100,12 @@ An authored request connects to the address its name was judged to, and the advi
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.
 
+## Authoring
+
+- A page whose part of the document passes 250 KB is suggested (`heavy-page`) — every visitor downloads it before the
+  page is theirs — naming the three shapes written again most inside it, by what they weigh: the rows to make one
+  `list`, the blocks written per state to make one element.
+
 ## Builder
 
 - A builder that cannot open its space says why and where to go — a session that ended (sign in again), a space out of

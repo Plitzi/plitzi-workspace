@@ -100,7 +100,7 @@ const isAncestor = (flat: Schema['flat'], ancestor: string, id: string): boolean
 /** A binding that reads a provider above the element it is on: the provider, and how far up it sits. */
 type Read = { provider: string; depth: number; source: string };
 
-const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, Signatures> => {
+export const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, Signatures> => {
   const depthOf = new Map<string, number>();
   const depth = (id: string): number => {
     const known = depthOf.get(id);

@@ -16,6 +16,12 @@ export const SUGGESTION_CODES = {
     means: 'the same block — a header, a footer, a side panel — written into several pages',
     fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it, written in its area’s folder and listed in the space’s `components`; a link marks its own page with the `current` state'
   },
+  'heavy-page': {
+    kind: 'suggested',
+    means:
+      'one page whose part of the document passes 250 KB — every visitor downloads it before the page is theirs — with the shapes written again most inside it, by what they weigh',
+    fix: 'the rows of data as one `list` of a component, read from the data (`list({ items, row })`), and a block written per state as one element whose state picks its content: the document then holds one copy'
+  },
   'repeated-shape': {
     kind: 'suggested',
     means:
