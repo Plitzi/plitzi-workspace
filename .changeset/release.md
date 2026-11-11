@@ -94,6 +94,8 @@ An authored request connects to the address its name was judged to, and the advi
 - An id style is checked as a class is — an unknown CSS property is refused with the nearest one — and a token's name
   must be one `var()` can read: `upsertIdStyle` wrote any property, and `upsertStyleVariable { name: "brand primary" }`
   wrote `--brand primary`.
+- What each answer costs an agent is a table the package exports (`ANSWER_BUDGETS`, `HOST_ANSWERS`): the answers made
+  from the space alone are held to it here, and a host holds the ones its adapters make — Plitzi's activity is.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.

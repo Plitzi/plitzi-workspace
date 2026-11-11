@@ -113,7 +113,7 @@ calls as a small one:
 primer (`plitzi://primer/{env}`) keeps 24,000 characters of what the space grows (pages, classes, flows) and points to
 its own resource for each section past that. On a space of 30 pages of 100 elements, a page reads in about 3,600 tokens,
 a search in about 4,600 (8,500 with detail) and the primer in about 12,000; each answer is held to a ceiling there
-(`apps/mcp/src/modules/mcp/tests/answerBudgets.ts`), which watches what an agent is handed and never drops a field.
+(`apps/mcp/src/modules/mcp/answerBudgets.ts`), which watches what an agent is handed and never drops a field.
 
 Every tool that only reads is marked `readOnlyHint` (from its `access`), so a host can run it without asking and ask
 before the ones that change something — `plitzi_apply`, the intent tools and `plitzi_try_function`.
