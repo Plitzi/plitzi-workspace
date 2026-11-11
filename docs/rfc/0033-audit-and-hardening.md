@@ -129,11 +129,12 @@ Nothing open.
 - **Waiting for the maintainer:** T5.11's bucket; T0.12's token permission (both at the end of this RFC); pushing
   `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
   (~150–300 MB), so a space's journeys run there; the templates' covers on the dev cluster, looked at by whoever can
-  reach it; T5.12's alerts sending — Brevo's SMTP key and the chat's webhook into `alertmanager.sops.yaml`
-  (`make secrets` with `ALERTS_*`), Brevo's SMTP login in monitoring's kustomization, `alerts@plitzi.com` a mailbox
-  that exists, `plitzi-platform` pushed and the app released with the chart's PodMonitors, then each rule fired once
-  on purpose and received at both (`cluster/docs/08-observability.md` § Alerts). Neither `promtool` nor `amtool` was on
-  the machine that wrote them: the rules and the config were checked by `make test`, not by Prometheus's own tools.
+  reach it; T5.12's alerts sending — the chat's webhook into `alertmanager.sops.yaml` (`make secrets` with
+  `ALERTS_CHAT_WEBHOOK_URL`; the mail needs nothing, it is the app's own, to its staff), `plitzi-platform` pushed and the
+  app released with the chart's `metrics.podMonitor`/`metrics.alerts`, then each rule fired once on purpose and received
+  at both (`cluster/docs/08-observability.md` § Alerts). Neither `promtool` nor `amtool` was on the machine that wrote
+  them, nor was kube-prometheus-stack rendered with the new Alertmanager values: checked by `make test` and the chart's
+  test, not by Prometheus's own tools.
 - **W1, W26:** written as far as it goes without counsel (2026-11-11: the processor's terms, a consumer's withdrawal,
   agents, export, security and retention); then the final legal text from counsel, its placeholders filled (the company's name, address and
   registration, the governing law); the draft notice out; `TERMS_VERSION` moved.
