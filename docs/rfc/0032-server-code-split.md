@@ -881,6 +881,33 @@ during the parse is higher: up to ~4× the body.
   builds it.
 - **§6.3's second lever (persistent connections) is worth at most the quarter that transport is.**
 
+### 8.2 Phase 6's results (2026-11-11)
+
+Taken as § 8.1's: a laptop, production builds, the bench at the `standard` profile (1 CPU, 512 MB) with nothing else
+running in Docker but the stores. Before and after were measured on the same afternoon, one after the other, because
+the machine moves runs by ±12 %: § 8.1's figures are not the baseline for them.
+
+**A page render, before the split and after phase 6** (`sdk-server-render`, CPU per request at c=1, 10 and 50):
+
+| Code | CPU per request | Requests a second |
+|---|---|---|
+| Before the split (`963ce9587^`) | 1.44–1.69 ms (1.98 cold) | 620–700 |
+| The split, built (`ff882cd03`) | 1.33–1.85 ms | — |
+| HEAD, before the fix below | 1.63–2.15 ms | 490–590 |
+| **HEAD** | **1.53–1.78 ms** | **625–650** |
+
+**What it decides:**
+- **Composing through `stages` and the resolver costs nothing**: the render is where it was before the split.
+- The one regression found was not the split's: a page's icon faces resolved the SDK's folder (`createRequire`) on every
+  render — a module lookup, dear under Docker's filesystem. It is resolved once a process now (`resolveSdkAssetsDir`).
+  Found by a CPU profile of both, not by bisecting 165 commits: what is new in a profile names its caller.
+- A cached page: 0.12–0.13 ms (0.10–0.11 before), within the machine's spread at these sizes.
+
+**The worker with the hosted platform's lookups** (`plitzi-sdk-server`'s bundled `worker` role on its stores — Prisma,
+Mongo, Redis — idle): ready in ~1 s; each of its processes ~185–190 MB, against 160 MB for `createWorker` alone (phase
+11). The deployment's lookups add ~25–30 MB a process. `sdk-server` with pages off (phase 1) is no longer a
+configuration to compare with: phase 6 removed it.
+
 ## 9. Phases
 
 Each phase ends with typecheck, lint and tests passing (the one-process configuration included, D11), and nothing
@@ -897,7 +924,7 @@ three processes, so the seams between them are tested, not only the one-process 
 | 3c | **The server-only types out of `sdk-shared`** (D12) | — | Folded into phases 4 to 6 (below) |
 | 4 | **`sdk-kernel` extracted** | `packages/sdk-kernel`, `apps/server` | Done 2026-11-05 (below): the kernel imports no `@plitzi/*` value (a lint rule); `sdk-server`'s pipeline and identity checks come from it; the auth e2e passes |
 | 5 | **`sdk-runtime` extracted:** the guest side moves; authors import from it; the builder's editor loads its `functions-api.d.ts`; the CLI's `functions dev` uses its runner | `packages/sdk-runtime`, every consumer (D10) | Done 2026-11-05 in the workspace (below): no surface writes the contract's old import; the hosted platform's seeds author 0/0 when it adopts the release |
-| 6 | **`sdk-actions` extracted, with `createWorker()`** (see below) | `packages/sdk-actions`, `apps/server`, the CLI, the hosted platform | `sdk-server` keeps no actions code outside its composition subpaths; the split-topology e2e passes; §8's worker and render rows are in |
+| 6 | **`sdk-actions` extracted, with `createWorker()`** (see below) | `packages/sdk-actions`, `apps/server`, the CLI, the hosted platform | Done: `sdk-server` keeps no actions code outside its composition subpaths; the split-topology e2e passes (`platform.split.test.ts`); §8's worker and render rows are in (§8.2, 2026-11-11) |
 | 7 | **Actions elsewhere for self-hosters:** a self-hosting example with the worker on its own; §4.4's other-origin mode with its refusal | `apps/server`'s examples, `docs/en` | Done 2026-11-05: `examples/self-hosting/11-actions-on-a-worker` runs the worker, the page server and a gateway as three processes (and the worker on its own origin, with no gateway); `action.origin` + `action.pageOrigins`, CORS with credentials, and `createWorker`'s refusal; both in the examples e2e |
 | 8 | **Pools** (§7): `ProcessStats`, `/_stats` behind its secret, the `local` source, `readPools`, the scaler contract | `sdk-kernel`, `sdk-actions`, `sdk-runtime` | Done 2026-11-05 in the workspace: `@plitzi/sdk-kernel/stats`; the page server, the worker and the MCP answer `/_stats` with `stats`, the runner behind its protocol secret; the engine feeds runs, refusals and slots, the runner its isolates. The hosted platform's `yarn start` reporting is its adoption (below); a runtime's health stays its `/_describe` |
 | 9 | **The remote render resolver** (§4.3) | `sdk-actions` | Done 2026-11-05: `createRemoteRenderResolver` and the worker's `POST /_render` (`render.secret`, `RENDER_PROTOCOL` `1.0`), handed with `engineOnWorker({ render })`; `platform.remoteRender.test.ts` renders a page server with no engine from a worker's kv |
