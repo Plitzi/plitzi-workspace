@@ -4,8 +4,9 @@ import { STATS_LOGS_PATH, STATS_PATH } from './probes';
 import { clientIp, parseRequest } from './requestParser';
 import { applySecurityHeaders } from './securityHeaders';
 import { socketResponse } from './socketResponse';
-import { isLogged, renderLogEvent, serverLog } from '../log/serverLog';
+import { isLogged, renderLogEvent, serverLog, traceField } from '../log/serverLog';
 import { keepLogEvent } from '../log/tail';
+import { readTraceparent, runInTrace, spanOf, TRACEPARENT, traceparentOf } from '../trace';
 
 import type { RawResponse } from './buildResponseHelpers';
 import type { ResolvedCompression } from './compress';
@@ -117,6 +118,7 @@ const runPipeline = async <C extends BaseContext>(
       // the server having gone wrong, which is 5xx and a thrown exception.
       ok: !error && status < 500,
       ...(error ? { error: errorText(error) } : {}),
+      ...traceField(),
       timestamp: new Date().toISOString()
     };
     keepLogEvent(event, level, renderLogEvent(event));
@@ -189,8 +191,23 @@ export const makeHandler = <C extends BaseContext>(
     }
   };
 
+  // Every request is a span of the caller's trace, or the first of one: what it logs and the hops it makes carry it,
+  // and the answer says it, so whoever asked finds the lines of what it asked for.
+  const traced = (
+    raw: Parameters<Handler>[0],
+    rawRes: Parameters<Handler>[1],
+    work: () => Promise<void>
+  ): Promise<void> => {
+    const trace = spanOf(readTraceparent(raw.headers[TRACEPARENT]));
+    if (!rawRes.headersSent) {
+      rawRes.setHeader(TRACEPARENT, traceparentOf(trace));
+    }
+
+    return runInTrace(trace, work);
+  };
+
   const handler: Handler = (raw, rawRes) => {
-    runPipeline(raw, rawRes, buildContext, stages, label, compression).catch(fail(rawRes));
+    traced(raw, rawRes, () => runPipeline(raw, rawRes, buildContext, stages, label, compression)).catch(fail(rawRes));
   };
 
   if (upgrades) {
@@ -204,7 +221,7 @@ export const makeHandler = <C extends BaseContext>(
       }
 
       const upgrade: UpgradeRequest = { socket, head, taken: false };
-      runPipeline(raw, rawRes, buildContext, stages, label, compression, upgrade)
+      traced(raw, rawRes, () => runPipeline(raw, rawRes, buildContext, stages, label, compression, upgrade))
         .then(() => {
           // Every stage fell through: nobody answered, and a socket left open here would hang until it timed out.
           if (!upgrade.taken && !rawRes.writableFinished) {

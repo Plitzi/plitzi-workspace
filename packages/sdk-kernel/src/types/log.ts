@@ -9,6 +9,8 @@ type ServerLogEventBase = {
   error?: string;
   /** ISO-8601 timestamp of when the event was emitted. */
   timestamp: string;
+  /** The W3C trace the work was part of (`sdk-kernel/trace`): one id for every line of one run, on every process. */
+  traceId?: string;
 };
 
 /** What every log event carries, whatever layer it came from. */
@@ -120,6 +122,8 @@ export type ServerMessageLogEvent = {
   ok: boolean;
   error?: string;
   timestamp: string;
+  /** The trace it was said in, as every other event's. */
+  traceId?: string;
 };
 
 export type ServerLogEvent =

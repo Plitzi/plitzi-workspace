@@ -1,5 +1,6 @@
 import { onAbort } from '@plitzi/sdk-kernel/http';
 import { serverLog } from '@plitzi/sdk-kernel/log';
+import { currentTrace } from '@plitzi/sdk-kernel/trace';
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { ActionRefusal, isActionRefusal, refusalCodeOf } from '@plitzi/sdk-shared/functions';
@@ -376,8 +377,10 @@ export const createActionRunner = (
 
   /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
   const record = async (entry: ActionRunRecord) => {
+    // The trace the run was part of: its record names it, as every line it logged did (`sdk-kernel/trace`).
+    const trace = currentTrace();
     try {
-      await config.onRun?.(entry);
+      await config.onRun?.(trace && !entry.traceId ? { ...entry, traceId: trace.traceId } : entry);
     } catch (error) {
       serverLog.error('Actions', 'run record failed', error);
     }

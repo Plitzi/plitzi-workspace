@@ -1,6 +1,14 @@
 import { keepLogEvent } from './tail';
+import { currentTrace } from '../trace';
 
 import type { LogLevel, ServerLogEvent, ServerLogger } from '../types';
+
+/** The trace an event is said in, when the work in hand is part of one: every line of a run carries it. */
+export const traceField = (): { traceId?: string } => {
+  const trace = currentTrace();
+
+  return trace ? { traceId: trace.traceId } : {};
+};
 
 const outcomeOf = (event: ServerLogEvent): string => (event.ok ? 'ok' : `ERROR ${event.error ?? ''}`.trim());
 
@@ -63,6 +71,12 @@ const renderMessage = (event: Extract<ServerLogEvent, { kind: 'message' }>): str
  *  reduced a run to its steps; the client IP it does carry is personal data, so a sink that persists these lines
  *  must say so. */
 export const renderLogEvent = (event: ServerLogEvent): string => {
+  const line = renderLine(event);
+
+  return event.traceId ? `${line} trace=${event.traceId}` : line;
+};
+
+const renderLine = (event: ServerLogEvent): string => {
   switch (event.kind) {
     case 'request':
       return renderRequest(event);
@@ -163,6 +177,7 @@ const say = (level: LogLevel, scope: string, message: string, cause?: unknown): 
     message,
     ok: level !== 'error',
     ...(cause === undefined ? {} : { error: errorText(cause) }),
+    ...traceField(),
     timestamp: new Date().toISOString()
   };
   // Kept whatever the console's threshold: the process's own log, read from the back-office (`readLogTail`).
@@ -181,7 +196,8 @@ export const serverLog = {
   /** Whether a level would be said — to skip building a costly message nobody will read. */
   enabled: (level: LogLevel): boolean => isLogged(state.level, level),
   /** Hands an event to a sink the consumer wired itself (`onRun`, `onReject`) only when the process would say it. */
-  emit: (logger: ServerLogger, event: ServerLogEvent): void => {
+  emit: (logger: ServerLogger, given: ServerLogEvent): void => {
+    const event: ServerLogEvent = given.traceId ? given : { ...given, ...traceField() };
     const level = logLevelOf(event);
     keepLogEvent(event, level, renderLogEvent(event));
     if (isLogged(state.level, level)) {

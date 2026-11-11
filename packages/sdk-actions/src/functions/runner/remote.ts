@@ -4,6 +4,7 @@ import { isIP } from 'node:net';
 import { WebSocket } from 'ws';
 
 import { frameText } from '@plitzi/sdk-kernel/http';
+import { traceHeaders } from '@plitzi/sdk-kernel/trace';
 import { readResponseMessage } from '@plitzi/sdk-shared/functions';
 import { FUNCTIONS_PROTOCOL, FunctionFailure, failedAnswerOf } from '@plitzi/sdk-shared/functions';
 
@@ -171,7 +172,8 @@ export const createRemoteRunner = ({
   }: Operation): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const socket = new WebSocket(address, {
-        headers: { authorization: `Bearer ${secret}` },
+        // The run's trace goes with the invocation: the runner's lines of it name the same trace as the worker's.
+        headers: { authorization: `Bearer ${secret}`, ...traceHeaders() },
         handshakeTimeout: connectTimeoutMs
       });
       let settled = false;

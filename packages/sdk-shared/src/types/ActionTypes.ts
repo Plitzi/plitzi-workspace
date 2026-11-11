@@ -401,6 +401,8 @@ export type ActionRejectRecord = {
  */
 export type ActionRunRecord = {
   runId: string;
+  /** The W3C trace the run was part of (`sdk-kernel/trace`): every line it logged, on every process, names it. */
+  traceId?: string;
   actionId: string;
   spaceId: number;
   environment: Environment;

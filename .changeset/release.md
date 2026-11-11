@@ -17,6 +17,14 @@ An authored request connects to the address its name was judged to, and the advi
   closed once its refusal is out. The functions runner and every server that refuses an upgrade without the secret met
   it.
 
+## Tracing
+
+- One trace for a run, across every process it crosses (`@plitzi/sdk-kernel/trace`): a request takes its caller's W3C
+  `traceparent` — or starts a trace — and answers with its own span of it; every log event carries `traceId` and
+  every line ends `trace=…`; the worker opens the runner's socket with it, the runner runs the invocation in it and
+  says one line of each (`debug` when it answered, `warn` when it broke); a run's record names it (`traceId`). No
+  vendor and no exporter: a deployment that wants spans reads them off the log events.
+
 ## Runtime
 
 - The functions runner's own tests are in `@plitzi/sdk-runtime`: its limits, its threads, what the code finds in an

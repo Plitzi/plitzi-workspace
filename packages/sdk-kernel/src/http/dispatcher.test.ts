@@ -284,3 +284,38 @@ describe('dispatcher client IP', () => {
     expect(firstRequest(events).clientIp).toBe('203.0.113.7');
   });
 });
+
+// One trace for a run: a request is a span of its caller's trace, answers with it, and every line it logs names it.
+describe('a request in a trace', () => {
+  const CALLER = '4bf92f3577b34da6a3ce929d0e0e4736';
+
+  it('answers as a span of the caller’s trace, and its line and the lines said meanwhile name it', async () => {
+    const headers: Record<string, string> = {};
+    const rawRes = { ...fakeResponse(), setHeader: (name: string, value: string) => (headers[name] = value) };
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: string) => said.push(line));
+    const speaks: Stage = ctx => {
+      serverLog.info('Actions', 'ran a flow');
+      ctx.res.setStatus(200);
+      ctx.res.end();
+
+      return true;
+    };
+
+    const events = await run(fakeClientRequest({ traceparent: `00-${CALLER}-00f067aa0ba902b7-01` }), [speaks], rawRes);
+
+    expect(headers.traceparent).toMatch(new RegExp(`^00-${CALLER}-[0-9a-f]{16}-01$`));
+    expect(headers.traceparent).not.toContain('00f067aa0ba902b7');
+    expect(events[0]).toMatchObject({ kind: 'request', traceId: CALLER });
+    expect(said.some(line => line.includes('ran a flow') && line.endsWith(`trace=${CALLER}`))).toBe(true);
+  });
+
+  it('starts a trace of its own when its caller sent none', async () => {
+    const headers: Record<string, string> = {};
+    const rawRes = { ...fakeResponse(), setHeader: (name: string, value: string) => (headers[name] = value) };
+    const events = await run(fakeRequest('/'), [answer(200)], rawRes);
+
+    expect(headers.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
+    expect(events[0]).toMatchObject({ traceId: headers.traceparent.split('-')[1] });
+  });
+});

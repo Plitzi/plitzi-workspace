@@ -11,6 +11,7 @@ import {
   sampleProcessMemory,
   withStopping
 } from '@plitzi/sdk-kernel/stats';
+import { readTraceparent, runInTrace, spanOf, TRACEPARENT } from '@plitzi/sdk-kernel/trace';
 import {
   FUNCTIONS_PROTOCOL,
   FunctionFailure,
@@ -28,6 +29,7 @@ import { createMemoryGuard } from './memoryGuard';
 
 import type { IsolateRunnerOptions } from './isolate';
 import type { MemoryReading, RunEnd, RunLabel, StatsConfig, StatsRecorder } from '@plitzi/sdk-kernel/stats';
+import type { Trace } from '@plitzi/sdk-kernel/trace';
 import type {
   FunctionAnswer,
   FunctionFailureReason,
@@ -146,7 +148,11 @@ type ConnectionStats = {
   ended: (limits: FunctionLimits) => void;
 };
 
-const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: ConnectionStats): void => {
+/**
+ * One invocation over its socket. `trace` is the worker's — the span the connection was opened in — so everything the
+ * invocation does and logs is that run's: a socket's messages come from its own connection, outside any request.
+ */
+const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: ConnectionStats, trace: Trace): void => {
   const pending = new Map<number, (answer: FunctionAnswer) => void>();
   const controller = new AbortController();
   let nextCall = 1;
@@ -165,9 +171,21 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
   let takenLimits: FunctionLimits | undefined;
   const finish = (message: RunnerResponseMessage): void => {
     if (invokedAt !== undefined) {
+      const tookMs = Date.now() - invokedAt;
       stats.inFlight.count -= 1;
-      stats.recorder.run(Date.now() - invokedAt, message.type === 'failed' ? endOf(message.reason) : undefined, label);
+      stats.recorder.run(tookMs, message.type === 'failed' ? endOf(message.reason) : undefined, label);
       invokedAt = undefined;
+      // One line an invocation, in the run's trace — `warn` when it broke, `debug` otherwise, as a run that worked is
+      // everywhere. Its words are left to the worker, which redacts them before they are written anywhere.
+      const what = label ? `${label.kind} ${label.name} space=${String(label.spaceId)}` : 'an invocation';
+      if (message.type === 'failed' && 'failed' in endOf(message.reason)) {
+        serverLog.warn('Functions', `${what} failed (${message.reason}) ${String(tookMs)}ms`);
+      } else {
+        serverLog.debug(
+          'Functions',
+          `${what} ${message.type === 'failed' ? message.reason : 'answered'} ${String(tookMs)}ms`
+        );
+      }
     }
 
     if (takenLimits) {
@@ -239,7 +257,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       send({ type: 'call', id, call });
     });
 
-  socket.on('message', data => {
+  const onMessage = (data: Parameters<typeof frameText>[0]): void => {
     const message = readRequestMessage(frameText(data));
     if (!message) {
       finish({ type: 'failed', reason: 'error', error: 'Not a message of the functions protocol' });
@@ -291,6 +309,11 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
 
     void start(message).catch((error: unknown) => {
       finish({ type: 'failed', reason: 'error', error: error instanceof Error ? error.message : String(error) });
+    });
+  };
+  socket.on('message', data => {
+    runInTrace(trace, () => {
+      onMessage(data);
     });
   });
 
@@ -636,19 +659,26 @@ export const startFunctionsRunnerService = async ({
       return;
     }
 
+    // The worker's span, sent as it opened the socket: this invocation is part of its run's trace.
+    const trace = spanOf(readTraceparent(req.headers[TRACEPARENT]));
     sockets.handleUpgrade(req, socket, head, ws =>
-      serveConnection(ws, engine, {
-        recorder,
-        inFlight,
-        busy,
-        tooLarge,
-        stopping: () => stopping,
-        wait,
-        ended: limits => {
-          release(limits);
-          letIn();
-        }
-      })
+      serveConnection(
+        ws,
+        engine,
+        {
+          recorder,
+          inFlight,
+          busy,
+          tooLarge,
+          stopping: () => stopping,
+          wait,
+          ended: limits => {
+            release(limits);
+            letIn();
+          }
+        },
+        trace
+      )
     );
   });
 
