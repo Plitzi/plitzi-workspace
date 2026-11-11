@@ -44,7 +44,7 @@ const MOVES: readonly Move[] = [
   ).flatMap(([area, names]) =>
     names.map(name => ({ name, from: `@plitzi/sdk-shared/${area}`, to: `@plitzi/sdk-shared/${area}/react` }))
   ),
-  // sdk-shared without plitzi-ui, and its server's folders without React or nexus (RFC 0032, D13): React's own helpers in
+  // sdk-shared without plitzi-ui, and its server's folders without React or nexus (docs/en/server-packages.md, D13): React's own helpers in
   // `react`, a condition and its evaluator in `conditions`, the persisted state with the store, the policies' names in
   // `helpers`.
   ...(

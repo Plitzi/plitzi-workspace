@@ -22,7 +22,7 @@ export type FleetBroadcast = { sdkFleet: 'broadcast'; channel: string; payload: 
 
 export type FleetMessage = FleetCall | FleetReply | FleetBroadcast;
 
-// The kernel takes no value from another Plitzi package (RFC 0032, D3): sdk-shared's `isRecord`, written again.
+// The kernel takes no value from another Plitzi package (docs/en/server-packages.md, D3): sdk-shared's `isRecord`, written again.
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 

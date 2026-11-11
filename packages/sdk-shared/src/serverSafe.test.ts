@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The folders a server, a worker, a runner and a runtime load (RFC 0032, D13): what they reach at run time never
+ * The folders a server, a worker, a runner and a runtime load (docs/en/server-packages.md, D13): what they reach at run time never
  * includes React, React DOM, nexus or plitzi-ui — optional peers of this package, which a server does not install. A
  * value import is followed through every relative path; `import type` loads nothing and is not.
  */

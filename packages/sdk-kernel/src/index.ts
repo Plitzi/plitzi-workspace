@@ -1,5 +1,5 @@
 /**
- * `@plitzi/sdk-kernel`: what every Plitzi server process is built on, and nothing else (RFC 0032).
+ * `@plitzi/sdk-kernel`: what every Plitzi server process is built on, and nothing else (docs/en/server-packages.md).
  *
  * Its entries are its folders, each imported on its own so a process loads only what it uses:
  *

@@ -11,7 +11,7 @@ import type {
 /**
  * Where the stored condition (`@plitzi/sdk-shared/conditions`, the schema's format) meets the editor that writes it
  * (plitzi-ui's QueryBuilder, with prop types of its own): the two are held assignable both ways, so a group the editor
- * writes is one the evaluator reads, and the other way round (RFC 0032, D13).
+ * writes is one the evaluator reads, and the other way round (docs/en/server-packages.md, D13).
  */
 describe('a condition, as stored and as edited', () => {
   it('is the same shape on both sides', () => {

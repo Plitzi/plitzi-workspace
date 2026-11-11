@@ -51,7 +51,7 @@ const notFoundStage: Stage<DeployedContext> = ({ res }) => {
 };
 
 /**
- * The actions engine as a server of its own (RFC 0032, D8): `/_action` and its webhooks, `/fn/` routes, `/_realtime` and
+ * The actions engine as a server of its own (docs/en/server-packages.md, D8): `/_action` and its webhooks, `/fn/` routes, `/_realtime` and
  * the job queue, on `@plitzi/sdk-kernel` alone — nothing of pages, RSC or signing in. It resolves the host's
  * deployment and who is calling with the same adapters a page server is given, so a gateway may send those paths of a
  * space's host here, beside the page servers or on another machine.

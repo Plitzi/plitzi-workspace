@@ -36,7 +36,7 @@ const isAnswer = (value: unknown): value is RenderAnswer =>
   isRecord(value) && typeof value.ok === 'boolean' && Array.isArray(value.runs);
 
 /**
- * A page's server elements resolved on a worker (RFC 0032, §4.3): each one asked at `/_render`, so this page server runs
+ * A page's server elements resolved on a worker (docs/en/server-packages.md): each one asked at `/_render`, so this page server runs
  * no action and no connector, and imports nothing of the engine to run. Handed to it with `engineOnWorker({ render })`.
  *
  * What fed the element comes back with its data — the runs, for a page that debugs — and a failure comes back as one:

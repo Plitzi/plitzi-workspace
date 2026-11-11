@@ -28,7 +28,7 @@ const engineLookups = (lookups: ActionLookups, dataDir: string | undefined, auth
 });
 
 /**
- * Pages and actions in one process (RFC 0032, D11): the actions engine built from `action`, `functions`, `connectors`
+ * Pages and actions in one process (docs/en/server-packages.md, D11): the actions engine built from `action`, `functions`, `connectors`
  * and `realtime`, and handed to the page server `createServer` makes of the rest. What `yarn start`, a project's own
  * server and most self-hosted deployments run; a deployment whose actions run on a worker of their own uses
  * `createServer` for its pages.

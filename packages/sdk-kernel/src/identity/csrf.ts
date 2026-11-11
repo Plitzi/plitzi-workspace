@@ -53,7 +53,7 @@ export interface CsrfConfig {
 /** Where the echo is looked for, and the field a `<form>` may carry it in instead. */
 /**
  * The wire's names, said again by the page's half (`@plitzi/sdk-shared/csrf`), which runs where this cannot: the kernel
- * imports no other Plitzi package's values (RFC 0032, D3). `csrf.test.ts` holds the two to the same words.
+ * imports no other Plitzi package's values (docs/en/server-packages.md, D3). `csrf.test.ts` holds the two to the same words.
  */
 export const CSRF_WIRE = { header: 'x-csrf-token', field: '_csrf', cookieSuffix: '_csrf' } as const;
 

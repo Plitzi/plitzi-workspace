@@ -16,7 +16,7 @@ export default tsEslint.config(
   },
   {
     /**
-     * What holds a run and its secrets imports nothing of what runs a space's own code (RFC 0032, D4), nor the page
+     * What holds a run and its secrets imports nothing of what runs a space's own code (docs/en/server-packages.md, D4), nor the page
      * server: a worker installs neither. What both sides speak is `@plitzi/sdk-shared/functions`.
      */
     files: ['src/**/*.ts'],
@@ -30,7 +30,7 @@ export default tsEslint.config(
             {
               group: ['@plitzi/sdk-server', '@plitzi/sdk-server/*', '@plitzi/sdk-runtime', '@plitzi/sdk-runtime/*'],
               message:
-                "The actions engine imports nothing of what runs a space's code, nor the page server (RFC 0032, D4): " +
+                "The actions engine imports nothing of what runs a space's code, nor the page server (docs/en/server-packages.md, D4): " +
                 'what both sides speak is @plitzi/sdk-shared/functions; a runner is handed to it.'
             }
           ]

@@ -4,7 +4,7 @@
  *  `createAuth`, which assembles them over the kernel's checks and is what almost every deployment wants.
  *
  *  Checking who a request is — the tokens (`@plitzi/sdk-kernel/tokens`), the session cookies, the identity resolver,
- *  CSRF, the RBAC checks (`@plitzi/sdk-kernel/identity`) — is the kernel's (RFC 0032, D3): a worker checks credentials
+ *  CSRF, the RBAC checks (`@plitzi/sdk-kernel/identity`) — is the kernel's (docs/en/server-packages.md, D3): a worker checks credentials
  *  and signs nobody in, so it runs that half without this one.
  *
  *  ```ts

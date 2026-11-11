@@ -16,7 +16,7 @@ export default tsEslint.config(
   },
   {
     /**
-     * The kernel takes nothing from another Plitzi package but its types (RFC 0032, D3): a value import of one would
+     * The kernel takes nothing from another Plitzi package but its types (docs/en/server-packages.md, D3): a value import of one would
      * load it into every process built on this, the functions runner's included.
      */
     files: ['src/**/*.ts'],
@@ -38,7 +38,7 @@ export default tsEslint.config(
                 '@plitzi/sdk-mcp/*'
               ],
               message:
-                "The kernel is below every server package, types included (RFC 0032, D3): a type it needs is its own, or sdk-shared's."
+                "The kernel is below every server package, types included (docs/en/server-packages.md, D3): a type it needs is its own, or sdk-shared's."
             },
             {
               group: [
@@ -53,7 +53,7 @@ export default tsEslint.config(
                 '!@plitzi/sdk-mcp/*'
               ],
               allowTypeImports: true,
-              message: 'The kernel imports only types from another Plitzi package (RFC 0032, D3).'
+              message: 'The kernel imports only types from another Plitzi package (docs/en/server-packages.md, D3).'
             }
           ]
         }

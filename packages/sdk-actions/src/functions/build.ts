@@ -127,7 +127,7 @@ export const MAX_FUNCTIONS_BYTES = 1_000_000;
 /** The one package a space's code may import: the contract, which is all it needs of the platform. */
 const CONTRACT_SPECIFIER = '@plitzi/sdk-runtime';
 
-/** Where the contract was imported from until it had a package of its own (RFC 0032): refused, naming where it is. */
+/** Where the contract was imported from until it had a package of its own (docs/en/server-packages.md): refused, naming where it is. */
 const FORMER_CONTRACT_SPECIFIER = '@plitzi/sdk-server/functions';
 
 /**

@@ -32,7 +32,6 @@ lost, it simply stops being read as a plan.
 | [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Postponed | new `mobile/` project, `sdk-authoring`, servers |
 | [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
 | [0024](./0024-import-and-migration.md) | Import and migration: UI in, sites over | Proposal | an import engine in the workspace, the builder, CLI, MCP, the platform's transformers |
-| [0032](./0032-server-code-split.md) | Server code split: a kernel, the author's runtime, an independent worker and visible pools | Accepted (option K) | `apps/server` → `packages/sdk-kernel` + `packages/sdk-runtime` + `packages/sdk-actions` (with its own worker), `maxRunBytes`, pools, the protocol into `sdk-shared`, and their consumers; last, a lighter `sdk-shared` (plitzi-ui out) |
 | [0033](./0033-audit-and-hardening.md) ([task briefs](./0033-audit-and-hardening/)) | Audit and hardening: the website and sign-in, page weight, the gates, the agent surface and server work | Proposal | an audit of code, design and product turned into tasks for agents: the `website` and `auth` seeds, what a page weighs (`apps/sdk`, `apps/server`), CI and dependency gates, `sdk-runtime`'s sandbox, `sdk-authoring` / `apps/mcp` / `apps/cli`, the hosted platform's pools and server work |
 
 ## Conventions

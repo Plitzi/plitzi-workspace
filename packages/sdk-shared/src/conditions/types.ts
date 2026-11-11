@@ -1,6 +1,6 @@
 /**
  * A condition as Plitzi stores it — a flag's rules, an interaction's `when`, a binding's condition: the schema's own
- * format, so sdk-shared defines it (RFC 0032, D13). plitzi-ui's QueryBuilder edits the same shape with prop types of its
+ * format, so sdk-shared defines it (docs/en/server-packages.md, D13). plitzi-ui's QueryBuilder edits the same shape with prop types of its
  * own, and a type test in the builder, where the two meet, holds them assignable both ways.
  */
 

@@ -1,5 +1,5 @@
 /**
- * The server split into packages (RFC 0032): what every server process is built on to `@plitzi/sdk-kernel`, the
+ * The server split into packages (docs/en/server-packages.md): what every server process is built on to `@plitzi/sdk-kernel`, the
  * contract a space's code is written against and what runs it to `@plitzi/sdk-runtime`, the actions engine to
  * `@plitzi/sdk-actions`, what both sides of the wire read to `@plitzi/sdk-shared`; `@plitzi/sdk-server` re-exports none
  * of it. `[from, to, names]`, from the entries `@plitzi/sdk-server` had, and the server types `@plitzi/sdk-shared` held.

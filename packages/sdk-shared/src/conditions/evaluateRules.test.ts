@@ -4,7 +4,7 @@ import { evaluateRules, getValuesRequired } from './evaluator';
 
 import type { RuleGroup } from './types';
 
-/** Whole rule groups evaluated, and what they need — copied with the evaluator from plitzi-ui (RFC 0032, D13). */
+/** Whole rule groups evaluated, and what they need — copied with the evaluator from plitzi-ui (docs/en/server-packages.md, D13). */
 describe('a rule group, evaluated', () => {
   it('should evaluate', () => {
     const queryRaw: RuleGroup = {

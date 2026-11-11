@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { importReach } from '../tests/importGraph';
 
 // A runner and a worker load this folder: what it loads, they load. It must never be where React or a UI library
-// comes in (RFC 0032 D5).
+// comes in (docs/en/server-packages.md D5).
 describe('what loading the functions protocol loads', () => {
   it('is its own files, and no other package', () => {
     const { files, packages } = importReach('functions');

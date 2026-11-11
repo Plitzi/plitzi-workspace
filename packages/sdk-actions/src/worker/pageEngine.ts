@@ -18,7 +18,7 @@ import type { EngineServerConfig } from '../types';
 import type { PageEngine, RscElementResolver } from '@plitzi/sdk-kernel/engine';
 
 /**
- * The actions engine as a page server is handed it (RFC 0032, D11): the actions module, the realtime channels and the
+ * The actions engine as a page server is handed it (docs/en/server-packages.md, D11): the actions module, the realtime channels and the
  * connectors' writes, each built once from the engine's own configuration — `action`, `functions`, `connectors`,
  * `realtime` — and nothing of the page server's. Undefined when there is nothing of the engine to run.
  *

@@ -38,7 +38,7 @@ const ALLOWED = [
   ...['kernel', 'actions', 'functions', 'functions-runner', 'runtime', 'mysql', 'mongo', 'sqlite'].map(entry => ({
     files: ['apps/cli/src/migrations/serverSplit.ts', 'apps/cli/dist/index.js'],
     specifier: `@plitzi/sdk-server/${entry}`,
-    why: 'the migration that moves imports to the packages the server split into, naming the entry they came from (RFC 0032)'
+    why: 'the migration that moves imports to the packages the server split into, naming the entry they came from (docs/en/server-packages.md)'
   })),
   {
     // A chunk of the build, named by its hash: matched by its folder.

@@ -17,7 +17,7 @@ import {
 
 import type { RuleGroup } from './types';
 
-/** Each operator of the rule evaluator, and the query it is read from — copied with it from plitzi-ui (RFC 0032, D13). */
+/** Each operator of the rule evaluator, and the query it is read from — copied with it from plitzi-ui (docs/en/server-packages.md, D13). */
 describe('the rule evaluator’s operators', () => {
   it('should transform', () => {
     const queryRaw: RuleGroup = {

@@ -458,7 +458,7 @@ the room of eight small ones, and waits longer for a runner with that much free.
 ## 9. For a deployment
 
 Everything here is `@plitzi/sdk-server`'s, but for what runs the code: the runner and its isolates are
-`@plitzi/sdk-runtime/runner`'s, which holds nothing of a run (RFC 0032).
+`@plitzi/sdk-runtime/runner`'s, which holds nothing of a run (docs/en/server-packages.md).
 
 **A self-hosted server's own functions** are loaded natively — trusted code, in the process. `loadFunctions` builds a
 folder of them (`src/functions/` in a project the CLI writes) the way the platform builds a space's (same files, same imports, same checks) and loads it:

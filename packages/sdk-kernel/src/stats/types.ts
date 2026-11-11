@@ -1,5 +1,5 @@
 /**
- * What a process says of itself (RFC 0032, §7): who it is, how loaded, how its work went over the last minute, quarter
+ * What a process says of itself (docs/en/server-packages.md): who it is, how loaded, how its work went over the last minute, quarter
  * and hour, and whether that is healthy. Every server process is built on the kernel, so they all say it the same way —
  * page servers, workers, functions runners — and `readPools` reads them all alike.
  */

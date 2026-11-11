@@ -1,5 +1,5 @@
 /**
- * `@plitzi/sdk-runtime`: the contract a space's own code is written against, and what runs it with no access (RFC 0032).
+ * `@plitzi/sdk-runtime`: the contract a space's own code is written against, and what runs it with no access (docs/en/server-packages.md).
  *
  * The root is the contract alone — what a space's functions and its runtime import, the same file whether a self-hosted
  * server loads it natively or the platform runs it in its sandbox:

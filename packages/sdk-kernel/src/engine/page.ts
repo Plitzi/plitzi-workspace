@@ -5,7 +5,7 @@ import type { BaseContext, Stage } from '../http/types';
 import type { RealtimeTransport } from '@plitzi/sdk-shared';
 
 /**
- * What a page server is handed of the actions engine (RFC 0032, D11): built by the engine, never by the page server,
+ * What a page server is handed of the actions engine (docs/en/server-packages.md, D11): built by the engine, never by the page server,
  * which mounts it where its pipeline says and reaches it through nothing else. Absent, the server runs no actions, no
  * functions and no realtime, and tells its pages so.
  *

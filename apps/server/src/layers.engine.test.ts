@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { importReach } from './tests/importReach';
 
 /**
- * What a page server loads never reaches the actions engine nor what runs a space's code (RFC 0032, D11): a page server
+ * What a page server loads never reaches the actions engine nor what runs a space's code (docs/en/server-packages.md, D11): a page server
  * deployed on its own installs neither `@plitzi/sdk-actions` nor `@plitzi/sdk-runtime` (optional peers), and loads none
  * of their code to find out. The engine is handed to it (`createPlatform`, `./platform`), never built from what it
  * imports.

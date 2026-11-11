@@ -9,7 +9,7 @@ export const DEFAULT_LIMITS: ResolvedActionLimits = {
   /** Generous for an API answer and nowhere near what it takes to hurt a process holding several runs at once. */
   maxResponseBytes: 5_000_000,
   /**
-   * Two answers at the response ceiling. A run holds a parsed answer at ~2.5–4× its size while it parses (RFC 0032
+   * Two answers at the response ceiling. A run holds a parsed answer at ~2.5–4× its size while it parses (docs/en/server-packages.md
    * §8.1), so this keeps one run under ~40 MB; what many runs hold together is the guards' `memoryShare`.
    */
   maxRunBytes: 10_000_000

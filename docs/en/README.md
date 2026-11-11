@@ -18,6 +18,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Connectors](./connectors.md) | Reading from (and writing to) a CMS or any REST API: the manifest, the provider element, paging and SSR preloading |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
 | [Functions](./functions.md) | A space's own server code: TypeScript tasks and `/fn/` routes the platform runs in a sandbox, written in the builder, a project or by an agent |
+| [Why the server is in packages](./server-packages.md) | The kernel, the runtime, the actions engine and the page server: the decisions behind the cut, what was measured, what waits for its trigger |
 | [A space as a project](./projects-from-spaces.md) | Taking a space on Plitzi out as a self-hosted project of its own (`plitzi create --from`), keeping it in step (`plitzi space pull`), and putting it back (`plitzi space push`) |
 | [Space runtimes](./runtimes.md) | A space's own server code as a process of its own beside the platform: Node and its packages, open connections, routes that stream |
 | [Feature flags](./feature-flags.md) | Switching parts of a space on or off: the model, who decides each flag (space, server, SDK, tester), gating elements and pages, server actions, and publishing flags alone |

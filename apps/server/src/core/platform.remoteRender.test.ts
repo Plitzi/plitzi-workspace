@@ -12,7 +12,7 @@ import type { HttpServer } from '@plitzi/sdk-kernel/http';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
- * A page server that runs no action at all (RFC 0032, §4.3, phase 9): it is given no lookups, no store, no engine — only
+ * A page server that runs no action at all (docs/en/server-packages.md, phase 9): it is given no lookups, no store, no engine — only
  * where the worker is and its render secret. Its server element is asked of the worker, which runs the render action
  * over the kv its calls wrote: what the page shows is the worker's.
  */

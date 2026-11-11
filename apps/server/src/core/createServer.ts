@@ -20,7 +20,7 @@ export type { ResolvedServices } from './services/resolve';
 
 /**
  * What a page server is not configured with: the actions engine's own configuration, which `createPlatform` builds the
- * engine from and hands the server (`engine`), or a worker runs elsewhere (RFC 0032, D12).
+ * engine from and hands the server (`engine`), or a worker runs elsewhere (docs/en/server-packages.md, D12).
  */
 const ENGINE_KEYS = ['action', 'functions', 'connectors', 'realtime'] as const;
 

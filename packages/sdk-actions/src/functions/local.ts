@@ -15,7 +15,7 @@ import type { FunctionLimits, FunctionRunner, SpaceFunctions } from '@plitzi/sdk
 export type LocalFunctionsOptions = {
   /**
    * What runs the code: an isolate, as on the platform — `createIsolateRunner({ concurrency: 1 })` of
-   * `@plitzi/sdk-runtime/runner`. Handed in, so what holds the runs never loads what runs a space's code (RFC 0032, D8).
+   * `@plitzi/sdk-runtime/runner`. Handed in, so what holds the runs never loads what runs a space's code (docs/en/server-packages.md, D8).
    */
   runner: FunctionRunner;
   /** Credentials `ctx.fetch` may name, by id — by default the project's own, from its environment (`PLITZI_CREDENTIALS`). */

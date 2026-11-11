@@ -268,7 +268,7 @@ describe('credentials', () => {
   });
 });
 
-// RFC 0032 D15: a credential is checked with a public key, so a process that only checks holds nothing that mints one.
+// docs/en/server-packages.md D15: a credential is checked with a public key, so a process that only checks holds nothing that mints one.
 describe('the keys a credential is signed and checked with', () => {
   const verifyingOnly = { verifying: KEYS.verifying };
 

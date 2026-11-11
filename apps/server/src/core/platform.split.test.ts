@@ -14,7 +14,7 @@ import type { HttpServer } from '@plitzi/sdk-kernel/http';
 import type { ActionEntry, ElementInteraction } from '@plitzi/sdk-shared';
 
 /**
- * Pages and actions apart (RFC 0032): a page server that runs nothing of the engine, a worker that runs it, and a
+ * Pages and actions apart (docs/en/server-packages.md): a page server that runs nothing of the engine, a worker that runs it, and a
  * gateway in front of both sending a space's paths by prefix — what the hosted platform's ingress does. The browser sees
  * one origin; the page is told where to call, and the call is the worker's.
  */

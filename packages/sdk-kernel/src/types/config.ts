@@ -5,7 +5,7 @@ import type { StatsConfig } from '../stats/types';
 import type { ServerFlags } from '@plitzi/sdk-shared/flags';
 
 /**
- * What every Plitzi server process is configured with (RFC 0032, D12): its transport, its log, its health, the headers
+ * What every Plitzi server process is configured with (docs/en/server-packages.md, D12): its transport, its log, its health, the headers
  * it answers with, what it may reach, and the adapters it asks. A page server's configuration and the actions engine's
  * are both this and their own.
  */

@@ -109,7 +109,7 @@ describe('workspace boundaries', () => {
     expect([...new Set(cycles)]).toEqual([]);
   });
 
-  // RFC 0032, phase 10: a runner's image and a worker's are their packages' installs, and the page server is not in them.
+  // docs/en/server-packages.md: a runner's image and a worker's are their packages' installs, and the page server is not in them.
   it('installs a runner and a worker without the page server', () => {
     const byName = new Map(packages.map(({ manifest }) => [manifest.name, manifest]));
     const installed = name => {

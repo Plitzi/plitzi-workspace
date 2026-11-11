@@ -16,7 +16,7 @@ export default tsEslint.config(
   },
   {
     /**
-     * What runs a space's own code holds nothing of what holds a run and its secrets (RFC 0032, D4): it imports neither
+     * What runs a space's own code holds nothing of what holds a run and its secrets (docs/en/server-packages.md, D4): it imports neither
      * the page server nor the actions engine, not even their types. What both sides speak is `@plitzi/sdk-shared/functions`.
      */
     files: ['src/**/*.ts'],
@@ -28,7 +28,7 @@ export default tsEslint.config(
             {
               group: ['@plitzi/sdk-server', '@plitzi/sdk-server/*', '@plitzi/sdk-actions', '@plitzi/sdk-actions/*'],
               message:
-                "What runs a space's own code imports nothing of the host that holds the run (RFC 0032, D4): what both " +
+                "What runs a space's own code imports nothing of the host that holds the run (docs/en/server-packages.md, D4): what both " +
                 'sides speak is @plitzi/sdk-shared/functions.'
             }
           ]

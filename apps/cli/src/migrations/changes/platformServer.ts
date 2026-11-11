@@ -3,7 +3,7 @@ import { loadTypeScript } from '../../projectTypeScript';
 import type { Migration, MigrationPlace } from '../types';
 import type TypeScript from 'typescript';
 
-/** What a page server is no longer configured with: the actions engine's own configuration (RFC 0032, D12). */
+/** What a page server is no longer configured with: the actions engine's own configuration (docs/en/server-packages.md, D12). */
 const ENGINE_KEYS = new Set(['action', 'functions', 'connectors', 'realtime']);
 
 const SERVER = '@plitzi/sdk-server';

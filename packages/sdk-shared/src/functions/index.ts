@@ -1,4 +1,4 @@
-// What both sides of the wire between the platform and a space's own code speak (plitzi-workspace RFC 0032 D5): the
+// What both sides of the wire between the platform and a space's own code speak (plitzi-workspace docs/en/server-packages.md D5): the
 // runner's messages, `ctx` and its vocabulary. It loads no other package: a runner, the platform and the builder's
 // editor (its types) all read it. The wire helpers encode bodies with Node's `Buffer`, so they run on a server.
 export type {

@@ -43,14 +43,14 @@ change**. The proof of that is the existing suites, unchanged and green, before 
 ## T3.9 — Plans that are not plans any more
 
 - **Repos:** `plitzi-sdk-server` (`docs/agent-workflow-improvements.md`), `plitzi-workspace`
-  (`docs/rfc/0032-server-code-split.md`). **Findings:** Q9, Q12. **Decision:** D8. **Size:** M.
+  (`docs/en/server-packages.md`, where RFC 0032's decisions went). **Findings:** Q9, Q12. **Decision:** D8. **Size:** M.
 - **Steps:**
   1. `agent-workflow-improvements.md` (2026-09-12) lists eight items with check names that exist nowhere
      (`UNKNOWN_TRIGGER_FIELD`…). For each item: find what shipped and under which name (authoring's codes are in
      `packages/sdk-authoring/src/schema/codes/`; triggers as data: `elementTriggers`). What shipped: delete from the
      doc. What did not: one line each in RFC 0033 § 9. **Ask before deleting the file**; if nothing is left, propose
      its deletion.
-  2. RFC 0032: phases 0–9 are marked done. Find what is left (phase 11, a lighter `sdk-shared`); either it is done in
+  2. docs/en/server-packages.md: phases 0–9 are marked done. Find what is left (phase 11, a lighter `sdk-shared`); either it is done in
      its own task or cut with the reason, then the RFC is deleted by its own rule — what it knew moves to `docs/en`
      and comments. **Ask the maintainer which.**
   3. For D8: measure what the seeds cost — `yarn typecheck` and `yarn lint`, cold and warm, with and without
