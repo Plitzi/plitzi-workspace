@@ -27,7 +27,7 @@ Each folder is an entry of its own, so a process loads what it imports and nothi
 | `@plitzi/sdk-kernel/log` | `serverLog`, `consoleLogger` and the log levels |
 | `@plitzi/sdk-kernel/outbound` | Where a request somebody else wrote may go (`assertOutboundAllowed`, `fetchOutbound`), and a process's requests to its own public address sent to where it listens (`reachOwnServer`, `reachSpaceInside`) |
 | `@plitzi/sdk-kernel/build` | `esbuildBuild`: the one way a process builds, so esbuild's child is stopped once nothing builds |
-| `@plitzi/sdk-kernel/stats` | A process's stats and its pools: the recorder (`createStatsRecorder`), `GET /_stats` behind a secret (`statsStage`), `readPools` and `createLocalPoolSource`, and the `PoolScaler` contract |
+| `@plitzi/sdk-kernel/stats` | A process's stats and its pools: the recorder (`createStatsRecorder`), `GET /_stats` behind a secret (`statsStage`), `/_stats/logs`, and `/_stats/metrics` — the same stats as Prometheus metrics (`metricsText`), with a deployment's own after them (`stats.gauges`) — `readPools` and `createLocalPoolSource`, and the `PoolScaler` contract |
 | `@plitzi/sdk-kernel/types` | Types alone: the request pipeline (`SSRRequest`, `SSRMiddleware`, `SSRContext`), the adapters a deployment answers (`SSRAdapters`, `SSRPageAdapters`) and what they are asked with, the configuration every server shares (`ServerBaseConfig`), the log's events and OAuth's |
 | `@plitzi/sdk-kernel/testing` | What the packages built on this test with: `TEST_KEYS`, `TEST_CERTIFICATES`, a fleet simulated in one process, the names of an integration run's tables (`runName`, `dropTablesOfThisRun`) |
 
