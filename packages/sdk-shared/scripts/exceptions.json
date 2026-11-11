@@ -17,7 +17,7 @@
   "apps/mcp": {
     "disable": 1,
     "any": 0,
-    "unknownAs": 4
+    "unknownAs": 5
   },
   "apps/sdk": {
     "disable": 6,

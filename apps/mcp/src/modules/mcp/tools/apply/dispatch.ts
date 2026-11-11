@@ -49,6 +49,8 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.deleteElement(space, env, op);
     case 'moveElement':
       return schema.moveElement(space, env, op);
+    case 'addSpec':
+      return schema.addSpec(space, env, op);
     case 'upsertPage':
       return schema.upsertPage(space, env, op);
     case 'deletePage':
@@ -208,6 +210,14 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       case 'upsertDataFile':
       case 'deleteDataFile':
         outcome.changedData = true;
+        break;
+      // Elements and the classes they declare: both stores.
+      case 'addSpec':
+        outcome.changedSchema = true;
+        if (Object.keys(op.classes ?? {}).length > 0) {
+          outcome.changedStyle = true;
+        }
+
         break;
       default:
         if (isStyleOp(op.type)) {

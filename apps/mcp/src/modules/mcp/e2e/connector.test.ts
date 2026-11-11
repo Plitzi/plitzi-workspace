@@ -121,7 +121,11 @@ const widgetOperations = [
 //
 // Raised to 80k when plitzi_test run took `tags`: a long list of journeys run a part at a time, as the builder and the
 // CLI filter it. Measured at 79.1k with ~0.9k of room.
-const TOOLS_BUDGET_BYTES = 80_000;
+//
+// Raised to 81.5k for addSpec: an element tree written as the authoring skill writes one, so an agent writes one
+// vocabulary in a project and over the MCP (RFC 0033 T4.7). Its descriptions were cut first. Measured at 80.8k with
+// ~0.7k of room.
+const TOOLS_BUDGET_BYTES = 81_500;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

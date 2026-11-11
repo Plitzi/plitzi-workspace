@@ -10,6 +10,7 @@ export * from './elements/upsertElement';
 export * from './elements/repeatElement';
 export * from './elements/patchElement';
 export * from './elements/deleteElement';
+export * from './elements/addSpec';
 export * from './elements/moveElement';
 export * from './pages/upsertPage';
 export * from './pages/upsertLayout';

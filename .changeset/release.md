@@ -121,6 +121,10 @@ An authored request connects to the address its name was judged to, and the advi
   and in a cluster every look was the renderer's 404 and answered the HTML instead. And the HTML a look answers is the
   markup, without the hydration payload, scripts and stylesheets, cut at 100 KB saying where: a look at Plitzi's
   pricing page answered 3 MB — 923,000 tokens.
+- `plitzi_apply` takes an element tree written as the authoring skill writes one — `addSpec { pageRef, parentRef,
+  spec, classes }`, the JSON `container({ … })` returns and the classes it names — checked by authoring itself, so its
+  refusals and warnings are the ones a project's `plitzi doctor` gives. An agent writes one vocabulary in a project and
+  over the MCP; a name the space already has is refused (`exists`).
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.

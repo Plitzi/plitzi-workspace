@@ -228,6 +228,9 @@ You do not have to rewrite them.
 ## Elements — create, move, delete
 - \`upsertElement\` creates an element (or replaces one by name) under \`parentRef\` — the page root when omitted — and
   builds a whole subtree in one op through nested \`children\`. \`patchElement\` changes an existing one in place.
+- \`addSpec { pageRef, parentRef, spec, classes }\` adds a tree written as the authoring skill writes one — what
+  \`container({ … })\` returns, as JSON, and the \`styles(name, { … })\` it names — checked by authoring itself: the
+  same words in a project and here. Every \`id\` in it must be new to the space.
 - \`moveElement { pageRef, ref, toParentRef, position }\` moves or reorders one: \`position\` \`"inside"\` (the default)
   nests it in \`toParentRef\`; \`"before"\`/\`"after"\` make it that element's sibling. Its subtree moves with it.
 - \`deleteElement { pageRef, ref }\` removes an element **and everything under it**. A binding or an interaction

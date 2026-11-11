@@ -23,6 +23,7 @@ const REFUSED: { [Type in Operation['type']]: Extract<Operation, { type: Type }>
   upsertElement: { type: 'upsertElement', pageRef: 'nope', element: { ref: 'x', type: 'text' } },
   patchElement: { type: 'patchElement', pageRef: 'home', ref: 'nope', props: { content: 'x' } },
   deleteElement: { type: 'deleteElement', pageRef: 'home', ref: 'nope' },
+  addSpec: { type: 'addSpec', pageRef: 'nope', spec: { type: 'text', id: 'x', content: 'Hi' } },
   moveElement: { type: 'moveElement', pageRef: 'home', ref: 'nope', toParentRef: 'home', position: 'inside' },
   repeatElement: {
     type: 'repeatElement',

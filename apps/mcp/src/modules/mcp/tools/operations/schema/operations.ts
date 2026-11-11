@@ -2,6 +2,7 @@ import { deleteBindingOp } from './bindings/deleteBinding';
 import { patchBindingOp } from './bindings/patchBinding';
 import { upsertBindingOp } from './bindings/upsertBinding';
 import { deleteComponentOp, upsertComponentOp } from './components';
+import { addSpecOp } from './elements/addSpec';
 import { deleteElementOp } from './elements/deleteElement';
 import { moveElementOp } from './elements/moveElement';
 import { patchElementOp } from './elements/patchElement';
@@ -29,6 +30,7 @@ export const elementOps = {
   patchElement: patchElementOp,
   deleteElement: deleteElementOp,
   moveElement: moveElementOp,
+  addSpec: addSpecOp,
   upsertPage: upsertPageOp,
   deletePage: deletePageOp,
   upsertLayout: upsertLayoutOp,

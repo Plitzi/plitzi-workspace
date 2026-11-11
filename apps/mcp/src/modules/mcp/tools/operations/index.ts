@@ -46,6 +46,7 @@ const documentOps = [
   closed(elementOps.patchElement),
   closed(elementOps.deleteElement),
   closed(elementOps.moveElement),
+  closed(elementOps.addSpec),
   closed(elementOps.upsertPage),
   closed(elementOps.deletePage),
   closed(elementOps.upsertLayout),

@@ -32,6 +32,7 @@ import {
   routeParamNames
 } from '../../../helpers';
 import { MAX_OPS } from '../../operations';
+import { authorSpec } from '../../operations/schema/elements/addSpec';
 
 import type { TypeMeta, ValidationCtx, ValidationMode } from './context';
 import type { Space } from '../../../helpers';
@@ -283,6 +284,17 @@ export const validateOperations = (
         checkSlotCss(slot, base, ctx);
         for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
           checkSlotCss(slotDef, `${base}.slots.${slotName}`, ctx);
+        }
+
+        break;
+      }
+      case 'addSpec': {
+        // Authored once here too, so what authoring warns of reaches the agent with the batch's answer.
+        const authoring = authorSpec(op);
+        if ('authored' in authoring) {
+          for (const warning of authoring.authored.warnings) {
+            warnOnce(ctx, `${base}.spec: ${warning.message}`);
+          }
         }
 
         break;
