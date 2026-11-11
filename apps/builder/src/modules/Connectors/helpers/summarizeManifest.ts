@@ -48,6 +48,9 @@ export const summarize = {
 export const summarizeEndpoint = (endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint): string =>
   `${endpoint.method ?? 'GET'} ${endpoint.path || EMPTY}`;
 
-/** True when a read endpoint maps the response by hand, so a collapsed header can say it was customized. */
+/**
+ * True when a read endpoint maps the response by hand, so a collapsed header can say it was customized. A path the form
+ * cleared is an empty string: any of the others still says so.
+ */
 export const hasResponseMapping = (endpoint: ConnectorReadEndpoint): boolean =>
-  Boolean(endpoint.itemsPath ?? endpoint.totalPath ?? endpoint.idPath ?? endpoint.valuesPath);
+  [endpoint.itemsPath, endpoint.totalPath, endpoint.idPath, endpoint.valuesPath].some(path => Boolean(path));
