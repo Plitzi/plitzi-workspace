@@ -1,7 +1,9 @@
 import type { SchemaVariableValue, StyleVariables } from '@plitzi/sdk-shared';
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
-const rgbColorRegex = /^rgba?\(\s*(\d{1,3}%?\s*,\s*){2,3}\d{1,3}%?\s*\)$/;
+// Three channels, and an alpha after them as a number from 0 to 1 or a percentage: `rgba(0, 0, 0, 0.5)` was quoted as
+// text, and a quoted colour is no colour wherever the variable is used.
+const rgbColorRegex = /^rgba?\(\s*\d{1,3}%?\s*,\s*\d{1,3}%?\s*,\s*\d{1,3}%?\s*(,\s*(0|1|0?\.\d+|\d{1,3}%)\s*)?\)$/;
 const hslColorRegex = /^hsla?\(\s*\d{1,3}(deg|rad|turn)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%(\s*,\s*(0|0?\.\d+|1))?\s*\)$/;
 
 const cssColorNames = new Set([

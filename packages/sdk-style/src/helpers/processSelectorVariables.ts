@@ -1,6 +1,8 @@
 import { isStyleVariableCategory, StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
-import type { StyleItem, StyleThemeValue } from '@plitzi/sdk-shared';
+import type { StyleItem, StyleThemeValue, StyleVariableValue } from '@plitzi/sdk-shared';
+
+const isThemeValue = (value: StyleVariableValue): value is StyleThemeValue => typeof value === 'object';
 
 const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
   const { variables } = selector;
@@ -20,15 +22,25 @@ const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
 
     switch (category) {
       case StyleVariableCategory.COLOR: {
-        Object.keys(variablesGroup).forEach(variable => {
-          const variableValue = variablesGroup[variable] as StyleThemeValue;
-          selectorVariables.default.push(`--${variable}:${variableValue.default};`);
-          if (variableValue.light) {
-            selectorVariables.light.push(`--${variable}:${variableValue.light};`);
+        Object.entries(variablesGroup).forEach(([variable, value]) => {
+          // A colour is one value or one per scheme. Only what was given is written: a side left out was written as
+          // the text `undefined`, which a custom property accepts — and it overrode the good value wherever it applied.
+          if (!isThemeValue(value)) {
+            selectorVariables.default.push(`--${variable}:${String(value)};`);
+
+            return;
           }
 
-          if (variableValue.dark) {
-            selectorVariables.dark.push(`--${variable}:${variableValue.dark};`);
+          if (value.default !== undefined) {
+            selectorVariables.default.push(`--${variable}:${value.default};`);
+          }
+
+          if (value.light) {
+            selectorVariables.light.push(`--${variable}:${value.light};`);
+          }
+
+          if (value.dark) {
+            selectorVariables.dark.push(`--${variable}:${value.dark};`);
           }
         });
 

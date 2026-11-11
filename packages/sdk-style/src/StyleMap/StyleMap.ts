@@ -26,6 +26,12 @@ export type StyleMapProps = {
   fonts?: Style['fonts'];
 };
 
+/**
+ * What a selector is written with: its attributes whole, or — at a `styleSelector` and a `path` — the block, the object
+ * or the value that goes there. The reducer's actions and the builder's style context take the same.
+ */
+export type SelectorValue = StyleItem['attributes'] | Partial<StyleObject> | StyleValue;
+
 class StyleMap {
   platform: Style['platform'];
   variables: Style['variables'];
@@ -49,7 +55,7 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    value: SelectorValue | undefined,
     params: StyleTarget
   ): boolean {
     return addSelector(this.platform, displayMode, selector, type, path, value, params);
@@ -61,7 +67,7 @@ class StyleMap {
     selector: string,
     type: TagType,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    value: SelectorValue | undefined,
     params: StyleTarget
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
@@ -76,7 +82,7 @@ class StyleMap {
     displayMode: DisplayMode,
     selector: string,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    value: SelectorValue | undefined,
     params: StyleTarget & { styleSelector: string }
   ): boolean {
     return updateSelector(this.platform, displayMode, selector, path, value, params);
@@ -87,7 +93,7 @@ class StyleMap {
     displayMode: DisplayMode,
     selector: string,
     path: StyleCategory | undefined,
-    value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
+    value: SelectorValue | undefined,
     params: StyleTarget & { styleSelector: string }
   ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, path, value, params);

@@ -3258,6 +3258,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.7"
+    vitest: "npm:^5.1.0"
   languageName: unknown
   linkType: soft
 

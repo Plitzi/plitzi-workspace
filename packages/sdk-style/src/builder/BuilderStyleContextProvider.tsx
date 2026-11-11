@@ -10,6 +10,7 @@ import StyleContext from '../StyleContext';
 import { makeSelector } from '../StyleHelper';
 import StyleReducer, { StyleActions } from '../StyleReducer';
 
+import type { SelectorValue } from '../StyleMap/StyleMap';
 import type { StyleReducerActions } from '../StyleReducer';
 import type {
   ReducerFilterCallback,
@@ -21,7 +22,6 @@ import type {
   SpaceFont,
   Style,
   StyleCategory,
-  StyleItem,
   StyleTarget,
   StyleVariableCategory,
   StyleVariableValue,
@@ -78,7 +78,7 @@ const BuilderStyleContextProvider = ({
       selector: string,
       type: TagType,
       path: StyleCategory | undefined,
-      value: StyleItem['attributes'] | undefined,
+      value: SelectorValue | undefined,
       params: StyleTarget,
       fromSubscriptions = false
     ) => {
@@ -105,7 +105,7 @@ const BuilderStyleContextProvider = ({
       displayMode: DisplayMode,
       selector: string,
       path: StyleCategory | undefined,
-      value: StyleItem['attributes'] | undefined,
+      value: SelectorValue | undefined,
       params: StyleTarget & { styleSelector: string },
       fromSubscriptions = false
     ) =>

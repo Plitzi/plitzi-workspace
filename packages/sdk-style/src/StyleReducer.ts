@@ -6,13 +6,13 @@ import { mergeSnippetStyle } from '@plitzi/sdk-shared/style';
 import { generateCache } from './StyleHelper';
 import StyleMap from './StyleMap';
 
+import type { SelectorValue } from './StyleMap/StyleMap';
 import type {
   DisplayMode,
   SnippetStyle,
   SpaceFont,
   Style,
   StyleCategory,
-  StyleItem,
   StyleTarget,
   StyleVariableCategory,
   StyleVariableValue,
@@ -51,7 +51,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         selector: string;
         path?: StyleCategory;
         selectorType: TagType;
-        value?: StyleItem['attributes'];
+        value?: SelectorValue;
         params: StyleTarget;
       }
     | {
@@ -59,7 +59,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         displayMode: DisplayMode;
         selector: string;
         path?: StyleCategory;
-        value?: StyleItem['attributes'];
+        value?: SelectorValue;
         params: StyleTarget & { styleSelector: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }

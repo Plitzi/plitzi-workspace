@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { styleVariablesToCss } from './VariablesHelper';
+import { schemaVariablesToCss, styleVariablesToCss } from './VariablesHelper';
 
 import type { StyleVariables } from '@plitzi/sdk-shared';
 
@@ -57,5 +57,57 @@ describe('styleVariablesToCss', () => {
 
     expect(out).not.toContain('undefined');
     expect(out).toContain('--accent: #eee;');
+  });
+});
+
+describe('schemaVariablesToCss', () => {
+  it('writes a colour as it is and anything else quoted, as a string a stylesheet can read', () => {
+    expect(
+      schemaVariablesToCss({
+        hex: '#0af',
+        rgb: 'rgba(0, 0, 0, 0.5)',
+        rgbPercent: 'rgba(255, 0, 0, 40%)',
+        rgbPlain: 'rgb(1,2,3)',
+        hsl: 'hsl(210deg, 50%, 40%)',
+        named: 'Teal',
+        title: 'Hello',
+        count: 3
+      }).split('\n')
+    ).toEqual([
+      '--hex:#0af;',
+      '--rgb:rgba(0, 0, 0, 0.5);',
+      '--rgbPercent:rgba(255, 0, 0, 40%);',
+      '--rgbPlain:rgb(1,2,3);',
+      '--hsl:hsl(210deg, 50%, 40%);',
+      '--named:Teal;',
+      '--title:"Hello";',
+      '--count:"3";'
+    ]);
+  });
+
+  it('leaves out what is neither text nor a number, and writes nothing for no variables', () => {
+    expect(schemaVariablesToCss({ flag: true, ok: 'x' })).toBe('--ok:"x";');
+    expect(schemaVariablesToCss(undefined)).toBe('');
+  });
+});
+
+describe('styleVariablesToCss on a selector of its own', () => {
+  it('scopes each scheme under the class that chooses it and under the system that would', () => {
+    const scoped = styleVariablesToCss(palette, '.card');
+
+    expect(scoped).toContain('.card {');
+    expect(scoped).toContain(':root:not(.dark) .card {');
+    expect(scoped).toContain('.dark .card {');
+  });
+
+  it('writes only the schemes, without the root block, when asked', () => {
+    const scoped = styleVariablesToCss(palette, '.card', 2, false);
+
+    expect(scoped.startsWith('.card {')).toBe(false);
+    expect(scoped).toContain('@media (prefers-color-scheme: light)');
+  });
+
+  it('writes a plain value on the root block', () => {
+    expect(styleVariablesToCss({ spacing: { gap: '8px' } })).toContain('--gap: 8px;');
   });
 });

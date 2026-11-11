@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
+import { isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
@@ -25,6 +25,16 @@ export type ManagerSelectorProps = {
   selected?: string;
   onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
   selectors?: Record<string, StyleItem>;
+};
+
+/** The class a selector names, without the state written after it (`card:hover`): what an element lists. */
+const classOf = (selector: string): string => selector.split(':')[0];
+
+/** Whether any of the element's selectors lists the class. */
+const wears = (element: Element, selector: string): boolean => {
+  const name = classOf(selector);
+
+  return !!name && Object.values(element.definition.styleSelectors).some(classes => classes.split(' ').includes(name));
 };
 
 const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
@@ -91,20 +101,6 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
     [onSelect, selectorsArr]
   );
 
-  const elementHasSelector = useCallback((element: Element, selector: string) => {
-    if (!selector) {
-      return [];
-    }
-
-    return Object.values(get(element, 'definition.styleSelectors', {})).find(styleSelector => {
-      if (selector.includes(':')) {
-        selector = get(selector.split(':'), '0', selector);
-      }
-
-      return styleSelector && selector && styleSelector.split(' ').includes(selector);
-    });
-  }, []);
-
   const handleCloseDeleteSelector = useCallback(
     (_e: MouseEvent | React.MouseEvent | undefined, value?: boolean, selectorsToDelete?: string[]) => {
       if (!value || !selectorsToDelete || selectorsToDelete.length === 0) {
@@ -112,15 +108,19 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       }
 
       const toDelete = new Set(selectorsToDelete);
+      const classesDeleted = new Set(selectorsToDelete.map(classOf));
+      // A class goes from every list that names it and the others stay: an element wearing `card primary` keeps `card`.
       const elementsUpdated = flatList
-        .filter(element => selectorsToDelete.some(selector => elementHasSelector(element, selector)))
+        .filter(element => selectorsToDelete.some(selector => wears(element, selector)))
         .map(element =>
           produce(element, draft => {
-            Object.keys(element.definition.styleSelectors).forEach(styleSelector => {
-              if (toDelete.has(get(draft, `definition.styleSelectors.${styleSelector}`, ''))) {
-                set(draft, `definition.styleSelectors.${styleSelector}`, '');
-              }
-            });
+            const { styleSelectors } = draft.definition;
+            for (const [styleSelector, classes] of Object.entries(styleSelectors)) {
+              styleSelectors[styleSelector] = classes
+                .split(' ')
+                .filter(name => name && !classesDeleted.has(name))
+                .join(' ');
+            }
           })
         );
 
@@ -132,7 +132,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       setCheckedSelectors(prev => prev.filter(selector => !toDelete.has(selector)));
       onSelect?.(state => (state && toDelete.has(state.name) ? undefined : state));
     },
-    [builderHandler, displayMode, elementHasSelector, flatList, onSelect]
+    [builderHandler, displayMode, flatList, onSelect]
   );
 
   const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector, , deleteState] =
@@ -163,11 +163,11 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       finalSelectors.reduce(
         (acum, selector) => ({
           ...acum,
-          [selector.name]: flatList.filter(element => elementHasSelector(element, selector.name)).length
+          [selector.name]: flatList.filter(element => wears(element, selector.name)).length
         }),
         {}
       ),
-    [finalSelectors, flatList, elementHasSelector]
+    [finalSelectors, flatList]
   );
 
   // Per selector: the ancestors it has rules under, and the ones no element it dresses sits inside

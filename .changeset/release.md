@@ -46,6 +46,11 @@ An authored request connects to the address its name was judged to, and the advi
 
 - The build writes `dist/build.json` with the mode it was made in (`{ "mode": "production" }`): what packs the `dist` —
   a server image — reads it rather than guessing a development build by its size.
+- A selector's colour variable given as one value (`'#05f'`, not `{ light, dark, default }`) is written as that value,
+  and a theme value with no `default` writes its schemes alone: both were written `--name:undefined;`, a variable no
+  rule could use.
+- A colour with a fractional or percentage alpha — `rgba(0, 0, 0, .5)`, `rgba(0, 0, 0, 50%)` — is a colour to the
+  space's variables, written as it is: it was quoted, `--shade:"rgba(0, 0, 0, .5)";`, a string no `color` reads.
 
 ## CLI
 
@@ -67,6 +72,9 @@ An authored request connects to the address its name was judged to, and the advi
   px). Under 1,536 px the search and Export are their icons (their names kept as title and accessible name), the
   element count its figure, the canvas's width reading left out; the actions never shrink, and where the window is still
   too narrow the left side scrolls inside itself. Nothing is taken out of the bar (`e2e/tests/builder/bar.spec.ts`).
+- Deleting a class in the Style Manager takes it out of every element that wears it and keeps the element's other
+  classes: an element on `card primary` kept `primary` when `primary` was deleted — a class the space no longer had —
+  and only an element on `primary` alone lost it.
 
 ## Space document
 
