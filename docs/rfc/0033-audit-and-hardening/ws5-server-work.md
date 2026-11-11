@@ -79,16 +79,6 @@ A regression here needs a test that would have caught it, proven on the old code
 - **Verify:** `make test` (kustomize + kubeconform); by the maintainer: a dump listed in the bucket, the restore Job
   green once.
 
-## T5.12 — Somebody is told
-
-- **Repos:** `plitzi-platform` (`cluster/gitops/infrastructure/monitoring/`), `plitzi-sdk-server` (the chart, the
-  metrics it exports). **Finding:** PL2. **Size:** M. Decided 2026-11-11: **both** receivers.
-- **Steps:** two receivers for Alertmanager — mail and a chat webhook, their secrets in SOPS, every alert to both. Rules: a backup Job failed or
-  did not run in 26 h; a volume past 85 %; a certificate 14 days from its end; a pod restarting; and the platform's
-  own figures — work waiting past its limit, a pool full for ten minutes, runs failing above a rate — exported from
-  what `/_stats` already holds.
-- **Verify:** `make test`; by the maintainer: each rule fired once on purpose and received.
-
 ## T5.13 — Small drifts
 
 - **Repo:** `plitzi-platform`. **Findings:** PL4, PL5. **Size:** S.

@@ -87,7 +87,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T5.8** One trace for a run | The run's page linking its lines (the log reader already takes `q=trace=…`); a job's run starting a trace of its own; a runtime's calls carrying it | An e2e in the split topology reads one id on the request, the run, the runner's log and the answer | M |
 | **T5.9** The engine's two closures | `runAction` and `createJobWorker` in parts with injected clocks, composed as today, no change of behaviour | Their suites unchanged; a load round within its band (T5.2) | L |
 | **T5.11** Backups elsewhere, and a restore with a date (`plitzi-platform`) | **The maintainer names the bucket and the credential.** Then each dump copied off the node, encrypted with the cluster's age key, its retention said; a monthly Job restoring the latest into a scratch database and counting rows | A dump listed in the bucket; the restore Job green once, by hand first | M |
-| **T5.12** Somebody is told (`plitzi-platform`, the chart) | **Both receivers** (2026-11-11): mail and a chat webhook. Rules: a backup Job failed or not run, a volume past 85 %, a certificate 14 days from its end, a pod restarting, work waiting past its limit, a pool full ten minutes, runs failing above a rate — from what `/_stats` holds | Each rule fired once on purpose and received | M |
 | **T5.13** Small drifts (`plitzi-platform`) | The vendored charts' images (Loki, Promtail) following their chart. The digests pinned 2026-11-11 are committed, not pushed | `make test` green | S |
 
 ### WS6 — Product
@@ -130,7 +129,11 @@ Nothing open.
 - **Waiting for the maintainer:** T5.11's bucket; T0.12's token permission (both at the end of this RFC); pushing
   `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
   (~150–300 MB), so a space's journeys run there; the templates' covers on the dev cluster, looked at by whoever can
-  reach it.
+  reach it; T5.12's alerts sending — Brevo's SMTP key and the chat's webhook into `alertmanager.sops.yaml`
+  (`make secrets` with `ALERTS_*`), Brevo's SMTP login in monitoring's kustomization, `alerts@plitzi.com` a mailbox
+  that exists, `plitzi-platform` pushed and the app released with the chart's PodMonitors, then each rule fired once
+  on purpose and received at both (`cluster/docs/08-observability.md` § Alerts). Neither `promtool` nor `amtool` was on
+  the machine that wrote them: the rules and the config were checked by `make test`, not by Prometheus's own tools.
 - **W1, W26:** the final legal text from counsel, its placeholders filled (the company's name, address and
   registration, the governing law); the draft notice out; `TERMS_VERSION` moved.
 - **X3:** how many plans are sold at all is a product decision; D6 settled only how `/pricing` opens.
