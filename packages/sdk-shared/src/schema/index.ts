@@ -8,6 +8,7 @@ export * from './providerWhen';
 export * from './serverInput';
 export * from './serverQuery';
 export * from './pageHead';
+export * from './plitziMark';
 export * from './schemaSettings';
 export * from './snippet';
 

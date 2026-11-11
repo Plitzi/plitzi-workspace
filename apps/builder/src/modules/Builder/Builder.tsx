@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
 import AppContext from '@pmodules/App/AppContext';
 
 import BuilderPlugin from './BuilderPlugin';
@@ -58,7 +59,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
       <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
         <div
           className="absolute top-[50%] h-100 w-100 translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
-          style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
+          style={{ backgroundImage: `url("${PLITZI_MARK_DATA_URL}")` }}
         />
         <div>Please add your first page</div>
       </div>

@@ -5,6 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useState, useCallback, useMemo, memo } from 'react';
 
+import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { useTheme } from '@plitzi/sdk-shared/theme/react';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
@@ -194,7 +195,7 @@ const AppHeader = () => {
           id="plitzi-logo"
         >
           <a href={origin}>
-            <img src="https://cdn.plitzi.com/resources/img/favicon.svg" className="h-6 w-6" alt="Plitzi" />
+            <img src={PLITZI_MARK_DATA_URL} className="h-6 w-6" alt="Plitzi" />
           </a>
           <i className="fa-solid fa-chevron-down" />
         </div>

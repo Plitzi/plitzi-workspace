@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
+import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
+
 import { formatBytes } from './helpers';
 
 export type ContentPluginProps = {
@@ -18,7 +20,7 @@ export type ContentPluginProps = {
 const ContentPlugin = ({
   className = '',
   backgroundColor = '#4422ee',
-  icon = 'https://cdn.plitzi.com/resources/img/favicon.svg',
+  icon = PLITZI_MARK_DATA_URL,
   name = 'Plugin Name',
   version = 'v0.0.0',
   author = 'Plitzi Team',

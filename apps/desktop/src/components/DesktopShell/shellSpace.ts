@@ -13,6 +13,7 @@ import {
   styles,
   text
 } from '@plitzi/sdk-authoring';
+import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
 
 import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -402,7 +403,7 @@ export const desktopShell: SpaceSpec = {
                     image({
                       id: 'brand-mark',
                       class: brandMark,
-                      src: 'https://cdn.plitzi.com/resources/img/favicon.svg',
+                      src: PLITZI_MARK_DATA_URL,
                       // Beside the name it marks: the name says it, so the mark is left out of what is read.
                       decorative: true
                     }),
