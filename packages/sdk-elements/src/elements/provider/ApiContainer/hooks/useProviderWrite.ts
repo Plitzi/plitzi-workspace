@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { csrfFetch } from '@plitzi/sdk-shared/csrf';
 import { invalidateQueries } from '@plitzi/sdk-shared/queries';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
@@ -40,7 +41,7 @@ const useProviderWrite = ({ elementId, enabled, onDone }: UseProviderWriteProps)
         throw new Error(`Write "${action}" was not sent: this page is served without a server that takes its writes`);
       }
 
-      const response = await fetch(endpoint, {
+      const response = await csrfFetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

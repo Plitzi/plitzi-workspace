@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <title><%= locals.title || '' %></title>
+    <% if (locals.csrfHint) { %>
+    <meta name="plitzi-csrf" content="<%= locals.csrfHint %>" />
+    <% } %>
     <%
       /*
         What a link preview, a search engine and the browser read of the page, as `pageHeadTags` (@plitzi/sdk-shared)

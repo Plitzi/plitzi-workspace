@@ -1,4 +1,5 @@
 import { CLIENT_HEADER, clientHeaderValue, CURRENT_HEADER } from '@plitzi/sdk-shared/clients';
+import { csrfFetch } from '@plitzi/sdk-shared/csrf';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import packageSettings from '../../../../package.json';
@@ -58,7 +59,10 @@ export const versionedFetch =
 export const platformFetch = versionedFetch(async (input: URL | RequestInfo, init: RequestInit = {}) => {
   const headers = new Headers(init.headers);
   headers.set(CLIENT_HEADER, clientHeaderValue('builder', packageSettings.version));
-  const response = await fetch(input, { ...init, headers });
+  // Its writes with the person's session echo the CSRF token the API asks for (`csrfFetch`); a `Request` is sent as it is.
+  const response = await (input instanceof Request
+    ? fetch(input, { ...init, headers })
+    : csrfFetch(input, { ...init, headers }));
   // Older than the platform takes: what the caller reads is refused, and the builder says to reload — as over GraphQL.
   if (response.status === 426) {
     const body: unknown = await response

@@ -1,4 +1,5 @@
 import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
+import { csrfFetch } from '@plitzi/sdk-shared/csrf';
 import { invalidateAfterWrite, queryCache, requestKey } from '@plitzi/sdk-shared/queries';
 
 import { webHookSpec } from './webHookSpec';
@@ -100,7 +101,8 @@ const send = async (
   // Any answer is one — a 404 or a 401 is what the next step reads (`{{ login.response.status }}`). No answer at all
   // (offline, refused, blocked by CORS) is the step failing: it used to report success with nothing in it, and the
   // flow carried on as if the request had been made.
-  const res = await fetch(url, fetchOptions).catch((error: unknown) => {
+  // A write to the deployment's own API echoes the CSRF token it asks for, renewed when it ran out (`csrfFetch`).
+  const res = await csrfFetch(url, fetchOptions).catch((error: unknown) => {
     throw new Error(`${method} ${url} got no answer: ${error instanceof Error ? error.message : String(error)}`);
   });
 

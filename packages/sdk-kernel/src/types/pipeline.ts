@@ -95,6 +95,8 @@ export type SSRTemplateProps = {
    * `iconsCssPath`'s, so a glyph in their range is fetched from them and any other from the whole font.
    */
   iconFaces?: string;
+  /** What the page's writes to the deployment's own APIs echo the CSRF token with (`@plitzi/sdk-shared/csrf`), as JSON. */
+  csrfHint?: string;
   /**
    * Where the page fetches the space from, when it travels beside the document rather than in its payload: the
    * page preloads it, and the bootstrap reads it before hydrating.

@@ -125,6 +125,13 @@ export type SSRVisitorCredentialsConfig = {
    * space, and never for a platform that serves its customers' too.
    */
   spaces?: (space: { spaceId: number; environment: Environment }) => boolean | Promise<boolean>;
+  /**
+   * Where each of those APIs hands out a CSRF token (`'/auth/csrf'`, the kernel's flow). Given, the pages of the spaces
+   * above are told the APIs and the cookie each keeps the token in (`<meta name="plitzi-csrf">`), and every write they
+   * send there with the visitor's session echoes it (`@plitzi/sdk-shared/csrf`) — what an API that asks for it
+   * (`createCsrfMiddleware`) needs. Never told to a space not trusted to carry its visitors' sessions.
+   */
+  csrfPath?: string;
 };
 
 export type SSRServerConfig = ServerBaseConfig & {

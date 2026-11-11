@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createCsrf } from './csrf';
+import { CSRF_COOKIE_SUFFIX, CSRF_FIELD_NAME, CSRF_HEADER_NAME } from '@plitzi/sdk-shared/csrf';
+
+import { createCsrf, CSRF_WIRE } from './csrf';
 
 import type { CsrfCarrier } from './csrf';
 
@@ -362,5 +364,12 @@ describe('the cookie it is handed over in', () => {
     const token = csrf.issue();
 
     expect(csrf.read(carrier({ headers: { cookie: `sess_csrf=${encodeURIComponent(token)}` } }))).toBe(token);
+  });
+});
+
+// The page's half sends what this half reads: the same header, field and cookie, or every write is refused.
+describe('the CSRF wire', () => {
+  it('is named the same by the page’s half', () => {
+    expect(CSRF_WIRE).toEqual({ header: CSRF_HEADER_NAME, field: CSRF_FIELD_NAME, cookieSuffix: CSRF_COOKIE_SUFFIX });
   });
 });

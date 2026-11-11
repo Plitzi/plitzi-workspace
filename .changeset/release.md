@@ -40,6 +40,13 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- A page's writes to the deployment's own APIs echo the CSRF token they ask for. Given `rsc.visitorCredentials.csrfPath`
+  (where each API hands one out, `'/auth/csrf'`), the pages of the spaces trusted with their visitors' sessions are
+  told those APIs and the cookie each keeps the token in (`<meta name="plitzi-csrf">`), and every write they send there
+  with the session — a `webHook` step, a provider's request or write, the builder's calls — carries `x-csrf-token`
+  (`csrfFetch`, `@plitzi/sdk-shared/csrf`); refused for the token (it ran out at twelve hours, the session changed),
+  the page asks for a new one and sends the write once more. Nothing else is sent the token. The kernel exports
+  `csrfCookieName(hostname, cookie)`.
 - A page fetches the icons its space names, not the whole font: the head declares them as faces of their own after Font
   Awesome's (`/_plitzi/icons/<hash>-<face>.woff2`, with their `unicode-range`), cut from the font on the first request
   for them and kept for good. Plitzi's website names 110 glyphs: 9 KB, where the solid face is 119 KB. An icon named

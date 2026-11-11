@@ -1,6 +1,6 @@
 export { requirementFor, createAuthorizer, checkPermission, checkSpaceAccess } from './authorize';
 export { readCookies, SPACE_TOKEN_PARAM, createCarriers, presentedOrigin } from './credentials';
-export { csrfFailureMessage, carrierOf, crossSiteRequest, createCsrf } from './csrf';
+export { csrfFailureMessage, carrierOf, crossSiteRequest, createCsrf, csrfCookieName } from './csrf';
 export { authorizesDebugging, resolveDebugAuthorization } from './debugAuthorization';
 export { hostnameOf, ANY_DOMAIN, domainAllowed, normalizeDomain, frameAncestors, corsOrigins } from './domains';
 export { createIdentity } from './identity';

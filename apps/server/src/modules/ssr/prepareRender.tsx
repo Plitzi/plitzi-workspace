@@ -21,6 +21,7 @@ import {
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
+import { csrfHintFor } from './csrfHint';
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { reportMissingPlugins } from './reportMissingPlugins';
@@ -368,6 +369,10 @@ export const prepareRender = async (
   // is linked; elsewhere the page draws its icons from the whole font.
   const sdkDir = linkStyle && rawOfflineData ? resolveSdkAssetsDir() : undefined;
   const spaceIcons = sdkDir && rawOfflineData ? spaceIconsOf(rawOfflineData, iconGlyphsAt(sdkDir)) : undefined;
+  const csrfHint = await csrfHintFor(config, {
+    spaceId: req.ctx.spaceDeployment?.spaceId ?? spaceId,
+    environment: req.ctx.spaceDeployment?.environment ?? environment
+  });
   const publishedDocument =
     document !== undefined &&
     offlineDataOverride === undefined &&
@@ -520,6 +525,7 @@ export const prepareRender = async (
       cssPath: assets.cssPath,
       iconsCssPath: sdkIconsStylePath,
       ...(spaceIcons ? { iconFaces: iconFacesCss(spaceIcons) } : {}),
+      ...(csrfHint ? { csrfHint } : {}),
       spaceDocumentPath,
       styleSheetPath: document?.data.style.cacheHref,
       react: vendorJs,

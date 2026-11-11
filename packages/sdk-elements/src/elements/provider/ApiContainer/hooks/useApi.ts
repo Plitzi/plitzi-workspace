@@ -1,6 +1,7 @@
 import { useCallback, useId, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { csrfFetch } from '@plitzi/sdk-shared/csrf';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { requestKey, useQuery } from '@plitzi/sdk-shared/queries';
@@ -80,7 +81,7 @@ const request = async (
   }
 
   try {
-    const res = await fetch(url, init);
+    const res = await csrfFetch(url, init);
     const data: unknown = await res.json();
     // The request a page makes on its own behalf is often the first to learn that the session behind it ended.
     // Reporting it renews or ends the session now rather than at the next revalidation; auth ignores refusals from

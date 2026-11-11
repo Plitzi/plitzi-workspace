@@ -51,8 +51,21 @@ export interface CsrfConfig {
 }
 
 /** Where the echo is looked for, and the field a `<form>` may carry it in instead. */
-const HEADER_NAME = 'x-csrf-token';
-const FIELD_NAME = '_csrf';
+/**
+ * The wire's names, said again by the page's half (`@plitzi/sdk-shared/csrf`), which runs where this cannot: the kernel
+ * imports no other Plitzi package's values (RFC 0032, D3). `csrf.test.ts` holds the two to the same words.
+ */
+export const CSRF_WIRE = { header: 'x-csrf-token', field: '_csrf', cookieSuffix: '_csrf' } as const;
+
+const HEADER_NAME = CSRF_WIRE.header;
+const FIELD_NAME = CSRF_WIRE.field;
+
+/**
+ * The name the token's cookie lands under on `hostname`: the session cookie's, and `_csrf`. Pure, so a page server that
+ * signs nothing can tell its pages which cookie to read (`<meta name="plitzi-csrf">`).
+ */
+export const csrfCookieName = (hostname: string, cookie?: SSRAuthCookie): string =>
+  `${sessionCookieParams({ hostname }, cookie).name}${CSRF_WIRE.cookieSuffix}`;
 
 /** Twelve hours: long enough for a working day, short enough to bound a leak. */
 const TOKEN_LIFETIME = 43_200;
@@ -242,7 +255,7 @@ export const createCsrf = (config: CsrfConfig) => {
   const foreign = (carrier: CsrfCarrier, alsoAllowed: readonly string[] = []): boolean =>
     crossSiteRequest(carrier, origin => permitted(origin) || alsoAllowed.includes(origin));
 
-  const nameFor = (hostname: string): string => `${sessionCookieParams({ hostname }, cookie).name}_csrf`;
+  const nameFor = (hostname: string): string => csrfCookieName(hostname, cookie);
 
   const sign = (nonce: string, expiry: number, binding: string): string =>
     createHmac('sha256', secret).update(`${nonce}.${expiry}.${binding}`).digest('base64url');
