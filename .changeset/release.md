@@ -27,6 +27,11 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Runtime
 
+- A runtime's functions answer as the protocol says every runner does (`createRuntimeRunner`): a task that throws ends
+  as `error` with its words, where it rejected with the bare error; aborted, an invocation ends whatever its code
+  waits on, where it waited on; and what it spent is said before it settles (its time and calls — a runtime is paid
+  by its size, so no CPU of its own). One contract holds the sandbox, the runner service and a runtime to it
+  (`runnerContract.ts` in `@plitzi/sdk-actions`'s tests).
 - The functions runner's own tests are in `@plitzi/sdk-runtime`: its limits, its threads, what the code finds in an
   isolate, what the runner keeps, the guest's `fetch` and `crypto`, the driver, the service's admission, queue and stop
   — and a suite of what a guest tries against the sandbox (constructors, ctx's methods, module loading, the network,

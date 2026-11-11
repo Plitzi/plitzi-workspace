@@ -20,9 +20,16 @@ import type { FunctionRunner, StreamedRouteAnswer } from '@plitzi/sdk-shared/fun
  */
 export const createRuntimeRunner = (definition: FunctionsDefinition = {}): FunctionRunner => ({
   describe: () => Promise.resolve(describeFunctions(definition)),
-  invoke: async ({ invocation, answer, signal }) => {
+  invoke: async ({ invocation, answer, signal, onUsage }) => {
+    const startedAt = Date.now();
+    let calls = 0;
+    const counted = (call: unknown): Promise<unknown> => {
+      calls += 1;
+
+      return answer(call);
+    };
     const driver = createFunctionsDriver({
-      call: answer,
+      call: counted,
       signal,
       responseOf: wire => responseOf(wireResponseFrom(wire)),
       requestOf: requestFromWire,
@@ -49,14 +56,38 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
       changeListEntry,
       refusal: message => new ActionRefusal(message)
     });
+    // Aborted, the invocation ends whatever the code waits on: what the platform stopped is not waited for here either.
+    let stop: (() => void) | undefined;
+    const aborted = new Promise<never>((_resolve, reject) => {
+      stop = () => {
+        reject(new FunctionFailure('aborted', typeof signal.reason === 'string' ? signal.reason : 'Aborted'));
+      };
+      if (signal.aborted) {
+        stop();
+      } else {
+        signal.addEventListener('abort', stop, { once: true });
+      }
+    });
     try {
-      return await driver.invoke(definition, invocation);
+      return await Promise.race([driver.invoke(definition, invocation), aborted]);
     } catch (error) {
+      if (error instanceof FunctionFailure) {
+        throw error;
+      }
+
       if (isActionRefusal(error)) {
         throw new FunctionFailure('refused', error.message);
       }
 
-      throw error;
+      // Every way it fails is one of the protocol's: the code's own error is `error`, with its words.
+      throw new FunctionFailure('error', error instanceof Error ? error.message : String(error));
+    } finally {
+      if (stop) {
+        signal.removeEventListener('abort', stop);
+      }
+
+      // A runtime is the space's whole process, sized and paid as one: an invocation is charged no CPU of its own.
+      onUsage?.({ cpuMs: 0, wallMs: Date.now() - startedAt, calls });
     }
   }
 });
