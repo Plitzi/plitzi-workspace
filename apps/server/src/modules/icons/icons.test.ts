@@ -85,6 +85,16 @@ describe('the icons a space names', () => {
     ]);
   });
 
+  // The regular face is a few hundred glyphs: a space with one regular icon fetched its every solid glyph twice.
+  it('puts an icon in the face its style class names, and none in another', () => {
+    const schema = withIcons();
+    schema.flat.mark.attributes.icon = "{{ liked ? 'far fa-heart' : 'fas fa-check' }}";
+    const icons = spaceIconsOf(offlineDataOf(schema), glyphs);
+
+    expect(icons?.faces.find(face => face.key === 'regular')?.codepoints).toEqual([0xf004]);
+    expect(icons?.faces.find(face => face.key === 'solid')?.codepoints).not.toContain(0xf004);
+  });
+
   it('are none for a space that names none', () => {
     expect(spaceIconsOf(offlineDataOf(), glyphs)).toBeUndefined();
   });
@@ -120,7 +130,7 @@ describe('a page’s icon faces', () => {
     const faces = facesOf(html) ?? '';
 
     expect(html.indexOf('plitzi-sdk-icons.css')).toBeLessThan(html.indexOf('data-plitzi-icons'));
-    expect(faces).toMatch(/font-weight:900;.*unicode-range:U\+F00C,U\+F00D,U\+F0C9\}/);
+    expect(faces).toMatch(/font-weight:900;.*unicode-range:U\+F00C-F00D,U\+F0C9\}/);
     expect(faces).toContain('font-family:"Font Awesome 7 Brands"');
   });
 
