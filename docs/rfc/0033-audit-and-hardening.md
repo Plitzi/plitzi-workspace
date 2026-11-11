@@ -74,10 +74,9 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T4.1** A standing score | All of it: inventory `bench/`; twelve tasks over three project shapes, each with a scripted check; run on a schedule, one model per tier, alone and as a team; success, calls, tokens, wall time and refusals kept by commit | A table per week in `bench/results`; a drop beyond its noise named by the report | L |
+| **T4.1** A standing score | All of it: inventory `bench/`; twelve tasks over three project shapes, each with a scripted check; run on a schedule, one model per tier, alone and as a team; the element-level tasks both ways — the MCP's own operations and `addSpec` (with `replaces`) — so the score says which an agent gets right; success, calls, tokens, wall time and refusals kept by commit | A table per week in `bench/results`; a drop beyond its noise named by the report | L |
 | **T4.6** What a refusal cost | From T4.1's records: the ten refusals and lints agents meet most, and whether the message alone was enough | A list with counts; no change made | S, after T4.1 |
 | **T4.9** The run skills, on a diet | Every sentence of the six `runs*.md` skills: enforced by a refusal, said by a command, or only there — the first two leave the skill; what stays ordered by how often runs met it, one rule a line, a glossary opening `runs.md`; T4.1's team score before and after | `runs-lead.md` under 3,500 tokens; a test lists each rule taken out beside what carries it; the score no lower | L, after T4.1 |
-| **T4.10** One vocabulary | § 4's proposal: the MCP takes an authoring element spec for the element-level operations. **Decided 2026-11-11: additive** — the MCP's operations and shapes stay as they are; the spec is a way in beside them, built on authoring. Its cost measured with T4.1's score both ways before the MCP's own shapes are retired | The score no lower on the element-level tasks | L, after T4.1 |
 
 ### WS5 — Server work
 
@@ -121,12 +120,6 @@ chunks of the element types it rendered, so hydration never waits on one; a stat
 bundle (`SpaceDeployMutation` uploads `plitzi-sdk.js` alone today); and the SDK with no page server — D1 — preloads a
 chunk as soon as the document says an element of its family is on the page, so nothing is drawn later than it is
 today (the flicker check). `devToolsChunkPlugin` allows one split today: it becomes the list of the allowed ones.
-
-**One vocabulary (T4.10).** Over the MCP an agent loads ~13.5 KB of operation schemas in a vocabulary of its own (refs,
-`style.base`, `nodes` with `nodeType`) beside a 113 KB guide; in a project it has learned authoring's factories from a
-256 KB skill. The proposal: `upsertElement { pageRef, parentRef?, spec }`, `spec` being an `ElementSpec`'s JSON,
-authored through `authorSnippet`; the operations' own shapes stay for reading and for what has no authoring form
-(moving, patching one attribute). Measured before decided (the full table: the history's § 8.4).
 
 ## 5. Found on the way, for the maintainer
 
