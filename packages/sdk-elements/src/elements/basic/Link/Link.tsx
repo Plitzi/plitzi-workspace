@@ -93,8 +93,11 @@ const Link = ({
   // says: it is followed as written, never resolved into `/https:/…`. Authoring refuses one written out in page mode
   // (`page-target-url`); a bound one it cannot see — a page's path from the data is as likely — so it is decided here.
   const external = mode === 'external' || SCHEME.test(href);
+  // A section of the page it is on — `#main-content`, a skip link's — is that section, followed by the browser: read as
+  // a page of that name, it led to the home (`/#main-content`).
+  const sameDocument = !external && href.length > 1 && href.startsWith('#');
   const path = useMemo(() => {
-    if (external) {
+    if (external || sameDocument) {
       return href;
     }
 
@@ -115,11 +118,11 @@ const Link = ({
     }
 
     return getPageFullPath(pageDefinitions, pageFolders, href, true);
-  }, [external, mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
-  const url = !external && hash ? `${path}#${hash}` : path;
+  }, [external, sameDocument, mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
+  const url = !external && !sameDocument && hash ? `${path}#${hash}` : path;
   // The page being shown, said by the link that leads to it — or by its section's: what a screen reader announces, and
   // what the `current` style state selects. From the address the server rendered, so the first paint already marks it.
-  const currentAs = external ? undefined : ariaCurrent(path, location, current);
+  const currentAs = external || sameDocument ? undefined : ariaCurrent(path, location, current);
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {
@@ -130,7 +133,7 @@ const Link = ({
     // A page of the site is navigated to in place — unless the link, or the person, asked for somewhere else: a
     // `target` of its own, or a click held with ⌘, Ctrl or Shift, or not the main button. The browser opens those.
     const elsewhere = target !== 'self' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
-    if (!external && !elsewhere) {
+    if (!external && !sameDocument && !elsewhere) {
       e.preventDefault();
       navigate(url);
     }

@@ -191,6 +191,8 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Elements
 
+- A link to a section of the page it is on — `href: '#main-content'`, a skip link's — goes to that section, followed by
+  the browser: in page mode it was read as a page of that name and led to the home (`/#main-content`), from every page.
 - A form control's `autoComplete` takes what the field holds — `username`, `current-password`, `new-password`,
   `one-time-code`, `email`… (`AUTOFILL_FIELDS`) — beside `true` and `false`. A password field said `off` on every space,
   so no password manager filled a sign-in or offered to save a new password: left on `true` it is now the account's

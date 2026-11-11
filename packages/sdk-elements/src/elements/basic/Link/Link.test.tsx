@@ -181,6 +181,12 @@ describe('Link Tests', () => {
       expect(anchorHref({ mode: 'external', href: 'https://plitzi.com/a//b' })).toBe('https://plitzi.com/a//b');
     });
 
+    // A skip link — `#main-content` — went to the home: the section was read as a page of that name.
+    it('keeps a section of the page it is on as the section, never a page of that name', () => {
+      expect(anchorHref({ mode: 'page', href: '#main-content' })).toBe('#main-content');
+      expect(anchorHref({ mode: 'internal', href: '#main-content' })).toBe('#main-content');
+    });
+
     it('follows a URL with a scheme as written, whatever the mode — never as /https:/…', () => {
       expect(anchorHref({ mode: 'page', href: 'https://www.idealo.es/' })).toBe('https://www.idealo.es/');
       expect(anchorHref({ mode: 'internal', href: 'mailto:hola@plitzi.com' })).toBe('mailto:hola@plitzi.com');
@@ -212,6 +218,14 @@ describe('Link Tests', () => {
 
       expect(navigate).toHaveBeenCalledWith('/agents');
       expect(defaultPrevented).toBe(true);
+    });
+
+    // The browser scrolls to the section and moves the keyboard's place there: the router would load another page.
+    it('leaves a section of the page it is on to the browser', () => {
+      const { navigate, defaultPrevented } = clickWith({ mode: 'page', href: '#main-content' });
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(defaultPrevented).toBe(false);
     });
 
     it('leaves a link with a target of its own to the browser', () => {
