@@ -777,8 +777,8 @@ sweep timer is stopped when `server.close()` is called.
 
 A space's compiled stylesheet (`style.cache`) holds every page's rules — on a large space most of the page: the
 Plitzi dashboard's was 429 KB of a 496 KB document, compressed again on every response. A server-rendered page links it
-instead, as `/_plitzi/style/<hash>.css`, and carries only what is this request's — the variables, the custom CSS — in
-the page. The file is compressed once, kept by the browser for good under its name, and answered by any replica from
+instead, as `/_plitzi/style/<hash>.css` — the compiled rules and the space's custom CSS after them — and carries only
+what is this request's, the variables, in the page. The file is compressed once, kept by the browser for good under its name, and answered by any replica from
 the space as the request resolves it, as the space document is: a name that is no longer the stylesheet's (the space
 changed since the page was drawn) answers the current one, `no-store`. Taking it out of the page made the dashboard's
 render ~60% cheaper in requests a second.
@@ -790,6 +790,13 @@ in the page where no other request could answer for it — a draft preview, a sp
 deployment's own `templateFn`, which does not know to link it, and when a `{{ token }}` in it is replaced by the
 variables as each request resolves them. A client-side render (no SSR) receives the stylesheet as it always did, and
 draws it; a page whose stylesheet the browser comes to draw itself (new documents in place) drops the linked copy.
+
+### A proxy in front of it
+
+A page is hydrated over the HTML the server sent: a proxy or CDN in front of the page server that rewrites it — an
+edge's email obfuscation (Cloudflare's *Email Address Obfuscation*), a minifier, an injected script — has React find
+HTML it did not render (error #418 in production) and the page's script policy refuse what was added. Leave the HTML
+alone at the edge: turn those features off for the hosts the server answers.
 
 ### A page that renders the space itself
 
