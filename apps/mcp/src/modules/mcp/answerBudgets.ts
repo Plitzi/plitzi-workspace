@@ -26,8 +26,16 @@ export const ANSWER_BUDGETS = {
   // The markup, cut at 100 KB (`AGENT_HTML_CHARS`): 26,500 tokens, whatever the page.
   'plitzi_look html': 29150,
   // The words beside a picture; the picture rides to the model as an image, priced by its size.
-  'plitzi_look image': 30
+  'plitzi_look image': 30,
+  // The auth space's journeys, listed with how each stands: 2,471 tokens.
+  plitzi_test: 2720
 } as const;
 
 /** The answers this package cannot make alone: a host measures them, on its own adapters. */
-export const HOST_ANSWERS = ['plitzi_activity', 'plitzi_look', 'plitzi_look html', 'plitzi_look image'] as const satisfies readonly (keyof typeof ANSWER_BUDGETS)[];
+export const HOST_ANSWERS = [
+  'plitzi_activity',
+  'plitzi_look',
+  'plitzi_look html',
+  'plitzi_look image',
+  'plitzi_test'
+] as const satisfies readonly (keyof typeof ANSWER_BUDGETS)[];
