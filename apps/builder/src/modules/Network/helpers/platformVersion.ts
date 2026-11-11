@@ -1,4 +1,7 @@
-import { CURRENT_HEADER } from '@plitzi/sdk-shared/clients';
+import { CLIENT_HEADER, clientHeaderValue, CURRENT_HEADER } from '@plitzi/sdk-shared/clients';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
+import packageSettings from '../../../../package.json';
 
 /**
  * What the platform says of this builder's version (`@plitzi/sdk-shared/clients`): a builder older than the platform —
@@ -47,3 +50,27 @@ export const versionedFetch =
 
     return response;
   };
+
+/**
+ * A request of the builder's to the platform's API: it says which builder it is, as its GraphQL link does, and hears
+ * the platform's version on the answer — every call the builder makes past GraphQL goes through it.
+ */
+export const platformFetch = versionedFetch(async (input: URL | RequestInfo, init: RequestInit = {}) => {
+  const headers = new Headers(init.headers);
+  headers.set(CLIENT_HEADER, clientHeaderValue('builder', packageSettings.version));
+  const response = await fetch(input, { ...init, headers });
+  // Older than the platform takes: what the caller reads is refused, and the builder says to reload — as over GraphQL.
+  if (response.status === 426) {
+    const body: unknown = await response
+      .clone()
+      .json()
+      .catch(() => undefined);
+    hearPlatform({
+      kind: 'outdated',
+      message:
+        isRecord(body) && typeof body.error === 'string' ? body.error : 'This builder is older than Plitzi takes.'
+    });
+  }
+
+  return response;
+});

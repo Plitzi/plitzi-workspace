@@ -134,7 +134,7 @@ An authored request connects to the address its name was judged to, and the advi
   too narrow the left side scrolls inside itself. Nothing is taken out of the bar (`e2e/tests/builder/bar.spec.ts`).
 - A builder left open across a release says so: a toast once when the platform is newer, and a **Reload** screen
   when it is older than the platform takes — where its requests would have failed one by one. It says its version as
-  `x-plitzi-client`, in place of the `sdk-version` header nothing read.
+  `x-plitzi-client` on every call — GraphQL and the API's own — in place of the `sdk-version` header nothing read.
 - Deleting a class in the Style Manager takes it out of every element that wears it and keeps the element's other
   classes: an element on `card primary` kept `primary` when `primary` was deleted — a class the space no longer had —
   and only an element on `primary` alone lost it.

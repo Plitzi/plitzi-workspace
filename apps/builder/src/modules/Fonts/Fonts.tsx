@@ -8,6 +8,7 @@ import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
 import EmptyState from '@pmodules/App/components/EmptyState';
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
@@ -104,7 +105,7 @@ const Fonts = () => {
       setMirroring(family);
 
       try {
-        const response = await fetch(`${server.apiServer}/spaces/${webId}/fonts/mirror`, {
+        const response = await platformFetch(`${server.apiServer}/spaces/${webId}/fonts/mirror`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'plitzi-access-token': userKey, 'Content-Type': 'application/json' },

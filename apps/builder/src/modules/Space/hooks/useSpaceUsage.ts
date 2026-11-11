@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 /** One page of the space and what it spent of the allowance this period. */
@@ -45,7 +46,7 @@ const useSpaceUsage = (spaceId: number) => {
     const controller = new AbortController();
     const load = async () => {
       try {
-        const response = await fetch(`${server.apiServer}/spaces/${String(spaceId)}/usage`, {
+        const response = await platformFetch(`${server.apiServer}/spaces/${String(spaceId)}/usage`, {
           signal: controller.signal,
           credentials: 'include',
           headers: { 'plitzi-access-token': userKey }

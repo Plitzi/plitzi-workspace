@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { FontStyle } from '@plitzi/sdk-shared';
@@ -34,7 +35,7 @@ const useFontCatalog = (query: string, enabled: boolean) => {
       setError(undefined);
 
       try {
-        const response = await fetch(`${server.apiServer}/fonts/catalog?q=${encodeURIComponent(search)}`, {
+        const response = await platformFetch(`${server.apiServer}/fonts/catalog?q=${encodeURIComponent(search)}`, {
           signal,
           credentials: 'include',
           headers: { 'plitzi-access-token': userKey }

@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { FontValidationError, parseSpaceFont } from '@plitzi/sdk-shared/style';
 import Notice from '@pmodules/App/components/Notice';
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { FontStyle, SpaceFont } from '@plitzi/sdk-shared';
@@ -41,7 +42,7 @@ const AddHostedFont = ({ fonts, onAdd, onUpdate }: AddHostedFontProps) => {
 
   const upload = useCallback(
     async (file: File): Promise<UploadedFace | undefined> => {
-      const response = await fetch(`${server.apiServer}/spaces/${webId}/fonts`, {
+      const response = await platformFetch(`${server.apiServer}/spaces/${webId}/fonts`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'plitzi-access-token': userKey, 'Content-Type': 'application/octet-stream' },

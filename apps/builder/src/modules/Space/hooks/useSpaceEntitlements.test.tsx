@@ -8,7 +8,7 @@ vi.mock('@pmodules/Network/hooks/useBuilderNetwork', () => ({
 }));
 
 const answer = (body: unknown, ok = true) =>
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok, json: () => Promise.resolve(body) } as Response);
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status: ok ? 200 : 500 }));
 
 afterEach(() => {
   vi.restoreAllMocks();

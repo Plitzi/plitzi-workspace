@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { isIncluded, mayDo } from '@plitzi/sdk-shared/network';
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { TCapability, TSpaceAccess, TSpaceEntitlements } from '@plitzi/sdk-shared/network';
@@ -16,7 +17,7 @@ const asked = new Map<string, Promise<SpaceAnswer>>();
 
 const fetchAnswer = async (url: string, userKey: string): Promise<SpaceAnswer> => {
   try {
-    const response = await fetch(url, { credentials: 'include', headers: { 'plitzi-access-token': userKey } });
+    const response = await platformFetch(url, { credentials: 'include', headers: { 'plitzi-access-token': userKey } });
     if (!response.ok) {
       return {};
     }

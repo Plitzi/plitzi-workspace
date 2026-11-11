@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { platformFetch } from '@pmodules/Network/helpers/platformVersion';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 /** What taking the next snapshot of an environment would remove, as the server answers it. */
@@ -24,7 +25,11 @@ const useNextPrune = (environment: string): NextPrune | undefined => {
 
     const controller = new AbortController();
     const url = `${server.apiServer}/spaces/${webId}/snapshots/next-prune?environment=${encodeURIComponent(environment)}`;
-    fetch(url, { credentials: 'include', headers: { 'plitzi-access-token': userKey }, signal: controller.signal })
+    platformFetch(url, {
+      credentials: 'include',
+      headers: { 'plitzi-access-token': userKey },
+      signal: controller.signal
+    })
       .then(async response => (response.ok ? ((await response.json()) as NextPrune) : undefined))
       .then(setAnswer)
       .catch(() => setAnswer(undefined));
