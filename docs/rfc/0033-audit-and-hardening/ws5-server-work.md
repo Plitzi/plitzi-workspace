@@ -82,8 +82,8 @@ A regression here needs a test that would have caught it, proven on the old code
 ## T5.12 — Somebody is told
 
 - **Repos:** `plitzi-platform` (`cluster/gitops/infrastructure/monitoring/`), `plitzi-sdk-server` (the chart, the
-  metrics it exports). **Finding:** PL2. **Size:** M. **Needs the maintainer** (where alerts go).
-- **Steps:** a receiver for Alertmanager (mail or a chat webhook, its secret in SOPS). Rules: a backup Job failed or
+  metrics it exports). **Finding:** PL2. **Size:** M. Decided 2026-11-11: **both** receivers.
+- **Steps:** two receivers for Alertmanager — mail and a chat webhook, their secrets in SOPS, every alert to both. Rules: a backup Job failed or
   did not run in 26 h; a volume past 85 %; a certificate 14 days from its end; a pod restarting; and the platform's
   own figures — work waiting past its limit, a pool full for ten minutes, runs failing above a rate — exported from
   what `/_stats` already holds.
@@ -94,6 +94,5 @@ A regression here needs a test that would have caught it, proven on the old code
 - **Repo:** `plitzi-platform`. **Findings:** PL4, PL5. **Size:** S.
 - **Steps:** the cluster's Mongo is 7.0, a laptop's 8.0: move the cluster by the upgrade path the server repository
   has (`yarn services:mongo-upgrade` shows the steps: dump first, the old volume kept) — **with the maintainer, never
-  alone**. Third-party images by digest. `terraform/` is the previous AWS stack ("not what runs today — ask before
-  touching"): ask whether to archive or delete it, with its two state files.
+  alone**. Third-party images by digest. `terraform/` stays: it is for when Plitzi runs on AWS.
 - **Verify:** `make test`.

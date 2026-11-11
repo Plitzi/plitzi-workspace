@@ -27,7 +27,7 @@ Answered by the maintainer on 2026-11-10.
 |---|---|---|
 | D1 | May a page's part of the space document be fetched on navigation? | **Yes, with three conditions.** A page brings its **layouts**, which are parts of their own (several pages share one). **Rendering with the SDK alone, as a single-page app with no page server, must not change at all** — it keeps receiving the document as it does today. And **navigation must not get worse where there is a page server either**: no wait a visitor can see that is not there today |
 | D2 | Does a visitor who is not signed in receive the signed-in pages' structure? | **No** |
-| D8 | Seeds of the showcase in a package of their own | Measured 2026-11-11, a copy without `prisma/seeds/spaces/showcase/` (492 of 960 seed files): `yarn typecheck` 18.3 → 12.6 s cold, `yarn lint` 63.4 → 41.5 s cold; warm runs stay seconds either way. **Waiting for the maintainer** to decide on the figure |
+| D8 | Seeds of the showcase in a package of their own | **No** (2026-11-11): `prisma/` sits outside `src/` on purpose; the cold figures (typecheck 18.3 → 12.6 s, lint 63.4 → 41.5 s) are not worth a package |
 | D11 | Which mark is the brand's | **The home's** — the stacked layers. The console, the back-office and the builder take it |
 
 ## 3. Work left
@@ -54,17 +54,12 @@ What each row says is what is left of it; what shipped of it is in the history.
 | Task | Left | Done when | Size |
 |---|---|---|---|
 | **T2.4′** The home on a phone, looked at | The maintainer's look on a phone — the rails of § 02–07 and § 01's moment-then-picture shipped 2026-11-11, "looked at on a phone before it is called done". The height back under 16,000 px without the 44 px targets giving way (they cost ~850 px: the footer's links, the studio's controls); the studio's billing toggle at 44 after a capture | § 1's two rows | S |
-| **T2.9** Templates | The Academy's four as one entry with its levels inside — a family of templates, a new word for the catalogue (its row, the API's grouping, the card's levels): **the maintainer's call**; the thumbnails on the dev cluster, looked at by whoever can reach it | The gallery's test still green (no two covers or descriptions alike) | M |
 | **T2.10** The sign-in pages, finished | One vertical rhythm for every sign-in page on a phone (`/sso` and `/forgot-password` centre where `/` and `/signup` start at the top); a share image and descriptions of a useful length | `auth` tests and the visual journey | S |
-| **T2.11** Loose ends | W16: the maintainer to confirm, then the empty `test` page removed from the website. W1 is § 6's | The page gone | S |
-| **T2.12** One mark | The builder's bar (`apps/builder`); the emails' mark as a picture; the favicon and the share card's `logo`, still the comet (`resources/img/favicon.svg`) — a drawn asset of the layers, **the maintainer's to give** | One mark on every screen, both themes | S |
-| **T2.14** Shift, signed in | **Pools**: 0.18 and ~7,700 nodes — the tab container mounts every panel; the general fix is the element's (a panel mounted when first shown, the existing `loadStrategy: 'lazy'`), **shown to the maintainer first** | Pools under 0.1 in `screens.spec.ts` and under 2,500 nodes on its first tab | M |
 | **T2.16** Landmarks | Authoring's suggestion for a page without `main`, once every seed — the demos' and showcases' — carries one | The lint says it; every seed passes | M |
 | **T2.17** Sign-in, said to everyone | **After the release that carries `autoComplete` tokens**: the auth seed names `username`, `new-password` and `one-time-code`; a focus ring on the fields, measured in both themes | The attributes asserted; the ring's contrast at 3:1 | S |
 | **T2.18** `llms.txt` and the sitemap | **After the release that carries `blockAiCrawlers` by kind**: the website seed leaves it out, the docs' routing page says the list. An `llms.txt` for the website and the docs; the sitemap with each template and showcase chapter and a `lastmod` | `/llms.txt` answers; the sitemap's test | M |
 | **T2.21** The builder's rail and chip | A click on the rail shows its panel open (plitzi-ui's `PopupSidePanel` reads `defaultValue` once — a change and release of plitzi-ui); the rail's buttons named on hover and for a screen reader; the class chip shows the author's name, the hash only when there is none; the dev-tools launcher clear of the panels. The builder's own type (under 12 px in places) is held to no scale yet: `screens.spec.ts` leaves it out (`brandScale: false`) | A click on each rail button shows its panel's content | M |
 | **T2.22** Long reference pages | The CLI reference and the authoring errors by section (a page each, the search finding them), or one page that draws only the section in view; the docs' bar whole at 390; a lint suggestion when a page's text and its language disagree; the home's first paragraph taken from the docs' | Neither page over 6,000 px; the suggestion's test | M |
-| **T2.25** One voice for the brand | One headline treatment (**the maintainer's pick**; the showcase's gradient is the proposal), mono kept for code and what is typed, sans for labels and kickers; the sign-in panel's mock-up replaced by a sentence and the mark | Mono under 15 % of the home's text nodes; one treatment on every `h1`; both themes | M |
 | **T2.28** The widths between | From 1024 the two-column layouts hold (the hero, `/pricing` with its summary beside the plans); the sticky summary clear of the rows; X-ray drawn once; the console's bar from 768; the run lines' column growing; the sweep of the key screens at seven widths | The sweep test; no control past the window's edge | M |
 
 ### WS3 — Code quality
@@ -82,7 +77,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T4.1** A standing score | All of it: inventory `bench/`; twelve tasks over three project shapes, each with a scripted check; run on a schedule, one model per tier, alone and as a team; success, calls, tokens, wall time and refusals kept by commit | A table per week in `bench/results`; a drop beyond its noise named by the report | L |
 | **T4.6** What a refusal cost | From T4.1's records: the ten refusals and lints agents meet most, and whether the message alone was enough | A list with counts; no change made | S, after T4.1 |
 | **T4.9** The run skills, on a diet | Every sentence of the six `runs*.md` skills: enforced by a refusal, said by a command, or only there — the first two leave the skill; what stays ordered by how often runs met it, one rule a line, a glossary opening `runs.md`; T4.1's team score before and after | `runs-lead.md` under 3,500 tokens; a test lists each rule taken out beside what carries it; the score no lower | L, after T4.1 |
-| **T4.10** One vocabulary | § 4's proposal: the MCP takes an authoring element spec for the element-level operations. **It changes the MCP's contract — the maintainer's call**, and its cost measured with T4.1's score both ways before the MCP's own shapes are retired | The score no lower on the element-level tasks | L, after T4.1 |
+| **T4.10** One vocabulary | § 4's proposal: the MCP takes an authoring element spec for the element-level operations. **Decided 2026-11-11: additive** — the MCP's operations and shapes stay as they are; the spec is a way in beside them, built on authoring. Its cost measured with T4.1's score both ways before the MCP's own shapes are retired | The score no lower on the element-level tasks | L, after T4.1 |
 
 ### WS5 — Server work
 
@@ -93,8 +88,8 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T5.8** One trace for a run | The run's page linking its lines (the log reader already takes `q=trace=…`); a job's run starting a trace of its own; a runtime's calls carrying it | An e2e in the split topology reads one id on the request, the run, the runner's log and the answer | M |
 | **T5.9** The engine's two closures | `runAction` and `createJobWorker` in parts with injected clocks, composed as today, no change of behaviour | Their suites unchanged; a load round within its band (T5.2) | L |
 | **T5.11** Backups elsewhere, and a restore with a date (`plitzi-platform`) | **The maintainer names the bucket and the credential.** Then each dump copied off the node, encrypted with the cluster's age key, its retention said; a monthly Job restoring the latest into a scratch database and counting rows | A dump listed in the bucket; the restore Job green once, by hand first | M |
-| **T5.12** Somebody is told (`plitzi-platform`, the chart) | **A receiver the maintainer chooses** (mail, a chat webhook). Rules: a backup Job failed or not run, a volume past 85 %, a certificate 14 days from its end, a pod restarting, work waiting past its limit, a pool full ten minutes, runs failing above a rate — from what `/_stats` holds | Each rule fired once on purpose and received | M |
-| **T5.13** Small drifts (`plitzi-platform`) | `terraform/` and its two state files archived or deleted — **the maintainer's to say**; the vendored charts' images (Loki, Promtail) following their chart. The digests pinned 2026-11-11 are committed, not pushed | `make test` green | S |
+| **T5.12** Somebody is told (`plitzi-platform`, the chart) | **Both receivers** (2026-11-11): mail and a chat webhook. Rules: a backup Job failed or not run, a volume past 85 %, a certificate 14 days from its end, a pod restarting, work waiting past its limit, a pool full ten minutes, runs failing above a rate — from what `/_stats` holds | Each rule fired once on purpose and received | M |
+| **T5.13** Small drifts (`plitzi-platform`) | The vendored charts' images (Loki, Promtail) following their chart. The digests pinned 2026-11-11 are committed, not pushed | `make test` green | S |
 
 ### WS6 — Product
 
@@ -135,16 +130,14 @@ authored through `authorSnippet`; the operations' own shapes stay for reading an
 
 ## 5. Found on the way, for the maintainer
 
-- **A link with an onClick flow does not follow an external `href`** (the SDK): the console's Docs link carried the
-  phone menu's closing flow and left nowhere. The seed no longer gives an external link that flow; whether the SDK
-  should navigate after a link's flow is general — shown here before it is changed.
+Nothing open.
 
 ## 6. Not an agent's, tracked here
 
-- **Waiting for the maintainer:** D8; T2.9's family of templates; T2.11's `test` page; T2.12's drawn mark; T2.14's lazy
-  panels; T2.25's headline; T4.10; T5.11's bucket; T5.12's receiver; T5.13's `terraform/`; T0.12's token permission;
-  pushing `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
-  (~150–300 MB).
+- **Waiting for the maintainer:** T5.11's bucket; T0.12's token permission (both at the end of this RFC); pushing
+  `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
+  (~150–300 MB), so a space's journeys run there; the templates' covers on the dev cluster, looked at by whoever can
+  reach it.
 - **W1, W26:** the final legal text from counsel, its placeholders filled (the company's name, address and
   registration, the governing law); the draft notice out; `TERMS_VERSION` moved.
 - **X3:** how many plans are sold at all is a product decision; D6 settled only how `/pricing` opens.

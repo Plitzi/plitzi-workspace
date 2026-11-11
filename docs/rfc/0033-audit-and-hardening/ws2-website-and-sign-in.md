@@ -20,19 +20,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 
 ---
 
-## T2.9 — Templates
-
-- **Finding:** W12. **Size:** M.
-- **Read first:** `website/landing/sections/templates.ts` (the landing's six), `landing/templatesPage.ts`,
-  `website/templates.ts`, `src/services/templates/` (`review.ts`, `manage.ts`, `catalogue.ts`), `docs/templates.md`.
-- **Steps:** templates of the category `Learning` never appear among the landing's six nor in the gallery's first
-  ("All") view; they are reached from the Academy and from the gallery's Learning filter, as one entry ("Café Lumen —
-  the Academy's site") with its levels inside. The review refuses a template with no description or no language, with
-  the fix in its words (a platform rule: it is in `src/services/templates`, general). Fix the two seeded templates
-  with no description and the one described in Spanish (give it a language, T2.22 handles `lang`).
-- **Verify:** `src/services/templates/review.test.ts` gains the two refusals; a test that the landing's six hold no
-  `Learning` template; the gallery's visual test.
-
 ## T2.10 — Sign-up and the sign-in pages
 
 - **Findings:** W14, W15, W25. **Decided (D7): the username stays.** An account signs in with its address **or** its
@@ -47,38 +34,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   mentions in the copy as if they existed — say only what works today.
 - **Verify:** `yarn vitest run prisma/seeds/spaces/platform/auth`; `yarn playwright test visual/auth.spec.ts`
   (sign-up, onboarding, mismatch journeys); a test that signs in once with the username and once with the address.
-
-## T2.11 — Loose ends
-
-- **Findings:** W1, W16, W26. **Size:** S.
-- **Steps:** W16: `website/pages/test.ts` is an empty page shipped in the public document — **ask the maintainer**,
-  then remove it and its registration in `website/index.ts`. W1/W26 are not yours: the draft notice
-  (`landing/legal/kit.ts:209`) and the terms' placeholders wait for counsel's text; when it arrives, `TERMS_VERSION`
-  (`src/config/legal.ts`) moves with it.
-
-## T2.12 — One mark
-
-- **Finding:** W18. **Decided (D11): the home's mark — the stacked layers — is the brand's.** **Size:** S.
-- **Steps:** Step 0: find every place a mark is drawn — the stacked layers (landing, sign-in, account) and the violet
-  comet (console, back-office, builder): `grep -rn "favicon\|logo" prisma/seeds/spaces/platform/brand prisma/seeds/spaces/platform/website/layouts`,
-  and in `plitzi-workspace/apps/builder` (`grep -rn "logo\|Logo" apps/builder/src/modules/App`). List them in the pull
-  request. The stacked layers live once in `brand/`; the console, the back-office, the emails (T2.20) and the
-  builder's bar read them from there. The comet is removed from the seeds; in the builder, replace it and **ask before
-  deleting its asset** if anything else may use it (a published package: check its exports). The favicon and the
-  share image follow the same mark.
-- **Do not:** redraw the mark; introduce a third variant for dark — the mark has a light and a dark form in `brand/`,
-  nothing more.
-- **Verify:** a test that the three platform spaces' bars and the builder's bar draw the same mark; both themes;
-  render diff of the console's and the back-office's header.
-
-## T2.14 — Shift, signed in
-
-- **Finding:** W20. **Size:** M.
-- **Steps:** on a production build of the visual stack, record `layout-shift` with sources for the console's home,
-  `/logs` at 390 (0.53 measured), a workspace's page (0.11) and the back-office's Pools (0.18–0.51; 6,825 nodes).
-  Re-measure first — the home's figure may be a development build's, like the public home's. Reserve what moves.
-  Pools: draw only the open tab's content (`pages/admin/pools*.ts`).
-- **Verify:** each ≤ 0.1 in T0.7's table; Pools under 2,500 nodes on its first tab.
 
 ## T2.16 — Landmarks and a skip link
 
@@ -163,16 +118,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   in authoring when a page's text and its language clearly disagree is a platform idea — propose it, do not build it
   here. The home's first paragraph takes the docs' sentence ("a platform for building websites and web apps…").
 - **Verify:** neither page over 6,000 px; `lang="es"` on Ceniza's pages; the docs' tests.
-
-## T2.25 — One voice for the brand
-
-- **Findings:** DS4, DS5, W18. **Size:** M. **After T2.12 and T2.24.**
-- **Steps:** one treatment for every page's headline (the maintainer picks; the showcase's gradient is the
-  proposal); monospace kept for code and what is typed — labels, kickers, chips and captions move to the sans (mono
-  is 41 % of the home's text nodes today); the sign-in's brand panel becomes a sentence and the mark instead of the
-  mock-up (27 text nodes under 12 px).
-- **Verify:** mono under 15 % of the home's text nodes (count as the design pass did: text nodes by computed
-  `font-family`); one treatment on every `h1`.
 
 ## T2.28 — The widths between
 
