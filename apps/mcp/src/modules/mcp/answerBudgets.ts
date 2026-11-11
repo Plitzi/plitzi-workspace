@@ -20,8 +20,14 @@ export const ANSWER_BUDGETS = {
   'plitzi_describe_operation upsertElement': 910,
   plitzi_render: 32,
   // A page of the activity of a space twelve changes old: edits by two writers and an action that failed.
-  plitzi_activity: 448
+  plitzi_activity: 448,
+  // The outline of Plitzi's guest home, 1,422 elements: 6,589 tokens.
+  plitzi_look: 7250,
+  // The markup, cut at 100 KB (`AGENT_HTML_CHARS`): 26,500 tokens, whatever the page.
+  'plitzi_look html': 29150,
+  // The words beside a picture; the picture rides to the model as an image, priced by its size.
+  'plitzi_look image': 30
 } as const;
 
 /** The answers this package cannot make alone: a host measures them, on its own adapters. */
-export const HOST_ANSWERS = ['plitzi_activity'] as const satisfies readonly (keyof typeof ANSWER_BUDGETS)[];
+export const HOST_ANSWERS = ['plitzi_activity', 'plitzi_look', 'plitzi_look html', 'plitzi_look image'] as const satisfies readonly (keyof typeof ANSWER_BUDGETS)[];

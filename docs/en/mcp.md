@@ -127,7 +127,11 @@ operations of `plitzi_apply`) and its data (`plitzi://data/{env}`: the JSON its 
 full list, with what each one answers, is the agent's manual at `plitzi://guide`.
 
 A look — `plitzi_look`, or `plitzi_apply`'s `look` — needs the deployment's SSR render service (and the screenshot
-service for an image or an outline); where they are missing, it says so instead of failing silently.
+service for an image or an outline); where they are missing, it says so instead of failing silently. It opens the page
+where a link to it goes, its route parameters given as `routeParams` (`{ "spaceId": "42" }`; one left out is refused
+naming it), and it is signed out: a look at a page for signed-in visitors says that what it shows is where they are
+sent. Its outline of a 1,400-element page is about 6,600 tokens, its HTML the markup alone, cut at 100 KB (about
+26,500).
 
 ## 4. What the server guarantees
 
