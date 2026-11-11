@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { closest } from '@plitzi/sdk-authoring';
 import { buildBody } from '@plitzi/sdk-server/ssr';
 
 import { computeVersion, findPageByRef, getPageElements } from '../modules/mcp/helpers';
@@ -11,12 +12,25 @@ import type { SSRPageServerConfig, SSRTemplateFn } from '@plitzi/sdk-server';
 import type { PluginManager, ServerCaches } from '@plitzi/sdk-server/ssr';
 import type { Environment, Schema } from '@plitzi/sdk-shared';
 
-const resolvePagePath = (schema: Schema, pageRef?: string): string => {
+/**
+ * The address of the page asked for, or why there is none: a page the space does not have is refused, never drawn
+ * as its home — a look at it answered the home as that page.
+ */
+const resolvePagePath = (schema: Schema, pageRef?: string): { path: string } | { refused: string } => {
   const pages = getPageElements(schema);
   const page = pageRef ? findPageByRef(schema, pageRef) : (pages.find(p => p.attributes.default) ?? pages[0]);
+  if (pageRef && !page) {
+    const nearest = closest(
+      pageRef,
+      pages.map(p => p.id)
+    );
+
+    return { refused: `The space has no page "${pageRef}"${nearest ? ` — did you mean "${nearest}"?` : ''}` };
+  }
+
   const slug = page && typeof page.attributes.slug === 'string' ? page.attributes.slug : '';
 
-  return slug.startsWith('/') ? slug : `/${slug}`;
+  return { path: slug.startsWith('/') ? slug : `/${slug}` };
 };
 
 const syntheticRequest = (pagePath: string): SSRRequest => ({
@@ -79,7 +93,12 @@ export const createPreview = async (
     draftOffline = { ...offlineData, schema: batch.draft.schema, style: batch.draft.style };
   }
 
-  const pagePath = resolvePagePath(draftOffline.schema, body.pageRef);
+  const resolved = resolvePagePath(draftOffline.schema, body.pageRef);
+  if ('refused' in resolved) {
+    return { ok: false, error: 'missing', message: resolved.refused };
+  }
+
+  const pagePath = resolved.path;
   // The render is the expensive half, and a caller heading for a screenshot never reads it — the browser renders
   // the same draft again from the token. So it is done only when asked for.
   let html: string | undefined;

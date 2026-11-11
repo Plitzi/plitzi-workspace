@@ -104,6 +104,20 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
     }
   });
 
+  // A look at "dashboard" on a space without one rendered its home — "/" — and answered it as the page asked for.
+  it('refuses a page the space does not have, naming the nearest, before any render', async () => {
+    const offline = { schema: buildSpace().schema, style: buildSpace().style };
+    const res = await createPreview(
+      { spaceId: 1, pageRef: 'hom' },
+      configWith(offline),
+      unusedRender,
+      unusedPlugins,
+      unusedCaches
+    );
+
+    expect(res).toEqual({ ok: false, error: 'missing', message: 'The space has no page "hom" — did you mean "home"?' });
+  });
+
   // A caller on the way to a screenshot reads the token and the path, never the HTML: the browser renders the
   // same draft again from the token, so rendering it here would be the second of two server renders per image.
   it('skips the render for includeHtml:false, and still mints the token and the path', async () => {

@@ -125,6 +125,9 @@ An authored request connects to the address its name was judged to, and the advi
   spec, classes }`, the JSON `container({ … })` returns and the classes it names — checked by authoring itself, so its
   refusals and warnings are the ones a project's `plitzi doctor` gives. An agent writes one vocabulary in a project and
   over the MCP; a name the space already has is refused (`exists`).
+- A look or a preview at a page the space does not have is refused (`missing`, with the nearest page) instead of
+  drawing its home: `plitzi_look { pageRef: "dashboard" }` on a space without one answered the home as that page, and a
+  thumbnail of a page since removed was the home's.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.
