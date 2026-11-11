@@ -26,7 +26,7 @@ What a space’s document is refused for is authoring’s, and listed with it in
 | `signed-out` | no session for the platform, or one it no longer takes | sign in with plitzi login, then run the command again | the CLI |
 | `not-allowed` | what was asked is not this account’s, this plan’s or this surface’s to do | do it where the message says it is done, or ask a person whose role or plan allows it | the CLI, the MCP |
 | `refused-by-platform` | the platform refused what was sent, in its own words | do what the platform’s words say; when they name no fix, plitzi doctor checks the connection and the project | the CLI |
-| `changed-since` | what is there changed since this copy last had it, and sending would replace that change | pull first (plitzi space pull), apply your change on what it brings, and send it again | the CLI |
+| `changed-since` | what is there changed since this copy last had it, and sending would replace that change | pull first (plitzi space pull) — over the MCP, read it again — apply your change on what it brings, and send it again | the CLI, the MCP |
 | `unanswered` | nothing answered: a server not running, an address nothing serves, a browser that did not start | start what the message names (npm start, plitzi server) or install it (plitzi browser install); plitzi doctor checks the machine | the CLI, the MCP |
 | `nobody-to-ask` | a choice that belongs to a person, and nobody is at the terminal to make it | ask the person each question the message lists, then run the command again with their answers | the CLI |
 | `in-use` | what would be removed or changed is still used, or still running | stop or repoint what uses it first: the message names each | the CLI, the MCP |

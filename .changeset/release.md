@@ -113,6 +113,9 @@ An authored request connects to the address its name was judged to, and the advi
   wrote `--brand primary`.
 - What each answer costs an agent is a table the package exports (`ANSWER_BUDGETS`, `HOST_ANSWERS`): the answers made
   from the space alone are held to it here, and a host holds the ones its adapters make — Plitzi's activity is.
+- A page wears classes of its own: `upsertPage { style: { base: [...] } }` gives its root what a class says (its
+  background, its padding), checked as an element's classes are. There was no way to over the MCP. The element tools
+  named on a page point at it, and their refusals carry a code like every other tool's.
 - The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
   edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
   element, never a page.

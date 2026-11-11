@@ -85,6 +85,7 @@ A required prop left out, a prop the component does not declare, a value of the 
 the component does not have is reported by \`plitzi_apply\`'s \`dryRun\` — fix it before applying.
 
 ## Pages & folders
+- **A page's own look** — its background, its padding — is a class on the page itself: \`upsertPage { ref, style: { base: ["page-dark"] } }\` (the element tools edit what is inside it).
 - **A page behind a feature flag**: \`upsertPage { flag: "labs" }\` answers 404 while the flag is off (see **Feature
   flags**); \`flag: null\` removes it.
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a

@@ -11,7 +11,7 @@ import {
   indexAddPage,
   resolveRef
 } from '../../../../helpers';
-import { elementFlag } from '../shared';
+import { elementFlag, styleRefs } from '../shared';
 import { guardNewRef, layoutsUri, pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -67,9 +67,21 @@ export const upsertPageOp = z
       .nullable()
       .optional()
       .describe('"locked": the document never moves, only overflow:auto panels scroll; "noBounce": no rubber band'),
-    flag: elementFlag.nullable().optional()
+    flag: elementFlag.nullable().optional(),
+    style: styleRefs
+      .optional()
+      .describe(
+        "The page's own classes — its root: the page's background, its padding, how it lays its body out. Replaces " +
+          'what the page wore; a class is a definition (upsertDefinition)'
+      )
   })
   .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
+
+/** A page root's selectors, from the classes the operation names: base, and each slot's. */
+const selectorsOf = (style: NonNullable<UpsertPage['style']>): Element['definition']['styleSelectors'] => ({
+  base: (style.base ?? []).join(' '),
+  ...Object.fromEntries(Object.entries(style.slots ?? {}).map(([slot, classes]) => [slot, classes.join(' ')]))
+});
 
 export type UpsertPage = z.infer<typeof upsertPageOp>;
 
@@ -172,6 +184,10 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       existing.attributes.documentScroll = op.documentScroll;
     }
 
+    if (op.style) {
+      existing.definition.styleSelectors = selectorsOf(op.style);
+    }
+
     if (op.flag === null) {
       Reflect.deleteProperty(existing.definition, 'flag');
     } else if (op.flag !== undefined) {
@@ -210,7 +226,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       label: op.label ?? op.ref,
       type: 'page',
       items: [],
-      styleSelectors: { base: '' },
+      styleSelectors: op.style ? selectorsOf(op.style) : { base: '' },
       ...(op.flag ? { flag: flagGateOf(op.flag, `Page "${op.ref}"`) } : {})
     }
   };

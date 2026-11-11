@@ -77,8 +77,8 @@ export const REFUSALS = {
   },
   'changed-since': {
     means: 'what is there changed since this copy last had it, and sending would replace that change',
-    next: 'pull first (plitzi space pull), apply your change on what it brings, and send it again',
-    surfaces: ['cli']
+    next: 'pull first (plitzi space pull) — over the MCP, read it again — apply your change on what it brings, and send it again',
+    surfaces: ['cli', 'mcp']
   },
   unanswered: {
     means: 'nothing answered: a server not running, an address nothing serves, a browser that did not start',

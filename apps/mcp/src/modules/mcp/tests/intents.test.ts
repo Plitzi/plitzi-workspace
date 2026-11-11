@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
-import { NOTHING_CHANGED } from '../tools/apply';
+import { apply, NOTHING_CHANGED } from '../tools/apply';
 import { addPageTool, setAttributesTool, setClassesTool } from '../tools/intents';
 
 import type { ToolContext } from '../tools/shared/tool';
@@ -50,9 +50,10 @@ describe('the intent tools', () => {
       done: false,
       errors: [
         {
+          code: 'bad-value',
           path: 'ref',
           message: '"home" is a page, not an element on one: this tool edits the elements inside it',
-          hint: 'plitzi://schema/{env}/pages/home lists them by ref; plitzi_apply upsertPage edits the page itself'
+          hint: 'plitzi://schema/{env}/pages/home lists them by ref; plitzi_apply upsertPage { ref: "home", style: { base: [...] } } gives the page its own classes'
         }
       ]
     });
@@ -135,5 +136,42 @@ describe('the intent tools', () => {
       effects: ['pricing (page) added']
     });
     expect(saved().schema.pages).toContain('pricing');
+  });
+});
+
+// A page's own classes — its background, its padding — are the page's to wear, given by upsertPage.
+describe('a page root’s classes', () => {
+  it('are given when the page is made, replaced when it is written again, and refused for a class the space lacks', async () => {
+    const cap = capturing(buildSpace());
+    const made = await apply(
+      {
+        operations: [
+          { type: 'upsertDefinition', ref: 'page-dark', desktop: { 'background-color': '#111111' } },
+          { type: 'upsertPage', ref: 'pricing', slug: 'pricing', style: { base: ['page-dark'] } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(made.applied).toBe(true);
+    expect(cap.saved().schema.flat.pricing.definition.styleSelectors).toEqual({ base: 'page-dark' });
+
+    const restyled = await apply(
+      { operations: [{ type: 'upsertPage', ref: 'home', style: { base: ['box'] } }] },
+      cap.saved(),
+      cap.persisters
+    );
+
+    expect(restyled.applied).toBe(true);
+    expect(cap.saved().schema.flat.home.definition.styleSelectors).toEqual({ base: 'box' });
+
+    const refused = await apply(
+      { operations: [{ type: 'upsertPage', ref: 'home', style: { base: ['nope'] } }] },
+      cap.saved(),
+      cap.persisters
+    );
+
+    expect(refused).toMatchObject({ applied: false, errors: [{ code: 'missing', path: 'operations[0].style.base' }] });
   });
 });

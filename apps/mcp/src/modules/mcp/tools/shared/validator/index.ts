@@ -306,6 +306,7 @@ export const validateOperations = (
         break;
       case 'upsertPage':
         checkRef(op.ref, `${base}.ref`, ctx);
+        checkClasses(op.style, `${base}.style`);
         // Nudge toward giving a new page an explicit slug (good practice: a clean, stable route). Only on create,
         // and lenient — the ref is used as a fallback slug, so a missing slug never fails the batch.
         if (op.slug === undefined && !findPageByRef(space.schema, op.ref)) {

@@ -8,6 +8,7 @@ import { scalar } from './operations/schema/shared';
 import { defineTool } from './shared/tool';
 
 import type { Operation } from './operations';
+import type { ValidationError } from '../types';
 import type { ToolContext } from './shared/tool';
 import type { Element } from '@plitzi/sdk-shared';
 
@@ -23,9 +24,9 @@ import type { Element } from '@plitzi/sdk-shared';
 /** What an intention answers: done, or why not — never the whole element back. */
 type IntentAnswer =
   | { done: true; saved: boolean; effects: string[]; warnings?: string[]; next: string }
-  | { done: false; errors: unknown[]; warnings?: string[] };
+  | { done: false; errors: ValidationError[]; warnings?: string[] };
 
-type Refusal = { done: false; errors: unknown[] };
+type Refusal = { done: false; errors: ValidationError[] };
 
 /** The element a ref names, with the page or layout it is on — or the nearest ref there is. */
 const locate = (ctx: ToolContext, ref: string): { element: Element; root: string; classes: string[] } | Refusal => {
@@ -48,9 +49,13 @@ const locate = (ctx: ToolContext, ref: string): { element: Element; root: string
       done: false,
       errors: [
         {
+          code: 'bad-value',
           path: 'ref',
           message: `"${ref}" is a ${kind}, not an element on one: this tool edits the elements inside it`,
-          hint: `plitzi://schema/{env}/pages/${ref} lists them by ref; plitzi_apply upsert${kind === 'page' ? 'Page' : 'Layout'} edits the ${kind} itself`
+          hint:
+            kind === 'page'
+              ? `plitzi://schema/{env}/pages/${ref} lists them by ref; plitzi_apply upsertPage { ref: "${ref}", style: { base: [...] } } gives the page its own classes`
+              : `plitzi://schema/{env}/pages/${ref} lists them by ref; plitzi_apply upsertLayout edits the layout itself`
         }
       ]
     };
@@ -63,6 +68,7 @@ const locate = (ctx: ToolContext, ref: string): { element: Element; root: string
     done: false,
     errors: [
       {
+        code: 'missing',
         path: 'ref',
         message: `There is no element "${ref}"${nearest ? ` — did you mean "${nearest}"?` : ''}`,
         hint: 'plitzi_search finds an element by its words, type or class'
@@ -92,7 +98,18 @@ const run = async (
   if (!result.applied) {
     return {
       done: false,
-      errors: result.errors ?? (result.conflict ? [result.conflict] : []),
+      errors:
+        result.errors ??
+        (result.conflict
+          ? [
+              {
+                code: 'changed-since',
+                path: 'space',
+                message: result.conflict.message,
+                hint: 'Someone changed it meanwhile: read it again and make the change on what it holds now'
+              }
+            ]
+          : []),
       ...(warnings.length > 0 ? { warnings } : {})
     };
   }
@@ -134,6 +151,7 @@ export const setAttributesTool = defineTool({
       return {
         done: false,
         errors: covered.map(key => ({
+          code: 'not-allowed' as const,
           path: key,
           message: `${key} of ${input.ref} is bound to ${String(bound.get(key))}: the page shows what the binding computes, not a value written here`,
           hint: 'plitzi_bind_attribute changes what it reads; to write a value instead, plitzi_apply deleteBinding first'
@@ -181,10 +199,14 @@ export const setClassesTool = defineTool({
         errors: absent.map(name => {
           const nearest = closest(name, at.classes);
 
-          return {
+          const error: ValidationError = {
+            code: 'missing',
             path: 'remove',
-            message: `${input.ref} does not wear "${name}"${nearest ? ` — did you mean "${nearest}"?` : ''}; it wears ${at.classes.join(', ') || 'no class'}`
+            message: `${input.ref} does not wear "${name}"${nearest ? ` — did you mean "${nearest}"?` : ''}; it wears ${at.classes.join(', ') || 'no class'}`,
+            hint: 'Take off a class it wears, as plitzi_read shows it'
           };
+
+          return error;
         })
       };
     }
