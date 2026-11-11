@@ -42,6 +42,25 @@ describe('the intent tools', () => {
     });
   });
 
+  // A page is not an element of one: said so, never "no element home — did you mean home?".
+  it('says a page is a page, and suggests only elements', async () => {
+    const { ctx } = context();
+
+    expect(await setClassesTool.execute({ ref: 'home', add: ['box'] }, ctx)).toEqual({
+      done: false,
+      errors: [
+        {
+          path: 'ref',
+          message: '"home" is a page, not an element on one: this tool edits the elements inside it',
+          hint: 'plitzi://schema/{env}/pages/home lists them by ref; plitzi_apply upsertPage edits the page itself'
+        }
+      ]
+    });
+    expect(await setClassesTool.execute({ ref: 'c2', add: ['box'] }, ctx)).toMatchObject({
+      errors: [{ message: 'There is no element "c2" — did you mean "c1"?' }]
+    });
+  });
+
   it('refuses a value for an attribute a binding computes', async () => {
     const { ctx } = context();
     ctx.space.schema.flat.c1.definition.bindings = { attributes: [{ id: 'b1', to: 'subType', source: 'state.tag' }] };

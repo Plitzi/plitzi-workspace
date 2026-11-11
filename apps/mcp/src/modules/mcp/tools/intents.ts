@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { closest } from '@plitzi/sdk-authoring';
 
 import { apply } from './apply';
-import { findElementByRef } from '../helpers';
+import { findElementByRef, findLayoutByRef, findRootByRef } from '../helpers';
 import { scalar } from './operations/schema/shared';
 import { defineTool } from './shared/tool';
 
@@ -38,7 +38,26 @@ const locate = (ctx: ToolContext, ref: string): { element: Element; root: string
     };
   }
 
-  const nearest = closest(ref, Object.keys(ctx.space.schema.flat));
+  // A page or a layout is not an element of one: these tools edit what is inside it. Said as that, never as an
+  // element that does not exist — with itself offered as the nearest name ("no element home — did you mean home?").
+  const root = findRootByRef(ctx.space.schema, ref);
+  if (root) {
+    const kind = findLayoutByRef(ctx.space.schema, ref) ? 'layout' : 'page';
+
+    return {
+      done: false,
+      errors: [
+        {
+          path: 'ref',
+          message: `"${ref}" is a ${kind}, not an element on one: this tool edits the elements inside it`,
+          hint: `plitzi://schema/{env}/pages/${ref} lists them by ref; plitzi_apply upsert${kind === 'page' ? 'Page' : 'Layout'} edits the ${kind} itself`
+        }
+      ]
+    };
+  }
+
+  const elements = Object.keys(ctx.space.schema.flat).filter(id => findElementByRef(ctx.space.schema, id));
+  const nearest = closest(ref, elements);
 
   return {
     done: false,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { deepEqual } from '@plitzi/sdk-shared/helpers';
 import { generateCache } from '@plitzi/sdk-style';
 
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
@@ -45,6 +46,15 @@ export const applyShape = {
 export const NOTHING_CHANGED = 'Nothing changed: every operation left the space as it was.';
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
+
+/**
+ * Whether the batch left a store as the space holds it. A write sent again — a client that timed out and retried, an
+ * agent that lost the answer — reads the space as the first left it, and its operations change nothing: written again,
+ * it would be a second entry in the space's history for an edit nobody made. Strict the other way: any difference, an
+ * `undefined` beside a missing key included, is written.
+ */
+const unchanged = (before: unknown, after: unknown, skip?: string[]): boolean =>
+  deepEqual(before, after, 'soft', { skip });
 
 /** Why the platform did not save the functions, as the batch's errors: each problem where it is, or the refusal. */
 const functionsErrors = (saved: Exclude<FunctionsSaveResult, { ok: true }>, env: Env): ValidationError[] =>
@@ -130,7 +140,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   // and it has to be before anything else is written, or a refusal here would leave the rest of the batch saved.
   // Every store this batch had something for and no persister: said by name, never only as `persisted: false`.
   const unsaved: string[] = [];
-  if (outcome.changedFunctions && draft.functions) {
+  if (outcome.changedFunctions && draft.functions && !unchanged(space.functions?.files, draft.functions.files)) {
     if (persisters?.saveFunctions) {
       const saved = await persisters.saveFunctions(draft.functions.files, space.functions?.version ?? '');
       if (!saved.ok) {
@@ -150,7 +160,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
 
   // The data next, for the same reason: what it is checked for as it is saved (a path, the weight, a newer copy) can
   // still refuse the batch, before the documents are written.
-  if (outcome.changedData && draft.data) {
+  if (outcome.changedData && draft.data && !unchanged(space.data?.files, draft.data.files)) {
     if (persisters?.saveData) {
       const saved = await persisters.saveData(draft.data.files, space.data?.version ?? '');
       if (!saved.ok) {
@@ -175,7 +185,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   }
 
   // Persist each schema that changed to its own store; unsaved when a changed schema has no persister.
-  if (outcome.changedSchema) {
+  if (outcome.changedSchema && !unchanged(space.schema, draft.schema)) {
     if (persisters?.schema) {
       await persisters.schema(draft.schema);
     } else {
@@ -183,7 +193,8 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     }
   }
 
-  if (outcome.changedStyle) {
+  // `cache` is compiled from the rest below: the same rules, the same stylesheet.
+  if (outcome.changedStyle && !unchanged(space.style, draft.style, ['cache'])) {
     if (persisters?.style) {
       // Compiled here, not left to the persister. The renderer serves `style.cache` and nothing else, so a document
       // stored without recompiling it is a page that keeps showing the old CSS — and the adapter contract asking
@@ -201,6 +212,16 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   // call. A connector the batch created and then removed appears in neither list, so nothing is written for it.
   for (const id of outcome.changedConnectors) {
     const entry = draft.connectors.find(item => item.id === id);
+    if (
+      entry &&
+      unchanged(
+        space.connectors.find(item => item.id === id),
+        entry
+      )
+    ) {
+      continue;
+    }
+
     if (entry && persisters?.saveConnector) {
       await persisters.saveConnector(entry);
     } else {
@@ -220,6 +241,16 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   // delete is its own call, and one created and then removed in the same batch is written nowhere.
   for (const id of outcome.changedActions) {
     const entry = draft.actions.find(item => item.id === id);
+    if (
+      entry &&
+      unchanged(
+        space.actions.find(item => item.id === id),
+        entry
+      )
+    ) {
+      continue;
+    }
+
     if (entry && persisters?.saveAction) {
       await persisters.saveAction(entry);
     } else {

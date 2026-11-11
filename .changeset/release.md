@@ -70,6 +70,16 @@ An authored request connects to the address its name was judged to, and the advi
   vulnerabilities", one advisory of eslint's counted ten times. A test holds every `plitzi …` command the skills write
   to one the CLI has.
 
+## MCP
+
+- A write sent again — a client that timed out and retried, an agent that lost the answer — changes nothing and writes
+  nothing: a store a batch left as it was is no longer saved. Every write the MCP sent was saved even when it changed
+  nothing, so a retried `plitzi_set_attributes`, `plitzi_apply` or `plitzi_add_page` added a second entry to the space's
+  history (two, with a class in it) for an edit nobody made. The answer says `Nothing changed`, as it did.
+- The element tools named on a page or a layout say so — `"home" is a page, not an element on one` — and where to
+  edit it, instead of `There is no element "home" — did you mean "home"?`. A ref nobody has is offered the nearest
+  element, never a page.
+
 ## Builder
 
 - A builder that cannot open its space says why and where to go — a session that ended (sign in again), a space out of
