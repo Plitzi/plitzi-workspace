@@ -77,8 +77,35 @@ const CONTENT_HEIGHT = (): number => {
 const FONTS_READY = (): Promise<unknown> =>
   Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
 
-/** Guard against a runaway page turning one screenshot into a hundred-megabyte PNG. */
-const MAX_HEIGHT = 8000;
+/**
+ * A capture shows the page, the same in the three places one is taken — this client, the screenshot service
+ * (`plitzi-platform` `cluster/services/screenshot`) and `plitzi-sdk-server`'s visual suite (`visual/helpers.ts`,
+ * `shoot`): drawn with `prefers-reduced-motion: reduce` (`emulateCaptureMedia`), so what reveals itself as it scrolls in
+ * rests at its end state; and a page taller than `ONE_SHOT_HEIGHT` in parts of at most `PART_HEIGHT` (`clip`), in order
+ * — Chromium paints nothing past 16,384 px of one capture. Never by scrolling: what sticks would be in every part.
+ */
+const ONE_SHOT_HEIGHT = 16_000;
+const PART_HEIGHT = 8_000;
+/** Guard against a runaway page: past this, its foot is not captured, and the capture says so in its last part. */
+const MAX_HEIGHT = 32_000;
+
+/** The regions a page of `height` is captured in: one, or parts of `PART_HEIGHT` each labelled with its place. */
+export const captureParts = (
+  label: string,
+  width: number,
+  height: number
+): { label: string; clip?: { x: number; y: number; width: number; height: number } }[] => {
+  if (height <= ONE_SHOT_HEIGHT) {
+    return [{ label }];
+  }
+
+  const count = Math.ceil(height / PART_HEIGHT);
+
+  return Array.from({ length: count }, (_, index) => ({
+    label: `${label} (${String(index + 1)}/${String(count)})`,
+    clip: { x: 0, y: index * PART_HEIGHT, width, height: Math.min(PART_HEIGHT, height - index * PART_HEIGHT) }
+  }));
+};
 
 const importDriver = async (name: string): Promise<Launcher | undefined> => {
   try {
@@ -197,22 +224,28 @@ export const createLocalScreenshotClient = async ({
 
           await page.evaluate(FONTS_READY);
 
+          let height = viewport.height;
           if (fullPage) {
-            const height = Math.min(await page.evaluate(CONTENT_HEIGHT), MAX_HEIGHT);
+            height = Math.min(await page.evaluate(CONTENT_HEIGHT), MAX_HEIGHT);
             if (height > viewport.height) {
               await setViewport(page, { width: viewport.width, height });
             }
           }
 
           if (views.includes('image')) {
-            const shot = await page.screenshot(
-              format === 'webp' ? { type: 'webp', quality, fullPage } : { type: 'png', fullPage }
-            );
-            images.push({
-              label: viewport.label,
-              mimeType: format === 'webp' ? 'image/webp' : 'image/png',
-              data: Buffer.from(shot).toString('base64')
-            });
+            const type = format === 'webp' ? { type: 'webp', quality } : { type: 'png' };
+            for (const part of fullPage
+              ? captureParts(viewport.label, viewport.width, height)
+              : [{ label: viewport.label }]) {
+              const shot = await page.screenshot(
+                'clip' in part ? { ...type, clip: part.clip, captureBeyondViewport: true } : { ...type, fullPage }
+              );
+              images.push({
+                label: part.label,
+                mimeType: format === 'webp' ? 'image/webp' : 'image/png',
+                data: Buffer.from(shot).toString('base64')
+              });
+            }
           }
 
           const outline = views.includes('accessibility') ? await readOutline(page) : undefined;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createLocalScreenshotClient, resolveLocalBrowser } from './localScreenshotClient';
+import { captureParts, createLocalScreenshotClient, resolveLocalBrowser } from './localScreenshotClient';
 
 /**
  * What matters here is the WIRING, not the picture: whether a host that has a browser gets a client shaped exactly
@@ -19,5 +19,20 @@ describe('mcp/localScreenshotClient', () => {
     } else {
       expect(client).toBeUndefined();
     }
+  });
+});
+
+// Chromium paints nothing past 16,384 px of one capture: the foot of a long page was white.
+describe('the regions a page is captured in', () => {
+  it('is one for a page one capture holds', () => {
+    expect(captureParts('desktop', 1440, 16_000)).toEqual([{ label: 'desktop' }]);
+  });
+
+  it('is parts of 8,000 px, in order and each saying its place, for a taller one', () => {
+    expect(captureParts('desktop', 1440, 20_500)).toEqual([
+      { label: 'desktop (1/3)', clip: { x: 0, y: 0, width: 1440, height: 8000 } },
+      { label: 'desktop (2/3)', clip: { x: 0, y: 8000, width: 1440, height: 8000 } },
+      { label: 'desktop (3/3)', clip: { x: 0, y: 16_000, width: 1440, height: 4500 } }
+    ]);
   });
 });
