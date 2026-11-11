@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { PLITZI_MARK_DATA_URL, PLITZI_MARK_SVG } from './plitziMark';
 
 describe('schema/plitziMark', () => {
