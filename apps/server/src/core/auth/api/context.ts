@@ -91,20 +91,28 @@ export const createAuthContext = ({
     createHash('sha256').update(normalizeRecoveryCode(code)).digest('hex');
 
   /**
-   * Sends, and never fails the flow if it cannot.
+   * Sends, and never fails the flow if it cannot — nor holds it while it does.
    *
    * Every one of these goes out AFTER something has already been committed — an account created, an address
    * changed, a reset token stored. Letting the mail provider decide whether that request succeeded turns an
    * outage at Brevo into a 500 on a change that did happen, which is the worst of both: the caller is told it
    * failed and retries against the new state. Reported instead, and the person can ask for another.
+   *
+   * Started, not awaited: the answer never depended on it, and waiting for it was the provider's round trip on every
+   * sign-up (RFC 0033 T6.2) — and on a password reset, a slower answer for an address that has an account than for
+   * one that has not, which is how a stranger tells them apart.
    */
-  const deliver = async (message: { to: string; template: string; data: Record<string, string> }): Promise<void> => {
-    try {
-      await adapters.sendMail?.(message);
-    } catch (error: unknown) {
-      const report = onMailError ?? ((cause: unknown) => serverLog.error('auth', 'could not send mail', cause));
-      report(error, { to: message.to, template: message.template });
-    }
+  const deliver = (message: { to: string; template: string; data: Record<string, string> }): void => {
+    const report = onMailError ?? ((cause: unknown) => serverLog.error('auth', 'could not send mail', cause));
+    Promise.resolve()
+      .then(() => adapters.sendMail?.(message))
+      .catch((error: unknown) => {
+        try {
+          report(error, { to: message.to, template: message.template });
+        } catch (reporting: unknown) {
+          serverLog.error('auth', 'could not send mail, nor report it', reporting);
+        }
+      });
   };
 
   /**

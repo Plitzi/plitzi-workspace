@@ -47,6 +47,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- The account mails — the address to confirm, a reset, a new address, a code — go out without the answer waiting for
+  them: a failed send was already reported and never failed the change, so waiting only added the provider's round trip
+  to every sign-up, and made a reset answer slower for an address with an account than for one without, which told a
+  stranger which addresses have one.
 - A page is sent the space in parts: its document (`/_plitzi/space/<hash>.json`) is a shell — the definition, settings,
   variables and every page and layout element itself — with that page's own elements and its layouts'; `schema.parts`
   names the rest, a part per page and per layout at `/_plitzi/space/part/<name>.json`, named by its content and kept for

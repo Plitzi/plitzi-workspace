@@ -63,7 +63,7 @@ export const factorsFlows = ({
           expiresAt: now() + LIFETIME.signInCode,
           userId: account.id
         });
-        await deliver({
+        deliver({
           to: account.email,
           template: 'signin-code',
           data: { username: account.username, code }

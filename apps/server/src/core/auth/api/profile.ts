@@ -77,7 +77,7 @@ export const profileFlows = ({
     if (parking && adapters.setPendingEmail) {
       const confirmationToken = mintLink(generateToken(), LIFETIME.confirmLink);
       await adapters.setPendingEmail(actor.id, email, confirmationToken);
-      await deliver({
+      deliver({
         to: email,
         template: 'email-change',
         data: { username: account.username, email, confirmationToken }
@@ -97,7 +97,7 @@ export const profileFlows = ({
     if (changingEmail && capabilities.emailVerification && adapters.setValidationToken) {
       const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
       await adapters.setValidationToken(actor.id, validationToken);
-      await deliver({
+      deliver({
         to: account.email,
         template: 'validation',
         data: { username: account.username, validationToken }

@@ -106,7 +106,7 @@ export const accountsFlows = ({
     if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {
       const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
       await adapters.setValidationToken(account.id, validationToken);
-      await deliver({
+      deliver({
         to: email,
         template: 'validation',
         data: { username, validationToken, ...destinationOf(fields.redirect) }
@@ -134,7 +134,7 @@ export const accountsFlows = ({
     if (account) {
       const resetToken = mintLink(generateToken(), LIFETIME.resetLink);
       await adapters.setResetToken?.(account.id, resetToken);
-      await deliver({
+      deliver({
         to: account.email,
         template: 'password-reset',
         data: { username: account.username, resetToken }
@@ -205,7 +205,7 @@ export const accountsFlows = ({
     if (account && !account.verified) {
       const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
       await adapters.setValidationToken?.(account.id, validationToken);
-      await deliver({
+      deliver({
         to: account.email,
         template: 'validation',
         data: { username: account.username, validationToken, ...destinationOf(redirect) }

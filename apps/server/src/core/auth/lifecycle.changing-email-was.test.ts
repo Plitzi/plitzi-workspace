@@ -264,7 +264,49 @@ describe('when the mail provider is down', () => {
     expect(await api.signup({ username: 'n', email: 'n@e.test', password: 'longenoughpw' })).toMatchObject({
       ok: true
     });
-    expect(onMailError).toHaveBeenCalledTimes(2);
+    // Said once it fails — after the answer, which never waited for the provider.
+    await vi.waitFor(() => {
+      expect(onMailError).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // The answer is the account's, not the provider's: a provider that never answers holds nobody's sign-up — nor, on a
+  // reset, makes an address that has an account answer slower than one that has not.
+  it('answers without waiting for the mail to go out', async () => {
+    const sent: string[] = [];
+    const tokens = createTokens({ keys: TEST_KEYS, issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        createAccount: account => Promise.resolve({ ...ada, ...account }),
+        findByValidationToken: () => Promise.resolve(ada),
+        setValidationToken: () => Promise.resolve(),
+        setVerified: () => Promise.resolve(),
+        sendMail: message => {
+          sent.push(message.template);
+
+          return new Promise<void>(() => undefined);
+        }
+      },
+      config: { hashPassword: plain => Promise.resolve(`hash:${plain}`), generateToken: () => 'tok' }
+    });
+
+    expect(await api.signup({ username: 'n', email: 'n@e.test', password: 'longenoughpw' })).toMatchObject({
+      ok: true
+    });
+    await vi.waitFor(() => {
+      expect(sent).toEqual(['validation']);
+    });
   });
 });
 describe('a second factor', () => {
