@@ -17,8 +17,8 @@ gains. The evidence the maintainer asked to see first is the RFC's table for `/t
   where there is a page server either**: no wait a visitor can see that is not there today.
 - **D2:** a visitor who is not signed in does not receive the structure of pages that need a session.
 
-**Order:** T1.1 measures and writes the two contracts; nobody starts T1.2, T1.3 or T1.4 before T1.1's note is in the
-RFC § 8. T1.2 and T1.3 are worked by different agents who read each other's part
+**Order:** T1.1 measures and writes the two contracts; nobody starts T1.2 or T1.4 before T1.1's note is in the
+RFC § 8. T1.2 is worked by an agent who reads the contract
 of § 8. All of WS1 needs portals from `plitzi-sdk-server` to `plitzi-workspace`: ask for them.
 
 **The net for every WS1 task:** `visual/screens.spec.ts`'s `wasted` budgets must not rise; the flicker and theme tests
@@ -31,29 +31,6 @@ space's stylesheet" says how), compressed bytes from the browser's network (`req
 watch server, never a development build.
 
 ---
-
-## T1.3 — The SDK in parts
-
-- **Repos:** `plitzi-workspace` (`apps/sdk`, `packages/sdk-elements`, `apps/server`). **Finding:** P2. **Size:** L.
-- **Depends on:** T1.1. **Contract:** RFC § 8, contract B.
-- **Steps:**
-  1. A **core** chunk: the store, navigation, auth, interactions, and the elements § 8 lists as everywhere.
-  2. **One chunk per heavy element or family** (chart, the form controls, tabs, list, markdown, map, …), named by
-     content, loaded through the element registry's own lazy path. The dev tools stay their own chunk, as today.
-  3. The page server writes `<link rel="modulepreload">` for the chunks of the element types it rendered, so
-     hydration finds them already fetched. Its `103 Early Hints` include them (AGENTS.md § "The page server answers
-     103 Early Hints").
-  4. A space's own plugins keep the import map they have (`react`, `react-dom`, the JSX and compiler runtimes,
-     `@plitzi/plitzi-sdk`): a plugin's value import of the SDK must keep resolving to one copy.
-  5. The server-side render imports the same registry — no element may render on the server and be missing in the
-     browser.
-- **Do not:** make an element render late that rendered at once (the flicker check); duplicate React or the store in
-  two chunks (AGENTS.md § "The image and `yarn start` run the roles' bundle" — one copy of each); change
-  `plitzi-sdk-vendor.js`'s contents without measuring.
-- **Verify:** `yarn check:dist-exports`, `yarn check:specifiers`, `yarn check:server-footprint` in the workspace; the
-  workspace's e2e (`yarn e2e:ci`); in the server, `yarn playwright test visual/` whole; hydration time of the
-  signed-in dashboard before and after (three runs, production); T0.7's `scriptKb` for `/terms` ≤ 150 KB.
-- **Stop and ask if:** a chunk boundary forces a plugin's bundle format to change.
 
 ## T1.7 — A heavy page is said
 

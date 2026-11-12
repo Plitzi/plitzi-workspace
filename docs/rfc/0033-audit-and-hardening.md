@@ -12,7 +12,7 @@ Each is a test that ratchets: lowered when beaten, never raised.
 
 | Target | Now | After | Task |
 |---|---|---|---|
-| JavaScript for a page of text (compressed) | ~344 KB (`screens.spec.ts` budgets) | ≤ 150 KB | T1.3 |
+| JavaScript for a page of text (compressed) | ~330 KB (`screens.spec.ts` budgets) | No split (D13): any saving is made inside `plitzi-sdk.js` | — |
 | Space document for a public page of the website (compressed) | 24 KB on `/terms`, 86 KB on the home (2026-11-12; 130 and 115 before) | ≤ 25 KB + the page's own — met | T1.2 |
 | Home height at 390 px | 16,847 px (ratchet 16,900; 15,991 before every control stood 44 px) | ≤ 16,000 px | T2.4′ |
 | Controls outside the window, 768 to 1280 px | the bar holds from 320 to 1440; the sweep of the key screens is not written | none, at seven widths | T2.28 |
@@ -29,6 +29,7 @@ Answered by the maintainer on 2026-11-10.
 | D2 | Does a visitor who is not signed in receive the signed-in pages' structure? | **No** |
 | D8 | Seeds of the showcase in a package of their own | **No** (2026-11-11): `prisma/` sits outside `src/` on purpose; the cold figures (typecheck 18.3 → 12.6 s, lint 63.4 → 41.5 s) are not worth a package |
 | D11 | Which mark is the brand's | **The home's** — the stacked layers. The console, the back-office and the builder take it |
+| D13 | Is the SDK split into chunks loaded per element family (T1.3)? | **No** (2026-11-12): the SDK is always one file, `plitzi-sdk.js` — it is also used as an SPA, loaded by name wherever a space is hosted. Its weight is cut inside it, never by splitting it (the dev-tools chunk, loaded only to debug, stays) |
 
 ## 3. Work left
 
@@ -46,7 +47,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | Task | Left | Done when | Size |
 |---|---|---|---|
 | **T1.2** The space document in parts | Shipped 2026-11-12 (shell + a part per page and layout, D1/D2, prefetch, the session changing on the page). Left: navigation timed against T1.1's figures at p50 and p95 — it is held to no blank frame and the same document, not yet to a time; a switch for `settings.wholeDocument` in the builder's General settings (the builder keeps the setting already) | The two figures no worse than T1.1's; the switch drawn in both themes | S |
-| **T1.3** The SDK in parts | All of it, by § 4's contract: a core and a chunk per heavy family (Markdown first), `modulepreload` for the rendered types, a static deploy uploading the chunks, the SDK alone preloading a chunk as soon as the document names its family | § 1's script row on `/terms`; the dashboard's hydration no slower (`NODE_ENV=production`); nothing drawn later than before (the flicker check) | L |
 | **T1.7** A heavy page is said | The pages `heavy-page` still names, in the visual lane, same pixels by render diff: `home-guest` 537 KB, `space-record` 306, `admin-pools` 277; the showcase's Pizarra (1,670) and Meridian (452). The way `/pricing` went (708 → 189 KB): sums once as computed values guarded to their page, rows written once through lists whose items draw no box (AGENTS.md says it) | `plitzi lint` names none of them | M |
 
 ### WS2 — Website and sign-in (one visual lane)
@@ -103,14 +103,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.8** A console that walks you in | A first run to the first publish as the page's main thing until done; renaming in place; acting on several spaces; one way to sort and page every table; a count of what needs attention on the bar; loading at its final size | T6.2's journey shorter; the tables in one shared component | L |
 
 ## 4. Design notes the open work needs
-
-**The SDK in parts (T1.3).** A core and a chunk per heavy family, named by content, beside `plitzi-sdk.js` under
-`/sdk-assets` (served already: the dev-tools chunk is). The first chunk is Markdown — the largest part, and one most
-pages lack. Three things decide it, and each is a test before it ships: the page server writes `modulepreload` for the
-chunks of the element types it rendered, so hydration never waits on one; a static deploy uploads the chunks beside the
-bundle (`SpaceDeployMutation` uploads `plitzi-sdk.js` alone today); and the SDK with no page server — D1 — preloads a
-chunk as soon as the document says an element of its family is on the page, so nothing is drawn later than it is
-today (the flicker check). `devToolsChunkPlugin` allows one split today: it becomes the list of the allowed ones.
 
 ## 5. Found on the way, for the maintainer
 
