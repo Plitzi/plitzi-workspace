@@ -400,7 +400,8 @@ are built in and a fourth is `(req) => …` of your own, which is how a deployme
 its proxy sets or by a table nobody else has still gets everything below.
 
 **A space is chosen by host or credential, never by the page's path or query.** `getSpaceDeployment` is asked on every
-request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_plitzi/style/<hash>.css`,
+request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_plitzi/space/part/<name>.json`,
+`/_plitzi/style/<hash>.css`,
 `/_plitzi/icons/…`, `/_action`,
 `/fn/…`, `/_realtime` — carries
 nothing of the page's address but its host: a space chosen by `?space=` or `/s/<id>/` renders its first page and then
@@ -810,6 +811,24 @@ A page is hydrated over the HTML the server sent: a proxy or CDN in front of the
 edge's email obfuscation (Cloudflare's *Email Address Obfuscation*), a minifier, an injected script — has React find
 HTML it did not render (error #418 in production) and the page's script policy refuse what was added. Leave the HTML
 alone at the edge: turn those features off for the hosts the server answers.
+
+### The space in parts
+
+A page the server draws is sent the space it hydrates with beside it, at `/_plitzi/space/<hash>.json` — and not the
+whole of it: a shell (the definition, the settings, the variables, every page and layout element itself, so the space
+routes as the whole did) with that page's own elements and its layouts' in it. `schema.parts` names the rest, a part per
+page and per layout, each at `/_plitzi/space/part/<name>.json`, named by its content and kept by the browser for good
+(`immutable`, `public` unless a session asked). A navigation fetches what its page needs before it goes, a link fetches
+it ahead once it is on screen, and a part that does not come loads the address from the server instead — the page is
+never drawn without its elements. The pages at the same address (one per access level), and the page drawn in place of
+a withheld one (`settings.withheldPage`), travel together.
+
+A part is answered from the space as this visitor may be sent it (`withholdPages`): a page they may not see has none,
+and a layout only such pages are drawn in is named `''` — the server's to draw, so a link to one of those pages loads
+it from there. When somebody signs in or out on the page, what its document kept from the visitor it was sent for is
+loaded from the server again. Whole for a draft, a page named by a token, a deployment's own `templateFn`, a URL that is
+no page, a space with one page, and one that says `settings.wholeDocument` — for pages that read each other's elements.
+The SDK alone, the builder and the MCP read the whole document, which has no `parts`.
 
 ### A page that renders the space itself
 

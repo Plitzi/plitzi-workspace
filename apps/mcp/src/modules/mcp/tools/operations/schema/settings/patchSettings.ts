@@ -102,6 +102,10 @@ export const patchSettingsOp = z
       .string()
       .optional()
       .describe('Page id drawn for a withheld page (its 401/403); "" = Plitzi\'s words'),
+    wholeDocument: z
+      .boolean()
+      .optional()
+      .describe('Whole space with every page, not in parts'),
     channels: z
       .record(z.string(), channel.nullable())
       .optional()

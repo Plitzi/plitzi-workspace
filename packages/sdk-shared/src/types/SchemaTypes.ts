@@ -305,6 +305,11 @@ export type Schema = {
      * yours" there, as on any page. Left out, the platform's few words. A page with an `access` of its own cannot be it.
      */
     withheldPage?: string;
+    /**
+     * Sends the whole space with every page instead of in parts — the page's own elements and its layouts', the rest
+     * fetched as a link to it is followed. For a space whose pages read each other's elements at run time.
+     */
+    wholeDocument?: boolean;
     /** The language its pages are written in, as a language tag (`en`, `es-MX`): `<html lang>` and `og:locale`. */
     language?: string;
     /** The tab's icon: a file of the site (`/favicon.svg`) or an address (`https://…`). Left out, Plitzi's. */
@@ -397,6 +402,13 @@ export type Schema = {
   pages: Element['id'][];
   pageFolders: PageFolder[];
   components: Record<SpaceComponent['id'], SpaceComponent>;
+  /**
+   * Only in a document a page server sends in parts (`splitSchema`): the roots — pages and layouts — whose elements are
+   * not in `flat` yet, each by the name of the part that holds them, fetched before a page that needs it is drawn; `''`
+   * for one this visitor is not sent, which only the server can draw. Absent, the document is whole: the SDK alone, the
+   * builder, the MCP and a static deploy never see it.
+   */
+  parts?: Record<string, string>;
 };
 
 export type SchemaContextValue = {

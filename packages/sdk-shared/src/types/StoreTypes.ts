@@ -135,6 +135,11 @@ export type CommonState = {
     currentPageId: string;
     navigate: (url: string, how?: NavigateHow) => void;
     /**
+     * Gets ready what following a link to `url` will need — the parts of the space its page is drawn from, when the
+     * space is sent in parts — so the navigation does not wait for them. Nothing when there is nothing to get.
+     */
+    prefetch?: (url: string) => void;
+    /**
      * Where a navigation is going while it waits for the destination's server data — `''` when none is. A link to a
      * page resolved on the server asks for that page's data before it goes, and the page on screen stays until then:
      * this is what a loading bar for it reads.

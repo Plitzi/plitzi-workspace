@@ -292,6 +292,8 @@ const matchRoutePath = (
   action: { type: 'authenticated' | 'accessDenied' | 'redirect' | 'notFound' | 'normal'; path?: string };
   pathMatch?: PathMatch;
   pageId?: string;
+  /** The page that sends this visitor elsewhere, for a `redirect`: what its address was, before it redirected. */
+  redirectedFrom?: string;
 } => {
   if (!pathName) {
     return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
@@ -335,7 +337,11 @@ const matchRoutePath = (
     path: { hasAccess, unauthorizedBehaviour, unauthorizedPageRedirect, notFound }
   } = possibleCandidate;
   if (!hasAccess && unauthorizedBehaviour === 'redirect' && unauthorizedPageRedirect) {
-    return { action: { type: 'redirect', path: unauthorizedPageRedirect }, pathMatch: undefined };
+    return {
+      action: { type: 'redirect', path: unauthorizedPageRedirect },
+      pathMatch: undefined,
+      redirectedFrom: pageId
+    };
   }
 
   // A page that answers as if it did not exist, to whoever it is not for: what a path no page answers gets — the

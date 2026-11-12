@@ -23,6 +23,7 @@ export const SCHEMA_SETTINGS = [
   'themeColor',
   'customCss',
   'withheldPage',
+  'wholeDocument',
   'visitorRoles',
   'userProvider',
   'tokenStorage',

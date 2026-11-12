@@ -2,6 +2,7 @@ export * from './aiCrawlers';
 export * from './anchor';
 export * from './schemaConstants';
 export * from './layoutChain';
+export * from './documentParts';
 export * from './serverElements';
 export * from './providerAnswer';
 export * from './providerWhen';

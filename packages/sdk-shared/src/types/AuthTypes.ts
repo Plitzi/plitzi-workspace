@@ -97,6 +97,11 @@ export type AuthContextValue = {
    * chose to leave, and sent back to it they were only ever sent to sign in again.
    */
   signedOutHere?: boolean;
+  /**
+   * The visitor changed their session on this page — signed in, signed out, or did either in another tab — rather than
+   * arriving with it. What the page was sent for its first visitor may not be what it would send them now.
+   */
+  sessionChangedHere?: boolean;
   user?: {
     details?: {
       id: number;

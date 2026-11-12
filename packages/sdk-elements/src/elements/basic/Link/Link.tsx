@@ -7,6 +7,7 @@ import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { ariaCurrent } from './ariaCurrent';
+import usePrefetchInView from './usePrefetchInView';
 import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -80,13 +81,14 @@ const Link = ({
   const {
     settings: { previewMode }
   } = usePlitzi();
-  const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate, location]] = useSdkStore([
+  const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate, location, prefetch]] = useSdkStore([
     'pageDefinitions',
     'schema.pageFolders',
     'navigation.routeParams',
     'navigation.queryParams',
     'navigation.navigate',
-    'navigation.href'
+    'navigation.href',
+    'navigation.prefetch'
   ]);
 
   // A value with a scheme — a URL the data hands a bound href, `mailto:`, `tel:` — is no page's path, whatever the mode
@@ -123,6 +125,8 @@ const Link = ({
   // The page being shown, said by the link that leads to it — or by its section's: what a screen reader announces, and
   // what the `current` style state selects. From the address the server rendered, so the first paint already marks it.
   const currentAs = external || sameDocument ? undefined : ariaCurrent(path, location, current);
+
+  usePrefetchInView(ref, url, prefetch, previewMode === true && !external && !sameDocument && target === 'self');
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {

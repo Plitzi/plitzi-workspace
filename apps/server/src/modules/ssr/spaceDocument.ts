@@ -3,6 +3,7 @@ import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 
 import { meterPage } from './meterPage';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
+import { partTextOf } from '../../helpers/documentParts';
 import { digest, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
@@ -28,6 +29,9 @@ export const SPACE_DOCUMENT_PATH = '/_plitzi/space/';
 export const CURRENT_SPACE_PATH = '/_plitzi/space.json';
 
 const DOCUMENT_PATH = /^\/_plitzi\/space\/([\w-]{1,64})\.json$/;
+
+/** One part of a space sent in parts (`documentParts`), by its name: what a navigation to a page not yet held fetches. */
+const PART_PATH = /^\/_plitzi\/space\/part\/([\w-]{1,64})\.json$/;
 
 /**
  * The documents this process just put in a page, so the request that follows is answered without reading the space
@@ -124,6 +128,13 @@ export const handleSpaceDocument = async (
   config: SSRPageServerConfig,
   offlineDataCache?: TtlCache<OfflineDataRaw>
 ): Promise<void> => {
+  const part = PART_PATH.exec(req.path)?.[1];
+  if (part) {
+    await handleSpacePart(req, res, config, part, offlineDataCache);
+
+    return;
+  }
+
   const hash = DOCUMENT_PATH.exec(req.path)?.[1];
   // The page's own defaults (`renderSSR`), so a page that was drawn has a space to fetch.
   const { environment = 'main' } = req.ctx.spaceDeployment ?? {};
@@ -158,6 +169,54 @@ export const handleSpaceDocument = async (
     current ? `${req.ctx.user ? 'private' : 'public'}, max-age=31536000, immutable` : 'no-store'
   );
   res.send(json);
+};
+
+/**
+ * Answers `/_plitzi/space/part/<name>.json`: one part of the space, from this visitor's own split — the space as they
+ * may be sent it (`withholdPages`) — so a part of a page they may not see, or of a layout only such pages are drawn in,
+ * is none of theirs and answers 404, as a name the space no longer has does. A page that is answered 404 loads the
+ * address it was going to from the server, which draws it or says why not.
+ */
+const handleSpacePart = async (
+  req: SSRRequest,
+  res: SSRResponseHelpers,
+  config: SSRPageServerConfig,
+  name: string,
+  offlineDataCache?: TtlCache<OfflineDataRaw>
+): Promise<void> => {
+  const { environment = 'main', revision = 0 } = req.ctx.spaceDeployment ?? {};
+  const spaceId = req.ctx.spaceDeployment?.spaceId ?? 1;
+  const cacheKey = offlineDataCacheKeyOf(req.ctx.spaceDeployment);
+  const held = cacheKey ? offlineDataCache?.get(cacheKey) : undefined;
+  const offlineData = held ?? (await config.adapters.getOfflineData(spaceId, environment, revision));
+  if (!offlineData) {
+    sendNoData(res, spaceId, environment);
+
+    return;
+  }
+
+  if (cacheKey && !held) {
+    offlineDataCache?.set(cacheKey, offlineData);
+  }
+
+  const { schema, withheld } = withholdPages(offlineData.schema, req.ctx.user);
+  const text = partTextOf(schema, withheld, name);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (text === undefined) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setStatus(404);
+    res.send(
+      JSON.stringify({
+        error: `No part "${name}" of this space for this visitor: the space changed since the page was drawn, or the part is a page they may not see`,
+        reason: 'part_gone'
+      })
+    );
+
+    return;
+  }
+
+  res.setHeader('Cache-Control', `${req.ctx.user ? 'private' : 'public'}, max-age=31536000, immutable`);
+  res.send(text);
 };
 
 /** The decision about this visit a page drawn here is handed in its bootstrap, for a page that renders by itself. */

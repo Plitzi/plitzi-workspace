@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useRef, useState, use } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
+import { missingParts, withParts } from '@plitzi/sdk-shared/schema';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { askSpace } from './askSpace';
+import { fetchPart, SpacePartsContext } from './spaceParts';
 
+import type { PartsNeed, SpaceParts } from './spaceParts';
 import type { OfflineDataRaw, Server, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 import type { NetworkInternalContextValue, NetworkContextValue } from '@plitzi/sdk-shared/network/react';
 import type { ReactNode, RefObject } from 'react';
@@ -148,6 +151,58 @@ const NetworkContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
+  /**
+   * The space sent in parts (`spaceParts`): what a page needs, fetched and put into the space before it is drawn. A
+   * navigation goes once the stores hold it — this effect runs after the schema's own provider, inside, has synced it
+   * — so the page it opens never draws a moment without its elements.
+   */
+  const latest = useRef(internalData);
+  latest.current = internalData;
+  const waiting = useRef<{ roots: string[]; resolve: () => void }[]>([]);
+  useEffect(() => {
+    const parts = internalData.schema.parts ?? {};
+    waiting.current = waiting.current.filter(each => {
+      if (each.roots.some(root => Object.hasOwn(parts, root))) {
+        return true;
+      }
+
+      each.resolve();
+
+      return false;
+    });
+  }, [internalData.schema]);
+  const need = useCallback((pageId: string): PartsNeed => {
+    const { schema } = latest.current;
+    const roots = missingParts(schema, pageId);
+    if (roots.length === 0) {
+      return 'held';
+    }
+
+    return roots.some(root => !schema.parts?.[root]) ? 'server' : 'fetch';
+  }, []);
+  const ensure = useCallback(async (pageId: string): Promise<boolean> => {
+    const { schema } = latest.current;
+    const roots = missingParts(schema, pageId);
+    if (roots.length === 0) {
+      return true;
+    }
+
+    const names = roots.map(root => schema.parts?.[root] ?? '');
+    if (names.includes('')) {
+      return false;
+    }
+
+    const parts = await Promise.all(names.map(fetchPart));
+    const held = new Promise<void>(resolve => {
+      waiting.current.push({ roots, resolve });
+    });
+    setInternalData(state => ({ ...state, schema: withParts(state.schema, parts) }));
+    await held;
+
+    return true;
+  }, []);
+  const partsValue = useMemo<SpaceParts>(() => ({ need, ensure }), [need, ensure]);
+
   const networkValue = useMemo<NetworkContextValue>(
     () => ({ webKey, webId, server, environment, instanceId, userKey }),
     [webKey, webId, server, environment, instanceId, userKey]
@@ -163,7 +218,9 @@ const NetworkContextProvider = ({
 
   return (
     <NetworkContext value={networkValue}>
-      <NetworkInternalContext value={internalData}>{children}</NetworkInternalContext>
+      <NetworkInternalContext value={internalData}>
+        <SpacePartsContext value={partsValue}>{children}</SpacePartsContext>
+      </NetworkInternalContext>
     </NetworkContext>
   );
 };

@@ -159,9 +159,10 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
        */
       authenticated:
         state === 'authenticated' || (state === 'init' && (!!bootstrapUser || peeked?.state === 'authenticated')),
-      signedOutHere
+      signedOutHere,
+      sessionChangedHere: decidedOnce
     }),
-    [manager, state, bootstrapUser, bootstrapToken, decided, peeked, signedOutHere]
+    [manager, state, bootstrapUser, bootstrapToken, decided, peeked, signedOutHere, decidedOnce]
   );
 
   return hookValue;

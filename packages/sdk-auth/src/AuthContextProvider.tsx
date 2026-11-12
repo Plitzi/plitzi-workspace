@@ -134,6 +134,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     loading,
     authenticated,
     signedOutHere,
+    sessionChangedHere,
     state,
     bootstrapUser,
     bootstrapToken,
@@ -190,6 +191,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
       state,
       authenticated: authenticated || !previewMode,
       signedOutHere: signedOutHere && previewMode,
+      sessionChangedHere,
       /**
        * The provider's session once it has one, and until then the best thing already known about this visitor.
        *
@@ -201,7 +203,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
        */
       user
     }),
-    [manager, state, authenticated, signedOutHere, previewMode, user]
+    [manager, state, authenticated, signedOutHere, sessionChangedHere, previewMode, user]
   );
 
   // A journey's test account, set through the dev tools' inspector: the page shows that visitor, signed in.

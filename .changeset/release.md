@@ -47,6 +47,14 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- A page is sent the space in parts: its document (`/_plitzi/space/<hash>.json`) is a shell — the definition, settings,
+  variables and every page and layout element itself — with that page's own elements and its layouts'; `schema.parts`
+  names the rest, a part per page and per layout at `/_plitzi/space/part/<name>.json`, named by its content and kept for
+  good. The website's `/terms` was sent 130 KB of the space, compressed; it is sent 24 KB. A part is answered from the
+  space as the visitor may be sent it: a page they may not see has none, and a layout only such pages use is named
+  `''`, the server's to draw. Whole, as before, for a draft, a page named by a token, a `templateFn`, a URL that is no
+  page, a space with one page, and `settings.wholeDocument`. The SDK alone, the builder, the MCP and a static deploy
+  read the whole document as they did.
 - A page's head reads `navigation.origin` on the server too: its JSON-LD, title, description and picture are templates
   over the page's context, which had the route and query but not the origin — a JSON-LD `url` of
   `{{ navigation.origin }}/` arrived as `/`, which no search engine takes as an address. It is the request's origin,
@@ -80,6 +88,13 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## SDK
 
+- A navigation fetches the parts of the space its page needs before it goes (a link fetches them ahead, idle, once it is
+  on screen), and a part that does not come loads the address from the server, said in the dev tools — never a page
+  drawn without its elements. A document with no `parts` — the SDK alone — takes none of this path.
+- Signing in or out on a page no longer leaves it showing what its document was sent for the visitor before: a page
+  that document withheld — a member's page, after signing in — is loaded from the server for the visitor now
+  (`sessionChangedHere` on the auth context says the session changed on this page). Since signed-in pages were
+  withheld from the signed out, an in-page sign-in drew "Sign in to see this page" on the page it had just opened.
 - A server-rendered page carries the space's variables alone inline: its custom CSS goes in the stylesheet it links
   (`/_plitzi/style/<hash>.css`) after the compiled rules, as the page drew them, and the browser keeps it with them.
   It was most of every page's HTML — Plitzi's website carried 44.7 KB of it on each, and `/terms` is 89 → 45 KB.
@@ -120,6 +135,7 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## MCP
 
+- `patchSettings` takes `wholeDocument`: every page sent the whole space rather than its own part.
 - A write sent again — a client that timed out and retried, an agent that lost the answer — changes nothing and writes
   nothing: a store a batch left as it was is no longer saved. Every write the MCP sent was saved even when it changed
   nothing, so a retried `plitzi_set_attributes`, `plitzi_apply` or `plitzi_add_page` added a second entry to the space's
@@ -204,6 +220,9 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Elements
 
+- A link on screen fetches what following it will need ahead (`navigation.prefetch`), when the browser is idle: with a
+  space sent in parts, its page's part. One observer for all the page's links.
+- A chart's line key is a pill, its ends rounded, rather than a 1 px corner of its own.
 - A link to a section of the page it is on — `href: '#main-content'`, a skip link's — goes to that section, followed by
   the browser: in page mode it was read as a page of that name and led to the home (`/#main-content`), from every page.
 - A form control's `autoComplete` takes what the field holds — `username`, `current-password`, `new-password`,

@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
+import { useCallback, use, useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
 import { useStoreById } from '@plitzi/nexus/react';
@@ -12,6 +12,7 @@ import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
 import { NetworkContext } from '@plitzi/sdk-shared/network/react';
+import { pageWithheldOf } from '@plitzi/sdk-shared/schema';
 import { refreshRsc } from '@plitzi/sdk-shared/server';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
@@ -19,6 +20,7 @@ import { currentUrl, offSiteTarget, returnTo, withRedirect } from './redirects';
 import useScrollOnNavigation from './useScrollOnNavigation';
 import useScrollToHash from './useScrollToHash';
 import { browserHost, moveDrawn } from './viewTransition';
+import { SpacePartsContext } from '../Network/spaceParts';
 
 import type { RedirectedAs } from './redirects';
 import type { CommonState, Element, NavigateHow, NavigationStatus, PageFolder, RouteParams } from '@plitzi/sdk-shared';
@@ -37,6 +39,44 @@ type RouterState = { location: Location; navigationType: NavigationType; navigat
 const PREFETCH_TIMEOUT_MS = 1500;
 
 const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+/**
+ * How long a navigation waits for the parts of the space its page needs (`spaceParts`) before it loads the address
+ * from the server instead: a part is one small file, and past this the network is not going to bring it soon.
+ */
+const PARTS_TIMEOUT_MS = 10_000;
+
+/** A page the document keeps from its visitor: withheld, drawn as a refusal, until the server is asked again. */
+const keptFromVisitor = (page: Element | undefined): boolean => pageWithheldOf(page?.attributes) !== undefined;
+
+/**
+ * Whether the server was already asked for `here` for this visitor (`markServerAsked`): asked once, a page they truly
+ * may not see is drawn as its refusal rather than loaded again and again. A browser that keeps nothing cannot tell a
+ * second load from a first, so it is drawn as the document says.
+ */
+const serverAskedKey = (visitor: string | undefined, here: string): string =>
+  `plitzi:visitor-load:${visitor ?? ''}:${here}`;
+
+const serverAsked = (visitor: string | undefined, here: string): boolean => {
+  try {
+    return window.sessionStorage.getItem(serverAskedKey(visitor, here)) !== null;
+  } catch {
+    return true;
+  }
+};
+
+const markServerAsked = (visitor: string | undefined, here: string): boolean => {
+  try {
+    window.sessionStorage.setItem(serverAskedKey(visitor, here), '1');
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** A target's path alone, as a route is matched: no query, no fragment. */
+const pathOf = (target: string): string => target.split(/[?#]/, 1)[0] || '/';
 
 type RoutePaths = ReturnType<typeof getPaths>;
 
@@ -108,7 +148,31 @@ const NavigationCore = ({
   pageDefinitionsRef.current = pageDefinitions;
   const pageFoldersRef = useRef(pageFolders);
   pageFoldersRef.current = pageFolders;
-  const { authenticated, signedOutHere, user, testAccount } = use(AuthContext);
+  const { authenticated, signedOutHere, user, testAccount, state: authState, sessionChangedHere } = use(AuthContext);
+  /**
+   * Who this document was sent for: the visitor of the first settled session — the one the page server drew. A page
+   * server sends a visitor only what is theirs (pages withheld, parts named `''`), so once somebody signs in or out on
+   * the page (`sessionChangedHere`), what the document keeps from the visitor it was sent for is loaded from the server,
+   * which sends this one theirs. A session settling as the page starts is no change; a test account of the dev tools is
+   * no visitor of the server's.
+   */
+  const visitorNow =
+    testAccount !== undefined
+      ? undefined
+      : authState === 'authenticated'
+        ? String(user?.details?.id ?? 'signed-in')
+        : authState === 'guest'
+          ? ''
+          : undefined;
+  const documentVisitor = useRef<string | undefined>(undefined);
+  if (documentVisitor.current === undefined && visitorNow !== undefined) {
+    documentVisitor.current = visitorNow;
+  }
+
+  const visitorChanged =
+    sessionChangedHere === true && visitorNow !== undefined && visitorNow !== documentVisitor.current;
+  const visitorChangedRef = useRef(visitorChanged);
+  visitorChangedRef.current = visitorChanged;
   const routerNavigate = router?.navigate;
   /**
    * The router's `navigate`, reached through a ref: it is a new function whenever the location changes, and the one
@@ -124,11 +188,24 @@ const NavigationCore = ({
     () => routesOf(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
     [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
+  const spaceParts = use(SpacePartsContext);
+  /** The page a target opens, for what it needs before it is drawn — read when it is asked, not when it was made. */
+  const pageAt = useRef<(target: string) => string | undefined>(() => undefined);
+  pageAt.current = target => matchRoutePath(paths, pathOf(target), authenticated).pageId;
+  /** A target loaded from the server: what a page whose parts cannot be had here does. */
+  const loadFromServer = useCallback(
+    (target: string) => {
+      const base = (server.basePath ?? '/').replace(/\/+$/, '');
+      window.location.assign(`${base}${target}`);
+    },
+    [server.basePath]
+  );
 
   const matchResult = useMemo<{
     action: { type: NavigationStatus; path?: string };
     pathMatch?: PathMatch;
     pageId?: string;
+    redirectedFrom?: string;
   }>(() => {
     // A widget names the element it draws. One that names none is a space drawn whole — a `plitziSdk` element, a
     // space inside a plugin — and with no address of its own it shows the page its home address would.
@@ -142,7 +219,7 @@ const NavigationCore = ({
     return matchRoutePath(paths, location.pathname, authenticated);
   }, [paths, location.pathname, authenticated, renderMode, currentPageIdProp]);
 
-  const { action, pageId = '', pathMatch } = matchResult;
+  const { action, pageId = '', pathMatch, redirectedFrom } = matchResult;
   const currentPageId = currentPageIdProp || pageId;
   useScrollToHash({
     hash: routerLocation?.hash ?? '',
@@ -215,6 +292,51 @@ const NavigationCore = ({
 
       const target = resolveTarget(url);
       const ticket = ++latestNavigation.current;
+      const pageId = pageAt.current(target);
+      const need = pageId ? spaceParts.need(pageId) : 'held';
+      if (pageId && visitorChangedRef.current && keptFromVisitor(pageDefinitionsRef.current[pageId])) {
+        loadFromServer(target);
+
+        return;
+      }
+
+      if (need === 'server') {
+        loadFromServer(target);
+
+        return;
+      }
+
+      if (pageId && need === 'fetch') {
+        store.set('navigation.pendingLocation', target);
+        const timedOut = wait(PARTS_TIMEOUT_MS).then(() => {
+          throw new Error(`they did not arrive in ${String(PARTS_TIMEOUT_MS / 1000)} s`);
+        });
+        Promise.race([spaceParts.ensure(pageId), timedOut]).then(
+          drawable => {
+            if (latestNavigation.current !== ticket) {
+              return;
+            }
+
+            if (drawable) {
+              handleNavigate(url, { replace });
+            } else {
+              loadFromServer(target);
+            }
+          },
+          (error: unknown) => {
+            pConsole.warning(
+              'navigation',
+              `The page at ${target} is loaded from the server: its part of the space could not be fetched (${error instanceof Error ? error.message : String(error)})`,
+              { status: 'warning', elementId: pageId }
+            );
+            if (latestNavigation.current === ticket) {
+              loadFromServer(target);
+            }
+          }
+        );
+
+        return;
+      }
 
       /**
        * Ask for the destination's data BEFORE going there.
@@ -252,7 +374,25 @@ const NavigationCore = ({
       };
       void Promise.race([prefetch, wait(PREFETCH_TIMEOUT_MS)]).then(go, go);
     },
-    [goTo, resolveTarget, store]
+    [goTo, loadFromServer, resolveTarget, spaceParts, store]
+  );
+
+  /**
+   * A link about to be followed — on screen — gets its page's parts of the space before it is (`navigation.prefetch`), so
+   * the navigation finds them held. One that fails is asked again by the navigation, which says why if it fails there.
+   */
+  const handlePrefetch = useCallback(
+    (url: string) => {
+      if (isAbsoluteUrl(url)) {
+        return;
+      }
+
+      const pageId = pageAt.current(resolveTarget(url));
+      if (pageId && spaceParts.need(pageId) === 'fetch') {
+        spaceParts.ensure(pageId).catch(() => undefined);
+      }
+    },
+    [resolveTarget, spaceParts]
   );
 
   const routeParamsValue = useMemo<RouteParams>(() => {
@@ -305,6 +445,70 @@ const NavigationCore = ({
   // What is shown for a page gated off is the space's "not found" page for its address, as for one nothing matches.
   const shownPageId = pageGatedOff ? (notFoundPageFor(paths, location.pathname) ?? '') : currentPageId;
 
+  /**
+   * A page this document kept from the visitor it was sent for redirects to signing in — and the visitor has signed in
+   * since: what it says is no longer theirs, so it is neither followed nor drawn, and the server is asked for the page.
+   */
+  const heldForServer =
+    visitorChanged &&
+    action.type === 'redirect' &&
+    redirectedFrom !== undefined &&
+    keptFromVisitor(pageDefinitions[redirectedFrom]);
+
+  /**
+   * The page on screen without its parts of the space — the router changed to it with no navigation, as one page at an
+   * address gives way to another when somebody signs in: fetched here, and loaded from the server if they do not come.
+   * A navigation fetches them before it goes; this is for what does not navigate.
+   */
+  const [, setPartsArrived] = useState(0);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !shownPageId || spaceParts.need(shownPageId) !== 'fetch') {
+      return;
+    }
+
+    const here = `${location.pathname}${location.search}${location.hash}`;
+    spaceParts.ensure(shownPageId).then(
+      drawable => {
+        if (drawable) {
+          // The page was held back for them (below): drawn now, its elements mounting with what they need.
+          setPartsArrived(turn => turn + 1);
+        } else {
+          loadFromServer(here);
+        }
+      },
+      (error: unknown) => {
+        pConsole.warning(
+          'navigation',
+          `The page at ${here} is loaded from the server: its part of the space could not be fetched (${error instanceof Error ? error.message : String(error)})`,
+          { status: 'warning', elementId: shownPageId }
+        );
+        loadFromServer(here);
+      }
+    );
+  }, [shownPageId, spaceParts, location, loadFromServer]);
+
+  /**
+   * The page on screen, once somebody signed in or out here, when the document keeps it from whoever it was sent for —
+   * withheld, or a part only the server draws: loaded from the server, which sends this visitor theirs. Once per visitor
+   * and address, so a page they truly may not see is drawn as its refusal rather than loaded again and again.
+   */
+  useEffect(() => {
+    if (!visitorChanged || typeof window === 'undefined') {
+      return;
+    }
+
+    if (!heldForServer && !keptFromVisitor(pageDefinitions[shownPageId]) && spaceParts.need(shownPageId) !== 'server') {
+      return;
+    }
+
+    const here = `${location.pathname}${location.search}${location.hash}`;
+    if (serverAsked(visitorNow, here) || !markServerAsked(visitorNow, here)) {
+      return;
+    }
+
+    loadFromServer(here);
+  }, [visitorChanged, visitorNow, heldForServer, shownPageId, pageDefinitions, spaceParts, location, loadFromServer]);
+
   useSdkStoreSync(
     [
       'navigation.urlSearchParams',
@@ -314,11 +518,28 @@ const NavigationCore = ({
       'navigation.origin',
       'navigation.href',
       'navigation.currentPageId',
-      'navigation.navigate'
+      'navigation.navigate',
+      'navigation.prefetch'
     ],
-    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, href, shownPageId, handleNavigate],
+    [
+      urlSearchParams,
+      routeParams,
+      stableQueryParams,
+      hostname,
+      origin,
+      href,
+      shownPageId,
+      handleNavigate,
+      handlePrefetch
+    ],
     { raw: true }
   );
+
+  // A page whose parts of the space are on their way is not drawn without them: elements mounted with nothing to draw
+  // do not come back for what arrives after.
+  if (typeof window !== 'undefined' && shownPageId && spaceParts.need(shownPageId) === 'fetch') {
+    return null;
+  }
 
   if (action.type === 'notFound' || pageGatedOff) {
     if (ssrResult) {
@@ -335,6 +556,10 @@ const NavigationCore = ({
     }
 
     return 'Access Denied';
+  }
+
+  if (heldForServer && !serverAsked(visitorNow, `${location.pathname}${location.search}${location.hash}`)) {
+    return null;
   }
 
   if (action.type === 'redirect') {

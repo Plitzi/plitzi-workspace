@@ -34,6 +34,7 @@ import { pageAssets, resolveSdkAssetsDir } from '../../core/sdkAssets';
 import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
+import { pageSchemaOf, sentInParts } from '../../helpers/documentParts';
 import { hydrationPayload, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { requestPaintedState } from '../../helpers/paintedCookie';
@@ -368,8 +369,22 @@ export const prepareRender = async (
    * not know to link it.
    */
   const linkStyle = offlineDataOverride === undefined && !spaceToken && config.templateFn === undefined;
+  /**
+   * The space in parts (`documentParts`): this page's own elements and its layouts', the rest named and fetched as a
+   * link to it is followed. Only where the document travels beside the page under the host's own name — whole for a
+   * draft, a space named by a token (`linkStyle`), a deployment's own template, and a URL that is no page.
+   */
+  const inParts =
+    linkStyle &&
+    config.ssrOnly !== true &&
+    pageMatch !== undefined &&
+    offlineData !== undefined &&
+    sentInParts(offlineData.schema);
+  const sentData = inParts
+    ? offlineDataWith(offlineData, pageSchemaOf(offlineData.schema, withholding?.withheld ?? [], pageMatch.pageId))
+    : offlineData;
   // Rendered from the document the page is sent, so the server draws the `<link>` the browser hydrates.
-  const document = offlineData !== undefined ? spaceDocument(offlineData, { linkStyle }) : undefined;
+  const document = sentData !== undefined ? spaceDocument(sentData, { linkStyle }) : undefined;
   // The glyphs the space names, as faces of their own — asked for by the host, like the stylesheet, so only where it
   // is linked; elsewhere the page draws its icons from the whole font.
   const sdkDir = linkStyle && rawOfflineData ? resolveSdkAssetsDir() : undefined;
