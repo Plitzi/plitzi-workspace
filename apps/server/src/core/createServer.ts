@@ -95,7 +95,8 @@ const withRsc = <T extends Omit<SSRPageServerConfig, (typeof ENGINE_KEYS)[number
         elementTimeoutMs: config.rsc?.elementTimeoutMs,
         sayFailures: config.devMode === true,
         outbound: { privateOrigins: privateOriginsOf(config.outbound?.privateOrigins) },
-        visitorCredentials: config.rsc?.visitorCredentials
+        visitorCredentials: config.rsc?.visitorCredentials,
+        ...(config.paintedDefaults ? { paintedDefaults: config.paintedDefaults } : {})
       })
     }
   };

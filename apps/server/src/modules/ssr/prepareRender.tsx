@@ -37,7 +37,7 @@ import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { pageSchemaOf, sentInParts } from '../../helpers/documentParts';
 import { hydrationPayload, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
-import { requestPaintedState } from '../../helpers/paintedCookie';
+import { requestPaintedStateWithDefaults } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 import { visitorScheme } from '../../helpers/visitorScheme';
@@ -338,9 +338,21 @@ export const prepareRender = async (
    * the defaults the server drew. Read here, the server draws with it, and the page starts from the same values: it
    * travels as the SDK's `state`, the starting `runtime.state`, in the render and in the payload alike, or the client
    * would hydrate other markup. Only the keys the space declares, only with `keepState` on, and of an entry another
-   * account wrote than the one this request proved, only the browser's (`browserState`).
+   * account wrote than the one this request proved, only the browser's (`browserState`). A key it holds none of, for an
+   * account the request proved, is the deployment's default (`paintedDefaults`) — the one its providers asked with.
    */
-  const paintedState = requestPaintedState(req, schema?.settings, req.ctx.user?.id).state;
+  const paintedState = (
+    await requestPaintedStateWithDefaults(
+      req,
+      schema?.settings,
+      {
+        spaceId: req.ctx.spaceDeployment?.spaceId ?? spaceId,
+        environment: req.ctx.spaceDeployment?.environment ?? environment,
+        account: req.ctx.user?.id
+      },
+      config.paintedDefaults
+    )
+  ).state;
 
   /**
    * The two layers of the space's flags this server answers for. Its own (`config.flags`), asked per space when it

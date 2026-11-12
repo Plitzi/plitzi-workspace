@@ -20,7 +20,7 @@ export const SUGGESTION_CODES = {
     kind: 'suggested',
     means:
       'one page whose part of the document passes 250 KB — every visitor downloads it before the page is theirs — with the shapes written again most inside it, by what they weigh',
-    fix: 'the rows of data as one `list` of a component, read from the data (`list({ items, row })`), and a block written per state as one element whose state picks its content: the document then holds one copy'
+    fix: "the rows of data as one `list` of a component, read from the data (`list({ items, row })`), and a block written per state as one element whose state picks its content: the document then holds one copy — or, for an app's page heavy for how many elements it has, `quiet: ['heavy-page']` on the page, with why"
   },
   'repeated-expression': {
     kind: 'suggested',

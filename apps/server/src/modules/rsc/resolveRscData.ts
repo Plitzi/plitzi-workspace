@@ -22,8 +22,9 @@ import {
 } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
-import { requestPaintedState } from '../../helpers/paintedCookie';
+import { requestPaintedStateWithDefaults } from '../../helpers/paintedCookie';
 
+import type { SSRPaintedDefaults } from '../../types/config';
 import type { RscElementResolver } from '@plitzi/sdk-kernel/engine';
 import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 import type { Element, Environment, Schema, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
@@ -52,6 +53,8 @@ export type ResolveRscDataOptions = {
   signal?: AbortSignal;
   /** While developing: a failed element says why in its data (`RSC_FAILURE`), where its provider shows it. */
   sayFailures?: boolean;
+  /** What a painted key starts as for an account the cookie holds none of (`paintedDefaults`). */
+  paintedDefaults?: SSRPaintedDefaults;
 };
 
 const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
@@ -118,7 +121,8 @@ export const resolveRscData = async ({
   flagOverrides,
   timeoutMs = DEFAULT_ELEMENT_TIMEOUT_MS,
   signal,
-  sayFailures = false
+  sayFailures = false,
+  paintedDefaults
 }: ResolveRscDataOptions): Promise<SSRRscData> => {
   if (schema.rsc?.enabled === false) {
     return {};
@@ -154,7 +158,12 @@ export const resolveRscData = async ({
     return { serverData: {} };
   }
 
-  const painted = requestPaintedState(req, schema.settings, user?.id);
+  const painted = await requestPaintedStateWithDefaults(
+    req,
+    schema.settings,
+    { spaceId, environment, account: user?.id },
+    paintedDefaults
+  );
   // Resolved once for the page, as the browser resolves them for it: the variables for this host and this address.
   const templateData: ServerTemplateData = {
     variables: resolveVariables(schema.variables, {

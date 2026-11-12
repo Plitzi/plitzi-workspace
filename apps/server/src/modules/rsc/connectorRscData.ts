@@ -4,7 +4,7 @@ import { externalQueryReader, visitorCredentialsOf } from './externalQueryReader
 import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
-import type { SSRVisitorCredentialsConfig } from '../../types';
+import type { SSRPaintedDefaults, SSRVisitorCredentialsConfig } from '../../types';
 import type { ProjectDataLookup } from '@plitzi/sdk-kernel/data';
 import type { RscElementResolver } from '@plitzi/sdk-kernel/engine';
 import type { OutboundOptions } from '@plitzi/sdk-kernel/outbound';
@@ -32,7 +32,8 @@ export const connectorRscData = ({
   elementTimeoutMs,
   sayFailures = false,
   outbound,
-  visitorCredentials
+  visitorCredentials,
+  paintedDefaults
 }: {
   /** The engine's resolver of an element that names an action or a connector (`PageEngine.resolveElement`). */
   engine?: RscElementResolver;
@@ -51,6 +52,8 @@ export const connectorRscData = ({
   outbound?: OutboundOptions;
   /** The deployment's own APIs a provider may ask as the visitor, and from which spaces (`rsc.visitorCredentials`). */
   visitorCredentials?: SSRVisitorCredentialsConfig;
+  /** What a painted key starts as for an account the cookie holds none of (`paintedDefaults`). */
+  paintedDefaults?: SSRPaintedDefaults;
 }): NonNullable<SSRAdapters['getRscData']> => {
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
   const resolveDataFile = data ? dataLookupResolver(data) : undefined;
@@ -121,6 +124,7 @@ export const connectorRscData = ({
       ...(flagOverrides ? { flagOverrides } : {}),
       ...(signal ? { signal } : {}),
       ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs }),
+      ...(paintedDefaults ? { paintedDefaults } : {}),
       sayFailures
     });
   };

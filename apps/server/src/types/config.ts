@@ -72,6 +72,18 @@ export type SSRCacheConfig = {
   store?: SharedPageStore;
 };
 
+/** What `paintedDefaults` is asked with: the space being drawn, the account the request proved, the keys it lacks. */
+export type SSRPaintedDefaultsContext = {
+  spaceId: number;
+  environment: Environment;
+  account: number | string;
+  keys: string[];
+};
+
+export type SSRPaintedDefaults = (
+  context: SSRPaintedDefaultsContext
+) => Record<string, unknown> | undefined | Promise<Record<string, unknown> | undefined>;
+
 export type SSRRscConfig = {
   /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
   enabled?: boolean;
@@ -212,6 +224,15 @@ export type SSRServerConfig = ServerBaseConfig & {
   trustedTypes?: false | 'report-only';
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
+  /**
+   * What a painted key (`settings.paintedState`) starts as for a signed-in visitor whose cookie holds none of it — the
+   * first visit after signing in, or after another account signed in on this browser (whose values are never drawn for
+   * this one). The page is drawn with it, its server providers ask with it, and the browser starts from it, as from a
+   * painted value — a dashboard knows its workspace on the first visit instead of learning it once the browser runs.
+   * Asked only for an account the request proved, once a request, for the keys it lacks; a key left out stays missing.
+   * The deployment's answer, never a space's: it reads the deployment's own records.
+   */
+  paintedDefaults?: SSRPaintedDefaults;
   /** Which request-handling services this server mounts: `ssr` on by default, `rsc` whenever
    *  `adapters.getRscData` exists. Stages a companion package contributes are deliberately NOT flags here —
    *  handing them over is the decision. Only createServer reads these as written; the surface factories pin what

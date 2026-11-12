@@ -8,7 +8,7 @@ import { authorFlows } from '../flows';
 import { pathForSlug, selectorFor } from '../handles';
 import { assertPageNav, folderPrefixes, routeOf } from '../nav';
 import { didYouMean } from '../suggest';
-import { assertFlowShapes } from './checks';
+import { assertFlowShapes, assertQuiet } from './checks';
 import { addElement, insert, nextId } from './elements';
 import { seoAttributes } from './seo';
 import { baseSelectorFor } from './styles';
@@ -237,6 +237,10 @@ export const addPage = (author: SpaceAuthor, page: PageSpec, index: number, home
     );
   }
 
+  if (page.quiet !== undefined) {
+    assertQuiet(page.quiet, `Page "${page.name}"`);
+  }
+
   const element: Element = {
     id,
     attributes: {
@@ -270,7 +274,8 @@ export const addPage = (author: SpaceAuthor, page: PageSpec, index: number, home
         })
       },
       ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {}),
-      ...(page.flag === undefined ? {} : { flag: flagGateOf(page.flag, `Page "${page.name}"`) })
+      ...(page.flag === undefined ? {} : { flag: flagGateOf(page.flag, `Page "${page.name}"`) }),
+      ...(page.quiet === undefined ? {} : { quiet: [...page.quiet] })
     }
   };
 

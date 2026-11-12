@@ -20,7 +20,8 @@ is a bug to fix; a suggestion is a shorter way to the same page — take it unle
 reason is usually that the copies are about to diverge. `npx @plitzi/cli explain repeated-on-pages` explains any code.
 
 Left on purpose, say so where it is written — `quiet` on an element it is about (a component's instance too:
-`component(id, { quiet })`), and it is not offered again, in the builder or over MCP either (it is kept in the
+`component(id, { quiet })`; a page for `heavy-page`, an app's page heavy for how many elements it has), and it is not
+offered again, in the builder or over MCP either (it is kept in the
 document):
 
 ```ts

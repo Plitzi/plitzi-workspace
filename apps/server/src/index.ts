@@ -57,6 +57,8 @@ export type {
   SSRFontsConfig,
   SSRImagesConfig,
   SSRPageServerConfig,
+  SSRPaintedDefaults,
+  SSRPaintedDefaultsContext,
   SSRPlugin,
   SSRRenderLimitConfig,
   SSRRscConfig,

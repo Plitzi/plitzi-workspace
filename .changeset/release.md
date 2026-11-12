@@ -47,6 +47,11 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- `paintedDefaults`: what a painted key (`settings.paintedState`) starts as for a signed-in visitor whose cookie holds
+  none of it — the first visit after signing in, or after another account signed in on the browser, whose values are
+  never drawn for this one. The page is drawn with it, its server providers ask with it and the browser starts from
+  it; asked once a request, for an account the request proved and the keys it lacks, never for a guest. A dashboard
+  knows its workspace on the first visit instead of learning it once the browser runs.
 - A page's document of the space in parts names its page (`/_plitzi/space/<hash>.json?page=<id>`): a process that did
   not draw the page — another replica, one restarted — answered the whole space instead, and a visitor whose page and
   document reached two processes downloaded every page.
@@ -192,6 +197,8 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Authoring
 
+- A page takes `quiet` as an element does: `quiet: ['heavy-page']` on an app's page heavy for how many elements it has,
+  not for a shape written again — validated (`quiet-unknown`), kept in the document and read back by `specFromSpace`.
 - A new suggestion, `repeated-expression`: the same long expression — its numbers and words aside — written into many
   bindings, steps or attributes (8 copies, 8 KB in all at least), named with what it weighs and where it starts. What the
   copies share belongs in a computed value worked out once (`null` off the page that reads it), and copies side by side

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HEAVY_PAGE_BYTES } from './heavyPages';
-import { authorSpace, container, list, paragraph, styles, text } from '../../index';
+import { authorSpace, container, list, paragraph, specFromSpace, styles, text } from '../../index';
 
 import type { ElementSpec, SpaceSpec } from '../../index';
 
@@ -65,5 +65,20 @@ describe('heavy-page, a suggestion', () => {
 
     expect(JSON.stringify(authorSpace(asList).schema).length).toBeLessThan(HEAVY_PAGE_BYTES * 2);
     expect(offered(asList)).toEqual([]);
+  });
+
+  // An app's page is heavy for how many elements it has, not for a shape written again: it says so, and is not told.
+  it('is not offered to a page that says it is heavy on purpose, and a misspelt code is refused', () => {
+    const heavy = space(Array.from({ length: 80 }, (_, index) => card(index)));
+    const said = (quiet: unknown): SpaceSpec => ({
+      ...heavy,
+      pages: heavy.pages.map(page => (page.id === 'pricing' ? { ...page, quiet: quiet as ['heavy-page'] } : page))
+    });
+
+    expect(offered(said(['heavy-page']))).toEqual([]);
+    // Kept in the page's document, and read back as written.
+    const written = authorSpace(said(['heavy-page']));
+    expect(specFromSpace(written).spec.pages.find(page => page.slug === 'pricing')?.quiet).toEqual(['heavy-page']);
+    expect(() => authorSpace(said(['heavy-pages']))).toThrow(/heavy-pages/);
   });
 });

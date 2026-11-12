@@ -370,6 +370,12 @@ export interface PageSpec {
   flag?: string;
   /** How the space's navigation lists it: see {@link PageNav}. */
   nav?: PageNav;
+  /**
+   * Suggestions this page is not offered, because it is written this way on purpose — `quiet: ['heavy-page']` on an
+   * app's page that is heavy for how many elements it has, not for a shape written again. Only suggestions: a problem
+   * is never quieted. Say why beside it.
+   */
+  quiet?: SuggestionCode[];
   body: ElementSpec[];
 }
 

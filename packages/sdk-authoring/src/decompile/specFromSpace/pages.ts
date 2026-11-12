@@ -7,6 +7,7 @@ import { baseStyle, pageStyle } from './classes';
 import { readElement } from './elements';
 import { componentRoots, childrenOf, dropField } from './tree';
 import { BINDING_CATEGORIES, LAYOUT_ATTRIBUTES, PAGE_ATTRIBUTES, bindingsOf, isEmpty, correct } from './values';
+import { isSuggestionCode } from '../../schema/codes';
 import { flagSpecOf } from '../../schema/flags';
 
 import type { SpecReader } from './reader';
@@ -273,6 +274,7 @@ export const readPage = (reader: SpecReader, page: Element, index: number): Page
     ...pageStyle(reader, page.definition.styleSelectors.base),
     ...readFlows(reader, page),
     ...(page.definition.flag ? { flag: flagSpecOf(page.definition.flag) } : {}),
+    ...(page.definition.quiet ? { quiet: page.definition.quiet.filter(isSuggestionCode) } : {}),
     body: childrenOf(reader, page).map(child => readElement(reader, child))
   };
 };

@@ -1,6 +1,8 @@
 export type {
   SSRCacheConfig,
   SSRPageServerConfig,
+  SSRPaintedDefaults,
+  SSRPaintedDefaultsContext,
   SSRRenderLimitConfig,
   SSRRscConfig,
   SSRServerConfig,
