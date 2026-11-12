@@ -7,6 +7,7 @@ import { suggestHeadingOrder } from './headingOrder';
 import { suggestHeavyPages } from './heavyPages';
 import { suggestMotion } from './motion';
 import { suggestPluginHosts, suggestUnusedPlugins } from './pluginHosts';
+import { suggestRepeatedExpressions } from './repeatedExpressions';
 import { suggestRepeats } from './repeats';
 
 import type { Suggestion } from './types';
@@ -70,7 +71,8 @@ export const suggestSpace = (
     ...suggestUnusedPlugins(schema, pluginTypes),
     ...suggestElementColours(style),
     ...suggestHeadingOrder(schema),
-    ...suggestHeavyPages(schema, style)
+    ...suggestHeavyPages(schema, style),
+    ...suggestRepeatedExpressions(schema)
   ]).sort((a, b) => b.saves - a.saves);
 
 /** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */

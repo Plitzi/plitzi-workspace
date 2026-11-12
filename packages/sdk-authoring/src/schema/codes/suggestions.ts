@@ -22,6 +22,12 @@ export const SUGGESTION_CODES = {
       'one page whose part of the document passes 250 KB — every visitor downloads it before the page is theirs — with the shapes written again most inside it, by what they weigh',
     fix: 'the rows of data as one `list` of a component, read from the data (`list({ items, row })`), and a block written per state as one element whose state picks its content: the document then holds one copy'
   },
+  'repeated-expression': {
+    kind: 'suggested',
+    means:
+      'the same long expression — its numbers and words aside — written into many bindings, steps or attributes: a sum or a choice worked out again in every copy, and carried by the document once per copy',
+    fix: "what the copies share as a computed value (`computed: { chosen: '{{ … }}' }`, read as `computed.chosen`), answering `null` off the page that reads it (`navigation.currentPageId`), each copy keeping what differs; copies side by side as one `list` whose rows carry what differs (`list({ items, row })`)"
+  },
   'repeated-shape': {
     kind: 'suggested',
     means:

@@ -180,6 +180,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Authoring
 
+- A new suggestion, `repeated-expression`: the same long expression — its numbers and words aside — written into many
+  bindings, steps or attributes (8 copies, 8 KB in all at least), named with what it weighs and where it starts. What the
+  copies share belongs in a computed value worked out once (`null` off the page that reads it), and copies side by side
+  in one `list` whose rows carry what differs — how Plitzi's pricing page went from 708 KB to 189.
 - A page whose part of the document passes 250 KB is suggested (`heavy-page`) — every visitor downloads it before the
   page is theirs — naming the three shapes written again most inside it, by what they weigh: the rows to make one
   `list`, the blocks written per state to make one element.
