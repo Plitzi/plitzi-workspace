@@ -14,7 +14,6 @@ Each is a test that ratchets: lowered when beaten, never raised.
 |---|---|---|---|
 | JavaScript for a page of text (compressed) | ~330 KB (`screens.spec.ts` budgets) | No split (D13): any saving is made inside `plitzi-sdk.js` | — |
 | Home height at 390 px | 16,847 px (ratchet 16,900; 15,991 before every control stood 44 px) | ≤ 16,000 px | T2.4′ |
-| Controls outside the window, 768 to 1280 px | the bar holds from 320 to 1440; the sweep of the key screens is not written | none, at seven widths | T2.28 |
 | Controls under 44 px on a phone | 0 on every key screen but the home's 2 (the studio's billing toggle, 43 px after a capture scrolled the page; 44 at rest) | 0 | T2.4′ |
 | Server CI | lint, types, unit; the e2e job written, never run on GitHub | + e2e, + visual `@smoke` | T0.6 |
 
@@ -47,7 +46,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T2.17** Sign-in, said to everyone | **After the release that carries `autoComplete` tokens**: the auth seed names `username`, `new-password` and `one-time-code`; a focus ring on the fields, measured in both themes | The attributes asserted; the ring's contrast at 3:1 | S |
 | **T2.18** `llms.txt` and the sitemap | **After the release that carries `blockAiCrawlers` by kind**: the website seed leaves it out, the docs' routing page says the list. An `llms.txt` for the website and the docs; the sitemap with each template and showcase chapter and a `lastmod` | `/llms.txt` answers; the sitemap's test | M |
 | **T2.21** The builder's rail and chip | A click on the rail shows its panel open (plitzi-ui's `PopupSidePanel` reads `defaultValue` once — a change and release of plitzi-ui); the rail's buttons named on hover and for a screen reader; the class chip shows the author's name, the hash only when there is none; the dev-tools launcher clear of the panels. The builder's own type (under 12 px in places) is held to no scale yet: `screens.spec.ts` leaves it out (`brandScale: false`) | A click on each rail button shows its panel's content | M |
-| **T2.28** The widths between | From 1024 the two-column layouts hold (the hero, `/pricing` with its summary beside the plans); the sticky summary clear of the rows; X-ray drawn once; the console's bar from 768; the run lines' column growing; the sweep of the key screens at seven widths | The sweep test; no control past the window's edge | M |
 
 ### WS3 — Code quality
 
@@ -83,7 +81,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.1** The funnel | The back-office's visual test of **Overview → Sign-ups** (its API and e2e exist) | The section drawn for the seeded data, in the visual lane | S |
 | **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | Per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
-| **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of T2.28; the home within its budget | L |
+| **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of the sweep; the home within its budget | L |
 | **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none; the sitemap's test (T2.18) | S |
 | **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
 
@@ -117,6 +115,12 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   suggestion when a page's text and its `settings.language` clearly disagree (its words read against the language's
   commonest — a cheap test, no model) would catch it in every space. A platform change: the threshold and what a
   mixed page (a code sample, a brand name) is held to are the maintainer's.
+- **A 1024 screen is a tablet.** The platform's tablet rules apply up to and including 1024 px
+  (`sdk-shared/style/breakpoints.ts`), so every layout meant below a desktop is what a 1024 screen gets. The hero holds
+  two columns there by itself (a grid of two 400 px columns when they fit), but `/pricing` changes its whole shape on a
+  tablet — the summary a bar at the foot instead of beside the plans — which no width inside one range can say. Either
+  the desktop starts at 1024 (tablet to 1023: every space's 1024 layout changes) or `/pricing` keeps its tablet shape
+  at 1024.
 
 ## 6. Not an agent's, tracked here
 

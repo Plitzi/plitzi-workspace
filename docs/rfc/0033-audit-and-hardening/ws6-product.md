@@ -54,7 +54,7 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
   5. Art: alternate the bands' mock-ups with one full-bleed picture of a real seeded site and one drawn diagram
      ("one document, three ways in"); the brand's own icons as a sprite.
 - **Do not:** invent a customer, a number or a quote; raise the home's weight above its budget (T0.7).
-- **Verify:** each new page in the sitemap and linked from the bar or the footer; both themes; every width of T2.28;
+- **Verify:** each new page in the sitemap and linked from the bar or the footer; both themes; every width of the sweep (`screens.spec`, `WIDTHS_BETWEEN`);
   authoring at 0 warnings and 0 suggestions.
 
 ## T6.6 — Found by a search

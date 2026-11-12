@@ -81,23 +81,3 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 - **Verify:** the builder's tests (`yarn turbo run test --filter=@plitzi/plitzi-builder`); the workspace's e2e; a
   test at 1280 and 1440 that **Publish** is inside the window; in the server, `visual/screens.spec.ts`
   (`website-builder`).
-
-## T2.28 — The widths between
-
-- **Findings:** RS1–RS6. **Size:** M. **With T2.1.**
-- **Facts (swept at 768, 834, 900, 1024, 1100, 1180, 1280):** the public bar needs 1,069 px and folds only under
-  ~834; at 1024 **Start free** is cut, at 900 **Sign in** too, at 834 Discord and the theme switch too. At 1024 the
-  hero is one column with its right half empty and `/pricing` is one column with its summary at the foot. The sticky
-  "Free · €0 / month" bar lies over the plan rows. "X-ray this page" is drawn twice at 1024. The console's bar loses
-  the theme switch and the account between 834 and 928.
-- **Steps:**
-  1. The public bar folds when its items do not fit: set the fold above what it needs (measure it — do not guess),
-     and keep **Start free** in the bar at every width.
-  2. From 1024 the two-column layouts hold: the hero's, and `/pricing`'s with the summary beside the plans. Check the
-     breakpoints in `brand/` — a layout meant for a phone must not apply up to 1280.
-  3. The sticky summary sits clear of the rows it summarises (under them, or with the list padded by its height).
-  4. X-ray once; the console's bar keeps its controls from 768; the automations' run line grows with the window.
-  5. Add the sweep to the visual suite as a `@responsive`-independent test on the key screens at the seven widths:
-     no control's box past the window's edge unless inside a container that scrolls sideways; no sideways scroll of
-     the page; no two controls of the bar overlapping.
-- **Verify:** the new test fails on `main` at 834–1068 and passes after; **Start free** whole at every width from 320.
