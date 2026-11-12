@@ -14,7 +14,6 @@ folder, one file per workstream:
 | [`ws2-website-and-sign-in.md`](ws2-website-and-sign-in.md) | T2.1–T2.28 — the `website`, `auth` and `docs` seeds, the builder's bar |
 | [`ws3-code.md`](ws3-code.md) | T3.2–T3.15 — closures, pools, nexus |
 | [`ws4-agents-surface.md`](ws4-agents-surface.md) | T4.1–T4.11 — authoring, MCP, CLI, skills |
-| [`ws5-server-work.md`](ws5-server-work.md) | T5.2–T5.13 (not T5.7, T5.10) — load, runners, traces, the cluster |
 | [`ws6-product.md`](ws6-product.md) | T6.1–T6.7 — funnel, trust pages, SEO, docs |
 
 ## 1. Before the first line of code

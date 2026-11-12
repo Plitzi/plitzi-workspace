@@ -51,8 +51,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T3.2** `session` in parts | A load round within its band — the maintainer's to run while T5.2 has not landed | The round within its band | S |
-| **T3.6** Builder modules with tests | One journey each in the workspace's e2e where a person uses Connectors, Actions, Fonts, Variables, Visitors, Elements and Transformers (their pure logic has unit tests since 2026-11-11) | Each journey failed once against a deliberate break | L |
+| **T3.2** `session` in parts | A load round within its band — the maintainer's to run | The round within its band | S |
 | **T3.8′** `plitzi-sdk-server`'s exceptions, explained | The workspace's are done (each removed or with its why, the table lower). In `plitzi-sdk-server` ~25 have no why yet — the Prisma and Redis base models' `any` and casts, two file-wide `no-non-null-assertion` in the CSS parser, `pubSub`'s `any`, the seeder's JSON casts: each removed or said why, `scripts/exceptions.json` lower | `yarn check:exceptions` there; none without a why | S |
 
 ### WS4 — Authoring, MCP and CLI
@@ -62,17 +61,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T4.1** A standing score | All of it: inventory `bench/`; twelve tasks over three project shapes, each with a scripted check; run on a schedule, one model per tier, alone and as a team; the element-level tasks both ways — the MCP's own operations and `addSpec` (with `replaces`) — so the score says which an agent gets right; success, calls, tokens, wall time and refusals kept by commit | A table per week in `bench/results`; a drop beyond its noise named by the report | L |
 | **T4.6** What a refusal cost | From T4.1's records: the ten refusals and lints agents meet most, and whether the message alone was enough | A list with counts; no change made | S, after T4.1 |
 | **T4.9** The run skills, on a diet | Every sentence of the six `runs*.md` skills: enforced by a refusal, said by a command, or only there — the first two leave the skill; what stays ordered by how often runs met it, one rule a line, a glossary opening `runs.md`; T4.1's team score before and after | `runs-lead.md` under 3,500 tokens; a test lists each rule taken out beside what carries it; the score no lower | L, after T4.1 |
-
-### WS5 — Server work
-
-| Task | Left | Done when | Size |
-|---|---|---|---|
-| **T5.2** The load round, kept | The probe and its cycle script from `tmp/load/` to `plitzi-sdk-server/test/load/`, with the estimate, the band and how to read `/_stats` refusals; the visual stack only; a nightly run keeping its result | `yarn load` documented in `docs/`; a round's result in a file by date | M |
-| **T5.3** A contract for runners | `busy` and `too_large` in `describeFunctionRunner` (they need a service sized for it); step 2, the `ctx` channel behind an interface with two transports — today's socket and request/response (a signed address per run) — proven by a test runner with no socket. No cloud's runner here | The three runners and the test runner pass; no engine file names the socket | L |
-| **T5.8** One trace for a run | The run's page linking its lines (the log reader already takes `q=trace=…`); a job's run starting a trace of its own; a runtime's calls carrying it | An e2e in the split topology reads one id on the request, the run, the runner's log and the answer | M |
-| **T5.9** The engine's two closures | `runAction` and `createJobWorker` in parts with injected clocks, composed as today, no change of behaviour | Their suites unchanged; a load round within its band (T5.2) | L |
-| **T5.11** Backups elsewhere, and a restore with a date (`plitzi-platform`) | **The maintainer names the bucket and the credential.** Then each dump copied off the node, encrypted with the cluster's age key, its retention said; a monthly Job restoring the latest into a scratch database and counting rows | A dump listed in the bucket; the restore Job green once, by hand first | M |
-| **T5.13** Small drifts (`plitzi-platform`) | The vendored charts' images (Loki, Promtail) following their chart. The digests pinned 2026-11-11 are committed, not pushed | `make test` green | S |
 
 ### WS6 — Product
 
@@ -124,7 +112,7 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
 
 ## 6. Not an agent's, tracked here
 
-- **Waiting for the maintainer:** T5.11's bucket; T0.12's token permission (both at the end of this RFC); pushing
+- **Waiting for the maintainer:** T0.12's token permission (at the end of this RFC); pushing
   `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
   (~150–300 MB), so a space's journeys run there; the templates' covers on the dev cluster, looked at by whoever can
   reach it; T5.12's alerts sending — the chat's webhook into `alertmanager.sops.yaml` (`make secrets` with

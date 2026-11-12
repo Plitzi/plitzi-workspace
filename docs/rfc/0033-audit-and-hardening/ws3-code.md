@@ -12,18 +12,8 @@ change**. The proof of that is the existing suites, unchanged and green, before 
 ## T3.2 — `session` in parts
 
 - **Done** 2026-11-10: `runClock.ts`, `turnHolder.ts`, `stops.ts`, each with its tests; `session` composes them.
-- **Left:** a load round within its band (T5.2). Ask the maintainer to run it while T5.2 has not landed; a result
+- **Left:** a load round within its band, the maintainer's to run (the load probe is not kept in a repository); a result
   outside the band is a regression of this split until shown otherwise.
-
-## T3.6 — Builder modules with tests
-
-- **Repo:** `plitzi-workspace` — `apps/builder/src/modules/`. **Finding:** Q6. **Size:** L — **one agent per two
-  modules**: Connectors + Actions; Fonts + Variables; Visitors + Elements + Transformers.
-- **Steps:** for each module: list its pure logic (helpers, reducers, selectors, validators) and test it; then one
-  journey in the workspace's e2e (`e2e/`) where a person uses the module end to end. For each new test, **break the
-  code once and see the test fail**; list the breaks in the pull request.
-- **Do not:** test implementation details of React components; snapshot whole trees.
-- **Verify:** `yarn turbo run test --filter=@plitzi/plitzi-builder`; `yarn e2e:ci`.
 
 ## T3.8′ — `plitzi-sdk-server`'s exceptions, explained
 
