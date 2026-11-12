@@ -444,6 +444,12 @@ const StyleInspector = ({
     ]
   );
 
+  // A class the builder named after its element (`container-2f16`) reads as the element's label: the id says nothing.
+  const classLabels = useMemo(
+    () => (element?.definition.label ? { [element.id]: element.definition.label } : undefined),
+    [element?.id, element?.definition.label]
+  );
+
   const hasControls =
     allowStyleVariant || allowStyleState || !!styleSelectorsAvailables?.length || !!componentSubTypesAvailables?.length;
 
@@ -457,6 +463,7 @@ const StyleInspector = ({
             selectors={selectors}
             selector={selector}
             componentType={componentType}
+            labels={classLabels}
             onAdd={handleAddSelector}
             onChange={handleChangeSelector}
             onRemove={handleRemoveSelector}

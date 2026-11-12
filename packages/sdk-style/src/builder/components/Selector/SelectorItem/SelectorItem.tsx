@@ -1,6 +1,6 @@
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { selectorFormatter } from '../SelectorHelper';
 import ItemOptions from './ItemOptions';
@@ -12,6 +12,11 @@ import type { MouseEvent } from 'react';
 export type SelectorItemProps = {
   className?: string;
   selector?: string;
+  /**
+   * What the chip reads as instead of the class's name, when the name says nothing to a person — a class the builder
+   * named after its element (`container-2f16`) reads as the element's label. Double-clicking still edits the name.
+   */
+  label?: string;
   type?: TagType;
   editable?: boolean;
   active?: boolean;
@@ -24,6 +29,7 @@ export type SelectorItemProps = {
 const SelectorItem = ({
   className = '',
   selector = '',
+  label,
   type = 'class',
   editable = true,
   active = false,
@@ -43,6 +49,14 @@ const SelectorItem = ({
     },
     [onClick, readOnly, selector, type]
   );
+
+  // The name while it is being edited, the label otherwise: a rename is of the class, never of its element's label.
+  const [editing, setEditing] = useState(false);
+  const shown = editing || !label ? selector : label;
+
+  const handleEditOpen = useCallback(() => setEditing(true), []);
+
+  const handleEditClose = useCallback(() => setEditing(false), []);
 
   const handleChange = useCallback(
     (value: string) => {
@@ -69,12 +83,14 @@ const SelectorItem = ({
         {editable && (
           <Contenteditable
             className="inline text-nowrap focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
-            value={selector}
+            value={shown}
             openMode="doubleClick"
             onChange={handleChange}
+            onEditOpen={handleEditOpen}
+            onEditClose={handleEditClose}
           />
         )}
-        {!editable && selector}
+        {!editable && shown}
       </div>
       {editable && type !== 'element' && <ItemOptions selector={selector} type={type} onAction={onAction} />}
     </div>

@@ -24,6 +24,8 @@ export type SelectorProps = {
   selectors?: Record<string, StyleItem>;
   selector?: Pick<StyleItem, 'name' | 'type'>;
   componentType?: string;
+  /** What a class's chip reads as instead of its name, by name (see `SelectorItem`'s `label`). */
+  labels?: Record<string, string>;
   disabled?: boolean;
   onSelectorSelected?: (selector?: SelectorValue) => void;
   onAdd?: (selector: SelectorValue, isDuplicated: boolean, originalSelector?: SelectorValue) => void;
@@ -37,6 +39,7 @@ const Selector = ({
   selectors,
   selector: selectorProp,
   componentType,
+  labels,
   disabled = false,
   onChange,
   onSelectorSelected,
@@ -298,6 +301,7 @@ const Selector = ({
               <SelectorItem
                 key={`${position}_${tag.name}`}
                 selector={tag.name}
+                label={labels?.[tag.name]}
                 type={tag.type}
                 editable={tag.type !== 'element'}
                 active={tag.name === selectorProp?.name.replace(/:.*/, '')}
