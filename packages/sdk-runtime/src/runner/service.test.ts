@@ -10,7 +10,7 @@ import type { FunctionsRunnerService } from './service';
 import type { FunctionInvokeRequest, FunctionLimits, FunctionRunner } from '@plitzi/sdk-shared/functions';
 
 /**
- * The runner as a service, held to what it alone decides (RFC 0033 T3.1): who may reach it, one operation per
+ * The runner as a service, held to what it alone decides: who may reach it, one operation per
  * connection, the protocol's versions, the memory it admits by — a visitor's request before work nobody waits on — what
  * it keeps until there is room, and how it stops. The engine behind it is a fake: what runs the code is the isolate's
  * suite.

@@ -72,7 +72,7 @@ describe('a space’s /robots.txt', () => {
     expect(text).not.toContain('Googlebot');
   });
 
-  // One switch for all of them kept assistants out of a site whose owner only meant not to train a model (D10).
+  // One switch for all of them kept assistants out of a site whose owner only meant not to train a model.
   it('keeps out only the kind it names: a site that refuses training is still read for a person who asked', async () => {
     const base = await serve({ customCss: '', blockAiCrawlers: ['training'] });
     const text = await (await fetch(`${base}/robots.txt`)).text();

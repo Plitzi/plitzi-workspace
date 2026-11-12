@@ -5,7 +5,7 @@ import { bundleOf, invoke, messageOf, meterCharging, reasonOf, spinFor, valueOf 
 
 /**
  * An invocation's limits, as the runner holds them: each stops the code by the rule its message says, and never by the
- * clock of a runner crowded around it. Moved from `sdk-actions` (RFC 0033 T3.1): a limit broken here fails this
+ * clock of a runner crowded around it. Moved from `sdk-actions`: a limit broken here fails this
  * package's suite, with no engine built.
  */
 

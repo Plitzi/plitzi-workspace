@@ -648,7 +648,7 @@ describe('a presence channel’s count', () => {
 
 /**
  * Two replicas on one bus, and a page whose stream one opened and whose publishes the other one receives: with no
- * affinity, a request goes where the balancer sends it. It answered 401 there (R5); relayed to the replica holding the
+ * affinity, a request goes where the balancer sends it. It answered 401 there; relayed to the replica holding the
  * stream, it is answered as that one answers its own — its rate and its presence there.
  */
 describe('two replicas, a page’s stream on one and its publish on the other', () => {

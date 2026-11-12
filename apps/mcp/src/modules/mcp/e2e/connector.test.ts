@@ -123,11 +123,11 @@ const widgetOperations = [
 // CLI filter it. Measured at 79.1k with ~0.9k of room.
 //
 // Raised to 81.5k for addSpec: an element tree written as the authoring skill writes one, so an agent writes one
-// vocabulary in a project and over the MCP (RFC 0033 T4.7). Its descriptions were cut first. Measured at 80.8k with
+// vocabulary in a project and over the MCP. Its descriptions were cut first. Measured at 80.8k with
 // ~0.7k of room.
 //
 // Raised to 82.3k for the four fields that said nothing to the agent — search's `filters`, try-function's `params` and
-// `dryRun`, activity's `limit` — found when the docs' MCP reference was generated from the tools (RFC 0033 T6.7).
+// `dryRun`, activity's `limit` — found when the docs' MCP reference was generated from the tools.
 // Measured at 81.8k.
 const TOOLS_BUDGET_BYTES = 82_300;
 

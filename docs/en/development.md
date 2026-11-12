@@ -70,6 +70,9 @@ Two places a change has to reach that are easy to miss:
 - **The browser runs `apps/sdk`'s bundle.** A server-rendered page loads `/sdk-assets/plitzi-sdk.js`, which is
   `@plitzi/plitzi-sdk`'s `dist`. An element change reaches a page only once that is rebuilt (the filter above
   includes it). `build-vendor:*` is the third-party half — React and friends — and never carries workspace code.
+  The SDK is always one file: it is also loaded by name as a single-page app wherever a space is hosted, so its
+  weight is cut inside it, never by splitting it into chunks per element family (only the dev tools, loaded to
+  debug, are a chunk of their own).
 - **An element's props are listed in `@plitzi/sdk-authoring`.** Adding or renaming one makes
   `attributeNames.test.ts` fail until the list is regenerated:
   `yarn workspace @plitzi/sdk-authoring generate:attribute-names`.

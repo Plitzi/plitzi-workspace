@@ -7,7 +7,7 @@ import { guestCrypto } from './crypto';
 
 /**
  * The guest's `crypto`, run in Node as it is printed into the isolate, over a host that computes what the runner would
- * — every rule the part states held here (RFC 0033 T3.1). What the runner itself bounds (rounds, bits) is the isolate's
+ * — every rule the part states held here. What the runner itself bounds (rounds, bits) is the isolate's
  * suite (`isolate.test.ts`).
  */
 

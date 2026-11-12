@@ -114,7 +114,7 @@ const SharingSettings = () => {
     [save]
   );
 
-  // Each kind its owner's to decide (D10). None kept out is the setting left out, never an empty list carried for nothing.
+  // Each kind its owner's to decide. None kept out is the setting left out, never an empty list carried for nothing.
   const handleAiCrawlers = useCallback(
     (kind: AiCrawlerKind) => (event: ChangeEvent<HTMLInputElement>) => {
       const next = AI_CRAWLER_KINDS.filter(each =>

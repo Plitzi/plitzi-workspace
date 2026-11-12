@@ -4,7 +4,7 @@ import { pageWithheldOf, withheldPageOf } from './pageAccess';
 import type { Element, Schema } from '../types';
 
 /**
- * The space sent in parts (RFC 0033, T1.2): a shell — everything but the pages' and layouts' own elements — and a part
+ * The space sent in parts: a shell — everything but the pages' and layouts' own elements — and a part
  * per page and per layout, fetched as a page that needs it is opened. A visitor of one page downloads that page and its
  * layouts, not the whole site.
  *

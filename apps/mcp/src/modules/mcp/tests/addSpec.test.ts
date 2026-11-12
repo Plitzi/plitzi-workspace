@@ -7,7 +7,7 @@ import type { Operation } from '../tools/operations';
 
 /**
  * An element tree in the authoring skill's vocabulary — what `container({ … })` returns, as JSON — and its classes:
- * one vocabulary for an agent in a project and over the MCP (RFC 0033 § 8.4).
+ * one vocabulary for an agent in a project and over the MCP.
  */
 
 const card: Operation = {

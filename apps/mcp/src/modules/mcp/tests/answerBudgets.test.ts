@@ -13,7 +13,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * What each answer costs an agent's context, on a space as large as a busy one (30 pages of 100 elements, 200 classes),
- * held to a ceiling: the `wasted` ratchet of renders, for words (RFC 0033 A4). Tokens are estimated at four characters
+ * held to a ceiling: the `wasted` ratchet of renders, for words. Tokens are estimated at four characters
  * each — the measure is the same on every run, which is what a ratchet needs.
  *
  * A budget watches; it never decides what an agent may see. An answer that grows past its ceiling because it says

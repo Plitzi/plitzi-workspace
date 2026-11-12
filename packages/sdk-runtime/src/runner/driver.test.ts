@@ -6,7 +6,7 @@ import { createFunctionsDriver, describeFunctions } from './driver';
 
 /**
  * The one driver there is — the sandbox's guest runs its source, a space runtime imports it — held to what it alone
- * decides (RFC 0033 T3.1): what a definition declares, which code an invocation reaches, what `ctx` sends the platform
+ * decides: what a definition declares, which code an invocation reaches, what `ctx` sends the platform
  * and reads back from it, and why a job's slice is asked to end.
  */
 

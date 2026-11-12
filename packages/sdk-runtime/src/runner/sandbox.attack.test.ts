@@ -7,7 +7,7 @@ import { bundleOf, invoke, reasonOf } from './tests/guest';
  * What a guest tries, and what it gets: each case named after the attempt, each ending in the stop or the refusal the
  * contract names. The sandbox's promise is that a space's code reaches nothing of the host — no `process`, no module
  * loader, no network but `ctx.fetch`, no memory or CPU past its limits, nothing of the invocation before it — and this
- * suite owns that promise, with no engine between it and the runner (RFC 0033 R1).
+ * suite owns that promise, with no engine between it and the runner.
  *
  * Anything this suite finds goes to the maintainer before it is written anywhere public.
  */

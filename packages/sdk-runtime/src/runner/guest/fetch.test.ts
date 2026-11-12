@@ -6,7 +6,7 @@ import { guestFetch } from './fetch';
 
 /**
  * The guest's `Headers`, `Request` and `Response`, run in Node as they are printed into the isolate: each rule the part
- * states, held here (RFC 0033 T3.1), so a change to one fails this suite before any bundle runs.
+ * states, held here, so a change to one fails this suite before any bundle runs.
  */
 
 const bytes = guestBytes();

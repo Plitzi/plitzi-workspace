@@ -99,7 +99,7 @@ export const createAuthContext = ({
    * failed and retries against the new state. Reported instead, and the person can ask for another.
    *
    * Started, not awaited: the answer never depended on it, and waiting for it was the provider's round trip on every
-   * sign-up (RFC 0033 T6.2) — and on a password reset, a slower answer for an address that has an account than for
+   * sign-up — and on a password reset, a slower answer for an address that has an account than for
    * one that has not, which is how a stranger tells them apart.
    */
   const deliver = (message: { to: string; template: string; data: Record<string, string> }): void => {

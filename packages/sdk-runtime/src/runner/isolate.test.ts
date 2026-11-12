@@ -9,7 +9,7 @@ import type { IsolateRunner } from './isolate';
 
 /**
  * What the code finds in an isolate — the web's APIs, none of Node's, a fresh start each time — and what a runner keeps
- * between invocations. Moved from `sdk-actions` (RFC 0033 T3.1); what the engine adds on top (the catalogue, kv,
+ * between invocations. Moved from `sdk-actions`; what the engine adds on top (the catalogue, kv,
  * signing, metering) is tested there.
  */
 
