@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import type { CpuMeter } from '../cpuMeter';
 import type { IsolateRunner } from '../isolate';
-import type { FunctionLimits } from '@plitzi/sdk-shared/functions';
+import type { FunctionLimits, FunctionUsage } from '@plitzi/sdk-shared/functions';
 
 /**
  * A bundle as the runner receives one — an ES module whose default export declares one task, `probe.run` — written by
@@ -24,6 +24,8 @@ const refuseEveryCall = (): Promise<unknown> => Promise.reject(new Error('No pla
 export type InvokeOptions = {
   answer?: (call: unknown) => Promise<unknown>;
   onWaited?: (ms: number) => void;
+  /** What it was charged, told once it ends. */
+  onUsage?: (usage: FunctionUsage) => void;
 };
 
 export type Outcome = { value: unknown } | { reason: string; message: string };
@@ -33,7 +35,7 @@ export const invoke = async (
   runner: IsolateRunner,
   bundle: { id: string; code: string },
   limits: Partial<FunctionLimits> = {},
-  { answer = refuseEveryCall, onWaited }: InvokeOptions = {}
+  { answer = refuseEveryCall, onWaited, onUsage }: InvokeOptions = {}
 ): Promise<Outcome> => {
   try {
     const value = await runner.invoke({
@@ -47,7 +49,8 @@ export const invoke = async (
       limits: { ...LIMITS, ...limits },
       answer,
       signal: new AbortController().signal,
-      ...(onWaited ? { onWaited } : {})
+      ...(onWaited ? { onWaited } : {}),
+      ...(onUsage ? { onUsage } : {})
     });
 
     return { value };
