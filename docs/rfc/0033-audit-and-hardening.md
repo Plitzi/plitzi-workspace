@@ -1,6 +1,6 @@
 # RFC 0033 — Audit and hardening: what is left
 
-Status, 2026-11-11: most of the audit has shipped. This file keeps **only the work still open** and what it needs to
+Status, 2026-11-12: most of the audit has shipped. This file keeps **only the work still open** and what it needs to
 be done. The audit's findings (W…, DS…, S…, Q…, A…, R…, PL…, X…, RS…), its method and every task already shipped are
 in this file's history — `git show c29db583b:docs/rfc/0033-audit-and-hardening.md` — and in the commits that name
 "RFC 0033". The procedure every task follows is unchanged:
@@ -13,7 +13,6 @@ Each is a test that ratchets: lowered when beaten, never raised.
 | Target | Now | After | Task |
 |---|---|---|---|
 | JavaScript for a page of text (compressed) | ~330 KB (`screens.spec.ts` budgets) | No split (D13): any saving is made inside `plitzi-sdk.js` | — |
-| Space document for a public page of the website (compressed) | 24 KB on `/terms`, 86 KB on the home (2026-11-12; 130 and 115 before) | ≤ 25 KB + the page's own — met | T1.2 |
 | Home height at 390 px | 16,847 px (ratchet 16,900; 15,991 before every control stood 44 px) | ≤ 16,000 px | T2.4′ |
 | Controls outside the window, 768 to 1280 px | the bar holds from 320 to 1440; the sweep of the key screens is not written | none, at seven widths | T2.28 |
 | Controls under 44 px on a phone | 0 on every key screen but the home's 2 (the studio's billing toggle, 43 px after a capture scrolled the page; 44 at rest) | 0 | T2.4′ |
@@ -46,14 +45,14 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T1.2** The space document in parts | Shipped 2026-11-12 (shell + a part per page and layout, D1/D2, prefetch, the session changing on the page). Left: navigation timed against T1.1's figures at p50 and p95 — it is held to no blank frame and the same document, not yet to a time; a switch for `settings.wholeDocument` in the builder's General settings (the builder keeps the setting already) | The two figures no worse than T1.1's; the switch drawn in both themes | S |
-| **T1.7** A heavy page is said | `space-record` done (300 → 247 KB, 2026-11-12: its capacity as lists and computed values; Pools left the list as five pages). Left, each a page rewritten rather than trimmed — measured 11-12: `home-guest` 527 KB over 1,423 elements, spread across the landing (the hero's studio mock 175, the capabilities 79, the comparison 60, the doors 54, collaboration 46); Meridian's `monitor` 454; Pizarra's `page-2` 1,670, its library writing every tile twice (the favourites and the category), each with its own flows. Since T1.2 a visitor downloads the page's part alone (the home's: 86 KB compressed), so the line is what a page weighs, not what every visitor pays for the whole site | `plitzi lint` names none of them | M each |
+| **T1.2** The space document in parts | Navigation timed against T1.1's figures at p50 and p95 — it is held to no blank frame and the same document, not yet to a time; a switch for `settings.wholeDocument` in the builder's General settings (the builder keeps the setting already) | The two figures no worse than T1.1's; the switch drawn in both themes | S |
+| **T1.7** A heavy page is said | Three pages rewritten rather than trimmed, measured 11-12: `home-guest` 527 KB over 1,423 elements, spread across the landing (the hero's studio mock 175, the capabilities 79, the comparison 60, the doors 54, collaboration 46); Meridian's `monitor` 454; Pizarra's `page-2` 1,670, its library writing every tile twice (the favourites and the category), each with its own flows. A visitor downloads the page's part alone, so the line is what a page weighs, not what every visitor pays for the whole site | `plitzi lint` names none of them | M each |
 
 ### WS2 — Website and sign-in (one visual lane)
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T2.4′** The home on a phone, looked at | The maintainer's look on a phone — the rails of § 02–07 and § 01's moment-then-picture shipped 2026-11-11, "looked at on a phone before it is called done". The height back under 16,000 px without the 44 px targets giving way (they cost ~850 px: the footer's links, the studio's controls); the studio's billing toggle at 44 after a capture | § 1's two rows | S |
+| **T2.4′** The home on a phone, looked at | The maintainer's look on a phone (the rails of § 02–07 and § 01's moment-then-picture, "looked at on a phone before it is called done"). The height back under 16,000 px without the 44 px targets giving way (they cost ~850 px: the footer's links, the studio's controls); the studio's billing toggle at 44 after a capture | § 1's two rows | S |
 | **T2.10** The sign-in pages, finished | One vertical rhythm for every sign-in page on a phone (`/sso` and `/forgot-password` centre where `/` and `/signup` start at the top); a share image and descriptions of a useful length | `auth` tests and the visual journey | S |
 | **T2.16** Landmarks | Authoring's suggestion for a page without `main`, once every seed — the demos' and showcases' — carries one | The lint says it; every seed passes | M |
 | **T2.17** Sign-in, said to everyone | **After the release that carries `autoComplete` tokens**: the auth seed names `username`, `new-password` and `one-time-code`; a focus ring on the fields, measured in both themes | The attributes asserted; the ring's contrast at 3:1 | S |
@@ -93,14 +92,13 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T6.1** The funnel | The back-office's visual test of **Overview → Sign-ups** (its API and e2e shipped) | The section drawn for the seeded data, in the visual lane | S |
-| **T6.2** Time to a first published page | Shipped 2026-11-12: the journey from Start free to the space answering on its address (`auth.spec.ts`, ~5 s, held to 6 s), and its mail wait taken out of the server (the account mails no longer awaited). Left: the budget lowered to what the stack measures once it runs that server | The journey's budget at its new figure | S |
-| **T6.3** What a buyer checks | Shipped 2026-11-12: `/changelog` read from the releases, `/security`, both in the footer; the website's `security.txt` already served. Left: a status page's address in the footer once there is one | The link, when the page exists | S |
+| **T6.1** The funnel | The back-office's visual test of **Overview → Sign-ups** (its API and e2e exist) | The section drawn for the seeded data, in the visual lane | S |
+| **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | After WS1: per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of T2.28; the home within its budget | L |
-| **T6.6** Found by a search | Left: `ItemList` on `/templates` (its gallery is read in the browser — a server provider first, holding its room); a share image per page made at publish — a platform change, its evidence to the maintainer first. Shipped: `FAQPage`, `Product`/`Offer`, the showcase's `ItemList`, docs' `TechArticle`/`BreadcrumbList`, docs' descriptions to length and the large card | A structured-data validator green on each page type; the sitemap's test (T2.18) | S |
-| **T6.7** Docs for both readers | Left: the REST routes as a generated page — the API declares no route table with what each route does (§ 5). Shipped (11-12): the builder's reference part, the MCP's tools generated from the server, "Copy as Markdown", "Suggest a change", "Was this page useful?", searches with no result | The docs' tests green with the new part | M |
-| **T6.8** A console that walks you in | Left: the first run's steps as the home's first section (they are its last: on the first visit after signing in they arrive in the browser, and drawn first they pushed the page down 0.5 — they need loading at their final size); acting on several spaces (the rows are whole links — a row of parts first, then a batch route that asks before deleting); one way to sort and page every table; loading at its final size. Shipped (11-12): the steps mean what they say; a count of what needs attention on Spaces; renaming a space on its page; the header at 390 px | T6.2's journey shorter; the tables in one shared component | L |
+| **T6.6** Found by a search | `ItemList` on `/templates` — its gallery is read in the browser, so a server provider first, holding its room; a share image per page made at publish — a platform change, its evidence to the maintainer first | A structured-data validator green on each page type; the sitemap's test (T2.18) | S |
+| **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
+| **T6.8** A console that walks you in | The first run's steps as the home's first section — they are its last: on the first visit after signing in they arrive in the browser, and drawn first they pushed the page down 0.5, so they need their room held; acting on several spaces (the rows are whole links — a row of parts first, then a batch route that asks before deleting); one way to sort and page every table; loading at its final size (with T2.14) | `auth.spec.ts`' timed journey no slower; the tables in one shared component | L |
 
 ## 4. Design notes the open work needs
 
@@ -118,6 +116,11 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   would teach the builder's and the CLI's internal routes as a public surface. Either the API declares its routes
   (path, method, guard, a sentence, the body) and the page is written from that, or the REST reference is dropped from
   T6.7 and the CLI and the MCP stay the documented ways in.
+- **A page that joins a channel late misses what was said meanwhile** (Pizarra, a seed's own): a writer who reloads
+  while somebody reveals private writing keeps the bar — the reveal is said between the board's load and the page's
+  join to `board:<id>`. `retain` would replay the last of each type, but that channel carries thirteen (the elements
+  among them); a topic of the board's state alone, retained, or a re-read once joined, closes it. The visual test waits
+  for the page's channels before revealing.
 - **Structured data off the browser's space.** Every page's `seoStructuredData` travels in the shell every page loads
   (65 docs pages: 2.5 KB gzipped of the 54 KB the front page's space weighs), and only the server's head reads it
   (`resolvePageSeo.ts`) — the browser's `PageHead` writes it again on a client navigation, which no crawler sees. Sent

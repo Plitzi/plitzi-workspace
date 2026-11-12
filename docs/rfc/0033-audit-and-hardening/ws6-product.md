@@ -60,43 +60,29 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 ## T6.6 — Found by a search
 
 - **Source:** RFC § 3.1.3 (SEO), W30. **Size:** S.
-- **Shipped (11-12):** `FAQPage` (the home's questions), `Product`/`Offer` per plan, the showcase's `ItemList`, the
-  docs' `TechArticle` + `BreadcrumbList`, docs' descriptions from the lede and the page's own prose (≤ 160), a share
-  image for the docs (the large card) and the website's redrawn with the layers mark.
-- **Left:** `ItemList` on `/templates` — its gallery is read in the browser (`landing/sections/templates.ts`), so the
+- **Steps:** `ItemList` on `/templates` — its gallery is read in the browser (`landing/sections/templates.ts`), so the
   head has nothing to write it from: a `runtime: 'server'` provider first, keeping the room its `loadingSlot` holds. A
   share image per page made at publish (a template's cover, a doc's title on the brand's ground) is general — every
   customer's space could have it — so it is a platform change: show the evidence to the maintainer first.
 - **Verify:** a structured-data validator green on each page type (in a test: parse the JSON-LD and check its
   required fields); `yarn vitest run prisma/seeds/spaces/platform`.
 
-## T6.7 — Docs for both readers
+## T6.7 — Docs for both readers: the REST reference
 
 - **Source:** RFC § 3.1.3 (Docs). **Size:** M.
-- **Read first:** `docs/public-docs.md`, `prisma/seeds/spaces/platform/docs/shell/nav.ts` (`DOCS_TABS`),
-  `shell/uiNames.ts` (`ui(…)`, `site(…)` — every builder button named as the builder shows it; `uiNames.test.ts`
-  checks them against the installed `@plitzi/*` `dist`).
-- **Shipped (11-12):** every public page ends with "Was this page useful?", "Suggest a change" and "Copy as Markdown";
-  the search keeps what found nothing; the staff read both on Internal → What readers said; the MCP's tools as a page
-  generated from the server's own list (`shell/mcpTools.ts`); the builder's reference part, In the builder
-  (`docs-builder*`, `docs-console-people`).
-- **Steps left:** the REST routes as a generated page — waits on § 5 (the API declares no route table). A page's
-  Markdown at an address an agent is given waits on § 5 too.
-- **Do not:** paste code into a lesson (the Academy's code is read from Café Lumen's project by `lessonFile`); name a
-  builder button in plain bold (`ui(…)`); teach a permission name with a dot.
-- **Verify:** `yarn vitest run prisma/seeds/spaces/platform/docs` (imports resolve, links exist, the catalogue is
-  whole); `visual/docs.spec.ts`; a page's Markdown is what an agent receives.
+- **Waits on:** the maintainer's word on § 5 — the API declares its routes, or the REST reference leaves T6.7.
+- **Steps:** if the routes are declared — path, method, guard, a sentence, the body — a reference page written from
+  that table when the docs are seeded, as `shell/mcpTools.ts` writes the MCP's from its tools; never by hand.
+- **Do not:** walk the Express routers for it (`routeGuards.test.ts` does, for guards): it has no word for a reader and
+  would teach internal routes as a public surface.
+- **Verify:** `yarn vitest run prisma/seeds/spaces/platform/docs` — a route added is on the page.
 
 ## T6.8 — A console that walks you in
 
 - **Source:** RFC § 3.1.3 (Console). **Size:** L.
 - **Read first:** `prisma/seeds/spaces/platform/website/homeChecklist.ts` (the checklist exists),
   `pages/home-authenticated.ts`, `pages/homeSpacesRows.ts`, the dashboard's layout rules in the maintainer's notes.
-- **Shipped (11-12):** the first run's checklist means what it says — create a space (New space, opened there), keep
-  a revision, invite someone, put it on your domain — read off the stats' `snapshotted` and `onDomain` (every space
-  answers on plitzi.app, so `published` meant nothing); `attention` on the workspace's alerts, a number on Spaces;
-  renaming a space where its name is the page's title, offered by the space's own `may`; the console's header at 390 px.
-- **Steps left:** the checklist as the home's FIRST section — it is the last: a returning visit draws it on the server,
+- **Steps:** the checklist as the home's FIRST section — it is the last: a returning visit draws it on the server,
   but the first visit after signing in learns the workspace in the browser, and a card arriving above the rest moved
   the page 0.5; it needs its room held, or the workspace known to the server on that visit. Acting on several spaces
   at once — the home's rows are whole links, so a row of parts first (a checkbox inside a link is not a control), then
@@ -104,4 +90,4 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
   (logs, runs, queue, audit, members). Loading drawn at its final size (with T2.14).
 - **Do not:** add a state key the server does not paint and expect it on reload (AGENTS.md § painted state); write a
   flow's bare `{{spaceId}}` inside a list's row (use `{{ navigation.routeParams.spaceId }}`).
-- **Verify:** T6.2's journey is shorter; the tables' behaviour lives in one component; `visual/website.spec.ts`.
+- **Verify:** `auth.spec.ts`' timed journey no slower; the tables' behaviour lives in one component; `visual/website.spec.ts`.
