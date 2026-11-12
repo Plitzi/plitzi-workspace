@@ -13,9 +13,7 @@ Each is a test that ratchets: lowered when beaten, never raised.
 | Target | Now | After | Task |
 |---|---|---|---|
 | JavaScript for a page of text (compressed) | ~330 KB (`screens.spec.ts` budgets) | No split (D13): any saving is made inside `plitzi-sdk.js` | — |
-| Home height at 390 px | 16,847 px (ratchet 16,900; 15,991 before every control stood 44 px) | ≤ 16,000 px | T2.4′ |
 | Controls under 44 px on a phone | 0 on every key screen but the home's 2 (the studio's billing toggle, 43 px after a capture scrolled the page; 44 at rest) | 0 | T2.4′ |
-| Server CI | lint, types, unit; the e2e job written, never run on GitHub | + e2e, + visual `@smoke` | T0.6 |
 
 ## 2. Decisions the open work still reads
 
@@ -31,27 +29,11 @@ Answered by the maintainer on 2026-11-10.
 
 What each row says is what is left of it; what shipped of it is in the history.
 
-### WS0 — Gates
-
-| Task | Left | Done when | Size |
-|---|---|---|---|
-| **T0.6** The visual suite in CI | The e2e job's first run on GitHub (written 2026-11-10, required by `build-app`), its time in the summary; the visual suite's `@smoke` per pull request, the full one nightly and before a release (block 3 of the CI plan) | A pull request that breaks the sign-in page fails | M |
-| **T0.12** The edge leaves the HTML alone | Email obfuscation off in every zone: committed in `plitzi-platform`'s Cloudflare role, **not applied — the API token lacks `Zone · Zone Settings : Edit`** (the maintainer's to grant, or turned off by hand); then the visual suite's remote check that a page's console holds no hydration error and no refused script, and the lab pass of `/terms` and `/templates` | No #418 and no blocked script on `dev.plitzi.com`; `/terms`' largest paint under 2.5 s in the lab | S |
-
 ### WS2 — Website and sign-in (one visual lane)
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T2.4′** The home on a phone, looked at | The maintainer's look on a phone (the rails of § 02–07 and § 01's moment-then-picture, "looked at on a phone before it is called done"). The height back under 16,000 px without the 44 px targets giving way (they cost ~850 px: the footer's links, the studio's controls); the studio's billing toggle at 44 after a capture | § 1's two rows | S |
-| **T2.17** Sign-in, said to everyone | **After the release that carries `autoComplete` tokens**: the auth seed names `username`, `new-password` and `one-time-code`; a focus ring on the fields, measured in both themes | The attributes asserted; the ring's contrast at 3:1 | S |
-| **T2.18** AI crawlers by kind, in the seeds | `/llms.txt` is the platform's (workspace `eca8b705d`); the sitemap stays what the schema says (its pages, folders and visibility — a template's page is reached through the gallery's links and its `ItemList`, which the page server draws). **After the release that carries both**: the website seed leaves its old `blockAiCrawlers` out, the docs' routing page says the kinds and `llms.txt` | `/llms.txt` answers on the website and the docs | S |
-| **T2.21** The builder's class chip | Its rail is done (plitzi-ui 1.6.39; `e2e/tests/builder/rail.spec.ts`). Left: the inspector shows a class as its `name` (`container-2f16` for one the builder made, which holds no other) — the maintainer says what it shows instead | The chip shows what the maintainer chose | S |
-
-### WS3 — Code quality
-
-| Task | Left | Done when | Size |
-|---|---|---|---|
-| **T3.2** `session` in parts | A load round within its band — the maintainer's to run | The round within its band | S |
+| **T2.4′** The home on a phone, looked at | The height is done (15,576 px, the pricing band left for `/pricing`). Left: the maintainer's look on a phone (the rails of § 02–06 and § 01's moment-then-picture); the studio's billing toggle at 44 px after a capture | § 1's row | S |
 
 ### WS4 — Authoring, MCP and CLI
 
@@ -68,7 +50,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | Per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of the sweep; the home within its budget | L |
-| **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none; the sitemap's test (T2.18) | S |
+| **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none | S |
 | **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
 
 ## 4. Design notes the open work needs
@@ -81,7 +63,7 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   (`uploadResource.ts`, `ACCEPTED`), so the docs keep each page's Markdown as JSON (`{ title, markdown }`) for "Copy as
   Markdown", and an agent has no `.md` to be pointed at. Either the CDN takes `text/plain`/`text/markdown` (a general
   change: `llms.txt`, `ads.txt` and a page's Markdown are text), or the page server answers `<path>.md` — which is
-  T2.18's `llms.txt` route's neighbour.
+  the `llms.txt` route's neighbour.
 - **The REST routes as a reference.** The API's routes are Express routers with no table of what each does — a list
   walked off them (as `routeGuards.test.ts` does) has methods, paths and guards, not one word for a reader, and it
   would teach the builder's and the CLI's internal routes as a public surface. Either the API declares its routes
@@ -110,7 +92,7 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
 
 ## 6. Not an agent's, tracked here
 
-- **Waiting for the maintainer:** T0.12's token permission (at the end of this RFC); pushing
+- **Waiting for the maintainer:** pushing
   `plitzi-platform`'s commits (a push there is a deploy); Chromium in the image for the screenshot service
   (~150–300 MB), so a space's journeys run there; the templates' covers on the dev cluster, looked at by whoever can
   reach it; T5.12's alerts sending — the chat's webhook into `alertmanager.sops.yaml` (`make secrets` with
