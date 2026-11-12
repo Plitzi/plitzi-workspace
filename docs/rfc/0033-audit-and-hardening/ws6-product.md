@@ -72,16 +72,16 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 
 ## T6.7 — Docs for both readers
 
-- **Source:** RFC § 3.1.3 (Docs). **Size:** L.
+- **Source:** RFC § 3.1.3 (Docs). **Size:** M.
 - **Read first:** `docs/public-docs.md`, `prisma/seeds/spaces/platform/docs/shell/nav.ts` (`DOCS_TABS`),
   `shell/uiNames.ts` (`ui(…)`, `site(…)` — every builder button named as the builder shows it; `uiNames.test.ts`
   checks them against the installed `@plitzi/*` `dist`).
 - **Shipped (11-12):** every public page ends with "Was this page useful?", "Suggest a change" and "Copy as Markdown";
-  the search keeps what found nothing; the staff read both on Internal → What readers said (`docs/public-docs.md`).
-- **Steps left:** a reference part for whoever builds in the builder and never opens the code (its panels, the
-  inspector, publishing and snapshots, domains, people and plans) — the Academy teaches it; no reference holds it. The
-  REST routes and the MCP's tools as generated reference pages (from the route table and the tool definitions, never
-  by hand). A page's Markdown at an address an agent is given waits on § 5.
+  the search keeps what found nothing; the staff read both on Internal → What readers said; the MCP's tools as a page
+  generated from the server's own list (`shell/mcpTools.ts`); the builder's reference part, In the builder
+  (`docs-builder*`, `docs-console-people`).
+- **Steps left:** the REST routes as a generated page — waits on § 5 (the API declares no route table). A page's
+  Markdown at an address an agent is given waits on § 5 too.
 - **Do not:** paste code into a lesson (the Academy's code is read from Café Lumen's project by `lessonFile`); name a
   builder button in plain bold (`ui(…)`); teach a permission name with a dot.
 - **Verify:** `yarn vitest run prisma/seeds/spaces/platform/docs` (imports resolve, links exist, the catalogue is
