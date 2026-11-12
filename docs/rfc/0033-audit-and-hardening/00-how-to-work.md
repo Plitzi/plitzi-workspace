@@ -10,7 +10,6 @@ folder, one file per workstream:
 
 | File | Tasks |
 |---|---|
-| [`ws4-agents-surface.md`](ws4-agents-surface.md) | T4.1–T4.11 — authoring, MCP, CLI, skills |
 | [`ws6-product.md`](ws6-product.md) | T6.1–T6.7 — funnel, trust pages, SEO, docs |
 
 ## 1. Before the first line of code

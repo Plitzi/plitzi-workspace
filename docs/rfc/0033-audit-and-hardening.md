@@ -28,21 +28,13 @@ Answered by the maintainer on 2026-11-10.
 
 What each row says is what is left of it; what shipped of it is in the history.
 
-### WS4 — Authoring, MCP and CLI
-
-| Task | Left | Done when | Size |
-|---|---|---|---|
-| **T4.1** A standing score | All of it: inventory `bench/`; twelve tasks over three project shapes, each with a scripted check; run on a schedule, one model per tier, alone and as a team; the element-level tasks both ways — the MCP's own operations and `addSpec` (with `replaces`) — so the score says which an agent gets right; success, calls, tokens, wall time and refusals kept by commit | A table per week in `bench/results`; a drop beyond its noise named by the report | L |
-| **T4.6** What a refusal cost | From T4.1's records: the ten refusals and lints agents meet most, and whether the message alone was enough | A list with counts; no change made | S, after T4.1 |
-| **T4.9** The run skills, on a diet | Every sentence of the six `runs*.md` skills: enforced by a refusal, said by a command, or only there — the first two leave the skill; what stays ordered by how often runs met it, one rule a line, a glossary opening `runs.md`; T4.1's team score before and after | `runs-lead.md` under 3,500 tokens; a test lists each rule taken out beside what carries it; the score no lower | L, after T4.1 |
-
 ### WS6 — Product
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
 | **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | Per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
-| **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of the sweep; the home within its budget | L |
+| **T6.5** The landing says who and proves it | Done of it (PSS `c4815f77`): the first screen names its reader and says the docs' sentence (`brand/about.ts`), the licence in place of the star count. Left — each needs what does not exist yet: the quieter second call to action (a 90-second recording of the studio, or an address kept, with its consent and storage); a page per reader and honest comparisons (Webflow, Framer, WordPress, a headless CMS — facts about other products to check); the bands' art | Each new page in the sitemap and linked; both themes, every width of the sweep | L |
 | **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none | S |
 | **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
 
