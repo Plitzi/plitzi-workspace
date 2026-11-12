@@ -57,7 +57,10 @@ const BUDGET = {
   // plitzi-ui's 19 modules; the persisted state and the theme's and network's React parts moved to folders the server
   // never imports (`store`, `theme/react`, `network/react`), which took nexus off it (docs/en/server-packages.md, D13).
   // 143: CPU and memory in one scale each (`helpers/resources`), a pure helper of the `helpers` barrel.
-  '@plitzi/sdk-shared': 143,
+  // 146: the space sent in parts (`schema/documentParts`, which the page server splits a space with) and the brand's mark
+  // (`schema/plitziMark`, the default favicon) — and one this budget left out when it was set: the commit that wrote 143
+  // loaded 144 (measured on it, 2026-11-12).
+  '@plitzi/sdk-shared': 146,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,
