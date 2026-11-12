@@ -13,7 +13,6 @@ Each is a test that ratchets: lowered when beaten, never raised.
 | Target | Now | After | Task |
 |---|---|---|---|
 | JavaScript for a page of text (compressed) | ~330 KB (`screens.spec.ts` budgets) | No split (D13): any saving is made inside `plitzi-sdk.js` | — |
-| Controls under 44 px on a phone | 0 on every key screen but the home's 2 (the studio's billing toggle, 43 px after a capture scrolled the page; 44 at rest) | 0 | T2.4′ |
 
 ## 2. Decisions the open work still reads
 
@@ -28,12 +27,6 @@ Answered by the maintainer on 2026-11-10.
 ## 3. Work left
 
 What each row says is what is left of it; what shipped of it is in the history.
-
-### WS2 — Website and sign-in (one visual lane)
-
-| Task | Left | Done when | Size |
-|---|---|---|---|
-| **T2.4′** The home on a phone, looked at | The height is done (15,576 px, the pricing band left for `/pricing`). Left: the maintainer's look on a phone (the rails of § 02–06 and § 01's moment-then-picture); the studio's billing toggle at 44 px after a capture | § 1's row | S |
 
 ### WS4 — Authoring, MCP and CLI
 
