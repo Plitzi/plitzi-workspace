@@ -669,8 +669,17 @@ const TOOLTIP = {
 
 const TIP_ROW = { display: 'flex', alignItems: 'center', gap: '6px' } as const;
 
-/** A series's key: a short stroke of its colour for a line, a small square for a bar or an area. */
-const LINE_KEY = { display: 'inline-block', width: '12px', height: '2px', borderRadius: '1px', flexShrink: 0 } as const;
+/**
+ * A series's key: a short stroke of its colour for a line — its ends rounded, a pill rather than a corner of its own —
+ * and a small square for a bar or an area.
+ */
+const LINE_KEY = {
+  display: 'inline-block',
+  width: '12px',
+  height: '2px',
+  borderRadius: '999px',
+  flexShrink: 0
+} as const;
 
 const BOX_KEY = { display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', flexShrink: 0 } as const;
 
