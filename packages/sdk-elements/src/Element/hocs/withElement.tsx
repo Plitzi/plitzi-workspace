@@ -354,7 +354,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const ref = useRef<HTMLElement>(undefined);
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- the same render on the server, the same order
     return useResolvedElement(props, { ref, traceId, parentTraceId: parentElement?.traceId, parentVisible });
   };
 

@@ -125,7 +125,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
         });
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- the branch is fixed for a mounted element (see the note above)
   const interactions = useRootElementInteractions({
     elementContext,
     previewMode,
