@@ -1,7 +1,7 @@
 import { get, set, omit, isEmpty, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 
-import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins';
+import { getStyle, pluginParseDefinition, getLocalCustomStyle } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import { PluginAssetsContext, PluginsContext } from '@plitzi/sdk-shared/plugins/react';
@@ -9,7 +9,7 @@ import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import PluginsReducer from './PluginsReducer';
 
-import type { ComponentDefinition, Asset, ComponentPlugin, PluginRaw } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Asset, PluginRaw } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PluginsContextProviderProps = {
@@ -251,27 +251,9 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
     setTemporalCustomStyles(state => omit(state, keys));
   }, []);
 
-  const pluginCustomStyleAssets = useMemo<Record<string, Asset>>(
-    () =>
-      Object.keys(components.current)
-        .filter(compKey => components.current[compKey].origin === 'local-custom')
-        .reduce((acum, compKey) => {
-          const assets = get(components, `${compKey}.assets`, []) as ComponentPlugin['assets'];
-
-          return {
-            ...acum,
-            ...assets.reduce(
-              (acum2, asset, i) => ({
-                ...acum2,
-                [`${compKey}-${i}`]: { type: 'link', id: `${compKey}-${i}`, params: asset }
-              }),
-              {}
-            )
-          };
-        }, {}),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [components.current]
-  );
+  // The host's own plugins' stylesheets, read from the registry (`components.current`) — the box is a new one whenever
+  // the host's plugins change, which is when these do.
+  const pluginCustomStyleAssets = useMemo(() => getLocalCustomStyle(components.current), [components]);
 
   const assetsState = useMemo(
     () => ({ ...pluginStyleAssets, ...pluginCustomStyleAssets, ...temporalCustomStyles }),

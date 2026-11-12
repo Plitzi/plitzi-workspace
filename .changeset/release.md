@@ -100,6 +100,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## SDK
 
+- A plugin a host hands over in its own code (`localCustomComponents`, a `<PlitziSdk.Plugin>`) is drawn with its
+  stylesheets: they were read off the registry's box instead of its contents, and every such plugin rendered without
+  its CSS — in the SDK and in the builder. `getLocalCustomStyle` (`@plitzi/sdk-plugins`) reads them, beside `getStyle`,
+  which reads a registered component's assets too now (a function, which a path reader did not walk).
 - A page whose sessions the page server holds (`userProvider: 'server'`) keeps the painted state it was drawn with
   when the cookie was another account's: the server proved this account and drew its own values, or its defaults
   (`paintedDefaults`) — which may equal the last account's, a workspace both belong to. Dropped as the other's, a

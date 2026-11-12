@@ -1,6 +1,6 @@
 {
   "apps/builder": {
-    "disable": 15,
+    "disable": 14,
     "any": 2,
     "unknownAs": 5
   },
@@ -20,7 +20,7 @@
     "unknownAs": 5
   },
   "apps/sdk": {
-    "disable": 5,
+    "disable": 4,
     "any": 3,
     "unknownAs": 2
   },

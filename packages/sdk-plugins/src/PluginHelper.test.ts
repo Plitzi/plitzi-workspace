@@ -11,7 +11,7 @@ vi.mock('@plitzi/sdk-shared/helpers', async importOriginal => ({
   fetchManifest
 }));
 
-const { fetchPluginsManifests, getStyle, pluginParseDefinition } = await import('./PluginHelper');
+const { fetchPluginsManifests, getLocalCustomStyle, getStyle, pluginParseDefinition } = await import('./PluginHelper');
 
 /** A CDN that answers each plugin's manifest by its URL. */
 const serving = (manifests: Record<string, PluginManifest | Error>) => {
@@ -91,5 +91,26 @@ describe('getStyle', () => {
       'https://cdn.example.com/charts/style.css',
       'https://cdn.example.com/maps/style.css'
     ]);
+  });
+});
+
+describe('getLocalCustomStyle', () => {
+  // A registered component is a function with its fields on it: what a path reader (`get`) does not walk.
+  const component = (origin: 'local' | 'local-custom', id: string) =>
+    Object.assign(() => null, {
+      origin,
+      assets: [
+        { type: 'link' as const, id, params: { href: `/${id}`, type: 'text/css' as const, rel: 'stylesheet' as const } }
+      ]
+    });
+
+  it('is the stylesheets of the plugins a host hands over in its own code, and of no other', () => {
+    const styles = getLocalCustomStyle({
+      seatPicker: component('local-custom', 'seat-picker.css'),
+      button: component('local', 'button.css')
+    });
+
+    expect(Object.keys(styles)).toEqual([btoa('seat-picker.css')]);
+    expect(styles[btoa('seat-picker.css')]).toMatchObject({ params: { href: '/seat-picker.css' } });
   });
 });

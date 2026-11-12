@@ -13,6 +13,7 @@ import PluginsContextProvider from './PluginsContextProvider';
 import type {
   ComponentContextValue,
   ComponentDefinition,
+  ComponentPluginWithHOC,
   PluginAssetsContextValue,
   PluginsContextValue
 } from '@plitzi/sdk-shared';
@@ -137,5 +138,47 @@ describe('PluginsContextProvider — changes from elsewhere', () => {
     deliver('SPACE_REMOVE_PLUGIN', { pluginType: 'weather' });
 
     expect(contexts.plugins?.plugins).toBe(before);
+  });
+});
+
+describe('PluginsContextProvider — a plugin the host hands over in its own code', () => {
+  // A `local-custom` plugin's stylesheet was read off the registry's box rather than its contents (`components`, not
+  // `components.current`), and every such plugin drew without its CSS.
+  it('loads its stylesheets with the space’s', () => {
+    // A component and what the registry reads of it: a type and its assets.
+    const seatPicker = Object.assign(() => null, {
+      type: 'seatPicker',
+      assets: [
+        {
+          type: 'link',
+          id: 'seat-picker.css',
+          params: { href: '/seat-picker.css', type: 'text/css', rel: 'stylesheet' }
+        }
+      ]
+    }) as unknown as ComponentPluginWithHOC;
+    let assets: PluginAssetsContextValue | undefined;
+    const Probe = () => {
+      assets = use(PluginAssetsContext);
+
+      return null;
+    };
+
+    render(
+      <NetworkContext
+        value={{ subscriptionManager: { subscribe: () => () => undefined } } as unknown as NetworkContextValue}
+      >
+        <ComponentProvider localCustomComponents={{ seatPicker }}>
+          <PluginsContextProvider plugins={{}}>
+            <Probe />
+          </PluginsContextProvider>
+        </ComponentProvider>
+      </NetworkContext>
+    );
+
+    expect(assets?.assets).toHaveProperty(btoa('seat-picker.css'));
+    expect(assets?.assets[btoa('seat-picker.css')]).toMatchObject({
+      type: 'link',
+      params: { href: '/seat-picker.css' }
+    });
   });
 });

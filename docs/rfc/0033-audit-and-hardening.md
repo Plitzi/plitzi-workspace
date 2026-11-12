@@ -121,10 +121,6 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   tablet — the summary a bar at the foot instead of beside the plans — which no width inside one range can say. Either
   the desktop starts at 1024 (tablet to 1023: every space's 1024 layout changes) or `/pricing` keeps its tablet shape
   at 1024.
-- **A local plugin's assets are never loaded** (the builder's and the SDK's `PluginsContextProvider`, the same code in
-  both): `get(components, \`${key}.assets\`)` reads the ref, not `components.current`, so a `local-custom` plugin's
-  assets are always `[]`. Fixing it makes both start loading those assets — a platform change, said here first; the
-  two copies are one more reason for a single module.
 
 ## 6. Not an agent's, tracked here
 

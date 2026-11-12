@@ -3,7 +3,7 @@ import { get, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
-import { getStyle } from '@plitzi/sdk-plugins';
+import { getStyle, getLocalCustomStyle } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network/react';
 import {
@@ -14,7 +14,7 @@ import {
 } from '@plitzi/sdk-shared/plugins/react';
 import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { Asset, ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { Asset, ComponentDefinition } from '@plitzi/sdk-shared';
 
 export type PluginsContextProviderProps = {
   children: React.ReactNode;
@@ -94,27 +94,9 @@ const PluginsContextProvider = ({
 
   const pluginStyleAssets = useMemo(() => getStyle(plugins), [plugins]);
 
-  const pluginCustomStyleAssets = useMemo<Record<string, Asset>>(
-    () =>
-      Object.keys(components.current)
-        .filter(compKey => components.current[compKey].origin === 'local-custom')
-        .reduce((acum, compKey) => {
-          const assets = get(components, `${compKey}.assets`, []) as ComponentPlugin['assets'];
-
-          return {
-            ...acum,
-            ...assets.reduce(
-              (acum2, asset, i) => ({
-                ...acum2,
-                [`${compKey}-${i}`]: { type: 'link', id: `${compKey}-${i}`, params: asset }
-              }),
-              {}
-            )
-          };
-        }, {}),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [components.current]
-  );
+  // The host's own plugins' stylesheets, read from the registry (`components.current`) — the box is a new one whenever
+  // the host's plugins change, which is when these do.
+  const pluginCustomStyleAssets = useMemo(() => getLocalCustomStyle(components.current), [components]);
 
   const assetsState = useMemo<Record<string, Asset>>(() => {
     const extraAssets: Record<string, Asset> = {};

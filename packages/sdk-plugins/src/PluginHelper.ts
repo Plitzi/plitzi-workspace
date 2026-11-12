@@ -4,7 +4,7 @@ import { fetchManifest } from '@plitzi/sdk-shared/helpers';
 
 import manifestAssetToAsset from './helpers/manifestAssetToAsset';
 
-import type { PluginManifest, ComponentDefinition, PluginRaw, Asset } from '@plitzi/sdk-shared';
+import type { PluginManifest, ComponentDefinition, ComponentPlugin, PluginRaw, Asset } from '@plitzi/sdk-shared';
 
 const getComponentDefinition = (
   pluginRaw: PluginRaw,
@@ -119,13 +119,25 @@ export const pluginParseDefinition = async (pluginsRaw: PluginRaw | PluginRaw[] 
   return definitions;
 };
 
-export const getStyle = (plugins: Record<string, ComponentDefinition>): Record<string, Asset> =>
+export const getStyle = (plugins: Record<string, Pick<ComponentDefinition, 'assets'>>): Record<string, Asset> =>
   Object.values(plugins).reduce(
     (acum, plugin) => ({
       ...acum,
-      ...get(plugin, 'assets', [])
+      // Read off the value itself: a registered component is a function, which a path reader (`get`) does not walk.
+      ...(Array.isArray(plugin.assets) ? plugin.assets : [])
         .filter(asset => asset.type === 'link')
         .reduce((acum2, asset) => ({ ...acum2, [btoa(asset.id)]: asset }), {})
     }),
     {}
+  );
+
+/**
+ * The stylesheets of the plugins a host hands over in its own code (`origin: 'local-custom'`), as `getStyle` reads a
+ * space's: each `link` asset, by its id. The registry holds every component; only those carry stylesheets of their own.
+ */
+export const getLocalCustomStyle = (
+  components: Record<string, Pick<ComponentPlugin, 'assets' | 'origin'>>
+): Record<string, Asset> =>
+  getStyle(
+    Object.fromEntries(Object.entries(components).filter(([, component]) => component.origin === 'local-custom'))
   );
