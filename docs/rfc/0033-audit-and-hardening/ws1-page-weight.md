@@ -32,45 +32,6 @@ watch server, never a development build.
 
 ---
 
-## T1.2 — The space document in parts
-
-- **Repos:** `plitzi-workspace` (`apps/server`, `apps/sdk`, `packages/sdk-schema`). **Finding:** P1. **Size:** L.
-- **Depends on:** T1.1. **Decided:** D1, D2 (above). **Contract:** RFC § 8, contract A — follow it; if it is wrong,
-  fix § 8 first.
-- **Steps:**
-  1. Server: `spaceDocument.ts` builds a **shell** (definition, settings, variables, flags, the page list with slug
-     and access level, what every page needs), **one part per layout** (its subtree and the components it uses) and
-     **one part per page** (its subtree, the components only it uses, and the names of the layouts it needs). Each is
-     named by a hash of its content and served immutable, like the stylesheet.
-  2. The page server puts the rendered page's part **and its layouts' parts** in reach of the first paint (inlined or
-     preloaded — § 8 says which) so the first load makes no extra round trip.
-  3. Client, **with a page server only**: `navigation.navigate` fetches the target page's part and any layout part it
-     does not hold; a link that enters the viewport prefetches both (idle priority). A layout already held is never
-     fetched again. Navigation stays free of the API — a part is a static file — and a part that fails to arrive falls
-     back to a full page load, said in the dev tools, never a blank page.
-  4. **The SDK alone, with no page server (D1): nothing changes.** A space rendered as a single-page app keeps
-     receiving the whole document through the request it makes today, and navigates within it as today. Do not make
-     that path fetch parts, and do not change what `/_plitzi/space.json` or the public `Space` query answer. Find every
-     such path first: `grep -rn "space.json\|query Space\|Space(" apps/sdk/src packages/sdk-shared/src examples`.
-  5. Access (D2): a guarded page's part is served as the page is — the same check as the page's own request. A
-     visitor not signed in gets 401/404 for it, and the shell's page list tells it only what it needs to route (slug,
-     access level), not the page's content. A layout used only by guarded pages is guarded the same way.
-  6. A setting keeps today's whole document for a space that asks. The builder and the MCP keep reading the whole,
-     through their own paths — do not route them through parts.
-- **Do not:** change the schema's stored shape; break `invalidateSpaceCaches` (a write must drop the shell, the parts
-  and both page caches — read AGENTS.md § "A published page is kept in Redis too"); add a proxy/CDN rule without the
-  same for the new path (AGENTS.md § "A page links the space's stylesheet").
-- **Verify:** unit tests of the split (a page's part plus the shell reassemble to the whole, for every seeded space —
-  reuse `compareSpaces`, expanding component instances first); e2e: a visitor not signed in cannot fetch a guarded
-  page's part; `yarn playwright test visual/screens.spec.ts` with `wasted` unchanged; T0.7's `spaceKb` for `/terms`
-  ≤ 25 KB plus the page's own; a navigation between two public pages that share a layout makes one request under
-  30 KB. **For D1:** the workspace's e2e of the client-only projects and examples (`yarn e2e:ci`) unchanged and
-  green, and the requests such a project makes are the same list as before (record both); navigation between two
-  pages, with a page server, no slower than T1.1's figures at the median and at p95, and with no loading state that
-  was not there — a test that fails if a spinner or an empty frame is painted between two pages.
-- **Stop and ask if:** a seeded space reads another page's elements at runtime (a binding across pages) — the split
-  must not break it silently; or the SDK-alone path cannot be left untouched without two code paths you cannot test.
-
 ## T1.3 — The SDK in parts
 
 - **Repos:** `plitzi-workspace` (`apps/sdk`, `packages/sdk-elements`, `apps/server`). **Finding:** P2. **Size:** L.

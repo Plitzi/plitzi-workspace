@@ -13,7 +13,7 @@ Each is a test that ratchets: lowered when beaten, never raised.
 | Target | Now | After | Task |
 |---|---|---|---|
 | JavaScript for a page of text (compressed) | ~344 KB (`screens.spec.ts` budgets) | ≤ 150 KB | T1.3 |
-| Space document for a public page of the website (compressed) | 115 KB on the home, 183 KB on the profile | ≤ 25 KB + the page's own | T1.2 |
+| Space document for a public page of the website (compressed) | 24 KB on `/terms`, 86 KB on the home (2026-11-12; 130 and 115 before) | ≤ 25 KB + the page's own — met | T1.2 |
 | Home height at 390 px | 16,847 px (ratchet 16,900; 15,991 before every control stood 44 px) | ≤ 16,000 px | T2.4′ |
 | Controls outside the window, 768 to 1280 px | the bar holds from 320 to 1440; the sweep of the key screens is not written | none, at seven widths | T2.28 |
 | Controls under 44 px on a phone | 0 on every key screen but the home's 2 (the studio's billing toggle, 43 px after a capture scrolled the page; 44 at rest) | 0 | T2.4′ |
@@ -45,7 +45,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T1.2** The space document in parts | All of it, by § 4's contract: a shell, a part per layout and per page, content-named and immutable; the page server puts the rendered page's parts within the first paint, a link in view prefetches; a guarded page's part served as the page is (D2); the SDK alone unchanged (D1); the builder and the MCP keep reading the whole | § 1's document row; a visitor not signed in cannot fetch a guarded page's part (e2e); the client-only examples' e2e green; navigation no slower at p95, no new loading state; `wasted` unchanged | L |
+| **T1.2** The space document in parts | Shipped 2026-11-12 (shell + a part per page and layout, D1/D2, prefetch, the session changing on the page). Left: navigation timed against T1.1's figures at p50 and p95 — it is held to no blank frame and the same document, not yet to a time; a switch for `settings.wholeDocument` in the builder's General settings (the builder keeps the setting already) | The two figures no worse than T1.1's; the switch drawn in both themes | S |
 | **T1.3** The SDK in parts | All of it, by § 4's contract: a core and a chunk per heavy family (Markdown first), `modulepreload` for the rendered types, a static deploy uploading the chunks, the SDK alone preloading a chunk as soon as the document names its family | § 1's script row on `/terms`; the dashboard's hydration no slower (`NODE_ENV=production`); nothing drawn later than before (the flicker check) | L |
 | **T1.7** A heavy page is said | The pages `heavy-page` still names, in the visual lane, same pixels by render diff: `home-guest` 537 KB, `space-record` 306, `admin-pools` 277; the showcase's Pizarra (1,670) and Meridian (452). The way `/pricing` went (708 → 189 KB): sums once as computed values guarded to their page, rows written once through lists whose items draw no box (AGENTS.md says it) | `plitzi lint` names none of them | M |
 
@@ -103,14 +103,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.8** A console that walks you in | A first run to the first publish as the page's main thing until done; renaming in place; acting on several spaces; one way to sort and page every table; a count of what needs attention on the bar; loading at its final size | T6.2's journey shorter; the tables in one shared component | L |
 
 ## 4. Design notes the open work needs
-
-**The document in parts (T1.2).** A shell — definition, settings, variables, the page list with each page's slug,
-access and the names of the layouts it needs — and a part per layout and per page, each named by its content and
-immutable. The page server puts the rendered page's parts, and its layouts', within the first paint (`<link
-rel=preload>` and the same fetch the document uses today); a link in view prefetches its page's part. A guarded page's
-part is answered as the page is (D2, already enforced on the whole document). **The SDK alone keeps its whole
-document** (D1): `/_plitzi/space.json` and a static deploy are unchanged, and the store treats a missing part as one to
-fetch, never as an empty page. The builder and the MCP keep reading the whole.
 
 **The SDK in parts (T1.3).** A core and a chunk per heavy family, named by content, beside `plitzi-sdk.js` under
 `/sdk-assets` (served already: the dev-tools chunk is). The first chunk is Markdown — the largest part, and one most
