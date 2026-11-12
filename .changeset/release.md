@@ -98,6 +98,9 @@ An authored request connects to the address its name was judged to, and the advi
 - A navigation fetches the parts of the space its page needs before it goes (a link fetches them ahead, idle, once it is
   on screen), and a part that does not come loads the address from the server, said in the dev tools — never a page
   drawn without its elements. A document with no `parts` — the SDK alone — takes none of this path.
+- A link to a page whose address another page shares for another visitor — the signed-in home beside the guest's —
+  is followed in the browser: the page withheld from this visitor no longer counts among what it needs, and every
+  guest's link to the home loaded it from the server, the whole page again.
 - Signing in or out on a page no longer leaves it showing what its document was sent for the visitor before: a page
   that document withheld — a member's page, after signing in — is loaded from the server for the visitor now
   (`sessionChangedHere` on the auth context says the session changed on this page). Since signed-in pages were
@@ -199,6 +202,8 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Builder
 
+- General settings → **Loading pages**: "Send every page with the first one" (`settings.wholeDocument`), for a space
+  whose pages read each other's elements while they run — the builder kept the setting, and nothing let a person set it.
 - A builder that cannot open its space says why and where to go — a session that ended (sign in again), a space out of
   reach (back to your spaces), a platform that does not answer (try again) — where it drew the bare words of the error
   on an empty page.

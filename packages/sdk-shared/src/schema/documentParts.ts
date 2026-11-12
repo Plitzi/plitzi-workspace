@@ -127,7 +127,10 @@ export const splitSchema = (
 /**
  * The roots a page needs and the shell does not hold: the page's own part and its layouts', by root; the parts of the
  * pages at its address; and, for a page withheld from this visitor, the page the space draws in its place
- * (`settings.withheldPage`).
+ * (`settings.withheldPage`). A page at its address that is withheld from this visitor — a part named `''`, its layouts
+ * too — is not among them: the router changes to it only once the visitor changes, and a page kept from the visitor the
+ * document was sent for is loaded from the server then. Counted, a guest's every link to the home loaded the whole page
+ * from the server, for the signed-in home beside it.
  */
 export const missingParts = (
   schema: Pick<Schema, 'flat' | 'parts' | 'pages'> & Partial<Pick<Schema, 'settings'>>,
@@ -153,9 +156,10 @@ export const missingParts = (
       : schema.pages.filter(
           other => other !== pageId && addressOf(schema.flat[other] as Element | undefined) === address
         );
-  const roots = [pageId, ...together].flatMap(id => [id, ...pageLayouts(schema.flat, id)]);
+  const own = [pageId, ...pageLayouts(schema.flat, pageId)];
+  const beside = together.flatMap(id => [id, ...pageLayouts(schema.flat, id)]).filter(root => parts[root] !== '');
 
-  return [...new Set([...roots, ...(instead ? [instead] : [])])].filter(root => Object.hasOwn(parts, root));
+  return [...new Set([...own, ...beside, ...(instead ? [instead] : [])])].filter(root => Object.hasOwn(parts, root));
 };
 
 /**

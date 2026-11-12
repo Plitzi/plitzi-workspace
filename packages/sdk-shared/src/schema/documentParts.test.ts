@@ -119,6 +119,25 @@ describe('a space sent in parts', () => {
     expect(page.parts?.account).toBeUndefined();
   });
 
+  it('does not count a page at its address withheld from this visitor, so a guest’s link to it is followed here', () => {
+    const space = schema();
+    // The signed-in page at `about`'s address, in the console, withheld from this guest — as the console's other page is.
+    space.flat.account = el('account', 'account', 'page', [], {
+      slug: 'about',
+      layout: 'console',
+      layoutContainer: 'console'
+    });
+    space.flat.about = { ...space.flat.about, attributes: { ...space.flat.about.attributes, slug: 'about' } };
+    space.flat.admin = { ...space.flat.admin, definition: { ...space.flat.admin.definition, items: [] } };
+    delete space.flat['admin-table'];
+    space.pages = [...space.pages, 'account'];
+    const { shell } = splitSchema(space, nameOf, ['admin', 'account']);
+
+    expect(shell.parts?.console).toBe('');
+    expect(missingParts(shell, 'about')).toEqual(['about', 'site']);
+    expect(missingParts(shell, 'account')).toEqual(['console', 'site', 'about']);
+  });
+
   it('leaves a document with nothing to split as it came, and one without parts untouched', () => {
     const whole = schema();
 

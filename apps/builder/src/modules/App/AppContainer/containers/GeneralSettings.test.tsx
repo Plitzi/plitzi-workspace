@@ -59,3 +59,26 @@ describe('GeneralSettings — the page shown instead of one withheld', () => {
     expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', undefined, 'withheldPage');
   });
 });
+
+// A space whose pages read each other's elements had no way in the builder to ask for every page at once.
+describe('GeneralSettings — every page with the first one', () => {
+  it('writes the whole document when checked, and leaves the setting out when unchecked', () => {
+    const { container, getByText, queryByText } = render(
+      <EventBridgeContext value={{ eventBridge }}>
+        <GeneralSettings />
+      </EventBridgeContext>
+    );
+    const checkbox = container.querySelector<HTMLInputElement>('input[name="wholeDocument"]');
+    if (!checkbox) {
+      throw new Error('No wholeDocument field');
+    }
+
+    expect(checkbox.checked).toBe(false);
+    expect(queryByText(/downloads all 3 pages/u)).toBeNull();
+    fireEvent.click(checkbox);
+    expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', true, 'wholeDocument');
+    expect(getByText(/downloads all 3 pages/u)).toBeTruthy();
+    fireEvent.click(checkbox);
+    expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', undefined, 'wholeDocument');
+  });
+});

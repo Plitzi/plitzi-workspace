@@ -93,7 +93,8 @@ const GeneralSettings = () => {
     mfaUrl = '',
     sessionGate = 'optimistic',
     sessionRevalidateSeconds = 300,
-    debugMode = false
+    debugMode = false,
+    wholeDocument = false
   } = settings;
 
   const handleChangeKeepState = useCallback(
@@ -119,6 +120,16 @@ const GeneralSettings = () => {
     (e: ChangeEvent<HTMLInputElement>) => {
       setSettings(state => ({ ...state, debugMode: e.target.checked }));
       void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'debugMode');
+    },
+    [eventBridge]
+  );
+
+  const handleChangeWholeDocument = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      // Left out rather than false: the setting's absence is the default, and the document says only what differs.
+      const next = e.target.checked ? true : undefined;
+      setSettings(state => ({ ...state, wholeDocument: next }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', next, 'wholeDocument');
     },
     [eventBridge]
   );
@@ -335,6 +346,26 @@ const GeneralSettings = () => {
             </option>
           ))}
         </Select>
+      </ViewSection>
+      <ViewSection title="Loading pages">
+        <p className="text-xs text-gray-500 dark:text-zinc-400">
+          A visitor receives the page they open and its layouts; the others arrive as a link to them is followed. A
+          space whose pages read each other's elements while they run needs every page from the start.
+        </p>
+        <Checkbox
+          size="sm"
+          name="wholeDocument"
+          checked={wholeDocument}
+          onChange={handleChangeWholeDocument}
+          type="checkbox"
+          label="Send every page with the first one"
+        />
+        {wholeDocument && pageIds.length > 1 && (
+          <Notice tone="info">
+            Each visitor now downloads all {pageIds.length} pages on arrival. Nothing changes for a single-page app
+            rendered in the browser alone: it always receives the whole space.
+          </Notice>
+        )}
       </ViewSection>
       <ViewSection title="Style">
         <Notice tone="info">Keep in mind that changing this can impact your style</Notice>
