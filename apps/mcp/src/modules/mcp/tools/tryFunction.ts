@@ -6,8 +6,11 @@ import type { ToolContext } from './shared/tool';
 
 export const tryFunctionShape = {
   task: z.string().describe('`<namespace>.<action>`'),
-  params: z.record(z.string(), z.unknown()).optional(),
-  dryRun: z.boolean().optional()
+  params: z.record(z.string(), z.unknown()).optional().describe('The task’s params, as a page would send them'),
+  dryRun: z
+    .boolean()
+    .optional()
+    .describe('Answers without running: trying a function runs its code for real — its fetches and its writes')
 };
 
 /**

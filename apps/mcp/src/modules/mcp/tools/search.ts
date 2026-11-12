@@ -18,7 +18,10 @@ import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export const searchShape = {
   query: z.string().describe('Case-insensitive match on label, type and attribute values'),
-  filters: z.object({ type: z.string().optional(), pageRef: z.string().optional() }).optional(),
+  filters: z
+    .object({ type: z.string().optional(), pageRef: z.string().optional() })
+    .optional()
+    .describe('Only elements of this `type`, or on the page `pageRef`'),
   include: z
     .literal('detail')
     .optional()

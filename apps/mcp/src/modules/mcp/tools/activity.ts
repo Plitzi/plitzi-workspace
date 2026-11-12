@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  ACTIVITY_LIMIT_DEFAULT,
   ACTIVITY_LIMIT_MAX,
   ACTIVITY_WAIT_DEFAULT_SECONDS,
   ACTIVITY_WAIT_MAX_SECONDS
@@ -19,7 +20,13 @@ export const activityShape = {
     .max(ACTIVITY_WAIT_MAX_SECONDS)
     .optional()
     .describe(`Seconds to wait for something; default ${String(ACTIVITY_WAIT_DEFAULT_SECONDS)}`),
-  limit: z.number().int().min(1).max(ACTIVITY_LIMIT_MAX).optional(),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(ACTIVITY_LIMIT_MAX)
+    .optional()
+    .describe(`At most this many; default ${String(ACTIVITY_LIMIT_DEFAULT)}`),
   mine: z.boolean().optional().describe('Include your own writes')
 };
 

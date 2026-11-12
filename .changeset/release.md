@@ -139,6 +139,8 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## MCP
 
+- Every field of every tool says what it is: `plitzi_search`'s `filters`, `plitzi_try_function`'s `params` and `dryRun`
+  and `plitzi_activity`'s `limit` said nothing to the agent.
 - `patchSettings` takes `wholeDocument`: every page sent the whole space rather than its own part.
 - A write sent again — a client that timed out and retried, an agent that lost the answer — changes nothing and writes
   nothing: a store a batch left as it was is no longer saved. Every write the MCP sent was saved even when it changed
