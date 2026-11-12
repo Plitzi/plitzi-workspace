@@ -82,17 +82,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   test at 1280 and 1440 that **Publish** is inside the window; in the server, `visual/screens.spec.ts`
   (`website-builder`).
 
-## T2.22 — Long reference pages and a Spanish site
-
-- **Findings:** W39, W40, W41. **Size:** M.
-- **Steps:** the docs' CLI reference (`docs/pages/docs-cli.ts`, 28,933 px) and authoring errors
-  (`docs/pages/docs-authoring-errors.ts`, 24,363 px) split by section — a page each, found by the docs' search — or
-  drawn section by section; keep every anchor that other pages link (`yarn vitest run prisma/seeds/spaces/platform/docs`
-  checks links). The docs' bar whole at 390. Ceniza's `settings.language` as `es` (it says `lang="en"`); a suggestion
-  in authoring when a page's text and its language clearly disagree is a platform idea — propose it, do not build it
-  here. The home's first paragraph takes the docs' sentence ("a platform for building websites and web apps…").
-- **Verify:** neither page over 6,000 px; `lang="es"` on Ceniza's pages; the docs' tests.
-
 ## T2.28 — The widths between
 
 - **Findings:** RS1–RS6. **Size:** M. **With T2.1.**

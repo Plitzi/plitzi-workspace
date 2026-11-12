@@ -47,7 +47,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T2.17** Sign-in, said to everyone | **After the release that carries `autoComplete` tokens**: the auth seed names `username`, `new-password` and `one-time-code`; a focus ring on the fields, measured in both themes | The attributes asserted; the ring's contrast at 3:1 | S |
 | **T2.18** `llms.txt` and the sitemap | **After the release that carries `blockAiCrawlers` by kind**: the website seed leaves it out, the docs' routing page says the list. An `llms.txt` for the website and the docs; the sitemap with each template and showcase chapter and a `lastmod` | `/llms.txt` answers; the sitemap's test | M |
 | **T2.21** The builder's rail and chip | A click on the rail shows its panel open (plitzi-ui's `PopupSidePanel` reads `defaultValue` once — a change and release of plitzi-ui); the rail's buttons named on hover and for a screen reader; the class chip shows the author's name, the hash only when there is none; the dev-tools launcher clear of the panels. The builder's own type (under 12 px in places) is held to no scale yet: `screens.spec.ts` leaves it out (`brandScale: false`) | A click on each rail button shows its panel's content | M |
-| **T2.22** Long reference pages | The CLI reference and the authoring errors by section (a page each, the search finding them), or one page that draws only the section in view; the docs' bar whole at 390; a lint suggestion when a page's text and its language disagree; the home's first paragraph taken from the docs' | Neither page over 6,000 px; the suggestion's test | M |
 | **T2.28** The widths between | From 1024 the two-column layouts hold (the hero, `/pricing` with its summary beside the plans); the sticky summary clear of the rows; X-ray drawn once; the console's bar from 768; the run lines' column growing; the sweep of the key screens at seven widths | The sweep test; no control past the window's edge | M |
 
 ### WS3 — Code quality
@@ -114,6 +113,10 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   (`resolvePageSeo.ts`) — the browser's `PageHead` writes it again on a client navigation, which no crawler sees. Sent
   with the page's own part, or not at all, a space with rich data pays nothing for it on the pages that do not show
   it.
+- **A page's words and its language.** Ceniza said `lang="en"` over Spanish, and nothing in authoring could say so: a
+  suggestion when a page's text and its `settings.language` clearly disagree (its words read against the language's
+  commonest — a cheap test, no model) would catch it in every space. A platform change: the threshold and what a
+  mixed page (a code sample, a brand name) is held to are the maintainer's.
 
 ## 6. Not an agent's, tracked here
 
