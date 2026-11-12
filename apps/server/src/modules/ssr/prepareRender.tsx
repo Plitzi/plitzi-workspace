@@ -398,11 +398,17 @@ export const prepareRender = async (
     offlineDataOverride === undefined &&
     config.templateFn === undefined &&
     config.ssrOnly !== true
-      ? publishSpaceDocument(spaceId, environment, document, withholding?.kept ?? [])
+      ? publishSpaceDocument(
+          spaceId,
+          environment,
+          document,
+          withholding?.kept ?? [],
+          inParts ? pageMatch.pageId : undefined
+        )
       : undefined;
   const spaceDocumentPath =
     publishedDocument && spaceToken
-      ? `${publishedDocument}?${SPACE_TOKEN_PARAM}=${encodeURIComponent(spaceToken)}`
+      ? `${publishedDocument}${publishedDocument.includes('?') ? '&' : '?'}${SPACE_TOKEN_PARAM}=${encodeURIComponent(spaceToken)}`
       : publishedDocument;
 
   const offlineDataStr = hydrationPayload(

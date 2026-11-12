@@ -47,6 +47,9 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## Server
 
+- A page's document of the space in parts names its page (`/_plitzi/space/<hash>.json?page=<id>`): a process that did
+  not draw the page — another replica, one restarted — answered the whole space instead, and a visitor whose page and
+  document reached two processes downloaded every page.
 - The account mails — the address to confirm, a reset, a new address, a code — go out without the answer waiting for
   them: a failed send was already reported and never failed the change, so waiting only added the provider's round trip
   to every sign-up, and made a reset answer slower for an address with an account than for one without, which told a

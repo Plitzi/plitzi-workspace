@@ -7,6 +7,7 @@ import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 
 import type { SSRServer } from '../../types';
+import type { Schema } from '@plitzi/sdk-shared';
 
 /**
  * The space beside the page, over real HTTP: the page names it and leaves it out of its payload, and the name answers
@@ -111,5 +112,78 @@ describe('modules/ssr/spaceDocument', () => {
     } finally {
       await lost.close();
     }
+  });
+});
+
+/**
+ * The space in parts, asked of a process that did not draw the page — another replica, one restarted: the address names
+ * the page its document is, so the answer is that page's document (its shell and its own part), never the whole space.
+ * It was the whole: a visitor whose page and document reached two processes downloaded every page — and a page's
+ * weight measured 8 KB or 15 KB by which process answered (the visual suite's `auth-done`).
+ */
+describe('modules/ssr/spaceDocument — a page of a space in parts', () => {
+  const page = (id: string, slug: string, words: string): Schema['flat'] => ({
+    [id]: {
+      id,
+      attributes: { slug, folder: '', default: slug === '' },
+      definition: { type: 'page', label: id, rootId: id, items: [`${id}-text`], styleSelectors: { base: '' } }
+    },
+    [`${id}-text`]: {
+      id: `${id}-text`,
+      attributes: { content: words },
+      definition: {
+        type: 'text',
+        label: 'Text',
+        rootId: id,
+        parentId: id,
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    }
+  });
+  const twoPages: Schema = {
+    flat: { ...page('home', '', 'The home'), ...page('about', 'about', 'About us') },
+    pages: ['home', 'about'],
+    pageFolders: [],
+    components: {},
+    definition: { name: 'test', permanentUrl: 'test' },
+    variables: [],
+    settings: { customCss: '' }
+  };
+
+  let parts: SSRServer;
+  let partsBase = '';
+
+  beforeAll(async () => {
+    const port = await unusedPort();
+    partsBase = `http://127.0.0.1:${String(port)}`;
+    parts = createServer({
+      port,
+      devMode: true,
+      adapters: createJsonAdapters({ offlineData: offlineDataOf(twoPages) })
+    });
+    await parts.listen(port, '127.0.0.1');
+    await vi.waitFor(async () => {
+      expect((await fetch(`${partsBase}/`)).status).toBe(200);
+    });
+  });
+
+  afterAll(async () => {
+    await parts.close();
+  });
+
+  it('names the page its document is', async () => {
+    const html = await (await fetch(`${partsBase}/about`)).text();
+
+    expect(documentPath(html)).toMatch(/^\/_plitzi\/space\/[\w-]+\.json\?page=about$/);
+  });
+
+  it('answers a page’s document it did not publish with that page’s document, not the whole space', async () => {
+    const response = await fetch(`${partsBase}/_plitzi/space/published-elsewhere.json?page=about`);
+    const { schema } = (await response.json()) as { schema: Schema };
+
+    expect(response.status).toBe(200);
+    expect(schema.flat).toHaveProperty('about-text');
+    expect(schema.flat).not.toHaveProperty('home-text');
   });
 });

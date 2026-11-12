@@ -3,7 +3,7 @@ import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
 
 import { meterPage } from './meterPage';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
-import { partTextOf } from '../../helpers/documentParts';
+import { pageSchemaOf, partTextOf, sentInParts } from '../../helpers/documentParts';
 import { digest, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 
 import type { TtlCache } from '../../helpers/cache';
@@ -50,12 +50,21 @@ const recent = new Map<string, RecentDocument>();
 const recentKey = (spaceId: number, environment: Environment, hash: string): string =>
   `${String(spaceId)}|${environment}|${hash}`;
 
+/**
+ * The page a document of the space in parts is that page's: its shell and its own part. Named in its address so that a
+ * process that did not draw the page — another replica, a process restarted — answers the same document rather than
+ * the whole space (`documentNow`), which it did: a visitor whose page and document reached two processes downloaded
+ * every page of the space.
+ */
+export const PAGE_PARAM = 'page';
+
 /** Where the page fetches `document` from — and the promise that this process can answer it. */
 export const publishSpaceDocument = (
   spaceId: number,
   environment: Environment,
   document: SpaceDocument,
-  kept: PageAccess[] = []
+  kept: PageAccess[] = [],
+  pageId?: string
 ): string => {
   const key = recentKey(spaceId, environment, document.hash);
   recent.delete(key);
@@ -68,7 +77,9 @@ export const publishSpaceDocument = (
     recent.delete(oldest);
   }
 
-  return `${SPACE_DOCUMENT_PATH}${document.hash}.json`;
+  const page = pageId === undefined ? '' : `?${PAGE_PARAM}=${encodeURIComponent(pageId)}`;
+
+  return `${SPACE_DOCUMENT_PATH}${document.hash}.json${page}`;
 };
 
 const sendNoData = (res: SSRResponseHelpers, spaceId: number, environment: Environment): void => {
@@ -92,7 +103,7 @@ const documentNow = async (
   req: SSRRequest,
   config: SSRPageServerConfig,
   offlineDataCache: TtlCache<OfflineDataRaw> | undefined,
-  { linkStyle }: { linkStyle: boolean }
+  { linkStyle, pageId }: { linkStyle: boolean; pageId?: string }
 ): Promise<{ document: SpaceDocument; cached: boolean } | undefined> => {
   const { environment = 'main', revision = 0 } = req.ctx.spaceDeployment ?? {};
   const spaceId = req.ctx.spaceDeployment?.spaceId ?? 1;
@@ -107,9 +118,13 @@ const documentNow = async (
     offlineDataCache?.set(cacheKey, offlineData);
   }
 
-  const { schema, kept } = withholdPages(offlineData.schema, req.ctx.user);
-  const document = spaceDocument(offlineDataWith(offlineData, schema), { linkStyle });
-  publishSpaceDocument(spaceId, environment, document, kept);
+  const { schema, kept, withheld } = withholdPages(offlineData.schema, req.ctx.user);
+  // A page's document, as the process that drew the page built it (`prepareRender`), when the address names one.
+  const ofPage =
+    linkStyle && pageId !== undefined && schema.pages.includes(pageId) && sentInParts(schema) ? pageId : undefined;
+  const sent = ofPage === undefined ? schema : pageSchemaOf(schema, withheld, ofPage);
+  const document = spaceDocument(offlineDataWith(offlineData, sent), { linkStyle });
+  publishSpaceDocument(spaceId, environment, document, kept, ofPage);
 
   return { document, cached: held !== undefined };
 };
@@ -151,7 +166,11 @@ export const handleSpaceDocument = async (
   let current = json !== undefined;
   if (json === undefined) {
     // In the form the page was given it: a page that named its space by a token carries its stylesheet (`prepareRender`).
-    const found = await documentNow(req, config, offlineDataCache, { linkStyle: !req.query[SPACE_TOKEN_PARAM] });
+    const pageId = req.query[PAGE_PARAM];
+    const found = await documentNow(req, config, offlineDataCache, {
+      linkStyle: !req.query[SPACE_TOKEN_PARAM],
+      ...(typeof pageId === 'string' ? { pageId } : {})
+    });
     if (!found) {
       sendNoData(res, spaceId, environment);
 
