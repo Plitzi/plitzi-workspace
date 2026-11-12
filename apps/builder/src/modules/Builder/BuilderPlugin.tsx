@@ -11,6 +11,6 @@ export type BuilderPluginProps = {
   assets?: Asset[];
 };
 
-const BuilderPlugin = (_props: BuilderPluginProps) => undefined; // eslint-disable-line
+const BuilderPlugin: FC<BuilderPluginProps> = () => undefined;
 
 export default BuilderPlugin;

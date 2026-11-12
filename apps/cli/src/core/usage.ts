@@ -12,6 +12,13 @@ import type { CommandPath } from '../commandPath';
 import type { Command } from 'commander';
 
 /**
+ * A terminal's colour codes (SGR, `ESC [ … m`): how a terminal shows a line, not what it says. They start with the
+ * escape character, which is what the expression has to match.
+ */
+// eslint-disable-next-line no-control-regex -- the escape character is the thing matched
+const COLOURS = /\x1b\[[0-9;]*m/g;
+
+/**
  * What each command of a run cost the agent that ran it — what it printed, which the agent reads as tokens, how long it
  * took, how it ended — a line each in the run's `usage.jsonl`, apart from its activity: the report reads it for the
  * cost of a run (the CLI's share of an agent's tokens), its repeated calls and its slowest, and the bench compares runs
@@ -99,9 +106,7 @@ export const keptCommand = (args: readonly string[]): string =>
 export const errorLine = (stderr: string, { most = 200 }: { most?: number } = {}): string | undefined => {
   const said = stderr
     .split('\n')
-    // Colours are how a terminal shows it, not what it says.
-    // eslint-disable-next-line no-control-regex
-    .map(line => line.replace(/\x1b\[[0-9;]*m/g, '').trim())
+    .map(line => line.replace(COLOURS, '').trim())
     .filter(line => line !== '' && !line.startsWith('·'));
   const line = said.find(each => /^(error\b|✗|refused\b)|\b(Error|refused|cannot|is not)\b/.test(each)) ?? said.at(0);
 
@@ -127,8 +132,7 @@ const cutAtWord = (line: string, most: number): string => {
 export const failureLines = (output: string): string[] => {
   const lines = output
     .split('\n')
-    // eslint-disable-next-line no-control-regex
-    .map(line => withoutSecrets(line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd()).slice(0, 240))
+    .map(line => withoutSecrets(line.replace(COLOURS, '').trimEnd()).slice(0, 240))
     .filter(line => line.trim() !== '' && !line.trim().startsWith('·'));
   // A test runner's own line for a test that failed names it — `✖ the night counts to the millisecond` — where the rest
   // of what it printed is a diff's fragments (a run's dev-2 read those alone): its names first.

@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/static-components */
-
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
@@ -123,6 +121,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       return undefined;
     }
 
+    // The element's own component, from the plugins registered: which one is known only once the element is.
+    // eslint-disable-next-line react-hooks/static-components
     return <PluginNode internalProps={{ id, rootId: id }} />;
   }, [components, element, id]);
 

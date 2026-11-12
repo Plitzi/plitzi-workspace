@@ -1,5 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters -- the caller names the value's type, as lodash's own
+   `get` lets it, where the path cannot say it */
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents -- a path's value type is written as the union a
+   path into an object of unknown shape can reach, `unknown` included, and kept readable as such */
 
 import { toPath } from './shared';
 

@@ -82,9 +82,11 @@ export const loadPluginComponents = async (
         let component = componentCache.get(cacheKey);
         if (!component) {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            // A plugin's module, by its address: an `import()` of a name known only at run time is typed `any`, and
+            // what it exports is read as the component it must be.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- a module known only at run time
             const mod = await import(cacheKey);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- its default export, or itself
             component = (mod.default ?? mod) as FC;
             componentCache.set(cacheKey, component);
           } catch (err) {

@@ -1,5 +1,3 @@
-/* eslint-disable no-async-promise-executor */
-
 import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use, useMemo, useState } from 'react';
@@ -94,7 +92,9 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
       !(previewData[node.value] as Record<string, unknown> | undefined) &&
       (dataSource[node.value] as SourceMeta | undefined)
     ) {
-      paths = new Promise(async resolve => {
+      // An async function called at once rather than an async promise executor: a field list that throws rejects the
+      // promise instead of leaving it pending forever.
+      paths = (async () => {
         let { fields } = dataSource[node.value];
         if (typeof fields === 'function') {
           fields = await fields();
@@ -109,8 +109,8 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
           finalFields.push({ value: nodeFullPath, label: nodeFullPath.replace(`${node.value}.`, '') });
         }
 
-        resolve(finalFields);
-      });
+        return finalFields;
+      })();
     } else if (previewData[node.value] as Record<string, unknown> | undefined) {
       paths = getPathsFromObject(previewData[node.value]).reduce<Exclude<Option, OptionGroup>[]>(
         (acum, path) => [...acum, { value: `${node.value}.${path}`, label: path }],

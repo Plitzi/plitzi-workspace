@@ -31,13 +31,20 @@ describe('a painted key the cookie holds none of, from the deployment', () => {
     expect(first.state).toEqual(workspaceOf('12'));
     expect(again).toBe(first);
     expect(defaults).toHaveBeenCalledTimes(1);
-    expect(defaults).toHaveBeenCalledWith({ spaceId: 7, environment: 'production', account: 5, keys: ['workspace', 'consent'] });
+    expect(defaults).toHaveBeenCalledWith({
+      spaceId: 7,
+      environment: 'production',
+      account: 5,
+      keys: ['workspace', 'consent']
+    });
   });
 
   it('is never asked for a guest: a guest’s page is every guest’s', async () => {
     const defaults = vi.fn(() => workspaceOf('12'));
 
-    expect((await requestPaintedStateWithDefaults(request(), settings, scope(undefined), defaults)).state).toBeUndefined();
+    expect(
+      (await requestPaintedStateWithDefaults(request(), settings, scope(undefined), defaults)).state
+    ).toBeUndefined();
     expect(defaults).not.toHaveBeenCalled();
   });
 

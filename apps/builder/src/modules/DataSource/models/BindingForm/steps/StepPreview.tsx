@@ -19,6 +19,8 @@ export type StepPreviewProps = {
 
 const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
   const form = useFormContext<BindingSchema>();
+  // plitzi-ui's `useFormWatch` answers a list of `any` for a list of names: each value is read below as what the form's
+  // schema says it is.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const [path, to, source, when, transformers] = useFormWatch(form, ['path', 'to', 'source', 'when', 'transformers']);
   const name = useMemo(() => fields?.find(f => f.path === path)?.name ?? 'Unknown', [fields, path]);

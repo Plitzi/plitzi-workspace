@@ -13,6 +13,6 @@ export type SdkPluginProps = {
   assets?: Asset[];
 };
 
-const SdkPlugin = (_props: SdkPluginProps) => undefined; // eslint-disable-line
+const SdkPlugin: FC<SdkPluginProps> = () => undefined;
 
 export default SdkPlugin;

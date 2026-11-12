@@ -78,7 +78,8 @@ export const buildTransport = (
 
     void (async () => {
       try {
-        // @ts-expect-error eslint-disable-line
+        // `node:http3` has no types yet in the Node this builds against: the module is read as what it answers.
+        // @ts-expect-error -- no declaration for `node:http3`
         const mod = (await import('node:http3')) as unknown as H3Module;
         h3 = mod.createServer(tlsOptions(config, label), handler);
         h3.listen(port, '0.0.0.0', () => {

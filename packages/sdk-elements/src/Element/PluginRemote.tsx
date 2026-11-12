@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/static-components */
-
 import { lazy, Suspense, use, useEffect, useMemo, useState } from 'react';
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
@@ -54,17 +52,14 @@ const PluginRemote = ({
     return null;
   }
 
-  if (plitziJsxSkipHOC) {
-    return (
-      <Suspense>
-        <Component internalProps={internalProps} plitziJsxSkipHOC={plitziJsxSkipHOC} {...plitziJsxProps} />
-      </Suspense>
-    );
-  }
+  // A JSX plugin that skips the element's wrapper takes its own props as well; any other, the element's alone.
+  const jsxProps = plitziJsxSkipHOC ? { plitziJsxSkipHOC, ...plitziJsxProps } : emptyObject;
 
   return (
     <Suspense>
-      <Component internalProps={internalProps} />
+      {/* eslint-disable-next-line react-hooks/static-components -- the plugin's component, loaded from its address: made
+          once per address above, never during a render that could make another */}
+      <Component internalProps={internalProps} {...jsxProps} />
     </Suspense>
   );
 };

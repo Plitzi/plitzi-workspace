@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters -- an event's payload type is the caller's to name:
+   the codec writes and reads bytes, and says what it carries as the type it is handed */
 
 import type { SubscriptionCollaborator } from '../types';
 

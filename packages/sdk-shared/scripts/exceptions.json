@@ -1,11 +1,11 @@
 {
   "apps/builder": {
-    "disable": 17,
+    "disable": 15,
     "any": 2,
     "unknownAs": 5
   },
   "apps/cli": {
-    "disable": 5,
+    "disable": 4,
     "any": 2,
     "unknownAs": 1
   },
@@ -20,7 +20,7 @@
     "unknownAs": 5
   },
   "apps/sdk": {
-    "disable": 6,
+    "disable": 5,
     "any": 3,
     "unknownAs": 2
   },
@@ -65,7 +65,7 @@
     "unknownAs": 0
   },
   "packages/sdk-kernel": {
-    "disable": 2,
+    "disable": 1,
     "any": 1,
     "unknownAs": 5
   },
