@@ -20,32 +20,6 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
 
 ---
 
-## T2.10 — Sign-up and the sign-in pages
-
-- **Findings:** W14, W15, W25. **Decided (D7): the username stays.** An account signs in with its address **or** its
-  username, and usernames are meant to become handles (`@username`). **Size:** S.
-- **Read first:** `auth/signIn.ts` (the pages; sign-up's fields at ~1563–1640; sign-in's field is already labelled
-  "Email or username"), `auth/theme.ts`, `auth/account/security.ts` (the same strength line), `docs/auth/README.md`.
-- **Steps:** the username field gets one line of help that says why it is asked — you can sign in with it or with
-  your address, and it is how others will find you; the strength line is neutral until a key is pressed (sign-up and
-  the account's password form); one vertical rhythm on a phone for `/`, `/signup`, `/sso`, `/forgot-password`; a
-  share image and descriptions of 120–160 characters for the auth pages.
-- **Do not:** remove or make optional the username field; change the sign-up API's contract; promise `@username`
-  mentions in the copy as if they existed — say only what works today.
-- **Verify:** `yarn vitest run prisma/seeds/spaces/platform/auth`; `yarn playwright test visual/auth.spec.ts`
-  (sign-up, onboarding, mismatch journeys); a test that signs in once with the username and once with the address.
-
-## T2.16 — Landmarks and a skip link
-
-- **Finding:** W27. **Size:** M.
-- **Steps:** Step 0: how the docs and the showcase spaces say their landmarks (they have 3–6 a page; `website`,
-  `auth` and Pizarra have none): compare a docs layout with `website/landing/site.ts`. Then: the bar as `header` and
-  `nav`, the content as `main`, the footer as `footer`, in `website`, `auth` and the console's layouts; a skip link
-  ("Skip to content") as the first Tab stop, visible on focus. If authoring has no way to say one of them, stop and
-  show the evidence; then add a suggestion to authoring's accessibility lint
-  (`plitzi-workspace/packages/sdk-authoring/src/schema/lint/accessibility.ts`) for a page with no `main`.
-- **Verify:** one `main` per page on the three spaces; the first Tab stop is the skip link; a suite step.
-
 ## T2.17 — Sign-in, said to everyone
 
 - **Findings:** W28, W31. **Size:** S.
