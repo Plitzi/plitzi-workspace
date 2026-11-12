@@ -31,7 +31,7 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 
 ## T6.4 — A page's weight, shown to its owner
 
-- **Finding:** X5. **Size:** L. **After WS1.**
+- **Finding:** X5. **Size:** L. WS1 has shipped (the space in parts, the heavy pages said): it can start.
 - **Steps:** a design note first (in the pull request, for the maintainer): what to measure per page (bytes by kind
   from the page server, layout shift and largest paint from the collector the page already loads), how it is stored
   beside the existing analytics (`src/services/api/analytics/`), what it costs per view, and the screen. Build only
@@ -52,7 +52,7 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
      page builder, a headless CMS), each from one shared frame and one data module, so a claim is written once.
      A comparison says where the other is better.
   5. Art: alternate the bands' mock-ups with one full-bleed picture of a real seeded site and one drawn diagram
-     ("one document, three ways in"); the brand's own icons as a sprite (with T1.4).
+     ("one document, three ways in"); the brand's own icons as a sprite.
 - **Do not:** invent a customer, a number or a quote; raise the home's weight above its budget (T0.7).
 - **Verify:** each new page in the sitemap and linked from the bar or the footer; both themes; every width of T2.28;
   authoring at 0 warnings and 0 suggestions.
@@ -81,12 +81,11 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 - **Read first:** `pages/logs-page.ts`, `automations-runs.ts`, `automations-queue.ts`, `workspace-audit.ts`,
   `workspace-settings.ts` (members) — each pages by hand; the provider's own pages
   (`sdk-elements`' `useProviderPagination`); the dashboard's layout rules in the maintainer's notes.
-- **Steps:** the steps as the home's first section once the RFC's § 5 says how the first visit knows its workspace
-  (`homeChecklist.ts`; it is the last section until then). One way to page and sort every table: the provider's `pagination: 'url'` (the page in the address, asked
+- **Steps:** one way to page and sort every table: the provider's `pagination: 'url'` (the page in the address, asked
   on the server, so a reload and a shared link land on it) and one pager component reading `pageInfo`; the routes
   answer `records` + `pageInfo` — the activity log's offset and the audit's cursor brought to one shape. Loading drawn at
   its final size (with T2.14).
 - **Do not:** add a state key the server does not paint and expect it on reload (AGENTS.md § painted state); write a
   flow's bare `{{spaceId}}` inside a list's row (use `{{ navigation.routeParams.spaceId }}`).
-- **Verify:** `auth.spec.ts`' timed journey no slower; `screens.spec.ts`' home shift unchanged with the steps first; the
-  tables' behaviour lives in one component; `visual/website.spec.ts`.
+- **Verify:** `auth.spec.ts`' timed journey no slower; the tables' behaviour lives in one component;
+  `visual/website.spec.ts`.
