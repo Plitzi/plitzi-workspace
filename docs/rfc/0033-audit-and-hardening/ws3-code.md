@@ -25,12 +25,10 @@ change**. The proof of that is the existing suites, unchanged and green, before 
 - **Do not:** test implementation details of React components; snapshot whole trees.
 - **Verify:** `yarn turbo run test --filter=@plitzi/plitzi-builder`; `yarn e2e:ci`.
 
-## T3.8 — Exceptions, counted and explained
+## T3.8′ — `plitzi-sdk-server`'s exceptions, explained
 
-- **Repo:** `plitzi-workspace` (then the same test in `plitzi-sdk-server`). **Finding:** Q8. **Size:** M.
-- **Steps:** 57 `eslint-disable react-refresh/only-export-components` comments: configure the rule per folder in the
-  shared config (`packages/sdk-shared/eslint.config.mjs`) and delete the comments. For every remaining
-  `eslint-disable`, `any` and `as unknown as` outside tests: remove it, or leave it **with a comment that says why
-  there is no alternative** (the repository's rule). Add a test that counts them per package against a table in the
-  repository and fails when a count rises.
-- **Verify:** `yarn lint`; `yarn typecheck`; the counting test.
+- **Repo:** `plitzi-sdk-server`. **Size:** S.
+- **Steps:** every `eslint-disable`, `any` and `as unknown as` outside tests (`yarn check:exceptions`) removed, or left
+  with a comment that says why there is no alternative; lower `scripts/exceptions.json`. The workspace's were done the
+  same way: a file-wide disable becomes a line's, a fix that is equivalent is made, a cast says what checked it.
+- **Verify:** `yarn check:exceptions`; `yarn lint`; `yarn typecheck`.

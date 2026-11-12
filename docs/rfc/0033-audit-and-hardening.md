@@ -53,7 +53,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 |---|---|---|---|
 | **T3.2** `session` in parts | A load round within its band — the maintainer's to run while T5.2 has not landed | The round within its band | S |
 | **T3.6** Builder modules with tests | One journey each in the workspace's e2e where a person uses Connectors, Actions, Fonts, Variables, Visitors, Elements and Transformers (their pure logic has unit tests since 2026-11-11) | Each journey failed once against a deliberate break | L |
-| **T3.8** Exceptions, counted and explained | The rest of `exceptions.json`, each removed or given its why — the builder's `exhaustive-deps` (≈15) and the contexts' `createContext(undefined as unknown as …)` are the largest families | The table lower | M |
+| **T3.8′** `plitzi-sdk-server`'s exceptions, explained | The workspace's are done (each removed or with its why, the table lower). In `plitzi-sdk-server` ~25 have no why yet — the Prisma and Redis base models' `any` and casts, two file-wide `no-non-null-assertion` in the CSS parser, `pubSub`'s `any`, the seeder's JSON casts: each removed or said why, `scripts/exceptions.json` lower | `yarn check:exceptions` there; none without a why | S |
 
 ### WS4 — Authoring, MCP and CLI
 
@@ -121,6 +121,10 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   tablet — the summary a bar at the foot instead of beside the plans — which no width inside one range can say. Either
   the desktop starts at 1024 (tablet to 1023: every space's 1024 layout changes) or `/pricing` keeps its tablet shape
   at 1024.
+- **A local plugin's assets are never loaded** (the builder's and the SDK's `PluginsContextProvider`, the same code in
+  both): `get(components, \`${key}.assets\`)` reads the ref, not `components.current`, so a `local-custom` plugin's
+  assets are always `[]`. Fixing it makes both start loading those assets — a platform change, said here first; the
+  two copies are one more reason for a single module.
 
 ## 6. Not an agent's, tracked here
 
