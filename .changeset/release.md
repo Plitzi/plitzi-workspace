@@ -97,6 +97,8 @@ An authored request connects to the address its name was judged to, and the advi
   password sprayed over usernames); and an account holds a ceiling of 100 from anywhere, so an `X-Forwarded-For` the
   client spells cannot buy unlimited tries. The address is what a session's device records (`req.ip`, then
   `X-Forwarded-For` and the headers an edge sets); with none, the account alone, as before.
+- A page renders in the CPU it took before the server was split (1.53–1.78 ms a page in the render bench, from
+  1.86–2.15): the SDK's folder is found once a process, not on every render.
 
 ## SDK
 
@@ -237,6 +239,10 @@ An authored request connects to the address its name was judged to, and the advi
 - Deleting a class in the Style Manager takes it out of every element that wears it and keeps the element's other
   classes: an element on `card primary` kept `primary` when `primary` was deleted — a class the space no longer had —
   and only an element on `primary` alone lost it.
+- A click on the left rail shows its panel, its button pressed; the rail's entries are named buttons
+  (`@plitzi/plitzi-ui` 1.6.39).
+- A connector's collapsed header says its response is mapped by hand whichever path holds the mapping: a cleared items
+  path hid a total path that was set, and the header said the response was not customized.
 
 ## Space document
 
