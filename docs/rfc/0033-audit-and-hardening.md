@@ -99,14 +99,25 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.4** A page's weight, shown to its owner | After WS1: per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of T2.28; the home within its budget | L |
 | **T6.6** Found by a search | Left: `ItemList` on `/templates` (its gallery is read in the browser — a server provider first, holding its room); a share image per page made at publish — a platform change, its evidence to the maintainer first. Shipped: `FAQPage`, `Product`/`Offer`, the showcase's `ItemList`, docs' `TechArticle`/`BreadcrumbList`, docs' descriptions to length and the large card | A structured-data validator green on each page type; the sitemap's test (T2.18) | S |
-| **T6.7** Docs for both readers | A reference part for the builder from its own names (`ui(…)`); "Copy as Markdown" and "edit this page"; "was this useful"; searches with no result listed; the REST routes and the MCP's tools as generated pages | The docs' tests green with the new part | L |
+| **T6.7** Docs for both readers | Left: a reference part for the builder from its own names (`ui(…)`); the REST routes and the MCP's tools as generated pages. Shipped (11-12): "Copy as Markdown", "Suggest a change" (an issue — the docs' source is private), "Was this page useful?", searches with no result, both listed for the staff | The docs' tests green with the new part | L |
 | **T6.8** A console that walks you in | A first run to the first publish as the page's main thing until done; renaming in place; acting on several spaces; one way to sort and page every table; a count of what needs attention on the bar; loading at its final size | T6.2's journey shorter; the tables in one shared component | L |
 
 ## 4. Design notes the open work needs
 
 ## 5. Found on the way, for the maintainer
 
-Nothing open.
+Platform changes a seed met, with the evidence — each waits for the maintainer's word:
+
+- **A page's Markdown at its own address.** The CDN takes media, JSON and modules, no text
+  (`uploadResource.ts`, `ACCEPTED`), so the docs keep each page's Markdown as JSON (`{ title, markdown }`) for "Copy as
+  Markdown", and an agent has no `.md` to be pointed at. Either the CDN takes `text/plain`/`text/markdown` (a general
+  change: `llms.txt`, `ads.txt` and a page's Markdown are text), or the page server answers `<path>.md` — which is
+  T2.18's `llms.txt` route's neighbour.
+- **Structured data off the browser's space.** Every page's `seoStructuredData` travels in the shell every page loads
+  (65 docs pages: 2.5 KB gzipped of the 54 KB the front page's space weighs), and only the server's head reads it
+  (`resolvePageSeo.ts`) — the browser's `PageHead` writes it again on a client navigation, which no crawler sees. Sent
+  with the page's own part, or not at all, a space with rich data pays nothing for it on the pages that do not show
+  it.
 
 ## 6. Not an agent's, tracked here
 

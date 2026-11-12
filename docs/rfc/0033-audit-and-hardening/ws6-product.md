@@ -76,11 +76,12 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 - **Read first:** `docs/public-docs.md`, `prisma/seeds/spaces/platform/docs/shell/nav.ts` (`DOCS_TABS`),
   `shell/uiNames.ts` (`ui(…)`, `site(…)` — every builder button named as the builder shows it; `uiNames.test.ts`
   checks them against the installed `@plitzi/*` `dist`).
-- **Steps:** a reference part for whoever builds in the builder and never opens the code (its panels, the inspector,
-  publishing and snapshots, domains, people and plans) — the Academy teaches it; no reference holds it. Every page
-  gains "Copy as Markdown" and "Edit this page"; "Was this useful" with one field; searches with no result are kept
-  and listed for whoever writes. The REST routes and the MCP's tools as generated reference pages (from the route
-  table and the tool definitions, never by hand).
+- **Shipped (11-12):** every public page ends with "Was this page useful?", "Suggest a change" and "Copy as Markdown";
+  the search keeps what found nothing; the staff read both on Internal → What readers said (`docs/public-docs.md`).
+- **Steps left:** a reference part for whoever builds in the builder and never opens the code (its panels, the
+  inspector, publishing and snapshots, domains, people and plans) — the Academy teaches it; no reference holds it. The
+  REST routes and the MCP's tools as generated reference pages (from the route table and the tool definitions, never
+  by hand). A page's Markdown at an address an agent is given waits on § 5.
 - **Do not:** paste code into a lesson (the Academy's code is read from Café Lumen's project by `lessonFile`); name a
   builder button in plain bold (`ui(…)`); teach a permission name with a dot.
 - **Verify:** `yarn vitest run prisma/seeds/spaces/platform/docs` (imports resolve, links exist, the catalogue is
