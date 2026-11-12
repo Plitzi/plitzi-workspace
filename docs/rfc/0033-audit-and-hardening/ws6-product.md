@@ -59,17 +59,16 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 
 ## T6.6 — Found by a search
 
-- **Source:** RFC § 3.1.3 (SEO), W30. **Size:** M.
-- **Facts:** only the home has structured data (`Organization`, `SoftwareApplication`, `Offer`); `/pricing`, the
-  templates, the showcase and the docs have none; docs' descriptions are 78–89 characters and use the small share
-  card; no page has its own share image.
-- **Steps:** structured data where the page is one, **written from the data the page draws**: `FAQPage` (the home's
-  questions), `Product`/`Offer` per plan (from `src/services/pricing`), `ItemList` (templates, showcase),
-  `BreadcrumbList` and `TechArticle` (docs). A share image per page made at publish (a template's cover, a doc's
-  title on the brand's ground). Docs' descriptions to 140–160 characters; the large card on the docs. What can be
-  general — a space's settings offering this to every customer — is a platform change: show the evidence first.
+- **Source:** RFC § 3.1.3 (SEO), W30. **Size:** S.
+- **Shipped (11-12):** `FAQPage` (the home's questions), `Product`/`Offer` per plan, the showcase's `ItemList`, the
+  docs' `TechArticle` + `BreadcrumbList`, docs' descriptions from the lede and the page's own prose (≤ 160), a share
+  image for the docs (the large card) and the website's redrawn with the layers mark.
+- **Left:** `ItemList` on `/templates` — its gallery is read in the browser (`landing/sections/templates.ts`), so the
+  head has nothing to write it from: a `runtime: 'server'` provider first, keeping the room its `loadingSlot` holds. A
+  share image per page made at publish (a template's cover, a doc's title on the brand's ground) is general — every
+  customer's space could have it — so it is a platform change: show the evidence to the maintainer first.
 - **Verify:** a structured-data validator green on each page type (in a test: parse the JSON-LD and check its
-  required fields); the sitemap's test; `yarn vitest run prisma/seeds/spaces/platform/docs`.
+  required fields); `yarn vitest run prisma/seeds/spaces/platform`.
 
 ## T6.7 — Docs for both readers
 
