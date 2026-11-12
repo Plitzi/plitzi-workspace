@@ -32,7 +32,7 @@
     "build:prod": "vite build"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.38",
+    "@plitzi/plitzi-ui": "^1.6.39",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "immer": "^11.2.9"

@@ -174,6 +174,9 @@ const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string
   /** Same rule as the actions above, and the panel reads this one at boot too: a space with no credentials still
    *  has to answer with a connection, because `true` is not something `.edges` can be read off. */
   SpaceCredentialsQuery: () => ({ data: { SpaceCredentials: emptyConnection('SpaceCredentialListType') } }),
+  /** The Assets panel's CDN providers, read when it opens: a space with none answers a connection too, or reading
+   *  `.edges` off `true` takes the builder down. */
+  SpaceCdnsQuery: () => ({ data: { SpaceCdns: emptyConnection('SpaceCdnListType') } }),
   /** What the server can tell about an action without running it. Nothing is wrong with an offline space's
    *  nothing, and the panel reads `.issues` off whatever comes back. */
   SpaceCheckActionQuery: () => ({
