@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiContainer, authorSpace, heading } from './index';
+import { apiContainer, authorSpace, container, heading } from './index';
 
 import type { PageSpec, SpaceSpec } from './index';
 
 const space = (pages: PageSpec[]): SpaceSpec => ({
   name: 'Not found',
   permanentUrl: 'not-found',
-  layouts: [{ id: 'site', body: [heading('Site', { id: 'site-title' }), { type: 'container', id: 'site-main' }] }],
+  layouts: [
+    { id: 'site', body: [heading('Site', { id: 'site-title' }), container({ id: 'site-main', subType: 'main' })] }
+  ],
   pages
 });
 
@@ -23,8 +25,27 @@ describe('the page for an address no page answers', () => {
     expect(suggestions[0].message).toContain('in the layout "site"');
   });
 
+  // Its content is its `main` when no layout says what it is drawn in: the space gets no landmark suggestion for a page
+  // it did not write.
+  it('draws its own main when the home page has no layout', () => {
+    const { schema, suggestions } = authorSpace({
+      name: 'Bare',
+      permanentUrl: 'bare',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ subType: 'main' })] }]
+    });
+
+    expect(schema.flat['plitzi-not-found-body'].attributes).toMatchObject({ subType: 'main' });
+    expect(suggestions.map(suggestion => suggestion.code)).toEqual(['not-found-page']);
+  });
+
   it('is the space’s own when it declares one', () => {
-    const notFound: PageSpec = { id: 'lost', name: 'Lost', slug: '*', body: [heading('Lost', { id: 'lost-title' })] };
+    const notFound: PageSpec = {
+      id: 'lost',
+      name: 'Lost',
+      slug: '*',
+      layout: { id: 'site', slot: 'site-main' },
+      body: [heading('Lost', { id: 'lost-title' })]
+    };
     const { schema, suggestions } = authorSpace(space([home, notFound]));
 
     expect(schema.flat['plitzi-not-found']).toBeUndefined();

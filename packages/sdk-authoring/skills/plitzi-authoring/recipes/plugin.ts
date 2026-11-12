@@ -4,6 +4,7 @@
  */
 import {
   button,
+  container,
   declaredCallback,
   declaredTrigger,
   defineElement,
@@ -38,17 +39,22 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        seatPicker({
-          id: 'seats',
-          rows: 12,
-          flows: [
-            [
-              named('picked', declaredTrigger(declaration, 'onPick')),
-              setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })
-            ]
+        container({
+          subType: 'main',
+          children: [
+            seatPicker({
+              id: 'seats',
+              rows: 12,
+              flows: [
+                [
+                  named('picked', declaredTrigger(declaration, 'onPick')),
+                  setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })
+                ]
+              ]
+            }),
+            button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
           ]
-        }),
-        button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
+        })
       ]
     }
   ]

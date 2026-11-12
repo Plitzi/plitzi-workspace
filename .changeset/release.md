@@ -210,6 +210,11 @@ An authored request connects to the address its name was judged to, and the advi
 - A page whose part of the document passes 250 KB is suggested (`heavy-page`) — every visitor downloads it before the
   page is theirs — naming the three shapes written again most inside it, by what they weigh: the rows to make one
   `list`, the blocks written per state to make one element.
+- A page that draws no `main` — neither it nor its layouts — is suggested (`page-without-main`): the landmark a screen
+  reader's "skip to the content" and a browser agent go to. A container or a provider drawn as one counts
+  (`subType: 'main'`), in the page, its layout's slot or a component it places; a page of raw HTML or a plugin's element
+  is not judged. The page authoring adds for an unknown address draws its content as `main` when it has no layout, and
+  the skill's recipes draw theirs.
 
 ## Builder
 

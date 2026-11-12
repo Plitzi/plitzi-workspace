@@ -39,36 +39,44 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        text({ from: 'computed.cartCount', as: '{{ source }} in the cart' }),
-        apiContainer({
-          id: 'catalog',
-          query: '/data/products.json',
-          cache: true,
-          // Shown in place of the rest until the first answer, and gone after it.
-          loadingSlot: 'catalog-skeleton',
+        container({
+          subType: 'main',
           children: [
-            container({ id: 'catalog-skeleton', class: skeleton }),
-            // Inside a template a source is spelled in full; a binding's own source is `source`.
-            text({ from: 'catalog.data.products', as: '{{ source|length }} products' }),
-            list({
-              id: 'products',
-              class: grid,
-              items: 'catalog.data.products',
+            text({ from: 'computed.cartCount', as: '{{ source }} in the cart' }),
+            apiContainer({
+              id: 'catalog',
+              query: '/data/products.json',
+              cache: true,
+              // Shown in place of the rest until the first answer, and gone after it.
+              loadingSlot: 'catalog-skeleton',
               children: [
-                // One `<li>` per product. Inside a row, a binding names the row short (`products.item`), a template in
-                // full (`list_products`).
-                listItem({
-                  class: card,
+                container({ id: 'catalog-skeleton', class: skeleton }),
+                // Inside a template a source is spelled in full; a binding's own source is `source`.
+                text({ from: 'catalog.data.products', as: '{{ source|length }} products' }),
+                list({
+                  id: 'products',
+                  class: grid,
+                  items: 'catalog.data.products',
                   children: [
-                    heading({ subType: 'h3', from: 'products.item.title' }),
-                    text({ from: 'products.item.price', as: 'price' })
+                    // One `<li>` per product. Inside a row, a binding names the row short (`products.item`), a template in
+                    // full (`list_products`).
+                    listItem({
+                      class: card,
+                      children: [
+                        heading({ subType: 'h3', from: 'products.item.title' }),
+                        text({ from: 'products.item.price', as: 'price' })
+                      ]
+                    })
                   ]
+                }),
+                // Revealed by the data, so it starts hidden: nothing flashes while the file loads.
+                text('No products yet.', {
+                  visible: {
+                    source: 'catalog.data.products',
+                    template: '{{ source is defined and source|length == 0 }}'
+                  }
                 })
               ]
-            }),
-            // Revealed by the data, so it starts hidden: nothing flashes while the file loads.
-            text('No products yet.', {
-              visible: { source: 'catalog.data.products', template: '{{ source is defined and source|length == 0 }}' }
             })
           ]
         })

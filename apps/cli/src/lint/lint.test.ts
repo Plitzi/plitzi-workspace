@@ -52,10 +52,12 @@ const codes = (report: LintReport): string[] => report.findings.map(each => each
 const only = (report: LintReport, code: string): LintFinding[] => report.findings.filter(each => each.code === code);
 
 /** A space whose index assembles what `src/space/pages/home.ts` writes, as the source to add to. */
-const SPACE_INDEX = `import { home } from './pages/home.ts';
+const SPACE_INDEX = `import { container } from '@plitzi/sdk-authoring';
 
-// The page for an address nothing answers, written: authoring has none of its own to add and suggest.
-const notFound = { name: 'Not found', slug: '*', body: [] };
+import { home } from './pages/home.ts';
+
+// The page for an address nothing answers, written — its content its \`main\`: authoring has none to add and suggest.
+const notFound = { name: 'Not found', slug: '*', body: [container({ subType: 'main' })] };
 
 export const space = { name: 'Lint', permanentUrl: 'lint', pages: [home, notFound] };
 `;
@@ -351,7 +353,13 @@ describe('plitzi space lint', () => {
 
   it('fails on an error; on warnings only with --strict or past --max-warnings', async () => {
     await write('src/space/index.ts', SPACE_INDEX);
-    await write('src/space/pages/home.ts', page("    heading('Hi', { id: 'home-title', css: { color: '#ff0066' } })"));
+    // One warning, the colour's: the page draws its `main`, so authoring has nothing to suggest beside it.
+    await write(
+      'src/space/pages/home.ts',
+      page(
+        "    container({ subType: 'main', children: [heading('Hi', { id: 'home-title', css: { color: '#ff0066' } })] })"
+      )
+    );
 
     expect((await run()).ok).toBe(true);
     expect(process.exitCode).toBeUndefined();

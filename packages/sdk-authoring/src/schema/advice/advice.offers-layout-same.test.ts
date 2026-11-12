@@ -537,8 +537,12 @@ describe('suggestions', () => {
     });
   });
   it('has nothing to say about a space written the short way', () => {
-    expect(authorSpace(space([page('home', [heading({ content: 'Hello' })])], { classes: {} })).suggestions).toEqual(
-      []
-    );
+    expect(
+      authorSpace(
+        space([page('home', [container({ subType: 'main', children: [heading({ content: 'Hello' })] })])], {
+          classes: {}
+        })
+      ).suggestions
+    ).toEqual([]);
   });
 });

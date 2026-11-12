@@ -16,8 +16,13 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        container({ id: 'checkout-new', flag: 'newCheckout', children: [text('One step')] }),
-        container({ id: 'checkout-old', flag: '!newCheckout', children: [text('Three steps')] })
+        container({
+          subType: 'main',
+          children: [
+            container({ id: 'checkout-new', flag: 'newCheckout', children: [text('One step')] }),
+            container({ id: 'checkout-old', flag: '!newCheckout', children: [text('Three steps')] })
+          ]
+        })
       ]
     }
   ]

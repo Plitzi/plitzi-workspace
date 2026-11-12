@@ -3,7 +3,7 @@
  * button, a field keeps its label out of sight rather than dropping it, a picture says what it shows or that it only
  * decorates.
  */
-import { button, formControl, image, setState, styles, text, onClick } from '@plitzi/sdk-authoring';
+import { button, container, formControl, image, onClick, setState, styles, text } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -23,16 +23,21 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        button({ content: '', title: 'Search', icon: 'fa-solid fa-magnifying-glass' }),
-        button({
-          content: '',
-          class: card,
-          children: [text('Pro'), text('12 € a month')],
-          flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]]
-        }),
-        formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' }),
-        image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }),
-        image({ src: '/grain.png', decorative: true })
+        container({
+          subType: 'main',
+          children: [
+            button({ content: '', title: 'Search', icon: 'fa-solid fa-magnifying-glass' }),
+            button({
+              content: '',
+              class: card,
+              children: [text('Pro'), text('12 € a month')],
+              flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]]
+            }),
+            formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' }),
+            image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }),
+            image({ src: '/grain.png', decorative: true })
+          ]
+        })
       ]
     }
   ]

@@ -63,75 +63,80 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        // One slide at a time, on its own every 5 s — held while the pointer or the keyboard is on it.
-        carousel({
-          id: 'hero',
-          label: 'Featured',
-          items: SLIDES,
-          autoplay: 5000,
-          row: r =>
-            container({
-              class: slide,
-              children: [heading({ subType: 'h2', from: `${r.item}.title` }), text({ from: `${r.item}.lede` })]
-            }),
+        container({
+          subType: 'main',
           children: [
-            button({ content: '‹', title: 'Previous slide', flows: [[onClick(), carouselPrevious('hero')]] }),
-            button({ content: '›', title: 'Next slide', flows: [[onClick(), carouselNext('hero')]] }),
-            list({
-              id: 'hero-dots',
-              class: dots,
-              items: 'hero.items',
+            // One slide at a time, on its own every 5 s — held while the pointer or the keyboard is on it.
+            carousel({
+              id: 'hero',
+              label: 'Featured',
+              items: SLIDES,
+              autoplay: 5000,
               row: r =>
-                listItem({
-                  children: [
-                    button({
-                      content: '',
-                      class: dot,
-                      bind: [
-                        bindTemplate('title', r.index, 'Slide {{ source + 1 }}'),
-                        activeWhen(dot, `{{ ${r.inTemplate.index} == carousel_hero.index }}`)
-                      ],
-                      flows: [[onClick(), carouselGoTo('hero', `{{ ${r.inTemplate.index} }}`)]]
+                container({
+                  class: slide,
+                  children: [heading({ subType: 'h2', from: `${r.item}.title` }), text({ from: `${r.item}.lede` })]
+                }),
+              children: [
+                button({ content: '‹', title: 'Previous slide', flows: [[onClick(), carouselPrevious('hero')]] }),
+                button({ content: '›', title: 'Next slide', flows: [[onClick(), carouselNext('hero')]] }),
+                list({
+                  id: 'hero-dots',
+                  class: dots,
+                  items: 'hero.items',
+                  row: r =>
+                    listItem({
+                      children: [
+                        button({
+                          content: '',
+                          class: dot,
+                          bind: [
+                            bindTemplate('title', r.index, 'Slide {{ source + 1 }}'),
+                            activeWhen(dot, `{{ ${r.inTemplate.index} == carousel_hero.index }}`)
+                          ],
+                          flows: [[onClick(), carouselGoTo('hero', `{{ ${r.inTemplate.index} }}`)]]
+                        })
+                      ]
                     })
-                  ]
                 })
+              ]
+            }),
+            // Scrolling past for ever at 40 px a second, still under the pointer.
+            carousel({
+              id: 'logos',
+              label: 'Brands we carry',
+              mode: 'marquee',
+              speed: 40,
+              items: ['Acme', 'Globex', 'Initech', 'Umbrella', 'Hooli'],
+              row: r => text({ from: r.item, css: { padding: '0px 24px', fontWeight: 600 } })
+            }),
+            // A row that swipes on a phone and snaps to each card; the arrows move it a page — as many cards as it shows —
+            // and each hides at its end.
+            carousel({
+              id: 'picks',
+              label: 'Picks',
+              mode: 'scroll',
+              class: cards,
+              items: SLIDES,
+              row: r => container({ class: slide, children: [text({ from: `${r.item}.title` })] }),
+              children: [
+                button({
+                  content: '‹',
+                  title: 'Earlier picks',
+                  class: arrow,
+                  bind: [activeWhen(arrow, '{{ carousel_picks.atStart }}', { variant: 'spent' })],
+                  flows: [[onClick(), carouselPrevious('picks', 'page')]]
+                }),
+                button({
+                  content: '›',
+                  title: 'More picks',
+                  class: arrow,
+                  bind: [activeWhen(arrow, '{{ carousel_picks.atEnd }}', { variant: 'spent' })],
+                  flows: [[onClick(), carouselNext('picks', 'page')]]
+                }),
+                text({ from: 'picks.index', as: '{{ source + 1 }} of {{ carousel_picks.count }}' })
+              ]
             })
-          ]
-        }),
-        // Scrolling past for ever at 40 px a second, still under the pointer.
-        carousel({
-          id: 'logos',
-          label: 'Brands we carry',
-          mode: 'marquee',
-          speed: 40,
-          items: ['Acme', 'Globex', 'Initech', 'Umbrella', 'Hooli'],
-          row: r => text({ from: r.item, css: { padding: '0px 24px', fontWeight: 600 } })
-        }),
-        // A row that swipes on a phone and snaps to each card; the arrows move it a page — as many cards as it shows —
-        // and each hides at its end.
-        carousel({
-          id: 'picks',
-          label: 'Picks',
-          mode: 'scroll',
-          class: cards,
-          items: SLIDES,
-          row: r => container({ class: slide, children: [text({ from: `${r.item}.title` })] }),
-          children: [
-            button({
-              content: '‹',
-              title: 'Earlier picks',
-              class: arrow,
-              bind: [activeWhen(arrow, '{{ carousel_picks.atStart }}', { variant: 'spent' })],
-              flows: [[onClick(), carouselPrevious('picks', 'page')]]
-            }),
-            button({
-              content: '›',
-              title: 'More picks',
-              class: arrow,
-              bind: [activeWhen(arrow, '{{ carousel_picks.atEnd }}', { variant: 'spent' })],
-              flows: [[onClick(), carouselNext('picks', 'page')]]
-            }),
-            text({ from: 'picks.index', as: '{{ source + 1 }} of {{ carousel_picks.count }}' })
           ]
         })
       ]

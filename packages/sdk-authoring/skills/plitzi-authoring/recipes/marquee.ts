@@ -32,20 +32,25 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        apiContainer({
-          id: 'catalog',
-          query: '/data/brands.json',
-          cache: true,
+        container({
+          subType: 'main',
           children: [
-            container({
-              class: marquee,
+            apiContainer({
+              id: 'catalog',
+              query: '/data/brands.json',
+              cache: true,
               children: [
-                list({
-                  id: 'brands',
-                  class: track,
-                  from: 'catalog.data.brands',
-                  as: '{{ source|merge(source)|merge(source) }}',
-                  children: [listItem({ children: [text({ from: 'brands.item' })] })]
+                container({
+                  class: marquee,
+                  children: [
+                    list({
+                      id: 'brands',
+                      class: track,
+                      from: 'catalog.data.brands',
+                      as: '{{ source|merge(source)|merge(source) }}',
+                      children: [listItem({ children: [text({ from: 'brands.item' })] })]
+                    })
+                  ]
                 })
               ]
             })

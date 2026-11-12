@@ -50,7 +50,8 @@ const WORDY_DEFAULTS: Readonly<Partial<Record<string, Readonly<Record<string, st
 const OPAQUE_TYPES = new Set(['custom', 'blockHtml', 'blockJsx', 'nodeHtml', 'reference']);
 
 /** What the linter cannot read words in: those, and any type not built in — a plugin's, which may well say something. */
-const isOpaque = (type: string): boolean => OPAQUE_TYPES.has(type) || !Object.hasOwn(elementAttributeNames, type);
+export const isOpaque = (type: string): boolean =>
+  OPAQUE_TYPES.has(type) || !Object.hasOwn(elementAttributeNames, type);
 
 /**
  * Types that render a box with no role of its own: a click on one reaches neither a keyboard nor the accessibility

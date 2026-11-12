@@ -1,4 +1,6 @@
-import { markdownHeadings, resolveLayoutChain } from '@plitzi/sdk-shared/schema';
+import { markdownHeadings } from '@plitzi/sdk-shared/schema';
+
+import { walkDrawn } from './drawn';
 
 import type { Suggestion } from './types';
 import type { Element, Schema } from '@plitzi/sdk-shared';
@@ -35,46 +37,24 @@ const headingLevel = (element: Element): number | undefined => {
 const startsHidden = (element: Element): boolean => element.definition.initialState?.visibility === false;
 
 /**
- * A page's headings in the order a visitor meets them: its shells' — the outermost first — with the page inside the
- * container each one takes it in, after what that container holds of its own, as the page is drawn. The shells are part
- * of the page's outline as a browser builds it: a header's `h1` above a page whose first heading is an `h3` skips two.
+ * A page's headings in the order a visitor meets them, as the page is drawn inside its shells (`walkDrawn`): a header's
+ * `h1` above a page whose first heading is an `h3` skips two.
  *
  * Read off what the document says: a `heading`, a container drawn as one, and the headings of a `markdown` whose text is
  * written out (one bound to data says nothing here). A decorative container is skipped with what it holds: assistive
  * technology is told to.
  */
 const outlineOf = (flat: Schema['flat'], pageId: string): OutlineHeading[] => {
-  const page = flat[pageId] as Element | undefined;
-  if (!page) {
-    return [];
-  }
-
-  // Innermost first: what each shell takes in its container is the next one in, and the last one takes the page.
-  const shells = resolveLayoutChain(
-    id => flat[id],
-    textOf(page.attributes.layout),
-    textOf(page.attributes.layoutContainer)
-  );
-  const inside = new Map<string, string>();
-  shells.forEach((link, index) => inside.set(link.slot, index === 0 ? pageId : shells[index - 1].layout));
-
   const outline: OutlineHeading[] = [];
-  const seen = new Set<string>();
-  const walk = (id: string, hiddenBy: string | undefined): void => {
-    const element = flat[id] as Element | undefined;
-    if (!element || seen.has(id)) {
-      return;
-    }
-
-    seen.add(id);
+  walkDrawn<{ hiddenBy: string | undefined }>(flat, pageId, { hiddenBy: undefined }, (element, { hiddenBy }) => {
     if (element.definition.type === 'container' && element.attributes.decorative === true) {
-      return;
+      return undefined;
     }
 
-    const hidden = hiddenBy ?? (startsHidden(element) ? id : undefined);
+    const hidden = hiddenBy ?? (startsHidden(element) ? element.id : undefined);
     const level = headingLevel(element);
     if (level !== undefined) {
-      outline.push({ id, level, hiddenBy: hidden });
+      outline.push({ id: element.id, level, hiddenBy: hidden });
     }
 
     const { content } = element.attributes;
@@ -84,17 +64,12 @@ const outlineOf = (flat: Schema['flat'], pageId: string): OutlineHeading[] => {
       !boundAttributes(element).has('content')
     ) {
       markdownHeadings(content).forEach(heading =>
-        outline.push({ id, level: heading.level, text: heading.text, hiddenBy: hidden })
+        outline.push({ id: element.id, level: heading.level, text: heading.text, hiddenBy: hidden })
       );
     }
 
-    (element.definition.items ?? []).forEach(item => walk(item, hidden));
-    const body = inside.get(id);
-    if (body !== undefined) {
-      walk(body, hidden);
-    }
-  };
-  walk(shells.length > 0 ? shells[shells.length - 1].layout : pageId, undefined);
+    return { hiddenBy: hidden };
+  });
 
   return outline;
 };

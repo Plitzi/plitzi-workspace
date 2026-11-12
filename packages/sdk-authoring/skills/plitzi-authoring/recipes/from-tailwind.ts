@@ -40,12 +40,17 @@ export const recipe: SpaceSpec = {
       slug: '',
       body: [
         container({
-          class: grid,
-          children: ['Fast', 'Typed', 'Yours'].map(name =>
-            container({ class: card, children: [heading(name, { subType: 'h3', class: title }), text('…')] })
-          )
-        }),
-        link({ href: '/start', class: cta, content: 'Get started' })
+          subType: 'main',
+          children: [
+            container({
+              class: grid,
+              children: ['Fast', 'Typed', 'Yours'].map(name =>
+                container({ class: card, children: [heading(name, { subType: 'h3', class: title }), text('…')] })
+              )
+            }),
+            link({ href: '/start', class: cta, content: 'Get started' })
+          ]
+        })
       ]
     }
   ]

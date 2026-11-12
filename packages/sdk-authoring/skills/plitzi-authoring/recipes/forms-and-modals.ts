@@ -5,6 +5,7 @@
 import {
   button,
   closeModal,
+  container,
   form,
   formControl,
   modalContainer,
@@ -28,36 +29,41 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        button({ content: 'Save', flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]] }),
-        // A switch is named for how it leaves its default: shown until somebody hides it.
-        button({ content: 'Hide details', flows: [[onClick(), toggleState({ key: 'detailsHidden' })]] }),
-        form({
-          id: 'signup',
-          managedByInteractions: true,
-          flows: [
-            [named('sent', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })]
-          ],
+        container({
+          subType: 'main',
           children: [
-            // Optional unless it says so, as an HTML field is: a sign-up without an address is no sign-up.
-            formControl({ name: 'email', label: 'Email', subType: 'email', required: true }),
-            button({ content: 'Sign up', subType: 'submit' })
+            button({ content: 'Save', flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]] }),
+            // A switch is named for how it leaves its default: shown until somebody hides it.
+            button({ content: 'Hide details', flows: [[onClick(), toggleState({ key: 'detailsHidden' })]] }),
+            form({
+              id: 'signup',
+              managedByInteractions: true,
+              flows: [
+                [named('sent', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })]
+              ],
+              children: [
+                // Optional unless it says so, as an HTML field is: a sign-up without an address is no sign-up.
+                formControl({ name: 'email', label: 'Email', subType: 'email', required: true }),
+                button({ content: 'Sign up', subType: 'submit' })
+              ]
+            }),
+            modalContainer({
+              id: 'details',
+              visible: false,
+              title: 'Details',
+              children: [
+                text('What the modal says.'),
+                button({
+                  content: '',
+                  title: 'Close',
+                  icon: 'fa-solid fa-xmark',
+                  flows: [[onClick(), closeModal('details')]]
+                })
+              ]
+            }),
+            button({ content: 'Open', flows: [[onClick(), openModal('details')]] })
           ]
-        }),
-        modalContainer({
-          id: 'details',
-          visible: false,
-          title: 'Details',
-          children: [
-            text('What the modal says.'),
-            button({
-              content: '',
-              title: 'Close',
-              icon: 'fa-solid fa-xmark',
-              flows: [[onClick(), closeModal('details')]]
-            })
-          ]
-        }),
-        button({ content: 'Open', flows: [[onClick(), openModal('details')]] })
+        })
       ]
     }
   ]

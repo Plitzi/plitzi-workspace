@@ -15,12 +15,17 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        link({ href: 'home', hash: 'plans', content: 'See the plans' }),
         container({
-          id: 'plans-section',
-          subType: 'section',
-          anchor: 'plans',
-          children: [heading('Plans', { subType: 'h2' }), text('Three of them.')]
+          subType: 'main',
+          children: [
+            link({ href: 'home', hash: 'plans', content: 'See the plans' }),
+            container({
+              id: 'plans-section',
+              subType: 'section',
+              anchor: 'plans',
+              children: [heading('Plans', { subType: 'h2' }), text('Three of them.')]
+            })
+          ]
         })
       ]
     },
@@ -29,7 +34,7 @@ export const recipe: SpaceSpec = {
       name: 'About',
       slug: 'about',
       // → /#plans
-      body: [link({ href: 'home', hash: 'plans', content: 'Plans' })]
+      body: [container({ subType: 'main', children: [link({ href: 'home', hash: 'plans', content: 'Plans' })] })]
     }
   ]
 };

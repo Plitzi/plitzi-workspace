@@ -55,5 +55,7 @@ const faqItem = ({ id, question: words, answer: text }: (typeof QUESTIONS)[numbe
 export const recipe: SpaceSpec = {
   name: 'Questions',
   permanentUrl: 'questions',
-  pages: [{ id: 'home', name: 'Home', slug: '', body: QUESTIONS.flatMap(faqItem) }]
+  pages: [
+    { id: 'home', name: 'Home', slug: '', body: [container({ subType: 'main', children: QUESTIONS.flatMap(faqItem) })] }
+  ]
 };

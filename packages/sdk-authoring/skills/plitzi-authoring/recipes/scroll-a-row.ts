@@ -43,32 +43,37 @@ export const recipe: SpaceSpec = {
       slug: '',
       body: [
         container({
+          subType: 'main',
           children: [
-            // Shown until the row says it is at that end: the arrows are there before anybody scrolls.
-            button({
-              content: '‹',
-              title: 'Previous categories',
-              visible: '!state.rowAtStart',
-              flows: [[onClick(), scrollBy('categories', { x: '-80%' })]]
-            }),
-            list({
-              id: 'categories',
-              class: row,
-              items: CATEGORIES,
-              flows: [
-                [
-                  named('moved', onScroll()),
-                  setState({ key: 'rowAtStart', type: 'boolean', value: '{{ moved.atStart }}' }),
-                  setState({ key: 'rowAtEnd', type: 'boolean', value: '{{ moved.atEnd }}' })
-                ]
-              ],
-              children: [listItem({ class: card, children: [text({ from: 'categories.item' })] })]
-            }),
-            button({
-              content: '›',
-              title: 'More categories',
-              visible: '!state.rowAtEnd',
-              flows: [[onClick(), scrollBy('categories', { x: '80%' })]]
+            container({
+              children: [
+                // Shown until the row says it is at that end: the arrows are there before anybody scrolls.
+                button({
+                  content: '‹',
+                  title: 'Previous categories',
+                  visible: '!state.rowAtStart',
+                  flows: [[onClick(), scrollBy('categories', { x: '-80%' })]]
+                }),
+                list({
+                  id: 'categories',
+                  class: row,
+                  items: CATEGORIES,
+                  flows: [
+                    [
+                      named('moved', onScroll()),
+                      setState({ key: 'rowAtStart', type: 'boolean', value: '{{ moved.atStart }}' }),
+                      setState({ key: 'rowAtEnd', type: 'boolean', value: '{{ moved.atEnd }}' })
+                    ]
+                  ],
+                  children: [listItem({ class: card, children: [text({ from: 'categories.item' })] })]
+                }),
+                button({
+                  content: '›',
+                  title: 'More categories',
+                  visible: '!state.rowAtEnd',
+                  flows: [[onClick(), scrollBy('categories', { x: '80%' })]]
+                })
+              ]
             })
           ]
         })

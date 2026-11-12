@@ -14,7 +14,7 @@
  * - An API's answer for the signed-in visitor (`credentials: 'include'`) is asked with their cookies only where the
  *   server names that API and trusts the space (`rsc.visitorCredentials`); anywhere else the provider's error says so.
  */
-import { apiContainer, heading, list, listItem, styles, text } from '@plitzi/sdk-authoring';
+import { apiContainer, container, heading, list, listItem, styles, text } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -50,16 +50,21 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        apiContainer({
-          id: 'plans',
-          query: '/data/plans.json',
-          runtime: 'server',
-          mockData: { plans: [{ name: 'Starter', price: '$0' }] },
+        container({
+          subType: 'main',
           children: [
-            // `plans.data.plans` — the file's `plans` — in either runtime.
-            list({ id: 'plan-list', class: grid, items: 'plans.data.plans', row: 'plan-card' }),
-            text('No plans yet.', {
-              visible: { source: 'plans.data.plans', template: '{{ source is defined and source|length == 0 }}' }
+            apiContainer({
+              id: 'plans',
+              query: '/data/plans.json',
+              runtime: 'server',
+              mockData: { plans: [{ name: 'Starter', price: '$0' }] },
+              children: [
+                // `plans.data.plans` — the file's `plans` — in either runtime.
+                list({ id: 'plan-list', class: grid, items: 'plans.data.plans', row: 'plan-card' }),
+                text('No plans yet.', {
+                  visible: { source: 'plans.data.plans', template: '{{ source is defined and source|length == 0 }}' }
+                })
+              ]
             })
           ]
         })

@@ -31,19 +31,24 @@ export const recipe: SpaceSpec = {
       slug: '',
       body: [
         container({
-          subType: 'section',
+          subType: 'main',
           children: [
-            heading('Find us', { subType: 'h2' }),
-            embed({
-              id: 'shop-map',
-              class: frame,
-              src: 'https://www.openstreetmap.org/export/embed.html?bbox=-3.71,40.41,-3.69,40.42',
-              title: 'Our shop on the map'
-            })
+            container({
+              subType: 'section',
+              children: [
+                heading('Find us', { subType: 'h2' }),
+                embed({
+                  id: 'shop-map',
+                  class: frame,
+                  src: 'https://www.openstreetmap.org/export/embed.html?bbox=-3.71,40.41,-3.69,40.42',
+                  title: 'Our shop on the map'
+                })
+              ]
+            }),
+            svg(CHECK, { class: badge }),
+            svg(CHECK, { class: badge, label: 'Verified' })
           ]
-        }),
-        svg(CHECK, { class: badge }),
-        svg(CHECK, { class: badge, label: 'Verified' })
+        })
       ]
     }
   ]

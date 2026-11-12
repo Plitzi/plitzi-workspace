@@ -5,6 +5,7 @@ import { suggestDeclarations } from './declarations';
 import { suggestElementColours } from './elementColors';
 import { suggestHeadingOrder } from './headingOrder';
 import { suggestHeavyPages } from './heavyPages';
+import { suggestMain } from './landmarks';
 import { suggestMotion } from './motion';
 import { suggestPluginHosts, suggestUnusedPlugins } from './pluginHosts';
 import { suggestRepeatedExpressions } from './repeatedExpressions';
@@ -71,6 +72,7 @@ export const suggestSpace = (
     ...suggestUnusedPlugins(schema, pluginTypes),
     ...suggestElementColours(style),
     ...suggestHeadingOrder(schema),
+    ...suggestMain(schema),
     ...suggestHeavyPages(schema, style),
     ...suggestRepeatedExpressions(schema)
   ]).sort((a, b) => b.saves - a.saves);

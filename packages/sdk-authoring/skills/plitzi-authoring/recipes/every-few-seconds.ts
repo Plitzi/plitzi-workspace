@@ -68,54 +68,64 @@ export const recipe: SpaceSpec = {
       slug: '',
       body: [
         container({
-          id: 'carousel',
-          subType: 'section',
-          label: 'Offers',
-          flows: [
-            // Each tick turns it, unless the pointer is on it.
-            [onInterval(5000), when({ field: 'state.carouselPaused', operator: '!=', value: 'true' }, next)],
-            [on('onMouseEnter'), setState({ key: 'carouselPaused', type: 'boolean', value: true })],
-            [on('onMouseLeave'), setState({ key: 'carouselPaused', type: 'boolean', value: false })]
-          ],
+          subType: 'main',
           children: [
-            list({
-              id: 'slides',
-              items: SLIDES,
+            container({
+              id: 'carousel',
+              subType: 'section',
+              label: 'Offers',
+              flows: [
+                // Each tick turns it, unless the pointer is on it.
+                [onInterval(5000), when({ field: 'state.carouselPaused', operator: '!=', value: 'true' }, next)],
+                [on('onMouseEnter'), setState({ key: 'carouselPaused', type: 'boolean', value: true })],
+                [on('onMouseLeave'), setState({ key: 'carouselPaused', type: 'boolean', value: false })]
+              ],
               children: [
-                listItem({
-                  class: slide,
-                  visible: { source: 'slides.index', template: '{{ source == (state.slide ?? 0) }}' },
-                  children: [heading({ subType: 'h2', from: 'slides.item.title' }), text({ from: 'slides.item.body' })]
-                })
-              ]
-            }),
-            button({
-              content: 'Previous',
-              flows: [[onClick(), previous]]
-            }),
-            button({
-              content: 'Next',
-              flows: [[onClick(), next]]
-            }),
-            list({
-              id: 'dots',
-              class: dots,
-              items: SLIDES,
-              children: [
-                listItem({
+                list({
+                  id: 'slides',
+                  items: SLIDES,
                   children: [
-                    button({
-                      content: '',
-                      title: 'Show this offer',
-                      class: dot,
-                      bind: [activeWhen(dot, '{{ list_dots.index == (state.slide ?? 0) }}')],
-                      flows: [[onClick(), setState({ key: 'slide', type: 'number', value: '{{ list_dots.index }}' })]]
+                    listItem({
+                      class: slide,
+                      visible: { source: 'slides.index', template: '{{ source == (state.slide ?? 0) }}' },
+                      children: [
+                        heading({ subType: 'h2', from: 'slides.item.title' }),
+                        text({ from: 'slides.item.body' })
+                      ]
                     })
                   ]
-                })
+                }),
+                button({
+                  content: 'Previous',
+                  flows: [[onClick(), previous]]
+                }),
+                button({
+                  content: 'Next',
+                  flows: [[onClick(), next]]
+                }),
+                list({
+                  id: 'dots',
+                  class: dots,
+                  items: SLIDES,
+                  children: [
+                    listItem({
+                      children: [
+                        button({
+                          content: '',
+                          title: 'Show this offer',
+                          class: dot,
+                          bind: [activeWhen(dot, '{{ list_dots.index == (state.slide ?? 0) }}')],
+                          flows: [
+                            [onClick(), setState({ key: 'slide', type: 'number', value: '{{ list_dots.index }}' })]
+                          ]
+                        })
+                      ]
+                    })
+                  ]
+                }),
+                text({ from: 'state.slide', as: '{{ (source ?? 0) + 1 }} of 3' })
               ]
-            }),
-            text({ from: 'state.slide', as: '{{ (source ?? 0) + 1 }} of 3' })
+            })
           ]
         })
       ]

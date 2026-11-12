@@ -11,6 +11,12 @@ export const SUGGESTION_CODES = {
       'an `h4` right after an `h2` on a page as it is drawn — inside its layouts, with the headings a `markdown` writes, and without those that start hidden (`visible: false`): the outline misses a level (Lighthouse: "not in a sequentially-descending order")',
     fix: 'the next level down; size it with its class'
   },
+  'page-without-main': {
+    kind: 'suggested',
+    means:
+      'a page that draws no `main` landmark — neither it nor its layouts: a screen reader skipping to the content and a browser agent find no place where the page\'s own content starts (Lighthouse: "Document does not have a main landmark")',
+    fix: "the container holding the page's content drawn as `main` (`container({ subType: 'main', children })`) — in the layout's slot when its pages share the shell — once a page"
+  },
   'repeated-on-pages': {
     kind: 'suggested',
     means: 'the same block — a header, a footer, a side panel — written into several pages',

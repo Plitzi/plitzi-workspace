@@ -3,7 +3,7 @@
  * address names — with a message, not an empty page, when no product has that name, and status 404: the provider is
  * resolved on the server, and `notFound` says when its answer holds nothing for this address.
  */
-import { apiContainer, heading, link, list, text, listItem } from '@plitzi/sdk-authoring';
+import { apiContainer, container, heading, link, list, listItem, text } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -16,21 +16,26 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        apiContainer({
-          id: 'catalog',
-          query: '/data/products.json',
-          cache: true,
+        container({
+          subType: 'main',
           children: [
-            list({
-              id: 'products',
-              items: 'catalog.data.products',
+            apiContainer({
+              id: 'catalog',
+              query: '/data/products.json',
+              cache: true,
               children: [
-                listItem({
+                list({
+                  id: 'products',
+                  items: 'catalog.data.products',
                   children: [
-                    // An attribute reads a name with filters, spelled in full.
-                    link({
-                      href: '/products/{{ list_products.item.slug|url_encode }}',
-                      children: [text({ from: 'products.item.title' })]
+                    listItem({
+                      children: [
+                        // An attribute reads a name with filters, spelled in full.
+                        link({
+                          href: '/products/{{ list_products.item.slug|url_encode }}',
+                          children: [text({ from: 'products.item.title' })]
+                        })
+                      ]
                     })
                   ]
                 })
@@ -45,27 +50,32 @@ export const recipe: SpaceSpec = {
       name: 'Product',
       slug: 'products/:slug',
       body: [
-        apiContainer({
-          id: 'catalog-one',
-          query: '/data/products.json',
-          runtime: 'server',
-          notFound: "{{ not (source.data.products|find('slug', navigation.routeParams.slug)) }}",
+        container({
+          subType: 'main',
           children: [
-            list({
-              id: 'this-product',
-              from: 'catalog-one.data.products',
-              as: '{{ source|filter(p => p.slug == navigation.routeParams.slug) }}',
-              visible: {
-                source: 'catalog-one.data.products',
-                template: "{{ source|find('slug', navigation.routeParams.slug) }}"
-              },
-              children: [listItem({ children: [heading({ subType: 'h1', from: 'this-product.item.title' })] })]
-            }),
-            text('No product by that name.', {
-              visible: {
-                source: 'catalog-one.data.products',
-                template: "{{ source is defined and not (source|find('slug', navigation.routeParams.slug)) }}"
-              }
+            apiContainer({
+              id: 'catalog-one',
+              query: '/data/products.json',
+              runtime: 'server',
+              notFound: "{{ not (source.data.products|find('slug', navigation.routeParams.slug)) }}",
+              children: [
+                list({
+                  id: 'this-product',
+                  from: 'catalog-one.data.products',
+                  as: '{{ source|filter(p => p.slug == navigation.routeParams.slug) }}',
+                  visible: {
+                    source: 'catalog-one.data.products',
+                    template: "{{ source|find('slug', navigation.routeParams.slug) }}"
+                  },
+                  children: [listItem({ children: [heading({ subType: 'h1', from: 'this-product.item.title' })] })]
+                }),
+                text('No product by that name.', {
+                  visible: {
+                    source: 'catalog-one.data.products',
+                    template: "{{ source is defined and not (source|find('slug', navigation.routeParams.slug)) }}"
+                  }
+                })
+              ]
             })
           ]
         })

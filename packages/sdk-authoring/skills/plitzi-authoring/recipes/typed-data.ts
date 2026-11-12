@@ -3,7 +3,7 @@
  * `site.data.hero.titel` is a type error, not an empty heading. In a project the sample is the file itself:
  * `import home from '../data/home.json' with { type: 'json' }` — `src/data/`, or `public/data/` with no server.
  */
-import { apiContainer, heading, list, source, styles, text, twig, listItem } from '@plitzi/sdk-authoring';
+import { apiContainer, container, heading, list, listItem, source, styles, text, twig } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -35,28 +35,33 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        apiContainer({
-          id: site.id,
-          query: '/data/home.json',
-          cache: true,
+        container({
+          subType: 'main',
           children: [
-            heading({ from: site.data.hero.title }),
-            text({ from: site.data.hero.subtitle }),
-            // A template takes the paths through `twig`, each written in full.
-            text({ content: twig`{{ ${site.data.products}|length }} products` }),
-            list({
-              id: 'products',
-              class: grid,
-              items: site.data.products,
-              // The row's item is typed as the sample's: every field any product has.
-              row: product =>
-                listItem({
-                  children: [
-                    text({ from: product.item.title }),
-                    text({ from: product.item.price, as: 'price' }),
-                    text({ from: product.item.badge, visible: product.item.badge })
-                  ]
+            apiContainer({
+              id: site.id,
+              query: '/data/home.json',
+              cache: true,
+              children: [
+                heading({ from: site.data.hero.title }),
+                text({ from: site.data.hero.subtitle }),
+                // A template takes the paths through `twig`, each written in full.
+                text({ content: twig`{{ ${site.data.products}|length }} products` }),
+                list({
+                  id: 'products',
+                  class: grid,
+                  items: site.data.products,
+                  // The row's item is typed as the sample's: every field any product has.
+                  row: product =>
+                    listItem({
+                      children: [
+                        text({ from: product.item.title }),
+                        text({ from: product.item.price, as: 'price' }),
+                        text({ from: product.item.badge, visible: product.item.badge })
+                      ]
+                    })
                 })
+              ]
             })
           ]
         })

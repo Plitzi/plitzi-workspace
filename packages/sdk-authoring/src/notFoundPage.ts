@@ -21,6 +21,9 @@ const defaultNotFoundPage = (home: PageSpec | undefined): PageSpec => ({
   body: [
     container({
       id: `${NOT_FOUND_ID}-body`,
+      // The page's content is its `main` — unless it is drawn in the home's layout, whose slot says what it is: a `main`
+      // inside a `main` is no landmark at all.
+      ...(home?.layout ? {} : { subType: 'main' }),
       css: {
         display: 'flex',
         'flex-direction': 'column',

@@ -33,11 +33,16 @@ export const recipe: SpaceSpec = {
       slug: '',
       css: { 'background-color': 'var(--card)', color: 'var(--foreground)', padding: '48px 24px' },
       body: [
-        container({ class: card, children: [heading('Plain', { subType: 'h2' }), text('The class as it is.')] }),
         container({
-          id: 'featured',
-          class: [card, { 'border-width': '2px', 'border-style': 'solid', 'border-color': 'var(--primary)' }],
-          children: [heading('Featured', { subType: 'h2' }), text('The class, plus one thing.')]
+          subType: 'main',
+          children: [
+            container({ class: card, children: [heading('Plain', { subType: 'h2' }), text('The class as it is.')] }),
+            container({
+              id: 'featured',
+              class: [card, { 'border-width': '2px', 'border-style': 'solid', 'border-color': 'var(--primary)' }],
+              children: [heading('Featured', { subType: 'h2' }), text('The class, plus one thing.')]
+            })
+          ]
         })
       ]
     }
