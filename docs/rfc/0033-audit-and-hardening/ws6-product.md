@@ -60,12 +60,10 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 ## T6.6 — Found by a search
 
 - **Source:** RFC § 3.1.3 (SEO), W30. **Size:** S.
-- **Steps:** `ItemList` on `/templates` — its gallery is read in the browser (`landing/sections/templates.ts`), so the
-  head has nothing to write it from: a `runtime: 'server'` provider first, keeping the room its `loadingSlot` holds. A
-  share image per page made at publish (a template's cover, a doc's title on the brand's ground) is general — every
-  customer's space could have it — so it is a platform change: show the evidence to the maintainer first.
-- **Verify:** a structured-data validator green on each page type (in a test: parse the JSON-LD and check its
-  required fields); `yarn vitest run prisma/seeds/spaces/platform`.
+- **Steps:** a share image per page made at publish (a template's cover, a doc's title on the brand's ground) is general
+  — every customer's space could have it — so it is a platform change: show the evidence to the maintainer first.
+  `/templates` says its `ItemList` (its gallery asked on the server, the category in the address).
+- **Verify:** each page type's share image in its head; `yarn vitest run prisma/seeds/spaces/platform`.
 
 ## T6.7 — Docs for both readers: the REST reference
 
@@ -79,15 +77,16 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 
 ## T6.8 — A console that walks you in
 
-- **Source:** RFC § 3.1.3 (Console). **Size:** L.
-- **Read first:** `prisma/seeds/spaces/platform/website/homeChecklist.ts` (the checklist exists),
-  `pages/home-authenticated.ts`, `pages/homeSpacesRows.ts`, the dashboard's layout rules in the maintainer's notes.
-- **Steps:** the checklist as the home's FIRST section — it is the last: a returning visit draws it on the server,
-  but the first visit after signing in learns the workspace in the browser, and a card arriving above the rest moved
-  the page 0.5; it needs its room held, or the workspace known to the server on that visit. Acting on several spaces
-  at once — the home's rows are whole links, so a row of parts first (a checkbox inside a link is not a control), then
-  a batch route that says what it did to each and asks before deleting. One shared way to sort and page every table
-  (logs, runs, queue, audit, members). Loading drawn at its final size (with T2.14).
+- **Source:** RFC § 3.1.3 (Console). **Size:** M.
+- **Read first:** `pages/logs-page.ts`, `automations-runs.ts`, `automations-queue.ts`, `workspace-audit.ts`,
+  `workspace-settings.ts` (members) — each pages by hand; the provider's own pages
+  (`sdk-elements`' `useProviderPagination`); the dashboard's layout rules in the maintainer's notes.
+- **Steps:** the steps as the home's first section once the RFC's § 5 says how the first visit knows its workspace
+  (`homeChecklist.ts`; it is the last section until then). One way to page and sort every table: the provider's `pagination: 'url'` (the page in the address, asked
+  on the server, so a reload and a shared link land on it) and one pager component reading `pageInfo`; the routes
+  answer `records` + `pageInfo` — the activity log's offset and the audit's cursor brought to one shape. Loading drawn at
+  its final size (with T2.14).
 - **Do not:** add a state key the server does not paint and expect it on reload (AGENTS.md § painted state); write a
   flow's bare `{{spaceId}}` inside a list's row (use `{{ navigation.routeParams.spaceId }}`).
-- **Verify:** `auth.spec.ts`' timed journey no slower; the tables' behaviour lives in one component; `visual/website.spec.ts`.
+- **Verify:** `auth.spec.ts`' timed journey no slower; `screens.spec.ts`' home shift unchanged with the steps first; the
+  tables' behaviour lives in one component; `visual/website.spec.ts`.

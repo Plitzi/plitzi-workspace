@@ -34,18 +34,17 @@ watch server, never a development build.
 
 ## T1.7 — A heavy page is said
 
-- **Repos:** `plitzi-workspace` (`packages/sdk-authoring`), then `plitzi-sdk-server` (the pricing seed).
-  **Finding:** P1's per-page figures. **Size:** M.
-- **Steps:**
-  1. Authoring: a **suggestion** (not a refusal) when one page's authored subtree passes 250 KB of document, naming
-     the three largest repeated shapes (the existing advice for repeats — `packages/sdk-authoring/src/schema/advice/repeats.ts`
-     — shows how repeats are found). It needs a code in `src/schema/codes/`, its row in the generated errors page
-     (`yarn generate:authoring-errors`), and a test.
-  2. The pricing page (`prisma/seeds/spaces/platform/website/landing/pricingPage.ts`, 691 KB authored): its plans,
-     capacity packs and comparison rows are written out per state. Author them from data — `services/pricing` is the
-     one place for the figures — through a `list` and components, so the document holds one row's shape.
-- **Do not:** change a pixel of `/pricing` (render diff, both themes, 1440/1024/390); change a price; duplicate a
-  figure outside `src/services/pricing`.
-- **Verify:** `plitzi lint` (or the seed's own authoring test) reports the suggestion for the pricing page before
-  step 2 and not after; the page's part under 200 KB; `yarn vitest run prisma/seeds/spaces/platform`;
-  `yarn playwright test visual/website.spec.ts` (the pricing configurator's test).
+- **Repos:** `plitzi-sdk-server` (the seeds), `plitzi-workspace` if § 5 says the steps are stored compact.
+  **Size:** M each.
+- **Waits on:** the maintainer's word on the RFC's § 5, "The 250 KB line and an app's page".
+- **Where it stands (11-12):** authoring's `heavy-page` names three pages, and none for a shape written again any
+  more. Pizarra's board went 1,670 → 990 KB: its 21 popovers were a flag each, so closing them all was 21 steps in
+  every tile, key and button (2,172 steps, 575 KB) — now one key, `panel` (`space/panels.ts`); its favourites drew
+  every tile a second time with its steps (323 KB) — now a `reference` to the category's tile. What is left on the
+  board, the monitor and the home is how many elements each has (`tmp/` weighing: by field, steps are half).
+- **Steps,** by the decision: a page's kind in the line (authoring), the steps stored compact (sdk-shared, the
+  builder, a migration), or `quiet: ['heavy-page']` with why on each app page. The home's hero mock as a picture is a
+  redesign of the landing (T6.5's lane).
+- **Do not:** split an app's page into pages to pass the line; change a pixel of a seed (render diff, both themes).
+- **Verify:** `plitzi lint` (or the seed's authoring) names none of the three, or each says why;
+  `yarn vitest run prisma/seeds/spaces/showcase/pizarra`; `visual/pizarra.spec.ts`.

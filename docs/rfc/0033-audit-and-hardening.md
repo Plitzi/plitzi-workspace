@@ -45,8 +45,7 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T1.2** The space document in parts | Navigation timed against T1.1's figures at p50 and p95 — it is held to no blank frame and the same document, not yet to a time; a switch for `settings.wholeDocument` in the builder's General settings (the builder keeps the setting already) | The two figures no worse than T1.1's; the switch drawn in both themes | S |
-| **T1.7** A heavy page is said | Three pages rewritten rather than trimmed, measured 11-12: `home-guest` 527 KB over 1,423 elements, spread across the landing (the hero's studio mock 175, the capabilities 79, the comparison 60, the doors 54, collaboration 46); Meridian's `monitor` 454; Pizarra's `page-2` 1,670, its library writing every tile twice (the favourites and the category), each with its own flows. A visitor downloads the page's part alone, so the line is what a page weighs, not what every visitor pays for the whole site | `plitzi lint` names none of them | M each |
+| **T1.7** A heavy page is said | Three pages past the line, measured 11-12 after Pizarra's rewrite (its popovers one state key, its favourites references to its tiles: 1,670 → 990 KB): `home-guest` 540 KB over 1,423 elements (the hero's studio mock 158 of it), Meridian's `monitor` 454 over 665, Pizarra's `page-2` 990 over 1,120. None is a shape written again any more: what is left is how many elements an app has — waits on § 5 (the 250 KB line and an app's page) | `plitzi lint` names none of them, or each says why it is heavy | M each |
 
 ### WS2 — Website and sign-in (one visual lane)
 
@@ -96,9 +95,9 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | After WS1: per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of T2.28; the home within its budget | L |
-| **T6.6** Found by a search | `ItemList` on `/templates` — its gallery is read in the browser, so a server provider first, holding its room; a share image per page made at publish — a platform change, its evidence to the maintainer first | A structured-data validator green on each page type; the sitemap's test (T2.18) | S |
+| **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none; the sitemap's test (T2.18) | S |
 | **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
-| **T6.8** A console that walks you in | The first run's steps as the home's first section — they are its last: on the first visit after signing in they arrive in the browser, and drawn first they pushed the page down 0.5, so they need their room held; acting on several spaces (the rows are whole links — a row of parts first, then a batch route that asks before deleting); one way to sort and page every table; loading at its final size (with T2.14) | `auth.spec.ts`' timed journey no slower; the tables in one shared component | L |
+| **T6.8** A console that walks you in | The first run's steps as the home's first section — they are its last: on the first visit after signing in the page server knows no workspace (§ 5, a painted key's first visit), and drawn first they arrive above the rest (0.57 of shift); one way to page and sort every table — logs, runs, queue, audit, members are five hand-written Newer/Older pagers over a state offset or a cursor: the provider's own pages (`pagination: 'url'`) and one pager component, the routes answering `records` + `pageInfo`; loading at its final size (with T2.14) | The tables in one shared component; the steps first with no shift; `auth.spec.ts`' timed journey no slower | M |
 
 ## 4. Design notes the open work needs
 
@@ -121,6 +120,19 @@ Platform changes a seed met, with the evidence — each waits for the maintainer
   join to `board:<id>`. `retain` would replay the last of each type, but that channel carries thirteen (the elements
   among them); a topic of the board's state alone, retained, or a re-read once joined, closes it. The visual test waits
   for the page's channels before revealing.
+- **The 250 KB line and an app's page** (T1.7). A page past it whose weight is no repeated shape is an app with many
+  elements: Pizarra's board is 1,120, Meridian's monitor 665. A flow's step is stored at ~284 bytes, ~200 of them
+  fields the platform could derive (`elementId`, `flowId`, `beforeNode`/`afterNode`, `enabled: true`, an empty
+  `preview`): stored without them, the board is 790 KB and the monitor 402 — still past it. Either the line is a page's
+  kind (a landing's, not an app's), or the steps are stored compact (a migration of every space), or such a page says
+  it is heavy on purpose (`quiet`, with why). The home's studio mock (158 KB) is a picture's job, which is a redesign.
+- **A painted key's first visit** (T6.8). The page server asks nothing for a query whose painted state key the page
+  does not hold yet (`serverQueryOf`: `{{ state.workspace.id }}` empty), and reads `state` only as a plain token — a
+  default (`?? …`) inside the expression is refused, rightly: the browser would not ask again when the key changes.
+  So the first visit after signing in learns its workspace in the browser, and whatever reads it arrives late; the home
+  keeps its steps last for that. Either the sign-in paints the keys a space asks for (the session's default workspace
+  in the painted cookie), or a space may declare a painted key's default the server resolves (the first of
+  `GET /workspaces`), or the steps stay last.
 - **Structured data off the browser's space.** Every page's `seoStructuredData` travels in the shell every page loads
   (65 docs pages: 2.5 KB gzipped of the 54 KB the front page's space weighs), and only the server's head reads it
   (`resolvePageSeo.ts`) — the browser's `PageHead` writes it again on a client navigation, which no crawler sees. Sent
