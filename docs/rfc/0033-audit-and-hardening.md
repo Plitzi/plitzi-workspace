@@ -52,7 +52,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | Task | Left | Done when | Size |
 |---|---|---|---|
 | **T3.2** `session` in parts | A load round within its band — the maintainer's to run | The round within its band | S |
-| **T3.8′** `plitzi-sdk-server`'s exceptions, explained | The workspace's are done (each removed or with its why, the table lower). In `plitzi-sdk-server` ~25 have no why yet — the Prisma and Redis base models' `any` and casts, two file-wide `no-non-null-assertion` in the CSS parser, `pubSub`'s `any`, the seeder's JSON casts: each removed or said why, `scripts/exceptions.json` lower | `yarn check:exceptions` there; none without a why | S |
 
 ### WS4 — Authoring, MCP and CLI
 

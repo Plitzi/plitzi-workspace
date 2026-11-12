@@ -14,11 +14,3 @@ change**. The proof of that is the existing suites, unchanged and green, before 
 - **Done** 2026-11-10: `runClock.ts`, `turnHolder.ts`, `stops.ts`, each with its tests; `session` composes them.
 - **Left:** a load round within its band, the maintainer's to run (the load probe is not kept in a repository); a result
   outside the band is a regression of this split until shown otherwise.
-
-## T3.8′ — `plitzi-sdk-server`'s exceptions, explained
-
-- **Repo:** `plitzi-sdk-server`. **Size:** S.
-- **Steps:** every `eslint-disable`, `any` and `as unknown as` outside tests (`yarn check:exceptions`) removed, or left
-  with a comment that says why there is no alternative; lower `scripts/exceptions.json`. The workspace's were done the
-  same way: a file-wide disable becomes a line's, a fix that is equivalent is made, a cast says what checked it.
-- **Verify:** `yarn check:exceptions`; `yarn lint`; `yarn typecheck`.
