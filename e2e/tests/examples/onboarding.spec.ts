@@ -210,14 +210,16 @@ describeTarget('server-actions-schedules', subject => {
     await capture('reminder-ran');
   });
 
-  test('a failing job is retried with a backoff, gives up, and says which step failed', async ({ request }) => {
+  // Out of attempts a job is set aside for somebody to look at, not dropped: what failed may be fixed, then resumed.
+  test('a failing job is retried with a backoff, is set aside, and says which step failed', async ({ request }) => {
     const { body } = await call(request, 'start-flaky', { failures: 99 });
 
-    await expect.poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 30_000 }).toBe('dead');
+    await expect.poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 30_000 }).toBe('paused');
 
-    const dead = await job(request, body.output.jobId);
-    expect(dead?.error).toBe('step "sync" failed: The upstream refused attempt 3');
-    expect(dead?.history).toContain('#3 failed');
+    const setAside = await job(request, body.output.jobId);
+    expect(setAside?.error).toContain('Set aside after 3 failed attempts');
+    expect(setAside?.error).toContain('step "sync" failed: The upstream refused attempt 3');
+    expect(setAside?.history).toContain('#3 failed');
   });
 
   test('a running job stops when it is cancelled', async ({ request }) => {
