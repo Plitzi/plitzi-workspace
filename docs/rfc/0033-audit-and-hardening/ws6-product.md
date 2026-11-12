@@ -92,9 +92,14 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 - **Source:** RFC § 3.1.3 (Console). **Size:** L.
 - **Read first:** `prisma/seeds/spaces/platform/website/homeChecklist.ts` (the checklist exists),
   `pages/home-authenticated.ts`, `pages/homeSpacesRows.ts`, the dashboard's layout rules in the maintainer's notes.
-- **Steps:** the first run leads to the first publish — the checklist as the home's main thing until it is done, each
-  step ticking; renaming a space in place; acting on several spaces at once; one shared way to sort and page every
-  table; a count of what needs attention on the bar; loading drawn at its final size (with T2.14).
+- **Shipped (11-12):** the first run's checklist leads the home until done — create a space (New space, opened there),
+  keep a revision, invite someone, put it on your domain — read off the stats' `snapshotted` and `onDomain` (every space
+  answers on plitzi.app, so `published` meant nothing); `attention` on the workspace's alerts, a number on Spaces;
+  renaming a space where its name is the page's title, offered by the space's own `may`.
+- **Steps left:** acting on several spaces at once — the home's rows are whole links, so a row of parts first (a
+  checkbox inside a link is not a control), then a batch route that says what it did to each and asks before deleting;
+  one shared way to sort and page every table (logs, runs, queue, audit, members); loading drawn at its final size
+  (with T2.14). The console's header at 390 px: the workspace name under its chevron, "+ New space" out of its button.
 - **Do not:** add a state key the server does not paint and expect it on reload (AGENTS.md § painted state); write a
   flow's bare `{{spaceId}}` inside a list's row (use `{{ navigation.routeParams.spaceId }}`).
 - **Verify:** T6.2's journey is shorter; the tables' behaviour lives in one component; `visual/website.spec.ts`.
