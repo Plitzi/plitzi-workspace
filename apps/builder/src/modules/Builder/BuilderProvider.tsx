@@ -201,31 +201,29 @@ const BuilderProvider = ({
     [getElement, getElementSelected, onBaseElementChange, setBaseContext, baseElementIdProp, setHovered, setSelected]
   );
 
-  const isDragAllowed = (
-    element?: Element,
-    parentElement?: Element,
-    dataType?: string,
-    dropPosition?: DropPosition
-  ) => {
-    if (!element) {
+  const isDragAllowed = useCallback(
+    (element?: Element, parentElement?: Element, dataType?: string, dropPosition?: DropPosition) => {
+      if (!element) {
+        return true;
+      }
+
+      let { itemsAllowed, itemsNotAllowed } = builderElementPermissions(element);
+      if (parentElement && dropPosition !== 'inside') {
+        ({ itemsAllowed, itemsNotAllowed } = builderElementPermissions(parentElement));
+      }
+
+      if (itemsAllowed && itemsAllowed.length > 0 && dataType && !itemsAllowed.includes(dataType)) {
+        return false;
+      }
+
+      if (itemsNotAllowed && dataType && itemsNotAllowed.includes(dataType)) {
+        return false;
+      }
+
       return true;
-    }
-
-    let { itemsAllowed, itemsNotAllowed } = builderElementPermissions(element);
-    if (parentElement && dropPosition !== 'inside') {
-      ({ itemsAllowed, itemsNotAllowed } = builderElementPermissions(parentElement));
-    }
-
-    if (itemsAllowed && itemsAllowed.length > 0 && dataType && !itemsAllowed.includes(dataType)) {
-      return false;
-    }
-
-    if (itemsNotAllowed && dataType && itemsNotAllowed.includes(dataType)) {
-      return false;
-    }
-
-    return true;
-  };
+    },
+    [builderElementPermissions]
+  );
 
   const drop = useCallback(
     (
@@ -363,8 +361,7 @@ const BuilderProvider = ({
 
       return false;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
+    [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected, isDragAllowed]
   );
 
   const elementAsSnippet = useCallback<BuilderContextValue['elementAsSnippet']>(
@@ -479,6 +476,9 @@ const BuilderProvider = ({
         builderSetBaseContext(baseElementId);
       }
     }
+    // A root opened, once: what it reads — the selection, the base context it may set — is read as it is then. With
+    // them as dependencies, the base context it sets would run it again, and a selection made inside the new root
+    // would clear the hover it was given.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
 

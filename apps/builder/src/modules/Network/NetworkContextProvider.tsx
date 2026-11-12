@@ -199,6 +199,8 @@ const NetworkContextProvider = ({
 
   useEffect(() => {
     void initQuery();
+    // Once, as the builder opens: the space's definitions are loaded once, and asked again by a person (`handleRetry`).
+    // `initQuery` is made again whenever the query client or the environment is, and each would load them twice.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

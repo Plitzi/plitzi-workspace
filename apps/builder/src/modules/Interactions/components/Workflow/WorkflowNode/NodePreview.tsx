@@ -50,6 +50,8 @@ const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) =>
     if (previewStr !== defaultPreviewStr) {
       onChange?.({ preview: defaultPreview });
     }
+    // On the default changing alone: the preview a person typed is theirs until the step's default changes under it,
+    // and with the preview as a dependency every key they pressed would reset it to the default.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultPreview]);
 
@@ -57,6 +59,8 @@ const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) =>
     if (previewStr !== previewState) {
       setPreviewState(previewStr);
     }
+    // The text being edited follows the stored preview when that changes from outside, not on every key of its own:
+    // with `previewState` as a dependency a half-typed JSON would be put back to the last one stored.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewStr]);
 

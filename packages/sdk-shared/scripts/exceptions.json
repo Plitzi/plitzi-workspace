@@ -1,6 +1,6 @@
 {
   "apps/builder": {
-    "disable": 22,
+    "disable": 17,
     "any": 2,
     "unknownAs": 5
   },

@@ -1,7 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import { throttle } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useEffect, useRef, useState } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -99,8 +97,7 @@ const BuilderOverlay = ({
     [positionRoot]
   );
 
-  // eslint-disable-next-line react-hooks/use-memo
-  const throttledHandleProcessContainer = useCallback(throttle(handleProcessContainer, 50), [handleProcessContainer]);
+  const throttledHandleProcessContainer = useMemo(() => throttle(handleProcessContainer, 50), [handleProcessContainer]);
 
   const getElementDOM = useCallback(
     (eId: string) => {
@@ -142,7 +139,7 @@ const BuilderOverlay = ({
   }, [handleProcessContainer, overlayProps, element?.definition.initialState?.styleVariant]);
 
   useEffect(() => {
-    const { elementDOM } = overlayProps;
+    const elementDOM = overlayProps.elementDOM;
     if (!elementDOM || mode !== 'select') {
       return undefined;
     }
@@ -242,7 +239,8 @@ const BuilderOverlay = ({
     };
 
     return eventBridge.listen(['styleAddSelector', 'styleUpdateSelector'], handler);
-  }, [handleProcessContainer, overlayProps]);
+    // `mode` too: a listener added in another mode was never taken away, and one never added when select was entered.
+  }, [eventBridge, mode, handleProcessContainer, overlayProps.elementDOM]);
 
   useEffect(() => {
     if (!overlayProps.element || overlayProps.elementDOM || mode !== 'select') {

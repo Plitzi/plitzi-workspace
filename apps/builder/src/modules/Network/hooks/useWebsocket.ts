@@ -133,6 +133,8 @@ const useWebsocket = <T = unknown>({
         internalWs.close(1000);
       }
     };
+    // `connect` is a function of each render: as a dependency it would open a socket on every one. What it opens with
+    // — the address, the mode — is here, and a socket already open is the state it set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws, url, close, connectMode]);
 

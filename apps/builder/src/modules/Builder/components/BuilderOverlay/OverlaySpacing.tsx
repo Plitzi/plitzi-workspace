@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import { memo, useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
@@ -62,7 +60,7 @@ const OverlaySpacing = ({
     };
 
     return eventBridge.listen(['styleAddSelector', 'styleUpdateSelector'], handler);
-  }, [getStyle, id]);
+  }, [eventBridge, getStyle, id]);
 
   useEffect(() => {
     setRawStyle(getStyle());
@@ -120,7 +118,7 @@ const OverlaySpacing = ({
         }
       }
     };
-  }, [rawStyle]);
+  }, [rawStyle, calculateWidth]);
 
   return (
     <div className="overlay__spacing">

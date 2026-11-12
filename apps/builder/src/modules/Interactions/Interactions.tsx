@@ -24,6 +24,8 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
   const [[sourcesRegistry, flat]] = useBuilderStore(['sources', 'schema.flat']);
   const { interactionsManager } = use(InteractionsContext);
   const [reRender, setRerender] = useState(0);
+  // `reRender` is the manager's own "something changed" (`onUpdate`, below): the manager is one object that changes in
+  // place, so the subscriptor is asked again on its word — the hook sees no read of it, and it is the whole point.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscriptor = useMemo(() => interactionsManager.getSubscriptor(id), [id, interactionsManager, reRender]);
 

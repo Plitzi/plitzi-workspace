@@ -148,6 +148,9 @@ const NetworkContextProvider = ({
     } else if (offlineDataAvailable) {
       void initOfflineData(offlineData);
     }
+    // What the space is loaded from, and nothing else: the two loaders are functions of each render, and as dependencies
+    // they would load the space again on every one. The data's type stands for the data, which a parent makes anew
+    // each render with the same contents.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 

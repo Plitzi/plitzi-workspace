@@ -4,8 +4,7 @@ import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
-
-import type { Element } from '@plitzi/sdk-shared';
+import { pathOf } from './helpers';
 
 export type BuilderBreadcrumbProps = {
   limit?: number;
@@ -30,27 +29,6 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
   const [cut, setCut] = useState(false);
   const { builderElementPermissions, baseElementIdOriginal } = use(BuilderContext);
 
-  const getPath = (id?: string): { id: string; label: string; type: string }[] => {
-    if (!id) {
-      return [];
-    }
-
-    const element = flat[id] as Element | undefined;
-    if (!element) {
-      return [{ id, label: 'unknown', type: 'unknown' }];
-    }
-
-    const {
-      definition: { parentId, label, type }
-    } = element;
-
-    if (!parentId) {
-      return [{ id, label, type }];
-    }
-
-    return [...getPath(parentId), { id, label, type }];
-  };
-
   const handleClick = useCallback(
     (id: string) => {
       if (!id) {
@@ -72,8 +50,7 @@ const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
 
   const handleMouseLeave = () => setHovered(undefined);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const path = useMemo(() => getPath(elementSelected), [elementSelected, flat]);
+  const path = useMemo(() => pathOf(flat, elementSelected), [elementSelected, flat]);
   const subPath = useMemo(() => {
     if (limit !== Infinity && path.length > limit) {
       return path.slice(path.length - limit);
