@@ -29,24 +29,6 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 - **Verify:** `yarn test:e2e` for the route (staff only: `hiddenWithout('adminManage')`); the back-office's visual
   test on seeded data; one `includes` check — count the route's SQL statements before adding a relation loop.
 
-## T6.2 — Time to a first published page
-
-- **Finding:** X2. **Size:** M. **Visual lane.**
-- **Steps:** a journey in `visual/auth.spec.ts` (it already signs up and onboards): from **Start free** to a page
-  answering on its own address, timed, each wait named (sign-up, the confirmation email, the four onboarding steps,
-  the first space, the first publish). Record the total in T0.7's table as a ratchet. Then remove the largest wait —
-  propose it first if it changes a flow.
-- **Verify:** the journey passes on the visual stack three times within 10 % of each other.
-
-## T6.3 — What a buyer checks
-
-- **Finding:** X4. **Size:** M.
-- **Steps:** a changelog page fed from the releases (the console already links "What's new" — find its source:
-  `grep -rn "What's new" prisma/seeds/spaces/platform`); a security page (how to report, what is in place — only what
-  is true: read `docs/auth/README.md` and RFC § 3.3.1); `/.well-known/security.txt` as a **route of the platform**
-  (never a file in `src/services/ssr/public/`); the footer links them; a status page's address once there is one.
-- **Verify:** the pages in both themes at the three widths; the sitemap lists them; `website/docsLinks.test.ts`.
-
 ## T6.4 — A page's weight, shown to its owner
 
 - **Finding:** X5. **Size:** L. **After WS1.**
