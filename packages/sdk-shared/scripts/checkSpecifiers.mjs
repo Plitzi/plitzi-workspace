@@ -28,15 +28,21 @@ const QUOTED = /['"`]@plitzi\/([a-z0-9-]+)\/([A-Za-z0-9_./-]*[A-Za-z0-9_])['"`]/
 // Any mention, but not a path inside a package's folder (`@plitzi/nexus/dist/…`, a bundle's region comment).
 const MENTIONED = /(?<![\w/.-])@plitzi\/([a-z0-9-]+)\/((?!dist\/|node_modules\/|src\/)[A-Za-z0-9_./-]*[A-Za-z0-9_])/g;
 
+/**
+ * The CLI's build: its entry and the chunks it splits off (the run's harness, and what they share), named by hash — a
+ * migration lands in whichever of them imports it first.
+ */
+const CLI_DIST = /^apps\/cli\/dist\/[\w-]+\.js$/;
+
 /** Written on purpose, each with why: a text describing the shape that no longer works. */
 const ALLOWED = [
   {
-    files: ['apps/cli/src/migrations/changes/folderImports.ts', 'apps/cli/dist/index.js'],
+    files: ['apps/cli/src/migrations/changes/folderImports.ts', CLI_DIST],
     specifier: '@plitzi/sdk-shared/helpers/isRecord',
     why: 'the migration that rewrites file imports, saying which shape it rewrites'
   },
   ...['kernel', 'actions', 'functions', 'functions-runner', 'runtime', 'mysql', 'mongo', 'sqlite'].map(entry => ({
-    files: ['apps/cli/src/migrations/serverSplit.ts', 'apps/cli/dist/index.js'],
+    files: ['apps/cli/src/migrations/serverSplit.ts', CLI_DIST],
     specifier: `@plitzi/sdk-server/${entry}`,
     why: 'the migration that moves imports to the packages the server split into, naming the entry they came from (docs/en/server-packages.md)'
   })),
