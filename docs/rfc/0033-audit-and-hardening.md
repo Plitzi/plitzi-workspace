@@ -89,7 +89,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of T2.28; the home within its budget | L |
 | **T6.6** Found by a search | A share image per page made at publish (a template's cover, a doc's title on the brand's ground) — a platform change, its evidence to the maintainer first | A share image on each page type that has none; the sitemap's test (T2.18) | S |
 | **T6.7** Docs for both readers | The REST routes as a generated page — waits on § 5: the API declares no route table with what each route does | The docs' tests green with the new part | M |
-| **T6.8** A console that walks you in | One way to page and sort every table — logs, runs, queue, audit, members are five hand-written Newer/Older pagers over a state offset or a cursor: the provider's own pages (`pagination: 'url'`) and one pager component, the routes answering `records` + `pageInfo`; loading at its final size (with T2.14) | The tables in one shared component; `auth.spec.ts`' timed journey no slower | M |
 
 ## 4. Design notes the open work needs
 

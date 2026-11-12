@@ -15,7 +15,7 @@ folder, one file per workstream:
 | [`ws3-code.md`](ws3-code.md) | T3.2–T3.15 — closures, pools, nexus |
 | [`ws4-agents-surface.md`](ws4-agents-surface.md) | T4.1–T4.11 — authoring, MCP, CLI, skills |
 | [`ws5-server-work.md`](ws5-server-work.md) | T5.2–T5.13 (not T5.7, T5.10) — load, runners, traces, the cluster |
-| [`ws6-product.md`](ws6-product.md) | T6.1–T6.8 — funnel, trust pages, SEO, docs, console |
+| [`ws6-product.md`](ws6-product.md) | T6.1–T6.7 — funnel, trust pages, SEO, docs |
 
 ## 1. Before the first line of code
 

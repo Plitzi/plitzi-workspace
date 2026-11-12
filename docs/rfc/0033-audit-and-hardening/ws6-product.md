@@ -4,7 +4,7 @@
 > findings, § 4 the decisions (§ 2 now), § 8 the design notes (§ 4 now). A task named here that is no longer in the RFC
 > has shipped: what it made is in the code.
 
-Read [`00-how-to-work.md`](00-how-to-work.md) first, and for T6.5–T6.8 the RFC § 3.1.3 — its table is what these
+Read [`00-how-to-work.md`](00-how-to-work.md) first, and for T6.5–T6.7 the RFC § 3.1.3 — its table is what these
 tasks build. Repository: `plitzi-sdk-server` unless said. Seed work follows `00-how-to-work.md` § 4 and takes the
 visual lane. These land **after** the faults of WS2: polish over a broken bar is wasted.
 
@@ -74,18 +74,3 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 - **Do not:** walk the Express routers for it (`routeGuards.test.ts` does, for guards): it has no word for a reader and
   would teach internal routes as a public surface.
 - **Verify:** `yarn vitest run prisma/seeds/spaces/platform/docs` — a route added is on the page.
-
-## T6.8 — A console that walks you in
-
-- **Source:** RFC § 3.1.3 (Console). **Size:** M.
-- **Read first:** `pages/logs-page.ts`, `automations-runs.ts`, `automations-queue.ts`, `workspace-audit.ts`,
-  `workspace-settings.ts` (members) — each pages by hand; the provider's own pages
-  (`sdk-elements`' `useProviderPagination`); the dashboard's layout rules in the maintainer's notes.
-- **Steps:** one way to page and sort every table: the provider's `pagination: 'url'` (the page in the address, asked
-  on the server, so a reload and a shared link land on it) and one pager component reading `pageInfo`; the routes
-  answer `records` + `pageInfo` — the activity log's offset and the audit's cursor brought to one shape. Loading drawn at
-  its final size (with T2.14).
-- **Do not:** add a state key the server does not paint and expect it on reload (AGENTS.md § painted state); write a
-  flow's bare `{{spaceId}}` inside a list's row (use `{{ navigation.routeParams.spaceId }}`).
-- **Verify:** `auth.spec.ts`' timed journey no slower; the tables' behaviour lives in one component;
-  `visual/website.spec.ts`.
