@@ -172,35 +172,49 @@ export const sampleSpace: SpaceSpec = {
       // a derived ref is positional, and the document id is a hash nothing should ever be written against.
       id: 'home',
       slug: '',
-      class: 'page',
       body: [
-        container({ class: 'backdrop' }),
+        // The page's content is its `main`, and the page's look is the main's: a landmark a screen reader jumps to.
         container({
-          class: 'logoFrame',
-          children: [image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', alt: 'Plitzi', class: 'logo' })]
-        }),
-        container({
-          class: 'headline',
-          children: [heading({ id: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
-        }),
-        // Named, because it is what a deployment WITHOUT the three components renders empty: a suite checking the page
-        // there sets the section aside by this name rather than by a number that moves when a section is added.
-        container({
-          id: 'rsc-section',
-          class: 'rscSection',
+          subType: 'main',
+          class: 'page',
           children: [
-            rscElement('serverInfo', 'rsc-server', 'server'),
-            rscElement('clientInfo', 'rsc-client', 'client'),
-            rscElement('sharedInfo', 'rsc-shared', 'shared')
-          ]
-        }),
-        container({
-          class: 'cards',
-          children: [
-            card('Docs', 'Find in-depth information about Plitzi features and API.'),
-            card('Learn', 'Learn about Plitzi in an interactive course with quizzes!'),
-            card('Templates', 'Explore the Plitzi playground'),
-            card('Deploy', 'Instantly deploy your Plitzi Space')
+            container({ class: 'backdrop' }),
+            container({
+              class: 'logoFrame',
+              children: [
+                image({
+                  id: 'logo',
+                  src: 'https://cdn.plitzi.com/resources/img/favicon.svg',
+                  alt: 'Plitzi',
+                  class: 'logo'
+                })
+              ]
+            }),
+            container({
+              class: 'headline',
+              children: [heading({ id: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
+            }),
+            // Named, because it is what a deployment WITHOUT the three components renders empty: a suite checking the
+            // page there sets the section aside by this name rather than by a number that moves when a section is
+            // added.
+            container({
+              id: 'rsc-section',
+              class: 'rscSection',
+              children: [
+                rscElement('serverInfo', 'rsc-server', 'server'),
+                rscElement('clientInfo', 'rsc-client', 'client'),
+                rscElement('sharedInfo', 'rsc-shared', 'shared')
+              ]
+            }),
+            container({
+              class: 'cards',
+              children: [
+                card('Docs', 'Find in-depth information about Plitzi features and API.'),
+                card('Learn', 'Learn about Plitzi in an interactive course with quizzes!'),
+                card('Templates', 'Explore the Plitzi playground'),
+                card('Deploy', 'Instantly deploy your Plitzi Space')
+              ]
+            })
           ]
         })
       ]
@@ -210,16 +224,22 @@ export const sampleSpace: SpaceSpec = {
       name: 'Not found',
       id: 'not-found',
       slug: '*',
-      class: 'page',
       body: [
-        container({ class: 'backdrop' }),
+        // The page's content is its `main`, and the page's look is the main's: a landmark a screen reader jumps to.
         container({
-          class: 'headline',
-          children: [heading({ id: 'not-found-title', content: 'Page not found', subType: 'h1', variant: 'lg' })]
-        }),
-        container({
-          class: 'cards',
-          children: [card('Home', 'There is nothing at this address — the welcome page is.', '/')]
+          subType: 'main',
+          class: 'page',
+          children: [
+            container({ class: 'backdrop' }),
+            container({
+              class: 'headline',
+              children: [heading({ id: 'not-found-title', content: 'Page not found', subType: 'h1', variant: 'lg' })]
+            }),
+            container({
+              class: 'cards',
+              children: [card('Home', 'There is nothing at this address — the welcome page is.', '/')]
+            })
+          ]
         })
       ]
     }

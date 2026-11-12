@@ -9,7 +9,7 @@ describe('the sample space', () => {
 
     // The page, and the one for an address nothing answers.
     expect(schema.pages).toEqual(['home', 'not-found']);
-    expect(Object.values(schema.flat).filter(element => element.definition.rootId === 'home')).toHaveLength(31);
+    expect(Object.values(schema.flat).filter(element => element.definition.rootId === 'home')).toHaveLength(32);
     expect(style.platform.desktop.page).toBeDefined();
     expect(warnings).toEqual([]);
   });
