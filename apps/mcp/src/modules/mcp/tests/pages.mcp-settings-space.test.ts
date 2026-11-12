@@ -153,7 +153,7 @@ describe('MCP settings (space-level customCss + auth config)', () => {
   });
 
   // A link to a space pasted in a chat showed no picture and Plitzi's icon, and an agent had no field to say otherwise.
-  it('writes how a link to the site shows — its name, language, icon, picture, colour — and its robots.txt', async () => {
+  it('writes how a link to the site shows — its name, language, icon, picture, colour — and its robots.txt and llms.txt', async () => {
     const cap = capturing(buildSpace());
     const identity = {
       siteName: 'Acme',
@@ -161,7 +161,8 @@ describe('MCP settings (space-level customCss + auth config)', () => {
       favicon: '/favicon.svg',
       shareImage: '/og.png',
       themeColor: { light: '#fbf7f0', dark: '#0b0a10' },
-      robotsTxt: 'User-agent: *\nAllow: /\n'
+      robotsTxt: 'User-agent: *\nAllow: /\n',
+      llmsTxt: '# Acme\n\n> What Acme is.'
     };
     const res = await apply({ operations: [{ type: 'patchSettings', ...identity }] }, buildSpace(), cap.persisters);
     expect(res.applied).toBe(true);

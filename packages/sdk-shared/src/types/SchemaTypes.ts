@@ -282,6 +282,13 @@ export type Schema = {
      */
     securityTxt?: string;
     /**
+     * The space's `/llms.txt` (llmstxt.org), as an assistant reads it to find its way around: the site's name, what it
+     * is, and a link to each page with what it is for. Left out, the server writes one from the pages the sitemap lists
+     * — each page's SEO title and description. A space that keeps `assistants` out (`blockAiCrawlers`) answers 404:
+     * an index for them would invite what the site refuses.
+     */
+    llmsTxt?: string;
+    /**
      * The kinds of AI crawler kept out of the whole site, each its owner's to decide (`AI_CRAWLERS`): `training` (GPTBot,
      * ClaudeBot, Google-Extended…), `assistants` fetching a page for a person (ChatGPT-User, Claude-User…) and AI
      * `search` indexes (OAI-SearchBot, PerplexityBot…). `/robots.txt` says `Disallow: /` to each agent of each kind named,

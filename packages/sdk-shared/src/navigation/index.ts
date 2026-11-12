@@ -1,5 +1,5 @@
 export { matchPath } from './matchPath';
-export { SITEMAP_EXCLUSION_WORDS, sitemapExclusion, sitemapPaths } from './sitemap';
+export { SITEMAP_EXCLUSION_WORDS, sitemapExclusion, sitemapPages, sitemapPaths } from './sitemap';
 export {
   getPageFullPath,
   getPaths,

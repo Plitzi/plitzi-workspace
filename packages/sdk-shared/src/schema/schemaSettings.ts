@@ -14,6 +14,7 @@ export const SCHEMA_SETTINGS = [
   'browserState',
   'robotsTxt',
   'securityTxt',
+  'llmsTxt',
   'blockAiCrawlers',
   'viewTransitions',
   'siteName',

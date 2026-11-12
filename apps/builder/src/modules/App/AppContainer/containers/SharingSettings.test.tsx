@@ -76,4 +76,14 @@ describe('SharingSettings', () => {
     fireEvent.change(fieldOf(container, 'robotsTxt'), { target: { value: 'User-agent: *\nDisallow: /admin' } });
     expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', 'User-agent: *\nDisallow: /admin', 'robotsTxt');
   });
+
+  // Left empty, the site writes its own from its pages: an empty text is the setting left out, not an empty index.
+  it('edits the llms.txt assistants read, and leaves it to the site when emptied', () => {
+    const { container } = renderWith({ llmsTxt: '# Lumen' });
+
+    fireEvent.change(fieldOf(container, 'llmsTxt'), { target: { value: '# Lumen\n\n> Coffee.' } });
+    expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', '# Lumen\n\n> Coffee.', 'llmsTxt');
+    fireEvent.change(fieldOf(container, 'llmsTxt'), { target: { value: '' } });
+    expect(emit).toHaveBeenCalledWith('main', 'schemaUpdateSettings', undefined, 'llmsTxt');
+  });
 });

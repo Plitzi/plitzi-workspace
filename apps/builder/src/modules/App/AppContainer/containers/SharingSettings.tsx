@@ -37,6 +37,7 @@ const SharingSettings = () => {
   const [identity, setIdentity] = useState<SpaceIdentity>(() => spaceIdentity(settings));
   const [robotsTxt, setRobotsTxt] = useState(settings.robotsTxt ?? '');
   const [securityTxt, setSecurityTxt] = useState(settings.securityTxt ?? '');
+  const [llmsTxt, setLlmsTxt] = useState(settings.llmsTxt ?? '');
   const [blockAiCrawlers, setBlockAiCrawlers] = useState<AiCrawlerKind[]>(() =>
     Array.isArray(settings.blockAiCrawlers) ? settings.blockAiCrawlers.filter(isAiCrawlerKind) : []
   );
@@ -101,6 +102,14 @@ const SharingSettings = () => {
     (value: string) => {
       setSecurityTxt(value);
       save('securityTxt', value === '' ? undefined : value);
+    },
+    [save]
+  );
+
+  const handleLlms = useCallback(
+    (value: string) => {
+      setLlmsTxt(value);
+      save('llmsTxt', value === '' ? undefined : value);
     },
     [save]
   );
@@ -223,12 +232,23 @@ const SharingSettings = () => {
           value={securityTxt}
           onChange={handleSecurity}
         />
+        <TextArea
+          size="sm"
+          name="llmsTxt"
+          label="llms.txt"
+          placeholder={'# Your site\n\n> What it is, in a sentence.\n\n## Pages\n\n- [Home](https://example.com/): …'}
+          rows={4}
+          value={llmsTxt}
+          onChange={handleLlms}
+        />
         <Notice tone="info">
           Search engines keep reading whatever is ticked here. Left empty, crawlers may read every page. A page kept out
           of search says so itself, with its robots under SEO. The site answers /sitemap.xml with its public pages — the
           map of pages marks the ones left out — and robots.txt names it. security.txt is where whoever finds a flaw in
           the site writes to you, served at /.well-known/security.txt; left empty, that address answers that the site
-          publishes none.
+          publishes none. llms.txt is the index an assistant reads to find its way around: left empty, the site writes
+          one from its public pages — each one's SEO title and description — and with assistants kept out it publishes
+          none.
         </Notice>
       </ViewSection>
     </ViewPage>

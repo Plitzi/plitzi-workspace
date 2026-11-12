@@ -5,6 +5,7 @@ import { configStaticStage, publicDirStage, wellKnownStage } from '@plitzi/sdk-k
 import { statsStage } from '@plitzi/sdk-kernel/stats';
 
 import { iconFacesStage } from './iconFaces';
+import { llmsTxtStage } from './llmsTxt';
 import { robotsTxtStage } from './robotsTxt';
 import { rscStage } from './rsc';
 import { securityTxtStage } from './securityTxt';
@@ -79,6 +80,7 @@ export const buildPagePipeline = (
     stages.push(iconFacesStage);
     stages.push(robotsTxtStage);
     stages.push(sitemapXmlStage);
+    stages.push(llmsTxtStage);
   }
 
   stages.push(services.ssr ? ssrStage : notFoundStage);

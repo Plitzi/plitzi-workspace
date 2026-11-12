@@ -256,6 +256,14 @@ An authored request connects to the address its name was judged to, and the advi
 - A space says its `/.well-known/security.txt` (RFC 9116) in `settings.securityTxt` — the builder's Sharing settings,
   code or the MCP — and the page server answers it as written; a space that says nothing answers 404 there.
 
+## llms.txt
+
+- A space answers `/llms.txt` (llmstxt.org), the index an assistant reads: its name, the home page's description, and
+  a link to each page the sitemap lists with its SEO title and description. `settings.llmsTxt` — the builder's
+  Sharing settings, code or the MCP — is the space's own instead; a space that keeps `assistants` out
+  (`blockAiCrawlers`) answers 404 there. `sitemapPages` (`@plitzi/sdk-shared/navigation`) is the sitemap's pages with
+  their ids, which both read.
+
 ## Elements
 
 - A link on screen fetches what following it will need ahead (`navigation.prefetch`), when the browser is idle: with a

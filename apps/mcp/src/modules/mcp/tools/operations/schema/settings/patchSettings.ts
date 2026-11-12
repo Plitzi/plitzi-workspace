@@ -93,6 +93,12 @@ export const patchSettingsOp = z
       .optional(),
     robotsTxt: z.string().optional(),
     securityTxt: z.string().optional().describe('/.well-known/security.txt, as written (RFC 9116: Contact, Expires)'),
+    llmsTxt: z
+      .string()
+      .optional()
+      .describe(
+        '/llms.txt, as written; left out, the site writes one from its public pages (404 with assistants kept out)'
+      ),
     blockAiCrawlers: z
       .array(z.enum(AI_CRAWLER_KINDS))
       .optional()
@@ -102,10 +108,7 @@ export const patchSettingsOp = z
       .string()
       .optional()
       .describe('Page id drawn for a withheld page (its 401/403); "" = Plitzi\'s words'),
-    wholeDocument: z
-      .boolean()
-      .optional()
-      .describe('Whole space with every page, not in parts'),
+    wholeDocument: z.boolean().optional().describe('Whole space with every page, not in parts'),
     channels: z
       .record(z.string(), channel.nullable())
       .optional()

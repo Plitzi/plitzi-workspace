@@ -64,12 +64,32 @@ const pagesOf = (schema: Pick<Schema, 'flat' | 'pages'>): Record<string, Element
  * Every address of the space a search engine may read, once each and sorted: its pages left in by
  * {@link sitemapExclusion}, at the path a link to each resolves to (its folders' slugs before its own).
  */
-export const sitemapPaths = (schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'>): string[] => {
+export const sitemapPaths = (schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'>): string[] => [
+  ...new Set(sitemapPages(schema).map(page => page.path))
+];
+
+/**
+ * The pages {@link sitemapPaths} lists, each with its id — what a reader that says more of a page than its address
+ * (`/llms.txt`: its title and description) reads. The first page at a path holds it, in the order the paths sort.
+ */
+export const sitemapPages = (
+  schema: Pick<Schema, 'flat' | 'pages' | 'pageFolders'>
+): { pageId: string; path: string }[] => {
   const pages = pagesOf(schema);
   const folders: PageFolder[] = schema.pageFolders;
-  const paths = Object.entries(pages)
-    .filter(([, page]) => !sitemapExclusion(page))
-    .map(([pageId]) => getPageFullPath(pages, folders, pageId, true));
+  const seen = new Set<string>();
 
-  return [...new Set(paths)].sort((a, b) => a.localeCompare(b));
+  return Object.entries(pages)
+    .filter(([, page]) => !sitemapExclusion(page))
+    .map(([pageId]) => ({ pageId, path: getPageFullPath(pages, folders, pageId, true) }))
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .filter(page => {
+      if (seen.has(page.path)) {
+        return false;
+      }
+
+      seen.add(page.path);
+
+      return true;
+    });
 };

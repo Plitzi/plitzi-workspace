@@ -143,3 +143,49 @@ describe('a space’s /sitemap.xml', () => {
     expect(xml).not.toContain(':slug');
   });
 });
+
+/** An assistant finds its way around by `/llms.txt`: the space's own, or one its pages make — and none for one kept out. */
+describe('a space’s /llms.txt', () => {
+  const page = (id: string, attributes: Record<string, unknown>) => ({
+    id,
+    attributes: { default: false, folder: '', ...attributes },
+    definition: { rootId: id, label: id, type: 'page', items: [], styleSelectors: { base: '' } }
+  });
+  const pages = [
+    page('home', {
+      slug: '',
+      default: true,
+      seoEnabled: true,
+      seoPageTitle: 'Café Lumen',
+      seoPageDescription: 'Coffee and a table by the window.'
+    }),
+    page('menu', { slug: 'menu', seoEnabled: true, seoPageTitle: 'The menu', seoPageDescription: 'What we pour.' }),
+    page('account', { slug: 'account', accessLevel: 'authenticated' })
+  ];
+  const site = { pages: pages.map(each => each.id), flat: Object.fromEntries(pages.map(each => [each.id, each])) };
+
+  it('is made from the pages the sitemap lists, each with its title and description', async () => {
+    const base = await serve({ customCss: '', siteName: 'Lumen' }, site);
+    const answer = await fetch(`${base}/llms.txt`);
+
+    expect(answer.status).toBe(200);
+    expect(answer.headers.get('content-type')).toContain('text/plain');
+    expect(await answer.text()).toBe(
+      `# Lumen\n\n> Coffee and a table by the window.\n\n## Pages\n\n- [Café Lumen](${base}/): Coffee and a table by the window.\n- [The menu](${base}/menu): What we pour.\n`
+    );
+  });
+
+  it('is the space’s own when it writes one', async () => {
+    const base = await serve({ customCss: '', llmsTxt: '# Lumen\n\n> Ours.' }, site);
+
+    expect(await (await fetch(`${base}/llms.txt`)).text()).toBe('# Lumen\n\n> Ours.\n');
+  });
+
+  it('answers 404 for a space that keeps assistants out, never its page', async () => {
+    const base = await serve({ customCss: '', blockAiCrawlers: ['assistants'] }, site);
+    const answer = await fetch(`${base}/llms.txt`);
+
+    expect(answer.status).toBe(404);
+    expect(answer.headers.get('content-type')).toContain('text/plain');
+  });
+});
