@@ -14,21 +14,6 @@ fact — a price comes from `src/services/pricing`, a plan's limit from the plan
 
 ---
 
-## T6.1 — The funnel
-
-- **Finding:** X2. **Size:** M.
-- **Read first:** `docs/beta-onboarding.md` (activation is defined once: *published to an address that works AND
-  edited again within 7 days*), `prisma/seeds/spaces/platform/website/pages/admin/overview.ts`,
-  `src/services/api/admin/` (the overview's API), `docs/back-office.md`.
-- **Steps:** Step 0: what the overview shows (People, Money, Moderation, health) and which events the platform already
-  records with a time (sign-up, confirmation, a space created, a publish, a later edit). Add, from those and nothing
-  new: signed up → confirmed → first space → first publish → edited again within 7 days, by week of sign-up, with the
-  median time between steps. Backend in UTC. If a step has no recorded time, say which and stop.
-- **Do not:** add tracking of people beyond what is recorded; count Plitzi's own seeded workspaces (the Money page
-  already excludes them — use the same rule).
-- **Verify:** `yarn test:e2e` for the route (staff only: `hiddenWithout('adminManage')`); the back-office's visual
-  test on seeded data; one `includes` check — count the route's SQL statements before adding a relation loop.
-
 ## T6.4 — A page's weight, shown to its owner
 
 - **Finding:** X5. **Size:** L. WS1 has shipped (the space in parts, the heavy pages said): it can start.

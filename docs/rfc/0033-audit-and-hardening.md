@@ -65,7 +65,6 @@ What each row says is what is left of it; what shipped of it is in the history.
 
 | Task | Left | Done when | Size |
 |---|---|---|---|
-| **T6.1** The funnel | The back-office's visual test of **Overview → Sign-ups** (its API and e2e exist) | The section drawn for the seeded data, in the visual lane | S |
 | **T6.3** What a buyer checks | A status page's address in the footer, once there is one | The link, when the page exists | S |
 | **T6.4** A page's weight, shown to its owner | Per page in a space's analytics, the bytes by kind and the layout shift, measured by the page server and the collector. A design note first | The note, then the screen | L |
 | **T6.5** The landing says who and proves it | The first screen names its reader with the docs' sentence; a quieter second call to action (a 90-second recording of the studio, an address kept); proof that exists today in place of the star count; pages per reader and the comparisons from one shared frame; the bands' art alternated | Each page in the sitemap and linked; both themes, every width of the sweep; the home within its budget | L |
