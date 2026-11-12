@@ -100,6 +100,10 @@ An authored request connects to the address its name was judged to, and the advi
 
 ## SDK
 
+- A page whose sessions the page server holds (`userProvider: 'server'`) keeps the painted state it was drawn with
+  when the cookie was another account's: the server proved this account and drew its own values, or its defaults
+  (`paintedDefaults`) — which may equal the last account's, a workspace both belong to. Dropped as the other's, a
+  dashboard lost its workspace after a change of account. A space that signs in in the browser still drops them.
 - A navigation fetches the parts of the space its page needs before it goes (a link fetches them ahead, idle, once it is
   on screen), and a part that does not come loads the address from the server, said in the dev tools — never a page
   drawn without its elements. A document with no `parts` — the SDK alone — takes none of this path.

@@ -513,6 +513,24 @@ describe('runtimeStatePersist', () => {
       expect(cookie()).toEqual({ owner: 'user:9', values: { name: 'Grace' } });
     });
 
+    it('keeps what the page started with when the page server holds the session: it drew for this account', () => {
+      writeCookie('user:7', { toolPick: 'star' });
+      const serverSessions = () =>
+        ({
+          settings: { keepState: true, userProvider: 'server', paintedState: ['toolPick', 'name'] }
+        }) as unknown as Schema;
+      const store = build({
+        schema: serverSessions(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(9) }, state: { toolPick: 'star', filter: 'open' } }
+      });
+      store.hydrate?.();
+      store.setState('schema', serverSessions());
+
+      expect(store.getState().runtime?.state).toEqual({ toolPick: 'star', filter: 'open' });
+      expect(cookie()).toEqual({ owner: 'user:9', values: { toolPick: 'star' } });
+    });
+
     it('does not bring the previous account’s painted values back when the account changes', () => {
       writeCookie('user:7', { toolPick: 'star' });
       const store = build({

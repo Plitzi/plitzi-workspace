@@ -186,7 +186,12 @@ const paintedSync = <TState extends CommonState>(
     if (!checked) {
       checked = true;
       const entry = readPaintedEntry(name);
-      if (entry && entry.owner !== owner) {
+      // Sessions the page server holds (`userProvider: 'server'`) are proved before the page is drawn: the server never
+      // draws another account's entry (`paintedStateFor`), so what the page starts with is this account's — its own
+      // values, or the deployment's defaults for it, which may equal the last account's (a workspace both belong to).
+      // Dropped as theirs, the dashboard lost its workspace after a change of account.
+      const serverProved = settings.userProvider === 'server';
+      if (entry && entry.owner !== owner && !serverProved) {
         // The browser's keys are nobody's: they stay, and the entry is written again under this owner with them alone.
         // Of the rest, only a value that is still the entry's goes: what this account wrote since the page hydrated —
         // a workspace its own provider's first answer picked, as early as a server provider answers — is its own.
