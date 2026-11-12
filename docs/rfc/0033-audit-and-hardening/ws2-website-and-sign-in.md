@@ -56,8 +56,8 @@ every brief here** and is not repeated in each. Unless a brief says otherwise:
   3. **Plitzi's website:** blocks nothing (`website/index.ts`, ~line 406). The docs already block nothing.
   4. An `llms.txt` for the website and the docs, written from their page lists — a route of the platform (like
      `robots.txt`), **never a file in `src/services/ssr/public/`**.
-  5. The sitemap gains each template's page and each showcase chapter, with `lastmod` (the sitemap is derived from
-     pages: find its stage in `apps/server`).
+  5. The sitemap stays what the schema says — its pages, their folders and visibility (`sitemapPaths`): a template's
+     page has an address the schema cannot name, and is reached through the gallery's links and `ItemList`.
 - **Do not:** let `settings.robotsTxt` (a space's own rules) be overwritten by the new setting — say in the docs how
   the two combine; block a search engine's ordinary crawler under any of the kinds.
 - **Verify:** in the workspace: tests of the stage for each kind alone and together, of authoring, the builder's
