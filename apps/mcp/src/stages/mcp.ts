@@ -16,6 +16,7 @@ const DEFAULT_PATH = '/mcp';
 const serveMcp = async (ctx: Parameters<Stage>[0], options: McpOptions): Promise<void> => {
   const { previewClient, screenshot } = options;
 
+  // The stage's raw response is the Node `ServerResponse` the MCP's handler writes; the pipeline types it as its own.
   ctx.operation = await handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, ctx.config.adapters, {
     preview: previewClient ? createHttpPreviewClient(previewClient) : undefined,
     screenshot: screenshot ? createHttpScreenshotClient(screenshot) : undefined,

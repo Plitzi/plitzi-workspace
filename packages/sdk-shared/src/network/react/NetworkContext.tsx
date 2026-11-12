@@ -55,6 +55,8 @@ export type BuilderNetworkContextValue<
   S extends Record<string, unknown> = Record<string, unknown>
 > = NetworkContextValue<Q, M, S, 'builder'>;
 
+// The context's default, for a reader outside every provider: the fields such a reader could touch are filled, the
+// rest of the network is the provider's to give.
 const networkContextDefaultValue: NetworkContextValue = {
   mutate: async () => {},
   query: async () => {},

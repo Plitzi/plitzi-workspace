@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- a document is checked as it arrived, not as its type says
+   it is: a field the type declares can be missing from an export, a hand-edited JSON or an older client's write */
 import { findLayoutCycle } from '@plitzi/sdk-shared/schema';
 
 import type { ValidationContext } from './context';

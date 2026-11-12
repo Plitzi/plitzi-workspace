@@ -9,6 +9,7 @@ export type TabContainerContextValue = {
   onSelect: Dispatch<SetStateAction<number>>;
 };
 
+// No default: a tab is drawn only inside its container, and a default would hide one that is not.
 const TabContainerContext = createContext<TabContainerContextValue>(undefined as unknown as TabContainerContextValue);
 TabContainerContext.displayName = 'TabContainerContext';
 

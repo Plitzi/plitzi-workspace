@@ -24,6 +24,8 @@ export type UpsertVariable = z.infer<typeof upsertVariableOp>;
 
 export const upsertVariable = (space: Space, env: Env, op: UpsertVariable): OpResult => {
   // The stored SchemaVariable is a discriminated union keyed by runtime `type`; the agent supplies it dynamically.
+  // The op's fields are checked by its schema; a variable's type narrows its value by `type`, which a literal built
+  // from the op's parts cannot tell the compiler.
   const variable = {
     name: op.name,
     category: op.category ?? 'general',

@@ -18,6 +18,7 @@ export type ComponentProviderProps = {
 const ComponentProvider = ({ localComponents, localCustomComponents, children }: ComponentProviderProps) => {
   const localComponentsParsed = useMemo<Record<string, ComponentPluginWithHOC>>(
     () => ({
+      // The built-in elements, each a component `withElement` wrapped: the registry's type for a plugin with its HOC.
       ...processLocalPlugins(defaultElements as unknown as Record<string, ComponentPluginWithHOC>),
       ...processLocalPlugins(localComponents),
       ...processLocalCustomPlugins(localCustomComponents)

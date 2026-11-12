@@ -274,6 +274,7 @@ export const createTokens = (config: TokenConfig) => {
       return { ok: false, reason: 'issuer-not-allowed' };
     }
 
+    // Every claim a token is read by is checked above: the cast names the shape those checks proved.
     return { ok: true, payload: payload as unknown as TokenPayload };
   };
 

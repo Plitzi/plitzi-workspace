@@ -95,7 +95,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   formControl: FormControl,
   apiContainer: ApiContainer,
   channel: Channel
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each element's own props, as the registry above says
 } satisfies Record<ElementType, FC<any>>;
 
 export { defaultElementsSettings };

@@ -12,6 +12,7 @@ export type DropdownContextValue = {
   layer: HTMLElement | null;
 };
 
+// No default: its parts are drawn only inside a dropdown, and a default would hide one that is not.
 const DropdownContext = createContext(undefined as unknown as DropdownContextValue);
 DropdownContext.displayName = 'DropdownContext';
 

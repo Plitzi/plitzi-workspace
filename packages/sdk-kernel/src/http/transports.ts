@@ -73,6 +73,7 @@ export const buildTransport = (
   if (version >= 3) {
     primary = http2.createSecureServer(
       { ...tlsOptions(config, label), allowHTTP1: true },
+      // Node types http2's handler for http2 requests; with `allowHTTP1` it is handed both, as the handler is written for.
       handler as unknown as Parameters<typeof http2.createSecureServer>[1]
     );
 
@@ -96,6 +97,7 @@ export const buildTransport = (
     if (config.tls) {
       primary = http2.createSecureServer(
         { ...tlsOptions(config, label), allowHTTP1: true },
+        // Node types http2's handler for http2 requests; with `allowHTTP1` it is handed both, as the handler is written for.
         handler as unknown as Parameters<typeof http2.createSecureServer>[1]
       );
     } else {

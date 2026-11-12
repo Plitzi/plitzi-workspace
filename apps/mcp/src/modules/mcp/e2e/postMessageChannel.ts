@@ -43,6 +43,7 @@ export class HostBridgeTransport implements Transport {
     // `source` is the identity the App's transport validates before accepting a frame.
     const event = new this.window.MessageEvent('message', {
       data: message,
+      // A test's stand-in for the parent window: the transport compares `source` by identity and reads nothing of it.
       source: this.parent as unknown as Window
     });
     this.window.dispatchEvent(event);

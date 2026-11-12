@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable @typescript-eslint/no-base-to-string -- two objects with a `toString` of their own (a URL, a class
+   instance) are equal when they say the same; the call is made only when one of them has one */
 
 const isEnumerable = (obj: object, key: string) => Object.getOwnPropertyDescriptor(obj, key)?.enumerable;
 
@@ -67,13 +68,16 @@ export const deepEqual = (a: unknown, b: unknown, mode: 'soft' | 'hard' = 'soft'
     }
 
     if (ArrayBuffer.isView(a) && ArrayBuffer.isView(b)) {
-      length = (a as unknown as unknown[]).length;
-      if (length != (b as unknown as unknown[]).length) {
+      // A typed array, read by index: `ArrayBuffer.isView` narrows to a view, whose type indexes nothing.
+      const left = a as unknown as ArrayLike<unknown>;
+      const right = b as unknown as ArrayLike<unknown>;
+      length = left.length;
+      if (length != right.length) {
         return false;
       }
 
       for (i = length; i-- !== 0;) {
-        if ((a as unknown as unknown[])[i] !== (b as unknown as unknown[])[i]) {
+        if (left[i] !== right[i]) {
           return false;
         }
       }

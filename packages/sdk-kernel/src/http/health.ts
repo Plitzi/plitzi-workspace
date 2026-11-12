@@ -1,7 +1,8 @@
 import type { ServerResponse } from 'node:http';
 
 export type HealthCheckApp = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Any app that routes a GET — Express's, a test double's: a handler's arguments are that framework's own.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whichever framework's handler arguments
   get: (path: string, handler: (...args: any[]) => void) => void;
 };
 

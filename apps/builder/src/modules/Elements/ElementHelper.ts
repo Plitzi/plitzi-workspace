@@ -36,6 +36,7 @@ export const getInitialItems = (
   }
 
   items.forEach(item => {
+    // A definition's initial tree is stored as definitions; each is read as the element it is placed as, which it is.
     const element = cloneDeep(definitions[item]) as unknown as
       (Pick<ComponentDefinition, 'definition' | 'attributes'> & { id: string; initialItems?: string[] }) | undefined;
     if (!element) {

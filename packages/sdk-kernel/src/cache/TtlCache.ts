@@ -55,6 +55,7 @@ export class TtlCache<T> {
     this.sizeOf = sizeOf;
     this.staleMs = staleMs;
     this.sweepTimer = setInterval(() => this.sweep(), sweepIntervalMs);
+    // Node's timer has `unref` (a sweep must not keep the process alive) and a browser's number does not: called when there.
     (this.sweepTimer as unknown as { unref?: () => void }).unref?.();
   }
 

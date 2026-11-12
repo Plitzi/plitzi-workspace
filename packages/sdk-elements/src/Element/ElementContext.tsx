@@ -43,6 +43,7 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
 
 const ElementContext = sharedContext<ElementContextValue | ElementContextValue<'skipHOC'>>(
   'ElementContext',
+  // No default: an element is drawn only under its provider, and a default would hide a reader that is not.
   undefined as unknown as ElementContextValue
 );
 

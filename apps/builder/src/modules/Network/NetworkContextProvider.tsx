@@ -151,6 +151,7 @@ const NetworkContextProvider = ({
       }
 
       if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
+        // The client types `data` as the document's result; the map names each mutation's result by its key, the same data.
         return { success: true, result: (result.data as unknown as BuilderMutationsMap)[mutationKey] };
       }
 

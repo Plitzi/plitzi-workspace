@@ -72,7 +72,8 @@ const ElementSettings = ({
     [previewMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // A panel takes its own element's attributes as props: no one props type is every element's or every plugin's.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each panel's props are its element's own
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
   // An instance of one of the space's components: what places it is the builder's, not the element's own settings.
   const componentId =

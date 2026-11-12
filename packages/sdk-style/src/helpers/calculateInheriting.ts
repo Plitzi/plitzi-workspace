@@ -359,6 +359,7 @@ const calculateInheriting = (
 
     // Virtual node
     if (!element && componentType) {
+      // A node of the type alone, for what its type's style gives: nothing else of an element is read by a style rule.
       const virtualNode = {
         definition: { type: componentType, styleSelectors: {}, parentId: undefined },
         attributes: {}
