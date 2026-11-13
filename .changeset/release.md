@@ -66,6 +66,10 @@ weighs on a phone — and what of it a phone cannot hold.
   one already is, is refused, saying which page it is and how to swap them. Its settings say what it is, on the Page
   section's header too.
 
+- **Space check** (the issues button's list) reads in tabs — Errors, Warnings, Suggestions, each counted — and, in each,
+  a line per code, folded, with how many and what they save: the fix is said once per code, a long message is cut to
+  three lines until asked for, and its code is set apart. Only the list scrolls; the tabs and *Fix automatically* stay.
+  The modal is wider on a desktop.
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the

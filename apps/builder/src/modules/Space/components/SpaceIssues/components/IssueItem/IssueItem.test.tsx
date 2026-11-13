@@ -38,7 +38,6 @@ describe('IssueItem', () => {
           fixable: false,
           fix: null
         }}
-        severity="error"
         onDismiss={onDismiss}
       />
     );
@@ -60,7 +59,6 @@ describe('IssueItem', () => {
           fixable: false,
           fix: null
         }}
-        severity="error"
         onDismiss={vi.fn()}
       />
     );
@@ -73,32 +71,11 @@ describe('IssueItem', () => {
     const { getByText, queryByRole } = render(
       <IssueItem
         issue={{ code: 'colour-without-dark', message: 'No dark value', elementId: null, fixable: false, fix: null }}
-        severity="warning"
         onDismiss={vi.fn()}
       />
     );
 
     expect(getByText('No dark value')).toBeTruthy();
     expect(queryByRole('button')).toBeNull();
-  });
-
-  // The fix the code's row says — the same one authoring and an agent over MCP are told — with its code set apart.
-  it('says what to write instead, with the code in it set apart', () => {
-    const { getByText, container } = render(
-      <IssueItem
-        issue={{
-          code: 'click-on-static-element',
-          message: 'A click on a box',
-          elementId: null,
-          fixable: false,
-          fix: 'the flow on a `button` (it holds children)'
-        }}
-        severity="error"
-        onDismiss={vi.fn()}
-      />
-    );
-
-    expect(getByText('Write instead:')).toBeDefined();
-    expect(container.querySelector('code')?.textContent).toBe('button');
   });
 });

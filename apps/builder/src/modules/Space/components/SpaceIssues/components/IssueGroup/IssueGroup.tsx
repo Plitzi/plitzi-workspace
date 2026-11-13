@@ -1,39 +1,38 @@
-import clsx from 'clsx';
-
-import { MUTED } from '../../helpers';
+import { byCode, SEVERITY_ICON, SEVERITY_TEXT } from '../../helpers';
+import CodeGroup from '../CodeGroup';
 import IssueItem from '../IssueItem';
 
 import type { IssueSeverity } from '../../helpers';
 import type { TSpaceIssue } from '@plitzi/sdk-shared/network';
 
 export type IssueGroupProps = {
-  title: string;
   issues: TSpaceIssue[];
   severity: IssueSeverity;
   onDismiss: () => void;
 };
 
-const IssueGroup = ({ title, issues, severity, onDismiss }: IssueGroupProps) => {
-  if (issues.length === 0) {
-    return null;
-  }
+/** The errors or the warnings, a group per code: what to write instead said once, then each place it was found. */
+const IssueGroup = ({ issues, severity, onDismiss }: IssueGroupProps) => {
+  const groups = byCode(issues);
 
   return (
-    <section className="flex flex-col gap-1">
-      <h5 className={clsx('text-[11px] font-bold tracking-wider uppercase', MUTED)}>
-        {title} · {issues.length}
-      </h5>
-      <ul className="flex flex-col">
-        {issues.map((issue, index) => (
-          <IssueItem
-            key={`${issue.code}:${issue.elementId ?? ''}:${index}`}
-            issue={issue}
-            severity={severity}
-            onDismiss={onDismiss}
-          />
-        ))}
-      </ul>
-    </section>
+    <ul className="flex flex-col gap-2">
+      {groups.map(group => (
+        <CodeGroup
+          key={group.code}
+          code={group.code}
+          count={group.items.length}
+          fix={group.fix}
+          icon={SEVERITY_ICON[severity]}
+          tone={SEVERITY_TEXT[severity]}
+          defaultOpen={groups.length === 1}
+        >
+          {group.items.map((issue, index) => (
+            <IssueItem key={`${issue.elementId ?? ''}:${String(index)}`} issue={issue} onDismiss={onDismiss} />
+          ))}
+        </CodeGroup>
+      ))}
+    </ul>
   );
 };
 

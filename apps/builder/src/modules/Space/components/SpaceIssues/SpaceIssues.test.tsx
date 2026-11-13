@@ -21,8 +21,8 @@ describe('SpaceIssues', () => {
     expect(getByText('Nothing wrong with the saved space.')).toBeTruthy();
   });
 
-  it('lists the shorter ways after the problems: the short way, what it saves, and the elements it is about', () => {
-    const { getByText } = render(
+  it('lists the shorter ways: the short way once, what each saves, and the elements it is about', () => {
+    const { getByText, getAllByRole } = render(
       <SpaceIssues
         issues={{
           errors: [],
@@ -42,15 +42,17 @@ describe('SpaceIssues', () => {
     );
 
     expect(getByText('Nothing wrong with the saved space.')).toBeTruthy();
-    expect(getByText('Suggestions · 1')).toBeTruthy();
+    expect(getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Suggestions1']);
+    // A list of one code has nothing to choose between: it starts unfolded.
+    expect(getByText('Repeated on pages')).toBeTruthy();
     expect(getByText('The short way:')).toBeTruthy();
     expect(getByText('Saves 35 elements')).toBeTruthy();
     expect(getByText('d')).toBeTruthy();
     expect(getByText('and 2 more')).toBeTruthy();
   });
 
-  it('lists what stops a publish before what only asks to be looked at, each group counted', () => {
-    const { getAllByRole } = render(
+  it('puts each list in a tab, what stops a publish first, each counted', () => {
+    const { getAllByRole, getByText, queryByText } = render(
       <SpaceIssues
         intro="Fix these first"
         issues={{
@@ -65,7 +67,72 @@ describe('SpaceIssues', () => {
       />
     );
 
-    expect(getAllByRole('heading').map(heading => heading.textContent)).toEqual(['Errors · 1', 'Warnings · 2']);
+    expect(getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Errors1', 'Warnings2']);
+    expect(getByText('Broken')).toBeTruthy();
+    expect(queryByText('Odd')).toBeNull();
+
+    fireEvent.click(getByText('Warnings'));
+
+    expect(queryByText('Broken')).toBeNull();
+    expect(getByText('B')).toBeTruthy();
+    expect(getByText('C')).toBeTruthy();
+  });
+
+  // Seventeen suggestions of three kinds read as three lines, not as seventeen paragraphs: the long list was unreadable.
+  it('folds a list of several codes to a line each, and says what to do once per code', () => {
+    const shape = (id: string) => ({
+      code: 'repeated-shape',
+      message: `Containers like "${id}" are one item written again`,
+      elementIds: [id],
+      saves: 10,
+      fix: 'one `list` over the rows'
+    });
+    const { getByText, queryByText, getAllByText } = render(
+      <SpaceIssues
+        issues={{
+          errors: [],
+          warnings: [],
+          suggestions: [
+            shape('one'),
+            shape('two'),
+            { code: 'desktop-only', message: 'Too wide', elementIds: ['wide'], saves: 0, fix: 'a `mobile` rule' }
+          ]
+        }}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(getByText('Repeated shape')).toBeTruthy();
+    expect(getByText('saves 20')).toBeTruthy();
+    expect(getByText('Desktop only')).toBeTruthy();
+    expect(queryByText(/Containers like/)).toBeNull();
+
+    fireEvent.click(getByText('Repeated shape'));
+
+    expect(getAllByText(/Containers like/)).toHaveLength(2);
+    expect(getAllByText('The short way:')).toHaveLength(1);
+    expect(getByText('list').tagName).toBe('CODE');
+  });
+
+  it('cuts a long message to three lines until asked for the rest', () => {
+    const long = `${'A paragraph that names every element. '.repeat(10)}End.`;
+    const { getByText } = render(
+      <SpaceIssues
+        issues={{
+          errors: [],
+          warnings: [{ code: 'w', message: long, elementId: null, fixable: false, fix: null }],
+          suggestions: []
+        }}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(getByText(/End\./).className).toContain('line-clamp-3');
+
+    fireEvent.click(getByText('Show more'));
+
+    expect(getByText(/End\./).className).not.toContain('line-clamp-3');
+    expect(getByText('Show less')).toBeTruthy();
   });
 
   it('offers to fix what has one reading, then gets out of the way', async () => {

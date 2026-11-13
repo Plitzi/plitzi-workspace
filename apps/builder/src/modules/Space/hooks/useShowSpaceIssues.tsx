@@ -19,7 +19,7 @@ const useShowSpaceIssues = () => {
     (issues: TSpaceIssues, intro?: string) =>
       showModal(
         <Modal.Header>
-          <h4>Problems</h4>
+          <h4>Space check</h4>
         </Modal.Header>,
         ({ onClose }) => (
           <Modal.Body>
@@ -27,7 +27,8 @@ const useShowSpaceIssues = () => {
           </Modal.Body>
         ),
         undefined,
-        { size: 'md' }
+        // Its messages run long and its fixes are code: on a desktop it takes the room it has, on a phone the width.
+        { size: 'md', className: { card: 'max-w-4xl' } }
       ),
     [fixSpaceIssues, showModal]
   );
