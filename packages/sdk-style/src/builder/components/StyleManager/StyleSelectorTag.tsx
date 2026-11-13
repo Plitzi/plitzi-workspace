@@ -11,6 +11,8 @@ export type StyleSelectorTagProps = {
   checked?: boolean;
   /** Whether any row is checked: the boxes show on every row then, not only under the pointer. */
   selecting?: boolean;
+  /** Listed inside a group: set in under the group's name. */
+  nested?: boolean;
   elementsCount?: number;
   /** Ancestors this selector has rules under, and how many of them no element it dresses sits inside. */
   ancestorsCount?: number;
@@ -31,6 +33,7 @@ const StyleSelectorTag = ({
   active = false,
   checked = false,
   selecting = false,
+  nested = false,
   elementsCount = 0,
   ancestorsCount = 0,
   unusedAncestorsCount = 0,
@@ -62,18 +65,17 @@ const StyleSelectorTag = ({
 
   return (
     <div
-      className={clsx(
-        'group relative flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-sm pr-1 pl-1.5 select-none',
-        {
-          'hover:bg-gray-100 dark:hover:bg-zinc-800': !active,
-          'bg-primary-50 dark:bg-primary-400/15': active,
-          'bg-secondary-50 dark:bg-secondary-900/30': checked && !active
-        }
-      )}
+      className={clsx('group relative flex h-7 shrink-0 cursor-pointer items-center gap-2 pr-2 select-none', {
+        'pl-7': nested,
+        'pl-2': !nested,
+        'hover:bg-gray-100 dark:hover:bg-zinc-800': !active,
+        'bg-primary-50 dark:bg-primary-400/15': active,
+        'bg-secondary-50 dark:bg-secondary-900/30': checked && !active
+      })}
       aria-current={active ? 'true' : undefined}
       onClick={handleClickSelect}
     >
-      {active && <span className="bg-primary-500 absolute top-1 bottom-1 left-0 w-0.5 rounded-full" />}
+      {active && <span className="bg-primary-500 absolute inset-y-0 left-0 w-0.5" />}
       <div
         className={clsx('flex w-4 shrink-0 items-center justify-center', {
           'hidden group-hover:flex': !selecting && !checked
@@ -113,7 +115,7 @@ const StyleSelectorTag = ({
       </span>
       {ancestorsCount > 0 && (
         <span
-          className={clsx('flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px]', {
+          className={clsx('flex shrink-0 items-center gap-1 rounded-sm px-1 text-[11px] leading-4', {
             'bg-amber-500/15 text-amber-700 dark:text-amber-300': unusedAncestorsCount > 0,
             'bg-gray-100 text-zinc-600 dark:bg-zinc-700/80 dark:text-zinc-100': unusedAncestorsCount === 0
           })}
@@ -131,7 +133,7 @@ const StyleSelectorTag = ({
       <button
         type="button"
         className={clsx(
-          'h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-[11px] text-zinc-400 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400',
+          'h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] text-zinc-400 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400',
           { flex: active, 'hidden group-hover:flex': !active }
         )}
         title={element ? `Delete the ${label} defaults` : `Delete .${label} from the space`}
@@ -142,7 +144,7 @@ const StyleSelectorTag = ({
       </button>
       {elementsCount > 0 && (
         <span
-          className="min-w-6 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-center text-[11px] font-medium text-zinc-600 tabular-nums dark:bg-zinc-700/80 dark:text-zinc-100"
+          className="min-w-5 shrink-0 rounded-sm bg-gray-100 px-1 text-center text-[11px] leading-4 font-medium text-zinc-600 tabular-nums dark:bg-zinc-700/80 dark:text-zinc-100"
           title={`Dresses ${String(elementsCount)} element${elementsCount === 1 ? '' : 's'}`}
         >
           {elementsCount}
@@ -150,7 +152,7 @@ const StyleSelectorTag = ({
       )}
       {elementsCount === 0 && !element && (
         <span
-          className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+          className="shrink-0 rounded-sm bg-amber-500/10 px-1 text-[10px] leading-4 font-medium text-amber-700 dark:text-amber-300"
           title="No element wears it"
         >
           unused

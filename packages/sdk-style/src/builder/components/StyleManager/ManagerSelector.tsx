@@ -57,9 +57,9 @@ const FILTERS: { id: ListFilter; label: string }[] = [
 type ListItem =
   | { kind: 'section'; key: string; title: string; count: number }
   | { kind: 'group'; key: string; prefix: string; count: number; open: boolean }
-  | { kind: 'row'; key: string; selector: StyleItem };
+  | { kind: 'row'; key: string; selector: StyleItem; nested: boolean };
 
-const HEIGHT: Record<ListItem['kind'], number> = { section: 28, group: 28, row: 32 };
+const HEIGHT: Record<ListItem['kind'], number> = { section: 28, group: 28, row: 28 };
 
 /** Past this many classes, they are listed by the prefix they share — `adm-`, `lp-` — each folded until opened. */
 const GROUPED_FROM = 40;
@@ -135,8 +135,8 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
   const finalSelectors = byFilter[filter];
   const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
   const items = useMemo<ListItem[]>(() => {
-    const rows = (list: StyleItem[]): ListItem[] =>
-      list.map(selector => ({ kind: 'row', key: selector.name, selector }));
+    const rows = (list: StyleItem[], nested = false): ListItem[] =>
+      list.map(selector => ({ kind: 'row', key: selector.name, selector, nested }));
     // Grouped when long and nothing is searched: a search shows its matches whole.
     const grouped = (list: StyleItem[]): ListItem[] => {
       if (list.length < GROUPED_FROM || searchInput) {
@@ -159,7 +159,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
 
         return [
           { kind: 'group', key: `group:${prefix}`, prefix, count: members.length, open },
-          ...(open ? rows(members) : [])
+          ...(open ? rows(members, true) : [])
         ];
       };
       const gathered = [...groups.entries()].filter(([, members]) => members.length >= GROUP_MIN);
@@ -437,7 +437,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       )}
       <div
         ref={windowed.ref}
-        className="-mx-1 flex grow basis-0 flex-col overflow-y-auto px-1 pb-2"
+        className="-mx-2 flex grow basis-0 flex-col overflow-y-auto pb-2"
         onScroll={windowed.onScroll}
       >
         <div style={{ height: windowed.before }} className="shrink-0" />
@@ -446,7 +446,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
             return (
               <h6
                 key={item.key}
-                className="flex h-7 shrink-0 items-center justify-between px-1.5 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+                className="flex h-7 shrink-0 items-center justify-between px-2 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
               >
                 {item.title}
                 <span className="font-normal tabular-nums">{item.count}</span>
@@ -460,7 +460,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
                 key={item.key}
                 type="button"
                 aria-expanded={item.open}
-                className="flex h-7 w-full shrink-0 cursor-pointer items-center gap-1.5 rounded-sm px-1.5 text-left text-xs text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="flex h-7 w-full shrink-0 cursor-pointer items-center gap-2 pr-2 pl-2 text-left text-xs text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 onClick={handleToggleGroup(item.prefix)}
               >
                 <i
@@ -486,6 +486,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
               active={name === selected}
               checked={checkedSelectors.includes(name)}
               selecting={checkedSelectors.length > 0}
+              nested={item.nested}
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
