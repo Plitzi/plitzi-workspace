@@ -95,7 +95,8 @@ const QuotaMeter = () => {
         <QuotaBreakdown readings={readings} spaceId={webId} liveElements={liveElements} />
       </Modal.Body>,
       undefined,
-      { size: 'md' }
+      // Two columns of breakdown on a desktop, one on a phone: it takes the room it has.
+      { size: 'md', className: { card: 'max-w-4xl' } }
     );
   }, [showModal, readings, webId, liveElements]);
 
