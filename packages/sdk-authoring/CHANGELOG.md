@@ -1,5 +1,12 @@
 # @plitzi/sdk-authoring
 
+## 0.39.4
+
+### Patch Changes
+
+- 35415a1: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+
 ## 0.39.3
 
 No changes in this release.

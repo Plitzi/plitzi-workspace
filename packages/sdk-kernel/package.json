@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-kernel",
-  "version": "0.39.3",
+  "version": "0.39.4",
   "license": "AGPL-3.0",
   "description": "What every Plitzi server process is built on: the HTTP pipeline, health and shutdown, the host → deployment resolution, and verifying who a request is.",
   "files": [
