@@ -28,6 +28,24 @@ export const SUGGESTION_CODES = {
       'one page whose part of the document passes 250 KB — every visitor downloads it before the page is theirs — with the shapes written again most inside it, by what they weigh',
     fix: "the rows of data as one `list` of a component, read from the data (`list({ items, row })`), and a block written per state as one element whose state picks its content: the document then holds one copy — or, for an app's page heavy for how many elements it has, `quiet: ['heavy-page']` on the page, with why"
   },
+  'desktop-only': {
+    kind: 'suggested',
+    means:
+      'a page, layout or component styled for the desktop alone where a phone (390 px) breaks — a width past 480 px with no `max-width` holding it; a grid whose fixed columns and gaps are wider than a phone, or three or more columns sharing its width a page’s parts apart (a gap of 16 px or more) and left narrower than 120 px each; type past 64 px — that no `mobile` rule of the classes on it sets again (a style’s `mobile` is laid over its `desktop` alone, so a `tablet` rule does not reach a phone). What a `mobile` rule hides is left out, as is a layout fluid on its own — wrapping flex, `%`, `min()`, `clamp()`, `repeat(auto-fit, minmax(…))` —, a row whose one column grows (`48px 1fr auto`), a dense widget’s many thin columns, and a space written mobile first',
+    fix: "the phone's value in the class's `mobile` rules (`styles('card', { css: { desktop: { … }, mobile: { gridTemplateColumns: '1fr' } } })`), or a value fluid on its own — `width: 'min(960px, 100%)'`, `font-size: 'clamp(32px, 6vw, 72px)'`, `grid-template-columns: 'repeat(auto-fit, minmax(240px, 1fr))'` — or, for a surface only a desktop opens, `quiet: ['desktop-only']` on it, with why"
+  },
+  'heavy-layout': {
+    kind: 'suggested',
+    means:
+      'one layout whose own part of the document passes 250 KB — every page drawn in it is downloaded with it, the first a visitor opens at least — with how many pages carry it and what 10,000 first visits move for it',
+    fix: "what only some of its pages show moved into those pages, or into a component they place; rows of data as one `list` of a component (`list({ items, row })`) — or, for a shell heavy on purpose, `quiet: ['heavy-layout']` on the layout, with why"
+  },
+  'many-elements': {
+    kind: 'suggested',
+    means:
+      'a page that builds more than 1,500 elements as it opens — its own, its layouts’ and its components’ once per instance, not those that start hidden with `loadStrategy` `lazy` or `visible` — with what a visit downloads for them: a phone builds, styles and lays out each before the page answers (Lighthouse flags a page past about 1,400)',
+    fix: "`loadStrategy: 'lazy'` on what starts hidden until something shows it (`visible: false`) — a tab, a panel, a dialog — so it is built the first time it is shown (one a condition shows may be on screen at once, and is not named); rows of data as one `list`; a part few visitors reach as a page of its own — or, for an app's page rich on purpose, `quiet: ['many-elements']` on the page, with why"
+  },
   'repeated-expression': {
     kind: 'suggested',
     means:

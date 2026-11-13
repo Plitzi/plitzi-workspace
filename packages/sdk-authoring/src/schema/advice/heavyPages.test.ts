@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { HEAVY_PAGE_BYTES } from './heavyPages';
-import { authorSpace, container, list, paragraph, specFromSpace, styles, text } from '../../index';
+import { HEAVY_PAGE_BYTES, MANY_ELEMENTS } from './heavyPages';
+import { authorSpace, component, container, list, paragraph, specFromSpace, styles, text } from '../../index';
 
 import type { ElementSpec, SpaceSpec } from '../../index';
 
@@ -80,5 +80,151 @@ describe('heavy-page, a suggestion', () => {
     const written = authorSpace(said(['heavy-page']));
     expect(specFromSpace(written).spec.pages.find(page => page.slug === 'pricing')?.quiet).toEqual(['heavy-page']);
     expect(() => authorSpace(said(['heavy-pages']))).toThrow(/heavy-pages/);
+  });
+});
+
+/** The suggestions of one code. */
+const ofCode = (spec: SpaceSpec, code: string) =>
+  authorSpace(spec).suggestions.filter(suggestion => suggestion.code === code);
+
+/** `count` short texts, each its own element. */
+const texts = (prefix: string, count: number): ElementSpec[] =>
+  Array.from({ length: count }, (_, index) => text(`${prefix} ${String(index)}`, { id: `${prefix}-${String(index)}` }));
+
+const onePage = (body: ElementSpec[], extra: Partial<SpaceSpec> = {}): SpaceSpec => ({
+  name: 'App',
+  permanentUrl: 'app',
+  pages: [{ id: 'home', name: 'Home', slug: '', isDefault: true, body }],
+  ...extra
+});
+
+describe('many-elements, a suggestion', () => {
+  it('says a page that builds more than a phone handles well as it opens, and what a visit downloads for it', () => {
+    const found = ofCode(onePage(texts('row', MANY_ELEMENTS + 100)), 'many-elements');
+
+    expect(found).toHaveLength(1);
+    expect(found[0].message).toMatch(/^Page "home" builds 1,60\d elements as it opens, past 1,500:/);
+    expect(found[0].message).toMatch(
+      /A visit downloads \d+ KB of document for them — \d+(\.\d)? (MB|GB) for every 10,000 visits/
+    );
+  });
+
+  it('says nothing under the line', () => {
+    expect(ofCode(onePage(texts('row', MANY_ELEMENTS - 100)), 'many-elements')).toEqual([]);
+  });
+
+  it('counts its layout’s elements with its own, and says how many are whose', () => {
+    const spec = onePage([container({ id: 'body', children: texts('row', 900) })], {
+      layouts: [
+        {
+          id: 'shell',
+          label: 'Shell',
+          body: [container({ id: 'nav', children: texts('link', 700) }), container({ id: 'slot' })]
+        }
+      ],
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          isDefault: true,
+          layout: { id: 'shell', slot: 'slot' },
+          body: [container({ id: 'body', children: texts('row', 900) })]
+        }
+      ]
+    });
+    const found = ofCode(spec, 'many-elements');
+
+    expect(found).toHaveLength(1);
+    expect(found[0].message).toMatch(/\(90\d of its own, 70\d of layout "shell"\)/);
+  });
+
+  it('counts a component once per instance placed', () => {
+    const spec = onePage(
+      Array.from({ length: 80 }, (_, index) => component('card', { id: `card-${String(index)}` })),
+      { components: [{ id: 'card', root: container({ id: 'card-root', children: texts('line', 19) }) }] }
+    );
+
+    expect(ofCode(spec, 'many-elements')).toHaveLength(1);
+  });
+
+  // A tab or a panel that starts hidden and is built when first shown costs the page nothing as it opens.
+  it('leaves out what starts hidden and waits to be shown, and names what starts hidden but is built all the same', () => {
+    const panel = (loadStrategy?: 'lazy') =>
+      onePage([
+        ...texts('row', 400),
+        container({
+          id: 'details',
+          visible: false,
+          ...(loadStrategy ? { loadStrategy } : {}),
+          children: texts('detail', 1_300)
+        })
+      ]);
+
+    expect(ofCode(panel('lazy'), 'many-elements')).toEqual([]);
+    const eager = ofCode(panel(), 'many-elements');
+    expect(eager).toHaveLength(1);
+    expect(eager[0].message).toContain('Built though they start hidden: "details" (1,300)');
+    expect(eager[0].message).toContain("`loadStrategy: 'lazy'` builds each the first time it is shown");
+    expect(eager[0].elementIds).toEqual(['home', 'details']);
+  });
+
+  // Pizarra's workspace: hidden until its board is read, which the server does for the first paint — lazy saves nothing.
+  it('does not name for deferring what a condition shows, which may be on screen at once', () => {
+    const found = ofCode(
+      onePage([
+        container({
+          id: 'workspace',
+          visible: { source: 'state.boardId', template: "{{ source != '' }}" },
+          children: texts('tool', MANY_ELEMENTS + 100)
+        })
+      ]),
+      'many-elements'
+    );
+
+    expect(found).toHaveLength(1);
+    expect(found[0].message).not.toContain('Built though they start hidden');
+    expect(found[0].elementIds).toEqual(['home']);
+  });
+});
+
+describe('heavy-layout, a suggestion', () => {
+  const layoutWith = (cards: number): SpaceSpec => ({
+    name: 'Pricing',
+    permanentUrl: 'pricing',
+    classes: { card: CARD },
+    layouts: [
+      {
+        id: 'shell',
+        label: 'Shell',
+        body: [
+          container({ id: 'aside', children: Array.from({ length: cards }, (_, index) => card(index)) }),
+          container({ id: 'slot' })
+        ]
+      }
+    ],
+    pages: ['home', 'about'].map((id, index) => ({
+      id,
+      name: id,
+      slug: index === 0 ? '' : id,
+      ...(index === 0 ? { isDefault: true } : {}),
+      layout: { id: 'shell', slot: 'slot' },
+      body: [text(id, { id: `${id}-title` })]
+    }))
+  });
+
+  // Its two pages and the not-found page authoring writes (`*`), drawn in the same shell.
+  it('says a layout past the line, and how many pages are downloaded with it', () => {
+    const found = ofCode(layoutWith(80), 'heavy-layout');
+
+    expect(found).toHaveLength(1);
+    expect(found[0].message).toMatch(
+      /^Layout "shell" is \d+ KB of document, past 250 KB: each of its 3 pages is downloaded with it/
+    );
+    expect(found[0].elementIds).toEqual(['shell']);
+  });
+
+  it('says nothing of a light one', () => {
+    expect(ofCode(layoutWith(4), 'heavy-layout')).toEqual([]);
   });
 });

@@ -4,12 +4,13 @@ import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
 import { suggestElementColours } from './elementColors';
 import { suggestHeadingOrder } from './headingOrder';
-import { suggestHeavyPages } from './heavyPages';
+import { suggestHeavyLayouts, suggestHeavyPages, suggestManyElements } from './heavyPages';
 import { suggestMain } from './landmarks';
 import { suggestMotion } from './motion';
 import { suggestPluginHosts, suggestUnusedPlugins } from './pluginHosts';
 import { suggestRepeatedExpressions } from './repeatedExpressions';
 import { suggestRepeats } from './repeats';
+import { suggestResponsive } from './responsive';
 
 import type { Suggestion } from './types';
 import type { Schema, Style } from '@plitzi/sdk-shared';
@@ -74,6 +75,9 @@ export const suggestSpace = (
     ...suggestHeadingOrder(schema),
     ...suggestMain(schema),
     ...suggestHeavyPages(schema, style),
+    ...suggestHeavyLayouts(schema),
+    ...suggestManyElements(schema),
+    ...suggestResponsive(schema, style),
     ...suggestRepeatedExpressions(schema)
   ]).sort((a, b) => b.saves - a.saves);
 
