@@ -92,12 +92,11 @@ export const statePathsOf = (schema: Pick<Schema, 'flat' | 'components'>): Map<s
 export const topKeysOf = (paths: Map<string, StatePathUse>): Map<string, StatePathUse> =>
   new Map([...paths].filter(([path]) => !path.includes('.')));
 
-/** The deepest paths the space names under a key, relative to it: `cart` → `items.0.name`, `total`. */
-export const subPathsOf = (paths: Map<string, StatePathUse>, key: string): string[] =>
+/** The deepest paths the space names under a key, with their uses: `cart` → `cart.items.0.name`, `cart.total`. */
+export const subPathsOf = (paths: Map<string, StatePathUse>, key: string): StatePathUse[] =>
   [...paths.values()]
     .filter(use => use.path.startsWith(`${key}.`) && use.children.length === 0)
-    .map(use => use.path.slice(key.length + 1))
-    .sort();
+    .sort((a, b) => a.path.localeCompare(b.path));
 
 /** An object or a list: a value with keys under it. */
 export const isBranch = (value: unknown): value is Record<string, unknown> | unknown[] =>

@@ -1,9 +1,10 @@
 import clsx from 'clsx';
 import { memo, useCallback, useState } from 'react';
 
-import { isBranch, preview, shapeOf, valueAt } from '../../helpers';
+import { isBranch, preview, shapeOf } from '../../helpers';
 import { STATE_COLUMNS } from '../../layout';
 import Kept from '../Kept';
+import SubPathRow from '../SubPathRow';
 import UseCounts from '../UseCounts';
 import UsedBy from '../UsedBy';
 import ValueEditor from '../ValueEditor';
@@ -16,8 +17,8 @@ export type StateRowProps = {
   use: StatePathUse;
   value: unknown;
   persistence: Persistence;
-  /** The deepest paths the space names under the key, relative to it (`items.0.name`). */
-  subPaths: string[];
+  /** The deepest paths the space names under the key (`cart.items.0.name`), with what reads and writes each. */
+  subPaths: StatePathUse[];
   /** The last change of the key or of anything under it while the panel is open: its row says it moved. */
   lastChange?: StateChange;
   onChange: (key: string, value: unknown) => void;
@@ -68,7 +69,7 @@ const StateRow = ({ use, value, persistence, subPaths, lastChange, onChange, onO
           {subPaths.length > 0 && (
             <span
               className="text-ui-fg-subtle flex shrink-0 items-center gap-0.5 text-[10px]"
-              title={`The space names ${String(subPaths.length)} path${subPaths.length === 1 ? '' : 's'} under it: ${subPaths.join(', ')}`}
+              title={`The space names ${String(subPaths.length)} path${subPaths.length === 1 ? '' : 's'} under it: ${subPaths.map(sub => sub.path).join(', ')}`}
             >
               <i className="fa-solid fa-folder-tree text-[9px]" aria-hidden />
               {subPaths.length}
@@ -93,34 +94,37 @@ const StateRow = ({ use, value, persistence, subPaths, lastChange, onChange, onO
         <UseCounts reads={reads} writes={writes} />
       </div>
       {open && (
-        <div className="flex flex-col gap-1 pb-2 pl-7">
-          {branch && <ValueJson value={value} onChange={handleChange} />}
-          {(branch || subPaths.length > 0) && (
-            <div className="flex flex-col gap-0.5 pt-1">
-              <div className="flex items-center justify-between">
-                <span className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
-                  {subPaths.length > 0 ? 'Under it, as the space names it' : 'Under it'}
-                </span>
-                <button
-                  type="button"
-                  className="text-primary-text cursor-pointer pr-2 text-[11px] hover:underline"
-                  onClick={handleOpenInTree}
-                >
-                  See it in the tree
-                </button>
-              </div>
-              {subPaths.map(sub => (
-                <div key={sub} className="flex items-baseline gap-2 font-mono text-[11px]">
-                  <span className="text-ui-fg-muted shrink-0">
-                    <span className="text-ui-fg-subtle">{key}.</span>
-                    {sub}
-                  </span>
-                  <span className="text-ui-fg-subtle min-w-0 truncate">{preview(valueAt(value, sub.split('.')))}</span>
-                </div>
-              ))}
+        <div className="flex flex-col pb-2">
+          {branch && (
+            <div className="pr-2 pb-1 pl-7">
+              <ValueJson value={value} onChange={handleChange} />
             </div>
           )}
-          <UsedBy reads={reads} writes={writes} />
+          {(branch || subPaths.length > 0) && (
+            <div className="flex items-center justify-between pt-1 pr-2 pl-7">
+              <span className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
+                {subPaths.length > 0 ? 'Under it, as the space names it' : 'Under it'}
+              </span>
+              <button
+                type="button"
+                className="text-primary-text cursor-pointer text-[11px] hover:underline"
+                onClick={handleOpenInTree}
+              >
+                See it in the tree
+              </button>
+            </div>
+          )}
+          {subPaths.map(sub => (
+            <SubPathRow key={sub.path} keyName={key} value={value} use={sub} />
+          ))}
+          <div className="pr-2 pl-7">
+            {subPaths.length > 0 && (
+              <span className="text-ui-fg-subtle block pt-2 text-[10px] font-semibold tracking-wider uppercase">
+                All of {key}
+              </span>
+            )}
+            <UsedBy reads={reads} writes={writes} />
+          </div>
         </div>
       )}
     </div>

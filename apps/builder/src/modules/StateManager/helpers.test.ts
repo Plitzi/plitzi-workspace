@@ -81,7 +81,10 @@ describe('the state keys a space uses', () => {
 
     expect(paths.get('cart')).toMatchObject({ reads: ['name'], writes: ['total'], children: ['items', 'total'] });
     expect(paths.get('cart.items.0')?.children).toEqual(['name']);
-    expect(subPathsOf(paths, 'cart')).toEqual(['items.0.name', 'total']);
+    expect(subPathsOf(paths, 'cart').map(use => [use.path, use.reads, use.writes])).toEqual([
+      ['cart.items.0.name', ['name'], []],
+      ['cart.total', [], ['total']]
+    ]);
   });
 });
 
