@@ -112,8 +112,8 @@ const Flamegraph = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-zinc-200 px-2 py-1 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">Commit #{commit.commitId}</span>
+      <div className="border-ui-line text-ui-fg-subtle flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b px-2 py-1 text-[10px]">
+        <span className="text-ui-fg font-medium">Commit #{commit.commitId}</span>
         {origin !== 'update' && (
           <span className="rounded bg-violet-100 px-1 text-[9px] font-medium text-violet-700 uppercase dark:bg-violet-500/20 dark:text-violet-300">
             {COMMIT_ORIGIN_LABEL[origin]}

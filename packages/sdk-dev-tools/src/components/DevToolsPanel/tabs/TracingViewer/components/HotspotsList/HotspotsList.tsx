@@ -76,8 +76,8 @@ const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: Hots
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2 py-1.5 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">Session hotspots</span>
+      <div className="border-ui-line text-ui-fg-subtle flex shrink-0 items-center gap-2 border-b px-2 py-1.5 text-[10px]">
+        <span className="text-ui-fg font-medium">Session hotspots</span>
         <span>
           · {rows.length} elements · {commits.length} commits
         </span>
@@ -90,7 +90,7 @@ const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: Hots
               aria-pressed={sort === item.id}
               className={clsx('rounded px-1.5 py-0.5 text-[10px] font-medium', {
                 'bg-violet-500 text-white': sort === item.id,
-                'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700': sort !== item.id
+                'text-ui-fg-muted hover:bg-ui-hover': sort !== item.id
               })}
             >
               {item.label}
@@ -108,9 +108,7 @@ const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: Hots
           className="min-h-0 flex-1 overflow-auto outline-none focus-visible:ring-1 focus-visible:ring-violet-400"
         >
           {rows.length === 0 && (
-            <div className="px-2 py-3 text-center text-[10px] text-zinc-400 dark:text-zinc-500">
-              No renders recorded yet
-            </div>
+            <div className="text-ui-fg-subtle px-2 py-3 text-center text-[10px]">No renders recorded yet</div>
           )}
           {rows.map(row => {
             const isSelected = row.id === selectedId;
@@ -127,26 +125,26 @@ const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: Hots
                 title={`${row.name} (${row.type})\n${row.renders} renders (${row.mounts} mount)\ntotal ${formatMs(row.totalSelf)} · avg ${formatMs(row.avgSelf)} · max ${formatMs(row.maxSelf)} · last ${formatMs(row.lastSelf)}`}
                 className={clsx('flex w-full items-center gap-2 px-2 py-0.5 text-left', {
                   'bg-violet-500/10': isSelected,
-                  'hover:bg-zinc-50 dark:hover:bg-zinc-800/50': !isSelected
+                  'hover:bg-ui-hover': !isSelected
                 })}
               >
                 <span className="flex w-40 shrink-0 flex-col">
-                  <span className="truncate text-zinc-700 dark:text-zinc-200">{row.name}</span>
-                  <span className="truncate text-[9px] text-zinc-400 dark:text-zinc-500">{row.type}</span>
+                  <span className="text-ui-fg truncate">{row.name}</span>
+                  <span className="text-ui-fg-subtle truncate text-[9px]">{row.type}</span>
                 </span>
                 <span
-                  className="w-12 shrink-0 text-right text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500"
+                  className="text-ui-fg-subtle w-12 shrink-0 text-right text-[10px] tabular-nums"
                   title="Times this element rendered itself"
                 >
                   {row.renders}×
                 </span>
-                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-800">
+                <div className="bg-ui-raised h-2 flex-1 overflow-hidden rounded-sm">
                   <div
                     style={{ width: `${Math.max(2, Math.round(barValue * 100))}%` }}
                     className={clsx('h-full rounded-sm', durationColor(row.maxSelf))}
                   />
                 </div>
-                <span className="w-14 shrink-0 text-right text-zinc-500 tabular-nums dark:text-zinc-400">
+                <span className="text-ui-fg-subtle w-14 shrink-0 text-right tabular-nums">
                   {sort === 'renders' ? `${row.renders}×` : formatMs(value)}
                 </span>
               </button>

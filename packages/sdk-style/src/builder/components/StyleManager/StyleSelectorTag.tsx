@@ -68,7 +68,7 @@ const StyleSelectorTag = ({
       className={clsx('group relative flex h-7 shrink-0 cursor-pointer items-center gap-2 pr-2 select-none', {
         'pl-7': nested,
         'pl-2': !nested,
-        'hover:bg-gray-100 dark:hover:bg-zinc-800': !active,
+        'hover:bg-ui-hover': !active,
         'bg-primary-50 dark:bg-primary-400/15': active,
         'bg-secondary-50 dark:bg-secondary-900/30': checked && !active
       })}
@@ -84,7 +84,7 @@ const StyleSelectorTag = ({
         <span className="relative flex size-3.5 items-center justify-center">
           <input
             type="checkbox"
-            className="peer checked:border-primary-600 checked:bg-primary-600 size-3.5 cursor-pointer appearance-none rounded-[3px] border border-gray-400 bg-white dark:border-zinc-500 dark:bg-zinc-800"
+            className="peer checked:border-primary-600 checked:bg-primary-600 border-ui-line-strong bg-ui-raised size-3.5 cursor-pointer appearance-none rounded-[3px] border"
             aria-label={`Check ${label}`}
             checked={checked}
             onChange={handleToggleCheck}
@@ -98,7 +98,7 @@ const StyleSelectorTag = ({
           'group-hover:hidden': !selecting && !checked,
           hidden: selecting || checked,
           'text-primary-500 dark:text-primary-300': element,
-          'font-mono font-bold text-zinc-400 dark:text-zinc-500': !element
+          'text-ui-fg-subtle font-mono font-bold': !element
         })}
         aria-hidden
       >
@@ -107,7 +107,7 @@ const StyleSelectorTag = ({
       <span
         className={clsx('min-w-0 grow basis-0 truncate font-mono text-xs', {
           'text-primary-700 dark:text-primary-200 font-semibold': active,
-          'text-zinc-800 dark:text-zinc-100': !active
+          'text-ui-fg': !active
         })}
         title={`${type}: ${label}`}
       >
@@ -117,7 +117,7 @@ const StyleSelectorTag = ({
         <span
           className={clsx('flex shrink-0 items-center gap-1 rounded-sm px-1 text-[11px] leading-4', {
             'bg-amber-500/15 text-amber-700 dark:text-amber-300': unusedAncestorsCount > 0,
-            'bg-gray-100 text-zinc-600 dark:bg-zinc-700/80 dark:text-zinc-100': unusedAncestorsCount === 0
+            'bg-ui-active text-ui-fg': unusedAncestorsCount === 0
           })}
           title={ancestorsTitle}
         >
@@ -133,7 +133,7 @@ const StyleSelectorTag = ({
       <button
         type="button"
         className={clsx(
-          'h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] text-zinc-400 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400',
+          'text-ui-fg-subtle h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400',
           { flex: active, 'hidden group-hover:flex': !active }
         )}
         title={element ? `Delete the ${label} defaults` : `Delete .${label} from the space`}
@@ -144,7 +144,7 @@ const StyleSelectorTag = ({
       </button>
       {elementsCount > 0 && (
         <span
-          className="min-w-5 shrink-0 rounded-sm bg-gray-100 px-1 text-center text-[11px] leading-4 font-medium text-zinc-600 tabular-nums dark:bg-zinc-700/80 dark:text-zinc-100"
+          className="bg-ui-active text-ui-fg min-w-5 shrink-0 rounded-sm px-1 text-center text-[11px] leading-4 font-medium tabular-nums"
           title={`Dresses ${String(elementsCount)} element${elementsCount === 1 ? '' : 's'}`}
         >
           {elementsCount}

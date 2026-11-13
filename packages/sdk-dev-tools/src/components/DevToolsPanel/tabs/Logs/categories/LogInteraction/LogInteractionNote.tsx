@@ -17,8 +17,8 @@ const stringify = (value: unknown) => (typeof value === 'string' ? value : JSON.
 
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex gap-2">
-    <span className="w-24 shrink-0 text-zinc-400 dark:text-zinc-500">{label}</span>
-    <span className="min-w-0 grow break-words text-zinc-700 dark:text-zinc-300">{children}</span>
+    <span className="text-ui-fg-subtle w-24 shrink-0">{label}</span>
+    <span className="text-ui-fg min-w-0 grow break-words">{children}</span>
   </div>
 );
 
@@ -35,14 +35,14 @@ const LogInteractionNote = ({ time, message, params }: LogInteractionNoteProps) 
 
   return (
     <ContainerCollapsable
-      className="last:border-b-none w-full border-b border-l-2 border-b-zinc-200 border-l-amber-500 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50"
+      className="last:border-b-none border-b-ui-line hover:bg-ui-hover w-full border-b border-l-2 border-l-amber-500 px-2 py-1 transition-colors"
       collapsed
     >
       <ContainerCollapsable.Header
         title={
           <div className="flex w-full items-center gap-2 overflow-hidden">
-            <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">{time}</span>
-            <div className="grow basis-0 truncate text-zinc-700 dark:text-zinc-300">{message}</div>
+            <span className="text-ui-fg-subtle shrink-0 font-mono tabular-nums">{time}</span>
+            <div className="text-ui-fg grow basis-0 truncate">{message}</div>
           </div>
         }
         placement="left"
@@ -51,7 +51,7 @@ const LogInteractionNote = ({ time, message, params }: LogInteractionNoteProps) 
         iconExpanded={iconExpanded}
       />
       <ContainerCollapsable.Content>
-        <div className="mx-2 my-1.5 flex flex-col gap-1 rounded border border-zinc-200 px-3 py-2 text-xs dark:border-zinc-800">
+        <div className="border-ui-line mx-2 my-1.5 flex flex-col gap-1 rounded border px-3 py-2 text-xs">
           {node?.title && <Row label="Step">{node.title}</Row>}
           {node?.action && <Row label="Action">{node.action}</Row>}
           {node?.elementId && <Row label="Element">{node.elementId}</Row>}

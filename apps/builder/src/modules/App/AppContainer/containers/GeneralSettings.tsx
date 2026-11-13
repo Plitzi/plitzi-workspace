@@ -348,7 +348,7 @@ const GeneralSettings = () => {
         </Select>
       </ViewSection>
       <ViewSection title="Loading pages">
-        <p className="text-xs text-gray-500 dark:text-zinc-400">
+        <p className="text-ui-fg-subtle text-xs">
           A visitor receives the page they open and its layouts; the others arrive as a link to them is followed. A
           space whose pages read each other's elements while they run needs every page from the start.
         </p>
@@ -439,7 +439,7 @@ const GeneralSettings = () => {
           />
         )}
         {keepState && (
-          <p className="text-xs text-gray-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle text-xs">
             For what the first paint shows — the tool a toolbar shows, a name in an avatar. They are kept in a cookie
             too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
           </p>
@@ -455,7 +455,7 @@ const GeneralSettings = () => {
           />
         )}
         {keepState && (
-          <p className="text-xs text-gray-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle text-xs">
             For a choice made of the browser rather than of the person — the cookie consent. What else was kept is the
             signed-in account's, and goes when somebody else signs in; these stay. Never what belongs to an account.
           </p>

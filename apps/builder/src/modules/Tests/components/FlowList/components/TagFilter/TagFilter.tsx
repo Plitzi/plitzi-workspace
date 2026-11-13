@@ -11,8 +11,7 @@ export type TagFilterProps = {
 
 const CHIP = 'flex shrink-0 cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium';
 const ON = 'border-primary-400 bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-200';
-const OFF =
-  'border-gray-300 text-zinc-600 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800';
+const OFF = 'border-ui-line-strong text-ui-fg-muted hover:bg-ui-hover';
 
 /**
  * The journeys' tags as chips, one row of them however many there are: what does not fit waits behind "+N", which
@@ -79,7 +78,7 @@ const TagFilter = ({ tags, tag, onTag }: TagFilterProps) => {
             onClick={() => onTag(tag === each.tag ? undefined : each.tag)}
           >
             {each.tag}
-            <span className="text-zinc-400 tabular-nums dark:text-zinc-500">{each.count}</span>
+            <span className="text-ui-fg-subtle tabular-nums">{each.count}</span>
           </button>
         ))}
       </div>

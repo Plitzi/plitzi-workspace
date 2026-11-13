@@ -41,7 +41,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
   return (
     <div className={clsx('flex h-full w-full flex-col gap-2 p-2', className)}>
       <div className="flex flex-col items-end gap-2">
-        <p className="self-stretch text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="text-ui-fg-muted self-stretch text-xs leading-relaxed">
           The page's state as the canvas runs it now. Change it and apply it to see the page in that case — nothing of
           the space is saved.
         </p>
@@ -51,7 +51,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
         </Button>
       </div>
       <CodeMirror
-        className="min-h-0 grow overflow-hidden rounded-md border border-gray-300 dark:border-zinc-700"
+        className="border-ui-line-strong min-h-0 grow overflow-hidden rounded-md border"
         value={value}
         theme={resolvedTheme}
         lineWrapping

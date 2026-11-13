@@ -128,7 +128,7 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
     >
       <Flex
         className={clsx('group rounded px-1 py-0.5', {
-          'cursor-grab hover:bg-gray-50 dark:hover:bg-zinc-800/60': !open
+          'hover:bg-ui-hover cursor-grab': !open
         })}
         gap={2}
         items="center"
@@ -138,7 +138,7 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
       >
         <button
           type="button"
-          className="flex w-3 shrink-0 cursor-pointer justify-center text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+          className="text-ui-fg-subtle hover:text-ui-fg flex w-3 shrink-0 cursor-pointer justify-center"
           aria-expanded={unfolded}
           title={unfolded ? 'Hide the preview and where it is used' : 'Show a preview and where it is used'}
           onClick={handleToggle}
@@ -155,7 +155,7 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
           >
             {label}
           </div>
-          <div className="flex items-center gap-1.5 truncate text-xs text-gray-500 dark:text-zinc-400">
+          <div className="text-ui-fg-subtle flex items-center gap-1.5 truncate text-xs">
             {open && (
               <span className="bg-primary-500 rounded-sm px-1 text-[10px] leading-4 font-semibold text-white">
                 Editing

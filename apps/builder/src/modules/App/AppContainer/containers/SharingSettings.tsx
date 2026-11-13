@@ -166,7 +166,7 @@ const SharingSettings = () => {
           value={identity.favicon ?? ''}
           onChange={handleText('favicon')}
         />
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex items-center gap-2 text-xs">
           {showsIcon && <img src={iconShown} alt="" width={16} height={16} className="size-4 shrink-0" />}
           <span>
             {identity.favicon === undefined

@@ -21,7 +21,7 @@ const LogNavigation = ({ time, message, params }: LogNavigationProps) => {
   return (
     <ContainerCollapsable
       className={clsx(
-        'last:border-b-none w-full border-b border-l-2 border-b-zinc-200 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50',
+        'last:border-b-none border-b-ui-line hover:bg-ui-hover w-full border-b border-l-2 px-2 py-1 transition-colors',
         {
           'border-l-emerald-500': params?.status === 'normal',
           'border-l-red-500': params?.status === 'accessDenied',
@@ -37,7 +37,7 @@ const LogNavigation = ({ time, message, params }: LogNavigationProps) => {
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
-        <span className="text-zinc-400 dark:text-zinc-500">0ms</span>
+        <span className="text-ui-fg-subtle">0ms</span>
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content>
         <LogNavigationBody elementId={params?.elementId} startTime={time} endTime={time} duration="0ms" />

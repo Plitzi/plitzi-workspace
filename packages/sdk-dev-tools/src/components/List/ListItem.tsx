@@ -22,7 +22,7 @@ const ListItem = ({ name, label, id, isSelected, className, onSelect }: ListItem
         {
           'border-l-violet-500 bg-violet-50 text-violet-700 dark:border-l-violet-500 dark:bg-violet-500/15 dark:text-violet-300':
             isSelected,
-          'border-l-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:border-l-transparent dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100':
+          'text-ui-fg-muted hover:bg-ui-hover hover:text-ui-fg border-l-transparent dark:border-l-transparent':
             !isSelected
         },
         className

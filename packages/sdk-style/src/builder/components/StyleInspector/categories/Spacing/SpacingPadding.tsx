@@ -20,13 +20,13 @@ const SpacingPadding = ({
 }: SpacingPaddingProps) => (
   <SpacingBox
     property="padding"
-    className="relative grow rounded-md border border-gray-300 bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800/70"
+    className="border-ui-line-strong bg-ui-raised relative grow rounded-md border"
     values={values}
     fragmentSelected={fragmentSelected}
     onSelectFragment={onSelectFragment}
   >
     <div
-      className="flex grow items-center justify-center rounded border border-gray-300 bg-white py-1 text-zinc-500 hover:text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+      className="border-ui-line-strong bg-ui-panel text-ui-fg-subtle hover:text-ui-fg flex grow items-center justify-center rounded border py-1"
       title={isLinked ? 'Sides linked: a change applies to all four' : 'Link the four sides'}
       onClick={onLinkSelected}
     >

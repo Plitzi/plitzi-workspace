@@ -179,7 +179,7 @@ const AppHeader = () => {
     <div
       id="builder-header"
       className={clsx(
-        'flex h-12 items-center justify-between gap-3 border-b border-gray-300 bg-white px-4 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'
+        'border-ui-line-strong bg-ui-panel text-ui-fg flex h-12 items-center justify-between gap-3 border-b px-4'
       )}
     >
       {/*
@@ -190,7 +190,7 @@ const AppHeader = () => {
       <div className="flex h-full min-w-0 shrink [scrollbar-width:none] items-center gap-3 overflow-x-auto overflow-y-hidden">
         <div
           className={clsx(
-            'bg-grayviolet-200 flex h-8 w-20 shrink-0 items-center justify-between rounded-lg pr-2 pl-3 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+            'bg-ui-raised text-ui-fg flex h-8 w-20 shrink-0 items-center justify-between rounded-lg pr-2 pl-3'
           )}
           id="plitzi-logo"
         >
@@ -238,7 +238,7 @@ const AppHeader = () => {
         <RoleBadge />
         <button
           className={clsx(
-            'flex h-7 w-7 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
+            'text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-7 w-7 cursor-pointer items-center justify-center rounded transition-colors'
           )}
           title={
             theme === 'dark' ? 'Switch to light mode' : theme === 'light' ? 'Use system theme' : 'Switch to dark mode'

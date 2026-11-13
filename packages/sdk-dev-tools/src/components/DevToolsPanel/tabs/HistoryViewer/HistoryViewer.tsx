@@ -64,7 +64,7 @@ const HistoryViewer = () => {
 
       <div tabIndex={0} onKeyDown={handleKeyDown} className="flex flex-1 flex-col overflow-y-auto outline-none">
         {ordered.length === 0 && (
-          <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
+          <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-2">
             <i className="fa-solid fa-clock-rotate-left text-3xl opacity-20" />
             <span className="text-xs">{filter ? 'No entries match the filter' : 'No history yet'}</span>
           </div>

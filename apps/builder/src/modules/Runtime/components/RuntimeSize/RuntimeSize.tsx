@@ -79,7 +79,7 @@ const RuntimeSize = ({ environment, size, status, sizes, onChange }: RuntimeSize
         <span className="text-xs text-blue-600 dark:text-blue-400">Restarting at {restartingAt.label}…</span>
       )}
       {!restarting && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           The processing power and memory this runtime may use — each size bought on the space&apos;s billing runs one
           environment. Applying a new size restarts it.
         </span>

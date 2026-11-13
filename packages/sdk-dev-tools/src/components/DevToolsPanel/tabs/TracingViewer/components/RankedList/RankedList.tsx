@@ -65,8 +65,8 @@ const RankedList = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-200 px-2 py-1.5 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">Commit #{commit.commitId}</span>
+      <div className="border-ui-line text-ui-fg-subtle flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b px-2 py-1.5 text-[10px]">
+        <span className="text-ui-fg font-medium">Commit #{commit.commitId}</span>
         {origin !== 'update' && (
           <span className="rounded bg-violet-100 px-1 text-[9px] font-medium text-violet-700 uppercase dark:bg-violet-500/20 dark:text-violet-300">
             {COMMIT_ORIGIN_LABEL[origin]}
@@ -90,7 +90,7 @@ const RankedList = ({
           className="min-h-0 flex-1 overflow-auto outline-none focus-visible:ring-1 focus-visible:ring-violet-400"
         >
           {ranked.length === 0 && (
-            <div className="px-2 py-3 text-center text-[10px] text-zinc-400 dark:text-zinc-500">
+            <div className="text-ui-fg-subtle px-2 py-3 text-center text-[10px]">
               No element re-rendered in this commit
             </div>
           )}
@@ -119,11 +119,11 @@ const RankedList = ({
                 title={`${row.name} (${row.type})\n${formatMs(row.selfDuration)} self · ${formatMs(row.actualDuration)} total · ${formatMs(row.baseDuration)} base\nphase: ${row.phase ?? 'update'} · ${formatPercent(contribution)} of render work${wasted ? '\nno input changed — re-rendered by an ancestor' : internal ? '\nno input changed — internal state/hook/context' : refOnly ? `\nreference-only change (missing memo): ${changedKeys}` : changedKeys ? `\nchanged: ${changedKeys}` : ''}`}
                 className={clsx('flex w-full items-center gap-2 px-2 py-0.5 text-left', {
                   'bg-violet-500/10': isSelected,
-                  'hover:bg-zinc-50 dark:hover:bg-zinc-800/50': !isSelected
+                  'hover:bg-ui-hover': !isSelected
                 })}
               >
                 <span className="flex w-40 shrink-0 flex-col">
-                  <span className="flex items-center gap-1 text-zinc-700 dark:text-zinc-200">
+                  <span className="text-ui-fg flex items-center gap-1">
                     {row.trigger && (
                       <i
                         className="fa-solid fa-bolt shrink-0 text-[9px] text-violet-500"
@@ -148,7 +148,7 @@ const RankedList = ({
                     )}
                     <span className="truncate">{row.name}</span>
                   </span>
-                  <span className="truncate text-[9px] text-zinc-400 dark:text-zinc-500">{subtitle}</span>
+                  <span className="text-ui-fg-subtle truncate text-[9px]">{subtitle}</span>
                 </span>
                 <span
                   className={clsx('rounded px-1 text-[9px] uppercase', {
@@ -158,21 +158,19 @@ const RankedList = ({
                 >
                   {row.phase === 'mount' ? 'mount' : 'update'}
                 </span>
-                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-800">
+                <div className="bg-ui-raised h-2 flex-1 overflow-hidden rounded-sm">
                   <div
                     style={{ width: `${Math.max(2, Math.round((value / max) * 100))}%` }}
                     className={clsx('h-full rounded-sm', durationColor(value))}
                   />
                 </div>
                 <span
-                  className="w-10 shrink-0 text-right text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500"
+                  className="text-ui-fg-subtle w-10 shrink-0 text-right text-[10px] tabular-nums"
                   title="Share of this commit's total render work"
                 >
                   {formatPercent(contribution)}
                 </span>
-                <span className="w-12 shrink-0 text-right text-zinc-500 tabular-nums dark:text-zinc-400">
-                  {formatMs(value)}
-                </span>
+                <span className="text-ui-fg-subtle w-12 shrink-0 text-right tabular-nums">{formatMs(value)}</span>
               </button>
             );
           })}

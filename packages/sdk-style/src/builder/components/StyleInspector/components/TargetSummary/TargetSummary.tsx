@@ -13,12 +13,12 @@ export type TargetSummaryProps = {
  */
 const TargetSummary = ({ selectorName, parts, onReset }: TargetSummaryProps) => (
   <div className="bg-primary-500/10 dark:bg-primary-400/10 flex items-center gap-2 rounded-md px-2 py-1 text-xs">
-    <span className="shrink-0 text-zinc-500 dark:text-zinc-400">Editing</span>
+    <span className="text-ui-fg-subtle shrink-0">Editing</span>
     <span className="text-primary-700 dark:text-primary-300 min-w-0 grow truncate font-medium">
       {[selectorName, ...parts].filter(Boolean).join(' › ')}
     </span>
     <Icon
-      className="shrink-0 cursor-pointer text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+      className="text-ui-fg-subtle hover:text-ui-fg shrink-0 cursor-pointer"
       icon="fa-solid fa-xmark"
       title="Back to the selector's own rules"
       onClick={onReset}

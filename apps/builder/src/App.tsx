@@ -185,7 +185,7 @@ const App = (props: AppProps) => {
   useEffect(() => {
     console.log(
       '%cHello! We are hiring people like you! Reach us at contact@plitzi.com!',
-      'background: linear-gradient(60deg, #01d0e2 0%, #4422ee 100%);\n  color: white;\n  display: block;\n  line-height: 25px;\n  height: 25px;\n  padding: 5px;'
+      'background: linear-gradient(60deg, #01d0e2 0%, #4422ee 100%);\n color: white;\n display: block;\n line-height: 25px;\n height: 25px;\n padding: 5px;'
     );
   }, []);
 

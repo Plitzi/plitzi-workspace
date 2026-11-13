@@ -28,7 +28,7 @@ const UsageOwner = ({ owner, opensComponent }: UsageOwnerProps) => {
   return (
     <button
       type="button"
-      className="flex min-w-0 cursor-pointer items-center gap-1.5 self-start rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-indigo-700 hover:bg-indigo-50 dark:bg-zinc-800 dark:text-indigo-300 dark:hover:bg-zinc-700"
+      className="bg-ui-raised dark:hover:bg-ui-hover flex min-w-0 cursor-pointer items-center gap-1.5 self-start rounded px-1.5 py-0.5 text-[11px] text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300"
       title={opensComponent ? 'Open this component in the canvas' : `Select ${owner.elementId}`}
       onClick={handleReveal}
     >

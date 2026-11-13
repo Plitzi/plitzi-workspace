@@ -4,7 +4,7 @@ import useVersionContents from './useVersionContents';
 
 import type { Environment } from '@plitzi/sdk-shared';
 
-const MUTED = 'text-zinc-500 dark:text-zinc-400';
+const MUTED = 'text-ui-fg-subtle';
 
 export type VersionContentsProps = {
   environment: Environment;
@@ -22,7 +22,7 @@ const VersionContents = ({ environment, revision, title }: VersionContentsProps)
   const { contents, loading, error } = useVersionContents(environment, revision);
 
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
+    <section className="border-ui-line flex flex-col gap-2 rounded-md border p-3">
       <h5 className={`text-[11px] font-bold tracking-wider uppercase ${MUTED}`}>{title}</h5>
       {loading && <p className={`text-xs ${MUTED}`}>Reading what it holds…</p>}
       {error && (
@@ -33,13 +33,13 @@ const VersionContents = ({ environment, revision, title }: VersionContentsProps)
           {contentsRows(contents).map(row => (
             <div key={row.label} className="contents">
               <dt className={MUTED}>{row.label}</dt>
-              <dd className="text-zinc-800 dark:text-zinc-100">{row.value}</dd>
+              <dd className="text-ui-fg">{row.value}</dd>
             </div>
           ))}
           <dt className={MUTED}>Plugins</dt>
           <dd>
             {contents.plugins.length > 0 && <PluginList plugins={contents.plugins} />}
-            {contents.plugins.length === 0 && <span className="text-zinc-800 dark:text-zinc-100">None</span>}
+            {contents.plugins.length === 0 && <span className="text-ui-fg">None</span>}
           </dd>
         </dl>
       )}

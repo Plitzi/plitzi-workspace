@@ -18,7 +18,7 @@ export type LogStoreProps = {
 const LogStore = ({ time, message, params }: LogStoreProps) => {
   return (
     <ContainerCollapsable
-      className="last:border-b-none w-full border-b border-l-2 border-b-zinc-200 border-l-violet-500 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50"
+      className="last:border-b-none border-b-ui-line hover:bg-ui-hover w-full border-b border-l-2 border-l-violet-500 px-2 py-1 transition-colors"
       collapsed
     >
       <ContainerCollapsable.Header

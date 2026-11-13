@@ -60,8 +60,7 @@ const InputEnvironment = () => (
                   className={clsx(
                     'relative flex grow basis-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 p-2',
                     {
-                      'hover:bg-primary-100 hover:border-primary-300 border-gray-300 dark:border-zinc-600':
-                        value !== env.value,
+                      'hover:bg-primary-100 hover:border-primary-300 border-ui-line-strong': value !== env.value,
                       'border-primary-500 bg-primary-300': value === env.value
                     }
                   )}
@@ -81,7 +80,7 @@ const InputEnvironment = () => (
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-1.5 rounded-md bg-gray-100 px-2 py-1.5 text-xs text-gray-500">
+          <div className="bg-ui-raised text-ui-fg-subtle flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs">
             <div className={clsx('w-1 rounded-full p-1', environments[value as Environment].dotColor)}></div>
             {environments[value as Environment].description}
           </div>

@@ -16,16 +16,16 @@ const LogAction = ({ className = '', time, message, params }: LogActionProps) =>
   const failed = Boolean(reason ?? error);
 
   return (
-    <div className={clsx('flex flex-col border-b border-gray-100 px-2 py-1 dark:border-zinc-800', className)}>
+    <div className={clsx('border-ui-line flex flex-col border-b px-2 py-1', className)}>
       <div className="flex items-center gap-2">
-        {time && <span className="text-gray-400">{time}</span>}
+        {time && <span className="text-ui-fg-subtle">{time}</span>}
         <span className="grow">{message ?? actionId}</span>
-        {mode && <span className="rounded-sm bg-gray-100 px-1 text-[10px] uppercase dark:bg-zinc-800">{mode}</span>}
-        <span className={clsx(failed ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-zinc-400')}>
+        {mode && <span className="bg-ui-raised rounded-sm px-1 text-[10px] uppercase">{mode}</span>}
+        <span className={clsx(failed ? 'text-red-600 dark:text-red-400' : 'text-ui-fg-subtle')}>
           {reason ?? status ?? ''}
         </span>
       </div>
-      {runId && <span className="font-mono text-[10px] text-gray-400">run {runId}</span>}
+      {runId && <span className="text-ui-fg-subtle font-mono text-[10px]">run {runId}</span>}
       {error && <span className="break-words text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );

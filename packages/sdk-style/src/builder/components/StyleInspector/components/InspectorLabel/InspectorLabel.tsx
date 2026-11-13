@@ -50,9 +50,8 @@ const InspectorLabel = ({
       <label
         className={clsx('m-0 truncate rounded-sm leading-5 transition-colors duration-150', {
           'px-1': !sectionTitle,
-          'rounded-b-none border border-gray-300 bg-gray-100 px-2 font-semibold text-zinc-700 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-200':
-            sectionTitle,
-          'text-zinc-600 dark:text-zinc-400': !sectionTitle && source === 'none',
+          'border-ui-line-strong bg-ui-active text-ui-fg rounded-b-none border px-2 font-semibold': sectionTitle,
+          'text-ui-fg-muted': !sectionTitle && source === 'none',
           // Where a value comes from is told by a tint, not a block of colour: a panel where half the rows inherit
           // something reads as calm, and the rows set on this selector are the ones that stand out.
           'bg-sky-500/12 text-sky-700 dark:bg-sky-400/12 dark:text-sky-300': source === 'value',

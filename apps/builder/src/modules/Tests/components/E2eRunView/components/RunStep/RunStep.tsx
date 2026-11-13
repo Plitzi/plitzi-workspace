@@ -22,15 +22,15 @@ const RunStep = ({ index, step, shown, onShow }: RunStepProps) => {
         'flex w-full items-start gap-3 rounded-md border px-3 py-2 text-left transition-colors',
         shown
           ? 'border-primary-500 bg-primary-50/60 dark:border-primary-400 dark:bg-primary-400/10'
-          : 'border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:hover:bg-zinc-800/60'
+          : 'border-ui-line-strong hover:bg-ui-hover'
       )}
     >
-      <span className="w-5 shrink-0 font-mono text-xs text-gray-400 dark:text-zinc-500">{index + 1}</span>
+      <span className="text-ui-fg-subtle w-5 shrink-0 font-mono text-xs">{index + 1}</span>
       <span className="flex min-w-0 grow flex-col gap-0.5">
-        <span className="truncate font-mono text-xs text-zinc-900 dark:text-zinc-100">{step.said}</span>
+        <span className="text-ui-fg truncate font-mono text-xs">{step.said}</span>
         {step.read && <span className="text-xs text-red-600 dark:text-red-400">{step.read}</span>}
       </span>
-      {step.notRun && <span className="text-xs text-gray-400 dark:text-zinc-500">not run</span>}
+      {step.notRun && <span className="text-ui-fg-subtle text-xs">not run</span>}
       {!step.notRun && (
         <span
           className={clsx(

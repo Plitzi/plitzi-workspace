@@ -37,11 +37,11 @@ const LogNavigationHeader = ({ status, message, time }: LogNavigationHeaderProps
 
   return (
     <div className="flex w-full items-center gap-2 overflow-hidden">
-      <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">
+      <span className="text-ui-fg-subtle shrink-0 font-mono tabular-nums">
         {typeof time === 'string' ? time : formatDate(time)}
       </span>
       <LogStatus logType={logType}>{statusMessage}</LogStatus>
-      <div className="grow basis-0 truncate text-zinc-700 dark:text-zinc-300">{message}</div>
+      <div className="text-ui-fg grow basis-0 truncate">{message}</div>
     </div>
   );
 };

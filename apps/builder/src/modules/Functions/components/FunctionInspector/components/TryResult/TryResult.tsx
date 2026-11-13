@@ -26,13 +26,13 @@ const TryResult = ({ report, task }: TryResultProps) => {
         >
           {report.status}
         </span>
-        {step && <span className="text-gray-500 dark:text-zinc-400">{String(step.endTime - step.startTime)} ms</span>}
+        {step && <span className="text-ui-fg-subtle">{String(step.endTime - step.startTime)} ms</span>}
       </div>
       {step?.logs && step.logs.length > 0 && (
-        <div className="flex flex-col gap-0.5 rounded-sm border border-gray-200 p-1.5 dark:border-zinc-700">
-          <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Logs</span>
+        <div className="border-ui-line flex flex-col gap-0.5 rounded-sm border p-1.5">
+          <span className="text-ui-fg-subtle text-[11px] font-medium tracking-wide uppercase">Logs</span>
           {step.logs.map((line, index) => (
-            <code key={`${String(index)} ${line}`} className="text-gray-600 dark:text-zinc-300">
+            <code key={`${String(index)} ${line}`} className="text-ui-fg-muted">
               {line}
             </code>
           ))}
@@ -40,7 +40,7 @@ const TryResult = ({ report, task }: TryResultProps) => {
       )}
       {step?.error && <Notice tone="danger">{step.error}</Notice>}
       {!step?.error && (
-        <pre className="max-h-80 overflow-auto rounded-sm bg-gray-100 p-2 font-mono dark:bg-zinc-800">
+        <pre className="bg-ui-raised max-h-80 overflow-auto rounded-sm p-2 font-mono">
           {JSON.stringify(report.output.value ?? null, null, 2)}
         </pre>
       )}

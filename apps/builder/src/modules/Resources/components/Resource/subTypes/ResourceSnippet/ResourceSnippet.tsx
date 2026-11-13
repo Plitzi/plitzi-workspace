@@ -63,7 +63,7 @@ const ResourceSnippet = ({
       onDragStart={onDragStart}
       draggable
       className={clsx(
-        'group relative flex w-full cursor-grabbing flex-col overflow-hidden rounded-md border border-gray-300 select-none [column-span:all] dark:border-zinc-600',
+        'group border-ui-line-strong relative flex w-full cursor-grabbing flex-col overflow-hidden rounded-md border select-none [column-span:all]',
         className
       )}
       onClick={onClick}

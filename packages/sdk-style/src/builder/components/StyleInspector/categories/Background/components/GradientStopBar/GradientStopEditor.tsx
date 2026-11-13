@@ -36,7 +36,7 @@ const GradientStopEditor = ({
       onChange={onColorChange}
     />
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">At</span>
+      <span className="text-ui-fg-subtle text-xs">At</span>
       <MetricInput
         size="xs"
         className="w-24 shrink-0"
@@ -49,7 +49,7 @@ const GradientStopEditor = ({
       <span className="grow" />
       <button
         type="button"
-        className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 hover:bg-gray-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md"
         title="Add a stop"
         aria-label="Add a stop"
         onClick={onAdd}
@@ -58,7 +58,7 @@ const GradientStopEditor = ({
       </button>
       <button
         type="button"
-        className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-red-400"
+        className="text-ui-fg-subtle disabled:hover:text-ui-fg flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:hover:text-red-400"
         title={canRemove ? 'Remove this stop' : 'A gradient needs two stops'}
         aria-label="Remove this stop"
         disabled={!canRemove}

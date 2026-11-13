@@ -51,7 +51,7 @@ const ViewPage = ({
                 size="xs"
                 intent="secondary"
                 border="none"
-                className="-ml-2 self-start text-gray-500 dark:text-zinc-400"
+                className="text-ui-fg-subtle -ml-2 self-start"
                 iconPlacement="before"
                 onClick={onBack}
               >
@@ -61,10 +61,8 @@ const ViewPage = ({
             )}
             <div className="flex items-start justify-between gap-6">
               <div className="flex min-w-0 flex-col gap-1">
-                {title && <h2 className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>}
-                {description && (
-                  <p className="max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-zinc-400">{description}</p>
-                )}
+                {title && <h2 className="text-ui-fg truncate text-lg font-semibold">{title}</h2>}
+                {description && <p className="text-ui-fg-muted max-w-2xl text-sm leading-relaxed">{description}</p>}
               </div>
               {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
             </div>

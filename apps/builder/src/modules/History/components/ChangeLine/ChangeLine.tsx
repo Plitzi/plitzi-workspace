@@ -32,7 +32,7 @@ const ChangeLine = ({ line, onDismiss }: ChangeLineProps) => {
   }, [elementId, flat, onDismiss, revealElement]);
 
   return (
-    <li className="flex text-zinc-700 dark:text-zinc-200">
+    <li className="text-ui-fg flex">
       {reachable && (
         <button
           type="button"

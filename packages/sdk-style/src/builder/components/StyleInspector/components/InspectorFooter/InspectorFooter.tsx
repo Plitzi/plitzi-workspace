@@ -22,10 +22,10 @@ const InspectorFooter = ({
   onChangeReplaceTokens,
   onChangeShowAllOptions
 }: InspectorFooterProps) => (
-  <div className="flex items-center justify-between gap-3 border-t border-gray-200 px-2.5 py-1.5 dark:border-zinc-800">
-    <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400">
+  <div className="border-ui-line flex items-center justify-between gap-3 border-t px-2.5 py-1.5">
+    <div className="text-ui-fg-subtle flex items-center gap-3">
       <Icon
-        className="cursor-pointer text-xs hover:text-zinc-800 dark:hover:text-zinc-100"
+        className="hover:text-ui-fg cursor-pointer text-xs"
         icon="fa-solid fa-angles-up"
         title="Collapse every category"
         onClick={onCollapseAll}

@@ -44,7 +44,7 @@ const StatusMark = ({ index, play, check }: { index: number; play?: StepPlay; ch
     <span
       className={clsx('font-mono text-[11px]', {
         'text-emerald-600 dark:text-emerald-400': check && play === undefined,
-        'text-gray-400 dark:text-zinc-500': !check || play !== undefined
+        'text-ui-fg-subtle': !check || play !== undefined
       })}
     >
       {index + 1}
@@ -89,7 +89,7 @@ const StudioStep = ({
           'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40': play?.state === 'failed',
           'border-amber-400 bg-amber-50 dark:border-amber-700/70 dark:bg-amber-950/30':
             problems.length > 0 && play?.state !== 'failed',
-          'border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:hover:bg-zinc-800/60':
+          'border-ui-line-strong hover:bg-ui-hover':
             play?.state !== 'running' && play?.state !== 'next' && play?.state !== 'failed' && problems.length === 0,
           'opacity-50': play?.state === 'notRun'
         }
@@ -104,10 +104,10 @@ const StudioStep = ({
         <i
           className={clsx(sentence.icon, 'mt-1 w-3.5 shrink-0 text-center text-[11px]', {
             'text-emerald-600 dark:text-emerald-400': sentence.check,
-            'text-zinc-500 dark:text-zinc-400': !sentence.check
+            'text-ui-fg-subtle': !sentence.check
           })}
         />
-        <p className="flex min-w-0 grow flex-wrap items-center gap-1 text-sm leading-5 text-zinc-800 dark:text-zinc-200">
+        <p className="text-ui-fg flex min-w-0 grow flex-wrap items-center gap-1 text-sm leading-5">
           {sentence.parts.map((part, at) =>
             'element' in part ? (
               <span
@@ -118,7 +118,7 @@ const StudioStep = ({
                 {nameOf(part.element)}
               </span>
             ) : 'value' in part ? (
-              <span key={at} className="max-w-full font-medium break-words text-zinc-900 dark:text-zinc-50">
+              <span key={at} className="text-ui-fg max-w-full font-medium break-words">
                 “{part.value}”
               </span>
             ) : 'check' in part ? (
@@ -135,12 +135,10 @@ const StudioStep = ({
           )}
         </p>
         {play?.state === 'passed' && (
-          <span className="shrink-0 pt-0.5 text-[11px] text-gray-400 dark:text-zinc-500">
-            {(play.ms / 1000).toFixed(1)} s
-          </span>
+          <span className="text-ui-fg-subtle shrink-0 pt-0.5 text-[11px]">{(play.ms / 1000).toFixed(1)} s</span>
         )}
         {!locked && (
-          <span className="absolute top-1 right-1 flex gap-0.5 rounded-md border border-gray-300 bg-white p-0.5 opacity-0 shadow-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-800">
+          <span className="border-ui-line-strong bg-ui-raised absolute top-1 right-1 flex gap-0.5 rounded-md border p-0.5 opacity-0 shadow-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
             <button type="button" className={ICON} title="Play up to this step, and hold there" onClick={handlePlayTo}>
               <i className="fa-solid fa-play" />
             </button>
@@ -178,6 +176,6 @@ const StudioStep = ({
 };
 
 const ICON =
-  'flex h-5 w-5 cursor-pointer items-center justify-center rounded text-[11px] text-zinc-500 hover:bg-gray-200 hover:text-zinc-900 disabled:cursor-default disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100';
+  'flex h-5 w-5 cursor-pointer items-center justify-center rounded text-[11px] text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg disabled:cursor-default disabled:opacity-30';
 
 export default StudioStep;

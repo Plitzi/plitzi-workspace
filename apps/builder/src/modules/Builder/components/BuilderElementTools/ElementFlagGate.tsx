@@ -62,7 +62,7 @@ const ElementFlagGate = ({ gate, flagNames: names, isPage = false, onUpdate }: E
           </Select>
         )}
       </div>
-      {gate && <span className="text-xs text-gray-500 dark:text-zinc-400">{effect}</span>}
+      {gate && <span className="text-ui-fg-subtle text-xs">{effect}</span>}
       {undeclared && (
         <span className="text-xs text-red-600 dark:text-red-400">
           The space does not declare this flag, so it reads as off.

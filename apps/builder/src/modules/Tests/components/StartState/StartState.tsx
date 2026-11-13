@@ -43,23 +43,20 @@ const StartState = ({ state = {}, locked, onChange }: StartStateProps) => {
   const handleCancel = useCallback(() => setAdding(false), []);
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
-      aria-label="What it starts with"
-    >
-      <i className="fa-solid fa-flag text-[11px] text-zinc-400" />
+    <div className="text-ui-fg-muted flex flex-wrap items-center gap-2 text-xs" aria-label="What it starts with">
+      <i className="fa-solid fa-flag text-ui-fg-subtle text-[11px]" />
       <span>{entries.length > 0 ? 'Starts with' : 'Starts as a new visitor'}</span>
       {entries.map(([name, each]) => (
         <span
           key={name}
-          className="flex items-center gap-1 rounded border border-gray-300 px-1.5 py-0.5 font-mono dark:border-zinc-700"
+          className="border-ui-line-strong flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono"
         >
           {name} = {valueText(each)}
           {!locked && (
             <button
               type="button"
               aria-label={`Start without ${name}`}
-              className="text-zinc-400 hover:text-red-600"
+              className="text-ui-fg-subtle hover:text-red-600"
               onClick={handleRemove(name)}
             >
               <i className="fa-solid fa-xmark" />

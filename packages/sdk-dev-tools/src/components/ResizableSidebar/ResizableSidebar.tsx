@@ -28,7 +28,7 @@ const ResizableSidebar = ({ storageKey, minWidth, maxWidth, defaultWidth, childr
 
   return (
     <ContainerResizable
-      className="shrink-0 border-l border-zinc-200 dark:border-zinc-800"
+      className="border-ui-line shrink-0 border-l"
       resizeHandles={['w']}
       axis="x"
       autoGrow={false}
@@ -37,7 +37,7 @@ const ResizableSidebar = ({ storageKey, minWidth, maxWidth, defaultWidth, childr
       maxConstraintsX={maxWidth}
       onChange={handleResize}
     >
-      <aside className="flex h-full w-full flex-col gap-1.5 overflow-auto bg-zinc-50 px-3 py-2 text-[10px] dark:bg-zinc-900/50">
+      <aside className="bg-ui-panel flex h-full w-full flex-col gap-1.5 overflow-auto px-3 py-2 text-[10px]">
         {children}
       </aside>
     </ContainerResizable>

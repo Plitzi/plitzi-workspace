@@ -85,7 +85,7 @@ const TransitionEasing = ({ value, onChange }: TransitionEasingProps) => {
         </div>
         <button
           type="button"
-          className="aria-pressed:border-primary-500 aria-pressed:text-primary-600 dark:aria-pressed:text-primary-300 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-zinc-500 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="aria-pressed:border-primary-500 aria-pressed:text-primary-600 dark:aria-pressed:text-primary-300 border-ui-line text-ui-fg-subtle hover:text-ui-fg flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border"
           aria-pressed={curveOpen}
           title={curveOpen ? 'Hide the curve' : 'Edit the curve'}
           aria-label={curveOpen ? 'Hide the curve' : 'Edit the curve'}
@@ -95,12 +95,12 @@ const TransitionEasing = ({ value, onChange }: TransitionEasingProps) => {
         </button>
       </div>
       {curveOpen && !curve && (
-        <p className="m-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <p className="text-ui-fg-subtle m-0 text-[11px]">
           {value} is not a curve, so there is nothing to drag. Pick a preset to start from one.
         </p>
       )}
       {curveOpen && curve && (
-        <div className="flex flex-col items-center gap-2 rounded-md border border-gray-200 p-2 dark:border-zinc-700">
+        <div className="border-ui-line flex flex-col items-center gap-2 rounded-md border p-2">
           <InputEasing
             value={curve}
             progress={progress}
@@ -111,7 +111,7 @@ const TransitionEasing = ({ value, onChange }: TransitionEasingProps) => {
           />
           <button
             type="button"
-            className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+            className="text-ui-fg-muted hover:text-ui-fg flex cursor-pointer items-center gap-1.5 text-xs"
             onClick={handleTogglePlay}
           >
             <i className={playing ? 'fa-solid fa-pause' : 'fa-solid fa-play'} />

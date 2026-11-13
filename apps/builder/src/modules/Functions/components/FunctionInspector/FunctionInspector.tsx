@@ -49,23 +49,21 @@ const FunctionInspector = ({
   const handleSize = useCallback((picked: FunctionSize) => onSizeChange(task, picked), [onSizeChange, task]);
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col overflow-auto border-l border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <header className="flex flex-col gap-1 border-b border-gray-200 px-4 py-4 dark:border-zinc-800">
+    <aside className="border-ui-line bg-ui-backdrop flex w-80 shrink-0 flex-col overflow-auto border-l">
+      <header className="border-ui-line flex flex-col gap-1 border-b px-4 py-4">
         <div className="flex items-center gap-2">
           <span className="bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-200 flex size-6 shrink-0 items-center justify-center rounded-md">
             <i className="fa-solid fa-bolt text-[11px]" />
           </span>
-          <span className="truncate text-sm font-semibold text-gray-900 dark:text-zinc-50">{task.title || name}</span>
+          <span className="text-ui-fg truncate text-sm font-semibold">{task.title || name}</span>
           {!task.saved && (
             <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
               Not saved
             </span>
           )}
         </div>
-        <code className="text-xs text-gray-500 dark:text-zinc-400">{name}</code>
-        {task.description && (
-          <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-zinc-300">{task.description}</p>
-        )}
+        <code className="text-ui-fg-subtle text-xs">{name}</code>
+        {task.description && <p className="text-ui-fg-muted mt-1 text-xs leading-relaxed">{task.description}</p>}
       </header>
       <InspectorSection title="Time limit">
         <TimeLimit ms={cpu.ms} asked={cpu.asked} disabledReason={limitsDisabledReason} onChange={handleLimit} />
@@ -83,15 +81,10 @@ const FunctionInspector = ({
         <TaskTest key={name} task={task} needsSave={modified || !task.saved} onRun={onRun} />
       </InspectorSection>
       <InspectorSection title="Hosts it may reach" hint="Every task’s ctx.fetch: anything else is refused.">
-        {hosts.length === 0 && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">None — no fetch leaves.</span>
-        )}
+        {hosts.length === 0 && <span className="text-ui-fg-subtle text-xs">None — no fetch leaves.</span>}
         <div className="flex flex-wrap gap-1">
           {hosts.map(host => (
-            <code
-              key={host}
-              className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-700 dark:bg-zinc-800 dark:text-zinc-300"
-            >
+            <code key={host} className="bg-ui-raised text-ui-fg rounded-sm px-1.5 py-0.5 text-[11px]">
               {host}
             </code>
           ))}

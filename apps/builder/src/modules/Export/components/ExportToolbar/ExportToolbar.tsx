@@ -18,7 +18,7 @@ export type ExportToolbarProps = {
 /** The format on the left, what can be done with the result on the right — one row, one place for every action. */
 const ExportToolbar = ({ format, fileName, canCopy, onChangeFormat, onCopy, onDownload }: ExportToolbarProps) => (
   <div className="flex flex-wrap items-center justify-between gap-3">
-    <div role="tablist" className="flex items-center gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+    <div role="tablist" className="bg-ui-raised flex items-center gap-1 rounded-lg p-1">
       {EXPORT_FORMATS.map(option => (
         <ExportFormatButton
           key={option.value}

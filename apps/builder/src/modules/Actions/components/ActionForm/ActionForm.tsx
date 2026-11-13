@@ -306,7 +306,7 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
       }
     >
       <ViewSection title="Flow">
-        <div className="flex min-h-72 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-800">
+        <div className="border-ui-line flex min-h-72 flex-col overflow-hidden rounded-lg border">
           <Workflow
             nodes={document.nodes}
             nodeDefinitions={nodeDefinitions}
@@ -317,7 +317,7 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
             onChange={handleChangeNodes}
           />
         </div>
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           End with an <b>Output</b> step naming what the caller gets back: that step is the contract, and only the last
           one that runs is answered.
         </span>

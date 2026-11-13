@@ -193,13 +193,13 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
     <section
       aria-label="The journey chosen"
       className={clsx(
-        'flex shrink-0 flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-zinc-700',
+        'border-ui-line-strong flex shrink-0 flex-col overflow-hidden rounded-lg border',
         // As tall as what it holds, up to a share of the room — the page above keeps the rest; the log of every flow a
         // fixed height, as it grows while it is read.
         view === 'run' ? 'h-[42%] min-h-64' : 'max-h-[46%] min-h-44'
       )}
     >
-      <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-gray-300 px-3 py-2 dark:border-zinc-700">
+      <header className="border-ui-line-strong flex min-h-12 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2">
         {view === 'steps' && flow ? (
           <>
             <div className="min-w-56 grow basis-0">
@@ -213,7 +213,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                 onChange={handleTitle}
               />
             </div>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{steps.length} steps · starts on</span>
+            <span className="text-ui-fg-subtle text-xs">{steps.length} steps · starts on</span>
             <span
               className={clsx('flex items-center gap-1.5 rounded-md', {
                 'ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900': placed?.page.length
@@ -277,12 +277,10 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
           </>
         ) : (
           <>
-            <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <span className="text-ui-fg truncate text-sm font-semibold">
               {view === 'run' ? 'Every journey, in turn' : 'No journey chosen'}
             </span>
-            {view === 'run' && (
-              <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">— each as a new visitor</span>
-            )}
+            {view === 'run' && <span className="text-ui-fg-subtle truncate text-xs">— each as a new visitor</span>}
           </>
         )}
         <span
@@ -290,7 +288,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             'text-red-600 dark:text-red-400': status.tone === 'record',
             'text-emerald-600 dark:text-emerald-400': status.tone === 'check',
             'text-primary-700 dark:text-primary-200': status.tone === 'play',
-            'text-zinc-500 dark:text-zinc-400': status.tone === 'idle'
+            'text-ui-fg-subtle': status.tone === 'idle'
           })}
         >
           {(mode !== 'idle' || checking) && <span className="size-1.5 animate-pulse rounded-full bg-current" />}
@@ -309,7 +307,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
         )}
       </header>
       {view === 'steps' && flow && (
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-300 px-3 py-2 dark:border-zinc-700">
+        <div className="border-ui-line-strong flex shrink-0 flex-wrap items-center gap-1.5 border-b px-3 py-2">
           {mode === 'playing' ? (
             <>
               {paused ? (
@@ -360,14 +358,14 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             </>
           )}
           <label
-            className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+            className="text-ui-fg-muted flex items-center gap-1.5 text-xs"
             title={
               playingAll
                 ? 'Playing them all waits for no step: the pause is for watching one journey.'
                 : 'How long a play waits between two steps, so each can be seen working on the page. 0 plays them at once.'
             }
           >
-            <i className="fa-solid fa-stopwatch text-zinc-400" />
+            <i className="fa-solid fa-stopwatch text-ui-fg-subtle" />
             Pause
             <span className="w-18">
               <Input
@@ -384,7 +382,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             </span>
             s
           </label>
-          <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-zinc-700" />
+          <span className="bg-ui-active mx-1 h-5 w-px" />
           <Button
             iconPlacement="before"
             size="xs"
@@ -435,16 +433,16 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
       {view === 'run' ? (
         <div className="flex min-h-0 grow">
           {!playingAll && outcome && (
-            <div className="flex w-[40%] shrink-0 flex-col justify-center gap-2 border-r border-gray-300 px-6 dark:border-zinc-700">
+            <div className="border-ui-line-strong flex w-[40%] shrink-0 flex-col justify-center gap-2 border-r px-6">
               <span
                 className={clsx('text-4xl leading-tight font-semibold tracking-tight', {
-                  'text-zinc-900 dark:text-zinc-50': outcome.ok,
+                  'text-ui-fg': outcome.ok,
                   'text-red-600 dark:text-red-400': !outcome.ok
                 })}
               >
                 {outcome.said}
               </span>
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="text-ui-fg-subtle text-sm">
                 {log.length} steps in {((playedMs ?? 0) / 1000).toFixed(1)} s, on the draft, each journey as a new
                 visitor.
               </span>
@@ -454,7 +452,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             ref={logRef}
             className="flex grow flex-col gap-0.5 overflow-y-auto px-4 py-2 font-mono text-[11px] leading-4"
           >
-            {log.length === 0 && <li className="text-zinc-400">Waiting for the first step…</li>}
+            {log.length === 0 && <li className="text-ui-fg-subtle">Waiting for the first step…</li>}
             {log.map((line, at) => (
               <li key={at} className="flex flex-col">
                 {line.flow !== log[at - 1]?.flow && (
@@ -463,15 +461,13 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
                   </span>
                 )}
                 <span className="flex gap-2">
-                  <span className="w-10 shrink-0 text-right text-zinc-400">{(line.at / 1000).toFixed(1)}</span>
+                  <span className="text-ui-fg-subtle w-10 shrink-0 text-right">{(line.at / 1000).toFixed(1)}</span>
                   <span
                     className={line.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
                   >
                     {line.ok ? '✓' : '✗'}
                   </span>
-                  <span className={line.ok ? 'text-zinc-700 dark:text-zinc-300' : 'text-red-700 dark:text-red-300'}>
-                    {line.text}
-                  </span>
+                  <span className={line.ok ? 'text-ui-fg' : 'text-red-700 dark:text-red-300'}>{line.text}</span>
                 </span>
               </li>
             ))}
@@ -543,9 +539,9 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
             )}
             <StartState state={flow.given?.state} locked={locked} onChange={handleGiven} />
             {steps.length === 0 ? (
-              <div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-gray-300 px-4 py-6 text-center dark:border-zinc-700">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">No steps yet</span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="border-ui-line-strong flex flex-col items-center gap-1 rounded-md border border-dashed px-4 py-6 text-center">
+                <span className="text-ui-fg text-sm font-medium">No steps yet</span>
+                <span className="text-ui-fg-subtle text-xs">
                   Press <b>Record</b> and use the page as a visitor would, then <b>Add a check</b> and click what must
                   show.
                 </span>
@@ -570,7 +566,7 @@ const FlowPanel = ({ problems, view, onView, onSaved }: FlowPanelProps) => {
           </div>
         </div>
       ) : (
-        <div className="flex grow items-center justify-center px-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex grow items-center justify-center px-6 text-center text-sm">
           Choose a journey to see it played on the page — or start a new one and write it by using the page.
         </div>
       )}

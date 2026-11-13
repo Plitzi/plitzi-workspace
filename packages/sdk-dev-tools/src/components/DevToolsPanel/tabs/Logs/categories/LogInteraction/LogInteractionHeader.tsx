@@ -13,7 +13,7 @@ export type LogInteractionHeaderProps = {
 const LogInteractionHeader = ({ status, message, time }: LogInteractionHeaderProps) => {
   return (
     <div className="flex w-full items-center gap-2 overflow-hidden">
-      <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">{time}</span>
+      <span className="text-ui-fg-subtle shrink-0 font-mono tabular-nums">{time}</span>
       {status === 'completed' && <LogStatus logType="success">Completed</LogStatus>}
       {status === 'failed' && <LogStatus logType="danger">Failed</LogStatus>}
       {status === 'skipped' && (
@@ -21,7 +21,7 @@ const LogInteractionHeader = ({ status, message, time }: LogInteractionHeaderPro
           Skipped
         </LogStatus>
       )}
-      <div className="grow basis-0 truncate text-zinc-700 dark:text-zinc-300">{message}</div>
+      <div className="text-ui-fg grow basis-0 truncate">{message}</div>
     </div>
   );
 };

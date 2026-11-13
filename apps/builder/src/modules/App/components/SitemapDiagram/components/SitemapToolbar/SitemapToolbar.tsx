@@ -53,7 +53,7 @@ const SitemapToolbar = ({
 
   return (
     <div
-      className="absolute top-3 left-3 z-20 flex items-center gap-2 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95"
+      className="border-ui-line dark:bg-ui-panel/95 absolute top-3 left-3 z-20 flex items-center gap-2 rounded-xl border bg-white/95 p-1.5 shadow-sm backdrop-blur"
       onPointerDown={keepPress}
     >
       {onClose && (
@@ -74,8 +74,8 @@ const SitemapToolbar = ({
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </div>
-      {query && <span className="min-w-14 text-xs text-gray-500 tabular-nums dark:text-zinc-400">{matches}</span>}
-      <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-zinc-700" />
+      {query && <span className="text-ui-fg-subtle min-w-14 text-xs tabular-nums">{matches}</span>}
+      <span className="bg-ui-active mx-1 h-5 w-px" />
       <Button size="sm" onClick={onAddPage} iconPlacement="before">
         <Button.Icon icon="fa-solid fa-plus" />
         Page
@@ -84,7 +84,7 @@ const SitemapToolbar = ({
         <Button.Icon icon="fa-solid fa-folder-plus" />
         Folder
       </Button>
-      <span className="hidden px-1 text-xs text-gray-500 xl:inline dark:text-zinc-400">
+      <span className="text-ui-fg-subtle hidden px-1 text-xs xl:inline">
         {pages} · {folders}
       </span>
     </div>

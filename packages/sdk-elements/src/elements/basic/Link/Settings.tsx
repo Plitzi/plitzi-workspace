@@ -133,7 +133,7 @@ const Settings = ({
               </option>
             ))}
           </Select>
-          <div className="truncate rounded-b border-r border-b border-l border-gray-200 p-1 text-xs">{fullpath}</div>
+          <div className="border-ui-line truncate rounded-b border-r border-b border-l p-1 text-xs">{fullpath}</div>
         </div>
       )}
       {mode !== 'external' && (

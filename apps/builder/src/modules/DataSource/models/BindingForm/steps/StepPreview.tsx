@@ -34,33 +34,24 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
       <Heading as="h5" className="mb-4">
         Preview
       </Heading>
-      <div className="flex w-full flex-col truncate rounded-sm border border-gray-300 dark:border-zinc-600">
+      <div className="border-ui-line-strong flex w-full flex-col truncate rounded-sm border">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
           <div className="ml-1 truncate capitalize">{path ? `${sourceName} [${name}]` : 'None'}</div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={fullSource}
-        >
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={fullSource}>
           <div className="font-bold">Path:</div>
           <div className="ml-1 truncate">{fullSource}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={to}>
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={to}>
           <div className="font-bold">To:</div>
           <div className="ml-1 truncate capitalize">{`${category} ${to}`}</div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={transformerName}
-        >
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>
           <div className="ml-1 truncate">{transformerName}</div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={whenStr}
-        >
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={whenStr}>
           <div className="font-bold">When:</div>
           <div className="ml-1 truncate">{whenStr}</div>
         </div>

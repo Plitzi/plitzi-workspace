@@ -35,7 +35,7 @@ const BuilderContextMenuItem = ({
       className={clsx(
         'group mx-1 flex h-8 cursor-pointer items-center justify-between gap-6 rounded-md px-2.5 text-[13px] transition-colors duration-100 select-none',
         {
-          'hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-400/15 dark:hover:text-primary-200 text-zinc-800 dark:text-zinc-200':
+          'hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-400/15 dark:hover:text-primary-200 text-ui-fg':
             intent === 'default',
           'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15': intent === 'danger'
         },
@@ -49,7 +49,7 @@ const BuilderContextMenuItem = ({
         {children && (
           <span
             className={clsx('flex w-4 justify-center text-xs', {
-              'text-zinc-400 group-hover:text-current dark:text-zinc-500': intent === 'default'
+              'text-ui-fg-subtle group-hover:text-current': intent === 'default'
             })}
           >
             {children}
@@ -57,7 +57,7 @@ const BuilderContextMenuItem = ({
         )}
         <span className="truncate">{title}</span>
       </div>
-      {shortcut && <kbd className="font-sans text-[11px] text-zinc-400 dark:text-zinc-500">{shortcut}</kbd>}
+      {shortcut && <kbd className="text-ui-fg-subtle font-sans text-[11px]">{shortcut}</kbd>}
     </div>
   );
 };

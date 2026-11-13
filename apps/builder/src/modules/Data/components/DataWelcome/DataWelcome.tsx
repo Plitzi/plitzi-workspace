@@ -28,25 +28,22 @@ const DataWelcome = ({ onStart }: DataWelcomeProps) => (
         <i className="fa-solid fa-database" />
       </span>
       <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-50">The space’s own data</h3>
-        <p className="text-sm text-gray-600 dark:text-zinc-300">
+        <h3 className="text-ui-fg text-lg font-semibold">The space’s own data</h3>
+        <p className="text-ui-fg-muted text-sm">
           A catalog, prices, a menu: JSON the pages read whole, kept with the space instead of in a service of its own.
         </p>
       </div>
       <div className="grid w-full grid-cols-1 gap-2 text-left sm:grid-cols-3">
         {POINTS.map(point => (
-          <div
-            key={point.title}
-            className="flex flex-col gap-1.5 rounded-lg border border-gray-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-          >
-            <i className={`fa-solid ${point.icon} text-xs text-gray-500 dark:text-zinc-400`} />
-            <span className="text-xs font-semibold text-gray-900 dark:text-zinc-100">{point.title}</span>
-            <span className="text-xs leading-relaxed text-gray-600 dark:text-zinc-400">{point.text}</span>
+          <div key={point.title} className="border-ui-line bg-ui-panel flex flex-col gap-1.5 rounded-lg border p-3">
+            <i className={`fa-solid ${point.icon} text-ui-fg-subtle text-xs`} />
+            <span className="text-ui-fg text-xs font-semibold">{point.title}</span>
+            <span className="text-ui-fg-muted text-xs leading-relaxed">{point.text}</span>
           </div>
         ))}
       </div>
       <Button onClick={onStart}>Start with an example</Button>
-      <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-[11px]">
         Or work in your own editor: a project&apos;s <code>src/data/</code> goes up with <code>plitzi space push</code>.
       </span>
     </div>

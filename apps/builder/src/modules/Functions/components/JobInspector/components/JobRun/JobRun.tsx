@@ -23,13 +23,13 @@ const STATUS_LABEL: Record<JobStatus, string> = {
 };
 
 const STATUS_TONE: Record<JobStatus, string> = {
-  pending: 'bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-300',
+  pending: 'bg-ui-raised text-ui-fg',
   running: 'bg-primary-100 text-primary-800 dark:bg-primary-500/20 dark:text-primary-200',
   paused: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
   succeeded: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
   failed: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
   dead: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-  cancelled: 'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400'
+  cancelled: 'bg-ui-raised text-ui-fg-subtle'
 };
 
 const CONTROL_LABEL: Record<JobControlAction, string> = {
@@ -105,19 +105,19 @@ const JobRun = ({ job, onControl }: JobRunProps) => {
   );
 
   return (
-    <li className="flex flex-col gap-1.5 rounded-md border border-gray-200 px-3 py-2 text-xs dark:border-zinc-800">
+    <li className="border-ui-line flex flex-col gap-1.5 rounded-md border px-3 py-2 text-xs">
       <div className="flex items-center justify-between gap-2">
         <span className={clsx('shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium', STATUS_TONE[job.status])}>
           {setAsideAfterFailing(job) ? 'Needs a look' : STATUS_LABEL[job.status]}
         </span>
-        <code className="truncate text-[11px] text-gray-400 dark:text-zinc-500" title={job.id}>
+        <code className="text-ui-fg-subtle truncate text-[11px]" title={job.id}>
           {job.id}
         </code>
       </div>
       {percent !== undefined && (
         <div className="flex flex-col gap-1">
           <div
-            className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-zinc-800"
+            className="bg-ui-raised h-1.5 overflow-hidden rounded-full"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
@@ -126,12 +126,10 @@ const JobRun = ({ job, onControl }: JobRunProps) => {
           >
             <div className="bg-primary-500 h-full rounded-full" style={{ width: `${String(percent)}%` }} />
           </div>
-          <span className="text-gray-600 dark:text-zinc-300">
-            {`${String(percent)}%${job.step ? ` · ${job.step}` : ''}`}
-          </span>
+          <span className="text-ui-fg-muted">{`${String(percent)}%${job.step ? ` · ${job.step}` : ''}`}</span>
         </div>
       )}
-      <span className="text-gray-500 dark:text-zinc-400">{meta.join(' · ')}</span>
+      <span className="text-ui-fg-subtle">{meta.join(' · ')}</span>
       {job.error && <span className="wrap-break-word text-red-600 dark:text-red-400">{job.error}</span>}
       {asked && <span className="text-amber-700 dark:text-amber-400">{asked}</span>}
       {controls.length > 0 && (

@@ -58,7 +58,7 @@ const History = ({ onDismiss }: HistoryProps) => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-col gap-2 border-b border-zinc-200 p-2 dark:border-zinc-700">
+      <div className="border-ui-line flex flex-col gap-2 border-b p-2">
         <div className="flex items-end gap-2">
           <Select value={origin} label="Made by" onChange={handleOrigin} size="xs" className="grow">
             {ORIGIN_FILTERS.map(candidate => (
@@ -100,7 +100,7 @@ const History = ({ onDismiss }: HistoryProps) => {
         <p className={clsx('p-3 text-xs', MUTED)}>Nothing recorded yet. Every change saved from now on appears here.</p>
       )}
       {!error && !loading && !complete && (
-        <div className="border-t border-zinc-200 p-2 dark:border-zinc-700">
+        <div className="border-ui-line border-t p-2">
           <Button size="xs" className="w-full" onClick={loadMore}>
             Older changes
           </Button>

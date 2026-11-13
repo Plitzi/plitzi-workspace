@@ -102,16 +102,16 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
   const fields = Object.entries(input);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+    <div className="border-ui-line flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Test run</span>
         <Button size="xs" disabled={disabled || isRunning || !selected} onClick={handleRun}>
           {isRunning ? 'Running…' : 'Run'}
         </Button>
       </div>
-      {disabled && disabledReason && <span className="text-xs text-gray-500">{disabledReason}</span>}
+      {disabled && disabledReason && <span className="text-ui-fg-subtle text-xs">{disabledReason}</span>}
       {triggers.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           This action has no way in yet. Add a trigger step to the flow — that is what decides who may start it and what
           they may send.
         </span>
@@ -129,7 +129,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
         <div className="flex flex-col gap-1">
           <Label size="xs">Delivery body (JSON)</Label>
           <TextArea className="w-full font-mono" size="xs" value={body} placeholder="{ }" onChange={setBody} />
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-xs">
             The signature is not checked here — there is no sender to sign with. Whether it WOULD verify is what the
             check above answers.
           </span>
@@ -187,11 +187,11 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
               return (
                 <div
                   key={`${String(node?.action)}-${index}`}
-                  className="flex flex-col rounded-md border border-gray-200 px-3 py-2 text-xs dark:border-zinc-800"
+                  className="border-ui-line flex flex-col rounded-md border px-3 py-2 text-xs"
                 >
                   <div className="flex items-center justify-between">
                     <span>{node?.title ?? node?.action ?? 'step'}</span>
-                    <span className="text-gray-500">{String(step.status)}</span>
+                    <span className="text-ui-fg-subtle">{String(step.status)}</span>
                   </div>
                   {failure && <span className="mt-1 wrap-break-word text-red-600 dark:text-red-400">{failure}</span>}
                 </div>

@@ -83,7 +83,7 @@ const ShadowItem = ({ value, withSpread, onChange, onRemove }: ShadowItemProps) 
       {!shadow && (
         <>
           <CategoryOption label="Value" type="input" value={value} onChange={handleChangeRaw} />
-          <p className="m-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle m-0 text-[11px]">
             Not a single shadow the editor can split into parts (a token, for one), so it is edited as written.
           </p>
         </>

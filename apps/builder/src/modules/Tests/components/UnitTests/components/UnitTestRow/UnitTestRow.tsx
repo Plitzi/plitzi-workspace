@@ -25,13 +25,13 @@ const UnitTestRow = ({ test, result, problems = [], readOnly = false, onEdit, on
   const handleRemove = useCallback(() => onRemove(test.id), [onRemove, test.id]);
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border border-gray-300 px-3 py-2 dark:border-zinc-700">
+    <div className="border-ui-line-strong flex items-start justify-between gap-3 rounded-md border px-3 py-2">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="flex min-w-0 items-center gap-1.5 truncate text-sm text-zinc-900 dark:text-zinc-100">
+        <span className="text-ui-fg flex min-w-0 items-center gap-1.5 truncate text-sm">
           <NeedsLook problems={problems} />
           {test.title || test.id}
         </span>
-        <span className="font-mono text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle font-mono text-xs">
           {test.element} · {test.expect.length} expectation{test.expect.length === 1 ? '' : 's'}
         </span>
         {problems.length > 0 && (

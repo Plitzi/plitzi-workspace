@@ -32,12 +32,12 @@ const QaInspectorDetails = ({ element }: QaInspectorDetailsProps) => {
         <span className="min-w-0 truncate font-mono font-semibold text-violet-700 dark:text-violet-300">
           {summary.name}
         </span>
-        <span className="shrink-0 font-mono text-zinc-400">
+        <span className="text-ui-fg-subtle shrink-0 font-mono">
           {summary.width} × {summary.height}
         </span>
         <button
           type="button"
-          className="ml-auto shrink-0 rounded px-1.5 py-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="hover:bg-ui-hover ml-auto shrink-0 rounded px-1.5 py-0.5"
           title="Scroll the page to it"
           onClick={handleScroll}
         >
@@ -45,14 +45,14 @@ const QaInspectorDetails = ({ element }: QaInspectorDetailsProps) => {
         </button>
         <button
           type="button"
-          className="shrink-0 rounded px-1.5 py-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="hover:bg-ui-hover shrink-0 rounded px-1.5 py-0.5"
           title="Let it go"
           onClick={handleUnpin}
         >
           <i className="fa-solid fa-xmark" />
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-x-4 rounded border border-zinc-200 px-2.5 py-1.5 @lg:grid-cols-2 dark:border-zinc-700">
+      <div className="border-ui-line grid grid-cols-1 gap-x-4 rounded border px-2.5 py-1.5 @lg:grid-cols-2">
         <QaProperty name="display">
           {summary.display} · {summary.position}
         </QaProperty>
@@ -79,17 +79,17 @@ const QaInspectorDetails = ({ element }: QaInspectorDetailsProps) => {
       {summary.classes.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {summary.classes.map(name => (
-            <span key={name} className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] dark:bg-zinc-800">
+            <span key={name} className="bg-ui-raised rounded px-1.5 py-0.5 font-mono text-[11px]">
               .{name}
             </span>
           ))}
         </div>
       )}
       <div className="flex flex-col">
-        <span className="mb-1 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+        <span className="text-ui-fg-subtle mb-1 text-[10px] font-semibold tracking-wider uppercase">
           CSS that reaches it · {rules.length}
         </span>
-        <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
+        <div className="border-ui-line overflow-hidden rounded border">
           {rules.map((rule, index) => (
             <QaRuleItem key={`${rule.selector}-${String(index)}`} rule={rule} />
           ))}

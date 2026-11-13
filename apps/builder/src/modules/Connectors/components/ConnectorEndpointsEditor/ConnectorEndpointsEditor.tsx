@@ -108,7 +108,7 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">Read</span>
+        <span className="text-ui-fg-subtle text-xs font-medium">Read</span>
         <Button size="xs" intent="secondary" onClick={handleAddRead}>
           <Button.Icon icon="fa-solid fa-plus" />
           Read endpoint
@@ -130,14 +130,14 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
       ))}
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">Write</span>
+        <span className="text-ui-fg-subtle text-xs font-medium">Write</span>
         <Button size="xs" intent="secondary" onClick={handleAddWrite}>
           <Button.Icon icon="fa-solid fa-plus" />
           Write endpoint
         </Button>
       </div>
       {writes.length === 0 && (
-        <div className="rounded-md border border-dashed border-gray-200 p-2 text-center text-xs text-gray-500 dark:border-zinc-700 dark:text-zinc-400">
+        <div className="border-ui-line text-ui-fg-subtle rounded-md border border-dashed p-2 text-center text-xs">
           Read-only. Anything not declared here is refused by the server.
         </div>
       )}

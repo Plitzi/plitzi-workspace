@@ -112,9 +112,7 @@ const FlowStrip = (props: FlowStripProps) => {
         {moments.map((moment, at) => (
           <Fragment key={moment.action?.index ?? 'opens'}>
             {/* Level with the cards: under each column's bar and the gap below it, at the middle of a step's card. */}
-            {at > 0 && (
-              <i className="fa-solid fa-arrow-right mt-[21px] shrink-0 text-xs text-zinc-400 dark:text-zinc-500" />
-            )}
+            {at > 0 && <i className="fa-solid fa-arrow-right text-ui-fg-subtle mt-[21px] shrink-0 text-xs" />}
             {/* As wide as what it says, sharing what room there is: the columns fit the strip when their least does, and
                 only past that does it scroll. A lone step needs less than one with its checks; the one being edited keeps
                 room for its form. */}
@@ -134,8 +132,8 @@ const FlowStrip = (props: FlowStripProps) => {
               {moment.action ? (
                 <ol>{card(moment.action)}</ol>
               ) : (
-                <span className="flex h-9 items-center gap-2 rounded-md border border-dashed border-gray-300 px-2.5 text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-                  <i className="fa-solid fa-flag text-[11px] text-zinc-400" />
+                <span className="border-ui-line-strong text-ui-fg-muted flex h-9 items-center gap-2 rounded-md border border-dashed px-2.5 text-sm">
+                  <i className="fa-solid fa-flag text-ui-fg-subtle text-[11px]" />
                   When the page opens
                 </span>
               )}

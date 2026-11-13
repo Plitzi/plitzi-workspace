@@ -8,11 +8,11 @@ import { XRAY_MARKS } from '../../../../qa/xray';
  */
 const QaXray = () => (
   <section className="flex min-w-0 flex-col gap-1.5">
-    <div className="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+    <div className="text-ui-fg-subtle flex items-center gap-2 text-[10px] font-semibold tracking-wider uppercase">
       <i className="fa-solid fa-x-ray" />
       X-ray
     </div>
-    <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
+    <div className="border-ui-line overflow-hidden rounded border">
       <QaXrayBoxesRow />
       {XRAY_MARKS.map(mark => (
         <QaXrayRow key={mark} mark={mark} />

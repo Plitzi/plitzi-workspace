@@ -23,12 +23,12 @@ const QaFindingItem = ({ finding: { element, note } }: QaFindingItemProps) => {
   return (
     <button
       type="button"
-      className="flex w-full cursor-pointer items-center gap-2 px-3 py-1 pl-6 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+      className="hover:bg-ui-hover flex w-full cursor-pointer items-center gap-2 px-3 py-1 pl-6 text-left"
       onClick={handleClick}
     >
-      <span className="shrink-0 font-mono text-zinc-500 dark:text-zinc-400">{element.tagName.toLowerCase()}</span>
+      <span className="text-ui-fg-subtle shrink-0 font-mono">{element.tagName.toLowerCase()}</span>
       {name && <span className="truncate font-mono text-violet-600 dark:text-violet-400">{name}</span>}
-      <span className="ml-auto shrink-0 text-[11px] text-zinc-500 dark:text-zinc-400">{note}</span>
+      <span className="text-ui-fg-subtle ml-auto shrink-0 text-[11px]">{note}</span>
     </button>
   );
 };

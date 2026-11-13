@@ -26,13 +26,13 @@ const ElementChip = ({ elementId, onDismiss }: ElementChipProps) => {
   }, [elementId, flat, onDismiss, revealElement]);
 
   if (!reachable) {
-    return <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">{elementId}</span>;
+    return <span className="text-ui-fg-subtle font-mono text-[11px]">{elementId}</span>;
   }
 
   return (
     <button
       type="button"
-      className="self-start rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-indigo-700 hover:bg-indigo-50 dark:bg-zinc-800 dark:text-indigo-300 dark:hover:bg-zinc-700"
+      className="bg-ui-raised dark:hover:bg-ui-hover self-start rounded px-1.5 py-0.5 font-mono text-[11px] text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300"
       title="Select this element"
       onClick={handleReveal}
     >

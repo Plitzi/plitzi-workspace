@@ -24,17 +24,17 @@ const QaCheckRow = ({ check }: QaCheckRowProps) => {
   const handleToggle = useCallback(() => setCheck(check, !on), [setCheck, check, on]);
 
   return (
-    <div className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800">
+    <div className="border-ui-line border-b last:border-b-0">
       <button
         type="button"
         role="switch"
         aria-checked={on}
         title={description}
-        className="flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+        className="hover:bg-ui-hover flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left"
         onClick={handleToggle}
       >
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={dot} />
-        <span className="min-w-0 truncate font-medium text-zinc-800 dark:text-zinc-200">{label}</span>
+        <span className="text-ui-fg min-w-0 truncate font-medium">{label}</span>
         {on && (
           <span
             className={clsx('ml-auto rounded-full px-1.5 text-[10px] font-semibold', {

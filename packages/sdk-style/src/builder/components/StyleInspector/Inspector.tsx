@@ -232,7 +232,7 @@ const Inspector = ({
           <div className="flex grow flex-col">
             <InspectorSearch value={search} onChange={setSearch} />
             {nothingFound && (
-              <p className="m-0 px-3 py-4 text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-ui-fg-subtle m-0 px-3 py-4 text-xs">
                 No property here matches “{search.trim()}”.
                 {!showAllOptions &&
                   mode === 'element' &&

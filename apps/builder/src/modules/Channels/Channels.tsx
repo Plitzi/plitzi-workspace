@@ -100,7 +100,7 @@ const Channels = () => {
           />
         ))}
         {Object.keys(drafts).length === 0 && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">No channels yet: add one below.</span>
+          <span className="text-ui-fg-subtle text-xs">No channels yet: add one below.</span>
         )}
         <div className="flex items-end gap-2">
           <Input

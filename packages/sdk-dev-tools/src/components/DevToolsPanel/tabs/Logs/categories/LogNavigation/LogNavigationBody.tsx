@@ -38,7 +38,7 @@ const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavig
           </div>
         </div>
       </div>
-      <div className="border-r border-gray-300" />
+      <div className="border-ui-line-strong border-r" />
       <div className="flex min-w-0 grow basis-0 flex-col gap-2">
         <div className="flex items-center gap-1">
           <i className="fa-solid fa-circle-info" />

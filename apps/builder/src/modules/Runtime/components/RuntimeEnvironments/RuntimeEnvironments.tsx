@@ -70,14 +70,11 @@ const RuntimeEnvironments = ({ environments, sizes, idleMinutes, onChange }: Run
     <div className="flex flex-col gap-3">
       <Heading as="h6">Environments</Heading>
       {environments.map(runtime => (
-        <div
-          key={runtime.environment}
-          className="flex flex-col gap-2 rounded-sm border border-gray-200 px-3 py-2 dark:border-zinc-700"
-        >
+        <div key={runtime.environment} className="border-ui-line flex flex-col gap-2 rounded-sm border px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 flex-col">
               <span className="text-sm font-medium">{runtime.environment}</span>
-              <span className="truncate text-xs text-gray-500 dark:text-zinc-400">
+              <span className="text-ui-fg-subtle truncate text-xs">
                 {runtime.revision === 0 && 'The draft'}
                 {runtime.revision > 0 && `Revision ${String(runtime.revision)}`} · code {runtime.digest.slice(0, 12)}
               </span>
@@ -96,7 +93,7 @@ const RuntimeEnvironments = ({ environments, sizes, idleMinutes, onChange }: Run
           />
           {runtime.error && <Notice tone="danger">{runtime.error}</Notice>}
           {runtime.status === 'ready' && (
-            <span className="text-xs text-gray-500 dark:text-zinc-400">
+            <span className="text-ui-fg-subtle text-xs">
               {runtime.tasks.length} tasks
               {runtime.endpoints.length > 0 && ` · answers ${runtime.endpoints.join(', ')}`}
               {runtime.startedAt !== null && ` · started ${clockOf(runtime.startedAt)}`}

@@ -31,7 +31,7 @@ const LogsSummary = ({ className, orientation = 'horizontal', items, logTypeSele
   return (
     <div
       className={clsx(
-        'flex shrink-0 border-zinc-200 select-none dark:border-zinc-700',
+        'border-ui-line flex shrink-0 select-none',
         orientation === 'horizontal' ? 'flex-col border-r' : 'border-b',
         className
       )}

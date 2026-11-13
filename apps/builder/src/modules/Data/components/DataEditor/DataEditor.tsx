@@ -18,13 +18,13 @@ export type DataEditorProps = {
 /** The file being edited, with the query a provider reads it by and whether it is JSON as it stands. */
 const DataEditor = ({ file, value, modified, problem, theme, onChange }: DataEditorProps) => (
   <div className="flex min-w-0 grow basis-0 flex-col overflow-hidden">
-    <div className="flex h-9 shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-3 dark:border-zinc-800">
+    <div className="border-ui-line flex h-9 shrink-0 items-center justify-between gap-3 border-b px-3">
       <span className="flex min-w-0 items-center gap-1 font-mono text-xs">
-        <span className="truncate font-medium text-gray-900 dark:text-zinc-100">{queryOf(file)}</span>
+        <span className="text-ui-fg truncate font-medium">{queryOf(file)}</span>
         {modified && <span className="ml-1 size-1.5 shrink-0 rounded-full bg-amber-500" title="Unsaved changes" />}
       </span>
       <span
-        className="flex min-w-0 shrink items-center gap-1.5 truncate text-[11px] text-gray-500 dark:text-zinc-400"
+        className="text-ui-fg-subtle flex min-w-0 shrink items-center gap-1.5 truncate text-[11px]"
         title={problem ?? 'It reads as JSON'}
       >
         <span className={clsx('size-1.5 shrink-0 rounded-full', { 'bg-green-500': !problem, 'bg-red-500': problem })} />

@@ -67,7 +67,7 @@ const ElementMotion = ({ motion, canHoldItems = false, isPage = false, onUpdate 
 
   if (isPage) {
     return (
-      <p className="m-0 p-2 text-xs text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle m-0 p-2 text-xs">
         A page does not move — what is in it does. Select a section, a heading or a card to give it motion.
       </p>
     );
@@ -76,7 +76,7 @@ const ElementMotion = ({ motion, canHoldItems = false, isPage = false, onUpdate 
   return (
     <div className="flex flex-col" aria-label="Motion">
       {still && (
-        <span className="border-b border-gray-200 p-2 text-xs text-gray-500 dark:border-zinc-700 dark:text-zinc-400">
+        <span className="border-ui-line text-ui-fg-subtle border-b p-2 text-xs">
           Your system asks for less motion, so the previews are still — and so is this element for every visitor who
           asks the same.
         </span>

@@ -33,8 +33,8 @@ const InteractionNode = ({
   const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
 
   return (
-    <div className="flex w-full flex-col gap-2 p-2 text-zinc-700 dark:text-zinc-300">
-      <div className="truncate font-semibold text-zinc-800 dark:text-zinc-200">{name}</div>
+    <div className="text-ui-fg flex w-full flex-col gap-2 p-2">
+      <div className="text-ui-fg truncate font-semibold">{name}</div>
       <NodeHeader duration={duration} status={status} type={type} action={action} />
       <NodeWhen when={when} />
       <NodeMetadata when={when} whenParams={whenParams} />

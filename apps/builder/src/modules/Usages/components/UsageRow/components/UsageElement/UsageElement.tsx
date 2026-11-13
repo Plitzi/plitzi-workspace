@@ -22,23 +22,21 @@ const UsageElement = ({ usage, onReveal }: UsageElementProps) => {
     <button
       type="button"
       title={`Select ${usage.elementId}${via ? ` — ${via}` : ''}`}
-      className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-indigo-50 dark:hover:bg-zinc-800"
+      className="dark:hover:bg-ui-hover flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-indigo-50"
       onClick={handleClick}
     >
       <i
         className={clsx(
           get(componentDefinitions.current, `${usage.elementType}.market.icon`, 'fa-solid fa-shapes'),
-          'w-3 shrink-0 text-center text-[11px] text-zinc-400 dark:text-zinc-500'
+          'text-ui-fg-subtle w-3 shrink-0 text-center text-[11px]'
         )}
       />
       <span className="min-w-0 shrink truncate font-mono text-[11px] text-indigo-700 dark:text-indigo-300">
         {usage.elementId}
-        {usage.label && <span className="font-sans text-zinc-500 dark:text-zinc-400"> · {usage.label}</span>}
+        {usage.label && <span className="text-ui-fg-subtle font-sans"> · {usage.label}</span>}
       </span>
       {via && (
-        <span className="ml-auto min-w-0 shrink-[2] truncate font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
-          {via}
-        </span>
+        <span className="text-ui-fg-subtle ml-auto min-w-0 shrink-[2] truncate font-mono text-[11px]">{via}</span>
       )}
     </button>
   );

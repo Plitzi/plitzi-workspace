@@ -51,7 +51,7 @@ const RuntimeVariables = ({ names, onChange }: RuntimeVariablesProps) => {
 
   return (
     <ViewSection title="Variables">
-      <p className="text-sm text-gray-600 dark:text-zinc-400">
+      <p className="text-ui-fg-muted text-sm">
         What the runtime starts with, read as environment variables. A value is written and never read back.
       </p>
       <div className="flex items-end gap-2">
@@ -77,19 +77,17 @@ const RuntimeVariables = ({ names, onChange }: RuntimeVariablesProps) => {
         </Button>
       </div>
       {problem && <Notice tone="danger">{problem}</Notice>}
-      {names.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">It starts with no variables.</span>
-      )}
+      {names.length === 0 && <span className="text-ui-fg-subtle text-xs">It starts with no variables.</span>}
       {names.length > 0 && (
-        <div className="flex flex-col divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <div className="divide-ui-line border-ui-line flex flex-col divide-y rounded-lg border">
           {names.map(variable => (
             <div key={variable} className="flex items-center justify-between gap-2 px-4 py-2.5">
-              <span className="font-mono text-sm text-zinc-800 dark:text-zinc-200">{variable}</span>
+              <span className="text-ui-fg font-mono text-sm">{variable}</span>
               <Button
                 size="xs"
                 intent="secondary"
                 border="none"
-                className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+                className="text-ui-fg-subtle hover:text-red-600 dark:hover:text-red-400"
                 title={`Remove ${variable}`}
                 onClick={handleRemove(variable)}
               >

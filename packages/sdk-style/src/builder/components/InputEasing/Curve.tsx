@@ -26,7 +26,7 @@ const Curve = ({ value = valueDefault, xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 }:
 
   return (
     <path
-      className="fill-transparent stroke-gray-900 stroke-2"
+      className="stroke-ui-fg fill-transparent stroke-2"
       d={`M${sx},${sy} C${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`}
     />
   );

@@ -52,7 +52,7 @@ const ResourceCdnForm = ({ onSubmit, onClose }: ResourceCdnFormProps) => {
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
         <CdnAccountFields provider={provider} onChangeProvider={handleChangeProvider} />
-        <p className="text-xs font-semibold text-gray-600 dark:text-zinc-300">Its first bucket</p>
+        <p className="text-ui-fg-muted text-xs font-semibold">Its first bucket</p>
         <CdnBucketFields provider={provider} visibility={visibility} />
       </Form.Body>
       <Form.Footer justify="end">

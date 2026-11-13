@@ -79,19 +79,15 @@ const TaskTest = ({ task, needsSave, onRun }: TaskTestProps) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2.5 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="border-ui-line bg-ui-panel flex flex-col gap-2 rounded-lg border p-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-medium text-gray-600 dark:text-zinc-300">Params</span>
-          <button
-            type="button"
-            className="text-[11px] text-gray-500 hover:text-gray-800 dark:text-zinc-400 dark:hover:text-zinc-100"
-            onClick={handleToggleJson}
-          >
+          <span className="text-ui-fg-muted text-[11px] font-medium">Params</span>
+          <button type="button" className="text-ui-fg-subtle hover:text-ui-fg text-[11px]" onClick={handleToggleJson}>
             {json === undefined ? 'Edit as JSON' : 'Edit as form'}
           </button>
         </div>
         {json === undefined && params.length === 0 && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">This task takes none.</span>
+          <span className="text-ui-fg-subtle text-xs">This task takes none.</span>
         )}
         {json === undefined &&
           params.map(([param, spec]) => (

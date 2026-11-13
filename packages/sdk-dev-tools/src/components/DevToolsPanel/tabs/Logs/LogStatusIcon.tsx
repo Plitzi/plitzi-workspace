@@ -33,7 +33,7 @@ const LogStatusIcon = ({ className, logType = 'info', iconClassName, title, chil
             'text-amber-500 dark:text-amber-400': logType === 'warning',
             'text-violet-500 dark:text-violet-400': logType === 'info',
             'text-emerald-500 dark:text-emerald-400': logType === 'success',
-            'text-zinc-500 dark:text-zinc-400': !['danger', 'warning', 'info', 'success'].includes(logType)
+            'text-ui-fg-subtle': !['danger', 'warning', 'info', 'success'].includes(logType)
           },
           'text-xs'
         )}

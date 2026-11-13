@@ -12,23 +12,18 @@ export type AreaStat = {
 const AreaStats = ({ stats }: { stats: AreaStat[] }) => (
   <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-4">
     {stats.map(stat => (
-      <div
-        key={stat.label}
-        className="flex flex-col gap-1 rounded-lg border border-gray-300 px-4 py-3 dark:border-zinc-700"
-      >
+      <div key={stat.label} className="border-ui-line-strong flex flex-col gap-1 rounded-lg border px-4 py-3">
         <span
           className={clsx('text-3xl leading-none font-semibold tracking-tight tabular-nums', {
             'text-emerald-600 dark:text-emerald-400': stat.tone === 'good',
             'text-red-600 dark:text-red-400': stat.tone === 'bad',
-            'text-zinc-900 dark:text-zinc-50': stat.tone === undefined
+            'text-ui-fg': stat.tone === undefined
           })}
         >
           {stat.value}
-          {stat.of && <span className="text-base font-normal text-zinc-400 dark:text-zinc-500">{stat.of}</span>}
+          {stat.of && <span className="text-ui-fg-subtle text-base font-normal">{stat.of}</span>}
         </span>
-        <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
-          {stat.label}
-        </span>
+        <span className="text-ui-fg-subtle text-[11px] font-semibold tracking-wider uppercase">{stat.label}</span>
       </div>
     ))}
   </div>

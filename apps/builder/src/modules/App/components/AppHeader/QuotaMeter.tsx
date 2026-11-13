@@ -11,7 +11,7 @@ import QuotaBreakdown from './QuotaBreakdown';
 import type { QuotaLevel, QuotaReading } from '@pmodules/Space/hooks/useSpaceQuota';
 
 const TEXT: Record<QuotaLevel, string> = {
-  ok: 'text-zinc-500 dark:text-zinc-400',
+  ok: 'text-ui-fg-subtle',
   near: 'text-yellow-600 dark:text-yellow-400',
   over: 'text-red-600 dark:text-red-400'
 };
@@ -113,7 +113,7 @@ const QuotaMeter = () => {
       title="Elements in this space — click to see where they went"
       className={clsx(
         'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs whitespace-nowrap select-none',
-        'transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800',
+        'hover:bg-ui-hover transition-colors',
         TEXT[level]
       )}
       onClick={handleClick}

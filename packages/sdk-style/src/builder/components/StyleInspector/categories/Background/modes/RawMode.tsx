@@ -21,7 +21,7 @@ const RawMode = ({ layer, onChange }: RawModeProps) => {
   return (
     <>
       <CategoryOption label="CSS" type="input" value={layer.raw} onChange={handleChange} />
-      <p className="m-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle m-0 text-[11px]">
         Any image CSS accepts: a token such as var(--hero-bg), image-set(…), cross-fade(…).
       </p>
     </>

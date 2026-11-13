@@ -32,7 +32,7 @@ const BORDER_TONE: Record<string, string> = {
   success: 'border-l-emerald-400',
   danger: 'border-l-red-400',
   warning: 'border-l-amber-400',
-  custom: 'border-l-zinc-300 dark:border-l-zinc-600'
+  custom: 'border-l-ui-line-strong'
 };
 
 export type RunRowProps = {
@@ -53,28 +53,26 @@ const RunRow = ({ run, selected, onSelect, onCancel }: RunRowProps) => {
     // Cancel sits beside the row rather than inside it: nested buttons are invalid markup.
     <div
       className={clsx('flex items-center gap-2 border-b border-l-2 px-2', BORDER_TONE[statusTone(run.status)], {
-        'border-b-zinc-100 bg-violet-500/5 dark:border-b-zinc-800': selected,
-        'border-b-zinc-100 hover:bg-zinc-50 dark:border-b-zinc-800 dark:hover:bg-zinc-800/60': !selected
+        'border-b-ui-line bg-violet-500/5': selected,
+        'border-b-ui-line hover:bg-ui-hover': !selected
       })}
     >
       <button type="button" className="flex grow flex-col gap-0.5 py-1.5 text-left" onClick={handleSelect}>
         <div className="flex items-center gap-1.5 text-[11px]">
           <LogStatusIcon logType={statusTone(run.status)} iconClassName={STATUS_ICON[run.status]} />
-          <span className="truncate font-medium text-zinc-700 dark:text-zinc-100">
-            {run.actionId || '(no action named)'}
-          </span>
+          <span className="text-ui-fg truncate font-medium">{run.actionId || '(no action named)'}</span>
           <span
-            className="flex shrink-0 items-center gap-1 rounded-sm bg-zinc-100 px-1 text-[9px] text-zinc-500 uppercase dark:bg-zinc-800 dark:text-zinc-400"
+            className="bg-ui-raised text-ui-fg-subtle flex shrink-0 items-center gap-1 rounded-sm px-1 text-[9px] uppercase"
             title={run.mode === 'render' ? 'Run by the server while it built this page' : undefined}
           >
             <i className={MODE_ICON[run.mode]} />
             {MODE_LABEL[run.mode]}
           </span>
-          <span className="ml-auto shrink-0 text-zinc-400 tabular-nums dark:text-zinc-500">
+          <span className="text-ui-fg-subtle ml-auto shrink-0 tabular-nums">
             {duration === undefined ? '…' : formatMs(duration)}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+        <div className="text-ui-fg-subtle flex items-center gap-1.5 text-[10px]">
           <span className="shrink-0 tabular-nums">{formatTime(run.startedAt)}</span>
           {run.steps !== undefined && <span className="shrink-0">{stepCount(run.steps.length)}</span>}
           {run.elementId !== undefined && <span className="truncate font-mono">{run.elementId}</span>}

@@ -111,7 +111,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
                 renderFloatingPopup={!previewMode}
               >
                 <ShortcutsProvider>
-                  <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
+                  <div className="bg-ui-backdrop relative flex max-w-screen grow basis-0 overflow-hidden">
                     {/* A whole view is not the page previewed: its sidebar stays, the Tests view's canvas in preview. */}
                     {(!previewMode || fullView) && (
                       <PopupSidePanel

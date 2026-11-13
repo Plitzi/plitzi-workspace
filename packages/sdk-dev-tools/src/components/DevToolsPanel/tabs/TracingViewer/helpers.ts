@@ -156,7 +156,7 @@ export const DURATION_LEGEND = [
   { color: 'bg-red-500', label: '≥50ms' }
 ] as const;
 
-export const BUBBLED_COLOR = 'bg-zinc-300 dark:bg-zinc-700';
+export const BUBBLED_COLOR = 'bg-ui-active';
 
 export const HATCH_STYLE: CSSProperties = {
   backgroundImage:
@@ -178,11 +178,11 @@ export const frameColor = (node: FlameNode): string => {
 // Amber frames need dark text for contrast; the other duration colours carry white.
 export const frameTextColor = (node: FlameNode): string => {
   if (node.state === 'bubbled') {
-    return 'text-zinc-600 dark:text-zinc-300';
+    return 'text-ui-fg-muted';
   }
 
   if (node.state === 'hatched') {
-    return 'text-zinc-400 dark:text-zinc-600';
+    return 'text-ui-fg-subtle';
   }
 
   return durationColor(node.selfDuration) === 'bg-amber-500' ? 'text-stone-900' : 'text-white';

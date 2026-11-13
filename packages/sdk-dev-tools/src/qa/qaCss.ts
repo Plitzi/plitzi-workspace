@@ -17,26 +17,7 @@ const NAMED =
   ':is([data-type="heading"], [data-type="text"], [data-type="paragraph"], [data-type="button"], [data-type="link"])';
 
 /** Every element's box, and its type and id over it while pointed at. */
-const BOXES = `
-${PAGE} [data-plitzi-el] { outline: 1px dashed rgba(124, 92, 255, 0.5); outline-offset: -1px; }
-${PAGE} [data-plitzi-el]:hover { outline: 1.5px solid #7c5cff; outline-offset: -1.5px; }
-${PAGE} ${NAMED}[data-plitzi-el]:hover { position: relative; }
-${PAGE} ${NAMED}[data-plitzi-el]:hover::after {
-  content: attr(data-type) ' · ' attr(data-plitzi-el);
-  position: absolute;
-  left: -1px;
-  bottom: 100%;
-  z-index: 2147483000;
-  padding: 1px 6px;
-  border-radius: 4px 4px 0 0;
-  background-color: #7c5cff;
-  color: #ffffff;
-  font: 500 10px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: nowrap;
-  pointer-events: none;
-}`;
+const BOXES = ` ${PAGE} [data-plitzi-el] { outline: 1px dashed rgba(124, 92, 255, 0.5); outline-offset: -1px; } ${PAGE} [data-plitzi-el]:hover { outline: 1.5px solid #7c5cff; outline-offset: -1.5px; } ${PAGE} ${NAMED}[data-plitzi-el]:hover { position: relative; } ${PAGE} ${NAMED}[data-plitzi-el]:hover::after { content: attr(data-type) ' · ' attr(data-plitzi-el); position: absolute; left: -1px; bottom: 100%; z-index: 2147483000; padding: 1px 6px; border-radius: 4px 4px 0 0; background-color: #7c5cff; color: #ffffff; font: 500 10px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0; text-transform: none; white-space: nowrap; pointer-events: none; }`;
 
 /**
  * Every element's box, and what carries the wiring asked for in the colour of its mark. Rules last win, so the marks

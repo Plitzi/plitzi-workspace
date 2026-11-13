@@ -36,7 +36,7 @@ const ActionsToolbar = ({
   );
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-ui-line bg-ui-panel flex shrink-0 items-center gap-2 border-b px-2 py-1.5">
       <div className="flex items-stretch gap-1">
         {FILTERS.map(item => {
           const isActive = filter === item.id;
@@ -48,7 +48,7 @@ const ActionsToolbar = ({
               aria-pressed={isActive}
               className={clsx('flex h-6 items-center gap-1 rounded px-2 text-xs font-medium transition-colors', {
                 'bg-violet-500 text-white': isActive,
-                'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700': !isActive
+                'text-ui-fg-muted hover:bg-ui-hover': !isActive
               })}
             >
               <i className={clsx(item.icon, item.id === 'live' && liveCount > 0 && 'fa-spin')} />
@@ -64,13 +64,13 @@ const ActionsToolbar = ({
         value={query}
         onChange={handleQueryChange}
         placeholder="Filter by action, step or run id"
-        className="h-6 min-w-0 grow rounded border border-zinc-200 bg-white px-2 text-xs text-zinc-700 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+        className="border-ui-line bg-ui-raised text-ui-fg placeholder:text-ui-fg-subtle h-6 min-w-0 grow rounded border px-2 text-xs"
       />
 
-      <span className="shrink-0 text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500">{runCount} runs</span>
+      <span className="text-ui-fg-subtle shrink-0 text-[10px] tabular-nums">{runCount} runs</span>
       <button
         onClick={onClear}
-        className="flex h-6 shrink-0 items-center gap-1 rounded px-2 text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        className="text-ui-fg-muted hover:bg-ui-hover flex h-6 shrink-0 items-center gap-1 rounded px-2 text-xs font-medium"
       >
         <i className="fa-solid fa-trash" />
         Clear

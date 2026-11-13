@@ -144,7 +144,7 @@ const TracingViewer = () => {
 
   if (!enabled) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
+      <div className="text-ui-fg-subtle flex h-full w-full flex-col items-center justify-center gap-2">
         <i className="fa-solid fa-gauge-high text-3xl opacity-20" />
         <span className="text-xs">Enable debugMode to record render tracing</span>
       </div>
@@ -162,7 +162,7 @@ const TracingViewer = () => {
           onViewChange={setView}
           onPersistChange={setPersist}
         />
-        <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
+        <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-2">
           <i className="fa-solid fa-chart-column text-3xl opacity-20" />
           <span className="text-xs">No commits recorded yet — interact with the page</span>
         </div>
@@ -189,9 +189,9 @@ const TracingViewer = () => {
         />
       )}
       {view !== 'hotspots' && isSsrCommit && (
-        <div className="flex grow flex-col items-center justify-center gap-3 px-6 text-center text-zinc-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-3 px-6 text-center">
           <i className="fa-solid fa-server text-3xl opacity-30" />
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Server render (SSR)</span>
+          <span className="text-ui-fg-muted text-sm font-medium">Server render (SSR)</span>
           <span className="max-w-md text-xs leading-relaxed">
             This page was rendered on the server first. React&apos;s Profiler doesn&apos;t run during server rendering,
             so there&apos;s no per-element timing for it — this commit marks that baseline. Commit&nbsp;#{firstRealId}{' '}

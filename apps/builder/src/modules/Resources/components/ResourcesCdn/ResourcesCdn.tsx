@@ -142,10 +142,7 @@ const ResourcesCdn = ({ cdn, isCollapsed, onCollapse, onChange, onRemove }: Reso
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <div
-          className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400"
-          title="Buckets"
-        >
+        <div className="border-ui-line-strong text-ui-fg-subtle rounded border px-1 text-xs" title="Buckets">
           {cdn.buckets.length}
         </div>
         <Icon

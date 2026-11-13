@@ -109,7 +109,7 @@ const BindingSelected = ({
   return (
     <div
       className={clsx('flex rounded-sm border', {
-        'border-gray-300 dark:border-zinc-600': !warningLevel,
+        'border-ui-line-strong': !warningLevel,
         'border-orange-400 dark:border-orange-500': warningLevel === 'warning',
         'border-red-400 dark:border-red-500': warningLevel === 'danger'
       })}
@@ -128,32 +128,26 @@ const BindingSelected = ({
           </Button>
         </div>
       </div>
-      <div className="flex w-full flex-col truncate border-l border-gray-300 dark:border-zinc-600">
+      <div className="border-ui-line-strong flex w-full flex-col truncate border-l">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
           <div className="ml-1 truncate capitalize">
             {!loading ? (fieldPath ? `${sourceDisplayName} [${name}]` : 'None') : 'Loading...'}
           </div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={source}>
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={source}>
           <div className="font-bold">Path:</div>
           <div className="ml-1 truncate">{source || ''}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={to}>
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={to}>
           <div className="font-bold">To:</div>
           <div className="ml-1 truncate capitalize">{`${category} ${to}`}</div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={transformerName}
-        >
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={transformerName}>
           <div className="font-bold">Transformers:</div>
           <div className="ml-1 truncate">{transformerName}</div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={whenStr}
-        >
+        <div className="border-ui-line-strong flex truncate border-t px-1 py-0.5 text-xs" title={whenStr}>
           <div className="font-bold">When:</div>
           <div className="ml-1 truncate">{whenStr}</div>
         </div>

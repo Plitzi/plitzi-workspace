@@ -146,7 +146,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
         {!isAdvanced && <ConnectorBasicEditor manifest={manifest} onChange={setManifest} />}
       </div>
       {(errors.length > 0 || warnings.length > 0) && (
-        <div className="flex flex-col gap-2 border-t border-gray-200 py-3 dark:border-zinc-800">
+        <div className="border-ui-line flex flex-col gap-2 border-t py-3">
           {errors.length > 0 && (
             <Notice tone="danger">
               <div className="flex flex-col gap-1">

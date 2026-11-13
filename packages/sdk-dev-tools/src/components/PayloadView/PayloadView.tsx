@@ -28,7 +28,7 @@ const PayloadView = ({ value }: PayloadViewProps) => {
   // an object or an array. Anything else is shown as it is rather than dropped.
   if (typeof value !== 'object' || value === null) {
     return (
-      <pre className="overflow-auto p-1.5 font-mono text-[11px] break-words whitespace-pre-wrap text-zinc-600 dark:text-zinc-300">
+      <pre className="text-ui-fg-muted overflow-auto p-1.5 font-mono text-[11px] break-words whitespace-pre-wrap">
         {JSON.stringify(value)}
       </pre>
     );

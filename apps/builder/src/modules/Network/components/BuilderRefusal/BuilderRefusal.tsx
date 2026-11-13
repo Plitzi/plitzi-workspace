@@ -30,7 +30,7 @@ const BuilderRefusal = ({ refusal, onRetry }: BuilderRefusalProps) => {
   }, []);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-white dark:bg-zinc-900" role="alert">
+    <div className="bg-ui-panel flex h-screen w-full items-center justify-center" role="alert">
       <EmptyState
         icon={ICON[refusal.kind]}
         title={refusal.title}

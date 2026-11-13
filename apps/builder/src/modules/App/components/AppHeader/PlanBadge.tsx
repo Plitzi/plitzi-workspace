@@ -25,9 +25,9 @@ const PlanBadge = () => {
   }
 
   return (
-    <div id="header-plan" className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+    <div id="header-plan" className="text-ui-fg-subtle flex items-center gap-1.5 text-xs">
       <span
-        className="rounded-full border border-gray-300 px-2 py-0.5 whitespace-nowrap text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+        className="border-ui-line-strong text-ui-fg-muted rounded-full border px-2 py-0.5 whitespace-nowrap"
         title="This space's plan"
       >
         {entitlements.tierLabel} plan

@@ -19,7 +19,7 @@ const SitemapChip = ({ icon, className, title, children }: SitemapChipProps) => 
   <span
     className={clsx(
       'flex max-w-full min-w-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
-      className ?? 'border-gray-200 bg-gray-50 text-gray-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+      className ?? 'border-ui-line bg-ui-raised text-ui-fg-muted'
     )}
     title={title}
   >

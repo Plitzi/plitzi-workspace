@@ -74,17 +74,16 @@ const SpaceCredential = ({
   return (
     <div
       className={clsx('group relative flex flex-col gap-2 rounded-lg border px-4 py-3 transition-colors duration-150', {
-        'hover:border-primary-300 dark:hover:border-primary-400/40 border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900':
+        'hover:border-primary-300 dark:hover:border-primary-400/40 border-ui-line bg-ui-panel':
           !selected && isSupported,
         'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-400/10': selected && isSupported,
         'cursor-pointer': isSupported,
-        'cursor-not-allowed border-gray-200 bg-gray-50 opacity-70 dark:border-zinc-800 dark:bg-zinc-800/40':
-          !isSupported
+        'border-ui-line bg-ui-raised cursor-not-allowed opacity-70': !isSupported
       })}
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{name}</span>
+        <span className="text-ui-fg text-sm font-medium">{name}</span>
         {selected && (
           <div className="flex">
             <Icon size="2xl" intent="primaryActive" icon="fa-solid fa-circle-check" className="cursor-default" />
@@ -137,7 +136,7 @@ const SpaceCredential = ({
           </span>
         )}
       </div>
-      <div className="text-xs text-gray-500 dark:text-zinc-400">Created {createdAtParsed}</div>
+      <div className="text-ui-fg-subtle text-xs">Created {createdAtParsed}</div>
 
       <div className="absolute right-2 bottom-2 flex">
         {onEdit && (
@@ -145,7 +144,7 @@ const SpaceCredential = ({
             icon="fas fa-pen"
             title="Replace its values"
             size="lg"
-            className="hidden cursor-pointer rounded p-4 group-hover:flex hover:bg-gray-200 dark:hover:bg-zinc-700"
+            className="hover:bg-ui-hover hidden cursor-pointer rounded p-4 group-hover:flex"
             onClick={handleClickEdit}
           />
         )}

@@ -16,12 +16,10 @@ export type SidebarSectionProps = {
 const SidebarSection = ({ title, count, actionTitle, onAction, children }: SidebarSectionProps) => (
   <section className="flex flex-col gap-1.5" aria-label={title}>
     <div className="flex h-6 items-center justify-between px-1">
-      <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+      <span className="text-ui-fg-subtle flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase">
         {title}
         {count !== undefined && (
-          <span className="rounded-full bg-gray-100 px-1.5 text-[11px] font-medium text-gray-600 dark:bg-zinc-800 dark:text-zinc-300">
-            {count}
-          </span>
+          <span className="bg-ui-raised text-ui-fg-muted rounded-full px-1.5 text-[11px] font-medium">{count}</span>
         )}
       </span>
       {onAction && (

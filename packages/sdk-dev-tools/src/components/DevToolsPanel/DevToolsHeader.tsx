@@ -74,7 +74,7 @@ const DevToolsHeader = ({
   );
 
   return (
-    <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
+    <div className="border-ui-line bg-ui-raised flex shrink-0 items-stretch justify-between border-b select-none">
       <div ref={tabsRef} role="tablist" className="flex min-w-0 items-stretch overflow-x-auto">
         {tabs.map(tab => {
           const isActive = tabSelected === tab.id;
@@ -89,8 +89,7 @@ const DevToolsHeader = ({
                 'flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2 font-medium transition-colors',
                 {
                   'border-violet-500 text-violet-600 dark:text-violet-400': isActive,
-                  'border-transparent text-zinc-500 hover:bg-zinc-200/70 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100':
-                    !isActive
+                  'text-ui-fg-subtle hover:bg-ui-hover/70 hover:text-ui-fg border-transparent': !isActive
                 }
               )}
             >
@@ -101,13 +100,13 @@ const DevToolsHeader = ({
         })}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1 border-l border-zinc-200 px-2 dark:border-zinc-700">
+      <div className="border-ui-line flex shrink-0 items-center gap-1 border-l px-2">
         {scopeOptions.length > 0 && (
           <select
             value={scopeValue ?? ''}
             onChange={handleSelectScope}
             title="Instance / StoreProvider driving the panel"
-            className="max-w-52 rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+            className="border-ui-line-strong bg-ui-panel text-ui-fg max-w-52 rounded border px-1 py-0.5 text-[11px]"
           >
             {scopeOptions.map(group => (
               <optgroup key={group.label} label={group.label}>

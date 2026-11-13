@@ -163,7 +163,7 @@ class InputEasing extends Component {
                 cy={cy1}
                 r={handleRadius}
                 onMouseDown={this.handleMouseDown('bottom')}
-                className="cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
+                className="group-hover:fill-ui-panel cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:stroke-[6px]"
               />
             </g>
             <g className="group">
@@ -179,7 +179,7 @@ class InputEasing extends Component {
                 cy={cy2}
                 r={handleRadius}
                 onMouseDown={this.handleMouseDown('top')}
-                className="cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:fill-white group-hover:stroke-[6px]"
+                className="group-hover:fill-ui-panel cursor-pointer fill-blue-400 stroke-blue-400 stroke-[3px] group-hover:stroke-[6px]"
               />
             </g>
           </>

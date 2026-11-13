@@ -176,7 +176,7 @@ const ElementDefinitionSettings = ({
               </option>
             ))}
           </Select>
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-xs">
             {LOAD_STRATEGIES[loadStrategy ?? declaredLoadStrategy].help} Everything stays mounted while editing.
           </span>
         </div>

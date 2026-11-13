@@ -32,9 +32,7 @@ const useSaveAsComponent = () => {
         </Modal.Header>,
         ({ onSubmit, onClose }) => (
           <Modal.Body>
-            <p className="mb-3 text-sm text-gray-600 first-letter:uppercase dark:text-zinc-400">
-              {REUSE.component.hint}.
-            </p>
+            <p className="text-ui-fg-muted mb-3 text-sm first-letter:uppercase">{REUSE.component.hint}.</p>
             <ComponentForm
               declaration={{ label: element.definition.label }}
               slotChoices={slotChoicesOf(getFlat(), element.id, componentDefinitions.current)}

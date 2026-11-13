@@ -27,7 +27,7 @@ const VariableValue = ({ type, value }: VariableValueProps) => {
           >
             {valueKey[0]}:
             <div
-              className="min-h-4 min-w-4 rounded border border-gray-300"
+              className="border-ui-line-strong min-h-4 min-w-4 rounded border"
               style={{ backgroundColor: value[valueKey as keyof StyleThemeValue] }}
             />
           </div>

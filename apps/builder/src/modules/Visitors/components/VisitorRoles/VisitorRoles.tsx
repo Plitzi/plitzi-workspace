@@ -92,7 +92,7 @@ const VisitorRoles = ({ roles }: VisitorRolesProps) => {
 
   return (
     <ViewSection title="Roles">
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         What a signed-in visitor may do here. An action asks for a permission (<code>access: role</code>); a role is the
         permissions it gives. Visitors hold only the permissions of the roles you give them below — never those of their
         Plitzi account.

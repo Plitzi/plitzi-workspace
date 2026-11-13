@@ -60,11 +60,7 @@ const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) =>
   const handleRemove = useCallback(() => onRemove(index), [index, onRemove]);
 
   return (
-    <Flex
-      direction="column"
-      gap={1.5}
-      className="rounded-md border border-gray-200 bg-gray-50/60 p-2 dark:border-zinc-700 dark:bg-zinc-800/40"
-    >
+    <Flex direction="column" gap={1.5} className="border-ui-line bg-ui-raised/60 rounded-md border p-2">
       {/* What identifies the prop on one line: its name flexes, its kind keeps the width its longest label needs. */}
       <div className="grid grid-cols-[minmax(0,1fr)_8rem_auto_auto] items-end gap-2">
         <Input value={name} label="Name" placeholder="title" onChange={handleName} size="xs" />
@@ -86,9 +82,7 @@ const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) =>
           className="mb-2"
         />
       </div>
-      {name && !problem && (
-        <span className="font-mono text-[11px] text-gray-500 dark:text-zinc-400">{`{{ props.${name} }}`}</span>
-      )}
+      {name && !problem && <span className="text-ui-fg-subtle font-mono text-[11px]">{`{{ props.${name} }}`}</span>}
       {problem && <span className="text-xs text-red-500">{problem}</span>}
       {/* What it is for, and — for a choice — its options beside it. */}
       <div className={prop.type === 'select' ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1'}>

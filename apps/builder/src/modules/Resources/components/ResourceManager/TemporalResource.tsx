@@ -159,7 +159,7 @@ const TemporalResource = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={clsx(
-        'relative flex w-full overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        'border-ui-line-strong relative flex w-full overflow-hidden rounded-md border select-none',
         className
       )}
     >
@@ -176,7 +176,7 @@ const TemporalResource = ({
       )}
       {error && (
         <div
-          className="absolute bottom-1 left-1 flex items-center justify-center rounded-sm bg-white p-1 text-red-400 dark:bg-zinc-800"
+          className="bg-ui-raised absolute bottom-1 left-1 flex items-center justify-center rounded-sm p-1 text-red-400"
           title={error}
         >
           <i className="fa-solid fa-triangle-exclamation" />

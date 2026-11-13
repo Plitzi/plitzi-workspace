@@ -50,8 +50,8 @@ export const STEP_ICON: Record<ActionRunStep['status'], string> = {
 export const STEP_BAR: Record<ActionRunStep['status'], string> = {
   success: 'bg-emerald-500/70',
   failed: 'bg-red-500/80',
-  skipped: 'bg-zinc-400/40',
-  disabled: 'bg-zinc-400/30'
+  skipped: 'bg-ui-line-strong/40',
+  disabled: 'bg-ui-line-strong/30'
 };
 
 /** How the run reached the server, said in one word beside the action's name. */

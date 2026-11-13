@@ -23,7 +23,7 @@ const FlagRule = ({ index, last, fields, onRemove, onMove }: FlagRuleProps) => {
   const handleDown = useCallback(() => onMove(index, index + 1), [index, onMove]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-2 rounded-sm border border-gray-300 p-2 dark:border-zinc-700">
+    <div className="border-ui-line-strong flex min-w-0 flex-col gap-2 rounded-sm border p-2">
       <div className="flex items-center justify-between gap-2">
         <Form.Switch name={`rules.${index}.value`} label="Turns the flag on" size="xs" />
         <div className="flex items-center gap-1">

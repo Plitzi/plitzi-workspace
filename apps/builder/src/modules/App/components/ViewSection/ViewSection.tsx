@@ -11,7 +11,7 @@ export type ViewSectionProps = {
 const ViewSection = ({ title, actions, children }: ViewSectionProps) => (
   <section className="flex flex-col gap-3">
     <div className="flex items-center justify-between gap-3">
-      <h3 className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">{title}</h3>
+      <h3 className="text-ui-fg-subtle text-xs font-semibold tracking-wide uppercase">{title}</h3>
       {actions}
     </div>
     {children}

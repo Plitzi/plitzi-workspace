@@ -24,7 +24,7 @@ const SuggestionItem = ({ suggestion, onDismiss }: SuggestionItemProps) => {
   const hidden = elementIds.length - SHOWN_ELEMENTS;
 
   return (
-    <li className="flex flex-col gap-1 border-t border-zinc-100 py-2 first:border-t-0 dark:border-zinc-800">
+    <li className="border-ui-line flex flex-col gap-1 border-t py-2 first:border-t-0">
       <Message text={message} />
       <div className="flex flex-wrap items-center gap-1">
         {elementIds.slice(0, SHOWN_ELEMENTS).map(elementId => (

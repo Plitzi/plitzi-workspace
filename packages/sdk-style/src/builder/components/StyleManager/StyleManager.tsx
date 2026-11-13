@@ -69,10 +69,10 @@ const StyleManager = () => {
         />
         {/* The inspector's own surface, as the sidebar gives it: its lines are drawn for that ground, and on the floating
             window's they were the same colour as it. */}
-        <div className="flex min-w-0 grow basis-0 flex-col overflow-auto bg-white dark:bg-zinc-900">
+        <div className="bg-ui-panel flex min-w-0 grow basis-0 flex-col overflow-auto">
           {selector && (
             <>
-              <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-zinc-800">
+              <div className="border-ui-line flex items-center gap-2 border-b px-3 py-2">
                 <span
                   className="bg-primary-50 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex size-7 shrink-0 items-center justify-center rounded-md text-xs"
                   aria-hidden
@@ -80,10 +80,10 @@ const StyleManager = () => {
                   {selector.type === 'element' ? <i className="fa-solid fa-cube" /> : <b className="font-mono">.</b>}
                 </span>
                 <div className="flex min-w-0 grow flex-col">
-                  <span className="truncate font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  <span className="text-ui-fg truncate font-mono text-sm font-semibold">
                     {selector.type === 'element' ? selector.name : `.${selector.name}`}
                   </span>
-                  <span className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span className="text-ui-fg-subtle truncate text-[11px]">
                     {selector.type === 'element'
                       ? `The defaults of every ${selector.componentType ?? selector.name}`
                       : dressed > 0
@@ -92,7 +92,7 @@ const StyleManager = () => {
                   </span>
                 </div>
                 <span
-                  className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-zinc-600 capitalize dark:bg-zinc-800 dark:text-zinc-300"
+                  className="bg-ui-raised text-ui-fg-muted shrink-0 rounded px-1.5 py-0.5 text-[11px] capitalize"
                   title="The breakpoint the styles below are edited at: the one the canvas shows"
                 >
                   <i className="fa-solid fa-display mr-1 text-[10px]" />
@@ -117,8 +117,8 @@ const StyleManager = () => {
               <span className="bg-primary-50 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex size-10 items-center justify-center rounded-lg">
                 <i className="fas fa-swatchbook" />
               </span>
-              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Pick a selector to edit it</span>
-              <span className="max-w-64 text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="text-ui-fg text-sm font-medium">Pick a selector to edit it</span>
+              <span className="text-ui-fg-subtle max-w-64 text-xs">
                 A class changes every element that wears it; an element’s defaults, every element of that type.
               </span>
             </div>

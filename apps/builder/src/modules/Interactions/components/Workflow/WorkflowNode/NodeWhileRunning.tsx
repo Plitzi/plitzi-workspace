@@ -24,7 +24,7 @@ const NodeWhileRunning = ({ whileRunning = 'skip', onChange }: NodeWhileRunningP
   );
 
   return (
-    <div className="flex w-full flex-col border-t-2 border-dotted border-gray-300 px-4 py-2 dark:border-zinc-600">
+    <div className="border-ui-line-strong flex w-full flex-col border-t-2 border-dotted px-4 py-2">
       <Select2
         size="xs"
         label="While running"

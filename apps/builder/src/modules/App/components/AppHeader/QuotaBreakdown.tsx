@@ -9,7 +9,7 @@ import useSpaceUsage from '@pmodules/Space/hooks/useSpaceUsage';
 import type { QuotaLevel, QuotaReading } from '@pmodules/Space/hooks/useSpaceQuota';
 import type { ReactNode } from 'react';
 
-const MUTED = 'text-zinc-500 dark:text-zinc-400';
+const MUTED = 'text-ui-fg-subtle';
 
 const FILL: Record<QuotaLevel, string> = {
   ok: 'bg-primary-500',
@@ -20,7 +20,7 @@ const FILL: Record<QuotaLevel, string> = {
 type DetailRow = { name: string; value: number };
 
 const Track = ({ percent, level = 'ok' }: { percent: number; level?: QuotaLevel }) => (
-  <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+  <div className="bg-ui-active h-1 w-full overflow-hidden rounded-full">
     <div className={clsx('h-full rounded-full', FILL[level])} style={{ width: `${Math.min(percent, 100)}%` }} />
   </div>
 );
@@ -31,7 +31,7 @@ const Allowance = ({ entry }: { entry: QuotaReading }) => (
     <div className="flex items-baseline justify-between gap-3">
       <span className={clsx('text-[11px]', MUTED)}>{entry.label}</span>
       <span className="text-[11px]">
-        <b className="text-zinc-800 dark:text-zinc-100">{format(entry.used)}</b>
+        <b className="text-ui-fg">{format(entry.used)}</b>
         <span className={MUTED}>{entry.unlimited ? ' · no limit' : ` / ${format(entry.quota)}`}</span>
       </span>
     </div>
@@ -54,7 +54,7 @@ const Section = ({ title, children }: { title: string; children: ReactNode }) =>
 const Breakdown = ({ name, value, rows }: { name: string; value: number; rows: DetailRow[] }) => (
   <div className="flex flex-col gap-1">
     <div className="flex items-baseline justify-between gap-3 text-xs">
-      <span className="font-semibold text-zinc-800 dark:text-zinc-100">{name}</span>
+      <span className="text-ui-fg font-semibold">{name}</span>
       <span className="font-semibold tabular-nums">{format(value)}</span>
     </div>
     {rows.length > 1 && (

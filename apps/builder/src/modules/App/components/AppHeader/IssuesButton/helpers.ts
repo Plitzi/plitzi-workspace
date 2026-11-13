@@ -1,7 +1,7 @@
 import type { IssuesLevel } from '@pmodules/Space/helpers/spaceIssues';
 
 export const LEVEL_TEXT: Record<IssuesLevel, string> = {
-  clean: 'text-zinc-500 dark:text-zinc-400',
+  clean: 'text-ui-fg-subtle',
   warnings: 'text-yellow-600 dark:text-yellow-400',
   errors: 'text-red-600 dark:text-red-400'
 };

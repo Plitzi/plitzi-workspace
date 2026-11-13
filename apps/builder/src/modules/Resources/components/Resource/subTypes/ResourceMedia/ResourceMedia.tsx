@@ -55,7 +55,7 @@ const ResourceMedia = ({
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={clsx(
-        'group relative flex cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        'group border-ui-line-strong relative flex cursor-grabbing overflow-hidden rounded-md border select-none',
         { 'w-full': type === 'image', 'min-h-20': type === 'video' },
         className
       )}

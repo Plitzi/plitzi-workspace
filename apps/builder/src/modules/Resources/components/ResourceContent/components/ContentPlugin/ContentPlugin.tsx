@@ -37,7 +37,7 @@ const ContentPlugin = ({
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-500"
           style={{ backgroundColor }}
         >
-          <div className="flex items-center justify-center rounded-sm bg-white p-1">
+          <div className="bg-ui-panel flex items-center justify-center rounded-sm p-1">
             <img src={icon} alt="" className="h-6 w-6" />
           </div>
         </div>

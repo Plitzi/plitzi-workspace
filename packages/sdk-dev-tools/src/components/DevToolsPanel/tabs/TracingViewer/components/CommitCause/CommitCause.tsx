@@ -32,9 +32,7 @@ const CommitCause = ({ commit, model, active, onSelectElement }: CommitCauseProp
     <>
       {triggers.length > 0 && (
         <span className="flex flex-wrap items-center gap-1">
-          <span className="mr-0.5 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
-            Triggered by
-          </span>
+          <span className="text-ui-fg-subtle mr-0.5 font-medium tracking-wide uppercase">Triggered by</span>
           {shownTriggers.map(node => (
             <button
               key={node.id}
@@ -49,25 +47,23 @@ const CommitCause = ({ commit, model, active, onSelectElement }: CommitCauseProp
               <span className="max-w-32 truncate">{node.name}</span>
             </button>
           ))}
-          {extraTriggers > 0 && <span className="text-zinc-400 dark:text-zinc-500">+{extraTriggers}</span>}
+          {extraTriggers > 0 && <span className="text-ui-fg-subtle">+{extraTriggers}</span>}
         </span>
       )}
       {commit.causes.length > 0 && (
         <span className="flex flex-wrap items-center gap-1">
-          <span className="mr-0.5 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
-            Store write
-          </span>
+          <span className="text-ui-fg-subtle mr-0.5 font-medium tracking-wide uppercase">Store write</span>
           {shownCauses.map(cause => (
             <span
               key={cause.path}
               title={cause.preview ? `${cause.path}\n${cause.preview}` : cause.path}
-              className="max-w-56 truncate rounded bg-zinc-500/10 px-1 py-0.5 font-mono text-[9px] text-zinc-600 dark:text-zinc-300"
+              className="text-ui-fg-muted max-w-56 truncate rounded bg-zinc-500/10 px-1 py-0.5 font-mono text-[9px]"
             >
               {cause.path}
-              {cause.preview && <span className="ml-1 text-zinc-400 dark:text-zinc-500">{cause.preview}</span>}
+              {cause.preview && <span className="text-ui-fg-subtle ml-1">{cause.preview}</span>}
             </span>
           ))}
-          {extraCauses > 0 && <span className="text-zinc-400 dark:text-zinc-500">+{extraCauses}</span>}
+          {extraCauses > 0 && <span className="text-ui-fg-subtle">+{extraCauses}</span>}
         </span>
       )}
     </>

@@ -42,8 +42,8 @@ const SettingsSection = ({
   return (
     <ContainerCollapsable collapsed={isCollapsed} onChange={setIsCollapsed}>
       <ContainerCollapsable.Header
-        className={clsx('h-8 bg-slate-100 px-1 hover:bg-slate-200/70 dark:bg-zinc-700/50 dark:hover:bg-zinc-700/60', {
-          'border-b border-gray-200 dark:border-zinc-700': isCollapsed
+        className={clsx('dark:bg-ui-active/50 dark:hover:bg-ui-hover/60 h-8 bg-slate-100 px-1 hover:bg-slate-200/70', {
+          'border-ui-line border-b': isCollapsed
         })}
         title={
           <div className="flex min-w-0 items-baseline gap-2">
@@ -51,7 +51,7 @@ const SettingsSection = ({
             <span
               className={clsx('truncate text-xs', {
                 'text-primary-500': highlight,
-                'text-gray-400 dark:text-zinc-500': !highlight
+                'text-ui-fg-subtle': !highlight
               })}
               title={summary}
             >
@@ -65,7 +65,7 @@ const SettingsSection = ({
       />
       <ContainerCollapsable.Content
         className={clsx('flex flex-col gap-3 px-1 py-2', {
-          'border-b border-gray-200 dark:border-zinc-700': !isCollapsed
+          'border-ui-line border-b': !isCollapsed
         })}
       >
         {children}

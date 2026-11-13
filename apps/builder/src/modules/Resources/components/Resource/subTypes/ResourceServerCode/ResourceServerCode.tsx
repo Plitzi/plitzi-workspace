@@ -35,15 +35,15 @@ const ResourceServerCode = ({
   return (
     <div
       className={clsx(
-        'group relative flex w-full flex-col gap-1 overflow-hidden rounded-md border border-gray-300 p-2 text-xs select-none dark:border-zinc-600',
+        'group border-ui-line-strong relative flex w-full flex-col gap-1 overflow-hidden rounded-md border p-2 text-xs select-none',
         className
       )}
       title={id}
     >
       <div className="flex items-center gap-2">
-        <i className="fa-solid fa-server text-gray-400 dark:text-zinc-500" />
-        <span className="font-semibold text-gray-700 dark:text-zinc-200">{serverCodeKindOf(id)}</span>
-        <span className="truncate font-mono text-gray-400 dark:text-zinc-500">{digest.slice(0, 12)}</span>
+        <i className="fa-solid fa-server text-ui-fg-subtle" />
+        <span className="text-ui-fg font-semibold">{serverCodeKindOf(id)}</span>
+        <span className="text-ui-fg-subtle truncate font-mono">{digest.slice(0, 12)}</span>
       </div>
       {inUse && (
         <span className="text-emerald-700 dark:text-emerald-400">
@@ -51,7 +51,7 @@ const ResourceServerCode = ({
           In use: {usedBy.join(', ')}
         </span>
       )}
-      {!inUse && <span className="text-gray-500 dark:text-zinc-400">Not used by any version</span>}
+      {!inUse && <span className="text-ui-fg-subtle">Not used by any version</span>}
       {!inUse && <ResourceRemoveButton onRemove={onRemove} />}
       {(isLoading || removing) && <ResourceLoading />}
     </div>

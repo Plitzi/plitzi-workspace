@@ -19,8 +19,8 @@ const MotionTriggerOption = ({ trigger, label, selected, onSelect }: MotionTrigg
       role="radio"
       aria-checked={selected}
       className={clsx('grow cursor-pointer rounded px-2 py-1 text-xs transition-colors', {
-        'bg-white font-medium text-gray-800 shadow-sm dark:bg-zinc-700 dark:text-zinc-100': selected,
-        'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200': !selected
+        'bg-ui-active text-ui-fg font-medium shadow-sm': selected,
+        'text-ui-fg-subtle hover:text-ui-fg': !selected
       })}
       onClick={handleSelect}
     >

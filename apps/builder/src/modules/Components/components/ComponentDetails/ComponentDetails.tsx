@@ -29,11 +29,9 @@ const ComponentDetails = ({ component }: ComponentDetailsProps) => {
   return (
     <div className="flex flex-col gap-2 pt-1 pb-2 pl-6">
       <ComponentPreview component={component} />
-      <span className="text-[11px] tracking-wider text-zinc-500 uppercase dark:text-zinc-400">Used in</span>
+      <span className="text-ui-fg-subtle text-[11px] tracking-wider uppercase">Used in</span>
       {groups.length === 0 && (
-        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-          Nothing places it yet: drag it onto a page to place it.
-        </span>
+        <span className="text-ui-fg-subtle text-[11px]">Nothing places it yet: drag it onto a page to place it.</span>
       )}
       {groups.map(group => (
         <UsageTreeGroup

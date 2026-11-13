@@ -13,7 +13,7 @@ export type MotionSummaryProps = {
 const MotionSummary = ({ sentence, problems, playing, onPlay }: MotionSummaryProps) => (
   <>
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <p role="status" className="m-0 min-w-0 grow basis-48 text-xs text-gray-800 dark:text-zinc-100">
+      <p role="status" className="text-ui-fg m-0 min-w-0 grow basis-48 text-xs">
         {sentence}
       </p>
       <Button size="xs" intent="secondary" disabled={problems.length > 0} onClick={onPlay}>
@@ -25,7 +25,7 @@ const MotionSummary = ({ sentence, problems, playing, onPlay }: MotionSummaryPro
         {problems.join(' · ')}
       </span>
     )}
-    <span className="text-xs text-gray-500 dark:text-zinc-400">
+    <span className="text-ui-fg-subtle text-xs">
       {playing
         ? 'The canvas is playing the motion; ⏸ in the header holds it still again.'
         : 'The canvas holds motion still while you edit.'}{' '}

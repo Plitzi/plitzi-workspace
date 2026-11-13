@@ -27,7 +27,7 @@ const Settings = ({ format = 'html', mediaBaseUrl = '', onUpdate }: SettingsProp
         onChange={update.text('mediaBaseUrl')}
         size="xs"
       />
-      <span className="text-xs text-gray-500">
+      <span className="text-ui-fg-subtle text-xs">
         Bind <strong>content</strong> to the body field of your record. Scripts, event handlers and javascript: URLs are
         removed before rendering.
       </span>

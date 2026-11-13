@@ -24,7 +24,7 @@ const ValueList = ({ label, keys, addLabel, onAdd, children }: ValueListProps) =
       <InspectorLabel keyValue={keys}>{label}</InspectorLabel>
       <button
         type="button"
-        className="focus-visible:outline-primary-500 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 transition-colors duration-150 hover:bg-gray-100 hover:text-zinc-900 focus-visible:outline-2 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="focus-visible:outline-primary-500 text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors duration-150 focus-visible:outline-2"
         title={addLabel}
         aria-label={addLabel}
         onClick={onAdd}

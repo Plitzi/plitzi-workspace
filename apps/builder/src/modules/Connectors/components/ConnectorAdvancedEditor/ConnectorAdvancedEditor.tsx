@@ -37,7 +37,7 @@ const ConnectorAdvancedEditor = ({ value, error, onChange }: ConnectorAdvancedEd
         onChange={onChange}
       />
       {error && <span className="text-xs text-red-600">{error}</span>}
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         Reference a credential by key — <code>{'{{credential.token}}'}</code> resolves on the server. The secret itself
         never leaves it, and neither does this manifest.
       </span>

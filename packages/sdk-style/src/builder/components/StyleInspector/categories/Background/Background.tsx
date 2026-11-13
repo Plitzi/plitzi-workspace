@@ -161,7 +161,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
           onAdd={handleAddLayer}
         >
           {!layers.length && (
-            <p className="m-0 rounded-md border border-dashed border-gray-300 px-3 py-2.5 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            <p className="border-ui-line-strong text-ui-fg-subtle m-0 rounded-md border border-dashed px-3 py-2.5 text-center text-xs">
               No layers. Add one for a gradient or an image.
             </p>
           )}

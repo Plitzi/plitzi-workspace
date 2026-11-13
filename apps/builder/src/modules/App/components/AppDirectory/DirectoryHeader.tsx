@@ -96,7 +96,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const sitemapTitle = sitemapOpen ? 'Back to the canvas' : 'See the pages as a map';
 
   return (
-    <div className="flex flex-col gap-2 border-b border-gray-300 pb-3 dark:border-zinc-700">
+    <div className="border-ui-line-strong flex flex-col gap-2 border-b pb-3">
       <PanelToolbar action={{ label: 'New page', onClick: () => void handleClickAddPage() }} />
       <div className="flex gap-2">
         <Button

@@ -21,9 +21,7 @@ const Message = ({ text }: MessageProps) => {
 
   return (
     <div className="flex flex-col items-start gap-0.5">
-      <p
-        className={`text-xs leading-relaxed break-words text-zinc-700 dark:text-zinc-200 ${long && !open ? 'line-clamp-3' : ''}`}
-      >
+      <p className={`text-ui-fg text-xs leading-relaxed break-words ${long && !open ? 'line-clamp-3' : ''}`}>
         <CodeText text={text} />
       </p>
       {long && (

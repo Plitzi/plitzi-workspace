@@ -11,8 +11,8 @@ export type FormSectionProps = {
 const FormSection = ({ title, hint, children }: FormSectionProps) => (
   <section className="flex flex-col gap-2" aria-label={title}>
     <div className="flex flex-col gap-0.5">
-      <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{title}</span>
-      {hint && <span className="text-xs text-gray-500 dark:text-zinc-400">{hint}</span>}
+      <span className="text-ui-fg text-sm font-semibold">{title}</span>
+      {hint && <span className="text-ui-fg-subtle text-xs">{hint}</span>}
     </div>
     {children}
   </section>

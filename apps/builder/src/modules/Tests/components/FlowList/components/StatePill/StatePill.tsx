@@ -17,9 +17,7 @@ const StatePill = ({ state, steps, className }: StatePillProps) => {
   switch (state.state) {
     case 'queued':
       return (
-        <span className={clsx(PILL, 'border-dashed border-gray-300 text-zinc-500 dark:border-zinc-600', className)}>
-          Queued
-        </span>
+        <span className={clsx(PILL, 'border-ui-line-strong text-ui-fg-subtle border-dashed', className)}>Queued</span>
       );
     case 'playing':
       return (
@@ -54,9 +52,7 @@ const StatePill = ({ state, steps, className }: StatePillProps) => {
         </span>
       );
     case 'stopped':
-      return (
-        <span className={clsx(PILL, 'border-gray-300 text-zinc-500 dark:border-zinc-600', className)}>Stopped</span>
-      );
+      return <span className={clsx(PILL, 'border-ui-line-strong text-ui-fg-subtle', className)}>Stopped</span>;
     case 'server':
       return (
         <span
@@ -68,9 +64,7 @@ const StatePill = ({ state, steps, className }: StatePillProps) => {
       );
     case 'idle':
       return (
-        <span className={clsx(PILL, 'border-dashed border-gray-300 text-zinc-400 dark:border-zinc-700', className)}>
-          Ready
-        </span>
+        <span className={clsx(PILL, 'border-ui-line-strong text-ui-fg-subtle border-dashed', className)}>Ready</span>
       );
   }
 };

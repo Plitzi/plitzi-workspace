@@ -23,20 +23,20 @@ const JobItem = ({ name, maxSeconds, selected, unsaved, onSelect }: JobItemProps
     <button
       type="button"
       className={clsx('flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left', {
-        'bg-white shadow-xs ring-1 ring-gray-200 dark:bg-zinc-800 dark:ring-zinc-700': selected,
-        'hover:bg-gray-100 dark:hover:bg-zinc-800/60': !selected
+        'bg-ui-raised ring-ui-line shadow-xs ring-1': selected,
+        'hover:bg-ui-hover': !selected
       })}
       onClick={handleSelect}
     >
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5">
-          <i className="fa-solid fa-layer-group shrink-0 text-[11px] text-gray-400 dark:text-zinc-500" />
-          <code className="truncate text-xs font-medium text-gray-900 dark:text-zinc-100">{name}</code>
+          <i className="fa-solid fa-layer-group text-ui-fg-subtle shrink-0 text-[11px]" />
+          <code className="text-ui-fg truncate text-xs font-medium">{name}</code>
         </span>
         <span
           className={clsx('shrink-0 rounded-sm px-1 font-mono text-[11px]', {
             'bg-primary-100 text-primary-800 dark:bg-primary-500/20 dark:text-primary-200': maxSeconds !== undefined,
-            'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400': maxSeconds === undefined
+            'bg-ui-raised text-ui-fg-subtle': maxSeconds === undefined
           })}
           title={limitTitle}
         >

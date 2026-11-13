@@ -166,11 +166,11 @@ const TestsArea = ({
     <div className="flex min-h-0 grow flex-col gap-4 overflow-hidden px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex min-w-0 items-center gap-2 text-sm">
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100">{spaceName}</span>
-          <i className="fa-solid fa-chevron-right text-[9px] text-zinc-400" />
+          <span className="text-ui-fg font-semibold">{spaceName}</span>
+          <i className="fa-solid fa-chevron-right text-ui-fg-subtle text-[9px]" />
           <span
             className={clsx('flex min-w-0 items-center gap-2 truncate', {
-              'text-zinc-700 dark:text-zinc-300': mode === 'idle' && !checking,
+              'text-ui-fg': mode === 'idle' && !checking,
               'text-primary-700 dark:text-primary-200': mode === 'playing',
               'text-red-600 dark:text-red-400': mode === 'recording' || checking
             })}
@@ -181,7 +181,7 @@ const TestsArea = ({
             <span className="truncate">{now}</span>
           </span>
         </div>
-        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Draft · {today()}</span>
+        <span className="text-ui-fg-subtle ml-auto text-xs">Draft · {today()}</span>
         <Button
           size="sm"
           intent="secondary"

@@ -85,7 +85,7 @@ const DevToolsPanel = ({
       onChange={handleResize}
     >
       <div
-        className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+        className="bg-ui-panel text-ui-fg flex h-full min-h-0 w-full flex-col overflow-hidden"
         {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}
       >
         <DevToolsHeader

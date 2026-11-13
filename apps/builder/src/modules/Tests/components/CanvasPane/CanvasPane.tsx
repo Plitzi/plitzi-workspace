@@ -45,17 +45,14 @@ const CanvasPane = ({ externalStyle }: CanvasPaneProps) => {
   return (
     <div className="flex min-h-0 min-w-0 grow justify-center overflow-hidden">
       <div
-        className={clsx(
-          'flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-gray-300 dark:border-zinc-700',
-          {
-            'w-full': displayMode === 'desktop',
-            'w-full max-w-3xl': displayMode === 'tablet',
-            'w-97.5': displayMode === 'mobile',
-            // Behind the page, the canvas' own theme — what shows while it is drawn anew for a play.
-            'bg-white': resolvedTheme === 'light',
-            'bg-zinc-950': resolvedTheme === 'dark'
-          }
-        )}
+        className={clsx('border-ui-line-strong flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border', {
+          'w-full': displayMode === 'desktop',
+          'w-full max-w-3xl': displayMode === 'tablet',
+          'w-97.5': displayMode === 'mobile',
+          // Behind the page, the canvas' own theme — what shows while it is drawn anew for a play.
+          'bg-ui-panel': resolvedTheme === 'light',
+          'bg-zinc-950': resolvedTheme === 'dark'
+        })}
         title={`${host}.plitzi.app${flow?.page && flow.page !== '/' ? flow.page : ''}`}
       >
         {/* Drawn once the area has its journeys and the chosen one open: before, it drew the editor's page, then drew

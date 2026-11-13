@@ -21,7 +21,7 @@ const SpacingMargin = ({
 }: SpacingMarginProps) => (
   <SpacingBox
     property="margin"
-    className="relative flex cursor-pointer flex-col rounded-md border border-dashed border-gray-300 select-none dark:border-zinc-600"
+    className="border-ui-line-strong relative flex cursor-pointer flex-col rounded-md border border-dashed select-none"
     values={values}
     fragmentSelected={fragmentSelected}
     onSelectFragment={onSelectFragment}

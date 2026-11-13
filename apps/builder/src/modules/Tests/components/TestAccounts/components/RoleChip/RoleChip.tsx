@@ -17,7 +17,7 @@ const RoleChip = ({ role, gone, onRemove }: RoleChipProps) => {
     <span
       title={gone ? `The space has no role "${role}" now: a journey plays without it` : undefined}
       className={clsx('inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[11px]', {
-        'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200': !gone,
+        'bg-ui-raised text-ui-fg': !gone,
         'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300': gone
       })}
     >
@@ -27,7 +27,7 @@ const RoleChip = ({ role, gone, onRemove }: RoleChipProps) => {
         <button
           type="button"
           title={`Take ${role} off`}
-          className="cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100"
+          className="text-ui-fg-subtle hover:text-ui-fg cursor-pointer"
           onClick={handleRemove}
         >
           <i className="fa-solid fa-xmark text-[10px]" />

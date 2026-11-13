@@ -147,7 +147,7 @@ const ResourceDirectory = ({
         {
           'border border-dashed border-orange-500 bg-orange-100 dark:bg-orange-950/20':
             items.length === 0 && !isDefault,
-          'bg-slate-100 dark:bg-zinc-800/60': items.length > 0 || isDefault,
+          'dark:bg-ui-raised/60 bg-slate-100': items.length > 0 || isDefault,
           'outline-2 -outline-offset-2 outline-black dark:outline-white': isDragging
         },
         className
@@ -174,9 +174,7 @@ const ResourceDirectory = ({
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
-          {items.length}
-        </div>
+        <div className="border-ui-line-strong text-ui-fg-subtle rounded border px-1 text-xs">{items.length}</div>
         {!isDefault && canRemove && (
           <Icon
             intent="danger"

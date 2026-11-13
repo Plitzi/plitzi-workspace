@@ -31,20 +31,16 @@ const ComponentBanner = ({ component, placements, shownAs, onShowAs }: Component
   const handleShowAs = useCallback((e: ChangeEvent<HTMLSelectElement>) => onShowAs(e.target.value), [onShowAs]);
 
   return (
-    <Flex
-      items="center"
-      gap={2}
-      className="border-b border-gray-200 bg-white px-3 py-1.5 dark:border-zinc-700 dark:bg-zinc-900"
-    >
+    <Flex items="center" gap={2} className="border-ui-line bg-ui-panel border-b px-3 py-1.5">
       <Icon icon={REUSE.component.icon} intent="primaryActive" />
       <span className="min-w-0 grow truncate text-sm">
         Editing component <b>{componentLabel(component)}</b> — every instance of it changes with what you edit here.
       </span>
       {placements.length > 0 && (
-        <label className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <label className="text-ui-fg-subtle flex shrink-0 items-center gap-1.5 text-xs">
           Shown as
           <select
-            className="max-w-56 rounded border border-gray-300 bg-white px-1.5 py-0.5 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            className="border-ui-line-strong bg-ui-raised text-ui-fg max-w-56 rounded border px-1.5 py-0.5 text-xs"
             title="Which instance's words and ground the canvas shows it with"
             value={shownAs}
             onChange={handleShowAs}

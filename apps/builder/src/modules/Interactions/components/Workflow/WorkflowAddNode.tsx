@@ -31,16 +31,16 @@ const WorkflowAddNode = ({
           <div
             className={clsx('h-4 w-0.5', {
               'bg-blue-500': topOpened,
-              'bg-gray-300 dark:bg-zinc-600': !topOpened
+              'bg-ui-line-strong': !topOpened
             })}
           />
         )}
         <div
           className={clsx(
-            'relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full bg-white group-hover:bg-blue-100 group-hover:text-blue-500 dark:bg-zinc-800 dark:group-hover:bg-blue-900/50',
+            'bg-ui-raised relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full group-hover:bg-blue-100 group-hover:text-blue-500 dark:group-hover:bg-blue-900/50',
             {
               'text-blue-500': topOpened || bottomOpened,
-              'text-gray-300 dark:text-zinc-600': !topOpened && !bottomOpened
+              'text-ui-fg-subtle': !topOpened && !bottomOpened
             }
           )}
           onClick={handleClick}
@@ -49,17 +49,17 @@ const WorkflowAddNode = ({
           <div
             className={clsx('h-3.5 w-7 rounded-t-full border-2 border-b-0! group-hover:border-blue-500', {
               'border-blue-500': topOpened,
-              'border-gray-300 dark:border-zinc-600': !topOpened
+              'border-ui-line-strong': !topOpened
             })}
           />
           <div
             className={clsx('h-3.5 w-7 rounded-b-full border-2 border-t-0! group-hover:border-blue-500', {
               'border-blue-500': bottomOpened,
-              'border-gray-300 dark:border-zinc-600': !bottomOpened
+              'border-ui-line-strong': !bottomOpened
             })}
           />
         </div>
-        {/* {concatenateBottom && <div className="bg-gray-700 group-hover:bg-gray-500 w-1 h-4" />} */}
+        {/* {concatenateBottom && <div className="bg-gray-700 group-hover:bg-ui-hover w-1 h-4" />} */}
       </div>
     </div>
   );

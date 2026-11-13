@@ -75,7 +75,7 @@ const FlagForm = ({
   );
 
   return (
-    <Form form={form} onSubmit={handleSubmit} className="gap-4 rounded border border-gray-300 p-2 dark:border-zinc-700">
+    <Form form={form} onSubmit={handleSubmit} className="border-ui-line-strong gap-4 rounded border p-2">
       <Form.Body gap={2}>
         <Form.Input name="name" label="Name" size="xs" disabled={!isNewRecord} />
         <Form.Input name="description" label="Description" placeholder="What it turns on" size="xs" />

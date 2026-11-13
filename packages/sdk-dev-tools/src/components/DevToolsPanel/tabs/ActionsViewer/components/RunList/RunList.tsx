@@ -16,9 +16,9 @@ const EMPTY_LOG =
 
 const RunList = ({ runs, total, selectedRunId, onSelect, onCancel }: RunListProps) => (
   <div className="flex min-w-0 grow flex-col overflow-auto">
-    {total === 0 && <div className="p-3 text-[11px] text-zinc-500 dark:text-zinc-400">{EMPTY_LOG}</div>}
+    {total === 0 && <div className="text-ui-fg-subtle p-3 text-[11px]">{EMPTY_LOG}</div>}
     {total > 0 && runs.length === 0 && (
-      <div className="p-3 text-[11px] text-zinc-500 dark:text-zinc-400">No run matches this filter.</div>
+      <div className="text-ui-fg-subtle p-3 text-[11px]">No run matches this filter.</div>
     )}
     {runs.map(run => (
       <RunRow key={run.id} run={run} selected={run.id === selectedRunId} onSelect={onSelect} onCancel={onCancel} />

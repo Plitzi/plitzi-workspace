@@ -23,42 +23,38 @@ const JobInspector = ({ job }: JobInspectorProps) => {
   const more = total - jobs.length;
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col overflow-auto border-l border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <header className="flex flex-col gap-1 border-b border-gray-200 px-4 py-4 dark:border-zinc-800">
+    <aside className="border-ui-line bg-ui-backdrop flex w-80 shrink-0 flex-col overflow-auto border-l">
+      <header className="border-ui-line flex flex-col gap-1 border-b px-4 py-4">
         <div className="flex items-center gap-2">
           <span className="bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-200 flex size-6 shrink-0 items-center justify-center rounded-md">
             <i className="fa-solid fa-layer-group text-[11px]" />
           </span>
-          <code className="truncate text-sm font-semibold text-gray-900 dark:text-zinc-50">{job.name}</code>
+          <code className="text-ui-fg truncate text-sm font-semibold">{job.name}</code>
           {!job.saved && (
             <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
               Not saved
             </span>
           )}
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-zinc-300">
+        <p className="text-ui-fg-muted mt-1 text-xs leading-relaxed">
           Long work of the space’s code: it runs on the server in slices, keeps what it saves, and can be paused.
         </p>
       </header>
       <InspectorSection title="Start it" hint="From a task or a route of these functions.">
-        <code className="rounded-sm bg-gray-100 px-1.5 py-1 text-[11px] break-all text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
-          {start}
-        </code>
+        <code className="bg-ui-raised text-ui-fg rounded-sm px-1.5 py-1 text-[11px] break-all">{start}</code>
       </InspectorSection>
       <InspectorSection title="Runs for" hint="Every slice together — never past what the plan allows.">
-        <span className="text-xs text-gray-700 dark:text-zinc-200">{runsFor}</span>
+        <span className="text-ui-fg text-xs">{runsFor}</span>
       </InspectorSection>
       <InspectorSection title="Who may watch it" hint="Its progress on a page: useJob(id), or a channel on $job:<id>.">
-        <span className="text-xs text-gray-700 dark:text-zinc-200">{watchLabel(job.watch)}</span>
-        {job.watch && <span className="text-[11px] text-gray-500 dark:text-zinc-400">And whoever started it.</span>}
+        <span className="text-ui-fg text-xs">{watchLabel(job.watch)}</span>
+        {job.watch && <span className="text-ui-fg-subtle text-[11px]">And whoever started it.</span>}
       </InspectorSection>
       <InspectorSection title="Runs" hint="This space’s, newest first — live while one moves.">
         {error && <Notice tone="danger">{error}</Notice>}
-        {!job.saved && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">Save the code, and the code can start it.</span>
-        )}
+        {!job.saved && <span className="text-ui-fg-subtle text-xs">Save the code, and the code can start it.</span>}
         {job.saved && !isLoading && jobs.length === 0 && !error && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-xs">
             Not started yet. A task or a route starts it with <code>{start}</code>.
           </span>
         )}
@@ -70,7 +66,7 @@ const JobInspector = ({ job }: JobInspectorProps) => {
           </ul>
         )}
         {more > 0 && (
-          <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-[11px]">
             {`+ ${String(more)} older — every one is in the dashboard’s Queue.`}
           </span>
         )}

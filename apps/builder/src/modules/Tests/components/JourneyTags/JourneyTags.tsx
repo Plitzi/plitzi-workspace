@@ -47,23 +47,20 @@ const JourneyTags = ({ tags = [], known, locked, onChange }: JourneyTagsProps) =
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+      className="text-ui-fg-muted flex flex-wrap items-center gap-1.5 text-xs"
       role="group"
       aria-label="Its tags"
       title="What it is about: the list is filtered by these"
     >
-      <i className="fa-solid fa-tag text-[11px] text-zinc-400" />
+      <i className="fa-solid fa-tag text-ui-fg-subtle text-[11px]" />
       {tags.map(tag => (
-        <span
-          key={tag}
-          className="flex items-center gap-1 rounded-full border border-gray-300 px-2 py-0.5 dark:border-zinc-700"
-        >
+        <span key={tag} className="border-ui-line-strong flex items-center gap-1 rounded-full border px-2 py-0.5">
           {tag}
           {!locked && (
             <button
               type="button"
               aria-label={`Untag ${tag}`}
-              className="text-zinc-400 hover:text-red-600"
+              className="text-ui-fg-subtle hover:text-red-600"
               onClick={handleRemove(tag)}
             >
               <i className="fa-solid fa-xmark" />

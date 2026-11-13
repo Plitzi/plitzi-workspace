@@ -12,9 +12,7 @@ const CodeText = ({ text }: CodeTextProps) =>
   partsOf(text).map((part, index) => (
     <Fragment key={index}>
       {part.code && (
-        <code className="rounded bg-zinc-100 px-1 font-mono text-[11px] [overflow-wrap:anywhere] dark:bg-zinc-800">
-          {part.text}
-        </code>
+        <code className="bg-ui-raised rounded px-1 font-mono text-[11px] [overflow-wrap:anywhere]">{part.text}</code>
       )}
       {!part.code && part.text}
     </Fragment>

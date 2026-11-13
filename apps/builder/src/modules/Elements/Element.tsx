@@ -21,12 +21,12 @@ const Element = ({ component }: ElementProps) => {
 
   return (
     <div
-      className="group flex cursor-grab flex-col items-center gap-1.5 rounded-lg border border-transparent px-1 py-2 text-center transition-colors hover:border-gray-200 hover:bg-gray-50 active:cursor-grabbing dark:hover:border-zinc-700 dark:hover:bg-zinc-800/70"
+      className="group hover:border-ui-line hover:bg-ui-hover flex cursor-grab flex-col items-center gap-1.5 rounded-lg border border-transparent px-1 py-2 text-center transition-colors active:cursor-grabbing"
       draggable
       onDragStart={onDragStart}
       title={summary ? `${label} — ${summary}` : label}
     >
-      <div className="group-hover:bg-primary-50 group-hover:text-primary-600 dark:group-hover:bg-primary-400/15 dark:group-hover:text-primary-300 flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-600 transition-colors dark:bg-zinc-800 dark:text-zinc-300">
+      <div className="group-hover:bg-primary-50 group-hover:text-primary-600 dark:group-hover:bg-primary-400/15 dark:group-hover:text-primary-300 bg-ui-raised text-ui-fg-muted flex size-9 shrink-0 items-center justify-center rounded-md transition-colors">
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
           <Icon intent="custom">
@@ -40,9 +40,7 @@ const Element = ({ component }: ElementProps) => {
           </Icon>
         )}
       </div>
-      <span className="line-clamp-2 w-full text-[11px] leading-tight break-words text-gray-700 dark:text-zinc-300">
-        {label}
-      </span>
+      <span className="text-ui-fg line-clamp-2 w-full text-[11px] leading-tight break-words">{label}</span>
     </div>
   );
 };

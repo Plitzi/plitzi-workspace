@@ -56,11 +56,11 @@ const LogInteractionFlow = ({
   return (
     <ContainerCollapsable
       className={clsx(
-        'last:border-b-none w-full border-b border-l-2 border-b-zinc-200 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50',
+        'last:border-b-none border-b-ui-line hover:bg-ui-hover w-full border-b border-l-2 px-2 py-1 transition-colors',
         {
           'border-l-emerald-500': status === 'completed',
           'border-l-red-500': status === 'failed',
-          'border-l-zinc-300 dark:border-l-zinc-600': status === 'skipped'
+          'border-l-ui-line-strong': status === 'skipped'
         }
       )}
       collapsed
@@ -72,7 +72,7 @@ const LogInteractionFlow = ({
         iconCollapsed={iconCollapsed}
         iconExpanded={iconExpanded}
       >
-        <div className="flex gap-3 text-zinc-400 dark:text-zinc-500">
+        <div className="text-ui-fg-subtle flex gap-3">
           {!!nodesFailed && (
             <LogStatusIcon logType="danger" title="Failed">
               {nodesFailed}

@@ -37,7 +37,7 @@ const ActionEvents = ({ actionId = '' }: ActionEventsProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+    <div className="border-ui-line flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Recent activity</span>
         <Button size="xs" disabled={isLoading} onClick={handleRefresh}>
@@ -45,28 +45,23 @@ const ActionEvents = ({ actionId = '' }: ActionEventsProps) => {
         </Button>
       </div>
       {data.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           Nothing yet. A run started by a page, a webhook or a schedule shows up here — including the deliveries that
           were refused before anything ran.
         </span>
       )}
       {data.map(event => (
-        <div
-          key={event.id}
-          className="flex flex-col rounded-md border border-gray-200 px-3 py-2 text-xs dark:border-zinc-800"
-        >
+        <div key={event.id} className="border-ui-line flex flex-col rounded-md border px-3 py-2 text-xs">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-gray-500 dark:text-zinc-400">
+            <span className="text-ui-fg-subtle">
               {when(event.createdAt)} · {event.trigger}
             </span>
             <span className={clsx('font-medium', toneOf(event))}>{event.refused ? event.reason : event.status}</span>
           </div>
           {!event.refused && event.status !== 'completed' && event.steps.length > 0 && (
-            <span className="mt-1 wrap-break-word text-gray-500 dark:text-zinc-400">{event.steps.join(' → ')}</span>
+            <span className="text-ui-fg-subtle mt-1 wrap-break-word">{event.steps.join(' → ')}</span>
           )}
-          {event.detail && (
-            <span className="mt-1 wrap-break-word text-gray-600 dark:text-zinc-300">{event.detail}</span>
-          )}
+          {event.detail && <span className="text-ui-fg-muted mt-1 wrap-break-word">{event.detail}</span>}
         </div>
       ))}
     </div>

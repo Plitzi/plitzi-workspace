@@ -71,7 +71,7 @@ const Runtime = () => {
       }
     >
       <PlanNotice capability="runtime" meanwhile="A runtime pushed is kept; it does not start until then." />
-      {isLoading && <span className="text-sm text-gray-500 dark:text-zinc-400">Loading…</span>}
+      {isLoading && <span className="text-ui-fg-subtle text-sm">Loading…</span>}
       {!isLoading && environments.length === 0 && (
         <EmptyState icon="fa-solid fa-server" title="No runtime yet" description={DESCRIPTION} />
       )}

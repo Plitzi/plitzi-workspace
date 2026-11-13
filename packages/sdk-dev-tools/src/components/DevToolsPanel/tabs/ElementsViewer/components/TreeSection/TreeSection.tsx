@@ -23,7 +23,7 @@ export type TreeSectionProps = {
 /** One tree of what is on screen — a layout, the page, a component — headed by what it is. */
 const TreeSection = ({ section, rows, more, selected, onSelect, onHover }: TreeSectionProps) => (
   <div className="flex flex-col">
-    <div className="sticky top-0 flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+    <div className="border-ui-line bg-ui-raised text-ui-fg-subtle sticky top-0 flex items-center gap-2 border-b px-2 py-1 text-[10px] font-semibold tracking-wider uppercase">
       <i className={ICON[section.kind]} />
       <span>{KIND[section.kind]}</span>
       <span className="truncate font-normal tracking-normal normal-case">{section.title}</span>
@@ -32,9 +32,7 @@ const TreeSection = ({ section, rows, more, selected, onSelect, onHover }: TreeS
       <TreeRow key={row.id} row={row} isSelected={selected === row.id} onSelect={onSelect} onHover={onHover} />
     ))}
     {more > 0 && (
-      <div className="p-2 text-center text-[11px] text-zinc-400 dark:text-zinc-600">
-        {more} more — narrow the search to reach them
-      </div>
+      <div className="text-ui-fg-subtle p-2 text-center text-[11px]">{more} more — narrow the search to reach them</div>
     )}
   </div>
 );

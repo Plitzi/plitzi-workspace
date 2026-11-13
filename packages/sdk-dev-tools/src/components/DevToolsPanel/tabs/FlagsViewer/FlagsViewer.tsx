@@ -36,15 +36,13 @@ const FlagsViewer = () => {
 
   if (!declared || names.length === 0) {
     return (
-      <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-600">
-        This space declares no feature flags
-      </div>
+      <div className="text-ui-fg-subtle py-4 text-center text-xs italic">This space declares no feature flags</div>
     );
   }
 
   return (
     <div className="flex w-full flex-col gap-1.5 overflow-y-auto p-3">
-      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+      <div className="text-ui-fg-subtle flex items-center justify-between gap-2 text-[10px] font-semibold tracking-wider uppercase">
         <span className="flex items-center gap-2">
           <i className="fa-solid fa-flag" />
           Feature Flags
@@ -52,14 +50,14 @@ const FlagsViewer = () => {
         {Object.keys(forced).length > 0 && (
           <button
             type="button"
-            className="rounded px-1.5 py-0.5 font-medium normal-case hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="hover:bg-ui-hover rounded px-1.5 py-0.5 font-medium normal-case"
             onClick={handleClearAll}
           >
             Stop forcing all
           </button>
         )}
       </div>
-      <div className="w-full overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
+      <div className="border-ui-line w-full overflow-hidden rounded border">
         {names.map(name => (
           <FlagsListItem
             key={name}

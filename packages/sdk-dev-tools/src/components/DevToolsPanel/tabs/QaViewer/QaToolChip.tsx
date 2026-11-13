@@ -34,8 +34,7 @@ const QaToolChip = ({ setting, label, icon, title, primary = false }: QaToolChip
           'border-violet-400/60 bg-violet-500/10 text-violet-700 dark:text-violet-300': on && !primary,
           'border-violet-300 text-violet-700 hover:bg-violet-500/10 dark:border-violet-500/50 dark:text-violet-300':
             !on && primary,
-          'border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800':
-            !on && !primary
+          'border-ui-line text-ui-fg-muted hover:bg-ui-hover': !on && !primary
         }
       )}
       onClick={handleClick}

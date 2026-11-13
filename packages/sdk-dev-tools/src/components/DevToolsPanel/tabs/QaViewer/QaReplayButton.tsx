@@ -25,7 +25,7 @@ const QaReplayButton = () => {
     <button
       type="button"
       title="Play the page's arrivals and loops again from the start"
-      className="flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-zinc-200 px-2 font-medium whitespace-nowrap text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      className="border-ui-line text-ui-fg-muted hover:bg-ui-hover flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 font-medium whitespace-nowrap transition-colors"
       onClick={handleClick}
     >
       <i className="fa-solid fa-rotate-left text-[10px]" />

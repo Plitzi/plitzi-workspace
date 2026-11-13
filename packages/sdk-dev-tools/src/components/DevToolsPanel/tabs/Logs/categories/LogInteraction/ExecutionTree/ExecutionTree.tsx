@@ -37,7 +37,7 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
 
   return (
     <div className={clsx('flex flex-col gap-1.5', className)}>
-      <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+      <div className="text-ui-fg-subtle flex items-center gap-1.5 px-2 text-[10px] font-semibold tracking-wider uppercase">
         <i className="fa-solid fa-code-merge" />
         Execution Tree
       </div>

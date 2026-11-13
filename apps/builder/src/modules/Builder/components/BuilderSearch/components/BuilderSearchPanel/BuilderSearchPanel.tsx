@@ -100,7 +100,7 @@ const BuilderSearchPanel = ({ onClose }: BuilderSearchPanelProps) => {
 
   return (
     <Flex direction="column" className="min-h-0 w-full">
-      <div className="border-b border-gray-200 p-3 dark:border-zinc-700">
+      <div className="border-ui-line border-b p-3">
         <Input
           ref={inputRef}
           placeholder="Element id, label, type or page name…"

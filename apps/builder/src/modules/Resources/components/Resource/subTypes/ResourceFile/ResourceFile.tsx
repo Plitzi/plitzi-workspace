@@ -53,13 +53,13 @@ const ResourceFile = ({
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={clsx(
-        'group relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        'group border-ui-line-strong relative flex w-full cursor-pointer flex-col justify-center overflow-hidden rounded-md border select-none',
         className
       )}
       onClick={onClick}
     >
       <div className="flex aspect-video h-full w-full grow items-center justify-center">
-        <i className="fa-solid fa-file fa-2x text-gray-300" title="Unknown" />
+        <i className="fa-solid fa-file fa-2x text-ui-fg-subtle" title="Unknown" />
       </div>
       {!isDragging && <ResourceRemoveButton onRemove={onRemove} />}
       {(isLoading || removing) && <ResourceLoading />}

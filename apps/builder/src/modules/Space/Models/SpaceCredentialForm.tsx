@@ -206,7 +206,7 @@ const SpaceCredentialForm = ({
       <Form.Body>
         <Form.Input name="name" label="Name" size="xs" />
         {editing && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-xs">
             The values this credential holds are never shown. Enter them all again: saving replaces every one.
           </span>
         )}

@@ -17,8 +17,8 @@ export type DataHeaderProps = {
 
 /** The panel's name and what it is for, where the files stand, and saving them. */
 const DataHeader = ({ state, canSave, isSaving, canDiscard, onSave, onDiscard }: DataHeaderProps) => (
-  <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-6 dark:border-zinc-800">
-    <p className="min-w-0 truncate text-sm text-gray-600 dark:text-zinc-400">
+  <header className="border-ui-line flex h-12 shrink-0 items-center justify-between gap-4 border-b px-6">
+    <p className="text-ui-fg-muted min-w-0 truncate text-sm">
       JSON the pages read on the server — <code>query: &apos;/data/&lt;file&gt;&apos;</code> with{' '}
       <code>runtime: &apos;server&apos;</code> — and never serve.
     </p>

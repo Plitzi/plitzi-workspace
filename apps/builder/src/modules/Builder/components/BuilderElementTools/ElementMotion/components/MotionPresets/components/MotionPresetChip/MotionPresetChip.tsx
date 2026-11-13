@@ -22,9 +22,8 @@ const MotionPresetChip = ({ value, label, selected, onSelect, onLook, onLookAway
       role="radio"
       aria-checked={selected}
       className={clsx('h-7 min-w-0 cursor-pointer truncate rounded border px-2 text-xs transition-colors', {
-        'border-primary-400 bg-primary-500/10 font-medium text-gray-900 dark:text-zinc-50': selected,
-        'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-50':
-          !selected
+        'border-primary-400 bg-primary-500/10 text-ui-fg font-medium': selected,
+        'border-ui-line text-ui-fg-muted hover:border-ui-line-strong hover:text-ui-fg': !selected
       })}
       onClick={handleSelect}
       onPointerEnter={handleLook}

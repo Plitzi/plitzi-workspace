@@ -33,7 +33,7 @@ const toggleClass = (active: boolean) =>
     'cursor-pointer rounded px-2 py-0.5 font-medium transition-colors',
     active
       ? 'bg-violet-500/15 text-violet-600 dark:text-violet-300'
-      : 'text-zinc-500 hover:bg-zinc-200/70 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100'
+      : 'text-ui-fg-subtle hover:bg-ui-hover/70 hover:text-ui-fg'
   );
 
 export type StoreViewerProps = {
@@ -78,8 +78,8 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
   return (
     <div className="flex h-full w-full flex-col">
       {!elementSelected && (
-        <div className="flex shrink-0 items-center gap-1 border-b border-zinc-200 px-2 py-1 text-[11px] dark:border-zinc-800">
-          <span className="mr-1 text-zinc-400 dark:text-zinc-500">View</span>
+        <div className="border-ui-line flex shrink-0 items-center gap-1 border-b px-2 py-1 text-[11px]">
+          <span className="text-ui-fg-subtle mr-1">View</span>
           <button className={toggleClass(view === 'own')} onClick={showOwn} title="Only this scope's own layer">
             Own
           </button>

@@ -61,7 +61,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
   );
 
   return (
-    <Flex className="group px-1 hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+    <Flex className="group hover:bg-ui-hover px-1">
       <Link to={id} relative="path" className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
@@ -96,7 +96,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
                 title={protection.says}
                 role="img"
                 aria-label={protection.says}
-                className="shrink-0 text-gray-400 dark:text-zinc-500"
+                className="text-ui-fg-subtle shrink-0"
               />
             )}
           </Flex>
@@ -111,7 +111,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
           />
         </Flex>
         {zoom && (
-          <div className="relative my-2 rounded-sm border border-gray-300 dark:border-zinc-700">
+          <div className="border-ui-line-strong relative my-2 rounded-sm border">
             <ContainerAutoScale className="flex h-37.5 w-full items-center justify-center overflow-hidden rounded-sm">
               <BuilderAreaPreview id={id} className="h-full w-full" previewMode />
             </ContainerAutoScale>

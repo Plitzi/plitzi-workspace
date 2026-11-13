@@ -4,7 +4,7 @@ export type SitemapPathProps = { path: string };
 
 /** A page's address, its dynamic segments (`:productId`) marked as what they are: a value, not a word. */
 const SitemapPath = ({ path }: SitemapPathProps) => (
-  <span className="truncate font-mono text-[11px] text-gray-500 dark:text-zinc-400" title={path}>
+  <span className="text-ui-fg-subtle truncate font-mono text-[11px]" title={path}>
     {path
       .split('/')
       .slice(1)

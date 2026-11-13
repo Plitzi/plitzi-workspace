@@ -11,15 +11,14 @@ export type RuntimeCodeNoteProps = {
  * Where a runtime's code comes from, said where the question comes up: nothing in the builder changes it. It is a
  * project of the space owner's own — Node, its packages — packed and pushed from there, and published with the space.
  */
-const CODE =
-  'rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[12px] text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200';
+const CODE = 'rounded bg-ui-raised px-1.5 py-0.5 font-mono text-[12px] text-ui-fg';
 
 const STEP =
   'flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-200';
 
 /** How a runtime gets here: it is written in a project of the author's and pushed, never edited in the builder. */
 const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
-  <div className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 text-sm leading-relaxed text-gray-600 dark:border-zinc-800 dark:text-zinc-300">
+  <div className="border-ui-line text-ui-fg-muted flex flex-col gap-4 rounded-lg border p-4 text-sm leading-relaxed">
     <p>
       {pushed ? 'Its code' : 'The code'} lives in a project of yours — a folder, usually a repository — as{' '}
       <code className={CODE}>src/runtime.ts</code>, whose default export is{' '}
@@ -45,7 +44,7 @@ const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
         <span>Publish the space — its published site starts on the same code.</span>
       </li>
     </ol>
-    <p className="text-xs text-gray-500 dark:text-zinc-400">
+    <p className="text-ui-fg-subtle text-xs">
       A project made with <code className={CODE}>plitzi create</code> in server mode has what a push needs; any other,{' '}
       <code className={CODE}>npm install @plitzi/sdk-server @plitzi/sdk-runtime</code>.
       {idleMinutes > 0 &&

@@ -21,7 +21,7 @@ const ExportChanges = ({ corrections }: ExportChangesProps) => {
 
   return (
     <div className="h-full overflow-auto">
-      <p className="border-b border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-700/70 dark:text-zinc-400">
+      <p className="border-ui-line text-ui-fg-subtle border-b px-4 py-3 text-xs">
         Leftovers an older builder wrote, tidied on the way. The code still builds the same page.
       </p>
       {groups.map(group => (

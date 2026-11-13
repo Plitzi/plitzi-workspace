@@ -16,7 +16,7 @@ const InputEasingButton = ({ children, title = '', className = '', onClick }: In
       title={title}
       onClick={onClick}
       className={clsx(
-        'hover:text-primary-600 dark:hover:text-primary-300 m-0.5 h-7 w-7 cursor-pointer rounded-md p-1 text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+        'hover:text-primary-600 dark:hover:text-primary-300 text-ui-fg-muted hover:bg-ui-hover m-0.5 h-7 w-7 cursor-pointer rounded-md p-1',
         className
       )}
     >

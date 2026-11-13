@@ -48,13 +48,13 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
     <div className="@container flex flex-col gap-2">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span id={triggerLabel} className="w-12 shrink-0 text-xs text-gray-600 dark:text-zinc-300">
+          <span id={triggerLabel} className="text-ui-fg-muted w-12 shrink-0 text-xs">
             Plays
           </span>
           <div
             role="radiogroup"
             aria-labelledby={triggerLabel}
-            className="grid grow grid-cols-3 gap-0.5 rounded-md bg-gray-100 p-0.5 dark:bg-zinc-800"
+            className="bg-ui-raised grid grow grid-cols-3 gap-0.5 rounded-md p-0.5"
           >
             {MOTION_TRIGGERS.map(name => (
               <MotionTriggerOption
@@ -67,7 +67,7 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
             ))}
           </div>
         </div>
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{TRIGGER_COPY[trigger].hint}</span>
+        <span className="text-ui-fg-subtle text-xs">{TRIGGER_COPY[trigger].hint}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 @min-[320px]:grid-cols-3">
         <Input
@@ -115,7 +115,7 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
       {canHoldItems && (
         <div className="flex flex-col gap-1">
           <Switch size="xs" label="Children arrive one by one" checked={staggered} onChange={handleStaggered} />
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-xs">
             Each child a moment after the one before, rather than the element as a whole — a grid of cards, a
             list&apos;s rows. Up to the first 24.
           </span>

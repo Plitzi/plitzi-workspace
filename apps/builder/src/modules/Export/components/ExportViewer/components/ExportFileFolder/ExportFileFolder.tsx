@@ -24,11 +24,11 @@ const ExportFileFolder = ({ folder, selectedPath, onSelect }: ExportFileFolderPr
         type="button"
         onClick={handleToggle}
         aria-expanded={open}
-        className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        className="text-ui-fg hover:bg-ui-hover flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-xs font-medium"
       >
         <i
           className={clsx(
-            'fa-solid fa-chevron-right w-2.5 shrink-0 text-[9px] text-zinc-400 transition-transform',
+            'fa-solid fa-chevron-right text-ui-fg-subtle w-2.5 shrink-0 text-[9px] transition-transform',
             open && 'rotate-90'
           )}
         />
@@ -39,10 +39,10 @@ const ExportFileFolder = ({ folder, selectedPath, onSelect }: ExportFileFolderPr
           )}
         />
         <span className="grow truncate">{folder.name}</span>
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">{folder.paths.length}</span>
+        <span className="text-ui-fg-subtle text-[11px]">{folder.paths.length}</span>
       </button>
       {open && (
-        <div className="mt-0.5 ml-[13px] space-y-0.5 border-l border-zinc-200 pl-1 dark:border-zinc-700">
+        <div className="border-ui-line mt-0.5 ml-[13px] space-y-0.5 border-l pl-1">
           {folder.paths.map(path => (
             <ExportFileItem
               key={path}

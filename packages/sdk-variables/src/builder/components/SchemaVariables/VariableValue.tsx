@@ -9,7 +9,7 @@ const VariableValue = ({ type, value }: VariableValueProps) => {
     <div className="flex items-center gap-1 truncate text-xs">
       {type === 'color' && (
         <div
-          className="min-h-3 min-w-3 rounded-sm border border-gray-300"
+          className="border-ui-line-strong min-h-3 min-w-3 rounded-sm border"
           title={value}
           style={{ backgroundColor: value }}
         />

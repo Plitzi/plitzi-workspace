@@ -55,12 +55,9 @@ const ChannelCard = ({ pattern, draft, problems = [], onChange, onRemove }: Chan
   const handleRemove = useCallback(() => onRemove(pattern), [onRemove, pattern]);
 
   return (
-    <div
-      className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 dark:border-zinc-700"
-      data-channel={pattern}
-    >
+    <div className="border-ui-line flex flex-col gap-3 rounded-lg border p-3" data-channel={pattern}>
       <div className="flex items-center justify-between gap-2">
-        <code className="truncate text-sm font-semibold text-gray-900 dark:text-zinc-50">{pattern}</code>
+        <code className="text-ui-fg truncate text-sm font-semibold">{pattern}</code>
         <Button size="xs" intent="danger" onClick={handleRemove}>
           Remove
         </Button>

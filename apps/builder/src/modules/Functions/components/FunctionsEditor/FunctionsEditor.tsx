@@ -86,15 +86,15 @@ const FunctionsEditor = ({
 
   return (
     <div className="flex min-w-0 grow basis-0 flex-col overflow-hidden">
-      <div className="flex h-9 shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-3 dark:border-zinc-800">
+      <div className="border-ui-line flex h-9 shrink-0 items-center justify-between gap-3 border-b px-3">
         <nav className="flex min-w-0 items-center gap-1 font-mono text-xs" aria-label="File">
           {segments.map((segment, index) => (
             <Fragment key={`${String(index)}:${segment}`}>
-              {index > 0 && <span className="text-gray-300 dark:text-zinc-600">/</span>}
+              {index > 0 && <span className="text-ui-fg-subtle">/</span>}
               <span
                 className={clsx('truncate', {
-                  'font-medium text-gray-900 dark:text-zinc-100': index === segments.length - 1,
-                  'text-gray-500 dark:text-zinc-400': index < segments.length - 1
+                  'text-ui-fg font-medium': index === segments.length - 1,
+                  'text-ui-fg-subtle': index < segments.length - 1
                 })}
               >
                 {segment}
@@ -104,13 +104,13 @@ const FunctionsEditor = ({
           {modified && <span className="ml-1 size-1.5 shrink-0 rounded-full bg-amber-500" title="Unsaved changes" />}
         </nav>
         <span
-          className="flex shrink-0 items-center gap-1.5 text-[11px] text-gray-500 dark:text-zinc-400"
+          className="text-ui-fg-subtle flex shrink-0 items-center gap-1.5 text-[11px]"
           title={checking ? 'Types and errors are checked as you type' : 'Checked when you save'}
         >
           <span
             className={clsx('size-1.5 rounded-full', {
               'bg-green-500': checking,
-              'bg-gray-300 dark:bg-zinc-600': !checking
+              'bg-ui-line-strong': !checking
             })}
           />
           TypeScript

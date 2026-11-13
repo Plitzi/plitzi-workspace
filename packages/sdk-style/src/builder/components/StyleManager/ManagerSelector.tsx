@@ -354,7 +354,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r border-gray-300 bg-gray-50/70 px-2 pt-2 dark:border-zinc-700 dark:bg-zinc-950/40">
+    <div className="border-ui-line-strong bg-ui-backdrop/70 flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r px-2 pt-2">
       <div className="flex items-center gap-1.5">
         <div className="grow">
           <Input
@@ -373,7 +373,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
           New
         </Button>
       </div>
-      <div className="flex gap-0.5 rounded-md bg-gray-100 p-0.5 dark:bg-zinc-800/70" role="tablist">
+      <div className="bg-ui-raised flex gap-0.5 rounded-md p-0.5" role="tablist">
         {FILTERS.map(({ id, label }) => (
           <button
             key={id}
@@ -383,8 +383,8 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
             className={clsx(
               'flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded px-1 py-1 text-[11px] font-medium whitespace-nowrap',
               {
-                'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-50': filter === id,
-                'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100': filter !== id
+                'bg-ui-active text-ui-fg shadow-sm': filter === id,
+                'text-ui-fg-subtle hover:text-ui-fg': filter !== id
               }
             )}
             title={`${label} · ${byFilter[id].length.toLocaleString('en')}`}
@@ -414,7 +414,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
         </div>
       )}
       {filter === 'unused' && byFilter.unused.length > 0 && checkedSelectors.length === 0 && (
-        <div className="flex items-center justify-between gap-2 px-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex items-center justify-between gap-2 px-1 text-xs">
           <span>No element wears these classes.</span>
           <Button size="xs" onClick={handleCheckUnused}>
             Select all
@@ -423,7 +423,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       )}
       {checkedSelectors.length > 0 && (
         <div className="bg-secondary-50 dark:bg-secondary-900/30 flex items-center justify-between gap-2 rounded-md px-2 py-1">
-          <span className="text-xs text-zinc-600 dark:text-zinc-300">{checkedSelectors.length} selected</span>
+          <span className="text-ui-fg-muted text-xs">{checkedSelectors.length} selected</span>
           <div className="flex gap-1">
             <Button size="xs" onClick={handleClearChecked}>
               Clear
@@ -446,7 +446,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
             return (
               <h6
                 key={item.key}
-                className="flex h-7 shrink-0 items-center justify-between px-2 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+                className="text-ui-fg-subtle flex h-7 shrink-0 items-center justify-between px-2 text-[10px] font-semibold tracking-wider uppercase"
               >
                 {item.title}
                 <span className="font-normal tabular-nums">{item.count}</span>
@@ -460,19 +460,19 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
                 key={item.key}
                 type="button"
                 aria-expanded={item.open}
-                className="flex h-7 w-full shrink-0 cursor-pointer items-center gap-2 pr-2 pl-2 text-left text-xs text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="text-ui-fg-muted hover:bg-ui-hover flex h-7 w-full shrink-0 cursor-pointer items-center gap-2 pr-2 pl-2 text-left text-xs"
                 onClick={handleToggleGroup(item.prefix)}
               >
                 <i
                   className={clsx(
-                    'fa-solid w-4 text-center text-[9px] text-zinc-400 dark:text-zinc-500',
+                    'fa-solid text-ui-fg-subtle w-4 text-center text-[9px]',
                     item.open ? 'fa-chevron-down' : 'fa-chevron-right'
                   )}
                 />
                 <span className={clsx('grow truncate', { 'font-mono': item.prefix !== OTHER })}>
                   {item.prefix === OTHER ? OTHER : `${item.prefix}…`}
                 </span>
-                <span className="text-[11px] text-zinc-400 tabular-nums dark:text-zinc-500">{item.count}</span>
+                <span className="text-ui-fg-subtle text-[11px] tabular-nums">{item.count}</span>
               </button>
             );
           }
@@ -500,7 +500,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
         })}
         <div style={{ height: windowed.after }} className="shrink-0" />
         {finalSelectors.length === 0 && (
-          <p className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle px-2 py-6 text-center text-xs">
             {searchInput
               ? 'No selector matches the search.'
               : filter === 'unused'

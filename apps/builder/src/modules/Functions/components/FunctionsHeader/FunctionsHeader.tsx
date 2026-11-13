@@ -29,8 +29,8 @@ const FunctionsHeader = ({
   onDiscard,
   onRemove
 }: FunctionsHeaderProps) => (
-  <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-6 dark:border-zinc-800">
-    <p className="min-w-0 truncate text-sm text-gray-600 dark:text-zinc-400">
+  <header className="border-ui-line flex h-12 shrink-0 items-center justify-between gap-4 border-b px-6">
+    <p className="text-ui-fg-muted min-w-0 truncate text-sm">
       Server code in TypeScript: tasks are steps any action runs, routes answer HTTP under <code>/fn</code>.
     </p>
     <div className="flex shrink-0 items-center gap-2">

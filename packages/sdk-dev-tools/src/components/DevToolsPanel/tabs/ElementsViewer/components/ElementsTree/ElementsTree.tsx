@@ -32,12 +32,12 @@ const ElementsTree = ({ sections, filter, selected, onFilter, onSelect, onHover 
   );
 
   return (
-    <div className="flex h-full w-[320px] shrink-0 flex-col gap-2 border-r border-zinc-200 dark:border-zinc-700">
+    <div className="border-ui-line flex h-full w-[320px] shrink-0 flex-col gap-2 border-r">
       <div className="px-2 pt-2">
         <Input value={filter} onChange={onFilter} placeholder="Search by name, id or type..." size="sm" />
       </div>
       <div className="flex flex-col overflow-y-auto text-xs">
-        {shown.length === 0 && <div className="p-4 text-center text-zinc-400 dark:text-zinc-600">No elements</div>}
+        {shown.length === 0 && <div className="text-ui-fg-subtle p-4 text-center">No elements</div>}
         {shown.map(({ section, rows }) => (
           <TreeSection
             key={`${section.kind}-${section.id}`}

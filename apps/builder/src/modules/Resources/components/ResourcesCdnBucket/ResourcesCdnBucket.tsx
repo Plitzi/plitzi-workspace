@@ -178,13 +178,10 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
   }, [bucket, cdnIdentifier, mutateNetwork, onChange, showDialog]);
 
   return (
-    <div className="group/bucket flex flex-col gap-2 rounded-md border border-gray-200 p-2 dark:border-zinc-700">
+    <div className="group/bucket border-ui-line flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-2">
-        <Icon icon={isPrivate ? 'fa-solid fa-lock' : 'fa-solid fa-bucket'} size="xs" className="text-gray-500" />
-        <span
-          className="max-w-1/2 shrink-0 truncate text-sm font-semibold text-gray-700 dark:text-zinc-200"
-          title={bucket.bucketName}
-        >
+        <Icon icon={isPrivate ? 'fa-solid fa-lock' : 'fa-solid fa-bucket'} size="xs" className="text-ui-fg-subtle" />
+        <span className="text-ui-fg max-w-1/2 shrink-0 truncate text-sm font-semibold" title={bucket.bucketName}>
           {bucket.name}
         </span>
         {isPrivate && (
@@ -196,11 +193,11 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
           </span>
         )}
         {!isPrivate && (
-          <span className="min-w-0 truncate text-xs text-gray-400 dark:text-zinc-500" title={bucket.domain}>
+          <span className="text-ui-fg-subtle min-w-0 truncate text-xs" title={bucket.domain}>
             {bucket.domain}
           </span>
         )}
-        <span className="ml-auto rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+        <span className="border-ui-line-strong text-ui-fg-subtle ml-auto rounded border px-1 text-xs">
           {finalResources.length}
         </span>
         <Icon
@@ -218,7 +215,7 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
         />
       </div>
       {isPrivate && (
-        <p className="text-xs text-gray-500 dark:text-zinc-400">
+        <p className="text-ui-fg-subtle text-xs">
           Where this space keeps its server code — its functions and runtime, written when they are saved or pushed. Its
           files have no public address, so plugins, images and snippets go in a public bucket.
         </p>

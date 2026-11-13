@@ -16,7 +16,7 @@ const SidebarToggle = ({ open, onToggle, className }: SidebarToggleProps) => (
       'flex h-4 w-4 items-center justify-center rounded text-[10px]',
       open
         ? 'bg-violet-500/15 text-violet-600 dark:text-violet-300'
-        : 'text-zinc-400 hover:bg-zinc-500/10 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300',
+        : 'text-ui-fg-subtle hover:bg-ui-hover/10 hover:text-ui-fg',
       className
     )}
   >

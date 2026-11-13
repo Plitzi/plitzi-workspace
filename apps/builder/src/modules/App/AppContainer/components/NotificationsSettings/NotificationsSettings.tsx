@@ -98,7 +98,7 @@ const NotificationsSettings = () => {
 
   return (
     <ViewSection title="Notifications">
-      <p className="text-xs text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle text-xs">
         How the toasts an Add Notification step shows look — the toast, its icon, its close button and its progress bar.
         One CSS value each; a token follows the theme. Left empty, the library&apos;s own.
       </p>

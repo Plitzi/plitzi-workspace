@@ -65,22 +65,22 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
   const handleClickNext = useCallback(() => navigate(1), [navigate]);
 
   return (
-    <div className="mx-2 my-1.5 flex flex-col gap-2 rounded border border-zinc-200 bg-zinc-50 font-mono dark:border-zinc-700 dark:bg-zinc-800/50">
+    <div className="border-ui-line bg-ui-raised mx-2 my-1.5 flex flex-col gap-2 rounded border font-mono">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-200 px-2 py-1 dark:border-zinc-700">
+      <div className="border-ui-line flex items-center justify-between border-b px-2 py-1">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 text-zinc-500 dark:text-zinc-400">path</span>
-          <span className="truncate text-zinc-400 dark:text-zinc-500">{path ?? '(full state)'}</span>
+          <span className="text-ui-fg-subtle shrink-0">path</span>
+          <span className="text-ui-fg-subtle truncate">{path ?? '(full state)'}</span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {hasDiffs && (
-            <span className="text-zinc-400 tabular-nums dark:text-zinc-600">
+            <span className="text-ui-fg-subtle tabular-nums">
               {activeHunk + 1}/{hunks.length}
             </span>
           )}
           <button
             className={clsx(
-              'rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600',
+              'bg-ui-active text-ui-fg-muted hover:bg-ui-hover rounded px-2 py-0.5 text-xs transition-colors',
               { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isFirst }
             )}
             disabled={!hasDiffs || isFirst}
@@ -90,7 +90,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
           </button>
           <button
             className={clsx(
-              'rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600',
+              'bg-ui-active text-ui-fg-muted hover:bg-ui-hover rounded px-2 py-0.5 text-xs transition-colors',
               { 'cursor-not-allowed opacity-30 dark:cursor-not-allowed dark:opacity-30': !hasDiffs || isLast }
             )}
             disabled={!hasDiffs || isLast}
@@ -102,8 +102,8 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
       </div>
 
       {/* Diff content */}
-      <pre ref={containerRef} className="max-h-64 overflow-auto bg-zinc-50 text-xs leading-5 dark:bg-zinc-800">
-        {!hasDiffs && <div className="px-3 py-2 text-zinc-400 italic dark:text-zinc-600">No changes</div>}
+      <pre ref={containerRef} className="bg-ui-raised max-h-64 overflow-auto text-xs leading-5">
+        {!hasDiffs && <div className="text-ui-fg-subtle px-3 py-2 italic">No changes</div>}
 
         {sections.map((section, idx) => {
           if (section.kind === 'separator') {
@@ -115,7 +115,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
                 data-hunk={section.hunkIndex}
                 className={clsx('px-3', {
                   'bg-violet-50 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400': isActive,
-                  'text-zinc-400 dark:text-zinc-700': !isActive
+                  'text-ui-fg-subtle': !isActive
                 })}
               >
                 @@ hunk {section.hunkIndex + 1}/{section.total} @@
@@ -159,7 +159,7 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
           }
 
           return (
-            <div key={diffIndex} className="px-3 text-zinc-400 dark:text-zinc-600">
+            <div key={diffIndex} className="text-ui-fg-subtle px-3">
               {'  '}
               {line.text}
             </div>

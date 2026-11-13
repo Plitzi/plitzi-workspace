@@ -64,14 +64,11 @@ const FlowRow = ({
 
   return (
     <li
-      className={clsx(
-        'group relative flex gap-2.5 border-b border-gray-200 py-2 pr-2.5 pl-3 last:border-b-0 dark:border-zinc-800',
-        {
-          'bg-primary-50 before:bg-primary-500 dark:bg-primary-400/10 before:absolute before:inset-y-0 before:left-0 before:w-0.5':
-            chosen,
-          'cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/60': !chosen && selectable
-        }
-      )}
+      className={clsx('group border-ui-line relative flex gap-2.5 border-b py-2 pr-2.5 pl-3 last:border-b-0', {
+        'bg-primary-50 before:bg-primary-500 dark:bg-primary-400/10 before:absolute before:inset-y-0 before:left-0 before:w-0.5':
+          chosen,
+        'hover:bg-ui-hover cursor-pointer': !chosen && selectable
+      })}
       onClick={chosen || !selectable ? undefined : () => onSelect(journey.id)}
     >
       <span
@@ -80,21 +77,21 @@ const FlowRow = ({
           {
             'border-primary-ui bg-primary-500 text-white': playing,
             'border-primary-ui text-primary-700 dark:text-primary-200': chosen && !playing,
-            'border-gray-300 text-zinc-500 dark:border-zinc-600 dark:text-zinc-400': !chosen && !playing
+            'border-ui-line-strong text-ui-fg-subtle': !chosen && !playing
           }
         )}
       >
         {letter}
       </span>
       <div className="flex min-w-0 grow flex-col gap-0.5">
-        <span className="flex min-w-0 items-start gap-1.5 text-[13px] leading-snug font-medium text-zinc-900 dark:text-zinc-100">
+        <span className="text-ui-fg flex min-w-0 items-start gap-1.5 text-[13px] leading-snug font-medium">
           <NeedsLook problems={problems} />
           <span className="line-clamp-2 min-w-0">
             {journey.title || 'A new journey'}
             {unsaved && <span className="text-primary-text font-normal"> · not saved</span>}
           </span>
         </span>
-        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle flex min-w-0 items-center gap-1.5 text-[11px]">
           <i className={clsx(device.icon, 'w-3 shrink-0 text-center text-[10px]')} title={device.label} />
           {journey.as && (
             <span className="flex shrink-0 items-center gap-1" title={`Plays as the test account ${journey.as}`}>
@@ -112,7 +109,7 @@ const FlowRow = ({
                 key={each}
                 className={clsx('rounded-full border px-1.5 text-[10px] leading-4', {
                   'border-primary-400 text-primary-700 dark:text-primary-200': each === tag,
-                  'border-gray-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400': each !== tag
+                  'border-ui-line text-ui-fg-subtle': each !== tag
                 })}
               >
                 {each}
@@ -135,7 +132,7 @@ const FlowRow = ({
               type="button"
               title="Remove this journey"
               aria-label={`Remove ${journey.title || journey.id}`}
-              className="invisible col-start-1 row-start-1 flex h-5 cursor-pointer items-center gap-1 rounded px-1.5 text-[11px] text-zinc-500 group-focus-within:visible group-hover:visible hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+              className="text-ui-fg-subtle invisible col-start-1 row-start-1 flex h-5 cursor-pointer items-center gap-1 rounded px-1.5 text-[11px] group-focus-within:visible group-hover:visible hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
               onClick={event => {
                 event.stopPropagation();
                 onRemove(journey.id);
@@ -151,7 +148,7 @@ const FlowRow = ({
             type="button"
             title={onServer.ok ? 'Passed on the server: view the run' : 'Failed on the server: view the run'}
             className={clsx(
-              'flex h-5 cursor-pointer items-center gap-1 rounded px-1 text-[10px] font-medium hover:bg-gray-100 dark:hover:bg-zinc-800',
+              'hover:bg-ui-hover flex h-5 cursor-pointer items-center gap-1 rounded px-1 text-[10px] font-medium',
               onServer.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
             )}
             onClick={event => {

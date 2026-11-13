@@ -18,12 +18,7 @@ const MetricToggle = ({ metric, onChange, className }: MetricToggleProps) => {
   const handleChange = useCallback((next: DurationMetric) => () => onChange(next), [onChange]);
 
   return (
-    <div
-      className={clsx(
-        'flex items-center overflow-hidden rounded border border-zinc-200 dark:border-zinc-700',
-        className
-      )}
-    >
+    <div className={clsx('border-ui-line flex items-center overflow-hidden rounded border', className)}>
       {OPTIONS.map(option => (
         <button
           key={option.id}
@@ -32,7 +27,7 @@ const MetricToggle = ({ metric, onChange, className }: MetricToggleProps) => {
           onClick={handleChange(option.id)}
           className={clsx('px-1.5 py-0.5 text-[10px] font-medium', {
             'bg-violet-500 text-white': metric === option.id,
-            'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700': metric !== option.id
+            'text-ui-fg-subtle hover:bg-ui-hover': metric !== option.id
           })}
         >
           {option.label}

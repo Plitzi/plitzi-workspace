@@ -97,10 +97,10 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
           <Label size="xs">Credential</Label>
           <div className="flex items-center gap-2">
             <div
-              className="flex h-7 grow items-center truncate rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-700"
+              className="border-ui-line-strong flex h-7 grow items-center truncate rounded-sm border px-2 text-xs"
               title={fieldDocs.credential}
             >
-              {manifest.credential || <span className="text-gray-400">None — public API</span>}
+              {manifest.credential || <span className="text-ui-fg-subtle">None — public API</span>}
             </div>
             <SpaceCredentialSelectorModal
               providersSupported={CREDENTIAL_PROVIDERS}
@@ -176,7 +176,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
           ))}
         </Select>
         {paginationDoc && (
-          <div className="flex gap-2 rounded-sm bg-gray-100 p-2 text-xs text-gray-600 dark:bg-zinc-800 dark:text-zinc-300">
+          <div className="bg-ui-raised text-ui-fg-muted flex gap-2 rounded-sm p-2 text-xs">
             <Icon icon="fa-solid fa-circle-info" />
             <span>{paginationDoc.description}</span>
           </div>

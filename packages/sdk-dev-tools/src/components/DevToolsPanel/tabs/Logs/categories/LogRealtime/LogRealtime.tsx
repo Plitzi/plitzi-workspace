@@ -40,15 +40,15 @@ export type LogRealtimeProps = {
 // topic the server would not carry here — with why, which is the one thing a silent channel never says by itself.
 const LogRealtime = ({ logType, time, message, params }: LogRealtimeProps) => (
   <ContainerCollapsable
-    className="last:border-b-none w-full border-b border-l-2 border-b-zinc-200 border-l-sky-500 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50"
+    className="last:border-b-none border-b-ui-line hover:bg-ui-hover w-full border-b border-l-2 border-l-sky-500 px-2 py-1 transition-colors"
     collapsed
   >
     <ContainerCollapsable.Header
       title={
         <div className="flex w-full items-center gap-2 overflow-hidden">
-          <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">{time}</span>
+          <span className="text-ui-fg-subtle shrink-0 font-mono tabular-nums">{time}</span>
           <LogStatus logType={logType}>{LABEL[params.event]}</LogStatus>
-          <div className="grow basis-0 truncate text-zinc-700 dark:text-zinc-300">{message}</div>
+          <div className="text-ui-fg grow basis-0 truncate">{message}</div>
         </div>
       }
       placement="left"
@@ -56,10 +56,10 @@ const LogRealtime = ({ logType, time, message, params }: LogRealtimeProps) => (
       iconCollapsed={iconCollapsed}
       iconExpanded={iconExpanded}
     >
-      <span className="font-mono text-zinc-400 dark:text-zinc-500">realtime</span>
+      <span className="text-ui-fg-subtle font-mono">realtime</span>
     </ContainerCollapsable.Header>
     <ContainerCollapsable.Content>
-      <pre className="mt-1 overflow-x-auto rounded bg-zinc-50 p-2 text-[11px] text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
+      <pre className="bg-ui-raised text-ui-fg-muted mt-1 overflow-x-auto rounded p-2 text-[11px]">
         {JSON.stringify(detailOf(params), null, 2)}
       </pre>
     </ContainerCollapsable.Content>

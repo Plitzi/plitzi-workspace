@@ -17,7 +17,7 @@ const OPTIONS: FlagPreviewOptionValue[] = [
 
 /** Forces a flag in the canvas only — what an author looks at, never what is saved or published. */
 const FlagPreviewToggle = ({ name, forced, onForce }: FlagPreviewToggleProps) => (
-  <div className="flex overflow-hidden rounded border border-gray-300 dark:border-zinc-700">
+  <div className="border-ui-line-strong flex overflow-hidden rounded border">
     {OPTIONS.map(option => (
       <FlagPreviewOption
         key={option.label}

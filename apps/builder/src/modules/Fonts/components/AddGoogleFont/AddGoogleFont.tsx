@@ -86,18 +86,13 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
       </Input>
       {error && <Notice tone="danger">{error}</Notice>}
       <Flex direction="column" gap={1} className="min-h-0 grow basis-0 overflow-y-auto">
-        {loading && fonts.length === 0 && <span className="text-xs text-gray-500 dark:text-zinc-400">Searching…</span>}
+        {loading && fonts.length === 0 && <span className="text-ui-fg-subtle text-xs">Searching…</span>}
         {fonts.map(entry => (
-          <Flex
-            key={entry.family}
-            direction="column"
-            gap={1}
-            className="rounded border border-gray-200 p-2 dark:border-zinc-700"
-          >
+          <Flex key={entry.family} direction="column" gap={1} className="border-ui-line rounded border p-2">
             <Flex justify="between" alignItems="center" gap={2}>
               <span className="truncate text-sm">{entry.family}</span>
               {declaredSet.has(entry.family) ? (
-                <span className="text-[11px] text-gray-500 dark:text-zinc-400">Declared</span>
+                <span className="text-ui-fg-subtle text-[11px]">Declared</span>
               ) : (
                 <Button size="xs" intent="secondary" onClick={() => handleExpand(entry)}>
                   {expanded === entry.family ? 'Cancel' : 'Choose weights'}
@@ -135,7 +130,7 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
           </Flex>
         ))}
         {!loading && fonts.length === 0 && query && (
-          <span className="text-xs text-gray-500 dark:text-zinc-400">Nothing matched “{query}”.</span>
+          <span className="text-ui-fg-subtle text-xs">Nothing matched “{query}”.</span>
         )}
       </Flex>
     </Flex>

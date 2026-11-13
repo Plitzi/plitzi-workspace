@@ -54,8 +54,8 @@ const ItemOptions = ({ selector = '', type = 'class', onAction }: ItemOptionsPro
           title="Class actions: duplicate, remove, delete"
         />
       </ContainerFloating.Trigger>
-      <ContainerFloating.Content className="text-xs text-zinc-700 dark:text-zinc-300">
-        <div className="min-w-44 rounded-md border border-gray-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+      <ContainerFloating.Content className="text-ui-fg text-xs">
+        <div className="border-ui-line bg-ui-overlay min-w-44 rounded-md border p-1 shadow-lg">
           <ul className="m-0 flex list-none flex-col p-0">
             <li>
               <button type="button" className={ITEM_CLASS} onClick={handleClickDuplicate}>

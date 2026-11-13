@@ -30,8 +30,8 @@ export type ConnectorSectionProps = {
  */
 const RAILS = [
   '',
-  'border-l-2 border-l-slate-300 pl-1 dark:border-l-zinc-600',
-  'border-l-2 border-l-slate-200 pl-1 dark:border-l-zinc-700'
+  'border-l-2 border-l-slate-300 pl-1 dark:border-l-ui-line-strong',
+  'border-l-2 border-l-slate-200 pl-1 dark:border-l-ui-line-strong'
 ];
 
 /**
@@ -40,9 +40,9 @@ const RAILS = [
  * to say.
  */
 const HEADER_TINTS = [
-  'bg-slate-100 dark:bg-zinc-700/50',
-  'bg-slate-100/70 dark:bg-zinc-700/35',
-  'bg-slate-100/50 dark:bg-zinc-700/25'
+  'bg-slate-100 dark:bg-ui-active/50',
+  'bg-slate-100/70 dark:bg-ui-active/35',
+  'bg-slate-100/50 dark:bg-ui-active/25'
 ];
 
 /**
@@ -109,8 +109,8 @@ const ConnectorSection = ({
       <ContainerCollapsable.Header
         // The hover shifts shade at every depth rather than only on the outermost one: an open header is still a
         // click target, and a nested one that never reacts reads as a label.
-        className={clsx('h-8 px-1 hover:bg-slate-200/70 dark:hover:bg-zinc-700/60', tint, {
-          'border-b border-gray-200 dark:border-zinc-700': isCollapsed
+        className={clsx('dark:hover:bg-ui-hover/60 h-8 px-1 hover:bg-slate-200/70', tint, {
+          'border-ui-line border-b': isCollapsed
         })}
         title={
           <div className="flex min-w-0 items-baseline gap-2">
@@ -125,7 +125,7 @@ const ConnectorSection = ({
             <span
               className={clsx('truncate text-xs', {
                 'text-primary-500': highlight,
-                'text-gray-400 dark:text-zinc-500': !highlight
+                'text-ui-fg-subtle': !highlight
               })}
               title={summary}
             >
@@ -141,7 +141,7 @@ const ConnectorSection = ({
           <Icon
             className={clsx('cursor-pointer text-xs', {
               'text-blue-500': showHelp,
-              'text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300': !showHelp
+              'text-ui-fg-subtle hover:text-ui-fg': !showHelp
             })}
             icon="fa-solid fa-circle-question"
             title={showHelp ? 'Hide field help' : 'Show field help'}
@@ -151,10 +151,10 @@ const ConnectorSection = ({
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
         className={clsx('flex flex-col gap-2 p-2', {
-          'border-b border-gray-200 dark:border-zinc-700': !isCollapsed && depth === 0
+          'border-ui-line border-b': !isCollapsed && depth === 0
         })}
       >
-        {showHelp && description && <span className="text-xs text-gray-500 dark:text-zinc-400">{description}</span>}
+        {showHelp && description && <span className="text-ui-fg-subtle text-xs">{description}</span>}
         <ConnectorSectionContext value={value}>{children}</ConnectorSectionContext>
       </ContainerCollapsable.Content>
     </ContainerCollapsable>

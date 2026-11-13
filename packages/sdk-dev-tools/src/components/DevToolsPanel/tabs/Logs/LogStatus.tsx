@@ -34,12 +34,7 @@ const LogStatus = ({ className, logType = 'info', iconClassName, children }: Log
           'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400': logType === 'warning',
           'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400': logType === 'info',
           'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400': logType === 'success',
-          'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': ![
-            'danger',
-            'warning',
-            'info',
-            'success'
-          ].includes(logType)
+          'bg-ui-active text-ui-fg-muted': !['danger', 'warning', 'info', 'success'].includes(logType)
         },
         className
       )}

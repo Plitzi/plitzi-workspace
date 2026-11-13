@@ -39,10 +39,9 @@ const ElementMatchItem = ({ match, rootLabel, active = false, onSelect, onHover 
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={clsx(
-        'flex w-full min-w-0 items-center gap-2 rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-zinc-800',
-        { 'bg-gray-100 dark:bg-zinc-800': active }
-      )}
+      className={clsx('hover:bg-ui-hover flex w-full min-w-0 items-center gap-2 rounded px-2 py-1 text-left', {
+        'bg-ui-raised': active
+      })}
     >
       <i
         className={clsx(

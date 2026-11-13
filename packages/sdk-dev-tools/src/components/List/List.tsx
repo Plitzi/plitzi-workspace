@@ -35,12 +35,12 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
   const handleSelect = useCallback((id?: string) => onSelect?.(items.find(item => item.id === id)), [items, onSelect]);
 
   return (
-    <div className={clsx('flex h-full flex-col gap-2 border-r border-zinc-200 dark:border-zinc-700', className)}>
+    <div className={clsx('border-ui-line flex h-full flex-col gap-2 border-r', className)}>
       <div className="px-2 pt-2">
         <Input value={filter} onChange={handleChangeFilter} placeholder="Search..." size="sm" />
       </div>
-      <div className="flex flex-col overflow-y-auto text-xs text-zinc-700 dark:text-zinc-300">
-        {!itemsSorted.length && <div className="p-4 text-center text-zinc-400 dark:text-zinc-600">No items</div>}
+      <div className="text-ui-fg flex flex-col overflow-y-auto text-xs">
+        {!itemsSorted.length && <div className="text-ui-fg-subtle p-4 text-center">No items</div>}
         {itemsSorted.length > 0 &&
           itemsSorted.map((item, i) => (
             <ListItem

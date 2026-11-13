@@ -73,8 +73,7 @@ const SelectorItem = ({
         'bg-primary-600 text-white shadow-sm': type !== 'element' && active,
         'bg-primary-500/15 text-primary-800 ring-primary-500/40 dark:text-primary-200 ring-1':
           type === 'element' && active,
-        'bg-gray-100 text-zinc-700 ring-1 ring-gray-200 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 dark:hover:bg-zinc-700':
-          !active,
+        'bg-ui-raised text-ui-fg ring-ui-line hover:bg-ui-hover ring-1': !active,
         'max-w-full min-w-0': !editable
       })}
       onClick={handleClick}

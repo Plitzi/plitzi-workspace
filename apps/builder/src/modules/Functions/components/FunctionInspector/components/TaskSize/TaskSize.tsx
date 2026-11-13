@@ -46,8 +46,7 @@ const TaskSize = ({ size, asked, allowed, disabledReason = '', onChange }: TaskS
                 'flex flex-col items-center gap-0.5 rounded-md py-1.5 ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                 {
                   'bg-primary-500 ring-primary-500 text-white': size === name,
-                  'bg-white text-gray-700 ring-gray-200 hover:bg-gray-50 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700 dark:hover:bg-zinc-800':
-                    size !== name
+                  'bg-ui-panel text-ui-fg ring-ui-line hover:bg-ui-hover': size !== name
                 }
               )}
               onClick={handlePick(name)}
@@ -63,7 +62,7 @@ const TaskSize = ({ size, asked, allowed, disabledReason = '', onChange }: TaskS
       </div>
       {disabledReason && <span className="text-[11px] text-amber-700 dark:text-amber-400">{disabledReason}</span>}
       {!disabledReason && (
-        <span className="text-[11px] leading-relaxed text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-[11px] leading-relaxed">
           {asked ? 'Memory per run, asked for in the code.' : 'Memory per run · the default.'} A run that holds more is
           stopped and says so; a larger size waits longer for room.
           {locked && largest && ` This space’s plan includes up to ${SIZE_LABELS[largest].toLowerCase()}.`}

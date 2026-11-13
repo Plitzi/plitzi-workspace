@@ -62,7 +62,7 @@ const ElementContentSettings = ({ type, registered, attributes, readOnly, onChan
 
   if (names.length === 0) {
     return (
-      <p className="m-0 px-2 text-xs text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle m-0 px-2 text-xs">
         This element has no words, link or picture of its own to edit.
       </p>
     );
@@ -70,7 +70,7 @@ const ElementContentSettings = ({ type, registered, attributes, readOnly, onChan
 
   return (
     <div className="flex flex-col gap-2 px-2">
-      <p className="m-0 text-xs text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle m-0 text-xs">
         {readOnly
           ? 'You can view this space: its content is shown, not changed.'
           : 'You can edit the content — the words, links and pictures — not the design.'}

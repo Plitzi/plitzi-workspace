@@ -14,7 +14,7 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
   return (
     <div className={clsx('flex flex-col', className)}>
       <div className="flex flex-col">
-        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <div className="text-ui-fg-subtle px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide uppercase">
           Default
         </div>
         <div className="flex flex-wrap">
@@ -36,7 +36,7 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <div className="text-ui-fg-subtle px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide uppercase">
           Ease In
         </div>
         <div className="flex flex-wrap">
@@ -70,7 +70,7 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <div className="text-ui-fg-subtle px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide uppercase">
           Ease Out
         </div>
         <div className="flex flex-wrap">
@@ -110,7 +110,7 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <div className="text-ui-fg-subtle px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide uppercase">
           Ease In Out
         </div>
         <div className="flex flex-wrap">

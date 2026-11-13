@@ -57,7 +57,7 @@ const FilterItem = ({ value, title, onRemove, onChange }: FilterItemProps) => {
       {!filter && (
         <>
           <CategoryOption label="Value" type="input" value={value} onChange={handleChangeRaw} />
-          <p className="m-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle m-0 text-[11px]">
             A function the editor has no control for, so it is edited as written.
           </p>
         </>

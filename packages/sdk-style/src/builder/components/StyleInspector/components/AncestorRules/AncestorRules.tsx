@@ -28,7 +28,7 @@ const AncestorRules = ({
   onRemoveUnused
 }: AncestorRulesProps) => (
   <div className="flex flex-col gap-1">
-    <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+    <div className="text-ui-fg-subtle flex items-center justify-between gap-2 text-[11px]">
       <span>
         <i className="fas fa-sitemap mr-1" />
         Ancestor rules ({conditions.length})

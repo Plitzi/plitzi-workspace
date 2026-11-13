@@ -129,25 +129,25 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-200 bg-white px-4 dark:border-zinc-700 dark:bg-zinc-800"
+      className="border-ui-line bg-ui-raised h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b px-4"
     >
       <Flex items="center" gap={2}>
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300 dark:bg-zinc-600': !isActive
+            'bg-ui-line-strong': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300 dark:bg-zinc-600': !isActive
+            'bg-ui-line-strong': !isActive
           })}
         />
         <div
           className={clsx('h-3 w-3 rounded-full', {
             'bg-secondary-400': isActive,
-            'bg-gray-300 dark:bg-zinc-600': !isActive
+            'bg-ui-line-strong': !isActive
           })}
         />
         {!multiPagesMode && baseElementIdOriginal !== baseElementId && (
@@ -157,16 +157,13 @@ const BuilderAreaHeader = ({
           </Button>
         )}
       </Flex>
-      <div
-        title="Default Page"
-        className={clsx({ 'text-primary-ui': defaultPage, 'text-gray-400 dark:text-zinc-600': !defaultPage })}
-      >
+      <div title="Default Page" className={clsx({ 'text-primary-ui': defaultPage, 'text-ui-fg-subtle': !defaultPage })}>
         <Icon icon="fas fa-home" />
       </div>
       <Flex
         items="center"
         grow
-        className="h-7 overflow-hidden rounded-lg border border-gray-200 px-3 select-none dark:border-zinc-700 dark:text-zinc-400"
+        className="border-ui-line dark:text-ui-fg-subtle h-7 overflow-hidden rounded-lg border px-3 select-none"
       >
         <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>

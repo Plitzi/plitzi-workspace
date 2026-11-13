@@ -19,10 +19,10 @@ const ActionWebhookUrl = ({ identifier, deployments }: ActionWebhookUrlProps) =>
   );
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+    <div className="border-ui-line flex flex-col gap-3 rounded-lg border p-4">
       <span className="text-sm font-medium">Where deliveries go</span>
       {deployments.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           This space is not published anywhere yet, so it has no address for a sender to deliver to. Publish it and the
           URL appears here.
         </span>
@@ -33,7 +33,7 @@ const ActionWebhookUrl = ({ identifier, deployments }: ActionWebhookUrlProps) =>
         return (
           <div key={deployment.domain} className="flex items-center gap-2">
             <div className="flex min-w-0 grow flex-col">
-              <span className="text-xs text-gray-500 dark:text-zinc-400">
+              <span className="text-ui-fg-subtle text-xs">
                 {deployment.environment}
                 {deployment.isDefault ? ' · default' : ''}
               </span>
@@ -47,7 +47,7 @@ const ActionWebhookUrl = ({ identifier, deployments }: ActionWebhookUrlProps) =>
           </div>
         );
       })}
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         POST, with the raw body the signature is computed over. Deliveries that do not verify are refused and show up in
         Recent activity below.
       </span>

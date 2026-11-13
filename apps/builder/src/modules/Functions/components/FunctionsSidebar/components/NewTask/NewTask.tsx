@@ -43,10 +43,7 @@ const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
   );
 
   return (
-    <div
-      className="flex flex-col gap-2 rounded-md border border-gray-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900"
-      onKeyDown={handleKeyDown}
-    >
+    <div className="border-ui-line bg-ui-panel flex flex-col gap-2 rounded-md border p-2" onKeyDown={handleKeyDown}>
       <div className="flex gap-1.5">
         <Input
           id={`${id}-namespace`}
@@ -74,7 +71,7 @@ const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
         value={title}
         onChange={setTitle}
       />
-      <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-[11px]">
         {valid ? `A step called ${namespace}.${action}` : 'Lowercase words and dashes: orders, sync-week'}
       </span>
       <div className="flex justify-end gap-1.5">

@@ -163,7 +163,7 @@ const DeployForm = ({
                   </option>
                 ))}
             </Form.Select>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="text-ui-fg-subtle flex items-center gap-1 text-xs">
               <div className="h-1 w-1 rounded-full bg-gray-500" />
               {`Last Revision Published ${formatFromNow(latestRevision.publishedAt, undefined, { addSuffix: true })}`}
             </div>

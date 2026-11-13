@@ -8,7 +8,7 @@ import QaVisionSelect from './QaVisionSelect';
  * wires, motion, and colour.
  */
 const QaToolbar = () => (
-  <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-zinc-200 px-3 py-2 dark:border-zinc-700">
+  <div className="border-ui-line flex shrink-0 flex-wrap items-center gap-1.5 border-b px-3 py-2">
     <QaToolChip
       setting="inspect"
       label="Inspect"

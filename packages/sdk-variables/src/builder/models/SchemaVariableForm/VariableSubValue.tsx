@@ -44,7 +44,7 @@ const VariableSubValue = ({
   );
 
   return (
-    <div className="flex min-w-0 grow basis-0 flex-col gap-3 rounded-sm border border-gray-300 p-2">
+    <div className="border-ui-line-strong flex min-w-0 grow basis-0 flex-col gap-3 rounded-sm border p-2">
       <VariableValue
         valueType={valueType}
         name={`subValues.${index}.value`}

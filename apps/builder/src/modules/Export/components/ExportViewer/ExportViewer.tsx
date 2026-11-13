@@ -41,8 +41,8 @@ const ExportViewer = ({
   const navigation = fileNavigationOf(paths);
 
   return (
-    <div className="relative flex min-h-0 grow flex-col overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700/70">
-      <div className="flex min-h-9 items-center justify-between gap-3 border-b border-zinc-200 px-2 dark:border-zinc-700/70">
+    <div className="border-ui-line relative flex min-h-0 grow flex-col overflow-hidden rounded-lg border">
+      <div className="border-ui-line flex min-h-9 items-center justify-between gap-3 border-b px-2">
         <div role="tablist" className="flex min-w-0 items-center gap-1">
           {!showChanges &&
             navigation === 'tabs' &&
@@ -50,7 +50,7 @@ const ExportViewer = ({
               <ExportFileTab key={path} path={path} selected={path === selectedPath} onSelect={onSelectPath} />
             ))}
           {!showChanges && navigation !== 'tabs' && selectedPath && (
-            <span className="truncate px-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">{selectedPath}</span>
+            <span className="text-ui-fg-subtle truncate px-2 font-mono text-xs">{selectedPath}</span>
           )}
         </div>
         {hasChanges && (
@@ -96,7 +96,7 @@ const ExportViewer = ({
         )}
       </div>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white/70 text-sm text-zinc-600 backdrop-blur-[1px] dark:bg-zinc-900/70 dark:text-zinc-300">
+        <div className="text-ui-fg-muted dark:bg-ui-panel/70 absolute inset-0 flex items-center justify-center gap-2 bg-white/70 text-sm backdrop-blur-[1px]">
           <i className="fa-solid fa-circle-notch fa-spin" />
           Generating…
         </div>

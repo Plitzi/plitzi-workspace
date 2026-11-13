@@ -19,7 +19,7 @@ const LogsSummaryItem = ({ className, amount, suffix = 'All', selected, logType,
     <div
       className={clsx(
         'flex cursor-pointer items-center gap-2 px-2 py-1.5 transition-colors',
-        selected ? 'bg-zinc-200 dark:bg-zinc-700' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800',
+        selected ? 'bg-ui-active' : 'hover:bg-ui-hover',
         className
       )}
       onClick={handleClick}
@@ -30,12 +30,11 @@ const LogsSummaryItem = ({ className, amount, suffix = 'All', selected, logType,
           'fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-400': logType === 'warning',
           'fa-solid fa-circle-info text-violet-500 dark:text-violet-400': logType === 'info',
           'fa-solid fa-check text-emerald-500 dark:text-emerald-400': logType === 'success',
-          'fa-solid fa-list text-zinc-500 dark:text-zinc-400':
-            !logType || !['danger', 'warning', 'info', 'success'].includes(logType)
+          'fa-solid fa-list text-ui-fg-subtle': !logType || !['danger', 'warning', 'info', 'success'].includes(logType)
         })}
       />
-      <span className="font-medium text-zinc-700 tabular-nums dark:text-zinc-200">{amount}</span>
-      <span className="text-xs text-zinc-400 dark:text-zinc-500">{suffix}</span>
+      <span className="text-ui-fg font-medium tabular-nums">{amount}</span>
+      <span className="text-ui-fg-subtle text-xs">{suffix}</span>
     </div>
   );
 };

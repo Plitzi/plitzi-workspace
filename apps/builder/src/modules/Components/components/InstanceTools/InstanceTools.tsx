@@ -67,7 +67,7 @@ const InstanceTools = ({ instanceId, componentId }: InstanceToolsProps) => {
   }
 
   return (
-    <Flex direction="column" gap={2} className="border-t border-gray-200 py-3 dark:border-zinc-700">
+    <Flex direction="column" gap={2} className="border-ui-line border-t py-3">
       <span className="text-sm">
         Instance of <b>{componentLabel(component)}</b>
       </span>

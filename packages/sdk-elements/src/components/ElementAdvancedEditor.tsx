@@ -68,7 +68,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
         <Button
           intent="custom"
           size="sm"
-          className="mr-2 rounded-sm bg-white p-2"
+          className="bg-ui-panel mr-2 rounded-sm p-2"
           onClick={handleFormat}
           title="Auto format"
           disabled={networkLoading}
@@ -77,7 +77,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
         </Button>
         <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="sm" className="mr-2 rounded-sm bg-white p-2" title="Plugins">
+            <Button intent="custom" size="sm" className="bg-ui-panel mr-2 rounded-sm p-2" title="Plugins">
               <Button.Icon icon="fa-solid fa-puzzle-piece" />
             </Button>
           </ContainerFloating.Trigger>
@@ -86,7 +86,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
               {pluginsAvailables.map(type => (
                 <li
                   key={type}
-                  className="border-gray-300 px-4 py-1 text-sm capitalize not-first:border-t"
+                  className="border-ui-line-strong px-4 py-1 text-sm capitalize not-first:border-t"
                   onClick={handlePluginInsert(type)}
                 >
                   {type}
@@ -97,7 +97,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
         </ContainerFloating>
         <ContainerFloating containerTopOffset={8}>
           <ContainerFloating.Trigger>
-            <Button intent="custom" size="sm" className="rounded-sm bg-white p-2">
+            <Button intent="custom" size="sm" className="bg-ui-panel rounded-sm p-2">
               <Button.Icon icon="fa-solid fa-circle-info" />
             </Button>
           </ContainerFloating.Trigger>

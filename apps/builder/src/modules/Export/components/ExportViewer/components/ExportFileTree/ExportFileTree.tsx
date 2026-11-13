@@ -15,7 +15,7 @@ const ExportFileTree = ({ paths, selectedPath, onSelect }: ExportFileTreeProps) 
   const tree = useMemo(() => fileTreeOf(paths), [paths]);
 
   return (
-    <nav className="w-64 shrink-0 space-y-1 overflow-auto border-r border-zinc-200 p-2 dark:border-zinc-700/70">
+    <nav className="border-ui-line w-64 shrink-0 space-y-1 overflow-auto border-r p-2">
       {tree.files.map(path => (
         <ExportFileItem key={path} path={path} label={path} selected={path === selectedPath} onSelect={onSelect} />
       ))}

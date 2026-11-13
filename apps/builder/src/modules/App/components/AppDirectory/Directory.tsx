@@ -110,11 +110,7 @@ const Directory = ({
               role="img"
               aria-label={protection.says}
               // Every page in it, as a page's own lock; some of them, fainter.
-              className={
-                protection.whole
-                  ? 'shrink-0 text-gray-400 dark:text-zinc-500'
-                  : 'shrink-0 text-gray-300 dark:text-zinc-600'
-              }
+              className={protection.whole ? 'text-ui-fg-subtle shrink-0' : 'text-ui-fg-subtle shrink-0'}
             />
           )}
         </Flex>

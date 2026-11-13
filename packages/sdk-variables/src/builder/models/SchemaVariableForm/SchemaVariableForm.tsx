@@ -98,7 +98,11 @@ const SchemaVariableForm = ({
   }, [form]);
 
   return (
-    <Form form={form} onSubmit={handleSubmitInternal} className="gap-4 rounded border border-gray-300 bg-slate-100 p-2">
+    <Form
+      form={form}
+      onSubmit={handleSubmitInternal}
+      className="border-ui-line-strong gap-4 rounded border bg-slate-100 p-2"
+    >
       <Form.Body gap={2}>
         <div className="flex gap-4">
           <Form.Input name="name" label="Name" size="xs" disabled={!isNewRecord} className="w-full grow basis-0" />

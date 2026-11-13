@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { BUBBLED_COLOR, DURATION_LEGEND } from '../../helpers';
 
 const DurationLegend = () => (
-  <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-t border-zinc-200 px-2 py-1 text-[9px] text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+  <div className="border-ui-line text-ui-fg-subtle flex shrink-0 items-center gap-2 overflow-x-auto border-t px-2 py-1 text-[9px]">
     <span className="font-medium">Render budget</span>
     {DURATION_LEGEND.map(item => (
       <span key={item.label} className="flex shrink-0 items-center gap-1">
@@ -17,7 +17,7 @@ const DurationLegend = () => (
     </span>
     <span className="flex shrink-0 items-center gap-1">
       <span
-        className="h-2 w-2 rounded-sm border border-zinc-400/60 bg-zinc-200 dark:bg-zinc-800"
+        className="border-ui-line-strong/60 bg-ui-raised h-2 w-2 rounded-sm border"
         style={{
           backgroundImage:
             'repeating-linear-gradient(45deg, rgba(113,113,122,0.4) 0, rgba(113,113,122,0.4) 1px, transparent 1px, transparent 3px)'

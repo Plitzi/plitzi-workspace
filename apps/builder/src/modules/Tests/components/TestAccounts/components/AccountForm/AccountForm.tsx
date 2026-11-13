@@ -57,7 +57,7 @@ const AccountForm = ({ account, taken, spaceRoles, onSave, onCancel }: AccountFo
   const handleSaveClick = useCallback(() => void handleSave(), [handleSave]);
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-md bg-zinc-50 p-3 dark:bg-zinc-800/60">
+    <div className="bg-ui-raised flex flex-col gap-2.5 rounded-md p-3">
       <Input
         size="sm"
         name="id"
@@ -76,7 +76,7 @@ const AccountForm = ({ account, taken, spaceRoles, onSave, onCancel }: AccountFo
         onChange={handleEmail}
       />
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Roles</span>
+        <span className="text-ui-fg text-xs font-medium">Roles</span>
         {draft.roles.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {draft.roles.map(role => (
@@ -85,7 +85,7 @@ const AccountForm = ({ account, taken, spaceRoles, onSave, onCancel }: AccountFo
           </div>
         )}
         {spaceRoles.length === 0 && (
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-ui-fg-subtle text-[11px]">
             The space declares no visitor roles: the account is signed in with none.
           </p>
         )}

@@ -75,7 +75,7 @@ const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
   return (
     <ViewSection title="People">
       {roles.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">Declare a role above to give it to somebody.</span>
+        <span className="text-ui-fg-subtle text-xs">Declare a role above to give it to somebody.</span>
       )}
       {roles.length > 0 && (
         <div className="flex items-end gap-2">
@@ -102,15 +102,15 @@ const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
         </div>
       )}
       {problem && <Notice tone="danger">{problem}</Notice>}
-      {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
+      {isLoading && <div className="text-ui-fg-subtle text-sm">Loading…</div>}
       {data.map(grant => (
         <div
           key={grant.id}
-          className="flex items-center justify-between gap-2 rounded-sm border border-gray-200 px-3 py-2 dark:border-zinc-700"
+          className="border-ui-line flex items-center justify-between gap-2 rounded-sm border px-3 py-2"
         >
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm">{grant.email}</span>
-            <span className="text-xs text-gray-500 dark:text-zinc-400">{grant.role}</span>
+            <span className="text-ui-fg-subtle text-xs">{grant.role}</span>
           </div>
           <div className="flex items-center gap-2">
             {grant.claimed && (

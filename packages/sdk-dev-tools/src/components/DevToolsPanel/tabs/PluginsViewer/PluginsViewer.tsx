@@ -58,9 +58,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
       label: (
         <div className="flex flex-col gap-0.5">
           <span className="capitalize">{entry.type}</span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-            {entry.version ?? ORIGIN_LABEL[entry.origin]}
-          </span>
+          <span className="text-ui-fg-subtle text-[10px]">{entry.version ?? ORIGIN_LABEL[entry.origin]}</span>
         </div>
       )
     }));
@@ -75,7 +73,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
       {plugin ? (
         <PluginDetails entry={plugin} />
       ) : (
-        <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-600">
+        <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-2">
           <i className="fa-solid fa-puzzle-piece text-2xl opacity-30" />
           <span>Select a plugin</span>
         </div>

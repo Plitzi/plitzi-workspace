@@ -221,7 +221,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     return (
       <Card
         ref={ref}
-        className="builder__context-menu z-99999999 flex flex-col rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+        className="builder__context-menu border-ui-line bg-ui-overlay z-99999999 flex flex-col rounded-lg border p-3 shadow-xl"
         style={{
           position: 'fixed',
           top: yPos,
@@ -233,7 +233,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         size="custom"
       >
         <Card.Body className="w-full">
-          <div className="flex h-16 items-center justify-center text-center text-xs text-gray-500 dark:text-zinc-400">
+          <div className="text-ui-fg-subtle flex h-16 items-center justify-center text-center text-xs">
             Select an element to see what you can do with it.
           </div>
         </Card.Body>
@@ -247,7 +247,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-99999999 flex overflow-visible rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+      className="builder__context-menu border-ui-line bg-ui-overlay z-99999999 flex overflow-visible rounded-lg border py-1 shadow-xl"
       style={{
         position: 'fixed',
         top: yPos,
@@ -261,7 +261,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
       <Card.Body className="w-full">
         <div className="flex w-full flex-col">
           <BuilderContextSubMenu onClick={handleClickParent} iframeDOM={iframeDOM} items={subMenuMemo} />
-          <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+          <div className="bg-ui-active my-1 h-px" />
           <BuilderContextMenuItem title="Copy Element" shortcut={withModifier('C')} onClick={handleClickCopy}>
             <i className="fas fa-copy" />
           </BuilderContextMenuItem>
@@ -272,7 +272,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
             <i className="fas fa-tools" />
           </BuilderContextMenuItem>
           {((!!items && canSnippet) || (canDelete && !!element?.definition.parentId)) && (
-            <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+            <div className="bg-ui-active my-1 h-px" />
           )}
           {!!items && canSnippet && (
             <BuilderContextMenuItem title="Save as snippet" hint={REUSE.snippet.hint} onClick={handleClickAsSnippet}>
@@ -290,7 +290,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
           )}
           {canDelete && (
             <>
-              <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+              <div className="bg-ui-active my-1 h-px" />
               <BuilderContextMenuItem
                 title="Delete element"
                 intent="danger"

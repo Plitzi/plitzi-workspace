@@ -44,7 +44,7 @@ const IssuesButton = () => {
       title={title}
       className={clsx(
         'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs transition-colors select-none',
-        'hover:bg-zinc-100 dark:hover:bg-zinc-800',
+        'hover:bg-ui-hover',
         tone
       )}
       onClick={handleClick}

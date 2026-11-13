@@ -56,7 +56,7 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
   );
 
   return (
-    <div className="flex shrink-0 flex-col border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-ui-line bg-ui-panel flex shrink-0 flex-col border-b">
       <div
         role="listbox"
         aria-label="Commits, total render time"
@@ -107,7 +107,7 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
               <span
                 className={clsx('text-[8px] leading-none font-semibold', {
                   'text-violet-600 dark:text-violet-300': origin === 'ssr' || origin === 'hydration',
-                  'text-zinc-500 dark:text-zinc-400': origin === 'mount' || origin === 'mixed',
+                  'text-ui-fg-subtle': origin === 'mount' || origin === 'mixed',
                   'text-transparent': origin === 'update'
                 })}
               >
@@ -118,10 +118,10 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
         })}
       </div>
 
-      <div className="flex items-center gap-x-3 gap-y-0.5 overflow-x-auto px-2 pb-1 text-[9px] text-zinc-400 dark:text-zinc-500">
+      <div className="text-ui-fg-subtle flex items-center gap-x-3 gap-y-0.5 overflow-x-auto px-2 pb-1 text-[9px]">
         {COMMIT_ORIGIN_LEGEND.map(item => (
           <span key={item.origin} className="flex shrink-0 items-center gap-1">
-            <span className="font-semibold text-zinc-500 dark:text-zinc-300">{COMMIT_ORIGIN_BADGE[item.origin]}</span>
+            <span className="text-ui-fg-muted font-semibold">{COMMIT_ORIGIN_BADGE[item.origin]}</span>
             {item.label}
           </span>
         ))}

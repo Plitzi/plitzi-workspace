@@ -30,7 +30,7 @@ const AGENT_TONE: Record<string, string> = {
 
 const Section = ({ title, count, children }: { title: string; count?: number; children?: ReactNode }) => (
   <section className="flex min-w-0 flex-col gap-1">
-    <h3 className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+    <h3 className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
       <span>
         {title}
         {count !== undefined && <span className="ml-1 font-normal">({count})</span>}
@@ -41,18 +41,18 @@ const Section = ({ title, count, children }: { title: string; count?: number; ch
 );
 
 const Rows = ({ children }: { children: ReactNode }) => (
-  <div className="w-full overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">{children}</div>
+  <div className="border-ui-line w-full overflow-hidden rounded border">{children}</div>
 );
 
 const AgentRow = ({ agent }: { agent: RunSnapshotAgent }) => (
   <div className="flex items-center gap-2 px-2 py-1">
     <span
-      className={clsx('h-2 w-2 shrink-0 rounded-full', AGENT_TONE[agent.status] ?? 'bg-zinc-300 dark:bg-zinc-600')}
+      className={clsx('h-2 w-2 shrink-0 rounded-full', AGENT_TONE[agent.status] ?? 'bg-ui-line-strong')}
       title={agent.status}
     />
     <span className="w-20 shrink-0 font-medium">{agent.agent}</span>
-    <span className="w-28 shrink-0 truncate text-[10px] text-zinc-400">{agent.model ?? 'harness model'}</span>
-    <span className="min-w-0 grow truncate text-zinc-600 dark:text-zinc-300">{agent.doing}</span>
+    <span className="text-ui-fg-subtle w-28 shrink-0 truncate text-[10px]">{agent.model ?? 'harness model'}</span>
+    <span className="text-ui-fg-muted min-w-0 grow truncate">{agent.doing}</span>
   </div>
 );
 
@@ -65,7 +65,7 @@ const AgentRow = ({ agent }: { agent: RunSnapshotAgent }) => (
 const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
   if (!snapshot) {
     return (
-      <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-600">
+      <div className="text-ui-fg-subtle py-4 text-center text-xs italic">
         No run of agents behind this page: only a run's preview (npm run start:preview) has one
       </div>
     );
@@ -89,15 +89,15 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
           <span className="truncate font-semibold">
             <i className="fa-solid fa-people-group mr-2 text-violet-500" />
             {snapshot.runId}
-            <span className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 uppercase dark:bg-zinc-800 dark:text-zinc-400">
+            <span className="bg-ui-raised text-ui-fg-subtle ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase">
               {snapshot.status}
             </span>
           </span>
-          <span className="shrink-0 text-[10px] text-zinc-400">as of {hhmm(snapshot.at)}</span>
+          <span className="text-ui-fg-subtle shrink-0 text-[10px]">as of {hhmm(snapshot.at)}</span>
         </div>
-        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{snapshot.goal}</span>
+        <span className="text-ui-fg-subtle text-[11px]">{snapshot.goal}</span>
         <div
-          className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700"
+          className="bg-ui-active h-1.5 w-full overflow-hidden rounded-full"
           role="progressbar"
           aria-valuenow={percent}
           aria-valuemin={0}
@@ -106,7 +106,7 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
         >
           <div className="h-full rounded-full bg-emerald-500" style={{ width: `${String(percent)}%` }} />
         </div>
-        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-[11px]">
           {snapshot.done} of {snapshot.total} tasks approved
           {snapshot.expectedEnd ? ` · expected end ${hhmm(snapshot.expectedEnd)}` : ''}
         </span>
@@ -121,10 +121,10 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
         {snapshot.tasks.length > 0 && (
           <Section title="Tasks" count={snapshot.tasks.length}>
             {/* Eight rows tall below its group's heading, scrolled on its own: a long run does not push the agents and the activity down. */}
-            <div className="max-h-62 w-full overflow-y-auto rounded border border-zinc-200 dark:border-zinc-700">
+            <div className="border-ui-line max-h-62 w-full overflow-y-auto rounded border">
               {byGroup.map(group => (
                 <Fragment key={group.label}>
-                  <div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500">
+                  <div className="border-ui-line bg-ui-panel text-ui-fg-subtle sticky top-0 z-10 border-b px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
                     {group.label} <span className="font-normal">({group.tasks.length})</span>
                   </div>
                   {group.tasks.map(task => (
@@ -167,18 +167,18 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
       {feed.length > 0 && (
         // The room left under the run, grown with the panel: the newest first, scrolled on its own.
         <section className="flex min-h-32 flex-1 flex-col gap-1">
-          <h3 className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+          <h3 className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
             Activity <span className="ml-1 font-normal">({feed.length})</span>
           </h3>
-          <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto rounded border border-zinc-200 p-1.5 dark:border-zinc-700">
+          <div className="border-ui-line flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto rounded border p-1.5">
             {feed.map(event => (
               <div key={`${event.at}-${event.by}-${event.text}`} className="flex gap-2 text-[11px]">
-                <span className="shrink-0 text-zinc-400">{event.at.slice(11, 16)}</span>
+                <span className="text-ui-fg-subtle shrink-0">{event.at.slice(11, 16)}</span>
                 <span className="w-24 shrink-0 truncate font-medium">{event.by}</span>
                 <span
                   className={clsx(
                     'min-w-0 grow',
-                    event.kind === 'problem' ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-300'
+                    event.kind === 'problem' ? 'text-red-600 dark:text-red-400' : 'text-ui-fg-muted'
                   )}
                   title={event.detail}
                 >

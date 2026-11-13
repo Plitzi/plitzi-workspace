@@ -89,6 +89,12 @@ weighs on a phone — and what of it a phone cannot hold.
   the Style Manager at its end. Focused, it lists the space's classes — **Create class** first for a new name — and the
   arrow keys move through them, Enter adding the one marked.
 
+- The builder's colours are one system, in both schemes: every panel, window, modal, menu and field is painted with
+  plitzi-ui's semantic tokens — the backdrop, the panels, what is raised, what floats above them, the fields, two
+  lines and three levels of text, each readable (4.5:1 or more) on every ground. The dark scheme's panels, floating
+  windows and modals were one colour, so nothing read as above anything; the light scheme's lists took their text
+  colour from the page the builder was mounted in. Needs `@plitzi/plitzi-ui` with the `ui-*` tokens.
+
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the

@@ -95,11 +95,11 @@ export const ORIGIN_LABEL: Record<ChangeOrigin, string> = {
 };
 
 export const ORIGIN_TONE: Record<ChangeOrigin, string> = {
-  builder: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
+  builder: 'bg-ui-raised text-ui-fg',
   mcp: 'bg-primary-100 text-primary-700 dark:bg-primary-400/15 dark:text-primary-300',
   autofix: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
-  api: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
-  system: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+  api: 'bg-ui-raised text-ui-fg',
+  system: 'bg-ui-raised text-ui-fg-subtle'
 };
 
 /** Each action in its own colour and shape, so a folded row is scanned by its icons before its words. */
@@ -119,7 +119,7 @@ export const ACTION_ICON: Record<ChangeAction, string> = {
   reorder: 'fa-solid fa-arrow-down-up-across-line'
 };
 
-export const MUTED = 'text-zinc-500 dark:text-zinc-400';
+export const MUTED = 'text-ui-fg-subtle';
 
 const TIME = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 

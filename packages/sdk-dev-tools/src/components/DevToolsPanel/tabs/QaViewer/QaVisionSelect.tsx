@@ -35,13 +35,10 @@ const QaVisionSelect = () => {
       value={settings.vision}
       title="See the page without one kind of colour, or out of focus"
       onChange={handleChange}
-      className={clsx(
-        'h-6 shrink-0 rounded-md border bg-white py-0 pr-6 pl-2 text-[11px] leading-[22px] dark:bg-zinc-900',
-        {
-          'border-violet-400/60 text-violet-700 dark:text-violet-300': settings.vision !== 'none',
-          'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300': settings.vision === 'none'
-        }
-      )}
+      className={clsx('bg-ui-panel h-6 shrink-0 rounded-md border py-0 pr-6 pl-2 text-[11px] leading-[22px]', {
+        'border-violet-400/60 text-violet-700 dark:text-violet-300': settings.vision !== 'none',
+        'border-ui-line text-ui-fg-muted': settings.vision === 'none'
+      })}
     >
       {MODES.map(({ mode, label }) => (
         <option key={mode} value={mode}>

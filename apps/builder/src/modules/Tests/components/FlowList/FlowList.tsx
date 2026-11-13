@@ -84,10 +84,8 @@ const FlowList = ({
   return (
     <section className="flex min-h-56 grow flex-col gap-2" aria-label="Journeys">
       <div className="flex items-center gap-2">
-        <h3 className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
-          Journeys
-        </h3>
-        <span className="rounded-full bg-gray-100 px-1.5 text-[11px] font-semibold text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+        <h3 className="text-ui-fg-subtle text-[11px] font-semibold tracking-wider uppercase">Journeys</h3>
+        <span className="bg-ui-raised text-ui-fg-muted rounded-full px-1.5 text-[11px] font-semibold tabular-nums">
           {narrowed ? `${String(shown.length)} of ${String(all.length)}` : all.length}
           {!narrowed && limit !== null && ` / ${String(limit)}`}
         </span>
@@ -129,13 +127,12 @@ const FlowList = ({
         />
       ) : (
         <ol
-          className={clsx(
-            'flex min-h-0 grow flex-col overflow-y-auto rounded-lg border border-gray-300 dark:border-zinc-700',
-            { 'justify-center': shown.length === 0 }
-          )}
+          className={clsx('border-ui-line-strong flex min-h-0 grow flex-col overflow-y-auto rounded-lg border', {
+            'justify-center': shown.length === 0
+          })}
         >
           {shown.length === 0 && (
-            <li className="px-4 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+            <li className="text-ui-fg-subtle px-4 py-6 text-center text-xs">
               No journey matches — clear the search, or choose All.
             </li>
           )}

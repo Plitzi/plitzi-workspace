@@ -92,7 +92,7 @@ const ComponentPreview = ({ component }: ComponentPreviewProps) => {
     <div
       ref={box}
       aria-hidden
-      className="pointer-events-none relative w-full overflow-hidden rounded border border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-950"
+      className="border-ui-line bg-ui-backdrop pointer-events-none relative w-full overflow-hidden rounded border"
       style={{ height: SHOWN_HEIGHT }}
     >
       <div

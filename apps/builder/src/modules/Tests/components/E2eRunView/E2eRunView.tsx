@@ -39,12 +39,12 @@ const E2eRunView = ({ test, result, onBack }: E2eRunViewProps) => {
       {result.problem && <p className="text-sm text-red-600 dark:text-red-400">{result.problem}</p>}
       <div className="flex flex-wrap items-start gap-6">
         <div
-          className="shrink-0 overflow-hidden rounded-[28px] border-[6px] border-zinc-900 bg-zinc-950 shadow-lg dark:border-zinc-700"
+          className="dark:border-ui-line-strong shrink-0 overflow-hidden rounded-[28px] border-[6px] border-zinc-900 bg-zinc-950 shadow-lg"
           style={{ width: width + 12 }}
         >
           {frame && <img src={frame} alt={`The page after step ${String(shown + 1)}`} className="block w-full" />}
           {!frame && (
-            <div className="flex h-96 items-center justify-center px-6 text-center text-xs text-zinc-400">
+            <div className="text-ui-fg-subtle flex h-96 items-center justify-center px-6 text-center text-xs">
               No picture of this step: it was not played.
             </div>
           )}

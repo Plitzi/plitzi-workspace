@@ -64,9 +64,9 @@ const Grid = ({ xFrom = 0, xTo = 0, yFrom = 0, yTo = 0 }: GridProps) => {
 
   return (
     <g>
-      <path className="fill-white" d={gridbg} />
-      <path className="stroke-gray-300" strokeWidth="1px" d={tenth} />
-      <path className="stroke-gray-300" strokeWidth="2px" d={half} />
+      <path className="fill-ui-panel" d={gridbg} />
+      <path className="stroke-ui-fg-subtle" strokeWidth="1px" d={tenth} />
+      <path className="stroke-ui-fg-subtle" strokeWidth="2px" d={half} />
       <path className="" strokeWidth="1px" d={ticksLeft} />
       <text className="rotate-[-90deg] text-xs" style={{ textAnchor: 'end' }} x={-y(1)} y={x(0) - 8}>
         Progress

@@ -30,7 +30,7 @@ const TracingToolbar = ({
   const handleTogglePersist = useCallback(() => onPersistChange(!persist), [persist, onPersistChange]);
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-ui-line bg-ui-panel flex shrink-0 items-center gap-2 border-b px-2 py-1.5">
       <div className="flex items-stretch gap-1">
         {VIEWS.map(item => {
           const isActive = view === item.id;
@@ -42,7 +42,7 @@ const TracingToolbar = ({
               aria-pressed={isActive}
               className={clsx('flex h-6 items-center gap-1 rounded px-2 text-xs font-medium transition-colors', {
                 'bg-violet-500 text-white': isActive,
-                'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700': !isActive
+                'text-ui-fg-muted hover:bg-ui-hover': !isActive
               })}
             >
               <i className={item.icon} />
@@ -53,14 +53,14 @@ const TracingToolbar = ({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{commitCount} commits</span>
+        <span className="text-ui-fg-subtle text-[10px]">{commitCount} commits</span>
         <button
           onClick={handleTogglePersist}
           aria-pressed={persist}
           title="Keep the recorded commits when navigating to another page"
           className={clsx('flex h-6 items-center gap-1 rounded px-2 text-xs font-medium transition-colors', {
             'bg-violet-500 text-white': persist,
-            'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-700': !persist
+            'text-ui-fg-muted hover:bg-ui-hover': !persist
           })}
         >
           <i className="fa-solid fa-thumbtack" />
@@ -68,7 +68,7 @@ const TracingToolbar = ({
         </button>
         <button
           onClick={onClear}
-          className="flex h-6 items-center gap-1 rounded px-2 text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="text-ui-fg-muted hover:bg-ui-hover flex h-6 items-center gap-1 rounded px-2 text-xs font-medium"
         >
           <i className="fa-solid fa-trash" />
           Clear

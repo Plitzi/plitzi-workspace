@@ -53,27 +53,27 @@ const RunTaskRow = ({ task }: { task: RunSnapshotTask }) => {
   const handleToggle = useCallback(() => setOpen(was => !was), []);
 
   return (
-    <div className="border-b border-zinc-200 last:border-b-0 dark:border-zinc-700">
+    <div className="border-ui-line border-b last:border-b-0">
       <button
         type="button"
         onClick={handleToggle}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800"
+        className="hover:bg-ui-hover flex w-full items-center gap-2 px-2 py-1.5 text-left"
       >
         <i className={clsx(ICON[task.status] ?? 'fa-regular fa-circle', 'w-3 text-[10px]', TONE[task.status])} />
         <UrgencyMark task={task} />
-        <span className="shrink-0 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">{task.id}</span>
+        <span className="text-ui-fg-subtle shrink-0 font-mono text-[11px]">{task.id}</span>
         <span className="min-w-0 grow truncate">{task.title}</span>
         {task.fraction !== undefined && (
-          <span className="shrink-0 text-[10px] text-zinc-400">{Math.round(task.fraction * 100)} %</span>
+          <span className="text-ui-fg-subtle shrink-0 text-[10px]">{Math.round(task.fraction * 100)} %</span>
         )}
-        <span className="shrink-0 text-[10px] text-zinc-400">{whoOf(task)}</span>
+        <span className="text-ui-fg-subtle shrink-0 text-[10px]">{whoOf(task)}</span>
       </button>
       {task.why && (
         <div
           className={clsx(
             'truncate px-7 pb-1 text-[10px]',
-            task.status === 'blocked' ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400'
+            task.status === 'blocked' ? 'text-red-600 dark:text-red-400' : 'text-ui-fg-subtle'
           )}
           title={task.why}
         >
@@ -81,7 +81,7 @@ const RunTaskRow = ({ task }: { task: RunSnapshotTask }) => {
         </div>
       )}
       {open && (
-        <div className="flex flex-col gap-0.5 px-7 pb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex flex-col gap-0.5 px-7 pb-2 text-[11px]">
           <span>
             {task.status}
             {task.round > 0 ? ` · round ${String(task.round)}` : ''} · {task.role}

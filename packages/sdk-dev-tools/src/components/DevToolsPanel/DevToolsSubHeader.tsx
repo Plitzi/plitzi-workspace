@@ -96,7 +96,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
   return (
     <div
       className={clsx(
-        'flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800',
+        'border-ui-line bg-ui-raised flex shrink-0 items-center justify-between gap-2 border-b px-2 py-1',
         className
       )}
     >

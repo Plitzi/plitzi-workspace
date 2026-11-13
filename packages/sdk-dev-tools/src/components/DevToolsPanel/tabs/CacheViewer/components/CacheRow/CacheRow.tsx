@@ -25,7 +25,7 @@ const CacheRow = ({ row, isOpen, value, onToggle, onExpire, onForget }: CacheRow
   const handleForget = useCallback(() => onForget(row.uid, row.path), [onForget, row.uid, row.path]);
 
   return (
-    <li className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+    <li className="border-ui-line border-b last:border-0">
       <div className="flex items-center gap-2 px-2 py-1.5">
         <button
           className="flex min-w-0 grow cursor-pointer items-center gap-2 text-left"
@@ -34,16 +34,14 @@ const CacheRow = ({ row, isOpen, value, onToggle, onExpire, onForget }: CacheRow
         >
           <i
             className={clsx(
-              'fa-solid w-2 shrink-0 text-[9px] text-zinc-400 dark:text-zinc-500',
+              'fa-solid text-ui-fg-subtle w-2 shrink-0 text-[9px]',
               isOpen ? 'fa-chevron-down' : 'fa-chevron-right'
             )}
           />
-          <span className="shrink-0 rounded-sm bg-zinc-100 px-1 text-[9px] text-zinc-500 uppercase dark:bg-zinc-800 dark:text-zinc-400">
+          <span className="bg-ui-raised text-ui-fg-subtle shrink-0 rounded-sm px-1 text-[9px] uppercase">
             {row.storeLabel}
           </span>
-          <span className="min-w-0 grow truncate font-mono text-[11px] text-zinc-700 dark:text-zinc-100">
-            {row.label}
-          </span>
+          <span className="text-ui-fg min-w-0 grow truncate font-mono text-[11px]">{row.label}</span>
           {row.tags.map(tag => (
             <span
               key={tag}
@@ -81,20 +79,20 @@ const CacheRow = ({ row, isOpen, value, onToggle, onExpire, onForget }: CacheRow
         )}
       </div>
       <div className="flex items-center gap-2 px-2 pb-1.5 pl-6">
-        <span className="h-1 min-w-0 grow overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+        <span className="bg-ui-raised h-1 min-w-0 grow overflow-hidden rounded-full">
           <span
             className={clsx('block h-full rounded-full', row.isStale ? 'bg-amber-500/60' : 'bg-emerald-500/80')}
             style={{ width: `${Math.round(row.progress * 100)}%` }}
           />
         </span>
-        <span className="shrink-0 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+        <span className="text-ui-fg-subtle shrink-0 text-[10px] tabular-nums">
           written {row.age} · ttl {row.ttl}
           {row.inUse === false && ` · nothing renders it${row.kept ? ` · ${row.kept}` : ''}`}
         </span>
       </div>
       {isOpen && (
-        <div className="max-h-56 overflow-auto border-t border-zinc-100 bg-zinc-50 px-2 py-1 dark:border-zinc-800 dark:bg-zinc-800/40">
-          <div className="pb-1 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">{row.path}</div>
+        <div className="border-ui-line bg-ui-raised max-h-56 overflow-auto border-t px-2 py-1">
+          <div className="text-ui-fg-subtle pb-1 font-mono text-[10px]">{row.path}</div>
           <PayloadView value={value} />
         </div>
       )}

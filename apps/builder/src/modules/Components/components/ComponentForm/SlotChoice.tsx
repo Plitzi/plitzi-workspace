@@ -24,7 +24,7 @@ const SlotChoice = ({ id, label, checked, onToggle }: SlotChoiceProps) => {
       label={
         <span className="flex items-baseline gap-1.5">
           {label}
-          <span className="font-mono text-[11px] text-gray-500 dark:text-zinc-400">{id}</span>
+          <span className="text-ui-fg-subtle font-mono text-[11px]">{id}</span>
         </span>
       }
     />

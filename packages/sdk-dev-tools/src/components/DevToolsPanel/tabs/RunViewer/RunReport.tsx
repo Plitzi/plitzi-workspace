@@ -56,25 +56,21 @@ const RunReport = () => {
           aria-pressed={pointing}
           className={clsx('flex h-6 items-center gap-1 rounded px-2 text-xs font-medium transition-colors', {
             'bg-violet-500 text-white': pointing,
-            'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-700': !pointing
+            'text-ui-fg-muted hover:bg-ui-hover': !pointing
           })}
         >
           <i className="fa-solid fa-crosshairs" />
           Point at it
         </button>
-        {pointing && (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Click the element on the page — Esc stops
-          </span>
-        )}
+        {pointing && <span className="text-ui-fg-subtle text-[11px]">Click the element on the page — Esc stops</span>}
         {!pointing && element && (
-          <span className="flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] dark:bg-zinc-800">
+          <span className="bg-ui-raised flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[11px]">
             {element}
             <button
               type="button"
               onClick={forget}
               title="Point at nothing"
-              className="text-zinc-400 hover:text-zinc-600"
+              className="text-ui-fg-subtle hover:text-ui-fg"
             >
               <i className="fa-solid fa-xmark" />
             </button>
@@ -92,7 +88,7 @@ const RunReport = () => {
         maxLength={RUN_REPORT_TEXT_MOST}
         rows={2}
         placeholder="What is wrong — sent with where you are, the width and what you did on the page"
-        className="w-full resize-y rounded border border-zinc-200 bg-white px-1.5 py-1 text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+        className="border-ui-line bg-ui-raised text-ui-fg placeholder:text-ui-fg-subtle w-full resize-y rounded border px-1.5 py-1 outline-none focus:border-violet-400"
       />
       <div className="flex flex-wrap items-center gap-2">
         <button

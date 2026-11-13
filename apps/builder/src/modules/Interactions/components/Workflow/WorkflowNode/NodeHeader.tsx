@@ -204,7 +204,7 @@ const NodeHeader = ({
                   size="xs"
                   intent="secondary"
                   border="none"
-                  className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg"
                   title="Move up"
                   onClick={handleClickUp}
                 >
@@ -216,7 +216,7 @@ const NodeHeader = ({
                   size="xs"
                   intent="secondary"
                   border="none"
-                  className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg"
                   title="Move down"
                   onClick={handleClickDown}
                 >
@@ -240,7 +240,7 @@ const NodeHeader = ({
           size="xs"
           intent="secondary"
           border="none"
-          className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg"
           onClick={handleClickCopyId}
           title="Copy ID"
         >
@@ -251,7 +251,7 @@ const NodeHeader = ({
             size="xs"
             intent="secondary"
             border="none"
-            className="text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+            className="text-ui-fg-subtle hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/15 dark:hover:text-red-400"
             onClick={onClickRemove}
             title="Remove"
           >

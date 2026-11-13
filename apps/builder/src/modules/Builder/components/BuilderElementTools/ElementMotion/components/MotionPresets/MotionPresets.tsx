@@ -52,29 +52,29 @@ const MotionPresets = ({ kind, title, none, presets, value, still, onChange }: M
             type="button"
             title="Play it again"
             aria-label={`Preview: ${copy.label}`}
-            className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900"
+            className="border-ui-line bg-ui-panel relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-md border"
             onClick={handleReplay}
           >
             <span
               ref={card}
-              className="flex w-16 flex-col gap-1 rounded border border-gray-200 bg-white p-1.5 shadow-sm dark:border-zinc-600 dark:bg-zinc-700"
+              className="border-ui-line bg-ui-active flex w-16 flex-col gap-1 rounded border p-1.5 shadow-sm"
             >
               <span className="bg-primary-400 h-1.5 w-3/4 rounded-full" />
-              <span className="h-1 w-full rounded-full bg-gray-200 dark:bg-zinc-500" />
-              <span className="h-1 w-1/2 rounded-full bg-gray-200 dark:bg-zinc-500" />
+              <span className="bg-ui-line-strong h-1 w-full rounded-full" />
+              <span className="bg-ui-line-strong h-1 w-1/2 rounded-full" />
             </span>
             {isEmphasised(kind, shown) && (
               <span
                 title={`Shown ${String(LOOP_PREVIEW_EMPHASIS)}× stronger here than on the page, where it is meant to be barely noticed`}
-                className="absolute top-1 right-1 rounded bg-gray-200 px-1 text-[11px] leading-4 text-gray-600 dark:bg-zinc-700 dark:text-zinc-300"
+                className="bg-ui-active text-ui-fg-muted absolute top-1 right-1 rounded px-1 text-[11px] leading-4"
               >
                 {LOOP_PREVIEW_EMPHASIS}× here
               </span>
             )}
           </button>
           {/* A fixed height: a caption that grew with its text would move the chips under the pointer looking at them. */}
-          <span className="line-clamp-2 h-8 text-xs text-gray-500 dark:text-zinc-400">
-            <span className="font-medium text-gray-800 dark:text-zinc-100">{copy.label}</span> — {copy.hint}
+          <span className="text-ui-fg-subtle line-clamp-2 h-8 text-xs">
+            <span className="text-ui-fg font-medium">{copy.label}</span> — {copy.hint}
           </span>
         </div>
         <div

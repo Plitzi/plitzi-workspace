@@ -97,11 +97,11 @@ const CacheViewer = () => {
 
   return (
     <div className="flex h-full w-full flex-col text-[11px]">
-      <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2 py-1 dark:border-zinc-800">
-        <span className="font-medium text-zinc-600 dark:text-zinc-300">Cached</span>
-        <span className="text-zinc-500 tabular-nums dark:text-zinc-400">{count}</span>
+      <div className="border-ui-line flex shrink-0 items-center gap-2 border-b px-2 py-1">
+        <span className="text-ui-fg-muted font-medium">Cached</span>
+        <span className="text-ui-fg-subtle tabular-nums">{count}</span>
         <input
-          className="min-w-0 grow rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          className="border-ui-line bg-ui-raised text-ui-fg placeholder:text-ui-fg-subtle min-w-0 grow rounded border px-1.5 py-0.5 outline-none focus:border-violet-400"
           value={filter}
           placeholder="Filter by URL, store or tag"
           onChange={event => setFilter(event.target.value)}
@@ -109,9 +109,7 @@ const CacheViewer = () => {
         <button
           className={clsx(
             'shrink-0 cursor-pointer rounded px-1.5 py-0.5 font-medium transition-colors',
-            staleOnly
-              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-              : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+            staleOnly ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'text-ui-fg-subtle hover:bg-ui-hover'
           )}
           onClick={handleStaleOnly}
         >
@@ -125,7 +123,7 @@ const CacheViewer = () => {
         </button>
       </div>
       {visible.length === 0 ? (
-        <div className="flex grow flex-col items-center justify-center gap-2 px-6 text-center text-zinc-500 dark:text-zinc-400">
+        <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-2 px-6 text-center">
           <i className="fa-solid fa-database text-3xl opacity-20" />
           <span>{count === 0 ? 'Nothing on this page is cached' : 'Nothing matches the filter'}</span>
           {count === 0 && (

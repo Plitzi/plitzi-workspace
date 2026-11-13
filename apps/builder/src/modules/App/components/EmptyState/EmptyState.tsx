@@ -18,9 +18,7 @@ const EmptyState = ({ icon, title, description, action, size = 'page' }: EmptySt
   <div
     className={clsx(
       'flex flex-col items-center text-center',
-      size === 'page'
-        ? 'gap-3 rounded-xl border border-gray-200 bg-gray-50/60 px-6 py-12 dark:border-zinc-800 dark:bg-zinc-800/20'
-        : 'gap-2 px-3 py-8'
+      size === 'page' ? 'border-ui-line bg-ui-raised/60 gap-3 rounded-xl border px-6 py-12' : 'gap-2 px-3 py-8'
     )}
   >
     <span
@@ -31,14 +29,9 @@ const EmptyState = ({ icon, title, description, action, size = 'page' }: EmptySt
     >
       <i className={icon} />
     </span>
-    <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</span>
+    <span className="text-ui-fg text-sm font-semibold">{title}</span>
     {description && (
-      <p
-        className={clsx(
-          'max-w-md leading-relaxed text-gray-600 dark:text-zinc-400',
-          size === 'page' ? 'text-sm' : 'text-xs'
-        )}
-      >
+      <p className={clsx('text-ui-fg-muted max-w-md leading-relaxed', size === 'page' ? 'text-sm' : 'text-xs')}>
         {description}
       </p>
     )}

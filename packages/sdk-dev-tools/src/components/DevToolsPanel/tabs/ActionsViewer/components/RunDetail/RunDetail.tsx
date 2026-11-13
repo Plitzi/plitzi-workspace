@@ -21,7 +21,7 @@ const STATUS_PILL: Record<string, string> = {
   success: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
   danger: 'bg-red-500/15 text-red-600 dark:text-red-400',
   warning: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  custom: 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-400'
+  custom: 'bg-zinc-500/15 text-ui-fg-subtle'
 };
 
 /** Why a page is usually shown the outline and not the results: they are the author's own data. */
@@ -52,9 +52,7 @@ const RunDetail = ({ run, selectedStepId, onSelectStep }: RunDetailProps) => {
   return (
     <>
       <div className="flex items-center gap-1.5">
-        <span className="truncate text-xs font-medium text-zinc-700 dark:text-zinc-100">
-          {run.actionId || '(no action named)'}
-        </span>
+        <span className="text-ui-fg truncate text-xs font-medium">{run.actionId || '(no action named)'}</span>
         <span className={clsx('shrink-0 rounded px-1 py-0.5 text-[9px]', STATUS_PILL[statusTone(run.status)])}>
           {run.reason ?? run.status}
         </span>
@@ -71,72 +69,70 @@ const RunDetail = ({ run, selectedStepId, onSelectStep }: RunDetailProps) => {
         </div>
       )}
 
-      <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Flow</div>
+      <div className="text-ui-fg-subtle mt-1 font-medium tracking-wide uppercase">Flow</div>
       {run.steps === undefined && (
-        <span className="text-zinc-400 italic dark:text-zinc-500">{isLive(run) ? STILL_RUNNING : NO_STEPS}</span>
+        <span className="text-ui-fg-subtle italic">{isLive(run) ? STILL_RUNNING : NO_STEPS}</span>
       )}
       {run.steps !== undefined && (
         <FlowTimeline steps={run.steps} selectedStepId={selectedStepId} onSelectStep={onSelectStep} />
       )}
       {selectedStepId !== undefined && stepResult === undefined && (
-        <span className="text-zinc-400 italic dark:text-zinc-500">{OUTLINE_ONLY}</span>
+        <span className="text-ui-fg-subtle italic">{OUTLINE_ONLY}</span>
       )}
       {stepResult !== undefined && (
-        <div className="overflow-auto rounded border border-zinc-200 dark:border-zinc-700">
+        <div className="border-ui-line overflow-auto rounded border">
           <PayloadView value={stepResult} />
         </div>
       )}
 
-      <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Run</div>
+      <div className="text-ui-fg-subtle mt-1 font-medium tracking-wide uppercase">Run</div>
       <div className="flex justify-between gap-2">
-        <span className="text-zinc-400 dark:text-zinc-500">Mode</span>
-        <span className="text-zinc-700 dark:text-zinc-200">{MODE_LABEL[run.mode]}</span>
+        <span className="text-ui-fg-subtle">Mode</span>
+        <span className="text-ui-fg">{MODE_LABEL[run.mode]}</span>
       </div>
       <div className="flex justify-between gap-2">
-        <span className="text-zinc-400 dark:text-zinc-500">Started</span>
-        <span className="text-zinc-700 tabular-nums dark:text-zinc-200">{formatTime(run.startedAt)}</span>
+        <span className="text-ui-fg-subtle">Started</span>
+        <span className="text-ui-fg tabular-nums">{formatTime(run.startedAt)}</span>
       </div>
       <div className="flex justify-between gap-2">
-        <span className="text-zinc-400 dark:text-zinc-500">Took</span>
-        <span className="text-zinc-700 tabular-nums dark:text-zinc-200">
-          {duration === undefined ? 'still running' : formatMs(duration)}
-        </span>
+        <span className="text-ui-fg-subtle">Took</span>
+        <span className="text-ui-fg tabular-nums">{duration === undefined ? 'still running' : formatMs(duration)}</span>
       </div>
       {run.elementId !== undefined && (
         <div className="flex justify-between gap-2">
-          <span className="text-zinc-400 dark:text-zinc-500">Element</span>
-          <span className="truncate font-mono text-zinc-600 dark:text-zinc-300">{run.elementId}</span>
+          <span className="text-ui-fg-subtle">Element</span>
+          <span className="text-ui-fg-muted truncate font-mono">{run.elementId}</span>
         </div>
       )}
       {run.runId !== undefined && (
         <div className="flex flex-col gap-0.5">
-          <span className="text-zinc-400 dark:text-zinc-500">Run id</span>
-          <span className="font-mono break-all text-zinc-600 dark:text-zinc-300">{run.runId}</span>
+          <span className="text-ui-fg-subtle">Run id</span>
+          <span className="text-ui-fg-muted font-mono break-all">{run.runId}</span>
         </div>
       )}
 
       {run.input !== undefined && (
         <>
-          <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Input</div>
-          <div className="overflow-auto rounded border border-zinc-200 dark:border-zinc-700">
+          <div className="text-ui-fg-subtle mt-1 font-medium tracking-wide uppercase">Input</div>
+          <div className="border-ui-line overflow-auto rounded border">
             <PayloadView value={run.input} />
           </div>
         </>
       )}
       {run.output !== undefined && (
         <>
-          <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Output</div>
-          <div className="overflow-auto rounded border border-zinc-200 dark:border-zinc-700">
+          <div className="text-ui-fg-subtle mt-1 font-medium tracking-wide uppercase">Output</div>
+          <div className="border-ui-line overflow-auto rounded border">
             <PayloadView value={run.output} />
           </div>
         </>
       )}
       {run.progress.length > 0 && (
         <>
-          <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+          <div className="text-ui-fg-subtle mt-1 font-medium tracking-wide uppercase">
             Progress ({run.progress.length})
           </div>
-          <div className="overflow-auto rounded border border-zinc-200 dark:border-zinc-700">
+          <div className="border-ui-line overflow-auto rounded border">
             <PayloadView value={run.progress} />
           </div>
         </>

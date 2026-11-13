@@ -528,7 +528,7 @@ const StyleInspector = ({
               <Icon
                 className={clsx('shrink-0 cursor-pointer rounded-sm p-1 text-xs', {
                   'bg-primary-500/15 text-primary-600 dark:text-primary-300': showMoreTargets,
-                  'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100': !showMoreTargets
+                  'text-ui-fg-subtle hover:text-ui-fg': !showMoreTargets
                 })}
                 icon="fa-solid fa-crosshairs"
                 title={moreTargetsHint(targetInUse, showMoreTargets)}
@@ -593,7 +593,7 @@ const StyleInspector = ({
         )}
         {parts.length > 0 && <TargetSummary selectorName={value} parts={parts} onReset={handleResetTarget} />}
       </div>
-      <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
+      <div className="border-ui-line-strong flex grow basis-0 flex-col overflow-auto border-t">
         <Inspector
           selectors={selectorsFiltered}
           componentType={componentType}

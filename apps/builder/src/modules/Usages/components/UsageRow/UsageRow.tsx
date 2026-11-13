@@ -26,26 +26,22 @@ const UsageRow = ({ item, category, open, unusedText, onToggle }: UsageRowProps)
   const handleToggle = useCallback(() => onToggle(item.key), [item.key, onToggle]);
 
   return (
-    <div className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800">
+    <div className="border-ui-line border-b last:border-b-0">
       <button
         type="button"
         aria-expanded={open}
-        className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-left hover:bg-gray-100 dark:hover:bg-zinc-800"
+        className="hover:bg-ui-hover flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-left"
         onClick={handleToggle}
       >
         <i
-          className={clsx('fa-solid w-3 shrink-0 text-center text-[9px] text-zinc-400 dark:text-zinc-500', {
+          className={clsx('fa-solid text-ui-fg-subtle w-3 shrink-0 text-center text-[9px]', {
             'fa-chevron-down': open,
             'fa-chevron-right': !open
           })}
         />
-        <span className="min-w-0 grow basis-0 truncate font-mono text-xs text-zinc-800 dark:text-zinc-100">
-          {item.name}
-        </span>
+        <span className="text-ui-fg min-w-0 grow basis-0 truncate font-mono text-xs">{item.name}</span>
         {item.detail && item.detail !== item.name && (
-          <span className="max-w-[40%] shrink-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-            {item.detail}
-          </span>
+          <span className="text-ui-fg-subtle max-w-[40%] shrink-0 truncate text-[11px]">{item.detail}</span>
         )}
         {unused && (
           <span className="shrink-0 rounded bg-yellow-100 px-1.5 text-[11px] font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
@@ -54,7 +50,7 @@ const UsageRow = ({ item, category, open, unusedText, onToggle }: UsageRowProps)
         )}
         {!unused && (
           <span
-            className="min-w-5 shrink-0 rounded bg-zinc-100 px-1.5 text-center text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+            className="bg-ui-raised text-ui-fg-muted min-w-5 shrink-0 rounded px-1.5 text-center text-[11px] font-medium"
             title={usageSummary(item.elements, item.references)}
           >
             {usageCount(item)}
@@ -67,7 +63,7 @@ const UsageRow = ({ item, category, open, unusedText, onToggle }: UsageRowProps)
           {unused && <p className="text-[11px] leading-relaxed text-yellow-700 dark:text-yellow-400">{unusedText}</p>}
           {item.references.length > 0 && <UsageReferences references={item.references} />}
           {item.elements.length > 0 && (
-            <span className="text-[11px] tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+            <span className="text-ui-fg-subtle text-[11px] tracking-wider uppercase">
               {usageSummary(item.elements, item.references)}
             </span>
           )}

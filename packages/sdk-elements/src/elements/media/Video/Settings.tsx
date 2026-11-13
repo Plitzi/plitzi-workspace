@@ -27,8 +27,8 @@ const Settings = ({
       <div className="flex flex-col">
         <Input value={src} label="Url" onChange={update.text('src')} />
         {src && (
-          <div className="relative mt-2 flex items-center justify-center rounded-sm border border-gray-300 p-2">
-            <div className="absolute top-2 left-2 rounded-tl rounded-br border border-gray-300 bg-white p-1 text-xs">
+          <div className="border-ui-line-strong relative mt-2 flex items-center justify-center rounded-sm border p-2">
+            <div className="border-ui-line-strong bg-ui-panel absolute top-2 left-2 rounded-tl rounded-br border p-1 text-xs">
               Preview
             </div>
             <video className="h-full w-full rounded-sm" src={src} autoPlay playsInline loop muted>

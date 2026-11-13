@@ -18,7 +18,7 @@ const CdnBucketFields = ({ provider, visibility }: CdnBucketFieldsProps) => (
       <option value="private">Private — the space’s server code, read only by Plitzi</option>
     </Form.Select>
     {visibility === 'private' && (
-      <p className="text-xs text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle text-xs">
         Use a bucket with no public access: Plitzi reads it with the CDN’s credential, and keeps the space’s functions
         and runtime there.
       </p>

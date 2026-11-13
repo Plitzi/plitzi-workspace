@@ -55,10 +55,10 @@ const CategoryContainer = ({
     <ContainerCollapsable className={className} collapsed={isCollapsed} onChange={onCollapse}>
       <ContainerCollapsable.Header
         className={clsx('h-8 px-2.5', {
-          'border-b border-gray-200 dark:border-zinc-800': isCollapsed,
-          'bg-gray-50 dark:bg-zinc-800/60': !isCollapsed
+          'border-ui-line border-b': isCollapsed,
+          'bg-ui-raised': !isCollapsed
         })}
-        title={<span className="text-[13px] font-medium text-zinc-800 dark:text-zinc-100">{title}</span>}
+        title={<span className="text-ui-fg text-[13px] font-medium">{title}</span>}
         placement="right"
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
@@ -71,8 +71,7 @@ const CategoryContainer = ({
                 'text-primary-500 dark:text-primary-400': advancedVisible,
                 // A value living in a hidden row would be invisible otherwise, so the toggle carries the hint.
                 'text-sky-600 dark:text-sky-400': !advancedVisible && hasAdvancedValues,
-                'text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300':
-                  !advancedVisible && !hasAdvancedValues
+                'text-ui-fg-subtle hover:text-ui-fg': !advancedVisible && !hasAdvancedValues
               })}
               icon="fa-solid fa-sliders"
               title={showAdvanced ? 'Hide advanced properties' : 'Show advanced properties'}
@@ -84,7 +83,7 @@ const CategoryContainer = ({
       <ContainerCollapsable.Content
         className={clsx(
           'flex flex-col gap-3 px-2.5 py-3',
-          { 'border-b border-gray-200 dark:border-zinc-800': !isCollapsed },
+          { 'border-ui-line border-b': !isCollapsed },
           classNameContent
         )}
       >

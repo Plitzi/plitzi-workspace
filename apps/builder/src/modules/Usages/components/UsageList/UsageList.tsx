@@ -74,14 +74,14 @@ const UsageList = ({ category, items }: UsageListProps) => {
         <>
           <PanelSearch placeholder={copy.search} value={query} onChange={handleQuery} />
           <div className="flex items-center justify-between gap-2 px-1">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="text-ui-fg-subtle text-xs">
               {listed.length} of {items.length}
             </span>
             <Switch size="xs" label={copy.unusedFilter} checked={unusedOnly} onChange={handleUnusedOnly} />
           </div>
         </>
       )}
-      {hasUnused && <p className="px-1 text-xs leading-snug text-zinc-500 dark:text-zinc-400">{UNUSED_NOTE}</p>}
+      {hasUnused && <p className="text-ui-fg-subtle px-1 text-xs leading-snug">{UNUSED_NOTE}</p>}
       <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto">
         {items.length === 0 && <EmptyState size="panel" icon={copy.icon} title={copy.empty} />}
         {items.length > 0 && listed.length === 0 && (

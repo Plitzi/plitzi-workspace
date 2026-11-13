@@ -8,22 +8,22 @@ export type NodeHeaderProps = {
 
 const NodeHeader = ({ duration, status, type, action }: NodeHeaderProps) => {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 rounded bg-zinc-50 p-2 dark:bg-zinc-800/60">
+    <div className="bg-ui-raised grid grid-cols-2 gap-x-3 gap-y-0.5 rounded p-2">
       <div className="flex gap-1.5">
-        <span className="text-zinc-400 dark:text-zinc-500">Duration</span>
-        <span className="font-mono text-zinc-700 dark:text-zinc-300">{duration}</span>
+        <span className="text-ui-fg-subtle">Duration</span>
+        <span className="text-ui-fg font-mono">{duration}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className="text-zinc-400 dark:text-zinc-500">Type</span>
-        <span className="text-zinc-700 dark:text-zinc-300">{type}</span>
+        <span className="text-ui-fg-subtle">Type</span>
+        <span className="text-ui-fg">{type}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className="text-zinc-400 dark:text-zinc-500">Status</span>
-        <span className="text-zinc-700 dark:text-zinc-300">{status}</span>
+        <span className="text-ui-fg-subtle">Status</span>
+        <span className="text-ui-fg">{status}</span>
       </div>
       <div className="flex gap-1.5">
-        <span className="text-zinc-400 dark:text-zinc-500">Action</span>
-        <span className="text-zinc-700 dark:text-zinc-300">{action}</span>
+        <span className="text-ui-fg-subtle">Action</span>
+        <span className="text-ui-fg">{action}</span>
       </div>
     </div>
   );

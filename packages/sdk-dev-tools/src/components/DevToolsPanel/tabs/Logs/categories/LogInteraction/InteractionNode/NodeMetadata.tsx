@@ -27,11 +27,9 @@ const NodeMetadata = ({ when, whenParams }: NodeMetadataProps) => {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
-        Params
-      </span>
+      <span className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">Params</span>
       <pre
-        className="overflow-auto rounded bg-zinc-50 p-2 font-mono text-xs leading-5 dark:bg-zinc-800"
+        className="bg-ui-raised overflow-auto rounded p-2 font-mono text-xs leading-5"
         dangerouslySetInnerHTML={{ __html: ownHtml(content) }}
       />
     </div>

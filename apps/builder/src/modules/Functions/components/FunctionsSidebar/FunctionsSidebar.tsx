@@ -94,7 +94,7 @@ const FunctionsSidebar = ({
   );
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col gap-5 overflow-auto border-r border-gray-200 bg-gray-50/60 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <aside className="border-ui-line bg-ui-panel/60 flex w-64 shrink-0 flex-col gap-5 overflow-auto border-r p-2.5">
       <SidebarSection
         title="Tasks"
         count={tasks.length}
@@ -105,9 +105,7 @@ const FunctionsSidebar = ({
           <NewTask namespace={usualNamespace(tasks)} onCreate={handleCreateTask} onCancel={handleStopTask} />
         )}
         {tasks.length === 0 && !isAddingTask && (
-          <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">
-            None yet. Each task is a step any action can run.
-          </span>
+          <span className="text-ui-fg-subtle px-1 text-xs">None yet. Each task is a step any action can run.</span>
         )}
         <div className="flex flex-col gap-0.5">
           {tasks.map(task => (
@@ -123,14 +121,14 @@ const FunctionsSidebar = ({
           ))}
         </div>
         {unreadableTasks > 0 && (
-          <span className="px-1 text-[11px] text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle px-1 text-[11px]">
             {`+ ${String(unreadableTasks)} built by a call — listed once saved`}
           </span>
         )}
       </SidebarSection>
       <SidebarSection title="Routes" count={routes.length}>
         {routes.length === 0 && (
-          <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle px-1 text-xs">
             {`None. Routes answer HTTP under ${FUNCTION_ROUTES_PREFIX}.`}
           </span>
         )}
@@ -147,7 +145,7 @@ const FunctionsSidebar = ({
       </SidebarSection>
       <SidebarSection title="Jobs" count={jobs.length}>
         {jobs.length === 0 && unreadableJobs === 0 && (
-          <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle px-1 text-xs">
             None. A job is long work the code starts, with progress a page can show.
           </span>
         )}
@@ -164,7 +162,7 @@ const FunctionsSidebar = ({
           ))}
         </div>
         {unreadableJobs > 0 && (
-          <span className="px-1 text-[11px] text-gray-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle px-1 text-[11px]">
             {`+ ${String(unreadableJobs)} built by a call — listed once saved`}
           </span>
         )}

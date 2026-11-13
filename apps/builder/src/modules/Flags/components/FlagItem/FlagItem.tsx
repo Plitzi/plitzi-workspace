@@ -40,12 +40,12 @@ const FlagItem = ({ name, flag, resolution, forced, fields, onUpdate, onRemove, 
   }
 
   return (
-    <div className="flex flex-col gap-1.5 rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
+    <div className="border-ui-line-strong bg-ui-raised text-ui-fg flex flex-col gap-1.5 rounded-sm border px-2 py-1.5 text-sm">
       <div className="flex items-center gap-2">
         <span
           className={clsx('h-2 w-2 shrink-0 rounded-full', {
             'bg-emerald-500': on,
-            'bg-zinc-300 dark:bg-zinc-600': !on
+            'bg-ui-line-strong': !on
           })}
           title="What the canvas shows now"
         />
@@ -59,8 +59,8 @@ const FlagItem = ({ name, flag, resolution, forced, fields, onUpdate, onRemove, 
           <Button.Icon icon="fa-solid fa-trash" />
         </Button>
       </div>
-      {flag.description && <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">{flag.description}</div>}
-      <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      {flag.description && <div className="text-ui-fg-subtle truncate text-xs">{flag.description}</div>}
+      <div className="text-ui-fg-subtle flex items-center justify-between gap-2 text-xs">
         <span>
           {`Default ${flag.value ? 'on' : 'off'}`}
           {flag.rules.length > 0 && ` · ${flag.rules.length} rule${flag.rules.length === 1 ? '' : 's'}`}

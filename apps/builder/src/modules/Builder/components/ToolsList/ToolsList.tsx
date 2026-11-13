@@ -10,7 +10,7 @@ const ToolsList = ({ onSelect, selected }: ToolsListProps) => {
     <ul
       role="tablist"
       aria-label="Element tools"
-      className="list-type-none m-0 flex w-full border-b border-gray-200 p-0 select-none dark:border-zinc-800"
+      className="list-type-none border-ui-line m-0 flex w-full border-b p-0 select-none"
     >
       <ToolsListItem id="style" title="Style" onClick={onSelect} active={selected === 'style'} />
       <ToolsListItem id="settings" title="Settings" onClick={onSelect} active={selected === 'settings'} />

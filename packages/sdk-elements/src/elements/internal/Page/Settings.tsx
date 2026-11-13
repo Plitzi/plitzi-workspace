@@ -232,12 +232,12 @@ const Settings = ({
         <Input value={name} label="Page Name" onChange={handleChangeName} size="xs" />
         <div className="flex flex-col gap-1">
           <Input value={slug} onChange={handleChangeSlug} label="Slug / Path" size="xs" />
-          <span className="truncate text-xs text-gray-500 dark:text-zinc-400" title={fullpath}>
-            Full path: <span className="font-semibold text-gray-700 dark:text-zinc-200">{fullpath}</span>
+          <span className="text-ui-fg-subtle truncate text-xs" title={fullpath}>
+            Full path: <span className="text-ui-fg font-semibold">{fullpath}</span>
           </span>
-          <span className="text-xs text-gray-400 dark:text-zinc-500">Letters, numbers and _ - : / *</span>
+          <span className="text-ui-fg-subtle text-xs">Letters, numbers and _ - : / *</span>
           {slug === NOT_FOUND_SLUG && (
-            <span className="text-xs text-gray-500 dark:text-zinc-400">
+            <span className="text-ui-fg-subtle text-xs">
               The 404 page {folder ? 'of its folder' : 'of the space'}: every address{folder ? ' in it' : ''} no other
               page answers lands here, sent with status 404.
             </span>
@@ -309,7 +309,7 @@ const Settings = ({
             ))}
           </Select>
         )}
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{accessHelp(accessState)}</span>
+        <span className="text-ui-fg-subtle text-xs">{accessHelp(accessState)}</span>
       </SettingsSection>
       <SettingsSection id="page-scroll" title="Scroll" summary={scroll.label}>
         <Select
@@ -322,7 +322,7 @@ const Settings = ({
           <option value="noBounce">No bounce</option>
           <option value="locked">Locked</option>
         </Select>
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{scroll.help}</span>
+        <span className="text-ui-fg-subtle text-xs">{scroll.help}</span>
       </SettingsSection>
       <SettingsSection
         id="page-seo"
@@ -376,17 +376,17 @@ const Settings = ({
               size="xs"
             />
             <SettingsSection id="page-seo-previews" title="Previews" summary="Search result and share card">
-              <span className="text-xs text-gray-500 dark:text-zinc-400">
+              <span className="text-ui-fg-subtle text-xs">
                 How this page&#39;s title and description show in search results (SERPs):
               </span>
-              <div className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-600">
+              <div className="border-ui-line-strong bg-ui-panel rounded border px-2 py-1">
                 <div className="mb-1 pt-1 text-xl text-[#1a0dab]">
                   <label>{seoPageTitle}</label>
                 </div>
                 <div className="text-sm text-[#006621]">
                   <span>www.url.com</span>
                 </div>
-                <div className="settings-seo__description mb-1 pt-1 text-sm text-gray-700">
+                <div className="settings-seo__description text-ui-fg mb-1 pt-1 text-sm">
                   {`${seoPageDescription.slice(0, 160)}...`}
                 </div>
               </div>

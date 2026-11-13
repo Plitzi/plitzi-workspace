@@ -43,18 +43,18 @@ const UsageTreeGroup = ({ group, defaultOpen = true }: UsageTreeGroupProps) => {
         <button
           type="button"
           aria-expanded={open}
-          className="flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded px-1 pb-0.5 text-left text-[11px] font-semibold text-zinc-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="text-ui-fg hover:bg-ui-hover flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded px-1 pb-0.5 text-left text-[11px] font-semibold"
           onClick={handleToggle}
         >
           <i
             className={clsx(
-              'fa-solid w-2.5 shrink-0 text-center text-[8px] text-zinc-400 dark:text-zinc-500',
+              'fa-solid text-ui-fg-subtle w-2.5 shrink-0 text-center text-[8px]',
               open ? 'fa-chevron-down' : 'fa-chevron-right'
             )}
           />
-          <i className={clsx(TREE_ICON[tree.kind], 'text-[10px] text-zinc-400 dark:text-zinc-500')} />
+          <i className={clsx(TREE_ICON[tree.kind], 'text-ui-fg-subtle text-[10px]')} />
           <span className="truncate">{tree.label}</span>
-          <span className="font-normal text-zinc-400 dark:text-zinc-500">· {elements.length}</span>
+          <span className="text-ui-fg-subtle font-normal">· {elements.length}</span>
         </button>
       </h6>
       {open && shown.map(usage => <UsageElement key={usage.elementId} usage={usage} onReveal={handleReveal} />)}

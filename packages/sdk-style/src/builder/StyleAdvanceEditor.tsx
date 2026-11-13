@@ -76,9 +76,9 @@ const StyleAdvanceEditor = () => {
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
       <div className="flex flex-col items-end gap-2">
-        <p className="self-stretch text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="text-ui-fg-muted self-stretch text-xs leading-relaxed">
           CSS of your own for the whole space, past what the style inspector writes.{' '}
-          <span className="font-medium text-zinc-800 dark:text-zinc-200">Ctrl + Space</span> completes a token.{' '}
+          <span className="text-ui-fg font-medium">Ctrl + Space</span> completes a token.{' '}
           <a
             href="https://developer.mozilla.org/docs/Web/CSS"
             target="_blank"
@@ -94,7 +94,7 @@ const StyleAdvanceEditor = () => {
         </Button>
       </div>
       <CodeMirror
-        className="min-h-0 grow overflow-hidden rounded-md border border-gray-300 dark:border-zinc-700"
+        className="border-ui-line-strong min-h-0 grow overflow-hidden rounded-md border"
         value={customCss}
         autoComplete={variables}
         theme={resolvedTheme}

@@ -30,14 +30,11 @@ const HistoryEntryItem = ({ index, path, value, timestamp, isSelected, isFuture,
     <button
       ref={ref}
       onClick={handleClick}
-      className={clsx(
-        'flex w-full flex-col gap-0.5 border-b border-zinc-100 px-3 py-1.5 text-left font-mono text-xs dark:border-zinc-800',
-        {
-          'bg-violet-600 text-white dark:bg-violet-600': isSelected,
-          'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/60': !isSelected,
-          'opacity-50': isFuture
-        }
-      )}
+      className={clsx('border-ui-line flex w-full flex-col gap-0.5 border-b px-3 py-1.5 text-left font-mono text-xs', {
+        'bg-violet-600 text-white dark:bg-violet-600': isSelected,
+        'text-ui-fg-muted hover:bg-ui-hover': !isSelected,
+        'opacity-50': isFuture
+      })}
     >
       <div className="flex w-full items-center gap-2">
         <span className="grow truncate">

@@ -19,7 +19,7 @@ const SECTIONS: [PanelSection, ...PanelSection[]] = [
  * holds them — and its realtime channels.
  */
 const ContainerSettings = () => (
-  <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-900">
+  <div className="bg-ui-panel flex min-h-0 grow basis-0 flex-col">
     <PanelSections name="settings" sections={SECTIONS} variant="page" />
   </div>
 );

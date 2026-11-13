@@ -22,18 +22,18 @@ const QaXrayRow = ({ mark }: QaXrayRowProps) => {
       aria-pressed={only}
       title={`${description}. Click to show only these; again for all.`}
       className={clsx(
-        'flex w-full cursor-pointer items-center gap-2 border-b border-zinc-100 px-2.5 py-1.5 text-left last:border-b-0 dark:border-zinc-800',
+        'border-ui-line flex w-full cursor-pointer items-center gap-2 border-b px-2.5 py-1.5 text-left last:border-b-0',
         {
           'bg-violet-500/10': only,
-          'hover:bg-zinc-50 dark:hover:bg-zinc-800/60': !only,
+          'hover:bg-ui-hover': !only,
           'opacity-50': settings.xrayFilter !== 'all' && !only
         }
       )}
       onClick={handleClick}
     >
       <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colour }} />
-      <span className="min-w-0 truncate font-medium text-zinc-800 dark:text-zinc-200">{label}</span>
-      <span className="ml-auto rounded-full bg-zinc-100 px-1.5 text-[10px] font-semibold text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+      <span className="text-ui-fg min-w-0 truncate font-medium">{label}</span>
+      <span className="bg-ui-raised text-ui-fg-muted ml-auto rounded-full px-1.5 text-[10px] font-semibold tabular-nums">
         {xrayCounts[mark]}
       </span>
     </button>

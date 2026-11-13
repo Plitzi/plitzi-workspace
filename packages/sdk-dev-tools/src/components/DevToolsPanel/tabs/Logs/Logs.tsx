@@ -49,12 +49,12 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', l
   return (
     <div className="flex h-full w-full flex-col">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-800">
-        <span className="font-mono text-zinc-400 dark:text-zinc-500">
+      <div className="border-ui-line bg-ui-raised flex shrink-0 items-center justify-between border-b px-2 py-1">
+        <span className="text-ui-fg-subtle font-mono">
           {items.length} {items.length === 1 ? 'entry' : 'entries'}
         </span>
         <button
-          className="rounded px-2 py-0.5 text-xs text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+          className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg rounded px-2 py-0.5 text-xs transition-colors"
           onClick={onClear}
         >
           <i className="fa-solid fa-trash-can mr-1" />
@@ -77,7 +77,7 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', l
         />
         <div ref={listRef} onScroll={handleScroll} className="flex grow basis-0 flex-col overflow-y-auto">
           {items.length === 0 ? (
-            <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
+            <div className="text-ui-fg-subtle flex grow flex-col items-center justify-center gap-2">
               <i className="fa-solid fa-terminal text-3xl opacity-20" />
               <span>No logs yet</span>
             </div>

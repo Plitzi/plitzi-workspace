@@ -64,7 +64,7 @@ const Settings = ({
         onChange={update.text('label')}
         size="xs"
       />
-      <span className="text-xs text-gray-500">
+      <span className="text-ui-fg-subtle text-xs">
         Bind <strong>pageInfo</strong> to your provider&apos;s page info, for example{' '}
         <code>apiContainer_posts.pageInfo</code>.
       </span>

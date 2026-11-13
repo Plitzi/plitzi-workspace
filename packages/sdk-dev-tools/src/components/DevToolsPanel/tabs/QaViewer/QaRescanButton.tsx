@@ -11,7 +11,7 @@ const QaRescanButton = () => {
   return (
     <button
       type="button"
-      className="rounded px-1.5 py-0.5 font-medium normal-case hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      className="hover:bg-ui-hover rounded px-1.5 py-0.5 font-medium normal-case"
       onClick={handleClick}
     >
       Look again

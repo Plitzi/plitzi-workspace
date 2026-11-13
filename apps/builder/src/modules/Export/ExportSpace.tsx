@@ -53,7 +53,7 @@ const ExportSpace = () => {
         onCopy={handleCopy}
         onDownload={handleDownload}
       />
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">{descriptionOf(session.format)}</p>
+      <p className="text-ui-fg-subtle text-xs">{descriptionOf(session.format)}</p>
       {session.locked && <ExportLocked planName={session.planName} onPickJson={pickJson} />}
       {!session.locked && session.error && <Notice tone="danger">{session.error}</Notice>}
       {!session.locked && (

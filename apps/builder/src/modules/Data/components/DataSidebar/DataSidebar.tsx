@@ -41,7 +41,7 @@ const DataSidebar = ({
   );
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col gap-5 overflow-auto border-r border-gray-200 bg-gray-50/60 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <aside className="border-ui-line bg-ui-panel/60 flex w-64 shrink-0 flex-col gap-5 overflow-auto border-r p-2.5">
       <SidebarSection title="Files" count={files.length} actionTitle="New file" onAction={handleStart}>
         {isAdding && (
           <NewFile placeholder="shop/products.json" nameOf={dataFileName} onAdd={handleAdd} onCancel={handleStop} />
@@ -66,7 +66,7 @@ const DataSidebar = ({
           ))}
         </div>
       </SidebarSection>
-      <p className="px-1 text-[11px] leading-relaxed text-gray-500 dark:text-zinc-400">
+      <p className="text-ui-fg-subtle px-1 text-[11px] leading-relaxed">
         A provider reads a file as <code>/data/&lt;path&gt;</code> on the server; what it reads is in the page it
         renders. Data a page must not carry belongs in a server action.
       </p>

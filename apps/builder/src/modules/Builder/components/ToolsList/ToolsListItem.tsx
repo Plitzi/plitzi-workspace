@@ -20,7 +20,7 @@ const ToolsListItem = ({ id = '', title = '', active = false, onClick }: ToolsLi
         className={clsx(
           'focus-visible:outline-primary-500 flex grow cursor-pointer items-center justify-center border-b-2 px-1.5 py-1.5 text-xs whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2',
           {
-            'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100': !active,
+            'text-ui-fg-subtle hover:text-ui-fg border-transparent': !active,
             'border-primary-ui text-primary-text font-medium': active
           }
         )}

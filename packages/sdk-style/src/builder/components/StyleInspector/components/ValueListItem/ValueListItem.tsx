@@ -65,19 +65,18 @@ const ValueListItem = ({ summary, preview, title, removeLabel, onRemove, childre
           'group flex h-7 w-full min-w-0 cursor-pointer items-center gap-2 rounded-md border px-2 text-xs transition-colors duration-150 select-none',
           {
             'border-primary-500/60 bg-primary-500/5 dark:border-primary-400/60 dark:bg-primary-400/10': open,
-            'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:border-zinc-600 dark:hover:bg-zinc-800':
-              !open
+            'border-ui-line bg-ui-raised hover:border-ui-line-strong hover:bg-ui-hover': !open
           }
         )}
         onClick={handleToggle}
       >
         {preview}
-        <span className="min-w-0 grow truncate font-mono text-[11px] text-zinc-700 dark:text-zinc-200" title={summary}>
+        <span className="text-ui-fg min-w-0 grow truncate font-mono text-[11px]" title={summary}>
           {summary}
         </span>
         <button
           type="button"
-          className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-zinc-400 transition-colors duration-150 group-hover:text-zinc-500 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:group-hover:text-zinc-400 dark:hover:text-red-400"
+          className="text-ui-fg-subtle group-hover:text-ui-fg flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded transition-colors duration-150 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
           title={removeLabel}
           aria-label={removeLabel}
           onClick={handleRemove}
@@ -87,11 +86,11 @@ const ValueListItem = ({ summary, preview, title, removeLabel, onRemove, childre
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="w-64">
         <div ref={contentRef} className="flex w-full flex-col outline-none" tabIndex={-1}>
-          <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-zinc-700">
-            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">{title}</span>
+          <div className="border-ui-line flex items-center justify-between gap-2 border-b px-3 py-2">
+            <span className="text-ui-fg text-xs font-semibold">{title}</span>
             <button
               type="button"
-              className="flex h-5 w-5 cursor-pointer items-center justify-center rounded text-zinc-400 hover:bg-gray-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-5 w-5 cursor-pointer items-center justify-center rounded"
               title="Close"
               aria-label="Close"
               onClick={handleClose}

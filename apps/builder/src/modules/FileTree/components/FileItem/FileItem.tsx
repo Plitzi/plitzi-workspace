@@ -35,8 +35,8 @@ const FileItem = ({ path, name, depth, selected, modified, removable, onSelect, 
       className={clsx(
         'group flex cursor-pointer items-center justify-between gap-1 rounded-sm py-1 pr-1 font-mono text-xs',
         {
-          'bg-blue-100 text-blue-900 dark:bg-zinc-700 dark:text-zinc-100': selected,
-          'hover:bg-gray-100 dark:hover:bg-zinc-800': !selected
+          'dark:bg-ui-active dark:text-ui-fg bg-blue-100 text-blue-900': selected,
+          'hover:bg-ui-hover': !selected
         }
       )}
       style={{ paddingLeft: 8 + depth * FILE_INDENT_PX }}
@@ -44,7 +44,7 @@ const FileItem = ({ path, name, depth, selected, modified, removable, onSelect, 
       onClick={handleSelect}
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        <i className="fa-regular fa-file-code shrink-0 text-[10px] text-gray-400 dark:text-zinc-500" />
+        <i className="fa-regular fa-file-code text-ui-fg-subtle shrink-0 text-[10px]" />
         <span className="truncate">{name}</span>
         {modified && (
           <span className="text-amber-600 dark:text-amber-400" title="Unsaved changes">

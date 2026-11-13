@@ -51,9 +51,7 @@ const PropsEditor = ({ value, onChange }: PropsEditorProps) => {
         </>
       }
     >
-      {value.length === 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">None: every instance renders the same.</span>
-      )}
+      {value.length === 0 && <span className="text-ui-fg-subtle text-xs">None: every instance renders the same.</span>}
       {value.map((entry, index) => (
         <PropRow
           key={index}

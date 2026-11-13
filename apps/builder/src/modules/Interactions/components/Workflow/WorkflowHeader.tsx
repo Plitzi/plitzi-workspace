@@ -45,8 +45,8 @@ const WorkflowHeader = ({ flows, flowId = '', flowSummaries = {}, setFlowId }: W
 
   return (
     <div
-      className={clsx('flex justify-between gap-1 bg-white px-2 py-1 dark:bg-zinc-800', {
-        'w-full rounded-2xl border border-gray-300 dark:border-zinc-600': flows.length > 0
+      className={clsx('bg-ui-raised flex justify-between gap-1 px-2 py-1', {
+        'border-ui-line-strong w-full rounded-2xl border': flows.length > 0
       })}
     >
       {flows.length > 0 && (
@@ -80,7 +80,7 @@ const WorkflowHeader = ({ flows, flowId = '', flowSummaries = {}, setFlowId }: W
             size="xs"
             intent="secondary"
             border="none"
-            className="text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+            className="text-ui-fg-subtle hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/15 dark:hover:text-red-400"
             onClick={handleClickRemove}
             title="Remove flow"
           >

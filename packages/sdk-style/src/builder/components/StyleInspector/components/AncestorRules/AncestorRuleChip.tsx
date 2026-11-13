@@ -28,8 +28,7 @@ const AncestorRuleChip = ({ condition, active = false, unused = false, onSelect,
       className={clsx('flex max-w-full items-center overflow-hidden rounded-sm border text-[11px] leading-none', {
         'border-primary-500 bg-primary-500/15 text-primary-700 dark:text-primary-200': active,
         'border-amber-500/70 bg-amber-500/10 text-amber-700 dark:text-amber-300': unused && !active,
-        'border-gray-300 bg-gray-100 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300':
-          !unused && !active
+        'border-ui-line-strong bg-ui-raised text-ui-fg-muted': !unused && !active
       })}
     >
       <button

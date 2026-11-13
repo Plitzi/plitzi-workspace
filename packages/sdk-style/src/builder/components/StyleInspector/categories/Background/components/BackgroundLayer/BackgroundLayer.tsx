@@ -131,7 +131,7 @@ const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove,
       className={clsx('rounded-md border transition-colors duration-150', {
         'border-primary-500 bg-primary-500/5 dark:border-primary-400 dark:bg-primary-400/10': isDragOver,
         'border-primary-500/60 dark:border-primary-400/60': expanded && !isDragOver,
-        'border-gray-200 dark:border-zinc-700': !expanded && !isDragOver
+        'border-ui-line': !expanded && !isDragOver
       })}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -147,7 +147,7 @@ const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove,
       >
         <span
           draggable
-          className="flex h-5 w-4 cursor-grab items-center justify-center text-zinc-400 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:text-zinc-200"
+          className="text-ui-fg-subtle hover:text-ui-fg flex h-5 w-4 cursor-grab items-center justify-center active:cursor-grabbing"
           title="Drag to reorder — the first layer is drawn on top"
           onClick={handleClickHandle}
           onDragStart={handleDragStart}
@@ -156,18 +156,18 @@ const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove,
           <i className="fa-solid fa-grip-vertical text-xs" />
         </span>
         <ColorSwatch className="h-5 w-5" value={preview} property="background" />
-        <span className="min-w-0 grow truncate text-xs text-zinc-700 dark:text-zinc-200" title={layerSummary(layer)}>
+        <span className="text-ui-fg min-w-0 grow truncate text-xs" title={layerSummary(layer)}>
           {layerSummary(layer)}
         </span>
         <i
-          className={clsx('fa-solid text-xs text-zinc-400 dark:text-zinc-500', {
+          className={clsx('fa-solid text-ui-fg-subtle text-xs', {
             'fa-angle-up': expanded,
             'fa-angle-down': !expanded
           })}
         />
         <button
           type="button"
-          className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-zinc-400 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+          className="text-ui-fg-subtle flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
           title="Remove layer"
           aria-label="Remove layer"
           onClick={handleRemove}
@@ -176,7 +176,7 @@ const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove,
         </button>
       </div>
       {expanded && (
-        <div className="flex flex-col gap-4 border-t border-gray-200 p-2.5 dark:border-zinc-700">
+        <div className="border-ui-line flex flex-col gap-4 border-t p-2.5">
           <LayerGroup title={gradient ? 'Gradient' : LAYER_TYPE_LABELS[layer.type]}>
             <CategoryOption label="Type" type="select" value={layer.type} onChange={handleTypeChange}>
               {LAYER_TYPES.map(type => (

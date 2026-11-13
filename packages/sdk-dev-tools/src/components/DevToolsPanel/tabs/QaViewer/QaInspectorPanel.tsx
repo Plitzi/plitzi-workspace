@@ -11,7 +11,7 @@ const QaInspectorPanel = () => {
 
   return (
     <section className="flex min-w-0 flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+      <div className="text-ui-fg-subtle flex items-center gap-2 text-[10px] font-semibold tracking-wider uppercase">
         <i className="fa-solid fa-magnifying-glass" />
         Inspector
       </div>

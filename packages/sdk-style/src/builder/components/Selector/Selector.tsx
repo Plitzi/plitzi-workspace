@@ -307,11 +307,11 @@ const Selector = ({
         <ContainerFloating.Trigger className="w-full">
           <div
             className={clsx(
-              'relative flex min-h-8 items-center gap-1 rounded-md border bg-white py-1 pr-1 pl-1 dark:bg-zinc-900',
+              'bg-ui-panel relative flex min-h-8 items-center gap-1 rounded-md border py-1 pr-1 pl-1',
               className,
               {
-                'pointer-events-none cursor-not-allowed border-gray-200 opacity-60 dark:border-zinc-800': disabled,
-                'focus-within:border-primary-500 focus-within:ring-primary-500/20 cursor-text border-gray-300 focus-within:ring-2 dark:border-zinc-700':
+                'border-ui-line pointer-events-none cursor-not-allowed opacity-60': disabled,
+                'focus-within:border-primary-500 focus-within:ring-primary-500/20 border-ui-line-strong cursor-text focus-within:ring-2':
                   !disabled
               }
             )}
@@ -343,7 +343,7 @@ const Selector = ({
               ))}
               <input
                 ref={inputRef}
-                className="min-w-20 grow basis-0 border-none bg-transparent px-1 py-0.5 text-xs text-inherit outline-hidden placeholder:text-zinc-400 focus:ring-transparent dark:placeholder:text-zinc-500"
+                className="placeholder:text-ui-fg-subtle min-w-20 grow basis-0 border-none bg-transparent px-1 py-0.5 text-xs text-inherit outline-hidden focus:ring-transparent"
                 placeholder={orderedTags.length > 0 ? 'Add class…' : 'Add a class to style it…'}
                 aria-label="Add a class"
                 aria-expanded={open}
@@ -360,7 +360,7 @@ const Selector = ({
               intent="secondary"
               size="custom"
               onClick={handleClickStyleManager}
-              className="h-6 w-6 shrink-0 self-start rounded bg-transparent text-zinc-500 hover:bg-gray-100 hover:text-zinc-900 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg h-6 w-6 shrink-0 self-start rounded bg-transparent dark:bg-transparent"
               title="Open the Style Manager: every class and element default of the space"
             >
               <Button.Icon icon="fas fa-swatchbook" />
@@ -378,7 +378,7 @@ const Selector = ({
       </ContainerFloating>
       {orderedTags.length > 1 && (
         <div
-          className="flex min-w-0 items-center gap-1.5 px-1 text-[11px] text-gray-500 dark:text-zinc-400"
+          className="text-ui-fg-subtle flex min-w-0 items-center gap-1.5 px-1 text-[11px]"
           title={note ?? STACKING_RULE}
         >
           <i className="fas fa-circle-info shrink-0" title={STACKING_RULE} />

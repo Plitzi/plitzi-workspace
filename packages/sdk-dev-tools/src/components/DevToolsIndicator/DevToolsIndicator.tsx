@@ -115,9 +115,9 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
     >
       <button
         className={clsx(
-          'flex cursor-pointer touch-none items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1.5 text-[12px]/[16px]',
-          'font-bold text-zinc-600 shadow-md transition-colors select-none hover:bg-zinc-50',
-          'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+          'border-ui-line bg-ui-panel flex cursor-pointer touch-none items-center gap-2 rounded border px-2 py-1.5 text-[12px]/[16px]',
+          'text-ui-fg-muted hover:bg-ui-hover font-bold shadow-md transition-colors select-none',
+          'dark:border-ui-line-strong dark:bg-ui-panel dark:text-ui-fg-muted dark:hover:bg-ui-hover'
         )}
         title="Plitzi dev tools — drag to the other corner"
         onPointerDown={handlePointerDown}
@@ -138,7 +138,7 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
             {warnings}
           </span>
         )}
-        {errors === 0 && warnings === 0 && <i className="fa-solid fa-terminal text-[11px] text-zinc-400" />}
+        {errors === 0 && warnings === 0 && <i className="fa-solid fa-terminal text-ui-fg-subtle text-[11px]" />}
       </button>
     </div>
   );

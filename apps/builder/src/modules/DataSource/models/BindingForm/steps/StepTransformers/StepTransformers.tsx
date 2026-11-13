@@ -106,7 +106,7 @@ const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) 
               const paramDefinitions = get(utility, `${action}.params`, {} as DataSourceUtilityParams);
 
               return (
-                <div key={i} className="flex flex-col gap-4 rounded-sm border border-gray-300 p-2 dark:border-zinc-700">
+                <div key={i} className="border-ui-line-strong flex flex-col gap-4 rounded-sm border p-2">
                   <div className="flex items-center gap-4">
                     <Switch
                       checked={enabled}

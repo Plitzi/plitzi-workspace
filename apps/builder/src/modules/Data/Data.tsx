@@ -173,7 +173,7 @@ const Data = () => {
               />
             )}
             {!current && (
-              <div className="flex grow items-center justify-center p-6 text-sm text-gray-500 dark:text-zinc-400">
+              <div className="text-ui-fg-subtle flex grow items-center justify-center p-6 text-sm">
                 Every file is removed: save to keep the data empty, or discard to bring them back.
               </div>
             )}

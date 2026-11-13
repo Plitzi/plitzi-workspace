@@ -16,21 +16,21 @@ const ServerPlayCard = ({ play, titleOf }: ServerPlayCardProps) => {
   return (
     <section
       aria-label="Playing on the server"
-      className="flex flex-col gap-2 rounded-lg border border-gray-300 p-3 dark:border-zinc-700"
+      className="border-ui-line-strong flex flex-col gap-2 rounded-lg border p-3"
     >
       <span className="text-primary-700 dark:text-primary-200 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
         <span className="size-1.5 animate-pulse rounded-full bg-current" />
         On the server · journey {now.at + 1} of {of}
       </span>
-      <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{titleOf(now.test)}</span>
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="text-ui-fg truncate text-sm font-medium">{titleOf(now.test)}</span>
+      <span className="text-ui-fg-subtle text-xs">
         Step {now.played} of {now.steps}
       </span>
       {now.frame && (
         <img
           src={now.frame}
           alt={`The page after step ${String(now.played)}`}
-          className="max-h-48 w-full rounded border border-gray-300 object-contain object-top dark:border-zinc-700"
+          className="border-ui-line-strong max-h-48 w-full rounded border object-contain object-top"
         />
       )}
     </section>

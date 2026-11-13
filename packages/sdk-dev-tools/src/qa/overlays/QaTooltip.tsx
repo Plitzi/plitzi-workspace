@@ -29,11 +29,11 @@ const QaTooltip = ({ element }: QaTooltipProps) => {
     >
       <span className="flex items-center gap-2">
         <span className="truncate font-semibold text-violet-300">{summary.name}</span>
-        <span className="text-zinc-400">
+        <span className="text-ui-fg-subtle">
           {summary.width} × {summary.height}
         </span>
       </span>
-      <span className="text-zinc-300">
+      <span className="text-ui-fg-subtle">
         {summary.font} / {summary.lineHeight}
       </span>
       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -41,7 +41,7 @@ const QaTooltip = ({ element }: QaTooltipProps) => {
         {summary.background && <QaSwatch colour={summary.background} />}
         {summary.contrast && <QaContrastBadge ratio={summary.contrast.ratio} needs={summary.contrast.needs} />}
       </span>
-      <span className="text-zinc-400">
+      <span className="text-ui-fg-subtle">
         padding {summary.padding} · margin {summary.margin}
         {summary.gap && ` · gap ${summary.gap}`}
       </span>

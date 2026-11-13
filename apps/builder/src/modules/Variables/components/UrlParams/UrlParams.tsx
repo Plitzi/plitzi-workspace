@@ -99,14 +99,14 @@ const UrlParams = ({ className = '' }: UrlParamsProps) => {
 
   return (
     <Flex direction="column" gap={3} className={`overflow-auto p-1 ${className}`}>
-      <span className="text-xs text-gray-500">
+      <span className="text-ui-fg-subtle text-xs">
         Try the page on another URL. What is set here overrides the editor&apos;s own address everywhere the page reads
         it — variable rules, bindings, server-driven sections and an action&apos;s input.
       </span>
 
       <Flex direction="column" gap={1}>
         <span className="text-xs font-medium">Route parameters</span>
-        {routeKeys.length === 0 && <span className="text-xs text-gray-500">This page&apos;s path takes none.</span>}
+        {routeKeys.length === 0 && <span className="text-ui-fg-subtle text-xs">This page&apos;s path takes none.</span>}
         {routeKeys.map(name => (
           <Input
             key={name}

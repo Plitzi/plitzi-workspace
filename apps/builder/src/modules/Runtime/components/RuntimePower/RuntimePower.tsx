@@ -42,7 +42,7 @@ const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => 
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         {stopped && runtime.stoppedReason === 'idle' && `Stopped after ${idleDurationOf(idleMinutes)} without use.`}
         {stopped && runtime.stoppedReason === 'manual' && 'Stopped by hand.'}
         {runtime.status === 'ready' &&

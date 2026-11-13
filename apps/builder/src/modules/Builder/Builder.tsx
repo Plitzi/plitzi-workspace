@@ -72,7 +72,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '', ground }: Bui
   return (
     <div
       className={clsx(
-        'flex min-w-0 grow basis-0 overflow-auto bg-gray-100 bg-size-[16px_16px] dark:bg-zinc-950',
+        'bg-ui-backdrop flex min-w-0 grow basis-0 overflow-auto bg-size-[16px_16px]',
         'bg-[radial-gradient(circle_at_1px_1px,#d1d5db_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,#27272a_1px,transparent_0)]',
         { 'justify-center': !multiPagesMode }
       )}

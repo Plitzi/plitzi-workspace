@@ -60,7 +60,7 @@ const RuntimeIdleNotice = () => {
       title={`Nothing has used the ${closing.environment} runtime for a while: it stops by itself to spend nothing. Keep it running for longer.`}
       className={clsx(
         'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs text-amber-600 transition-colors select-none',
-        'hover:bg-zinc-100 dark:text-amber-400 dark:hover:bg-zinc-800'
+        'hover:bg-ui-hover dark:text-amber-400'
       )}
       disabled={keeping}
       onClick={handleKeep}

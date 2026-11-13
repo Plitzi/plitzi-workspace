@@ -17,7 +17,7 @@ const dayOf = (iso: string): string =>
 
 /** A count of a plan's allowance, as a bar: full, it says so — calmly, amber; nothing broke. */
 const Meter = ({ used, limit }: { used: number; limit: number }) => (
-  <span className="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-800">
+  <span className="bg-ui-raised h-1 w-full overflow-hidden rounded-full">
     <span
       className={clsx('block h-full rounded-full', used >= limit ? 'bg-amber-500' : 'bg-primary-500')}
       style={{ width: `${String(Math.min(100, Math.round((used / Math.max(limit, 1)) * 100)))}%` }}
@@ -39,16 +39,16 @@ const PlanUsage = ({ journeys, plays }: PlanUsageProps) => {
   const kept = entitlements.journeysPerSpace;
   const limit = plays?.limit ?? entitlements.serverRunsPerMonth;
   const more = entitlements.moreJourneys ?? entitlements.moreServerRuns;
-  const row = 'flex items-baseline justify-between gap-2 text-xs text-zinc-600 dark:text-zinc-300';
-  const figure = 'font-semibold text-zinc-900 tabular-nums dark:text-zinc-50';
+  const row = 'flex items-baseline justify-between gap-2 text-xs text-ui-fg-muted';
+  const figure = 'font-semibold text-ui-fg tabular-nums';
 
   return (
     <section
       aria-label="What the plan allows"
-      className="flex shrink-0 flex-col gap-2 rounded-lg border border-gray-300 px-3 py-2.5 dark:border-zinc-700"
+      className="border-ui-line-strong flex shrink-0 flex-col gap-2 rounded-lg border px-3 py-2.5"
     >
       <span
-        className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+        className="text-ui-fg-subtle flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase"
         title="Element checks, and journeys played here in the builder, count against nothing."
       >
         {entitlements.tierLabel} plan
@@ -88,7 +88,7 @@ const PlanUsage = ({ journeys, plays }: PlanUsageProps) => {
           <Meter used={plays.used} limit={limit} />
         )}
         {limit !== null && plays && (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span className="text-ui-fg-subtle text-[11px]">
             {plays.used === null
               ? 'The count could not be read just now — runs are not held back by it.'
               : `${String(Math.max(0, limit - plays.used))} left · they start again on ${dayOf(plays.resetsOn)}`}

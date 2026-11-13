@@ -190,7 +190,7 @@ const Tests = ({ externalStyle = '' }: TestsProps) => {
           className="gap-8"
           description="One element in a given situation — shown or hidden, the words it reads, the look it wears — checked in an instant on every save. A snapshot or a publish waits for them, as it waits for the journeys."
         >
-          {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
+          {isLoading && <div className="text-ui-fg-subtle text-sm">Loading…</div>}
           {answer && <TestsSummary answer={answer} problems={problems} />}
           <UnitTests
             readOnly={!mayTest}

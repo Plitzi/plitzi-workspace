@@ -18,7 +18,7 @@ const QaViewport = ({ box }: QaViewportProps) => {
     >
       {box.viewportWidth} × {box.viewportHeight} ·{' '}
       <span className="text-violet-300">{displayModeAt(box.viewportWidth)}</span>
-      {narrower && <span className="text-zinc-400"> · page {Math.round(box.width)}</span>}
+      {narrower && <span className="text-ui-fg-subtle"> · page {Math.round(box.width)}</span>}
     </div>
   );
 };

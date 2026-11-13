@@ -18,7 +18,7 @@ const FieldHelp = ({ children }: FieldHelpProps) => {
     return null;
   }
 
-  return <span className="-mt-1 text-xs text-gray-500 dark:text-zinc-400">{children}</span>;
+  return <span className="text-ui-fg-subtle -mt-1 text-xs">{children}</span>;
 };
 
 export default FieldHelp;

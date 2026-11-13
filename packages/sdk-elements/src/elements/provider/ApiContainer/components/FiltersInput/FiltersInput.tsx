@@ -75,7 +75,7 @@ const FiltersInput = ({ value, operators, onChange }: FiltersInputProps) => {
         Add Filter
       </Button>
       {operators.length === 0 && (
-        <span className="text-xs text-gray-500">Select a connector to see the operators it supports.</span>
+        <span className="text-ui-fg-subtle text-xs">Select a connector to see the operators it supports.</span>
       )}
     </div>
   );

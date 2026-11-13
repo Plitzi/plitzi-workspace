@@ -54,7 +54,7 @@ const SpaceIssues = ({ issues, intro, onDismiss, onFix }: SpaceIssuesProps) => {
 
   return (
     <div className="flex max-h-[75vh] min-h-0 flex-col gap-3">
-      {intro && <p className="text-sm text-zinc-700 dark:text-zinc-200">{intro}</p>}
+      {intro && <p className="text-ui-fg text-sm">{intro}</p>}
       {clean && (
         <p className={clsx('flex items-center gap-2 text-sm', MUTED)}>
           <i className="fa-solid fa-circle-check text-green-600 dark:text-green-400" />

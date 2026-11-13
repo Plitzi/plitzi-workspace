@@ -32,9 +32,9 @@ const TestsSummary = ({ answer, problems: all }: TestsSummaryProps) => {
         >
           <b className="text-2xl font-semibold">{answer.unitPassed}</b>/{total} element checks pass
         </span>
-        <span className="text-gray-500 dark:text-zinc-400">
-          <b className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{answer.tests.e2e?.length ?? 0}</b>{' '}
-          journeys — played with “Play all”, or “Run on the server”
+        <span className="text-ui-fg-subtle">
+          <b className="text-ui-fg text-2xl font-semibold">{answer.tests.e2e?.length ?? 0}</b> journeys — played with
+          “Play all”, or “Run on the server”
         </span>
       </div>
       {needs > 0 && (

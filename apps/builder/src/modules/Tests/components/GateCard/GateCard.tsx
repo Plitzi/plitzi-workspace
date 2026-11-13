@@ -16,17 +16,15 @@ export type GateCardProps = {
 const GateCard = ({ ready, total, flowsNeedLook, checksNeedLook, onChecks, onShowFlow }: GateCardProps) => (
   <section
     aria-label="Before a snapshot or a publish"
-    className="flex shrink-0 flex-col gap-1 rounded-lg border border-gray-300 px-3 py-2.5 dark:border-zinc-700"
+    className="border-ui-line-strong flex shrink-0 flex-col gap-1 rounded-lg border px-3 py-2.5"
   >
-    <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+    <span className="text-ui-fg-subtle text-[11px] font-semibold tracking-wider uppercase">
       Before a snapshot or a publish
     </span>
-    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-      Every journey and every element check must pass.
-    </span>
+    <span className="text-ui-fg text-sm font-medium">Every journey and every element check must pass.</span>
     <div className="flex items-baseline gap-2">
-      <span className="text-2xl leading-none font-semibold text-zinc-900 tabular-nums dark:text-zinc-50">{ready}</span>
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">of {total} ready, as last played</span>
+      <span className="text-ui-fg text-2xl leading-none font-semibold tabular-nums">{ready}</span>
+      <span className="text-ui-fg-subtle text-xs">of {total} ready, as last played</span>
       <button
         type="button"
         className="text-primary-text ml-auto cursor-pointer text-xs font-medium hover:underline"

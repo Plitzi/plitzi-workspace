@@ -205,7 +205,7 @@ const Transform = () => {
         </div>
         {isEditorVisible && (
           <div
-            className={clsx('flex bg-white dark:bg-zinc-900', {
+            className={clsx('bg-ui-panel flex', {
               'h-full': layoutMode === 'horizontal',
               'w-full': layoutMode === 'vertical'
             })}
@@ -268,7 +268,7 @@ const Transform = () => {
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-gray-400 p-2 dark:border-zinc-600">
+      <div className="border-ui-line-strong flex items-center justify-between gap-3 border-t p-2">
         <TransformLayout
           layoutMode={layoutMode}
           onLayoutModeChange={handleChangeLayoutMode}

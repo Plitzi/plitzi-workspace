@@ -31,10 +31,10 @@ const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
   const handleToggle = useCallback(() => setOpen(value => !value), []);
 
   return (
-    <li className="border-b border-zinc-100 dark:border-zinc-800">
+    <li className="border-ui-line border-b">
       <button
         type="button"
-        className="focus-visible:ring-primary-500 flex w-full cursor-pointer flex-col gap-1 px-3 py-2 text-left hover:bg-zinc-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset dark:hover:bg-zinc-800/60"
+        className="focus-visible:ring-primary-500 hover:bg-ui-hover flex w-full cursor-pointer flex-col gap-1 px-3 py-2 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-inset"
         aria-expanded={open}
         onClick={handleToggle}
       >
@@ -42,14 +42,14 @@ const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
           <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium', ORIGIN_TONE[newest.origin])}>
             {ORIGIN_LABEL[newest.origin]}
           </span>
-          <span className="truncate font-medium text-zinc-800 dark:text-zinc-100">{authorLabel(newest)}</span>
+          <span className="text-ui-fg truncate font-medium">{authorLabel(newest)}</span>
           <span className={clsx('ml-auto shrink-0 font-mono text-[11px]', MUTED)} title="Change number">
             {groupRange(group)}
           </span>
           <span className={clsx('shrink-0 text-[11px]', MUTED)}>{formatTime(newest.at)}</span>
         </span>
         {!open && (
-          <span className="flex flex-col text-zinc-600 dark:text-zinc-300">
+          <span className="text-ui-fg-muted flex flex-col">
             {lines.slice(0, FOLDED_LINES).map(line => (
               <LineLabel key={line.text} line={line} />
             ))}
@@ -61,7 +61,7 @@ const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
         )}
       </button>
       {open && (
-        <ol className="mx-3 mb-2 flex flex-col divide-y divide-zinc-100 border-l-2 border-zinc-200 pl-2 dark:divide-zinc-800 dark:border-zinc-700">
+        <ol className="divide-ui-line border-ui-line mx-3 mb-2 flex flex-col divide-y border-l-2 pl-2">
           {group.changes.map(change => (
             <SaveDetail key={change.seq} change={change} onDismiss={onDismiss} />
           ))}

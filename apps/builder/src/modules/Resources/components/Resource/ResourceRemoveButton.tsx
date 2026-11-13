@@ -6,7 +6,7 @@ const ResourceRemoveButton = ({ onRemove }: ResourceRemoveButtonProps) => {
   return (
     <div className="absolute top-0 left-0 hidden h-full w-full items-center justify-center bg-black/40 group-hover:flex">
       <div
-        className="flex aspect-square cursor-pointer items-center justify-center rounded border border-gray-300 bg-white px-1"
+        className="border-ui-line-strong bg-ui-panel flex aspect-square cursor-pointer items-center justify-center rounded border px-1"
         onClick={onRemove}
         title="Remove"
       >

@@ -26,7 +26,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
   const errors = issues.filter(issue => issue.level === 'error');
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+    <div className="border-ui-line flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Check against this server</span>
         <Button size="xs" disabled={isLoading} onClick={handleRecheck}>
@@ -34,7 +34,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
         </Button>
       </div>
       {!data && !isLoading && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           Nothing checked yet — the answer arrives with the saved action.
         </span>
       )}
@@ -59,7 +59,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
         </Notice>
       ))}
       {errors.length > 0 && (
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
+        <span className="text-ui-fg-subtle text-xs">
           A run started by a page, a webhook or a schedule will fail on these until they are fixed.
         </span>
       )}

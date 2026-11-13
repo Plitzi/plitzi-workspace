@@ -77,9 +77,7 @@ const Components = ({ filter }: ComponentsProps) => {
   return (
     <Flex direction="column" gap={1}>
       <Flex items="center" justify="between" gap={2}>
-        <span className="px-1 text-[11px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
-          Components
-        </span>
+        <span className="text-ui-fg-subtle px-1 text-[11px] font-semibold tracking-wide uppercase">Components</span>
         <Button size="xs" title="New component" onClick={handleAdd} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
           New
@@ -95,7 +93,7 @@ const Components = ({ filter }: ComponentsProps) => {
             pageFolders={pageFolders}
           />
         ))}
-        {listed.length === 0 && <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">{emptyMessage}</span>}
+        {listed.length === 0 && <span className="text-ui-fg-subtle px-1 text-xs">{emptyMessage}</span>}
       </Flex>
     </Flex>
   );

@@ -84,7 +84,7 @@ const Resource = ({
             <Heading as="h5" className="mb-1">
               Preview
             </Heading>
-            <div className="group relative rounded-sm border border-gray-400 p-1">
+            <div className="group border-ui-line-strong relative rounded-sm border p-1">
               <ResourceContent className="h-24 w-24 rounded-sm" type={type} src={src} title={title} />
               {(type === 'image' || type === 'video') && (
                 <a
@@ -94,7 +94,7 @@ const Resource = ({
                 >
                   <Icon
                     icon="fa-solid fa-arrow-up-right-from-square"
-                    className="rounded-sm bg-white p-1 dark:bg-zinc-800"
+                    className="bg-ui-raised rounded-sm p-1"
                     size="custom"
                   />
                 </a>

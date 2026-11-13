@@ -23,7 +23,7 @@ const FlagSource = ({ resolution }: FlagSourceProps) => {
   return (
     <span
       className={clsx('rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wider uppercase', {
-        'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400': layer === 'space',
+        'bg-ui-raised text-ui-fg-subtle': layer === 'space',
         'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300': layer === 'server' || layer === 'sdk',
         'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300': layer === 'qa'
       })}

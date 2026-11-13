@@ -45,51 +45,51 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, host
   return (
     <div className="flex justify-around gap-3">
       <div className="flex min-w-0 grow basis-0 flex-col">
-        <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+        <div className="text-ui-fg-subtle mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
           <i className="fa-regular fa-clock" />
           Times
         </div>
-        <div className="flex flex-col gap-0.5 font-mono text-zinc-700 dark:text-zinc-300">
+        <div className="text-ui-fg flex flex-col gap-0.5 font-mono">
           <div className="flex gap-1">
-            <span className="text-zinc-400 dark:text-zinc-500">Start</span>
+            <span className="text-ui-fg-subtle">Start</span>
             {startTimeParsed}
           </div>
           <div className="flex gap-1">
-            <span className="text-zinc-400 dark:text-zinc-500">End</span>
+            <span className="text-ui-fg-subtle">End</span>
             {endTimeParsed}
           </div>
           <div className="flex gap-1">
-            <span className="text-zinc-400 dark:text-zinc-500">Duration</span>
+            <span className="text-ui-fg-subtle">Duration</span>
             {duration}
           </div>
         </div>
       </div>
 
-      <div className="w-px shrink-0 bg-zinc-200 dark:bg-zinc-800" />
+      <div className="bg-ui-raised w-px shrink-0" />
 
       <div className="flex min-w-0 grow basis-0 flex-col">
-        <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+        <div className="text-ui-fg-subtle mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
           <i className="fa-solid fa-circle-info" />
           Details
         </div>
-        <div className="flex flex-col gap-0.5 text-zinc-700 dark:text-zinc-300">
+        <div className="text-ui-fg flex flex-col gap-0.5">
           <div className="flex gap-1">
-            <span className="text-zinc-400 dark:text-zinc-500">Type</span>
+            <span className="text-ui-fg-subtle">Type</span>
             <span>Interaction</span>
           </div>
           <div className="flex min-w-0 gap-1">
-            <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Trigger</span>
+            <span className="text-ui-fg-subtle shrink-0">Trigger</span>
             <span className="truncate">{triggerName}</span>
           </div>
           {hostElementId && (
             <div className="flex min-w-0 gap-1">
               {/* Tells identical triggers apart; for global callbacks `Element` below names only the source. */}
-              <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Fired on</span>
+              <span className="text-ui-fg-subtle shrink-0">Fired on</span>
               <span className="truncate font-mono">{hostElementId}</span>
             </div>
           )}
           <div className="flex min-w-0 gap-1">
-            <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Element</span>
+            <span className="text-ui-fg-subtle shrink-0">Element</span>
             <span
               className="cursor-pointer truncate text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
               onClick={handleClick}
@@ -97,9 +97,7 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, host
               onMouseLeave={handleMouseLeave}
             >
               {element?.definition.label}
-              {elementId && (
-                <span className="ml-1 font-mono text-[10px] text-zinc-400 dark:text-zinc-500">[{elementId}]</span>
-              )}
+              {elementId && <span className="text-ui-fg-subtle ml-1 font-mono text-[10px]">[{elementId}]</span>}
             </span>
           </div>
         </div>

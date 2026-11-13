@@ -14,7 +14,7 @@ export type IssueItemProps = {
 
 /** One issue of its code's group, and the element it names — a link to it. What to write instead is the group's. */
 const IssueItem = ({ issue, onDismiss }: IssueItemProps) => (
-  <li className="flex flex-col gap-1 border-t border-zinc-100 py-2 first:border-t-0 dark:border-zinc-800">
+  <li className="border-ui-line flex flex-col gap-1 border-t py-2 first:border-t-0">
     <Message text={issue.message} />
     <div className="flex flex-wrap items-center gap-2">
       {issue.elementId !== null && <ElementChip elementId={issue.elementId} onDismiss={onDismiss} />}

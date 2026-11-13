@@ -43,8 +43,8 @@ const KindRow = ({ index, count, row, kinds, elements, elementId, onChange, onRe
   const handleDown = useCallback(() => onMove(index, 1), [index, onMove]);
 
   return (
-    <div className="flex items-end gap-2 rounded-md border border-gray-300 px-3 py-2 dark:border-zinc-700">
-      <span className="pb-2 font-mono text-xs text-gray-400 dark:text-zinc-500">{index + 1}</span>
+    <div className="border-ui-line-strong flex items-end gap-2 rounded-md border px-3 py-2">
+      <span className="text-ui-fg-subtle pb-2 font-mono text-xs">{index + 1}</span>
       <Select size="sm" name="kind" label="Kind" value={row.kind} onChange={handleKind}>
         {Object.entries(kinds).map(([kind, each]) => (
           <option key={kind} value={kind}>

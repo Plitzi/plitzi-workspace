@@ -39,7 +39,7 @@ const Elements = () => {
 
   return (
     <div className="flex grow basis-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-col gap-2 border-b border-gray-200 p-2 dark:border-zinc-800">
+      <div className="border-ui-line flex shrink-0 flex-col gap-2 border-b p-2">
         <PanelSearch placeholder="Search elements" value={filter} onChange={handleChange} />
         {!searching && (
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Categories">

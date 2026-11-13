@@ -25,15 +25,14 @@ const CategoryChip = ({ id, label, icon, count, active, onSelect }: CategoryChip
         {
           'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-400/40 dark:bg-primary-400/15 dark:text-primary-200':
             active,
-          'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800':
-            !active
+          'border-ui-line text-ui-fg-muted hover:border-ui-line-strong hover:bg-ui-hover': !active
         }
       )}
       onClick={handleClick}
     >
       <i className={clsx(icon, 'text-[10px]')} />
       {label}
-      <span className="text-gray-400 tabular-nums dark:text-zinc-500">{count}</span>
+      <span className="text-ui-fg-subtle tabular-nums">{count}</span>
     </button>
   );
 };

@@ -40,7 +40,7 @@ const ContainerServer = () => {
   const [first, ...rest] = sections;
 
   return (
-    <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-900">
+    <div className="bg-ui-panel flex min-h-0 grow basis-0 flex-col">
       <PanelSections
         name="server"
         sections={[first, ...rest]}

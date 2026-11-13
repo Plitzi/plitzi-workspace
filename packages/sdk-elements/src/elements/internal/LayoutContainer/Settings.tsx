@@ -57,7 +57,7 @@ const Settings = ({ id, layout = '', layoutContainer = '', subType = 'div', fold
         onChange={handleChangeFolder}
       />
       <LayoutPicker layout={layout} layoutContainer={layoutContainer} ownLayoutId={id} onUpdate={onUpdate} />
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         A layout can sit inside another one: pages using this layout are shown inside it, and it inside the one picked
         here — the outer shell stays mounted while moving between pages that share it.
       </span>

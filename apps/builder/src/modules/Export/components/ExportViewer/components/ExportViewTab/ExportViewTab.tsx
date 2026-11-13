@@ -24,16 +24,14 @@ const ExportViewTab = ({ view, label, icon, count, selected, onSelect }: ExportV
       onClick={handleClick}
       className={clsx(
         '-mb-px flex cursor-pointer items-center gap-2 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
-        selected && 'border-primary-500 text-zinc-900 dark:text-zinc-50',
-        !selected && 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+        selected && 'border-primary-500 text-ui-fg',
+        !selected && 'text-ui-fg-subtle hover:text-ui-fg border-transparent'
       )}
     >
       <i className={clsx(icon, 'text-[11px]')} />
       {label}
       {count !== undefined && (
-        <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] leading-4 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-          {count}
-        </span>
+        <span className="bg-ui-active text-ui-fg-muted rounded-full px-1.5 text-[11px] leading-4">{count}</span>
       )}
     </button>
   );

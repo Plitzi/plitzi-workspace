@@ -190,7 +190,7 @@ const Settings = ({
         <option value="connector">Connector (server-side)</option>
         <option value="action">Server action (server-side)</option>
       </Select>
-      <span className="text-xs text-gray-500 dark:text-zinc-400">
+      <span className="text-ui-fg-subtle text-xs">
         {source === 'connector' &&
           'The server calls the API and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'}
         {source === 'action' &&
@@ -201,7 +201,7 @@ const Settings = ({
       {source === 'action' && (
         <>
           {actionCatalog?.length === 0 && (
-            <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+            <div className="border-ui-line-strong text-ui-fg-subtle rounded-sm border p-2 text-xs">
               No actions yet. Add one in the Actions panel and give it a “While a page renders” trigger — that is the
               way in this element uses.
             </div>
@@ -225,7 +225,7 @@ const Settings = ({
       {source === 'connector' && (
         <>
           {connectorOptions.length === 0 && (
-            <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+            <div className="border-ui-line-strong text-ui-fg-subtle rounded-sm border p-2 text-xs">
               No connectors yet. Add one in the Connectors panel — it holds the API endpoints, and the credential stays
               on the server.
             </div>
@@ -288,7 +288,7 @@ const Settings = ({
           <div className="flex flex-col">
             <label>Query</label>
             <CodeMirror
-              className="min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
+              className="border-ui-line-strong min-h-6.5 basis-auto rounded-sm border px-1 text-xs"
               value={query}
               theme={resolvedTheme}
               mode="text"
@@ -333,7 +333,7 @@ const Settings = ({
                 onChange={update.text('gcTime')}
                 size="xs"
               />
-              <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+              <div className="border-ui-line-strong text-ui-fg-subtle rounded-sm border p-2 text-xs">
                 A completed server action refreshes every cached request, in case it changed what they read. On its
                 step, “Refresh cached requests” can name only the containers it affects, or none for an action that only
                 reads. A webhook step can do the same.
@@ -392,7 +392,7 @@ const Settings = ({
             <option value="address">Address</option>
             <option value="figure">Figure</option>
           </Select>
-          <div className="my-2 h-px w-full border border-gray-300 bg-gray-300" />
+          <div className="border-ui-line-strong bg-ui-line-strong my-2 h-px w-full border" />
           <div className="flex min-h-50 grow flex-col">
             <label>Mock Data (Build Mode)</label>
             <CodeMirror

@@ -14,12 +14,12 @@ export type LogStoreHeaderProps = {
 const LogStoreHeader = ({ storeName, path, message, time }: LogStoreHeaderProps) => {
   return (
     <div className="flex w-full items-center gap-2 overflow-hidden">
-      <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">
+      <span className="text-ui-fg-subtle shrink-0 font-mono tabular-nums">
         {typeof time === 'string' ? time : formatDate(time)}
       </span>
       <LogStatus logType="info">Store</LogStatus>
-      {storeName && <span className="shrink-0 font-semibold text-zinc-700 dark:text-zinc-200">{storeName}</span>}
-      <span className="truncate font-mono text-zinc-400 dark:text-zinc-500">{path ?? message ?? '(full state)'}</span>
+      {storeName && <span className="text-ui-fg shrink-0 font-semibold">{storeName}</span>}
+      <span className="text-ui-fg-subtle truncate font-mono">{path ?? message ?? '(full state)'}</span>
     </div>
   );
 };

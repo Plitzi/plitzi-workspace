@@ -22,7 +22,7 @@ const InspectorSearch = ({ value, onChange }: InspectorSearchProps) => {
   );
 
   return (
-    <div className="border-b border-gray-200 px-2 py-1.5 dark:border-zinc-800">
+    <div className="border-ui-line border-b px-2 py-1.5">
       <Input
         size="xs"
         value={value}

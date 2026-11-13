@@ -28,9 +28,7 @@ const DetailsRuntime = ({ id }: DetailsRuntimeProps) => {
   const report = root && typeof document !== 'undefined' ? elementReport(root.getState(), id, document) : undefined;
 
   if (!report) {
-    return (
-      <div className="text-sm text-zinc-400 dark:text-zinc-500">Neither the document nor the page has “{id}”.</div>
-    );
+    return <div className="text-ui-fg-subtle text-sm">Neither the document nor the page has “{id}”.</div>;
   }
 
   return (
