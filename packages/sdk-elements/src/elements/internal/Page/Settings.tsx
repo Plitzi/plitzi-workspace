@@ -11,8 +11,10 @@ import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { OG_TYPES, pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import SettingsSection from '../../../components/SettingsSection';
 import useSettingsUpdate from '../../useSettingsUpdate';
 import LayoutPicker from '../LayoutPicker';
+import { accessHelp, accessSummary, isRestricted, scrollOf, seoSummary } from './settingsSummary';
 import SharePreview from './SharePreview';
 
 import type { DocumentScroll } from './declaration';
@@ -158,205 +160,189 @@ const Settings = ({
 
   const fullpath = useMemo(() => getPageFullPath(flat, pageFolders, id, true), [flat, pageFolders, id]);
 
+  const accessState = useMemo(() => {
+    const redirectName: unknown = Object.hasOwn(flat, unauthorizedPageRedirect)
+      ? flat[unauthorizedPageRedirect].attributes.name
+      : undefined;
+
+    return {
+      accessLevel,
+      permissions: pageAccessOf({ access })?.permissions ?? [],
+      unauthorizedBehaviour,
+      redirectName: typeof redirectName === 'string' ? redirectName : ''
+    };
+  }, [accessLevel, access, unauthorizedBehaviour, flat, unauthorizedPageRedirect]);
+  const scroll = scrollOf(documentScroll);
+
   return (
-    <div className="flex flex-col gap-4 py-2">
-      {!enabled && (
-        <Alert intent="info" size="xs" solid={false}>
-          <span className="text-xs">When this option is disable, this page wont be accesible</span>
-        </Alert>
-      )}
-      <Checkbox label=" Page Enabled" checked={enabled} onChange={handleChangeEnabled} size="xs" />
-      <Input value={name} label="Page Name" onChange={handleChangeName} size="xs" />
-      <Alert intent="info" size="xs" solid={false}>
-        <span className="text-xs">Slug is a combination of letters, numbers and _ - : / *</span>
-      </Alert>
-      <div className="flex flex-col">
-        <Input
-          value={slug}
-          onChange={handleChangeSlug}
-          label="Slug / Path"
-          className={{ inputContainer: 'rounded-none rounded-tl rounded-tr' }}
+    <div className="flex flex-col py-2">
+      <SettingsSection id="page-page" title="Page" summary={enabled ? fullpath : `${fullpath} · disabled`} defaultOpen>
+        <Checkbox label=" Page Enabled" checked={enabled} onChange={handleChangeEnabled} size="xs" />
+        {!enabled && (
+          <Alert intent="info" size="xs" solid={false}>
+            <span className="text-xs">While disabled, this page is not served to anybody</span>
+          </Alert>
+        )}
+        <Input value={name} label="Page Name" onChange={handleChangeName} size="xs" />
+        <div className="flex flex-col gap-1">
+          <Input value={slug} onChange={handleChangeSlug} label="Slug / Path" size="xs" />
+          <span className="truncate text-xs text-gray-500 dark:text-zinc-400" title={fullpath}>
+            Full path: <span className="font-semibold text-gray-700 dark:text-zinc-200">{fullpath}</span>
+          </span>
+          <span className="text-xs text-gray-400 dark:text-zinc-500">Letters, numbers and _ - : / *</span>
+        </div>
+        <Select2
+          label="Folder"
+          value={folder}
+          options={pageFolderOptions}
+          placeholder="None"
+          onChange={handleChangeFolder}
           size="xs"
         />
-        <div className="truncate rounded-b border-x border-b border-gray-200 px-1 py-0.5 text-xs" title={fullpath}>
-          Full Path: <span className="font-bold">{fullpath}</span>
-        </div>
-      </div>
-      <Select2
-        label="Folder"
-        value={folder}
-        options={pageFolderOptions}
-        placeholder="None"
-        onChange={handleChangeFolder}
-        size="xs"
-      />
-      <LayoutPicker layout={layout} layoutContainer={layoutContainer} onUpdate={onUpdate} />
-      <Select
-        value={accessLevel}
-        label="Restrict Access"
-        onChange={handleChangeAccessLevel}
-        placeholder="None"
-        size="xs"
+        <LayoutPicker layout={layout} layoutContainer={layoutContainer} onUpdate={onUpdate} />
+      </SettingsSection>
+      <SettingsSection
+        id="page-access"
+        title="Access"
+        summary={accessSummary(accessState)}
+        highlight={isRestricted(accessState)}
       >
-        <option value="public">Public</option>
-        <option value="authenticated">Authenticated</option>
-      </Select>
-      {accessLevel === '' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">Anyone on the internet can access this page</span>
-        </Alert>
-      )}
-      {accessLevel === 'public' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">Only Guest can access this page</span>
-        </Alert>
-      )}
-      <Input
-        label="Required permissions"
-        value={permissionsDraft}
-        onChange={setPermissionsDraft}
-        onBlur={handleBlurPermissions}
-        placeholder="None — anybody this page is for"
-        size="xs"
-      />
-      {permissions !== '' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">
-            Only visitors holding every one of these see this page. Anybody else is answered 401 or 403 — or 404, if
-            Unauthorized Behaviour says Not found — and the server never sends them its content
-          </span>
-        </Alert>
-      )}
-      {(accessLevel !== '' || permissions !== '') && (
         <Select
-          label="Unauthorized Behaviour"
-          value={unauthorizedBehaviour}
-          onChange={update.text('unauthorizedBehaviour')}
+          value={accessLevel}
+          label="Restrict Access"
+          onChange={handleChangeAccessLevel}
           placeholder="None"
           size="xs"
         >
-          <option value="redirect">Redirect</option>
-          <option value="notFound">Not found (404)</option>
+          <option value="public">Public</option>
+          <option value="authenticated">Authenticated</option>
         </Select>
-      )}
-      {unauthorizedBehaviour === 'notFound' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">
-            Anybody this page is not for is answered as if it did not exist — the space&apos;s 404 — and is sent nothing
-            of it, not its name nor its path. For a back-office, whose refusal would tell whoever probes the path that
-            something is there
-          </span>
-        </Alert>
-      )}
-      {unauthorizedBehaviour === 'redirect' && (
-        <Select
-          value={unauthorizedPageRedirect}
-          label="Redirect Page"
-          onChange={update.text('unauthorizedPageRedirect')}
-          placeholder="None"
+        <Input
+          label="Required permissions"
+          value={permissionsDraft}
+          onChange={setPermissionsDraft}
+          onBlur={handleBlurPermissions}
+          placeholder="None — anybody this page is for"
           size="xs"
-        >
-          {pagesParsed.map(page => (
-            <option key={page.id} value={page.id}>
-              {get(page, 'attributes.name') as string}
-            </option>
-          ))}
-        </Select>
-      )}
-      <Select
-        value={documentScroll}
-        label="Document Scroll"
-        onChange={update.text('documentScroll')}
-        placeholder="Scrolls"
-        size="xs"
-      >
-        <option value="noBounce">No bounce</option>
-        <option value="locked">Locked</option>
-      </Select>
-      {documentScroll === 'noBounce' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">
-            The page scrolls, but a finger pulled past either end no longer bounces it or reloads it
-          </span>
-        </Alert>
-      )}
-      {documentScroll === 'locked' && (
-        <Alert intent="info" solid={false} size="xs">
-          <span className="text-xs">
-            The page holds still: only the parts set to scroll on their own (overflow auto) move. For a screen that
-            fills the window — a dashboard, a board
-          </span>
-        </Alert>
-      )}
-      <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} size="xs" />
-      {seoEnabled && (
-        <>
-          <Input value={seoPageTitle} label="SEO Title" onChange={update.text('seoPageTitle')} size="xs" />
-          <TextArea
-            label="SEO Description"
-            value={seoPageDescription}
-            onChange={update.text('seoPageDescription')}
-            rows={3}
-            size="xs"
-          />
-          <div className="flex flex-col">
-            <p className="mb-4 text-xs">
-              Specify this page&#39;s title and description. You can see how they&#39;ll look in search engine results
-              pages (SERPs) in the preview below.
-            </p>
-            <label>Search Result Preview</label>
-            <div className="rounded border border-gray-300 px-2 py-1">
-              <div className="mb-1 pt-1 text-xl text-[#1a0dab]">
-                <label>{seoPageTitle}</label>
-              </div>
-              <div className="text-sm text-[#006621]">
-                <span>www.url.com</span>
-              </div>
-              <div className="settings-seo__description mb-1 pt-1 text-sm">{`${seoPageDescription.slice(0, 160)}...`}</div>
-            </div>
-          </div>
-          <Input
-            value={seoRobots}
-            label="Robots"
-            placeholder="index, follow"
-            onChange={update.text('seoRobots')}
-            size="xs"
-          />
-          <Input
-            value={seoImage}
-            label="Share image"
-            placeholder="/og.png, https://…, or {{ apiContainer_room.cover }}"
-            onChange={update.text('seoImage')}
-            size="xs"
-          />
-          <Input
-            value={seoImageAlt}
-            label="Share image description"
-            placeholder="What the picture shows"
-            onChange={update.text('seoImageAlt')}
-            size="xs"
-          />
+        />
+        {(accessLevel !== '' || permissions !== '') && (
           <Select
-            value={seoType}
-            label="Kind of page"
-            onChange={update.text('seoType')}
+            label="Unauthorized Behaviour"
+            value={unauthorizedBehaviour}
+            onChange={update.text('unauthorizedBehaviour')}
+            placeholder="None"
             size="xs"
-            placeholder="website"
           >
-            {OG_TYPES.map(type => (
-              <option key={type} value={type}>
-                {type}
+            <option value="redirect">Redirect</option>
+            <option value="notFound">Not found (404)</option>
+          </Select>
+        )}
+        {unauthorizedBehaviour === 'redirect' && (
+          <Select
+            value={unauthorizedPageRedirect}
+            label="Redirect Page"
+            onChange={update.text('unauthorizedPageRedirect')}
+            placeholder="None"
+            size="xs"
+          >
+            {pagesParsed.map(page => (
+              <option key={page.id} value={page.id}>
+                {get(page, 'attributes.name') as string}
               </option>
             ))}
           </Select>
-          <SharePreview
-            title={seoPageTitle}
-            description={seoPageDescription}
-            {...(seoImage ? { image: seoImage } : {})}
-            {...(seoImageAlt ? { imageAlt: seoImageAlt } : {})}
-          />
-        </>
-      )}
+        )}
+        <span className="text-xs text-gray-500 dark:text-zinc-400">{accessHelp(accessState)}</span>
+      </SettingsSection>
+      <SettingsSection id="page-scroll" title="Scroll" summary={scroll.label}>
+        <Select
+          value={documentScroll}
+          label="Document Scroll"
+          onChange={update.text('documentScroll')}
+          placeholder="Scrolls"
+          size="xs"
+        >
+          <option value="noBounce">No bounce</option>
+          <option value="locked">Locked</option>
+        </Select>
+        <span className="text-xs text-gray-500 dark:text-zinc-400">{scroll.help}</span>
+      </SettingsSection>
+      <SettingsSection
+        id="page-seo"
+        title="Search & sharing"
+        summary={seoSummary(seoEnabled, seoPageTitle)}
+        highlight={seoEnabled}
+      >
+        <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} size="xs" />
+        {seoEnabled && (
+          <>
+            <Input value={seoPageTitle} label="SEO Title" onChange={update.text('seoPageTitle')} size="xs" />
+            <TextArea
+              label="SEO Description"
+              value={seoPageDescription}
+              onChange={update.text('seoPageDescription')}
+              rows={3}
+              size="xs"
+            />
+            <Input
+              value={seoRobots}
+              label="Robots"
+              placeholder="index, follow"
+              onChange={update.text('seoRobots')}
+              size="xs"
+            />
+            <Select
+              value={seoType}
+              label="Kind of page"
+              onChange={update.text('seoType')}
+              size="xs"
+              placeholder="website"
+            >
+              {OG_TYPES.map(type => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </Select>
+            <Input
+              value={seoImage}
+              label="Share image"
+              placeholder="/og.png, https://…, or {{ apiContainer_room.cover }}"
+              onChange={update.text('seoImage')}
+              size="xs"
+            />
+            <Input
+              value={seoImageAlt}
+              label="Share image description"
+              placeholder="What the picture shows"
+              onChange={update.text('seoImageAlt')}
+              size="xs"
+            />
+            <SettingsSection id="page-seo-previews" title="Previews" summary="Search result and share card">
+              <span className="text-xs text-gray-500 dark:text-zinc-400">
+                How this page&#39;s title and description show in search results (SERPs):
+              </span>
+              <div className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-600">
+                <div className="mb-1 pt-1 text-xl text-[#1a0dab]">
+                  <label>{seoPageTitle}</label>
+                </div>
+                <div className="text-sm text-[#006621]">
+                  <span>www.url.com</span>
+                </div>
+                <div className="settings-seo__description mb-1 pt-1 text-sm text-gray-700">
+                  {`${seoPageDescription.slice(0, 160)}...`}
+                </div>
+              </div>
+              <SharePreview
+                title={seoPageTitle}
+                description={seoPageDescription}
+                {...(seoImage ? { image: seoImage } : {})}
+                {...(seoImageAlt ? { imageAlt: seoImageAlt } : {})}
+              />
+            </SettingsSection>
+          </>
+        )}
+      </SettingsSection>
     </div>
   );
 };

@@ -33,3 +33,8 @@ weighs on a phone — and what of it a phone cannot hold.
   permissions, saying which (and when it answers everyone else with a 404), and beside a folder all of whose pages are —
   fainter, with how many, when only some are. Read by the rule the server withholds pages with (`protectedAccessOf`,
   `@plitzi/sdk-shared/schema`), so the lock and what a visitor is sent never disagree.
+- A page's settings are four sections — **Page** open, **Access**, **Scroll** and **Search & sharing** closed, each
+  header saying what it holds (`Signed-in visitors · 404 to others`, `Locked`, the SEO title), a restricted page's in
+  the accent — where they were one column of every field with a notice under each, longer than the panel. Every field
+  is where it was, one click away; each section's notices are one line about the state it is in, and the search and
+  share previews sit in a section of their own. The sections are `SettingsSection`, for other elements' settings too.
