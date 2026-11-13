@@ -19,24 +19,25 @@ export type StateRowProps = {
   persistence: Persistence;
   /** The deepest paths the space names under the key (`cart.items.0.name`), with what reads and writes each. */
   subPaths: StatePathUse[];
-  /** The last change of the key or of anything under it while the panel is open: its row says it moved. */
-  lastChange?: StateChange;
+  /** The last change of each path while the panel is open: a row, the key's or a path's under it, says it moved. */
+  lastOf: Map<string, StateChange>;
   onChange: (key: string, value: unknown) => void;
-  onOpenInTree: (key: string) => void;
+  /** Sets one path under the key alone (`cart.items.0.name`), not the whole of what holds it. */
+  onChangePath: (segments: [string, ...string[]], value: unknown) => void;
 };
 
 /**
  * One top-level key of the state: its name — with what it holds (`{3}`, `[12]`) and how many paths under it the space
  * names — its value edited in place, how the settings keep it, and how many elements read and write it. Unfolded: the
- * paths under it with their values, a way into the tree, and each element that uses it as a link.
+ * paths under it, each with its value set in place and its own uses, and each element that uses the key as a link.
  */
-const StateRow = ({ use, value, persistence, subPaths, lastChange, onChange, onOpenInTree }: StateRowProps) => {
+const StateRow = ({ use, value, persistence, subPaths, lastOf, onChange, onChangePath }: StateRowProps) => {
   const [open, setOpen] = useState(false);
   const { path: key, reads, writes } = use;
 
   const handleChange = useCallback((next: unknown) => onChange(key, next), [key, onChange]);
   const handleToggle = useCallback(() => setOpen(current => !current), []);
-  const handleOpenInTree = useCallback(() => onOpenInTree(key), [key, onOpenInTree]);
+  const lastChange = lastOf.get(key);
   const branch = isBranch(value);
   const shape = shapeOf(value);
 
@@ -97,25 +98,24 @@ const StateRow = ({ use, value, persistence, subPaths, lastChange, onChange, onO
         <div className="flex flex-col pb-2">
           {branch && (
             <div className="pr-2 pb-1 pl-7">
-              <ValueJson value={value} onChange={handleChange} />
+              {/* Drawn again at each change of the key, a path's under it set in its row too: never an old draft. */}
+              <ValueJson key={lastChange?.id ?? 0} value={value} onChange={handleChange} />
             </div>
           )}
-          {(branch || subPaths.length > 0) && (
-            <div className="flex items-center justify-between pt-1 pr-2 pl-7">
-              <span className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
-                {subPaths.length > 0 ? 'Under it, as the space names it' : 'Under it'}
-              </span>
-              <button
-                type="button"
-                className="text-primary-text cursor-pointer text-[11px] hover:underline"
-                onClick={handleOpenInTree}
-              >
-                See it in the tree
-              </button>
-            </div>
+          {subPaths.length > 0 && (
+            <span className="text-ui-fg-subtle pt-1 pr-2 pl-7 text-[10px] font-semibold tracking-wider uppercase">
+              Under it, as the space names it
+            </span>
           )}
           {subPaths.map(sub => (
-            <SubPathRow key={sub.path} keyName={key} value={value} use={sub} />
+            <SubPathRow
+              key={sub.path}
+              keyName={key}
+              value={value}
+              use={sub}
+              lastChange={lastOf.get(sub.path)}
+              onChange={onChangePath}
+            />
           ))}
           <div className="pr-2 pl-7">
             {subPaths.length > 0 && (
