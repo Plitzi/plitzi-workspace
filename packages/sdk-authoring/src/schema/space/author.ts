@@ -34,6 +34,7 @@ import {
   addPage,
   assertLayoutRef,
   buildPageFolders,
+  assertOneNotFoundPerScope,
   homeIndexOf,
   withheldPageId,
   writeRedirect
@@ -346,6 +347,9 @@ export class SpaceAuthor {
     const pageFolders = buildPageFolders(this);
     const declared = collecting(this, () => components.map(component => addComponent(this, component)));
     collecting(this, () => layouts.forEach(layout => addLayout(this, layout)));
+    collecting(this, () => {
+      assertOneNotFoundPerScope(this.spec.pages);
+    });
     const home = homeIndexOf(this.spec.pages);
     const pages = collecting(this, () => this.spec.pages.map((page, index) => addPage(this, page, index, home)));
     const families = new Map<object, string[]>();

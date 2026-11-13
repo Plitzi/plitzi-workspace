@@ -8,6 +8,7 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation';
+import { NOT_FOUND_SLUG, notFoundPageIn } from '@plitzi/sdk-shared/navigation';
 import { OG_TYPES, pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
@@ -106,15 +107,40 @@ const Settings = ({
     [onUpdate, slug, name]
   );
 
+  /**
+   * Why the last change that would have made a second 404 page in one place was not made: one per place — the space, or
+   * one folder —, or the router would pick one of two. Said beside the field it was typed in.
+   */
+  const [notFoundRefusal, setNotFoundRefusal] = useState('');
+  const notFoundAlready = useCallback(
+    (inFolder: string): string | undefined => {
+      const other = notFoundPageIn({ flat, pages }, inFolder, id);
+      const name: unknown = other !== undefined && Object.hasOwn(flat, other) ? flat[other].attributes.name : undefined;
+
+      return other === undefined ? undefined : typeof name === 'string' && name !== '' ? name : other;
+    },
+    [flat, pages, id]
+  );
+
   const handleChangeSlug = useCallback(
     (value: string) => {
       const pattern = /^[a-zA-Z0-9:*/_-]+$/gim;
       if (pattern.test(value) || !value) {
         const newSlug = value.replaceAll('//', '/');
+        const other = newSlug === NOT_FOUND_SLUG ? notFoundAlready(folder) : undefined;
+        if (other !== undefined) {
+          setNotFoundRefusal(
+            `"${other}" is already the 404 page ${folder ? 'of this folder' : 'of the space'}: one per place. Use "Use as 404 page" in the Pages panel to make this one it instead.`
+          );
+
+          return;
+        }
+
+        setNotFoundRefusal('');
         onUpdate?.('slug', newSlug);
       }
     },
-    [onUpdate]
+    [onUpdate, notFoundAlready, folder]
   );
 
   const handleChangeAccessLevel = useCallback(
@@ -146,8 +172,21 @@ const Settings = ({
   );
 
   const handleChangeFolder = useCallback(
-    (option?: Exclude<Option, OptionGroup>) => onUpdate?.('folder', option?.value ?? ''),
-    [onUpdate]
+    (option?: Exclude<Option, OptionGroup>) => {
+      const into = option?.value ?? '';
+      const other = slug === NOT_FOUND_SLUG ? notFoundAlready(into) : undefined;
+      if (other !== undefined) {
+        setNotFoundRefusal(
+          `"${other}" is already the 404 page ${into ? 'of that folder' : 'of the space'}: one per place. Give one of them another slug first.`
+        );
+
+        return;
+      }
+
+      setNotFoundRefusal('');
+      onUpdate?.('folder', into);
+    },
+    [onUpdate, notFoundAlready, slug]
   );
 
   const pageFolderOptions = useMemo(
@@ -176,7 +215,14 @@ const Settings = ({
 
   return (
     <div className="flex flex-col py-2">
-      <SettingsSection id="page-page" title="Page" summary={enabled ? fullpath : `${fullpath} · disabled`} defaultOpen>
+      <SettingsSection
+        id="page-page"
+        title="Page"
+        summary={[slug === NOT_FOUND_SLUG ? '404 page' : fullpath, enabled ? '' : 'disabled']
+          .filter(Boolean)
+          .join(' · ')}
+        defaultOpen
+      >
         <Checkbox label=" Page Enabled" checked={enabled} onChange={handleChangeEnabled} size="xs" />
         {!enabled && (
           <Alert intent="info" size="xs" solid={false}>
@@ -190,6 +236,17 @@ const Settings = ({
             Full path: <span className="font-semibold text-gray-700 dark:text-zinc-200">{fullpath}</span>
           </span>
           <span className="text-xs text-gray-400 dark:text-zinc-500">Letters, numbers and _ - : / *</span>
+          {slug === NOT_FOUND_SLUG && (
+            <span className="text-xs text-gray-500 dark:text-zinc-400">
+              The 404 page {folder ? 'of its folder' : 'of the space'}: every address{folder ? ' in it' : ''} no other
+              page answers lands here, sent with status 404.
+            </span>
+          )}
+          {notFoundRefusal && (
+            <Alert intent="warning" size="xs" solid={false}>
+              <span className="text-xs">{notFoundRefusal}</span>
+            </Alert>
+          )}
         </div>
         <Select2
           label="Folder"

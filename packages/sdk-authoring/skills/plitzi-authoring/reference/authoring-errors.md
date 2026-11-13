@@ -108,6 +108,7 @@ The space is not written until these are fixed.
 | `no-pages` | a space with no pages | `pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]` |
 | `not-found-in-browser` | `notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status | `runtime: 'server'` on the provider, or `visible` on the page's "not found" part instead |
 | `not-found-not-a-template` | `notFound`, a provider's or a page's, that is not one `{{ expression }}` — never `true`, so never a 404 | `notFound: '{{ source.found == false }}'` |
+| `not-found-twice` | two pages answering every address nothing else does (`slug: '*'`) in the same place — the space, or one folder: the router would pick one, and an address land on whichever it picked | one per place: the other given a slug of its own, or moved to the folder whose addresses it answers (a folder's answers its own, the space's the rest) |
 | `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500' |
 | `og-type-unknown` | a page's `seoType` that Open Graph does not name | `seoType: 'article'`, `'profile'`, `'music.playlist'` — or leave it out, and the page is a `website` |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |

@@ -38,3 +38,16 @@ weighs on a phone — and what of it a phone cannot hold.
   the accent — where they were one column of every field with a notice under each, longer than the panel. Every field
   is where it was, one click away; each section's notices are one line about the state it is in, and the search and
   share previews sit in a section of their own. The sections are `SettingsSection`, for other elements' settings too.
+- The 404 page is said and set in the builder: the Pages tree marks the page of every address no other page answers
+  (`slug: '*'`) with a **404** badge — of the space, or of its folder —, and the page menu's **Use as 404 page** makes
+  another page it, giving the old one a slug of its name back (both said before and after). One per place — the space,
+  or one folder: typing `*` in a page's slug, moving a 404 page into a folder, or dragging it there in the sitemap where
+  one already is, is refused, saying which page it is and how to swap them. Its settings say what it is, on the Page
+  section's header too.
+
+## Authoring and the 404 page
+
+- `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the
+  space, or one folder —, which left the router to pick one. A folder's answers its own addresses, the space's the rest.
+  `@plitzi/sdk-shared/navigation` says which page is a place's 404 (`notFoundPageIn`, `isNotFoundPage`) and a free slug
+  for one that stops being it (`freeSlugFor`).

@@ -6,6 +6,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { isNotFoundPage, pageFolderOf } from '@plitzi/sdk-shared/navigation';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
 import ItemActions from './ItemActions';
@@ -36,6 +37,12 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
     attributes: { name, default: defaultPage },
     definition: { label, type }
   } = element as Element & { attributes: { name: string; default: boolean } };
+
+  // The page of every address nothing else answers in its place — the space, or its folder — sent with status 404.
+  const notFound = type !== 'layoutContainer' && isNotFoundPage(element.attributes);
+  const notFoundSays = pageFolderOf(element.attributes)
+    ? 'The 404 page of its folder: every address in it no other page answers lands here, sent with status 404'
+    : 'The 404 page: every address no other page answers lands here, sent with status 404';
 
   const protection = useMemo(
     () => (type === 'layoutContainer' ? undefined : pageProtection(element.attributes)),
@@ -71,6 +78,16 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
             <Text size="sm" isTruncated active={active}>
               {name ? name : label ? label : type}
             </Text>
+            {notFound && (
+              <span
+                role="img"
+                aria-label={notFoundSays}
+                title={notFoundSays}
+                className="shrink-0 rounded-sm bg-amber-100 px-1 text-[10px] leading-4 font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+              >
+                404
+              </span>
+            )}
             {protection && (
               <Icon
                 size="xs"
@@ -89,6 +106,7 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
             type={type}
             zoom={zoom}
             defaultPage={defaultPage}
+            notFound={notFound}
             onZoom={handleClickZoom}
           />
         </Flex>

@@ -218,6 +218,26 @@ export const homeIndexOf = (pages: readonly PageSpec[]): number => {
   return root !== -1 ? root : pages.findIndex(page => page.slug !== '*');
 };
 
+/**
+ * One page for the addresses nothing answers in each scope — the space's, and each folder's: two with `slug: '*'` in the
+ * same place would leave the router to pick one of them, and an address to land on whichever it picked. A folder's
+ * answers its own addresses, the space's the rest.
+ */
+export const assertOneNotFoundPerScope = (pages: readonly PageSpec[]): void => {
+  const byScope = new Map<string, string[]>();
+  pages
+    .filter(page => page.slug === '*')
+    .forEach(page => byScope.set(page.folder ?? '', [...(byScope.get(page.folder ?? '') ?? []), page.name]));
+  const twice = [...byScope.entries()].find(([, names]) => names.length > 1);
+  if (twice) {
+    const [folder, names] = twice;
+    throw new AuthoringError(
+      'not-found-twice',
+      `Pages ${names.map(name => `"${name}"`).join(' and ')} each answer every address nothing else does ${folder ? `in the folder "${folder}"` : 'in the space'} (slug '*'): keep one — give the other a slug of its own, or move it to the folder whose addresses it answers`
+    );
+  }
+};
+
 export const addPage = (author: SpaceAuthor, page: PageSpec, index: number, home: number): string => {
   if (page.slug === '*' && page.isDefault === true) {
     throw new AuthoringError(

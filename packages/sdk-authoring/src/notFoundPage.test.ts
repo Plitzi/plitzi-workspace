@@ -54,6 +54,35 @@ describe('the page for an address no page answers', () => {
   });
 });
 
+describe('one page for the addresses nothing answers, per place', () => {
+  const lost = (id: string, folder?: string): PageSpec => ({
+    id,
+    name: id,
+    slug: '*',
+    ...(folder ? { folder } : {}),
+    body: [heading(id, { id: `${id}-title` })]
+  });
+
+  it('is refused twice in the space, naming both and the fix', () => {
+    expect(() => authorSpace(space([home, lost('lost'), lost('gone')]))).toThrow(
+      /Pages "lost" and "gone" each answer every address nothing else does in the space \(slug '\*'\)/
+    );
+  });
+
+  it('is refused twice in one folder, and kept once in each folder and in the space', () => {
+    const withDocs = (pages: PageSpec[]): SpaceSpec => ({
+      ...space(pages),
+      pageFolders: [{ id: 'docs' }, { id: 'blog' }]
+    });
+
+    expect(() => authorSpace(withDocs([home, lost('a', 'docs'), lost('b', 'docs')]))).toThrow(/in the folder "docs"/);
+    const { schema } = authorSpace(
+      withDocs([home, lost('lost'), lost('docs-lost', 'docs'), lost('blog-lost', 'blog')])
+    );
+    expect(['lost', 'docs-lost', 'blog-lost'].map(id => schema.flat[id].attributes.slug)).toEqual(['*', '*', '*']);
+  });
+});
+
 /** A server provider says when its answer means the address shows nothing: the page goes out with status 404. */
 describe('a provider whose answer is "not found"', () => {
   const post = (fields: Record<string, unknown>) =>

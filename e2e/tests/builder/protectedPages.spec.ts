@@ -42,6 +42,8 @@ describeTarget('builder', subject => {
     capture
   }) => {
     test.skip(!isMockBackend(), 'the live backend serves a space this spec knows nothing about');
+    // Two loads of the builder, one per theme: past the default 30 s while the whole suite runs beside it.
+    test.slow();
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(subject.origin, { waitUntil: 'domcontentloaded' });

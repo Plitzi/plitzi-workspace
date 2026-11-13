@@ -1,8 +1,10 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
+import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { isNotFoundPage, notFoundPageIn } from '@plitzi/sdk-shared/navigation';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SitemapDiagram from '@pmodules/App/components/SitemapDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
@@ -14,6 +16,7 @@ import type { SitemapEntry } from '@pmodules/App/components/SitemapDiagram';
 
 const ContainerSitemap = () => {
   const { showModal } = useModal();
+  const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const [[pageFolders, pageDefinitions, flat, currentPageId]] = useBuilderStore([
     'schema.pageFolders',
@@ -88,6 +91,21 @@ const ContainerSitemap = () => {
       const into = folderId ?? '';
       if (entry.type === 'page') {
         const page = Object.hasOwn(pageDefinitions, entry.id) ? pageDefinitions[entry.id] : undefined;
+        // A 404 page into a folder that has its own: two in one place, and the router would pick one.
+        const already =
+          page && isNotFoundPage(page.attributes)
+            ? notFoundPageIn({ flat, pages: Object.keys(pageDefinitions) }, into, page.id)
+            : undefined;
+        if (already !== undefined) {
+          const name = Object.hasOwn(flat, already) ? flat[already].attributes.name : undefined;
+          addToast(
+            `That folder already has its 404 page${typeof name === 'string' ? ` ("${name}")` : ''}: one per folder. Give one of them another slug first, or use "Use as 404 page" on it`,
+            { appeareance: 'warning', autoDismiss: true, placement: 'top-right' }
+          );
+
+          return;
+        }
+
         if (page) {
           void eventBridge.emit('main', 'schemaUpdateElement', {
             ...page,
@@ -103,7 +121,7 @@ const ContainerSitemap = () => {
         void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...folder, parentId: into });
       }
     },
-    [eventBridge, pageDefinitions, pageFolders]
+    [eventBridge, pageDefinitions, pageFolders, flat, addToast]
   );
 
   const handleRemove = useCallback(

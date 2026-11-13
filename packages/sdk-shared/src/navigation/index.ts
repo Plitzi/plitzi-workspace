@@ -1,4 +1,5 @@
 export { matchPath } from './matchPath';
+export { freeSlugFor, isNotFoundPage, notFoundPageIn, pageFolderOf, slugOfName } from './notFoundPages';
 export { SITEMAP_EXCLUSION_WORDS, sitemapExclusion, sitemapPages, sitemapPaths } from './sitemap';
 export {
   getPageFullPath,

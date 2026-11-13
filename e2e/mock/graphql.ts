@@ -170,6 +170,9 @@ const savedTests = new WeakMap<OfflineDataRaw, MockTests>();
 const testsOf = (space: OfflineDataRaw): MockTests =>
   savedTests.get(space) ?? space.schema.tests ?? { unit: [], e2e: [] };
 
+/** The id an element was sent with: a text, or `''`. */
+const idOf = (element: Record<string, unknown>): string => (typeof element.id === 'string' ? element.id : '');
+
 const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string, unknown>) => unknown) | undefined> = {
   InitQuery: initQuery,
   SpaceConnectorsQuery: () => ({ data: { SpaceConnectors: emptyConnection('SpaceConnectorListType') } }),
@@ -231,6 +234,18 @@ const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string
    *  the linter finds nothing in. */
   /** The Tests view asks at its first paint and after each save: what the last save stored. */
   SpaceTestsQuery: space => ({ data: { SpaceTests: testsAnswer(testsOf(space)) } }),
+  // The element as saved, as the server answers it: the query selects its fields, and `true` in their place is an answer
+  // Apollo reads as an element missing every one of them.
+  SpaceUpdateElementMutation: (_space, variables) => {
+    const element = isRecord(variables.element) ? variables.element : {};
+
+    return { data: { SpaceUpdateElement: asElement(idOf(element), element) } };
+  },
+  SpaceUpdateElementsMutation: (_space, variables) => {
+    const elements = Array.isArray(variables.elements) ? variables.elements.filter(isRecord) : [];
+
+    return { data: { SpaceUpdateElements: elements.map(element => asElement(idOf(element), element)) } };
+  },
   SpaceSetTestsMutation: (space, variables) => {
     // What the builder sent, kept as the server would keep it — read back by the next SpaceTestsQuery.
     savedTests.set(space, isRecord(variables.tests) ? variables.tests : {});

@@ -17,6 +17,12 @@ export const PAGE_CODES = {
     means: "the page of every address no other answers (`slug: '*'`) marked the home",
     fix: "`isDefault` on the page at `''`, or left out: the page at `''` is the home"
   },
+  'not-found-twice': {
+    kind: 'refused',
+    means:
+      "two pages answering every address nothing else does (`slug: '*'`) in the same place — the space, or one folder: the router would pick one, and an address land on whichever it picked",
+    fix: "one per place: the other given a slug of its own, or moved to the folder whose addresses it answers (a folder's answers its own, the space's the rest)"
+  },
   'page-route-reserved': {
     kind: 'refused',
     means: "a page under `/fn`, where the space's functions answer",

@@ -151,7 +151,8 @@ Every page is now its content and nothing else, and every page is guaranteed the
   status 404, in the layout you give it, so the visitor is still on the site with a way back. Its own address answers
   404 too.
 - **One per folder, if a section wants its own.** In a folder (`folder: 'docs'`) it answers that folder's unknown
-  addresses; the deepest folder's wins, the space's takes the rest. A page whose `flag` is off shows it too.
+  addresses; the deepest folder's wins, the space's takes the rest. A page whose `flag` is off shows it too. Never two
+  in one place — the space, or one folder: the router would pick one, so `author` refuses it (`not-found-twice`).
 - **A space with none is given a plain one** — a title and a link home, in the home page's layout — and `author`
   suggests writing your own (`not-found-page`): say it in the space's words.
 - **A page that exists but finds nothing** — `/products/:slug` for a slug no product has — is sent with 404 too when
