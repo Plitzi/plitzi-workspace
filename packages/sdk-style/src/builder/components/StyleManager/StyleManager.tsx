@@ -67,7 +67,9 @@ const StyleManager = () => {
           selected={selector?.name}
           onSelect={setSelector}
         />
-        <div className="flex min-w-0 grow basis-0 flex-col overflow-auto">
+        {/* The inspector's own surface, as the sidebar gives it: its lines are drawn for that ground, and on the floating
+            window's they were the same colour as it. */}
+        <div className="flex min-w-0 grow basis-0 flex-col overflow-auto bg-white dark:bg-zinc-900">
           {selector && (
             <>
               <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-zinc-800">
