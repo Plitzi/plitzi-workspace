@@ -15,7 +15,11 @@ import type { ReactNode } from 'react';
  */
 const JourneyVisitor = ({ children }: { children?: ReactNode }) => {
   const auth = use(AuthContext);
-  const [[onCanvas = false, testAccount]] = useBuilderStore(['journeyOnCanvas', 'runtime.testAccount']);
+  const [[onCanvas = false, testAccount, canvasGuest = false]] = useBuilderStore([
+    'journeyOnCanvas',
+    'runtime.testAccount',
+    'canvasGuest'
+  ]);
   const token = auth.user?.accessToken;
   // The editor's own session, as it stands while no journey is on the canvas: what a journey's visitor never reads.
   const [editorToken, setEditorToken] = useState(token);
@@ -23,7 +27,10 @@ const JourneyVisitor = ({ children }: { children?: ReactNode }) => {
     setEditorToken(token);
   }
 
-  const guest = playsAsGuest(onCanvas, testAccount !== undefined, token, editorToken);
+  // Or the State Manager shows the page to a guest — while no journey is on the canvas to decide its own visitor.
+  const guest =
+    playsAsGuest(onCanvas, testAccount !== undefined, token, editorToken) ||
+    (!onCanvas && canvasGuest && testAccount === undefined);
   const value = useMemo(() => (guest ? guestAuth(auth) : auth), [guest, auth]);
 
   return <AuthContext value={value}>{children}</AuthContext>;

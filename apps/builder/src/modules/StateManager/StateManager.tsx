@@ -1,63 +1,73 @@
-import { useDidUpdateEffect } from '@plitzi/plitzi-ui';
-import Button from '@plitzi/plitzi-ui/Button';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useCallback, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useTheme } from '@plitzi/sdk-shared/theme/react';
+import ViewTabs from '@pmodules/App/components/ViewTabs';
+import UrlParams from '@pmodules/Variables/components/UrlParams';
+
+import ComputedTab from './components/ComputedTab';
+import Scenarios from './components/Scenarios';
+import StateTab from './components/StateTab';
+import VisitorTab from './components/VisitorTab';
+import { stateKeysOf } from './helpers';
+import useCanvasVisitor from './hooks/useCanvasVisitor';
 
 export type StateManagerProps = {
   className?: string;
 };
 
+type Tab = 'state' | 'visitor' | 'address' | 'computed';
+
+const NO_STATE: Record<string, unknown> = {};
+
+/**
+ * The page's context as the canvas runs it — what decides how it looks besides the space itself: its state, who visits
+ * it, the address it is opened at and the values the space computes from them. Each can be set here to see the page in
+ * that case, and a case kept by name (Scenarios). Nothing of it is saved in the space.
+ */
 const StateManager = ({ className = '' }: StateManagerProps) => {
-  const { resolvedTheme } = useTheme();
-  const [state = emptyObject, setState] = useBuilderStore('runtime.state');
-  const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
-  const { addToast } = useToast();
+  const [[state = NO_STATE, flat, components, computed, urlTest]] = useBuilderStore([
+    'runtime.state',
+    'schema.flat',
+    'schema.components',
+    'schema.settings.computed',
+    'urlTest'
+  ]);
+  const { visitor } = useCanvasVisitor();
+  const [tab, setTab] = useState<Tab>('state');
 
-  const handleChange = useCallback((value: string) => setValue(value), []);
+  const keys = useMemo(() => {
+    const used = stateKeysOf({ flat, components });
 
-  const handleClickSave = useCallback(() => {
-    try {
-      setState(JSON.parse(value) as Record<string, unknown>);
-      setValue(JSON.stringify(JSON.parse(value), null, 2));
-    } catch {
-      addToast('The state is not valid JSON — fix it and apply it again', {
-        appeareance: 'error',
-        autoDismiss: true,
-        placement: 'top-right'
-      });
-    }
-  }, [setState, value, addToast]);
-
-  useDidUpdateEffect(() => {
-    setValue(JSON.stringify(state, null, 2));
-  }, [state]);
+    return new Set([...used.keys(), ...Object.keys(state)]).size;
+  }, [flat, components, state]);
+  // A tab whose case is not the canvas's own says so: what is set there changes the page.
+  const tested = Object.keys(urlTest?.routeParams ?? {}).length + Object.keys(urlTest?.queryParams ?? {}).length;
+  const marked = (on: boolean) => on && <span className="bg-primary-500 size-1.5 rounded-full" aria-label="set" />;
 
   return (
     <div className={clsx('flex h-full w-full flex-col gap-2 p-2', className)}>
-      <div className="flex flex-col items-end gap-2">
-        <p className="text-ui-fg-muted self-stretch text-xs leading-relaxed">
-          The page's state as the canvas runs it now. Change it and apply it to see the page in that case — nothing of
-          the space is saved.
-        </p>
-        <Button size="xs" iconPlacement="before" onClick={handleClickSave}>
-          <Button.Icon icon="fa-solid fa-check" />
-          Apply
-        </Button>
-      </div>
-      <CodeMirror
-        className="border-ui-line-strong min-h-0 grow overflow-hidden rounded-md border"
-        value={value}
-        theme={resolvedTheme}
-        lineWrapping
-        onChange={handleChange}
-        mode="json"
+      <Scenarios />
+      <ViewTabs
+        tabs={[
+          { id: 'state', label: 'State', mark: <span className="text-ui-fg-subtle tabular-nums">{keys}</span> },
+          { id: 'visitor', label: 'Visitor', mark: marked(visitor.kind !== 'editor') },
+          { id: 'address', label: 'Address', mark: marked(tested > 0) },
+          {
+            id: 'computed',
+            label: 'Computed',
+            mark: <span className="text-ui-fg-subtle tabular-nums">{Object.keys(computed ?? {}).length}</span>
+          }
+        ]}
+        selected={tab}
+        onSelect={setTab}
       />
+      <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto" role="tabpanel">
+        {tab === 'state' && <StateTab />}
+        {tab === 'visitor' && <VisitorTab />}
+        {tab === 'address' && <UrlParams />}
+        {tab === 'computed' && <ComputedTab />}
+      </div>
     </div>
   );
 };

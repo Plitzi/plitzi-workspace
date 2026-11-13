@@ -100,6 +100,17 @@ weighs on a phone — and what of it a phone cannot hold.
 - Assets' folders are rows of the panel, as Pages' are — no card each, their count in words' colour, an empty one
   marked in amber, the one a file is dragged over in the accent.
 
+- The **State Manager** is the page's context, where it was a JSON box: **State** lists every key the space reads or
+  writes — set or not yet — each edited as what it is (a toggle, a number, words, JSON), with how the settings keep it
+  (kept, painted, browser, not kept) and the elements that read and write it, each a link; the keys the page holds
+  that nothing names apart; the changes as the canvas runs, newest first; the whole as JSON still. **Visitor** shows
+  the page to your session, a guest or one of the space's test accounts, and what the page reads of its visitor.
+  **Address** is the URL the page is tried on. **Computed** lists the space's computed values and what each gives
+  now. A case is saved by name — the state, the visitor and the address — and applied again in one choice; kept in
+  the browser, never in the space.
+- The **Usages** panel read only a bare token's sources: `{{ state.open ? 'a' : 'b' }}` read nothing. It reads every
+  template's.
+
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the

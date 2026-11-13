@@ -336,6 +336,12 @@ export type BuilderState = CommonState & {
    * editing — a journey that met a guarded page passed on the server and failed here. Editor-only and never published.
    */
   journeyOnCanvas?: boolean;
+  /**
+   * The canvas shown to a guest — chosen in the State Manager's Visitor tab: the page as a visitor with no session sees
+   * it, where it otherwise shows the editor's own. A test account is laid over it as `runtime.testAccount` instead.
+   * Editor-only and never published; a journey on the canvas decides its own visitor.
+   */
+  canvasGuest?: boolean;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

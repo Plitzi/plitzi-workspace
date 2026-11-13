@@ -11,6 +11,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  /* A State Manager row the canvas just changed (`state-flash`, assets/index.scss). */
+  --animate-state-flash: state-flash 1.2s ease-out forwards;
+}
+
 @layer base {
   .dark {
     color-scheme: dark;

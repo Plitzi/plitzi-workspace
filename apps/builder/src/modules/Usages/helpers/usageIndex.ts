@@ -2,7 +2,7 @@ import { unusedDeclarations } from '@plitzi/sdk-authoring';
 import { isInstance } from '@plitzi/sdk-schema';
 import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { rootName } from '@pmodules/Builder/helpers/searchElements';
 import { componentLabel } from '@pmodules/Components/helpers';
 
@@ -92,7 +92,9 @@ const scanText = (text: string, reads: Pick<ElementReads, 'paths' | 'cssVariable
     reads.cssVariables.add(name);
   }
 
-  if (hasValidToken(text)) {
+  // Any template, not only a bare token: `{{ state.open ? 'a' : 'b' }}` reads `state.open` as surely as `{{ state.open }}`,
+  // and gated on a token alone every expression's reads were missing from the index.
+  if (text.includes('{{') || text.includes('{%')) {
     for (const path of templatePaths(text)) {
       reads.paths.add(path);
     }
@@ -198,6 +200,12 @@ const readsOf = (element: Element): ElementReads => {
 
   return reads;
 };
+
+/**
+ * The source paths an element reads — in its bindings, its steps, its attributes, its `when`s — read as the usage index
+ * reads them: what another view asks of one element (the State Manager's keys) without a second reading of the schema.
+ */
+export const elementPaths = (element: Element): ReadonlySet<string> => readsOf(element).paths;
 
 const scanStyleValue = (value: unknown, reads: SelectorReads): void => {
   if (typeof value === 'string') {

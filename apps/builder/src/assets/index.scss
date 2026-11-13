@@ -39,3 +39,14 @@
     }
   }
 }
+
+// A row of the State Manager the canvas just changed: a glow that fades, so what a flow touched is seen as it happens.
+@keyframes state-flash {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}

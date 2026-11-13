@@ -335,6 +335,21 @@ describe('buildUsageIndex — data sources', () => {
   });
 });
 
+describe('what a template reads', () => {
+  // Gated on a bare token, `{{ state.open ? 'a' : 'b' }}` read nothing: every expression's source was missing.
+  it('reads the sources of an expression as of a bare token', () => {
+    const flat = flatOf(
+      home,
+      element('badge', { parentId: 'home', attributes: { content: "{{ state.open ? 'open' : 'shut' }}" } })
+    );
+    const index = buildUsageIndex(source({ flat }));
+
+    expect(item(index, 'dataSources', 'source:state').elements).toEqual([
+      expect.objectContaining({ elementId: 'badge', via: ['state.open'] })
+    ]);
+  });
+});
+
 describe('usageIndexOf', () => {
   it('answers the same document with the same index, and a changed one with a new index', () => {
     const first = source({ flat: flatOf(home) });
