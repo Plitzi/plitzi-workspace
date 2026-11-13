@@ -61,7 +61,7 @@ const freshKey = (): string => {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
 
-  return `kept-${Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')}`;
+  return `call-${Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')}`;
 };
 
 const pause = (ms: number, signal: AbortSignal): Promise<void> =>
@@ -143,9 +143,16 @@ export const deliverCall = async ({
   /** Told when the call is kept, before it is waited for: what puts it on the page as waiting. */
   onQueued: () => void;
 }): Promise<Delivery> => {
+  /**
+   * One key for the call from its first try, sent with both: a connection lost after a worker began it — the request
+   * went out, the answer never came back — is kept for later all the same, and kept under a key of its own it ran
+   * twice. Under the first try's key, the run it began answers for it (the worker's replay), or refuses it while it
+   * still runs. A key the call names is its own.
+   */
+  const keyed = { ...call, idempotencyKey: call.idempotencyKey || freshKey() };
   let answered: { status: number; payload: ActionResponse } | undefined;
   try {
-    answered = await post(endpoint, JSON.stringify(call), signal, keepalive);
+    answered = await post(endpoint, JSON.stringify(keyed), signal, keepalive);
   } catch (error) {
     if (signal.aborted) {
       throw error;
@@ -155,12 +162,7 @@ export const deliverCall = async ({
   if (!answered || answered.status === 502 || answered.status === 503) {
     const unanswered = answered;
     try {
-      const kept = await post(
-        QUEUED_CALLS_PATH,
-        JSON.stringify({ ...call, idempotencyKey: call.idempotencyKey || freshKey() }),
-        signal,
-        keepalive
-      );
+      const kept = await post(QUEUED_CALLS_PATH, JSON.stringify(keyed), signal, keepalive);
       // A page server that keeps no calls (404) leaves it as it was: nothing could run it.
       if (kept.status === 404) {
         return unanswered ?? { unreachable: new Error('No worker answered, and this server keeps no calls for later') };

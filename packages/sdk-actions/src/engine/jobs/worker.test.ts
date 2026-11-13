@@ -106,6 +106,33 @@ describe('createJobWorker', () => {
   });
 
   /**
+   * A replica with no room is not the job's fault, and not a run: what its history and its plan count are the runs that
+   * started. Claimed, then turned away at the run's start for the replica's capacity (`over_capacity` — here its memory,
+   * past a share of 0), the job goes back with its attempt refunded, its task never called and nothing recorded of it;
+   * given room, it runs once and is recorded once.
+   */
+  it('hands back a job its replica has no room for, its attempt refunded and no run recorded of it', async () => {
+    const ran = vi.fn(() => ({ ok: true }));
+    const full = world(ran, undefined, { memoryShare: 0 });
+    await full.job();
+
+    expect(await full.worker().poll()).toBe(1);
+    await settle();
+
+    expect(await full.read()).toMatchObject({ status: 'pending', attempts: 0, history: [] });
+    expect(ran).not.toHaveBeenCalled();
+    expect(full.runs).toEqual([]);
+
+    const roomy = world(ran);
+    await roomy.job();
+    await roomy.worker().poll();
+    await settle();
+
+    expect(ran).toHaveBeenCalledTimes(1);
+    expect(roomy.runs.map(run => run.status)).toEqual(['completed']);
+  });
+
+  /**
    * The failure that used to empty the queue.
    *
    * A store that throws is not the job being wrong — it is the guards being unreachable — and counting it as an
@@ -461,6 +488,51 @@ describe('a call kept in the queue', () => {
     expect(again).toEqual(first);
     // A different caller under the same key is a different call: kept on its own, never handed the first one's ticket.
     expect('refused' in stranger || ('jobId' in first && stranger.jobId !== first.jobId)).toBe(true);
+  });
+
+  /**
+   * The page's first try reached a worker, which ran it, and the answer was lost on the way back: the page keeps the
+   * call under the key it was first sent with (`deliverCall`), and the kept call answers with that run — the task is
+   * not run a second time, nor a second run recorded.
+   */
+  it('answers with the run its first try began, under the same key, never running it again', async () => {
+    const ran = vi.fn((_params: unknown, ctx: { user?: { email?: string } }) => ctx.user?.email ?? 'nobody');
+    const test = world(ran, [callEntry], undefined, undefined, { replayTtlMs: 60_000 });
+    const firstTry = {
+      spaceId: 1,
+      actionId: 'greet',
+      callerId: 'user:7',
+      input: {},
+      idempotencyKey: 'call-lost-answer',
+      ttlMs: 10_000
+    };
+    const run = await test.module.guards.begin(firstTry);
+    await test.module.guards.end(run, { runId: run.runId, status: 'completed', output: { who: 'ana@example.com' } });
+
+    const kept = await keepCall(test.queue, {
+      spaceId: 1,
+      environment: 'main',
+      actionId: 'greet',
+      input: {},
+      user: ana,
+      callerId: 'user:7',
+      idempotencyKey: 'call-lost-answer'
+    });
+    if ('refused' in kept) {
+      throw new Error(kept.refused);
+    }
+
+    test.advance(Date.now() - MIDNIGHT);
+    expect(await test.worker().poll()).toBe(1);
+    await settle();
+
+    expect(await readKeptCall(test.queue, 1, kept.jobId, kept.ticket)).toMatchObject({
+      status: 'completed',
+      runId: run.runId,
+      output: { who: 'ana@example.com' }
+    });
+    expect(ran).not.toHaveBeenCalled();
+    expect(test.runs).toEqual([]);
   });
 
   it('answers a refusal once, never running it again', async () => {

@@ -508,7 +508,7 @@ describe('the runner service, through the remote runner', () => {
     }
   });
 
-  it('spreads its invocations over several runners, and gives a busy one’s to the next', async () => {
+  it('spreads its invocations over several runners, and gives a busy one’s to the next, metered once', async () => {
     const full = await startFunctionsRunnerService({
       secret: SECRET,
       port: 0,
@@ -529,17 +529,21 @@ describe('the runner service, through the remote runner', () => {
     });
     const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
 
+    // What the run is metered by: the runner that ran it, once — the busy one took nothing, and says nothing of it.
+    const usages: unknown[] = [];
     try {
       const value = await runners.invoke({
         bundle: { id: 'bundle-of-two-runners', load: () => Promise.resolve(code) },
         invocation,
         limits: LIMITS,
         answer: () => Promise.resolve(null),
-        signal: new AbortController().signal
+        signal: new AbortController().signal,
+        onUsage: usage => usages.push(usage)
       });
 
       expect(value).toBe('ran');
       expect(asked).toEqual(urls);
+      expect(usages).toHaveLength(1);
     } finally {
       await full.close();
     }

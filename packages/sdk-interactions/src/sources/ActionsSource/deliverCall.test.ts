@@ -76,9 +76,61 @@ describe('delivering a call', () => {
     const kept: unknown = typeof sent === 'string' ? JSON.parse(sent) : undefined;
     expect(kept).toMatchObject({
       actionId: 'book',
-      idempotencyKey: expect.stringMatching(/^kept-[0-9a-f]{32}$/) as string
+      idempotencyKey: expect.stringMatching(/^call-[0-9a-f]{32}$/) as string
     });
     expect(asked[2]?.init?.headers).toEqual({ 'x-plitzi-ticket': 't-1' });
+  });
+
+  /**
+   * The request reached a worker, which began the run, and the answer was lost on the way back: kept for later under the
+   * key it was first sent with, the run it began answers for it — under a fresh key it ran a second time.
+   */
+  it('keeps a call whose answer was lost under the key its first try was sent with', async () => {
+    const asked = answering(
+      new TypeError('Failed to fetch'),
+      json(202, { status: 'queued', jobId: 'call:3:abc', ticket: 't-1' }),
+      json(200, { status: 'completed', jobId: 'call:3:abc', runId: 'r1', output: { booked: 2 } })
+    );
+
+    const delivering = deliverCall({
+      endpoint: '/_action',
+      call,
+      signal: new AbortController().signal,
+      onQueued: vi.fn()
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await delivering;
+
+    const keys = asked.slice(0, 2).map(each => {
+      const body: unknown = typeof each.init?.body === 'string' ? JSON.parse(each.init.body) : undefined;
+
+      return typeof body === 'object' && body !== null && 'idempotencyKey' in body ? body.idempotencyKey : undefined;
+    });
+    expect(asked.map(each => each.url).slice(0, 2)).toEqual(['/_action', QUEUED_CALLS_PATH]);
+    expect(keys[0]).toMatch(/^call-[0-9a-f]{32}$/);
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  it('keeps the key a call names, on both tries', async () => {
+    const asked = answering(
+      new TypeError('Failed to fetch'),
+      json(202, { status: 'queued', jobId: 'j', ticket: 't' }),
+      json(200, { status: 'completed', jobId: 'j', runId: 'r1' })
+    );
+
+    const delivering = deliverCall({
+      endpoint: '/_action',
+      call: { ...call, idempotencyKey: 'order-42' },
+      signal: new AbortController().signal,
+      onQueued: vi.fn()
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await delivering;
+
+    expect(asked.slice(0, 2).map(each => each.init?.body)).toEqual([
+      JSON.stringify({ ...call, idempotencyKey: 'order-42' }),
+      JSON.stringify({ ...call, idempotencyKey: 'order-42' })
+    ]);
   });
 
   it('waits the same for a call the worker kept, its runner away', async () => {

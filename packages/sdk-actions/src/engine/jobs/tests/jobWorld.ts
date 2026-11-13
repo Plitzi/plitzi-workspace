@@ -3,7 +3,7 @@ import { createActionsModule } from '../../module';
 import { createMemoryJobQueue } from '../memoryQueue';
 import { createJobWorker } from '../worker';
 
-import type { ActionEntry, JobInput, ElementInteraction } from '@plitzi/sdk-shared';
+import type { ActionEntry, ActionRunRecord, JobInput, ElementInteraction } from '@plitzi/sdk-shared';
 import type { FunctionTask } from '@plitzi/sdk-shared/functions';
 
 /**
@@ -58,7 +58,8 @@ export const world = (
   run: FunctionTask['run'],
   entries = [entry()],
   concurrency?: Parameters<typeof createActionsModule>[0]['concurrency'],
-  admitRun?: Parameters<typeof createActionsModule>[0]['admitRun']
+  admitRun?: Parameters<typeof createActionsModule>[0]['admitRun'],
+  idempotency?: Parameters<typeof createActionsModule>[0]['idempotency']
 ) => {
   let now = MIDNIGHT;
   const queue = createMemoryJobQueue({ clock: () => now });
@@ -67,19 +68,26 @@ export const world = (
     listActions: () => Promise.resolve(entries)
   };
   const task: FunctionTask = { namespace: 'test', action: 'work', title: 'Work', params: {}, run };
+  /** Every run that started and ended, as a deployment's history keeps them: a refusal is never one. */
+  const runs: ActionRunRecord[] = [];
   // `jobs: false` so the module builds no scheduler of its own; the test drives the worker directly.
   const module = createActionsModule({
     lookups,
     functions: tasksOf(task),
     jobs: false,
+    onRun: record => {
+      runs.push(record);
+    },
     ...(concurrency ? { concurrency } : {}),
-    ...(admitRun ? { admitRun } : {})
+    ...(admitRun ? { admitRun } : {}),
+    ...(idempotency ? { idempotency } : {})
   });
 
   return {
     queue,
     module,
     lookups,
+    runs,
     advance: (ms: number) => {
       now += ms;
     },

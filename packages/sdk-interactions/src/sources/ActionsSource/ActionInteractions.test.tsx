@@ -165,7 +165,12 @@ describe('ActionInteractions', () => {
 
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { body: string }];
     expect(url).toBe('/_action');
-    expect(JSON.parse(init.body)).toEqual({ actionId: 'quote', input: { amount: 3 } });
+    // With the key its tries share (`deliverCall`): kept for later, it is the run this one began, never a second.
+    expect(JSON.parse(init.body)).toEqual({
+      actionId: 'quote',
+      input: { amount: 3 },
+      idempotencyKey: expect.stringMatching(/^call-[0-9a-f]{32}$/) as string
+    });
     expect(result).toEqual({ status: 'completed', runId: 'r1', output: { total: 9 } });
   });
 
@@ -179,7 +184,7 @@ describe('ActionInteractions', () => {
     await mount().run({ actionId: 'quote', input: { city: 'Berlin', weightKg: 2 }, mode: 'await' });
 
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { body: string }];
-    expect(JSON.parse(init.body)).toEqual({ actionId: 'quote', input: { city: 'Berlin', weightKg: 2 } });
+    expect(JSON.parse(init.body)).toMatchObject({ actionId: 'quote', input: { city: 'Berlin', weightKg: 2 } });
   });
 
   it('does not wait for a detached run, and keeps it alive across a navigation', async () => {
