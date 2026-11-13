@@ -3,7 +3,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useCallback, use } from 'react';
+import { useCallback, use, useState } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
@@ -13,6 +13,7 @@ import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import { componentLabel } from '../../helpers';
 import { slotChoicesOf } from '../../slotChoices';
+import ComponentDetails from '../ComponentDetails';
 import ComponentForm, { COMPONENT_MODAL } from '../ComponentForm';
 
 import type { PageFolder, SpaceComponent, SpaceComponentDeclaration } from '@plitzi/sdk-shared';
@@ -27,13 +28,17 @@ export type ComponentItemProps = {
   pageFolders: PageFolder[];
 };
 
-/** One component of the space: dragged onto a page to place it, opened to edit its tree, renamed, removed. */
+/**
+ * One component of the space: dragged onto a page to place it, unfolded to see it and where it is placed, opened to
+ * edit its tree — marked while it is — renamed, removed.
+ */
 const ComponentItem = ({ component, instances, open, pageFolders }: ComponentItemProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);
   const setBuilderStore = useBuilderStoreSetter();
+  const [unfolded, setUnfolded] = useState(false);
   const label = componentLabel(component);
   const { onDragStart } = useDragElement({
     type: 'reference',
@@ -48,6 +53,8 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
     },
     [component.id, setBuilderStore]
   );
+
+  const handleToggle = useCallback(() => setUnfolded(value => !value), []);
 
   const handleEdit = useCallback(
     async (e: MouseEvent) => {
@@ -114,36 +121,66 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
   );
 
   return (
-    <Flex
-      className={clsx('group my-1 rounded px-1 first:mt-0', {
-        'cursor-grabbing': !open,
-        'bg-primary-50 dark:bg-zinc-800': open
+    <div
+      className={clsx('my-0.5 rounded first:mt-0', {
+        'bg-primary-50 ring-primary-300 dark:bg-primary-400/15 dark:ring-primary-400/40 ring-1': open
       })}
-      gap={2}
-      items="center"
-      draggable={!open}
-      onDragStart={onDragStart}
     >
-      <Icon icon={REUSE.component.icon} intent="primaryActive" />
-      <div className="flex grow basis-0 flex-col overflow-hidden">
-        <div className="group-hover:text-primary-text truncate font-bold">{label}</div>
-        <div className="truncate text-xs text-gray-500 dark:text-zinc-400">
-          {instances} {instances === 1 ? 'instance' : 'instances'}
+      <Flex
+        className={clsx('group rounded px-1 py-0.5', {
+          'cursor-grab hover:bg-gray-50 dark:hover:bg-zinc-800/60': !open
+        })}
+        gap={2}
+        items="center"
+        draggable={!open}
+        aria-current={open ? 'true' : undefined}
+        onDragStart={onDragStart}
+      >
+        <button
+          type="button"
+          className="flex w-3 shrink-0 cursor-pointer justify-center text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+          aria-expanded={unfolded}
+          title={unfolded ? 'Hide the preview and where it is used' : 'Show a preview and where it is used'}
+          onClick={handleToggle}
+        >
+          <i className={clsx('fa-solid text-[9px]', unfolded ? 'fa-chevron-down' : 'fa-chevron-right')} />
+        </button>
+        <Icon icon={REUSE.component.icon} intent="primaryActive" />
+        <div className="flex grow basis-0 flex-col overflow-hidden">
+          <div
+            className={clsx('truncate font-bold', {
+              'text-primary-700 dark:text-primary-200': open,
+              'group-hover:text-primary-text': !open
+            })}
+          >
+            {label}
+          </div>
+          <div className="flex items-center gap-1.5 truncate text-xs text-gray-500 dark:text-zinc-400">
+            {open && (
+              <span className="bg-primary-500 rounded-sm px-1 text-[10px] leading-4 font-semibold text-white">
+                Editing
+              </span>
+            )}
+            {instances} {instances === 1 ? 'instance' : 'instances'}
+          </div>
         </div>
-      </div>
-      <div className="hidden gap-1 group-hover:flex">
-        <Icon icon="fa-solid fa-pen-ruler" onClick={handleOpen} title="Edit in canvas" size="sm" cursor="pointer" />
-        <Icon icon="fas fa-pen" onClick={handleEdit} title="Props and slots" size="sm" cursor="pointer" />
-        <Icon
-          icon="fas fa-trash-alt"
-          onClick={handleRemove}
-          title="Remove"
-          size="sm"
-          cursor="pointer"
-          intent="danger"
-        />
-      </div>
-    </Flex>
+        <div className={clsx('gap-1', open ? 'flex' : 'hidden group-hover:flex')}>
+          {!open && (
+            <Icon icon="fa-solid fa-pen-ruler" onClick={handleOpen} title="Edit in canvas" size="sm" cursor="pointer" />
+          )}
+          <Icon icon="fas fa-pen" onClick={handleEdit} title="Props and slots" size="sm" cursor="pointer" />
+          <Icon
+            icon="fas fa-trash-alt"
+            onClick={handleRemove}
+            title="Remove"
+            size="sm"
+            cursor="pointer"
+            intent="danger"
+          />
+        </div>
+      </Flex>
+      {unfolded && <ComponentDetails component={component} />}
+    </div>
   );
 };
 

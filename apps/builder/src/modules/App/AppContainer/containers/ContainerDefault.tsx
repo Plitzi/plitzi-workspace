@@ -17,14 +17,21 @@ export type ContainerDefaultProps = {
 const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
   const [[storedCss, pages]] = useBuilderStore(['schema.settings.customCss', 'schema.pages']);
   const customCss = typeof storedCss === 'string' ? storedCss : '';
-  const { component } = useOpenComponent();
+  const { component, ground, placements, shownAs, showAs } = useOpenComponent();
   const [width, setWidth] = useStorage('builder-state.popupSidePanel.width.right', RIGHT_PANEL_WIDTH);
 
   return (
     <div className="flex w-full grow">
       <div className="flex grow basis-0 flex-col">
-        {component && !previewMode && <ComponentBanner component={component} />}
-        <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
+        {component && !previewMode && (
+          <ComponentBanner component={component} placements={placements} shownAs={shownAs} onShowAs={showAs} />
+        )}
+        <Builder
+          externalStyle={externalStyle}
+          customCss={customCss}
+          pages={pages}
+          ground={component ? ground : undefined}
+        />
       </div>
       {!previewMode && (
         <PopupSidePanel

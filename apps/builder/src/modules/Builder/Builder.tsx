@@ -11,14 +11,17 @@ import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
 import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
+import type { ComponentGround } from '@pmodules/Components/preview';
 
 export type BuilderProps = {
   pages?: string[];
   customCss?: string;
   externalStyle?: string;
+  /** What a component open in the canvas is drawn on: the ground around the instance it is shown as. */
+  ground?: ComponentGround;
 };
 
-const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProps) => {
+const Builder = ({ pages = [], customCss = '', externalStyle = '', ground }: BuilderProps) => {
   const builderContextValue = use(BuilderContext);
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
@@ -81,6 +84,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
           displayMode={displayMode}
           previewMode={previewMode}
           debugMode={debugMode}
+          ground={ground}
         />
       )}
       {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
@@ -92,6 +96,7 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
           displayMode="mobile"
           headerTitle="Mobile Preview"
           previewMode
+          ground={ground}
         />
       )}
       {multiPagesMode &&

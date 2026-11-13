@@ -70,6 +70,12 @@ weighs on a phone — and what of it a phone cannot hold.
   a line per code, folded, with how many and what they save: the fix is said once per code, a long message is cut to
   three lines until asked for, and its code is set apart. Only the list scrolls; the tabs and *Fix automatically* stay.
   The modal is wider on a desktop.
+- The **Components** area: a component unfolds to a preview of it — drawn as its first instance shows it, fitted to its
+  size — and every place it is used, by page, each a link to the instance (a page of many folds them; the **Usages**
+  panel's pages fold too). The one open in the canvas is marked **Editing**.
+- A component edited on its own is drawn as one of its instances shows it: that instance's props over the defaults,
+  on the ground it sits on (the nearest background and text colour around it, the page's layout's included). **Shown
+  as** in the banner picks the instance. A component made for a dark band no longer opens on a blank white canvas.
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the

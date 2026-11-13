@@ -16,11 +16,14 @@ const SHOWN = 25;
 
 export type UsageTreeGroupProps = {
   group: TreeGroup;
+  /** Unfolded from the start; folded, its name and count alone — a long list of places reads as its pages first. */
+  defaultOpen?: boolean;
 };
 
-/** The uses in one page, layout or component, under its name. */
-const UsageTreeGroup = ({ group }: UsageTreeGroupProps) => {
+/** The uses in one page, layout or component, under its name — which folds them away and back. */
+const UsageTreeGroup = ({ group, defaultOpen = true }: UsageTreeGroupProps) => {
   const { tree, elements } = group;
+  const [open, setOpen] = useState(defaultOpen);
   const [flat] = useBuilderStore('schema.flat');
   const revealElement = useRevealElement();
   const [expanded, setExpanded] = useState(false);
@@ -32,18 +35,30 @@ const UsageTreeGroup = ({ group }: UsageTreeGroupProps) => {
   );
 
   const handleExpand = useCallback(() => setExpanded(true), []);
+  const handleToggle = useCallback(() => setOpen(value => !value), []);
 
   return (
     <section className="flex flex-col">
-      <h6 className="flex min-w-0 items-center gap-1.5 px-1 pb-0.5 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200">
-        <i className={clsx(TREE_ICON[tree.kind], 'text-[10px] text-zinc-400 dark:text-zinc-500')} />
-        <span className="truncate">{tree.label}</span>
-        <span className="font-normal text-zinc-400 dark:text-zinc-500">· {elements.length}</span>
+      <h6>
+        <button
+          type="button"
+          aria-expanded={open}
+          className="flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded px-1 pb-0.5 text-left text-[11px] font-semibold text-zinc-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          onClick={handleToggle}
+        >
+          <i
+            className={clsx(
+              'fa-solid w-2.5 shrink-0 text-center text-[8px] text-zinc-400 dark:text-zinc-500',
+              open ? 'fa-chevron-down' : 'fa-chevron-right'
+            )}
+          />
+          <i className={clsx(TREE_ICON[tree.kind], 'text-[10px] text-zinc-400 dark:text-zinc-500')} />
+          <span className="truncate">{tree.label}</span>
+          <span className="font-normal text-zinc-400 dark:text-zinc-500">· {elements.length}</span>
+        </button>
       </h6>
-      {shown.map(usage => (
-        <UsageElement key={usage.elementId} usage={usage} onReveal={handleReveal} />
-      ))}
-      {shown.length < elements.length && (
+      {open && shown.map(usage => <UsageElement key={usage.elementId} usage={usage} onReveal={handleReveal} />)}
+      {open && shown.length < elements.length && (
         <button
           type="button"
           className="cursor-pointer self-start px-1.5 py-0.5 text-[11px] text-indigo-700 hover:underline dark:text-indigo-300"

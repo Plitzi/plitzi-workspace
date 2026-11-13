@@ -34,6 +34,7 @@ import { liveCanvas } from './liveCanvas';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
 import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
+import type { ComponentGround } from '@pmodules/Components/preview';
 
 /** Module-level, so a space that declares no font of its own keeps one reference across every render. */
 const NO_FONTS: SpaceFont[] = [];
@@ -50,7 +51,14 @@ export type BuilderAreaProps = {
   debugMode?: boolean;
   /** The canvas alone, its frame — size, padding, shadow — drawn by whoever places it: the Tests area's devices. */
   bare?: boolean;
+  /** What a component open in the canvas is drawn on: the ground around the instance it is shown as. */
+  ground?: ComponentGround;
+  /** A canvas the test studio plays in; a thumbnail is never one, and taking it over would leave the studio none. */
+  studio?: boolean;
 };
+
+/** The frame a canvas that is not the studio's hands it: none. */
+const NO_FRAME = { current: null };
 
 const BuilderArea = ({
   className = '',
@@ -62,7 +70,9 @@ const BuilderArea = ({
   mobilePreview = false,
   previewMode = false,
   debugMode = false,
-  bare = false
+  bare = false,
+  ground,
+  studio = true
 }: BuilderAreaProps) => {
   const [cache] = useBuilderStore('style.cache');
   const [fonts = NO_FONTS] = useBuilderStore('style.fonts');
@@ -111,7 +121,7 @@ const BuilderArea = ({
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   // The canvas an e2e test open in the studio is played and recorded in.
-  useCanvasStudio(ref);
+  useCanvasStudio(studio ? ref : NO_FRAME);
   const refContainer = useRef<HTMLDivElement>(null);
 
   // Replaying restarts what is already running: an arrival that played once sits finished, and turning the motion on
@@ -204,6 +214,26 @@ const BuilderArea = ({
     Plugin && baseElementData.definition.type === 'layoutContainer' && page?.definition.type === 'page'
       ? clsx('plitzi-component__page', 'plitzi__page', page.definition.styleSelectors.base)
       : undefined;
+  /**
+   * A component edited on its own, drawn on the ground of the instance it is shown as: one made for a dark band has
+   * white words, and on the canvas's own white the canvas read as blank.
+   */
+  const groundStyle = useMemo(
+    () =>
+      ground && (ground.background !== undefined || ground.color !== undefined)
+        ? // The canvas lays its root in a row: the ground takes the row whole, the root its own size in it.
+          {
+            display: 'flex',
+            alignItems: 'flex-start',
+            background: ground.background,
+            color: ground.color,
+            minHeight: '100vh',
+            flexGrow: 1,
+            minWidth: 0
+          }
+        : undefined,
+    [ground]
+  );
 
   return (
     <div
@@ -271,13 +301,17 @@ const BuilderArea = ({
                             same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
                             switching to a root of a different KIND still changes the component type and remounts;
                             page to page keeps the shell and swaps only the body. */}
-                        {pageBox ? (
+                        {pageBox && (
                           <div className={pageBox}>
                             <Plugin internalProps={baseElementValueMemo} />
                           </div>
-                        ) : (
-                          <Plugin internalProps={baseElementValueMemo} />
                         )}
+                        {!pageBox && groundStyle && (
+                          <div style={groundStyle}>
+                            <Plugin internalProps={baseElementValueMemo} />
+                          </div>
+                        )}
+                        {!pageBox && !groundStyle && <Plugin internalProps={baseElementValueMemo} />}
                       </PlitziProvider>
                     </EnclosingSpaceContext>
                   </SpaceContainer>
