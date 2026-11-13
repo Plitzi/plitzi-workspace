@@ -9,10 +9,17 @@ import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 const VARIABLES = { environment: 'main' };
 
 /**
+ * How long the save queue stays drained before the list is asked for again. While someone edits, it drains after every
+ * change, and each answer is the whole space read by the linter on the server: asked each time, a big space's checks
+ * queued behind its own saves.
+ */
+export const QUIET_MS = 1500;
+
+/**
  * What is wrong with the space as it is SAVED, read by the same linter the publish gate runs.
  *
- * Asked again each time the save queue drains, not on every edit: the server can only read what it holds, and the
- * builder's own schema is ahead of it for as long as anything is still queued. `refresh` answers with the fresh list,
+ * Asked again once the save queue has drained and stayed so for a moment (`QUIET_MS`), not on every edit: the server can
+ * only read what it holds, and the builder's own schema is ahead of it for as long as anything is still queued. `refresh` answers with the fresh list,
  * for a caller that has to decide on it — publishing — rather than just show it.
  */
 const useSpaceIssues = () => {
@@ -21,11 +28,16 @@ const useSpaceIssues = () => {
   const wasProcessing = useRef(processing);
 
   useEffect(() => {
-    if (wasProcessing.current && !processing) {
-      void mutate();
+    const drained = wasProcessing.current && !processing;
+    wasProcessing.current = processing;
+    if (!drained) {
+      return undefined;
     }
 
-    wasProcessing.current = processing;
+    // Another save before the moment is up cancels it: the list is asked for once the editing pauses.
+    const timer = setTimeout(() => void mutate(), QUIET_MS);
+
+    return () => clearTimeout(timer);
   }, [processing, mutate]);
 
   const refresh = useCallback(async (): Promise<TSpaceIssues | undefined> => {

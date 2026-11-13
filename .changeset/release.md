@@ -82,6 +82,9 @@ weighs on a phone — and what of it a phone cannot hold.
   delete them at once. The selector picked is named over the inspector with what it dresses and the breakpoint edited.
   A long list is grouped by the prefix its classes share (`adm-…`, `lp-…`, the rest under **Other**), each folded until
   opened, and drawn by what is in view: 1,900 selectors list, pick and check at once.
+- The space's issues are asked for once the save queue has stayed drained a moment (1.5 s), not after every save of an
+  edit, and the server reads a big space's in half the time (`authorSpace`, `validateSpace` and `suggestSpace` too:
+  the website's checks went from 720 ms to 350).
 - An element's **classes** are a field: the type's defaults first, the classes after, **Add class…** always there,
   the Style Manager at its end. Focused, it lists the space's classes — **Create class** first for a new name — and the
   arrow keys move through them, Enter adding the one marked.

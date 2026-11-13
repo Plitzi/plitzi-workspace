@@ -45,6 +45,29 @@ describe('suggestions', () => {
       ).suggestions;
     const find = (code: string, extra?: Partial<SpaceSpec>) => declared(extra).find(item => item.code === code);
 
+    // The website has 1,900 classes at three widths: every word their rules share was added to a set copied whole each
+    // time, 1.2 s a read — and the builder reads it after every save.
+    it('reads a space of thousands of classes in a moment', () => {
+      const rules = (name: string) => ({
+        name,
+        type: 'class' as const,
+        cache: '',
+        attributes: { base: { default: { color: 'var(--ink)', 'font-size': '12px', display: 'flex' } } }
+      });
+      const many = (prefix: string) =>
+        Object.fromEntries(
+          Array.from({ length: 4000 }, (_, index) => [`${prefix}${String(index)}`, rules(`c${String(index)}`)])
+        );
+      const { schema, style } = authorPublic(space([page('home', [heading({ content: 'Hello' })])]));
+      const big = { ...style, platform: { desktop: many('c'), tablet: many('c'), mobile: many('c') } };
+
+      const started = performance.now();
+      const unused = unusedDeclarations(schema, big);
+
+      expect(unused.classes).toHaveLength(4000);
+      expect(performance.now() - started).toBeLessThan(1000);
+    });
+
     it('names a class nothing wears or names, and not one another class names in its ancestors', () => {
       const unused = find('unused-class');
 

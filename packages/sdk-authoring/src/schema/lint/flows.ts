@@ -75,14 +75,7 @@ const checkElementIds = (
     }
 
     const { elementType } = param;
-    const candidates = Object.values({ ...ctx.schema.flat, ...ctx.flat })
-      .filter(element => !elementType || element.definition.type === elementType)
-      .map(element => element.id);
     const kind = elementType ? `an ${elementType}` : 'an element';
-    const listed =
-      candidates.length > 0
-        ? `: ${candidates.slice(0, 8).join(', ')}${candidates.length > 8 ? ', …' : ''}`
-        : ', and the space has none';
     for (const id of ids) {
       if (typeof id !== 'string' || hasTemplateSyntax(id)) {
         continue;
@@ -94,6 +87,15 @@ const checkElementIds = (
         continue;
       }
 
+      // The ids it could have meant, read only for an id that is wrong: built for every step, it was a copy of the whole
+      // space per id the website's flows name.
+      const candidates = Object.values({ ...ctx.schema.flat, ...ctx.flat })
+        .filter(each => !elementType || each.definition.type === elementType)
+        .map(each => each.id);
+      const listed =
+        candidates.length > 0
+          ? `: ${candidates.slice(0, 8).join(', ')}${candidates.length > 8 ? ', …' : ''}`
+          : ', and the space has none';
       const found = element
         ? `a "${type ?? ''}" — only ${kind} is refreshed by its id, so it refreshes nothing`
         : 'an id no element of the space has';

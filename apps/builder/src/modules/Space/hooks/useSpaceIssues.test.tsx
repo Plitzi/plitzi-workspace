@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
-import useSpaceIssues from './useSpaceIssues';
+import useSpaceIssues, { QUIET_MS } from './useSpaceIssues';
 
 import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
@@ -63,18 +63,38 @@ describe('useSpaceIssues', () => {
   });
 
   // The server reads what it holds, so asking while a save is queued answers for a space the builder has moved past.
-  it('asks again once the save queue drains, and not before', () => {
+  it('asks again once the save queue drains and stays so a moment, and not before', () => {
+    vi.useFakeTimers();
     const { rerender } = mount(true);
     expect(mutate).not.toHaveBeenCalled();
 
     settle(true, rerender);
+    settle(false, rerender);
     expect(mutate).not.toHaveBeenCalled();
 
-    settle(false, rerender);
+    vi.advanceTimersByTime(QUIET_MS);
     expect(mutate).toHaveBeenCalledTimes(1);
 
     settle(false, rerender);
+    vi.advanceTimersByTime(QUIET_MS);
     expect(mutate).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  // Each save of an edit drains the queue: the list was asked for after every one, the whole space read each time.
+  it('asks once for a run of saves, after the last', () => {
+    vi.useFakeTimers();
+    const { rerender } = mount(true);
+    for (let save = 0; save < 5; save++) {
+      settle(false, rerender);
+      vi.advanceTimersByTime(QUIET_MS / 3);
+      settle(true, rerender);
+    }
+
+    settle(false, rerender);
+    vi.advanceTimersByTime(QUIET_MS);
+    expect(mutate).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   it('hands a caller that has to decide the fresh list', async () => {

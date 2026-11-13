@@ -29,31 +29,35 @@ const attributeText = (element: Element, key: string): string => {
  * element's own `anchor`, and the `id` of every heading a Markdown element renders. One in a list's rows is not the
  * page's: each row's is its own (`rowAnchors`).
  */
-const anchorsOfPage = (ctx: LintContext, pageId: string, rowAnchors?: Set<string>): Map<string, string[]> => {
+const anchorsOfPage = (
+  ctx: LintContext,
+  byRoot: ReadonlyMap<string, Element[]>,
+  pageId: string,
+  rowAnchors?: Set<string>
+): Map<string, string[]> => {
   const page = ctx.element(pageId);
   const chain = page
     ? resolveLayoutChain(id => ctx.element(id), attributeText(page, 'layout'), attributeText(page, 'layoutContainer'))
     : [];
   const roots = new Set([pageId, ...chain.map(link => link.layout)]);
   const anchors = new Map<string, string[]>();
-  Object.values(ctx.flat).forEach(element => {
-    if (!roots.has(element.definition.rootId)) {
-      return;
-    }
+  // Only the page's own elements and its layouts': a walk of the whole space per page was pages × elements.
+  [...roots]
+    .flatMap(root => byRoot.get(root) ?? [])
+    .forEach(element => {
+      if (element.definition.anchor && inRows(ctx, element.id)) {
+        rowAnchors?.add(element.definition.anchor);
 
-    if (element.definition.anchor && inRows(ctx, element.id)) {
-      rowAnchors?.add(element.definition.anchor);
+        return;
+      }
 
-      return;
-    }
-
-    const own = element.definition.anchor ? [element.definition.anchor] : [];
-    const headings =
-      element.definition.type === 'markdown'
-        ? markdownHeadings(attributeText(element, 'content')).map(heading => heading.anchor)
-        : [];
-    [...own, ...headings].forEach(anchor => anchors.set(anchor, [...(anchors.get(anchor) ?? []), element.id]));
-  });
+      const own = element.definition.anchor ? [element.definition.anchor] : [];
+      const headings =
+        element.definition.type === 'markdown'
+          ? markdownHeadings(attributeText(element, 'content')).map(heading => heading.anchor)
+          : [];
+      [...own, ...headings].forEach(anchor => anchors.set(anchor, [...(anchors.get(anchor) ?? []), element.id]));
+    });
 
   return anchors;
 };
@@ -191,6 +195,13 @@ export const lintAnchors = (ctx: LintContext): void => {
     return;
   }
 
+  const byRoot = new Map<string, Element[]>();
+  Object.values(ctx.flat).forEach(element => {
+    const root = element.definition.rootId;
+    const elements = byRoot.get(root) ?? [];
+    elements.push(element);
+    byRoot.set(root, elements);
+  });
   const byPage = new Map<string, { anchors: Map<string, string[]>; rows: Set<string> }>();
   const anchorsByPage = (pageId: string): { anchors: Map<string, string[]>; rows: Set<string> } => {
     const known = byPage.get(pageId);
@@ -199,7 +210,7 @@ export const lintAnchors = (ctx: LintContext): void => {
     }
 
     const rows = new Set<string>();
-    const found = { anchors: anchorsOfPage(ctx, pageId, rows), rows };
+    const found = { anchors: anchorsOfPage(ctx, byRoot, pageId, rows), rows };
     byPage.set(pageId, found);
 
     return found;
