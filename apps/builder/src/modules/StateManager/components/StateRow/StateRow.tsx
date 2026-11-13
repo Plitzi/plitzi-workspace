@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { memo, useCallback, useState } from 'react';
 
 import { preview } from '../../helpers';
+import { STATE_COLUMNS } from '../../layout';
 import UsedBy from '../UsedBy';
 import ValueEditor from '../ValueEditor';
 
@@ -17,9 +18,6 @@ export type StateRowProps = {
   onChange: (key: string, value: unknown) => void;
 };
 
-const persistenceLabel = ({ kept, painted, browser }: Persistence): string =>
-  !kept ? 'not kept' : painted ? 'painted' : browser ? 'browser' : 'kept';
-
 /**
  * One key of the state: its name, its value edited in place, how the settings keep it, and how many elements read and
  * write it — unfolded, each one a link.
@@ -34,7 +32,7 @@ const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowPro
 
   return (
     <div className="border-ui-line border-b last:border-b-0">
-      <div className="relative flex min-h-9 items-center gap-2 py-1 pr-1 pl-2">
+      <div className={clsx(STATE_COLUMNS, 'relative min-h-9 py-1 pr-2 pl-2')}>
         {/* A short glow on the row when the canvas just changed it: what the flow touched, seen as it happens. */}
         {lastChange && (
           <span
@@ -46,7 +44,7 @@ const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowPro
         <button
           type="button"
           aria-expanded={open}
-          className="text-ui-fg flex min-w-0 basis-2/5 cursor-pointer items-center gap-1.5 text-left font-mono text-xs"
+          className="text-ui-fg flex min-w-0 cursor-pointer items-center gap-1.5 text-left font-mono text-xs"
           title={open ? 'Hide what reads and writes it' : 'Show what reads and writes it'}
           onClick={handleToggle}
         >
@@ -58,32 +56,44 @@ const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowPro
           />
           <span className="truncate">{key}</span>
         </button>
-        <div className="min-w-0 grow basis-0">
+        <div className="min-w-0">
           {isObject ? (
-            <span className="text-ui-fg-muted block truncate font-mono text-[11px]" title={JSON.stringify(value)}>
+            <button
+              type="button"
+              className="text-ui-fg-muted hover:bg-ui-hover block w-full cursor-pointer truncate rounded-sm px-1.5 py-0.5 text-left font-mono text-[11px]"
+              title="Edit it as JSON"
+              onClick={handleToggle}
+            >
               {preview(value)}
-            </span>
+            </button>
           ) : (
             <ValueEditor value={value} onChange={handleChange} />
           )}
         </div>
-        <span
-          className={clsx('shrink-0 rounded-sm px-1 text-[10px] leading-4', {
-            'bg-primary-400/15 text-primary-text': persistence.kept,
-            'bg-ui-raised text-ui-fg-subtle': !persistence.kept
-          })}
-          title={persistence.reason}
-        >
-          {persistenceLabel(persistence)}
+        <span className="flex items-center justify-center gap-1 text-[11px]" title={persistence.reason}>
+          {persistence.kept ? (
+            <>
+              <i className="fa-solid fa-check text-primary-text" aria-label="Kept" />
+              {persistence.painted && (
+                <i className="fa-solid fa-server text-ui-fg-subtle text-[9px]" aria-label="painted" />
+              )}
+              {persistence.browser && (
+                <i className="fa-solid fa-globe text-ui-fg-subtle text-[9px]" aria-label="browser" />
+              )}
+            </>
+          ) : (
+            <span className="text-ui-fg-subtle" aria-label="Not kept">
+              —
+            </span>
+          )}
         </span>
         <span
-          className="text-ui-fg-subtle w-14 shrink-0 text-right text-[11px] whitespace-nowrap tabular-nums"
-          title={`${String(reads.length)} read it, ${String(writes.length)} write it`}
+          className="text-ui-fg-subtle text-right text-[11px] whitespace-nowrap tabular-nums"
+          title={`${String(reads.length)} element${reads.length === 1 ? '' : 's'} read it, ${String(writes.length)} write it`}
         >
           {reads.length}
-          <i className="fa-solid fa-eye mx-0.5 text-[8px]" />
+          <span className="text-ui-line-strong mx-0.5">/</span>
           {writes.length}
-          <i className="fa-solid fa-pen ml-0.5 text-[8px]" />
         </span>
       </div>
       {open && (

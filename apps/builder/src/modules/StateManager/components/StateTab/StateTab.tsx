@@ -6,6 +6,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import { persistenceOf, preview, stateKeysOf } from '../../helpers';
 import useStateChanges from '../../hooks/useStateChanges';
+import { STATE_COLUMNS } from '../../layout';
 import StateJson from '../StateJson';
 import StateRow from '../StateRow';
 
@@ -33,7 +34,9 @@ const StateTab = () => {
   const used = useMemo(() => stateKeysOf({ flat, components }), [flat, components]);
   const { declared, loose } = useMemo(() => {
     const matches = (key: string) => key.toLowerCase().includes(query.trim().toLowerCase());
-    const byName = (a: StateKeyUse, b: StateKeyUse) => a.key.localeCompare(b.key);
+    // What the page holds first: the keys it has set, then those waiting for a value — each by name.
+    const byName = (a: StateKeyUse, b: StateKeyUse) =>
+      Number(state[a.key] === undefined) - Number(state[b.key] === undefined) || a.key.localeCompare(b.key);
 
     return {
       declared: [...used.values()].filter(each => matches(each.key)).sort(byName),
@@ -89,6 +92,36 @@ const StateTab = () => {
       {mode === 'json' && <StateJson state={state} onApply={setState} />}
       {mode === 'table' && (
         <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto">
+          <p className="text-ui-fg-subtle flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 pb-1.5 text-[10px]">
+            <span>
+              <i className="fa-solid fa-check text-primary-text mr-1" />
+              kept between visits
+            </span>
+            <span>
+              <i className="fa-solid fa-server mr-1" />
+              drawn by the server too
+            </span>
+            <span>
+              <i className="fa-solid fa-globe mr-1" />
+              kept by the browser
+            </span>
+            <span>— not kept · not set</span>
+          </p>
+          <div
+            className={clsx(
+              STATE_COLUMNS,
+              'bg-ui-panel border-ui-line text-ui-fg-subtle sticky top-0 z-1 border-b px-2 py-1.5 text-[10px] font-semibold tracking-wider whitespace-nowrap uppercase'
+            )}
+          >
+            <span>Key</span>
+            <span>Value</span>
+            <span className="text-center" title="Kept between visits, as the space's settings say (keepState)">
+              Kept
+            </span>
+            <span className="text-right" title="How many elements read it / write it">
+              Reads / writes
+            </span>
+          </div>
           <section className="flex flex-col">
             <h6 className="text-ui-fg-subtle flex h-7 items-center justify-between px-2 text-[10px] font-semibold tracking-wider uppercase">
               Used by the space
