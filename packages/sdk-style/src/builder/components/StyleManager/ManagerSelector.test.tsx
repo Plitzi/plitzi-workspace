@@ -191,6 +191,36 @@ describe('ManagerSelector', () => {
     expect(screen.getByText('1 selected')).not.toBeNull();
   });
 
+  // The website has 1,900 classes: listed whole, the list was a scroll with no end and every check redrew it all.
+  describe('a long list', () => {
+    const many = Object.fromEntries(
+      Array.from({ length: 120 }, (_, index) => {
+        const name = `${index < 60 ? 'lp' : 'adm'}-part-${String(index).padStart(3, '0')}`;
+
+        return [name, item(name)];
+      })
+    );
+
+    it('lists its classes by the prefix they share, each folded until opened', () => {
+      manager({ selectors: many, flatList: [] });
+
+      expect(screen.queryAllByTitle(/^\w+: /)).toEqual([]);
+
+      fireEvent.click(screen.getByRole('button', { name: /^lp-…/ }));
+
+      expect(names().length).toBeGreaterThan(0);
+      expect(names().every(name => name.startsWith('lp-'))).toBe(true);
+    });
+
+    it('shows a search’s matches whole, and draws only the rows in view', () => {
+      manager({ selectors: many, flatList: [] });
+      fireEvent.change(screen.getByPlaceholderText('Search selectors'), { target: { value: 'part' } });
+
+      expect(names().length).toBeGreaterThan(0);
+      expect(names().length).toBeLessThan(120);
+    });
+  });
+
   it('says how many ancestor rules dress nothing, and cleans them up', () => {
     manager();
 

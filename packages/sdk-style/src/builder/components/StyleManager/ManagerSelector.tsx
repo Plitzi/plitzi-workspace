@@ -12,6 +12,7 @@ import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import StyleSelectorTag from './StyleSelectorTag';
+import useWindowedList from '../../hooks/useWindowedList';
 import SelectorForm from '../../models/SelectorForm';
 import { ancestorRemovals, unusedAncestors } from '../StyleInspector/helpers';
 
@@ -48,6 +49,30 @@ const FILTERS: { id: ListFilter; label: string }[] = [
   { id: 'unused', label: 'Unused' }
 ];
 
+/** A row of the list: a section's head, a group's (a prefix the classes share), or a selector. */
+type ListItem =
+  | { kind: 'section'; key: string; title: string; count: number }
+  | { kind: 'group'; key: string; prefix: string; count: number; open: boolean }
+  | { kind: 'row'; key: string; selector: StyleItem };
+
+const HEIGHT: Record<ListItem['kind'], number> = { section: 28, group: 28, row: 32 };
+
+/** Past this many classes, they are listed by the prefix they share — `adm-`, `lp-` — each folded until opened. */
+const GROUPED_FROM = 40;
+
+/** A prefix fewer classes share is no group of its own: they are listed under Other, folded too. */
+const GROUP_MIN = 5;
+
+/** The group of the classes no prefix of enough of them gathers. */
+const OTHER = 'Other';
+
+/** The prefix a class is grouped under: what its name says before its first dash, or none for a name with none. */
+const prefixOf = (name: string): string | undefined => {
+  const dash = name.indexOf('-');
+
+  return dash > 0 ? name.slice(0, dash + 1) : undefined;
+};
+
 const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
@@ -76,13 +101,21 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
     });
   }, [selectorsArr, searchInput]);
 
-  const elementCounts = useMemo<Record<string, number>>(
-    () =>
-      Object.fromEntries(
-        selectorsArr.map(selector => [selector.name, flatList.filter(element => wears(element, selector.name)).length])
-      ),
-    [selectorsArr, flatList]
-  );
+  // One pass over the elements, each class counted once per element that wears it: a filter per selector read every
+  // element 1,900 times over on the website.
+  const elementCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    for (const element of flatList) {
+      const worn = new Set(
+        Object.values(element.definition.styleSelectors).flatMap(classes => classes.split(' ').filter(Boolean))
+      );
+      worn.forEach(name => {
+        counts[name] = (counts[name] ?? 0) + 1;
+      });
+    }
+
+    return Object.fromEntries(selectorsArr.map(selector => [selector.name, counts[classOf(selector.name)] ?? 0]));
+  }, [selectorsArr, flatList]);
 
   /** What each filter keeps of what is searched — the list shown, and the count beside each filter. */
   const byFilter = useMemo<Record<ListFilter, StyleItem[]>>(() => {
@@ -96,15 +129,84 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
     };
   }, [searched, elementCounts]);
   const finalSelectors = byFilter[filter];
-  const sections = useMemo(
-    () =>
-      filter === 'all'
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(new Set());
+  const items = useMemo<ListItem[]>(() => {
+    const rows = (list: StyleItem[]): ListItem[] =>
+      list.map(selector => ({ kind: 'row', key: selector.name, selector }));
+    // Grouped when long and nothing is searched: a search shows its matches whole.
+    const grouped = (list: StyleItem[]): ListItem[] => {
+      if (list.length < GROUPED_FROM || searchInput) {
+        return rows(list);
+      }
+
+      const groups = new Map<string, StyleItem[]>();
+      const loose: StyleItem[] = [];
+      for (const selector of list) {
+        const prefix = prefixOf(selector.name);
+        if (prefix) {
+          groups.set(prefix, [...(groups.get(prefix) ?? []), selector]);
+        } else {
+          loose.push(selector);
+        }
+      }
+
+      const group = (prefix: string, members: StyleItem[]): ListItem[] => {
+        const open = openGroups.has(prefix);
+
+        return [
+          { kind: 'group', key: `group:${prefix}`, prefix, count: members.length, open },
+          ...(open ? rows(members) : [])
+        ];
+      };
+      const gathered = [...groups.entries()].filter(([, members]) => members.length >= GROUP_MIN);
+      const other = [...loose, ...[...groups.values()].filter(members => members.length < GROUP_MIN).flat()].sort(
+        (a, b) => a.name.localeCompare(b.name)
+      );
+
+      return [
+        ...gathered.sort(([a], [b]) => a.localeCompare(b)).flatMap(([prefix, members]) => group(prefix, members)),
+        ...(other.length > 0 ? group(OTHER, other) : [])
+      ];
+    };
+
+    if (filter !== 'all') {
+      return filter === 'elements' ? rows(finalSelectors) : grouped(finalSelectors);
+    }
+
+    return [
+      ...(byFilter.elements.length > 0
         ? [
-            { title: 'Element defaults', items: byFilter.elements },
-            { title: 'Classes', items: byFilter.classes }
-          ].filter(section => section.items.length > 0)
-        : [{ title: undefined, items: finalSelectors }],
-    [filter, byFilter, finalSelectors]
+            {
+              kind: 'section' as const,
+              key: 'section:elements',
+              title: 'Element defaults',
+              count: byFilter.elements.length
+            },
+            ...rows(byFilter.elements)
+          ]
+        : []),
+      ...(byFilter.classes.length > 0
+        ? [
+            { kind: 'section' as const, key: 'section:classes', title: 'Classes', count: byFilter.classes.length },
+            ...grouped(byFilter.classes)
+          ]
+        : [])
+    ];
+  }, [filter, byFilter, finalSelectors, searchInput, openGroups]);
+  const heights = useMemo(() => items.map(item => HEIGHT[item.kind]), [items]);
+  const windowed = useWindowedList(heights);
+
+  const handleToggleGroup = useCallback(
+    (prefix: string) => () =>
+      setOpenGroups(current => {
+        const next = new Set(current);
+        if (!next.delete(prefix)) {
+          next.add(prefix);
+        }
+
+        return next;
+      }),
+    []
   );
 
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
@@ -248,7 +350,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r border-gray-200 px-2 pt-2 dark:border-zinc-800">
+    <div className="flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r border-gray-300 bg-gray-50/70 px-2 pt-2 dark:border-zinc-700 dark:bg-zinc-950/40">
       <div className="flex items-center gap-1.5">
         <div className="grow">
           <Input
@@ -328,38 +430,69 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
           </div>
         </div>
       )}
-      <div className="-mx-1 flex grow basis-0 flex-col gap-2 overflow-y-auto px-1 pb-2">
-        {sections.map(section => (
-          <section key={section.title ?? filter} className="flex flex-col">
-            {section.title && (
-              <h6 className="sticky top-0 z-1 flex items-center justify-between bg-white px-1.5 py-1 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:bg-zinc-900 dark:text-zinc-400">
-                {section.title}
-                <span className="font-normal tabular-nums">{section.items.length}</span>
+      <div
+        ref={windowed.ref}
+        className="-mx-1 flex grow basis-0 flex-col overflow-y-auto px-1 pb-2"
+        onScroll={windowed.onScroll}
+      >
+        <div style={{ height: windowed.before }} className="shrink-0" />
+        {items.slice(windowed.start, windowed.end).map(item => {
+          if (item.kind === 'section') {
+            return (
+              <h6
+                key={item.key}
+                className="flex h-7 shrink-0 items-center justify-between px-1.5 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400"
+              >
+                {item.title}
+                <span className="font-normal tabular-nums">{item.count}</span>
               </h6>
-            )}
-            {section.items.map(selector => {
-              const { name, type } = selector;
+            );
+          }
 
-              return (
-                <StyleSelectorTag
-                  key={name}
-                  id={name}
-                  active={name === selected}
-                  checked={checkedSelectors.includes(name)}
-                  selecting={checkedSelectors.length > 0}
-                  label={name}
-                  type={type}
-                  elementsCount={elementCounts[name]}
-                  ancestorsCount={ancestorHealth[name].count}
-                  unusedAncestorsCount={ancestorHealth[name].unused.size}
-                  onSelect={handleClickSelect}
-                  onDelete={handleClickDelete}
-                  onToggleCheck={handleToggleCheck}
+          if (item.kind === 'group') {
+            return (
+              <button
+                key={item.key}
+                type="button"
+                aria-expanded={item.open}
+                className="flex h-7 w-full shrink-0 cursor-pointer items-center gap-1.5 rounded-sm px-1.5 text-left text-xs text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                onClick={handleToggleGroup(item.prefix)}
+              >
+                <i
+                  className={clsx(
+                    'fa-solid w-4 text-center text-[9px] text-zinc-400 dark:text-zinc-500',
+                    item.open ? 'fa-chevron-down' : 'fa-chevron-right'
+                  )}
                 />
-              );
-            })}
-          </section>
-        ))}
+                <span className={clsx('grow truncate', { 'font-mono': item.prefix !== OTHER })}>
+                  {item.prefix === OTHER ? OTHER : `${item.prefix}…`}
+                </span>
+                <span className="text-[11px] text-zinc-400 tabular-nums dark:text-zinc-500">{item.count}</span>
+              </button>
+            );
+          }
+
+          const { name, type } = item.selector;
+
+          return (
+            <StyleSelectorTag
+              key={item.key}
+              id={name}
+              active={name === selected}
+              checked={checkedSelectors.includes(name)}
+              selecting={checkedSelectors.length > 0}
+              label={name}
+              type={type}
+              elementsCount={elementCounts[name]}
+              ancestorsCount={ancestorHealth[name].count}
+              unusedAncestorsCount={ancestorHealth[name].unused.size}
+              onSelect={handleClickSelect}
+              onDelete={handleClickDelete}
+              onToggleCheck={handleToggleCheck}
+            />
+          );
+        })}
+        <div style={{ height: windowed.after }} className="shrink-0" />
         {finalSelectors.length === 0 && (
           <p className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
             {searchInput

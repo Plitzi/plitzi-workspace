@@ -1,4 +1,3 @@
-import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import clsx from 'clsx';
 import { useCallback, memo } from 'react';
 
@@ -64,7 +63,7 @@ const StyleSelectorTag = ({
   return (
     <div
       className={clsx(
-        'group relative flex min-h-8 cursor-pointer items-center gap-2 rounded-md py-1 pr-1 pl-1.5 select-none',
+        'group relative flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-sm pr-1 pl-1.5 select-none',
         {
           'hover:bg-gray-100 dark:hover:bg-zinc-800': !active,
           'bg-primary-50 dark:bg-primary-400/15': active,
@@ -80,7 +79,14 @@ const StyleSelectorTag = ({
           'hidden group-hover:flex': !selecting && !checked
         })}
       >
-        <Checkbox size="xs" checked={checked} onChange={handleToggleCheck} onClick={handleStopPropagation} />
+        <input
+          type="checkbox"
+          className="accent-primary-600 size-3.5 cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+          aria-label={`Check ${label}`}
+          checked={checked}
+          onChange={handleToggleCheck}
+          onClick={handleStopPropagation}
+        />
       </div>
       <span
         className={clsx('flex w-4 shrink-0 items-center justify-center text-[11px]', {
@@ -106,7 +112,7 @@ const StyleSelectorTag = ({
         <span
           className={clsx('flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px]', {
             'bg-amber-500/15 text-amber-700 dark:text-amber-300': unusedAncestorsCount > 0,
-            'bg-gray-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300': unusedAncestorsCount === 0
+            'bg-gray-100 text-zinc-600 dark:bg-zinc-700/80 dark:text-zinc-100': unusedAncestorsCount === 0
           })}
           title={ancestorsTitle}
         >
@@ -133,7 +139,7 @@ const StyleSelectorTag = ({
       </button>
       {elementsCount > 0 && (
         <span
-          className="min-w-6 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-center text-[11px] font-medium text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300"
+          className="min-w-6 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-center text-[11px] font-medium text-zinc-600 tabular-nums dark:bg-zinc-700/80 dark:text-zinc-100"
           title={`Dresses ${String(elementsCount)} element${elementsCount === 1 ? '' : 's'}`}
         >
           {elementsCount}
