@@ -98,6 +98,7 @@ const StyleAdvanceEditor = () => {
         value={customCss}
         autoComplete={variables}
         theme={resolvedTheme}
+        size="xs"
         lineWrapping
         onChange={handleChange}
       />
