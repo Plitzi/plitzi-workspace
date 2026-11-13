@@ -9,6 +9,7 @@ import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
 import ItemActions from './ItemActions';
+import { pageProtection } from './protection';
 
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -35,6 +36,11 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
     attributes: { name, default: defaultPage },
     definition: { label, type }
   } = element as Element & { attributes: { name: string; default: boolean } };
+
+  const protection = useMemo(
+    () => (type === 'layoutContainer' ? undefined : pageProtection(element.attributes)),
+    [type, element.attributes]
+  );
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -65,6 +71,17 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
             <Text size="sm" isTruncated active={active}>
               {name ? name : label ? label : type}
             </Text>
+            {protection && (
+              <Icon
+                size="xs"
+                intent="custom"
+                icon="fa-solid fa-lock"
+                title={protection.says}
+                role="img"
+                aria-label={protection.says}
+                className="shrink-0 text-gray-400 dark:text-zinc-500"
+              />
+            )}
           </Flex>
           <ItemActions
             id={id}

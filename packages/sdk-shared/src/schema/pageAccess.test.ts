@@ -6,6 +6,7 @@ import {
   pageAccessOf,
   pageAccessRefusal,
   pageWithheldOf,
+  protectedAccessOf,
   withheldPageOf,
   withholdPages
 } from './pageAccess';
@@ -50,6 +51,16 @@ describe('a page that says who may see it', () => {
     expect(pageAccessRefusal(access, { permissions: ['spaceView'] })).toBe('forbidden');
     expect(pageAccessRefusal(access, { permissions: ['adminManage', 'spaceView'] })).toBeUndefined();
     expect(pageAccessRefusal(undefined, undefined)).toBeUndefined();
+  });
+});
+
+describe('what keeps a page from a visitor', () => {
+  it('is its permissions, a session for one only for the signed in, and nothing for one anybody may open', () => {
+    expect(protectedAccessOf({ access: { permissions: ['billing'] } })).toEqual({ permissions: ['billing'] });
+    expect(protectedAccessOf({ accessLevel: 'authenticated' })).toEqual({ permissions: [] });
+    expect(protectedAccessOf({ accessLevel: 'all' })).toBeUndefined();
+    expect(protectedAccessOf({ access: { permissions: [] } })).toBeUndefined();
+    expect(protectedAccessOf(undefined)).toBeUndefined();
   });
 });
 

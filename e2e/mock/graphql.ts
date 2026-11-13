@@ -98,7 +98,13 @@ const initQuery = (space: OfflineDataRaw) => {
           pages: schema.pages,
           // Lists over the wire, both of them. A space that declares neither still has to answer with an empty
           // one: an empty OBJECT is read as a single record missing every field the query selected.
-          pageFolders: asList(schema.pageFolders).map(folder => ({ ...folder, __typename: 'SpacePageFolder' })),
+          // `parentId` written for a folder at the top too, as `null`: the query selects it, and a field left out is a
+          // record Apollo reads as missing it.
+          pageFolders: asList(schema.pageFolders).map(folder => ({
+            ...folder,
+            parentId: folder.parentId ?? null,
+            __typename: 'SpacePageFolder'
+          })),
           variables: asList(schema.variables),
           components: schema.components,
           flags: schema.flags ?? {},

@@ -46,6 +46,14 @@ export const pageAccessOf = (attributes: Record<string, unknown> | undefined): P
   return names.length > 0 ? { permissions: names } : undefined;
 };
 
+/**
+ * What keeps a page from a visitor, or nothing for a page anybody may open: the permissions it declares (`access`) — or,
+ * for one only for signed-in visitors (`accessLevel: 'authenticated'`), a session and no permission. What the server
+ * withholds a page by (`withholdPages`), and what the builder marks a protected page and folder with.
+ */
+export const protectedAccessOf = (attributes: Record<string, unknown> | undefined): PageAccess | undefined =>
+  pageAccessOf(attributes) ?? (attributes?.accessLevel === 'authenticated' ? { permissions: [] } : undefined);
+
 /** Why this visitor may not see a page that declares `access`, or nothing when they may — or when it declares none. */
 export const pageAccessRefusal = (
   access: PageAccess | undefined,
@@ -103,8 +111,7 @@ export const withholdPages = (schema: Schema, caller: AccessCaller): WithheldSch
     // A page for signed-in visitors is kept from the signed out as one for some permissions is: any session, none of
     // them. Only the ones that answer as if they did not exist were, and a visitor of `/terms` downloaded the
     // console's pages — 300 KB of one of them — that their own visit redirects away from.
-    const access =
-      pageAccessOf(attributes) ?? (attributes?.accessLevel === 'authenticated' ? { permissions: [] } : undefined);
+    const access = protectedAccessOf(attributes);
     if (!access) {
       continue;
     }

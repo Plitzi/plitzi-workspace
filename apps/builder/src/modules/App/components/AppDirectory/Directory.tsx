@@ -10,6 +10,7 @@ import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 import DirectoryItem from './DirectoryItem';
+import { folderProtection } from './protection';
 
 import type { PageFolder, Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -56,6 +57,10 @@ const Directory = ({
     [id, pageFolders]
   );
   const collapsed = isCollapsed?.(id) ?? true;
+  const protection = useMemo(
+    () => (isRootFolder ? undefined : folderProtection(id, pageFolders ?? [], elements ?? [])),
+    [isRootFolder, id, pageFolders, elements]
+  );
   const handleCollapse = useCallback((value: boolean) => onCollapse?.(id, value), [onCollapse, id]);
 
   const handleClickSettings = useCallback(
@@ -96,10 +101,26 @@ const Directory = ({
           <Text size="sm" weight="bold" className="capitalize">
             {name}
           </Text>
+          {protection && (
+            <Icon
+              size="xs"
+              intent="custom"
+              icon="fa-solid fa-lock"
+              title={protection.says}
+              role="img"
+              aria-label={protection.says}
+              // Every page in it, as a page's own lock; some of them, fainter.
+              className={
+                protection.whole
+                  ? 'shrink-0 text-gray-400 dark:text-zinc-500'
+                  : 'shrink-0 text-gray-300 dark:text-zinc-600'
+              }
+            />
+          )}
         </Flex>
       </Flex>
     ),
-    [name, nestedLevel, collapsed]
+    [name, nestedLevel, collapsed, protection]
   );
 
   const handleClickRemoveFolder = useCallback(

@@ -26,3 +26,10 @@ weighs on a phone — and what of it a phone cannot hold.
   phone squeezes under 120 px, type past 64 px — that no `mobile` rule sets again, by the class that says it. A layout
   fluid on its own, a row whose one column grows, a dense widget's thin columns, what a `mobile` rule hides or scales
   down whole, and a space written mobile first are never named.
+
+## Builder
+
+- The page tree marks what a visitor may not open: a lock beside a page only for signed-in visitors or for some
+  permissions, saying which (and when it answers everyone else with a 404), and beside a folder all of whose pages are —
+  fainter, with how many, when only some are. Read by the rule the server withholds pages with (`protectedAccessOf`,
+  `@plitzi/sdk-shared/schema`), so the lock and what a visitor is sent never disagree.
