@@ -10,7 +10,7 @@ const HEADER_CLASS_NAME = {
   panel: 'mx-2 mt-2',
   // Over a view that replaces the canvas: the same column as the page under it (`ViewPage`), so tabs, notice and
   // content share one left edge.
-  page: 'mx-auto w-full max-w-5xl px-6 pt-5 pb-4'
+  page: 'mx-auto w-full max-w-5xl 2xl:max-w-7xl px-6 pt-5 pb-4'
 } as const;
 
 export type PanelSection = {

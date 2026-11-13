@@ -39,7 +39,7 @@ const ViewPage = ({
     <div className={clsx('flex min-h-0 grow basis-0 flex-col', { 'overflow-y-auto': scroll })}>
       <div
         className={clsx(
-          'mx-auto flex w-full max-w-5xl flex-col gap-5 px-6 pt-2 pb-10',
+          'mx-auto flex w-full max-w-5xl flex-col gap-5 px-6 pt-2 pb-10 2xl:max-w-7xl',
           { 'min-h-0 grow': !scroll },
           className
         )}

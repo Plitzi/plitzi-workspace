@@ -140,16 +140,15 @@ const ResourceDirectory = ({
     [canDrop, draggingFile?.directoryName, name]
   );
 
+  const empty = !isDefault && items.length === 0;
+
   return (
+    // A row of the panel's list, as a folder of Pages is: no card of its own, its count in words' colour. A folder a file
+    // is dragged over takes the accent; an empty one says so, in amber, until something is dropped in it.
     <ContainerCollapsable
       className={clsx(
-        'w-full rounded',
-        {
-          'border border-dashed border-orange-500 bg-orange-100 dark:bg-orange-950/20':
-            items.length === 0 && !isDefault,
-          'dark:bg-ui-raised/60 bg-slate-100': items.length > 0 || isDefault,
-          'outline-2 -outline-offset-2 outline-black dark:outline-white': isDragging
-        },
+        'w-full rounded-sm',
+        { 'bg-primary-50 ring-primary-400/60 dark:bg-primary-400/15 ring-1 ring-inset': isDragging },
         className
       )}
       collapsed
@@ -159,37 +158,43 @@ const ResourceDirectory = ({
     >
       <ContainerCollapsable.Header
         className={{
-          header: clsx('group w-full p-2', { 'pointer-events-none': isDragging }),
+          header: clsx('group hover:bg-ui-hover h-7 w-full rounded-sm px-1.5', { 'pointer-events-none': isDragging }),
           headerSlot: 'flex items-center gap-2',
           headerContainer: 'grow basis-0 overflow-hidden',
           headerTitle: 'w-full grow basis-0'
         }}
         title={
-          <div className="flex w-full items-center gap-2">
-            <Icon size="sm" icon="fa-solid fa-folder-open" />
+          <div className="text-ui-fg flex w-full items-center gap-2 text-[13px]">
+            <Icon size="sm" icon="fa-solid fa-folder" className="text-ui-fg-subtle" />
             <div className="truncate">{nameFormatted}</div>
+            {empty && (
+              <span className="shrink-0 rounded-sm bg-amber-500/10 px-1 text-[10px] leading-4 font-medium text-amber-700 dark:text-amber-300">
+                empty
+              </span>
+            )}
           </div>
         }
         placement="right"
-        iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
-        iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
+        iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-right" />}
+        iconExpanded={<Icon size="sm" icon="fa-solid fa-angle-down" />}
       >
-        <div className="border-ui-line-strong text-ui-fg-subtle rounded border px-1 text-xs">{items.length}</div>
         {!isDefault && canRemove && (
           <Icon
             intent="danger"
             icon="fas fa-trash-alt"
+            size="xs"
             className="hidden cursor-pointer group-hover:block"
             title="Remove"
             onClick={handleClickRemoveDirectory}
           />
         )}
+        <span className="text-ui-fg-subtle text-[11px] tabular-nums">{items.length}</span>
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
-        className={clsx('max-h-87.5 overflow-y-auto p-2', { 'pointer-events-none': isDragging })}
+        className={clsx('max-h-87.5 overflow-y-auto px-1.5 pb-2', { 'pointer-events-none': isDragging })}
       >
         {items.length > 0 && (
-          <div className="mt-2 block columns-3 gap-2">
+          <div className="mt-1 block columns-3 gap-2">
             {items.map(resource => (
               <Resource
                 className="mb-2"

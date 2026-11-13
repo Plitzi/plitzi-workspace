@@ -14,7 +14,7 @@ export type FunctionsOfferProps = {
  * keep server code on at first, so they wait here until it has one. Installing saves them as the space's own.
  */
 const FunctionsOffer = ({ template, isInstalling = false, onInstall }: FunctionsOfferProps) => (
-  <div className="mx-auto w-full max-w-5xl px-6 py-6">
+  <div className="mx-auto w-full max-w-5xl px-6 py-6 2xl:max-w-7xl">
     <EmptyState
       icon="fa-solid fa-code"
       title="The template's functions are waiting"

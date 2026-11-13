@@ -97,10 +97,16 @@ const ResourcesList = ({
   );
 
   return (
-    <div className={clsx('flex w-full flex-col gap-4 overflow-y-auto', className)}>
+    <div className={clsx('flex w-full flex-col gap-0.5 overflow-y-auto', className)}>
       {visibility === 'public' && (
         // Beside the panel's one primary action (a new provider), a secondary one: a folder of this bucket.
-        <Button size="xs" intent="secondary" className="self-start" iconPlacement="before" onClick={handleAddDirectory}>
+        <Button
+          size="xs"
+          intent="secondary"
+          className="mb-1.5 self-start"
+          iconPlacement="before"
+          onClick={handleAddDirectory}
+        >
           <Button.Icon icon="fa-solid fa-folder-plus" />
           New folder
         </Button>

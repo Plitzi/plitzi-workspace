@@ -95,6 +95,11 @@ weighs on a phone — and what of it a phone cannot hold.
   windows and modals were one colour, so nothing read as above anything; the light scheme's lists took their text
   colour from the page the builder was mounted in. Needs `@plitzi/plitzi-ui` with the `ui-*` tokens.
 
+- The views that take the canvas' place — Server, Settings — use a wide screen: past 1,536 px the page is 1,280 wide,
+  and each section's name stands in a column of its own beside what it holds, as a settings page reads.
+- Assets' folders are rows of the panel, as Pages' are — no card each, their count in words' colour, an empty one
+  marked in amber, the one a file is dragged over in the accent.
+
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the
