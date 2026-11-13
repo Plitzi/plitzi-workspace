@@ -39,6 +39,10 @@ const wears = (element: Element, selector: string): boolean => {
   return !!name && Object.values(element.definition.styleSelectors).some(classes => classes.split(' ').includes(name));
 };
 
+/** A count as a tab says it: thousands in short (`1.9k`), the exact one in its title. */
+const shortCount = (count: number): string =>
+  count < 1000 ? String(count) : `${(count / 1000).toFixed(count < 10000 ? 1 : 0).replace(/\.0$/, '')}k`;
+
 /** What the list shows: every selector, the classes, the element types' defaults, or the classes no element wears. */
 type ListFilter = 'all' | 'classes' | 'elements' | 'unused';
 
@@ -377,12 +381,13 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
             role="tab"
             aria-selected={filter === id}
             className={clsx(
-              'flex grow cursor-pointer items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] font-medium',
+              'flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded px-1 py-1 text-[11px] font-medium whitespace-nowrap',
               {
                 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-50': filter === id,
                 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100': filter !== id
               }
             )}
+            title={`${label} · ${byFilter[id].length.toLocaleString('en')}`}
             onClick={handleFilter(id)}
           >
             {label}
@@ -392,7 +397,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
                 'opacity-60': !(id === 'unused' && byFilter.unused.length > 0)
               })}
             >
-              {byFilter[id].length}
+              {shortCount(byFilter[id].length)}
             </span>
           </button>
         ))}

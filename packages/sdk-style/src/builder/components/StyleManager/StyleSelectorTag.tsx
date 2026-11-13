@@ -79,14 +79,17 @@ const StyleSelectorTag = ({
           'hidden group-hover:flex': !selecting && !checked
         })}
       >
-        <input
-          type="checkbox"
-          className="accent-primary-600 size-3.5 cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
-          aria-label={`Check ${label}`}
-          checked={checked}
-          onChange={handleToggleCheck}
-          onClick={handleStopPropagation}
-        />
+        <span className="relative flex size-3.5 items-center justify-center">
+          <input
+            type="checkbox"
+            className="peer checked:border-primary-600 checked:bg-primary-600 size-3.5 cursor-pointer appearance-none rounded-[3px] border border-gray-400 bg-white dark:border-zinc-500 dark:bg-zinc-800"
+            aria-label={`Check ${label}`}
+            checked={checked}
+            onChange={handleToggleCheck}
+            onClick={handleStopPropagation}
+          />
+          <i className="fa-solid fa-check pointer-events-none absolute hidden text-[8px] text-white peer-checked:block" />
+        </span>
       </div>
       <span
         className={clsx('flex w-4 shrink-0 items-center justify-center text-[11px]', {
