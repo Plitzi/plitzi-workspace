@@ -125,8 +125,11 @@ export class SpaceAuthor {
   /** Each component's tree, by component id. */
   readonly componentTrees = new Map<string, AuthorTree>();
 
-  /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
-  readonly styleWarnings: (SchemaValidationError & { code: WarningCode })[] = [];
+  /**
+   * What only the spec can be warned of, never the documents — a plugin's own code (`warnReservedAttributes`). Every
+   * other warning is the linter's, so the builder says it too.
+   */
+  readonly specWarnings: (SchemaValidationError & { code: WarningCode })[] = [];
 
   /** What could not be written as declared, kept so the run reports all of it (see `addElement`). */
   readonly refusals: SpaceRefusal[] = [];
@@ -211,7 +214,7 @@ export class SpaceAuthor {
       schema,
       style,
       handles: buildHandles(this.handles, this.layoutHandles),
-      warnings: [...this.styleWarnings, ...warnings],
+      warnings: [...this.specWarnings, ...warnings],
       suggestions
     };
   }

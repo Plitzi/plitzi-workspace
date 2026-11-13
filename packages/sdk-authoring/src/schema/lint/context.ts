@@ -14,12 +14,21 @@ import type { Element, Schema, SpaceComponent, Style } from '@plitzi/sdk-shared'
 /** The built-in element that hosts a component of the project's own, named by its `renderType`. */
 export const CUSTOM_TYPE = 'custom';
 
+const HOSTED = `${CUSTOM_TYPE}:`;
+
+/** The name a component hosted by a `custom` element is declared under: `custom:<renderType>`. */
+export const hostedType = (renderType: string): string => `${HOSTED}${renderType}`;
+
+/** The component a `custom:<renderType>` name hosts; undefined for a plugin's own type. */
+export const hostedComponentOf = (type: string): string | undefined =>
+  type.startsWith(HOSTED) ? type.slice(HOSTED.length) : undefined;
+
 /** The name an element's plugin is declared under: its own type, or `custom:<renderType>` for one a `custom` hosts. */
 export const pluginKeyOf = (element: Element): string => {
   const { type } = element.definition;
   const renderType = element.attributes.renderType;
 
-  return type === CUSTOM_TYPE && typeof renderType === 'string' ? `${CUSTOM_TYPE}:${renderType}` : type;
+  return type === CUSTOM_TYPE && typeof renderType === 'string' ? hostedType(renderType) : type;
 };
 
 export type LintCatalogs = AuthorSpaceOptions;
@@ -138,7 +147,7 @@ export class LintContext {
     }
 
     const renderType = textOf(element.attributes.renderType);
-    const hosted = `${CUSTOM_TYPE}:${renderType}`;
+    const hosted = hostedType(renderType);
 
     return renderType && this.catalogs.pluginTypes?.includes(hosted) ? hosted : undefined;
   }

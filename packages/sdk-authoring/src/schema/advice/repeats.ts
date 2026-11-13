@@ -388,7 +388,8 @@ export const suggestRepeats = (
     const counted =
       ` Counted from ${String(MIN_SHAPE_COPIES)} copies of ${String(MIN_SHAPE)} elements or more (2 of ` +
       `${String(MIN_PAIR)} or more); a helper called once a copy still writes each into the document. Alike on ` +
-      "purpose: `quiet: ['repeated-shape']` on them, with a comment saying why.";
+      "purpose: `quiet: ['repeated-shape']` on them — or once, on the row copies side by side sit in — with a comment " +
+      'saying why.';
     suggestions.push({
       code: 'repeated-shape',
       elementIds: fresh,

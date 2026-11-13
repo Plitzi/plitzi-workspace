@@ -203,20 +203,18 @@ const RENAMED: Readonly<Partial<Record<string, string>>> = {
  * names, which a factory reads as that and never hands to the plugin. About the plugin's code, not the space, so it is
  * authoring's alone; a variant no style declares is the document linter's (`lintVariants`), the builder's too.
  */
-const warnUnreachable = (author: SpaceAuthor, element: Element, where: string): void => {
+const warnReservedAttributes = (author: SpaceAuthor, element: Element, where: string): void => {
   const key = pluginKeyOf(element);
   const reserved = author.options.reservedPluginAttributes?.[key] ?? [];
   if (reserved.length > 0 && !author.reservedWarned.has(key)) {
     author.reservedWarned.add(key);
-    author.styleWarnings.push({
+    author.specWarnings.push({
       code: 'plugin-attribute-reserved',
       // Each named as the one it is: a run's plugins declared `from`, and were told to rename `variant` → `kind`.
       message: `${where} is a "${key}", whose plugin declares ${reserved.map(name => `\`${name}\``).join(', ')} — ${reserved.length === 1 ? 'a name' : 'names'} authoring reads as the element's own (\`variant\` is its style variant, \`class\` its classes, \`from\` where its rows come from), so the plugin is never handed ${reserved.length === 1 ? 'it' : 'them'}. Rename ${reserved.length === 1 ? 'it' : 'them'} in the plugin: ${reserved.map(name => `\`${name}\` → \`${RENAMED[name] ?? `${name}Value`}\``).join(', ')}.`,
       elementId: element.id
     });
   }
-
-  // A variant no style declares is the linter's to say (`lintVariants`), so the builder says it too.
 };
 
 const recordHandle = (author: SpaceAuthor, handle: ElementHandle): void => {
@@ -478,7 +476,7 @@ const writeElement = (
   };
 
   insert(author, element, parentId, isRoot ? 'custom' : 'inside', place, tree);
-  warnUnreachable(author, element, where);
+  warnReservedAttributes(author, element, where);
 
   recordHandle(author, {
     id,

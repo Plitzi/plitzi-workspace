@@ -3,7 +3,7 @@ import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import { defineElement } from './element';
 import { ELEMENT_SPEC_KEYS } from '../schema/guard';
-import { CUSTOM_TYPE } from '../schema/lint/context';
+import { CUSTOM_TYPE, hostedType } from '../schema/lint/context';
 
 import type { AuthorSpaceOptions, PluginDeclarationData } from '../schema';
 import type { ElementFactory } from './element';
@@ -55,8 +55,7 @@ const attributesOf = (declaration: PluginDeclarationData): string[] | null => {
  * hosts it (`custom:<type>`). What authoring hands the linter for the plugins it is given, and what any reader of a
  * space's stored documents hands it for the plugins installed there — the builder's — so both read the same.
  */
-export const pluginTypesOf = (types: readonly string[]): string[] =>
-  types.flatMap(type => [type, `${CUSTOM_TYPE}:${type}`]);
+export const pluginTypesOf = (types: readonly string[]): string[] => types.flatMap(type => [type, hostedType(type)]);
 
 /**
  * The catalogs `authorSpace` holds a space to, with each declared plugin in them as if it were built in.
@@ -77,7 +76,6 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
    * `defineElement`) and `custom:<type>` (a component of the project's own, hosted by `custom({ renderType })`). The
    * hosted form is the `custom` element's own vocabulary plus the component's.
    */
-  const hostedKey = (declaration: PluginDeclarationData): string => `${CUSTOM_TYPE}:${declaration.type}`;
   const byType = <T>(
     own: (declaration: PluginDeclarationData) => T | undefined,
     hosted: (declaration: PluginDeclarationData) => T | undefined = own
@@ -86,7 +84,7 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
       plugins.flatMap(declaration => {
         const entries: [string, T | undefined][] = [
           [declaration.type, own(declaration)],
-          [hostedKey(declaration), hosted(declaration)]
+          [hostedType(declaration.type), hosted(declaration)]
         ];
 
         return entries.filter((entry): entry is [string, T] => entry[1] !== undefined);
@@ -150,15 +148,15 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
     },
     drawsNothingTypes: [
       ...(rest.drawsNothingTypes ?? []),
-      ...plugins
-        .filter(declaration => declaration.drawsNothing === true)
-        .flatMap(declaration => [declaration.type, hostedKey(declaration)])
+      ...pluginTypesOf(
+        plugins.filter(declaration => declaration.drawsNothing === true).map(declaration => declaration.type)
+      )
     ],
     choosesChildrenTypes: [
       ...(rest.choosesChildrenTypes ?? []),
-      ...plugins
-        .filter(declaration => declaration.choosesChildren === true)
-        .flatMap(declaration => [declaration.type, hostedKey(declaration)])
+      ...pluginTypesOf(
+        plugins.filter(declaration => declaration.choosesChildren === true).map(declaration => declaration.type)
+      )
     ],
     // A plugin package holds children only when its definition says so — as the built-in elements do.
     leafTypes: [

@@ -313,6 +313,19 @@ describe('suggestions', () => {
     expect(codesOf(rows())).toContain('repeated-shape');
     expect(codesOf(rows('repeated-shape'))).not.toContain('repeated-shape');
 
+    // Said once, on the row the copies sit side by side in: a plan picker's options, alike on purpose.
+    const held = (quiet?: 'repeated-shape') =>
+      space([
+        page('home', [
+          container({
+            ...(quiet ? { quiet: [quiet] } : {}),
+            children: ['Videos', 'Exercises', 'A certificate', 'Lifetime access'].map(words => row(words))
+          })
+        ])
+      ]);
+    expect(codesOf(held())).toContain('repeated-shape');
+    expect(codesOf(held('repeated-shape'))).not.toContain('repeated-shape');
+
     // In the document, where the builder's list and the MCP read it: the same suggestion is left out there too.
     const { schema, style } = authorSpace(rows('repeated-shape'));
     expect(Object.values(schema.flat).some(element => element.definition.quiet?.includes('repeated-shape'))).toBe(true);

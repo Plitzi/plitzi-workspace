@@ -20,6 +20,12 @@ export { unusedDeclarations } from './declarations';
 export type { WornClass, WornList } from './classOverrides';
 export type { Suggestion } from './types';
 
+/** Every element of the pages' tree and of each component's. */
+const elementsOf = (schema: Schema) =>
+  [schema.flat, ...Object.values(schema.components).map(component => component.flat)].flatMap(flat =>
+    Object.values(flat)
+  );
+
 /**
  * What each element quiets (`definition.quiet`): a suggestion about an element written that way on purpose is left
  * out — here, so authoring, the builder's list and the MCP leave out the same ones. The pages' tree and every
@@ -27,9 +33,9 @@ export type { Suggestion } from './types';
  */
 const quietCodes = (schema: Schema): Map<string, string[]> =>
   new Map(
-    [schema.flat, ...Object.values(schema.components).map(component => component.flat)]
-      .flatMap(flat => Object.values(flat))
-      .flatMap(element => (element.definition.quiet ? [[element.id, element.definition.quiet] as const] : []))
+    elementsOf(schema).flatMap(element =>
+      element.definition.quiet ? [[element.id, element.definition.quiet] as const] : []
+    )
   );
 
 /**
@@ -81,11 +87,25 @@ export const suggestSpace = (
     ...suggestRepeatedExpressions(schema)
   ]).sort((a, b) => b.saves - a.saves);
 
-/** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */
+/**
+ * The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). Nor
+ * the one element all of them sit in: copies side by side are said alike on purpose once, on the row that holds them
+ * (`quiet` on a plan picker's options, not on each plan's card).
+ */
 export const withoutQuieted = (schema: Schema, suggestions: Suggestion[]): Suggestion[] => {
   const quiets = quietCodes(schema);
+  const parents = new Map(elementsOf(schema).map(element => [element.id, element.definition.parentId]));
+  const holder = (ids: readonly string[]): string[] => {
+    const held = new Set(ids.map(id => parents.get(id)));
+    const [parent] = held;
+
+    return held.size === 1 && parent !== undefined ? [parent] : [];
+  };
 
   return suggestions.filter(
-    suggestion => !suggestion.elementIds.some(id => quiets.get(id)?.includes(suggestion.code) === true)
+    suggestion =>
+      ![...suggestion.elementIds, ...holder(suggestion.elementIds)].some(
+        id => quiets.get(id)?.includes(suggestion.code) === true
+      )
   );
 };

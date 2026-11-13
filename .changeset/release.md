@@ -44,6 +44,9 @@ weighs on a phone — and what of it a phone cannot hold.
   in both their spellings — what `authorSpace` passes, for a host that lints a stored space.
 - `pluginStylesheets(plugins)` (`@plitzi/sdk-mcp/server`): the stylesheets a space's installed plugins publish, cached,
   so a token only a plugin's CSS reads is not said unused (`unused-token`).
+- A suggestion is quieted on the one element every element it is about sits in, too: copies side by side said alike on
+  purpose once, on their row (`quiet: ['repeated-shape']` on a plan picker's options), not on each copy. A quiet written
+  there was read by nothing before.
 
 ## Builder
 

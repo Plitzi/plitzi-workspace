@@ -1,4 +1,4 @@
-import { CUSTOM_TYPE, textOf } from '../lint/context';
+import { CUSTOM_TYPE, hostedComponentOf, hostedType, textOf } from '../lint/context';
 
 import type { Suggestion } from './types';
 import type { Schema } from '@plitzi/sdk-shared';
@@ -13,7 +13,7 @@ import type { Schema } from '@plitzi/sdk-shared';
  */
 export const suggestPluginHosts = (schema: Schema, pluginTypes: readonly string[]): Suggestion[] => {
   // A declared plugin is listed under the name its `custom` host is checked by, as the linter reads it.
-  const declared = new Set(pluginTypes.filter(type => type.startsWith(`${CUSTOM_TYPE}:`)));
+  const declared = new Set(pluginTypes.filter(type => hostedComponentOf(type) !== undefined));
   if (declared.size === 0) {
     return [];
   }
@@ -22,7 +22,7 @@ export const suggestPluginHosts = (schema: Schema, pluginTypes: readonly string[
     .flatMap(flat => Object.values(flat))
     .flatMap(element => {
       const type = textOf(element.attributes.renderType);
-      if (element.definition.type !== CUSTOM_TYPE || !declared.has(`${CUSTOM_TYPE}:${type}`)) {
+      if (element.definition.type !== CUSTOM_TYPE || !declared.has(hostedType(type))) {
         return [];
       }
 
@@ -45,9 +45,7 @@ export const suggestPluginHosts = (schema: Schema, pluginTypes: readonly string[
  * border light lost its only placement to another task, and author, lint, doctor and every check said nothing.
  */
 export const suggestUnusedPlugins = (schema: Schema, pluginTypes: readonly string[]): Suggestion[] => {
-  const declared = pluginTypes.flatMap(type =>
-    type.startsWith(`${CUSTOM_TYPE}:`) ? [type.slice(CUSTOM_TYPE.length + 1)] : []
-  );
+  const declared = pluginTypes.flatMap(type => hostedComponentOf(type) ?? []);
   if (declared.length === 0) {
     return [];
   }
