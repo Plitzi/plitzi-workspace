@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseTyped, persistenceOf, preview, stateKeysOf } from './helpers';
+import {
+  parseTyped,
+  persistenceOf,
+  preview,
+  segmentsOf,
+  setInState,
+  shapeOf,
+  statePathsOf,
+  subPathsOf,
+  topKeysOf,
+  valueAt
+} from './helpers';
 
 import type { Element, ElementInteraction, Schema } from '@plitzi/sdk-shared';
 
@@ -47,12 +58,58 @@ describe('the state keys a space uses', () => {
       }
     };
 
-    const keys = stateKeysOf(schema);
+    const paths = statePathsOf(schema);
+    const keys = topKeysOf(paths);
 
     expect([...keys.keys()].sort()).toEqual(['cart', 'cartOpen', 'step']);
-    expect(keys.get('cart')).toEqual({ key: 'cart', reads: ['title'], writes: [] });
-    expect(keys.get('step')).toEqual({ key: 'step', reads: ['badge'], writes: ['next'] });
-    expect(keys.get('cartOpen')).toEqual({ key: 'cartOpen', reads: ['card-root'], writes: ['open'] });
+    expect(keys.get('cart')).toEqual({ path: 'cart', reads: ['title'], writes: [], children: ['count'] });
+    expect(keys.get('step')).toEqual({ path: 'step', reads: ['badge'], writes: ['next'], children: [] });
+    expect(keys.get('cartOpen')).toEqual({ path: 'cartOpen', reads: ['card-root'], writes: ['open'], children: [] });
+    expect(paths.get('cart.count')).toEqual({ path: 'cart.count', reads: ['title'], writes: [], children: [] });
+  });
+
+  it('counts a use under a key for the key, and names the deepest paths under it', () => {
+    const schema: Pick<Schema, 'flat' | 'components'> = {
+      flat: {
+        name: element('name', {}, { content: '{{ state.cart.items[0].name }}' }),
+        total: element('total', { interactions: { a: step('setState', { key: 'cart.total', value: 3 }) } })
+      },
+      components: {}
+    };
+
+    const paths = statePathsOf(schema);
+
+    expect(paths.get('cart')).toMatchObject({ reads: ['name'], writes: ['total'], children: ['items', 'total'] });
+    expect(paths.get('cart.items.0')?.children).toEqual(['name']);
+    expect(subPathsOf(paths, 'cart')).toEqual(['items.0.name', 'total']);
+  });
+});
+
+describe('a path into the state', () => {
+  it('names its keys, and stops at a template', () => {
+    expect(segmentsOf('state.cart.items[0].name')).toEqual(['cart', 'items', '0', 'name']);
+    expect(segmentsOf("runtime.state.cart['total']")).toEqual(['cart', 'total']);
+    expect(segmentsOf('cart.{{ props.key }}')).toEqual(['cart']);
+    expect(segmentsOf('cart.item{{ i }}')).toEqual(['cart']);
+    expect(segmentsOf('cart[{{ i }}].done')).toEqual(['cart']);
+    expect(segmentsOf('{{ props.name }}')).toEqual([]);
+  });
+
+  it('reads and writes one path, copying what is on the way', () => {
+    const state = { cart: { items: [{ name: 'tea' }], total: 2 }, step: 1 };
+    const next = setInState(state, ['cart', 'items', '0', 'name'], 'coffee');
+
+    expect(valueAt(next, ['cart', 'items', '0', 'name'])).toBe('coffee');
+    expect(Array.isArray(valueAt(next, ['cart', 'items']))).toBe(true);
+    expect(state.cart.items[0].name).toBe('tea');
+    expect(next.step).toBe(1);
+    expect(setInState({}, ['filters', 'status'], 'open')).toEqual({ filters: { status: 'open' } });
+  });
+
+  it('says what a branch holds', () => {
+    expect(shapeOf([1, 2])).toBe('[2]');
+    expect(shapeOf({ a: 1 })).toBe('{1}');
+    expect(shapeOf(3)).toBeUndefined();
   });
 });
 

@@ -1,34 +1,43 @@
 import clsx from 'clsx';
 import { memo, useCallback, useState } from 'react';
 
-import { preview } from '../../helpers';
+import { isBranch, preview, shapeOf, valueAt } from '../../helpers';
 import { STATE_COLUMNS } from '../../layout';
+import Kept from '../Kept';
+import UseCounts from '../UseCounts';
 import UsedBy from '../UsedBy';
 import ValueEditor from '../ValueEditor';
+import ValueJson from '../ValueJson';
 
-import type { Persistence, StateKeyUse } from '../../helpers';
+import type { Persistence, StatePathUse } from '../../helpers';
 import type { StateChange } from '../../hooks/useStateChanges';
 
 export type StateRowProps = {
-  use: StateKeyUse;
+  use: StatePathUse;
   value: unknown;
   persistence: Persistence;
-  /** The key's last change while the panel is open: its row says it moved. */
+  /** The deepest paths the space names under the key, relative to it (`items.0.name`). */
+  subPaths: string[];
+  /** The last change of the key or of anything under it while the panel is open: its row says it moved. */
   lastChange?: StateChange;
   onChange: (key: string, value: unknown) => void;
+  onOpenInTree: (key: string) => void;
 };
 
 /**
- * One key of the state: its name, its value edited in place, how the settings keep it, and how many elements read and
- * write it — unfolded, each one a link.
+ * One top-level key of the state: its name — with what it holds (`{3}`, `[12]`) and how many paths under it the space
+ * names — its value edited in place, how the settings keep it, and how many elements read and write it. Unfolded: the
+ * paths under it with their values, a way into the tree, and each element that uses it as a link.
  */
-const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowProps) => {
+const StateRow = ({ use, value, persistence, subPaths, lastChange, onChange, onOpenInTree }: StateRowProps) => {
   const [open, setOpen] = useState(false);
-  const { key, reads, writes } = use;
+  const { path: key, reads, writes } = use;
 
   const handleChange = useCallback((next: unknown) => onChange(key, next), [key, onChange]);
   const handleToggle = useCallback(() => setOpen(current => !current), []);
-  const isObject = typeof value === 'object' && value !== null;
+  const handleOpenInTree = useCallback(() => onOpenInTree(key), [key, onOpenInTree]);
+  const branch = isBranch(value);
+  const shape = shapeOf(value);
 
   return (
     <div className="border-ui-line border-b last:border-b-0">
@@ -55,9 +64,19 @@ const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowPro
             )}
           />
           <span className="truncate">{key}</span>
+          {shape && <span className="text-ui-fg-subtle shrink-0 text-[10px]">{shape}</span>}
+          {subPaths.length > 0 && (
+            <span
+              className="text-ui-fg-subtle flex shrink-0 items-center gap-0.5 text-[10px]"
+              title={`The space names ${String(subPaths.length)} path${subPaths.length === 1 ? '' : 's'} under it: ${subPaths.join(', ')}`}
+            >
+              <i className="fa-solid fa-folder-tree text-[9px]" aria-hidden />
+              {subPaths.length}
+            </span>
+          )}
         </button>
         <div className="min-w-0">
-          {isObject ? (
+          {branch ? (
             <button
               type="button"
               className="text-ui-fg-muted hover:bg-ui-hover block w-full cursor-pointer truncate rounded-sm px-1.5 py-0.5 text-left font-mono text-[11px]"
@@ -70,69 +89,40 @@ const StateRow = ({ use, value, persistence, lastChange, onChange }: StateRowPro
             <ValueEditor value={value} onChange={handleChange} />
           )}
         </div>
-        <span className="flex items-center justify-center gap-1 text-[11px]" title={persistence.reason}>
-          {persistence.kept ? (
-            <>
-              <i className="fa-solid fa-check text-primary-text" aria-label="Kept" />
-              {persistence.painted && (
-                <i className="fa-solid fa-server text-ui-fg-subtle text-[9px]" aria-label="painted" />
-              )}
-              {persistence.browser && (
-                <i className="fa-solid fa-globe text-ui-fg-subtle text-[9px]" aria-label="browser" />
-              )}
-            </>
-          ) : (
-            <span className="text-ui-fg-subtle" aria-label="Not kept">
-              —
-            </span>
-          )}
-        </span>
-        <span
-          className="text-ui-fg-subtle text-right text-[11px] whitespace-nowrap tabular-nums"
-          title={`${String(reads.length)} element${reads.length === 1 ? '' : 's'} read it, ${String(writes.length)} write it`}
-        >
-          {reads.length}
-          <span className="text-ui-line-strong mx-0.5">/</span>
-          {writes.length}
-        </span>
+        <Kept persistence={persistence} />
+        <UseCounts reads={reads} writes={writes} />
       </div>
       {open && (
         <div className="flex flex-col gap-1 pb-2 pl-7">
-          {isObject && <ValueJson value={value} onChange={handleChange} />}
+          {branch && <ValueJson value={value} onChange={handleChange} />}
+          {(branch || subPaths.length > 0) && (
+            <div className="flex flex-col gap-0.5 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-ui-fg-subtle text-[10px] font-semibold tracking-wider uppercase">
+                  {subPaths.length > 0 ? 'Under it, as the space names it' : 'Under it'}
+                </span>
+                <button
+                  type="button"
+                  className="text-primary-text cursor-pointer pr-2 text-[11px] hover:underline"
+                  onClick={handleOpenInTree}
+                >
+                  See it in the tree
+                </button>
+              </div>
+              {subPaths.map(sub => (
+                <div key={sub} className="flex items-baseline gap-2 font-mono text-[11px]">
+                  <span className="text-ui-fg-muted shrink-0">
+                    <span className="text-ui-fg-subtle">{key}.</span>
+                    {sub}
+                  </span>
+                  <span className="text-ui-fg-subtle min-w-0 truncate">{preview(valueAt(value, sub.split('.')))}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <UsedBy reads={reads} writes={writes} />
         </div>
       )}
-    </div>
-  );
-};
-
-/** An object or a list, edited whole as JSON; applied when it is valid and left. */
-const ValueJson = ({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) => {
-  const [draft, setDraft] = useState(() => JSON.stringify(value, null, 2));
-  const [invalid, setInvalid] = useState(false);
-
-  const handleBlur = useCallback(() => {
-    try {
-      onChange(JSON.parse(draft));
-      setInvalid(false);
-    } catch {
-      setInvalid(true);
-    }
-  }, [draft, onChange]);
-
-  return (
-    <div className="flex flex-col gap-1">
-      <textarea
-        className={clsx(
-          'bg-ui-field text-ui-fg min-h-20 w-full rounded-sm border p-1.5 font-mono text-[11px] leading-snug outline-none',
-          { 'border-red-500': invalid, 'border-ui-line-strong focus:border-primary-500': !invalid }
-        )}
-        spellCheck={false}
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={handleBlur}
-      />
-      {invalid && <span className="text-[11px] text-red-600 dark:text-red-400">Not valid JSON: not applied.</span>}
     </div>
   );
 };

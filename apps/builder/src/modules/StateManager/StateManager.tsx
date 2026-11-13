@@ -9,7 +9,7 @@ import ComputedTab from './components/ComputedTab';
 import Scenarios from './components/Scenarios';
 import StateTab from './components/StateTab';
 import VisitorTab from './components/VisitorTab';
-import { stateKeysOf } from './helpers';
+import { statePathsOf, topKeysOf } from './helpers';
 import useCanvasVisitor from './hooks/useCanvasVisitor';
 
 export type StateManagerProps = {
@@ -37,7 +37,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
   const [tab, setTab] = useState<Tab>('state');
 
   const keys = useMemo(() => {
-    const used = stateKeysOf({ flat, components });
+    const used = topKeysOf(statePathsOf({ flat, components }));
 
     return new Set([...used.keys(), ...Object.keys(state)]).size;
   }, [flat, components, state]);
