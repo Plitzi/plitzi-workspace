@@ -70,6 +70,31 @@ describe('lintSpace', () => {
       expect(unknown[0].message).toContain('did you mean "caret-blink"?');
     });
 
+    // Read off the stylesheet, so the builder says it of a class as authoring does: a phone gets the desktop's back.
+    it('tablet-rule-skips-mobile', () => {
+      const rules = (name: string, rule: Record<string, string>) => ({
+        name,
+        type: 'class' as const,
+        cache: '',
+        attributes: { base: { default: rule } }
+      });
+      const documents = withChange(({ style }) => {
+        style.platform.desktop.grid = rules('grid', { 'grid-template-columns': '1fr 1fr 1fr' });
+        style.platform.tablet.grid = rules('grid', { 'grid-template-columns': '1fr 1fr' });
+        style.platform.tablet.both = rules('both', { 'grid-template-columns': '1fr' });
+        style.platform.mobile.both = rules('both', { 'grid-template-columns': '1fr' });
+        style.platform.tablet.aside = rules('aside', { width: '240px' });
+        style.platform.mobile.aside = rules('aside', { display: 'none' });
+        // A rail on a phone: the tablet's columns have no grid left there to reach.
+        style.platform.tablet.cards = rules('cards', { 'grid-template-columns': '1fr 1fr', gap: '12px' });
+        style.platform.mobile.cards = rules('cards', { display: 'flex', gap: '12px' });
+      });
+      const skipped = lintSpace(documents).warnings.filter(issue => issue.code === 'tablet-rule-skips-mobile');
+
+      expect(skipped.map(issue => issue.details)).toEqual([{ properties: ['grid-template-columns'] }]);
+      expect(skipped[0].message).toContain('Class "grid" sets grid-template-columns for tablet but not for mobile');
+    });
+
     // The copy of a shop asked DM Sans for 400 where it loads 500 and 700: its pill drew at 500, and no check said so.
     it('font-weight-not-loaded', () => {
       const font = { fallback: 'sans-serif', styles: ['normal' as const], source: 'google' as const };

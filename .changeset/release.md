@@ -25,7 +25,25 @@ weighs on a phone — and what of it a phone cannot hold.
   past 480 px no `max-width` holds, a grid whose fixed columns and gaps are wider than a phone or whose shared columns a
   phone squeezes under 120 px, type past 64 px — that no `mobile` rule sets again, by the class that says it. A layout
   fluid on its own, a row whose one column grows, a dense widget's thin columns, what a `mobile` rule hides or scales
-  down whole, and a space written mobile first are never named.
+  down whole, a grid a `mobile` rule lays out otherwise (a table's row stacked with `display: flex`), a width inside a
+  box that clips or scrolls it sideways (`overflow-x: auto` round a table, `hidden` round a hero's glow), and a space
+  written mobile first are never named.
+
+## Authoring and the builder say the same
+
+- Authoring is the one source of what a space is warned of: the checks it made of a spec alone are now read off the
+  documents, so `validateSpace` — and with it the builder's Space Issues and the MCP — says them too.
+  `tablet-rule-skips-mobile` (which no longer names a grid's own properties on a phone that is not a grid there),
+  `unknown-variant` (an element's own variant and one an `activeWhen` sets, with the plugin's or the hosted component's
+  hint) and `transient-`, `kept-`, `painted-` and `browser-state-without-keep-state` were said by `authorSpace` alone.
+- `AUTHORING_ONLY_CODES`: the few codes only `authorSpace` can say, each with why in its row of
+  `authoring-errors.md` (`plugin-attribute-reserved` reads the plugin's own declaration, `not-found-page` that the
+  page was added, `class-overrides-class` the shorthand a rule was written with). Every other code is said the same by both — a consumer holds itself to it
+  by comparing the two with these left out.
+- `pluginTypesOf(types)` (`@plitzi/sdk-authoring`): a space's installed plugins as the element types the linter reads,
+  in both their spellings — what `authorSpace` passes, for a host that lints a stored space.
+- `pluginStylesheets(plugins)` (`@plitzi/sdk-mcp/server`): the stylesheets a space's installed plugins publish, cached,
+  so a token only a plugin's CSS reads is not said unused (`unused-token`).
 
 ## Builder
 

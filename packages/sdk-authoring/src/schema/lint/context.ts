@@ -14,6 +14,14 @@ import type { Element, Schema, SpaceComponent, Style } from '@plitzi/sdk-shared'
 /** The built-in element that hosts a component of the project's own, named by its `renderType`. */
 export const CUSTOM_TYPE = 'custom';
 
+/** The name an element's plugin is declared under: its own type, or `custom:<renderType>` for one a `custom` hosts. */
+export const pluginKeyOf = (element: Element): string => {
+  const { type } = element.definition;
+  const renderType = element.attributes.renderType;
+
+  return type === CUSTOM_TYPE && typeof renderType === 'string' ? `${CUSTOM_TYPE}:${renderType}` : type;
+};
+
 export type LintCatalogs = AuthorSpaceOptions;
 
 export type LintIssue = SchemaValidationError;

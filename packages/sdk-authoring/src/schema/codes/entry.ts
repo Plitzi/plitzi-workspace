@@ -8,4 +8,9 @@ export type AuthoringCodeEntry = {
   means: string;
   /** What to write instead. */
   fix: string;
+  /**
+   * Why only `authorSpace` can say it — what it reads that the documents do not hold. Every other code is said of the
+   * documents alone, so the builder and the MCP, which read nothing else, say what authoring says.
+   */
+  authoringOnly?: string;
 };

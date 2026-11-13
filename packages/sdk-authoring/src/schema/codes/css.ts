@@ -129,7 +129,8 @@ export const CSS_CODES = {
   },
   'tablet-rule-skips-mobile': {
     kind: 'warned',
-    means: 'a tablet rule phones never get — mobile inherits desktop, not tablet',
+    means:
+      'a tablet rule phones never get — mobile inherits desktop, not tablet (a grid’s columns are left alone where the phone is not a grid)',
     fix: 'write it under `compact` (tablet and mobile together)'
   },
   'tw-unknown-class': {

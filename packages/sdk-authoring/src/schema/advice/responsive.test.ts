@@ -75,6 +75,52 @@ describe('desktop-only, a suggestion', () => {
     expect(offered(space({ css: { desktop: { width: '320px', 'font-size': '18px' } } }))).toEqual([]);
   });
 
+  // The back-office's tables: a row of fixed columns on a desktop, stacked on a phone — a grid it no longer is.
+  it('says nothing of a grid a mobile rule lays out otherwise', () => {
+    const columns = { 'grid-template-columns': 'minmax(0, 1fr) 120px 160px 110px', 'column-gap': '16px' };
+
+    expect(offered(space({ css: { desktop: { display: 'grid', ...columns }, mobile: { display: 'flex' } } }))).toEqual(
+      []
+    );
+    expect(
+      offered(space({ css: { desktop: { display: 'grid', ...columns }, mobile: { display: 'inline-grid' } } }))
+    ).toHaveLength(1);
+  });
+
+  // The pricing page's comparison, scrolled sideways in its card; the hero's glow, clipped by the hero.
+  it('says nothing of a width inside a box that scrolls or clips it sideways, but still names its type', () => {
+    const held = (overflow: CssProps, inner: CssProps): SpaceSpec => {
+      const frame = styles('frame', { css: { desktop: overflow } });
+      const box = styles('box', { css: { desktop: inner } });
+
+      return {
+        name: 'Shop',
+        permanentUrl: 'shop',
+        classes: { frame, box },
+        pages: [
+          {
+            id: 'home',
+            name: 'Home',
+            slug: '',
+            isDefault: true,
+            body: [
+              container({
+                id: 'frame',
+                class: frame,
+                children: [container({ id: 'panel', class: box, children: [text('One', { id: 'one' })] })]
+              })
+            ]
+          }
+        ]
+      };
+    };
+
+    expect(offered(held({ 'overflow-x': 'auto' }, { 'min-width': '720px' }))).toEqual([]);
+    expect(offered(held({ overflow: 'hidden' }, { width: '760px' }))).toEqual([]);
+    expect(offered(held({ overflow: 'visible hidden' }, { width: '760px' }))).toHaveLength(1);
+    expect(offered(held({ 'overflow-x': 'auto' }, { 'font-size': '72px' }))).toHaveLength(1);
+  });
+
   // A style's mobile is laid over its desktop alone: a tablet rule leaves a phone the desktop's.
   it('still names what only a tablet rule sets again', () => {
     const found = offered(space({ css: { desktop: { width: '960px' }, tablet: { width: '100%' } } }));

@@ -319,24 +319,16 @@ const stateKeyList = (
 };
 
 /**
- * The keys a space never keeps. Warned when it cannot DO anything: without `keepState` nothing is kept in the first
- * place.
+ * The keys a space never keeps, held to be names. That it does nothing without `keepState` is the linter's to say
+ * (`lintKeptState`), so the builder says it too.
  */
 export const assertTransientState = (author: SpaceAuthor): void => {
-  const transient = stateKeyList(author, 'transientState', ['demoStep', 'panelOpen'], 'never to keep');
-  if (transient.length > 0 && author.spec.settings?.keepState !== true) {
-    author.styleWarnings.push({
-      code: 'transient-state-without-keep-state',
-      message:
-        '`settings.transientState` names keys never to keep, but `settings.keepState` is not on — nothing is kept in the first place, so it does nothing. Turn `keepState` on, or remove `transientState`.',
-      details: { keys: transient }
-    });
-  }
+  stateKeyList(author, 'transientState', ['demoStep', 'panelOpen'], 'never to keep');
 };
 
 /**
  * The only keys a space keeps. Refused beside `transientState`: one names what is kept, the other what is not, and a
- * key in neither would be kept by one and not by the other. Warned without `keepState`, as `transientState` is.
+ * key in neither would be kept by one and not by the other. Without `keepState`, the linter says it (`lintKeptState`).
  */
 export const assertKeptState = (author: SpaceAuthor): void => {
   const kept = stateKeyList(author, 'keptState', ['dismissedNotice'], 'to keep, and only those');
@@ -345,15 +337,6 @@ export const assertKeptState = (author: SpaceAuthor): void => {
       'state-kept-and-transient',
       '`settings.keptState` names the only keys kept, and `settings.transientState` the keys left out — say one of the two: `keptState` when few are kept, `transientState` when few are not.'
     );
-  }
-
-  if (kept.length > 0 && author.spec.settings?.keepState !== true) {
-    author.styleWarnings.push({
-      code: 'kept-state-without-keep-state',
-      message:
-        '`settings.keptState` names the keys to keep, but `settings.keepState` is not on — nothing is kept, so it does nothing. Turn `keepState` on, or remove `keptState`.',
-      details: { keys: kept }
-    });
   }
 };
 
@@ -384,15 +367,6 @@ export const assertPaintedState = (author: SpaceAuthor): void => {
       `\`settings.paintedState\` names ${unkept.map(key => `"${key}"`).join(', ')}, which \`settings.keptState\` does not keep — a painted key is kept, so the server can draw with it. Add ${unkept.length === 1 ? 'it' : 'them'} to \`keptState\`, or leave ${unkept.length === 1 ? 'it' : 'them'} out of \`paintedState\`.`
     );
   }
-
-  if (painted.length > 0 && author.spec.settings?.keepState !== true) {
-    author.styleWarnings.push({
-      code: 'painted-state-without-keep-state',
-      message:
-        '`settings.paintedState` names kept keys for the server to draw with, but `settings.keepState` is not on — nothing is kept, so there is nothing to draw with. Turn `keepState` on, or remove `paintedState`.',
-      details: { keys: painted }
-    });
-  }
 };
 
 /**
@@ -413,15 +387,6 @@ export const assertBrowserState = (author: SpaceAuthor): void => {
       'state-browser-not-kept',
       `\`settings.browserState\` names ${unkept.map(key => `"${key}"`).join(', ')}, which the space does not keep (\`transientState\` leaves ${them} out, or \`keptState\` does not name ${them}) — a key of the browser's is a kept one that no change of account takes away. Keep ${them}, or leave ${them} out of \`browserState\`.`
     );
-  }
-
-  if (browser.length > 0 && author.spec.settings?.keepState !== true) {
-    author.styleWarnings.push({
-      code: 'browser-state-without-keep-state',
-      message:
-        '`settings.browserState` names kept keys the browser keeps whoever signs in, but `settings.keepState` is not on — nothing is kept, so it does nothing. Turn `keepState` on, or remove `browserState`.',
-      details: { keys: browser }
-    });
   }
 };
 

@@ -17,13 +17,13 @@ import { flagGateOf } from '../flags';
 import { authorFlows } from '../flows';
 import { assertBindingShape } from '../guard';
 import { instanceSelectorFor, selectorFor } from '../handles';
-import { CUSTOM_TYPE } from '../lint/context';
+import { pluginKeyOf } from '../lint/context';
 import { MAIN_ATTRIBUTES } from '../mainAttributes';
 import { refusalOf } from '../refusals';
 import { didYouMean } from '../suggest';
 import { writtenAt } from '../writtenAt';
 import { assertElementShape, assertFlowShapes, assertQuiet } from './checks';
-import { baseSelectorFor, declaredSlots, slotSelectors, variantDeclared, variantOwner } from './styles';
+import { baseSelectorFor, declaredSlots, slotSelectors, variantOwner } from './styles';
 import { REPEATING_TYPES, aboveChildren, placeOf, rowsOf, shownWithOf } from './values';
 
 import type { SpaceAuthor } from './author';
@@ -168,14 +168,6 @@ export const markConditionalByChildren = (author: SpaceAuthor, schema: Schema): 
   }
 };
 
-/** The name an element's plugin is declared under: its own type, or `custom:<renderType>` for one a `custom` hosts. */
-const pluginKeyOf = (element: Element): string => {
-  const { type } = element.definition;
-  const renderType = element.attributes.renderType;
-
-  return type === CUSTOM_TYPE && typeof renderType === 'string' ? `${CUSTOM_TYPE}:${renderType}` : type;
-};
-
 /** Whether the element's plugin declares it draws nothing. */
 const drawsNothing = (author: SpaceAuthor, element: Element): boolean => {
   return author.options.drawsNothingTypes?.includes(pluginKeyOf(element)) ?? false;
@@ -188,38 +180,6 @@ export const isBoxless = (author: SpaceAuthor, element: Element): boolean =>
 /** Whether the element's plugin declares it shows only some of its children, chosen as it runs. */
 const choosesChildren = (author: SpaceAuthor, element: Element): boolean => {
   return author.options.choosesChildrenTypes?.includes(pluginKeyOf(element)) ?? false;
-};
-
-/**
- * An `activeWhen` that sets a variant its class does not declare: nothing ever applies, and it was said nowhere
- * (motion-bump's variant is `hit`, and its `activeWhen` — `active` — never worked). `idle` is the class as it is.
- */
-const warnVariantsSet = (author: SpaceAuthor, element: Element, spec: ElementSpec, where: string): void => {
-  for (const binding of Array.isArray(spec.bind) ? spec.bind : []) {
-    const setter = binding.transformers?.find(each => each.action === 'styleVariant');
-    const key = setter?.params.key;
-    const template = binding.transformers?.find(each => each.action === 'twigTemplate')?.params.template;
-    if (typeof key !== 'string' || typeof template !== 'string') {
-      continue;
-    }
-
-    const cls = key.slice(0, key.lastIndexOf('.'));
-    // The shape `activeWhen` writes — `{{ (…) ? 'active' : 'idle' }}` — names its one variant; a template that builds the
-    // name (`'c' ~ source`) or compares words (`source == 'handle'`) names none to hold the class to.
-    const names = [...template.matchAll(/\?\s*'([\w-]+)'\s*:\s*'idle'\s*\}\}\s*$/g)].map(match => match[1]);
-    const declared = Object.values(author.classRules.get(cls) ?? {}).flatMap(block =>
-      Object.keys(block.variants ?? {})
-    );
-    if (names.length === 0 || !author.classRules.has(cls) || names.some(name => declared.includes(name))) {
-      continue;
-    }
-
-    author.styleWarnings.push({
-      code: 'unknown-variant',
-      message: `${where} sets class ${cls}'s variant ${names.map(name => `'${name}'`).join(' or ')} by \`activeWhen\`, which ${cls} does not declare — ${declared.length > 0 ? `its variants: ${declared.join(', ')}` : 'it has none'} — so nothing applies. Name one it declares — \`activeWhen(${cls}, …, { variant: '${declared[0] ?? 'active'}' })\` — or declare it.`,
-      elementId: element.id
-    });
-  }
 };
 
 /** A name for a plugin's attribute that is not one of the element's own, by the one it was: what the warning suggests. */
@@ -239,11 +199,11 @@ const RENAMED: Readonly<Partial<Record<string, string>>> = {
 };
 
 /**
- * What an element is written with that reaches nothing, said: a variant no class and no type style declares — the
- * element looks the same with it or without — and, once per plugin, an attribute it declares under one of the
- * element's own names, which a factory reads as that and never hands to the plugin.
+ * What a plugin declares that its element never gets, said once per plugin: an attribute under one of the element's own
+ * names, which a factory reads as that and never hands to the plugin. About the plugin's code, not the space, so it is
+ * authoring's alone; a variant no style declares is the document linter's (`lintVariants`), the builder's too.
  */
-const warnUnreachable = (author: SpaceAuthor, element: Element, spec: ElementSpec, where: string): void => {
+const warnUnreachable = (author: SpaceAuthor, element: Element, where: string): void => {
   const key = pluginKeyOf(element);
   const reserved = author.options.reservedPluginAttributes?.[key] ?? [];
   if (reserved.length > 0 && !author.reservedWarned.has(key)) {
@@ -256,21 +216,7 @@ const warnUnreachable = (author: SpaceAuthor, element: Element, spec: ElementSpe
     });
   }
 
-  warnVariantsSet(author, element, spec, where);
-  if (spec.variant === undefined || variantDeclared(author, spec, spec.variant)) {
-    return;
-  }
-
-  const plugin = reserved.includes('variant')
-    ? ' If it was meant for the plugin’s own `variant`, that attribute is never set: rename it in the plugin.'
-    : element.definition.type === CUSTOM_TYPE
-      ? ' On a `custom` element `variant` is its style variant, never a prop of the component it hosts: hand the component a prop of another name (`tone`).'
-      : '';
-  author.styleWarnings.push({
-    code: 'unknown-variant',
-    message: `${where} is written with \`variant: '${spec.variant}'\`, which no class of it and no style of its type declares, so nothing applies.${plugin} Declare it — \`styles(name, { variants: { ${spec.variant}: { … } } })\` — or name one that is.`,
-    elementId: element.id
-  });
+  // A variant no style declares is the linter's to say (`lintVariants`), so the builder says it too.
 };
 
 const recordHandle = (author: SpaceAuthor, handle: ElementHandle): void => {
@@ -532,7 +478,7 @@ const writeElement = (
   };
 
   insert(author, element, parentId, isRoot ? 'custom' : 'inside', place, tree);
-  warnUnreachable(author, element, spec, where);
+  warnUnreachable(author, element, where);
 
   recordHandle(author, {
     id,

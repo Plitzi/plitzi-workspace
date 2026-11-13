@@ -187,7 +187,49 @@ const lintFontWeights = (ctx: LintContext): void => {
   }
 };
 
+/**
+ * A tablet rule a phone never sees.
+ *
+ * The breakpoints are RANGES, not a cascade: `tablet` is 48–64rem, `mobile` is up to 48rem, and each inherits only
+ * from `desktop`. So a layout that collapses to a column at tablet and says nothing for mobile comes back as desktop
+ * columns on a phone — the narrowest screen gets the widest layout, and every check passes. A warning and not a
+ * refusal, because a rule meant for tablets alone is legal, just rarely what anybody meant. Read off the stylesheet, so
+ * authoring and the builder say it of the same classes.
+ */
+/** The properties only a grid reads: what a grid's tracks and its placement of items are. */
+const GRID_ONLY = /^grid-(template|auto)-/;
+
+const lintTabletOnly = (ctx: LintContext): void => {
+  const { tablet, mobile } = ctx.style.platform;
+  Object.entries(tablet).forEach(([name, item]) => {
+    const rules = Object.hasOwn(item.attributes, 'base') ? (item.attributes.base.default ?? {}) : {};
+    const phone =
+      Object.hasOwn(mobile, name) && Object.hasOwn(mobile[name].attributes, 'base')
+        ? (mobile[name].attributes.base.default ?? {})
+        : {};
+    // Hidden on a phone, it shows nothing there for a tablet rule to have reached.
+    if (phone.display === 'none') {
+      return;
+    }
+
+    // A grid's own properties do nothing where the phone lays it out otherwise — a grid made a rail (`display: flex`).
+    const notAGrid = typeof phone.display === 'string' && !phone.display.endsWith('grid');
+    const skipped = Object.keys(rules).filter(
+      property => !Object.hasOwn(phone, property) && !(notAGrid && GRID_ONLY.test(property))
+    );
+    if (skipped.length > 0) {
+      ctx.warn(
+        'tablet-rule-skips-mobile',
+        `Class "${name}" sets ${skipped.join(', ')} for tablet but not for mobile. Tablet (48–64rem) and mobile (up to 48rem) are separate ranges and mobile inherits desktop, not tablet — so phones get the desktop value back. For both, write it once under \`compact\` (tablet and mobile together); repeat it under \`mobile\` otherwise.`,
+        undefined,
+        { properties: skipped }
+      );
+    }
+  });
+};
+
 export const lintStyle = (ctx: LintContext): void => {
+  lintTabletOnly(ctx);
   lintColours(ctx);
   lintVariables(ctx);
   lintAnimations(ctx);

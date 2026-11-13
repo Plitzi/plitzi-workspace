@@ -76,6 +76,17 @@ export const authoringCodeEntry = (code: string): AuthoringCodeEntry | undefined
   isAuthoringCode(code) ? AUTHORING_CODES[code] : undefined;
 
 /**
+ * The codes only `authorSpace` can say, each with why (`authoringOnly`): every other code is said of the documents
+ * alone — by `validateSpace` and `suggestSpace` — so the builder and the MCP, which read nothing else, say what
+ * authoring says. A test holds every seed to it.
+ */
+export const AUTHORING_ONLY_CODES: ReadonlySet<string> = new Set(
+  Object.entries(AUTHORING_CODES).flatMap(([code, entry]: [string, AuthoringCodeEntry]) =>
+    entry.authoringOnly === undefined ? [] : [code]
+  )
+);
+
+/**
  * A declaration `authorSpace` will not write, with the code its row in `authoring-errors.md` is filed under.
  *
  * `reason` is the sentence alone; `message` leads with the code, so an error that escapes on its own still says where

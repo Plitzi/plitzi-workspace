@@ -9,7 +9,7 @@ export { createServer } from './createServer';
 export { buildMCPPipeline } from './pipeline';
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './modules/mcp/handler';
 export { createHttpPreviewClient } from './modules/mcp/previewClient';
-export { pluginCatalog, stringDeclarations } from './modules/mcp/catalogs/pluginCatalog';
+export { pluginCatalog, pluginStylesheets, stringDeclarations } from './modules/mcp/catalogs/pluginCatalog';
 export { createHttpScreenshotClient } from './modules/mcp/screenshotClient';
 export { createLocalScreenshotClient, resolveLocalBrowser } from './modules/mcp/localScreenshotClient';
 

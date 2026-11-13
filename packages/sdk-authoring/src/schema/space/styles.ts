@@ -234,37 +234,7 @@ export const parseFonts = (author: SpaceAuthor, fonts: SpaceFont[]): SpaceFont[]
   });
 };
 
-/**
- * A tablet rule a phone never sees.
- *
- * The breakpoints are RANGES, not a cascade: `tablet` is 48–64rem, `mobile` is up to 48rem, and each inherits
- * only from `desktop`. So a layout that collapses to a column at tablet and says nothing for mobile comes back as
- * desktop columns on a phone — the narrowest screen gets the widest layout, and every check passes. A warning and
- * not a refusal, because a rule meant for tablets alone is legal, just rarely what anybody meant.
- */
-const warnTabletOnly = (author: SpaceAuthor, blocks: ResponsiveBlock, where: string): void => {
-  const tablet = blocks.tablet?.default ?? {};
-  const mobile = blocks.mobile?.default ?? {};
-  // Hidden on a phone, it shows nothing there for a tablet rule to have reached.
-  if (mobile.display === 'none') {
-    return;
-  }
-
-  const skipped = Object.keys(tablet).filter(property => !Object.hasOwn(mobile, property));
-  if (skipped.length === 0) {
-    return;
-  }
-
-  author.styleWarnings.push({
-    code: 'tablet-rule-skips-mobile',
-    message: `${where} sets ${skipped.join(', ')} for tablet but not for mobile. Tablet (48–64rem) and mobile (up to 48rem) are separate ranges and mobile inherits desktop, not tablet — so phones get the desktop value back. For both, write it once under \`compact\` (tablet and mobile together); repeat it under \`mobile\` otherwise.`,
-    details: { properties: skipped }
-  });
-};
-
-export const writeSelector = (author: SpaceAuthor, name: string, blocks: ResponsiveBlock, where: string): void => {
-  warnTabletOnly(author, blocks, where);
-
+export const writeSelector = (author: SpaceAuthor, name: string, blocks: ResponsiveBlock): void => {
   for (const breakpoint of BREAKPOINTS) {
     const block = blocks[breakpoint];
     if (!block) {
@@ -351,12 +321,7 @@ export const baseSelectorFor = (
   // for an element's own rules steps past a class that already answers to it rather than overwriting its rules.
   if (spec.selector !== undefined) {
     assertOwnSelector(author, spec.selector, `Element "${spec.type}" at ${place}`);
-    writeSelector(
-      author,
-      spec.selector,
-      toBlocks({ css: spec.css, states: spec.states }),
-      `Element "${spec.type}" at ${place}`
-    );
+    writeSelector(author, spec.selector, toBlocks({ css: spec.css, states: spec.states }));
 
     return spec.selector;
   }
@@ -368,12 +333,7 @@ export const baseSelectorFor = (
 
   author.ownSelectors.add(selector);
 
-  writeSelector(
-    author,
-    selector,
-    toBlocks({ css: spec.css, states: spec.states }),
-    `Element "${spec.type}" at ${place}`
-  );
+  writeSelector(author, selector, toBlocks({ css: spec.css, states: spec.states }));
 
   return selector;
 };
@@ -406,7 +366,7 @@ const modifierFor = (
   const name = modifierClassName(id);
   assertOwnSelector(author, name, where);
   const blocks = toBlocks(modifiers[0]);
-  writeSelector(author, name, blocks, where);
+  writeSelector(author, name, blocks);
   author.ownRules.set(name, {
     blocks,
     written: () => {
@@ -440,19 +400,5 @@ export const slotSelectors = (author: SpaceAuthor, spec: ElementSpec, place: str
 
       return [slot, names.join(' ')];
     })
-  );
-};
-
-/** Whether `variant` is declared by the element's type style or by one of its classes — where `variantOwner` looks. */
-export const variantDeclared = (author: SpaceAuthor, spec: ElementSpec, variant: string): boolean => {
-  if (author.spec.elements?.[spec.type]?.variants?.[variant] !== undefined) {
-    return true;
-  }
-
-  return (
-    spec.class !== undefined &&
-    classNames(splitClassList(spec.class).refs).some(name =>
-      Object.values(author.classRules.get(name) ?? {}).some(block => block.variants?.[variant] !== undefined)
-    )
   );
 };

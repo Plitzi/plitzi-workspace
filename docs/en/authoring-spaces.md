@@ -846,7 +846,8 @@ And it returns `warnings` for what is written and will not do what it says — `
 `condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens — against the sources around the element; conditions
 belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
 `FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile` (write the rule under `compact` to reach
-both; a rule the phone hides with `display: none` is left alone), `span-holds-block` (a `container` with
+both; a rule the phone hides with `display: none` is left alone, and so are a grid's columns where the phone lays it
+out otherwise), `span-holds-block` (a `container` with
 `subType: 'span'` holding a heading, a paragraph, a list, a form or prose), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children),
 `flag-unused` (a declared flag nothing gates on or reads) and `flag-rule-empty` (a flag rule with no conditions, which
 is skipped rather than read as "always").

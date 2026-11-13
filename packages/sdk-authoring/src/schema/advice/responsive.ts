@@ -164,6 +164,9 @@ const wornBy = (element: Element): string[][] =>
 
 type Finding = { className: string; says: string; elements: string[] };
 
+/** The risks that are a box's width — what a parent that clips or scrolls sideways keeps off the page. */
+const WIDTHS = ['width', 'min-width', 'grid-template-columns'];
+
 /** A class's own rules at one width — none when the class says nothing there, which a width's map leaves out. */
 const rulesAt = (rules: Style['platform']['desktop'], className: string): StyleObject | undefined =>
   Object.hasOwn(rules, className) && Object.hasOwn(rules[className].attributes, 'base')
@@ -187,30 +190,53 @@ const findingsUnder = (flat: Schema['flat'], root: string, style: Style): Findin
         return rules?.display === 'none' || (scale !== null && Number(scale[1]) < 1);
       })
     );
-  const drawn: Element[] = [];
-  const stack = [root];
+  // A box that clips or scrolls what it holds sideways (`overflow-x: auto` round a table, `hidden` round a hero's
+  // glow): nothing inside it widens the page — a wide table there scrolls, as one should on a phone.
+  const holdsSideways = (element: Element): boolean =>
+    wornBy(element).some(classes =>
+      classes.some(name =>
+        [rulesAt(desktop, name), rulesAt(mobile, name)].some(rules => {
+          const read = (property: 'overflow' | 'overflow-x'): string | undefined =>
+            rules && Object.hasOwn(rules, property) ? String(rules[property]) : undefined;
+          // `overflow` says the sideways one first: `overflow: hidden visible` clips sideways.
+          const sideways = read('overflow-x') ?? topLevel(read('overflow') ?? '')[0];
+
+          return ['hidden', 'clip', 'auto', 'scroll'].includes(sideways);
+        })
+      )
+    );
+  const drawn: { element: Element; held: boolean }[] = [];
+  const stack: { id: string; held: boolean }[] = [{ id: root, held: false }];
   while (stack.length > 0) {
-    const id = stack.pop();
-    const element = id === undefined ? undefined : (flat[id] as Element | undefined);
-    if (!element || fittedOnPhone(element)) {
+    const next = stack.pop();
+    const element = next === undefined ? undefined : (flat[next.id] as Element | undefined);
+    if (!next || !element || fittedOnPhone(element)) {
       continue;
     }
 
-    drawn.push(element);
-    stack.push(...[...(element.definition.items ?? [])].reverse());
+    drawn.push({ element, held: next.held });
+    const held = next.held || holdsSideways(element);
+    stack.push(...[...(element.definition.items ?? [])].reverse().map(id => ({ id, held })));
   }
 
-  for (const element of drawn) {
+  for (const { element, held } of drawn) {
     for (const classes of wornBy(element)) {
       // Set again for a phone by any class the same part wears: a modifier's `mobile` rule fixes the base's.
       const fixed = new Set(classes.flatMap(name => Object.keys(rulesAt(mobile, name) ?? {})));
+      // Laid out otherwise on a phone — a table's row stacked (`display: flex`) — it has no columns there to break.
+      if (classes.some(name => !String(rulesAt(mobile, name)?.display ?? 'grid').endsWith('grid'))) {
+        fixed.add('grid-template-columns');
+      }
+
       for (const className of classes) {
         const rules = rulesAt(desktop, className);
         if (!rules) {
           continue;
         }
 
-        const open = risksOf(rules).filter(risk => !fixed.has(risk.property));
+        const open = risksOf(rules).filter(
+          risk => !fixed.has(risk.property) && !(held && WIDTHS.includes(risk.property))
+        );
         if (open.length === 0) {
           continue;
         }

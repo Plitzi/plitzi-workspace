@@ -155,3 +155,58 @@ export const pluginCatalog = async (
 
   return catalog;
 };
+
+type StylesheetCacheEntry = { text: string | null; expiresAt: number };
+
+const stylesheetCache = new Map<string, StylesheetCacheEntry>();
+
+/** One stylesheet a plugin publishes, as text — cached as its manifest is, and null when its host does not answer. */
+const fetchStylesheet = async (url: string): Promise<string | null> => {
+  const cached = stylesheetCache.get(url);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.text;
+  }
+
+  let text: string | null = null;
+  try {
+    const res = await fetch(url);
+    text = res.ok ? await res.text() : null;
+  } catch {
+    // A plugin's stylesheet that cannot be read reads no token: what it would have used is said unused, as before.
+    text = null;
+  }
+
+  stylesheetCache.set(url, { text, expiresAt: Date.now() + MANIFEST_TTL_MS });
+
+  return text;
+};
+
+/**
+ * The stylesheets a space's plugins publish (`assets` of type `style` in each manifest), as their text: what
+ * `suggestSpace` is handed as `stylesheets`, so a token only a plugin's CSS reads is not said unused — the same text
+ * authoring reads from a project's `src/plugins/`. Read through the same cache as the catalog.
+ */
+export const pluginStylesheets = async (
+  plugins: Record<string, { resource: string }> | undefined
+): Promise<string[]> => {
+  if (!plugins) {
+    return [];
+  }
+
+  const sheets = await Promise.all(
+    Object.values(plugins).map(async ({ resource }) => {
+      const manifest = await fetchManifest(resource);
+      const styles = Object.values(manifest?.assets ?? {}).filter(asset => asset.type === 'style');
+
+      return Promise.all(
+        styles.map(asset => {
+          const src = asset.url ?? (asset.src ? `${resource}/${asset.src}` : undefined);
+
+          return src ? fetchStylesheet(src) : Promise.resolve(null);
+        })
+      );
+    })
+  );
+
+  return sheets.flat().filter((text): text is string => text !== null);
+};

@@ -51,6 +51,14 @@ const attributesOf = (declaration: PluginDeclarationData): string[] | null => {
 };
 
 /**
+ * The element types a set of plugins adds, as the linter reads them: each one's own type, and the `custom` element that
+ * hosts it (`custom:<type>`). What authoring hands the linter for the plugins it is given, and what any reader of a
+ * space's stored documents hands it for the plugins installed there — the builder's — so both read the same.
+ */
+export const pluginTypesOf = (types: readonly string[]): string[] =>
+  types.flatMap(type => [type, `${CUSTOM_TYPE}:${type}`]);
+
+/**
  * The catalogs `authorSpace` holds a space to, with each declared plugin in them as if it were built in.
  *
  * Every catalog a built-in element is checked against is derived from its declaration; a plugin's declaration has
@@ -110,10 +118,7 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
   return {
     ...rest,
     ...(vocabulary ? { vocabulary } : {}),
-    pluginTypes: [
-      ...(rest.pluginTypes ?? []),
-      ...plugins.flatMap(declaration => [declaration.type, hostedKey(declaration)])
-    ],
+    pluginTypes: [...(rest.pluginTypes ?? []), ...pluginTypesOf(plugins.map(declaration => declaration.type))],
     sourceTypes: { ...rest.sourceTypes, ...byType(declaration => declaration.sourceType) },
     attributeNames: {
       ...rest.attributeNames,

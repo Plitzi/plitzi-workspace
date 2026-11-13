@@ -36,9 +36,14 @@ const cell = (text: string): string => text.replaceAll('|', '\\|');
  */
 export const authoringCodesTable = (kind: AuthoringCodeEntry['kind']): string => {
   const rows = Object.entries(AUTHORING_CODES)
+    // Read as the registry's entry type: the literal rows type only the fields each row writes.
+    .map(([code, entry]): [string, AuthoringCodeEntry] => [code, entry])
     .filter(([, entry]) => entry.kind === kind)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([code, entry]) => `| \`${code}\` | ${cell(entry.means)} | ${cell(entry.fix)} |`);
+    .map(
+      ([code, entry]) =>
+        `| \`${code}\` | ${cell(entry.means)}${entry.authoringOnly ? ` — said by \`author\` alone, which reads ${cell(entry.authoringOnly)}` : ''} | ${cell(entry.fix)} |`
+    );
 
   // A suggestion is not something wrong: its row is the long way it was written, and the short way.
   const head =

@@ -7,6 +7,7 @@ import { checkAttributeTemplates, checkBindings, shorten } from './elementBindin
 import { checkRequiredMessage, warnFormControls } from './forms';
 import { checkIntent, warnRouteParams } from './intent';
 import { checkFocusOnFieldBox, checkHeadingLevels, checkIconFont, checkPopupPosition, checkSlots } from './slots';
+import { lintVariants } from './variants';
 
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
@@ -238,6 +239,7 @@ const checkSvgMarkup = (ctx: LintContext, element: Element, where: string): void
 };
 
 export const lintElements = (ctx: LintContext): void => {
+  lintVariants(ctx);
   const catalog = ctx.catalogs.attributeNames;
   const unknownTypes = new Set<string>();
   for (const element of Object.values(ctx.flat)) {

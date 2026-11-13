@@ -31,7 +31,7 @@ export const SUGGESTION_CODES = {
   'desktop-only': {
     kind: 'suggested',
     means:
-      'a page, layout or component styled for the desktop alone where a phone (390 px) breaks — a width past 480 px with no `max-width` holding it; a grid whose fixed columns and gaps are wider than a phone, or three or more columns sharing its width a page’s parts apart (a gap of 16 px or more) and left narrower than 120 px each; type past 64 px — that no `mobile` rule of the classes on it sets again (a style’s `mobile` is laid over its `desktop` alone, so a `tablet` rule does not reach a phone). What a `mobile` rule hides is left out, as is a layout fluid on its own — wrapping flex, `%`, `min()`, `clamp()`, `repeat(auto-fit, minmax(…))` —, a row whose one column grows (`48px 1fr auto`), a dense widget’s many thin columns, and a space written mobile first',
+      'a page, layout or component styled for the desktop alone where a phone (390 px) breaks — a width past 480 px with no `max-width` holding it; a grid whose fixed columns and gaps are wider than a phone, or three or more columns sharing its width a page’s parts apart (a gap of 16 px or more) and left narrower than 120 px each; type past 64 px — that no `mobile` rule of the classes on it sets again (a style’s `mobile` is laid over its `desktop` alone, so a `tablet` rule does not reach a phone). What a `mobile` rule hides is left out, as is a grid it lays out otherwise (`display: flex`), a width inside a box that clips or scrolls it sideways (`overflow-x: auto` round a table), a layout fluid on its own — wrapping flex, `%`, `min()`, `clamp()`, `repeat(auto-fit, minmax(…))` —, a row whose one column grows (`48px 1fr auto`), a dense widget’s many thin columns, and a space written mobile first',
     fix: "the phone's value in the class's `mobile` rules (`styles('card', { css: { desktop: { … }, mobile: { gridTemplateColumns: '1fr' } } })`), or a value fluid on its own — `width: 'min(960px, 100%)'`, `font-size: 'clamp(32px, 6vw, 72px)'`, `grid-template-columns: 'repeat(auto-fit, minmax(240px, 1fr))'` — or, for a surface only a desktop opens, `quiet: ['desktop-only']` on it, with why"
   },
   'heavy-layout': {
@@ -123,7 +123,8 @@ export const SUGGESTION_CODES = {
     kind: 'suggested',
     means:
       'a space with no page of its own for an address no other page answers — a plain one was added, in the home page’s layout, sent with status 404',
-    fix: "a page whose slug is `'*'`: `{ id: 'not-found', name: 'Not found', slug: '*', layout: …, body: [...] }`"
+    fix: "a page whose slug is `'*'`: `{ id: 'not-found', name: 'Not found', slug: '*', layout: …, body: [...] }`",
+    authoringOnly: 'that the page was added: written, it is a page like any other'
   },
   'unused-plugin': {
     kind: 'suggested',
@@ -139,6 +140,7 @@ export const SUGGESTION_CODES = {
     kind: 'suggested',
     means:
       "one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — or the same property set over the class listed after it — `gap` over `gap` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list",
-    fix: "the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone; the same property, left to one of the two or written on the element itself — or `quiet: ['class-overrides-class']` when the winner is meant to win"
+    fix: "the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone; the same property, left to one of the two or written on the element itself — or `quiet: ['class-overrides-class']` when the winner is meant to win",
+    authoringOnly: 'the shorthand a rule was written with — the stylesheet holds the longhands it stands for'
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;

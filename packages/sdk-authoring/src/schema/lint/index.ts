@@ -8,6 +8,7 @@ import { lintDataPaths } from './dataPaths';
 import { lintElements } from './elements';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
+import { lintKeptState } from './keptState';
 import { lintLinks } from './links';
 import { lintMotion } from './motion';
 import { lintPages } from './pages';
@@ -48,6 +49,7 @@ export const lintSpace = (
   const ctx = new LintContext(schema, style, catalogs);
   lintPages(ctx);
   lintComputed(ctx);
+  lintKeptState(ctx);
   lintFlags(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);

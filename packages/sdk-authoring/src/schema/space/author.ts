@@ -330,7 +330,7 @@ export class SpaceAuthor {
       // wear — so it is written, empty. Left out, the document stops saying it exists, and reading it back drops the
       // name from every element wearing it.
       const blocks = BREAKPOINTS.some(breakpoint => responsive[breakpoint]) ? responsive : { desktop: {} };
-      writeSelector(this, name, blocks, `Class "${name}"`);
+      writeSelector(this, name, blocks);
     }
 
     assertAncestorClasses(this);

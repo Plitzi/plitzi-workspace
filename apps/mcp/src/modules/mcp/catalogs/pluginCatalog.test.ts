@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { pluginCatalog, stringDeclarations } from './pluginCatalog';
+import { pluginCatalog, pluginStylesheets, stringDeclarations } from './pluginCatalog';
 
 /**
  * The manifest cache is module-level and deliberately so — a plugin resource is an immutable URL. Each test therefore
@@ -119,5 +119,41 @@ describe('stringDeclarations', () => {
   it('answers undefined rather than an empty object, so the key is omitted entirely', () => {
     expect(stringDeclarations(undefined)).toBeUndefined();
     expect(stringDeclarations({ hover: { color: 'blue' } })).toBeUndefined();
+  });
+});
+
+describe('pluginStylesheets', () => {
+  it('reads the stylesheets each manifest publishes, by their src under the resource, and nothing else', async () => {
+    const resource = 'https://cdn.test/seq/1';
+    const fetchMock = vi.fn((url: string) =>
+      Promise.resolve(
+        url.endsWith('/plugin-manifest.json')
+          ? {
+              ok: true,
+              json: () =>
+                Promise.resolve(
+                  manifest({
+                    assets: {
+                      'seq.css': { src: 'seq.css', type: 'style' },
+                      'seq.mjs': { src: 'seq.mjs', type: 'script' }
+                    }
+                  })
+                )
+            }
+          : { ok: true, text: () => Promise.resolve(`/* ${url} */ .seq { color: var(--accent); }`) }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await pluginStylesheets({ sequencer: { resource } })).toEqual([
+      `/* ${resource}/seq.css */ .seq { color: var(--accent); }`
+    ]);
+    expect(fetchMock.mock.calls.map(([url]) => url)).not.toContain(`${resource}/seq.mjs`);
+  });
+
+  it('reads none of a space with no plugins, nor of a plugin whose host does not answer', async () => {
+    expect(await pluginStylesheets(undefined)).toEqual([]);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('down')));
+    expect(await pluginStylesheets({ gone: { resource: 'https://cdn.test/gone/1' } })).toEqual([]);
   });
 });
