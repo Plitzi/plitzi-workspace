@@ -160,13 +160,14 @@ const Directory = ({
     <ContainerCollapsable collapsed={collapsed} onChange={handleCollapse} gap={1}>
       <ContainerCollapsable.Header
         placement="right"
-        iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
+        iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-right" />}
         iconExpanded={<Icon size="sm" icon="fa-solid fa-angle-down" />}
-        className="py-0"
+        className={{ header: 'group py-0' }}
         title={titleMemo}
       >
         {!isRootFolder && (
-          <Flex gap={2} items="center">
+          // Under the pointer only, as a page's are: six folders' red bins at rest were the loudest thing in the tree.
+          <Flex gap={2} items="center" className="hidden group-hover:flex">
             <Icon size="xs" icon="fa-solid fa-gear" cursor="pointer" title="Settings" onClick={handleClickSettings} />
             <Icon
               size="xs"

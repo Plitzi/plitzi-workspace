@@ -1,5 +1,4 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, useState } from 'react';
@@ -137,7 +136,8 @@ const ResourcesCdn = ({ cdn, isCollapsed, onCollapse, onChange, onRemove }: Reso
     <ContainerCollapsable collapsed={isCollapsed} onChange={handleCollapse}>
       <ContainerCollapsable.Header
         className={{ header: 'group', headerSlot: 'flex items-center gap-2' }}
-        title={<Heading as="h5">{cdn.name}</Heading>}
+        // A provider is a section of the panel: its name at the size the panel's sections are named, not a page title.
+        title={<span className="text-ui-fg text-[13px] font-semibold">{cdn.name}</span>}
         placement="right"
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}

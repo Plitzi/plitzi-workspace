@@ -224,7 +224,7 @@ const BuilderTree = () => {
         <Tree
           className="w-full py-2"
           size="sm"
-          intent="secondary"
+          intent="primary"
           items={nodes}
           itemsOpened={openedCache}
           itemHovered={elementHovered}

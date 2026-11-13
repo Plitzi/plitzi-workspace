@@ -148,14 +148,14 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
         <Icon icon={REUSE.component.icon} intent="primaryActive" />
         <div className="flex grow basis-0 flex-col overflow-hidden">
           <div
-            className={clsx('truncate font-bold', {
+            className={clsx('truncate text-[13px] font-medium', {
               'text-primary-700 dark:text-primary-200': open,
               'group-hover:text-primary-text': !open
             })}
           >
             {label}
           </div>
-          <div className="text-ui-fg-subtle flex items-center gap-1.5 truncate text-xs">
+          <div className="text-ui-fg-subtle flex items-center gap-1.5 truncate text-[11px]">
             {open && (
               <span className="bg-primary-500 rounded-sm px-1 text-[10px] leading-4 font-semibold text-white">
                 Editing

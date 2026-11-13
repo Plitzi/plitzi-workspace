@@ -99,7 +99,9 @@ const ResourcesList = ({
   return (
     <div className={clsx('flex w-full flex-col gap-4 overflow-y-auto', className)}>
       {visibility === 'public' && (
-        <Button size="sm" onClick={handleAddDirectory}>
+        // Beside the panel's one primary action (a new provider), a secondary one: a folder of this bucket.
+        <Button size="xs" intent="secondary" className="self-start" iconPlacement="before" onClick={handleAddDirectory}>
+          <Button.Icon icon="fa-solid fa-folder-plus" />
           New folder
         </Button>
       )}
