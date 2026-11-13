@@ -498,7 +498,7 @@ After finishing any set of code changes, always run:
 - Design tokens of Plitzi's own UI live in plitzi-ui's `theme.css`, **never** in `apps/sdk/src/assets/tailwind.css`
   (it ships on every customer page).
   Paint the UI with its semantic tokens, never a shade: grounds `bg-ui-backdrop` / `-panel` / `-raised` / `-hover` /
-  `-active` / `-overlay` (what floats: a window, a modal, a menu) / `-field`, lines `border-ui-line` / `-line-strong`,
+  `-active` / `-overlay` (what opens over the rest: a modal, a menu, a dropdown — a floating panel is a panel) / `-field`, lines `border-ui-line` / `-line-strong`,
   text `text-ui-fg` / `-fg-muted` / `-fg-subtle` — each defined for both schemes, so no `dark:` partner is written. A
   raw `zinc-*`/`gray-*` is for what is deliberately one colour in both (a code block, a swatch). The builder's root sets
   its own text colour: it is mounted in a host page, whose colour would otherwise leak in.

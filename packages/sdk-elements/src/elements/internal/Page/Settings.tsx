@@ -379,7 +379,8 @@ const Settings = ({
               <span className="text-ui-fg-subtle text-xs">
                 How this page&#39;s title and description show in search results (SERPs):
               </span>
-              <div className="border-ui-line-strong bg-ui-panel rounded border px-2 py-1">
+              {/* A search result as a search engine draws it: white, its own colours, in either scheme of the builder. */}
+              <div className="rounded border border-gray-300 bg-white px-2 py-1">
                 <div className="mb-1 pt-1 text-xl text-[#1a0dab]">
                   <label>{seoPageTitle}</label>
                 </div>

@@ -354,7 +354,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="border-ui-line-strong bg-ui-backdrop/70 flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r px-2 pt-2">
+    <div className="border-ui-line flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r px-2 pt-2">
       <div className="flex items-center gap-1.5">
         <div className="grow">
           <Input
