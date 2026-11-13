@@ -107,7 +107,7 @@ describe('ManagerSelector', () => {
 
   it('narrows the list to what is searched', () => {
     manager();
-    fireEvent.change(screen.getByPlaceholderText('Search Selector'), { target: { value: 'PRI' } });
+    fireEvent.change(screen.getByPlaceholderText('Search selectors'), { target: { value: 'PRI' } });
 
     expect(names()).toEqual(['primary']);
   });
@@ -170,6 +170,25 @@ describe('ManagerSelector', () => {
     expect(builder.handler).toHaveBeenCalledWith('schemaUpdateElements', [element('hero', { base: 'primary' })]);
     expect(builder.handler).toHaveBeenLastCalledWith('styleRemoveSelectors', 'desktop', ['ghost', 'card']);
     expect(screen.queryByText('2 selected')).toBeNull();
+  });
+
+  it('splits the list into the elements’ defaults and the classes, each counted', () => {
+    manager();
+
+    expect(screen.getByRole('heading', { name: /Element defaults/ }).textContent).toBe('Element defaults1');
+    expect(screen.getByRole('heading', { name: /Classes/ }).textContent).toBe('Classes3');
+  });
+
+  // The classes nothing wears, shown on their own and taken away together.
+  it('shows the classes no element wears, and selects them all to delete at once', () => {
+    manager();
+    fireEvent.click(screen.getByRole('tab', { name: /Unused/ }));
+
+    expect(names()).toEqual(['ghost']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select all' }));
+
+    expect(screen.getByText('1 selected')).not.toBeNull();
   });
 
   it('says how many ancestor rules dress nothing, and cleans them up', () => {

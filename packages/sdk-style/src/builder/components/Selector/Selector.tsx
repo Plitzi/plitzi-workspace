@@ -7,7 +7,7 @@ import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import { inStylesheetOrder, overrideNote, overriddenProperties, selectorFormatter } from './SelectorHelper';
 import SelectorItem from './SelectorItem';
-import SelectorSuggestions from './SelectorSuggestions';
+import SelectorSuggestions, { suggestionsFor } from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
 import type { StyleItem } from '@plitzi/sdk-shared';
@@ -48,6 +48,7 @@ const Selector = ({
 }: SelectorProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
+  const [highlighted, setHighlighted] = useState(-1);
   const [open, setOpen, , triggerRef, triggerRect] = useFloating({ disabled });
   const { existsPopup, addPopup } = usePopup('floating');
   const tagComponent = useMemo(
@@ -87,18 +88,23 @@ const Selector = ({
     [selectors, value]
   );
 
+  const suggestions = useMemo(() => suggestionsFor(inputValue, selectorsAvailables), [inputValue, selectorsAvailables]);
+  const optionsCount = suggestions.list.length + (suggestions.creates ? 1 : 0);
+
   const handleChangeInput = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      setOpen(e.target.value.length > 0);
+      setOpen(true);
       setInputValue(e.target.value);
+      // What is typed is what Enter makes: the keys pick from the list only once they move into it.
+      setHighlighted(-1);
     },
     [setOpen]
   );
 
   const handleClick = useCallback(() => {
     inputRef.current?.focus();
-    setOpen(inputValue.length > 0);
-  }, [inputRef, inputValue, setOpen]);
+    setOpen(true);
+  }, [inputRef, setOpen]);
 
   const handleClickSelector = useCallback(
     (selector: SelectorValue) => onSelectorSelected?.(selector),
@@ -163,10 +169,49 @@ const Selector = ({
     [tags, selectorProp, onChange, onSelectorSelected, onAdd, onRemove]
   );
 
+  const handleSuggestionsSelect = useCallback(
+    (tag: SelectorValue) => {
+      setTimeout(() => setInputValue(''), 0);
+      setOpen(false);
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      onChange?.(finalValue);
+      onSelectorSelected?.(tag);
+    },
+    [tags, onChange, onSelectorSelected, setOpen]
+  );
+
+  const handleSuggestionsCreate = useCallback(
+    (tag: SelectorValue) => {
+      setTimeout(() => setInputValue(''), 0);
+      setOpen(false);
+      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
+      onChange?.(finalValue);
+      onAdd?.(tag, false);
+      onSelectorSelected?.(tag);
+    },
+    [tags, onChange, onAdd, onSelectorSelected, setOpen]
+  );
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       switch (e.key) {
         case 'Enter': {
+          if (highlighted >= 0) {
+            e.preventDefault();
+            if (suggestions.creates && highlighted === 0) {
+              handleSuggestionsCreate({ name: suggestions.creates, type: 'class' });
+            } else {
+              const picked = suggestions.list.at(highlighted - (suggestions.creates ? 1 : 0));
+              if (picked) {
+                handleSuggestionsSelect(picked);
+              }
+            }
+
+            setHighlighted(-1);
+
+            break;
+          }
+
           const { value: newValue } = e.currentTarget;
           if (newValue !== '' && !tags.find(tag => tag.name === newValue)) {
             setInputValue('');
@@ -191,13 +236,16 @@ const Selector = ({
         }
 
         case 'ArrowUp': {
-          setOpen(false);
+          e.preventDefault();
+          setHighlighted(current => Math.max(current - 1, -1));
 
           break;
         }
 
         case 'ArrowDown': {
+          e.preventDefault();
           setOpen(true);
+          setHighlighted(current => Math.min(current + 1, optionsCount - 1));
 
           break;
         }
@@ -205,6 +253,8 @@ const Selector = ({
         case 'Escape': {
           e.stopPropagation();
           setInputValue('');
+          setHighlighted(-1);
+          setOpen(false);
           e.currentTarget.blur();
 
           break;
@@ -214,30 +264,18 @@ const Selector = ({
           break;
       }
     },
-    [tags, onAdd, onChange, onSelectorSelected, setOpen]
-  );
-
-  const handleSuggestionsSelect = useCallback(
-    (tag: SelectorValue) => {
-      setTimeout(() => setInputValue(''), 0);
-      setOpen(false);
-      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
-      onChange?.(finalValue);
-      onSelectorSelected?.(tag);
-    },
-    [tags, onChange, onSelectorSelected, setOpen]
-  );
-
-  const handleSuggestionsCreate = useCallback(
-    (tag: SelectorValue) => {
-      setTimeout(() => setInputValue(''), 0);
-      setOpen(false);
-      const finalValue = [...tags, tag].reduce((acum, tag) => `${acum} ${tag.name}`, '').trim();
-      onChange?.(finalValue);
-      onAdd?.(tag, false);
-      onSelectorSelected?.(tag);
-    },
-    [tags, onChange, onAdd, onSelectorSelected, setOpen]
+    [
+      tags,
+      onAdd,
+      onChange,
+      onSelectorSelected,
+      setOpen,
+      highlighted,
+      suggestions,
+      optionsCount,
+      handleSuggestionsCreate,
+      handleSuggestionsSelect
+    ]
   );
 
   const handleClickStyleManager = useCallback(
@@ -269,63 +307,70 @@ const Selector = ({
         <ContainerFloating.Trigger className="w-full">
           <div
             className={clsx(
-              'bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1 dark:bg-zinc-800',
+              'relative flex min-h-8 items-center gap-1 rounded-md border bg-white py-1 pr-1 pl-1 dark:bg-zinc-900',
               className,
               {
-                'pointer-events-none cursor-not-allowed bg-gray-100 dark:bg-zinc-900': disabled,
-                'cursor-pointer': !disabled
+                'pointer-events-none cursor-not-allowed border-gray-200 opacity-60 dark:border-zinc-800': disabled,
+                'focus-within:border-primary-500 focus-within:ring-primary-500/20 cursor-text border-gray-300 focus-within:ring-2 dark:border-zinc-700':
+                  !disabled
               }
             )}
             onClick={handleClick}
             onKeyDown={handleKeyDown}
           >
+            <div className="flex min-w-0 grow flex-wrap items-center gap-1">
+              {tagComponent && (
+                <SelectorItem
+                  selector={tagComponent.name}
+                  type={tagComponent.type}
+                  editable={false}
+                  active={tagComponent.name === selectorProp?.name.replace(/:.*/, '')}
+                  onClick={handleClickSelector}
+                />
+              )}
+              {orderedTags.map(({ position, ...tag }) => (
+                <SelectorItem
+                  key={`${position}_${tag.name}`}
+                  selector={tag.name}
+                  label={labels?.[tag.name]}
+                  type={tag.type}
+                  editable={tag.type !== 'element'}
+                  active={tag.name === selectorProp?.name.replace(/:.*/, '')}
+                  onAction={handleClickAction(position)}
+                  onClick={handleClickSelector}
+                  onChange={handleChangeItem(position)}
+                />
+              ))}
+              <input
+                ref={inputRef}
+                className="min-w-20 grow basis-0 border-none bg-transparent px-1 py-0.5 text-xs text-inherit outline-hidden placeholder:text-zinc-400 focus:ring-transparent dark:placeholder:text-zinc-500"
+                placeholder={orderedTags.length > 0 ? 'Add class…' : 'Add a class to style it…'}
+                aria-label="Add a class"
+                aria-expanded={open}
+                aria-autocomplete="list"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                value={inputValue}
+                onChange={handleChangeInput}
+              />
+            </div>
             <Button
               intent="secondary"
               size="custom"
               onClick={handleClickStyleManager}
-              className="h-7 w-7 rounded-sm bg-white dark:bg-zinc-700 dark:text-zinc-200"
-              title="Style Manager"
+              className="h-6 w-6 shrink-0 self-start rounded bg-transparent text-zinc-500 hover:bg-gray-100 hover:text-zinc-900 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              title="Open the Style Manager: every class and element default of the space"
             >
               <Button.Icon icon="fas fa-swatchbook" />
             </Button>
-            {tagComponent && (
-              <SelectorItem
-                selector={tagComponent.name}
-                type={tagComponent.type}
-                editable={false}
-                active={tagComponent.name === selectorProp?.name.replace(/:.*/, '')}
-                onClick={handleClickSelector}
-              />
-            )}
-            {orderedTags.map(({ position, ...tag }) => (
-              <SelectorItem
-                key={`${position}_${tag.name}`}
-                selector={tag.name}
-                label={labels?.[tag.name]}
-                type={tag.type}
-                editable={tag.type !== 'element'}
-                active={tag.name === selectorProp?.name.replace(/:.*/, '')}
-                onAction={handleClickAction(position)}
-                onClick={handleClickSelector}
-                onChange={handleChangeItem(position)}
-              />
-            ))}
-            <input
-              ref={inputRef}
-              className="flex min-h-0 w-0 border-none bg-transparent px-1 py-0 text-xs text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-              value={inputValue}
-              onChange={handleChangeInput}
-            />
           </div>
         </ContainerFloating.Trigger>
         <ContainerFloating.Content style={contentStyle}>
           <SelectorSuggestions
-            selector={inputValue}
-            selectors={selectorsAvailables}
+            suggestions={suggestions}
+            highlighted={highlighted}
             onSelect={handleSuggestionsSelect}
             onCreate={handleSuggestionsCreate}
           />

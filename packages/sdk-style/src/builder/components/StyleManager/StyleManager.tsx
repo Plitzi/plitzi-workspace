@@ -46,9 +46,19 @@ const StyleManager = () => {
     return { base: selector.name };
   }, [selector, styleSelectorsAvailables]);
 
+  const dressed = useMemo(
+    () =>
+      selector
+        ? flatList.filter(element =>
+            Object.values(element.definition.styleSelectors).some(classes => classes.split(' ').includes(selector.name))
+          ).length
+        : 0,
+    [flatList, selector]
+  );
+
   return (
-    <div className="flex h-full grow flex-col overflow-auto">
-      <div className="flex grow overflow-auto">
+    <div className="flex h-full grow flex-col overflow-hidden">
+      <div className="flex grow overflow-hidden">
         <ManagerSelector
           displayMode={displayMode}
           selectors={selectors}
@@ -57,23 +67,58 @@ const StyleManager = () => {
           selected={selector?.name}
           onSelect={setSelector}
         />
-        <div className="flex grow basis-0 flex-col overflow-auto">
+        <div className="flex min-w-0 grow basis-0 flex-col overflow-auto">
           {selector && (
-            <StyleInspector
-              mode="manager"
-              displayMode={displayMode}
-              selectors={selectors}
-              styleSelectors={styleSelectors}
-              styleSelectorsAvailables={styleSelectorsAvailables}
-              componentSubTypesAvailables={componentSubTypesAvailables}
-              allowStyleSelector={selector.type === 'element'}
-              componentType={selector.componentType}
-              value={selector.name}
-            />
+            <>
+              <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-zinc-800">
+                <span
+                  className="bg-primary-50 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex size-7 shrink-0 items-center justify-center rounded-md text-xs"
+                  aria-hidden
+                >
+                  {selector.type === 'element' ? <i className="fa-solid fa-cube" /> : <b className="font-mono">.</b>}
+                </span>
+                <div className="flex min-w-0 grow flex-col">
+                  <span className="truncate font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                    {selector.type === 'element' ? selector.name : `.${selector.name}`}
+                  </span>
+                  <span className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {selector.type === 'element'
+                      ? `The defaults of every ${selector.componentType ?? selector.name}`
+                      : dressed > 0
+                        ? `A class, worn by ${String(dressed)} element${dressed === 1 ? '' : 's'}`
+                        : 'A class no element wears'}
+                  </span>
+                </div>
+                <span
+                  className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-zinc-600 capitalize dark:bg-zinc-800 dark:text-zinc-300"
+                  title="The breakpoint the styles below are edited at: the one the canvas shows"
+                >
+                  <i className="fa-solid fa-display mr-1 text-[10px]" />
+                  {displayMode}
+                </span>
+              </div>
+              <StyleInspector
+                mode="manager"
+                displayMode={displayMode}
+                selectors={selectors}
+                styleSelectors={styleSelectors}
+                styleSelectorsAvailables={styleSelectorsAvailables}
+                componentSubTypesAvailables={componentSubTypesAvailables}
+                allowStyleSelector={selector.type === 'element'}
+                componentType={selector.componentType}
+                value={selector.name}
+              />
+            </>
           )}
           {!selector && (
-            <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-500 select-none dark:border-zinc-600 dark:text-zinc-400">
-              No selector or element selected. Click on one to select it.
+            <div className="flex grow flex-col items-center justify-center gap-2 p-6 text-center select-none">
+              <span className="bg-primary-50 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex size-10 items-center justify-center rounded-lg">
+                <i className="fas fa-swatchbook" />
+              </span>
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Pick a selector to edit it</span>
+              <span className="max-w-64 text-xs text-zinc-500 dark:text-zinc-400">
+                A class changes every element that wears it; an element’s defaults, every element of that type.
+              </span>
             </div>
           )}
         </div>

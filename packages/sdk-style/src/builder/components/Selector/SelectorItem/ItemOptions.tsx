@@ -48,7 +48,11 @@ const ItemOptions = ({ selector = '', type = 'class', onAction }: ItemOptionsPro
   return (
     <ContainerFloating>
       <ContainerFloating.Trigger>
-        <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-4 !min-w-4" />
+        <Icon
+          icon="fa-solid fa-ellipsis-vertical"
+          className="h-4 w-3 !min-w-3 rounded-sm opacity-70 hover:opacity-100"
+          title="Class actions: duplicate, remove, delete"
+        />
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="text-xs text-zinc-700 dark:text-zinc-300">
         <div className="min-w-44 rounded-md border border-gray-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">

@@ -76,6 +76,14 @@ weighs on a phone — and what of it a phone cannot hold.
 - A component edited on its own is drawn as one of its instances shows it: that instance's props over the defaults,
   on the ground it sits on (the nearest background and text colour around it, the page's layout's included). **Shown
   as** in the banner picks the instance. A component made for a dark band no longer opens on a blank white canvas.
+- The **Style Manager**: a search and **New** on one line; **All**, **Classes**, **Elements** and **Unused** with their
+  counts; the element types' defaults and the classes in sections; a row per selector — its kind, its name, how many
+  elements wear it or that none does —, its box shown while several are checked; **Select all** among the unused to
+  delete them at once. The selector picked is named over the inspector with what it dresses and the breakpoint edited.
+- An element's **classes** are a field: the type's defaults first, the classes after, **Add class…** always there,
+  the Style Manager at its end. Focused, it lists the space's classes — **Create class** first for a new name — and the
+  arrow keys move through them, Enter adding the one marked.
+
 ## Authoring and the 404 page
 
 - `not-found-twice`, refused: two pages answering every address nothing else does (`slug: '*'`) in the same place — the

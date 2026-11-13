@@ -3,6 +3,7 @@ import { isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
+import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, memo } from 'react';
 
@@ -37,9 +38,20 @@ const wears = (element: Element, selector: string): boolean => {
   return !!name && Object.values(element.definition.styleSelectors).some(classes => classes.split(' ').includes(name));
 };
 
+/** What the list shows: every selector, the classes, the element types' defaults, or the classes no element wears. */
+type ListFilter = 'all' | 'classes' | 'elements' | 'unused';
+
+const FILTERS: { id: ListFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'classes', label: 'Classes' },
+  { id: 'elements', label: 'Elements' },
+  { id: 'unused', label: 'Unused' }
+];
+
 const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
+  const [filter, setFilter] = useState<ListFilter>('all');
   const [checkedSelectors, setCheckedSelectors] = useState<string[]>([]);
   const { builderHandler } = use(BuilderContext);
   const [platform] = useBuilderStore('style.platform');
@@ -48,7 +60,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
     () => selectorsArr.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
     [selectorsArr]
   );
-  const finalSelectors = useMemo(() => {
+  const searched = useMemo(() => {
     let selectorsParsed = selectorsArr;
     if (!isEmpty(searchInput)) {
       selectorsParsed = selectorsArr.filter(selector =>
@@ -56,7 +68,7 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
       );
     }
 
-    return selectorsParsed.sort((a, b) => {
+    return [...selectorsParsed].sort((a, b) => {
       const aNumber = Number(a.type === 'element');
       const bNumber = Number(b.type === 'element');
 
@@ -64,7 +76,39 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
     });
   }, [selectorsArr, searchInput]);
 
+  const elementCounts = useMemo<Record<string, number>>(
+    () =>
+      Object.fromEntries(
+        selectorsArr.map(selector => [selector.name, flatList.filter(element => wears(element, selector.name)).length])
+      ),
+    [selectorsArr, flatList]
+  );
+
+  /** What each filter keeps of what is searched — the list shown, and the count beside each filter. */
+  const byFilter = useMemo<Record<ListFilter, StyleItem[]>>(() => {
+    const classes = searched.filter(selector => selector.type !== 'element');
+
+    return {
+      all: searched,
+      classes,
+      elements: searched.filter(selector => selector.type === 'element'),
+      unused: classes.filter(selector => elementCounts[selector.name] === 0)
+    };
+  }, [searched, elementCounts]);
+  const finalSelectors = byFilter[filter];
+  const sections = useMemo(
+    () =>
+      filter === 'all'
+        ? [
+            { title: 'Element defaults', items: byFilter.elements },
+            { title: 'Classes', items: byFilter.classes }
+          ].filter(section => section.items.length > 0)
+        : [{ title: undefined, items: finalSelectors }],
+    [filter, byFilter, finalSelectors]
+  );
+
   const handleChangeSearch = useCallback((value: string) => setSearchInput(value), [setSearchInput]);
+  const handleFilter = useCallback((next: ListFilter) => () => setFilter(next), []);
 
   const handleCloseAddSelector = useCallback(
     (_e: MouseEvent | React.MouseEvent | undefined, values?: SelectorFormValues) => {
@@ -151,24 +195,17 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
 
   const handleClearChecked = useCallback(() => setCheckedSelectors([]), []);
 
+  const handleCheckUnused = useCallback(
+    () => setCheckedSelectors(byFilter.unused.map(selector => selector.name)),
+    [byFilter.unused]
+  );
+
   const handleDeleteChecked = useCallback(
     () => onOpenDeleteSelector(undefined, checkedSelectors),
     [onOpenDeleteSelector, checkedSelectors]
   );
 
   const deleteCount = Array.isArray(deleteState) ? deleteState.length : 0;
-
-  const elementCounts = useMemo<Record<string, number>>(
-    () =>
-      finalSelectors.reduce(
-        (acum, selector) => ({
-          ...acum,
-          [selector.name]: flatList.filter(element => wears(element, selector.name)).length
-        }),
-        {}
-      ),
-    [finalSelectors, flatList]
-  );
 
   // Per selector: the ancestors it has rules under, and the ones no element it dresses sits inside
   const ancestorHealth = useMemo<Record<string, { count: number; unused: Set<string> }>>(
@@ -211,16 +248,57 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
 
   return (
-    <div className="flex max-w-[350px] grow basis-0 flex-col gap-2 overflow-auto border-r border-gray-300 pt-2 pr-2 dark:border-zinc-700">
-      <Button intent="primary" size="sm" className="w-full" iconPlacement="before" onClick={onOpenAddSelector}>
-        <Button.Icon icon="fas fa-tint" size="md" className="text-base" />
-        New Selector
-      </Button>
-      <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} size="xs" />
+    <div className="flex w-[300px] shrink-0 flex-col gap-2 overflow-hidden border-r border-gray-200 px-2 pt-2 dark:border-zinc-800">
+      <div className="flex items-center gap-1.5">
+        <div className="grow">
+          <Input
+            placeholder="Search selectors"
+            aria-label="Search selectors"
+            value={searchInput}
+            onChange={handleChangeSearch}
+            size="xs"
+            clearable
+          >
+            <Input.Icon icon="fa-solid fa-magnifying-glass" />
+          </Input>
+        </div>
+        <Button intent="primary" size="xs" iconPlacement="before" title="New selector" onClick={onOpenAddSelector}>
+          <Button.Icon icon="fa-solid fa-plus" />
+          New
+        </Button>
+      </div>
+      <div className="flex gap-0.5 rounded-md bg-gray-100 p-0.5 dark:bg-zinc-800/70" role="tablist">
+        {FILTERS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={filter === id}
+            className={clsx(
+              'flex grow cursor-pointer items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] font-medium',
+              {
+                'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-50': filter === id,
+                'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100': filter !== id
+              }
+            )}
+            onClick={handleFilter(id)}
+          >
+            {label}
+            <span
+              className={clsx('tabular-nums', {
+                'text-amber-600 dark:text-amber-400': id === 'unused' && byFilter.unused.length > 0,
+                'opacity-60': !(id === 'unused' && byFilter.unused.length > 0)
+              })}
+            >
+              {byFilter[id].length}
+            </span>
+          </button>
+        ))}
+      </div>
       {unusedTotal > 0 && (
-        <div className="flex items-center justify-between gap-2 rounded-sm bg-amber-500/10 px-2 py-1">
-          <span className="text-xs text-amber-700 dark:text-amber-300">
-            <i className="fas fa-triangle-exclamation mr-1" />
+        <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
+          <span className="text-xs text-amber-800 dark:text-amber-200">
+            <i className="fas fa-sitemap mr-1.5 text-[10px]" />
             {unusedLabel}
           </span>
           <Button size="xs" onClick={handleRemoveUnusedAncestors}>
@@ -228,8 +306,16 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
           </Button>
         </div>
       )}
+      {filter === 'unused' && byFilter.unused.length > 0 && checkedSelectors.length === 0 && (
+        <div className="flex items-center justify-between gap-2 px-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <span>No element wears these classes.</span>
+          <Button size="xs" onClick={handleCheckUnused}>
+            Select all
+          </Button>
+        </div>
+      )}
       {checkedSelectors.length > 0 && (
-        <div className="bg-secondary-50 dark:bg-secondary-900/30 flex items-center justify-between gap-2 rounded-sm px-2 py-1">
+        <div className="bg-secondary-50 dark:bg-secondary-900/30 flex items-center justify-between gap-2 rounded-md px-2 py-1">
           <span className="text-xs text-zinc-600 dark:text-zinc-300">{checkedSelectors.length} selected</span>
           <div className="flex gap-1">
             <Button size="xs" onClick={handleClearChecked}>
@@ -242,27 +328,47 @@ const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onS
           </div>
         </div>
       )}
-      <div className="flex grow basis-0 flex-col overflow-y-auto">
-        {finalSelectors.map(selector => {
-          const { name, type } = selector;
+      <div className="-mx-1 flex grow basis-0 flex-col gap-2 overflow-y-auto px-1 pb-2">
+        {sections.map(section => (
+          <section key={section.title ?? filter} className="flex flex-col">
+            {section.title && (
+              <h6 className="sticky top-0 z-1 flex items-center justify-between bg-white px-1.5 py-1 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase dark:bg-zinc-900 dark:text-zinc-400">
+                {section.title}
+                <span className="font-normal tabular-nums">{section.items.length}</span>
+              </h6>
+            )}
+            {section.items.map(selector => {
+              const { name, type } = selector;
 
-          return (
-            <StyleSelectorTag
-              key={name}
-              id={name}
-              active={name === selected}
-              checked={checkedSelectors.includes(name)}
-              label={name}
-              type={type}
-              elementsCount={elementCounts[name]}
-              ancestorsCount={ancestorHealth[name].count}
-              unusedAncestorsCount={ancestorHealth[name].unused.size}
-              onSelect={handleClickSelect}
-              onDelete={handleClickDelete}
-              onToggleCheck={handleToggleCheck}
-            />
-          );
-        })}
+              return (
+                <StyleSelectorTag
+                  key={name}
+                  id={name}
+                  active={name === selected}
+                  checked={checkedSelectors.includes(name)}
+                  selecting={checkedSelectors.length > 0}
+                  label={name}
+                  type={type}
+                  elementsCount={elementCounts[name]}
+                  ancestorsCount={ancestorHealth[name].count}
+                  unusedAncestorsCount={ancestorHealth[name].unused.size}
+                  onSelect={handleClickSelect}
+                  onDelete={handleClickDelete}
+                  onToggleCheck={handleToggleCheck}
+                />
+              );
+            })}
+          </section>
+        ))}
+        {finalSelectors.length === 0 && (
+          <p className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+            {searchInput
+              ? 'No selector matches the search.'
+              : filter === 'unused'
+                ? 'Every class is worn by an element.'
+                : 'No selectors yet: make one with New.'}
+          </p>
+        )}
       </div>
       <Modal id={idAddSelector} open={openAddSelector} onClose={onCloseAddSelector} size="sm">
         <Modal.Header>

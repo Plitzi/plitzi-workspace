@@ -67,19 +67,21 @@ const SelectorItem = ({
 
   return (
     <div
-      className={clsx('relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 select-none', className, {
+      className={clsx('relative flex h-6 cursor-pointer items-center gap-1 rounded px-1.5 select-none', className, {
         // The class being edited is the strongest mark in the panel; the element's type defaults, a softer one;
         // the classes it also wears but are not being edited, neutral.
-        'bg-primary-600 text-white': type !== 'element' && active,
-        'bg-primary-500/20 text-primary-800 dark:text-primary-200': type === 'element' && active,
-        'bg-gray-200 text-zinc-700 hover:bg-gray-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600':
+        'bg-primary-600 text-white shadow-sm': type !== 'element' && active,
+        'bg-primary-500/15 text-primary-800 ring-primary-500/40 dark:text-primary-200 ring-1':
+          type === 'element' && active,
+        'bg-gray-100 text-zinc-700 ring-1 ring-gray-200 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 dark:hover:bg-zinc-700':
           !active,
         'max-w-full min-w-0': !editable
       })}
       onClick={handleClick}
       title={`${type}: ${selector}`}
     >
-      <div className="flex min-w-0 grow basis-0 text-xs">
+      {type === 'element' && <i className="fa-solid fa-cube text-[9px] opacity-70" aria-hidden />}
+      <div className="flex min-w-0 grow basis-0 font-mono text-[11px]">
         {editable && (
           <Contenteditable
             className="inline text-nowrap focus-visible:m-[1px] focus-visible:px-1 focus-visible:outline-1 focus-visible:outline-dashed"
@@ -90,7 +92,7 @@ const SelectorItem = ({
             onEditClose={handleEditClose}
           />
         )}
-        {!editable && shown}
+        {!editable && <span className="truncate">{shown}</span>}
       </div>
       {editable && type !== 'element' && <ItemOptions selector={selector} type={type} onAction={onAction} />}
     </div>
