@@ -4,6 +4,7 @@ import { describeOperationTool } from './describeOperation';
 import { addPageTool, bindAttributeTool, placeComponentTool, setAttributesTool, setClassesTool } from './intents';
 import { lookTool } from './look';
 import { readTool } from './read';
+import { publishTool, releasesTool, rollbackTool } from './releases';
 import { renderTool } from './render';
 import { searchTool } from './search';
 import { testTool } from './test';
@@ -33,7 +34,10 @@ export const tools: ToolDef[] = [
   lookTool,
   tryFunctionTool,
   testTool,
-  activityTool
+  activityTool,
+  releasesTool,
+  publishTool,
+  rollbackTool
 ];
 
 export type { ToolContext, ToolDef } from './shared/tool';

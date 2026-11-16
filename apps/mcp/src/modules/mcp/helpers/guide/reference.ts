@@ -149,6 +149,12 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   pass it back as \`after\` and the call waits up to \`wait\` seconds (45, at most 50) until something happens. Your own
   writes are left out and counted (\`skippedMine\`; \`mine: true\` keeps them). On a space people edit too, call it
   before a write that rests on what you read earlier.
+- \`plitzi_releases { domain? }\`, \`plitzi_publish { domain, environment, revision? }\`, \`plitzi_rollback { domain, to? }\`
+  — the space's releases (RFC 0034): what each domain serves and what a rollback would put back, one domain's history,
+  pointing a domain at a revision (its environment's latest unless named; \`main\` serves the draft), and putting back
+  what it served right before its latest release. A publish is live at once for that domain's visitors: publish only
+  what the person asked for. Held to who may publish, the plan and the revision's tests, a refusal answered as
+  \`{ done: false, reason }\`; a rollback is never refused by plan. Feature flags and the space's data stay as they are.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Suggestions — the same page with fewer elements

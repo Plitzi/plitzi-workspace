@@ -659,6 +659,25 @@ in the background and is told what each edit did, instead of running `author` an
 Not a page as it renders — the project's server restarts on the same save, and `page check` is what looks at one — nor
 the project around the space (`doctor`).
 
+## `space snapshot`, `space publish`, `space rollback` and `space releases`
+
+```bash
+plitzi space snapshot -m "Spring menu"                # the draft kept as production's next revision
+plitzi space publish example.com                      # example.com serves production's latest
+plitzi space publish dev.example.com -e development -r 4
+plitzi space rollback example.com                     # what it served right before its latest release
+plitzi space rollback example.com --to production@9   # or a version from its history
+plitzi space releases                                 # every domain: what it serves, what a rollback would put back
+plitzi space releases example.com --json              # one domain's releases, newest first
+```
+
+The builder's **Snapshot** and **Publish** for a terminal, a CI job or an agent, held to the same rules on the platform:
+a snapshot to the plan, the space's issues and its tests; a publish to the plan and the revision's tests. Every publish
+and rollback is a release of the domain — what it serves from then on, what it served before, who — and a rollback is
+never refused by plan nor re-judged by tests: it puts back what was live. Feature flags and the space's data are the
+environment's, not the snapshot's, and stay as they are. The MCP's `plitzi_publish`, `plitzi_rollback` and
+`plitzi_releases` do the same.
+
 ## `space activity`
 
 ```bash

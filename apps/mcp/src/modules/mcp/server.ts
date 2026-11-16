@@ -161,7 +161,8 @@ export const createMcpServer = async ({
     runE2eTests,
     saveData,
     getActivity,
-    getRenderCredential
+    getRenderCredential,
+    releases
   } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
   const write: SSRWriteContext = {
@@ -226,6 +227,18 @@ export const createMcpServer = async ({
     ...(getActivity
       ? {
           activity: query => getActivity(requireSpaceId(), query, { userId: grant?.userId, origin: 'mcp' }, signal)
+        }
+      : {}),
+    // Publishing and rolling back are writes: a read-only connection is refused before the platform is asked, and the
+    // platform holds the member the agent acts for to its own rule of who may publish.
+    ...(releases
+      ? {
+          releases: {
+            domains: () => releases.domains(requireSpaceId()),
+            history: (domain: string) => releases.history(requireSpaceId(), domain),
+            publish: asked => releases.publish(requireWritableSpaceId(), asked, write),
+            rollback: asked => releases.rollback(requireWritableSpaceId(), asked, write)
+          }
         }
       : {})
   });

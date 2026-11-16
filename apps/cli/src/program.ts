@@ -18,6 +18,7 @@ import { registerFunctions } from './commands/register/functions';
 import { groupHelp } from './commands/register/helpGroups';
 import { API_OPTION, DRY_RUN_OPTION } from './commands/register/options';
 import { registerPage } from './commands/register/page';
+import { registerSpace } from './commands/register/space';
 import { registerRuns } from './commands/runs/register';
 import addRuntime from './commands/runtime/addRuntime';
 import {
@@ -29,7 +30,6 @@ import {
 } from './commands/runtime/runtime';
 import { serverList, serverReset, serverStop } from './commands/server/server';
 import packSourceCommand from './commands/source/packSource';
-import { activity } from './commands/space/activity';
 import { explainCommand } from './commands/space/explain';
 import { fix } from './commands/space/fix';
 import { pull, PULL_PARTS, pullParts } from './commands/space/pull';
@@ -60,7 +60,6 @@ import type { AddRuntimeOptions } from './commands/runtime/addRuntime';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime/runtime';
 import type { ServerResetOptions, ServerStopOptions } from './commands/server/server';
 import type { PackSourceOptions } from './commands/source/packSource';
-import type { ActivityOptions } from './commands/space/activity';
 import type { ExplainOptions } from './commands/space/explain';
 import type { FixOptions } from './commands/space/fix';
 import type { PullOptions } from './commands/space/pull';
@@ -534,18 +533,7 @@ export const buildProgram = (): Command => {
     .option('--json', 'One object, for a tool or an agent')
     .action(async (file: string, options: RunCommandOptions) => (await overview()).spaceImpact(file, options));
 
-  spaceGroup
-    .command('activity')
-    .description(
-      'What happened on the space: the draft changed (a person in the builder, an agent, the autofix), a version went out, an action failed — your own pushes left out'
-    )
-    .option('-f, --follow', 'Stay, and say each as it happens: what an agent runs in the background to hear of them')
-    .option('--after <cursor>', 'From where a previous read left off — the cursor it gave — not from the latest')
-    .option('--mine', 'Keep your own pushes too')
-    .addOption(new Option('--limit <n>', 'At most this many a page').argParser(positiveInteger))
-    .option('--json', 'One page as one object — with --follow, one a line as it arrives — for a tool or an agent')
-    .option(...API_OPTION)
-    .action((options: ActivityOptions) => activity(options));
+  registerSpace(spaceGroup);
 
   const data = program
     .command('data')

@@ -129,7 +129,10 @@ const widgetOperations = [
 // Raised to 82.3k for the four fields that said nothing to the agent — search's `filters`, try-function's `params` and
 // `dryRun`, activity's `limit` — found when the docs' MCP reference was generated from the tools.
 // Measured at 81.8k.
-const TOOLS_BUDGET_BYTES = 82_300;
+//
+// Raised to 84.2k for plitzi_releases, plitzi_publish and plitzi_rollback (RFC 0034): what each domain serves, a
+// publish and a rollback, which an agent could not do over the MCP before. Measured at 83.7k.
+const TOOLS_BUDGET_BYTES = 84_200;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

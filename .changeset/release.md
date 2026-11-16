@@ -5,6 +5,20 @@
 A server action's call whose answer was lost on the way back runs once, not twice, and authoring says what a page
 weighs on a phone — and what of it a phone cannot hold.
 
+## CLI
+
+- `plitzi space snapshot`, `space publish <domain>`, `space rollback <domain> [--to production@9]` and `space releases
+[domain]` (RFC 0034): the builder's Snapshot and Publish for a terminal, a CI job or an agent — what each domain
+  serves, what a rollback would put back, a domain's history — held on the platform to the same rules, `--json` for a
+  tool.
+
+## MCP
+
+- `plitzi_releases`, `plitzi_publish` and `plitzi_rollback`: what each domain serves and its history, a publish and a
+  rollback, for the member the agent acts for and held to that member's right to publish; a refusal is answered as
+  `{ done: false, reason }`. A host offers them through the `releases` adapter (`@plitzi/sdk-kernel`); the tool listing's
+  budget grew to 84.2k for them.
+
 ## SDK
 
 - A server action's call is sent with one key from its first try: a connection lost after a worker began the run — the
@@ -53,6 +67,10 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **Releases and rollback** (RFC 0034, F1). Every publish and rollback of a domain is recorded — what it serves from
+  then on, what it served before, who — and the publish sheet lists a domain's history, with **Serve this again** on
+  each release and **Roll back to rN** at its foot and beside the outcome: a rollback asks first, naming what it puts
+  back and what it does not undo (feature flags, the space's data), and is never refused by plan.
 - **Snapshot and Publish, redrawn** (RFC 0034, F0). The header's end is one release cluster: a chip that says how far
   the draft has moved since the last snapshot ("4 changes since production r12"), **Snapshot**, and **Publish** — its
   one primary; the logo's chevron is a real menu — back to the spaces, **Export**, the theme — and the quota, plan and role read as one group.
@@ -80,7 +98,7 @@ weighs on a phone — and what of it a phone cannot hold.
 
 - **Space check** (the issues button's list) reads in tabs — Errors, Warnings, Suggestions, each counted — and, in each,
   a line per code, folded, with how many and what they save: the fix is said once per code, a long message is cut to
-  three lines until asked for, and its code is set apart. Only the list scrolls; the tabs and *Fix automatically* stay.
+  three lines until asked for, and its code is set apart. Only the list scrolls; the tabs and _Fix automatically_ stay.
   The modal is wider on a desktop.
 - The **Components** area: a component unfolds to a preview of it — drawn as its first instance shows it, fitted to its
   size — and every place it is used, by page, each a link to the instance (a page of many folds them; the **Usages**

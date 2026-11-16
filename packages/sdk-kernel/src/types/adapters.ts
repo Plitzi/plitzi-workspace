@@ -27,6 +27,9 @@ import type {
   SSRUser,
   Schema,
   SessionScope,
+  SpaceDomainRelease,
+  SpaceReleaseOutcome,
+  SpaceReleases,
   Style
 } from '@plitzi/sdk-shared';
 import type { ActivityReader, SpaceActivityPage, SpaceActivityQuery } from '@plitzi/sdk-shared/activity';
@@ -259,6 +262,25 @@ export type SSRAdapters = {
     reader: ActivityReader,
     signal?: AbortSignal
   ) => Promise<SpaceActivityPage>;
+  /**
+   * A space's releases (RFC 0034): every domain with what it serves, one domain's history, a publish and a rollback —
+   * each held to the deployment's own rules (who may publish, the plan, the revision's tests), a refusal answered as
+   * data in its words. When omitted, the MCP offers no `plitzi_releases`, `plitzi_publish` nor `plitzi_rollback`.
+   */
+  releases?: {
+    domains: (spaceId: number) => Promise<SpaceDomainRelease[]>;
+    history: (spaceId: number, domain: string) => Promise<SpaceReleases>;
+    publish: (
+      spaceId: number,
+      asked: { domain: string; environment: Environment; revision?: number },
+      write: SSRWriteContext
+    ) => Promise<SpaceReleaseOutcome>;
+    rollback: (
+      spaceId: number,
+      asked: { domain: string; to?: { environment: Environment; revision: number } },
+      write: SSRWriteContext
+    ) => Promise<SpaceReleaseOutcome>;
+  };
   /**
    * Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived in
    * was written by the server, from {@link SSRAuthCookie}.

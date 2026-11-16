@@ -1,6 +1,6 @@
 # RFC 0034 — Releases and deploy targets: snapshot, publish, deploy, roll back
 
-- **Status:** Accepted — F0 in progress
+- **Status:** Accepted — F0 shipped; F1 shipped but its preview addresses (§14.6)
 - **Author:** Plitzi
 - **Date:** 2026-11-16
 - **Scope:** `plitzi-sdk-server` (a space's targets, its release history, the deploy jobs, the providers' credentials,
@@ -359,12 +359,12 @@ A side sheet on the right, not a modal: what is live stays readable beside it, a
 ## 12. CLI and MCP
 
 ```
-plitzi snapshot --env production -m "Spring menu"
-plitzi publish example.com r12            # --latest; deploys when the target needs it, after saying so (--yes in CI)
-plitzi rollback example.com               # to the previous release; --to r9
-plitzi releases example.com               # the history, each release's deploy, and the versions the target runs
-plitzi deploy example.com                 # rebuild and ship the live revision (a new version, a provider changed, a failed deploy)
-plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the customer's own CI
+plitzi space snapshot -e production -m "Spring menu"
+plitzi space publish example.com -r 12         # the environment's latest when -r is left out
+plitzi space rollback example.com              # to the previous release; --to production@9
+plitzi space releases [example.com]            # every domain, or one domain's history
+plitzi space deploy example.com                # (F2) rebuild and ship the live revision
+plitzi build --spa|--static|--ssr --out dist/  # (F2–F4) the same builders, in the customer's own CI
 ```
 
 ## 13. Phases

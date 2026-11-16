@@ -6,7 +6,13 @@ import type { PreviewClient, ScreenshotClient, ScreenshotImage } from '../../typ
 import type { Env, Persisters } from '../../types';
 import type { McpUiToolMeta } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ActionRunReport } from '@plitzi/sdk-shared';
+import type {
+  ActionRunReport,
+  Environment,
+  SpaceDomainRelease,
+  SpaceReleaseOutcome,
+  SpaceReleases
+} from '@plitzi/sdk-shared';
 import type { SpaceActivityPage, SpaceActivityQuery } from '@plitzi/sdk-shared/activity';
 import type { ZodObject, ZodRawShape } from 'zod';
 
@@ -34,6 +40,17 @@ export interface ToolContext {
   renderCredential?: () => Promise<string | undefined>;
   /** What happened on the space after a cursor, waited for — when the host wired it. Only plitzi_activity uses it. */
   activity?: (query: SpaceActivityQuery) => Promise<SpaceActivityPage>;
+  /** The space's releases, bound to it and to the member the agent acts for — when the host wired them. Only
+   *  plitzi_releases, plitzi_publish and plitzi_rollback use them. */
+  releases?: {
+    domains: () => Promise<SpaceDomainRelease[]>;
+    history: (domain: string) => Promise<SpaceReleases>;
+    publish: (asked: { domain: string; environment: Environment; revision?: number }) => Promise<SpaceReleaseOutcome>;
+    rollback: (asked: {
+      domain: string;
+      to?: { environment: Environment; revision: number };
+    }) => Promise<SpaceReleaseOutcome>;
+  };
 }
 
 /** Build the MCP CallToolResult for an image-returning tool: a text meta block followed by one image block per

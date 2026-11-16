@@ -184,6 +184,19 @@ export type SpaceRelease = {
 /** A domain's releases, newest first, and what rolling it back would serve — none when there is nothing before. */
 export type SpaceReleases = { releases: SpaceRelease[]; rollback: SpaceServedVersion | null };
 
+/** A space's domain as its releases read it: what it serves now, and what a rollback would put back. */
+export type SpaceDomainRelease = {
+  domain: string;
+  verified: boolean;
+  serves: SpaceServedVersion | null;
+  followsLatest: boolean;
+  rollback: SpaceServedVersion | null;
+};
+
+/** How a publish or a rollback went: the release it recorded, or the platform's refusal in its own words. */
+export type SpaceReleaseOutcome =
+  { done: true; release: SpaceRelease } | { done: false; reason: string; code?: string };
+
 /**
  * What changes going from one version of a space to another — the draft against a snapshot (what a snapshot would
  * freeze), a snapshot against what a domain serves (what a publish would change): pages by name, the rest counted.
