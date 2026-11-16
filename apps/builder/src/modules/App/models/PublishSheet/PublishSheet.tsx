@@ -6,6 +6,7 @@ import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 
+import ReleaseHistory from './ReleaseHistory';
 import ChangesSummary, { useVersionChanges } from '../../components/ChangesSummary';
 import EnvironmentSegments from '../../components/EnvironmentSegments';
 import Notice from '../../components/Notice';
@@ -13,7 +14,7 @@ import { ageAgo, shortAge } from '../../helpers/age';
 import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 import useLatestSnapshots, { latestDetail } from '../../hooks/useLatestSnapshots';
 
-import type { Environment, SpaceDeployment, SpaceSnapshot } from '@plitzi/sdk-shared';
+import type { Environment, SpaceDeployment, SpaceServedVersion, SpaceSnapshot } from '@plitzi/sdk-shared';
 
 export type PublishSheetProps = {
   /** The snapshot to publish, when the sheet opens from "Snapshot and publish…". */
@@ -89,6 +90,20 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
   const [pickedCredential, setPickedCredential] = useState<string>();
   const credential = pickedCredential ?? target?.credential?.identifier ?? '';
   const [outcome, setOutcome] = useState<Outcome>({ state: 'idle' });
+  const {
+    data: history,
+    isLoading: loadingHistory,
+    mutate: refreshHistory
+  } = useGraphQL(
+    target ? 'SpaceReleases' : null,
+    data => data?.SpaceReleases,
+    { domain: target?.domain },
+    {
+      revalidateOnMount: true
+    }
+  );
+  /** A rollback asked for and not yet confirmed: what it would put back. */
+  const [rollingBackTo, setRollingBackTo] = useState<SpaceServedVersion>();
 
   const liveLatest = target && target.environment !== 'main' ? byEnvironment[target.environment] : undefined;
   const liveRevision = target?.environment === 'main' ? 0 : (target?.revision ?? liveLatest?.revision);
@@ -121,6 +136,7 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
       { environment, domain: target.domain, revision: revision ?? 0, credentialIdentifier: credential },
       true
     );
+    await refreshHistory();
     if (response.result) {
       setOutcome({
         state: 'done',
@@ -133,13 +149,61 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
         said: error instanceof Error ? error.message : error || 'It was not published.'
       });
     }
-  }, [credential, environment, mutate, refusal, revision, target]);
+  }, [credential, environment, mutate, refreshHistory, refusal, revision, target]);
+
+  const handleRollBack = useCallback(async () => {
+    if (!target || !rollingBackTo) {
+      return;
+    }
+
+    setOutcome({ state: 'publishing' });
+    const response = await mutate(
+      'SpaceRollback',
+      { domain: target.domain, environment: rollingBackTo.environment, revision: rollingBackTo.revision },
+      true
+    );
+    setRollingBackTo(undefined);
+    await refreshHistory();
+    if (response.result) {
+      setOutcome({
+        state: 'done',
+        said: `${target.domain} serves ${rollingBackTo.environment === 'main' ? 'the draft' : revisionName(rollingBackTo.environment, rollingBackTo.revision)} again.`
+      });
+    } else {
+      const error = response.error;
+      setOutcome({
+        state: 'failed',
+        said: error instanceof Error ? error.message : error || 'It was not rolled back.'
+      });
+    }
+  }, [mutate, refreshHistory, rollingBackTo, target]);
+
+  const rollback = history?.rollback ?? undefined;
+  // One string: the button takes its words as a single child.
+  const rollbackLabel = rollback
+    ? `Roll back to ${rollback.environment === 'main' ? 'the draft' : `r${String(rollback.revision)}`}`
+    : '';
 
   if (outcome.state === 'done' && target) {
     return (
       <div className="flex flex-col gap-4">
         <Notice tone="success">{outcome.said}</Notice>
         <div className="flex justify-end gap-2">
+          {rollback && (
+            <Button
+              size="sm"
+              intent="secondary"
+              className="mr-auto whitespace-nowrap"
+              iconPlacement="before"
+              onClick={() => {
+                setOutcome({ state: 'idle' });
+                setRollingBackTo(rollback);
+              }}
+            >
+              <Button.Icon icon="fa-solid fa-rotate-left" />
+              {rollbackLabel}
+            </Button>
+          )}
           <Button
             size="sm"
             intent="secondary"
@@ -182,6 +246,7 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
                   setPickedEnvironment(undefined);
                   setPickedRevision(undefined);
                   setPickedCredential(undefined);
+                  setRollingBackTo(undefined);
                   setOutcome({ state: 'idle' });
                 }}
               >
@@ -322,10 +387,64 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
         </p>
       )}
 
+      {target && (
+        <ReleaseHistory
+          domain={target.domain}
+          releases={history?.releases ?? []}
+          loading={loadingHistory}
+          onServeAgain={setRollingBackTo}
+        />
+      )}
+
       {outcome.state === 'failed' && <Notice tone="danger">{outcome.said}</Notice>}
 
+      {target && rollingBackTo && (
+        <div
+          role="alertdialog"
+          aria-label="Roll back"
+          className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+        >
+          <p className="text-ui-fg">
+            Put{' '}
+            {rollingBackTo.environment === 'main'
+              ? 'the draft'
+              : revisionName(rollingBackTo.environment, rollingBackTo.revision)}{' '}
+            back on <b>{target.domain}</b>? It is live at once.
+          </p>
+          <p className="text-ui-fg-subtle text-xs">
+            Feature flags and the space’s data stay as they are now: they are the environment’s, not the snapshot’s.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={() => setRollingBackTo(undefined)}>
+              Keep it as it is
+            </Button>
+            <Button
+              size="sm"
+              intent="secondary"
+              disabled={outcome.state === 'publishing'}
+              onClick={() => void handleRollBack()}
+            >
+              {outcome.state === 'publishing' ? 'Rolling back…' : 'Roll back'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="border-ui-line flex items-center justify-end gap-2 border-t pt-3">
-        {refusal && <span className="text-ui-fg-subtle mr-auto text-xs">{refusal}</span>}
+        {rollback && !rollingBackTo && (
+          <Button
+            size="sm"
+            intent="secondary"
+            className="mr-auto shrink-0 whitespace-nowrap"
+            iconPlacement="before"
+            title={`What ${target?.domain ?? 'the domain'} served right before its latest release`}
+            onClick={() => setRollingBackTo(rollback)}
+          >
+            <Button.Icon icon="fa-solid fa-rotate-left" />
+            {rollbackLabel}
+          </Button>
+        )}
+        {refusal && <span className={clsx('text-ui-fg-subtle text-xs', !rollback && 'mr-auto')}>{refusal}</span>}
         <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onClose}>
           Cancel
         </Button>

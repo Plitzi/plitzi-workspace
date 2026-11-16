@@ -14,6 +14,7 @@ import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceJobsQuery from './Space/SpaceJobsQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
+import SpaceReleasesQuery from './Space/SpaceReleasesQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
 import SpaceSnapshotsQuery from './Space/SpaceSnapshotsQuery';
@@ -38,6 +39,7 @@ import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceJobsQuery } from './Space/SpaceJobsQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
+import type { TSpaceReleasesQuery } from './Space/SpaceReleasesQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
 import type { TSpaceSnapshotsQuery } from './Space/SpaceSnapshotsQuery';
@@ -74,6 +76,7 @@ export type BuilderQueriesMap = {
   SpaceVersionContents: TSpaceVersionContentsQuery;
   SpaceVersionChanges: TSpaceVersionChangesQuery;
   SpaceSnapshots: TSpaceSnapshotsQuery;
+  SpaceReleases: TSpaceReleasesQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
   SpaceRuntime: TSpaceRuntimeQuery;
 };
@@ -100,6 +103,7 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceVersionContents: SpaceVersionContentsQuery,
   SpaceVersionChanges: SpaceVersionChangesQuery,
   SpaceSnapshots: SpaceSnapshotsQuery,
+  SpaceReleases: SpaceReleasesQuery,
   SpaceVisitors: SpaceVisitorsQuery,
   SpaceRuntime: SpaceRuntimeQuery
 };

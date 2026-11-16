@@ -164,6 +164,26 @@ export type SpaceSnapshot = {
   domains: string[];
 };
 
+/** A version as a domain serves it: an environment and a revision of it, 0 for the draft. */
+export type SpaceServedVersion = { environment: Environment; revision: number };
+
+/** One move of a domain (RFC 0034): what it serves from then on, what it served before, who and why. */
+export type SpaceRelease = {
+  id: number;
+  domain: string;
+  environment: Environment;
+  revision: number;
+  followsLatest: boolean;
+  previous: SpaceServedVersion | null;
+  kind: 'publish' | 'rollback';
+  by: { id: number; username: string } | null;
+  /** Unix seconds. */
+  at: number;
+};
+
+/** A domain's releases, newest first, and what rolling it back would serve — none when there is nothing before. */
+export type SpaceReleases = { releases: SpaceRelease[]; rollback: SpaceServedVersion | null };
+
 /**
  * What changes going from one version of a space to another — the draft against a snapshot (what a snapshot would
  * freeze), a snapshot against what a domain serves (what a publish would change): pages by name, the rest counted.
