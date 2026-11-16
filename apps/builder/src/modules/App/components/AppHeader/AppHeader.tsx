@@ -150,8 +150,10 @@ const AppHeader = () => {
       return;
     }
 
-    await openPublish();
-  }, [domainLocked, openPlans, openPublish]);
+    // What a publisher usually means by pressing it: the last snapshot made, on a domain — preselected, never forced.
+    const { newest } = draft;
+    await openPublish(newest ? { environment: newest.environment, revision: newest.revision } : undefined);
+  }, [domainLocked, draft, openPlans, openPublish]);
 
   const handleClickExport = useCallback(async () => {
     await showModal(

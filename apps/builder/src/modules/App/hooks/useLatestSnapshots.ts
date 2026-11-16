@@ -1,5 +1,6 @@
-import { formatFromNow } from '@plitzi/sdk-shared/dates';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+
+import { shortAge } from '../helpers/age';
 
 import type { PublishedEnvironment } from '../helpers/environments';
 import type { SpaceSnapshot } from '@plitzi/sdk-shared';
@@ -37,10 +38,8 @@ const useLatestSnapshots = () => {
   };
 };
 
-/** `r12 · 2 h ago`, or that there is none yet. */
+/** `r12 · 2 h`, or that there is none yet. */
 export const latestDetail = (snapshot: SpaceSnapshot | undefined): string =>
-  snapshot
-    ? `r${String(snapshot.revision)} · ${formatFromNow(snapshot.publishedAt, undefined, { addSuffix: true })}`
-    : 'No snapshot yet';
+  snapshot ? `r${String(snapshot.revision)} · ${shortAge(snapshot.publishedAt)}` : 'No snapshot yet';
 
 export default useLatestSnapshots;

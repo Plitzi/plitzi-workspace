@@ -15,8 +15,9 @@ export const WIDE_MODAL = { className: { card: 'w-[min(1180px,94vw)] max-w-none'
 export const SHEET_MODAL = {
   className: {
     root: 'items-stretch justify-end p-0',
-    card: 'h-full w-[min(560px,100vw)] max-w-none overflow-y-auto rounded-none'
+    // `builder-sheet` takes the kit's slide over (assets/index.scss): in from the right edge, out to it, no overshoot.
+    card: 'builder-sheet h-full w-[min(560px,100vw)] max-w-none overflow-y-auto rounded-none'
   },
-  animation: 'slideLeft' as const,
-  duration: 200
+  animation: 'slideRight' as const,
+  duration: 240
 };

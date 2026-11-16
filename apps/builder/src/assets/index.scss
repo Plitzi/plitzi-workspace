@@ -17,7 +17,8 @@
   // Plitzi's typeface, as on the website and the dashboard. Declared here and not on `:root`: the builder is mounted
   // inside a host page, whose own `--font-sans` it must neither read nor overwrite. The host loads the faces.
   .plitzi-builder {
-    --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-sans:
+      Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     font-family: var(--font-sans);
@@ -48,5 +49,50 @@
 
   to {
     opacity: 0;
+  }
+}
+
+/*
+ * A side sheet (`SHEET_MODAL`): in from beyond the right edge it is anchored to, and out the same way — the kit's
+ * `slideRight` moves a centred card 150 px with an overshoot, which on an edge-anchored panel bounced it off its own
+ * edge. The modal closes on `animationend`, so reduced motion keeps a short fade rather than no animation at all.
+ */
+@keyframes builder-sheet-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes builder-sheet-out {
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes builder-sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.builder-sheet.modal--slideRight-enter {
+  animation-name: builder-sheet-in;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.builder-sheet.modal--slideRight-leave {
+  animation-name: builder-sheet-out;
+  animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder-sheet.modal--slideRight-enter,
+  .builder-sheet.modal--slideRight-leave {
+    animation-name: builder-sheet-fade;
+    animation-direction: normal;
+  }
+
+  .builder-sheet.modal--slideRight-leave {
+    animation-direction: reverse;
   }
 }

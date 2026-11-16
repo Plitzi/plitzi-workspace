@@ -2,7 +2,6 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
-import { formatFromNow } from '@plitzi/sdk-shared/dates';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
@@ -10,6 +9,7 @@ import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 import ChangesSummary, { useVersionChanges } from '../../components/ChangesSummary';
 import EnvironmentSegments from '../../components/EnvironmentSegments';
 import Notice from '../../components/Notice';
+import { ageAgo, shortAge } from '../../helpers/age';
 import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 import useLatestSnapshots, { latestDetail } from '../../hooks/useLatestSnapshots';
 
@@ -195,8 +195,7 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
                 <span className="text-ui-fg-subtle text-xs">
                   {deployment.isVerified ? (
                     <>
-                      Serves {liveOf(deployment, latest)} · since{' '}
-                      {formatFromNow(deployment.updatedAt * 1000, undefined, { addSuffix: false })}
+                      Serves {liveOf(deployment, latest)} · since {shortAge(deployment.updatedAt * 1000)}
                     </>
                   ) : (
                     <span className="text-amber-600 dark:text-amber-400">
@@ -268,7 +267,7 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
                   <span className="text-ui-fg-subtle truncate text-[11px]">
                     {[
                       snapshot.by?.username,
-                      formatFromNow(snapshot.publishedAt, undefined, { addSuffix: true }),
+                      ageAgo(snapshot.publishedAt),
                       snapshot.domains.length > 0 && !liveHere ? `live on ${snapshot.domains.join(', ')}` : ''
                     ]
                       .filter(Boolean)
