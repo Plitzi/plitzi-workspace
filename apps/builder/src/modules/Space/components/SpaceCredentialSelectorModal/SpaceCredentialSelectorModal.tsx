@@ -6,15 +6,13 @@ import { useCallback, useState } from 'react';
 
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
-import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
-import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
+import SpaceCredentialForm, { credentialDataOf } from '@pmodules/Space/Models/SpaceCredentialForm';
 
 import ModalBody from './ModalBody';
 
-import type { SpaceCredential, SpaceCredentialProvider } from '@plitzi/sdk-shared';
-import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
+import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
+import type { SpaceCredentialFormValues } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent, ReactNode } from 'react';
-import type z from 'zod';
 
 export type SpaceCredentialSelectorModalProps = {
   className?: string;
@@ -33,20 +31,16 @@ const SpaceCredentialSelectorModal = ({
 }: SpaceCredentialSelectorModalProps) => {
   const { mutate: mutateNetwork } = useBuilderNetwork();
   const [selected, setSelected] = useState(selectedProp);
-  const [newCredential, setNewCredential] = useState<
-    Omit<SpaceCredential, 'identifier' | 'createdAt' | 'updatedAt'> | undefined
-  >(undefined);
+  const [creating, setCreating] = useState(false);
   const handleClick = useCallback((e: MouseEvent) => {
     e.stopPropagation();
   }, []);
 
-  // A caller that restricts the list restricts what it can use, so a credential created from here starts on a
-  // provider it will accept rather than on one it would immediately grey out.
-  const handleClickNewCredential = useCallback(() => {
-    setNewCredential({ name: '', provider: providersSupported?.[0] ?? 'r2', inUse: false, usedIn: [] });
-  }, [providersSupported]);
+  // A caller that restricts the list restricts what it can use, so a credential created from here is offered only the
+  // kinds it will accept rather than one it would immediately grey out.
+  const handleClickNewCredential = useCallback(() => setCreating(true), []);
 
-  const handleCloseForm = useCallback(() => setNewCredential(undefined), []);
+  const handleCloseForm = useCallback(() => setCreating(false), []);
 
   const [id, open, onOpen, onClose] = useDisclosure();
   const { data = [], mutate } = useGraphQL(open ? 'SpaceCredentials' : null, data => data?.SpaceCredentials.edges, {});
@@ -58,18 +52,18 @@ const SpaceCredentialSelectorModal = ({
   }, [selectedProp, open]);
 
   const handleSubmitForm = useCallback(
-    async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
+    async (_e: MouseEvent | undefined, values: SpaceCredentialFormValues) => {
       const response = await mutateNetwork('SpaceAddCredential', {
         name: values.name,
         provider: values.provider,
-        data: buildCredentialData(values)
+        data: credentialDataOf(values)
       });
       if (!response.success) {
         return;
       }
 
       void mutate();
-      setNewCredential(undefined);
+      setCreating(false);
     },
     [mutate, mutateNetwork]
   );
@@ -92,7 +86,7 @@ const SpaceCredentialSelectorModal = ({
       }
 
       void mutate();
-      setNewCredential(undefined);
+      setCreating(false);
     },
     [mutate, mutateNetwork]
   );
@@ -108,14 +102,10 @@ const SpaceCredentialSelectorModal = ({
           Space Credentials
         </Modal.Header>
         <Modal.Body gap={4}>
-          {newCredential && (
-            <SpaceCredentialForm
-              provider={newCredential.provider}
-              onSubmit={handleSubmitForm}
-              onClose={handleCloseForm}
-            />
+          {creating && (
+            <SpaceCredentialForm providers={providersSupported} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
           )}
-          {!newCredential && (
+          {!creating && (
             <ModalBody
               providersSupported={providersSupported}
               credentials={data}
@@ -126,7 +116,7 @@ const SpaceCredentialSelectorModal = ({
             />
           )}
         </Modal.Body>
-        {!newCredential && (
+        {!creating && (
           <Modal.Footer justify="end">
             <Button onClick={(e: MouseEvent) => void onClose(e)} size="sm">
               Cancel

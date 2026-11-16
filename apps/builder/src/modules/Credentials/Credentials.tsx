@@ -7,13 +7,11 @@ import ViewPage from '@pmodules/App/components/ViewPage';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentials from '@pmodules/Space/components/SpaceCredentials';
-import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
-import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
+import SpaceCredentialForm, { credentialDataOf } from '@pmodules/Space/Models/SpaceCredentialForm';
 
-import type { SpaceCredentialProvider, SpaceCredential as TSpaceCredential } from '@plitzi/sdk-shared';
-import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
+import type { SpaceCredential as TSpaceCredential } from '@plitzi/sdk-shared';
+import type { SpaceCredentialFormValues } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent } from 'react';
-import type z from 'zod';
 
 /**
  * Manages the space's secrets in one place.
@@ -23,17 +21,17 @@ import type z from 'zod';
  * token has to exist before there is a manifest to reference it from.
  */
 const DESCRIPTION =
-  'Secrets are encrypted at rest and only ever resolved on the server. A connector names the credential it needs; the value itself never reaches the browser or the published page.';
+  'What the space signs in with — to an API, its storage, a host it deploys to, a mail server. Encrypted at rest and read only on the server: a value never reaches the browser or a published page.';
 
 const Credentials = () => {
   const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data = [], isLoading, mutate } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges);
   const { showDialog } = useModal();
-  const [provider, setProvider] = useState<SpaceCredentialProvider | undefined>(undefined);
+  const [creating, setCreating] = useState(false);
   /** The credential whose values are being replaced. Only its name, identifier and provider are known here. */
   const [editing, setEditing] = useState<TSpaceCredential | undefined>(undefined);
 
-  const handleCreate = useCallback(() => setProvider('custom'), []);
+  const handleCreate = useCallback(() => setCreating(true), []);
 
   const handleEdit = useCallback(
     (identifier: string) => setEditing(data.find(credential => credential.identifier === identifier)),
@@ -41,29 +39,29 @@ const Credentials = () => {
   );
 
   const handleCloseForm = useCallback(() => {
-    setProvider(undefined);
+    setCreating(false);
     setEditing(undefined);
   }, []);
 
   const handleSubmitForm = useCallback(
-    async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
+    async (_e: MouseEvent | undefined, values: SpaceCredentialFormValues) => {
       const response = await mutateNetwork('SpaceAddCredential', {
         name: values.name,
         provider: values.provider,
-        data: buildCredentialData(values)
+        data: credentialDataOf(values)
       });
       if (!response.success) {
         return;
       }
 
       await mutate();
-      setProvider(undefined);
+      setCreating(false);
     },
     [mutate, mutateNetwork]
   );
 
   const handleSubmitEdit = useCallback(
-    async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
+    async (_e: MouseEvent | undefined, values: SpaceCredentialFormValues) => {
       if (!editing) {
         return;
       }
@@ -72,7 +70,7 @@ const Credentials = () => {
         identifier: editing.identifier,
         name: values.name,
         provider: values.provider,
-        data: buildCredentialData(values)
+        data: credentialDataOf(values)
       });
       if (!response.success) {
         return;
@@ -118,9 +116,9 @@ const Credentials = () => {
   return (
     <>
       {isLoading && <ViewPage description="Loading credentials…" />}
-      {!isLoading && provider && (
+      {!isLoading && creating && (
         <ViewPage onBack={handleCloseForm} backLabel="Credentials" title="New credential" description={DESCRIPTION}>
-          <SpaceCredentialForm provider={provider} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
+          <SpaceCredentialForm onSubmit={handleSubmitForm} onClose={handleCloseForm} />
         </ViewPage>
       )}
       {!isLoading && editing && (
@@ -135,13 +133,13 @@ const Credentials = () => {
           />
         </ViewPage>
       )}
-      {!isLoading && !provider && !editing && (
+      {!isLoading && !creating && !editing && (
         <ViewPage description={data.length > 0 ? DESCRIPTION : undefined} actions={data.length > 0 && createButton}>
           {data.length === 0 && (
             <EmptyState
               icon="fa-solid fa-key"
               title="No credentials yet"
-              description={`${DESCRIPTION} Add the CMS token your connector authenticates with.`}
+              description={`${DESCRIPTION} Add the first: a CMS token, a storage key, a deploy token.`}
               action={createButton}
             />
           )}

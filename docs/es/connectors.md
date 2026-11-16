@@ -97,7 +97,7 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
 ```
                        ┌─────────────────────────── B U I L D E R ───────────────────────────┐
                        │  Panel "Connectors"  ──  presets  ──  editor JSON del manifest     │
-                       │  Credenciales (CMS / Custom API) ── SpaceCredentialForm            │
+                       │  Credenciales (API, CMS or secret) ── SpaceCredentialForm          │
                        └───────────────┬─────────────────────────────────────────────────────┘
                                        │  GraphQL: SpaceConnectors + add/update/remove
                                        ▼
@@ -415,8 +415,8 @@ El espacio se sirve con SSR/RSC activado. El servidor (`plitzi-sdk-server`) debe
 
 ### 1. Crear la credencial (el secreto)
 
-Panel lateral **Credentials** → *New Credential*. Provider **CMS / Custom API** (`SpaceCredentialForm.tsx`): nombre +
-JSON con las llaves que usará el manifest, p. ej. `{ "token": "…" }`. Queda guardada con un `identifier`, cifrada en
+Panel lateral **Credentials** → *New credential* → **API, CMS or secret** (`SpaceCredentialForm`, sus tipos en
+`@plitzi/sdk-shared/credentials`): nombre y los valores con nombre que usará el manifest, p. ej. `token`. Queda guardada con un `identifier`, cifrada en
 reposo (`SpaceCredential.encryptedFields`). El secreto no baja al navegador ni entra nunca en el manifest.
 
 ### 2. Crear el conector

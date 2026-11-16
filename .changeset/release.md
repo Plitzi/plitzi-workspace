@@ -104,6 +104,14 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **A credential starts with what it signs in to.** A new one is chosen from cards — APIs and content, storage, deploys,
+  email, site access — each saying what it is for; then that provider's own fields, named as the provider names them,
+  with where it issues one and with what permissions beside them, and a link to that page. A secret is typed unseen and
+  can be shown to check a paste; a value of the wrong shape (an R2 key that is not 32 hexadecimal characters, a signed
+  token pasted as a key) is said at its field, by the same rule the platform refuses a save with. An API's or a CMS's
+  credential is a list of named values instead of JSON. The list labels every kind, deploy credentials too, and a
+  domain's password is called a **Site password**. The kinds are one list in `@plitzi/sdk-shared/credentials`.
+
 - The draft's status and **Snapshot** are one control, as **Publish** and its menu are; the account group's parts sit
   evenly inside it (3 px all round), so a hovered one no longer leans to a side. **Domains and targets** opens the
   console on the space's Domains tab.

@@ -13,6 +13,7 @@ const SERVER_SAFE = [
   'activity',
   'conditions',
   'connectors',
+  'credentials',
   'dates',
   'flags',
   'functions',

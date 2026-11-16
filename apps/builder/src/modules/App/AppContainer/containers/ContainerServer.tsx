@@ -50,8 +50,8 @@ const ContainerServer = () => {
             <Notice tone="caution">
               <span>
                 <b className="font-semibold">No server-rendered deployment.</b> What is here runs on a server or not at
-                all: an action reports itself inert and connectors resolve only in this preview. Deploy the space with a
-                Plitzi SSR credential to reach visitors.
+                all: an action reports itself inert and connectors resolve only in this preview. Publish it to a domain
+                Plitzi serves to reach visitors.
               </span>
             </Notice>
           )

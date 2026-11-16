@@ -3,6 +3,7 @@ import { Icon } from '@plitzi/plitzi-ui/components';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
+import { CREDENTIAL_KINDS } from '@plitzi/sdk-shared/credentials';
 import { formatDate } from '@plitzi/sdk-shared/dates';
 
 import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
@@ -91,36 +92,10 @@ const SpaceCredential = ({
         )}
       </div>
       <div className="flex items-center gap-2">
-        {provider === 'r2' && (
-          <>
-            <Icon icon="fa-brands fa-cloudflare" />
-            Cloudflare R2
-          </>
-        )}
-        {provider === 's3' && (
-          <>
-            <Icon icon="fa-brands fa-aws" />
-            Amazon S3
-          </>
-        )}
-        {provider === 'ssr' && (
-          <>
-            <Icon icon="fa-solid fa-server" />
-            Plitzi SSR
-          </>
-        )}
-        {provider === 'custom' && (
-          <>
-            <Icon icon="fa-solid fa-plug" />
-            API / CMS
-          </>
-        )}
-        {provider === 'smtp' && (
-          <>
-            <Icon icon="fa-solid fa-envelope" />
-            SMTP (email)
-          </>
-        )}
+        <span className="text-ui-fg-subtle flex items-center gap-1.5 text-xs">
+          <Icon icon={CREDENTIAL_KINDS[provider].icon} />
+          {CREDENTIAL_KINDS[provider].label}
+        </span>
         {inUse && (
           <span title={usedInLabel}>
             <Badge intent="info" solid={false} size="xs" icon="fa-solid fa-link">
