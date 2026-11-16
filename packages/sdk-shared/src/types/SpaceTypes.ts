@@ -193,8 +193,13 @@ export type SpaceTarget = {
   id: number;
   domain: string;
   verified: boolean;
-  /** Plitzi's own address for the space (`<space>.plitzi.app`): always served by its page servers. */
+  /** A host of Plitzi's own (the space's address, or one of the platform's): always served by its page servers. */
   plitziOwned: boolean;
+  /**
+   * The space's own address (`<space>.plitzi.app`): it shows the draft as it is saved, always — what is published on
+   * it is never what it serves, so it is no place to publish a version to (a domain of the space's own is).
+   */
+  ownAddress: boolean;
   mode: DeployMode;
   provider: 'ssr' | DeployProviderId;
   providerLabel: string;
