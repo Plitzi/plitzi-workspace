@@ -277,7 +277,7 @@ export type SSRAdapters = {
     history: (spaceId: number, domain: string) => Promise<SpaceReleases>;
     publish: (
       spaceId: number,
-      asked: { domain: string; environment: Environment; revision?: number },
+      asked: { domain: string; environment: Environment; revision?: number; deploy?: boolean },
       write: SSRWriteContext
     ) => Promise<SpaceReleaseOutcome>;
     rollback: (

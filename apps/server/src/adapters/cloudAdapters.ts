@@ -3,6 +3,8 @@ import { behindText, CLIENT_HEADER, clientHeaderValue, CURRENT_HEADER } from '@p
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { schemaFromWire } from '@plitzi/sdk-shared/schema';
 
+import { ownVersion } from '../helpers/ownVersion';
+
 import type { SSRPageAdapters, SSRSpaceDeployment } from '@plitzi/sdk-kernel/types';
 import type { Environment, OfflineDataRaw, PluginRaw, Schema, SchemaRaw, Style } from '@plitzi/sdk-shared';
 
@@ -255,14 +257,14 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
         headers: {
           'Content-Type': 'application/json',
           authorization: `Bearer ${webKey}`,
-          [CLIENT_HEADER]: clientHeaderValue('sdkServer', VERSION)
+          [CLIENT_HEADER]: clientHeaderValue('sdkServer', ownVersion())
         },
         body: JSON.stringify({ query, variables })
       });
       const current = response.headers.get(CURRENT_HEADER);
       if (current && !toldBehind) {
         toldBehind = true;
-        serverLog.warn('CloudAdapters', behindText('sdkServer', VERSION, current));
+        serverLog.warn('CloudAdapters', behindText('sdkServer', ownVersion(), current));
       }
 
       if (!response.ok) {

@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { contentTypeOf } from './contentType';
 import { resolveSdkAssetsDir } from '../core/sdkAssets';
+import { ownVersion } from '../helpers/ownVersion';
 
 import type { BuildVersions, SiteFile } from './types';
 
@@ -101,7 +102,7 @@ export const buildVersions = (): BuildVersions => {
     // React is the page server's peer: a build without it says so in its versions rather than guessing one.
   }
 
-  versions = { sdk: dir ? versionOf(path.join(dir, '..', 'package.json')) : 'unknown', react, sdkServer: VERSION };
+  versions = { sdk: dir ? versionOf(path.join(dir, '..', 'package.json')) : 'unknown', react, sdkServer: ownVersion() };
 
   return versions;
 };

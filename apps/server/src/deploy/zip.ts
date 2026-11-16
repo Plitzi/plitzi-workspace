@@ -17,7 +17,7 @@ const END_OF_CENTRAL = 0x06054b50;
 const STORED = 0;
 const DEFLATED = 8;
 /** "Version needed to extract": 2.0, deflate. */
-const VERSION = 20;
+const ZIP_VERSION = 20;
 /** Bit 11: names are UTF-8. */
 const UTF8 = 0x0800;
 const MAX_FILES = 0xffff;
@@ -48,7 +48,7 @@ export const zipFiles = (files: SiteFile[]): Uint8Array => {
 
     const local = Buffer.alloc(30);
     local.writeUInt32LE(LOCAL_HEADER, 0);
-    local.writeUInt16LE(VERSION, 4);
+    local.writeUInt16LE(ZIP_VERSION, 4);
     local.writeUInt16LE(UTF8, 6);
     local.writeUInt16LE(method, 8);
     local.writeUInt16LE(0, 10);
@@ -62,8 +62,8 @@ export const zipFiles = (files: SiteFile[]): Uint8Array => {
     const central = Buffer.alloc(46);
     central.writeUInt32LE(CENTRAL_HEADER, 0);
     // Made by Unix (3), so the permissions below are read.
-    central.writeUInt16LE((3 << 8) | VERSION, 4);
-    central.writeUInt16LE(VERSION, 6);
+    central.writeUInt16LE((3 << 8) | ZIP_VERSION, 4);
+    central.writeUInt16LE(ZIP_VERSION, 6);
     central.writeUInt16LE(UTF8, 8);
     central.writeUInt16LE(method, 10);
     central.writeUInt16LE(0, 12);

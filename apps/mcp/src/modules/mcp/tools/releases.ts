@@ -18,7 +18,8 @@ export const releasesTool = defineTool({
   name: 'plitzi_releases',
   title: 'Space releases',
   description:
-    'Every domain of the space with the revision it serves and what a rollback would put back — or, with `domain`, ' +
+    'Every domain of the space with the revision it serves, where its site is (Plitzi, or a copy on a provider) and ' +
+    'what it asks, and what a rollback would put back — or, with `domain`, ' +
     'that domain’s releases, newest first: what each put on it, who, when, publish or rollback.',
   inputShape: { domain: z.string().optional().describe('One domain’s history; every domain when left out') },
   access: 'read',
@@ -41,7 +42,11 @@ export const publishTool = defineTool({
   inputShape: {
     domain: z.string().describe('One of the space’s domains'),
     environment: environment.describe('The revision’s environment; `main` serves the draft as it is saved'),
-    revision: z.number().int().positive().optional().describe('The revision; the environment’s latest when left out')
+    revision: z.number().int().positive().optional().describe('The revision; the environment’s latest when left out'),
+    deploy: z
+      .boolean()
+      .optional()
+      .describe('A domain whose site a provider holds: deploy it when the revision needs one (refused otherwise)')
   },
   access: 'write',
   documents: false,

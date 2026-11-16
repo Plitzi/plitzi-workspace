@@ -322,11 +322,16 @@ export type SpaceDomainRelease = {
   serves: SpaceServedVersion | null;
   followsLatest: boolean;
   rollback: SpaceServedVersion | null;
+  /** Where its site is: `Plitzi`, or a copy on a provider (`GitHub Pages · SPA`). */
+  where?: string;
+  /** What it asks of a publisher, when anything: a deploy that failed, newer versions out, a plan that dropped it. */
+  asks?: string;
 };
 
 /** How a publish or a rollback went: the release it recorded, or the platform's refusal in its own words. */
 export type SpaceReleaseOutcome =
-  { done: true; release: SpaceRelease } | { done: false; reason: string; code?: string };
+  | { done: true; release: SpaceRelease; /** The deploy it queued, on a domain whose site a provider holds. */ deployId?: number }
+  | { done: false; reason: string; code?: string };
 
 /**
  * What changes going from one version of a space to another — the draft against a snapshot (what a snapshot would
