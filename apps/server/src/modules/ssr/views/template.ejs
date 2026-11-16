@@ -128,6 +128,10 @@
     <script<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
 <%- inline('motionSeen.js') %>
     </script>
+    <%# The tab the address names, open before the page paints: views/inline/tabHash.js says why. %>
+    <script<%- locals.nonce ? ` nonce="${locals.nonce}"` : '' %>>
+<%- inline('tabHash.js') %>
+    </script>
     <% if (!locals.ssrOnly) { %>
     <%# The payload is data, so it travels as JSON: parsing it as a JavaScript literal cost the browser several times
         what JSON.parse does, on megabytes of it. Escaped by the server — no `<` reaches this block. %>

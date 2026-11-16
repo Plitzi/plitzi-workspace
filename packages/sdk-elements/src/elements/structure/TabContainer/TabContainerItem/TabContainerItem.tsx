@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
@@ -61,8 +61,9 @@ const TabContainerItem = ({
   const name = hash.replace(/^#/, '').trim();
   const linked = Boolean(isHeader && name);
 
-  // Opened by the address: on load — after hydration, the server never sees a hash — and whenever the hash changes.
-  useEffect(() => {
+  // Opened by the address before the browser paints — a page the server drew had it opened by its script already
+  // (sdk-server's `tabHash.js`), one drawn here is opened now — and whenever the hash changes.
+  useLayoutEffect(() => {
     if (!linked || typeof window === 'undefined') {
       return undefined;
     }
@@ -131,7 +132,9 @@ const TabContainerItem = ({
         'aria-selected': selected,
         'aria-controls': panelId,
         tabIndex: selected ? 0 : -1,
-        onKeyDown: handleKeyDown
+        onKeyDown: handleKeyDown,
+        // What the page's script finds the tab its address names by, before React is there.
+        ...(linked ? { 'data-tab-hash': name } : {})
       }
     : // A panel not on show is `hidden`: out of the reading order and the find-in-page, and what keeps it out of the
       // `current` state, which selects the panel on show (`[role="tabpanel"]:not([hidden])`)

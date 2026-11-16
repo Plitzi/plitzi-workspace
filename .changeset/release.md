@@ -59,7 +59,8 @@ weighs on a phone — and what of it a phone cannot hold.
 ## Authoring
 
 - A tab of a `tabContainer` takes `hash`: a link to the page ending in `#domains` opens on that tab, and choosing the
-  tab writes it in the address — replaced, so Back leaves the page rather than the tab.
+  tab writes it in the address — replaced, so Back leaves the page rather than the tab. A page the server drew opens on
+  it before it paints (the page's `tabHash.js`), and hydrates there: no flash of the first tab.
 - An attribute an element does not read, on an element that reads none, says so (`It reads no attribute: remove it.`)
   instead of an empty list.
 
@@ -140,8 +141,8 @@ weighs on a phone — and what of it a phone cannot hold.
   is where it was, one click away; each section's notices are one line about the state it is in, and the search and
   share previews sit in a section of their own. The sections are `SettingsSection`, for other elements' settings too.
 - The 404 page is said and set in the builder: the Pages tree marks the page of every address no other page answers
-  (`slug: '*'`) with a **404** badge — of the space, or of its folder —, and the page menu's **Use as 404 page** makes
-  another page it, giving the old one a slug of its name back (both said before and after). One per place — the space,
+  (`slug: '*'`) with an icon of its own, as the home page has — of the space, or of its folder, said in its title —,
+  and the page menu's **Use as 404 page** makes another page it, giving the old one a slug of its name back (both said before and after). One per place — the space,
   or one folder: typing `*` in a page's slug, moving a 404 page into a folder, or dragging it there in the sitemap where
   one already is, is refused, saying which page it is and how to swap them. Its settings say what it is, on the Page
   section's header too.

@@ -65,29 +65,28 @@ const DirectoryItem = ({ element, active = false, nestedLevel = 0 }: DirectoryIt
       <Link to={id} relative="path" className="flex min-w-0 grow basis-0 flex-col" onClick={handleClick}>
         <Flex basis={0} grow gap={2} items="center" justify="between">
           <Flex grow items="center" basis={0} gap={2} className="overflow-hidden" style={styleMemo}>
+            {/* What the page is, in its icon: a layout, the space's home, the page of every address nobody answers, a page. */}
             <Icon
               size="sm"
               cursor="pointer"
               active={active}
               intent={active ? 'primary' : 'custom'}
               icon={
-                type === 'layoutContainer' ? 'fa-solid fa-border-all' : defaultPage ? 'fas fa-home' : 'fa-solid fa-file'
+                type === 'layoutContainer'
+                  ? 'fa-solid fa-border-all'
+                  : defaultPage
+                    ? 'fas fa-home'
+                    : notFound
+                      ? 'fa-solid fa-file-circle-question'
+                      : 'fa-solid fa-file'
               }
-              title={type === 'layoutContainer' ? 'Layout' : 'Page'}
+              {...(notFound && !active ? { className: 'text-amber-600 dark:text-amber-400' } : {})}
+              title={type === 'layoutContainer' ? 'Layout' : notFound ? notFoundSays : 'Page'}
+              {...(notFound ? { role: 'img', 'aria-label': notFoundSays } : {})}
             />
             <Text size="sm" isTruncated active={active}>
               {name ? name : label ? label : type}
             </Text>
-            {notFound && (
-              <span
-                role="img"
-                aria-label={notFoundSays}
-                title={notFoundSays}
-                className="shrink-0 rounded-sm bg-amber-100 px-1 text-[10px] leading-4 font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
-              >
-                404
-              </span>
-            )}
             {protection && (
               <Icon
                 size="xs"
