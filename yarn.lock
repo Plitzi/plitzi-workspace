@@ -1238,9 +1238,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hookform/resolvers@npm:^7.0.2":
-  version: 7.0.2
-  resolution: "@hookform/resolvers@npm:7.0.2"
+"@hookform/resolvers@npm:^7.0.6":
+  version: 7.0.6
+  resolution: "@hookform/resolvers@npm:7.0.6"
   dependencies:
     "@standard-schema/utils": "npm:^0.3.0"
   peerDependencies:
@@ -1248,7 +1248,7 @@ __metadata:
     "@vinejs/vine": ^2.0.0 || ^3.0.0 || ^4.0.0
     ajv: ^8.12.0
     ajv-errors: ^3.0.0
-    ajv-formats: ^2.1.1
+    ajv-formats: ^2.1.1 || ^3.0.0
     arktype: ^2.0.0
     ata-validator: ^1.23.0
     class-transformer: ">=0.4.0"
@@ -1315,7 +1315,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/24bba5a7f1362c83d344a22b797079a6c748447ddd18c1523031c9accd3f1addf1f4f6ff086e75ea9343ce82e3683848b3f7c6f02f2755ea1341ccdb7755764a
+  checksum: 10c0/9fafcfa47e7889da6504f34a1e296d8bcbbff6647268bde57ab02648da8937c5efb6857a582137b253aa2fbe4fafaa27768c1fe6d87c3925f1b84308ead3d769
   languageName: node
   linkType: hard
 
@@ -2792,7 +2792,7 @@ __metadata:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.4.0"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -2852,7 +2852,7 @@ __metadata:
   dependencies:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.5"
@@ -2889,7 +2889,7 @@ __metadata:
     "@dr.pogodin/react-helmet": "npm:^3.3.2"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
@@ -2936,9 +2936,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.6.39":
-  version: 1.6.39
-  resolution: "@plitzi/plitzi-ui@npm:1.6.39"
+"@plitzi/plitzi-ui@npm:^1.6.40":
+  version: 1.6.40
+  resolution: "@plitzi/plitzi-ui@npm:1.6.40"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.4"
     "@codemirror/commands": "npm:^6.11.1"
@@ -2950,13 +2950,13 @@ __metadata:
     "@codemirror/state": "npm:^6.7.6"
     "@codemirror/theme-one-dark": "npm:^6.1.3"
     "@codemirror/view": "npm:^6.43.15"
-    "@hookform/resolvers": "npm:^7.0.2"
-    "@uiw/color-convert": "npm:^2.10.3"
-    "@uiw/react-color-sketch": "npm:^2.10.3"
+    "@hookform/resolvers": "npm:^7.0.6"
+    "@uiw/color-convert": "npm:^2.10.4"
+    "@uiw/react-color-sketch": "npm:^2.10.4"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.4.0"
-    immer: "npm:^11.2.9"
+    immer: "npm:^11.2.10"
     react-markdown: "npm:^10.1.0"
     react-syntax-highlighter: "npm:^16.1.2"
     react-toastify: "npm:^11.2.0"
@@ -2969,7 +2969,7 @@ __metadata:
     react-dom: ^19.2.8
     react-hook-form: ^7.85.0
     zod: ^4.6.4
-  checksum: 10c0/83bc1482022bb44f89442439ad0cc288fd3515a9a3b2a0cb619e7b6173e8813df689b620765f09b86d5074abd86a9f7d7004a9db756518ab45db3f7d006671a2
+  checksum: 10c0/1d31899518048c3b694ea0ccc27f1dc98ba31b9bc7509961abed2542e4438edfda9d0dce537eb14d0c3dce0833f3355a5fb98f46ae0a4c594c99a600ca72c921
   languageName: node
   linkType: hard
 
@@ -2979,7 +2979,7 @@ __metadata:
   dependencies:
     "@changesets/cli": "npm:^3.0.3"
     "@playwright/test": "npm:^1.65.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.3.0"
     eslint: "npm:^9.39.5"
@@ -3033,7 +3033,7 @@ __metadata:
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
@@ -3051,7 +3051,7 @@ __metadata:
   resolution: "@plitzi/sdk-authoring@workspace:packages/sdk-authoring"
   dependencies:
     "@microsoft/api-extractor": "npm:^7.60.1"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -3077,7 +3077,7 @@ __metadata:
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@testing-library/react": "npm:^16.3.3"
@@ -3102,7 +3102,7 @@ __metadata:
   dependencies:
     "@dr.pogodin/react-helmet": "npm:^3.3.2"
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
@@ -3148,7 +3148,7 @@ __metadata:
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3234,7 +3234,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
     react: "npm:^19.3.1"
@@ -3253,7 +3253,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-plugins@workspace:packages/sdk-plugins"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
@@ -3293,7 +3293,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     eslint: "npm:^9.39.5"
@@ -3338,7 +3338,7 @@ __metadata:
     vitest: "npm:^5.1.0"
     ws: "npm:^8.22.2"
   peerDependencies:
-    "@plitzi/sdk-actions": ^0.39.3
+    "@plitzi/sdk-actions": ^0.39.4
     react: ^19
     react-dom: ^19
     sharp: ^0.34.0
@@ -3409,7 +3409,7 @@ __metadata:
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
     "@plitzi/nexus": "npm:^1.4.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3430,7 +3430,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.39"
+    "@plitzi/plitzi-ui": "npm:^1.6.40"
     "@plitzi/sdk-shared": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.5"
@@ -4722,122 +4722,122 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/color-convert@npm:2.10.3, @uiw/color-convert@npm:^2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/color-convert@npm:2.10.3"
+"@uiw/color-convert@npm:2.10.4, @uiw/color-convert@npm:^2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/color-convert@npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
-  checksum: 10c0/5fed21fe91d6b6d23c7cf82a12d2a7e28c6dfbaa0d7db374cf18258b9b1000be3ebc845039a157b6b105214770cf95e87ae6fd7377df995f6f7300b19f259f02
+  checksum: 10c0/9d69865dcecce4e0347a83931cd14441e6b4dfb65094eb2afd741f5410cfc4cf9a989a9b1797054f4c2d040f0adbadacd618f63e0056992679dbba1173e1bfea
   languageName: node
   linkType: hard
 
-"@uiw/react-color-alpha@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-alpha@npm:2.10.3"
+"@uiw/react-color-alpha@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-alpha@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
-    "@uiw/react-drag-event-interactive": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
+    "@uiw/react-drag-event-interactive": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/ef04e8094663c8ebb1c3513981de79a9c8582fc94cbd1baebb6862f9c6430f34a4e8f3b7123571127e8c0367e7723fced53a2da70853b211cadb4d221233e4a0
+  checksum: 10c0/28455eda8b9e6162b1847bcf5e012b064eaefc07bf161f8130f29df7f792971c85872b10300ae27b37ded67627218cbb61b14ecdcd96903115ac496ab0ae9fab
   languageName: node
   linkType: hard
 
-"@uiw/react-color-editable-input-rgba@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-editable-input-rgba@npm:2.10.3"
+"@uiw/react-color-editable-input-rgba@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-editable-input-rgba@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
-    "@uiw/react-color-editable-input": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
+    "@uiw/react-color-editable-input": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/344bacf5e5180a15c15e93dae862f8ecc7e0d1d74e08283fdf6188690e0a7a9d132e521f31fe131a48f546f3a848e55fb6f55c65b87ca100b555114c93b3d756
+  checksum: 10c0/a93d7b4022ad225b471ff58986e57c2d9fc8c74ffbe5ab7cac0581c5183860501e9e167075a57760efb111eade1f3df2ded4259b9ae7564228f8603180f81c89
   languageName: node
   linkType: hard
 
-"@uiw/react-color-editable-input@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-editable-input@npm:2.10.3"
+"@uiw/react-color-editable-input@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-editable-input@npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/f8e60b0cff73ccd720a405670fce43ca99cccdcca32b3a8a441f81d9c318e8882a37174ebd9fa58cd75f8eb301722e14015f067706f05e70c6ac3ac8148436d6
+  checksum: 10c0/d9d1fe305c53373b10a248897e2f3fadefcd203c6aadab69931337a5efe688da277d106797ae45aa2f217f735a79c4ae5b4c586da77040b8f3db26c40ca48cdc
   languageName: node
   linkType: hard
 
-"@uiw/react-color-hue@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-hue@npm:2.10.3"
+"@uiw/react-color-hue@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-hue@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
-    "@uiw/react-color-alpha": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
+    "@uiw/react-color-alpha": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/90b6185c1e56821f7315e97d6b2ab5f8d2ce8584e996383fcaef9b55cd38a37dac9640c4b1ddabca3094cfa1da966993d7210eac178ec88e44b07c2a19f9f286
+  checksum: 10c0/a11492aa36b6c69242e3db775456a70ad19ecef933da0aedf8d39c432c25f399deef52ae59a89c4e824e08b638ee765cfef3c0f332968e4b0287fd9bc7df0698
   languageName: node
   linkType: hard
 
-"@uiw/react-color-saturation@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-saturation@npm:2.10.3"
+"@uiw/react-color-saturation@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-saturation@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
-    "@uiw/react-drag-event-interactive": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
+    "@uiw/react-drag-event-interactive": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/64f66ca3e6f8e5315e9364c56974098e741458c7feb73bc40756525761df1ea6d8f783a6ee852e6deb019c5b4199b7eed4ab8256f8a1934348925afa7ac2b350
+  checksum: 10c0/46661a4c68ffe7d28fb82b4e081375733a595c45c84f2b7ed13ab6baeef96b8206ef827bcf5939b57752e807aa3532658ea72237c90b5e1b2c713d0269c8cbe4
   languageName: node
   linkType: hard
 
-"@uiw/react-color-sketch@npm:^2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-sketch@npm:2.10.3"
+"@uiw/react-color-sketch@npm:^2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-sketch@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
-    "@uiw/react-color-alpha": "npm:2.10.3"
-    "@uiw/react-color-editable-input": "npm:2.10.3"
-    "@uiw/react-color-editable-input-rgba": "npm:2.10.3"
-    "@uiw/react-color-hue": "npm:2.10.3"
-    "@uiw/react-color-saturation": "npm:2.10.3"
-    "@uiw/react-color-swatch": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
+    "@uiw/react-color-alpha": "npm:2.10.4"
+    "@uiw/react-color-editable-input": "npm:2.10.4"
+    "@uiw/react-color-editable-input-rgba": "npm:2.10.4"
+    "@uiw/react-color-hue": "npm:2.10.4"
+    "@uiw/react-color-saturation": "npm:2.10.4"
+    "@uiw/react-color-swatch": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/69a74310961750514d2656c683d77f486b5e468b98384eb2805a97dd50ed5cb1194b20d1108711eb0ed37cb6fed8560891586a6aabfff68a2c71ce48be1071c3
+  checksum: 10c0/152d7966a7c0a758800abdcefc7351a94fc8bc7eac773ef672cdb0b2cf60fa51d9bac3c1abaf70b72ae1c5f277aefcd72095767d86d47c2062ff2bfad05a74cb
   languageName: node
   linkType: hard
 
-"@uiw/react-color-swatch@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-color-swatch@npm:2.10.3"
+"@uiw/react-color-swatch@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-color-swatch@npm:2.10.4"
   dependencies:
-    "@uiw/color-convert": "npm:2.10.3"
+    "@uiw/color-convert": "npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/640875a484dc8aabacacaaa4b2b4404423a3affe686cc2283056002a0903034ef22bf3b84800d4341b31ebf2e81d8571d2bfca955dd763880cbe6822f30eb39a
+  checksum: 10c0/16cfcb6fa8a5614db3ff6abc3bea5ef24c1a5f3728b777442bae0ab2670e28a8b882f0a490b79fde433ae39e948f3ac340e5089b181c3e624848594f002df09f
   languageName: node
   linkType: hard
 
-"@uiw/react-drag-event-interactive@npm:2.10.3":
-  version: 2.10.3
-  resolution: "@uiw/react-drag-event-interactive@npm:2.10.3"
+"@uiw/react-drag-event-interactive@npm:2.10.4":
+  version: 2.10.4
+  resolution: "@uiw/react-drag-event-interactive@npm:2.10.4"
   peerDependencies:
     "@babel/runtime": ">=7.19.0"
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10c0/8be11bc07a00ed6a3bc7d5dccc481393bbb1a88bfe4de95390178b49985a179b5d49a91178d901f85204c40cdf2178746f29a09fe8779ef5f25fb3eb30e36e4b
+  checksum: 10c0/81728bb61d521eeaa16a26e968b00a7f40727cabbfeda1c93232b2008a61280f65b3ba629773b73cdb96bfd571eb1e2a7e2ac1c5b0c1cde80dce08c278eb963b
   languageName: node
   linkType: hard
 
@@ -8421,6 +8421,13 @@ __metadata:
   version: 3.0.6
   resolution: "immediate@npm:3.0.6"
   checksum: 10c0/f8ba7ede69bee9260241ad078d2d535848745ff5f6995c7c7cb41cfdc9ccc213f66e10fa5afb881f90298b24a3f7344b637b592beb4f54e582770cdce3f1f039
+  languageName: node
+  linkType: hard
+
+"immer@npm:^11.2.10":
+  version: 11.2.10
+  resolution: "immer@npm:11.2.10"
+  checksum: 10c0/6f06679642fba3a4d71a0ead000e0583fd423a8e6256616f67fd5e7f82f448f704135b9cfb84cb75787a48b362643089909d99ec08b19b6c79fecbc5bc1294c2
   languageName: node
   linkType: hard
 
