@@ -16,7 +16,9 @@ import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
+import SpaceSnapshotsQuery from './Space/SpaceSnapshotsQuery';
 import SpaceTestsQuery from './Space/SpaceTestsQuery';
+import SpaceVersionChangesQuery from './Space/SpaceVersionChangesQuery';
 import SpaceVersionContentsQuery from './Space/SpaceVersionContentsQuery';
 import SpaceVisitorsQuery from './Space/SpaceVisitorsQuery';
 
@@ -38,7 +40,9 @@ import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
+import type { TSpaceSnapshotsQuery } from './Space/SpaceSnapshotsQuery';
 import type { TSpaceTestsQuery } from './Space/SpaceTestsQuery';
+import type { TSpaceVersionChangesQuery } from './Space/SpaceVersionChangesQuery';
 import type { TSpaceVersionContentsQuery } from './Space/SpaceVersionContentsQuery';
 import type { TSpaceVisitorsQuery } from './Space/SpaceVisitorsQuery';
 
@@ -68,6 +72,8 @@ export type BuilderQueriesMap = {
   SpaceConnectors: TSpaceConnectorsQuery;
   SpaceCredentials: TSpaceCredentialsQuery;
   SpaceVersionContents: TSpaceVersionContentsQuery;
+  SpaceVersionChanges: TSpaceVersionChangesQuery;
+  SpaceSnapshots: TSpaceSnapshotsQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
   SpaceRuntime: TSpaceRuntimeQuery;
 };
@@ -92,6 +98,8 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceConnectors: SpaceConnectorsQuery,
   SpaceCredentials: SpaceCredentialsQuery,
   SpaceVersionContents: SpaceVersionContentsQuery,
+  SpaceVersionChanges: SpaceVersionChangesQuery,
+  SpaceSnapshots: SpaceSnapshotsQuery,
   SpaceVisitors: SpaceVisitorsQuery,
   SpaceRuntime: SpaceRuntimeQuery
 };

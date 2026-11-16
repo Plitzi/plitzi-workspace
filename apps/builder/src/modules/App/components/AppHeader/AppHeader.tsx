@@ -3,7 +3,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useState, useCallback, useMemo, memo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 
 import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -25,20 +25,27 @@ import PageHeader from './PageHeader';
 import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
+import DraftStatusChip from './ReleaseCluster/DraftStatusChip';
+import HeaderMenu from './ReleaseCluster/HeaderMenu';
+import useDraftStatus from './ReleaseCluster/useDraftStatus';
 import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
 import ViewButtons from './ViewButtons';
 import ZoomButtons from './ZoomButtons';
-import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
-import DeployForm from '../../models/DeployForm';
-import PublishForm from '../../models/PublishForm';
+import { PUBLISHED_ENVIRONMENTS } from '../../helpers/environments';
+import { FORM_MODAL, SHEET_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
+import PublishSheet from '../../models/PublishSheet';
+import SnapshotForm from '../../models/SnapshotForm';
+
+import type { SnapshotFormValues } from '../../models/SnapshotForm';
+import type { Environment } from '@plitzi/sdk-shared';
 
 const AppHeader = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { mutate } = useBuilderNetwork();
-  const [loadingDeployment, setLoadingDeployment] = useState(false);
+  const draft = useDraftStatus();
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
   const showSpaceIssues = useShowSpaceIssues();
@@ -53,7 +60,27 @@ const AppHeader = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  const handleClickPublish = useCallback(async () => {
+  /** The publish sheet, on a snapshot just made when there is one. It publishes and says how it went itself. */
+  const openPublish = useCallback(
+    async (initial?: { environment: Environment; revision: number }) => {
+      await showModal(
+        <Modal.Header>
+          <h4>Publish</h4>
+        </Modal.Header>,
+        ({ onClose }) => (
+          <Modal.Body>
+            <PublishSheet environment={initial?.environment} revision={initial?.revision} onClose={onClose} />
+          </Modal.Body>
+        ),
+        undefined,
+        SHEET_MODAL
+      );
+      await draft.refresh();
+    },
+    [draft, showModal]
+  );
+
+  const handleClickSnapshot = useCallback(async () => {
     if (snapshotsLocked?.upgradeUrl) {
       openPlans(snapshotsLocked.upgradeUrl);
 
@@ -69,62 +96,13 @@ const AppHeader = () => {
       return;
     }
 
-    const response = await showModal<{ environment: string; description: string }>(
+    const response = await showModal<SnapshotFormValues>(
       <Modal.Header>
-        <h4>Make Snapshot</h4>
+        <h4>Make a snapshot</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
-          <PublishForm onClose={onClose} onSubmit={onSubmit} />
-        </Modal.Body>
-      )
-    );
-
-    if (!response) {
-      return;
-    }
-
-    const responseMutation = await mutate('SpacePublish', response, true);
-    const refused = issuesFromError(responseMutation.error);
-    if (refused) {
-      // Saved between the check above and the publish: the server's reading is the one that counts.
-      await showSpaceIssues({ errors: refused, warnings: [], suggestions: [] }, PUBLISH_REFUSED);
-    } else if (responseMutation.result) {
-      addToast(
-        <div>
-          Snapshot <b>{`${responseMutation.result.environment}:${responseMutation.result.revision}`}</b> Created
-          Successfully
-        </div>,
-        { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
-      );
-    } else if (responseMutation.error) {
-      addToast(responseMutation.error instanceof Error ? responseMutation.error.message : responseMutation.error, {
-        appeareance: 'error',
-        autoDismiss: true,
-        placement: 'top-right'
-      });
-    }
-  }, [addToast, mutate, openPlans, refreshIssues, showModal, showSpaceIssues, snapshotsLocked]);
-
-  const handleClickDeploy = useCallback(async () => {
-    if (domainLocked?.upgradeUrl) {
-      openPlans(domainLocked.upgradeUrl);
-
-      return;
-    }
-
-    const response = await showModal<{
-      environment: string;
-      domain: string;
-      revision?: number;
-      cdnIdentifier?: string;
-    }>(
-      <Modal.Header>
-        <h4>Publish a snapshot</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <DeployForm onClose={onClose} onSubmit={onSubmit} />
+          <SnapshotForm onClose={onClose} onSubmit={onSubmit} />
         </Modal.Body>
       ),
       undefined,
@@ -135,16 +113,27 @@ const AppHeader = () => {
       return;
     }
 
-    setLoadingDeployment(true);
-    const responseMutation = await mutate('SpaceDeploy', response, true);
-    setLoadingDeployment(false);
-    if (responseMutation.result) {
-      addToast(
-        <div>
-          Your snapshot have being published to <b>{responseMutation.result.domain}</b> Successfully
-        </div>,
-        { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
-      );
+    const { thenPublish, ...values } = response;
+    const responseMutation = await mutate('SpacePublish', values, true);
+    const refused = issuesFromError(responseMutation.error);
+    if (refused) {
+      // Saved between the check above and the publish: the server's reading is the one that counts.
+      await showSpaceIssues({ errors: refused, warnings: [], suggestions: [] }, PUBLISH_REFUSED);
+    } else if (responseMutation.result) {
+      const { environment, revision } = responseMutation.result;
+      await draft.refresh();
+      // The environment the snapshot was asked into, as the answer names it.
+      const kept = PUBLISHED_ENVIRONMENTS.find(published => published === environment);
+      if (thenPublish && kept) {
+        await openPublish({ environment: kept, revision });
+      } else {
+        addToast(
+          <div>
+            Kept as <b>{`${environment} r${String(revision)}`}</b>. Publish it when it is ready.
+          </div>,
+          { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
+        );
+      }
     } else if (responseMutation.error) {
       addToast(responseMutation.error instanceof Error ? responseMutation.error.message : responseMutation.error, {
         appeareance: 'error',
@@ -152,7 +141,17 @@ const AppHeader = () => {
         placement: 'top-right'
       });
     }
-  }, [addToast, domainLocked, mutate, openPlans, showModal]);
+  }, [addToast, draft, mutate, openPlans, openPublish, refreshIssues, showModal, showSpaceIssues, snapshotsLocked]);
+
+  const handleClickPublish = useCallback(async () => {
+    if (domainLocked?.upgradeUrl) {
+      openPlans(domainLocked.upgradeUrl);
+
+      return;
+    }
+
+    await openPublish();
+  }, [domainLocked, openPlans, openPublish]);
 
   const handleClickExport = useCallback(async () => {
     await showModal(
@@ -233,49 +232,35 @@ const AppHeader = () => {
         <PreviewModeButtons />
         {may('spaceCode') && <RuntimeIdleNotice />}
         <IssuesButton />
-        <QuotaMeter />
-        <PlanBadge />
-        <RoleBadge />
-        <button
-          className={clsx(
-            'text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-7 w-7 cursor-pointer items-center justify-center rounded transition-colors'
+        {/* The account, as one group: the space's quota, its plan and the person's role on it. */}
+        <div className="border-ui-line flex h-8 items-center gap-1 rounded-lg border px-1">
+          <QuotaMeter />
+          <PlanBadge />
+          <RoleBadge />
+        </div>
+        {/*
+          The release cluster: what the draft is against the last snapshot, Snapshot, and Publish — the header's one
+          primary. What is used less steps back into the menu beside it.
+        */}
+        <div className="flex items-center gap-2">
+          {publishes && (
+            <DraftStatusChip
+              newest={draft.newest}
+              changes={draft.changes}
+              loading={draft.loading}
+              onClick={() => void handleClickPublish()}
+            />
           )}
-          title={
-            theme === 'dark' ? 'Switch to light mode' : theme === 'light' ? 'Use system theme' : 'Switch to dark mode'
-          }
-          onClick={toggleTheme}
-        >
-          <i
-            className={clsx(
-              'fa-solid text-sm',
-              theme === 'dark' ? 'fa-sun' : theme === 'light' ? 'fa-moon' : 'fa-desktop'
-            )}
-          />
-        </button>
-        <div className="flex gap-2">
-          <Button
-            id="header-export"
-            size="sm"
-            title="Export: a copy of this space as JSON, or as the code that authors it."
-            aria-label="Export"
-            onClick={handleClickExport}
-            intent="secondary"
-            iconPlacement="before"
-          >
-            {/* Its icon, and its name beside it from 1,536 px up; under it its name stays its title and accessible name. */}
-            <Button.Icon icon="fa-solid fa-download" />
-            <span className="hidden 2xl:inline">Export</span>
-          </Button>
           {publishes && (
             <Button
-              id="header-publish"
+              id="header-snapshot"
               size="sm"
               title={
                 snapshotsLocked
                   ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
                   : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
               }
-              onClick={handleClickPublish}
+              onClick={() => void handleClickSnapshot()}
               intent="secondary"
             >
               {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
@@ -284,20 +269,52 @@ const AppHeader = () => {
           )}
           {publishes && (
             <Button
-              id="header-deploy"
+              id="header-publish"
               size="sm"
               title={
                 domainLocked
                   ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
-                  : "Publish: put a revision live on an environment's domain."
+                  : 'Publish: choose which revision a domain serves.'
               }
-              onClick={handleClickDeploy}
-              disabled={loadingDeployment}
+              onClick={() => void handleClickPublish()}
             >
-              {domainLocked && !loadingDeployment && <Button.Icon icon="fa-solid fa-lock" />}
-              {!loadingDeployment ? 'Publish' : <Button.Icon icon="fa-solid fa-sync" className="fa-spin fa-2x" />}
+              {domainLocked && <Button.Icon icon="fa-solid fa-lock" />}
+              Publish
             </Button>
           )}
+          <HeaderMenu
+            id="header-more"
+            label="More"
+            icon="fa-solid fa-ellipsis"
+            sections={[
+              {
+                items: [
+                  {
+                    id: 'header-export',
+                    label: 'Export',
+                    icon: 'fa-solid fa-download',
+                    onSelect: () => void handleClickExport()
+                  }
+                ]
+              },
+              {
+                label: 'Theme',
+                items: (
+                  [
+                    ['light', 'Light', 'fa-solid fa-sun'],
+                    ['dark', 'Dark', 'fa-solid fa-moon'],
+                    ['system', 'System', 'fa-solid fa-desktop']
+                  ] as const
+                ).map(([mode, label, icon]) => ({
+                  id: `header-theme-${mode}`,
+                  label,
+                  icon,
+                  checked: theme === mode,
+                  onSelect: () => setTheme(mode)
+                }))
+              }
+            ]}
+          />
         </div>
       </div>
     </div>

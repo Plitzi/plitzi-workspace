@@ -53,6 +53,15 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **Snapshot and Publish, redrawn** (RFC 0034, F0). The header's end is one release cluster: a chip that says how far
+  the draft has moved since the last snapshot ("4 changes since production r12"), **Snapshot**, and **Publish** — its
+  one primary; **Export** and the theme step back into a `⋯` menu, and the quota, plan and role read as one group.
+  **Make a snapshot** chooses its environment on a segmented control (each with its latest revision; a locked one
+  outlined with its plan, never a bright tile), says what changes against that environment's latest, asks what it is
+  for, shows only the notices that apply, and offers **Snapshot and publish…**. **Publish** opens beside the page:
+  the domains, each with what it serves now; the environment and the revision, each snapshot with its words, who
+  made it and where it is live; what changes on that domain; then one action, and the outcome in the sheet itself.
+  Cancel no longer weighs what the action does.
 - The page tree marks what a visitor may not open: a lock beside a page only for signed-in visitors or for some
   permissions, saying which (and when it answers everyone else with a 404), and beside a folder all of whose pages are —
   fainter, with how many, when only some are. Read by the rule the server withholds pages with (`protectedAccessOf`,

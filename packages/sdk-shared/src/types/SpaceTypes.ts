@@ -151,3 +151,35 @@ export type SpaceVersionContents = {
   /** Its runtime, and whether the source it was packed from is kept with this version — none when it has none. */
   runtime: { source: boolean } | null;
 };
+
+/** One snapshot as the publish sheet lists it: its words, its moment, who made it and the domains serving it now. */
+export type SpaceSnapshot = {
+  environment: Environment;
+  revision: number;
+  description: string;
+  /** ISO 8601, UTC. */
+  publishedAt: string;
+  /** None for a snapshot made before its author was kept. */
+  by: { id: number; username: string } | null;
+  domains: string[];
+};
+
+/**
+ * What changes going from one version of a space to another — the draft against a snapshot (what a snapshot would
+ * freeze), a snapshot against what a domain serves (what a publish would change): pages by name, the rest counted.
+ */
+export type SpaceVersionChanges = {
+  pages: { added: string[]; removed: string[]; changed: string[] };
+  layouts: number;
+  components: number;
+  styles: boolean;
+  fonts: boolean;
+  settings: boolean;
+  plugins: { added: string[]; removed: string[]; changed: string[] };
+  actions: number;
+  connectors: number;
+  functions: boolean;
+  runtime: boolean;
+  /** How many of these differ: 0 is the same version twice. */
+  total: number;
+};
