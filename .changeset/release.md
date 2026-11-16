@@ -8,6 +8,10 @@ weighs on a phone — and what of it a phone cannot hold.
 ## CLI
 
 - `plitzi space snapshot` prints the snapshot's preview address, to look at it before any domain serves it.
+- `plitzi space targets | deploy <domain> [--follow] [--redeploy] | deploys [domain] | download <deploy>`, and
+  `space publish --deploy | --at <moment>` (RFC 0034): where each domain's site is — Plitzi, or a copy on GitHub Pages,
+  AWS, Cloudflare, Netlify, Vercel, FTP, a zip or a server of your own — a copy deployed again and followed to its end
+  (exit 1 when it failed), its deploys, a kept one's site as a zip, a publish with its deploy or set for later.
 - `plitzi space snapshot`, `space publish <domain>`, `space rollback <domain> [--to production@9]` and `space releases
 [domain]` (RFC 0034): the builder's Snapshot and Publish for a terminal, a CI job or an agent — what each domain
   serves, what a rollback would put back, a domain's history — held on the platform to the same rules, `--json` for a
@@ -24,13 +28,18 @@ weighs on a phone — and what of it a phone cannot hold.
   and switched in one step behind CloudFront by a prefix per deploy), `ftpUploader` (FTP and FTPS), `folderUploader`;
   `zipFiles` / `unzipFiles` for a site as one zip.
 - `renderGrant({ served })`: a page that names no revision is answered the one its own domain (`Origin`) is published at.
-
+- `createCloudAdapters({ domain })`: a server of your own serves the revision its domain is published at, says what it
+  is (`x-plitzi-client: sdkServer/<version>`, judged as every client of the platform is), says once when Plitzi is
+  newer, and logs the platform's own words when it is refused.
 - `snapshotPreview({ suffix, keyOf, find })` and `previewLabel(name, snapshot, key)` (`@plitzi/sdk-server/spaces`): a
   snapshot served at an address of its own, `<name>--r12-production-<space>-<key>.<suffix>`, its key the deployment's
   secret for that snapshot — a wrong one is the 404 of a space that does not exist. A resolution may say `noindex`:
   every page on it answers `X-Robots-Tag: noindex, nofollow`, and its `/robots.txt` disallows everything.
 
 ## MCP
+
+- `plitzi_publish { deploy }` deploys a copy a provider holds when the revision needs one (refused with why otherwise),
+  answering the deploy it queued; `plitzi_releases` says where each domain's site is and what it asks.
 
 - `plitzi_releases`, `plitzi_publish` and `plitzi_rollback`: what each domain serves and its history, a publish and a
   rollback, for the member the agent acts for and held to that member's right to publish; a refusal is answered as
@@ -85,6 +94,17 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **Where a domain's site is, and its deploys** (RFC 0034, F2–F4). The publish sheet lists every domain as a target —
+  Plitzi, or a copy on a provider as a single-page app, prerendered or a server of your own — with what it serves and what
+  it asks (a deploy that failed, newer versions out, a plan that dropped it). It says what a publish will do before it
+  does — whether the copy needs a deploy and why, what runs on Plitzi — and its button becomes the deploy too; pressed, it
+  follows the deploy's steps and log, and a deploy can be stopped. A target's settings choose its mode and provider from
+  the platform's list, sign in with a credential of the space (GitHub, Cloudflare, Netlify, Vercel, FTP, now kinds of
+  the credential form) or a bucket of its CDN, protect it — only whoever manages the space moves it — and make its deploy
+  hook. A publish can be set for later, in your own time.
+- **The draft has a panel of its own.** Its chip opens what it is against the last snapshot and what changed, where it is
+  live as it is saved and what the targets ask, with Snapshot as its next step — no longer a second way into Publish,
+  which is a split button whose menu rolls each domain back, opens the history, and the console's domains.
 - **A snapshot's preview** (RFC 0034 §14.6): each revision in the publish sheet has **Preview** beside it — the snapshot
   at an address of its own, as a visitor would see it, before any domain serves it. Only whoever has the link opens it,
   and it is never indexed.

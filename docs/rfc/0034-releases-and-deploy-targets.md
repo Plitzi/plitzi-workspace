@@ -1,6 +1,7 @@
 # RFC 0034 — Releases and deploy targets: snapshot, publish, deploy, roll back
 
-- **Status:** Accepted — F0 and F1 shipped (with the preview addresses, §14.6); F2–F4 in progress
+- **Status:** Implemented, F0–F4 — awaiting the first deploys to real providers (§15); deleted once those pass, its
+  why kept in `plitzi-sdk-server/docs/deploys.md`
 - **Author:** Plitzi
 - **Date:** 2026-11-16
 - **Scope:** `plitzi-sdk-server` (a space's targets, its release history, the deploy jobs, the providers' credentials,
@@ -401,9 +402,33 @@ What was open when this was proposed, decided when it was accepted:
    a client is what a preview is for. The name is cut to fit one DNS label (63 characters) and decides nothing — the
    space is the id. Mechanism: `snapshotPreview` / `previewLabel` in `@plitzi/sdk-server/spaces`.
 
+### What the implementation decided
+
+7. **A prerendered site runs nothing on a server.** Its pages hydrate and move between each other as whole loads; a
+   revision with server actions, functions, a runtime or pages for signed-in visitors is refused for `static` before
+   anything moves, naming them, with the fix (an SPA, or Plitzi SSR) — §5.3's "a refusal with its fix". An SPA runs them
+   on Plitzi, from its own address.
+8. **An SPA's plugins are read with the space at run time**, so they are not part of its fingerprint (§5.1's table
+   listed them): its parts are the shell, the SDK, the environment, the fonts, the head, the space's key and Plitzi's
+   addresses. A key re-minted — a new target's origin let in — is a deploy for every SPA, said as such.
+9. **The versions' window is the platform's client window.** A server of the owner's own is a client of the platform
+   like the CLI and the builder (`x-plitzi-client: sdkServer/<version>`): behind is an update available, older than
+   `CLIENT_OLDEST_SDK_SERVER` (by default the minor before the platform's) is refused with the step. Six months (§14.5)
+   is a policy for whoever sets that floor; the code reads the floor.
+10. **No `plitzi build`.** `--ssr` is the project's own `build` (`@plitzi/sdk-server/bundle`), connected by
+    `createCloudAdapters({ domain })`; `--spa` and `--static` are a `download` target's deploy, saved with `plitzi space
+    download`. The CLI's are `plitzi space targets | deploy | deploys | download` and `publish --deploy | --at`.
+11. **Where a domain's site is** is set in the builder's publish sheet; a domain is still added and verified in the
+    console. A target off Plitzi is proven by its TXT record alone.
+12. **Cloudflare Pages' file keys** are SHA-256 of the file's base64 and extension, cut to 32 hex: Pages' own uploader
+    uses BLAKE3, which Node does not ship. Whether Pages takes them is the first real deploy's to say (§15).
+
 ## 15. Not in this RFC
 
 - Rolling back by itself on errors (decided against: rollbacks are manual).
+- Deploys to the real providers, tested: every provider is held to its API by a local fake, and S3/R2 to a local
+  SeaweedFS; the first deploy to GitHub Pages, AWS (S3 + CloudFront, Amplify), Cloudflare (R2, Pages), Netlify, Vercel
+  and an FTP host is a test of its own, with accounts of the maintainer's.
 - Versioning a space's data or its feature flags with its snapshots.
 - Building a customer's own code beyond what a space already holds (its plugins and runtime bundle are built by the CLI
   as today).
