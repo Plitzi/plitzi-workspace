@@ -384,6 +384,20 @@ describe('renderGrant', () => {
     expect(await resolver(fetched({ revision: 'latest' }))).toMatchObject({ revision: 0 });
   });
 
+  // RFC 0034 §5: an SPA's shell names its environment and no revision — its domain is published at one.
+  it('serves the revision the page’s own domain is published at, when the page names none', async () => {
+    const served = vi.fn((_spaceId: number, host: string) => Promise.resolve(host === 'acme.com' ? 7 : undefined));
+    const resolver = renderGrant({ resolveGrant: grantedFor(['https://acme.com']), find, served });
+
+    expect(await resolver(fetched({ environment: 'production' }))).toMatchObject({
+      environment: 'production',
+      revision: 7
+    });
+    expect(served).toHaveBeenCalledWith(5, 'acme.com', 'production');
+    expect(await resolver(fetched({ environment: 'production', revision: '3' }))).toMatchObject({ revision: 3 });
+    expect(await resolver(fetched({ environment: 'main' }))).toMatchObject({ revision: 0 });
+  });
+
   it('refuses an environment there is none of, naming the ones there are', async () => {
     const resolver = renderGrant({ resolveGrant: grantedFor([]), find });
 

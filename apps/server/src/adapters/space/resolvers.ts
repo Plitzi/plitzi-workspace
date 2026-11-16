@@ -171,7 +171,27 @@ export interface RenderGrantOptions {
   resolveGrant: (req: SSRRequest, options: GrantOptions) => Promise<GrantResult>;
   /** Confirms the space exists. Return nothing and the request is a 404. */
   find: (spaceId: number) => Promise<{ spaceId: number; environment?: Environment } | undefined>;
+  /**
+   * The revision a site published as files serves, asked when the page names none: the page's own domain (the
+   * request's `Origin`) is a target of the space, pointed at a revision of the environment the page names — so a
+   * publish to it is a pointer move, as on a domain the page server answers (RFC 0034 §5). Nothing, and the
+   * environment's latest is served.
+   */
+  served?: (spaceId: number, originHost: string, environment: Environment) => Promise<number | undefined>;
 }
+
+const originHostOf = (req: SSRRequest): string | undefined => {
+  const origin = req.headers.origin;
+  if (typeof origin !== 'string') {
+    return undefined;
+  }
+
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * A page that renders the space itself — a site published as files, an embed, the desktop app — asking for it with the
@@ -181,9 +201,9 @@ export interface RenderGrantOptions {
  * credential in `Authorization`, which a page's `fetch` sends: one in the address (`?access-token`) is a page opened
  * by a tool — a screenshot, a journey — and stays what it was. The grant is checked with the page's `Origin` and the
  * host it was presented on, as every browser credential is; it names the space, and the request the environment and
- * revision — the live one when it names none, which is what a published site asks for.
+ * revision — when it names none, the one its page's domain is published at (`served`), or the live one.
  */
-export const renderGrant = ({ resolveGrant, find }: RenderGrantOptions): SpaceResolver => {
+export const renderGrant = ({ resolveGrant, find, served }: RenderGrantOptions): SpaceResolver => {
   return async (req: SSRRequest) => {
     if (!req.headers.authorization) {
       return undefined;
@@ -207,12 +227,20 @@ export const renderGrant = ({ resolveGrant, find }: RenderGrantOptions): SpaceRe
       );
     }
 
-    const revision = Number(req.query.revision);
+    const environment = isEnvironment(asked) ? asked : (space.environment ?? 'main');
+    const named = Number(req.query.revision);
+    const originHost = originHostOf(req);
+    const revision =
+      Number.isInteger(named) && named > 0
+        ? named
+        : served && originHost && environment !== 'main'
+          ? ((await served(space.spaceId, originHost, environment)) ?? 0)
+          : 0;
 
     return {
       spaceId: space.spaceId,
-      environment: isEnvironment(asked) ? asked : (space.environment ?? 'main'),
-      revision: Number.isInteger(revision) && revision > 0 ? revision : 0,
+      environment,
+      revision,
       grantOrigins: result.grant.origins
     } satisfies SpaceResolution;
   };

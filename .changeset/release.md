@@ -15,6 +15,16 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Page server
 
+- `@plitzi/sdk-server/deploy` (RFC 0034): a space's site built and shipped wherever it is served. `buildSpaShell` — an
+  `index.html` that names its environment and never a revision, with the SDK and React carried beside it under a folder
+  named by their digest (no third-party CDN at run time) — and `buildStaticSite`, every page a page server draws, followed
+  link by link, kept as HTML with the files it loads, a route with parameters no page reaches reported by name. Each
+  build's fingerprint is said part by part (`fingerprintChanges`: the SDK, the fonts, the key…), and its versions
+  (`buildVersions`). Uploaders: `s3Uploader` (AWS, R2 or any storage that speaks S3, signed with SigV4 — no AWS SDK —
+  and switched in one step behind CloudFront by a prefix per deploy), `ftpUploader` (FTP and FTPS), `folderUploader`;
+  `zipFiles` / `unzipFiles` for a site as one zip.
+- `renderGrant({ served })`: a page that names no revision is answered the one its own domain (`Origin`) is published at.
+
 - `snapshotPreview({ suffix, keyOf, find })` and `previewLabel(name, snapshot, key)` (`@plitzi/sdk-server/spaces`): a
   snapshot served at an address of its own, `<name>--r12-production-<space>-<key>.<suffix>`, its key the deployment's
   secret for that snapshot — a wrong one is the 404 of a space that does not exist. A resolution may say `noindex`:
