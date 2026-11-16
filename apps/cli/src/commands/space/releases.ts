@@ -27,6 +27,9 @@ export interface SnapshotOptions extends ReleaseOptions {
 export interface PublishOptions extends ReleaseOptions {
   environment?: string;
   revision?: number;
+  deploy?: boolean;
+  /** An ISO 8601 moment: set for later instead of now. */
+  at?: string;
 }
 
 export interface RollbackOptions extends ReleaseOptions {
@@ -120,7 +123,9 @@ export const snapshot = async (options: SnapshotOptions): Promise<void> => {
   console.log(
     [
       `Kept the draft as ${chalk.bold(versionName(taken))}.`,
-      ...(preview ? [`Look at it before any domain serves it: ${preview} (only whoever has the link can open it)`] : []),
+      ...(preview
+        ? [`Look at it before any domain serves it: ${preview} (only whoever has the link can open it)`]
+        : []),
       `Put it on a domain: plitzi space publish <domain> --revision ${String(taken.revision)}`
     ].join('\n')
   );
@@ -128,14 +133,32 @@ export const snapshot = async (options: SnapshotOptions): Promise<void> => {
 
 export const publish = async (domain: string, options: PublishOptions): Promise<void> => {
   const environment = options.environment ?? 'production';
+  const at = options.at === undefined ? undefined : Date.parse(options.at);
+  if (at !== undefined && Number.isNaN(at)) {
+    fail('bad-value', `--at is an ISO 8601 moment — 2026-12-01T09:00Z — not ${options.at ?? ''}.`);
+
+    return;
+  }
+
   const connection = await connectToSpace(options, 'to publish');
   if (!connection) {
     return;
   }
 
+  if (at !== undefined) {
+    await scheduleLater(connection, domain, environment, options, Math.floor(at / 1000));
+
+    return;
+  }
+
   const answer = await ask(connection, '/releases', {
     method: 'POST',
-    body: { domain, environment, ...(options.revision ? { revision: options.revision } : {}) }
+    body: {
+      domain,
+      environment,
+      ...(options.revision ? { revision: options.revision } : {}),
+      ...(options.deploy ? { deploy: true } : {})
+    }
   });
   if (!answer) {
     return;
@@ -148,10 +171,56 @@ export const publish = async (domain: string, options: PublishOptions): Promise<
     return;
   }
 
+  const queued = isRecord(answer.data) && isRecord(answer.data.deploy) ? answer.data.deploy.id : undefined;
   console.log(
     options.json
       ? JSON.stringify(answer.data)
-      : `${chalk.bold(domain)} serves ${versionName(release)}. Changed your mind: plitzi space rollback ${domain}`
+      : `${chalk.bold(domain)} serves ${versionName(release)}.${typeof queued === 'number' ? ` Its copy is being deployed (#${String(queued)}): plitzi space deploys ${domain}.` : ''} Changed your mind: plitzi space rollback ${domain}`
+  );
+};
+
+/** A publish set for later: the revision named, or the environment's latest now — what is published is fixed now. */
+const scheduleLater = async (
+  connection: Connection,
+  domain: string,
+  environment: string,
+  options: PublishOptions,
+  at: number
+): Promise<void> => {
+  let revision = options.revision;
+  if (revision === undefined) {
+    const latest = await ask(connection, `/snapshots?environment=${encodeURIComponent(environment)}`);
+    const listed: unknown = isRecord(latest?.data) ? latest.data.snapshots : undefined;
+    const first: unknown = Array.isArray(listed) ? (listed as unknown[]).at(0) : undefined; // A JSON array: its items unread.
+    revision = isServed(first) ? first.revision : undefined;
+    if (revision === undefined) {
+      fail(
+        'refused-by-platform',
+        `${environment} has no snapshot to set for later: take one with plitzi space snapshot`
+      );
+
+      return;
+    }
+  }
+
+  const answer = await ask(connection, '/releases/schedule', {
+    method: 'POST',
+    body: { domain, environment, revision, at }
+  });
+  if (!answer) {
+    return;
+  }
+
+  if (answer.status !== 201) {
+    fail('refused-by-platform', refusalOf(answer.data, answer.status));
+
+    return;
+  }
+
+  console.log(
+    options.json
+      ? JSON.stringify(answer.data)
+      : `${chalk.bold(domain)} will serve ${environment} r${String(revision)} at ${new Date(at * 1000).toISOString().slice(0, 16).replace('T', ' ')} UTC, with its deploy when it needs one.`
   );
 };
 

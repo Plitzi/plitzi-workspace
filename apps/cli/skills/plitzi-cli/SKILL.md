@@ -40,6 +40,8 @@ npx plitzi page check -- /about --width 1440,390        # whether a page is whol
 npx plitzi space activity --follow --json               # what others do on the space: edits, versions, failures
 npx plitzi space snapshot -m "Spring menu"              # the draft kept as production's next revision
 npx plitzi space publish example.com                    # a domain serves a revision; rollback puts back the one before
+npx plitzi space publish example.com --deploy           # its copy on GitHub Pages, AWS, Cloudflare… deployed when needed
+npx plitzi space deploy example.com --follow            # ship again what it serves, its log as it runs (targets lists them)
 npx plitzi explain navigate                             # what a name means: element, step, state, setting, any export
 npx plitzi explain "carousel end"                       # whether Plitzi has a way: fields, steps, states, commands
 npx plitzi doctor                                       # whether the project is whole; --fix the simple parts

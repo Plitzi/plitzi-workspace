@@ -678,6 +678,25 @@ never refused by plan nor re-judged by tests: it puts back what was live. Featur
 environment's, not the snapshot's, and stay as they are. The MCP's `plitzi_publish`, `plitzi_rollback` and
 `plitzi_releases` do the same.
 
+## `space targets`, `space deploy`, `space deploys` and `space download`
+
+```bash
+plitzi space targets                                  # every domain: Plitzi, or a copy on GitHub Pages, AWS, Cloudflare…
+plitzi space publish example.com --deploy             # publish, and deploy the copy when the revision needs one
+plitzi space publish example.com --at 2026-12-01T09:00Z   # set for later (a plan with deploy automation)
+plitzi space deploy example.com --follow              # build and ship again what it serves, its log as it runs
+plitzi space deploy example.com --redeploy            # the same, to bring it to the newest SDK
+plitzi space deploys example.com                      # its deploys, newest first, and how each ended
+plitzi space download 42 -o site.zip                  # a kept deploy's site, to host by hand
+```
+
+A domain is served by Plitzi's page servers, or its site is a copy a provider holds — a single-page app or every page
+prerendered, on GitHub Pages, S3 + CloudFront, Amplify, R2, Cloudflare Pages, Netlify, Vercel, FTP, a zip, or a server
+of your own running `@plitzi/sdk-server` (built with the project's own `build`). Where each domain's site is, and what
+signs in there, is set in the builder's publish sheet. A publish to a copy that needs a deploy says why and is refused
+unless `--deploy` is given; a rollback ships the deploy kept for what it puts back. `deploy --follow` exits 1 when the
+deploy failed, with its log above it.
+
 ## `space activity`
 
 ```bash

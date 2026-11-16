@@ -1,8 +1,10 @@
+import { stripVTControlCharacters } from 'node:util';
+
 import { describe, expect, it } from 'vitest';
 
 import { domainLine, parseVersion, releaseLine, versionName } from './releases';
 
-const plain = (text: string) => text.replace(/\u001b\[[0-9;]*m/g, '');
+const plain = (text: string) => stripVTControlCharacters(text);
 
 describe('the releases commands', () => {
   it('name a version the way the builder does', () => {

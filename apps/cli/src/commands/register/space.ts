@@ -3,9 +3,11 @@ import { Option } from 'commander';
 import { API_OPTION } from './options';
 import { positiveInteger } from '../../options';
 import { activity } from '../space/activity';
+import { deploy, deploys, download, targets } from '../space/deploys';
 import { PUBLISHED_ENVIRONMENTS, publish, releases, rollback, snapshot } from '../space/releases';
 
 import type { ActivityOptions } from '../space/activity';
+import type { DeployOptions, DownloadOptions } from '../space/deploys';
 import type { PublishOptions, ReleaseOptions, RollbackOptions, SnapshotOptions } from '../space/releases';
 import type { Command } from 'commander';
 
@@ -43,6 +45,11 @@ export const registerSpace = (space: Command): void => {
         positiveInteger
       )
     )
+    .option('--deploy', 'On a domain whose site a provider holds, deploy it when the revision needs one')
+    .option(
+      '--at <moment>',
+      'Publish later instead, at an ISO 8601 moment (2026-12-01T09:00Z): a plan with deploy automation'
+    )
     .option('--json', 'The release as one object')
     .option(...API_OPTION)
     .action((domain: string, options: PublishOptions) => publish(domain, options));
@@ -63,6 +70,41 @@ export const registerSpace = (space: Command): void => {
     .option('--json', 'The answer as one object')
     .option(...API_OPTION)
     .action((domain: string | undefined, options: ReleaseOptions) => releases(domain, options));
+
+  space
+    .command('targets')
+    .description(
+      'Every domain: where its site is (Plitzi, or a copy on GitHub Pages, AWS, Cloudflare…), what it serves, what it asks'
+    )
+    .option('--json', 'The targets, the providers and the plan’s limits as one object')
+    .option(...API_OPTION)
+    .action((options: DeployOptions) => targets(options));
+
+  space
+    .command('deploy')
+    .argument('<domain>', 'A domain whose site a provider holds')
+    .description('Build and ship again what the domain serves — --redeploy to bring it to the newest versions')
+    .option('--redeploy', 'Say it is to update the versions the site runs')
+    .option('-f, --follow', 'Stay, say its log as it runs, and end with how it ended (exit 1 when it failed)')
+    .option('--json', 'The deploy as one object')
+    .option(...API_OPTION)
+    .action((domain: string, options: DeployOptions) => deploy(domain, options));
+
+  space
+    .command('deploys')
+    .argument('[domain]', 'One domain’s deploys; every domain’s when left out')
+    .description('The latest deploys, newest first: what each shipped and how it ended')
+    .option('--json', 'The deploys as one object')
+    .option(...API_OPTION)
+    .action((domain: string | undefined, options: DeployOptions) => deploys(domain, options));
+
+  space
+    .command('download')
+    .argument('<deploy>', 'The deploy, by its number (plitzi space deploys lists them)', positiveInteger)
+    .description('Save a kept deploy’s site as a zip, to host it anywhere by hand')
+    .option('-o, --out <file>', 'Where to save it; deploy-<n>.zip here when left out')
+    .option(...API_OPTION)
+    .action((deployId: number, options: DownloadOptions) => download(deployId, options));
 
   space
     .command('activity')
