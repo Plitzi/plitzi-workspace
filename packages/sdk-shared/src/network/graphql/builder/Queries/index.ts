@@ -19,6 +19,7 @@ import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceReleasesQuery from './Space/SpaceReleasesQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
+import SpaceScheduledPublishesQuery from './Space/SpaceScheduledPublishesQuery';
 import SpaceSnapshotsQuery from './Space/SpaceSnapshotsQuery';
 import SpaceTargetsQuery from './Space/SpaceTargetsQuery';
 import SpaceTestsQuery from './Space/SpaceTestsQuery';
@@ -47,6 +48,7 @@ import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceReleasesQuery } from './Space/SpaceReleasesQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
+import type { TSpaceScheduledPublishesQuery } from './Space/SpaceScheduledPublishesQuery';
 import type { TSpaceSnapshotsQuery } from './Space/SpaceSnapshotsQuery';
 import type { TSpaceTargetsQuery } from './Space/SpaceTargetsQuery';
 import type { TSpaceTestsQuery } from './Space/SpaceTestsQuery';
@@ -84,6 +86,7 @@ export type BuilderQueriesMap = {
   SpaceSnapshots: TSpaceSnapshotsQuery;
   SpaceReleases: TSpaceReleasesQuery;
   SpaceTargets: TSpaceTargetsQuery;
+  SpaceScheduledPublishes: TSpaceScheduledPublishesQuery;
   SpacePublishCheck: TSpacePublishCheckQuery;
   SpaceDeployDetail: TSpaceDeployDetailQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
@@ -114,6 +117,7 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceSnapshots: SpaceSnapshotsQuery,
   SpaceReleases: SpaceReleasesQuery,
   SpaceTargets: SpaceTargetsQuery,
+  SpaceScheduledPublishes: SpaceScheduledPublishesQuery,
   SpacePublishCheck: SpacePublishCheckQuery,
   SpaceDeployDetail: SpaceDeployDetailQuery,
   SpaceVisitors: SpaceVisitorsQuery,

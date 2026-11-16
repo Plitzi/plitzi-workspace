@@ -26,6 +26,7 @@ const target = (domain: string, extra: Partial<SpaceTarget> = {}): SpaceTarget =
   running: null,
   update: null,
   locked: null,
+  required: null,
   ...extra
 });
 

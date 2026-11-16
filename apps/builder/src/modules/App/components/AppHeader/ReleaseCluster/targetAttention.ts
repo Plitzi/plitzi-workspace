@@ -11,8 +11,13 @@ export const targetAttention = (targets: readonly SpaceTarget[]): TargetAttentio
   targets
     .flatMap((target): TargetAttention[] => {
       const { domain, running, lastDeploy, locked, update, verified } = target;
+      // A server of the owner's own too old for Plitzi to answer, said before anything else it asks.
       if (running) {
         return [{ domain, tone: 'progress', words: `Deploying ${running.environment} r${String(running.revision)}…` }];
+      }
+
+      if (target.required) {
+        return [{ domain, tone: 'danger', words: target.required }];
       }
 
       if (lastDeploy?.status === 'failed') {

@@ -6,12 +6,15 @@ import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import { MODE_WORDS } from './helpers';
+import TargetAutomation from './TargetAutomation';
 import Notice from '../../components/Notice';
 
 import type { DeployMode, DeployProviderInfo, SpaceTarget, SpaceTargets } from '@plitzi/sdk-shared';
 
 export type TargetSettingsProps = {
   target: SpaceTarget;
+  /** The plan that includes deploy automation, when the space's does not. */
+  lockedBy?: string;
   catalog: SpaceTargets;
   /** The target's settings as kept: its provider's and every target's. */
   config: Record<string, string>;
@@ -38,7 +41,7 @@ const errorOf = (error: unknown): string =>
  * and its own settings, and what signs in there — each provider's fields as the platform lists them, so a provider
  * added there is offered here without a change to this form.
  */
-const TargetSettings = ({ target, catalog, config: kept, onSaved, onBack }: TargetSettingsProps) => {
+const TargetSettings = ({ target, lockedBy, catalog, config: kept, onSaved, onBack }: TargetSettingsProps) => {
   const { mutate } = useBuilderNetwork();
   const [mode, setMode] = useState<DeployMode>(target.mode);
   const offered = useMemo(() => catalog.providers.filter(provider => provider.modes.includes(mode)), [catalog, mode]);
@@ -226,6 +229,9 @@ const TargetSettings = ({ target, catalog, config: kept, onSaved, onBack }: Targ
       ))}
 
       {said && <Notice tone={said.tone}>{said.words}</Notice>}
+
+      {/* Applied at once, apart from Save: it is the target as it is now that is protected or hooked. */}
+      <TargetAutomation target={target} lockedBy={lockedBy} onChanged={onSaved} />
 
       <div className="border-ui-line flex items-center justify-end gap-2 border-t pt-3">
         <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onBack}>

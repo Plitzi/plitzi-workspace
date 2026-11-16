@@ -2,7 +2,8 @@ import type { ActionDocument } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorManifestDraft } from './ConnectorTypes';
 
-export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom' | 'smtp' | 'github' | 'cloudflare' | 'netlify' | 'vercel' | 'ftp';
+export type SpaceCredentialProvider =
+  's3' | 'r2' | 'ssr' | 'custom' | 'smtp' | 'github' | 'cloudflare' | 'netlify' | 'vercel' | 'ftp';
 
 /**
  * A connector manifest as the builder sees it.
@@ -216,6 +217,8 @@ export type SpaceTarget = {
   update: { words: string; runs: DeployVersions; newest: DeployVersions } | null;
   /** Its plan no longer includes its kind of deploy. */
   locked: { error: string; requires: string; upgradeUrl: string } | null;
+  /** A server of the owner's own past the oldest version Plitzi answers: rebuilt before it is served again. */
+  required: string | null;
 };
 
 export type SpaceTargets = {
@@ -224,6 +227,19 @@ export type SpaceTargets = {
   targetFields: (DeployProviderField & { modes: DeployMode[] })[];
   limits: { deployTargets: number; keptArtifacts: number; deployMinutesPerMonth: number | null };
   deployMinutes: { used: number; limit: number | null };
+};
+
+/** A publish set for later (RFC 0034 §8): published when due, as whoever set it — or why it was not. */
+export type SpaceScheduledPublish = {
+  id: number;
+  domain: string;
+  environment: Environment;
+  revision: number;
+  /** UTC seconds. */
+  at: number;
+  status: 'pending' | 'published' | 'failed' | 'canceled';
+  error: string | null;
+  by: { id: number; username: string } | null;
 };
 
 /** What publishing a revision on a domain would do, before it does (RFC 0034 §11.3). */

@@ -10,6 +10,7 @@ import DeployProgress from './DeployProgress';
 import { targetWhere, versionName } from './helpers';
 import ReleaseHistory from './ReleaseHistory';
 import RevisionList from './RevisionList';
+import ScheduledPublishes, { momentWords } from './ScheduledPublishes';
 import TargetSettings from './TargetSettings';
 import WhatHappens from './WhatHappens';
 import { targetAttention } from '../../components/AppHeader/ReleaseCluster/targetAttention';
@@ -122,6 +123,8 @@ const PublishSheet = ({
   const [pickedCredential, setPickedCredential] = useState<string>();
   const credential = pickedCredential ?? access;
   const [working, setWorking] = useState(false);
+  /** A publish set for later: the moment, as the person's own clock reads it (`datetime-local`). */
+  const [later, setLater] = useState<string>();
   const [failure, setFailure] = useState<string>();
   const {
     data: history,
@@ -206,6 +209,26 @@ const PublishSheet = ({
         : { name: 'done', said }
     );
   }, [afterWrite, credential, environment, mutate, needsDeploy, refusal, revision, target]);
+
+  const handleSchedule = useCallback(async () => {
+    const at = later ? Math.floor(new Date(later).getTime() / 1000) : NaN;
+    if (!target || refusal || !revision || !Number.isFinite(at)) {
+      return;
+    }
+
+    setWorking(true);
+    setFailure(undefined);
+    const response = await mutate('SpaceSchedulePublish', { domain: target.domain, environment, revision, at }, true);
+    setWorking(false);
+    if (response.result) {
+      setView({
+        name: 'done',
+        said: `${target.domain} will serve ${revisionName(environment, revision)} at ${momentWords(at)}${needsDeploy ? ', with its deploy' : ''}.`
+      });
+    } else {
+      setFailure(errorOf(response.error, 'It was not set for later.'));
+    }
+  }, [environment, later, mutate, needsDeploy, refusal, revision, target]);
 
   const handleRollBack = useCallback(async () => {
     if (!target || !rollingBackTo) {
@@ -327,6 +350,7 @@ const PublishSheet = ({
     return (
       <TargetSettings
         target={target}
+        lockedBy={locked('deployAutomation')?.requires}
         catalog={catalog}
         config={configOf(target)}
         onSaved={() => void refreshTargets()}
@@ -411,6 +435,8 @@ const PublishSheet = ({
           })}
         </div>
       </section>
+
+      {view.name === 'history' && target && <ScheduledPublishes domain={target.domain} />}
 
       {view.name === 'history' && target && (
         <ReleaseHistory
@@ -586,6 +612,26 @@ const PublishSheet = ({
         {refusal && view.name === 'publish' && (
           <span className={clsx('text-ui-fg-subtle text-xs', !rollback && 'mr-auto')}>{refusal}</span>
         )}
+        {view.name === 'publish' && environment !== 'main' && !refusal && (
+          <label
+            className="text-ui-fg-subtle flex items-center gap-1 text-xs"
+            title={
+              locked('deployAutomation')
+                ? `Publishing at a set time is included in the ${locked('deployAutomation')?.requires ?? ''} plan`
+                : 'Publish at a moment of your choosing, in your own time'
+            }
+          >
+            <i className={clsx('fa-solid', locked('deployAutomation') ? 'fa-lock' : 'fa-clock')} />
+            <input
+              type="datetime-local"
+              aria-label="Publish later, at"
+              disabled={locked('deployAutomation') !== undefined}
+              className="border-ui-line bg-ui-panel text-ui-fg w-40 rounded-md border px-1.5 py-1 text-xs"
+              value={later ?? ''}
+              onChange={event => setLater(event.target.value || undefined)}
+            />
+          </label>
+        )}
         <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onClose}>
           {view.name === 'history' ? 'Close' : 'Cancel'}
         </Button>
@@ -593,15 +639,17 @@ const PublishSheet = ({
           <Button
             size="sm"
             disabled={refusal !== undefined || working || (holdsACopy && checking)}
-            onClick={() => void handlePublish()}
+            onClick={() => void (later ? handleSchedule() : handlePublish())}
           >
-            {working
-              ? needsDeploy
-                ? 'Starting the deploy…'
-                : 'Publishing…'
-              : needsDeploy
-                ? 'Publish and deploy'
-                : 'Publish'}
+            {later && !working
+              ? 'Set for later'
+              : working
+                ? needsDeploy
+                  ? 'Starting the deploy…'
+                  : 'Publishing…'
+                : needsDeploy
+                  ? 'Publish and deploy'
+                  : 'Publish'}
           </Button>
         )}
       </div>
