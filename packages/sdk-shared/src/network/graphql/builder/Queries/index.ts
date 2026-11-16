@@ -8,16 +8,19 @@ import SpaceCheckActionQuery from './Space/SpaceCheckActionQuery';
 import SpaceConnectorsQuery from './Space/SpaceConnectorsQuery';
 import SpaceCredentialsQuery from './Space/SpaceCredentialsQuery';
 import SpaceDataQuery from './Space/SpaceDataQuery';
+import SpaceDeployDetailQuery from './Space/SpaceDeployDetailQuery';
 import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
 import SpaceFunctionsQuery from './Space/SpaceFunctionsQuery';
 import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceJobsQuery from './Space/SpaceJobsQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
+import SpacePublishCheckQuery from './Space/SpacePublishCheckQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceReleasesQuery from './Space/SpaceReleasesQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
 import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
 import SpaceSnapshotsQuery from './Space/SpaceSnapshotsQuery';
+import SpaceTargetsQuery from './Space/SpaceTargetsQuery';
 import SpaceTestsQuery from './Space/SpaceTestsQuery';
 import SpaceVersionChangesQuery from './Space/SpaceVersionChangesQuery';
 import SpaceVersionContentsQuery from './Space/SpaceVersionContentsQuery';
@@ -33,16 +36,19 @@ import type { TSpaceCheckActionQuery } from './Space/SpaceCheckActionQuery';
 import type { TSpaceConnectorsQuery } from './Space/SpaceConnectorsQuery';
 import type { TSpaceCredentialsQuery } from './Space/SpaceCredentialsQuery';
 import type { TSpaceDataQuery } from './Space/SpaceDataQuery';
+import type { TSpaceDeployDetailQuery } from './Space/SpaceDeployDetailQuery';
 import type { TSpaceDeploymentsQuery } from './Space/SpaceDeploymentsQuery';
 import type { TSpaceFunctionsQuery } from './Space/SpaceFunctionsQuery';
 import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceJobsQuery } from './Space/SpaceJobsQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
+import type { TSpacePublishCheckQuery } from './Space/SpacePublishCheckQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceReleasesQuery } from './Space/SpaceReleasesQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
 import type { TSpaceSnapshotsQuery } from './Space/SpaceSnapshotsQuery';
+import type { TSpaceTargetsQuery } from './Space/SpaceTargetsQuery';
 import type { TSpaceTestsQuery } from './Space/SpaceTestsQuery';
 import type { TSpaceVersionChangesQuery } from './Space/SpaceVersionChangesQuery';
 import type { TSpaceVersionContentsQuery } from './Space/SpaceVersionContentsQuery';
@@ -77,6 +83,9 @@ export type BuilderQueriesMap = {
   SpaceVersionChanges: TSpaceVersionChangesQuery;
   SpaceSnapshots: TSpaceSnapshotsQuery;
   SpaceReleases: TSpaceReleasesQuery;
+  SpaceTargets: TSpaceTargetsQuery;
+  SpacePublishCheck: TSpacePublishCheckQuery;
+  SpaceDeployDetail: TSpaceDeployDetailQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
   SpaceRuntime: TSpaceRuntimeQuery;
 };
@@ -104,6 +113,9 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceVersionChanges: SpaceVersionChangesQuery,
   SpaceSnapshots: SpaceSnapshotsQuery,
   SpaceReleases: SpaceReleasesQuery,
+  SpaceTargets: SpaceTargetsQuery,
+  SpacePublishCheck: SpacePublishCheckQuery,
+  SpaceDeployDetail: SpaceDeployDetailQuery,
   SpaceVisitors: SpaceVisitorsQuery,
   SpaceRuntime: SpaceRuntimeQuery
 };

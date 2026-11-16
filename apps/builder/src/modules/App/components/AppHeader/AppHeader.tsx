@@ -20,13 +20,16 @@ import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import DisplayModeButtons from './DisplayModeButtons';
 import HeaderMenu from './HeaderMenu';
+import HeaderPopover from './HeaderPopover';
 import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
 import PageHeader from './PageHeader';
 import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
-import DraftStatusChip from './ReleaseCluster/DraftStatusChip';
+import DraftPanel from './ReleaseCluster/DraftPanel';
+import { draftStatus } from './ReleaseCluster/draftStatus';
+import { attentionTone, targetAttention } from './ReleaseCluster/targetAttention';
 import useDraftStatus from './ReleaseCluster/useDraftStatus';
 import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
@@ -34,6 +37,7 @@ import ViewButtons from './ViewButtons';
 import ZoomButtons from './ZoomButtons';
 import { PUBLISHED_ENVIRONMENTS } from '../../helpers/environments';
 import { FORM_MODAL, SHEET_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
+import useSpaceTargets from '../../hooks/useSpaceTargets';
 import PublishSheet from '../../models/PublishSheet';
 import SnapshotForm from '../../models/SnapshotForm';
 
@@ -44,7 +48,7 @@ const AppHeader = () => {
   const { theme, setTheme } = useTheme();
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { mutate } = useBuilderNetwork();
+  const { mutate, webId } = useBuilderNetwork();
   const draft = useDraftStatus();
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
@@ -59,25 +63,39 @@ const AppHeader = () => {
   const openPlans = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
+  // The space's targets: what the header says needs a look, and where the draft is live as it is saved.
+  const { targets, refresh: refreshTargets } = useSpaceTargets(publishes);
+  const attention = useMemo(() => targetAttention(targets?.targets ?? []), [targets]);
+  const tone = attentionTone(attention);
+  const draftAddress = targets?.targets.find(target => target.plitziOwned && target.environment === 'main')?.domain;
 
-  /** The publish sheet, on a snapshot just made when there is one. It publishes and says how it went itself. */
+  /**
+   * The publish sheet — on a snapshot just made, on a domain asked for, or on its history. It publishes, deploys and
+   * says how it went itself.
+   */
   const openPublish = useCallback(
-    async (initial?: { environment: Environment; revision: number }) => {
+    async (initial?: { environment?: Environment; revision?: number; domain?: string; view?: 'history' }) => {
       await showModal(
         <Modal.Header>
           <h4>Publish</h4>
         </Modal.Header>,
         ({ onClose }) => (
           <Modal.Body>
-            <PublishSheet environment={initial?.environment} revision={initial?.revision} onClose={onClose} />
+            <PublishSheet
+              environment={initial?.environment}
+              revision={initial?.revision}
+              domain={initial?.domain}
+              view={initial?.view}
+              onClose={onClose}
+            />
           </Modal.Body>
         ),
         undefined,
         SHEET_MODAL
       );
-      await draft.refresh();
+      await Promise.all([draft.refresh(), refreshTargets()]);
     },
-    [draft, showModal]
+    [draft, refreshTargets, showModal]
   );
 
   const handleClickSnapshot = useCallback(async () => {
@@ -143,17 +161,21 @@ const AppHeader = () => {
     }
   }, [addToast, draft, mutate, openPlans, openPublish, refreshIssues, showModal, showSpaceIssues, snapshotsLocked]);
 
-  const handleClickPublish = useCallback(async () => {
-    if (domainLocked?.upgradeUrl) {
-      openPlans(domainLocked.upgradeUrl);
+  const handleClickPublish = useCallback(
+    async (domain?: string) => {
+      if (domainLocked?.upgradeUrl) {
+        openPlans(domainLocked.upgradeUrl);
 
-      return;
-    }
+        return;
+      }
 
-    // What a publisher usually means by pressing it: the last snapshot made, on a domain — preselected, never forced.
-    const { newest } = draft;
-    await openPublish(newest ? { environment: newest.environment, revision: newest.revision } : undefined);
-  }, [domainLocked, draft, openPlans, openPublish]);
+      // What a publisher usually means by pressing it: the last snapshot made, on a domain — preselected, never forced.
+      const { newest } = draft;
+      await openPublish({ ...(newest ? { environment: newest.environment, revision: newest.revision } : {}), domain });
+    },
+    [domainLocked, draft, openPlans, openPublish]
+  );
+  const status = draftStatus(draft.newest, draft.changes);
 
   const handleClickExport = useCallback(async () => {
     await showModal(
@@ -276,19 +298,54 @@ const AppHeader = () => {
           <RoleBadge />
         </div>
         {/*
-          The release cluster: what the draft is against the last snapshot, Snapshot, and Publish — the header's one
-          primary. What is used less steps back into the logo's menu.
+          The release cluster (RFC 0034 §11.1): the draft — what it is against the last snapshot, opened as a panel of its
+          own with Snapshot as its next step — then Publish, the header's one primary, whose menu holds the rollbacks and
+          the history; its dot says when a target asks for a look.
         */}
-        <div className="flex items-center gap-2">
-          {publishes && (
-            <DraftStatusChip
-              newest={draft.newest}
-              changes={draft.changes}
-              loading={draft.loading}
-              onClick={() => void handleClickPublish()}
-            />
-          )}
-          {publishes && (
+        {publishes && (
+          <div className="border-ui-line flex items-center gap-2 border-l pl-3">
+            <HeaderPopover
+              id="header-draft-status"
+              label="Draft"
+              title={`${status.words} — what changed, and Snapshot`}
+              align="end"
+              triggerClassName={clsx(
+                'border-ui-line text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs whitespace-nowrap transition-colors',
+                'aria-expanded:bg-ui-hover aria-expanded:text-ui-fg'
+              )}
+              trigger={
+                <>
+                  <span
+                    className={clsx(
+                      'h-1.5 w-1.5 rounded-full',
+                      draft.loading ? 'bg-ui-line-strong' : status.pending ? 'bg-amber-500' : 'bg-emerald-500'
+                    )}
+                  />
+                  <span className="hidden 2xl:inline">{status.words}</span>
+                  <span className="2xl:hidden">{status.short}</span>
+                  <i className="fa-solid fa-chevron-down text-[9px] opacity-60" />
+                </>
+              }
+            >
+              {close => (
+                <DraftPanel
+                  newest={draft.newest}
+                  changes={draft.changes}
+                  loading={draft.loading}
+                  draftAddress={draftAddress}
+                  attention={attention}
+                  snapshotLocked={snapshotsLocked !== undefined}
+                  onSnapshot={() => {
+                    close();
+                    void handleClickSnapshot();
+                  }}
+                  onPublish={domain => {
+                    close();
+                    void handleClickPublish(domain);
+                  }}
+                />
+              )}
+            </HeaderPopover>
             <Button
               id="header-snapshot"
               size="sm"
@@ -299,27 +356,94 @@ const AppHeader = () => {
               }
               onClick={() => void handleClickSnapshot()}
               intent="secondary"
+              iconPlacement="before"
             >
               {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
               Snapshot
             </Button>
-          )}
-          {publishes && (
-            <Button
-              id="header-publish"
-              size="sm"
-              title={
-                domainLocked
-                  ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
-                  : 'Publish: choose which revision a domain serves.'
-              }
-              onClick={() => void handleClickPublish()}
-            >
-              {domainLocked && <Button.Icon icon="fa-solid fa-lock" />}
-              Publish
-            </Button>
-          )}
-        </div>
+            <div className="flex items-stretch">
+              <Button
+                id="header-publish"
+                size="sm"
+                className="rounded-r-none"
+                title={
+                  domainLocked
+                    ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
+                    : 'Publish: choose which revision a domain serves, and deploy it where it needs one.'
+                }
+                onClick={() => void handleClickPublish()}
+                iconPlacement="before"
+              >
+                {domainLocked && <Button.Icon icon="fa-solid fa-lock" />}
+                Publish
+              </Button>
+              <HeaderMenu
+                id="header-publish-more"
+                label={tone ? `More publishing — ${attention.at(0)?.domain ?? ''} asks for a look` : 'More publishing'}
+                align="end"
+                triggerClassName="bg-primary-500 hover:bg-primary-600 dark:bg-primary-400 dark:hover:bg-primary-500 focus-visible:ring-primary-500 relative flex h-full cursor-pointer items-center rounded-r-md border-l border-white/25 px-2 text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                trigger={
+                  <>
+                    <i className="fa-solid fa-chevron-down text-[10px]" />
+                    {tone && (
+                      <span
+                        className={clsx(
+                          'ring-ui-panel absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full ring-2',
+                          tone === 'danger'
+                            ? 'bg-red-500'
+                            : tone === 'progress'
+                              ? 'animate-pulse bg-sky-400'
+                              : 'bg-amber-500'
+                        )}
+                      />
+                    )}
+                  </>
+                }
+                sections={[
+                  ...(targets && targets.targets.some(target => target.rollback)
+                    ? [
+                        {
+                          label: 'Roll back',
+                          items: targets.targets.flatMap(target =>
+                            target.rollback
+                              ? [
+                                  {
+                                    id: `header-rollback-${String(target.id)}`,
+                                    label: target.domain,
+                                    detail: `To ${target.rollback.environment === 'main' ? 'the draft' : `${target.rollback.environment} r${String(target.rollback.revision)}`}, what it served before`,
+                                    icon: 'fa-solid fa-rotate-left',
+                                    onSelect: () => void openPublish({ domain: target.domain, view: 'history' })
+                                  }
+                                ]
+                              : []
+                          )
+                        }
+                      ]
+                    : []),
+                  {
+                    items: [
+                      {
+                        id: 'header-release-history',
+                        label: 'Release history',
+                        detail: 'Every publish and rollback, per domain',
+                        icon: 'fa-solid fa-clock-rotate-left',
+                        onSelect: () => void openPublish({ view: 'history' })
+                      },
+                      {
+                        id: 'header-targets',
+                        label: 'Domains and targets',
+                        detail: 'Add a domain, verify it, say where it is deployed',
+                        icon: 'fa-solid fa-globe',
+                        onSelect: () =>
+                          window.open(`${origin}/spaces/${String(webId)}`, '_blank', 'noopener,noreferrer')
+                      }
+                    ]
+                  }
+                ]}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

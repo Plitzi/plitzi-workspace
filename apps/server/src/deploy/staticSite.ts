@@ -107,6 +107,12 @@ export const linksOf = (html: string): { pages: string[]; files: string[] } => {
     }
   }
 
+  // The page server's own files a page names in its data (the space's document, its parts): kept so the page that
+  // asks for them on its first load finds them; a part not kept is a page loaded whole from its address.
+  for (const match of html.matchAll(/["'](\/_plitzi\/[\w./-]+\.(?:json|css|js))["']/g)) {
+    add(files, match[1]);
+  }
+
   return { pages: [...pages], files: [...files] };
 };
 

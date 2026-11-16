@@ -12,6 +12,9 @@ const SpaceRollbackMutation = /* GraphQL */ `
       revision
       isVerified
       default
+      mode
+      provider
+      deployId
       credential {
         identifier
       }

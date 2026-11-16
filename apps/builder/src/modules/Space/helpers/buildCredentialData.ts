@@ -22,7 +22,14 @@ export const buildCredentialData = (values: z.infer<typeof spaceCredentialFormSc
     return { host, port, security, username, password, fromEmail, fromName };
   }
 
-  return values.fields;
+  if (values.provider === 'ssr') {
+    return values.fields;
+  }
+
+  // A deploy target's sign-in: the values its kind's fields name, trimmed, the ones left empty left out.
+  return Object.fromEntries(
+    Object.entries(values.deploy).flatMap(([key, value]) => (value.trim() ? [[key, value.trim()]] : []))
+  );
 };
 
 export default buildCredentialData;

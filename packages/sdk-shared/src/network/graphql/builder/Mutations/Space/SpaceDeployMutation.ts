@@ -3,12 +3,19 @@ import type { SpaceDeployment } from '../../../../../types';
 export type TSpaceDeployMutation = SpaceDeployment;
 
 const SpaceDeployMutation = /* GraphQL */ `
-  mutation SpaceDeployMutation($environment: String!, $domain: String!, $revision: Int, $credentialIdentifier: String) {
+  mutation SpaceDeployMutation(
+    $environment: String!
+    $domain: String!
+    $revision: Int
+    $credentialIdentifier: String
+    $deploy: Boolean
+  ) {
     SpaceDeploy(
       environment: $environment
       domain: $domain
       revision: $revision
       credentialIdentifier: $credentialIdentifier
+      deploy: $deploy
     ) {
       id
       environment
@@ -16,6 +23,9 @@ const SpaceDeployMutation = /* GraphQL */ `
       revision
       isVerified
       default
+      mode
+      provider
+      deployId
       credential {
         identifier
       }

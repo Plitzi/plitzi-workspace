@@ -17,7 +17,7 @@ export interface SiteFile {
 }
 
 /** A line of a deploy's log, said as it happens. Every write a provider makes says what it did; nothing is silent. */
-export type DeployLog = (line: string, level?: 'info' | 'warn') => void;
+export type DeployLog = (line: string, level?: 'info' | 'warn' | 'error') => void;
 
 /** What a provider answers once the site is where it goes. */
 export interface UploadResult {

@@ -4,9 +4,11 @@ import { useCallback } from 'react';
 import { z } from 'zod';
 
 import { readSmtpCredential } from '@plitzi/sdk-shared/actions';
+import { DEPLOY_CREDENTIALS, deployCredentialProblems } from '@plitzi/sdk-shared/deploy';
 
 import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
 import type { SmtpSecurity } from '@plitzi/sdk-shared/actions';
+import type { DeployCredentialKind } from '@plitzi/sdk-shared/deploy';
 import type { MouseEvent } from 'react';
 
 type SmtpFields = {
@@ -32,7 +34,25 @@ const SMTP_DEFAULTS: SmtpFields = {
 
 const SMTP_FIELDS: (keyof SmtpFields)[] = ['host', 'port', 'security', 'username', 'password', 'fromEmail', 'fromName'];
 
+/** The kinds a deploy target signs in with (RFC 0034 §6), each drawn from its fields in `@plitzi/sdk-shared/deploy`. */
+const DEPLOY_KINDS = Object.keys(DEPLOY_CREDENTIALS) as DeployCredentialKind[]; // `Object.keys` widens what it reads.
+
+/** A deploy credential's arm of the form: its values under `deploy`, judged by the list the server checks them by. */
+const deployArm = (kind: DeployCredentialKind) =>
+  z
+    .object({ provider: z.literal(kind), name: z.string().min(2), deploy: z.record(z.string(), z.string()) })
+    .superRefine((values, ctx) => {
+      deployCredentialProblems(kind, values.deploy).forEach(message =>
+        ctx.addIssue({ code: 'custom', path: ['deploy'], message })
+      );
+    });
+
 export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
+  deployArm('github'),
+  deployArm('cloudflare'),
+  deployArm('netlify'),
+  deployArm('vercel'),
+  deployArm('ftp'),
   z.object({
     provider: z.literal('s3'),
     name: z.string().min(2),
@@ -135,6 +155,10 @@ const getDefaultValues = ({
     return { name, provider, ...SMTP_DEFAULTS };
   }
 
+  if (provider !== 's3' && provider !== 'r2') {
+    return { name, provider, deploy: {} };
+  }
+
   return { name, provider, accessKeyId, secretAccessKey };
 };
 
@@ -186,6 +210,7 @@ const SpaceCredentialForm = ({
       form.formMethods.resetField('accessKeyId');
       form.formMethods.resetField('secretAccessKey');
       form.formMethods.resetField('data');
+      form.formMethods.setValue('deploy', {});
       if (value === 'custom') {
         form.formMethods.setValue('data', '{\n  "token": ""\n}');
       }
@@ -217,8 +242,39 @@ const SpaceCredentialForm = ({
             <option value="ssr">Plitzi SSR</option>
             <option value="custom">CMS / Custom API</option>
             <option value="smtp">SMTP (email)</option>
+            <optgroup label="Deploy targets">
+              {DEPLOY_KINDS.map(kind => (
+                <option key={kind} value={kind}>
+                  {DEPLOY_CREDENTIALS[kind].label}
+                </option>
+              ))}
+            </optgroup>
           </Form.Select>
         )}
+        {DEPLOY_KINDS.map(kind => (
+          <Form.Conditional key={kind} when="provider" is={kind}>
+            {DEPLOY_CREDENTIALS[kind].fields.map(field =>
+              field.choices ? (
+                <Form.Select key={field.key} name={`deploy.${field.key}`} label={field.label} size="xs">
+                  {field.choices.map(choice => (
+                    <option key={choice.value} value={choice.value}>
+                      {choice.label}
+                    </option>
+                  ))}
+                </Form.Select>
+              ) : (
+                <Form.Input
+                  key={field.key}
+                  name={`deploy.${field.key}`}
+                  label={field.required ? field.label : `${field.label} (optional)`}
+                  placeholder={field.example}
+                  size="xs"
+                  {...(field.secret ? { type: 'password' } : {})}
+                />
+              )
+            )}
+          </Form.Conditional>
+        ))}
         <Form.Conditional when="provider" is={['s3', 'r2']}>
           <Form.Input name="accessKeyId" label="Access Key ID" size="xs" />
           <Form.Input name="secretAccessKey" label="Secret Access Key" size="xs" />

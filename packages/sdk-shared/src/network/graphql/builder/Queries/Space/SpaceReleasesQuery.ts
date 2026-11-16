@@ -17,6 +17,7 @@ const SpaceReleasesQuery = /* GraphQL */ `
           revision
         }
         kind
+        deployId
         by {
           id
           username

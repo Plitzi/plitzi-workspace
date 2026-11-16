@@ -2,7 +2,7 @@ import type { ActionDocument } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorManifestDraft } from './ConnectorTypes';
 
-export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom' | 'smtp';
+export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom' | 'smtp' | 'github' | 'cloudflare' | 'netlify' | 'vercel' | 'ftp';
 
 /**
  * A connector manifest as the builder sees it.
@@ -116,14 +116,125 @@ export type SpaceDeployment = {
   domain: string;
   isVerified: boolean;
   default: boolean;
-  /**
-   * What serves it: `ssr` a page server — Plitzi's own when there is no `credential`, the space's when there is — or a
-   * static bucket (`s3`, `r2`).
-   */
-  provider: 'ssr' | 's3' | 'r2';
+  /** What serves it: Plitzi's page servers (`ssr`), or the provider holding a copy of the site (RFC 0034 §6). */
+  provider: 'ssr' | DeployProviderId;
+  /** How it serves the space (RFC 0034 §5). */
+  mode: DeployMode;
   credential: SpaceCredential | null;
+  /** The deploy a publish or rollback queued, on a target holding a copy of the site. */
+  deployId?: number | null;
   createdAt: number;
   updatedAt: number;
+};
+
+/** How a domain serves its space (RFC 0034 §5): Plitzi's page servers, an SPA, every page prerendered, or a server of
+ *  the owner's own. */
+export type DeployMode = 'ssr' | 'spa' | 'static' | 'selfHosted';
+
+/** The providers a copy of the site may be deployed to (RFC 0034 §6) — the server's `deploys/providers`. */
+export type DeployProviderId =
+  'github' | 's3' | 'amplify' | 'r2' | 'cloudflarePages' | 'netlify' | 'vercel' | 'ftp' | 'download' | 'selfHosted';
+
+export type DeployStatus = 'queued' | 'building' | 'uploading' | 'succeeded' | 'failed' | 'canceled';
+
+/** One deploy as a list says it. */
+export type SpaceDeploySummary = {
+  id: number;
+  domain: string;
+  kind: 'deploy' | 'redeploy' | 'rollback';
+  status: DeployStatus;
+  environment: Environment;
+  revision: number;
+  mode: DeployMode;
+  provider: DeployProviderId;
+  error: string | null;
+  url: string | null;
+  reference: string | null;
+  files: number | null;
+  bytes: number | null;
+  /** Kept: downloadable, and shipped again by a rollback without rebuilding. */
+  kept: boolean;
+  by: { id: number; username: string } | null;
+  /** UTC seconds. */
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+};
+
+/** The SDK, React and `@plitzi/sdk-server` a build runs (RFC 0034 §5.2). */
+export type DeployVersions = { sdk: string; react: string; sdkServer: string };
+
+/** One deploy with what it said as it ran. */
+export type SpaceDeployDetail = SpaceDeploySummary & {
+  log: { at: number; level: 'info' | 'warn' | 'error'; line: string }[];
+  versions: DeployVersions | null;
+};
+
+/** A setting of a provider, or of every target holding a copy (`targetFields`). */
+export type DeployProviderField = { key: string; label: string; required: boolean; hint?: string; example?: string };
+
+/** A provider as the console and the builder offer it. */
+export type DeployProviderInfo = {
+  id: DeployProviderId;
+  label: string;
+  description: string;
+  modes: DeployMode[];
+  signIn:
+    | { kind: 'credential'; credential: string; fields: string[] }
+    | { kind: 'bucket'; cdn: 's3' | 'r2' }
+    | { kind: 'none' };
+  atomic: boolean;
+  fields: DeployProviderField[];
+};
+
+/** One domain of a space as a target (RFC 0034 §11.3): how it serves the space and where it stands. */
+export type SpaceTarget = {
+  id: number;
+  domain: string;
+  verified: boolean;
+  /** Plitzi's own address for the space (`<space>.plitzi.app`): always served by its page servers. */
+  plitziOwned: boolean;
+  mode: DeployMode;
+  provider: 'ssr' | DeployProviderId;
+  providerLabel: string;
+  atomic: boolean;
+  environment: Environment;
+  /** Pinned; none follows its environment's latest. */
+  revision: number | null;
+  /** What it serves, and what rolling it back would put back. */
+  serves: SpaceServedVersion | null;
+  rollback: SpaceServedVersion | null;
+  /** Its provider's settings and every target's (`basePath`, `staticPaths`), as kept. */
+  config: Record<string, unknown> | null;
+  credential: { identifier: string; name: string } | null;
+  bucket: { identifier: string; name: string; cdn: { identifier: string; name: string } } | null;
+  protected: boolean;
+  hook: boolean;
+  lastDeploy: SpaceDeploySummary | null;
+  running: SpaceDeploySummary | null;
+  /** Newer versions than it runs, said (RFC 0034 §5.2). */
+  update: { words: string; runs: DeployVersions; newest: DeployVersions } | null;
+  /** Its plan no longer includes its kind of deploy. */
+  locked: { error: string; requires: string; upgradeUrl: string } | null;
+};
+
+export type SpaceTargets = {
+  targets: SpaceTarget[];
+  providers: DeployProviderInfo[];
+  targetFields: (DeployProviderField & { modes: DeployMode[] })[];
+  limits: { deployTargets: number; keptArtifacts: number; deployMinutesPerMonth: number | null };
+  deployMinutes: { used: number; limit: number | null };
+};
+
+/** What publishing a revision on a domain would do, before it does (RFC 0034 §11.3). */
+export type SpacePublishCheck = {
+  domain: string;
+  mode: DeployMode;
+  revision: number;
+  deploy: { needed: boolean; reasons: string[] };
+  /** What of the revision runs on a server: on Plitzi for an SPA, impossible for a prerendered site. */
+  serverFeatures: string[];
+  locked: { error: string; requires: string; upgradeUrl: string } | null;
 };
 
 /**
@@ -178,6 +289,8 @@ export type SpaceRelease = {
   followsLatest: boolean;
   previous: SpaceServedVersion | null;
   kind: 'publish' | 'rollback';
+  /** The deploy that shipped it, on a target holding a copy of the site. */
+  deployId: number | null;
   by: { id: number; username: string } | null;
   /** Unix seconds. */
   at: number;

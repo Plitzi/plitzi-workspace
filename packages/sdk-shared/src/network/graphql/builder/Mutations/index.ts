@@ -47,16 +47,19 @@ import SpaceStopRuntimeMutation from './Space/runtime/SpaceStopRuntimeMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
 import SpaceAddSnippetMutation from './Space/SpaceAddSnippetMutation';
+import SpaceCancelDeployMutation from './Space/SpaceCancelDeployMutation';
 import SpaceCloneElementMutation from './Space/SpaceCloneElementMutation';
 import SpaceDeployMutation from './Space/SpaceDeployMutation';
 import SpaceFixIssuesMutation from './Space/SpaceFixIssuesMutation';
 import SpaceMoveElementMutation from './Space/SpaceMoveElementMutation';
 import SpacePublishMutation from './Space/SpacePublishMutation';
+import SpaceRedeployMutation from './Space/SpaceRedeployMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
 import SpaceRemovePluginMutation from './Space/SpaceRemovePluginMutation';
 import SpaceRenameElementMutation from './Space/SpaceRenameElementMutation';
 import SpaceRollbackMutation from './Space/SpaceRollbackMutation';
 import SpaceRunE2eTestsMutation from './Space/SpaceRunE2eTestsMutation';
+import SpaceSetTargetMutation from './Space/SpaceSetTargetMutation';
 import SpaceSetTestsMutation from './Space/SpaceSetTestsMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
 import SpaceUpdateElementsMutation from './Space/SpaceUpdateElementsMutation';
@@ -121,12 +124,15 @@ import type { TSpaceAddResourceMutation } from './Space/resources/SpaceAddResour
 import type { TSpaceMoveResourceMutation } from './Space/resources/SpaceMoveResourceMutation';
 import type { TSpaceRemoveResourceMutation } from './Space/resources/SpaceRemoveResourceMutation';
 import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
+import type { TSpaceCancelDeployMutation } from './Space/SpaceCancelDeployMutation';
 import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
 import type { TSpaceFixIssuesMutation } from './Space/SpaceFixIssuesMutation';
 import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
+import type { TSpaceRedeployMutation } from './Space/SpaceRedeployMutation';
 import type { TSpaceRenameElementMutation } from './Space/SpaceRenameElementMutation';
 import type { TSpaceRollbackMutation } from './Space/SpaceRollbackMutation';
 import type { TSpaceRunE2eTestsMutation } from './Space/SpaceRunE2eTestsMutation';
+import type { TSpaceSetTargetMutation } from './Space/SpaceSetTargetMutation';
 import type { TSpaceSetTestsMutation } from './Space/SpaceSetTestsMutation';
 import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
 
@@ -199,6 +205,9 @@ export type BuilderMutationsMap = {
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
   SpaceRollback: TSpaceRollbackMutation;
+  SpaceRedeploy: TSpaceRedeployMutation;
+  SpaceCancelDeploy: TSpaceCancelDeployMutation;
+  SpaceSetTarget: TSpaceSetTargetMutation;
   SpaceUpdateSettings: unknown;
   SpaceSetTests: TSpaceSetTestsMutation;
   SpaceRunE2eTests: TSpaceRunE2eTestsMutation;
@@ -289,6 +298,9 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceRollback: SpaceRollbackMutation,
+  SpaceRedeploy: SpaceRedeployMutation,
+  SpaceCancelDeploy: SpaceCancelDeployMutation,
+  SpaceSetTarget: SpaceSetTargetMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,
   SpaceSetTests: SpaceSetTestsMutation,
   SpaceRunE2eTests: SpaceRunE2eTestsMutation,

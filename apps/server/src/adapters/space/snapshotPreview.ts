@@ -45,7 +45,9 @@ export interface SnapshotPreviewOptions {
    */
   keyOf: (address: PreviewAddress) => string;
   /** The space, when it is one the deployment serves; nothing for one it does not, and the address is a 404. */
-  find: (spaceId: number) => Promise<{ spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'> } | undefined>;
+  find: (
+    spaceId: number
+  ) => Promise<{ spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'> } | undefined>;
 }
 
 const sameKey = (presented: string, expected: string): boolean => {
