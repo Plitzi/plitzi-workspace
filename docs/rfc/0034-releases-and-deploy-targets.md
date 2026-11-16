@@ -39,6 +39,8 @@ This RFC keeps the pointer model and builds on it:
    when Plitzi releases newer ones, the target says it should be redeployed, and refuses a snapshot it can no longer
    run, with the fix (§5.2).
 
+Each kind of deploy is a capability of the space's plan, gated, sold and locked as every other one is (§8).
+
 ```
 dev.example.com   environment development   GitHub Pages     (static)
 example.com       environment production    AWS Amplify      (static)
@@ -181,7 +183,40 @@ Credentials are `space_credential` rows (encrypted), one kind per provider, crea
 - **Information, not automation.** After a publish the card shows what the target reports — page errors, failed runs —
   since the release, beside the rollback. It decides nothing.
 
-## 8. Where the code lives
+## 8. Plans
+
+What a space may deploy, and where, is its plan's — the same catalogue every other gate reads
+(`src/services/entitlements/catalog.ts`, `SPACE_CAPABILITIES`): a refusal names the plan that includes it, the builder
+locks what the plan lacks and says with which, and the pricing page lists it under going live. A space's plan is the
+higher of its site plan and its workspace's, as for every capability (`entitlementsOfSpace`).
+
+**Capabilities** (new rows of the catalogue, group `live`; the tiers are a proposal):
+
+| Capability | What it opens | From |
+| --- | --- | --- |
+| — | Plitzi SSR on `<space>.plitzi.app` (the draft) | Free |
+| `customDomain` (exists) | Plitzi SSR on a domain of its own, by CNAME | Site |
+| `snapshots` (exists) | Snapshots, publish, the release history and rollback | Site |
+| `deployDownload` | The site as a zip (SPA or static), to host anywhere by hand | Site |
+| `deploySpa` | SPA targets on a provider (GitHub Pages, S3 + CloudFront, Amplify, R2, Netlify, Vercel, FTP) | App |
+| `deployStatic` | Static (prerendered) targets on those providers | App |
+| `deploySelfHosted` | Self-hosted SSR (`@plitzi/sdk-server`), connected or baked | Growth |
+| `deployAutomation` | Deploy hooks, a publish scheduled for later, production protected (who may publish) | App+ |
+
+**Limits** (plan figures, as page views and runs are):
+
+| Limit | Meaning |
+| --- | --- |
+| `deployTargets` | Targets a space may have besides its `plitzi.app` address |
+| `keptArtifacts` | Deploys kept per target for a rollback without rebuilding — never under 2 (the live one and the one before, §7) |
+| `deployMinutes` | Build time a month, counted as server work is (`analytics/serverWork.ts`): a static prerender of a large site is real CPU |
+
+**When a plan changes.** A downgrade never takes a site down: every target keeps serving what it serves, and its
+rollback stays available (rolling back is never refused by plan). What the plan no longer includes is refused from then
+on — creating such a target, deploying to it, publishing a revision that needs a deploy there — with the plan that
+includes it, and the target's card says so. A target over `deployTargets` is kept, not deleted; a new one is refused.
+
+## 9. Where the code lives
 
 | Piece | Repo | Why there |
 | --- | --- | --- |
@@ -192,7 +227,7 @@ Credentials are `space_credential` rows (encrypted), one kind per provider, crea
 | `plitzi snapshot`, `plitzi publish`, `plitzi rollback`, `plitzi releases`, `plitzi deploy`, `plitzi build --spa\|--static\|--ssr` | CLI | One API for every surface |
 | `plitzi_publish`, `plitzi_rollback`, `plitzi_releases` | MCP | An agent publishes as a person does, held to the same gate |
 
-## 9. Data
+## 10. Data
 
 - **`space_deployment` → a target.** Adds `mode` (`ssr`, `spa`, `static`, `selfHosted`), widens `provider`, adds
   `config` (the provider's own: repo and branch, bucket and distribution, app id), `deployedRevision`,
@@ -207,7 +242,7 @@ Credentials are `space_credential` rows (encrypted), one kind per provider, crea
 No legacy shims: the SPA shell that bakes its revision is replaced, and every published static site is redeployed once
 by the migration's release notes.
 
-## 10. The builder
+## 11. The builder
 
 - **Make a snapshot** — kept, polished: what it freezes, the environment, a description; after it, "Publish r12 now".
 - **Publish** — a panel, not a four-select modal: one card per target (domain, mode and provider, live release, who and
@@ -220,7 +255,7 @@ by the migration's release notes.
 - **Targets** — in the space's settings, with the domains (they are the same rows): add a target, pick a mode and a
   provider, connect its credential, verify the domain.
 
-## 11. CLI and MCP
+## 12. CLI and MCP
 
 ```
 plitzi snapshot --env production -m "Spring menu"
@@ -231,17 +266,17 @@ plitzi deploy example.com                 # rebuild and ship the live revision (
 plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the customer's own CI
 ```
 
-## 12. Phases
+## 13. Phases
 
 | Phase | What | Why first |
 | --- | --- | --- |
 | **F0** | The current dialogs made right: colours, the disabled environment, the notice, button weight, copy; what is live now on the chosen domain | Small, independent, visible today |
 | **F1** | `space_release`; the publish panel over Plitzi SSR targets; rollback (manual) with its pruning protection; `plitzi publish / rollback / releases`; the MCP tools | The pointer model already exists: history and rollback are most of the value at the least cost |
-| **F2** | Targets and modes; `space_deploy` and the deploy job; the SPA shell that reads its revision; fingerprints and the "needs a deploy" warning; the versions each deploy records and the update-available state (§5.2); GitHub Pages, S3 + CloudFront, Amplify, download | The two examples of §1 |
-| **F3** | Static prerender; R2 / Cloudflare Pages, Netlify / Vercel; FTP / SFTP; kept artifacts for rollback | Builds on F2's pipeline |
-| **F4** | Self-hosted SSR (`plitzi build --ssr`, connected and baked) with its reported versions, the support window and redeploy-required refusals (§5.2); deploy hooks; a publish scheduled for later; production protected (who may publish) | The rest |
+| **F2** | Targets and modes, gated by `deployDownload`, `deploySpa` and the `deployTargets` limit; `space_deploy` and the deploy job; the SPA shell that reads its revision; fingerprints and the "needs a deploy" warning; the versions each deploy records and the update-available state (§5.2); GitHub Pages, S3 + CloudFront, Amplify, download | The two examples of §1 |
+| **F3** | Static prerender (`deployStatic`, `deployMinutes`); R2 / Cloudflare Pages, Netlify / Vercel; FTP / SFTP; kept artifacts for rollback | Builds on F2's pipeline |
+| **F4** | Self-hosted SSR (`deploySelfHosted`; `plitzi build --ssr`, connected and baked) with its reported versions, the support window and redeploy-required refusals (§5.2); deploy hooks, a publish scheduled for later, production protected (`deployAutomation`) | The rest |
 
-## 13. Open questions
+## 14. Open questions
 
 1. **A space's runtime is per environment, not per revision.** Publishing an older revision to one target while the
    environment's runtime runs the latest serves that page with a newer runtime. Per-revision runtimes, or the publish
@@ -250,14 +285,15 @@ plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the cust
    declared enumerable, or a list in the target's settings?
 3. **The SPA's revision lookup** is one more request per page view: cached at the edge with the space document (and
    dropped on publish), or the host's revision handed to the shell by the provider (a `_redirects`/header rule)?
-4. **Plans.** Which modes and providers each plan includes, and how many targets and kept artifacts.
+4. **Plans.** The tiers of §8 are a proposal: which plan each deploy capability starts at, and the figures of its
+   limits.
 5. **The support window.** How long Plitzi's API keeps answering an older `@plitzi/sdk-server` (a number of minor
    releases, or months), how far ahead a version's end is announced, and who is told (the space's owners, the
    workspace's admins).
 6. **Preview addresses.** `r12--acme.plitzi.app` serving any snapshot before it is published — cheap with SSR; wanted
    in F1?
 
-## 14. Not in this RFC
+## 15. Not in this RFC
 
 - Rolling back by itself on errors (decided against: rollbacks are manual).
 - Versioning a space's data or its feature flags with its snapshots.
