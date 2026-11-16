@@ -35,6 +35,9 @@ This RFC keeps the pointer model and builds on it:
    CloudFront, Amplify, R2, FTP, a self-hosted server…). A publish that needs one **says so before it happens**.
 4. **Roll back** — always one action away, on every target, to the release before. **Manual only**: nothing rolls back
    by itself.
+5. **Stay current** — a target that holds a copy runs the versions it was built with (the SDK, `@plitzi/sdk-server`);
+   when Plitzi releases newer ones, the target says it should be redeployed, and refuses a snapshot it can no longer
+   run, with the fix (§5.2).
 
 ```
 dev.example.com   environment development   GitHub Pages     (static)
@@ -102,6 +105,7 @@ it. The publish panel compares the revision's fingerprint with the target's last
 | Baked in | SPA | Static | Self-hosted, connected |
 | --- | --- | --- | --- |
 | The SDK and React versions the build uses | ✓ | ✓ | ✓ |
+| The `@plitzi/sdk-server` version (§5.2) | — | — | ✓ |
 | The space's fonts and head (favicon, meta, analytics tag) | ✓ | ✓ | — |
 | Its plugins' bundles (content-addressed digests) | ✓ | ✓ | ✓ |
 | Its routes (pages added, removed, re-slugged) | — | ✓ | — |
@@ -112,7 +116,32 @@ The SPA shell stops baking the revision: it asks Plitzi which revision its host 
 space document it already loads), so publishing to an SPA target is a pointer move like Plitzi SSR's, and a deploy is
 needed only when the shell itself changed. A static target cannot avoid one.
 
-### 5.2 Server features off Plitzi
+### 5.2 When Plitzi moves on: versions
+
+A target that holds a copy runs the versions it was built with — the SDK and React in an SPA or a static site, and
+`@plitzi/sdk-server` itself in a self-hosted server. Plitzi keeps releasing; such a target stays where it was until it is
+redeployed, and it must say so rather than drift silently.
+
+- **Each deploy records its versions** (`space_deploy.versions`: SDK, React, `@plitzi/sdk-server`, the document schema
+  it reads). A self-hosted server built by the CLI records them in its bundle, and a *connected* one reports them to
+  Plitzi when it asks for the space (a header beside its space token), so Plitzi knows what each target really runs —
+  also one redeployed by hand.
+- **Plitzi publishes what it supports**: the newest versions, and the oldest `@plitzi/sdk-server` and document schema
+  its API still answers (a support window, announced with each release as `docs/upgrading.md` does for the platform).
+- **Three states, on the target's card, in the publish panel, in `plitzi releases` and to the space's owners:**
+
+  | State | When | What it says | Publishing |
+  | --- | --- | --- | --- |
+  | Up to date | The target runs the newest versions | Nothing | As usual |
+  | Update available | A newer SDK or `@plitzi/sdk-server` exists, the target's still supported | "sdk-server 2.4 is out (this target runs 2.1): redeploy to update — what changes", with the release notes | As usual; **Redeploy** offered beside it |
+  | Redeploy required | The snapshot being published needs a newer version than the target runs (a document schema, an element, an SDK feature), or the target's version leaves the support window | "r12 needs sdk-server ≥ 2.3; this target runs 2.1: redeploy first", and the date a version leaves support well before it does | Refused for that target with the fix — **Redeploy and publish** (Plitzi builds it) or the CLI command (the customer builds it) |
+
+- **Never an upgrade by surprise.** Plitzi does not redeploy a target because a version came out: the person presses
+  Redeploy, as they press Roll back. A redeploy is a deploy like any other — recorded, logged, and rolled back from if
+  the new version misbehaves (the artifact before it is kept, §7).
+- **Plitzi SSR targets need none of this**: they run Plitzi's own page servers, updated with the platform.
+
+### 5.3 Server features off Plitzi
 
 A static or SPA site still runs the space's actions, functions, sign-in and realtime **on Plitzi**, cross-origin: the
 host joins the space token's origins when the target is created, and the pre-publish checks list what the site uses
@@ -166,12 +195,14 @@ Credentials are `space_credential` rows (encrypted), one kind per provider, crea
 ## 9. Data
 
 - **`space_deployment` → a target.** Adds `mode` (`ssr`, `spa`, `static`, `selfHosted`), widens `provider`, adds
-  `config` (the provider's own: repo and branch, bucket and distribution, app id), `deployedRevision` and
-  `deployedFingerprint`. Today's rows map: `ssr` → Plitzi SSR; `s3`/`r2` → SPA on that provider.
+  `config` (the provider's own: repo and branch, bucket and distribution, app id), `deployedRevision`,
+  `deployedFingerprint` and `runningVersions` (what the target last reported or was last built with, §5.2). Today's
+  rows map: `ssr` → Plitzi SSR; `s3`/`r2` → SPA on that provider.
 - **`space_release`** (new): `targetId`, `environment`, `revision`, `previousRevision`, `kind` (`publish`, `rollback`),
   `deployId` (nullable), `by`, `at`. Append-only; the history and the rollback read it.
-- **`space_deploy`** (new): `targetId`, `revision`, `fingerprint`, `status`, `log` (bounded), `artifactKey`, `size`,
-  `startedAt`, `finishedAt`, `by`. Artifacts in the space's private bucket by content hash.
+- **`space_deploy`** (new): `targetId`, `revision`, `fingerprint`, `versions` (SDK, React, `@plitzi/sdk-server`,
+  document schema), `status`, `log` (bounded), `artifactKey`, `size`, `startedAt`, `finishedAt`, `by`. Artifacts in
+  the space's private bucket by content hash.
 
 No legacy shims: the SPA shell that bakes its revision is replaced, and every published static site is redeployed once
 by the migration's release notes.
@@ -180,8 +211,9 @@ by the migration's release notes.
 
 - **Make a snapshot** — kept, polished: what it freezes, the environment, a description; after it, "Publish r12 now".
 - **Publish** — a panel, not a four-select modal: one card per target (domain, mode and provider, live release, who and
-  when, needs-a-deploy badge). Pick a snapshot from a list that says, for each, its description, author, date, its
-  tests' result and what changes against the target's live revision ("3 pages changed, 1 new"). The checks (space
+  when, needs-a-deploy badge, and its versions' state: up to date, update available, redeploy required — §5.2). Pick
+  a snapshot from a list that says, for each, its description, author, date, its tests' result and what changes
+  against the target's live revision ("3 pages changed, 1 new"). The checks (space
   tests, Space Issues, cross-origin features for SPA/static), then **Publish** or **Publish and deploy**, and **Roll
   back to rN** always beside them.
 - **A deploy** — its live log and status in a drawer, reachable from the target's card and from the activity feed.
@@ -194,8 +226,8 @@ by the migration's release notes.
 plitzi snapshot --env production -m "Spring menu"
 plitzi publish example.com r12            # --latest; deploys when the target needs it, after saying so (--yes in CI)
 plitzi rollback example.com               # to the previous release; --to r9
-plitzi releases example.com               # the history, with each release's deploy
-plitzi deploy example.com                 # rebuild and ship the live revision (a provider changed, a failed deploy)
+plitzi releases example.com               # the history, each release's deploy, and the versions the target runs
+plitzi deploy example.com                 # rebuild and ship the live revision (a new version, a provider changed, a failed deploy)
 plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the customer's own CI
 ```
 
@@ -205,9 +237,9 @@ plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the cust
 | --- | --- | --- |
 | **F0** | The current dialogs made right: colours, the disabled environment, the notice, button weight, copy; what is live now on the chosen domain | Small, independent, visible today |
 | **F1** | `space_release`; the publish panel over Plitzi SSR targets; rollback (manual) with its pruning protection; `plitzi publish / rollback / releases`; the MCP tools | The pointer model already exists: history and rollback are most of the value at the least cost |
-| **F2** | Targets and modes; `space_deploy` and the deploy job; the SPA shell that reads its revision; fingerprints and the "needs a deploy" warning; GitHub Pages, S3 + CloudFront, Amplify, download | The two examples of §1 |
+| **F2** | Targets and modes; `space_deploy` and the deploy job; the SPA shell that reads its revision; fingerprints and the "needs a deploy" warning; the versions each deploy records and the update-available state (§5.2); GitHub Pages, S3 + CloudFront, Amplify, download | The two examples of §1 |
 | **F3** | Static prerender; R2 / Cloudflare Pages, Netlify / Vercel; FTP / SFTP; kept artifacts for rollback | Builds on F2's pipeline |
-| **F4** | Self-hosted SSR (`plitzi build --ssr`, connected and baked); deploy hooks; a publish scheduled for later; production protected (who may publish) | The rest |
+| **F4** | Self-hosted SSR (`plitzi build --ssr`, connected and baked) with its reported versions, the support window and redeploy-required refusals (§5.2); deploy hooks; a publish scheduled for later; production protected (who may publish) | The rest |
 
 ## 13. Open questions
 
@@ -219,7 +251,10 @@ plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the cust
 3. **The SPA's revision lookup** is one more request per page view: cached at the edge with the space document (and
    dropped on publish), or the host's revision handed to the shell by the provider (a `_redirects`/header rule)?
 4. **Plans.** Which modes and providers each plan includes, and how many targets and kept artifacts.
-5. **Preview addresses.** `r12--acme.plitzi.app` serving any snapshot before it is published — cheap with SSR; wanted
+5. **The support window.** How long Plitzi's API keeps answering an older `@plitzi/sdk-server` (a number of minor
+   releases, or months), how far ahead a version's end is announced, and who is told (the space's owners, the
+   workspace's admins).
+6. **Preview addresses.** `r12--acme.plitzi.app` serving any snapshot before it is published — cheap with SSR; wanted
    in F1?
 
 ## 14. Not in this RFC
