@@ -44,7 +44,12 @@ const cloud = (latest: () => number | undefined = () => 7, flags: () => FlagsAns
     calls.push(body);
 
     if (failing) {
-      return Promise.resolve({ ok: false, status: 502, json: () => Promise.resolve({}) } as Response);
+      return Promise.resolve({
+        ok: false,
+        status: 502,
+        headers: new Headers(),
+        json: () => Promise.resolve({})
+      } as Response);
     }
 
     const data = body.query.includes('SpaceLatestRevision')
@@ -53,7 +58,12 @@ const cloud = (latest: () => number | undefined = () => 7, flags: () => FlagsAns
         ? { SpaceFlags: flags() }
         : { Space: space };
 
-    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ data }) } as unknown as Response);
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      json: () => Promise.resolve({ data })
+    } as unknown as Response);
   }) as unknown as typeof fetch;
 
   return {
@@ -350,7 +360,11 @@ describe('the shape it hands to the renderer', () => {
 
   const serving = (payload: unknown) =>
     vi.fn(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: { Space: payload } }) } as unknown as Response)
+      Promise.resolve({
+        ok: true,
+        headers: new Headers(),
+        json: () => Promise.resolve({ data: { Space: payload } })
+      } as unknown as Response)
     ) as unknown as typeof fetch;
 
   it('keys the element list by id, so a page can be looked up at all', async () => {
@@ -374,5 +388,18 @@ describe('the shape it hands to the renderer', () => {
     const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving({ style: {}, plugins: [] }) });
 
     await expect(built.getOfflineData(1, 'main')).resolves.toBeUndefined();
+  });
+});
+
+describe('a server of a customer’s own, told apart', () => {
+  it('says what it is, and asks the revision its own domain is published at', async () => {
+    const plitzi = cloud();
+    await read(adapters(plitzi.fetchImpl, { environment: 'production', domain: 'shop.example.com' }), 'production');
+
+    const calls = (plitzi.fetchImpl as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls;
+    expect((calls[0][1].headers as Record<string, string>)['x-plitzi-client']).toMatch(/^sdkServer\//);
+    expect(
+      calls.some(([, init]) => typeof init.body === 'string' && init.body.includes('"domain":"shop.example.com"'))
+    ).toBe(true);
   });
 });

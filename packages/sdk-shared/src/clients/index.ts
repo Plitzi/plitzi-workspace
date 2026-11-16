@@ -11,15 +11,19 @@ export const CLIENT_HEADER = 'x-plitzi-client';
 /** What the platform answers a client older than itself with: its own version. */
 export const CURRENT_HEADER = 'x-plitzi-current';
 
-export const CLIENT_SURFACES = ['cli', 'builder'] as const;
+/** `sdkServer` is a server of a customer's own running `@plitzi/sdk-server` and asking Plitzi for its space (RFC 0034 §5.2). */
+export const CLIENT_SURFACES = ['cli', 'builder', 'sdkServer'] as const;
 
 export type ClientSurface = (typeof CLIENT_SURFACES)[number];
 
 /** The step that brings each surface up to the platform. */
 export const CLIENT_UPGRADE: Record<ClientSurface, string> = {
   cli: 'in a project, plitzi upgrade packages (the CLI is one of them); elsewhere, npx @plitzi/cli@latest',
-  builder: 'reload the builder: it loads the platform’s own'
+  builder: 'reload the builder: it loads the platform’s own',
+  sdkServer: 'update @plitzi/sdk-server, build the server again (plitzi build --ssr) and deploy it'
 };
+
+const SURFACE_NAMES: Record<ClientSurface, string> = { cli: 'CLI', builder: 'builder', sdkServer: 'server' };
 
 type Version = readonly [number, number, number];
 
@@ -92,8 +96,8 @@ export const judgeClient = (
 
 /** What a refused client is told: what it is, what the platform takes, and the step. */
 export const outdatedText = (verdict: Extract<ClientVerdict, { kind: 'refused' }>): string =>
-  `This ${verdict.surface === 'cli' ? 'CLI' : 'builder'} is ${verdict.version}, and the platform (${verdict.current}) takes ${verdict.oldest} and later: ${CLIENT_UPGRADE[verdict.surface]}.`;
+  `This ${SURFACE_NAMES[verdict.surface]} is ${verdict.version}, and the platform (${verdict.current}) takes ${verdict.oldest} and later: ${CLIENT_UPGRADE[verdict.surface]}.`;
 
 /** What a client behind is told, once. */
 export const behindText = (surface: ClientSurface, version: string, current: string): string =>
-  `Plitzi ${current} is out, and this ${surface === 'cli' ? 'CLI' : 'builder'} is ${version}: ${CLIENT_UPGRADE[surface]}.`;
+  `Plitzi ${current} is out, and this ${SURFACE_NAMES[surface]} is ${version}: ${CLIENT_UPGRADE[surface]}.`;

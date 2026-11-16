@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { behindText, clientHeaderValue, clientOf, judgeClient, oldestByDefault, outdatedText } from './index';
 
-const platform = { current: '0.40.2', oldest: { cli: '0.39.0', builder: '0.40.0' } };
+const platform = { current: '0.40.2', oldest: { cli: '0.39.0', builder: '0.40.0', sdkServer: '0.39.0' } };
 
 describe('a client judged against the platform', () => {
   it('reads the client a request names, and nothing from what names none', () => {
@@ -48,5 +48,16 @@ describe('a client judged against the platform', () => {
   it('takes the minor before its own by default', () => {
     expect(oldestByDefault('0.40.2')).toBe('0.39.0');
     expect(oldestByDefault('1.0.4')).toBe('1.0.0');
+  });
+});
+
+describe('a server of a customer’s own', () => {
+  it('is judged as every client is: refused under the oldest the platform answers, with the step that updates it', () => {
+    const verdict = judgeClient('sdkServer/0.38.4', platform);
+
+    expect(verdict).toMatchObject({ kind: 'refused', surface: 'sdkServer', oldest: '0.39.0' });
+    expect(verdict.kind === 'refused' && outdatedText(verdict)).toBe(
+      'This server is 0.38.4, and the platform (0.40.2) takes 0.39.0 and later: update @plitzi/sdk-server, build the server again (plitzi build --ssr) and deploy it.'
+    );
   });
 });

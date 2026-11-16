@@ -1,4 +1,5 @@
 import { serverLog } from '@plitzi/sdk-kernel/log';
+import { behindText, CLIENT_HEADER, clientHeaderValue, CURRENT_HEADER } from '@plitzi/sdk-shared/clients';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { schemaFromWire } from '@plitzi/sdk-shared/schema';
 
@@ -73,6 +74,13 @@ export type CloudAdaptersConfig = {
    */
   revision?: number;
   /**
+   * The domain this server answers on, when it is a target of the space (RFC 0034, a server of your own): in latest
+   * mode, the revision served is the one that domain is published at — a publish or a rollback in the builder moves it
+   * — rather than the environment's newest. Plitzi also keeps what this server says it runs, to say when it should be
+   * built again.
+   */
+  domain?: string;
+  /**
    * How often Plitzi is ASKED anything, in seconds. Default a minute. Ignored in both directions at the edges:
    *
    * - `main` **does not cache at all**. It is the document somebody is actively editing, and an edit that shows
@@ -127,8 +135,8 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
  * magnitude cheaper — for this deployment and for Plitzi — than pulling a whole space down to discover it did not
  * change. The space itself is fetched only when this answer moves.
  */
-const LATEST_REVISION_QUERY = `query SpaceLatestRevisionQuery($environment: String!) {
-  SpaceLatestRevision(environment: $environment) {
+const LATEST_REVISION_QUERY = `query SpaceLatestRevisionQuery($environment: String!, $domain: String) {
+  SpaceLatestRevision(environment: $environment, domain: $domain) {
     snapshot { revision }
     flagsHash
   }
@@ -225,8 +233,11 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     cache,
     spaceId = 1,
     deployment,
+    domain,
     fetchImpl = fetch
   } = config;
+  // Said once a process: Plitzi answered that it is newer than this server, which goes on working.
+  let toldBehind = false;
 
   assertHostKey(webKey);
 
@@ -240,12 +251,27 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     try {
       const response = await fetchImpl(serverUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', authorization: `Bearer ${webKey}` },
+        // What this server is, judged by the platform as every client of it is: one too old is refused with the step.
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${webKey}`,
+          [CLIENT_HEADER]: clientHeaderValue('sdkServer', VERSION)
+        },
         body: JSON.stringify({ query, variables })
       });
+      const current = response.headers.get(CURRENT_HEADER);
+      if (current && !toldBehind) {
+        toldBehind = true;
+        serverLog.warn('CloudAdapters', behindText('sdkServer', VERSION, current));
+      }
 
       if (!response.ok) {
-        serverLog.error('CloudAdapters', `${what} answered ${response.status}`);
+        // The platform's own words when it says why (a server too old for it says what to do), the status otherwise.
+        const said: unknown = await response.json().catch(() => undefined);
+        serverLog.error(
+          'CloudAdapters',
+          `${what} answered ${String(response.status)}${isRecord(said) && typeof said.error === 'string' ? `: ${said.error}` : ''}`
+        );
 
         return undefined;
       }
@@ -292,7 +318,7 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
   const probe = async (env: string): Promise<{ revision?: number; flagsHash?: string }> => {
     const data = await post<LatestRevisionPayload['data']>(
       LATEST_REVISION_QUERY,
-      { environment: env },
+      { environment: env, domain: domain ?? null },
       `latest revision of ${env}`
     );
     const answer = data?.SpaceLatestRevision;
