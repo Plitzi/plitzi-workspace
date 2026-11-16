@@ -55,7 +55,7 @@ weighs on a phone — and what of it a phone cannot hold.
 
 - **Snapshot and Publish, redrawn** (RFC 0034, F0). The header's end is one release cluster: a chip that says how far
   the draft has moved since the last snapshot ("4 changes since production r12"), **Snapshot**, and **Publish** — its
-  one primary; **Export** and the theme step back into a `⋯` menu, and the quota, plan and role read as one group.
+  one primary; the logo's chevron is a real menu — back to the spaces, **Export**, the theme — and the quota, plan and role read as one group.
   **Make a snapshot** chooses its environment on a segmented control (each with its latest revision; a locked one
   outlined with its plan, never a bright tile), says what changes against that environment's latest, asks what it is
   for, shows only the notices that apply, and offers **Snapshot and publish…**. **Publish** opens beside the page:

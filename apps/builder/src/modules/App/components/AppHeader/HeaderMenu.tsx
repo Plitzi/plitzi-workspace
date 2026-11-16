@@ -2,7 +2,7 @@ import useOverlayEscape from '@plitzi/plitzi-ui/hooks/useOverlayEscape';
 import clsx from 'clsx';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
-import type { KeyboardEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
 export type HeaderMenuItem = {
   id: string;
@@ -19,16 +19,23 @@ export type HeaderMenuProps = {
   id: string;
   /** Its accessible name and title: what the menu is for. */
   label: string;
-  icon: string;
+  /** What the button shows. */
+  trigger: ReactNode;
+  triggerClassName: string;
+  /** Which edge of the button the menu lines up with: its start under a button on the left, its end on the right. */
+  align?: 'start' | 'end';
   sections: readonly HeaderMenuSection[];
 };
 
 /**
- * A menu under a header button: what the header keeps a step back — the export, the theme. Opened, focus moves into it;
- * arrows move between its items, Escape and a press outside close it, and choosing an item closes it.
+ * A menu under a header button — the logo's: the way back to the spaces, the export, the theme. Opened, focus moves
+ * into it; arrows move between its items, Escape and a press outside close it, and choosing an item closes it. It is
+ * placed on the window, not inside the header: the header's left side scrolls when it is short of room, and would clip it.
  */
-const HeaderMenu = ({ id, label, icon, sections }: HeaderMenuProps) => {
+const HeaderMenu = ({ id, label, trigger, triggerClassName, align = 'start', sections }: HeaderMenuProps) => {
   const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState<CSSProperties>({});
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -67,6 +74,7 @@ const HeaderMenu = ({ id, label, icon, sections }: HeaderMenuProps) => {
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={buttonRef}
         id={id}
         type="button"
         title={label}
@@ -74,10 +82,21 @@ const HeaderMenu = ({ id, label, icon, sections }: HeaderMenuProps) => {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        className="text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-7 w-7 cursor-pointer items-center justify-center rounded transition-colors"
-        onClick={() => setOpen(value => !value)}
+        className={triggerClassName}
+        onClick={() => {
+          const rect = buttonRef.current?.getBoundingClientRect();
+          if (rect) {
+            setPlace(
+              align === 'start'
+                ? { top: rect.bottom + 4, left: rect.left }
+                : { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+            );
+          }
+
+          setOpen(value => !value);
+        }}
       >
-        <i className={clsx(icon, 'text-sm')} />
+        {trigger}
       </button>
       {open && (
         <div
@@ -85,7 +104,8 @@ const HeaderMenu = ({ id, label, icon, sections }: HeaderMenuProps) => {
           id={menuId}
           role="menu"
           aria-label={label}
-          className="border-ui-line bg-ui-panel absolute top-full right-0 z-50 mt-1 flex min-w-52 flex-col gap-1 rounded-lg border p-1 shadow-lg"
+          style={place}
+          className="border-ui-line bg-ui-panel fixed z-[700] flex min-w-56 flex-col gap-1 rounded-lg border p-1 shadow-lg"
           onKeyDown={handleKeyDown}
         >
           {sections.map((section, index) => (

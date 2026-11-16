@@ -19,6 +19,7 @@ import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useS
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import DisplayModeButtons from './DisplayModeButtons';
+import HeaderMenu from './HeaderMenu';
 import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
 import PageHeader from './PageHeader';
@@ -26,7 +27,6 @@ import PlanBadge from './PlanBadge';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
 import DraftStatusChip from './ReleaseCluster/DraftStatusChip';
-import HeaderMenu from './ReleaseCluster/HeaderMenu';
 import useDraftStatus from './ReleaseCluster/useDraftStatus';
 import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
@@ -189,17 +189,52 @@ const AppHeader = () => {
         history, the views — that gives way, scrolling inside itself. Nothing is taken out of the bar.
       */}
       <div className="flex h-full min-w-0 shrink [scrollbar-width:none] items-center gap-3 overflow-x-auto overflow-y-hidden">
-        <div
-          className={clsx(
-            'bg-ui-raised text-ui-fg flex h-8 w-20 shrink-0 items-center justify-between rounded-lg pr-2 pl-3'
-          )}
+        {/* The logo is the builder's menu: the way back to the spaces, the export, the theme. */}
+        <HeaderMenu
           id="plitzi-logo"
-        >
-          <a href={origin}>
-            <img src={PLITZI_MARK_DATA_URL} className="h-6 w-6" alt="Plitzi" />
-          </a>
-          <i className="fa-solid fa-chevron-down" />
-        </div>
+          label="Plitzi menu"
+          triggerClassName="bg-ui-raised text-ui-fg hover:bg-ui-hover flex h-8 w-20 shrink-0 cursor-pointer items-center justify-between rounded-lg pr-2 pl-3 transition-colors"
+          trigger={
+            <>
+              <img src={PLITZI_MARK_DATA_URL} className="h-6 w-6" alt="" />
+              <i className="fa-solid fa-chevron-down text-xs" />
+            </>
+          }
+          sections={[
+            {
+              items: [
+                {
+                  id: 'header-back',
+                  label: 'Back to your spaces',
+                  icon: 'fa-solid fa-arrow-left',
+                  onSelect: () => window.location.assign(`${origin}/spaces`)
+                },
+                {
+                  id: 'header-export',
+                  label: 'Export',
+                  icon: 'fa-solid fa-download',
+                  onSelect: () => void handleClickExport()
+                }
+              ]
+            },
+            {
+              label: 'Theme',
+              items: (
+                [
+                  ['light', 'Light', 'fa-solid fa-sun'],
+                  ['dark', 'Dark', 'fa-solid fa-moon'],
+                  ['system', 'System', 'fa-solid fa-desktop']
+                ] as const
+              ).map(([mode, label, icon]) => ({
+                id: `header-theme-${mode}`,
+                label,
+                icon,
+                checked: theme === mode,
+                onSelect: () => setTheme(mode)
+              }))
+            }
+          ]}
+        />
         <PageHeader />
         <BuilderSearchButton />
         <HistoryButtons />
@@ -242,7 +277,7 @@ const AppHeader = () => {
         </div>
         {/*
           The release cluster: what the draft is against the last snapshot, Snapshot, and Publish — the header's one
-          primary. What is used less steps back into the menu beside it.
+          primary. What is used less steps back into the logo's menu.
         */}
         <div className="flex items-center gap-2">
           {publishes && (
@@ -284,39 +319,6 @@ const AppHeader = () => {
               Publish
             </Button>
           )}
-          <HeaderMenu
-            id="header-more"
-            label="More"
-            icon="fa-solid fa-ellipsis"
-            sections={[
-              {
-                items: [
-                  {
-                    id: 'header-export',
-                    label: 'Export',
-                    icon: 'fa-solid fa-download',
-                    onSelect: () => void handleClickExport()
-                  }
-                ]
-              },
-              {
-                label: 'Theme',
-                items: (
-                  [
-                    ['light', 'Light', 'fa-solid fa-sun'],
-                    ['dark', 'Dark', 'fa-solid fa-moon'],
-                    ['system', 'System', 'fa-solid fa-desktop']
-                  ] as const
-                ).map(([mode, label, icon]) => ({
-                  id: `header-theme-${mode}`,
-                  label,
-                  icon,
-                  checked: theme === mode,
-                  onSelect: () => setTheme(mode)
-                }))
-              }
-            ]}
-          />
         </div>
       </div>
     </div>

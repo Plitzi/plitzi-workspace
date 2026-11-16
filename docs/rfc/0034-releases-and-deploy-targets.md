@@ -252,7 +252,7 @@ the builder's own kit (`plitzi-ui`), light and dark, at desktop and 390 px.
 ### 11.1 The header
 
 ```
-… ⌕  ↶ ↷ │ ▭ ▭ ▭ │ 100% │ ◐ preview │ ⚠ 2 │      ● Draft · 4 changes since production r12   [ Snapshot ]  [ Publish ▾ ]   ⋯
+[◆ ▾] Home  ⌕  ↶ ↷ │ ▭ ▭ ▭ │ 100% │ ◐ preview │ ⚠ 2 │    ● Draft · 4 changes since production r12   [ Snapshot ]  [ Publish ▾ ]
 ```
 
 - **One release cluster** at the right end, in reading order:
@@ -264,7 +264,7 @@ the builder's own kit (`plitzi-ui`), light and dark, at desktop and 390 px.
   - **Publish** — the one primary of the header, a split button: the button opens the publish panel; its menu holds
     *Roll back <domain> to rN* for each target that has a release before the live one, *Release history*, and
     *Targets and domains…* (the space's settings).
-- **Everything else steps back**: Export moves into the overflow menu `⋯` with the theme and the space's settings; the
+- **Everything else steps back**: the logo's chevron opens the builder's menu — back to the spaces, Export, the theme; the
   quota, plan and role badges become one account chip that opens them. The cluster never wraps: under 1,536 px the
   chip shows its dot and revision alone, its words as its title.
 - **Keyboard**: the two actions get shortcuts shown in their titles and in the shortcuts sheet (`?`), checked against
