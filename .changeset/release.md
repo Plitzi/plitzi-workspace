@@ -60,7 +60,11 @@ weighs on a phone — and what of it a phone cannot hold.
 
 - A tab of a `tabContainer` takes `hash`: a link to the page ending in `#domains` opens on that tab, and choosing the
   tab writes it in the address — replaced, so Back leaves the page rather than the tab. A page the server drew opens on
-  it before it paints (the page's `tabHash.js`), and hydrates there: no flash of the first tab.
+  it before it paints, and hydrates there: no flash of the first tab.
+- `usePrePaint(name, script, enabled?)` (`@plitzi/sdk-shared/hooks`): an element that draws by what only the browser
+  knows — the address's hash — asks the page to run its script as soon as it is parsed, before it paints. The server
+  render collects what was asked (`SSRRenderResult.prePaint`, once per name) and the page server writes each under the
+  page's nonce, whole or streamed; in the browser it asks nothing. A tab with a `hash` is its first user.
 - An attribute an element does not read, on an element that reads none, says so (`It reads no attribute: remove it.`)
   instead of an empty list.
 

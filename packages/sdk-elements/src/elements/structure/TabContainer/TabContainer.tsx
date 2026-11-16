@@ -16,8 +16,8 @@ export type TabContainerProps = {
 
 /**
  * The tab the page was drawn with: on the server and in a render of the browser's own, the first; hydrating, the one
- * the document shows — the page's script may have opened the tab its address names before it painted (sdk-server's
- * `tabHash.js`), and React hydrates what is there rather than putting the first back.
+ * the document shows — the page may have opened the tab its address names before it painted (`openTabFromHash`, asked by
+ * the tab with `usePrePaint`), and React hydrates what is there rather than putting the first back.
  */
 const drawnTab = (baseId: string): number => {
   if (typeof document === 'undefined') {

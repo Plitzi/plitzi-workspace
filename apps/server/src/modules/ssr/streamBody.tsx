@@ -57,7 +57,11 @@ export const streamBody = async (
 
   const sentinelIdx = fullTemplate.indexOf(SSR_SENTINEL);
   const head = sentinelIdx >= 0 ? fullTemplate.slice(0, sentinelIdx) : fullTemplate;
-  const tail = sentinelIdx >= 0 ? fullTemplate.slice(sentinelIdx + SSR_SENTINEL.length) : '';
+  const tailOf = (template: string): string => {
+    const at = template.indexOf(SSR_SENTINEL);
+
+    return at >= 0 ? template.slice(at + SSR_SENTINEL.length) : '';
+  };
 
   const result: SSRRenderResult = {};
   const nonce = prep.templateParams.nonce ?? '';
@@ -74,6 +78,13 @@ export const streamBody = async (
         cb();
       },
       final(cb) {
+        // What the page runs before it paints is what its elements asked as they rendered (`usePrePaint`), known only
+        // now: the template's tail written again with it — the head, sent already, never reads it.
+        const tail = tailOf(
+          result.prePaint
+            ? renderFn({ ...prep.templateParams, html: SSR_SENTINEL, prePaint: result.prePaint })
+            : fullTemplate
+        );
         const tailBuf = Buffer.from(tail, 'utf-8');
         res.write(tailBuf);
         res.end();

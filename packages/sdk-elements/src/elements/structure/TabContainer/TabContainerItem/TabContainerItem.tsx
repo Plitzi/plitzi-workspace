@@ -1,6 +1,9 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
+import { usePrePaint } from '@plitzi/sdk-shared/hooks';
+
+import { openTabFromHash } from './openTabFromHash';
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
 
@@ -60,9 +63,11 @@ const TabContainerItem = ({
   const selected = tabSelected === position;
   const name = hash.replace(/^#/, '').trim();
   const linked = Boolean(isHeader && name);
+  // Drawn by the server, the page opens the tab its address names before it paints: the server never sees the hash.
+  usePrePaint('tab-hash', openTabFromHash, linked);
 
-  // Opened by the address before the browser paints — a page the server drew had it opened by its script already
-  // (sdk-server's `tabHash.js`), one drawn here is opened now — and whenever the hash changes.
+  // Opened by the address before the browser paints — a page the server drew had it opened as it was parsed
+  // (`openTabFromHash`), one drawn here is opened now — and whenever the hash changes.
   useLayoutEffect(() => {
     if (!linked || typeof window === 'undefined') {
       return undefined;

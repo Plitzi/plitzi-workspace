@@ -61,7 +61,7 @@ export const buildBody = async (
   }
 
   const templateStart = metrics ? performance.now() : 0;
-  const body = renderFn({ ...prep.templateParams, html });
+  const body = renderFn({ ...prep.templateParams, html, ...(result.prePaint ? { prePaint: result.prePaint } : {}) });
   metrics?.record('template', Math.round(performance.now() - templateStart));
 
   return { body, result, cacheable: prep.cacheable, nonce: prep.templateParams.nonce ?? '' };

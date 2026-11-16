@@ -7,6 +7,12 @@ export type SSRRenderResult = {
   status?: number;
   redirect?: string;
   headers?: Record<string, string>;
+  /**
+   * What the page's elements need done as soon as the page is parsed, before it paints and before React is there —
+   * by name, each an expression of plain JavaScript the page runs once (`usePrePaint`). What only the browser knows (the
+   * address's hash, the window's size) cannot be drawn by the server: an element that draws by it says so here.
+   */
+  prePaint?: Record<string, string>;
 };
 
 /**

@@ -207,3 +207,26 @@ describe('the SSR document / bootstrap', () => {
     expect(compileTemplate()({ html: '<div />', offlineData: '{}', ssrOnly: true })).not.toContain('plitzi-ssr-data');
   });
 });
+
+describe('the SSR document / what the page runs before it paints', () => {
+  it('runs each script its elements asked for once, under the page’s nonce, after the page and before the SDK', () => {
+    const html = compileTemplate()({
+      html: '<div id="tabs"></div>',
+      offlineData: '{}',
+      nonce: 'n0nce',
+      prePaint: { 'tab-hash': '(() => { document.title = "</script><b>"; })();' }
+    });
+    const script = html.indexOf('data-pre-paint="tab-hash"');
+
+    expect(script).toBeGreaterThan(html.indexOf('<div id="tabs"></div>'));
+    expect(script).toBeLessThan(html.indexOf('id="plitzi-ssr-data"'));
+    expect(html).toContain('<script data-pre-paint="tab-hash" nonce="n0nce">');
+    // A `</script` in a script would end it and put the rest into the page as markup.
+    expect(html).toContain('document.title = "<\\/script><b>"');
+    expect(html.match(/data-pre-paint=/g)).toHaveLength(1);
+  });
+
+  it('runs nothing when no element asked', () => {
+    expect(compileTemplate()({ html: '<div />', offlineData: '{}' })).not.toContain('data-pre-paint');
+  });
+});

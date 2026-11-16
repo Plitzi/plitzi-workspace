@@ -1,11 +1,11 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { runInThisContext } from 'node:vm';
 
 import { act } from '@testing-library/react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { NetworkContext } from '@plitzi/sdk-shared/network/react';
 
 import { TabContainer } from './TabContainer';
 import { TabContainerBody } from './TabContainerBody/TabContainerBody';
@@ -15,6 +15,8 @@ import ElementContext from '../../../Element/ElementContext';
 import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { TabContainerItemProps } from './TabContainerItem/TabContainerItem';
+import type { SSRRenderResult } from '@plitzi/sdk-shared';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network/react';
 import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
@@ -58,15 +60,14 @@ const Tabs = () => (
   </ElementContext>
 );
 
-/**
- * The page's script that opens the tab its address names before React is there (sdk-server's template, `tabHash.js`):
- * read from where the page server keeps it, since the two halves — it, and the container hydrating on what it opened —
- * are one contract.
- */
-const TAB_HASH = readFileSync(
-  path.resolve(process.cwd(), '../../apps/server/src/modules/ssr/views/inline/tabHash.js'),
-  'utf8'
-);
+/** What a page server hands the render, by reference: where the page's elements say what it must run before it paints. */
+const serverRender = (result: SSRRenderResult) =>
+  renderToString(
+    // Only what a tab's render reads of the network: the server's render, and where it writes.
+    <NetworkContext value={{ server: { ssr: { renderResult: result } } } as unknown as NetworkContextValue}>
+      <Tabs />
+    </NetworkContext>
+  );
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -79,11 +80,13 @@ const openTab = () =>
 describe('a page drawn by the server, opened on the tab its address names', () => {
   it('shows that tab before React is there, and hydrates on it without a mismatch', async () => {
     window.history.replaceState(null, '', '/spaces/7#domains');
-    document.body.innerHTML = `<div id="plitzi">${renderToString(<Tabs />)}</div>`;
+    const result: SSRRenderResult = {};
+    document.body.innerHTML = `<div id="plitzi">${serverRender(result)}</div>`;
     expect(openTab()).toBe('Overview');
+    expect(Object.keys(result.prePaint ?? {})).toEqual(['tab-hash']);
 
-    // As the browser runs it, parsed after the page and before it paints.
-    runInThisContext(TAB_HASH);
+    // What the page runs as it is parsed, before it paints: the tab's own script, as the render collected it.
+    runInThisContext(result.prePaint?.['tab-hash'] ?? '');
 
     expect(openTab()).toBe('Domains');
     expect([...document.querySelectorAll('[role="tabpanel"]')].map(panel => (panel as HTMLElement).hidden)).toEqual([
