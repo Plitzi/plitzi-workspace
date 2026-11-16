@@ -292,7 +292,8 @@ const AppHeader = () => {
         {may('spaceCode') && <RuntimeIdleNotice />}
         <IssuesButton />
         {/* The account, as one group: the space's quota, its plan and the person's role on it. */}
-        <div className="border-ui-line flex h-8 items-center gap-1 rounded-lg border px-1">
+        {/* 3 px all round, and each part's corners the group's less that: a part hovered sits evenly inside it. */}
+        <div className="border-ui-line flex h-8 items-stretch gap-1 rounded-lg border p-[3px] pr-1">
           <QuotaMeter />
           <PlanBadge />
           <RoleBadge />
@@ -304,63 +305,68 @@ const AppHeader = () => {
         */}
         {publishes && (
           <div className="border-ui-line flex items-center gap-2 border-l pl-3">
-            <HeaderPopover
-              id="header-draft-status"
-              label="Draft"
-              title={`${status.words} — what changed, and Snapshot`}
-              align="end"
-              triggerClassName={clsx(
-                'border-ui-line text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs whitespace-nowrap transition-colors',
-                'aria-expanded:bg-ui-hover aria-expanded:text-ui-fg'
-              )}
-              trigger={
-                <>
-                  <span
-                    className={clsx(
-                      'h-1.5 w-1.5 rounded-full',
-                      draft.loading ? 'bg-ui-line-strong' : status.pending ? 'bg-amber-500' : 'bg-emerald-500'
-                    )}
+            {/*
+              The draft and its next step, one control: its status opens what changed, Snapshot keeps it — as Publish
+              is one control with its menu.
+            */}
+            <div className="border-ui-line-strong flex h-8 items-stretch rounded-lg border">
+              <HeaderPopover
+                id="header-draft-status"
+                label="Draft"
+                title={`${status.words} — what changed, and where it is live`}
+                align="end"
+                triggerClassName={clsx(
+                  'text-ui-fg-subtle hover:bg-ui-hover hover:text-ui-fg flex h-full shrink-0 cursor-pointer items-center gap-1.5 rounded-l-[7px] px-2.5 text-xs whitespace-nowrap transition-colors outline-none',
+                  'focus-visible:ring-primary-500 focus-visible:ring-2 aria-expanded:bg-ui-hover aria-expanded:text-ui-fg'
+                )}
+                trigger={
+                  <>
+                    <span
+                      className={clsx(
+                        'h-1.5 w-1.5 rounded-full',
+                        draft.loading ? 'bg-ui-line-strong' : status.pending ? 'bg-amber-500' : 'bg-emerald-500'
+                      )}
+                    />
+                    <span className="hidden 2xl:inline">{status.words}</span>
+                    <span className="2xl:hidden">{status.short}</span>
+                    <i className="fa-solid fa-chevron-down text-[9px] opacity-60" />
+                  </>
+                }
+              >
+                {close => (
+                  <DraftPanel
+                    newest={draft.newest}
+                    changes={draft.changes}
+                    loading={draft.loading}
+                    draftAddress={draftAddress}
+                    attention={attention}
+                    snapshotLocked={snapshotsLocked !== undefined}
+                    onSnapshot={() => {
+                      close();
+                      void handleClickSnapshot();
+                    }}
+                    onPublish={domain => {
+                      close();
+                      void handleClickPublish(domain);
+                    }}
                   />
-                  <span className="hidden 2xl:inline">{status.words}</span>
-                  <span className="2xl:hidden">{status.short}</span>
-                  <i className="fa-solid fa-chevron-down text-[9px] opacity-60" />
-                </>
-              }
-            >
-              {close => (
-                <DraftPanel
-                  newest={draft.newest}
-                  changes={draft.changes}
-                  loading={draft.loading}
-                  draftAddress={draftAddress}
-                  attention={attention}
-                  snapshotLocked={snapshotsLocked !== undefined}
-                  onSnapshot={() => {
-                    close();
-                    void handleClickSnapshot();
-                  }}
-                  onPublish={domain => {
-                    close();
-                    void handleClickPublish(domain);
-                  }}
-                />
-              )}
-            </HeaderPopover>
-            <Button
-              id="header-snapshot"
-              size="sm"
-              title={
-                snapshotsLocked
-                  ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
-                  : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
-              }
-              onClick={() => void handleClickSnapshot()}
-              intent="secondary"
-              iconPlacement="before"
-            >
-              {snapshotsLocked && <Button.Icon icon="fa-solid fa-lock" />}
-              Snapshot
-            </Button>
+                )}
+              </HeaderPopover>
+              <button
+                id="header-snapshot"
+                type="button"
+                title={
+                  snapshotsLocked
+                    ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
+                    : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
+                }
+                className="border-ui-line-strong text-ui-fg hover:bg-ui-hover focus-visible:ring-primary-500 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-r-[7px] border-l px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+                onClick={() => void handleClickSnapshot()}
+              >
+                {snapshotsLocked && <i className="fa-solid fa-lock text-xs" />}
+                Snapshot
+              </button>
+            </div>
             <div className="flex items-stretch">
               <Button
                 id="header-publish"
@@ -435,7 +441,7 @@ const AppHeader = () => {
                         detail: 'Add a domain, verify it, say where it is deployed',
                         icon: 'fa-solid fa-globe',
                         onSelect: () =>
-                          window.open(`${origin}/spaces/${String(webId)}`, '_blank', 'noopener,noreferrer')
+                          window.open(`${origin}/spaces/${String(webId)}#domains`, '_blank', 'noopener,noreferrer')
                       }
                     ]
                   }

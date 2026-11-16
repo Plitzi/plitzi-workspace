@@ -278,7 +278,7 @@ describe('explain, of a state a class styles and what an element marks its node 
     const tab = explainText('tabContainerItem');
     expect(tab).toContain('On the page:');
     expect(tab).toContain('aria-selected — on the open tab — what a class’s `current` state lights');
-    expect(tab).toContain('Attributes: none of its own');
+    expect(tab).toContain('hash = ""');
     expect(explainText('dropdown')).toContain('openDropdown');
   });
 });

@@ -360,7 +360,7 @@ const checkCallbackKey = (ctx: LintContext, node: ElementInteraction, where: str
   if (key !== 'className' && !names.includes(key)) {
     ctx.error(
       'callback-key-unknown',
-      `${at} "${key}" on "${target}", which a "${type}" never reads — the step runs and nothing changes${didYouMean(key, names) || '.'} It reads ${names.join(', ')}.`,
+      `${at} "${key}" on "${target}", which a "${type}" never reads — the step runs and nothing changes${didYouMean(key, names) || '.'}${names.length > 0 ? ` It reads ${names.join(', ')}.` : ' It reads none.'}`,
       hostId
     );
   }

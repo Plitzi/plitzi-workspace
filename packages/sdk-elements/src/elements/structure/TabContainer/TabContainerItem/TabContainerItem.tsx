@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import withElement from '../../../../Element/hocs/withElement';
 import RootElement from '../../../../Element/RootElement';
@@ -10,6 +10,12 @@ export type TabContainerItemProps = {
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
+  /**
+   * The address's hash that opens this tab — `domains` for `#domains`: a link to the page with it opens on this tab,
+   * and choosing the tab writes it in the address (replacing it, so Back leaves the page rather than the tab). Only a tab
+   * of the header reads it.
+   */
+  hash?: string;
   // Custom Props
   baseId?: string;
   tabSelected?: number;
@@ -48,9 +54,44 @@ const TabContainerItem = ({
   tabIndex: position = 0,
   tabCount = 0,
   isHeader,
-  onSelect
+  onSelect,
+  hash = ''
 }: TabContainerItemProps) => {
   const selected = tabSelected === position;
+  const name = hash.replace(/^#/, '').trim();
+  const linked = Boolean(isHeader && name);
+
+  // Opened by the address: on load — after hydration, the server never sees a hash — and whenever the hash changes.
+  useEffect(() => {
+    if (!linked || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const follow = () => {
+      if (decodeURIComponent(window.location.hash.slice(1)) === name) {
+        onSelect?.(position);
+      }
+    };
+    follow();
+    window.addEventListener('hashchange', follow);
+
+    return () => window.removeEventListener('hashchange', follow);
+  }, [linked, name, onSelect, position]);
+
+  // Chosen, it says so in the address — never on the first draw, which would write the open tab into every visit.
+  const wasSelected = useRef<boolean | undefined>(undefined);
+  useEffect(() => {
+    const before = wasSelected.current;
+    wasSelected.current = selected;
+    if (!linked || !selected || before !== false || typeof window === 'undefined') {
+      return;
+    }
+
+    if (decodeURIComponent(window.location.hash.slice(1)) !== name) {
+      const { pathname, search } = window.location;
+      window.history.replaceState(window.history.state, '', `${pathname}${search}#${encodeURIComponent(name)}`);
+    }
+  }, [linked, name, selected]);
   const tabId = `${baseId}_tab_${position}`;
   const panelId = `${baseId}_panel_${position}`;
 

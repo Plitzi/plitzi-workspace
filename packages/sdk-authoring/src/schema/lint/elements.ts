@@ -87,7 +87,7 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
           : '';
       ctx.error(
         'unknown-attribute',
-        `${where} sets "${name}", which a "${type}" never reads${didYouMean(name, names) || '.'}${hint || ` It reads ${names.join(', ')}.`}`,
+        `${where} sets "${name}", which a "${type}" never reads${didYouMean(name, names) || '.'}${hint || (names.length > 0 ? ` It reads ${names.join(', ')}.` : ' It reads no attribute: remove it.')}`,
         element.id
       );
       continue;

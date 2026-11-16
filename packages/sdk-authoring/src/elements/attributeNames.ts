@@ -448,7 +448,7 @@ export const elementAttributeNames = {
   tabContainer: [],
   tabContainerBody: [],
   tabContainerHeader: [],
-  tabContainerItem: [],
+  tabContainerItem: ['hash'],
   text: ['content', 'decorative', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
   video: ['autoPlay', 'loop', 'muted', 'playsInline', 'src']

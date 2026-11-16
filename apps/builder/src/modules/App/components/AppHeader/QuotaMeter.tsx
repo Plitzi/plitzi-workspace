@@ -113,7 +113,7 @@ const QuotaMeter = () => {
       tabIndex={0}
       title="Elements in this space — click to see where they went"
       className={clsx(
-        'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs whitespace-nowrap select-none',
+        'flex h-full cursor-pointer items-center gap-1.5 rounded-[5px] px-2 text-xs whitespace-nowrap select-none',
         'hover:bg-ui-hover transition-colors',
         TEXT[level]
       )}

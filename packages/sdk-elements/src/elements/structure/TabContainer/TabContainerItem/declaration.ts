@@ -21,7 +21,7 @@ const declaration = elementDeclaration<TabContainerItemAttributes>()({
     tabindex: 'roving: 0 on the open tab, -1 on the rest — the arrow keys move between them'
   },
   content: {
-    attributes: {},
+    attributes: { hash: '' },
     definition: {
       label: 'Tab Container Item',
       description: 'One selectable tab (trigger + panel) inside a tabContainer.',

@@ -58,6 +58,11 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Authoring
 
+- A tab of a `tabContainer` takes `hash`: a link to the page ending in `#domains` opens on that tab, and choosing the
+  tab writes it in the address — replaced, so Back leaves the page rather than the tab.
+- An attribute an element does not read, on an element that reads none, says so (`It reads no attribute: remove it.`)
+  instead of an empty list.
+
 - `many-elements`, a suggestion: a page that builds more than 1,500 elements as it opens — its own, its layouts' and its
   components' once per instance — says how many and whose, and what a visit downloads for them (and 10,000 of them,
   before compression). What starts hidden with `loadStrategy` `lazy` or `visible` is not counted, and what starts hidden
@@ -93,6 +98,10 @@ weighs on a phone — and what of it a phone cannot hold.
   there was read by nothing before.
 
 ## Builder
+
+- The draft's status and **Snapshot** are one control, as **Publish** and its menu are; the account group's parts sit
+  evenly inside it (3 px all round), so a hovered one no longer leans to a side. **Domains and targets** opens the
+  console on the space's Domains tab.
 
 - **Where a domain's site is, and its deploys** (RFC 0034, F2–F4). The publish sheet lists every domain as a target —
   Plitzi, or a copy on a provider as a single-page app, prerendered or a server of your own — with what it serves and what
