@@ -47,17 +47,20 @@ const HeaderMenu = ({ id, label, trigger, triggerClassName, align = 'start', sec
   } = useAnchoredOverlay(align, '[role^="menuitem"]');
   const menuId = useId();
 
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
-    const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
-    if (step === 0) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+      if (step === 0) {
+        return;
+      }
 
-    event.preventDefault();
-    const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])];
-    const at = items.findIndex(item => item === document.activeElement);
-    items[(at + step + items.length) % items.length]?.focus();
-  }, []);
+      event.preventDefault();
+      const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])];
+      const at = items.findIndex(item => item === document.activeElement);
+      items[(at + step + items.length) % items.length]?.focus();
+    },
+    [menuRef]
+  );
 
   return (
     <div ref={rootRef} className="relative">

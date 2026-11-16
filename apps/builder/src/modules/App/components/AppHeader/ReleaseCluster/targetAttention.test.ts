@@ -9,6 +9,7 @@ const target = (domain: string, extra: Partial<SpaceTarget> = {}): SpaceTarget =
   domain,
   verified: true,
   plitziOwned: false,
+  ownAddress: false,
   mode: 'spa',
   provider: 'github',
   providerLabel: 'GitHub Pages',

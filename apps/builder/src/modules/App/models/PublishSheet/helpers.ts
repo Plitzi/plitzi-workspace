@@ -1,6 +1,7 @@
-import { revisionName } from '../../helpers/environments';
+import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 
-import type { DeployMode, DeployStatus, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
+import type { PublishedEnvironment } from '../../helpers/environments';
+import type { DeployMode, DeployStatus, Environment, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
 
 /** How a target serves the space, in a few words. */
 export const MODE_WORDS: Record<DeployMode, string> = {
@@ -53,4 +54,28 @@ export const deploySteps = (
             ? 'current'
             : 'todo'
   }));
+};
+
+/** What a domain is asked to show: the latest changes (kept as a version first), a version kept before, or every save. */
+export type ContentKind = 'latest' | 'saved' | 'live';
+
+/** What a domain shows now, in the words its owner reads on its card. */
+export const showsWords = (serves: SpaceServedVersion | null): string =>
+  !serves
+    ? 'Nothing published yet'
+    : serves.environment === 'main'
+      ? 'Shows every change as you save it'
+      : `Shows ${ENVIRONMENT_META[serves.environment].label} r${String(serves.revision)}`;
+
+/**
+ * Where "your latest changes" are kept before they are published: the environment the domain shows already, or the one
+ * closest to the public the plan includes — none when the plan includes no versions at all.
+ */
+export const latestEnvironmentOf = (
+  shown: Environment | undefined,
+  isLocked: (environment: PublishedEnvironment) => boolean
+): PublishedEnvironment | undefined => {
+  const preferred = shown && shown !== 'main' ? [shown] : [];
+
+  return [...preferred, ...[...PUBLISHED_ENVIRONMENTS].reverse()].find(environment => !isLocked(environment));
 };

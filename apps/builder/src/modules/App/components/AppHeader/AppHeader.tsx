@@ -59,7 +59,6 @@ const AppHeader = () => {
   const { may } = useSpaceAccess();
   const publishes = may('spacePublish');
   const snapshotsLocked = locked('snapshots');
-  const domainLocked = locked('customDomain');
   const openPlans = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
@@ -161,19 +160,14 @@ const AppHeader = () => {
     }
   }, [addToast, draft, mutate, openPlans, openPublish, refreshIssues, showModal, showSpaceIssues, snapshotsLocked]);
 
+  // Always the sheet, whatever the plan: it shows the space live at its own address and says which plan includes a
+  // domain of its own — sent to the plans instead, somebody whose site was already live was told it was not theirs to
+  // publish. It opens on the latest changes; a version kept before is one choice away.
   const handleClickPublish = useCallback(
     async (domain?: string) => {
-      if (domainLocked?.upgradeUrl) {
-        openPlans(domainLocked.upgradeUrl);
-
-        return;
-      }
-
-      // What a publisher usually means by pressing it: the last snapshot made, on a domain — preselected, never forced.
-      const { newest } = draft;
-      await openPublish({ ...(newest ? { environment: newest.environment, revision: newest.revision } : {}), domain });
+      await openPublish({ domain });
     },
-    [domainLocked, draft, openPlans, openPublish]
+    [openPublish]
   );
   const status = draftStatus(draft.newest, draft.changes);
 
@@ -372,15 +366,9 @@ const AppHeader = () => {
                 id="header-publish"
                 size="sm"
                 className="rounded-r-none"
-                title={
-                  domainLocked
-                    ? `${domainLocked.label} is included in the ${domainLocked.requires ?? ''} plan — opens the plans.`
-                    : 'Publish: choose which revision a domain serves, and deploy it where it needs one.'
-                }
+                title="Publish: where your site is live, and what each of your domains shows."
                 onClick={() => void handleClickPublish()}
-                iconPlacement="before"
               >
-                {domainLocked && <Button.Icon icon="fa-solid fa-lock" />}
                 Publish
               </Button>
               <HeaderMenu

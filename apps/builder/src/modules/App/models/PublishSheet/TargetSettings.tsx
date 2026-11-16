@@ -73,10 +73,13 @@ const TargetSettings = ({ target, lockedBy, catalog, config: kept, onSaved, onBa
         : [],
     [cdns, signIn]
   );
-  const fields = [
-    ...(mode === 'ssr' ? [] : (provider?.fields ?? [])),
-    ...catalog.targetFields.filter(field => field.modes.includes(mode))
-  ];
+  const fields = useMemo(
+    () => [
+      ...(mode === 'ssr' ? [] : (provider?.fields ?? [])),
+      ...catalog.targetFields.filter(field => field.modes.includes(mode))
+    ],
+    [catalog.targetFields, mode, provider]
+  );
 
   const handleSave = useCallback(async () => {
     setSaving(true);

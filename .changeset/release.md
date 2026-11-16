@@ -108,6 +108,14 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **Publish, for somebody who has never done it.** It opens on the space's own address — live with every save, nothing to
+  publish there, only who may see it — then the domains, each saying what it shows now, or one not connected yet. What
+  a domain should show is three answers: **your latest changes**, kept as a version on the way (no Snapshot needed
+  first, and an unchanged draft publishes the version it already is); **a version you kept**; or **every change, as you
+  save it**. Who may see it is beside it, and one block says what the domain will show instead of what and what visitors
+  will see change. Scheduling is a button of its own. Publish opens the sheet on every plan — it sent a free space to the
+  plans although its site was already live.
+
 - **A credential starts with what it signs in to.** A new one is chosen from cards — APIs and content, storage, deploys,
   email, site access — each saying what it is for; then that provider's own fields, named as the provider names them,
   with where it issues one and with what permissions beside them, and a link to that page. A secret is typed unseen and

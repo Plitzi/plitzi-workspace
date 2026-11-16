@@ -21,12 +21,10 @@ export type RevisionListProps = {
  */
 const RevisionList = ({ environment, snapshots, loading, revision, domain, onPick }: RevisionListProps) => (
   <section className="flex flex-col gap-2" aria-label="Revision">
-    <h5 className="text-ui-fg-subtle text-[11px] font-bold tracking-wider uppercase">Revision</h5>
+    <h5 className="text-ui-fg text-xs font-medium">Version</h5>
     {loading && <span className="text-ui-fg-subtle text-xs">Reading the snapshots…</span>}
     {!loading && snapshots.length === 0 && (
-      <span className="text-ui-fg-subtle text-xs">
-        {ENVIRONMENT_META[environment].label} has no snapshot yet: make one with Snapshot.
-      </span>
+      <span className="text-ui-fg-subtle text-xs">No versions kept in {ENVIRONMENT_META[environment].label} yet.</span>
     )}
     <div role="radiogroup" aria-label="Revision" className="flex max-h-64 flex-col gap-1 overflow-y-auto">
       {snapshots.map(snapshot => {

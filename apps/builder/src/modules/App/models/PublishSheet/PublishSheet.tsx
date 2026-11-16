@@ -1,27 +1,36 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import { issuesFromError, PUBLISH_REFUSED } from '@pmodules/Space/helpers/spaceIssues';
+import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
+import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
+import AccessPicker from './AccessPicker';
+import ContentChoice from './ContentChoice';
 import DeployProgress from './DeployProgress';
-import { targetWhere, versionName } from './helpers';
+import DomainList from './DomainList';
+import { latestEnvironmentOf, versionName } from './helpers';
+import OwnAddressCard from './OwnAddressCard';
+import PublishDone from './PublishDone';
 import ReleaseHistory from './ReleaseHistory';
-import RevisionList from './RevisionList';
+import RollbackConfirm from './RollbackConfirm';
 import ScheduledPublishes, { momentWords } from './ScheduledPublishes';
+import ScheduleRow from './ScheduleRow';
+import SheetTabs from './SheetTabs';
+import TargetNotices from './TargetNotices';
 import TargetSettings from './TargetSettings';
 import WhatHappens from './WhatHappens';
-import { targetAttention } from '../../components/AppHeader/ReleaseCluster/targetAttention';
-import ChangesSummary, { useVersionChanges } from '../../components/ChangesSummary';
-import EnvironmentSegments from '../../components/EnvironmentSegments';
+import { useVersionChanges } from '../../components/ChangesSummary';
 import Notice from '../../components/Notice';
-import { shortAge } from '../../helpers/age';
 import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
-import useLatestSnapshots, { latestDetail } from '../../hooks/useLatestSnapshots';
+import useLatestSnapshots from '../../hooks/useLatestSnapshots';
 import useSpaceTargets from '../../hooks/useSpaceTargets';
 
+import type { ContentKind } from './helpers';
+import type { PublishedEnvironment } from '../../helpers/environments';
 import type { Environment, SpacePublishCheck, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
 
 export type PublishSheetProps = {
@@ -44,19 +53,13 @@ type View =
 
 const QUIET_BUTTON = 'border-transparent bg-transparent text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover';
 
-const TONE_TEXT = {
-  danger: 'text-red-700 dark:text-red-300',
-  warning: 'text-amber-700 dark:text-amber-300',
-  progress: 'text-sky-700 dark:text-sky-300'
-} as const;
-
-/** The domain to open on: one asked for, one the snapshot's environment serves, a domain of the space's own, any. */
-const firstTarget = (targets: readonly SpaceTarget[], environment: Environment | undefined, asked?: string) =>
-  targets.find(t => t.domain === asked) ??
-  targets.find(t => t.verified && t.environment === environment && t.environment !== 'main') ??
-  targets.find(t => t.verified && t.environment !== 'main') ??
-  targets.find(t => t.verified) ??
-  targets.at(0);
+/** The domain to open on: one asked for, one the snapshot's environment shows, one showing a version, any. */
+const firstDomain = (domains: readonly SpaceTarget[], environment: Environment | undefined, asked?: string) =>
+  domains.find(t => t.domain === asked) ??
+  domains.find(t => t.verified && t.environment === environment && t.environment !== 'main') ??
+  domains.find(t => t.verified && t.environment !== 'main') ??
+  domains.find(t => t.verified) ??
+  domains.at(0);
 
 const checkOf = (response: { SpacePublishCheck: SpacePublishCheck } | undefined) => response?.SpacePublishCheck;
 
@@ -69,11 +72,15 @@ const configOf = (target: SpaceTarget): Record<string, string> =>
     Object.entries(target.config ?? {}).flatMap(([key, value]) => (typeof value === 'string' ? [[key, value]] : []))
   );
 
+const isPublished = (environment: Environment | undefined): environment is PublishedEnvironment =>
+  environment !== undefined && environment !== 'main';
+
 /**
- * Publish (RFC 0034 §11.3): which revision a domain serves. Its targets first — how each serves the space, what it
- * serves now and what it asks for; then the environment and the revision; then what will happen, in words, before
- * anything does — a deploy and why, what runs on Plitzi — and one action. Pressed, a deploy becomes its progress here;
- * the history and the target's own settings are views of the same sheet.
+ * Publish (RFC 0034 §11.3), for somebody who has never done it: the space's own address first — live with every save,
+ * nothing to publish there — then its domains, one chosen; what it should show, in three plain answers (the latest
+ * changes, kept as a version on the way; a version kept before; every save); who may see it; and what will happen, in
+ * one place, before anything does. One action. Pressed, a deploy becomes its progress here; the history and a domain's
+ * hosting are views of the same sheet.
  */
 const PublishSheet = ({
   environment: askedEnvironment,
@@ -82,47 +89,111 @@ const PublishSheet = ({
   view: askedView,
   onClose
 }: PublishSheetProps) => {
-  const { mutate } = useBuilderNetwork();
+  const { mutate, webId } = useBuilderNetwork();
   const { locked } = useSpaceEntitlements();
-  const { byEnvironment } = useLatestSnapshots();
+  const { byEnvironment, newest, refresh: refreshSnapshots } = useLatestSnapshots();
+  const newestKeptIn = newest && isPublished(newest.environment) ? newest.environment : undefined;
+  const { refresh: refreshIssues } = useSpaceIssues();
+  const showSpaceIssues = useShowSpaceIssues();
   const { targets: catalog, loading: loadingTargets, refresh: refreshTargets } = useSpaceTargets();
   const targets = useMemo(() => catalog?.targets ?? [], [catalog]);
+  const own = targets.find(each => each.ownAddress);
+  const domains = useMemo(() => targets.filter(each => !each.ownAddress), [targets]);
   // The access a domain is behind is the domain's own setting, read with the domains.
-  const { data: deployments = [] } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges, undefined, {
-    revalidateOnMount: true
-  });
-  const { data: credentials = [] } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges, {
+  const { data: deployments = [], mutate: refreshDeployments } = useGraphQL(
+    'SpaceDeployments',
+    data => data?.SpaceDeployments.edges,
+    undefined,
+    { revalidateOnMount: true }
+  );
+  const { data: passwords = [] } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges, {
     filter: { provider: { eq: 'ssr' } }
   });
+  const accessOf = useCallback(
+    (domain: string | undefined) => deployments.find(d => d.domain === domain)?.credential?.identifier ?? '',
+    [deployments]
+  );
 
   const [view, setView] = useState<View>(askedView === 'history' ? { name: 'history' } : { name: 'publish' });
   const [pickedDomain, setPickedDomain] = useState<string>();
   const target = useMemo(
-    () => targets.find(t => t.domain === pickedDomain) ?? firstTarget(targets, askedEnvironment, askedDomain),
-    [askedDomain, askedEnvironment, pickedDomain, targets]
+    () => domains.find(t => t.domain === pickedDomain) ?? firstDomain(domains, askedEnvironment, askedDomain),
+    [askedDomain, askedEnvironment, domains, pickedDomain]
   );
   const holdsACopy = target !== undefined && target.mode !== 'ssr';
-  const [pickedEnvironment, setPickedEnvironment] = useState<Environment>();
-  const environment: Environment =
+  const served = target?.serves ?? undefined;
+
+  // What it should show. A version asked for opens on it; otherwise the latest changes — what pressing Publish means.
+  const isLocked = useCallback((environment: PublishedEnvironment) => locked(environment) !== undefined, [locked]);
+  const lockedRequires = useCallback((environment: PublishedEnvironment) => locked(environment)?.requires, [locked]);
+  const openEnvironments = PUBLISHED_ENVIRONMENTS.filter(environment => !isLocked(environment));
+  const versionsLockedBy = openEnvironments.length === 0 ? locked('production')?.requires : undefined;
+  const [pickedKind, setPickedKind] = useState<ContentKind>();
+  const defaultKind: ContentKind =
+    askedRevision !== undefined && isPublished(askedEnvironment) ? 'saved' : versionsLockedBy ? 'live' : 'latest';
+  const kind: ContentKind = pickedKind === 'live' && holdsACopy ? 'latest' : (pickedKind ?? defaultKind);
+
+  // The latest changes: kept in the environment the domain shows already, or the one nearest the public.
+  const [pickedLatestEnvironment, setPickedLatestEnvironment] = useState<PublishedEnvironment>();
+  const latestEnvironment = pickedLatestEnvironment ?? latestEnvironmentOf(served?.environment, isLocked);
+  const latestKept = latestEnvironment ? byEnvironment[latestEnvironment] : undefined;
+  const { changes: sinceKept } = useVersionChanges(
+    kind === 'latest' && latestKept
+      ? { environment: latestKept.environment, revision: latestKept.revision }
+      : undefined,
+    { environment: 'main' }
+  );
+  /** Nothing changed since the environment's latest version: that one is published, no new one is kept. */
+  const keptAs = latestKept && sinceKept?.total === 0 ? latestKept.revision : undefined;
+  const [description, setDescription] = useState('');
+
+  // A version kept before.
+  const [pickedEnvironment, setPickedEnvironment] = useState<PublishedEnvironment>();
+  const savedEnvironment: PublishedEnvironment =
     pickedEnvironment ??
-    askedEnvironment ??
-    (target && target.environment !== 'main' ? target.environment : undefined) ??
+    (isPublished(askedEnvironment) ? askedEnvironment : undefined) ??
+    (isPublished(served?.environment) ? served.environment : undefined) ??
+    (latestEnvironment && byEnvironment[latestEnvironment] ? latestEnvironment : undefined) ??
+    // Where there is a version to choose: a list that opens empty beside one that is not says there are none.
+    newestKeptIn ??
+    latestEnvironment ??
     'production';
   const { data: snapshots = [], isLoading: loadingSnapshots } = useGraphQL(
-    environment === 'main' ? null : 'SpaceSnapshots',
+    kind === 'saved' ? 'SpaceSnapshots' : null,
     data => data?.SpaceSnapshots,
-    { environment },
+    { environment: savedEnvironment },
     { revalidateOnMount: true }
   );
   const [pickedRevision, setPickedRevision] = useState<number>();
-  const revision =
-    environment === 'main'
-      ? 0
-      : (pickedRevision ?? (askedEnvironment === environment ? askedRevision : undefined) ?? snapshots.at(0)?.revision);
-  const access = deployments.find(d => d.domain === target?.domain)?.credential?.identifier ?? '';
-  const [pickedCredential, setPickedCredential] = useState<string>();
-  const credential = pickedCredential ?? access;
+  const savedRevision =
+    pickedRevision ?? (askedEnvironment === savedEnvironment ? askedRevision : undefined) ?? snapshots.at(0)?.revision;
+
+  // The version it comes to: the draft for every save, none yet for latest changes still to be kept.
+  const environment: Environment | undefined =
+    kind === 'live' ? 'main' : kind === 'latest' ? latestEnvironment : savedEnvironment;
+  const revision = kind === 'live' ? 0 : kind === 'latest' ? keptAs : savedRevision;
+  const keepsANewVersion = kind === 'latest' && keptAs === undefined;
+
+  const { changes, loading: comparing } = useVersionChanges(
+    served && (served.environment === 'main' || served.revision) ? served : undefined,
+    keepsANewVersion || kind === 'live'
+      ? { environment: 'main' }
+      : environment && revision
+        ? { environment, revision }
+        : undefined
+  );
+  // What publishing it there would do — a deploy and why — asked of the platform, on a domain holding a copy.
+  const { data: check, isLoading: checking } = useGraphQL(
+    holdsACopy && isPublished(environment) && revision ? 'SpacePublishCheck' : null,
+    checkOf,
+    { domain: target?.domain, environment, revision },
+    { revalidateOnMount: true }
+  );
+
+  const [pickedAccess, setPickedAccess] = useState<string>();
+  const access = pickedAccess ?? accessOf(target?.domain);
   const [working, setWorking] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   /** A publish set for later: the moment, as the person's own clock reads it (`datetime-local`). */
   const [later, setLater] = useState<string>();
   const [failure, setFailure] = useState<string>();
@@ -139,58 +210,120 @@ const PublishSheet = ({
   /** A rollback asked for and not yet confirmed: what it would put back. */
   const [rollingBackTo, setRollingBackTo] = useState<SpaceServedVersion>();
 
-  const served = target?.serves ?? undefined;
-  const { changes, loading: comparing } = useVersionChanges(
-    served && (served.environment === 'main' || served.revision) ? served : undefined,
-    revision !== undefined ? { environment, ...(revision ? { revision } : {}) } : undefined
-  );
-  // What publishing it there would do — a deploy and why — asked of the platform, on a target holding a copy.
-  const { data: check, isLoading: checking } = useGraphQL(
-    holdsACopy && environment !== 'main' && revision ? 'SpacePublishCheck' : null,
-    checkOf,
-    { domain: target?.domain, environment, revision },
-    { revalidateOnMount: true }
-  );
-
   const needsDeploy = check?.deploy.needed ?? false;
+  const accessChanged = access !== accessOf(target?.domain);
   const alreadyLive =
-    target !== undefined && served?.environment === environment && served.revision === revision && !needsDeploy;
+    target !== undefined &&
+    !keepsANewVersion &&
+    served !== undefined &&
+    served.environment === environment &&
+    served.revision === revision &&
+    !needsDeploy &&
+    !accessChanged;
   const staticRefused = check?.mode === 'static' && check.serverFeatures.length > 0;
   const refusal = !target
-    ? 'This space has no domain yet: add one in the console.'
+    ? undefined
     : !target.verified
-      ? `${target.domain} is not verified yet: its DNS record is not there.`
+      ? `${target.domain} is not connected yet: its DNS record is missing. Add it where the domain was bought — the console's Domains tab says what to add — and publish here once it is checked.`
       : target.locked
-        ? `${target.locked.requires} deploys it again — it keeps serving what it serves.`
-        : holdsACopy && environment === 'main'
-          ? `${target.domain} holds a copy of the site: it serves a snapshot, never the draft.`
-          : environment !== 'main' && revision === undefined
-            ? `${ENVIRONMENT_META[environment].label} has no snapshot yet: make one first.`
+        ? `${target.locked.requires} deploys it again — it keeps showing what it shows.`
+        : kind === 'latest' && !latestEnvironment
+          ? `Versions are included in the ${versionsLockedBy ?? 'next'} plan.`
+          : kind === 'saved' && savedRevision === undefined && !loadingSnapshots
+            ? `${ENVIRONMENT_META[savedEnvironment].label} has no versions yet: “Your latest changes” keeps and publishes them in one step.`
             : staticRefused
               ? `It runs ${check.serverFeatures.join(', ')} on a server: a prerendered site has none.`
               : alreadyLive
-                ? `${target.domain} already serves it.`
+                ? `${target.domain} already shows it.`
                 : undefined;
+  const scheduleLocked = locked('deployAutomation');
+  const canSchedule = kind !== 'live' && !refusal;
+  const addUrl = `${typeof window === 'undefined' ? 'https://plitzi.com' : window.location.origin}/spaces/${String(webId)}#domains`;
 
   const afterWrite = useCallback(async () => {
-    await Promise.all([refreshHistory(), refreshTargets()]);
-  }, [refreshHistory, refreshTargets]);
+    await Promise.all([refreshHistory(), refreshTargets(), refreshDeployments()]);
+  }, [refreshDeployments, refreshHistory, refreshTargets]);
+
+  /**
+   * The latest changes kept as a version, as Snapshot keeps them — refused, as Snapshot is, while the space has errors:
+   * their list is shown instead. Its revision, or nothing when it was not kept.
+   */
+  const keepLatest = useCallback(async (): Promise<number | undefined> => {
+    if (!latestEnvironment) {
+      return undefined;
+    }
+
+    const issues = await refreshIssues();
+    if (issues && issues.errors.length > 0) {
+      await showSpaceIssues(issues, PUBLISH_REFUSED);
+
+      return undefined;
+    }
+
+    const kept = await mutate(
+      'SpacePublish',
+      { environment: latestEnvironment, description: description.trim() || 'Published from the builder' },
+      true
+    );
+    const refused = issuesFromError(kept.error);
+    if (refused) {
+      await showSpaceIssues({ errors: refused, warnings: [], suggestions: [] }, PUBLISH_REFUSED);
+
+      return undefined;
+    }
+
+    if (!kept.result) {
+      setFailure(errorOf(kept.error, 'Your changes were not kept as a version.'));
+
+      return undefined;
+    }
+
+    await refreshSnapshots();
+
+    return kept.result.revision;
+  }, [description, latestEnvironment, mutate, refreshIssues, refreshSnapshots, showSpaceIssues]);
 
   const handlePublish = useCallback(async () => {
-    if (!target || refusal) {
+    if (!target || refusal || !environment) {
       return;
     }
 
     setWorking(true);
     setFailure(undefined);
+    const publishing = keepsANewVersion ? await keepLatest() : revision;
+    if (publishing === undefined) {
+      setWorking(false);
+
+      return;
+    }
+
+    const shown = environment === 'main' ? 'every change as you save it' : revisionName(environment, publishing);
+    if (later && environment !== 'main') {
+      const at = Math.floor(new Date(later).getTime() / 1000);
+      const response = await mutate(
+        'SpaceSchedulePublish',
+        { domain: target.domain, environment, revision: publishing, at },
+        true
+      );
+      setWorking(false);
+      if (response.result) {
+        setView({ name: 'done', said: `${target.domain} will show ${shown} on ${momentWords(at)}.` });
+      } else {
+        setFailure(errorOf(response.error, 'It was not set for later.'));
+      }
+
+      return;
+    }
+
     const response = await mutate(
       'SpaceDeploy',
       {
         environment,
         domain: target.domain,
-        revision: revision ?? 0,
-        credentialIdentifier: credential,
-        deploy: needsDeploy
+        revision: publishing,
+        credentialIdentifier: access,
+        // On a domain holding a copy: deployed when the version needs it, and only then — the platform decides.
+        deploy: holdsACopy
       },
       true
     );
@@ -202,33 +335,25 @@ const PublishSheet = ({
       return;
     }
 
-    const said = `${target.domain} now serves ${environment === 'main' ? 'the draft' : revisionName(environment, revision ?? 0)}.`;
+    const said = `${target.domain} now shows ${shown}.`;
     setView(
       response.result.deployId
         ? { name: 'deploy', deployId: response.result.deployId, said: `${said} Its copy is being deployed:` }
         : { name: 'done', said }
     );
-  }, [afterWrite, credential, environment, mutate, needsDeploy, refusal, revision, target]);
-
-  const handleSchedule = useCallback(async () => {
-    const at = later ? Math.floor(new Date(later).getTime() / 1000) : NaN;
-    if (!target || refusal || !revision || !Number.isFinite(at)) {
-      return;
-    }
-
-    setWorking(true);
-    setFailure(undefined);
-    const response = await mutate('SpaceSchedulePublish', { domain: target.domain, environment, revision, at }, true);
-    setWorking(false);
-    if (response.result) {
-      setView({
-        name: 'done',
-        said: `${target.domain} will serve ${revisionName(environment, revision)} at ${momentWords(at)}${needsDeploy ? ', with its deploy' : ''}.`
-      });
-    } else {
-      setFailure(errorOf(response.error, 'It was not set for later.'));
-    }
-  }, [environment, later, mutate, needsDeploy, refusal, revision, target]);
+  }, [
+    access,
+    afterWrite,
+    environment,
+    holdsACopy,
+    keepLatest,
+    keepsANewVersion,
+    later,
+    mutate,
+    refusal,
+    revision,
+    target
+  ]);
 
   const handleRollBack = useCallback(async () => {
     if (!target || !rollingBackTo) {
@@ -252,7 +377,7 @@ const PublishSheet = ({
       return;
     }
 
-    const said = `${target.domain} serves ${versionName(back)} again.`;
+    const said = `${target.domain} shows ${versionName(back)} again.`;
     setView(
       response.result.deployId
         ? { name: 'deploy', deployId: response.result.deployId, said: `${said} Its copy is being shipped again:` }
@@ -260,47 +385,90 @@ const PublishSheet = ({
     );
   }, [afterWrite, mutate, rollingBackTo, target]);
 
-  const handleDeployAgain = useCallback(
-    async (kind: 'deploy' | 'redeploy') => {
-      if (!target) {
-        return;
-      }
+  const handleDeployAgain = useCallback(async () => {
+    if (!target) {
+      return;
+    }
 
-      setWorking(true);
-      setFailure(undefined);
-      const response = await mutate('SpaceRedeploy', { domain: target.domain, kind }, true);
-      setWorking(false);
-      await refreshTargets();
-      if (response.result) {
-        setView({
-          name: 'deploy',
-          deployId: response.result.id,
-          said: `${target.domain} is deployed again${kind === 'redeploy' ? ' with the newest versions' : ''}:`
-        });
-      } else {
-        setFailure(errorOf(response.error, 'It was not deployed.'));
-      }
-    },
-    [mutate, refreshTargets, target]
-  );
+    const kind = target.update ? 'redeploy' : 'deploy';
+    setWorking(true);
+    setFailure(undefined);
+    const response = await mutate('SpaceRedeploy', { domain: target.domain, kind }, true);
+    setWorking(false);
+    await refreshTargets();
+    if (response.result) {
+      setView({
+        name: 'deploy',
+        deployId: response.result.id,
+        said: `${target.domain} is deployed again${kind === 'redeploy' ? ' with the newest versions' : ''}:`
+      });
+    } else {
+      setFailure(errorOf(response.error, 'It was not deployed.'));
+    }
+  }, [mutate, refreshTargets, target]);
 
   const rollback = target?.rollback ?? history?.rollback ?? undefined;
   // One string: the button takes its words as a single child.
   const rollbackLabel = rollback
-    ? `Roll back to ${rollback.environment === 'main' ? 'the draft' : `r${String(rollback.revision)}`}`
+    ? `Roll back to ${rollback.environment === 'main' ? 'every save' : `r${String(rollback.revision)}`}`
     : '';
-  const pickTarget = (domain: string) => {
+
+  const handleChooseDomain = useCallback((domain: string) => {
     setPickedDomain(domain);
+    setPickedKind(undefined);
     setPickedEnvironment(undefined);
     setPickedRevision(undefined);
-    setPickedCredential(undefined);
+    setPickedAccess(undefined);
     setRollingBackTo(undefined);
     setFailure(undefined);
-  };
-  const askRollBack = () => {
+  }, []);
+  const handleSettings = useCallback((domain: string) => {
+    setPickedDomain(domain);
+    setView({ name: 'settings' });
+  }, []);
+  const handleShowPublish = useCallback(() => setView({ name: 'publish' }), []);
+  const handleShowHistory = useCallback(() => setView({ name: 'history' }), []);
+  const handleChooseKind = useCallback((value: ContentKind) => {
+    setPickedKind(value);
+    setFailure(undefined);
+  }, []);
+  const handleChooseEnvironment = useCallback((value: Environment) => {
+    if (isPublished(value)) {
+      setPickedEnvironment(value);
+      setPickedRevision(undefined);
+    }
+  }, []);
+  const handleAskRollBack = useCallback(() => {
     setView({ name: 'publish' });
     setRollingBackTo(rollback);
-  };
+  }, [rollback]);
+  const handleServeAgain = useCallback((version: SpaceServedVersion) => {
+    setView({ name: 'publish' });
+    setRollingBackTo(version);
+  }, []);
+  const handleKeepAsItIs = useCallback(() => setRollingBackTo(undefined), []);
+  const handleConfirmRollBack = useCallback(() => void handleRollBack(), [handleRollBack]);
+  const handleDeployAgainClick = useCallback(() => void handleDeployAgain(), [handleDeployAgain]);
+  const handleFollowDeploy = useCallback(() => {
+    if (target?.running) {
+      setView({ name: 'deploy', deployId: target.running.id, said: `${target.domain} is being deployed:` });
+    }
+  }, [target]);
+  const handleSchedule = useCallback(() => setScheduling(true), []);
+  const handlePublishNow = useCallback(() => {
+    setScheduling(false);
+    setLater(undefined);
+  }, []);
+  const handlePublishClick = useCallback(() => void handlePublish(), [handlePublish]);
+  const handleOpenSite = useCallback(() => {
+    if (target) {
+      window.open(`https://${target.domain}`, '_blank', 'noopener,noreferrer');
+    }
+  }, [target]);
+  const handleRefreshTargets = useCallback(() => void refreshTargets(), [refreshTargets]);
+  const handleOwnAccessChanged = useCallback(async () => {
+    await Promise.all([refreshTargets(), refreshDeployments()]);
+  }, [refreshDeployments, refreshTargets]);
 
   if (view.name === 'deploy' && target) {
     return (
@@ -308,7 +476,7 @@ const PublishSheet = ({
         deployId={view.deployId}
         domain={target.domain}
         said={view.said}
-        {...(rollback ? { onRollBack: askRollBack } : {})}
+        {...(rollback ? { onRollBack: handleAskRollBack } : {})}
         onDone={onClose}
       />
     );
@@ -316,33 +484,13 @@ const PublishSheet = ({
 
   if (view.name === 'done' && target) {
     return (
-      <div className="flex flex-col gap-4">
-        <Notice tone="success">{view.said}</Notice>
-        <div className="flex justify-end gap-2">
-          {rollback && (
-            <Button
-              size="sm"
-              intent="secondary"
-              className="mr-auto whitespace-nowrap"
-              iconPlacement="before"
-              onClick={askRollBack}
-            >
-              <Button.Icon icon="fa-solid fa-rotate-left" />
-              {rollbackLabel}
-            </Button>
-          )}
-          <Button
-            size="sm"
-            intent="secondary"
-            onClick={() => window.open(`https://${target.domain}`, '_blank', 'noopener,noreferrer')}
-          >
-            Open the site
-          </Button>
-          <Button size="sm" onClick={onClose}>
-            Done
-          </Button>
-        </div>
-      </div>
+      <PublishDone
+        said={view.said}
+        {...(rollback ? { rollbackLabel } : {})}
+        onRollBack={handleAskRollBack}
+        onOpenSite={handleOpenSite}
+        onDone={onClose}
+      />
     );
   }
 
@@ -353,88 +501,36 @@ const PublishSheet = ({
         lockedBy={locked('deployAutomation')?.requires}
         catalog={catalog}
         config={configOf(target)}
-        onSaved={() => void refreshTargets()}
-        onBack={() => setView({ name: 'publish' })}
+        onSaved={handleRefreshTargets}
+        onBack={handleShowPublish}
       />
     );
   }
 
+  const publishing = view.name === 'publish';
+
   return (
     <div className="flex min-h-0 flex-col gap-5">
-      <section className="flex flex-col gap-2" aria-label="Targets">
-        <span className="flex items-center justify-between">
-          <h5 className="text-ui-fg-subtle text-[11px] font-bold tracking-wider uppercase">Where</h5>
-          <span role="tablist" aria-label="View" className="bg-ui-raised flex rounded-md p-0.5 text-xs">
-            {(['publish', 'history'] as const).map(name => (
-              <button
-                key={name}
-                type="button"
-                role="tab"
-                aria-selected={view.name === name}
-                className={clsx(
-                  'rounded px-2 py-0.5 transition-colors',
-                  view.name === name ? 'bg-ui-panel text-ui-fg shadow-sm' : 'text-ui-fg-subtle hover:text-ui-fg'
-                )}
-                onClick={() => setView(name === 'history' ? { name: 'history' } : { name: 'publish' })}
-              >
-                {name === 'publish' ? 'Publish' : 'History'}
-              </button>
-            ))}
-          </span>
-        </span>
-        {loadingTargets && <span className="text-ui-fg-subtle text-xs">Reading the domains…</span>}
-        <div role="radiogroup" aria-label="Domain" className="flex flex-col gap-1.5">
-          {targets.map(each => {
-            const chosen = each.domain === target?.domain;
-            const meta = ENVIRONMENT_META[each.environment];
-            const asks = targetAttention([each]).at(0);
+      <SheetTabs publishing={publishing} onPublish={handleShowPublish} onHistory={handleShowHistory} />
 
-            return (
-              <div
-                key={each.domain}
-                className={clsx(
-                  'flex items-stretch rounded-lg border transition-colors',
-                  chosen ? 'border-primary-500 bg-primary-500/10' : 'border-ui-line hover:bg-ui-hover'
-                )}
-              >
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={chosen}
-                  className="focus-visible:ring-primary-500 flex min-w-0 grow flex-col gap-0.5 rounded-lg px-3 py-2 text-left outline-none focus-visible:ring-2"
-                  onClick={() => pickTarget(each.domain)}
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-ui-fg truncate text-sm font-semibold">{each.domain}</span>
-                    <span className="text-ui-fg-subtle flex shrink-0 items-center gap-1.5 text-[11px]">
-                      <span className={clsx('h-1.5 w-1.5 rounded-full', meta.dot)} />
-                      {meta.label} · {targetWhere(each)}
-                    </span>
-                  </span>
-                  <span className="text-ui-fg-subtle truncate text-xs">
-                    {each.serves ? `Serves ${versionName(each.serves)}` : 'Nothing published yet'}
-                    {each.lastDeploy?.finishedAt
-                      ? ` · deployed ${shortAge(each.lastDeploy.finishedAt * 1000)} ago`
-                      : ''}
-                  </span>
-                  {asks && <span className={clsx('truncate text-xs', TONE_TEXT[asks.tone])}>{asks.words}</span>}
-                </button>
-                {chosen && !each.plitziOwned && (
-                  <button
-                    type="button"
-                    title={`Where ${each.domain} is served: Plitzi, or a copy of the site on a provider`}
-                    aria-label={`Settings of ${each.domain}`}
-                    className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover m-1 flex w-8 shrink-0 items-center justify-center rounded-md"
-                    onClick={() => setView({ name: 'settings' })}
-                  >
-                    <i className="fa-solid fa-sliders" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {publishing && own && (
+        <OwnAddressCard
+          target={own}
+          access={accessOf(own.domain)}
+          passwords={passwords}
+          onChanged={handleOwnAccessChanged}
+        />
+      )}
+
+      <DomainList
+        domains={domains}
+        chosen={target?.domain}
+        loading={loadingTargets}
+        addUrl={addUrl}
+        lockedBy={locked('customDomain')?.requires}
+        onChoose={handleChooseDomain}
+        onSettings={handleSettings}
+      />
 
       {view.name === 'history' && target && <ScheduledPublishes domain={target.domain} />}
 
@@ -444,209 +540,141 @@ const PublishSheet = ({
           domain={target.domain}
           releases={history?.releases ?? []}
           loading={loadingHistory}
-          onServeAgain={version => {
-            setView({ name: 'publish' });
-            setRollingBackTo(version);
-          }}
+          onServeAgain={handleServeAgain}
         />
       )}
 
-      {view.name === 'publish' && (
+      {publishing && target && (
         <>
-          {target && (target.update || target.lastDeploy?.status === 'failed') && !target.running && (
-            <Notice tone={target.lastDeploy?.status === 'failed' ? 'danger' : 'caution'}>
-              <span className="flex items-center justify-between gap-3">
-                <span>
-                  {target.lastDeploy?.status === 'failed'
-                    ? `Its last deploy failed: ${target.lastDeploy.error ?? 'its log says why'}`
-                    : target.update?.words}
-                </span>
-                <Button
-                  size="xs"
-                  intent="secondary"
-                  className="shrink-0"
-                  disabled={working}
-                  onClick={() => void handleDeployAgain(target.update ? 'redeploy' : 'deploy')}
-                >
-                  {target.update ? 'Redeploy' : 'Deploy again'}
-                </Button>
-              </span>
-            </Notice>
-          )}
-          {target?.running && (
-            <Notice tone="info">
-              <span className="flex items-center justify-between gap-3">
-                <span>Deploying {revisionName(target.running.environment, target.running.revision)}…</span>
-                <Button
-                  size="xs"
-                  intent="secondary"
-                  onClick={() => {
-                    if (target.running) {
-                      setView({
-                        name: 'deploy',
-                        deployId: target.running.id,
-                        said: `${target.domain} is being deployed:`
-                      });
-                    }
-                  }}
-                >
-                  Follow it
-                </Button>
-              </span>
-            </Notice>
-          )}
-
-          <EnvironmentSegments
-            label="Environment"
-            value={environment}
-            onChange={value => {
-              setPickedEnvironment(value);
-              setPickedRevision(undefined);
-            }}
-            segments={[
-              ...(holdsACopy ? [] : [{ value: 'main' as const, detail: 'Live as it is saved' }]),
-              ...PUBLISHED_ENVIRONMENTS.map(env => ({
-                value: env,
-                detail: latestDetail(byEnvironment[env]),
-                lockedBy: locked(env)?.requires
-              }))
-            ]}
+          <TargetNotices
+            target={target}
+            working={working}
+            onDeployAgain={handleDeployAgainClick}
+            onFollow={handleFollowDeploy}
           />
 
-          {environment !== 'main' && (
-            <RevisionList
-              environment={environment}
-              snapshots={snapshots}
-              loading={loadingSnapshots}
-              revision={revision}
-              domain={target?.domain}
-              onPick={setPickedRevision}
+          {target.verified && (
+            <ContentChoice
+              domain={target.domain}
+              kind={kind}
+              offersLive={!holdsACopy}
+              versionsLockedBy={versionsLockedBy}
+              latest={{
+                environment: latestEnvironment,
+                environments: openEnvironments,
+                keptAs,
+                description,
+                onEnvironment: setPickedLatestEnvironment,
+                onDescription: setDescription
+              }}
+              saved={{
+                environment: savedEnvironment,
+                byEnvironment,
+                lockedBy: lockedRequires,
+                snapshots,
+                loading: loadingSnapshots,
+                revision: savedRevision,
+                onEnvironment: handleChooseEnvironment,
+                onRevision: setPickedRevision
+              }}
+              onKind={handleChooseKind}
             />
           )}
 
-          {target && revision !== undefined && !alreadyLive && (
-            <ChangesSummary
-              title={`What changes on ${target.domain}`}
-              changes={changes}
-              loading={comparing}
-              empty="Nothing is published there yet to compare with"
+          {target.verified && !holdsACopy && (
+            <AccessPicker
+              domain={target.domain}
+              value={access}
+              passwords={passwords}
+              hint="Applies when you publish."
+              onChange={setPickedAccess}
             />
           )}
 
-          {target && !holdsACopy && (
-            <details className="text-ui-fg-subtle text-xs">
-              <summary className="hover:text-ui-fg w-fit cursor-pointer">Access to {target.domain}</summary>
-              <label className="mt-2 flex flex-col gap-1">
-                <span>Who may open it</span>
-                <select
-                  className="border-ui-line bg-ui-panel text-ui-fg rounded-md border px-2 py-1.5 text-sm"
-                  value={credential}
-                  onChange={event => setPickedCredential(event.target.value)}
-                >
-                  <option value="">Everybody</option>
-                  {credentials.map(item => (
-                    <option key={item.identifier} value={item.identifier}>
-                      Behind {item.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </details>
-          )}
-
-          {target && revision !== undefined && !refusal && (
+          {!refusal && (
             <WhatHappens
               target={target}
-              environment={environment}
-              revision={revision}
+              kind={kind}
+              environment={isPublished(environment) ? environment : undefined}
+              revision={kind === 'live' ? undefined : revision}
               served={served}
+              changes={changes}
+              comparing={comparing}
               check={holdsACopy ? check : undefined}
               checking={holdsACopy && checking}
             />
           )}
+
+          {refusal && <Notice tone="info">{refusal}</Notice>}
         </>
       )}
 
       {failure && <Notice tone="danger">{failure}</Notice>}
 
       {target && rollingBackTo && (
-        <div
-          role="alertdialog"
-          aria-label="Roll back"
-          className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
-        >
-          <p className="text-ui-fg">
-            Put {versionName(rollingBackTo)} back on <b>{target.domain}</b>?{' '}
-            {holdsACopy
-              ? 'Its copy is shipped again — from the deploy kept for it when there is one.'
-              : 'It is live at once.'}
-          </p>
-          <p className="text-ui-fg-subtle text-xs">
-            Feature flags and the space’s data stay as they are now: they are the environment’s, not the snapshot’s.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={() => setRollingBackTo(undefined)}>
-              Keep it as it is
-            </Button>
-            <Button size="sm" intent="secondary" disabled={working} onClick={() => void handleRollBack()}>
-              {working ? 'Rolling back…' : 'Roll back'}
-            </Button>
-          </div>
-        </div>
+        <RollbackConfirm
+          domain={target.domain}
+          version={rollingBackTo}
+          holdsACopy={holdsACopy}
+          working={working}
+          onKeep={handleKeepAsItIs}
+          onConfirm={handleConfirmRollBack}
+        />
       )}
 
-      <div className="border-ui-line flex items-center justify-end gap-2 border-t pt-3">
+      {publishing && scheduling && canSchedule && (
+        <ScheduleRow value={later ?? ''} onChange={setLater} onCancel={handlePublishNow} />
+      )}
+
+      <div className="border-ui-line flex flex-wrap items-center justify-end gap-2 border-t pt-3">
         {rollback && !rollingBackTo && (
           <Button
             size="sm"
             intent="secondary"
             className="mr-auto shrink-0 whitespace-nowrap"
             iconPlacement="before"
-            title={`What ${target?.domain ?? 'the domain'} served right before its latest release`}
-            onClick={() => setRollingBackTo(rollback)}
+            title={`What ${target?.domain ?? 'the domain'} showed right before its latest publish`}
+            onClick={handleAskRollBack}
           >
             <Button.Icon icon="fa-solid fa-rotate-left" />
             {rollbackLabel}
           </Button>
         )}
-        {refusal && view.name === 'publish' && (
-          <span className={clsx('text-ui-fg-subtle text-xs', !rollback && 'mr-auto')}>{refusal}</span>
-        )}
-        {view.name === 'publish' && environment !== 'main' && !refusal && (
-          <label
-            className="text-ui-fg-subtle flex items-center gap-1 text-xs"
-            title={
-              locked('deployAutomation')
-                ? `Publishing at a set time is included in the ${locked('deployAutomation')?.requires ?? ''} plan`
-                : 'Publish at a moment of your choosing, in your own time'
-            }
-          >
-            <i className={clsx('fa-solid', locked('deployAutomation') ? 'fa-lock' : 'fa-clock')} />
-            <input
-              type="datetime-local"
-              aria-label="Publish later, at"
-              disabled={locked('deployAutomation') !== undefined}
-              className="border-ui-line bg-ui-panel text-ui-fg w-40 rounded-md border px-1.5 py-1 text-xs"
-              value={later ?? ''}
-              onChange={event => setLater(event.target.value || undefined)}
-            />
-          </label>
-        )}
-        <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onClose}>
-          {view.name === 'history' ? 'Close' : 'Cancel'}
-        </Button>
-        {view.name === 'publish' && (
+        {publishing && target && canSchedule && !scheduling && (
           <Button
             size="sm"
-            disabled={refusal !== undefined || working || (holdsACopy && checking)}
-            onClick={() => void (later ? handleSchedule() : handlePublish())}
+            intent="custom"
+            className={QUIET_BUTTON}
+            iconPlacement="before"
+            disabled={scheduleLocked !== undefined}
+            title={
+              scheduleLocked
+                ? `Publishing at a set time is included in the ${scheduleLocked.requires} plan`
+                : 'Publish at a moment of your choosing'
+            }
+            onClick={handleSchedule}
           >
-            {later && !working
-              ? 'Set for later'
-              : working
-                ? needsDeploy
-                  ? 'Starting the deploy…'
-                  : 'Publishing…'
+            <Button.Icon icon={scheduleLocked ? 'fa-solid fa-lock' : 'fa-solid fa-clock'} />
+            Schedule…
+          </Button>
+        )}
+        <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onClose}>
+          {publishing && target ? 'Cancel' : 'Close'}
+        </Button>
+        {publishing && target && (
+          <Button
+            size="sm"
+            disabled={
+              refusal !== undefined || working || (holdsACopy && checking) || (scheduling && later === undefined)
+            }
+            onClick={handlePublishClick}
+          >
+            {working
+              ? keepsANewVersion
+                ? 'Keeping your changes…'
+                : 'Publishing…'
+              : scheduling
+                ? 'Schedule'
                 : needsDeploy
                   ? 'Publish and deploy'
                   : 'Publish'}
