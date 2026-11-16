@@ -244,14 +244,115 @@ by the migration's release notes.
 
 ## 11. The builder
 
-- **Make a snapshot** — kept, polished: what it freezes, the environment, a description; after it, "Publish r12 now".
-- **Publish** — a panel, not a four-select modal: one card per target (domain, mode and provider, live release, who and
-  when, needs-a-deploy badge, and its versions' state: up to date, update available, redeploy required — §5.2). Pick
-  a snapshot from a list that says, for each, its description, author, date, its tests' result and what changes
-  against the target's live revision ("3 pages changed, 1 new"). The checks (space
-  tests, Space Issues, cross-origin features for SPA/static), then **Publish** or **Publish and deploy**, and **Roll
-  back to rN** always beside them.
-- **A deploy** — its live log and status in a drawer, reachable from the target's card and from the activity feed.
+Today the header's right end is a row of equals — quota, plan, role, theme, **Export**, **Snapshot**, **Publish** — and
+nothing in it says what is live, what changed since, or that a target needs attention. The two modals ask for
+selects, show notices as bright strips, and give Cancel the weight of the action. All three are redesigned together, in
+the builder's own kit (`plitzi-ui`), light and dark, at desktop and 390 px.
+
+### 11.1 The header
+
+```
+… ⌕  ↶ ↷ │ ▭ ▭ ▭ │ 100% │ ◐ preview │ ⚠ 2 │      ● Draft · 4 changes since production r12   [ Snapshot ]  [ Publish ▾ ]   ⋯
+```
+
+- **One release cluster** at the right end, in reading order:
+  - **The status chip** — what the draft is against the last snapshot ("4 changes since production r12", "Snapshotted",
+    "No snapshot yet") with a dot that turns amber when a target needs attention (needs a deploy, update available,
+    redeploy required, a deploy failed) and red when one failed. Pressed, it opens the publish panel (§11.3) on its
+    targets.
+  - **Snapshot** — secondary. Opens §11.2. Locked with the plan that includes it (as today).
+  - **Publish** — the one primary of the header, a split button: the button opens the publish panel; its menu holds
+    *Roll back <domain> to rN* for each target that has a release before the live one, *Release history*, and
+    *Targets and domains…* (the space's settings).
+- **Everything else steps back**: Export moves into the overflow menu `⋯` with the theme and the space's settings; the
+  quota, plan and role badges become one account chip that opens them. The cluster never wraps: under 1,536 px the
+  chip shows its dot and revision alone, its words as its title.
+- **Keyboard**: the two actions get shortcuts shown in their titles and in the shortcuts sheet (`?`), checked against
+  the builder's existing ones before they are chosen.
+
+### 11.2 Make a snapshot
+
+```
+┌ Make a snapshot ─────────────────────────────────────────── ✕ ┐
+│ Freeze the draft as a revision you can publish, compare or     │
+│ roll back to. Nothing a visitor sees changes yet.              │
+│                                                                │
+│ Environment   [ Development r4 ][ Staging r9 ][ Production r12 ]│
+│               (a locked one: outlined, dimmed, 🔒 App plan)     │
+│                                                                │
+│ What changes since production r12                              │
+│   3 pages changed · 1 new · 2 actions · fonts                  │
+│   ▸ the list                                                   │
+│                                                                │
+│ Description   [ Spring menu, new booking form            ]     │
+│                                                                │
+│ ✓ Space tests pass   ⚠ 2 issues (they do not stop a snapshot)  │
+│ ⓘ Flags go to the environment, not into the snapshot · more    │
+│ ⓘ Production keeps 10: r2 will be dropped (never a live one)   │
+├────────────────────────────────────────────────────────────────┤
+│                         Cancel   [ Snapshot ]  [ Snapshot and publish… ] │
+└────────────────────────────────────────────────────────────────┘
+```
+
+- **The environment is a segmented control**, each segment with its latest revision and how old; a locked one is
+  outlined and dimmed with a lock and its plan — never a bright tile.
+- **What it changes, against the environment's latest** (not the whole draft, which `VersionContents` shows today): a
+  line of counts and the list behind it.
+- **The checks it will meet at publish, said now**: space tests (they refuse a publish, not a snapshot), Space Issues.
+- **Notices only when they apply**, one line each, calm (info, never a white strip): the flags note collapsed to a line
+  with "more"; the prune notice only when this snapshot drops one, naming it.
+- **A description is asked for, not required**, with an example; it is what the publish panel's list shows.
+- **One primary**: *Snapshot and publish…* continues into §11.3 with this revision chosen; *Snapshot* stays beside it.
+  After either, a toast: "production r13 saved · Publish".
+
+### 11.3 Publish (replaces "Publish a snapshot")
+
+A side sheet on the right, not a modal: what is live stays readable beside it, and it holds a history.
+
+```
+┌ Publish ─────────────────────────────────────── ✕ ┐
+│ TARGETS                                           │
+│ ◉ example.com          Production · Amplify (SPA) │
+│   live r11 · 3 d ago by ana   ● needs a deploy    │
+│ ○ dev.example.com      Development · GitHub Pages │
+│   live r4 · 2 h ago by luis   ✓ up to date        │
+│ ○ acme.plitzi.app      Draft · Plitzi             │
+│                                                   │
+│ REVISION  (production)                            │
+│ ◉ r12  Spring menu · ana · 1 h  ✓ tests  3 changed│
+│ ○ r11  live · Winter menu · ana · 3 d             │
+│ ○ r10  … · 9 d                    ✗ tests         │
+│                                                   │
+│ example.com will serve r12 (now r11).             │
+│ Needs a deploy to Amplify: fonts changed, SDK 4.2 │
+│ This site calls 2 actions on Plitzi.              │
+├───────────────────────────────────────────────────┤
+│ ↶ Roll back to r10         Cancel  [ Publish and deploy ] │
+└───────────────────────────────────────────────────┘
+```
+
+- **Targets first**, as cards: domain; environment, provider and mode; the live release, its age and who; and its
+  state — needs a deploy, update available, redeploy required (§5.2), deploy failed, domain not verified. A target the
+  plan does not include is shown locked with its plan (§8). No targets but the draft's address: the sheet says where
+  the site is live and offers to add a domain or a target.
+- **Then the revision**, from the chosen target's environment, newest first: description, author, age, tests' result,
+  what changes against the live one; the live one marked; one whose tests fail shown and not selectable, with why.
+  Each opens its preview address when F1's previews exist (§14).
+- **Then what will happen, in words**, before anything does: what the target will serve instead of what, whether a
+  deploy is needed and why, what the site does on Plitzi cross-origin, how long a deploy usually takes.
+- **The footer has one primary**, its words the action: *Publish*, *Publish and deploy*, *Redeploy and publish*, or
+  disabled with the reason beside it. **Roll back to rN** sits at the footer's start whenever the target has a release
+  before the live one (§7), with its confirmation naming what it does not undo.
+- **Pressed, the sheet becomes the progress**: checks → pointer → build → upload → caches, each step ticked, a log
+  behind a toggle; done, *Open the site* and *Roll back* side by side.
+- **History** — a second view of the sheet per target: every release, who, when, its deploy, and *Roll back to this*
+  on each.
+- **Out of the sheet**: the access credential (password-protecting a domain) and the provider settings move to the
+  target's settings; the sheet only chooses.
+
+### 11.4 Targets and deploys
+
+- **A deploy** — its live log and status, reachable from the target's card, the history and the activity feed.
 - **Targets** — in the space's settings, with the domains (they are the same rows): add a target, pick a mode and a
   provider, connect its credential, verify the domain.
 
@@ -270,7 +371,7 @@ plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the cust
 
 | Phase | What | Why first |
 | --- | --- | --- |
-| **F0** | The current dialogs made right: colours, the disabled environment, the notice, button weight, copy; what is live now on the chosen domain | Small, independent, visible today |
+| **F0** | The header's release cluster (§11.1), Make a snapshot (§11.2) and the publish sheet (§11.3) over today's model: targets are today's domains, no history yet, rollback hidden until F1 | Visible today, and F1–F4 fill the same screens instead of redrawing them |
 | **F1** | `space_release`; the publish panel over Plitzi SSR targets; rollback (manual) with its pruning protection; `plitzi publish / rollback / releases`; the MCP tools | The pointer model already exists: history and rollback are most of the value at the least cost |
 | **F2** | Targets and modes, gated by `deployDownload`, `deploySpa` and the `deployTargets` limit; `space_deploy` and the deploy job; the SPA shell that reads its revision; fingerprints and the "needs a deploy" warning; the versions each deploy records and the update-available state (§5.2); GitHub Pages, S3 + CloudFront, Amplify, download | The two examples of §1 |
 | **F3** | Static prerender (`deployStatic`, `deployMinutes`); R2 / Cloudflare Pages, Netlify / Vercel; FTP / SFTP; kept artifacts for rollback | Builds on F2's pipeline |
