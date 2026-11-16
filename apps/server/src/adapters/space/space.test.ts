@@ -274,6 +274,17 @@ describe('wildcardSubdomain', () => {
   it('declines a slug that names no space', async () => {
     expect(await resolver(request('ghost.example.app'))).toBeUndefined();
   });
+
+  /** A password on the address is the address's, as on a custom domain: the basic-auth stage asks it. */
+  it('carries the access its deployment keeps for the address', async () => {
+    const credential = { provider: 'ssr', data: { type: 'basic', user: 'ana', pass: 'secret' } };
+    const guarded = wildcardSubdomain({
+      suffix: 'example.app',
+      find: () => Promise.resolve({ spaceId: 5, credential })
+    });
+
+    expect(await guarded(request('acme.example.app'))).toMatchObject({ spaceId: 5, revision: 0, credential });
+  });
 });
 
 describe('authoringPreview', () => {

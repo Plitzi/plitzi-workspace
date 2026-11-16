@@ -62,12 +62,18 @@ export interface WildcardSubdomainOptions {
   suffix: string;
   /**
    * The slug IS the sub-domain. Return nothing for a slug that names no space. A space's own script policy goes in
-   * `security`; the rest of it is the domain's, and this one is the deployment's own.
+   * `security`; the rest of it is the domain's, and this one is the deployment's own. Its `credential` is who may see
+   * the address — a password its owner put on it, asked by the basic-auth stage as on any domain of its own — when the
+   * deployment keeps one for it.
    */
-  find: (
-    slug: string
-  ) => Promise<
-    { spaceId: number; environment?: Environment; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'> } | undefined
+  find: (slug: string) => Promise<
+    | {
+        spaceId: number;
+        environment?: Environment;
+        security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'>;
+        credential?: SSRCredential;
+      }
+    | undefined
   >;
 }
 

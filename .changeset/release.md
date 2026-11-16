@@ -19,6 +19,10 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Page server
 
+- `wildcardSubdomain`'s `find` may answer a sub-domain's `credential`: a password its owner put on the address is asked
+  by the basic-auth stage, as on a domain of its own. A space's address on the spaces' domain resolves by its sub-domain
+  before any row is read, so a password set on it was never asked — the draft stayed open to everybody.
+
 - `@plitzi/sdk-server/deploy` (RFC 0034): a space's site built and shipped wherever it is served. `buildSpaShell` — an
   `index.html` that names its environment and never a revision, with the SDK and React carried beside it under a folder
   named by their digest (no third-party CDN at run time) — and `buildStaticSite`, every page a page server draws, followed
