@@ -32,7 +32,7 @@ lost, it simply stops being read as a plan.
 | [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Postponed | new `mobile/` project, `sdk-authoring`, servers |
 | [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
 | [0024](./0024-import-and-migration.md) | Import and migration: UI in, sites over | Proposal | an import engine in the workspace, the builder, CLI, MCP, the platform's transformers |
-| [0034](./0034-releases-and-deploy-targets.md) | Releases and deploy targets: snapshot, publish, deploy, roll back | Proposal | `plitzi-sdk-server`, `sdk-server` builders and uploaders, the builder, CLI, MCP |
+| [0034](./0034-releases-and-deploy-targets.md) | Releases and deploy targets: snapshot, publish, deploy, roll back | Accepted | `plitzi-sdk-server`, `sdk-server` builders and uploaders, the builder, CLI, MCP |
 
 ## Conventions
 

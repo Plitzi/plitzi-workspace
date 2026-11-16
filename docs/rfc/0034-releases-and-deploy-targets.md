@@ -1,6 +1,6 @@
 # RFC 0034 — Releases and deploy targets: snapshot, publish, deploy, roll back
 
-- **Status:** Proposal — for review; no work started
+- **Status:** Accepted — F0 in progress
 - **Author:** Plitzi
 - **Date:** 2026-11-16
 - **Scope:** `plitzi-sdk-server` (a space's targets, its release history, the deploy jobs, the providers' credentials,
@@ -337,7 +337,7 @@ A side sheet on the right, not a modal: what is live stays readable beside it, a
   the site is live and offers to add a domain or a target.
 - **Then the revision**, from the chosen target's environment, newest first: description, author, age, tests' result,
   what changes against the live one; the live one marked; one whose tests fail shown and not selectable, with why.
-  Each opens its preview address when F1's previews exist (§14).
+  Each opens its preview address once F1 ships them (§14.6).
 - **Then what will happen, in words**, before anything does: what the target will serve instead of what, whether a
   deploy is needed and why, what the site does on Plitzi cross-origin, how long a deploy usually takes.
 - **The footer has one primary**, its words the action: *Publish*, *Publish and deploy*, *Redeploy and publish*, or
@@ -377,22 +377,24 @@ plitzi build --spa|--static|--ssr --out dist/   # the same builders, in the cust
 | **F3** | Static prerender (`deployStatic`, `deployMinutes`); R2 / Cloudflare Pages, Netlify / Vercel; FTP / SFTP; kept artifacts for rollback | Builds on F2's pipeline |
 | **F4** | Self-hosted SSR (`deploySelfHosted`; `plitzi build --ssr`, connected and baked) with its reported versions, the support window and redeploy-required refusals (§5.2); deploy hooks, a publish scheduled for later, production protected (`deployAutomation`) | The rest |
 
-## 14. Open questions
+## 14. Decisions
 
-1. **A space's runtime is per environment, not per revision.** Publishing an older revision to one target while the
-   environment's runtime runs the latest serves that page with a newer runtime. Per-revision runtimes, or the publish
-   panel refuses (or warns) when the revision's runtime bundle differs from the environment's?
-2. **Static routes with parameters.** A prerender needs every value of `/menu/:dish`: from the space's data, a provider
-   declared enumerable, or a list in the target's settings?
-3. **The SPA's revision lookup** is one more request per page view: cached at the edge with the space document (and
-   dropped on publish), or the host's revision handed to the shell by the provider (a `_redirects`/header rule)?
-4. **Plans.** The tiers of §8 are a proposal: which plan each deploy capability starts at, and the figures of its
-   limits.
-5. **The support window.** How long Plitzi's API keeps answering an older `@plitzi/sdk-server` (a number of minor
-   releases, or months), how far ahead a version's end is announced, and who is told (the space's owners, the
-   workspace's admins).
-6. **Preview addresses.** `r12--acme.plitzi.app` serving any snapshot before it is published — cheap with SSR; wanted
-   in F1?
+What was open when this was proposed, decided when it was accepted:
+
+1. **A space's runtime stays per environment.** Publishing to a target a revision whose runtime bundle differs from the
+   one its environment runs is allowed, and the publish sheet says so in words ("this domain will run the environment's
+   runtime, built from r12"); per-revision runtimes are not in this RFC.
+2. **Static routes with parameters** come from a crawl of the prerendered pages (every internal link found, followed
+   within the space) plus a list in the target's settings for routes no page links to. A parameterised route neither
+   finds is reported by the deploy, by name, never left out silently.
+3. **The SPA asks its host's revision with the space document**: the shell names no revision; `/_plitzi/space.json`
+   resolves the host as the page server does (its pointer, cached by host, dropped on publish). One request, as today.
+4. **Plans**: the tiers and limits of §8 as written.
+5. **The support window**: Plitzi's API answers every `@plitzi/sdk-server` released in the last six months; a version's
+   end is announced thirty days ahead to the space's owners and the workspace's admins, by email and on the target's
+   card.
+6. **Preview addresses** ship in F1: `r<N>-<environment>--<permanentUrl>.<spaces domain>` serves that snapshot, behind
+   the space's access (members only), never indexed.
 
 ## 15. Not in this RFC
 
