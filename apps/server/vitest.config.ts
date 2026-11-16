@@ -1,11 +1,6 @@
 /// <reference types="vitest" />
 
-import { createRequire } from 'node:module';
-
 import { defaultServerConditions, defineConfig } from 'vite';
-
-const require = createRequire(import.meta.url);
-const PACKAGE = require('./package.json') as { version: string };
 
 /**
  * The workspace packages are read from their sources under test — `@plitzi/source`, which leads every one of their
@@ -15,9 +10,6 @@ const PACKAGE = require('./package.json') as { version: string };
 const SOURCE_CONDITION = '@plitzi/source';
 
 export default defineConfig({
-  define: {
-    VERSION: JSON.stringify(PACKAGE.version)
-  },
   test: {
     environment: 'node',
     globals: true,

@@ -1,21 +1,12 @@
 /// <reference types="vite/client" />
 
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import { transformSync } from 'esbuild';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-
-const require = createRequire(import.meta.url);
-const PACKAGE = require('./package.json') as {
-  version: string;
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-};
 
 const baseUrl = new URL('.', import.meta.url);
 const root = baseUrl.pathname;
@@ -81,11 +72,9 @@ export default defineConfig(({ mode }) => {
       }),
       copyViews()
     ],
-    define: {
-      // No `process.env.NODE_ENV`: a server reads it from the process it runs in. Baked in, the published build always
-      // believed it ran in production, whatever the deployment set — the build React renders with is the process's.
-      VERSION: JSON.stringify(PACKAGE.version)
-    },
+    // Nothing defined at build time: a server reads `NODE_ENV` from the process it runs in (baked in, the published build
+    // always believed it ran in production), and its own version from its manifest (`helpers/ownVersion.ts`), which a
+    // package compiling this source reads the same.
     build: {
       // Keep the previous output in place during development so `beforeWriteFile` has something to compare against:
       // wiping dist means every declaration is written afresh, and the editors holding them open re-parse the lot.
