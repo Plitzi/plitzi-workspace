@@ -11,6 +11,9 @@ weighs on a phone — and what of it a phone cannot hold.
   request went out, the answer never came back — is kept for later under that same key, so the run it began answers
   for it (or refuses it while it still runs). Kept under a key of its own, it ran a second time. A key the call names
   is still its own.
+- A template that is a literal word alone — `{{ null }}`, `{{ false }}`, `{{ true }}` — is that value: read as a name
+  nobody set, it reached a step param or a binding as an empty string, so a `json` setState given `{{ null }}` to empty
+  a key failed to parse. Written as text, each reads as a variable holding it does (`false`, `true`, nothing).
 
 ## Authoring
 

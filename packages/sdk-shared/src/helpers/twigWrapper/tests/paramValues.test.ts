@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { processTwigParam, processTwigValue, resolveStepParam } from '../index';
+import { processTwig, processTwigParam, processTwigValue, resolveStepParam } from '../index';
 
 /**
  * What a flow step is handed for a param. The type is the value's own — never guessed from what its text looks like:
@@ -29,6 +29,36 @@ describe('a value template with {% set %} before its expression', () => {
 
   it('is text when anything else is written around it', () => {
     expect(processTwigValue('{% set n = 2 %}n is {{ n }}', {})).toBe('n is 2');
+  });
+});
+
+describe('a literal word alone in a template', () => {
+  // Spelled as names, read as values: taken for a variable nobody set, each arrived as '' — a `json` setState given
+  // `{{ null }}` to empty a key failed to parse, and the panel it closed stayed open.
+  it('is the value it names, for a step param and a bound value alike', () => {
+    for (const [template, value] of [
+      ['{{ null }}', null],
+      ['{{ none }}', null],
+      ['{{ false }}', false],
+      ['{{ true }}', true]
+    ] as const) {
+      expect([template, processTwigParam(template, {})]).toEqual([template, value]);
+      expect([template, processTwigValue(template, {})]).toEqual([template, value]);
+    }
+  });
+
+  it('is never read off the context, even where a key of that name exists', () => {
+    expect(processTwigParam('{{ null }}', { null: 'shadow' })).toBe(null);
+  });
+
+  it('renders as text the way a variable holding it does', () => {
+    expect(processTwig('{{ false }}|{{ true }}|{{ null }}', {})).toBe('false|true|');
+    expect(processTwig('{{ off }}|{{ on }}', { off: false, on: true })).toBe('false|true');
+  });
+
+  it('still lets a name that only starts like one be a name', () => {
+    expect(processTwigParam('{{ nullable }}', { nullable: 'yes' })).toBe('yes');
+    expect(processTwigParam('{{ trueName.first }}', { trueName: { first: 'Ana' } })).toBe('Ana');
   });
 });
 

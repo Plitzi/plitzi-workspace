@@ -57,10 +57,18 @@ export const isDigit = (c: number): boolean => c >= Char.Zero && c <= Char.Nine;
 export const isSpace = (c: number): boolean =>
   c === Char.Space || c === Char.Tab || c === Char.Newline || c === Char.CarriageReturn;
 
-// Whether the whole string is a bare identifier: `name`, `_id`, `item0` (no dots, no other characters).
+/**
+ * Twig's literal words. They are spelled as names, but they are values: `{{ null }}` is null, not a variable called
+ * `null`. The fast paths below read a name off the context, so a word of these taken for one resolved to nothing — a
+ * step param written `{{ false }}` or `{{ null }}` arrived as `''`, and a `json` setState holding it failed to parse.
+ */
+const LITERAL_WORDS: ReadonlySet<string> = new Set(['true', 'false', 'null', 'none']);
+
+// Whether the whole string is a bare identifier: `name`, `_id`, `item0` (no dots, no other characters) — never a
+// literal word, which the expression parser reads as the value it is.
 export const isSimpleIdentifier = (s: string): boolean => {
   const len = s.length;
-  if (len === 0 || !isIdentStart(s.charCodeAt(0))) {
+  if (len === 0 || !isIdentStart(s.charCodeAt(0)) || LITERAL_WORDS.has(s)) {
     return false;
   }
 
@@ -82,7 +90,7 @@ export const isSimpleIdentifier = (s: string): boolean => {
  */
 export const isDottedPath = (s: string): boolean => {
   const len = s.length;
-  if (len === 0 || !isIdentStart(s.charCodeAt(0))) {
+  if (len === 0 || !isIdentStart(s.charCodeAt(0)) || LITERAL_WORDS.has(s)) {
     return false;
   }
 
