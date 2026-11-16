@@ -60,8 +60,12 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const cacheKey = `${hostname}:${tokenHash}`;
+    // What was sent AND what is expected: a password changed is asked again at once, never believed for the rest of
+    // the TTL because it once matched the old one.
+    const cacheKey = crypto
+      .createHash('sha256')
+      .update(`${hostname}\0${credentials.user}\0${credentials.pass}\0${token}`)
+      .digest('hex');
 
     if (authCache.get(cacheKey)) {
       await next();
