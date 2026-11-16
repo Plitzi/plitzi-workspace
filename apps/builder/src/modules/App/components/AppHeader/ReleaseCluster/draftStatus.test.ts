@@ -10,7 +10,8 @@ const snapshot: SpaceSnapshot = {
   description: '',
   publishedAt: '2026-11-16T10:00:00.000Z',
   by: null,
-  domains: []
+  domains: [],
+  previewUrl: 'https://acme--r12-production-1-0123456789ab.plitzi.app/'
 };
 const changed = (total: number) => ({ total }) as SpaceVersionChanges;
 

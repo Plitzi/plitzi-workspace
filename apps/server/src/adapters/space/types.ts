@@ -24,6 +24,8 @@ export interface SpaceResolution {
    * `authoringPreview` sets it; nothing infers it, because only the resolver can tell the two apart.
    */
   authoring?: boolean;
+  /** Never for search, whatever the space's plan or pages say — see `SSRSpaceDeployment.noindex`. */
+  noindex?: boolean;
   /** The origins of the credential that chose the space, when one did — `renderGrant` sets it. */
   grantOrigins?: string[];
   /** What the draft is at, when the deployment can say — see `SSRSpaceDeployment.draftVersion`. Usually set by `decorate`. */

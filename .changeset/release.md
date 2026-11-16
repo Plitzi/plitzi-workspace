@@ -7,10 +7,18 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## CLI
 
+- `plitzi space snapshot` prints the snapshot's preview address, to look at it before any domain serves it.
 - `plitzi space snapshot`, `space publish <domain>`, `space rollback <domain> [--to production@9]` and `space releases
 [domain]` (RFC 0034): the builder's Snapshot and Publish for a terminal, a CI job or an agent — what each domain
   serves, what a rollback would put back, a domain's history — held on the platform to the same rules, `--json` for a
   tool.
+
+## Page server
+
+- `snapshotPreview({ suffix, keyOf, find })` and `previewLabel(name, snapshot, key)` (`@plitzi/sdk-server/spaces`): a
+  snapshot served at an address of its own, `<name>--r12-production-<space>-<key>.<suffix>`, its key the deployment's
+  secret for that snapshot — a wrong one is the 404 of a space that does not exist. A resolution may say `noindex`:
+  every page on it answers `X-Robots-Tag: noindex, nofollow`, and its `/robots.txt` disallows everything.
 
 ## MCP
 
@@ -67,6 +75,9 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
+- **A snapshot's preview** (RFC 0034 §14.6): each revision in the publish sheet has **Preview** beside it — the snapshot
+  at an address of its own, as a visitor would see it, before any domain serves it. Only whoever has the link opens it,
+  and it is never indexed.
 - **Releases and rollback** (RFC 0034, F1). Every publish and rollback of a domain is recorded — what it serves from
   then on, what it served before, who — and the publish sheet lists a domain's history, with **Serve this again** on
   each release and **Roll back to rN** at its foot and beside the outcome: a rollback asks first, naming what it puts

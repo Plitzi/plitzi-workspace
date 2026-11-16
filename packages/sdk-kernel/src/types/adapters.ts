@@ -83,6 +83,11 @@ export type SSRSpaceDeployment = {
    */
   authoring?: boolean;
   /**
+   * This address is never for search — a snapshot's preview, made for people to look at before any domain serves it:
+   * every page answered on it says `X-Robots-Tag: noindex, nofollow`, whatever the plan or the page's own robots say.
+   */
+  noindex?: boolean;
+  /**
    * The origins of the credential that chose this space — set only when one did rather than the host (`renderGrant`):
    * a page of one of them renders the space itself and is answered its document across origins.
    */

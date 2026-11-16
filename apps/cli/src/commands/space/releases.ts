@@ -102,17 +102,27 @@ export const snapshot = async (options: SnapshotOptions): Promise<void> => {
     return;
   }
 
-  const taken = isRecord(answer.data) && isServed(answer.data.snapshot) ? answer.data.snapshot : undefined;
+  const kept = isRecord(answer.data) ? answer.data.snapshot : undefined;
+  const taken = isServed(kept) ? kept : undefined;
   if (answer.status !== 201 || !taken) {
     fail('refused-by-platform', refusalOf(answer.data, answer.status));
 
     return;
   }
 
+  if (options.json) {
+    console.log(JSON.stringify(answer.data));
+
+    return;
+  }
+
+  const preview = isRecord(kept) && typeof kept.previewUrl === 'string' ? kept.previewUrl : undefined;
   console.log(
-    options.json
-      ? JSON.stringify(answer.data)
-      : `Kept the draft as ${chalk.bold(versionName(taken))}. Put it on a domain: plitzi space publish <domain> --revision ${String(taken.revision)}`
+    [
+      `Kept the draft as ${chalk.bold(versionName(taken))}.`,
+      ...(preview ? [`Look at it before any domain serves it: ${preview} (only whoever has the link can open it)`] : []),
+      `Put it on a domain: plitzi space publish <domain> --revision ${String(taken.revision)}`
+    ].join('\n')
   );
 };
 

@@ -5,7 +5,7 @@ import { AI_CRAWLERS } from '@plitzi/sdk-shared/schema';
 
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../createServer';
-import { DEFAULT_ROBOTS_TXT } from './robotsTxt';
+import { DEFAULT_ROBOTS_TXT, NOINDEX_ROBOTS_TXT } from './robotsTxt';
 
 import type { SSRServer } from '../../types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -22,7 +22,11 @@ afterEach(async () => {
   server = undefined;
 });
 
-const serve = async (settings: Record<string, unknown>, schema: Record<string, unknown> = {}): Promise<string> => {
+const serve = async (
+  settings: Record<string, unknown>,
+  schema: Record<string, unknown> = {},
+  deployment: { noindex?: boolean } = {}
+): Promise<string> => {
   const port = await unusedPort();
   // Only what these files read: the settings, and for the sitemap its pages.
   const offlineData = {
@@ -32,7 +36,11 @@ const serve = async (settings: Record<string, unknown>, schema: Record<string, u
   server = createServer({
     port,
     devMode: true,
-    adapters: { ...createJsonAdapters({ offlineData }), authenticate: () => Promise.resolve(undefined) }
+    adapters: {
+      ...createJsonAdapters({ offlineData }),
+      ...(deployment.noindex ? { getSpaceDeployment: () => Promise.resolve({ spaceId: 1, noindex: true }) } : {}),
+      authenticate: () => Promise.resolve(undefined)
+    }
   });
   await server.listen(port, '127.0.0.1');
   const base = `http://127.0.0.1:${String(port)}`;
@@ -51,6 +59,12 @@ describe('a space’s /robots.txt', () => {
     expect(answer.status).toBe(200);
     expect(answer.headers.get('content-type')).toContain('text/plain');
     expect(await answer.text()).toBe(`User-agent: *\nDisallow: /overlay\n\nSitemap: ${base}/sitemap.xml\n`);
+  });
+
+  it('keeps every crawler out of an address that is never for search, whatever the space says', async () => {
+    const base = await serve({ customCss: '', robotsTxt: 'User-agent: *\nAllow: /' }, {}, { noindex: true });
+
+    expect(await (await fetch(`${base}/robots.txt`)).text()).toBe(NOINDEX_ROBOTS_TXT);
   });
 
   it('names no sitemap of its own when the space’s text already names one', async () => {

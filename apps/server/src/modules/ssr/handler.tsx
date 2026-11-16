@@ -62,6 +62,11 @@ export const renderSSR = async (
   // A `system` theme is drawn as the machine asks (`theme.resolved`): Chromium says which from its next request on.
   res.setHeader('Accept-CH', SCHEME_HINT_HEADER);
   res.setHeader('Vary', SCHEME_HINT_HEADER);
+  // An address made for people, never for search (a snapshot's preview), whatever the plan or the page's robots say.
+  if (req.ctx.spaceDeployment?.noindex) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  }
+
   // Sent once the page is known to be rendered: that wait is what the browser spends fetching the stylesheets.
   const hint = pageHints(config, res);
 

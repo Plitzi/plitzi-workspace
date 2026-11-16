@@ -162,6 +162,8 @@ export type SpaceSnapshot = {
   /** None for a snapshot made before its author was kept. */
   by: { id: number; username: string } | null;
   domains: string[];
+  /** Where a member looks at it before any domain serves it: its own address, never for search. */
+  previewUrl: string;
 };
 
 /** A version as a domain serves it: an environment and a revision of it, 0 for the draft. */

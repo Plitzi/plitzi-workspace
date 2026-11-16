@@ -1,6 +1,6 @@
 # RFC 0034 — Releases and deploy targets: snapshot, publish, deploy, roll back
 
-- **Status:** Accepted — F0 shipped; F1 shipped but its preview addresses (§14.6)
+- **Status:** Accepted — F0 and F1 shipped (with the preview addresses, §14.6); F2–F4 in progress
 - **Author:** Plitzi
 - **Date:** 2026-11-16
 - **Scope:** `plitzi-sdk-server` (a space's targets, its release history, the deploy jobs, the providers' credentials,
@@ -337,7 +337,7 @@ A side sheet on the right, not a modal: what is live stays readable beside it, a
   the site is live and offers to add a domain or a target.
 - **Then the revision**, from the chosen target's environment, newest first: description, author, age, tests' result,
   what changes against the live one; the live one marked; one whose tests fail shown and not selectable, with why.
-  Each opens its preview address once F1 ships them (§14.6).
+  Each opens its preview address (§14.6).
 - **Then what will happen, in words**, before anything does: what the target will serve instead of what, whether a
   deploy is needed and why, what the site does on Plitzi cross-origin, how long a deploy usually takes.
 - **The footer has one primary**, its words the action: *Publish*, *Publish and deploy*, *Redeploy and publish*, or
@@ -393,8 +393,13 @@ What was open when this was proposed, decided when it was accepted:
 5. **The support window**: Plitzi's API answers every `@plitzi/sdk-server` released in the last six months; a version's
    end is announced thirty days ahead to the space's owners and the workspace's admins, by email and on the target's
    card.
-6. **Preview addresses** ship in F1: `r<N>-<environment>--<permanentUrl>.<spaces domain>` serves that snapshot, behind
-   the space's access (members only), never indexed.
+6. **Preview addresses** ship in F1: `<permanentUrl>--r<N>-<environment>-<space id>-<key>.<spaces domain>` serves
+   that snapshot, never indexed (`X-Robots-Tag`, a `robots.txt` that disallows everything), metered as any page of the
+   space is. The address is the access: `key` is the deployment's HMAC of the snapshot, handed only to the space's
+   members in the snapshot lists, so it cannot be guessed and one snapshot's address never opens another's. A sign-in on
+   the preview host was weighed and set aside: a space's hosts hold no member session, and a link a member can send to
+   a client is what a preview is for. The name is cut to fit one DNS label (63 characters) and decides nothing — the
+   space is the id. Mechanism: `snapshotPreview` / `previewLabel` in `@plitzi/sdk-server/spaces`.
 
 ## 15. Not in this RFC
 

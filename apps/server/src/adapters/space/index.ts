@@ -234,6 +234,8 @@ export {
   wildcardSubdomain
 } from './resolvers';
 export { createMemoryCache, refuse } from './types';
+export { parsePreviewLabel, PREVIEW_KEY_LENGTH, previewLabel, snapshotPreview } from './snapshotPreview';
 
 export type { AuthoringPreviewOptions, DeploymentRow, RenderGrantOptions, WildcardSubdomainOptions } from './resolvers';
 export type { SpaceCache, SpaceRefusal, SpaceResolution, SpaceResolver } from './types';
+export type { PreviewAddress, SnapshotPreviewOptions } from './snapshotPreview';

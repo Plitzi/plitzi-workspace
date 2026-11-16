@@ -306,39 +306,50 @@ const PublishSheet = ({ environment: askedEnvironment, revision: askedRevision, 
               const liveHere = snapshot.domains.includes(target?.domain ?? '');
 
               return (
-                <button
-                  key={snapshot.revision}
-                  type="button"
-                  role="radio"
-                  aria-checked={chosen}
-                  className={clsx(
-                    'flex flex-col gap-0.5 rounded-md border px-3 py-1.5 text-left transition-colors outline-none',
-                    'focus-visible:ring-primary-500 focus-visible:ring-2',
-                    chosen ? 'border-primary-500 bg-primary-500/10' : 'hover:bg-ui-hover border-transparent'
-                  )}
-                  onClick={() => setPickedRevision(snapshot.revision)}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-ui-fg text-sm font-semibold">r{snapshot.revision}</span>
-                    <span className="text-ui-fg min-w-0 truncate text-sm">
-                      {snapshot.description || 'No description'}
-                    </span>
-                    {liveHere && (
-                      <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
-                        live here
-                      </span>
+                <div key={snapshot.revision} className="flex items-stretch gap-1">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={chosen}
+                    className={clsx(
+                      'flex min-w-0 flex-1 flex-col gap-0.5 rounded-md border px-3 py-1.5 text-left transition-colors outline-none',
+                      'focus-visible:ring-primary-500 focus-visible:ring-2',
+                      chosen ? 'border-primary-500 bg-primary-500/10' : 'hover:bg-ui-hover border-transparent'
                     )}
-                  </span>
-                  <span className="text-ui-fg-subtle truncate text-[11px]">
-                    {[
-                      snapshot.by?.username,
-                      ageAgo(snapshot.publishedAt),
-                      snapshot.domains.length > 0 && !liveHere ? `live on ${snapshot.domains.join(', ')}` : ''
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </button>
+                    onClick={() => setPickedRevision(snapshot.revision)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-ui-fg text-sm font-semibold">r{snapshot.revision}</span>
+                      <span className="text-ui-fg min-w-0 truncate text-sm">
+                        {snapshot.description || 'No description'}
+                      </span>
+                      {liveHere && (
+                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                          live here
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-ui-fg-subtle truncate text-[11px]">
+                      {[
+                        snapshot.by?.username,
+                        ageAgo(snapshot.publishedAt),
+                        snapshot.domains.length > 0 && !liveHere ? `live on ${snapshot.domains.join(', ')}` : ''
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </button>
+                  {/* Its own address: the snapshot as a visitor would see it, before any domain serves it. */}
+                  <a
+                    href={snapshot.previewUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    title={`Preview r${String(snapshot.revision)} at its own address — only whoever has the link can open it`}
+                    className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover focus-visible:ring-primary-500 flex shrink-0 items-center rounded-md px-2 text-xs font-medium outline-none focus-visible:ring-2"
+                  >
+                    Preview
+                  </a>
+                </div>
               );
             })}
           </div>

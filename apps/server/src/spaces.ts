@@ -8,16 +8,22 @@ export {
   createMemoryCache,
   createSpaceAdapters,
   fixedSpace,
+  parsePreviewLabel,
   presentsCredential,
+  PREVIEW_KEY_LENGTH,
+  previewLabel,
   refuse,
   renderGrant,
+  snapshotPreview,
   verifiedDomain,
   wildcardSubdomain
 } from './adapters/space';
 export type {
   AuthoringPreviewOptions,
   DeploymentRow,
+  PreviewAddress,
   RenderGrantOptions,
+  SnapshotPreviewOptions,
   SpaceAdapters,
   SpaceAdaptersConfig,
   SpaceCache,
