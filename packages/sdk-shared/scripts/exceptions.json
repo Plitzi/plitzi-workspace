@@ -6,7 +6,7 @@
   },
   "apps/cli": {
     "disable": 4,
-    "any": 2,
+    "any": 0,
     "unknownAs": 1
   },
   "apps/desktop": {
@@ -41,7 +41,7 @@
   },
   "packages/sdk-authoring": {
     "disable": 1,
-    "any": 3,
+    "any": 1,
     "unknownAs": 3
   },
   "packages/sdk-dev-tools": {

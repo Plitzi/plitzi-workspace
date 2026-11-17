@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import ts from 'typescript';
+
 /**
  * Every exception to the workspace's rules, counted per package — `eslint-disable`, an `any`, an `as unknown as` — in
  * what a package ships (not its tests, stories or benchmarks), held to `exceptions.json` (`yarn check:exceptions`).
@@ -23,9 +25,52 @@ const KINDS = {
   unknownAs: /\bas unknown as\b/g
 };
 
-// What a type is written in, not what a comment says: "the other way: any difference" is prose, not an `any`. A line
-// comment starts at `//` not preceded by `:` (an address in a string keeps its `://`).
-const codeOf = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+// What a type is written in, not what a comment or a string says: "the other way: any difference" in a comment and
+// 'The page scrolls as any page does.' in a label are prose, not an `any`. Read as TypeScript reads it — a regex cannot
+// tell a template's closing backtick from a string's opening, and one emptied code that was there — every comment, every
+// string, the literal parts of a template and a JSX text are blanked; what is between a template's `${}` stays.
+const PROSE = new Set([
+  ts.SyntaxKind.StringLiteral,
+  ts.SyntaxKind.NoSubstitutionTemplateLiteral,
+  ts.SyntaxKind.TemplateHead,
+  ts.SyntaxKind.TemplateMiddle,
+  ts.SyntaxKind.TemplateTail,
+  ts.SyntaxKind.JsxText
+]);
+
+export const codeOf = (text, fileName = 'file.ts') => {
+  // As its extension says: a `.ts` file read as TSX takes a generic `<D, A>(…)` for a tag, and its "text" for prose.
+  const kind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, false, kind);
+  const blanks = [];
+  const visit = node => {
+    const start = node.getStart(source);
+    if (PROSE.has(node.kind)) {
+      blanks.push([start, node.end]);
+    }
+
+    for (const comment of ts.getLeadingCommentRanges(text, node.pos) ?? []) {
+      blanks.push([comment.pos, comment.end]);
+    }
+
+    node.getChildren(source).forEach(visit);
+  };
+  visit(source);
+  for (const comment of ts.getLeadingCommentRanges(text, source.endOfFileToken.pos) ?? []) {
+    blanks.push([comment.pos, comment.end]);
+  }
+
+  const chars = [...text];
+  for (const [from, to] of blanks) {
+    for (let index = from; index < to; index += 1) {
+      if (chars[index] !== '\n') {
+        chars[index] = ' ';
+      }
+    }
+  }
+
+  return chars.join('');
+};
 
 const filesOf = dir =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -53,7 +98,7 @@ export const countExceptions = () => {
       const total = { disable: 0, any: 0, unknownAs: 0 };
       for (const file of filesOf(src)) {
         const text = fs.readFileSync(file, 'utf8');
-        const code = codeOf(text);
+        const code = codeOf(text, file);
         for (const [kind, pattern] of Object.entries(KINDS)) {
           // A disable is a comment by its nature; every other exception is counted in the code alone.
           total[kind] += (kind === 'disable' ? text : code).match(pattern)?.length ?? 0;
