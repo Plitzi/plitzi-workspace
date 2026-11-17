@@ -17,6 +17,20 @@ export const ENVIRONMENT_META: Readonly<Record<Environment, { label: string; ico
   production: { label: 'Production', icon: 'fa-solid fa-rocket', dot: 'bg-emerald-500' }
 };
 
-/** `production r12`, the way a revision is said everywhere. */
+/**
+ * `version 12`, the way a revision is said everywhere: production's is the version a person means, so only another
+ * environment's is named (`staging version 3`) — revisions are counted per environment.
+ */
 export const revisionName = (environment: Environment, revision: number): string =>
-  environment === 'main' ? 'the draft' : `${ENVIRONMENT_META[environment].label.toLowerCase()} r${String(revision)}`;
+  environment === 'main'
+    ? 'the draft'
+    : environment === 'production'
+      ? `version ${String(revision)}`
+      : `${ENVIRONMENT_META[environment].label.toLowerCase()} version ${String(revision)}`;
+
+/** The same, to start a sentence or a title: `Version 12`, `Staging version 3`. */
+export const revisionTitle = (environment: Environment, revision: number): string => {
+  const name = revisionName(environment, revision);
+
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+};

@@ -1,4 +1,4 @@
-import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
+import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 
 import type { PublishedEnvironment } from '../../helpers/environments';
 import type { DeployMode, DeployStatus, Environment, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
@@ -11,7 +11,7 @@ export const MODE_WORDS: Record<DeployMode, string> = {
   selfHosted: 'Your server'
 };
 
-/** `production r12`, or the draft. */
+/** `version 12`, or the draft. */
 export const versionName = ({ environment, revision }: SpaceServedVersion): string =>
   environment === 'main' ? 'the draft' : revisionName(environment, revision);
 
@@ -65,7 +65,7 @@ export const showsWords = (serves: SpaceServedVersion | null): string =>
     ? 'Nothing published yet'
     : serves.environment === 'main'
       ? 'Shows every change as you save it'
-      : `Shows ${ENVIRONMENT_META[serves.environment].label} r${String(serves.revision)}`;
+      : `Shows ${revisionName(serves.environment, serves.revision)}`;
 
 /**
  * Where "your latest changes" are kept before they are published: the environment the domain shows already, or the one

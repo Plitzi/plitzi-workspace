@@ -25,7 +25,9 @@ const versionName = ({ environment, revision }: SpaceServedVersion) =>
  */
 const ReleaseHistory = ({ domain, releases, loading, onServeAgain, open = false }: ReleaseHistoryProps) => (
   <details className="text-xs" open={open}>
-    <summary className="text-ui-fg-subtle hover:text-ui-fg w-fit cursor-pointer">Release history of {domain}</summary>
+    <summary className="text-ui-fg-subtle hover:text-ui-fg w-fit cursor-pointer">
+      What was published on {domain}, and when
+    </summary>
     <div className="mt-2 flex flex-col gap-1">
       {loading && <span className="text-ui-fg-subtle">Reading the history…</span>}
       {!loading && releases.length === 0 && (

@@ -78,8 +78,8 @@ const DomainCard = ({ target, chosen, onChoose, onSettings }: DomainCardProps) =
       {onSettings && (
         <button
           type="button"
-          title={`Hosting of ${target.domain}: Plitzi, or a copy of the site on GitHub Pages, Netlify, Vercel…`}
-          aria-label={`Hosting of ${target.domain}`}
+          title={`Settings of ${target.domain}: where it is hosted, and whether it shows every save`}
+          aria-label={`Settings of ${target.domain}`}
           className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover m-1 flex w-8 shrink-0 items-center justify-center rounded-md"
           onClick={handleSettings}
         >

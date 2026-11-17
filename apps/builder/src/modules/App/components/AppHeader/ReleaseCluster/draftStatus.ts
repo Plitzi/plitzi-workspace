@@ -13,7 +13,7 @@ export const draftStatus = (
 
   const kept = revisionName(newest.environment, newest.revision);
   if (!changes || changes.total === 0) {
-    return { words: `Draft · kept as ${kept}`, short: `r${String(newest.revision)}`, pending: false };
+    return { words: `Draft · kept as ${kept}`, short: `v${String(newest.revision)}`, pending: false };
   }
 
   const count = changes.total === 1 ? '1 change' : `${String(changes.total)} changes`;

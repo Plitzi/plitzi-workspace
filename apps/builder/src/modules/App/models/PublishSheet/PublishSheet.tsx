@@ -9,13 +9,14 @@ import useSpaceEntitlements from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import AccessPicker from './AccessPicker';
-import ContentChoice from './ContentChoice';
 import DeployProgress from './DeployProgress';
 import DomainList from './DomainList';
 import { latestEnvironmentOf, versionName } from './helpers';
 import OwnAddressCard from './OwnAddressCard';
 import PublishDone from './PublishDone';
+import PublishWhat from './PublishWhat';
 import ReleaseHistory from './ReleaseHistory';
+import RevisionList from './RevisionList';
 import RollbackConfirm from './RollbackConfirm';
 import ScheduledPublishes, { momentWords } from './ScheduledPublishes';
 import ScheduleRow from './ScheduleRow';
@@ -25,7 +26,7 @@ import TargetSettings from './TargetSettings';
 import WhatHappens from './WhatHappens';
 import { useVersionChanges } from '../../components/ChangesSummary';
 import Notice from '../../components/Notice';
-import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
+import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 import useLatestSnapshots from '../../hooks/useLatestSnapshots';
 import useSpaceTargets from '../../hooks/useSpaceTargets';
 
@@ -77,10 +78,11 @@ const isPublished = (environment: Environment | undefined): environment is Publi
 
 /**
  * Publish (RFC 0034 §11.3), for somebody who has never done it: the space's own address first — live with every save,
- * nothing to publish there — then its domains, one chosen; what it should show, in three plain answers (the latest
- * changes, kept as a version on the way; a version kept before; every save); who may see it; and what will happen, in
- * one place, before anything does. One action. Pressed, a deploy becomes its progress here; the history and a domain's
- * hosting are views of the same sheet.
+ * nothing to publish there — then its domains, one chosen; and Publish means one thing: the latest changes go out,
+ * kept as a version on the way. Who may see it and what will happen are said before anything does. Going back to a
+ * version is the history's (one list of the versions kept, whatever environment kept each), and showing every save is
+ * the domain's settings' — each sends its choice here, with the way back to the latest changes. Pressed, a deploy
+ * becomes its progress here.
  */
 const PublishSheet = ({
   environment: askedEnvironment,
@@ -91,8 +93,7 @@ const PublishSheet = ({
 }: PublishSheetProps) => {
   const { mutate, webId } = useBuilderNetwork();
   const { locked } = useSpaceEntitlements();
-  const { byEnvironment, newest, refresh: refreshSnapshots } = useLatestSnapshots();
-  const newestKeptIn = newest && isPublished(newest.environment) ? newest.environment : undefined;
+  const { byEnvironment, refresh: refreshLatest } = useLatestSnapshots();
   const { refresh: refreshIssues } = useSpaceIssues();
   const showSpaceIssues = useShowSpaceIssues();
   const { targets: catalog, loading: loadingTargets, refresh: refreshTargets } = useSpaceTargets();
@@ -125,17 +126,14 @@ const PublishSheet = ({
 
   // What it should show. A version asked for opens on it; otherwise the latest changes — what pressing Publish means.
   const isLocked = useCallback((environment: PublishedEnvironment) => locked(environment) !== undefined, [locked]);
-  const lockedRequires = useCallback((environment: PublishedEnvironment) => locked(environment)?.requires, [locked]);
-  const openEnvironments = PUBLISHED_ENVIRONMENTS.filter(environment => !isLocked(environment));
-  const versionsLockedBy = openEnvironments.length === 0 ? locked('production')?.requires : undefined;
+  const versionsLockedBy = PUBLISHED_ENVIRONMENTS.every(isLocked) ? locked('production')?.requires : undefined;
   const [pickedKind, setPickedKind] = useState<ContentKind>();
   const defaultKind: ContentKind =
     askedRevision !== undefined && isPublished(askedEnvironment) ? 'saved' : versionsLockedBy ? 'live' : 'latest';
   const kind: ContentKind = pickedKind === 'live' && holdsACopy ? 'latest' : (pickedKind ?? defaultKind);
 
-  // The latest changes: kept in the environment the domain shows already, or the one nearest the public.
-  const [pickedLatestEnvironment, setPickedLatestEnvironment] = useState<PublishedEnvironment>();
-  const latestEnvironment = pickedLatestEnvironment ?? latestEnvironmentOf(served?.environment, isLocked);
+  // The latest changes: kept in the environment the domain shows already, or the one nearest the public — never asked.
+  const latestEnvironment = latestEnvironmentOf(served?.environment, isLocked);
   const latestKept = latestEnvironment ? byEnvironment[latestEnvironment] : undefined;
   const { changes: sinceKept } = useVersionChanges(
     kind === 'latest' && latestKept
@@ -147,26 +145,26 @@ const PublishSheet = ({
   const keptAs = latestKept && sinceKept?.total === 0 ? latestKept.revision : undefined;
   const [description, setDescription] = useState('');
 
-  // A version kept before.
-  const [pickedEnvironment, setPickedEnvironment] = useState<PublishedEnvironment>();
+  // A version kept before: one picked in the history, or the one just kept with Snapshot.
+  const [picked, setPicked] = useState<{ environment: PublishedEnvironment; revision: number }>();
   const savedEnvironment: PublishedEnvironment =
-    pickedEnvironment ??
-    (isPublished(askedEnvironment) ? askedEnvironment : undefined) ??
-    (isPublished(served?.environment) ? served.environment : undefined) ??
-    (latestEnvironment && byEnvironment[latestEnvironment] ? latestEnvironment : undefined) ??
-    // Where there is a version to choose: a list that opens empty beside one that is not says there are none.
-    newestKeptIn ??
-    latestEnvironment ??
-    'production';
-  const { data: snapshots = [], isLoading: loadingSnapshots } = useGraphQL(
-    kind === 'saved' ? 'SpaceSnapshots' : null,
+    picked?.environment ?? (isPublished(askedEnvironment) ? askedEnvironment : undefined) ?? 'production';
+  const savedRevision = picked?.revision ?? (picked ? undefined : askedRevision);
+  // Every version kept, in one list: whoever never chose an environment reads what they kept, not three lists.
+  const {
+    data: snapshots = [],
+    isLoading: loadingSnapshots,
+    mutate: refreshSnapshots
+  } = useGraphQL(
+    kind === 'saved' || view.name === 'history' ? 'SpaceSnapshots' : null,
     data => data?.SpaceSnapshots,
-    { environment: savedEnvironment },
+    // Named as none: the builder fills in its own environment — the draft's — where a query names none.
+    { environment: null },
     { revalidateOnMount: true }
   );
-  const [pickedRevision, setPickedRevision] = useState<number>();
-  const savedRevision =
-    pickedRevision ?? (askedEnvironment === savedEnvironment ? askedRevision : undefined) ?? snapshots.at(0)?.revision;
+  const savedSnapshot = snapshots.find(
+    each => each.environment === savedEnvironment && each.revision === savedRevision
+  );
 
   // The version it comes to: the draft for every save, none yet for latest changes still to be kept.
   const environment: Environment | undefined =
@@ -229,8 +227,8 @@ const PublishSheet = ({
         ? `${target.locked.requires} deploys it again — it keeps showing what it shows.`
         : kind === 'latest' && !latestEnvironment
           ? `Versions are included in the ${versionsLockedBy ?? 'next'} plan.`
-          : kind === 'saved' && savedRevision === undefined && !loadingSnapshots
-            ? `${ENVIRONMENT_META[savedEnvironment].label} has no versions yet: “Your latest changes” keeps and publishes them in one step.`
+          : kind === 'saved' && savedRevision === undefined
+            ? 'Choose the version to publish in History.'
             : staticRefused
               ? `It runs ${check.serverFeatures.join(', ')} on a server: a prerendered site has none.`
               : alreadyLive
@@ -278,10 +276,10 @@ const PublishSheet = ({
       return undefined;
     }
 
-    await refreshSnapshots();
+    await Promise.all([refreshLatest(), refreshSnapshots()]);
 
     return kept.result.revision;
-  }, [description, latestEnvironment, mutate, refreshIssues, refreshSnapshots, showSpaceIssues]);
+  }, [description, latestEnvironment, mutate, refreshIssues, refreshLatest, refreshSnapshots, showSpaceIssues]);
 
   const handlePublish = useCallback(async () => {
     if (!target || refusal || !environment) {
@@ -410,14 +408,13 @@ const PublishSheet = ({
   const rollback = target?.rollback ?? history?.rollback ?? undefined;
   // One string: the button takes its words as a single child.
   const rollbackLabel = rollback
-    ? `Roll back to ${rollback.environment === 'main' ? 'every save' : `r${String(rollback.revision)}`}`
+    ? `Roll back to ${rollback.environment === 'main' ? 'every save' : revisionName(rollback.environment, rollback.revision)}`
     : '';
 
   const handleChooseDomain = useCallback((domain: string) => {
     setPickedDomain(domain);
     setPickedKind(undefined);
-    setPickedEnvironment(undefined);
-    setPickedRevision(undefined);
+    setPicked(undefined);
     setPickedAccess(undefined);
     setRollingBackTo(undefined);
     setFailure(undefined);
@@ -428,15 +425,21 @@ const PublishSheet = ({
   }, []);
   const handleShowPublish = useCallback(() => setView({ name: 'publish' }), []);
   const handleShowHistory = useCallback(() => setView({ name: 'history' }), []);
-  const handleChooseKind = useCallback((value: ContentKind) => {
-    setPickedKind(value);
+  const handleLatest = useCallback(() => {
+    setPickedKind('latest');
+    setPicked(undefined);
     setFailure(undefined);
   }, []);
-  const handleChooseEnvironment = useCallback((value: Environment) => {
-    if (isPublished(value)) {
-      setPickedEnvironment(value);
-      setPickedRevision(undefined);
-    }
+  const handlePublishVersion = useCallback((environment: PublishedEnvironment, revision: number) => {
+    setPickedKind('saved');
+    setPicked({ environment, revision });
+    setFailure(undefined);
+    setView({ name: 'publish' });
+  }, []);
+  const handleEverySave = useCallback(() => {
+    setPickedKind('live');
+    setFailure(undefined);
+    setView({ name: 'publish' });
   }, []);
   const handleAskRollBack = useCallback(() => {
     setView({ name: 'publish' });
@@ -502,6 +505,7 @@ const PublishSheet = ({
         catalog={catalog}
         config={configOf(target)}
         onSaved={handleRefreshTargets}
+        onEverySave={handleEverySave}
         onBack={handleShowPublish}
       />
     );
@@ -534,9 +538,17 @@ const PublishSheet = ({
 
       {view.name === 'history' && target && <ScheduledPublishes domain={target.domain} />}
 
+      {view.name === 'history' && (
+        <RevisionList
+          snapshots={snapshots}
+          loading={loadingSnapshots}
+          domain={target?.verified ? target.domain : undefined}
+          onPublish={handlePublishVersion}
+        />
+      )}
+
       {view.name === 'history' && target && (
         <ReleaseHistory
-          open
           domain={target.domain}
           releases={history?.releases ?? []}
           loading={loadingHistory}
@@ -554,30 +566,18 @@ const PublishSheet = ({
           />
 
           {target.verified && (
-            <ContentChoice
+            <PublishWhat
               domain={target.domain}
               kind={kind}
-              offersLive={!holdsACopy}
+              latestEnvironment={latestEnvironment}
+              keptAs={keptAs}
+              description={description}
+              onDescription={setDescription}
+              savedEnvironment={savedEnvironment}
+              savedRevision={savedRevision}
+              savedSnapshot={savedSnapshot}
               versionsLockedBy={versionsLockedBy}
-              latest={{
-                environment: latestEnvironment,
-                environments: openEnvironments,
-                keptAs,
-                description,
-                onEnvironment: setPickedLatestEnvironment,
-                onDescription: setDescription
-              }}
-              saved={{
-                environment: savedEnvironment,
-                byEnvironment,
-                lockedBy: lockedRequires,
-                snapshots,
-                loading: loadingSnapshots,
-                revision: savedRevision,
-                onEnvironment: handleChooseEnvironment,
-                onRevision: setPickedRevision
-              }}
-              onKind={handleChooseKind}
+              onLatest={handleLatest}
             />
           )}
 

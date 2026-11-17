@@ -26,17 +26,17 @@ describe('draftStatus', () => {
 
   it('says the draft is kept when nothing changed since the last snapshot', () => {
     expect(draftStatus(snapshot, changed(0))).toEqual({
-      words: 'Draft · kept as production r12',
-      short: 'r12',
+      words: 'Draft · kept as version 12',
+      short: 'v12',
       pending: false
     });
   });
 
   it('counts what changed since the last snapshot', () => {
     expect(draftStatus(snapshot, changed(4))).toMatchObject({
-      words: 'Draft · 4 changes since production r12',
+      words: 'Draft · 4 changes since version 12',
       pending: true
     });
-    expect(draftStatus(snapshot, changed(1)).words).toBe('Draft · 1 change since production r12');
+    expect(draftStatus(snapshot, changed(1)).words).toBe('Draft · 1 change since version 12');
   });
 });

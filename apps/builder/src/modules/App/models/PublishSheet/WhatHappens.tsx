@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 
 import { changeLines } from '../../components/ChangesSummary/helpers';
-import { ENVIRONMENT_META } from '../../helpers/environments';
+import { revisionName } from '../../helpers/environments';
 
 import type { ContentKind } from './helpers';
 import type { PublishedEnvironment } from '../../helpers/environments';
@@ -26,13 +26,7 @@ const willShow = ({ kind, environment, revision }: Pick<WhatHappensProps, 'kind'
     return 'every change as soon as you save it';
   }
 
-  if (!environment) {
-    return 'your latest changes';
-  }
-
-  return revision === undefined
-    ? `your latest changes, kept as a new ${ENVIRONMENT_META[environment].label} version`
-    : `${ENVIRONMENT_META[environment].label} r${String(revision)}`;
+  return environment && revision !== undefined ? revisionName(environment, revision) : 'your latest changes';
 };
 
 const nowShows = (served: SpaceServedVersion | undefined): string =>
@@ -40,7 +34,7 @@ const nowShows = (served: SpaceServedVersion | undefined): string =>
     ? 'Nothing is published there yet.'
     : served.environment === 'main'
       ? 'Now it shows every change as you save it.'
-      : `Now it shows ${ENVIRONMENT_META[served.environment].label} r${String(served.revision)}.`;
+      : `Now it shows ${revisionName(served.environment, served.revision)}.`;
 
 /**
  * What publishing does, before anything does, in one place: what the domain will show instead of what, what visitors
@@ -67,6 +61,11 @@ const WhatHappens = ({
         <b>{target.domain}</b> will show {willShow({ kind, environment, revision })}.{' '}
         <span className="text-ui-fg-subtle">{nowShows(served)}</span>
       </p>
+      {served?.environment === 'main' && kind !== 'live' && (
+        <span className="text-ui-fg-subtle text-xs">
+          From then on, your edits wait for your next publish: visitors no longer see them as you save.
+        </span>
+      )}
       {served && comparing && <span className="text-ui-fg-subtle text-xs">Comparing with what it shows…</span>}
       {served && !comparing && lines && changes?.total === 0 && (
         <span className="text-ui-fg-subtle text-xs">Visitors will see no difference: the content is the same.</span>

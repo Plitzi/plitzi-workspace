@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import EverySave from './EverySave';
 import { MODE_WORDS } from './helpers';
 import TargetAutomation from './TargetAutomation';
 import Notice from '../../components/Notice';
@@ -19,6 +20,8 @@ export type TargetSettingsProps = {
   /** The target's settings as kept: its provider's and every target's. */
   config: Record<string, string>;
   onSaved: () => void;
+  /** Takes the domain to publishing every save — what it asks, and who may see it, said there before it happens. */
+  onEverySave: () => void;
   onBack: () => void;
 };
 
@@ -41,7 +44,15 @@ const errorOf = (error: unknown): string =>
  * and its own settings, and what signs in there — each provider's fields as the platform lists them, so a provider
  * added there is offered here without a change to this form.
  */
-const TargetSettings = ({ target, lockedBy, catalog, config: kept, onSaved, onBack }: TargetSettingsProps) => {
+const TargetSettings = ({
+  target,
+  lockedBy,
+  catalog,
+  config: kept,
+  onSaved,
+  onEverySave,
+  onBack
+}: TargetSettingsProps) => {
   const { mutate } = useBuilderNetwork();
   const [mode, setMode] = useState<DeployMode>(target.mode);
   const offered = useMemo(() => catalog.providers.filter(provider => provider.modes.includes(mode)), [catalog, mode]);
@@ -232,6 +243,10 @@ const TargetSettings = ({ target, lockedBy, catalog, config: kept, onSaved, onBa
       ))}
 
       {said && <Notice tone={said.tone}>{said.words}</Notice>}
+
+      {target.mode === 'ssr' && target.verified && (
+        <EverySave domain={target.domain} showing={target.serves?.environment === 'main'} onChoose={onEverySave} />
+      )}
 
       {/* Applied at once, apart from Save: it is the target as it is now that is protected or hooked. */}
       <TargetAutomation target={target} lockedBy={lockedBy} onChanged={onSaved} />

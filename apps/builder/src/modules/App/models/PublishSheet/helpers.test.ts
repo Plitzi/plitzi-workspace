@@ -18,7 +18,8 @@ describe('the publish sheet’s words', () => {
   it('says what a domain shows as its owner reads it', () => {
     expect(showsWords(null)).toBe('Nothing published yet');
     expect(showsWords({ environment: 'main', revision: 0 })).toBe('Shows every change as you save it');
-    expect(showsWords({ environment: 'production', revision: 4 })).toBe('Shows Production r4');
+    expect(showsWords({ environment: 'production', revision: 4 })).toBe('Shows version 4');
+    expect(showsWords({ environment: 'staging', revision: 2 })).toBe('Shows staging version 2');
   });
 
   it('keeps the latest changes where the domain is already, or nearest the public the plan allows', () => {

@@ -109,12 +109,14 @@ weighs on a phone — and what of it a phone cannot hold.
 ## Builder
 
 - **Publish, for somebody who has never done it.** It opens on the space's own address — live with every save, nothing to
-  publish there, only who may see it — then the domains, each saying what it shows now, or one not connected yet. What
-  a domain should show is three answers: **your latest changes**, kept as a version on the way (no Snapshot needed
-  first, and an unchanged draft publishes the version it already is); **a version you kept**; or **every change, as you
-  save it**. Who may see it is beside it, and one block says what the domain will show instead of what and what visitors
-  will see change. Scheduling is a button of its own. Publish opens the sheet on every plan — it sent a free space to the
-  plans although its site was already live.
+  publish there, only who may see it — then the domains, each saying what it shows now, or one not connected yet.
+  Publish means one thing: **your latest changes** go out, kept as a version on the way (no Snapshot needed first, and
+  an unchanged draft publishes the version it already is) — no environment to choose. Going back is the history's: every
+  version kept, in one list whatever environment kept it, each to preview or publish. Showing every save is a setting of
+  the domain. Versions are said as `version 4` (`staging version 2` outside production), never `production r4`. Who may
+  see it is beside it, and one block says what the domain will show instead of what and what visitors will see change.
+  Scheduling is a button of its own. Publish opens the sheet on every plan — it sent a free space to the plans although
+  its site was already live.
 
 - **A credential starts with what it signs in to.** A new one is chosen from cards — APIs and content, storage, deploys,
   email, site access — each saying what it is for; then that provider's own fields, named as the provider names them,
@@ -139,7 +141,7 @@ weighs on a phone — and what of it a phone cannot hold.
 - **The draft has a panel of its own.** Its chip opens what it is against the last snapshot and what changed, where it is
   live as it is saved and what the targets ask, with Snapshot as its next step — no longer a second way into Publish,
   which is a split button whose menu rolls each domain back, opens the history, and the console's domains.
-- **A snapshot's preview** (RFC 0034 §14.6): each revision in the publish sheet has **Preview** beside it — the snapshot
+- **A snapshot's preview** (RFC 0034 §14.6): each version in the publish sheet's history has **Preview** beside it — the snapshot
   at an address of its own, as a visitor would see it, before any domain serves it. Only whoever has the link opens it,
   and it is never indexed.
 - **Releases and rollback** (RFC 0034, F1). Every publish and rollback of a domain is recorded — what it serves from
