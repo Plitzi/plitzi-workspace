@@ -7,7 +7,7 @@ import type { BuiltSite, FingerprintParts, SiteFile } from './types';
 import type { Environment, FontHead } from '@plitzi/sdk-shared';
 
 /**
- * A space as a single-page app (RFC 0034 §5 "SPA"): an `index.html` that loads the SDK from beside it and asks the page
+ * A space as a single-page app: an `index.html` that loads the SDK from beside it and asks the page
  * server for the space, and the SDK's files under a folder named by their digest. Hosted anywhere that serves files.
  *
  * The shell names the environment it serves and never a revision: the page server answers the revision the site's own

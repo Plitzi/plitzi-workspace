@@ -27,7 +27,7 @@ const QUIET_BUTTON = 'border-transparent bg-transparent text-ui-fg-subtle hover:
 const detailOf = (response: { SpaceDeployDetail: SpaceDeployDetail } | undefined) => response?.SpaceDeployDetail;
 
 /**
- * A deploy as it runs (RFC 0034 §11.3 "Pressed, the sheet becomes the progress"): its steps ticked, its log behind a
+ * A deploy as it runs: its steps ticked, its log behind a
  * toggle, a way to stop it; done, the site to open and the rollback beside it; failed, why, in its own words.
  */
 const DeployProgress = ({ deployId, domain, said, onRollBack, onDone }: DeployProgressProps) => {

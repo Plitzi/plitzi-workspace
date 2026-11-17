@@ -30,7 +30,7 @@ const TONE_DOT: Record<TargetAttention['tone'], string> = {
 };
 
 /**
- * The draft, opened from its chip (RFC 0034 §11.1): what it is against the last snapshot and what changed, where it is
+ * The draft, opened from its chip: what it is against the last snapshot and what changed, where it is
  * live as it is saved, what the space's targets ask — and the next step, Snapshot. Publish has its own button: this is
  * where a person reads where they are, not a second way to the same sheet.
  */

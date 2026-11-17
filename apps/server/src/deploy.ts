@@ -1,5 +1,5 @@
 /**
- * A space's site built and put where it is served (RFC 0034): the SPA shell and its fingerprint, the versions a build
+ * A space's site built and put where it is served: the SPA shell and its fingerprint, the versions a build
  * bakes in, a site as a zip and back, and the uploaders a self-hoster's deployment or the CLI hands a credential —
  * an S3 bucket (AWS, R2, any storage that speaks its API) with CloudFront, an FTP host, a folder — and a site
  * prerendered from any page server. A server that never deploys never

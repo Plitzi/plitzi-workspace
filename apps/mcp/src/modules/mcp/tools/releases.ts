@@ -5,7 +5,7 @@ import { defineTool } from './shared/tool';
 import type { ToolContext } from './shared/tool';
 
 /**
- * A space's releases (RFC 0034), for an agent as for a person: what each domain serves and what a rollback would put
+ * A space's releases, for an agent as for a person: what each domain serves and what a rollback would put
  * back, a domain's history, a publish and a rollback — held on the platform to the same rules as the builder's Publish
  * (who may publish, the plan, the revision's tests), a refusal answered in its words.
  */

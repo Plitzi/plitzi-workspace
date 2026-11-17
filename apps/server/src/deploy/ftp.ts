@@ -6,7 +6,7 @@ import type { Socket } from 'node:net';
 import type { TLSSocket } from 'node:tls';
 
 /**
- * A site written to a host by FTP (RFC 0034 §6, the oldest of them, kept for the hosts that offer nothing else): every
+ * A site written to a host by FTP (the oldest of them, kept for the hosts that offer nothing else): every
  * file stored over a passive data connection, over TLS when the host offers it (`explicit`, AUTH TLS on port 21) or
  * asks for it (`implicit`, port 990). Files are replaced one by one — not atomic, said before the first deploy and in
  * every log — and a file the site no longer has is left on the host.

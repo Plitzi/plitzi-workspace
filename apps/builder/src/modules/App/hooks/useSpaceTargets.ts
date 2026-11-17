@@ -5,7 +5,7 @@ import type { SpaceTargets } from '@plitzi/sdk-shared';
 const targetsOf = (response: { SpaceTargets: SpaceTargets } | undefined) => response?.SpaceTargets;
 
 /**
- * The space's targets (RFC 0034): how each domain serves it and where it stands — read whenever shown, and every few
+ * The space's targets: how each domain serves it and where it stands — read whenever shown, and every few
  * seconds while one of them is deploying, so the header and the sheet say when it ends.
  */
 const useSpaceTargets = (enabled = true) => {

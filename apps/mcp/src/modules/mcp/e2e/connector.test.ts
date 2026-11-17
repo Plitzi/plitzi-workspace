@@ -130,7 +130,7 @@ const widgetOperations = [
 // `dryRun`, activity's `limit` — found when the docs' MCP reference was generated from the tools.
 // Measured at 81.8k.
 //
-// Raised to 84.2k for plitzi_releases, plitzi_publish and plitzi_rollback (RFC 0034): what each domain serves, a
+// Raised to 84.2k for plitzi_releases, plitzi_publish and plitzi_rollback: what each domain serves, a
 // publish and a rollback, which an agent could not do over the MCP before. Measured at 83.7k.
 const TOOLS_BUDGET_BYTES = 84_200;
 

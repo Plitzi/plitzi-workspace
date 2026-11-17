@@ -76,7 +76,7 @@ export type CloudAdaptersConfig = {
    */
   revision?: number;
   /**
-   * The domain this server answers on, when it is a target of the space (RFC 0034, a server of your own): in latest
+   * The domain this server answers on, when it is a target of the space (a server of your own): in latest
    * mode, the revision served is the one that domain is published at — a publish or a rollback in the builder moves it
    * — rather than the environment's newest. Plitzi also keeps what this server says it runs, to say when it should be
    * built again.

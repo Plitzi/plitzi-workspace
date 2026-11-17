@@ -5,7 +5,7 @@ import type { DeployLog, SiteFile, SiteUploader, UploadResult } from '../types';
 
 /**
  * A site written to an S3 bucket — AWS's, or any storage that speaks its API (Cloudflare R2, MinIO, SeaweedFS) — and,
- * when a CloudFront distribution fronts it, switched there in one step (RFC 0034 §6): each deploy is written under a
+ * when a CloudFront distribution fronts it, switched there in one step: each deploy is written under a
  * prefix of its own, then the distribution's origin is pointed at that prefix, so a visitor sees the old site or the
  * new one, never half of each; going back is pointing it at the previous prefix again. Without a distribution the files
  * are replaced where they are, one by one, and the log says so before it starts.

@@ -186,7 +186,7 @@ export interface RenderGrantOptions {
   /**
    * The revision a site published as files serves, asked when the page names none: the page's own domain (the
    * request's `Origin`) is a target of the space, pointed at a revision of the environment the page names — so a
-   * publish to it is a pointer move, as on a domain the page server answers (RFC 0034 §5). Nothing, and the
+   * publish to it is a pointer move, as on a domain the page server answers. Nothing, and the
    * environment's latest is served.
    */
   served?: (spaceId: number, originHost: string, environment: Environment) => Promise<number | undefined>;

@@ -10,7 +10,7 @@ import type { Connection } from '../../account/connection';
 import type { AccountOptions } from '../account/account';
 
 /**
- * `plitzi space snapshot | publish | rollback | releases` (RFC 0034): keep the draft as a revision, point a domain at
+ * `plitzi space snapshot | publish | rollback | releases`: keep the draft as a revision, point a domain at
  * one, put back what a domain served before, and read what each domain serves and has served — the builder's Snapshot
  * and Publish, for a terminal, a CI job or an agent, held to the same rules on the platform.
  */

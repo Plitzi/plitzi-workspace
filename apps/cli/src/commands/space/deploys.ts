@@ -15,7 +15,7 @@ import type { Connection } from '../../account/connection';
 import type { AccountOptions } from '../account/account';
 
 /**
- * `plitzi space targets | deploy | deploys | download` (RFC 0034): where each domain's site is and where it stands, a
+ * `plitzi space targets | deploy | deploys | download`: where each domain's site is and where it stands, a
  * target deployed again (followed to its end), its deploys and a kept one's site as a zip — the builder's publish sheet
  * for a terminal, a CI job or an agent, held to the same rules on the platform.
  */

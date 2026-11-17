@@ -12,7 +12,7 @@ import type { PublishOptions, ReleaseOptions, RollbackOptions, SnapshotOptions }
 import type { Command } from 'commander';
 
 /**
- * `plitzi space snapshot | publish | rollback | releases` (RFC 0034) and `plitzi space activity`: what goes live on the
+ * `plitzi space snapshot | publish | rollback | releases` and `plitzi space activity`: what goes live on the
  * space's domains, and what happened on it.
  */
 export const registerSpace = (space: Command): void => {

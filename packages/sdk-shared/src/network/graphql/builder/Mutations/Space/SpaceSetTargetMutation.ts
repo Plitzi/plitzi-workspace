@@ -7,7 +7,7 @@ export type TSpaceSetTargetMutation = {
   message: string;
 };
 
-/** How a domain serves the space: Plitzi's page servers, or a copy of the site on a provider (RFC 0034 §5). */
+/** How a domain serves the space: Plitzi's page servers, or a copy of the site on a provider. */
 const SpaceSetTargetMutation = /* GraphQL */ `
   mutation SpaceSetTargetMutation(
     $domain: String!

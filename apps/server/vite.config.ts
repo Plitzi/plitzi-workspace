@@ -99,7 +99,7 @@ export default defineConfig(({ mode }) => {
           project: path.resolve(root, 'src/project.ts'),
           // A project's server bundled for production, the step its `build` runs: a server that only serves never loads it.
           bundle: path.resolve(root, 'src/bundle.ts'),
-          // A space's site built and shipped (RFC 0034): what a deployment that deploys, or the CLI, loads — never a page server.
+          // A space's site built and shipped: what a deployment that deploys, or the CLI, loads — never a page server.
           deploy: path.resolve(root, 'src/deploy.ts'),
           // What `start:dev` of such a project preloads: its `.env`, read where Node's own flag would make the watcher
           // restart on every write in the project. A side effect and nothing else, so it is an entry of its own.

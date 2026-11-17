@@ -4,7 +4,7 @@ import type { SpaceTarget } from '@plitzi/sdk-shared';
 export type TargetAttention = { domain: string; tone: 'danger' | 'warning' | 'progress'; words: string };
 
 /**
- * What the space's targets need, most pressing first (RFC 0034 §11.1): a deploy that failed, one under way, a plan that
+ * What the space's targets need, most pressing first: a deploy that failed, one under way, a plan that
  * no longer includes the target, newer versions out, a domain not verified. A target that needs nothing says nothing.
  */
 export const targetAttention = (targets: readonly SpaceTarget[]): TargetAttention[] =>

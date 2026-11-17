@@ -18,7 +18,7 @@ const errorOf = (error: unknown): string =>
   error instanceof Error ? error.message : typeof error === 'string' ? error : 'It was not changed';
 
 /**
- * What runs a target without a person at the builder (RFC 0034 §8): protected — only whoever manages the space moves
+ * What runs a target without a person at the builder: protected — only whoever manages the space moves
  * it — and a deploy hook, a secret address a CI calls as its last step, shown the once it is made.
  */
 const TargetAutomation = ({ target, lockedBy, onChanged }: TargetAutomationProps) => {

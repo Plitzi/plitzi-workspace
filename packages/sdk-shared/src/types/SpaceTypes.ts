@@ -117,9 +117,9 @@ export type SpaceDeployment = {
   domain: string;
   isVerified: boolean;
   default: boolean;
-  /** What serves it: Plitzi's page servers (`ssr`), or the provider holding a copy of the site (RFC 0034 §6). */
+  /** What serves it: Plitzi's page servers (`ssr`), or the provider holding a copy of the site. */
   provider: 'ssr' | DeployProviderId;
-  /** How it serves the space (RFC 0034 §5). */
+  /** How it serves the space. */
   mode: DeployMode;
   credential: SpaceCredential | null;
   /** The deploy a publish or rollback queued, on a target holding a copy of the site. */
@@ -128,11 +128,11 @@ export type SpaceDeployment = {
   updatedAt: number;
 };
 
-/** How a domain serves its space (RFC 0034 §5): Plitzi's page servers, an SPA, every page prerendered, or a server of
+/** How a domain serves its space: Plitzi's page servers, an SPA, every page prerendered, or a server of
  *  the owner's own. */
 export type DeployMode = 'ssr' | 'spa' | 'static' | 'selfHosted';
 
-/** The providers a copy of the site may be deployed to (RFC 0034 §6) — the server's `deploys/providers`. */
+/** The providers a copy of the site may be deployed to — the server's `deploys/providers`. */
 export type DeployProviderId =
   'github' | 's3' | 'amplify' | 'r2' | 'cloudflarePages' | 'netlify' | 'vercel' | 'ftp' | 'download' | 'selfHosted';
 
@@ -162,7 +162,7 @@ export type SpaceDeploySummary = {
   finishedAt: number | null;
 };
 
-/** The SDK, React and `@plitzi/sdk-server` a build runs (RFC 0034 §5.2). */
+/** The SDK, React and `@plitzi/sdk-server` a build runs. */
 export type DeployVersions = { sdk: string; react: string; sdkServer: string };
 
 /** One deploy with what it said as it ran. */
@@ -188,7 +188,7 @@ export type DeployProviderInfo = {
   fields: DeployProviderField[];
 };
 
-/** One domain of a space as a target (RFC 0034 §11.3): how it serves the space and where it stands. */
+/** One domain of a space as a target: how it serves the space and where it stands. */
 export type SpaceTarget = {
   id: number;
   domain: string;
@@ -218,7 +218,7 @@ export type SpaceTarget = {
   hook: boolean;
   lastDeploy: SpaceDeploySummary | null;
   running: SpaceDeploySummary | null;
-  /** Newer versions than it runs, said (RFC 0034 §5.2). */
+  /** Newer versions than it runs, said. */
   update: { words: string; runs: DeployVersions; newest: DeployVersions } | null;
   /** Its plan no longer includes its kind of deploy. */
   locked: { error: string; requires: string; upgradeUrl: string } | null;
@@ -234,7 +234,7 @@ export type SpaceTargets = {
   deployMinutes: { used: number; limit: number | null };
 };
 
-/** A publish set for later (RFC 0034 §8): published when due, as whoever set it — or why it was not. */
+/** A publish set for later: published when due, as whoever set it — or why it was not. */
 export type SpaceScheduledPublish = {
   id: number;
   domain: string;
@@ -247,7 +247,7 @@ export type SpaceScheduledPublish = {
   by: { id: number; username: string } | null;
 };
 
-/** What publishing a revision on a domain would do, before it does (RFC 0034 §11.3). */
+/** What publishing a revision on a domain would do, before it does. */
 export type SpacePublishCheck = {
   domain: string;
   mode: DeployMode;
@@ -301,7 +301,7 @@ export type SpaceSnapshot = {
 /** A version as a domain serves it: an environment and a revision of it, 0 for the draft. */
 export type SpaceServedVersion = { environment: Environment; revision: number };
 
-/** One move of a domain (RFC 0034): what it serves from then on, what it served before, who and why. */
+/** One move of a domain: what it serves from then on, what it served before, who and why. */
 export type SpaceRelease = {
   id: number;
   domain: string;
@@ -335,7 +335,11 @@ export type SpaceDomainRelease = {
 
 /** How a publish or a rollback went: the release it recorded, or the platform's refusal in its own words. */
 export type SpaceReleaseOutcome =
-  | { done: true; release: SpaceRelease; /** The deploy it queued, on a domain whose site a provider holds. */ deployId?: number }
+  | {
+      done: true;
+      release: SpaceRelease;
+      /** The deploy it queued, on a domain whose site a provider holds. */ deployId?: number;
+    }
   | { done: false; reason: string; code?: string };
 
 /**

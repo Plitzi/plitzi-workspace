@@ -5,7 +5,7 @@ import { buildVersions } from './sdkFiles';
 import type { BuiltSite, DeployLog, SiteFile } from './types';
 
 /**
- * A space prerendered (RFC 0034 §5 "Static"): every page a page server draws, read from it as a browser would and kept
+ * A space prerendered: every page a page server draws, read from it as a browser would and kept
  * as HTML, with every file of the same origin those pages load — the SDK, the stylesheets, the fonts, the images —
  * beside them at the paths they are asked for. The pages are the content, so every publish of one is a deploy.
  *

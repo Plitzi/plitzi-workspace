@@ -272,7 +272,7 @@ export type SSRAdapters = {
     signal?: AbortSignal
   ) => Promise<SpaceActivityPage>;
   /**
-   * A space's releases (RFC 0034): every domain with what it serves, one domain's history, a publish and a rollback —
+   * A space's releases: every domain with what it serves, one domain's history, a publish and a rollback —
    * each held to the deployment's own rules (who may publish, the plan, the revision's tests), a refusal answered as
    * data in its words. When omitted, the MCP offers no `plitzi_releases`, `plitzi_publish` nor `plitzi_rollback`.
    */

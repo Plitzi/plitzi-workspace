@@ -294,7 +294,7 @@ const AppHeader = () => {
           <RoleBadge />
         </div>
         {/*
-          The release cluster (RFC 0034 §11.1): the draft — what it is against the last snapshot, opened as a panel of its
+          The release cluster: the draft — what it is against the last snapshot, opened as a panel of its
           own with Snapshot as its next step — then Publish, the header's one primary, whose menu holds the rollbacks and
           the history; its dot says when a target asks for a look.
         */}

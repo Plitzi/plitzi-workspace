@@ -150,7 +150,7 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   writes are left out and counted (\`skippedMine\`; \`mine: true\` keeps them). On a space people edit too, call it
   before a write that rests on what you read earlier.
 - \`plitzi_releases { domain? }\`, \`plitzi_publish { domain, environment, revision?, deploy? }\`, \`plitzi_rollback { domain, to? }\`
-  — the space's releases (RFC 0034): what each domain serves, where its site is (\`where\`: Plitzi, or a copy on a
+  — the space's releases: what each domain serves, where its site is (\`where\`: Plitzi, or a copy on a
   provider) and what it asks (\`asks\`), and what a rollback would put back, one domain's history,
   pointing a domain at a revision (its environment's latest unless named; \`main\` serves the draft), and putting back
   what it served right before its latest release. A publish is live at once for that domain's visitors: publish only

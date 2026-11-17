@@ -11,7 +11,7 @@ export const CLIENT_HEADER = 'x-plitzi-client';
 /** What the platform answers a client older than itself with: its own version. */
 export const CURRENT_HEADER = 'x-plitzi-current';
 
-/** `sdkServer` is a server of a customer's own running `@plitzi/sdk-server` and asking Plitzi for its space (RFC 0034 §5.2). */
+/** `sdkServer` is a server of a customer's own running `@plitzi/sdk-server` and asking Plitzi for its space. */
 export const CLIENT_SURFACES = ['cli', 'builder', 'sdkServer'] as const;
 
 export type ClientSurface = (typeof CLIENT_SURFACES)[number];

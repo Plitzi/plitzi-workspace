@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import type { FingerprintParts } from './types';
 
 /**
- * Does this publish need a deploy? (RFC 0034 §5.1) A build is described part by part — the SDK it loads, the fonts it
+ * Does this publish need a deploy? A build is described part by part — the SDK it loads, the fonts it
  * links, the environment it names — each a digest, computed without building anything, so a target's last deploy and
  * the revision about to be published can be compared before the person confirms, and the parts that differ said.
  */

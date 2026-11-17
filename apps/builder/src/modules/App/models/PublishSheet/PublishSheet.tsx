@@ -75,7 +75,7 @@ const isPublished = (environment: Environment | undefined): environment is Publi
   environment !== undefined && environment !== 'main';
 
 /**
- * Publish (RFC 0034 §11.3), for somebody who has never done it: where the site is, in one list — the space's own
+ * Publish, for somebody who has never done it: where the site is, in one list — the space's own
  * address, always the latest saved edits, then the domains, one chosen — and what the chosen one shows, decided in the
  * order anybody would: an environment (each said for what it is for), the latest of it or one version, and whether the
  * editor's changes are kept as a new one first. Who may see it and what will happen are said before anything does.

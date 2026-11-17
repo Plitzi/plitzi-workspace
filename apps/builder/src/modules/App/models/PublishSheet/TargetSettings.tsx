@@ -38,7 +38,7 @@ const errorOf = (error: unknown): string =>
   error instanceof Error ? error.message : typeof error === 'string' ? error : 'It was not saved';
 
 /**
- * Where a domain's site is (RFC 0034 §11.4): served by Plitzi, or a copy of it on a provider — the mode, the provider
+ * Where a domain's site is: served by Plitzi, or a copy of it on a provider — the mode, the provider
  * and its own settings, and what signs in there — each provider's fields as the platform lists them, so a provider
  * added there is offered here without a change to this form.
  */

@@ -1,5 +1,5 @@
 /**
- * What a deploy is made of, whatever builds it and wherever it goes (RFC 0034): a site is a list of files at paths
+ * What a deploy is made of, whatever builds it and wherever it goes: a site is a list of files at paths
  * relative to its root, and a provider is what puts that list somewhere a visitor's browser reaches.
  */
 
@@ -39,7 +39,7 @@ export interface SiteUploader {
   upload: (files: SiteFile[], log: DeployLog, signal?: AbortSignal) => Promise<UploadResult>;
 }
 
-/** The versions a build bakes in (RFC 0034 §5.2): what the site runs until it is deployed again. */
+/** The versions a build bakes in: what the site runs until it is deployed again. */
 export interface BuildVersions {
   /** `@plitzi/plitzi-sdk`. */
   sdk: string;
