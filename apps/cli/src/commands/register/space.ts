@@ -34,16 +34,19 @@ export const registerSpace = (space: Command): void => {
   space
     .command('publish')
     .argument('<domain>', 'One of the space’s domains: example.com')
-    .description('Point a domain at a revision — the environment’s latest unless one is named — recorded as a release')
+    .description(
+      'Point a domain at a revision, recorded as a release: named (-r), it stays on it; left out, it follows the environment’s latest'
+    )
     .addOption(
       new Option('-e, --environment <environment>', 'The revision’s environment')
         .choices(['main', ...PUBLISHED_ENVIRONMENTS])
         .default('production')
     )
     .addOption(
-      new Option('-r, --revision <n>', 'The revision; the environment’s latest when left out').argParser(
-        positiveInteger
-      )
+      new Option(
+        '-r, --revision <n>',
+        'The revision it stays on; left out, it follows the environment’s latest'
+      ).argParser(positiveInteger)
     )
     .option('--deploy', 'On a domain whose site a provider holds, deploy it when the revision needs one')
     .option(

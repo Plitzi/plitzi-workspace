@@ -30,7 +30,8 @@ const BUDGET = {
   // 10: the actions engine is handed to a page server (`createPlatform`), never imported by it (docs/en/server-packages.md, D11).
   // 8: and it lives in `@plitzi/sdk-actions` now, its configuration's seam with it.
   // 7: a chunk fewer since the stats and the log tail are the kernel's.
-  '@plitzi/sdk-server': 7,
+  // 8: where the SDK's files are (`sdkAssets`), a chunk of its own since the deploys read it too (`./deploy`).
+  '@plitzi/sdk-server': 8,
   // 14: the entries the page server reaches (`http`, `identity`, `deployment`, `cache`, `log`, `outbound`, `build`) and
   // the chunks they share. Not `tokens`: `jsonwebtoken` loads only for a server that mints or verifies one (`createAuth`).
   // 16: the space's data folder (`data`), read by a `/data/<file>` provider, and the pub/sub a cache bus travels on
@@ -39,7 +40,8 @@ const BUDGET = {
   // password hashing (`identity/passwords`), both the kernel's since the store is (docs/en/server-packages.md).
   // 20: `/_stats` and its recorder (`stats`), mounted by every server beside `/health` (docs/en/server-packages.md).
   // 21: each process's last lines at every level (`log/tail`), what `/_stats/logs` answers.
-  '@plitzi/sdk-kernel': 21,
+  // 22: `isRecord`, written once for the fleet channel, the pools' stats and a site password's check (`data/isRecord`).
+  '@plitzi/sdk-kernel': 22,
   // 147: a provider's `when`, read by the page server as the browser reads it (`providerWhen`, `providerAnswer`, and the
   // global sources' names it tells apart) — and its `input`, resolved with the browser's own bindings and transformers
   // (`serverInputOf`, `getBindingsDetails`, `dataSource/utility`): a date formatted in an input is the same on both.
@@ -60,7 +62,9 @@ const BUDGET = {
   // 146: the space sent in parts (`schema/documentParts`, which the page server splits a space with) and the brand's mark
   // (`schema/plitziMark`, the default favicon) — and one this budget left out when it was set: the commit that wrote 143
   // loaded 144 (measured on it, 2026-11-12).
-  '@plitzi/sdk-shared': 146,
+  // 148: the client headers a server of the owner's own is told it is behind with (`clients`), and the 404 page of a
+  // folder (`navigation/notFoundPages`) — pure, a part of the barrel the sitemap and the routes are read from.
+  '@plitzi/sdk-shared': 148,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

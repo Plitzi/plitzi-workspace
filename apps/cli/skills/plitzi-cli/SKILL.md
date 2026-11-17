@@ -38,10 +38,7 @@ npx plitzi element remove ent-trust                     # an element taken out, 
 npx plitzi element move ent-faq --before ent-pricing    # an element put elsewhere among its siblings
 npx plitzi page check -- /about --width 1440,390        # whether a page is whole, in text
 npx plitzi space activity --follow --json               # what others do on the space: edits, versions, failures
-npx plitzi space snapshot -m "Spring menu"              # the draft kept as production's next revision
-npx plitzi space publish example.com                    # a domain serves a revision; rollback puts back the one before
-npx plitzi space publish example.com --deploy           # its copy on GitHub Pages, AWS, Cloudflare… deployed when needed
-npx plitzi space deploy example.com --follow            # ship again what it serves, its log as it runs (targets lists them)
+npx plitzi space publish example.com                    # the draft's versions on a domain: releases, below
 npx plitzi explain navigate                             # what a name means: element, step, state, setting, any export
 npx plitzi explain "carousel end"                       # whether Plitzi has a way: fields, steps, states, commands
 npx plitzi doctor                                       # whether the project is whole; --fix the simple parts
@@ -87,4 +84,5 @@ MCP meanwhile refuses `space push` until `space pull`.
 | An element of your own, a plugin package, packing and uploading one                    | [plugins](reference/plugins.md)                 |
 | A space on Plitzi as a project, and back (`create --from`, `space pull`, `space push`) | [from-space](reference/from-space.md)           |
 | The space's own server code (`functions`, `runtime`)                                   | [functions](reference/functions.md)             |
+| Put a version online: snapshot, publish, roll back, a copy on a provider               | [releases](reference/releases.md)               |
 | Something does not work                                                                | [troubleshooting](reference/troubleshooting.md) |

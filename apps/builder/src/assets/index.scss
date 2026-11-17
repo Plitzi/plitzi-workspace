@@ -21,10 +21,10 @@
       Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    font-family: var(--font-sans);
     // Its own text colour, from the UI's tokens: inherited, the host page's leaked in (the dashboard set zinc-200 on
     // its page, and the builder's lists read white on white in the light scheme).
     color: var(--color-ui-fg);
+    font-family: var(--font-sans);
   }
 
   body,
