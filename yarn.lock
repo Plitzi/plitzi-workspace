@@ -3356,13 +3356,10 @@ __metadata:
     vitest: "npm:^5.1.0"
     ws: "npm:^8.23.0"
   peerDependencies:
-    "@plitzi/sdk-actions": ^0.39.5
     react: ^19
     react-dom: ^19
     sharp: ^0.34.0
   peerDependenciesMeta:
-    "@plitzi/sdk-actions":
-      optional: true
     sharp:
       optional: true
   languageName: unknown
@@ -3407,13 +3404,10 @@ __metadata:
     zod: "npm:^4.6.7"
   peerDependencies:
     "@apollo/client": ^4.3.1
-    "@plitzi/nexus": ^1.5.0
     react: ^19
     react-dom: ^19
   peerDependenciesMeta:
     "@apollo/client":
-      optional: true
-    "@plitzi/nexus":
       optional: true
     react:
       optional: true

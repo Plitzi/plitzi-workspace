@@ -54,14 +54,16 @@ below hold it.
 - **D9 — Secrets stay in the trusted plane; the egress proxy waits for its trigger** (below).
 - **D10 — No compatibility layer**: the imports changed in one change, everywhere; no package re-exports another's.
 - **D11 — One process can still run everything**, through `sdk-server`'s composition subpaths (`./platform`,
-  `./project`, `./bundle`) and nowhere else. A page server's entries never reach `sdk-actions` (an import test follows
-  them), which is an optional peer, so one deployed alone does not install it; `createPlatform` without it refuses,
-  naming the package. `sdk-server` imports nothing of `sdk-runtime`: a deployment that runs an author's code hands
-  `sdk-actions` a runner of it (D8).
+  `./project`, `./bundle`) and nowhere else. `sdk-actions` is a dependency of `sdk-server`, installed with it and
+  loaded only there: a page server's entries never reach it (an import test follows them). Not a peer — a `workspace:`
+  range in a peer crashes Yarn's install through a portal, and every `@plitzi/*` is published at one version
+  (`.changeset/config.json`'s `fixed`), so a project with its own `sdk-actions` holds one copy. `sdk-server` imports
+  nothing of `sdk-runtime`: a deployment that runs an author's code hands `sdk-actions` a runner of it (D8).
 - **D12 — Each package owns its configuration and its types.** `createServer` takes pages, RSC and signing in;
   `createWorker` and `createActionsModule` the actions and functions; the server-only types left `sdk-shared`, which
   keeps what the browser also reads. The CLI's `upgrade` migrates a project's server file.
-- **D13 — `sdk-shared` is cheap to depend on**: no plitzi-ui, React, React DOM and nexus optional peers, the generic
+- **D13 — `sdk-shared` is cheap to depend on**: no plitzi-ui; React, React DOM and Apollo optional peers (the page brings
+  its one copy); nexus a dependency, half a megabyte the server packages install and never load; the generic
   helpers copied into a server-safe folder, and the rule evaluator copied with Plitzi reading only its own
   (`evaluateRuleGroup`, `@plitzi/sdk-shared/conditions`) so the preview and the server never decide one condition two
   ways. `src/serverSafe.test.ts` holds the server-safe folders to none of them.

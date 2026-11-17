@@ -35,19 +35,18 @@
     "build:prod": "vite build"
   },
   "dependencies": {
+    "@plitzi/nexus": "^1.5.1",
     "date-fns": "^4.4.0",
     "zod": "^4.6.7"
   },
   "peerDependencies": {
     "@apollo/client": "^4.3.1",
-    "@plitzi/nexus": "^1.5.0",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
     "@apollo/client": "^4.3.8",
     "@eslint/js": "^10.0.1",
-    "@plitzi/nexus": "^1.5.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
@@ -79,9 +78,6 @@
   },
   "peerDependenciesMeta": {
     "@apollo/client": {
-      "optional": true
-    },
-    "@plitzi/nexus": {
       "optional": true
     },
     "react": {

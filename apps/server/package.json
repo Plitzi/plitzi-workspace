@@ -96,6 +96,7 @@
   ],
   "dependencies": {
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-actions": "workspace:*",
     "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^7.0.2",
@@ -104,21 +105,16 @@
     "subset-font": "^2.9.0"
   },
   "peerDependencies": {
-    "@plitzi/sdk-actions": "^0.39.5",
     "react": "^19",
     "react-dom": "^19",
     "sharp": "^0.34.0"
   },
   "peerDependenciesMeta": {
-    "@plitzi/sdk-actions": {
-      "optional": true
-    },
     "sharp": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@plitzi/sdk-actions": "workspace:*",
     "@plitzi/sdk-runtime": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/jsonwebtoken": "^9.0.10",
