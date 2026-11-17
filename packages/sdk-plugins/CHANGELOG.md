@@ -1,5 +1,11 @@
 # @plitzi/sdk-plugins
 
+## 0.39.6
+
+### Patch Changes
+
+- @plitzi/sdk-shared@0.39.6
+
 ## 0.39.5
 
 ### Patch Changes
