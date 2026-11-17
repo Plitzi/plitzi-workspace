@@ -79,7 +79,7 @@ const AppHeader = () => {
           <h4>Publish</h4>
         </Modal.Header>,
         ({ onClose }) => (
-          <Modal.Body>
+          <Modal.Body size="custom" className="flex min-h-0 flex-col">
             <PublishSheet
               environment={initial?.environment}
               revision={initial?.revision}

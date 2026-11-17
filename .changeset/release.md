@@ -108,16 +108,19 @@ weighs on a phone — and what of it a phone cannot hold.
 
 ## Builder
 
-- **Publish, for somebody who has never done it.** It opens on the space's own address — live with every save, nothing to
-  publish there, only who may see it — then the domains, each saying what it shows now, or one not connected yet.
-  Publish means one thing: **your latest changes** go out, kept as a version on the way (no Snapshot needed first, and
-  an unchanged draft publishes the version it already is) — no environment to choose. Going back is the history's: every
-  version kept, in one list whatever environment kept it, each to preview or publish. Showing every save is a setting of
-  the domain. Versions are said as `version 4` (`staging version 2` outside production), never `production r4`. Who may
-  see it is beside it, and one block says what the domain will show instead of what and what visitors will see change.
-  Scheduling is a button of its own. Publish opens the sheet on every plan — it sent a free space to the plans although
-  its site was already live.
-
+- **Publish, for somebody who has never done it.** It opens on where the site is, in one list: the space's own address
+  (always the latest saved edits, nothing to publish — who may see it beside it), then the domains, each saying what it
+  shows now, and "Connect a domain you own". For the chosen one, in the order anybody decides it: the **environment**
+  (Draft — every save — or one whose versions it shows, each said for what it is for), the **version** (**Latest**,
+  which it follows, or **a specific version** from the environment's list, with its preview), and for Latest whether
+  to **keep the editor's changes as a new version first**. Who may see it is beside it, and one block says what the
+  domain will show instead of what and what visitors will see change. The actions stay at the bottom while the content
+  scrolls. The history lists every version kept, in one list, each to preview or publish. Versions are said as `v4` /
+  `version 4`, never `production r4`. Publish opens the sheet on every plan — it sent a free space to the plans
+  although its site was already live.
+- **A publish with no revision follows the environment's latest** (the API, `plitzi space publish`, `plitzi_publish`):
+  each version kept there afterwards shows on the domain. It kept the revision the domain was pinned to before, so
+  "the latest" meant whatever was pinned — publish with a revision to stay on one.
 - **A credential starts with what it signs in to.** A new one is chosen from cards — APIs and content, storage, deploys,
   email, site access — each saying what it is for; then that provider's own fields, named as the provider names them,
   with where it issues one and with what permissions beside them, and a link to that page. A secret is typed unseen and

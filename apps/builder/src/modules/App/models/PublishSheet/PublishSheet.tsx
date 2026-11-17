@@ -1,4 +1,3 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback, useMemo, useState } from 'react';
 
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
@@ -12,25 +11,26 @@ import AccessPicker from './AccessPicker';
 import DeployProgress from './DeployProgress';
 import DomainList from './DomainList';
 import { latestEnvironmentOf, versionName } from './helpers';
-import OwnAddressCard from './OwnAddressCard';
+import OwnAddressRow from './OwnAddressRow';
 import PublishDone from './PublishDone';
-import PublishWhat from './PublishWhat';
 import ReleaseHistory from './ReleaseHistory';
 import RevisionList from './RevisionList';
 import RollbackConfirm from './RollbackConfirm';
 import ScheduledPublishes, { momentWords } from './ScheduledPublishes';
 import ScheduleRow from './ScheduleRow';
+import SheetFooter from './SheetFooter';
+import SheetFrame from './SheetFrame';
 import SheetTabs from './SheetTabs';
+import ShowWhat from './ShowWhat';
 import TargetNotices from './TargetNotices';
 import TargetSettings from './TargetSettings';
 import WhatHappens from './WhatHappens';
 import { useVersionChanges } from '../../components/ChangesSummary';
 import Notice from '../../components/Notice';
-import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
+import { ENVIRONMENT_META, revisionName } from '../../helpers/environments';
 import useLatestSnapshots from '../../hooks/useLatestSnapshots';
 import useSpaceTargets from '../../hooks/useSpaceTargets';
 
-import type { ContentKind } from './helpers';
 import type { PublishedEnvironment } from '../../helpers/environments';
 import type { Environment, SpacePublishCheck, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
 
@@ -51,8 +51,6 @@ type View =
   | { name: 'settings' }
   | { name: 'deploy'; deployId: number; said: string }
   | { name: 'done'; said: string };
-
-const QUIET_BUTTON = 'border-transparent bg-transparent text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover';
 
 /** The domain to open on: one asked for, one the snapshot's environment shows, one showing a version, any. */
 const firstDomain = (domains: readonly SpaceTarget[], environment: Environment | undefined, asked?: string) =>
@@ -77,12 +75,11 @@ const isPublished = (environment: Environment | undefined): environment is Publi
   environment !== undefined && environment !== 'main';
 
 /**
- * Publish (RFC 0034 §11.3), for somebody who has never done it: the space's own address first — live with every save,
- * nothing to publish there — then its domains, one chosen; and Publish means one thing: the latest changes go out,
- * kept as a version on the way. Who may see it and what will happen are said before anything does. Going back to a
- * version is the history's (one list of the versions kept, whatever environment kept each), and showing every save is
- * the domain's settings' — each sends its choice here, with the way back to the latest changes. Pressed, a deploy
- * becomes its progress here.
+ * Publish (RFC 0034 §11.3), for somebody who has never done it: where the site is, in one list — the space's own
+ * address, always the latest saved edits, then the domains, one chosen — and what the chosen one shows, decided in the
+ * order anybody would: an environment (each said for what it is for), the latest of it or one version, and whether the
+ * editor's changes are kept as a new one first. Who may see it and what will happen are said before anything does.
+ * The history lists every version kept, each to preview or publish; pressed, a deploy becomes its progress here.
  */
 const PublishSheet = ({
   environment: askedEnvironment,
@@ -124,61 +121,65 @@ const PublishSheet = ({
   const holdsACopy = target !== undefined && target.mode !== 'ssr';
   const served = target?.serves ?? undefined;
 
-  // What it should show. A version asked for opens on it; otherwise the latest changes — what pressing Publish means.
+  // What it shows: an environment, then its latest (each one kept there shows) or one version it stays on. A version
+  // asked for — Snapshot's "publish it", the history's — opens on it; otherwise the environment the domain shows, or the
+  // one nearest the public the plan includes, at its latest.
   const isLocked = useCallback((environment: PublishedEnvironment) => locked(environment) !== undefined, [locked]);
-  const versionsLockedBy = PUBLISHED_ENVIRONMENTS.every(isLocked) ? locked('production')?.requires : undefined;
-  const [pickedKind, setPickedKind] = useState<ContentKind>();
-  const defaultKind: ContentKind =
-    askedRevision !== undefined && isPublished(askedEnvironment) ? 'saved' : versionsLockedBy ? 'live' : 'latest';
-  const kind: ContentKind = pickedKind === 'live' && holdsACopy ? 'latest' : (pickedKind ?? defaultKind);
+  const lockedRequires = useCallback((environment: PublishedEnvironment) => locked(environment)?.requires, [locked]);
+  const [pickedEnvironment, setPickedEnvironment] = useState<Environment>();
+  const [pickedFollows, setPickedFollows] = useState<boolean>();
+  const [pickedRevision, setPickedRevision] = useState<number>();
+  const askedHere = isPublished(askedEnvironment) && askedRevision !== undefined ? askedEnvironment : undefined;
+  const chosenEnvironment: Environment =
+    pickedEnvironment ?? askedHere ?? latestEnvironmentOf(served?.environment, isLocked) ?? 'main';
+  // A domain holding a copy serves a version, never every save.
+  const environment: Environment =
+    chosenEnvironment === 'main' && holdsACopy
+      ? (latestEnvironmentOf(undefined, isLocked) ?? 'main')
+      : chosenEnvironment;
+  const follows = pickedFollows ?? !(askedHere !== undefined && askedHere === environment);
+  const latestKept = isPublished(environment) ? byEnvironment[environment] : undefined;
 
-  // The latest changes: kept in the environment the domain shows already, or the one nearest the public — never asked.
-  const latestEnvironment = latestEnvironmentOf(served?.environment, isLocked);
-  const latestKept = latestEnvironment ? byEnvironment[latestEnvironment] : undefined;
+  // The environment's versions, to choose one.
+  const { data: environmentSnapshots = [], isLoading: loadingEnvironment } = useGraphQL(
+    isPublished(environment) && !follows ? 'SpaceSnapshots' : null,
+    data => data?.SpaceSnapshots,
+    { environment },
+    { revalidateOnMount: true }
+  );
+  const chosenRevision =
+    pickedRevision ?? (askedHere === environment ? askedRevision : undefined) ?? environmentSnapshots.at(0)?.revision;
+
+  // Keeping the editor's changes as the environment's next version first: for the latest, when they differ from it.
   const { changes: sinceKept } = useVersionChanges(
-    kind === 'latest' && latestKept
-      ? { environment: latestKept.environment, revision: latestKept.revision }
-      : undefined,
+    follows && latestKept ? { environment: latestKept.environment, revision: latestKept.revision } : undefined,
     { environment: 'main' }
   );
-  /** Nothing changed since the environment's latest version: that one is published, no new one is kept. */
-  const keptAs = latestKept && sinceKept?.total === 0 ? latestKept.revision : undefined;
+  const editorIsKept = latestKept !== undefined && sinceKept?.total === 0;
+  const [pickedKeep, setPickedKeep] = useState<boolean>();
+  const keepsFirst = isPublished(environment) && follows && !editorIsKept && (!latestKept || (pickedKeep ?? true));
   const [description, setDescription] = useState('');
 
-  // A version kept before: one picked in the history, or the one just kept with Snapshot.
-  const [picked, setPicked] = useState<{ environment: PublishedEnvironment; revision: number }>();
-  const savedEnvironment: PublishedEnvironment =
-    picked?.environment ?? (isPublished(askedEnvironment) ? askedEnvironment : undefined) ?? 'production';
-  const savedRevision = picked?.revision ?? (picked ? undefined : askedRevision);
-  // Every version kept, in one list: whoever never chose an environment reads what they kept, not three lists.
+  // The version it comes to: the draft, the version chosen, or the environment's latest — none yet when kept first.
+  const revision: number | undefined =
+    environment === 'main' ? undefined : !follows ? chosenRevision : keepsFirst ? undefined : latestKept?.revision;
+
+  // Every version kept, in one list, for the history: whatever environment kept each.
   const {
     data: snapshots = [],
     isLoading: loadingSnapshots,
     mutate: refreshSnapshots
   } = useGraphQL(
-    kind === 'saved' || view.name === 'history' ? 'SpaceSnapshots' : null,
+    view.name === 'history' ? 'SpaceSnapshots' : null,
     data => data?.SpaceSnapshots,
     // Named as none: the builder fills in its own environment — the draft's — where a query names none.
     { environment: null },
     { revalidateOnMount: true }
   );
-  const savedSnapshot = snapshots.find(
-    each => each.environment === savedEnvironment && each.revision === savedRevision
-  );
-
-  // The version it comes to: the draft for every save, none yet for latest changes still to be kept.
-  const environment: Environment | undefined =
-    kind === 'live' ? 'main' : kind === 'latest' ? latestEnvironment : savedEnvironment;
-  const revision = kind === 'live' ? 0 : kind === 'latest' ? keptAs : savedRevision;
-  const keepsANewVersion = kind === 'latest' && keptAs === undefined;
 
   const { changes, loading: comparing } = useVersionChanges(
     served && (served.environment === 'main' || served.revision) ? served : undefined,
-    keepsANewVersion || kind === 'live'
-      ? { environment: 'main' }
-      : environment && revision
-        ? { environment, revision }
-        : undefined
+    environment === 'main' || keepsFirst ? { environment: 'main' } : revision ? { environment, revision } : undefined
   );
   // What publishing it there would do — a deploy and why — asked of the platform, on a domain holding a copy.
   const { data: check, isLoading: checking } = useGraphQL(
@@ -212,12 +213,11 @@ const PublishSheet = ({
   const accessChanged = access !== accessOf(target?.domain);
   const alreadyLive =
     target !== undefined &&
-    !keepsANewVersion &&
-    served !== undefined &&
-    served.environment === environment &&
-    served.revision === revision &&
+    !keepsFirst &&
     !needsDeploy &&
-    !accessChanged;
+    !accessChanged &&
+    target.environment === environment &&
+    (environment === 'main' || (follows ? target.revision === null : target.revision === revision));
   const staticRefused = check?.mode === 'static' && check.serverFeatures.length > 0;
   const refusal = !target
     ? undefined
@@ -225,17 +225,17 @@ const PublishSheet = ({
       ? `${target.domain} is not connected yet: its DNS record is missing. Add it where the domain was bought — the console's Domains tab says what to add — and publish here once it is checked.`
       : target.locked
         ? `${target.locked.requires} deploys it again — it keeps showing what it shows.`
-        : kind === 'latest' && !latestEnvironment
-          ? `Versions are included in the ${versionsLockedBy ?? 'next'} plan.`
-          : kind === 'saved' && savedRevision === undefined
-            ? 'Choose the version to publish in History.'
+        : environment === 'main' && holdsACopy
+          ? `${target.domain} holds a copy of the site: it shows a version. Versions are included in the ${locked('production')?.requires ?? 'next'} plan.`
+          : isPublished(environment) && !follows && chosenRevision === undefined && !loadingEnvironment
+            ? 'Choose a version — or Latest, to keep your current changes as the first.'
             : staticRefused
               ? `It runs ${check.serverFeatures.join(', ')} on a server: a prerendered site has none.`
               : alreadyLive
                 ? `${target.domain} already shows it.`
                 : undefined;
   const scheduleLocked = locked('deployAutomation');
-  const canSchedule = kind !== 'live' && !refusal;
+  const canSchedule = environment !== 'main' && !refusal;
   const addUrl = `${typeof window === 'undefined' ? 'https://plitzi.com' : window.location.origin}/spaces/${String(webId)}#domains`;
 
   const afterWrite = useCallback(async () => {
@@ -247,7 +247,7 @@ const PublishSheet = ({
    * their list is shown instead. Its revision, or nothing when it was not kept.
    */
   const keepLatest = useCallback(async (): Promise<number | undefined> => {
-    if (!latestEnvironment) {
+    if (!isPublished(environment)) {
       return undefined;
     }
 
@@ -260,7 +260,7 @@ const PublishSheet = ({
 
     const kept = await mutate(
       'SpacePublish',
-      { environment: latestEnvironment, description: description.trim() || 'Published from the builder' },
+      { environment, description: description.trim() || 'Published from the builder' },
       true
     );
     const refused = issuesFromError(kept.error);
@@ -279,28 +279,33 @@ const PublishSheet = ({
     await Promise.all([refreshLatest(), refreshSnapshots()]);
 
     return kept.result.revision;
-  }, [description, latestEnvironment, mutate, refreshIssues, refreshLatest, refreshSnapshots, showSpaceIssues]);
+  }, [description, environment, mutate, refreshIssues, refreshLatest, refreshSnapshots, showSpaceIssues]);
 
   const handlePublish = useCallback(async () => {
-    if (!target || refusal || !environment) {
+    if (!target || refusal) {
       return;
     }
 
     setWorking(true);
     setFailure(undefined);
-    const publishing = keepsANewVersion ? await keepLatest() : revision;
-    if (publishing === undefined) {
+    const version = keepsFirst ? await keepLatest() : revision;
+    if (isPublished(environment) && version === undefined) {
       setWorking(false);
 
       return;
     }
 
-    const shown = environment === 'main' ? 'every change as you save it' : revisionName(environment, publishing);
-    if (later && environment !== 'main') {
+    const shown =
+      environment === 'main' || version === undefined
+        ? 'every change as you save it'
+        : follows
+          ? `the latest ${ENVIRONMENT_META[environment].label} version (v${String(version)} now)`
+          : `${ENVIRONMENT_META[environment].label} v${String(version)}`;
+    if (later && isPublished(environment) && version !== undefined) {
       const at = Math.floor(new Date(later).getTime() / 1000);
       const response = await mutate(
         'SpaceSchedulePublish',
-        { domain: target.domain, environment, revision: publishing, at },
+        { domain: target.domain, environment, revision: version, at },
         true
       );
       setWorking(false);
@@ -318,7 +323,8 @@ const PublishSheet = ({
       {
         environment,
         domain: target.domain,
-        revision: publishing,
+        // Named, the domain stays on it; left out, it follows the environment's latest.
+        ...(follows || version === undefined ? {} : { revision: version }),
         credentialIdentifier: access,
         // On a domain holding a copy: deployed when the version needs it, and only then — the platform decides.
         deploy: holdsACopy
@@ -343,9 +349,10 @@ const PublishSheet = ({
     access,
     afterWrite,
     environment,
+    follows,
     holdsACopy,
     keepLatest,
-    keepsANewVersion,
+    keepsFirst,
     later,
     mutate,
     refusal,
@@ -413,8 +420,10 @@ const PublishSheet = ({
 
   const handleChooseDomain = useCallback((domain: string) => {
     setPickedDomain(domain);
-    setPickedKind(undefined);
-    setPicked(undefined);
+    setPickedEnvironment(undefined);
+    setPickedFollows(undefined);
+    setPickedRevision(undefined);
+    setPickedKeep(undefined);
     setPickedAccess(undefined);
     setRollingBackTo(undefined);
     setFailure(undefined);
@@ -425,19 +434,19 @@ const PublishSheet = ({
   }, []);
   const handleShowPublish = useCallback(() => setView({ name: 'publish' }), []);
   const handleShowHistory = useCallback(() => setView({ name: 'history' }), []);
-  const handleLatest = useCallback(() => {
-    setPickedKind('latest');
-    setPicked(undefined);
+  const handleEnvironment = useCallback((value: Environment) => {
+    setPickedEnvironment(value);
+    setPickedRevision(undefined);
     setFailure(undefined);
   }, []);
-  const handlePublishVersion = useCallback((environment: PublishedEnvironment, revision: number) => {
-    setPickedKind('saved');
-    setPicked({ environment, revision });
+  const handleFollows = useCallback((value: boolean) => {
+    setPickedFollows(value);
     setFailure(undefined);
-    setView({ name: 'publish' });
   }, []);
-  const handleEverySave = useCallback(() => {
-    setPickedKind('live');
+  const handlePublishVersion = useCallback((value: PublishedEnvironment, version: number) => {
+    setPickedEnvironment(value);
+    setPickedFollows(false);
+    setPickedRevision(version);
     setFailure(undefined);
     setView({ name: 'publish' });
   }, []);
@@ -475,25 +484,29 @@ const PublishSheet = ({
 
   if (view.name === 'deploy' && target) {
     return (
-      <DeployProgress
-        deployId={view.deployId}
-        domain={target.domain}
-        said={view.said}
-        {...(rollback ? { onRollBack: handleAskRollBack } : {})}
-        onDone={onClose}
-      />
+      <SheetFrame>
+        <DeployProgress
+          deployId={view.deployId}
+          domain={target.domain}
+          said={view.said}
+          {...(rollback ? { onRollBack: handleAskRollBack } : {})}
+          onDone={onClose}
+        />
+      </SheetFrame>
     );
   }
 
   if (view.name === 'done' && target) {
     return (
-      <PublishDone
-        said={view.said}
-        {...(rollback ? { rollbackLabel } : {})}
-        onRollBack={handleAskRollBack}
-        onOpenSite={handleOpenSite}
-        onDone={onClose}
-      />
+      <SheetFrame>
+        <PublishDone
+          said={view.said}
+          {...(rollback ? { rollbackLabel } : {})}
+          onRollBack={handleAskRollBack}
+          onOpenSite={handleOpenSite}
+          onDone={onClose}
+        />
+      </SheetFrame>
     );
   }
 
@@ -505,7 +518,6 @@ const PublishSheet = ({
         catalog={catalog}
         config={configOf(target)}
         onSaved={handleRefreshTargets}
-        onEverySave={handleEverySave}
         onBack={handleShowPublish}
       />
     );
@@ -514,19 +526,47 @@ const PublishSheet = ({
   const publishing = view.name === 'publish';
 
   return (
-    <div className="flex min-h-0 flex-col gap-5">
+    <SheetFrame
+      footer={
+        <SheetFooter
+          {...(rollback && !rollingBackTo ? { rollbackLabel } : {})}
+          rollbackTitle={`What ${target?.domain ?? 'the domain'} showed right before its latest publish`}
+          publishing={publishing && target !== undefined}
+          schedule={{ lockedBy: scheduleLocked?.requires, shown: canSchedule && !scheduling }}
+          action={{
+            words: working
+              ? keepsFirst
+                ? 'Keeping your changes…'
+                : 'Publishing…'
+              : scheduling
+                ? 'Schedule'
+                : needsDeploy
+                  ? 'Publish and deploy'
+                  : 'Publish',
+            disabled:
+              refusal !== undefined || working || (holdsACopy && checking) || (scheduling && later === undefined)
+          }}
+          onRollBack={handleAskRollBack}
+          onSchedule={handleSchedule}
+          onClose={onClose}
+          onPublish={handlePublishClick}
+        />
+      }
+    >
       <SheetTabs publishing={publishing} onPublish={handleShowPublish} onHistory={handleShowHistory} />
 
-      {publishing && own && (
-        <OwnAddressCard
-          target={own}
-          access={accessOf(own.domain)}
-          passwords={passwords}
-          onChanged={handleOwnAccessChanged}
-        />
-      )}
-
       <DomainList
+        own={
+          own && (
+            <OwnAddressRow
+              target={own}
+              access={accessOf(own.domain)}
+              passwords={passwords}
+              onChanged={handleOwnAccessChanged}
+            />
+          )
+        }
+        publishing={publishing}
         domains={domains}
         chosen={target?.domain}
         loading={loadingTargets}
@@ -566,18 +606,29 @@ const PublishSheet = ({
           />
 
           {target.verified && (
-            <PublishWhat
+            <ShowWhat
               domain={target.domain}
-              kind={kind}
-              latestEnvironment={latestEnvironment}
-              keptAs={keptAs}
-              description={description}
-              onDescription={setDescription}
-              savedEnvironment={savedEnvironment}
-              savedRevision={savedRevision}
-              savedSnapshot={savedSnapshot}
-              versionsLockedBy={versionsLockedBy}
-              onLatest={handleLatest}
+              environment={environment}
+              offersDraft={!holdsACopy}
+              byEnvironment={byEnvironment}
+              lockedBy={lockedRequires}
+              onEnvironment={handleEnvironment}
+              version={{
+                follows,
+                revision: chosenRevision,
+                snapshots: environmentSnapshots,
+                loading: loadingEnvironment,
+                onFollow: handleFollows,
+                onPick: setPickedRevision
+              }}
+              keep={{
+                shown: follows,
+                changes: sinceKept,
+                checked: keepsFirst,
+                description,
+                onChecked: setPickedKeep,
+                onDescription: setDescription
+              }}
             />
           )}
 
@@ -594,9 +645,10 @@ const PublishSheet = ({
           {!refusal && (
             <WhatHappens
               target={target}
-              kind={kind}
-              environment={isPublished(environment) ? environment : undefined}
-              revision={kind === 'live' ? undefined : revision}
+              environment={environment}
+              follows={follows}
+              revision={revision}
+              keepsFirst={keepsFirst}
               served={served}
               changes={changes}
               comparing={comparing}
@@ -625,63 +677,7 @@ const PublishSheet = ({
       {publishing && scheduling && canSchedule && (
         <ScheduleRow value={later ?? ''} onChange={setLater} onCancel={handlePublishNow} />
       )}
-
-      <div className="border-ui-line flex flex-wrap items-center justify-end gap-2 border-t pt-3">
-        {rollback && !rollingBackTo && (
-          <Button
-            size="sm"
-            intent="secondary"
-            className="mr-auto shrink-0 whitespace-nowrap"
-            iconPlacement="before"
-            title={`What ${target?.domain ?? 'the domain'} showed right before its latest publish`}
-            onClick={handleAskRollBack}
-          >
-            <Button.Icon icon="fa-solid fa-rotate-left" />
-            {rollbackLabel}
-          </Button>
-        )}
-        {publishing && target && canSchedule && !scheduling && (
-          <Button
-            size="sm"
-            intent="custom"
-            className={QUIET_BUTTON}
-            iconPlacement="before"
-            disabled={scheduleLocked !== undefined}
-            title={
-              scheduleLocked
-                ? `Publishing at a set time is included in the ${scheduleLocked.requires} plan`
-                : 'Publish at a moment of your choosing'
-            }
-            onClick={handleSchedule}
-          >
-            <Button.Icon icon={scheduleLocked ? 'fa-solid fa-lock' : 'fa-solid fa-clock'} />
-            Schedule…
-          </Button>
-        )}
-        <Button size="sm" intent="custom" className={QUIET_BUTTON} onClick={onClose}>
-          {publishing && target ? 'Cancel' : 'Close'}
-        </Button>
-        {publishing && target && (
-          <Button
-            size="sm"
-            disabled={
-              refusal !== undefined || working || (holdsACopy && checking) || (scheduling && later === undefined)
-            }
-            onClick={handlePublishClick}
-          >
-            {working
-              ? keepsANewVersion
-                ? 'Keeping your changes…'
-                : 'Publishing…'
-              : scheduling
-                ? 'Schedule'
-                : needsDeploy
-                  ? 'Publish and deploy'
-                  : 'Publish'}
-          </Button>
-        )}
-      </div>
-    </div>
+    </SheetFrame>
   );
 };
 

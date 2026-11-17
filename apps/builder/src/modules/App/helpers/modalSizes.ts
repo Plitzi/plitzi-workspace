@@ -16,7 +16,8 @@ export const SHEET_MODAL = {
   className: {
     root: 'items-stretch justify-end p-0',
     // `builder-sheet` takes the kit's slide over (assets/index.scss): in from the right edge, out to it, no overshoot.
-    card: 'builder-sheet h-full w-[min(560px,100vw)] max-w-none overflow-y-auto rounded-none'
+    // The card never scrolls: the sheet's content does, under its fixed header and over its fixed actions.
+    card: 'builder-sheet h-full w-[min(560px,100vw)] max-w-none overflow-hidden rounded-none'
   },
   animation: 'slideRight' as const,
   duration: 240

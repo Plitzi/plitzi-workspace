@@ -22,7 +22,7 @@ const TONE_TEXT = {
   progress: 'text-sky-700 dark:text-sky-300'
 } as const;
 
-/** One domain to publish to: what it shows now, where it is hosted when not on Plitzi, and what it asks for. */
+/** One domain to publish to, as a row of the list: what it shows now, where it is hosted, and what it asks for. */
 const DomainCard = ({ target, chosen, onChoose, onSettings }: DomainCardProps) => {
   const asks = targetAttention([target]).at(0);
   const shown = target.serves?.environment;
@@ -31,46 +31,46 @@ const DomainCard = ({ target, chosen, onChoose, onSettings }: DomainCardProps) =
   const handleSettings = useCallback(() => onSettings?.(target.domain), [onSettings, target.domain]);
 
   return (
-    <div
+    <li
       className={clsx(
-        'flex items-stretch rounded-lg border transition-colors',
-        chosen ? 'border-primary-500 bg-primary-500/10' : 'border-ui-line hover:bg-ui-hover'
+        'flex items-stretch transition-colors',
+        chosen ? 'bg-primary-500/10 shadow-primary-500 shadow-[inset_3px_0_0]' : 'hover:bg-ui-hover'
       )}
     >
       <button
         type="button"
         role="radio"
         aria-checked={chosen}
-        className="focus-visible:ring-primary-500 flex min-w-0 grow items-start gap-2.5 rounded-lg px-3 py-2.5 text-left outline-none focus-visible:ring-2"
+        className="focus-visible:ring-primary-500 flex min-w-0 grow items-center gap-2.5 px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset"
         onClick={handleChoose}
       >
         <span
           aria-hidden
           className={clsx(
-            'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border',
-            chosen ? 'border-primary-500' : 'border-ui-line'
+            'flex size-4 shrink-0 items-center justify-center rounded-full border',
+            chosen ? 'border-primary-500' : 'border-ui-line-strong'
           )}
         >
           {chosen && <span className="bg-primary-500 size-2 rounded-full" />}
         </span>
         <span className="flex min-w-0 grow flex-col gap-0.5">
           <span className="text-ui-fg truncate text-sm font-semibold">{target.domain}</span>
-          {target.verified && (
+          {target.verified ? (
             <span className="text-ui-fg-subtle flex min-w-0 items-center gap-1.5 text-xs">
               {shown && <span className={clsx('size-1.5 shrink-0 rounded-full', ENVIRONMENT_META[shown].dot)} />}
               <span className="truncate">
-                {showsWords(target.serves)}
+                {showsWords(target)}
+                {target.mode !== 'ssr' ? ` · on ${targetWhere(target)}` : ''}
                 {target.lastDeploy?.finishedAt
                   ? ` · deployed ${shortAge(target.lastDeploy.finishedAt * 1000)} ago`
                   : ''}
               </span>
             </span>
-          )}
-          {target.mode !== 'ssr' && (
-            <span className="text-ui-fg-subtle truncate text-xs">On {targetWhere(target)}</span>
-          )}
-          {!target.verified && (
-            <span className={clsx('text-xs', TONE_TEXT.warning)}>Not connected yet: its DNS record is missing</span>
+          ) : (
+            <span className={clsx('text-xs', TONE_TEXT.warning)}>
+              <i className="fa-solid fa-triangle-exclamation mr-1" aria-hidden />
+              Not connected yet: its DNS record is missing
+            </span>
           )}
           {asks && <span className={clsx('truncate text-xs', TONE_TEXT[asks.tone])}>{asks.words}</span>}
         </span>
@@ -78,15 +78,15 @@ const DomainCard = ({ target, chosen, onChoose, onSettings }: DomainCardProps) =
       {onSettings && (
         <button
           type="button"
-          title={`Settings of ${target.domain}: where it is hosted, and whether it shows every save`}
+          title={`Settings of ${target.domain}: where it is hosted, and its automation`}
           aria-label={`Settings of ${target.domain}`}
-          className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover m-1 flex w-8 shrink-0 items-center justify-center rounded-md"
+          className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover my-1.5 mr-1.5 flex w-8 shrink-0 items-center justify-center rounded-md"
           onClick={handleSettings}
         >
           <i className="fa-solid fa-sliders" aria-hidden />
         </button>
       )}
-    </div>
+    </li>
   );
 };
 

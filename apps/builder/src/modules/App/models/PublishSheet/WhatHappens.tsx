@@ -1,18 +1,25 @@
 import clsx from 'clsx';
 
 import { changeLines } from '../../components/ChangesSummary/helpers';
-import { revisionName } from '../../helpers/environments';
+import { ENVIRONMENT_META } from '../../helpers/environments';
 
-import type { ContentKind } from './helpers';
-import type { PublishedEnvironment } from '../../helpers/environments';
-import type { SpacePublishCheck, SpaceServedVersion, SpaceTarget, SpaceVersionChanges } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  SpacePublishCheck,
+  SpaceServedVersion,
+  SpaceTarget,
+  SpaceVersionChanges
+} from '@plitzi/sdk-shared';
 
 export type WhatHappensProps = {
   target: SpaceTarget;
-  kind: ContentKind;
-  /** The version it will show; none for latest changes still to be kept. */
-  environment: PublishedEnvironment | undefined;
+  environment: Environment;
+  /** It follows the environment's latest, or stays on `revision`. */
+  follows: boolean;
+  /** The version it comes to: none yet for changes still to be kept. */
   revision: number | undefined;
+  /** The editor's changes are kept as a new version first. */
+  keepsFirst: boolean;
   served: SpaceServedVersion | undefined;
   changes: SpaceVersionChanges | undefined;
   comparing: boolean;
@@ -21,20 +28,41 @@ export type WhatHappensProps = {
   checking: boolean;
 };
 
-const willShow = ({ kind, environment, revision }: Pick<WhatHappensProps, 'kind' | 'environment' | 'revision'>) => {
-  if (kind === 'live') {
+const willShow = ({
+  environment,
+  follows,
+  revision,
+  keepsFirst
+}: Pick<WhatHappensProps, 'environment' | 'follows' | 'revision' | 'keepsFirst'>): string => {
+  if (environment === 'main') {
     return 'every change as soon as you save it';
   }
 
-  return environment && revision !== undefined ? revisionName(environment, revision) : 'your latest changes';
+  const label = ENVIRONMENT_META[environment].label;
+  if (!follows) {
+    return revision === undefined ? `a ${label} version` : `${label} v${String(revision)}, and stay on it`;
+  }
+
+  return keepsFirst
+    ? `your current changes, kept as the next ${label} version — and each one kept after it`
+    : `the latest ${label} version${revision === undefined ? '' : ` (v${String(revision)} now)`}, and each one kept after it`;
 };
 
-const nowShows = (served: SpaceServedVersion | undefined): string =>
-  !served
-    ? 'Nothing is published there yet.'
-    : served.environment === 'main'
-      ? 'Now it shows every change as you save it.'
-      : `Now it shows ${revisionName(served.environment, served.revision)}.`;
+const nowShows = (target: SpaceTarget, served: SpaceServedVersion | undefined): string => {
+  if (!served) {
+    return 'Nothing is published there yet.';
+  }
+
+  if (served.environment === 'main') {
+    return 'Now it shows every change as you save it.';
+  }
+
+  const label = ENVIRONMENT_META[served.environment].label;
+
+  return target.revision === null
+    ? `Now it shows the latest ${label} version (v${String(served.revision)}).`
+    : `Now it stays on ${label} v${String(served.revision)}.`;
+};
 
 /**
  * What publishing does, before anything does, in one place: what the domain will show instead of what, what visitors
@@ -43,9 +71,10 @@ const nowShows = (served: SpaceServedVersion | undefined): string =>
  */
 const WhatHappens = ({
   target,
-  kind,
   environment,
+  follows,
   revision,
+  keepsFirst,
   served,
   changes,
   comparing,
@@ -58,12 +87,14 @@ const WhatHappens = ({
   return (
     <section aria-label="What will happen" className="bg-ui-raised flex flex-col gap-2 rounded-lg px-3 py-2.5 text-sm">
       <p className="text-ui-fg">
-        <b>{target.domain}</b> will show {willShow({ kind, environment, revision })}.{' '}
-        <span className="text-ui-fg-subtle">{nowShows(served)}</span>
+        <b>{target.domain}</b> will show {willShow({ environment, follows, revision, keepsFirst })}.{' '}
+        <span className="text-ui-fg-subtle">{nowShows(target, served)}</span>
       </p>
-      {served?.environment === 'main' && kind !== 'live' && (
+      {served?.environment === 'main' && environment !== 'main' && (
         <span className="text-ui-fg-subtle text-xs">
-          From then on, your edits wait for your next publish: visitors no longer see them as you save.
+          {follows
+            ? `From then on, your edits reach it when you keep them as a new ${ENVIRONMENT_META[environment].label} version — Publish or Snapshot does.`
+            : 'From then on, your edits wait for your next publish: visitors no longer see them as you save.'}
         </span>
       )}
       {served && comparing && <span className="text-ui-fg-subtle text-xs">Comparing with what it shows…</span>}
@@ -123,7 +154,7 @@ const WhatHappens = ({
           )}
         </ul>
       )}
-      {kind === 'latest' && revision === undefined && target.mode !== 'ssr' && (
+      {keepsFirst && target.mode !== 'ssr' && (
         <span className="text-ui-fg-subtle text-xs">
           Its copy on {target.providerLabel} is deployed again when the new version needs it.
         </span>

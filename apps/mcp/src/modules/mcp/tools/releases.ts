@@ -37,12 +37,18 @@ export const publishTool = defineTool({
   name: 'plitzi_publish',
   title: 'Publish a revision',
   description:
-    'Point a domain at a revision — its environment’s latest unless `revision` names one — recorded as a release. ' +
+    'Point a domain at a revision, recorded as a release: named, it stays on it; left out, it follows its environment’s ' +
+    'latest — each revision kept there afterwards shows on it. ' +
     'Live at once for the visitors of that domain: publish only what the person asked to be published.',
   inputShape: {
     domain: z.string().describe('One of the space’s domains'),
     environment: environment.describe('The revision’s environment; `main` serves the draft as it is saved'),
-    revision: z.number().int().positive().optional().describe('The revision; the environment’s latest when left out'),
+    revision: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe('The revision it stays on; left out, it follows the environment’s latest'),
     deploy: z
       .boolean()
       .optional()

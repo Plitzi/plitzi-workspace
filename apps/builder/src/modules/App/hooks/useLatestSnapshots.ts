@@ -38,8 +38,8 @@ const useLatestSnapshots = () => {
   };
 };
 
-/** `r12 · 2 h`, or that there is none yet. */
+/** `v12 · 2 h`, or that there is none yet. */
 export const latestDetail = (snapshot: SpaceSnapshot | undefined): string =>
-  snapshot ? `r${String(snapshot.revision)} · ${shortAge(snapshot.publishedAt)}` : 'No snapshot yet';
+  snapshot ? `v${String(snapshot.revision)} · ${shortAge(snapshot.publishedAt)}` : 'No versions yet';
 
 export default useLatestSnapshots;

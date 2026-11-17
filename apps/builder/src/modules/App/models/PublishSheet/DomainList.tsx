@@ -1,8 +1,11 @@
 import DomainCard from './DomainCard';
 
 import type { SpaceTarget } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 export type DomainListProps = {
+  /** The space's own address, first: where the site is before any domain, with nothing to publish. */
+  own: ReactNode;
   domains: readonly SpaceTarget[];
   chosen: string | undefined;
   loading: boolean;
@@ -10,62 +13,75 @@ export type DomainListProps = {
   addUrl: string;
   /** The plan that includes domains of the space's own, when its own does not. */
   lockedBy?: string;
+  /** Choosing one is what publishing is about: absent in the history, which only reads them. */
+  publishing: boolean;
   onChoose: (domain: string) => void;
   onSettings: (domain: string) => void;
 };
 
 /**
- * The domains a version is published to, one chosen — or, before the space has any, what one is for and where to add
- * it: publishing means nothing until there is somewhere to publish.
+ * Where the site is, in one list: the space's own address — always the latest saved edits — then the domains, one
+ * chosen to publish to, and the way to connect another. Before there is any, what one is for.
  */
-const DomainList = ({ domains, chosen, loading, addUrl, lockedBy, onChoose, onSettings }: DomainListProps) => (
-  <section className="flex flex-col gap-2" aria-label="Your domains">
-    <span className="flex items-center justify-between gap-2">
-      <h5 className="text-ui-fg text-sm font-semibold">Your domains</h5>
-      {domains.length > 0 && (
-        <a
-          href={addUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="text-primary-600 dark:text-primary-300 text-xs font-medium hover:underline"
-        >
-          Add a domain
-        </a>
+const DomainList = ({
+  own,
+  domains,
+  chosen,
+  loading,
+  addUrl,
+  lockedBy,
+  publishing,
+  onChoose,
+  onSettings
+}: DomainListProps) => (
+  <section className="flex flex-col gap-2" aria-label="Where your site is">
+    <div className="flex flex-col gap-0.5">
+      <h5 className="text-ui-fg text-sm font-semibold">Where your site is</h5>
+      {publishing && domains.length > 0 && (
+        <span className="text-ui-fg-subtle text-xs">Choose the domain to publish to.</span>
       )}
-    </span>
-    {loading && <span className="text-ui-fg-subtle text-xs">Reading the domains…</span>}
-    {!loading && domains.length === 0 && (
-      <div className="border-ui-line flex flex-col items-start gap-2 rounded-lg border border-dashed p-3">
-        <span className="text-ui-fg text-sm">Put the site on a domain of your own</span>
-        <span className="text-ui-fg-subtle text-xs">
-          www.example.com instead of the Plitzi address. A domain shows the version you publish on it, and changes only
-          when you publish again.
-          {lockedBy ? ` Included in the ${lockedBy} plan.` : ''}
-        </span>
+    </div>
+    <ul className="border-ui-line divide-ui-line flex flex-col divide-y overflow-hidden rounded-lg border">
+      {own}
+      {loading && <li className="text-ui-fg-subtle px-3 py-2.5 text-xs">Reading the domains…</li>}
+      {domains.length > 0 && (
+        <li>
+          <ul role="radiogroup" aria-label="Domain to publish to" className="divide-ui-line flex flex-col divide-y">
+            {domains.map(domain => (
+              <DomainCard
+                key={domain.domain}
+                target={domain}
+                chosen={domain.domain === chosen}
+                onChoose={onChoose}
+                {...(domain.plitziOwned ? {} : { onSettings })}
+              />
+            ))}
+          </ul>
+        </li>
+      )}
+      <li>
         <a
           href={addUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="bg-primary-600 hover:bg-primary-700 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-white"
+          className="text-primary-600 dark:text-primary-300 hover:bg-ui-hover flex items-start gap-2.5 px-3 py-2.5 text-sm font-medium"
         >
-          <i className="fa-solid fa-plus text-[10px]" aria-hidden />
-          Add a domain
+          <span className="border-primary-500/50 flex size-6 shrink-0 items-center justify-center rounded-md border border-dashed text-xs">
+            <i className="fa-solid fa-plus" aria-hidden />
+          </span>
+          <span className="flex flex-col gap-0.5">
+            Connect a domain you own
+            {!loading && domains.length === 0 && (
+              <span className="text-ui-fg-subtle text-xs font-normal">
+                www.example.com instead of the Plitzi address: it shows what you publish on it, and changes only when
+                you publish again.
+                {lockedBy ? ` Included in the ${lockedBy} plan.` : ''}
+              </span>
+            )}
+          </span>
         </a>
-      </div>
-    )}
-    {domains.length > 0 && (
-      <div role="radiogroup" aria-label="Domain" className="flex flex-col gap-1.5">
-        {domains.map(domain => (
-          <DomainCard
-            key={domain.domain}
-            target={domain}
-            chosen={domain.domain === chosen}
-            onChoose={onChoose}
-            {...(domain.plitziOwned ? {} : { onSettings })}
-          />
-        ))}
-      </div>
-    )}
+      </li>
+    </ul>
   </section>
 );
 

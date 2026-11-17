@@ -1,4 +1,4 @@
-import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
+import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 
 import type { PublishedEnvironment } from '../../helpers/environments';
 import type { DeployMode, DeployStatus, Environment, SpaceServedVersion, SpaceTarget } from '@plitzi/sdk-shared';
@@ -56,16 +56,33 @@ export const deploySteps = (
   }));
 };
 
-/** What a domain is asked to show: the latest changes (kept as a version first), a version kept before, or every save. */
-export type ContentKind = 'latest' | 'saved' | 'live';
+/**
+ * What a domain shows now, in the words its owner reads on its row: every save, the latest version of an environment
+ * (which it follows: each one kept there shows), or one version it stays on.
+ */
+export const showsWords = ({ serves, revision }: Pick<SpaceTarget, 'serves' | 'revision'>): string => {
+  if (!serves) {
+    return 'Nothing published yet';
+  }
 
-/** What a domain shows now, in the words its owner reads on its card. */
-export const showsWords = (serves: SpaceServedVersion | null): string =>
-  !serves
-    ? 'Nothing published yet'
-    : serves.environment === 'main'
-      ? 'Shows every change as you save it'
-      : `Shows ${revisionName(serves.environment, serves.revision)}`;
+  if (serves.environment === 'main') {
+    return 'Shows every change as you save it';
+  }
+
+  const label = ENVIRONMENT_META[serves.environment].label;
+
+  return revision === null
+    ? `Shows the latest ${label} version · v${String(serves.revision)}`
+    : `Stays on ${label} v${String(serves.revision)}`;
+};
+
+/** What each environment is for, said where one is chosen: names alone mean nothing to somebody new. */
+export const ENVIRONMENT_PURPOSE: Record<Environment, string> = {
+  main: 'Every change shows the moment you save it — unfinished ones too. There is nothing to publish next time.',
+  development: 'Versions you keep while you work, before anybody else sees them.',
+  staging: 'Versions you keep to check, before they go to production.',
+  production: 'The versions your visitors see.'
+};
 
 /**
  * Where "your latest changes" are kept before they are published: the environment the domain shows already, or the one
