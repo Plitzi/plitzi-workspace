@@ -484,29 +484,25 @@ const PublishSheet = ({
 
   if (view.name === 'deploy' && target) {
     return (
-      <SheetFrame>
-        <DeployProgress
-          deployId={view.deployId}
-          domain={target.domain}
-          said={view.said}
-          {...(rollback ? { onRollBack: handleAskRollBack } : {})}
-          onDone={onClose}
-        />
-      </SheetFrame>
+      <DeployProgress
+        deployId={view.deployId}
+        domain={target.domain}
+        said={view.said}
+        {...(rollback ? { onRollBack: handleAskRollBack } : {})}
+        onDone={onClose}
+      />
     );
   }
 
   if (view.name === 'done' && target) {
     return (
-      <SheetFrame>
-        <PublishDone
-          said={view.said}
-          {...(rollback ? { rollbackLabel } : {})}
-          onRollBack={handleAskRollBack}
-          onOpenSite={handleOpenSite}
-          onDone={onClose}
-        />
-      </SheetFrame>
+      <PublishDone
+        said={view.said}
+        {...(rollback ? { rollbackLabel } : {})}
+        onRollBack={handleAskRollBack}
+        onOpenSite={handleOpenSite}
+        onDone={onClose}
+      />
     );
   }
 

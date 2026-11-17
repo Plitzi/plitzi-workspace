@@ -16,10 +16,10 @@ const snapshot: SpaceSnapshot = {
 const changed = (total: number) => ({ total }) as SpaceVersionChanges;
 
 describe('draftStatus', () => {
-  it('says there is no snapshot yet, as pending', () => {
+  it('says there is no version yet, as pending', () => {
     expect(draftStatus(undefined, undefined)).toEqual({
-      words: 'Draft · no snapshot yet',
-      short: 'No snapshot',
+      words: 'Draft · no versions yet',
+      short: 'No versions',
       pending: true
     });
   });

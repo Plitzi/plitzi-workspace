@@ -128,6 +128,10 @@ weighs on a phone — and what of it a phone cannot hold.
   token pasted as a key) is said at its field, by the same rule the platform refuses a save with. An API's or a CMS's
   credential is a list of named values instead of JSON. The list labels every kind, deploy credentials too, and a
   domain's password is called a **Site password**. The kinds are one list in `@plitzi/sdk-shared/credentials`.
+- **Snapshot is called Save version in the builder** — the header's button, its dialog ("Save a version", "Save and
+  publish…"), the draft's panel and status ("no versions yet"), the plan's pruning notice — as Framer and Figma say it:
+  a person keeps versions. The API, the CLI and the MCP keep the word snapshot. Every view of the publish sheet keeps its
+  actions at the bottom.
 - **A Site password is a user and a password, and one that cannot be checked keeps the site closed.** Its "A token"
   type was checked by nothing, and the kernel let every visitor through a domain behind one; it is gone (with the
   conditional fields only it used), and `basicAuthMiddleware` asks for any Site password without both values instead of

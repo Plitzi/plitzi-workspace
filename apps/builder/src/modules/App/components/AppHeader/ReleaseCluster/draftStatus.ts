@@ -8,7 +8,7 @@ export const draftStatus = (
   changes: SpaceVersionChanges | undefined
 ): { words: string; short: string; pending: boolean } => {
   if (!newest) {
-    return { words: 'Draft · no snapshot yet', short: 'No snapshot', pending: true };
+    return { words: 'Draft · no versions yet', short: 'No versions', pending: true };
   }
 
   const kept = revisionName(newest.environment, newest.revision);

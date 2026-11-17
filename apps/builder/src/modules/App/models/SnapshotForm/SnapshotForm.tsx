@@ -10,7 +10,7 @@ import ChangesSummary, { useVersionChanges } from '../../components/ChangesSumma
 import EnvironmentSegments from '../../components/EnvironmentSegments';
 import SnapshotPruneNotice from '../../components/SnapshotPruneNotice';
 import VersionContents from '../../components/VersionContents';
-import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
+import { ENVIRONMENT_META, PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 import useLatestSnapshots, { latestDetail } from '../../hooks/useLatestSnapshots';
 
 import type { PublishedEnvironment } from '../../helpers/environments';
@@ -22,7 +22,7 @@ const snapshotFormSchema = z.object({
 });
 
 export type SnapshotFormValues = z.infer<typeof snapshotFormSchema> & {
-  /** Pressed "Snapshot and publish…": the publish sheet opens next, on this snapshot. */
+  /** Pressed "Save and publish…": the publish sheet opens next, on this version. */
   thenPublish: boolean;
 };
 
@@ -68,7 +68,8 @@ const SnapshotForm = ({ environment, onClose, onSubmit }: SnapshotFormProps) => 
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body className="gap-4">
         <p className="text-ui-fg-subtle text-sm">
-          Freeze the draft as a revision you can publish, compare or roll back to. Nothing a visitor sees changes yet.
+          Keep what is in the editor as a version you can publish, compare or go back to. Nothing a visitor sees changes
+          yet.
         </p>
         <Form.Custom
           name="environment"
@@ -92,7 +93,7 @@ const SnapshotForm = ({ environment, onClose, onSubmit }: SnapshotFormProps) => 
             loading={loading}
           />
         ) : (
-          <VersionContents environment="main" title={`The first snapshot of ${chosen} will freeze`} />
+          <VersionContents environment="main" title={`The first ${ENVIRONMENT_META[chosen].label} version will keep`} />
         )}
         <Form.TextArea
           name="description"
@@ -103,23 +104,24 @@ const SnapshotForm = ({ environment, onClose, onSubmit }: SnapshotFormProps) => 
         <ul className="text-ui-fg-subtle flex flex-col gap-1 text-xs">
           <li className="flex items-center gap-1.5">
             <i className="fa-solid fa-flask-vial w-3.5 text-center" />
-            The space’s tests run as it is taken; one that fails keeps it from being taken.
+            The space’s tests run as it is saved; one that fails keeps it from being saved.
           </li>
           {warnings > 0 && (
             <li className="flex items-center gap-1.5">
               <i className="fa-solid fa-triangle-exclamation w-3.5 text-center text-amber-500" />
-              {warnings === 1 ? '1 issue' : `${String(warnings)} issues`} in Space Issues — they do not stop a snapshot.
+              {warnings === 1 ? '1 issue' : `${String(warnings)} issues`} in Space Issues — they do not stop saving a
+              version.
             </li>
           )}
           <li>
             <details>
               <summary className="hover:text-ui-fg flex w-fit cursor-pointer items-center gap-1.5">
                 <i className="fa-solid fa-flag w-3.5 text-center" />
-                Feature flags go to the environment, not into the snapshot
+                Feature flags go to the environment, not into the version
               </summary>
               <p className="mt-1 pl-5">
-                This snapshot sends the draft’s flags to {chosen} and keeps a copy only as a fallback. Rolling back to
-                an older snapshot later keeps the environment’s flags as they are.
+                Saving it sends the draft’s flags to {ENVIRONMENT_META[chosen].label} and keeps a copy only as a
+                fallback. Going back to an older version later keeps the environment’s flags as they are.
               </p>
             </details>
           </li>
@@ -138,7 +140,7 @@ const SnapshotForm = ({ environment, onClose, onSubmit }: SnapshotFormProps) => 
             thenPublish.current = false;
           }}
         >
-          Snapshot
+          Save version
         </Button>
         <Button
           type="submit"
@@ -147,7 +149,7 @@ const SnapshotForm = ({ environment, onClose, onSubmit }: SnapshotFormProps) => 
             thenPublish.current = true;
           }}
         >
-          Snapshot and publish…
+          Save and publish…
         </Button>
       </Form.Footer>
     </Form>

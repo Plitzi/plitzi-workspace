@@ -8,7 +8,7 @@ export type SnapshotPruneNoticeProps = {
   environment: string;
 };
 
-/** What the snapshot about to be taken removes, said before it is taken. Nothing when it removes none. */
+/** What the version about to be saved removes, said before it is saved. Nothing when it removes none. */
 const SnapshotPruneNotice = ({ environment }: SnapshotPruneNoticeProps) => {
   const prune = useNextPrune(environment);
   const sentence = prune ? pruneSentence(prune) : '';

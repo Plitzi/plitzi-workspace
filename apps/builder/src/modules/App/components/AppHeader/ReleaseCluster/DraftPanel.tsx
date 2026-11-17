@@ -62,10 +62,10 @@ const DraftPanel = ({
         </span>
         <span className="text-ui-fg-subtle text-xs">
           {!newest
-            ? 'Nothing of it is kept yet: a snapshot keeps it as a revision you can publish, compare and go back to.'
+            ? 'No version of it is kept yet: saving one keeps it to publish, compare and go back to.'
             : pending
-              ? 'Saved as you edit, and live only at the space’s own address: a snapshot keeps it as a revision.'
-              : 'Everything you see is kept in the newest snapshot.'}
+              ? 'Saved as you edit, and live only at the space’s own address: saving a version keeps it.'
+              : 'Everything you see is kept in the newest version.'}
         </span>
       </div>
 
@@ -123,7 +123,7 @@ const DraftPanel = ({
         </Button>
         <Button size="sm" iconPlacement="before" onClick={onSnapshot}>
           {snapshotLocked && <Button.Icon icon="fa-solid fa-lock" />}
-          {pending ? 'Make a snapshot' : 'Snapshot again'}
+          {pending ? 'Save a version' : 'Save another version'}
         </Button>
       </div>
     </div>

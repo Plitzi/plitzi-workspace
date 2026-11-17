@@ -35,7 +35,7 @@ import RoleBadge from './RoleBadge';
 import RuntimeIdleNotice from './RuntimeIdleNotice';
 import ViewButtons from './ViewButtons';
 import ZoomButtons from './ZoomButtons';
-import { PUBLISHED_ENVIRONMENTS } from '../../helpers/environments';
+import { PUBLISHED_ENVIRONMENTS, revisionName } from '../../helpers/environments';
 import { FORM_MODAL, SHEET_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
 import useSpaceTargets from '../../hooks/useSpaceTargets';
 import PublishSheet from '../../models/PublishSheet';
@@ -115,7 +115,7 @@ const AppHeader = () => {
 
     const response = await showModal<SnapshotFormValues>(
       <Modal.Header>
-        <h4>Make a snapshot</h4>
+        <h4>Save a version</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
@@ -146,7 +146,8 @@ const AppHeader = () => {
       } else {
         addToast(
           <div>
-            Kept as <b>{`${environment} r${String(revision)}`}</b>. Publish it when it is ready.
+            Saved as <b>{kept ? revisionName(kept, revision) : `${environment} version ${String(revision)}`}</b>.
+            Publish it when it is ready.
           </div>,
           { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
         );
@@ -352,13 +353,13 @@ const AppHeader = () => {
                 title={
                   snapshotsLocked
                     ? `${snapshotsLocked.label} are included in the ${snapshotsLocked.requires ?? ''} plan — opens the plans.`
-                    : 'Snapshot: keep the draft as a revision you can publish, compare or roll back to.'
+                    : 'Save version: keep what is in the editor as a version you can publish, compare or go back to.'
                 }
                 className="border-ui-line-strong text-ui-fg hover:bg-ui-hover focus-visible:ring-primary-500 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-r-[7px] border-l px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
                 onClick={() => void handleClickSnapshot()}
               >
                 {snapshotsLocked && <i className="fa-solid fa-lock text-xs" />}
-                Snapshot
+                Save version
               </button>
             </div>
             <div className="flex items-stretch">

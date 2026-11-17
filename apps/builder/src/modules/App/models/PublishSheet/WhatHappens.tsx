@@ -93,7 +93,7 @@ const WhatHappens = ({
       {served?.environment === 'main' && environment !== 'main' && (
         <span className="text-ui-fg-subtle text-xs">
           {follows
-            ? `From then on, your edits reach it when you keep them as a new ${ENVIRONMENT_META[environment].label} version — Publish or Snapshot does.`
+            ? `From then on, your edits reach it when you keep them as a new ${ENVIRONMENT_META[environment].label} version — Publish or Save version does.`
             : 'From then on, your edits wait for your next publish: visitors no longer see them as you save.'}
         </span>
       )}

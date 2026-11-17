@@ -21,7 +21,7 @@ const RevisionList = ({ snapshots, loading, domain, onPublish }: RevisionListPro
     <div className="flex flex-col gap-0.5">
       <h5 className="text-ui-fg text-sm font-semibold">Versions you kept</h5>
       <span className="text-ui-fg-subtle text-xs">
-        Every publish keeps one, and so does Snapshot.
+        Every publish keeps one, and so does Save version.
         {domain ? ` Publish an earlier one on ${domain} to go back to it.` : ''}
       </span>
     </div>

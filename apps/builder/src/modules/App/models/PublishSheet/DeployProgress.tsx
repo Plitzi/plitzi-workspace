@@ -7,6 +7,7 @@ import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import { deploySteps, deployWords } from './helpers';
+import SheetFrame from './SheetFrame';
 import Notice from '../../components/Notice';
 import { revisionName } from '../../helpers/environments';
 
@@ -77,14 +78,59 @@ const DeployProgress = ({ deployId, domain, said, onRollBack, onDone }: DeployPr
   }, [deployId, domain, server.apiServer, userKey, webId]);
 
   if (!deploy) {
-    return <span className="text-ui-fg-subtle text-sm">Reading the deploy…</span>;
+    return (
+      <SheetFrame>
+        <span className="text-ui-fg-subtle text-sm">Reading the deploy…</span>
+      </SheetFrame>
+    );
   }
 
   const { words, going } = deployWords(deploy.status);
   const url = deploy.url ?? `https://${domain}`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <SheetFrame
+      footer={
+        <div className="flex items-center justify-end gap-2">
+          {going && (
+            <Button
+              size="sm"
+              intent="custom"
+              className={clsx(QUIET_BUTTON, 'mr-auto')}
+              disabled={canceling}
+              onClick={() => void handleCancel()}
+            >
+              {canceling ? 'Stopping…' : 'Stop the deploy'}
+            </Button>
+          )}
+          {!going && onRollBack && (
+            <Button
+              size="sm"
+              intent="secondary"
+              className="mr-auto whitespace-nowrap"
+              iconPlacement="before"
+              onClick={onRollBack}
+            >
+              <Button.Icon icon="fa-solid fa-rotate-left" />
+              Roll back
+            </Button>
+          )}
+          {deploy.status === 'succeeded' && deploy.kept && deploy.provider === 'download' && (
+            <Button size="sm" intent="secondary" onClick={() => void handleDownload()}>
+              Download the site
+            </Button>
+          )}
+          {deploy.status === 'succeeded' && deploy.provider !== 'download' && (
+            <Button size="sm" intent="secondary" onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}>
+              Open the site
+            </Button>
+          )}
+          <Button size="sm" onClick={onDone}>
+            {going ? 'Close — it goes on' : 'Done'}
+          </Button>
+        </div>
+      }
+    >
       <p className="text-ui-fg text-sm">{said}</p>
       <div className="border-ui-line flex flex-col gap-2 rounded-lg border p-3">
         <span className="text-ui-fg flex items-center justify-between gap-2 text-sm font-semibold">
@@ -159,45 +205,7 @@ const DeployProgress = ({ deployId, domain, said, onRollBack, onDone }: DeployPr
           </pre>
         )}
       </div>
-      <div className="flex items-center justify-end gap-2">
-        {going && (
-          <Button
-            size="sm"
-            intent="custom"
-            className={clsx(QUIET_BUTTON, 'mr-auto')}
-            disabled={canceling}
-            onClick={() => void handleCancel()}
-          >
-            {canceling ? 'Stopping…' : 'Stop the deploy'}
-          </Button>
-        )}
-        {!going && onRollBack && (
-          <Button
-            size="sm"
-            intent="secondary"
-            className="mr-auto whitespace-nowrap"
-            iconPlacement="before"
-            onClick={onRollBack}
-          >
-            <Button.Icon icon="fa-solid fa-rotate-left" />
-            Roll back
-          </Button>
-        )}
-        {deploy.status === 'succeeded' && deploy.kept && deploy.provider === 'download' && (
-          <Button size="sm" intent="secondary" onClick={() => void handleDownload()}>
-            Download the site
-          </Button>
-        )}
-        {deploy.status === 'succeeded' && deploy.provider !== 'download' && (
-          <Button size="sm" intent="secondary" onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}>
-            Open the site
-          </Button>
-        )}
-        <Button size="sm" onClick={onDone}>
-          {going ? 'Close — it goes on' : 'Done'}
-        </Button>
-      </div>
-    </div>
+    </SheetFrame>
   );
 };
 
