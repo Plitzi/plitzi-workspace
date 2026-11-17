@@ -10,7 +10,9 @@
 
 export { buildBody } from './modules/ssr/buildBody';
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
+// What `buildBody` and a preview are handed: the page server makes one, and whoever builds a page itself (a preview
+// of its own, a test) makes theirs — `new PluginManager({})` loads no plugins.
+export { PluginManager } from './plugins/manager';
 
-export type { PluginManager } from './plugins/manager';
 export type { ServerCaches } from './helpers/cache';
 export type { PipelineExtensions, SSRContext } from './core/http/pageContext';

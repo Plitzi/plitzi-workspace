@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderSSR } from './handler';
 import { createRenderTurns } from './renderTurns';
 import { TtlCache } from '../../helpers/cache';
+import { PluginManager } from '../../plugins/manager';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
-import type { PluginManager } from '../../plugins/manager';
 import type { SSRPageServerConfig } from '../../types';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
@@ -73,7 +73,7 @@ const caches = (html?: TtlCache<CachedPage>): ServerCaches => ({
 });
 
 const render = (req: SSRRequest, res: SSRResponseHelpers, html?: TtlCache<CachedPage>) =>
-  renderSSR(req, res, config, () => '', {} as PluginManager, caches(html));
+  renderSSR(req, res, config, () => '', new PluginManager({}), caches(html));
 
 const page = (body: string): Rendered => ({ body, result: {}, cacheable: true, nonce: '' });
 

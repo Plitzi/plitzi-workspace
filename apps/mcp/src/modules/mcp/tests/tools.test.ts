@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { createMemoryDraftStore } from '@plitzi/sdk-server/ssr';
+import { createMemoryDraftStore, PluginManager } from '@plitzi/sdk-server/ssr';
 
 import { buildSpace } from './helpers';
 import { createPreview } from '../../../preview/createPreview';
@@ -79,7 +79,8 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
       typeof createPreview
     >[1];
   const unusedRender = (() => '') as unknown as Parameters<typeof createPreview>[2];
-  const unusedPlugins = {} as Parameters<typeof createPreview>[3];
+  // A page that loads no plugins: these paths are refused before any plugin is asked for.
+  const unusedPlugins = new PluginManager({});
   const unusedCaches = {} as Parameters<typeof createPreview>[4];
 
   it('refuses with missing when the space has no offline data', async () => {

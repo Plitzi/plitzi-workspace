@@ -85,7 +85,7 @@ export const createSpaceAdapters = (config: SpaceAdaptersConfig) => {
     resolvers,
     cache,
     ttlSeconds = 300,
-    cacheKey = req => (presentsCredential(req) ? undefined : req.hostname),
+    cacheKey = (req: SSRRequest) => (presentsCredential(req) ? undefined : req.hostname),
     frameAncestors,
     decorate,
     notFound = { code: 404, message: 'Space not found' },

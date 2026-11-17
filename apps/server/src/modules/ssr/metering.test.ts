@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderSSR } from './handler';
 import { createRenderTurns } from './renderTurns';
 import { TtlCache } from '../../helpers/cache';
+import { PluginManager } from '../../plugins/manager';
 
 import type { CachedPage, ServerCaches } from '../../helpers/cache';
-import type { PluginManager } from '../../plugins/manager';
 import type { SSRPageServerConfig } from '../../types';
 import type { MeteredKind, SSRMeterDecision, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 
@@ -61,7 +61,7 @@ const caches = (html?: TtlCache<CachedPage>): ServerCaches => ({
 });
 
 const render = (req: SSRRequest, res: SSRResponseHelpers, serverCaches: ServerCaches) =>
-  renderSSR(req, res, config(), () => '<html>templated</html>', {} as PluginManager, serverCaches);
+  renderSSR(req, res, config(), () => '<html>templated</html>', new PluginManager({}), serverCaches);
 
 beforeEach(() => {
   vi.clearAllMocks();

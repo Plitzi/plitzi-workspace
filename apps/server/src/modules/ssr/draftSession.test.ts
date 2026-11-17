@@ -4,9 +4,9 @@ import { PREVIEW_COOKIE } from '@plitzi/sdk-kernel/identity';
 
 import { renderSSR } from './handler';
 import { createMemoryDraftStore, takeDraftOverride } from './preview';
+import { PluginManager } from '../../plugins/manager';
 
 import type { ServerCaches } from '../../helpers/cache';
-import type { PluginManager } from '../../plugins/manager';
 import type { SSRPageServerConfig, SSRServerConfig } from '../../types';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -50,17 +50,10 @@ const response = () => {
 };
 
 const render = (req: SSRRequest, res: SSRResponseHelpers, config: SSRPageServerConfig) =>
-  renderSSR(
-    req,
-    res,
-    config,
-    () => '<html>templated</html>',
-    {} as PluginManager,
-    {
-      html: undefined,
-      offlineData: undefined
-    } as unknown as ServerCaches
-  );
+  renderSSR(req, res, config, () => '<html>templated</html>', new PluginManager({}), {
+    html: undefined,
+    offlineData: undefined
+  } as unknown as ServerCaches);
 
 const configWith = (store: ReturnType<typeof createMemoryDraftStore>): SSRPageServerConfig =>
   ({

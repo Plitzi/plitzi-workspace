@@ -137,6 +137,8 @@ weighs on a phone — and what of it a phone cannot hold.
   conditional fields only it used), and `basicAuthMiddleware` asks for any Site password without both values instead of
   passing. A version's preview address asks for the Site passwords its space's addresses ask — any one opens it, and
   with none it is open as the site is — as Vercel's and Netlify's previews are behind the site's protection.
+- `PluginManager` is exported as a class from `@plitzi/sdk-server/ssr` (it was its type alone): `buildBody` and a
+  preview are handed one, and whoever builds a page itself makes theirs — `new PluginManager({})` loads none.
 - **`SSRSpaceDeployment.credentials` replaces `credential`** (`@plitzi/sdk-kernel`, `@plitzi/sdk-server`): a list of
   Site passwords, any one of which opens the host. A `getSpaceDeployment` adapter of your own returns
   `credentials: [credential]` instead of `credential`; `verifiedDomain`'s and `wildcardSubdomain`'s `find` still return

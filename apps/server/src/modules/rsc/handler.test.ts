@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TtlCache } from '@plitzi/sdk-kernel/cache';
 
 import { handleRsc, withPageLocation } from './handler';
+import { PluginManager } from '../../plugins/manager';
 
-import type { PluginManager } from '../../plugins/manager';
 import type { SSRPageServerConfig } from '../../types';
 import type { SSRRequest, SSRResponseHelpers, SSRRscContext } from '@plitzi/sdk-kernel/types';
 
@@ -71,8 +71,8 @@ describe('handleRsc', () => {
       write: () => undefined,
       end: () => undefined
     };
-    // The handler never reads its plugin manager; a test has none to give it.
-    await handleRsc(req, res, config, {} as PluginManager, cache);
+    // The handler never reads its plugin manager: one with no plugins, as a page that loads none has.
+    await handleRsc(req, res, config, new PluginManager({}), cache);
 
     return sent;
   };

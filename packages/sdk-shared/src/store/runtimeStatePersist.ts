@@ -387,8 +387,9 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     }
   });
 
-  return api => {
-    const handlers = persist(api);
+  // The store's context goes on to the persist inside: a write it fails after returning is reported through it.
+  return (api, context) => {
+    const handlers = persist(api, context);
     const initial = api.getState().runtime?.state;
     let owner = stateOwner(api.getState());
     const painted = paintedSync(api, webId);

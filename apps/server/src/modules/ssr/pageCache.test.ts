@@ -4,9 +4,9 @@ import { DEFAULT_COMPRESSION } from '@plitzi/sdk-kernel/http';
 
 import { renderSSR } from './handler';
 import { createServerCaches, destroyServerCaches, keepPage, toSharedPage } from '../../helpers/cache';
+import { PluginManager } from '../../plugins/manager';
 
 import type { ServerCaches } from '../../helpers/cache';
-import type { PluginManager } from '../../plugins/manager';
 import type { SharedPage, SharedPageStore, SSRPageServerConfig } from '../../types';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
@@ -65,7 +65,7 @@ const render = (req: SSRRequest, res: SSRResponseHelpers, serverCaches: ServerCa
     res,
     { adapters: {}, devMode: false, cacheTtlMs: 1_000, ...config } as unknown as SSRPageServerConfig,
     () => '',
-    {} as PluginManager,
+    new PluginManager({}),
     serverCaches
   );
 
