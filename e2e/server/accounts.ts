@@ -10,7 +10,9 @@ import type { SSRSession } from '@plitzi/sdk-kernel/types';
  *  form submitted, not that anybody was authenticated. Everything else here is the smallest thing the server needs
  *  — it looks accounts up through these functions and never learns where they came from. */
 
-type Row = AccountRecord & { session?: SSRSession };
+/** Every session the account holds, as a real store keeps one per device. One per row replaced the session of every
+ *  spec signed in as the same person whenever another one signed in beside it: its next page read it as revoked. */
+type Row = AccountRecord & { sessions: SSRSession[] };
 
 const hash = (password: string): string => {
   const salt = randomBytes(16).toString('hex');
@@ -37,14 +39,23 @@ export const CREDENTIALS = {
 
 /** Two accounts with different access, so a spec can tell "signed in" from "signed in as somebody who may edit". */
 const rows: Row[] = [
-  { id: 1, username: 'ada', email: 'ada@example.test', active: true, verified: true, passwordHash: hash('password') },
+  {
+    id: 1,
+    username: 'ada',
+    email: 'ada@example.test',
+    active: true,
+    verified: true,
+    passwordHash: hash('password'),
+    sessions: []
+  },
   {
     id: 2,
     username: 'grace',
     email: 'grace@example.test',
     active: true,
     verified: true,
-    passwordHash: hash('password')
+    passwordHash: hash('password'),
+    sessions: []
   }
 ];
 
@@ -56,10 +67,11 @@ const ACCESS: Record<number, { roles: string[]; permissions: string[] }> = {
 const find = (predicate: (row: Row) => boolean): Row | undefined => rows.find(predicate);
 
 export const accounts: IdentityAdapters & AccountAdapters = {
-  /** Looked up BY THE TOKEN, not by user id. Keeping the current session on the row is what makes signing out
-   *  actually sign somebody out: a token that no longer matches a row is dead, however valid its signature. */
+  /** Looked up BY THE TOKEN, not by user id. Keeping the sessions on the row is what makes signing out actually sign
+   *  somebody out: a token no row holds is dead, however valid its signature. */
   findAccountByToken: token => {
-    const row = find(candidate => candidate.session?.token === token);
+    const row = find(candidate => candidate.sessions.some(session => session.token === token));
+    const session = row?.sessions.find(held => held.token === token);
 
     return Promise.resolve(
       row
@@ -70,7 +82,7 @@ export const accounts: IdentityAdapters & AccountAdapters = {
             verified: row.verified,
             ...ACCESS[row.id],
             token,
-            expiresAt: row.session?.expiresAt ?? 0
+            expiresAt: session?.expiresAt ?? 0
           }
         : undefined
     );
@@ -82,22 +94,23 @@ export const accounts: IdentityAdapters & AccountAdapters = {
     const row = find(candidate => candidate.id === userId);
 
     if (row) {
-      row.session = session;
+      row.sessions.push(session);
     }
 
     return Promise.resolve();
   },
 
+  /** One session by either of its tokens; every one of the account by its id. */
   clearSession: target => {
-    const row = find(
-      candidate =>
-        (target.userId !== undefined && candidate.id === target.userId) ||
-        (target.accessToken !== undefined && candidate.session?.token === target.accessToken) ||
-        (target.refreshToken !== undefined && candidate.session?.refreshToken === target.refreshToken)
-    );
-
-    if (row) {
-      row.session = undefined;
+    for (const row of rows) {
+      row.sessions =
+        target.userId !== undefined && row.id === target.userId
+          ? []
+          : row.sessions.filter(
+              session =>
+                (target.accessToken === undefined || session.token !== target.accessToken) &&
+                (target.refreshToken === undefined || session.refreshToken !== target.refreshToken)
+            );
     }
 
     return Promise.resolve();
@@ -106,7 +119,8 @@ export const accounts: IdentityAdapters & AccountAdapters = {
   loadAccess: userId => Promise.resolve(ACCESS[userId] ?? { roles: [], permissions: [] }),
 
   /** The token carries its own expiry, so the row is only the revocation switch. */
-  findByRefreshToken: token => Promise.resolve(find(candidate => candidate.session?.refreshToken === token))
+  findByRefreshToken: token =>
+    Promise.resolve(find(candidate => candidate.sessions.some(session => session.refreshToken === token)))
 };
 
 export const verifyPassword = (password: string, stored: string): Promise<boolean> =>

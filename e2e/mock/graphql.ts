@@ -288,6 +288,21 @@ const handlers: Record<string, ((space: OfflineDataRaw, variables: Record<string
   SpaceRuntimeQuery: () => ({
     data: { SpaceRuntime: { environments: [], variables: [], idleMinutes: 0, sizes: [], __typename: 'SpaceRuntime' } }
   }),
+  /** The header's draft status asks every environment's latest version at boot, and the publish sheet the list: a
+   *  mocked space has kept none. The fallback's `true` has no `[0]`, and reading it took the whole header down. */
+  SpaceSnapshotsQuery: () => ({ data: { SpaceSnapshots: [] } }),
+  /** The header's release cluster asks the space's targets at boot: none, no provider, an unlimited plan. */
+  SpaceTargetsQuery: () => ({
+    data: {
+      SpaceTargets: {
+        targets: [],
+        providers: [],
+        targetFields: [],
+        limits: { deployTargets: 0, keptArtifacts: 2, deployMinutesPerMonth: null },
+        deployMinutes: { used: 0, limit: null }
+      }
+    }
+  }),
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {
