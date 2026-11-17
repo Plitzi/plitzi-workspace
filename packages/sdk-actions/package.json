@@ -39,8 +39,8 @@
   "dependencies": {
     "@plitzi/sdk-kernel": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "nodemailer": "^10.4.0",
-    "ws": "^8.22.2"
+    "nodemailer": "^10.6.0",
+    "ws": "^8.23.0"
   },
   "peerDependencies": {
     "esbuild": "^0.28.2",
@@ -69,10 +69,10 @@
     "eslint-plugin-import": "^2.32.0",
     "ioredis": "^6.0.0",
     "isolated-vm": "^7.0.2",
-    "mongodb": "^7.8.0",
+    "mongodb": "^7.9.0",
     "mysql2": "^3.24.6",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.1.0"
   }

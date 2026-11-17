@@ -124,7 +124,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
-    "@types/subset-font": "^2",
+    "@types/subset-font": "^2.3.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.3.0",
     "@vitest/coverage-v8": "^5.1.0",
@@ -136,10 +136,10 @@
     "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.1.0",
-    "ws": "^8.22.2"
+    "ws": "^8.23.0"
   },
   "scripts": {
     "prepack": "node scripts/copy-authoring-skill.mjs",

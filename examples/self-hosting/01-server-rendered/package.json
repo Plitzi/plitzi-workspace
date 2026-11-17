@@ -19,7 +19,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@plitzi/sdk-authoring": "workspace:*",
     "@types/node": "^26.6.6",
     "typescript": "^6.0.3"

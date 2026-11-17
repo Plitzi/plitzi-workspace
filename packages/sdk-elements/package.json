@@ -33,7 +33,7 @@
   "sideEffects": false,
   "dependencies": {
     "@dr.pogodin/react-helmet": "^3.3.2",
-    "@plitzi/nexus": "^1.4.0",
+    "@plitzi/nexus": "^1.5.1",
     "@plitzi/plitzi-ui": "^1.6.40",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -42,8 +42,8 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "dompurify": "^3.4.17",
-    "immer": "^11.2.9",
+    "dompurify": "^3.4.18",
+    "immer": "^11.2.10",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.2",
     "remark-gfm": "^4.0.1"
@@ -57,7 +57,7 @@
     "eslint": "^9.39.5",
     "react": "^19.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   }
 }

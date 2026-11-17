@@ -32,20 +32,20 @@
     "build:prod": "vite build"
   },
   "dependencies": {
-    "@plitzi/nexus": "^1.4.0",
+    "@plitzi/nexus": "^1.5.1",
     "@plitzi/plitzi-ui": "^1.6.40",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.2.9",
+    "immer": "^11.2.10",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "eslint": "^9.39.5",
     "react": "^19.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {

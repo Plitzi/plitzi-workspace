@@ -30,16 +30,16 @@
     "commander": "^15.1.0",
     "esbuild": "^0.28.2",
     "fflate": "^0.8.3",
-    "playwright-core": "^1.65.0"
+    "playwright-core": "^1.65.1"
   },
   "devDependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "@types/node": "^26.6.6",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "scripts": {
