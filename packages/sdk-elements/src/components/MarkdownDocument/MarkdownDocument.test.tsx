@@ -173,7 +173,9 @@ describe('MarkdownDocument', () => {
     // ran off a 390 px screen.
     it("names every body cell after its column's heading", () => {
       const { container } = render(
-        <MarkdownDocument>{'| Name | Purpose |\n| - | - |\n| theme | Remembers it |\n| flags | Keeps them |'}</MarkdownDocument>
+        <MarkdownDocument>
+          {'| Name | Purpose |\n| - | - |\n| theme | Remembers it |\n| flags | Keeps them |'}
+        </MarkdownDocument>
       );
       const labels = [...container.querySelectorAll('td')].map(cell => cell.getAttribute('data-label'));
 
