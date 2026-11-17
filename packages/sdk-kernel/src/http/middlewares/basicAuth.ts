@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 import { TtlCache } from '../../cache/TtlCache';
+import { isRecord } from '../../data/isRecord';
 
 import type { SSRMiddleware } from '../../types';
 
@@ -34,14 +35,20 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    const { data: credentials } = credential as { data: { type: 'basic' | 'token'; user: string; pass: string } };
-    if (credentials.type !== 'basic') {
-      await next();
+    // A site password is a user and a password. One without both is asked for and never met: a credential that cannot
+    // be checked keeps the site closed — it once let everybody in, for a kind of password nothing checked.
+    const hostname = req.hostname;
+    const data: Record<string, unknown> = isRecord(credential.data) ? credential.data : {};
+    const expected =
+      typeof data.user === 'string' && data.user !== '' && typeof data.pass === 'string' && data.pass !== ''
+        ? { user: data.user, pass: data.pass }
+        : undefined;
+    if (!expected) {
+      sendChallenge(res, hostname, realm);
 
       return;
     }
 
-    const hostname = req.hostname;
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       sendChallenge(res, hostname, realm);
@@ -64,7 +71,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
     // the TTL because it once matched the old one.
     const cacheKey = crypto
       .createHash('sha256')
-      .update(`${hostname}\0${credentials.user}\0${credentials.pass}\0${token}`)
+      .update(`${hostname}\0${expected.user}\0${expected.pass}\0${token}`)
       .digest('hex');
 
     if (authCache.get(cacheKey)) {
@@ -83,8 +90,8 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
     const user = decoded.slice(0, colonIdx);
     const pass = decoded.slice(colonIdx + 1);
 
-    const expectedUser = Buffer.from(credentials.user);
-    const expectedPass = Buffer.from(credentials.pass);
+    const expectedUser = Buffer.from(expected.user);
+    const expectedPass = Buffer.from(expected.pass);
     const actualUser = Buffer.from(user);
     const actualPass = Buffer.from(pass);
 

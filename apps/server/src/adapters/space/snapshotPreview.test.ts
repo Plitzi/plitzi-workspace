@@ -66,6 +66,18 @@ describe('snapshotPreview', () => {
     expect(await resolver(request(host))).toEqual({ refuse: { code: 404, message: 'Space not found' } });
   });
 
+  it('is behind the password its space’s own address asks for', async () => {
+    const credential = { provider: 'ssr', data: { user: 'ana', pass: 'secret' } };
+    const guarded = snapshotPreview({
+      suffix: 'plitzi.app',
+      keyOf,
+      find: spaceId => Promise.resolve({ spaceId, credential })
+    });
+    const host = `${previewLabel('acme', ACME, keyOf(ACME))}.plitzi.app`;
+
+    expect(await guarded(request(host))).toEqual({ ...ACME, noindex: true, credential });
+  });
+
   it('leaves every other sub-domain to the resolvers after it', async () => {
     expect(await resolver(request('acme.plitzi.app'))).toBeUndefined();
     expect(await resolver(request(`deep.${previewLabel('acme', ACME, keyOf(ACME))}.plitzi.app`))).toBeUndefined();

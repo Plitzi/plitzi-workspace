@@ -24,8 +24,6 @@ export type CredentialField = {
   choices?: readonly { value: string; label: string }[];
   /** The shape its provider issues it in: a value of another shape is refused as it is saved, naming the shape. */
   format?: { pattern: RegExp; expected: string };
-  /** Asked only when another field holds one value (a site password's user, when it is a user and a password). */
-  when?: { key: string; is: string };
 };
 
 export type CredentialKind = {
@@ -260,22 +258,12 @@ export const CREDENTIAL_KINDS: Readonly<Record<SpaceCredentialProvider, Credenti
     icon: 'fa-solid fa-lock',
     group: 'access',
     purpose: 'Asks a domain’s visitors for a password before it shows them a page.',
+    // A user and a password, as every browser asks for them (HTTP Basic): what a site's visitors can enter.
     fields: [
-      {
-        key: 'type',
-        label: 'Visitors enter',
-        required: true,
-        initial: 'basic',
-        choices: [
-          { value: 'basic', label: 'A user and a password' },
-          { value: 'token', label: 'A token' }
-        ]
-      },
       {
         key: 'user',
         label: 'User',
         required: true,
-        when: { key: 'type', is: 'basic' },
         format: { pattern: /^.{2,20}$/u, expected: '2 to 20 characters' }
       },
       {
@@ -283,16 +271,7 @@ export const CREDENTIAL_KINDS: Readonly<Record<SpaceCredentialProvider, Credenti
         label: 'Password',
         required: true,
         secret: true,
-        when: { key: 'type', is: 'basic' },
         format: { pattern: /^.{2,50}$/u, expected: '2 to 50 characters' }
-      },
-      {
-        key: 'token',
-        label: 'Token',
-        required: true,
-        secret: true,
-        when: { key: 'type', is: 'token' },
-        format: { pattern: /^.{10,100}$/u, expected: '10 to 100 characters' }
       }
     ]
   }

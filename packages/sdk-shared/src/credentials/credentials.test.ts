@@ -24,12 +24,12 @@ describe('a credential', () => {
     ]);
   });
 
-  it('asks only the fields its other values call for, and keeps only those', () => {
-    expect(credentialProblems('ssr', { type: 'token', user: 'x' })).toEqual([
-      { key: 'token', message: 'Token is required' }
+  it('asks a site password for a user and a password, and keeps only those', () => {
+    expect(credentialProblems('ssr', { user: 'x' })).toEqual([
+      { key: 'user', message: 'User is 2 to 20 characters; this one is 1 characters' },
+      { key: 'pass', message: 'Password is required' }
     ]);
-    expect(credentialData('ssr', { type: 'basic', user: ' ana ', pass: ' secret ', token: 'left behind' })).toEqual({
-      type: 'basic',
+    expect(credentialData('ssr', { user: ' ana ', pass: ' secret ', type: 'left behind' })).toEqual({
       user: 'ana',
       pass: ' secret '
     });

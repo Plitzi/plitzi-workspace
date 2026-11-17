@@ -1,4 +1,5 @@
 import { STATS_PATH } from './stage';
+import { isRecord } from '../data/isRecord';
 
 import type {
   InstanceHealth,
@@ -9,9 +10,6 @@ import type {
   PoolSource,
   ProcessStats
 } from './types';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isStats = (value: unknown): value is ProcessStats =>
   isRecord(value) && typeof value.pool === 'string' && isRecord(value.health) && isRecord(value.load);

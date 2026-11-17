@@ -277,7 +277,7 @@ describe('wildcardSubdomain', () => {
 
   /** A password on the address is the address's, as on a custom domain: the basic-auth stage asks it. */
   it('carries the access its deployment keeps for the address', async () => {
-    const credential = { provider: 'ssr', data: { type: 'basic', user: 'ana', pass: 'secret' } };
+    const credential = { provider: 'ssr', data: { user: 'ana', pass: 'secret' } };
     const guarded = wildcardSubdomain({
       suffix: 'example.app',
       find: () => Promise.resolve({ spaceId: 5, credential })

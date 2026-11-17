@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { refuse } from './types';
 
 import type { SpaceResolver } from './types';
-import type { SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-kernel/types';
+import type { SSRCredential, SSRDeploymentSecurity, SSRRequest } from '@plitzi/sdk-kernel/types';
 import type { Environment } from '@plitzi/sdk-shared';
 
 /**
@@ -44,10 +44,16 @@ export interface SnapshotPreviewOptions {
    * impossible to work out without the deployment's secret.
    */
   keyOf: (address: PreviewAddress) => string;
-  /** The space, when it is one the deployment serves; nothing for one it does not, and the address is a 404. */
+  /**
+   * The space, when it is one the deployment serves; nothing for one it does not, and the address is a 404. Its
+   * `credential` is who may see its versions: the password on its own address, asked here as there — a preview is the
+   * site as it was, and the site is behind it.
+   */
   find: (
     spaceId: number
-  ) => Promise<{ spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'> } | undefined>;
+  ) => Promise<
+    { spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'>; credential?: SSRCredential } | undefined
+  >;
 }
 
 const sameKey = (presented: string, expected: string): boolean => {
@@ -128,7 +134,8 @@ export const snapshotPreview = ({ suffix, keyOf, find }: SnapshotPreviewOptions)
       environment: address.environment,
       revision: address.revision,
       noindex: true,
-      ...(space.security ? { security: space.security } : {})
+      ...(space.security ? { security: space.security } : {}),
+      ...(space.credential ? { credential: space.credential } : {})
     };
   };
 };

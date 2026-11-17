@@ -128,6 +128,12 @@ weighs on a phone — and what of it a phone cannot hold.
   token pasted as a key) is said at its field, by the same rule the platform refuses a save with. An API's or a CMS's
   credential is a list of named values instead of JSON. The list labels every kind, deploy credentials too, and a
   domain's password is called a **Site password**. The kinds are one list in `@plitzi/sdk-shared/credentials`.
+- **A Site password is a user and a password, and one that cannot be checked keeps the site closed.** Its "A token"
+  type was checked by nothing, and the kernel let every visitor through a domain behind one; it is gone (with the
+  conditional fields only it used), and `basicAuthMiddleware` asks for any Site password without both values instead of
+  passing. A version's preview address asks for the password its space's own address asks for
+  (`snapshotPreview({ find })` returns its `credential`), as Vercel's and Netlify's previews are behind the site's
+  protection.
 
 - The draft's status and **Snapshot** are one control, as **Publish** and its menu are; the account group's parts sit
   evenly inside it (3 px all round), so a hovered one no longer leans to a side. **Domains and targets** opens the

@@ -10,10 +10,6 @@ export type CredentialProblem = { key: string; message: string };
 /** A signed token pasted where a key belongs — the most likely mix-up, and worth naming as such. */
 const looksLikeToken = (value: string): boolean => value.split('.').length === 3 && value.length > 100;
 
-/** Whether a field is asked, given the values beside it. */
-export const fieldAsked = (field: CredentialField, values: Record<string, unknown>): boolean =>
-  !field.when || values[field.when.key] === field.when.is;
-
 const fieldProblem = (field: CredentialField, raw: unknown): string | undefined => {
   const text = typeof raw === 'string' ? (field.secret ? raw : raw.trim()) : typeof raw === 'number' ? String(raw) : '';
   if (!text) {
@@ -55,7 +51,7 @@ export const credentialProblems = (
   }
 
   const problems = kind.fields.flatMap(field => {
-    const message = fieldAsked(field, data) ? fieldProblem(field, data[field.key]) : undefined;
+    const message = fieldProblem(field, data[field.key]);
 
     return message ? [{ key: field.key, message }] : [];
   });
@@ -85,7 +81,7 @@ export const credentialData = (
       const raw = values[field.key] ?? '';
       const value = field.secret ? raw : raw.trim();
 
-      return fieldAsked(field, values) && value ? [[field.key, value]] : [];
+      return value ? [[field.key, value]] : [];
     })
   );
 };
