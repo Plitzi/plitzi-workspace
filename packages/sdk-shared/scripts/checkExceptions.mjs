@@ -60,7 +60,8 @@ export const codeOf = (text, fileName = 'file.ts') => {
     blanks.push([comment.pos, comment.end]);
   }
 
-  const chars = [...text];
+  // UTF-16 units, as the parser's positions count: by code points, an emoji moved every blank after it.
+  const chars = text.split('');
   for (const [from, to] of blanks) {
     for (let index = from; index < to; index += 1) {
       if (chars[index] !== '\n') {

@@ -22,6 +22,15 @@ describe('codeOf', () => {
     expect(anys("const url = 'https://example.com'; const x: any = 1;")).toBe(1);
   });
 
+  // By code points, each emoji moved every blank after it one place on: the code after the icons was blanked instead.
+  it('blanks where the parser says, an emoji before it or not', () => {
+    const icons = "const icons = '🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀';";
+    const text = `${icons}\nconst label = 'read as any';\nconst a: any = 1;`;
+
+    expect(codeOf(text)).toContain('\nconst a: any = 1;');
+    expect(anys(text)).toBe(1);
+  });
+
   // Read as TSX, a `.ts` file's generic arrow `<D, A>(…)` was a tag, and its body blanked as the tag's text.
   it('reads a .ts file as TypeScript, generics and all', () => {
     const generic = 'export const make = <D, A>(value: D): A => {\n  return value as unknown as A;\n};';
