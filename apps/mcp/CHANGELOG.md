@@ -1,5 +1,20 @@
 # @plitzi/sdk-mcp
 
+## 0.39.5
+
+### Patch Changes
+
+- 4427674: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [4427674]
+  - @plitzi/plitzi-sdk@0.39.5
+  - @plitzi/sdk-server@0.39.5
+  - @plitzi/sdk-authoring@0.39.5
+  - @plitzi/sdk-kernel@0.39.5
+  - @plitzi/sdk-schema@0.39.5
+  - @plitzi/sdk-shared@0.39.5
+  - @plitzi/sdk-style@0.39.5
+
 ## 0.39.4
 
 ### Patch Changes
