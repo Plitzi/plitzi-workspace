@@ -53,7 +53,9 @@ export interface SpaceAdaptersConfig {
   onError?: (error: unknown, req?: SSRRequest) => void;
 }
 
-const RESOLUTION_PREFIX = 'space:resolution:';
+// Versioned with the resolution's shape: `credentials` replaced `credential`, and an entry of the old shape read back
+// would carry no password — the site open until it expired.
+const RESOLUTION_PREFIX = 'space:resolution:v2:';
 const DOMAINS_PREFIX = 'space:domains:';
 
 /**

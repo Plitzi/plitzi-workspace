@@ -12,7 +12,7 @@ const SITE = { user: 'ana', pass: 'open-sesame' };
 const basic = (user: string, pass: string) => `Basic ${Buffer.from(`${user}:${pass}`).toString('base64')}`;
 
 /** One request to a domain behind `site`, answered by the middleware: let through, or asked for the password. */
-const ask = async (middleware: SSRMiddleware, site: unknown, authorization?: string) => {
+const ask = async (middleware: SSRMiddleware, site: unknown, authorization?: string, sites: unknown[] = [site]) => {
   const seen = { status: 200, passed: false };
   const headers: Record<string, string> = {};
   // The middleware reads the host, the header and the deployment's credential, and answers with three calls: the rest
@@ -20,7 +20,7 @@ const ask = async (middleware: SSRMiddleware, site: unknown, authorization?: str
   const req = {
     hostname: 'acme.example.app',
     headers: authorization ? { authorization } : {},
-    ctx: { spaceDeployment: { credential: { provider: 'ssr', data: site } } }
+    ctx: { spaceDeployment: { credentials: sites.map(data => ({ provider: 'ssr', data })) } }
   } as unknown as Req;
   const res = {
     setHeader: (name: string, value: string) => {
@@ -68,5 +68,15 @@ describe('basicAuthMiddleware', () => {
     expect((await ask(middleware, { type: 'token', token: 'abcdefghijklmnop' }, basic('x', 'y'))).status).toBe(401);
     expect((await ask(middleware, { user: 'ana' }, basic('ana', ''))).status).toBe(401);
     expect((await ask(middleware, 'not an object', basic('ana', 'open-sesame'))).status).toBe(401);
+  });
+
+  it('opens to any one of the host’s passwords, and asks for none when it has none', async () => {
+    const middleware = basicAuthMiddleware();
+    const other = { user: 'bea', pass: 'second-door' };
+
+    expect((await ask(middleware, SITE, basic('bea', 'second-door'), [SITE, other])).status).toBe(200);
+    expect((await ask(middleware, SITE, basic('ana', 'open-sesame'), [SITE, other])).status).toBe(200);
+    expect((await ask(middleware, SITE, basic('bea', 'open-sesame'), [SITE, other])).status).toBe(401);
+    expect((await ask(middleware, SITE, undefined, [])).status).toBe(200);
   });
 });

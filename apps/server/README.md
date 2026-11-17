@@ -1664,7 +1664,7 @@ server's, which is what keeps a session established on the API side visible to t
 
 ## Basic auth
 
-Per-space HTTP Basic authentication is handled automatically via `ctx.spaceDeployment.credential`. Set `credential.provider = 'ssr'` and `credential.data = { user, pass }` in your `getSpaceDeployment` adapter. Successful authentications are cached in-memory for 5 minutes.
+Per-space HTTP Basic authentication is handled automatically via `ctx.spaceDeployment.credentials`: a list of `{ provider: 'ssr', data: { user, pass } }`, any one of which opens the host (a domain's own password; a version's preview every one its space's addresses ask). Return it from your `getSpaceDeployment` adapter — `verifiedDomain` and `wildcardSubdomain` turn a row's `credential` into it, and `snapshotPreview`'s `find` returns the list. None, or an empty list, and the host is open; a password without both a user and a password keeps it closed. Successful authentications are cached in-memory for 5 minutes.
 
 Credential comparison uses `crypto.timingSafeEqual` to prevent timing attacks. Invalid credentials always receive a `WWW-Authenticate` challenge and `401 Unauthorized`.
 

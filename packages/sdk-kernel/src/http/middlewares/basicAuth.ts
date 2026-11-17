@@ -27,23 +27,25 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
   const authCache = new TtlCache<true>(cacheTtlMs, 10_000);
 
   return async (req, res, next) => {
-    const credential = req.ctx.spaceDeployment?.credential;
-
-    if (!credential || credential.provider !== 'ssr') {
+    const passwords = (req.ctx.spaceDeployment?.credentials ?? []).filter(credential => credential.provider === 'ssr');
+    if (passwords.length === 0) {
       await next();
 
       return;
     }
 
-    // A site password is a user and a password. One without both is asked for and never met: a credential that cannot
-    // be checked keeps the site closed — it once let everybody in, for a kind of password nothing checked.
+    // A site password is a user and a password, and any one of the host's opens it (a version's preview carries every
+    // one its space's addresses ask). One without both is never met: a password that cannot be checked keeps the site
+    // closed — it once let everybody in, for a kind of password nothing checked.
     const hostname = req.hostname;
-    const data: Record<string, unknown> = isRecord(credential.data) ? credential.data : {};
-    const expected =
-      typeof data.user === 'string' && data.user !== '' && typeof data.pass === 'string' && data.pass !== ''
-        ? { user: data.user, pass: data.pass }
-        : undefined;
-    if (!expected) {
+    const expected = passwords.flatMap(({ data }) => {
+      const pair: Record<string, unknown> = isRecord(data) ? data : {};
+
+      return typeof pair.user === 'string' && pair.user !== '' && typeof pair.pass === 'string' && pair.pass !== ''
+        ? [{ user: pair.user, pass: pair.pass }]
+        : [];
+    });
+    if (expected.length === 0) {
       sendChallenge(res, hostname, realm);
 
       return;
@@ -71,7 +73,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
     // the TTL because it once matched the old one.
     const cacheKey = crypto
       .createHash('sha256')
-      .update(`${hostname}\0${expected.user}\0${expected.pass}\0${token}`)
+      .update([hostname, ...expected.flatMap(({ user, pass }) => [user, pass]), token].join('\0'))
       .digest('hex');
 
     if (authCache.get(cacheKey)) {
@@ -87,18 +89,16 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    const user = decoded.slice(0, colonIdx);
-    const pass = decoded.slice(colonIdx + 1);
+    const actualUser = Buffer.from(decoded.slice(0, colonIdx));
+    const actualPass = Buffer.from(decoded.slice(colonIdx + 1));
+    const sameAs = (actual: Buffer, wanted: string): boolean => {
+      const expectedBytes = Buffer.from(wanted);
 
-    const expectedUser = Buffer.from(expected.user);
-    const expectedPass = Buffer.from(expected.pass);
-    const actualUser = Buffer.from(user);
-    const actualPass = Buffer.from(pass);
-
-    const userMatch = actualUser.length === expectedUser.length && crypto.timingSafeEqual(actualUser, expectedUser);
-    const passMatch = actualPass.length === expectedPass.length && crypto.timingSafeEqual(actualPass, expectedPass);
-
-    if (!userMatch || !passMatch) {
+      return actual.length === expectedBytes.length && crypto.timingSafeEqual(actual, expectedBytes);
+    };
+    // Every pair is compared, whichever matches: how long the answer takes says nothing of which one did.
+    const matches = expected.map(({ user, pass }) => sameAs(actualUser, user) && sameAs(actualPass, pass));
+    if (!matches.includes(true)) {
       sendChallenge(res, hostname, realm);
 
       return;

@@ -114,7 +114,7 @@ describe('caching', () => {
     await spaces.getSpaceDeployment(credentialed);
 
     expect(resolver).toHaveBeenCalledTimes(2);
-    expect(await cache.get('space:resolution:a.test')).toBeUndefined();
+    expect(await cache.get('space:resolution:v2:a.test')).toBeUndefined();
   });
 
   it('never caches an authoring resolution, even without a credential in the query', async () => {
@@ -126,7 +126,7 @@ describe('caching', () => {
 
     await spaces.getSpaceDeployment(request('a.test'));
 
-    expect(await cache.get('space:resolution:a.test')).toBeUndefined();
+    expect(await cache.get('space:resolution:v2:a.test')).toBeUndefined();
   });
 
   it('does not cache a refusal, so fixing the row fixes the site', async () => {
@@ -283,7 +283,11 @@ describe('wildcardSubdomain', () => {
       find: () => Promise.resolve({ spaceId: 5, credential })
     });
 
-    expect(await guarded(request('acme.example.app'))).toMatchObject({ spaceId: 5, revision: 0, credential });
+    expect(await guarded(request('acme.example.app'))).toMatchObject({
+      spaceId: 5,
+      revision: 0,
+      credentials: [credential]
+    });
   });
 });
 

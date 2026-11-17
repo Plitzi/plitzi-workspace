@@ -21,6 +21,7 @@ export interface DeploymentRow {
   spaceId: number;
   environment?: Environment;
   revision?: number | null;
+  /** The password on the domain, when its owner put one on it. */
   credential?: SSRCredential;
   /** `false` refuses the request outright. A domain that is not proven is not a domain this space answers on. */
   verified?: boolean;
@@ -51,7 +52,7 @@ export const verifiedDomain = (find: (domain: string) => Promise<DeploymentRow |
       // A null revision means "the live one", which is what 0 says here. They arrive as different values from a
       // nullable column and mean the same thing.
       revision: row.revision ?? 0,
-      ...(credential ? { credential } : {}),
+      ...(credential ? { credentials: [credential] } : {}),
       ...(security ? { security } : {})
     };
   };
@@ -100,8 +101,13 @@ export const wildcardSubdomain = ({ suffix, find }: WildcardSubdomainOptions): S
     }
 
     const space = await find(slug);
+    if (!space) {
+      return undefined;
+    }
 
-    return space ? { ...space, revision: 0 } : undefined;
+    const { credential, ...found } = space;
+
+    return { ...found, revision: 0, ...(credential ? { credentials: [credential] } : {}) };
   };
 };
 

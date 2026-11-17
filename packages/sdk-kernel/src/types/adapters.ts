@@ -62,7 +62,11 @@ export type SSRSpaceDeployment = {
   /** What this host's pages are held to, for a deployment that lets each domain say: absent, the server's own. */
   security?: SSRDeploymentSecurity;
   environment?: Environment;
-  credential?: SSRCredential;
+  /**
+   * The Site passwords that open this host, any one of them (the basic-auth stage): a domain's own, or — a version's
+   * preview — every one its space's addresses ask. None, or empty, and the host is open.
+   */
+  credentials?: SSRCredential[];
   spaceId?: number | null;
   revision?: number;
   /**

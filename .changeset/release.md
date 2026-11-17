@@ -135,9 +135,13 @@ weighs on a phone — and what of it a phone cannot hold.
 - **A Site password is a user and a password, and one that cannot be checked keeps the site closed.** Its "A token"
   type was checked by nothing, and the kernel let every visitor through a domain behind one; it is gone (with the
   conditional fields only it used), and `basicAuthMiddleware` asks for any Site password without both values instead of
-  passing. A version's preview address asks for the password its space's own address asks for
-  (`snapshotPreview({ find })` returns its `credential`), as Vercel's and Netlify's previews are behind the site's
-  protection.
+  passing. A version's preview address asks for the Site passwords its space's addresses ask — any one opens it, and
+  with none it is open as the site is — as Vercel's and Netlify's previews are behind the site's protection.
+- **`SSRSpaceDeployment.credentials` replaces `credential`** (`@plitzi/sdk-kernel`, `@plitzi/sdk-server`): a list of
+  Site passwords, any one of which opens the host. A `getSpaceDeployment` adapter of your own returns
+  `credentials: [credential]` instead of `credential`; `verifiedDomain`'s and `wildcardSubdomain`'s `find` still return
+  a row's one `credential`, and `snapshotPreview`'s `find` returns `credentials`. The resolution cache is keyed
+  `space:resolution:v2:` so no entry of the old shape is read.
 
 - The draft's status and **Snapshot** are one control, as **Publish** and its menu are; the account group's parts sit
   evenly inside it (3 px all round), so a hovered one no longer leans to a side. **Domains and targets** opens the

@@ -46,13 +46,14 @@ export interface SnapshotPreviewOptions {
   keyOf: (address: PreviewAddress) => string;
   /**
    * The space, when it is one the deployment serves; nothing for one it does not, and the address is a 404. Its
-   * `credential` is who may see its versions: the password on its own address, asked here as there — a preview is the
-   * site as it was, and the site is behind it.
+   * `credentials` are who may see its versions: every Site password its addresses ask, any one opening the preview — a
+   * preview is the site as it was, and the site is behind them. None, and the preview is open as its site is.
    */
   find: (
     spaceId: number
   ) => Promise<
-    { spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'>; credential?: SSRCredential } | undefined
+    | { spaceId: number; security?: Pick<SSRDeploymentSecurity, 'scriptPolicy'>; credentials?: SSRCredential[] }
+    | undefined
   >;
 }
 
@@ -135,7 +136,7 @@ export const snapshotPreview = ({ suffix, keyOf, find }: SnapshotPreviewOptions)
       revision: address.revision,
       noindex: true,
       ...(space.security ? { security: space.security } : {}),
-      ...(space.credential ? { credential: space.credential } : {})
+      ...(space.credentials && space.credentials.length > 0 ? { credentials: space.credentials } : {})
     };
   };
 };

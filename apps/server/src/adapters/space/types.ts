@@ -13,7 +13,8 @@ export interface SpaceResolution {
   environment?: Environment;
   /** Defaults to `0` — the live snapshot. */
   revision?: number;
-  credential?: SSRCredential;
+  /** The Site passwords that open it, any one of them (`SSRSpaceDeployment.credentials`); none, and it is open. */
+  credentials?: SSRCredential[];
   /**
    * What the host's pages are held to, as the row that resolved it says (`SSRSpaceDeployment.security`): kept with the
    * resolution, so no request asks for it again. Absent, the server's own.
