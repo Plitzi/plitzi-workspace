@@ -54,9 +54,10 @@ below hold it.
 - **D9 — Secrets stay in the trusted plane; the egress proxy waits for its trigger** (below).
 - **D10 — No compatibility layer**: the imports changed in one change, everywhere; no package re-exports another's.
 - **D11 — One process can still run everything**, through `sdk-server`'s composition subpaths (`./platform`,
-  `./project`, `./bundle`) and nowhere else. A page server's entries never reach `sdk-actions` or `sdk-runtime` (an
-  import test follows them), and both are optional peers, so one deployed alone installs neither;
-  `createPlatform` without them refuses, naming the package.
+  `./project`, `./bundle`) and nowhere else. A page server's entries never reach `sdk-actions` (an import test follows
+  them), which is an optional peer, so one deployed alone does not install it; `createPlatform` without it refuses,
+  naming the package. `sdk-server` imports nothing of `sdk-runtime`: a deployment that runs an author's code hands
+  `sdk-actions` a runner of it (D8).
 - **D12 — Each package owns its configuration and its types.** `createServer` takes pages, RSC and signing in;
   `createWorker` and `createActionsModule` the actions and functions; the server-only types left `sdk-shared`, which
   keeps what the browser also reads. The CLI's `upgrade` migrates a project's server file.
