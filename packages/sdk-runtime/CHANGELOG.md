@@ -1,5 +1,15 @@
 # @plitzi/sdk-runtime
 
+## 0.39.9
+
+### Patch Changes
+
+- f04c646: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [f04c646]
+  - @plitzi/sdk-kernel@0.39.9
+  - @plitzi/sdk-shared@0.39.9
+
 ## 0.39.8
 
 ### Patch Changes
