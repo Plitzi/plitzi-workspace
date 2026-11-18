@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { serverLog } from '@plitzi/sdk-kernel/log';
 
+import { limitSetAsideError } from './endings';
 import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { schedulesFor } from './schedules';
@@ -99,6 +100,112 @@ describe('createScheduler', () => {
     world.at('2026-03-02T00:30:00Z');
     const [second] = (await world.replica().sweep()).enqueued;
     expect(await world.queue.getJob([1], second)).toMatchObject({ status: 'pending', needsMemoryMb: 513 });
+  });
+
+  /** The first fire of a schedule, claimed and ended as a worker ends one stopped at a limit its plan sets. */
+  const setAsideAt = async (world: ReturnType<typeof cluster>, limit: 'memory' | 'cpu' | 'quota'): Promise<string> => {
+    const [first] = (await world.replica().sweep()).enqueued;
+    await world.queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+    const said = `Went over its ${limit}`;
+    await world.queue.settle({
+      jobId: first,
+      workerId: 'pod-a',
+      status: 'paused',
+      error: limitSetAsideError(said),
+      attempt: { status: 'failed', workerId: 'pod-a', error: said, limit }
+    });
+
+    return first;
+  };
+
+  // A run stopped at a limit its plan sets meets it again at the next fire. A sweep that needed more memory than a
+  // small task has was one more job set aside every minute — thirty an hour, each a failed run — for nobody to resume.
+  it('waits on a fire set aside at a limit instead of firing into it again', async () => {
+    const world = cluster([scheduled('* * * * *')]);
+    await seed(world);
+    world.at('2026-03-01T00:01:00Z');
+    const first = await setAsideAt(world, 'memory');
+
+    for (const minute of ['02', '03', '04', '30']) {
+      world.at(`2026-03-01T00:${minute}:00Z`);
+      const pass = await world.replica().sweep();
+
+      expect(pass.enqueued).toEqual([]);
+      expect(pass.held).toEqual([{ spaceId: 1, actionId: 'digest', jobId: first, limit: 'memory' }]);
+    }
+
+    // One job waits for somebody, not one a minute; and the schedule kept its place — nothing to replay afterwards.
+    expect((await world.queue.listJobs({ spaceIds: [1], limit: 10, offset: 0 })).total).toBe(1);
+    const [schedule] = await world.queue.listSchedules([1]);
+
+    expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-01T00:31:00.000Z');
+    // The last fire made into a job is still the one it waits on: the fires held back since were not.
+    expect(first).toBe(`schedule:1:digest:${String(schedule.lastFireAt)}`);
+  });
+
+  it('fires again once the job it waited on is resumed, or cancelled', async () => {
+    for (const release of ['resume', 'cancel'] as const) {
+      const world = cluster([scheduled('* * * * *')]);
+      await seed(world);
+      world.at('2026-03-01T00:01:00Z');
+      const first = await setAsideAt(world, 'memory');
+      world.at('2026-03-01T00:02:00Z');
+
+      expect((await world.replica().sweep()).enqueued).toEqual([]);
+      await world.queue[release]([1], first);
+      world.at('2026-03-01T00:03:00Z');
+
+      expect((await world.replica().sweep()).enqueued, release).toEqual([
+        `schedule:1:digest:${Date.parse('2026-03-01T00:03:00Z')}`
+      ]);
+    }
+  });
+
+  // Nobody may be watching: what a run holds can depend on the day's data, and a schedule held for ever by one large
+  // day would be a feed that never came back. Once a day it is tried again — one run, not one a minute.
+  it('tries a held schedule again once a day', async () => {
+    const world = cluster([scheduled('* * * * *')]);
+    await seed(world);
+    world.at('2026-03-01T00:01:00Z');
+    await setAsideAt(world, 'memory');
+    const [held] = await world.queue.listSchedules([1]);
+    const firedAt = held.lastFireAt ?? 0;
+    world.at(new Date(firedAt + 23 * 60 * 60_000).toISOString());
+
+    expect((await world.replica().sweep()).enqueued).toEqual([]);
+    world.at(new Date(firedAt + 24 * 60 * 60_000 + 30_000).toISOString());
+
+    // One run, of the fire then due — and the jobs are two: the one set aside, and this.
+    expect((await world.replica().sweep()).enqueued).toHaveLength(1);
+    expect((await world.queue.listJobs({ spaceIds: [1], limit: 10, offset: 0 })).total).toBe(2);
+  });
+
+  // Its allowance for the period comes back by itself, and a run that failed every attempt may pass the next time:
+  // neither is a limit the code meets again at every fire.
+  it('does not wait on a fire that spent its allowance, nor on one that failed every attempt', async () => {
+    const spent = cluster([scheduled('* * * * *')]);
+    await seed(spent);
+    spent.at('2026-03-01T00:01:00Z');
+    await setAsideAt(spent, 'quota');
+    spent.at('2026-03-01T00:02:00Z');
+
+    expect((await spent.replica().sweep()).enqueued).toHaveLength(1);
+
+    const failed = cluster([scheduled('* * * * *')]);
+    await seed(failed);
+    failed.at('2026-03-01T00:01:00Z');
+    const [first] = (await failed.replica().sweep()).enqueued;
+    await failed.queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+    await failed.queue.settle({
+      jobId: first,
+      workerId: 'pod-a',
+      status: 'paused',
+      error: 'Set aside after 3 failed attempts',
+      attempt: { status: 'failed', workerId: 'pod-a', error: 'the API answered 503' }
+    });
+    failed.at('2026-03-01T00:02:00Z');
+
+    expect((await failed.replica().sweep()).enqueued).toHaveLength(1);
   });
 
   it('runs nothing on a schedule for a space refused one, and takes its schedules off the queue', async () => {

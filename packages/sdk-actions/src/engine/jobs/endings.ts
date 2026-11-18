@@ -33,7 +33,33 @@ export const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion
  * owner to fix or its plan to allow more, rather than run twice more for nothing. Time is not among them: an API slow
  * for a minute answers the next attempt.
  */
-export const SET_ASIDE_LIMITS = new Set(['cpu', 'memory', 'calls', 'output', 'steps', 'requests', 'response', 'quota']);
+export const SET_ASIDE_LIMITS = new Set<ActionRunLimit>([
+  'cpu',
+  'memory',
+  'calls',
+  'output',
+  'steps',
+  'requests',
+  'response',
+  'quota'
+]);
+
+/**
+ * The limits a SCHEDULE waits on: those the code itself meets again at the next fire, as it would at the next attempt.
+ * Its allowance for the period (`quota`) is not one — that comes back by itself when the period turns, and a schedule
+ * waiting on it would wait on a job nobody has a reason to resume.
+ */
+export const HOLDS_SCHEDULE = new Set<ActionRunLimit>([...SET_ASIDE_LIMITS].filter(limit => limit !== 'quota'));
+
+/**
+ * The limit a job set aside was stopped at, when its schedule waits on it: `paused`, its last attempt ended at a
+ * limit of {@link HOLDS_SCHEDULE}. A job set aside after failing every attempt is not one — the next fire may pass.
+ */
+export const heldAtLimit = (job: Pick<Job, 'status' | 'history'>): ActionRunLimit | undefined => {
+  const limit = job.status === 'paused' ? job.history.at(-1)?.limit : undefined;
+
+  return limit !== undefined && HOLDS_SCHEDULE.has(limit) ? limit : undefined;
+};
 
 /** Why a job stopped at one of {@link SET_ASIDE_LIMITS} waits for somebody. */
 export const limitSetAsideError = (said: string): string =>
@@ -83,7 +109,7 @@ export const limitEndings =
       status: 'paused',
       runId,
       error: limitSetAsideError(said),
-      attempt: { status: 'failed', workerId, runId, error: said }
+      attempt: { status: 'failed', workerId, runId, error: said, limit }
     });
 
     return true;

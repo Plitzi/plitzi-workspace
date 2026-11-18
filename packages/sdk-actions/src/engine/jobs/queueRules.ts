@@ -330,14 +330,17 @@ export const queueRules = (
         .map(schedule => ({ ...schedule }));
     },
 
-    advanceSchedule: ({ spaceId, actionId, from, to, missed }) => {
+    advanceSchedule: ({ spaceId, actionId, from, to, missed, held }) => {
       const schedule = schedules.get(key(spaceId, actionId));
       if (!schedule || schedule.nextRunAt !== from) {
         return false;
       }
 
       schedule.nextRunAt = to;
-      schedule.lastFireAt = from;
+      if (!held) {
+        schedule.lastFireAt = from;
+      }
+
       schedule.missed += missed;
       schedule.updatedAt = now();
 

@@ -410,15 +410,17 @@ export const createMysqlJobQueue = ({
       return rows.map(toSchedule);
     },
 
-    advanceSchedule: async ({ spaceId, actionId, from, to, missed }) => {
+    advanceSchedule: async ({ spaceId, actionId, from, to, missed, held }) => {
       const conn = await db();
       const at = await clock.now();
       // Compare-and-set on the very value that was read: two replicas that swept the same fire cannot both move it.
       const result = await execute(
         conn,
-        `UPDATE ${t.schedules} SET next_run_at = ?, last_fire_at = ?, updated_at = ?, missed = missed + ?
+        // A fire held back was not enqueued: the last one that was stays the last.
+        `UPDATE ${t.schedules} SET next_run_at = ?, last_fire_at = ${held ? 'last_fire_at' : '?'}, updated_at = ?,
+          missed = missed + ?
         WHERE space_id = ? AND action_id = ? AND next_run_at = ?`,
-        [to, from, at, missed, spaceId, actionId, from]
+        [to, ...(held ? [] : [from]), at, missed, spaceId, actionId, from]
       );
 
       return result.affectedRows === 1;

@@ -164,7 +164,7 @@ export type ActionSchedule = {
   enabled: boolean;
   /** Epoch ms of the next fire this schedule owes. The queue's clock decides when that has arrived. */
   nextRunAt: number;
-  /** The last fire actually enqueued. */
+  /** The last fire actually enqueued: one the scheduler held back (`advanceSchedule`'s `held`) does not move it. */
   lastFireAt?: number;
   /** Fires that went by while nothing was running to take them. Cumulative, and shown to an operator. */
   missed: number;
@@ -247,6 +247,11 @@ export type JobQueue = {
     from: number;
     to: number;
     missed: number;
+    /**
+     * The fire at `from` was not enqueued — the schedule waits on the one before it, set aside at a limit it would
+     * meet again: it moves on with the clock, and `lastFireAt` stays the fire that was.
+     */
+    held?: boolean;
   }) => Promise<boolean>;
   /** Replaces what this space has scheduled. An action no longer listed stops having a schedule at all. */
   putSchedules: (params: { spaceId: number; schedules: ActionScheduleInput[] }) => Promise<void>;

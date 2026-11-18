@@ -1,19 +1,27 @@
 import { serverLog } from '@plitzi/sdk-kernel/log';
 import { cronFiresBetween, cronNextFire } from '@plitzi/sdk-shared/actions';
 
+import { heldAtLimit } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { DEFAULT_MAX_ATTEMPTS, scheduleJobId, schedulesFor } from './schedules';
 
 import type { FailureStreak } from './failureStreak';
 import type { JobQueue, ActionSchedule } from '../../types';
 import type { ActionLookups } from '../types';
-import type { Environment } from '@plitzi/sdk-shared';
+import type { ActionRunLimit, Environment } from '@plitzi/sdk-shared';
 
 const MINUTE_MS = 60_000;
 
 /** Where a schedule is parked when its expression has no next fire at all. Four years out, which is the horizon
  *  {@link cronNextFire} searches: nothing inside it matched, so nothing inside it will. */
 const PARK_MS = 4 * 366 * 24 * 60 * MINUTE_MS;
+
+/**
+ * How long a schedule waits on a fire set aside at a limit before it tries one again by itself. What a run holds can
+ * depend on the day's data, and nobody may be watching: held for ever by one large day, a feed would never come back.
+ * A day apart it is one run that says where it stands — not one a minute.
+ */
+const HELD_RETRY_MS = 24 * 60 * MINUTE_MS;
 
 export type SchedulerOptions = {
   queue: JobQueue;
@@ -48,6 +56,8 @@ export type SweepResult = {
   duplicates: string[];
   /** Fires that went by while nothing was running, by schedule. */
   missed: { spaceId: number; actionId: string; count: number }[];
+  /** Fires not made into jobs: their schedule waits on the job named, set aside at a limit it would meet again. */
+  held: { spaceId: number; actionId: string; jobId: string; limit: ActionRunLimit }[];
 };
 
 export type Scheduler = {
@@ -79,6 +89,11 @@ export type Scheduler = {
  * **An outage does not replay as a storm.** The overdue fire becomes one job, and the schedule then jumps to the
  * first occurrence after now, recording how many went by. A digest missed for a day sends once and says it missed
  * 23 — rather than sending 23 times, which is how a scheduler that "catches up" turns an outage into an incident.
+ *
+ * **A limit is not fired into again.** A fire set aside because its code went past what its plan gives it — its
+ * memory, its CPU, its calls — would be at the next fire too: the schedule waits on that one job, moving on with the
+ * clock, until somebody resumes or cancels it; and tries one again by itself a day later. An every-minute sweep that
+ * needed more memory than its size has was one more job set aside every minute, each a failed run.
  */
 export const createScheduler = ({
   queue,
@@ -111,6 +126,8 @@ export const createScheduler = ({
   let timer: NodeJS.Timeout | undefined;
   let reconcileTimer: NodeJS.Timeout | undefined;
   let running = false;
+  /** The job each schedule was last said to wait on, so it is said once — not at every fire held back. */
+  const waiting = new Map<string, string>();
 
   const produce = async (schedule: ActionSchedule, at: Date, result: SweepResult): Promise<void> => {
     const { spaceId, actionId, cron, timezone, nextRunAt: fireAt } = schedule;
@@ -128,6 +145,37 @@ export const createScheduler = ({
         ? undefined
         : await queue.getJob([spaceId], scheduleJobId(spaceId, actionId, schedule.lastFireAt));
 
+    // The fire before was set aside at a limit its code meets again: this one would be too. The schedule waits on it
+    // — and keeps its place, so nothing is owed when it goes on.
+    const limit = before ? heldAtLimit(before) : undefined;
+    const key = `${String(spaceId)}:${actionId}`;
+    if (before && limit && at.getTime() - before.dueAt < HELD_RETRY_MS) {
+      if (waiting.get(key) !== before.id) {
+        waiting.set(key, before.id);
+        serverLog.warn(
+          'Actions',
+          `schedule ${actionId} of space ${String(spaceId)} waits: its run ${before.id} was set aside at its ${limit} ` +
+            'limit, which the next would reach too. It fires again once that job is resumed or cancelled, and tries ' +
+            'one by itself a day after it.'
+        );
+      }
+
+      result.held.push({ spaceId, actionId, jobId: before.id, limit });
+      const late = Math.max(fireAt, at.getTime());
+      const following = cronNextFire(cron, new Date(Math.floor(late / MINUTE_MS) * MINUTE_MS + MINUTE_MS), timezone);
+      await queue.advanceSchedule({
+        spaceId,
+        actionId,
+        from: fireAt,
+        to: following ? following.getTime() : late + PARK_MS,
+        missed: 0,
+        held: true
+      });
+
+      return;
+    }
+
+    waiting.delete(key);
     const created = await queue.enqueue({
       id,
       spaceId,
@@ -165,7 +213,7 @@ export const createScheduler = ({
   };
 
   const sweep = async (): Promise<SweepResult> => {
-    const result: SweepResult = { enqueued: [], duplicates: [], missed: [] };
+    const result: SweepResult = { enqueued: [], duplicates: [], missed: [], held: [] };
     const at = await queue.now();
     for (const schedule of await queue.dueSchedules(batch)) {
       await produce(schedule, at, result);

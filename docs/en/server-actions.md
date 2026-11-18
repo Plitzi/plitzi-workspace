@@ -523,6 +523,16 @@ Four properties follow, and they are the reason the design looks the way it does
   whatever spaces it is kept for. When none may (`ceilingMb`), the job is set aside (`paused`), its error saying so,
   until a worker is given more memory and it is resumed. A worker that died for anything else leaves its jobs to the
   next, as above. `summarize` counts both (`needingMemory`). Without `claimMemory`, nothing changes.
+- **A schedule does not fire into a limit again.** A run stopped at a limit its plan sets — its memory, its CPU, its
+  calls, its output, its steps, its requests — is set aside at once (`paused`): the same code reaches it again on
+  every attempt. It would at the schedule's next fire too, so the schedule waits on that one job: its fires are held
+  back, not made into jobs (`SweepResult.held`, and one line in the log), while it moves on with the clock and owes
+  nothing afterwards. It fires again once the job is resumed or cancelled — and tries one fire by itself a day after
+  it, for a schedule nobody is watching whose data had one large day. An every-minute task that needs more memory than
+  its size has is then one job waiting for somebody, with what to do on it (`limits: { size: 'medium' }`,
+  [functions](./functions.md)), not sixty failed runs an hour. A job's attempt says the limit it was stopped at
+  (`history[].limit`). An allowance spent for the period (`quota`) is not such a limit: it comes back by itself. A
+  `JobQueue` of your own leaves `lastFireAt` as it is when `advanceSchedule` says `held`.
 - **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
   SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
   job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is

@@ -202,7 +202,7 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
 
     describeMemoryNeeds({ queue: () => queue, job, wait, space: SPACE, otherSpace: OTHER_SPACE });
     describeFlow({ queue: () => queue, job });
-    describeSetAside({ queue: () => queue, job, space: SPACE });
+    describeSetAside({ queue: () => queue, job, schedule, space: SPACE });
     describeCodeClaims({ queue: () => queue, job });
 
     it('keeps a claim alive while its worker reports in', async () => {

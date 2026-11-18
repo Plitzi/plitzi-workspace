@@ -434,14 +434,15 @@ export const createMongoJobQueue = ({
       return due.map(toSchedule);
     },
 
-    advanceSchedule: async ({ spaceId, actionId, from, to, missed }) => {
+    advanceSchedule: async ({ spaceId, actionId, from, to, missed, held }) => {
       const { schedules } = await collections();
       const at = await clock.now();
       // Compare-and-set on the very value that was read: two replicas that swept the same fire cannot both move it,
       // so the schedule advances exactly once however many of them got there.
       const result = await schedules.updateOne(
         { _id: scheduleId(spaceId, actionId), nextRunAt: from },
-        { $set: { nextRunAt: to, lastFireAt: from, updatedAt: at }, $inc: { missed } }
+        // A fire held back was not enqueued: the last one that was stays the last.
+        { $set: { nextRunAt: to, ...(held ? {} : { lastFireAt: from }), updatedAt: at }, $inc: { missed } }
       );
 
       return result.matchedCount === 1;

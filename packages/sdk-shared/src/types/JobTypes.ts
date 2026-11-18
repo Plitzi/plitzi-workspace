@@ -1,4 +1,4 @@
-import type { ActionAccess, ActionTriggerType } from './ActionTypes';
+import type { ActionAccess, ActionRunLimit, ActionTriggerType } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { SpaceRevision } from './ServerAdapterTypes';
 import type { RunUser } from './ServerTypes';
@@ -110,6 +110,12 @@ export type JobAttempt = {
   error?: string;
   /** The error is the code's own refusal (`ActionRefusal`), written for whoever asked — what a job's watcher may read. */
   refused?: true;
+  /**
+   * The limit the attempt was stopped at, when it was one (`memory`, `cpu`, `calls`…): what tells a job set aside
+   * because its code needs more than its plan gives it — which a schedule waits on rather than firing into again —
+   * from one set aside for anything else.
+   */
+  limit?: ActionRunLimit;
   /** What the worker that held it may hold, in MiB, when it said. */
   memoryMb?: number;
   /** That worker said it neared its memory while it held the job: a `lost` one then needs a larger worker. */

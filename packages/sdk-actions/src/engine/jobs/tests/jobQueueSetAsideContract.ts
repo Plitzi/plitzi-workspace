@@ -1,12 +1,13 @@
 import { expect, it } from 'vitest';
 
-import type { JobQueue } from '../../../types';
+import type { ActionScheduleInput, JobQueue } from '../../../types';
 import type { JobInput } from '@plitzi/sdk-shared';
 
 /** What the set-aside half of the job queue contract reads of the contract around it. */
 export type SetAsideSubject = {
   queue: () => JobQueue;
   job: (over?: Partial<JobInput>) => Promise<JobInput>;
+  schedule: (over?: Partial<ActionScheduleInput>) => Promise<ActionScheduleInput>;
   space: number;
 };
 
@@ -48,5 +49,23 @@ export const describeSetAside = (ctx: SetAsideSubject): void => {
     expect(summary.waiting).toEqual({ calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 });
     expect(summary.oldestDueAt).toBeUndefined();
     expect(summary.spaces).toEqual([]);
+  });
+
+  // A schedule waits on a fire set aside at a limit: the fires after it are held back, not made into jobs. It moves
+  // on with the clock all the same, and the last fire that was a job stays the last — it names the one it waits on.
+  it('moves a schedule on without a fire, keeping the last one that was', async () => {
+    await ctx.queue().putSchedules({ spaceId: ctx.space, schedules: [await ctx.schedule()] });
+    const [due] = await ctx.queue().dueSchedules(10);
+    const moved = { spaceId: ctx.space, actionId: due.actionId, missed: 0 };
+    await ctx.queue().advanceSchedule({ ...moved, from: due.nextRunAt, to: due.nextRunAt + 60_000 });
+
+    expect(
+      await ctx
+        .queue()
+        .advanceSchedule({ ...moved, from: due.nextRunAt + 60_000, to: due.nextRunAt + 120_000, held: true })
+    ).toBe(true);
+    const [after] = await ctx.queue().listSchedules([ctx.space]);
+
+    expect(after).toMatchObject({ nextRunAt: due.nextRunAt + 120_000, lastFireAt: due.nextRunAt });
   });
 };
