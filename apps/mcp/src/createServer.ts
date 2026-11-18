@@ -1,4 +1,5 @@
 import { createHttpServer, makeHandler } from '@plitzi/sdk-kernel/http';
+import { configureServerLog, defaultLogLevel } from '@plitzi/sdk-kernel/log';
 
 import { buildMCPPipeline } from './pipeline';
 
@@ -15,6 +16,15 @@ import type { SSRServerConfig } from '@plitzi/sdk-server';
  *  It owns its whole sub-domain, answering JSON-RPC on every path rather than under /mcp. To serve MCP alongside
  *  pages on one port instead, hand `mcpExtensions(options)` to createServer from `@plitzi/sdk-server`. */
 export const createServer = (config: SSRServerConfig, options: McpOptions = {}): HttpServer => {
+  // What this server says — that it listens, a request it refused — held to its own threshold and handed to its own
+  // sink, as a page server's and a worker's are. Left to the process's default, a production MCP said errors alone,
+  // on the console, whatever `logLevel` and `logger` it was given: it started without a line.
+  configureServerLog({
+    level: config.logLevel ?? defaultLogLevel(config.devMode),
+    ...(config.logger ? { logger: config.logger } : {}),
+    ...(config.slowRunMs === undefined ? {} : { slowRunMs: config.slowRunMs })
+  });
+
   const stages = buildMCPPipeline(options);
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<BaseContext> = (raw, rawRes, req, res) => ({

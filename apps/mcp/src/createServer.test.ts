@@ -6,7 +6,7 @@ import { createServer } from './createServer';
 import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
 import type { HttpServer } from '@plitzi/sdk-kernel/http';
-import type { SSRAdapters } from '@plitzi/sdk-kernel/types';
+import type { ServerLogEvent, SSRAdapters } from '@plitzi/sdk-kernel/types';
 
 const PORT = await unusedPort();
 
@@ -16,15 +16,30 @@ const adapters = {
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true })
 } as unknown as SSRAdapters;
 
+/** What the server said to the sink it was given. */
+const said: ServerLogEvent[] = [];
+
 const server: HttpServer = createServer({
   httpVersion: 1,
   adapters,
-  health: { payload: { role: 'mcp', ok: true } }
+  health: { payload: { role: 'mcp', ok: true } },
+  logLevel: 'info',
+  logger: event => {
+    said.push(event);
+  }
 });
 await server.listen(PORT, '127.0.0.1');
 
 describe('createServer (dedicated MCP server end-to-end)', () => {
   afterAll(() => server.close());
+
+  // Its `logLevel` and `logger` were never applied: in production it kept the process's default — errors alone, on
+  // the console — and a pod's log showed its databases connecting and then nothing, as if it had not started.
+  it('says that it listens, at the level and to the sink it was given', () => {
+    expect(said.filter(event => event.kind === 'message').map(event => `${event.scope} ${event.message}`)).toContain(
+      `MCP HTTP/1.1 - listening on 127.0.0.1:${String(PORT)}`
+    );
+  });
 
   it('answers the health endpoint with the configured payload', async () => {
     const res = await httpRequest(PORT, 'GET', '/health');
