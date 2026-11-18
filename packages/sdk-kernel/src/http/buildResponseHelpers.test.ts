@@ -53,6 +53,29 @@ describe('sending a response', () => {
     expect(state.body).toBe(body);
   });
 
+  /**
+   * A page says `no-transform` to the proxies after this server — one that rewrote its HTML broke its hydration — and
+   * is still this server's to compress: unencoded, a landing is half a megabyte on the wire.
+   */
+  it('compresses a body whose no-transform is said to the proxies alone, the stored form included', () => {
+    const { raw, headers, state } = rawResponse();
+    const res = buildResponseHelpers(raw, 'gzip');
+
+    res.setHeader('Cache-Control', 'no-transform');
+    res.send(body, { ownEncoding: true });
+
+    expect(headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(state.body as Buffer).toString()).toBe(body);
+
+    const stored = rawResponse();
+    const again = buildResponseHelpers(stored.raw, 'gzip');
+    again.setHeader('Cache-Control', 'no-transform');
+    again.send(() => 'never read', { compressed: { gzip: state.body as Buffer }, ownEncoding: true });
+
+    expect(stored.headers['content-encoding']).toBe('gzip');
+    expect(stored.state.body).toBe(state.body);
+  });
+
   it('still compresses a response that only asked not to be cached', () => {
     const { raw, headers } = rawResponse();
     const res = buildResponseHelpers(raw, 'gzip');

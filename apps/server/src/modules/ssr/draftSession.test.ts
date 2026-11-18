@@ -161,7 +161,7 @@ describe('rendering a draft', () => {
     expect(headers['Set-Cookie']).toContain(`${PREVIEW_COOKIE}=session`);
     expect(headers['Set-Cookie']).toContain('HttpOnly');
     expect(headers['Set-Cookie']).toContain('Secure');
-    expect(headers['Cache-Control']).toBe('no-store, no-cache, must-revalidate');
+    expect(headers['Cache-Control']).toBe('no-store, no-cache, must-revalidate, no-transform');
     expect(headers['X-Robots-Tag']).toBe('noindex, nofollow');
   });
 
@@ -189,7 +189,19 @@ describe('rendering a draft', () => {
     await render(request({ __pt: 'once' }), res, configWith(store));
 
     expect(headers['Set-Cookie']).toBeUndefined();
-    expect(headers['Cache-Control']).toBe('no-store, no-cache, must-revalidate');
+    expect(headers['Cache-Control']).toBe('no-store, no-cache, must-revalidate, no-transform');
+  });
+
+  /**
+   * A page hydrates over the HTML it was sent, node for node: a proxy that rewrites it on the way (an email address
+   * obfuscated, a script injected) makes React throw the server's page away and draw it again — every animation twice.
+   */
+  it('tells every proxy on the way to leave a page’s HTML as it was sent', async () => {
+    const { res, headers } = response();
+
+    await render(request({}), res, configWith(createMemoryDraftStore()));
+
+    expect(headers['Cache-Control']).toBe('no-transform');
   });
 
   /** Nobody is billed for looking at their own unsaved edits — including on the reloads a session makes possible. */

@@ -41,6 +41,15 @@ const sendUnavailable = (res: SSRResponseHelpers, said: string): void => {
 /** How long a page answered busy tells its visitor to wait before asking again, in seconds. */
 const BUSY_RETRY_AFTER_S = 2;
 
+/**
+ * A page hydrates over the very HTML it was sent: the browser's first render must find, node for node, what the server
+ * drew. A proxy that edits the document on its way — an email address rewritten against scrapers, a script injected,
+ * markup minified — breaks that, and React throws the server's page away and draws it again from nothing: every
+ * animation starts twice, every font and image is asked for again (#418; Cloudflare's Email Address Obfuscation did it
+ * to a landing with one address in its copy). `no-transform` is HTTP's own word for it, and the proxies honour it.
+ */
+const PAGE_AS_SENT = 'no-transform';
+
 /** The turn of a space with no limit: nothing to give back. */
 const noTurn = (): void => undefined;
 
@@ -59,6 +68,7 @@ export const renderSSR = async (
   const limit = renderLimitFor(req.ctx.spaceDeployment, config.renderLimit);
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', PAGE_AS_SENT);
   // A `system` theme is drawn as the machine asks (`theme.resolved`): Chromium says which from its next request on.
   res.setHeader('Accept-CH', SCHEME_HINT_HEADER);
   res.setHeader('Vary', SCHEME_HINT_HEADER);
@@ -86,7 +96,7 @@ export const renderSSR = async (
      * somebody else, and `noindex` because a draft URL that reaches a crawler puts unpublished copy in a search
      * result. Neither is a nicety: the whole point of a draft is that it is not the site yet.
      */
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Cache-Control', `no-store, no-cache, must-revalidate, ${PAGE_AS_SENT}`);
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
 
     // Only a reusable draft is remembered: a one-shot token is spent by the render that is happening right now, and
@@ -159,7 +169,7 @@ export const renderSSR = async (
     sendScriptPolicy(res, config, page.nonce, req.ctx.spaceDeployment);
     // A copy of the compressed forms: one made for a client that takes another encoding is not added to the kept page
     // behind the cache's back, where its bytes would go uncounted.
-    res.send(() => pageHtml(page), { compressed: { ...page.compressed } });
+    res.send(() => pageHtml(page), { compressed: { ...page.compressed }, ownEncoding: true });
 
     return decision;
   };
@@ -221,7 +231,7 @@ export const renderSSR = async (
     }
 
     sendScriptPolicy(res, config, rendered.nonce, req.ctx.spaceDeployment);
-    res.send(rendered.body ?? '', page ? { compressed: { ...page.compressed } } : undefined);
+    res.send(rendered.body ?? '', { ...(page ? { compressed: { ...page.compressed } } : {}), ownEncoding: true });
   };
 
   if (slot) {

@@ -84,12 +84,16 @@ export const buildResponseHelpers = (
    * all, where a credential travels beside a value the caller chose (the `scope` it echoes back). Compressing the
    * two together is the shape a BREACH-style attack needs, and the stage that knows this is the one that has
    * already said so in a header.
+   *
+   * A stage that says it to the proxies alone — a page, whose HTML must not be rewritten on the way but is this
+   * server's to compress — sends with `ownEncoding`.
    */
-  const transformable = (): boolean => !String(raw.getHeaders()['cache-control']).includes('no-transform');
+  const transformable = (ownEncoding: boolean): boolean =>
+    ownEncoding || !String(raw.getHeaders()['cache-control']).includes('no-transform');
 
   /** A stored form this request can take as it is, without the body it was made from. */
-  const storedFor = (store: CompressedBodies | undefined): Buffer | undefined =>
-    encoding === 'identity' || !transformable() ? undefined : store?.[encoding];
+  const storedFor = (store: CompressedBodies | undefined, ownEncoding: boolean): Buffer | undefined =>
+    encoding === 'identity' || !transformable(ownEncoding) ? undefined : store?.[encoding];
 
   const writeBody = (payload: string | Buffer, encoded: boolean) => {
     if (encoded) {
@@ -103,8 +107,8 @@ export const buildResponseHelpers = (
     raw.end(payload);
   };
 
-  const writeSend = (content: string | Buffer | (() => string), store?: CompressedBodies) => {
-    const stored = typeof content === 'function' ? storedFor(store) : undefined;
+  const writeSend = (content: string | Buffer | (() => string), store?: CompressedBodies, ownEncoding = false) => {
+    const stored = typeof content === 'function' ? storedFor(store, ownEncoding) : undefined;
     if (stored) {
       writeBody(stored, true);
 
@@ -121,7 +125,7 @@ export const buildResponseHelpers = (
      * (woff2, png), so re-encoding it would cost CPU to make it bigger.
      */
     const compressed =
-      typeof body === 'string' && transformable() ? compressOnce(body, encoding, compression, store) : body;
+      typeof body === 'string' && transformable(ownEncoding) ? compressOnce(body, encoding, compression, store) : body;
     writeBody(compressed, compressed !== body);
   };
 
@@ -139,7 +143,7 @@ export const buildResponseHelpers = (
       statusCode = code;
     },
     send(body, options) {
-      writeSend(body, options?.compressed);
+      writeSend(body, options?.compressed, options?.ownEncoding);
     },
     write(chunk) {
       if (!raw.headersSent) {

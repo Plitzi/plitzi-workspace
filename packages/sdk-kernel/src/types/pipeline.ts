@@ -54,8 +54,15 @@ export type SSRResponseHelpers = {
    *
    * A function is a body read only when it is needed: when the stored form for this request's encoding is missing, or
    * the client takes no compression. A static file is then read from disk once per encoding, not on every request.
+   *
+   * `ownEncoding` is for a body whose `Cache-Control: no-transform` is said to the proxies after this server, not to
+   * this server: it is still compressed here — that encoding is how the origin sends it — and nothing on the way may
+   * change it. Without it `no-transform` holds this server too, as a response carrying a credential needs.
    */
-  send: (body: string | Buffer | (() => string), options?: { compressed?: CompressedBodies }) => void;
+  send: (
+    body: string | Buffer | (() => string),
+    options?: { compressed?: CompressedBodies; ownEncoding?: boolean }
+  ) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
   /**
