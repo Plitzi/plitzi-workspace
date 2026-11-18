@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createIsolateRunner } from './isolate';
-import { bundleOf, invoke, reasonOf } from './tests/guest';
+import { bundleOf, invoke, messageOf, reasonOf } from './tests/guest';
 
 /**
  * What a guest tries, and what it gets: each case named after the attempt, each ending in the stop or the refusal the
@@ -174,6 +174,96 @@ describe('the sandbox, against what a guest tries', () => {
       reasonOf(await invoke(runner, bundleOf("let s = 'x'; for (;;) { s += s; }"), { memoryMb: 16 }))
     );
     expect(await invoke(runner, bundleOf('return 2;'))).toEqual({ value: 2 });
+  });
+
+  /** What the platform answers a call with, a moment later — as every real answer arrives. */
+  const answeredLater =
+    (value: unknown, ms = 20) =>
+    (): Promise<unknown> =>
+      new Promise(resolve => {
+        setTimeout(() => {
+          resolve(value);
+        }, ms);
+      });
+
+  // What the platform answers is copied into the isolate, and one with no room for it is not stopped by isolated-vm:
+  // the PROCESS is (`ivm::FatalRuntimeError`, uncaught) — the runner, and every other space's run in it. Only for an
+  // answer that arrives once the code is waiting, which every real one does and no test's did: a space reading its
+  // feeds whole into a small task took a cluster's runner down eleven times in one night.
+  it('an answer larger than the room it has stops it at its memory, and the runner goes on', async () => {
+    const outcome = await invoke(
+      runner,
+      bundleOf("const kept = await ctx.kv.get('the-whole-list'); return kept.length;"),
+      { memoryMb: 16, wallMs: 5000 },
+      { answer: answeredLater('x'.repeat(24 * 1024 * 1024)) }
+    );
+
+    expect(outcome).toMatchObject({ reason: 'memory' });
+    expect(messageOf(outcome)).toContain('16 MB');
+    expect(await invoke(runner, bundleOf('return 2;'))).toEqual({ value: 2 });
+  });
+
+  it('answers that together are more than its room stop it, though each alone would fit', async () => {
+    const outcome = await invoke(
+      runner,
+      bundleOf(
+        "const all = await Promise.all(Array.from({ length: 8 }, (_, i) => ctx.kv.get('part-' + i))); return all.length;"
+      ),
+      { memoryMb: 16, wallMs: 5000 },
+      { answer: answeredLater('x'.repeat(4 * 1024 * 1024)) }
+    );
+
+    expect(outcome).toMatchObject({ reason: 'memory' });
+    expect(await invoke(runner, bundleOf('return 2;'))).toEqual({ value: 2 });
+  });
+
+  it("an answer with no room for it stops that invocation alone: another space's, beside it, ends as it would", async () => {
+    const [over, beside] = await Promise.all([
+      invoke(
+        runner,
+        bundleOf("const kept = await ctx.kv.get('the-whole-list'); return kept.length;"),
+        { memoryMb: 16, wallMs: 5000 },
+        { answer: answeredLater('x'.repeat(24 * 1024 * 1024)) }
+      ),
+      invoke(
+        runner,
+        bundleOf("const kept = await ctx.kv.get('a-word'); return kept + '!';"),
+        { wallMs: 5000 },
+        { answer: answeredLater('still here', 200) }
+      )
+    ]);
+
+    expect(over).toMatchObject({ reason: 'memory' });
+    expect(beside).toEqual({ value: 'still here!' });
+  });
+
+  it('an answer that arrives once it was stopped is handed to nothing, and the runner goes on', async () => {
+    const outcome = await invoke(
+      runner,
+      bundleOf("return await ctx.kv.get('slow');"),
+      { wallMs: 100 },
+      { answer: answeredLater('too late', 300) }
+    );
+
+    expect(outcome).toMatchObject({ reason: 'wall' });
+    // Past the moment the answer arrives: one handed to a disposed isolate would reject with nothing awaiting it.
+    await new Promise(resolve => {
+      setTimeout(resolve, 350);
+    });
+    expect(await invoke(runner, bundleOf('return 2;'))).toEqual({ value: 2 });
+  });
+
+  it('an answer it has room for is handed to it whole, in whatever script it is written', async () => {
+    const latin = 'x'.repeat(4 * 1024 * 1024);
+    const wide = '気象警報'.repeat(512 * 1024);
+    const read = "const kept = await ctx.kv.get('a-list'); return [kept.length, kept.slice(-4)];";
+
+    expect(await invoke(runner, bundleOf(read), { memoryMb: 32 }, { answer: answeredLater(latin) })).toEqual({
+      value: [latin.length, 'xxxx']
+    });
+    expect(await invoke(runner, bundleOf(read), { memoryMb: 32 }, { answer: answeredLater(wide) })).toEqual({
+      value: [wide.length, '気象警報']
+    });
   });
 
   it('a second invocation finds nothing the first one left', async () => {

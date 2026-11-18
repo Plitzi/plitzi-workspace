@@ -38,5 +38,11 @@ export type GuestDriver = {
   abort: (reason: string) => void;
 };
 
+/**
+ * What the guest's bootstrap answers: the driver, and how the runner hands the code an answer to what it asked
+ * (`host.call`, `host.crypto`) — by calling `settle` with the id the guest asked under, never as that call's result.
+ */
+export type GuestInstalled = GuestDriver & { settle: (id: number, text: string) => void };
+
 /** The bytes every part of the guest reads and writes. */
 export type Bytes = Uint8Array<ArrayBuffer>;

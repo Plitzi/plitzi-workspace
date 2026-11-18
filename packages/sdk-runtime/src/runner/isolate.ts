@@ -19,7 +19,7 @@ import { createTurnHolder } from './turnHolder';
 import { createTurns } from './turns';
 
 import type { CpuMeter, MeteredIsolate } from './cpuMeter';
-import type { GuestDriver } from './guest/types';
+import type { GuestDriver, GuestInstalled } from './guest/types';
 import type {
   FunctionsBundleRef,
   FunctionInvocation,
@@ -210,7 +210,7 @@ const cryptoAnswer = async (message: string, charge: (ms: number) => void): Prom
  * Sets the guest up in a fresh context: the runner's four calls, taken off the global the moment they are captured,
  * and the guest printed from its own source, its web APIs first, a part at a time — with the platform's functions it runs
  * as they are (`GuestShared`),
- * printed from theirs. Answers the driver.
+ * printed from theirs. Answers the driver, with the `settle` the runner hands its answers over by.
  */
 const BOOTSTRAP = `(() => {
   const refs = { call: __plitziCall, sleep: __plitziSleep, random: __plitziRandom, crypto: __plitziCrypto };
@@ -219,11 +219,26 @@ const BOOTSTRAP = `(() => {
   delete globalThis.__plitziRandom;
   delete globalThis.__plitziCrypto;
   const transfer = { arguments: { copy: true }, result: { promise: true, copy: true } };
+  // What the host answers is handed over by its calling \`settle\`, never as the result of the call that asked: an
+  // answer the isolate has no room for then stops this isolate, where as a result it ended the host's process.
+  const asked = new Map();
+  let asking = 0;
+  const ask = (ref, message) =>
+    new Promise(resolve => {
+      asking += 1;
+      asked.set(asking, resolve);
+      ref.applyIgnored(undefined, [asking, message], { arguments: { copy: true } });
+    });
+  const settle = (id, text) => {
+    const heard = asked.get(id);
+    asked.delete(id);
+    if (heard) heard(text);
+  };
   const host = {
-    call: message => refs.call.apply(undefined, [message], transfer),
+    call: message => ask(refs.call, message),
     sleep: ms => refs.sleep.apply(undefined, [ms], transfer),
     random: length => refs.random(length),
-    crypto: message => refs.crypto.apply(undefined, [message], transfer)
+    crypto: message => ask(refs.crypto, message)
   };
   const bytes = (${guestBytes.toString()})();
   const events = (${guestEvents.toString()})(host);
@@ -233,7 +248,8 @@ const BOOTSTRAP = `(() => {
     fetch: (${guestFetch.toString()})(bytes, events),
     crypto: (${guestCrypto.toString()})(host, bytes)
   };
-  return (${installGuest.toString()})(globalThis, host, { changeKv: ${changeKv.toString()}, changeListEntry: ${changeListEntry.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} }, parts);
+  const driver = (${installGuest.toString()})(globalThis, host, { changeKv: ${changeKv.toString()}, changeListEntry: ${changeListEntry.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} }, parts);
+  return Object.assign(driver, { settle });
 })()`;
 
 type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
@@ -410,6 +426,30 @@ export const createIsolateRunner = ({
       }, ms);
       timers.add(timer);
     };
+    /** The guest's `settle`, once the guest is there: how the code hears back from the host. */
+    let settle: IsolatedVM.Reference<GuestInstalled['settle']> | undefined;
+    /**
+     * Hands the code what the host answers, by CALLING the guest with it (`settle`) — never as the result of the call
+     * that asked.
+     *
+     * An answer is copied into the isolate once the code is waiting for it. Handed over as the result of the guest's
+     * own call, a copy that takes the isolate past its memory is not stopped by isolated-vm: it throws where nothing
+     * catches (`ivm::FatalRuntimeError`) and the PROCESS ends — the runner, with every other space's invocation in it.
+     * A call the host makes into the guest is run as any other: past its memory the isolate alone is disposed of, and
+     * the invocation ends stopped at its memory, as it would have a line of its own code later.
+     */
+    const answered = (id: number, text: Promise<string>): void => {
+      text
+        // Neither kind of answer rejects, each saying its own failure; one that did is still an answer, never a wait
+        // that ends at the invocation's time with no word of why.
+        .catch((error: unknown) => JSON.stringify(failedAnswerOf(error)))
+        .then(said =>
+          isolate.isDisposed || !settle ? undefined : settle.apply(undefined, [id, said], { arguments: { copy: true } })
+        )
+        // The isolate is gone — at its memory taking this in, or stopped while the host worked: the invocation's own
+        // ending says which, to whoever awaits it.
+        .catch(() => undefined);
+    };
     const watchdog = setInterval(() => {
       const cpuMs = readCpu();
       // Its CPU is its share of what the process took (`createCpuMeter`): beside more isolates than cores, never the time
@@ -433,7 +473,7 @@ export const createIsolateRunner = ({
       lastCpuMs = cpuMs;
     }, WATCHDOG_MS);
 
-    let driver: IsolatedVM.Reference<GuestDriver> | undefined;
+    let driver: IsolatedVM.Reference<GuestInstalled> | undefined;
     const onAbort = (): void => {
       // Why it was asked to end, when it was said — a job's slice tells its code whether it was paused or timed.
       const reason = typeof signal?.reason === 'string' ? signal.reason : 'The run was aborted';
@@ -452,24 +492,28 @@ export const createIsolateRunner = ({
       global.setSync('globalThis', global.derefInto());
       global.setSync(
         '__plitziCall',
-        new ivm.Reference(async (message: string): Promise<string> => {
+        new ivm.Reference((id: number, message: string): void => {
           calls++;
           if (calls > limits.calls) {
             stop('calls');
+            answered(id, Promise.resolve(JSON.stringify({ ok: false, error: stopMessage('calls', limits) })));
 
-            return JSON.stringify({ ok: false, error: stopMessage('calls', limits) });
+            return;
           }
 
-          return waitingOn(async () => {
-            try {
-              // Read by the platform, not here: a runner is not trusted to have checked what the code sent.
-              const value = await answer(JSON.parse(message));
+          answered(
+            id,
+            waitingOn(async () => {
+              try {
+                // Read by the platform, not here: a runner is not trusted to have checked what the code sent.
+                const value = await answer(JSON.parse(message));
 
-              return JSON.stringify({ ok: true, value: value ?? null });
-            } catch (error) {
-              return JSON.stringify(failedAnswerOf(error));
-            }
-          });
+                return JSON.stringify({ ok: true, value: value ?? null });
+              } catch (error) {
+                return JSON.stringify(failedAnswerOf(error));
+              }
+            })
+          );
         })
       );
       global.setSync(
@@ -499,16 +543,20 @@ export const createIsolateRunner = ({
       );
       global.setSync(
         '__plitziCrypto',
-        new ivm.Reference((message: string) =>
-          waitingOn(() =>
-            cryptoAnswer(message, ms => {
-              clock.chargeHost(ms);
-              if (clock.chargedCpu() > limits.cpuMs) {
-                stop('cpu');
-              }
-            })
-          )
-        )
+        // What it encrypts comes back as large as it was sent: an answer handed over like any other.
+        new ivm.Reference((id: number, message: string): void => {
+          answered(
+            id,
+            waitingOn(() =>
+              cryptoAnswer(message, ms => {
+                clock.chargeHost(ms);
+                if (clock.chargedCpu() > limits.cpuMs) {
+                  stop('cpu');
+                }
+              })
+            )
+          );
+        })
       );
 
       const guestScript = isolate.compileScriptSync(BOOTSTRAP, {
@@ -517,6 +565,7 @@ export const createIsolateRunner = ({
       });
       guestCache ??= cachedDataOf(ivm, guestScript);
       driver = guestScript.runSync(context, { reference: true });
+      settle = driver.getSync('settle', { reference: true });
       signal?.addEventListener('abort', onAbort, { once: true });
       if (signal?.aborted) {
         onAbort();

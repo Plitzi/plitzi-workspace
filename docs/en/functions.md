@@ -442,7 +442,9 @@ task's time and size beside it.
 space's plan says which its tasks may ask for: a size it leaves out is refused when the task runs, naming the plan, and
 the builder shows it locked. Start small and go up when a run says it went over (`Went over its 32 MB of memory (a
 small task)… { size: 'medium' }`): the runner keeps a task's memory for it whole while it runs, so a large task takes
-the room of eight small ones, and waits longer for a runner with that much free.
+the room of eight small ones, and waits longer for a runner with that much free. What a call answers counts as the
+task's own memory the moment it arrives: a value read whole (`ctx.kv.get`, a `ctx.fetch` body) that the task has no
+room for stops that run at its memory, as a line of its own code would have — never the runner it shares.
 
 ## 8. Security: why one space cannot reach another
 
