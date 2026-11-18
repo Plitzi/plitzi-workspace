@@ -2,6 +2,7 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
 import { claimable } from './claimable';
 import { dropWaiting } from './dropWaiting';
+import { listFilter, listJobGroupsOf } from './jobLists';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { NEEDING_STATUSES, statusCounts, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
@@ -498,21 +499,22 @@ export const createMongoJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
+    listJobs: async (query: JobQuery) => {
       const { jobs } = await collections();
-      const filter = {
-        spaceId: { $in: spaceIds },
-        ...(name ? { 'target.name': name } : {}),
-        ...(status ? { status } : {}),
-        ...(kind ? { 'target.kind': kind } : {})
-      };
-
+      const filter = listFilter(query);
       const [found, total] = await Promise.all([
-        jobs.find(filter).sort({ updatedAt: -1, _id: -1 }).skip(offset).limit(limit).toArray(),
+        jobs.find(filter).sort({ updatedAt: -1, _id: -1 }).skip(query.offset).limit(query.limit).toArray(),
         jobs.countDocuments(filter)
       ]);
 
       return { jobs: found.map(toJob), total };
+    },
+
+    listJobGroups: async (query: JobQuery) => {
+      const { jobs } = await collections();
+      const { groups, ...counted } = await listJobGroupsOf(jobs, query);
+
+      return { ...counted, groups: groups.map(({ latest, ...group }) => ({ ...group, latest: toJob(latest) })) };
     },
 
     listAcross: async ({ statuses, limit, order, environment }) => {

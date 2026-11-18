@@ -153,6 +153,21 @@ export type JobQuery = {
 };
 
 /**
+ * Jobs that say the same thing — one space's runs of one work (`target.kind` and `target.name`) in one status: what
+ * `JobQueue.listJobGroups` answers as one row, and exactly what `cancelWaiting` drops at once when narrowed to them.
+ */
+export type JobGroup = {
+  /** The most recently touched of them, as `listJobs` reads it, without what a job of the functions saved (`state`). */
+  latest: Omit<Job, 'state'>;
+  /** How many jobs the group holds, `latest` among them. */
+  count: number;
+  /** The earliest `dueAt` among them. */
+  firstDueAt: number;
+  /** The latest `dueAt` among them. */
+  lastDueAt: number;
+};
+
+/**
  * Which jobs an operator drops at once (`JobQueue.cancelWaiting`): everything of these spaces that has not started —
  * waiting to run or set aside — narrowed like a list of them is.
  */
@@ -282,6 +297,13 @@ export type JobQueue = {
   /** Replaces what this space has scheduled. An action no longer listed stops having a schedule at all. */
   putSchedules: (params: { spaceId: number; schedules: ActionScheduleInput[] }) => Promise<void>;
   listJobs: (query: JobQuery) => Promise<{ jobs: Job[]; total: number }>;
+  /**
+   * The jobs `listJobs` would list, a {@link JobGroup} per space, work and status — the group of the most recently
+   * touched job first — paged by groups, `total` counting them and `jobs` the jobs they hold, every page's. What a queue
+   * reads as a list a person scans: a schedule whose every fire was set aside is one row saying how many, not a page of
+   * the same line, every page alike.
+   */
+  listJobGroups: (query: JobQuery) => Promise<{ groups: JobGroup[]; total: number; jobs: number }>;
   /**
    * Jobs of EVERY space in these statuses — an operator's view, never a space's own (`listJobs` is): the longest due first
    * (`due`), or the latest written first (`latest`). What a monitoring screen lists of what waits, runs and just ended.

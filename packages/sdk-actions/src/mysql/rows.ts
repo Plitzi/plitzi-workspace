@@ -38,6 +38,49 @@ export type JobRow = {
   near_memory_limit: Numeric;
 };
 
+/** Every column of a job's row — typed whole, so a column added to `JobRow` is added here or the build fails. */
+const JOB_COLUMNS: Record<keyof JobRow, true> = {
+  id: true,
+  space_id: true,
+  target_kind: true,
+  target_name: true,
+  target: true,
+  environment: true,
+  input: true,
+  due_at: true,
+  max_attempts: true,
+  missed: true,
+  job_key: true,
+  status: true,
+  run_at: true,
+  attempts: true,
+  lease_until: true,
+  worker_id: true,
+  run_id: true,
+  cancel_requested: true,
+  created_at: true,
+  updated_at: true,
+  error: true,
+  history: true,
+  state: true,
+  progress: true,
+  result: true,
+  pause_requested: true,
+  active_ms: true,
+  holder_memory_mb: true,
+  needs_memory_mb: true,
+  near_memory_limit: true
+};
+
+/**
+ * A job's row as a list reads it: every column but what a job of the functions saved (`state`, up to megabytes, and no
+ * list shows it) — read as NULL, so `toJob` reads it as none.
+ */
+export const LISTED_JOB_COLUMNS = [
+  ...Object.keys(JOB_COLUMNS).filter(column => column !== 'state'),
+  'NULL AS state'
+].join(', ');
+
 export type ScheduleRow = {
   space_id: Numeric;
   action_id: string;

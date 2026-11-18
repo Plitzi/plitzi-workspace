@@ -14,6 +14,7 @@ export type {
   JobQuery,
   JobQueue,
   JobFlowMinute,
+  JobGroup,
   JobQueueSummary,
   JobSettlement,
   JobsDropped,

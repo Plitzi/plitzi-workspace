@@ -1,6 +1,7 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
 import { flowOf } from './flow';
+import { groupJobs } from './jobGroups';
 import { LOST_ERROR, lostError, needsAfterLoss, outgrewWorker, setAsideError } from './memoryNeeds';
 
 import type {
@@ -129,6 +130,18 @@ export const queueRules = (
 
     return job && spaceIds.includes(job.spaceId) ? job : undefined;
   };
+
+  /** What `listJobs` and `listJobGroups` read: the jobs a query names, the most recently touched first. */
+  const listed = ({ spaceIds, name, status, kind }: JobQuery): Job[] =>
+    [...jobs.values()]
+      .filter(
+        job =>
+          spaceIds.includes(job.spaceId) &&
+          (name === undefined || job.target.name === name) &&
+          (status === undefined || job.status === status) &&
+          (kind === undefined || job.target.kind === kind)
+      )
+      .sort((a, b) => b.updatedAt - a.updatedAt);
 
   /** Numbered by the history itself, not by `attempts`: an operator who repeats a finished job starts its attempt
    *  count again, and the record of what has already been tried must not start again with it. */
@@ -390,20 +403,23 @@ export const queueRules = (
       return undefined;
     },
 
-    listJobs: ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
-      const matching = [...jobs.values()]
-        .filter(
-          job =>
-            spaceIds.includes(job.spaceId) &&
-            (name === undefined || job.target.name === name) &&
-            (status === undefined || job.status === status) &&
-            (kind === undefined || job.target.kind === kind)
-        )
-        .sort((a, b) => b.updatedAt - a.updatedAt);
+    listJobs: (query: JobQuery) => {
+      const matching = listed(query);
 
       return {
-        jobs: matching.slice(offset, offset + limit).map(job => ({ ...job })),
+        jobs: matching.slice(query.offset, query.offset + query.limit).map(job => ({ ...job })),
         total: matching.length
+      };
+    },
+
+    listJobGroups: (query: JobQuery) => {
+      const matching = listed(query);
+      const groups = groupJobs(matching);
+
+      return {
+        groups: groups.slice(query.offset, query.offset + query.limit),
+        total: groups.length,
+        jobs: matching.length
       };
     },
 
@@ -736,6 +752,7 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   advanceSchedule: (...args) => access('advanceSchedule', args),
   putSchedules: (...args) => access('putSchedules', args),
   listJobs: (...args) => access('listJobs', args),
+  listJobGroups: (...args) => access('listJobGroups', args),
   listAcross: (...args) => access('listAcross', args),
   summarize: (...args) => access('summarize', args),
   countDue: (...args) => access('countDue', args),

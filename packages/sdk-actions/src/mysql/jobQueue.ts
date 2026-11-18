@@ -1,6 +1,7 @@
 import { execute, selectOne, selectRows } from '@plitzi/sdk-kernel/mysql';
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
+import { listJobGroupsOf, listWhere } from './jobLists';
 import { claimable, jsonOrNull, toJob, toSchedule } from './rows';
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { summarizeJobsTable } from './summary';
@@ -474,36 +475,27 @@ export const createMysqlJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
-      if (!inSpaces(spaceIds)) {
+    listJobs: async (query: JobQuery) => {
+      if (!inSpaces(query.spaceIds)) {
         return { jobs: [], total: 0 };
       }
 
       const conn = await db();
-      const where = [
-        'space_id IN (?)',
-        ...(name ? ['target_name = ?'] : []),
-        ...(status ? ['status = ?'] : []),
-        ...(kind ? ['target_kind = ?'] : [])
-      ].join(' AND ');
-      const params: unknown[] = [
-        spaceIds,
-        ...(name ? [name] : []),
-        ...(status ? [status] : []),
-        ...(kind ? [kind] : [])
-      ];
-
+      const where = listWhere(query);
       const [rows, count] = await Promise.all([
         selectRows<JobRow>(
           conn,
-          `SELECT * FROM ${t.jobs} WHERE ${where} ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?`,
-          [...params, limit, offset]
+          `SELECT * FROM ${t.jobs} WHERE ${where.sql} ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?`,
+          [...where.params, query.limit, query.offset]
         ),
-        selectOne<{ total: Numeric }>(conn, `SELECT COUNT(*) AS total FROM ${t.jobs} WHERE ${where}`, params)
+        selectOne<{ total: Numeric }>(conn, `SELECT COUNT(*) AS total FROM ${t.jobs} WHERE ${where.sql}`, where.params)
       ]);
 
       return { jobs: rows.map(toJob), total: Number(count?.total ?? 0) };
     },
+
+    listJobGroups: async (query: JobQuery) =>
+      inSpaces(query.spaceIds) ? listJobGroupsOf(await db(), t.jobs, query) : { groups: [], total: 0, jobs: 0 },
 
     countDue: async ({ spaces, memoryMb } = {}) => {
       const conn = await db();
