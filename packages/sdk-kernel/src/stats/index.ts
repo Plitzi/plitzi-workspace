@@ -17,6 +17,7 @@ export type { MemoryReading } from './memory';
 export type { ProcessLoad } from './load';
 export type { StatsRecorder } from './recorder';
 export type {
+  EnvironmentWork,
   InstanceHealth,
   InstancePhase,
   InstanceStatus,

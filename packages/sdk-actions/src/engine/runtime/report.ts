@@ -18,7 +18,7 @@ import type { ActionRejectRecord } from '@plitzi/sdk-shared';
  */
 export const reportReject = async (config: EngineServerConfig, record: ActionRejectRecord): Promise<void> => {
   if (config.stats) {
-    statsRecorderFor(config.stats, config.health?.version).refuse(record.reason);
+    statsRecorderFor(config.stats, config.health?.version).refuse(record.reason, record.environment);
   }
 
   try {

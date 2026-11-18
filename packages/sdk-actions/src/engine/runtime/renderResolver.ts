@@ -105,6 +105,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
        */
       const run = await module.guards.begin({
         spaceId,
+        environment,
         actionId: entry.id,
         callerId,
         input,

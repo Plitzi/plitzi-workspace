@@ -175,6 +175,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   const input = body.input ?? {};
   const begin = {
     spaceId,
+    environment,
     actionId: entry.id,
     callerId,
     input,

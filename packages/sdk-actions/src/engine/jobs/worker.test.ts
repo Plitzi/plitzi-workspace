@@ -222,6 +222,7 @@ describe('createJobWorker', () => {
     await worker.poll();
     await settle();
     expect(worker.inFlight()).toBe(1);
+    expect(worker.inFlightByEnvironment()).toEqual({ [jobInput().environment]: 1 });
 
     expect(await test.queue.cancel([1], jobInput().id)).toBe(true);
     // The flag is read at the next heartbeat, which is what reaches the replica actually running the flow — a
@@ -231,6 +232,7 @@ describe('createJobWorker', () => {
 
     expect((await test.read()).status).toBe('cancelled');
     expect(worker.inFlight()).toBe(0);
+    expect(worker.inFlightByEnvironment()).toEqual({});
   });
 
   it('drops a waiting job an operator cancels, without running it', async () => {

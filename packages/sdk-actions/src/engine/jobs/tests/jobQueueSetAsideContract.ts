@@ -37,6 +37,23 @@ export const describeSetAside = (ctx: SetAsideSubject): void => {
     ]);
   });
 
+  // What a view narrowed to one environment reads: production's jobs apart from a builder's rehearsals in `main`.
+  it('counts the jobs by status for each environment too, the one with the most first', async () => {
+    const later = (await ctx.queue().now()).getTime() + 60_000;
+    await ctx.queue().enqueue(await ctx.job({ id: 'p-1', environment: 'production', dueAt: later }));
+    await ctx.queue().enqueue(await ctx.job({ id: 'p-2', environment: 'production', dueAt: later }));
+    await ctx.queue().enqueue(await ctx.job({ id: 'm-1', environment: 'main' }));
+    await ctx.queue().claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+
+    const summary = await ctx.queue().summarize();
+
+    expect(summary.byStatus).toMatchObject({ pending: 2, running: 1 });
+    expect(summary.environments.map(each => each.environment)).toEqual(['production', 'main']);
+    expect(summary.environments[0].byStatus).toMatchObject({ pending: 2, running: 0 });
+    expect(summary.environments[1].byStatus).toMatchObject({ pending: 0, running: 1 });
+    expect((await ctx.queue().summarize()).environments).toHaveLength(2);
+  });
+
   // Counted as waiting, 32 jobs set aside at their limits read as a queue falling behind for minutes, with nothing to run.
   it('says a job set aside apart from what waits for the queue', async () => {
     await ctx.queue().enqueue(await ctx.job({ maxAttempts: 1 }));

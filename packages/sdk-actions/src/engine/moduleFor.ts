@@ -56,13 +56,20 @@ export const actionsModuleFor = (config: EngineConfig): ActionsModule | undefine
   });
   if (stats) {
     const sizes = module.guards.slots();
-    stats.slot('calls', sizes.calls.of, () => module.guards.slots().calls.used);
-    stats.slot('renders', sizes.renders.of, () => module.guards.slots().renders.used);
+    stats.slot('calls', sizes.calls.of, () => module.guards.slots().calls.used, {
+      environments: () => module.guards.slots().calls.environments
+    });
+    stats.slot('renders', sizes.renders.of, () => module.guards.slots().renders.used, {
+      environments: () => module.guards.slots().renders.environments
+    });
     // The jobs it runs at once beside them: what an autoscaler adds to the queue's due ones to size its pool.
     const jobs = module.jobs;
     const jobWorkers = config.action?.jobs === false ? 0 : (config.action?.jobs?.workers ?? DEFAULT_JOB_WORKERS);
     if (jobs && jobWorkers > 0) {
-      stats.slot('jobs', jobWorkers, () => jobs.worker.inFlight(), { queues: true });
+      stats.slot('jobs', jobWorkers, () => jobs.worker.inFlight(), {
+        queues: true,
+        environments: () => jobs.worker.inFlightByEnvironment()
+      });
     }
   }
 

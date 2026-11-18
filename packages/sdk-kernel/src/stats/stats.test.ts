@@ -104,6 +104,35 @@ describe('a process’s stats', () => {
     expect(stats.snapshot().series.at(-2)?.runsOf).toBeUndefined();
   });
 
+  // What a screen narrowed to one environment of the spaces reads: the production runs apart from a builder's
+  // rehearsals in `main`, each a share of the minute's own figures.
+  it('counts a minute’s runs, refusals and work in flight by the environment each was for', () => {
+    const now = 100 * MINUTE;
+    const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' }, () => now);
+    const label = { spaceId: 7, kind: 'action', name: 'digest' };
+
+    stats.run(10, undefined, { ...label, environment: 'production' });
+    stats.run(20, { failed: 'error' }, { ...label, environment: 'production' });
+    stats.run(30, { limit: 'cpu' }, { ...label, environment: 'main' });
+    stats.run(40, undefined, label);
+    stats.refuse('busy', 'main');
+    stats.refuse('protocol');
+    stats.slot('jobs', 4, () => 3, { queues: true, environments: () => ({ production: 2, main: 1 }) });
+    stats.slot('calls', 8, () => 1);
+    const read = stats.snapshot();
+    const minute = read.series.at(-1);
+
+    expect(minute).toMatchObject({ runs: 4, failed: 1, limited: 1, refused: 2 });
+    expect(minute?.environments).toEqual({
+      production: { runs: 2, failed: 1, limited: 0, refused: 0 },
+      main: { runs: 1, failed: 0, limited: 1, refused: 1 }
+    });
+    expect(read.load.slots.jobs).toEqual({ used: 3, of: 4, environments: { production: 2, main: 1 } });
+    expect(read.load.slots.calls).toEqual({ used: 1, of: 8 });
+    // A minute nothing named an environment in says none, rather than an empty one.
+    expect(read.series.at(-2)).not.toHaveProperty('environments');
+  });
+
   it('says it is degraded, and why, when too many runs fail or its slots are full', () => {
     const stats = createStatsRecorder({ pool: 'worker', instance: 'w-1' });
     for (let run = 0; run < 10; run += 1) {

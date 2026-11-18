@@ -407,9 +407,9 @@ export const queueRules = (
       };
     },
 
-    listAcross: ({ statuses, limit, order }) =>
+    listAcross: ({ statuses, limit, order, environment }) =>
       [...jobs.values()]
-        .filter(job => statuses.includes(job.status))
+        .filter(job => statuses.includes(job.status) && (environment === undefined || job.environment === environment))
         .sort((a, b) => (order === 'due' ? a.runAt - b.runAt : b.updatedAt - a.updatedAt))
         .slice(0, limit)
         .map(job => ({ ...job })),
@@ -592,6 +592,32 @@ export const waitingKindOf = (kind: string, trigger: string | null | undefined):
 };
 
 /** Every status at zero: what a summary counts up from, so a status nothing is in still says 0. */
+/**
+ * The jobs counted by status and environment — a store's own grouping, one row a pair — as `summarize` answers them:
+ * every status, and the same for each environment, the one with the most jobs first.
+ */
+export const statusCounts = (
+  counted: Iterable<{ status: JobStatus; environment: string; n: number }>
+): Pick<JobQueueSummary, 'byStatus' | 'environments'> => {
+  const byStatus = noJobsByStatus();
+  const byEnvironment = new Map<string, Record<JobStatus, number>>();
+  for (const { status, environment, n } of counted) {
+    byStatus[status] += n;
+    const kept = byEnvironment.get(environment) ?? noJobsByStatus();
+    kept[status] += n;
+    byEnvironment.set(environment, kept);
+  }
+
+  const total = (counts: Record<JobStatus, number>): number => Object.values(counts).reduce((sum, n) => sum + n, 0);
+
+  return {
+    byStatus,
+    environments: [...byEnvironment]
+      .map(([environment, counts]) => ({ environment, byStatus: counts }))
+      .sort((a, b) => total(b.byStatus) - total(a.byStatus) || a.environment.localeCompare(b.environment))
+  };
+};
+
 export const noJobsByStatus = (): Record<JobStatus, number> => ({
   pending: 0,
   running: 0,
@@ -617,13 +643,16 @@ export const NEEDING_STATUSES: readonly JobStatus[] = ['pending', 'paused'];
  * ones count the same in their own query.
  */
 export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSummary => {
-  const byStatus = noJobsByStatus();
+  const pairs = new Map<string, { status: JobStatus; environment: string; n: number }>();
   const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
   const bySpace = new Map<number, JobQueueSummary['spaces'][number] & { lastAt: number }>();
   let oldestDueAt: number | undefined;
   const needingMemory: JobsNeedingMemory = { waiting: 0, paused: 0 };
   all.forEach(job => {
-    byStatus[job.status] += 1;
+    const pair = `${job.status}\u0000${job.environment}`;
+    const counted = pairs.get(pair) ?? { status: job.status, environment: job.environment, n: 0 };
+    counted.n += 1;
+    pairs.set(pair, counted);
     if (job.needsMemoryMb !== undefined && NEEDING_STATUSES.includes(job.status)) {
       if (job.status === 'paused') {
         needingMemory.paused += 1;
@@ -664,7 +693,7 @@ export const summarizeJobs = (all: readonly Job[], spaces: number): JobQueueSumm
   });
 
   return {
-    byStatus,
+    ...statusCounts(pairs.values()),
     waiting,
     ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
     needingMemory,

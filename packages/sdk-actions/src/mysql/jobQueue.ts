@@ -517,15 +517,16 @@ export const createMysqlJobQueue = ({
       return Number(row?.n ?? 0);
     },
 
-    listAcross: async ({ statuses, limit, order }) => {
+    listAcross: async ({ statuses, limit, order, environment }) => {
       if (statuses.length === 0) {
         return [];
       }
 
       const rows = await selectRows<JobRow>(
         await db(),
-        `SELECT * FROM ${t.jobs} WHERE status IN (?) ORDER BY ${order === 'due' ? 'run_at ASC' : 'updated_at DESC'}, id LIMIT ?`,
-        [statuses, limit]
+        `SELECT * FROM ${t.jobs} WHERE status IN (?)${environment === undefined ? '' : ' AND environment = ?'}
+        ORDER BY ${order === 'due' ? 'run_at ASC' : 'updated_at DESC'}, id LIMIT ?`,
+        [statuses, ...(environment === undefined ? [] : [environment]), limit]
       );
 
       return rows.map(toJob);

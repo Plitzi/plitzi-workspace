@@ -106,6 +106,11 @@ export type WaitingJobs = {
 /** A queue at a glance — see `JobQueue.summarize`. */
 export type JobQueueSummary = {
   byStatus: Record<JobStatus, number>;
+  /**
+   * The same count for each environment of the spaces that has any job — `production`, `main`… — the most jobs first:
+   * what a view narrowed to one environment reads. They add up to `byStatus`.
+   */
+  environments: { environment: string; byStatus: Record<JobStatus, number> }[];
   waiting: WaitingJobs;
   /** When the job waiting longest was due, epoch ms by the queue's clock; absent with nothing waiting. */
   oldestDueAt?: number;
@@ -281,7 +286,13 @@ export type JobQueue = {
    * Jobs of EVERY space in these statuses — an operator's view, never a space's own (`listJobs` is): the longest due first
    * (`due`), or the latest written first (`latest`). What a monitoring screen lists of what waits, runs and just ended.
    */
-  listAcross: (query: { statuses: JobStatus[]; limit: number; order: 'due' | 'latest' }) => Promise<Job[]>;
+  listAcross: (query: {
+    statuses: JobStatus[];
+    limit: number;
+    order: 'due' | 'latest';
+    /** One environment's jobs alone (`production`, `main`…); every environment's without it. */
+    environment?: Environment;
+  }) => Promise<Job[]>;
   /**
    * The whole queue at a glance, every space: what an operator reads to tell a queue that drains from one that fills —
    * its jobs by status, what waits by what it is, the oldest of it, and the spaces with the most waiting.

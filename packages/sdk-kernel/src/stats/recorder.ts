@@ -4,6 +4,7 @@ import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { MINUTE_NAMES, MINUTE_RUNS } from './types';
 
 import type {
+  EnvironmentWork,
   NamedWork,
   ProcessStats,
   RunEnd,
@@ -40,6 +41,8 @@ type Bucket = {
   /** The slowest labelled runs and every labelled one that did not answer, kept short; and each name's work, up to {@link NAMES}. */
   slow: SlowRun[];
   names: Map<string, NamedWork>;
+  /** The minute's work by environment, for what said one. */
+  environments: Map<string, EnvironmentWork>;
 };
 
 /** How many names a minute counts on their own; past it, a new name's runs are not kept by name. */
@@ -51,15 +54,24 @@ export type StatsRecorder = {
    * code), and — when the recorder knows — what it was.
    */
   run: (durationMs: number, end?: RunEnd, label?: RunLabel) => void;
-  /** A request refused before it became a run. */
-  refuse: (reason: string) => void;
+  /** A request refused before it became a run — and for which environment, when whoever refuses it knows. */
+  refuse: (reason: string, environment?: string) => void;
   /**
    * Work in flight against a size: read when the stats are, so nothing is counted twice. With `queues`, what comes past
    * the size waits its turn rather than being refused — a worker's jobs, a runner's invocations — and a full slot is a
    * process at work: it degrades only while something waits (`used` past `of`). Otherwise near full degrades it: what
    * comes next is refused.
    */
-  slot: (name: string, of: number, used: () => number, options?: { queues?: boolean }) => void;
+  slot: (
+    name: string,
+    of: number,
+    used: () => number,
+    options?: {
+      queues?: boolean;
+      /** What of it each environment's is, read with `used`: what a screen narrowed to one environment shows. */
+      environments?: () => Record<string, number>;
+    }
+  ) => void;
   snapshot: () => ProcessStats;
 };
 
@@ -100,9 +112,23 @@ const seriesOf = (buckets: Bucket[], minute: number): StatsMinute[] => {
       ...(bucket && bucket.slow.length > 0 ? { runsOf: bucket.slow } : {}),
       ...(bucket && bucket.names.size > 0
         ? { names: [...bucket.names.values()].sort((a, b) => b.totalMs - a.totalMs).slice(0, MINUTE_NAMES) }
-        : {})
+        : {}),
+      ...(bucket && bucket.environments.size > 0 ? { environments: Object.fromEntries(bucket.environments) } : {})
     };
   });
+};
+
+/** The minute's count for one environment, begun at nothing the first time it is named. */
+const workOf = (bucket: Bucket, environment: string): EnvironmentWork => {
+  const kept = bucket.environments.get(environment);
+  if (kept) {
+    return kept;
+  }
+
+  const work: EnvironmentWork = { runs: 0, failed: 0, limited: 0, refused: 0 };
+  bucket.environments.set(environment, work);
+
+  return work;
 };
 
 /** Whether a kept run is one to look at: it failed, or it reached a limit. */
@@ -183,7 +209,10 @@ export const createStatsRecorder = (
   const thresholds = { ...DEFAULT_THRESHOLDS, ...identity.thresholds };
   const instance = identity.instance ?? `${os.hostname()}:${String(process.pid)}`;
   const buckets: Bucket[] = [];
-  const slots = new Map<string, { of: number; used: () => number; queues: boolean }>();
+  const slots = new Map<
+    string,
+    { of: number; used: () => number; queues: boolean; environments?: () => Record<string, number> }
+  >();
   const lag = monitorEventLoopDelay({ resolution: 20 });
   lag.enable();
   let cpuAt = { usage: process.cpuUsage(), wall: process.hrtime.bigint() };
@@ -204,7 +233,8 @@ export const createStatsRecorder = (
       limits: new Map(),
       refusals: new Map(),
       slow: [],
-      names: new Map()
+      names: new Map(),
+      environments: new Map()
     };
     buckets.push(bucket);
     while (buckets.length > 0 && (buckets[0]?.minute ?? minute) <= minute - KEPT_MINUTES) {
@@ -284,12 +314,23 @@ export const createStatsRecorder = (
       if (end && 'limit' in end) {
         add(bucket.limits, end.limit);
       }
+
+      if (label?.environment) {
+        const work = workOf(bucket, label.environment);
+        work.runs += 1;
+        work.failed += Number(end !== undefined && 'failed' in end);
+        work.limited += Number(end !== undefined && 'limit' in end);
+      }
     },
-    refuse: reason => {
-      add(current().refusals, reason);
+    refuse: (reason, environment) => {
+      const bucket = current();
+      add(bucket.refusals, reason);
+      if (environment) {
+        workOf(bucket, environment).refused += 1;
+      }
     },
-    slot: (name, of, used, { queues = false } = {}) => {
-      slots.set(name, { of, used, queues });
+    slot: (name, of, used, { queues = false, environments } = {}) => {
+      slots.set(name, { of, used, queues, ...(environments ? { environments } : {}) });
     },
     snapshot: () => {
       const outcomes = { '1m': windowOf(since(1)), '15m': windowOf(since(15)), '60m': windowOf(since(60)) };
@@ -297,7 +338,12 @@ export const createStatsRecorder = (
       // The last sample, or one taken now when none is yet: the first ten seconds of a process.
       const { cpu, lagMs: eventLoopLagP99Ms } = latest ?? sample();
       const load = {
-        slots: Object.fromEntries([...slots].map(([name, slot]) => [name, { used: slot.used(), of: slot.of }])),
+        slots: Object.fromEntries(
+          [...slots].map(([name, slot]) => [
+            name,
+            { used: slot.used(), of: slot.of, ...(slot.environments ? { environments: slot.environments() } : {}) }
+          ])
+        ),
         cpu,
         memory: { rss: memory.rss, heapUsed: memory.heapUsed, heapTotal: memory.heapTotal },
         eventLoopLagP99Ms

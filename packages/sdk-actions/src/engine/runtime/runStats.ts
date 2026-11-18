@@ -34,7 +34,8 @@ export const recordedRun =
       kind: 'action',
       name: record.actionId,
       trigger: record.trigger,
-      runId: record.runId
+      runId: record.runId,
+      environment: record.environment
     });
     await onRun?.(record);
   };

@@ -4,6 +4,7 @@ export { KEPT_CALL_MS, KEPT_CALLS_PER_SPACE } from './engine/jobs/calls';
 export { createFileJobQueue } from './engine/jobs/fileQueue';
 export { createActionJobs } from './engine/jobs/jobs';
 export { createMemoryJobQueue } from './engine/jobs/memoryQueue';
+export { statusCounts } from './engine/jobs/queueRules';
 export { createScheduler } from './engine/jobs/scheduler';
 export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './engine/jobs/schedules';
 export { createJobWorker } from './engine/jobs/worker';

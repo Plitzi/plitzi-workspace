@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 
 import type { JobQueue } from '../../../types';
-import type { JobInput } from '@plitzi/sdk-shared';
+import type { Environment, JobInput } from '@plitzi/sdk-shared';
 
 /** What the flow half of the job queue contract reads of the contract around it. */
 export type FlowSubject = {
@@ -50,5 +50,24 @@ export const describeFlow = (ctx: FlowSubject): void => {
     expect(waiting.map(job => job.id)).toEqual(['older', 'newer', 'later']);
     expect(await queue.listAcross({ statuses: ['pending'], limit: 1, order: 'due' })).toHaveLength(1);
     expect(await queue.listAcross({ statuses: ['running'], limit: 10, order: 'latest' })).toEqual([]);
+  });
+
+  // What a view narrowed to one environment lists: thirty of ITS jobs, not whichever of the thirty latest are its.
+  it('lists one environment’s jobs alone when asked for it', async () => {
+    const queue = ctx.queue();
+    const at = (await queue.now()).getTime();
+    await queue.enqueue(await ctx.job({ id: 'live-1', environment: 'production', dueAt: at - 2_000 }));
+    await queue.enqueue(await ctx.job({ id: 'draft-1', environment: 'main', dueAt: at - 1_000 }));
+    await queue.enqueue(await ctx.job({ id: 'live-2', environment: 'production', dueAt: at }));
+
+    const listed = (environment?: Environment) =>
+      queue
+        .listAcross({ statuses: ['pending'], limit: 10, order: 'due', ...(environment ? { environment } : {}) })
+        .then(jobs => jobs.map(job => job.id));
+
+    expect(await listed('production')).toEqual(['live-1', 'live-2']);
+    expect(await listed('main')).toEqual(['draft-1']);
+    expect(await listed('staging')).toEqual([]);
+    expect(await listed()).toEqual(['live-1', 'draft-1', 'live-2']);
   });
 };

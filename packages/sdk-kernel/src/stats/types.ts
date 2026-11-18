@@ -54,7 +54,18 @@ export type StatsWindow = {
  * What a run was: the space it ran for, what kind of thing — an action, or a space function's `task`, `route` or `job`
  * — and its name. Said by whatever records the run, so a slow minute names what made it slow.
  */
-export type RunLabel = { spaceId: number; kind: string; name: string; trigger?: string; runId?: string };
+export type RunLabel = {
+  spaceId: number;
+  kind: string;
+  name: string;
+  trigger?: string;
+  runId?: string;
+  /** Which of the space's environments it ran for (`production`, `main`…), when whoever records it knows. */
+  environment?: string;
+};
+
+/** What a minute counted for one environment of the spaces: a share of the minute's own figures, never beside them. */
+export type EnvironmentWork = { runs: number; failed: number; limited: number; refused: number };
 
 /**
  * How a run ended when it did not simply answer — three things, because they ask different things of whoever reads it:
@@ -103,6 +114,11 @@ export type StatsMinute = {
   runsOf?: SlowRun[];
   /** The actions and functions that took the most of it, up to {@link MINUTE_NAMES}. */
   names?: NamedWork[];
+  /**
+   * The minute's work by the environment it was for — the runs and refusals whose recorder said one. What nobody
+   * named an environment for is in the minute's totals alone: these never add up to more than them.
+   */
+  environments?: Record<string, EnvironmentWork>;
 };
 
 /** How many of a minute's runs it keeps by name (its slowest, its failures), and how many of its names. */
@@ -119,8 +135,11 @@ export type ProcessStats = {
   at: string;
   uptimeSeconds: number;
   load: {
-    /** Work in flight against what this process takes at once: `calls`, `renders`, `isolates`. */
-    slots: Record<string, { used: number; of: number }>;
+    /**
+     * Work in flight against what this process takes at once: `calls`, `renders`, `isolates` — and, where its owner
+     * knows, how much of it each environment's is (`environments`).
+     */
+    slots: Record<string, { used: number; of: number; environments?: Record<string, number> }>;
     /** CPU spent over the last sample (ten seconds), as a share of one core over that time. */
     cpu: number;
     memory: { rss: number; heapUsed: number; heapTotal: number };

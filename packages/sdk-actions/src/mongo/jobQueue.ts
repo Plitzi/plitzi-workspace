@@ -4,7 +4,7 @@ import { claimable } from './claimable';
 import { dropWaiting } from './dropWaiting';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
-import { NEEDING_STATUSES, noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
+import { NEEDING_STATUSES, statusCounts, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
 import type {
@@ -515,10 +515,10 @@ export const createMongoJobQueue = ({
       return { jobs: found.map(toJob), total };
     },
 
-    listAcross: async ({ statuses, limit, order }) => {
+    listAcross: async ({ statuses, limit, order, environment }) => {
       const { jobs } = await collections();
       const found = await jobs
-        .find({ status: { $in: statuses } })
+        .find({ status: { $in: statuses }, ...(environment === undefined ? {} : { environment }) })
         .sort(order === 'due' ? { runAt: 1, _id: 1 } : { updatedAt: -1, _id: -1 })
         .limit(limit)
         .toArray();
@@ -533,14 +533,14 @@ export const createMongoJobQueue = ({
       // a `$facet` answers one document even over an empty collection.
       const [found] = await jobs
         .aggregate<{
-          byStatus: { _id: JobStatus; n: number }[];
+          byStatus: { _id: { status: JobStatus; environment: string }; n: number }[];
           waiting: { _id: { kind: string; trigger?: string | null }; n: number; oldest: number }[];
           spaces: { _id: number; waiting: number; calls: number; oldestDueAt: number; lastError?: string | null }[];
           needingMemory: { _id: JobStatus; n: number; most: number }[];
         }>([
           {
             $facet: {
-              byStatus: [{ $group: { _id: '$status', n: { $sum: 1 } } }],
+              byStatus: [{ $group: { _id: { status: '$status', environment: '$environment' }, n: { $sum: 1 } } }],
               needingMemory: [
                 { $match: { status: { $in: [...NEEDING_STATUSES] }, needsMemoryMb: { $exists: true } } },
                 { $group: { _id: '$status', n: { $sum: 1 }, most: { $max: '$needsMemoryMb' } } }
@@ -575,10 +575,6 @@ export const createMongoJobQueue = ({
           }
         ])
         .toArray();
-      const byStatus = noJobsByStatus();
-      found.byStatus.forEach(each => {
-        byStatus[each._id] = each.n;
-      });
       const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
       let oldestDueAt: number | undefined;
       found.waiting.forEach(each => {
@@ -589,7 +585,7 @@ export const createMongoJobQueue = ({
       const waitingForMemory = found.needingMemory.find(each => each._id === 'pending');
 
       return {
-        byStatus,
+        ...statusCounts(found.byStatus.map(each => ({ ...each._id, n: each.n }))),
         waiting,
         ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
         needingMemory: {

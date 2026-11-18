@@ -135,7 +135,8 @@ const endOf = (reason: FunctionFailureReason): RunEnd =>
 /** What one connection tells the runner's stats: an invocation in flight, how it ended, a version refused. */
 type ConnectionStats = {
   recorder: StatsRecorder;
-  inFlight: { count: number };
+  /** The invocations in flight, and how many of them each environment's are. */
+  inFlight: { count: number; environments: Record<string, number> };
   /** Why this runner takes no new invocation of these limits right now, or nothing — and then it is counted as taken. */
   busy: (limits: FunctionLimits, urgency: FunctionUrgency) => string | undefined;
   /** Why this runner could never take an invocation of these limits — its size past its whole room — or nothing. */
@@ -176,6 +177,10 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     if (invokedAt !== undefined) {
       const tookMs = Date.now() - invokedAt;
       stats.inFlight.count -= 1;
+      if (label?.environment) {
+        stats.inFlight.environments[label.environment] = (stats.inFlight.environments[label.environment] ?? 1) - 1;
+      }
+
       stats.recorder.run(tookMs, message.type === 'failed' ? endOf(message.reason) : undefined, label);
       invokedAt = undefined;
       // One line an invocation, in the run's trace — `warn` when it broke, `debug` otherwise, as a run that worked is
@@ -328,7 +333,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     // and at the head of the queue hold up every invocation behind it.
     const tooLarge = stats.tooLarge(limits);
     if (tooLarge) {
-      stats.recorder.refuse('busy');
+      stats.recorder.refuse('busy', invocation.context.environment);
       finish({
         type: 'failed',
         reason: protocolKnows(message.protocol, '1.4') ? 'too_large' : 'busy',
@@ -344,7 +349,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
     if (busy) {
       const keeps = !stats.stopping() && message.queue === true && protocolKnows(message.protocol, '1.3');
       if (!keeps) {
-        stats.recorder.refuse(stats.stopping() ? 'stopping' : 'busy');
+        stats.recorder.refuse(stats.stopping() ? 'stopping' : 'busy', invocation.context.environment);
         finish({ type: 'failed', reason: 'busy', error: busy });
 
         return;
@@ -353,7 +358,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       send({ type: 'queued' });
       if (!(await stats.wait(limits, urgency, controller.signal))) {
         if (!controller.signal.aborted) {
-          stats.recorder.refuse('stopping');
+          stats.recorder.refuse('stopping', invocation.context.environment);
           finish({
             type: 'failed',
             reason: 'busy',
@@ -372,10 +377,13 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner, stats: Conne
       // A route is named by its method and path (`GET /orders/:id`), the others by theirs.
       name: invocation.kind === 'route' ? invocation.key : invocation.name,
       trigger: invocation.context.trigger,
-      runId: invocation.context.runId
+      runId: invocation.context.runId,
+      environment: invocation.context.environment
     };
     invokedAt = Date.now();
     stats.inFlight.count += 1;
+    const { environment } = invocation.context;
+    stats.inFlight.environments[environment] = (stats.inFlight.environments[environment] ?? 0) + 1;
     // What the platform waits for its answer from (1.2): an older one is told nothing it does not know.
     if (protocolKnows(message.protocol, '1.2')) {
       send({ type: 'accepted' });
@@ -474,7 +482,7 @@ export const startFunctionsRunnerService = async ({
     protocol: FUNCTIONS_PROTOCOL,
     ...(version ? { version } : {})
   });
-  const inFlight = { count: 0 };
+  const inFlight: { count: number; environments: Record<string, number> } = { count: 0, environments: {} };
   let stopping = false;
   const most = isolate.concurrency ?? DEFAULT_CONCURRENCY;
   const MB = 1048576;
@@ -593,7 +601,9 @@ export const startFunctionsRunnerService = async ({
   if (!runner) {
     // Past its size an invocation waits its turn here: full is at work, and only what waits degrades it.
     // Full, it turns invocations away to other runners: near full is what its autoscaler and its health read.
-    recorder.slot('isolates', most, () => inFlight.count);
+    recorder.slot('isolates', most, () => inFlight.count, {
+      environments: () => Object.fromEntries(Object.entries(inFlight.environments).filter(([, held]) => held > 0))
+    });
   }
 
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });

@@ -9,6 +9,7 @@ import { GIVE_UP, failedOutError, failureOf, limitEndings, limitSetAsideError } 
 import { createFailureStreak } from './failureStreak';
 import { NEAR_MEMORY_SHARE, memoryWords, nearMemory, readProcessMemory } from './memoryWatch';
 import { NOT_NOW_WORDS, TRY_AGAIN, claimsWithin, msToNextMinute, runnersFull, tryAgainMs } from './notNow';
+import { tally } from './tally';
 import { ActionRunError, limitOf } from '../runtime/errors';
 
 import type { MemoryReading } from './memoryWatch';
@@ -119,6 +120,8 @@ export type JobWorker = {
    */
   stop: () => Promise<void>;
   inFlight: () => number;
+  /** The jobs it holds, by the environment each is of. */
+  inFlightByEnvironment: () => Record<string, number>;
 };
 
 export const createJobWorker = ({
@@ -144,7 +147,8 @@ export const createJobWorker = ({
   const claimFailures = createFailureStreak('Actions', 'job claim');
   const heartbeatFailures = createFailureStreak('Actions', 'job heartbeat');
   const { baseMs = 30_000, maxMs = 15 * 60_000 } = backoff;
-  const active = new Map<string, AbortController>();
+  /** The jobs held: what stops each, and the environment it is of — what the process's stats count its jobs by. */
+  const active = new Map<string, { controller: AbortController; environment: string }>();
   /** Of `active`, the jobs of a space's functions: what a stop asks to save and hand back, rather than waits for. */
   const slicing = new Set<string>();
   /** Which kind of the work that needs a runner a look offers its room to first (`claimsWithin`), by turns. */
@@ -235,7 +239,7 @@ export const createJobWorker = ({
    */
   const executeSlice = async (job: Job, jobs: FunctionJobsService): Promise<void> => {
     const controller = new AbortController();
-    active.set(job.id, controller);
+    active.set(job.id, { controller, environment: job.environment });
     slicing.add(job.id);
     try {
       await jobs.announce(job.spaceId, job.id);
@@ -376,6 +380,7 @@ export const createJobWorker = ({
         // that run, and one running now is not started twice.
         {
           spaceId: job.spaceId,
+          environment: job.environment,
           actionId,
           callerId: call.callerId,
           input: job.input,
@@ -385,6 +390,7 @@ export const createJobWorker = ({
         }
       : {
           spaceId: job.spaceId,
+          environment: job.environment,
           actionId,
           callerId: call?.callerId ?? trigger,
           input: job.input,
@@ -440,7 +446,7 @@ export const createJobWorker = ({
       return;
     }
 
-    active.set(job.id, run.controller);
+    active.set(job.id, { controller: run.controller, environment: job.environment });
     try {
       const result = await module.runAction({
         entry,
@@ -696,7 +702,7 @@ export const createJobWorker = ({
 
     // Why it is stopped goes with the abort: a job's slice saves and is set aside on a pause, ends on a cancel.
     for (const { jobId, stop } of await queue.heartbeat({ jobIds: held, workerId, leaseMs })) {
-      active.get(jobId)?.abort(stop);
+      active.get(jobId)?.controller.abort(stop);
     }
   };
 
@@ -760,6 +766,7 @@ export const createJobWorker = ({
     beat,
     watchMemory,
     inFlight: () => active.size,
+    inFlightByEnvironment: () => tally([...active.values()].map(held => held.environment)),
     start: () => {
       if (timer || workers <= 0) {
         return;
@@ -797,7 +804,7 @@ export const createJobWorker = ({
 
       // A job's slice may have hours to go: it is asked to save and hand back, and another replica goes on from there.
       for (const jobId of slicing) {
-        active.get(jobId)?.abort('shutdown');
+        active.get(jobId)?.controller.abort('shutdown');
       }
 
       /**

@@ -265,7 +265,7 @@ describe('a worker’s stats', () => {
     expect(stats.pool).toBe('worker');
     expect(stats.outcomes['1m'].runs).toBe(1);
     expect(stats.outcomes['1m'].refusals).toEqual({ not_found: 1 });
-    expect(stats.load.slots.calls).toEqual({ used: 0, of: 100 });
+    expect(stats.load.slots.calls).toEqual({ used: 0, of: 100, environments: {} });
     expect(stats.health.status).toBe('healthy');
     expect((await fetch(`${base}/_stats`)).status).toBe(401);
   });

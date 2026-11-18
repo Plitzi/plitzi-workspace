@@ -1,6 +1,6 @@
 import { selectRows } from '@plitzi/sdk-kernel/mysql';
 
-import { noJobsByStatus, waitingKindOf } from '../engine/jobs/queueRules';
+import { statusCounts, waitingKindOf } from '../engine/jobs/queueRules';
 
 import type { JobQueueSummary, WaitingJobs } from '../types';
 import type { JobStatus } from '@plitzi/sdk-shared';
@@ -21,9 +21,9 @@ const NEEDING = "status IN ('pending', 'paused')";
  */
 export const summarizeJobsTable = async (conn: Pool, table: string, spaces: number): Promise<JobQueueSummary> => {
   const [statuses, kinds, bySpace, needing] = await Promise.all([
-    selectRows<{ status: JobStatus; n: Numeric }>(
+    selectRows<{ status: JobStatus; environment: string; n: Numeric }>(
       conn,
-      `SELECT status, COUNT(*) AS n FROM ${table} GROUP BY status`,
+      `SELECT status, environment, COUNT(*) AS n FROM ${table} GROUP BY status, environment`,
       []
     ),
     selectRows<{ kind: string; trig: string | null; n: Numeric; oldest: Numeric }>(
@@ -57,10 +57,6 @@ export const summarizeJobsTable = async (conn: Pool, table: string, spaces: numb
   ]);
   const waitingForMemory = needing.find(row => row.status === 'pending');
   const pausedForMemory = needing.find(row => row.status === 'paused');
-  const byStatus = noJobsByStatus();
-  statuses.forEach(row => {
-    byStatus[row.status] = Number(row.n);
-  });
   const waiting: WaitingJobs = { calls: 0, schedules: 0, later: 0, functionJobs: 0, other: 0 };
   let oldestDueAt: number | undefined;
   kinds.forEach(row => {
@@ -69,7 +65,7 @@ export const summarizeJobsTable = async (conn: Pool, table: string, spaces: numb
   });
 
   return {
-    byStatus,
+    ...statusCounts(statuses.map(row => ({ ...row, n: Number(row.n) }))),
     waiting,
     ...(oldestDueAt === undefined ? {} : { oldestDueAt }),
     needingMemory: {

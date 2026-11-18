@@ -114,6 +114,24 @@ describe('createRunGuards', () => {
     }
   });
 
+  // What the pools' screen, narrowed to one environment, reads of a process's slots: production's calls apart from a
+  // builder's rehearsals in `main`. A run nobody named an environment for is in the slot's total alone.
+  it('says the runs it holds by the environment each is for, and frees them as they end', async () => {
+    const guards = createRunGuards({ perSpace: 10 });
+    const live = await guards.begin(params({ idempotencyKey: 'a', environment: 'production' }));
+    await guards.begin(params({ idempotencyKey: 'b', environment: 'production' }));
+    await guards.begin(params({ idempotencyKey: 'c', environment: 'main' }));
+    await guards.begin(params({ idempotencyKey: 'd' }));
+    await guards.begin({ ...render(1), environment: 'production' });
+
+    expect(guards.slots().calls).toMatchObject({ used: 4, environments: { production: 2, main: 1 } });
+    expect(guards.slots().renders).toMatchObject({ used: 1, environments: { production: 1 } });
+
+    await guards.end(live);
+
+    expect(guards.slots().calls).toMatchObject({ used: 3, environments: { production: 1, main: 1 } });
+  });
+
   it('still holds renders to what the process will carry', async () => {
     const guards = createRunGuards({ renderPerProcess: 2 });
     await guards.begin(render(1));

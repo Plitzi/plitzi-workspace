@@ -157,7 +157,8 @@ describe('who reaches the runner', () => {
 describe('one connection', () => {
   it('runs one invocation, asks for a bundle it is not handed, and carries each call back on the same socket', async () => {
     const { engine, held } = heldEngine();
-    const client = connect(await serve(engine));
+    const address = await serve(engine);
+    const client = connect(address);
     await client.send(invoke());
     await client.next('accepted');
 
@@ -176,6 +177,10 @@ describe('one connection', () => {
     running.end('finished');
 
     expect((await client.closed).at(-1)).toEqual({ type: 'done', value: 'finished' });
+    // And its stats say which environment of the space it ran for: what the pools' screen narrows to.
+    const read = await fetch(`http://${address}/_stats`, { headers: { authorization: `Bearer ${SECRET}` } });
+    const stats = (await read.json()) as { series: { environments?: Record<string, { runs: number }> }[] };
+    expect(stats.series.at(-1)?.environments).toMatchObject({ main: { runs: 1 } });
   });
 
   it('takes one operation, and refuses a second on the same connection', async () => {

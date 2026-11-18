@@ -25,6 +25,8 @@ export type ActiveRun = {
   runKey: string;
   kind: RunKind;
   spaceId: number;
+  /** Which of the space's environments it runs for, when whoever began it said: what its slot is counted by. */
+  environment?: string;
   actionId: string;
   callerId: string;
   controller: AbortController;
@@ -91,6 +93,8 @@ export type RunGuardsConfig = {
 
 export type BeginRunParams = {
   spaceId: number;
+  /** Which of the space's environments the run is for: counted apart in the process's stats, never part of its key. */
+  environment?: string;
   actionId: string;
   callerId: string;
   input: Record<string, unknown>;
@@ -138,7 +142,7 @@ export type RunGuards = {
   cancel: (runId: string, callerId: string) => Promise<boolean>;
   active: () => number;
   /** Runs in flight against what this process takes at once, by kind: what its stats report as its slots. */
-  slots: () => { calls: { used: number; of: number }; renders: { used: number; of: number } };
+  slots: () => Record<'calls' | 'renders', { used: number; of: number; environments: Record<string, number> }>;
   /**
    * The room this process has for more calls: how many more it takes, the spaces already at their share, and how many it
    * may take past a share while no other space's work waits (`spare`) — what a job worker claims by, so it never takes a
@@ -359,6 +363,7 @@ export const createRunGuards = (
       runKey,
       kind,
       spaceId: params.spaceId,
+      ...(params.environment ? { environment: params.environment } : {}),
       actionId: params.actionId,
       callerId: params.callerId,
       controller: new AbortController(),
@@ -512,9 +517,25 @@ export const createRunGuards = (
   const join = (params: BeginRunParams): Promise<RunAnswer | undefined> | undefined =>
     byKey.get(deriveRunKey(params))?.answered;
 
+  /** The runs of a kind in flight, by the environment each said it is for. */
+  const byEnvironment = (kind: RunKind): Record<string, number> => {
+    const held: Record<string, number> = {};
+    byKey.forEach(run => {
+      if (run.kind === kind && run.environment) {
+        held[run.environment] = (held[run.environment] ?? 0) + 1;
+      }
+    });
+
+    return held;
+  };
+
   const slots = () => ({
-    calls: { used: count(run => run.kind === 'call'), of: perProcess },
-    renders: { used: count(run => run.kind === 'render'), of: renderPerProcess }
+    calls: { used: count(run => run.kind === 'call'), of: perProcess, environments: byEnvironment('call') },
+    renders: {
+      used: count(run => run.kind === 'render'),
+      of: renderPerProcess,
+      environments: byEnvironment('render')
+    }
   });
 
   const room = () => {

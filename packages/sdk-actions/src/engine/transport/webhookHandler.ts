@@ -189,6 +189,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   const limits = await module.limitsFor(spaceId, entry.document);
   const begin = {
     spaceId,
+    environment,
     actionId: entry.id,
     callerId,
     input,

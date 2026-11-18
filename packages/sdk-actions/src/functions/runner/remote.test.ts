@@ -420,7 +420,7 @@ describe('the runner service, through the remote runner', () => {
 
     expect(read.pool).toBe('runner');
     expect(read.protocol).toBe(FUNCTIONS_PROTOCOL);
-    expect(read.load.slots.isolates).toEqual({ used: 0, of: 8 });
+    expect(read.load.slots.isolates).toEqual({ used: 0, of: 8, environments: {} });
     expect(read.outcomes['60m'].runs).toBeGreaterThan(0);
     expect((await fetch(stats)).status).toBe(401);
   });

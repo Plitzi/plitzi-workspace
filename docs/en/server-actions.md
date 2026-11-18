@@ -523,6 +523,9 @@ Four properties follow, and they are the reason the design looks the way it does
   whatever spaces it is kept for. When none may (`ceilingMb`), the job is set aside (`paused`), its error saying so,
   until a worker is given more memory and it is resumed. A worker that died for anything else leaves its jobs to the
   next, as above. `summarize` counts both (`needingMemory`). Without `claimMemory`, nothing changes.
+  `summarize` also answers the jobs by status for each environment of the spaces (`environments`), for a screen
+  narrowed to one — production's apart from the draft's — and `listAcross` lists one environment's jobs alone when it
+  is given one (`environment`).
 - **A schedule does not fire into a limit again.** A run stopped at a limit its plan sets — its memory, its CPU, its
   calls, its output, its steps, its requests — is set aside at once (`paused`): the same code reaches it again on
   every attempt. It would at the schedule's next fire too, so the schedule waits on that one job: its fires are held
