@@ -2,8 +2,8 @@
 '@plitzi/cli': patch
 ---
 
-A page tells every proxy on its way to leave its HTML as it was sent, so nothing between the server and the browser
-can break its hydration.
+A page is no longer drawn twice as it loads: its server elements hydrate in place, and every proxy on its way is told
+to leave its HTML as it was sent.
 
 ## Page server
 
@@ -14,6 +14,17 @@ can break its hydration.
   `Cache-Control: no-transform`, HTTP's own word for it, which the proxies honour. It is still compressed by the server
   itself: `res.send(body, { ownEncoding: true })` is how a stage says `no-transform` to the proxies after it and not to
   this server, where the header otherwise stops compression too (as a response carrying a credential needs).
+
+## SDK
+
+- **A server element hydrates over the server's markup, instead of being frozen and built again.** An element with
+  `runtime: 'server'` — a provider with a server query, above all — was drawn during hydration as a frozen copy of the
+  server's HTML and swapped for itself on the render right after. The same nodes to the eye, but new ones: every CSS
+  animation under a provider started twice on every load (17 of a home's 23), every card of a list it fed faded in
+  twice, every image in it was decoded again. It is now drawn by the browser from the start, from the payload the
+  server drew it with, and React hydrates it in place. Only an element the browser has no component for — a plugin
+  registered on the server alone — stays frozen, for the life of the page. A container holding one no longer renders a
+  second time once hydration is over.
 
 ## To do when you upgrade
 

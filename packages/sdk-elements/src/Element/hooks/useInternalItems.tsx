@@ -215,28 +215,31 @@ const drawItems = ({
       });
 
       /**
-       * A server element is frozen for HYDRATION, and then only for as long as it has to be.
+       * A server element is drawn by the browser too, from the payload the server drew it with — and frozen only when
+       * this browser has no component for it.
        *
-       * React must be handed exactly the markup the server sent, so the first client render replays it from the
-       * DOM — `RootElement` marks the server-rendered root with `data-rsc-id` for the shell to find. That is what
-       * `mounted` is: false while hydrating, true on the render right after, before the browser paints.
+       * It used to be frozen for hydration: the first client render replayed the server's markup from the DOM
+       * (`RootElement` marks the server-rendered root with `data-rsc-id` for the shell to find), and the element took
+       * over on the render right after. Frozen markup is not React's, so nothing inside it has a handler — a pager
+       * under a server-driven provider did nothing, its `loadMore` / `goToPage` / `writeRecord` never fired — which is
+       * why it could not stay frozen. But the takeover was a swap: the frozen copy unmounted, the element mounted, and
+       * everything under it was new DOM. What keeps a credential on the server is `getRscData` running there, not
+       * whether the browser mounts what it already has the data for: so it mounts it from the start, by hydrating.
        *
-       * Staying frozen after that was the mistake, and it was a big one. Frozen markup is not React's, so nothing
-       * inside it has a handler: a pager under a server-driven provider did nothing, the provider's own
-       * `loadMore` / `goToPage` / `writeRecord` could never fire, and a route change onto a page whose server
-       * markup this document never carried rendered an empty section. What keeps a credential on the server is
-       * `getRscData` running there — not whether the browser mounts what it already has the data for.
-       *
-       * So the element takes over once hydration is done, rendering from the same payload the server used. The
-       * exception is the element this browser has no component for, which has nothing to take over with.
+       * The exception is the element this browser has no component for — a plugin registered on the server alone —
+       * whose markup is all there is: that one stays frozen for the life of the page.
        */
-      // The shell stays around the element on both sides of hydration, under the same key, and only stops
-      // freezing: wrapped while hydrating and not after, the element changed type and key the moment hydration was
-      // over, and React tore down everything under it to build it again — a provider with no markup of its own
-      // took the whole layout with it, and every animation in it started over.
+      // The shell stays around the element on both sides of hydration, under the same key: wrapped while hydrating
+      // and not after, the element changed type and key the moment hydration was over, and React tore down everything
+      // under it to build it again.
+      //
+      // And an element this browser can draw is never frozen at all: it hydrates over the server's markup, from the
+      // payload the server drew it with, like any other element. Frozen until hydration was over and swapped for
+      // itself right after, its markup was thrown away and built again — the same nodes to the eye, but new ones: every
+      // animation under a provider started twice on every load, every image in it was decoded again.
       if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
         return (
-          <ServerStaticShell key={itemId} id={itemId} frozen={!(mounted && renderable)}>
+          <ServerStaticShell key={itemId} id={itemId} frozen={!renderable}>
             {item}
           </ServerStaticShell>
         );
@@ -310,7 +313,7 @@ const useInternalItemsInBrowser = ({
 
   /**
    * Whether hydration is over, for the items that draw differently once it is: a `runtime: 'client'` one the server
-   * left out, a `runtime: 'server'` one frozen against the server's markup until then.
+   * left out. A `runtime: 'server'` one draws the same on both sides of it.
    *
    * `useSyncExternalStore` with a server snapshot unlike the client's: React draws the server's during hydration, then
    * draws the element again — synchronously, before the browser paints. Asked of every element with items, that was
@@ -321,9 +324,7 @@ const useInternalItemsInBrowser = ({
     previewMode === true &&
     rscEnabled &&
     // An item naming an element that is gone reads nothing, whatever the path's type says.
-    itemElements.some(
-      (el: Element | undefined) => el?.definition.runtime === 'client' || el?.definition.runtime === 'server'
-    );
+    itemElements.some((el: Element | undefined) => el?.definition.runtime === 'client');
   const mounted = useSyncExternalStore(storeSubscriber, switchesOnMount ? snapshot : serverSnapshot, serverSnapshot);
   const isSlot = plitziElementLayout?.slots.includes(id) ?? false;
   const layoutBody = useLayoutBody(isSlot ? id : undefined);

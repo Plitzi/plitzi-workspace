@@ -32,27 +32,23 @@ const parseStyleString = (styleStr: string): CSSProperties => {
 };
 
 /**
- * Renders a runtime:'server' element as frozen server HTML.
+ * Keeps a `runtime: 'server'` element this browser cannot draw as the server's own HTML, frozen.
  *
- * During the initial client render (hydrateRoot), React calls useState initializers
- * synchronously before it has modified the DOM. We use this window to read the
- * server-rendered element from the DOM via its data-plitzi-id attribute, capture its
- * tag, attributes, and innerHTML, then render it back via dangerouslySetInnerHTML.
+ * During the initial client render (hydrateRoot), React calls useState initializers synchronously before it has
+ * modified the DOM. We use this window to read the server-rendered element from the DOM via its `data-rsc-id`
+ * attribute, capture its tag, attributes, and innerHTML, then render it back via dangerouslySetInnerHTML: React
+ * hydrates the snapshot element without touching its children.
  *
- * The actual plugin component is never mounted in the browser, so no useEffect or
- * useState from the plugin ever runs. React hydrates the snapshot element without
- * touching its children (dangerouslySetInnerHTML takes ownership of innerHTML).
+ * `frozen` is whether there is anything to freeze for: true for an element with no component in this browser — a
+ * plugin registered on the server alone — which has nothing else to show, for the life of the page. Every other
+ * server element is `children`, drawn here from the payload the server drew it with and hydrated over its markup like
+ * any element: frozen first and swapped for itself once hydration was over, its DOM was rebuilt on every load.
  *
- * When there is nothing to freeze, `children` — the element itself — is rendered instead. That is not the
- * hydration case, where the server always sent the markup; it is the SPA one: a route change mounts a page whose
- * server elements were never in this document, and freezing an element against markup that does not exist used to
- * render nothing at all. The element then resolves the way it does anywhere else, from the payload `useRscSync`
- * fetches for the new location.
+ * When there is nothing to freeze against, `children` is rendered too. That is the SPA case: a route change mounts a
+ * page whose server elements were never in this document, and freezing an element against markup that does not exist
+ * used to render nothing at all.
  *
- * `frozen` is whether the snapshot is still what is shown: true while hydrating, false once the element can take
- * over. The shell itself stays where it is either way, so the element under it keeps its identity — an element that
- * had nothing to freeze (a provider that draws no markup of its own) is the same element before hydration ends and
- * after, and nothing under it mounts twice.
+ * The shell itself stays where it is either way, so the element under it keeps its identity.
  */
 const ServerStaticShell = ({ id, frozen, children }: { id: string; frozen: boolean; children?: ReactNode }) => {
   // Read once, on the render that hydrates: past it, the DOM is React's and holds nothing to freeze against.

@@ -19,12 +19,21 @@ vi.mock('@plitzi/sdk-shared/plugins/react', async importOriginal => {
   };
 });
 
+/** Whether the element draws markup of its own, marked as the server marks it. */
+const marked = vi.hoisted(() => ({ current: false }));
+
 vi.mock('../helpers/pluginSelector', async importOriginal => {
   const actual = await importOriginal<typeof import('../helpers/pluginSelector')>();
 
   return {
     ...actual,
-    default: ({ key, type }: { key?: string; type: string }) => createElement('section', { key, 'data-plugin': type })
+    // As `RootElement` draws a server element: its root marked with `data-rsc-id`, its own markup under it.
+    default: ({ key, type }: { key?: string; type: string }) =>
+      createElement(
+        'section',
+        { key, 'data-plugin': type, ...(marked.current ? { 'data-rsc-id': key } : {}) },
+        marked.current ? createElement('p', { className: 'card' }, 'drawn by the server') : undefined
+      )
   };
 });
 
@@ -81,5 +90,31 @@ describe('a server-runtime element across hydration', () => {
     expect(served).not.toBeNull();
     expect(container.querySelector('[data-plugin="apiContainer"]')).toBe(served);
     container.remove();
+  });
+
+  // A provider with markup of its own was frozen for hydration — a copy of the server's HTML — and swapped for itself
+  // on the render right after: the same nodes to the eye, but new ones. Every animation under it started twice on
+  // every load (17 of a home's 23), and so did the fade of every card of a list it fed.
+  it('hydrates an element it can draw over the server’s markup, instead of freezing it and building it again', async () => {
+    marked.current = true;
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(tree());
+    document.body.append(container);
+    const served = container.querySelector('.card');
+
+    await act(async () => {
+      hydrateRoot(container, tree());
+      await Promise.resolve();
+    });
+    // The render right after hydration, when a frozen element used to be swapped.
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 20));
+    });
+
+    expect(served).not.toBeNull();
+    expect(container.querySelector('.card')).toBe(served);
+    expect(container.querySelector('[data-plugin="apiContainer"]')?.hasAttribute('data-rsc-id')).toBe(true);
+    container.remove();
+    marked.current = false;
   });
 });
