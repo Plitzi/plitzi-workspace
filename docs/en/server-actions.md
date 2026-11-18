@@ -911,7 +911,11 @@ exactly once with several replicas producing — and `claim` must be atomic and 
 has lapsed. `cancelPending({ spaceId, key, olderThan? })` is what a `later` job with a `key` stands on: it drops the
 space's jobs waiting under that key and answers how many — with `olderThan`, only those enqueued before that job (earlier,
 or the same instant with a smaller id), so of two set at once the newer is left on every replica — and never a running
-one, which is usually the run that set the next.
+one, which is usually the run that set the next. `cancelWaiting({ spaceIds, status?, kind?, name? })` is an
+operator's: every job of those spaces that has not started — `pending` or `paused`, or one of the two, of one kind or one
+name — is `cancelled` in one statement, and it answers how many and which of them were jobs of the functions, whose
+watchers `createJobControl` then tells. A queue a schedule filled with runs set aside is emptied with it; what runs is
+left to `cancel`, a job at a time.
 
 Schedules are rows derived from the action documents. Call `reconcile(spaceId)` whenever a space's actions change
 — the deployment is the only thing that knows when that is — and the periodic pass over `listScheduledSpaces`

@@ -59,4 +59,44 @@ describe('an operator’s hold on the jobs', () => {
     expect(await createJobControl({ queue }).cancel([1], 'job:1:b')).toBe(true);
     expect((await queue.getJob([1], 'job:1:b'))?.status).toBe('cancelled');
   });
+
+  it('drops everything waiting at once, telling the watchers of each job of the functions', async () => {
+    const queue = createMemoryJobQueue();
+    const pubsub = createMemoryPubSub();
+    const kv = createMemoryKv();
+    const heard: string[] = [];
+    const ids = Array.from({ length: 45 }, (_, index) => `job:1:${String(index)}`);
+    for (const id of ids) {
+      await pubsub.subscribe(adapterTopic(SPACE, `$job:${id}`), raw => {
+        const message = JSON.parse(raw) as RealtimeMessage;
+        heard.push(`${id} ${(message.data as { status: string }).status}`);
+      });
+      await queue.enqueue({
+        id,
+        spaceId: 1,
+        environment: 'main',
+        target: { kind: 'function', name: 'train' },
+        input: {},
+        dueAt: Date.now() + 60_000,
+        maxAttempts: 3
+      });
+    }
+
+    await queue.enqueue({
+      id: 'sweep',
+      spaceId: 1,
+      environment: 'main',
+      target: { kind: 'action', name: 'sweep', trigger: 'schedule' },
+      input: {},
+      dueAt: Date.now() + 60_000,
+      maxAttempts: 3
+    });
+    const control = createJobControl({ queue, realtime: { pubsub, kv } });
+
+    expect((await control.cancelWaiting({ spaceIds: [2] })).cancelled).toBe(0);
+    expect(heard).toEqual([]);
+
+    expect((await control.cancelWaiting({ spaceIds: [1] })).cancelled).toBe(46);
+    expect([...heard].sort()).toEqual(ids.map(id => `${id} cancelled`).sort());
+  });
 });

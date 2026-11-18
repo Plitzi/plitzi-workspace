@@ -10,6 +10,8 @@ import type {
   JobQueue,
   JobQueueSummary,
   JobSettlement,
+  JobsDropped,
+  JobsToDrop,
   JobSpaces,
   JobTake,
   JobStop,
@@ -51,6 +53,14 @@ export type QueueRules = {
   [K in keyof JobQueue]: (...args: Parameters<JobQueue[K]>) => Awaited<ReturnType<JobQueue[K]>>;
 };
 
+/** Whether what `cancelWaiting` answered says it dropped a job. */
+const droppedSome = (answer: unknown): boolean =>
+  typeof answer === 'object' &&
+  answer !== null &&
+  'cancelled' in answer &&
+  typeof answer.cancelled === 'number' &&
+  answer.cancelled > 0;
+
 /**
  * Whether a call changed the state, by its method and what it answered — what a store keeping the state elsewhere writes
  * back after. A worker claims every second: a claim that took nothing, a refused `write` or `cancel` change nothing, and
@@ -70,6 +80,8 @@ export const changedBy = <K extends keyof JobQueue>(method: K, answer: Awaited<R
       return answer === true;
     case 'cancelPending':
       return typeof answer === 'number' && answer > 0;
+    case 'cancelWaiting':
+      return droppedSome(answer);
     // A worker beats only for the jobs it holds: each extends a lease.
     case 'heartbeat':
     case 'settle':
@@ -531,6 +543,31 @@ export const queueRules = (
       }
 
       return dropped;
+    },
+
+    cancelWaiting: ({ spaceIds, status, kind, name }: JobsToDrop): JobsDropped => {
+      const at = now();
+      const dropped: JobsDropped = { cancelled: 0, functionJobs: [] };
+      for (const job of jobs.values()) {
+        if (
+          spaceIds.includes(job.spaceId) &&
+          (job.status === 'pending' || job.status === 'paused') &&
+          (status === undefined || job.status === status) &&
+          (kind === undefined || job.target.kind === kind) &&
+          (name === undefined || job.target.name === name)
+        ) {
+          job.status = 'cancelled';
+          job.workerId = undefined;
+          job.pauseRequested = undefined;
+          job.updatedAt = at;
+          dropped.cancelled += 1;
+          if (job.target.kind === 'function') {
+            dropped.functionJobs.push(job.id);
+          }
+        }
+      }
+
+      return dropped;
     }
   };
 };
@@ -680,5 +717,6 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   cancel: (...args) => access('cancel', args),
   pause: (...args) => access('pause', args),
   resume: (...args) => access('resume', args),
-  cancelPending: (...args) => access('cancelPending', args)
+  cancelPending: (...args) => access('cancelPending', args),
+  cancelWaiting: (...args) => access('cancelWaiting', args)
 });

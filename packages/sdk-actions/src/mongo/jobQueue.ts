@@ -1,6 +1,7 @@
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
 import { claimable } from './claimable';
+import { dropWaiting } from './dropWaiting';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { NEEDING_STATUSES, noJobsByStatus, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
@@ -45,7 +46,7 @@ export type MongoJobQueue = JobQueue & {
   resyncClock: () => void;
 };
 
-type JobDocument = Omit<Job, 'id'> & {
+export type JobDocument = Omit<Job, 'id'> & {
   _id: string;
   /** Set only once a job is finished, so a job still waiting or running is never expired out from under anybody. */
   expiresAt?: Date | null;
@@ -754,6 +755,13 @@ export const createMongoJobQueue = ({
       );
 
       return dropped.modifiedCount;
+    },
+
+    cancelWaiting: async query => {
+      const { jobs } = await collections();
+      const at = await clock.now();
+
+      return dropWaiting(jobs, query, at, expiryOf(at));
     }
   };
 };

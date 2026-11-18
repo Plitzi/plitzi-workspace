@@ -8,7 +8,7 @@ import { flowOf } from '../engine/jobs/flow';
 import { lostError, LOST_ERROR, needsAfterLoss, outgrewWorker, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { createStoreClock } from '../engine/jobs/storeClock';
 
-import type { JobQuery, JobQueue, JobSettlement, JobStop, JobWrite } from '../types';
+import type { JobQuery, JobQueue, JobSettlement, JobsToDrop, JobStop, JobWrite } from '../types';
 import type { JobRow, Numeric, ScheduleRow } from './rows';
 import type { Job, JobAttempt, JobInput, JobStatus } from '@plitzi/sdk-shared';
 import type { Pool, PoolConnection } from 'mysql2/promise';
@@ -695,6 +695,45 @@ export const createMysqlJobQueue = ({
       );
 
       return dropped.affectedRows;
+    },
+
+    cancelWaiting: async ({ spaceIds, status, kind, name }: JobsToDrop) => {
+      if (!inSpaces(spaceIds)) {
+        return { cancelled: 0, functionJobs: [] };
+      }
+
+      const conn = await db();
+      const where = [
+        'space_id IN (?)',
+        status ? 'status = ?' : "status IN ('pending', 'paused')",
+        ...(name ? ['target_name = ?'] : []),
+        ...(kind ? ['target_kind = ?'] : [])
+      ].join(' AND ');
+      const params: unknown[] = [
+        spaceIds,
+        ...(status ? [status] : []),
+        ...(name ? [name] : []),
+        ...(kind ? [kind] : [])
+      ];
+      // Read before they are dropped: after, nothing tells them from the ones cancelled before. One that moved between
+      // the two statements is told as it then is — whoever tells its watchers reads the job, not this list.
+      const watched =
+        kind === 'action'
+          ? []
+          : await selectRows<Pick<JobRow, 'id'>>(
+              conn,
+              `SELECT id FROM ${t.jobs} WHERE ${where} AND target_kind = 'function'`,
+              params
+            );
+      const at = await clock.now();
+      const dropped = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET status = 'cancelled', updated_at = ?, expires_at = ?, worker_id = NULL, pause_requested = 0
+        WHERE ${where}`,
+        [at, expiryOf(at), ...params]
+      );
+
+      return { cancelled: dropped.affectedRows, functionJobs: watched.map(job => job.id) };
     }
   };
 };

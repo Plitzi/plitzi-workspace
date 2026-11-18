@@ -19,12 +19,15 @@ export type JobControlOptions = {
   realtime?: { pubsub: PubSubAdapter; kv: ActionKvAdapter };
 };
 
-export type JobControl = Pick<JobQueue, 'pause' | 'resume' | 'cancel' | 'requeue'>;
+/** How many of the jobs dropped at once (`cancelWaiting`) have their watchers told at a time. */
+const ANNOUNCED_AT_ONCE = 20;
+
+export type JobControl = Pick<JobQueue, 'pause' | 'resume' | 'cancel' | 'requeue' | 'cancelWaiting'>;
 
 /**
  * An operator's hold on the jobs, from a process that serves no pages — a deployment's API behind its Queue panel: the
- * queue's own `pause`, `resume`, `cancel` and `requeue`, each said on `$job:<id>` when it changed a job of the spaces'
- * functions, as the page server says it when its code does the same.
+ * queue's own `pause`, `resume`, `cancel`, `requeue` and `cancelWaiting`, each said on `$job:<id>` when it changed a job
+ * of the spaces' functions, as the page server says it when its code does the same.
  */
 export const createJobControl = ({ queue, realtime }: JobControlOptions): JobControl => {
   const said = realtime ? { retained: createRealtimeRetained(realtime.kv), pubsub: realtime.pubsub } : undefined;
@@ -69,6 +72,17 @@ export const createJobControl = ({ queue, realtime }: JobControlOptions): JobCon
     cancel: told((spaceIds, jobId) => queue.cancel(spaceIds, jobId)),
     requeue: told((spaceIds, jobId, options?: Parameters<JobQueue['requeue']>[2]) =>
       queue.requeue(spaceIds, jobId, options)
-    )
+    ),
+    cancelWaiting: async query => {
+      const dropped = await queue.cancelWaiting(query);
+      // A few at a time: a queue emptied of thousands tells them all without opening as many reads at once.
+      for (let from = 0; from < dropped.functionJobs.length; from += ANNOUNCED_AT_ONCE) {
+        await Promise.all(
+          dropped.functionJobs.slice(from, from + ANNOUNCED_AT_ONCE).map(jobId => announce(query.spaceIds, jobId))
+        );
+      }
+
+      return dropped;
+    }
   };
 };

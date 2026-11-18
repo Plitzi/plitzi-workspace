@@ -148,6 +148,27 @@ export type JobQuery = {
 };
 
 /**
+ * Which jobs an operator drops at once (`JobQueue.cancelWaiting`): everything of these spaces that has not started —
+ * waiting to run or set aside — narrowed like a list of them is.
+ */
+export type JobsToDrop = {
+  spaceIds: number[];
+  /** Only what waits to run (`pending`), or only what was set aside (`paused`). Absent, both. */
+  status?: Extract<JobStatus, 'pending' | 'paused'>;
+  /** Only runs of actions, or only jobs of the spaces' functions. */
+  kind?: JobTarget['kind'];
+  /** Only what runs this action, or this job (`target.name`). */
+  name?: string;
+};
+
+/** What `JobQueue.cancelWaiting` dropped. */
+export type JobsDropped = {
+  cancelled: number;
+  /** The jobs of the spaces' functions among them: the ones somebody may be watching, for whoever tells them. */
+  functionJobs: string[];
+};
+
+/**
  * A recurring intent, as a row rather than as a timer.
  *
  * `nextRunAt` is the point of the whole design: the instant of the next fire is DECIDED ONCE and written down, so
@@ -306,4 +327,10 @@ export type JobQueue = {
    * newer is the one left, on every replica. A running one is left: it is usually the run that set the next.
    */
   cancelPending: (params: { spaceId: number; key: string; olderThan?: string }) => Promise<number>;
+  /**
+   * Drops every job of these spaces that has not started (`cancelled`) — a queue filled by a schedule whose runs were
+   * all set aside is emptied in one statement, not a job at a time. A running one is left to `cancel`: only the worker
+   * holding it can stop it.
+   */
+  cancelWaiting: (query: JobsToDrop) => Promise<JobsDropped>;
 };
