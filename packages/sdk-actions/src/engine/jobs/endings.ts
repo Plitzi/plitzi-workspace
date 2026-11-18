@@ -1,5 +1,7 @@
 import { serverLog } from '@plitzi/sdk-kernel/log';
 
+import { SET_ASIDE_WORDS } from './memoryNeeds';
+
 import type { JobSettlement } from '../../types';
 import type { ActionRunResult } from '../types';
 import type { ActionRunLimit, Job } from '@plitzi/sdk-shared';
@@ -44,21 +46,51 @@ export const SET_ASIDE_LIMITS = new Set<ActionRunLimit>([
   'quota'
 ]);
 
-/**
- * The limits a SCHEDULE waits on: those the code itself meets again at the next fire, as it would at the next attempt.
- * Its allowance for the period (`quota`) is not one — that comes back by itself when the period turns, and a schedule
- * waiting on it would wait on a job nobody has a reason to resume.
- */
-export const HOLDS_SCHEDULE = new Set<ActionRunLimit>([...SET_ASIDE_LIMITS].filter(limit => limit !== 'quota'));
+const HOUR_MS = 60 * 60_000;
+
+/** Why a schedule waits on the fire before it, and when it tries one by itself. */
+export type ScheduleHold = {
+  /** What the fire before was set aside at. */
+  limit: ActionRunLimit;
+  /** How long after that fire the schedule tries one by itself. */
+  retryMs: number;
+  /** `retryMs` in words, for the line that says it waits. */
+  retryIn: string;
+};
 
 /**
- * The limit a job set aside was stopped at, when its schedule waits on it: `paused`, its last attempt ended at a
- * limit of {@link HOLDS_SCHEDULE}. A job set aside after failing every attempt is not one — the next fire may pass.
+ * What the code meets again at the next fire, as it would at the next attempt: a day before the schedule tries one by
+ * itself. What a run holds can depend on the day's data, and nobody may be watching — held for ever by one large day,
+ * a feed would never come back; a day apart it is one run that says where it stands, not one a minute.
  */
-export const heldAtLimit = (job: Pick<Job, 'status' | 'history'>): ActionRunLimit | undefined => {
-  const limit = job.status === 'paused' ? job.history.at(-1)?.limit : undefined;
+const AGAIN_IN_A_DAY = { retryMs: 24 * HOUR_MS, retryIn: 'a day' };
 
-  return limit !== undefined && HOLDS_SCHEDULE.has(limit) ? limit : undefined;
+/**
+ * Its allowance for the period spent: nobody resumes a job for that — it comes back when the period turns, or the plan
+ * changes — so the schedule asks again by itself, an hour apart: back within the hour, and never a job a minute.
+ */
+const AGAIN_IN_AN_HOUR = { retryMs: HOUR_MS, retryIn: 'an hour' };
+
+/**
+ * Why a schedule waits on the fire before it, when it does: that job is set aside (`paused`) at something the next
+ * fire would meet too — a limit of {@link SET_ASIDE_LIMITS} its last attempt ended at, or a worker died running it and
+ * none here may hold what it needs (the next fire starts at that need). Fired into, each is one more job set aside per
+ * fire, for as long as nobody looks: a queue that only grows.
+ *
+ * A job set aside after failing every attempt is not one: the next fire may pass, and takes its place
+ * (`createScheduler`).
+ */
+export const scheduleHold = (job: Pick<Job, 'status' | 'history' | 'error'>): ScheduleHold | undefined => {
+  if (job.status !== 'paused') {
+    return undefined;
+  }
+
+  const limit = job.history.at(-1)?.limit;
+  if (limit !== undefined && SET_ASIDE_LIMITS.has(limit)) {
+    return { limit, ...(limit === 'quota' ? AGAIN_IN_AN_HOUR : AGAIN_IN_A_DAY) };
+  }
+
+  return job.error?.startsWith(SET_ASIDE_WORDS[0]) ? { limit: 'memory', ...AGAIN_IN_A_DAY } : undefined;
 };
 
 /** Why a job stopped at one of {@link SET_ASIDE_LIMITS} waits for somebody. */

@@ -1,7 +1,7 @@
 import { serverLog } from '@plitzi/sdk-kernel/log';
 import { cronFiresBetween, cronNextFire } from '@plitzi/sdk-shared/actions';
 
-import { heldAtLimit } from './endings';
+import { scheduleHold } from './endings';
 import { createFailureStreak } from './failureStreak';
 import { DEFAULT_MAX_ATTEMPTS, scheduleJobId, schedulesFor } from './schedules';
 
@@ -15,13 +15,6 @@ const MINUTE_MS = 60_000;
 /** Where a schedule is parked when its expression has no next fire at all. Four years out, which is the horizon
  *  {@link cronNextFire} searches: nothing inside it matched, so nothing inside it will. */
 const PARK_MS = 4 * 366 * 24 * 60 * MINUTE_MS;
-
-/**
- * How long a schedule waits on a fire set aside at a limit before it tries one again by itself. What a run holds can
- * depend on the day's data, and nobody may be watching: held for ever by one large day, a feed would never come back.
- * A day apart it is one run that says where it stands — not one a minute.
- */
-const HELD_RETRY_MS = 24 * 60 * MINUTE_MS;
 
 export type SchedulerOptions = {
   queue: JobQueue;
@@ -58,6 +51,8 @@ export type SweepResult = {
   missed: { spaceId: number; actionId: string; count: number }[];
   /** Fires not made into jobs: their schedule waits on the job named, set aside at a limit it would meet again. */
   held: { spaceId: number; actionId: string; jobId: string; limit: ActionRunLimit }[];
+  /** Jobs still set aside when their schedule fired again, cancelled: the new fire stands for them. */
+  superseded: string[];
 };
 
 export type Scheduler = {
@@ -145,18 +140,20 @@ export const createScheduler = ({
         ? undefined
         : await queue.getJob([spaceId], scheduleJobId(spaceId, actionId, schedule.lastFireAt));
 
-    // The fire before was set aside at a limit its code meets again: this one would be too. The schedule waits on it
-    // — and keeps its place, so nothing is owed when it goes on.
-    const limit = before ? heldAtLimit(before) : undefined;
+    // The fire before was set aside at something this one would meet too — a limit of its code's, its plan's
+    // allowance, a worker large enough: the schedule waits on it — and keeps its place, so nothing is owed when it
+    // goes on.
+    const hold = before ? scheduleHold(before) : undefined;
     const key = `${String(spaceId)}:${actionId}`;
-    if (before && limit && at.getTime() - before.dueAt < HELD_RETRY_MS) {
+    if (before && hold && at.getTime() - before.dueAt < hold.retryMs) {
+      const { limit } = hold;
       if (waiting.get(key) !== before.id) {
         waiting.set(key, before.id);
         serverLog.warn(
           'Actions',
           `schedule ${actionId} of space ${String(spaceId)} waits: its run ${before.id} was set aside at its ${limit} ` +
             'limit, which the next would reach too. It fires again once that job is resumed or cancelled, and tries ' +
-            'one by itself a day after it.'
+            `one by itself ${hold.retryIn} after it.`
         );
       }
 
@@ -187,6 +184,11 @@ export const createScheduler = ({
       ...(before?.needsMemoryMb === undefined ? {} : { needsMemoryMb: before.needsMemoryMb })
     });
     (created ? result.enqueued : result.duplicates).push(id);
+    // A schedule has one job set aside at most: the fire before still waits for somebody, and this one is the same
+    // work, tried again — it takes its place. Left there, each would stay for ever: a job set aside has no expiry.
+    if (before?.status === 'paused' && (await queue.cancel([spaceId], before.id))) {
+      result.superseded.push(before.id);
+    }
 
     // Late by more than the fire itself: the occurrences in between are gone, and an operator is owed the number.
     const lateness = Math.max(fireAt, at.getTime());
@@ -213,7 +215,7 @@ export const createScheduler = ({
   };
 
   const sweep = async (): Promise<SweepResult> => {
-    const result: SweepResult = { enqueued: [], duplicates: [], missed: [], held: [] };
+    const result: SweepResult = { enqueued: [], duplicates: [], missed: [], held: [], superseded: [] };
     const at = await queue.now();
     for (const schedule of await queue.dueSchedules(batch)) {
       await produce(schedule, at, result);

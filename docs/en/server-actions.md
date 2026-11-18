@@ -531,8 +531,14 @@ Four properties follow, and they are the reason the design looks the way it does
   it, for a schedule nobody is watching whose data had one large day. An every-minute task that needs more memory than
   its size has is then one job waiting for somebody, with what to do on it (`limits: { size: 'medium' }`,
   [functions](./functions.md)), not sixty failed runs an hour. A job's attempt says the limit it was stopped at
-  (`history[].limit`). An allowance spent for the period (`quota`) is not such a limit: it comes back by itself. A
-  `JobQueue` of your own leaves `lastFireAt` as it is when `advanceSchedule` says `held`.
+  (`history[].limit`). The same for a job no worker of the deployment may hold (above), and for an allowance spent for
+  the period (`quota`) — which nobody resumes a job for, since it comes back by itself: there the schedule asks again an
+  hour apart. A `JobQueue` of your own leaves `lastFireAt` as it is when `advanceSchedule` says `held`.
+- **A schedule has one job set aside at most.** When it fires while the job of its fire before is still set aside —
+  the day or the hour above is up, or that job failed every attempt, which the next fire may not — the new fire takes
+  its place: the one before is cancelled (`SweepResult.superseded`), still listed with its attempts and run again from
+  the Queue if wanted. A job set aside has no expiry, so one kept per fire is a queue that only grows: an API down for
+  a day under an every-minute schedule was 1,440 of them.
 - **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
   SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
   job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is

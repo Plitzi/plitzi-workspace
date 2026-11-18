@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { heldAtLimit, limitEndings, limitSetAsideError } from './endings';
+import { limitEndings, limitSetAsideError, scheduleHold } from './endings';
+import { setAsideError } from './memoryNeeds';
 
 import type { JobSettlement } from '../../types';
 import type { Job } from '@plitzi/sdk-shared';
@@ -58,23 +59,43 @@ describe('a job stopped at a limit', () => {
   });
 });
 
-describe('heldAtLimit', () => {
+describe('scheduleHold', () => {
   const attempt = { attempt: 1, status: 'failed' as const, startedAt: 0, endedAt: 1, workerId: 'pod-a' };
+  const DAY = { retryMs: 24 * 60 * 60_000, retryIn: 'a day' };
 
-  it('is the limit a job set aside was stopped at, when its code meets it again', () => {
+  it('is the limit a job set aside was stopped at, tried again a day later when its code meets it again', () => {
     for (const limit of ['memory', 'cpu', 'calls', 'output', 'steps', 'requests', 'response'] as const) {
-      expect(heldAtLimit(job({ status: 'paused', history: [{ ...attempt, limit }] }))).toBe(limit);
+      expect(scheduleHold(job({ status: 'paused', history: [{ ...attempt, limit }] }))).toEqual({ limit, ...DAY });
     }
   });
 
-  it('is nothing for an allowance spent, a job that failed every attempt, or one no longer set aside', () => {
-    expect(heldAtLimit(job({ status: 'paused', history: [{ ...attempt, limit: 'quota' }] }))).toBeUndefined();
+  // Nobody resumes a job for an allowance: it comes back by itself, so the schedule asks again within the hour.
+  it('is its plan’s allowance spent, asked again an hour later', () => {
+    expect(scheduleHold(job({ status: 'paused', history: [{ ...attempt, limit: 'quota' }] }))).toEqual({
+      limit: 'quota',
+      retryMs: 60 * 60_000,
+      retryIn: 'an hour'
+    });
+  });
+
+  it('is its memory when a worker died running it and none here may hold what it needs', () => {
+    const lost = { ...attempt, status: 'lost' as const };
+
+    expect(scheduleHold(job({ status: 'paused', error: setAsideError(513, 512), history: [lost] }))).toEqual({
+      limit: 'memory',
+      ...DAY
+    });
+  });
+
+  it('is nothing for a job that failed every attempt, or one no longer set aside', () => {
     expect(
-      heldAtLimit(job({ status: 'paused', history: [{ ...attempt, error: 'the API answered 503' }] }))
+      scheduleHold(job({ status: 'paused', history: [{ ...attempt, error: 'the API answered 503' }] }))
     ).toBeUndefined();
-    expect(heldAtLimit(job({ status: 'pending', history: [{ ...attempt, limit: 'memory' }] }))).toBeUndefined();
-    expect(heldAtLimit(job({ status: 'paused', history: [] }))).toBeUndefined();
+    expect(scheduleHold(job({ status: 'pending', history: [{ ...attempt, limit: 'memory' }] }))).toBeUndefined();
+    expect(scheduleHold(job({ status: 'paused', history: [] }))).toBeUndefined();
     // The last attempt is the one it waits on: an earlier one at a limit, resumed since, says nothing.
-    expect(heldAtLimit(job({ status: 'paused', history: [{ ...attempt, limit: 'memory' }, attempt] }))).toBeUndefined();
+    expect(
+      scheduleHold(job({ status: 'paused', history: [{ ...attempt, limit: 'memory' }, attempt] }))
+    ).toBeUndefined();
   });
 });
