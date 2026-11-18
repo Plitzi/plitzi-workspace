@@ -1,5 +1,12 @@
 # @plitzi/sdk-shared
 
+## 0.39.7
+
+### Patch Changes
+
+- 081d94e: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+
 ## 0.39.6
 
 No changes in this release.

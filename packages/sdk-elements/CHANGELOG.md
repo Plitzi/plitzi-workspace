@@ -1,5 +1,19 @@
 # @plitzi/sdk-elements
 
+## 0.39.7
+
+### Patch Changes
+
+- 081d94e: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [081d94e]
+  - @plitzi/sdk-auth@0.39.7
+  - @plitzi/sdk-event-bridge@0.39.7
+  - @plitzi/sdk-interactions@0.39.7
+  - @plitzi/sdk-navigation@0.39.7
+  - @plitzi/sdk-schema@0.39.7
+  - @plitzi/sdk-shared@0.39.7
+
 ## 0.39.6
 
 ### Patch Changes
