@@ -1,5 +1,14 @@
 # @plitzi/sdk-event-bridge
 
+## 0.39.11
+
+### Patch Changes
+
+- d0b5be6: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [d0b5be6]
+  - @plitzi/sdk-shared@0.39.11
+
 ## 0.39.10
 
 ### Patch Changes
