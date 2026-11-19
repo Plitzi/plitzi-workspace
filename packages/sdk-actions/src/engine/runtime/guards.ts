@@ -4,6 +4,7 @@ import { sampleProcessMemory } from '@plitzi/sdk-kernel/stats';
 
 import { ActionRunError } from './errors';
 
+import type { ActionKvAdapter } from '../types';
 import type { MemoryReading } from '@plitzi/sdk-kernel/stats';
 import type { ActionCallResult } from '@plitzi/sdk-shared';
 
@@ -52,16 +53,11 @@ export type ActiveRun = {
  * The half of a key/value store the guards need, and nothing more.
  *
  * The same methods `ActionKvAdapter` already declares, so a deployment that configured `action.kv` has already
- * provided this: no second store to stand up, and no adapter change. `increment` is what takes a single-flight
- * key; `get`/`set` are what carry a cancellation and a replayable answer between replicas.
+ * provided this: no second store to stand up, and no adapter change. `swap` is what takes a single-flight key — written
+ * where none is, with its lifetime, at once; `get`/`set` are what carry a cancellation and a replayable answer between
+ * replicas.
  */
-export type RunKeyStore = {
-  get: (key: string) => Promise<string | undefined>;
-  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
-  increment: (key: string, amount: number) => Promise<number>;
-  expire: (key: string, ttlSeconds: number) => Promise<void>;
-  delete: (key: string) => Promise<void>;
-};
+export type RunKeyStore = Pick<ActionKvAdapter, 'get' | 'set' | 'swap' | 'delete'>;
 
 export type RunGuardsConfig = {
   /**
@@ -290,30 +286,15 @@ export const createRunGuards = (
   };
 
   /**
-   * Takes the key, here and — when there is one — everywhere.
-   *
-   * `increment` is the primitive because it is the only atomic one the adapter contract has, and it says exactly
-   * what is needed: the caller whose increment answers `1` created the key and holds it. The lifetime is set by
-   * that same caller, which is the rule `createKvStore` already follows for a rate-limit window; the gap between
-   * the two calls is a key that outlives its holder if the process dies inside it, and it is the same gap that
-   * idiom has always had.
+   * Takes the key, here and — when there is one — everywhere: written only where nothing holds it, with its lifetime in
+   * the same write (`swap`), and holding the run's id. Never a key without one: taken by `increment` and given its
+   * lifetime by an `expire` after, a store that timed out on the second (a rollout's Redis did) kept the key for good —
+   * every later run of it refused as "already running" while nothing ran, its job back in the queue every second.
    */
   const ttlSeconds = (ttlMs: number): number => Math.max(1, Math.ceil(ttlMs / 1000));
 
-  const takeShared = async (runKey: string, ttlMs: number): Promise<boolean> => {
-    if (!store) {
-      return true;
-    }
-
-    const held = await store.increment(`${keyPrefix}${runKey}`, 1);
-    if (held !== 1) {
-      return false;
-    }
-
-    await store.expire(`${keyPrefix}${runKey}`, ttlSeconds(ttlMs));
-
-    return true;
-  };
+  const takeShared = async (runKey: string, runId: string, ttlMs: number): Promise<boolean> =>
+    store ? store.swap(`${keyPrefix}${runKey}`, undefined, runId, ttlSeconds(ttlMs)) : true;
 
   const begin = async (params: BeginRunParams): Promise<ActiveRun> => {
     sweep();
@@ -384,7 +365,7 @@ export const createRunGuards = (
 
     try {
       // And only THEN the shared one, so a run refused locally never leaves a key another replica has to wait out.
-      if (!(await takeShared(runKey, params.ttlMs))) {
+      if (!(await takeShared(runKey, run.runId, params.ttlMs))) {
         throw new ActionRunError('duplicate', 'This action is already running');
       }
     } catch (error) {

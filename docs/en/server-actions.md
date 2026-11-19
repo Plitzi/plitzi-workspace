@@ -1030,8 +1030,9 @@ one-minute window never closes while traffic keeps arriving.
 Two things your adapter does owe:
 
 - **`increment` and `swap` must be atomic.** They are what get-then-set cannot be, and the reason they are operations
-  rather than something the server composes: single-flight is taken with `increment`, and `setIf` and every list
-  write stand on `swap`. On Redis it is a script (`createRedisKv` has it); on SQL, `UPDATE … WHERE v = ?` and an
+  rather than something the server composes: a rate limit counts with `increment`, and single-flight, `setIf` and
+  every list write stand on `swap` — a single-flight key is written only where none is, with its lifetime in the same
+  write, so no failure between two calls leaves one that never expires. On Redis it is a script (`createRedisKv` has it); on SQL, `UPDATE … WHERE v = ?` and an
   insert that ignores a key already there — comparing bytes, not a collation that ignores case.
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.

@@ -18,31 +18,59 @@ const render = (n: number, spaceId = 1): BeginRunParams =>
   params({ spaceId, kind: 'render', callerId: 'render', idempotencyKey: `render:${n}` });
 
 describe('createRunGuards', () => {
-  /** One store two sets of guards can both reach: what a cluster has, and the only way to test that they agree. */
+  /**
+   * One store two sets of guards can both reach: what a cluster has, and the only way to test that they agree. A key
+   * lives until `clock` passes its lifetime, as a shared store's does — and one written without a lifetime, for good.
+   */
   const sharedStore = () => {
-    const counters = new Map<string, number>();
     const values = new Map<string, string>();
+    const expires = new Map<string, number>();
+    const clock = { now: 0 };
+    const live = (key: string) => {
+      const at = expires.get(key);
+      if (at !== undefined && at <= clock.now) {
+        values.delete(key);
+        expires.delete(key);
+      }
+
+      return values.get(key);
+    };
+    const write = (key: string, value: string, ttlSeconds?: number) => {
+      values.set(key, value);
+      if (ttlSeconds === undefined) {
+        expires.delete(key);
+      } else {
+        expires.set(key, clock.now + ttlSeconds * 1000);
+      }
+    };
+
+    /** The single-flight keys alone — not who owns a run, nor its cancel or its answer. */
+    const runKeys = () => [...values.keys()].filter(key => !/^action:run:(owner|cancel|done):/.test(key));
 
     return {
-      counters,
       values,
+      expires,
+      clock,
+      runKeys,
       store: {
-        get: (key: string) => Promise.resolve(values.get(key)),
-        set: (key: string, value: string) => {
-          values.set(key, value);
+        get: (key: string) => Promise.resolve(live(key)),
+        set: (key: string, value: string, ttlSeconds?: number) => {
+          write(key, value, ttlSeconds);
 
           return Promise.resolve();
         },
-        increment: (key: string, amount: number) => {
-          const next = (counters.get(key) ?? 0) + amount;
-          counters.set(key, next);
+        swap: (key: string, expected: string | undefined, next: string, ttlSeconds?: number) => {
+          if (live(key) !== expected) {
+            return Promise.resolve(false);
+          }
 
-          return Promise.resolve(next);
+          write(key, next, ttlSeconds);
+
+          return Promise.resolve(true);
         },
-        expire: () => Promise.resolve(),
         delete: (key: string) => {
-          counters.delete(key);
           values.delete(key);
+          expires.delete(key);
 
           return Promise.resolve();
         }
@@ -207,16 +235,36 @@ describe('createRunGuards', () => {
       await expect(second.begin(params())).resolves.toBeDefined();
     });
 
+    // Taken by `increment` and given its lifetime after, a key whose `expire` never landed (a Redis timing out through a
+    // rollout) was kept for good: Meridian's schedules refused as "already running" for twelve hours, nothing running.
+    it('takes the key with its lifetime in one write, so a holder that never ends it frees it when that runs out', async () => {
+      const { store, expires, clock, runKeys } = sharedStore();
+      const crashed = createRunGuards({}, store);
+      const next = createRunGuards({}, store);
+
+      const held = await crashed.begin(params({ ttlMs: 10_000 }));
+      expect(
+        runKeys().map(key => expires.get(key)),
+        'the key was written without a lifetime'
+      ).toEqual([10_000]);
+      await expect(next.begin(params())).rejects.toThrow(/already running/);
+
+      // Its process is gone: nothing ends the run, and only the lifetime frees the key.
+      clock.now = 10_001;
+      const after = await next.begin(params());
+      expect(after.runId).not.toBe(held.runId);
+    });
+
     /** A refusal must not write: a call refused locally that had already taken the shared key would leave every
      *  other replica waiting out a run that never started. */
     it('takes no shared key for a run it refused itself', async () => {
-      const { store, counters } = sharedStore();
+      const { store, runKeys } = sharedStore();
       const guards = createRunGuards({ perSpace: 1 }, store);
 
       await guards.begin(params({ idempotencyKey: 'a' }));
       await expect(guards.begin(params({ idempotencyKey: 'b' }))).rejects.toThrow(/Too many/);
 
-      expect(counters.size, 'a refused run left a key behind').toBe(1);
+      expect(runKeys(), 'a refused run left a key behind').toHaveLength(1);
     });
 
     /**
