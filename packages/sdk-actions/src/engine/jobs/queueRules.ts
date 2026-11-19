@@ -1,8 +1,10 @@
 import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { flowOf } from './flow';
 import { groupJobs } from './jobGroups';
 import { LOST_ERROR, lostError, needsAfterLoss, outgrewWorker, setAsideError } from './memoryNeeds';
+import { cancelWaitingIn, putBack, resumeWaitingIn } from './waitingRules';
 
 import type {
   JobClaimMemory,
@@ -12,7 +14,9 @@ import type {
   JobQueueSummary,
   JobSettlement,
   JobsDropped,
+  JobsResumed,
   JobsToDrop,
+  JobsToResume,
   JobSpaces,
   JobTake,
   JobStop,
@@ -54,13 +58,12 @@ export type QueueRules = {
   [K in keyof JobQueue]: (...args: Parameters<JobQueue[K]>) => Awaited<ReturnType<JobQueue[K]>>;
 };
 
-/** Whether what `cancelWaiting` answered says it dropped a job. */
-const droppedSome = (answer: unknown): boolean =>
-  typeof answer === 'object' &&
-  answer !== null &&
-  'cancelled' in answer &&
-  typeof answer.cancelled === 'number' &&
-  answer.cancelled > 0;
+/** Whether what `cancelWaiting` or `resumeWaiting` answered says it moved a job: its count under `field`. */
+const movedSome = (answer: unknown, field: 'cancelled' | 'resumed'): boolean => {
+  const moved = isRecord(answer) ? answer[field] : undefined;
+
+  return typeof moved === 'number' && moved > 0;
+};
 
 /**
  * Whether a call changed the state, by its method and what it answered — what a store keeping the state elsewhere writes
@@ -82,7 +85,9 @@ export const changedBy = <K extends keyof JobQueue>(method: K, answer: Awaited<R
     case 'cancelPending':
       return typeof answer === 'number' && answer > 0;
     case 'cancelWaiting':
-      return droppedSome(answer);
+      return movedSome(answer, 'cancelled');
+    case 'resumeWaiting':
+      return movedSome(answer, 'resumed');
     // A worker beats only for the jobs it holds: each extends a lease.
     case 'heartbeat':
     case 'settle':
@@ -525,13 +530,7 @@ export const queueRules = (
         return false;
       }
 
-      job.status = 'pending';
-      job.runAt = now();
-      job.updatedAt = now();
-      // Set aside after failing every attempt: resumed once fixed, it has them all again.
-      if (job.attempts >= job.maxAttempts) {
-        job.attempts = 0;
-      }
+      putBack(job, now());
 
       return true;
     },
@@ -561,30 +560,9 @@ export const queueRules = (
       return dropped;
     },
 
-    cancelWaiting: ({ spaceIds, status, kind, name }: JobsToDrop): JobsDropped => {
-      const at = now();
-      const dropped: JobsDropped = { cancelled: 0, functionJobs: [] };
-      for (const job of jobs.values()) {
-        if (
-          spaceIds.includes(job.spaceId) &&
-          (job.status === 'pending' || job.status === 'paused') &&
-          (status === undefined || job.status === status) &&
-          (kind === undefined || job.target.kind === kind) &&
-          (name === undefined || job.target.name === name)
-        ) {
-          job.status = 'cancelled';
-          job.workerId = undefined;
-          job.pauseRequested = undefined;
-          job.updatedAt = at;
-          dropped.cancelled += 1;
-          if (job.target.kind === 'function') {
-            dropped.functionJobs.push(job.id);
-          }
-        }
-      }
+    cancelWaiting: (query: JobsToDrop): JobsDropped => cancelWaitingIn(jobs.values(), query, now()),
 
-      return dropped;
-    }
+    resumeWaiting: (query: JobsToResume): JobsResumed => resumeWaitingIn(jobs.values(), query, now())
   };
 };
 
@@ -764,5 +742,6 @@ export const queueOver = (access: QueueAccess): JobQueue => ({
   pause: (...args) => access('pause', args),
   resume: (...args) => access('resume', args),
   cancelPending: (...args) => access('cancelPending', args),
-  cancelWaiting: (...args) => access('cancelWaiting', args)
+  cancelWaiting: (...args) => access('cancelWaiting', args),
+  resumeWaiting: (...args) => access('resumeWaiting', args)
 });

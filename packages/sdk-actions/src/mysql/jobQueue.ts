@@ -2,6 +2,7 @@ import { execute, selectOne, selectRows } from '@plitzi/sdk-kernel/mysql';
 import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 
 import { listJobGroupsOf, listWhere } from './jobLists';
+import { PUT_BACK, resumeWaitingOf } from './resumeWaiting';
 import { claimable, jsonOrNull, toJob, toSchedule } from './rows';
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { summarizeJobsTable } from './summary';
@@ -660,9 +661,7 @@ export const createMysqlJobQueue = ({
       const at = await clock.now();
       const resumed = await execute(
         conn,
-        `UPDATE ${t.jobs} SET status = 'pending', run_at = ?, updated_at = ?,
-          attempts = IF(attempts >= max_attempts, 0, attempts)
-        WHERE id = ? AND space_id IN (?) AND status = 'paused'`,
+        `UPDATE ${t.jobs} SET ${PUT_BACK} WHERE id = ? AND space_id IN (?) AND status = 'paused'`,
         [at, at, jobId, spaceIds]
       );
 
@@ -727,6 +726,11 @@ export const createMysqlJobQueue = ({
       );
 
       return { cancelled: dropped.affectedRows, functionJobs: watched.map(job => job.id) };
-    }
+    },
+
+    resumeWaiting: async query =>
+      inSpaces(query.spaceIds)
+        ? resumeWaitingOf(await db(), t.jobs, query, await clock.now())
+        : { resumed: 0, functionJobs: [] }
   };
 };

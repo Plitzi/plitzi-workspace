@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
 
+import { describeResumeWaiting } from './jobQueueResumeContract';
+
 import type { JobQueue } from '../../../types';
 import type { JobInput } from '@plitzi/sdk-shared';
 
@@ -13,9 +15,12 @@ export type DropWaitingSubject = {
 
 /**
  * A queue emptied at once (`cancelWaiting`), run inside `describeJobQueue` against each store: a schedule whose every
- * run was set aside leaves a job a minute, and an operator drops them in one go — never what runs or has ended.
+ * run was set aside leaves a job a minute, and an operator drops them in one go — never what runs or has ended — or, its
+ * cause fixed, puts them all back (`describeResumeWaiting`).
  */
 export const describeDropWaiting = (ctx: DropWaitingSubject): void => {
+  describeResumeWaiting(ctx);
+
   it('drops at once what has not started — all of it, or one status, kind and name — and leaves the rest', async () => {
     const queue = ctx.queue();
     const sweep = (id: string, over: Partial<JobInput> = {}) =>

@@ -3,6 +3,7 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 import { claimable } from './claimable';
 import { dropWaiting } from './dropWaiting';
 import { listFilter, listJobGroupsOf } from './jobLists';
+import { putBack, resumeWaiting } from './resumeWaiting';
 import { flowOf } from '../engine/jobs/flow';
 import { LOST_ERROR, LOST_MEMORY_WORDS, SET_ASIDE_WORDS } from '../engine/jobs/memoryNeeds';
 import { NEEDING_STATUSES, statusCounts, WAITING_STATUSES, waitingKindOf } from '../engine/jobs/queueRules';
@@ -713,20 +714,7 @@ export const createMongoJobQueue = ({
     resume: async (spaceIds, jobId) => {
       const { jobs } = await collections();
       const at = await clock.now();
-      const resumed = await jobs.updateOne(
-        { _id: jobId, spaceId: { $in: spaceIds }, status: 'paused' },
-        // Set aside after failing every attempt: resumed once fixed, it has them all again.
-        [
-          {
-            $set: {
-              status: 'pending',
-              runAt: at,
-              updatedAt: at,
-              attempts: { $cond: [{ $gte: ['$attempts', '$maxAttempts'] }, 0, '$attempts'] }
-            }
-          }
-        ]
-      );
+      const resumed = await jobs.updateOne({ _id: jobId, spaceId: { $in: spaceIds }, status: 'paused' }, putBack(at));
 
       return resumed.matchedCount === 1;
     },
@@ -760,6 +748,12 @@ export const createMongoJobQueue = ({
       const at = await clock.now();
 
       return dropWaiting(jobs, query, at, expiryOf(at));
+    },
+
+    resumeWaiting: async query => {
+      const { jobs } = await collections();
+
+      return resumeWaiting(jobs, query, await clock.now());
     }
   };
 };

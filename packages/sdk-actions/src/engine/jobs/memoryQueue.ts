@@ -45,7 +45,8 @@ export const JOB_QUEUE_METHODS: StoreMethods<JobQueue> = {
   pause: true,
   resume: true,
   cancelPending: true,
-  cancelWaiting: true
+  cancelWaiting: true,
+  resumeWaiting: true
 };
 
 /**

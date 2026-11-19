@@ -181,6 +181,19 @@ export type JobsToDrop = {
   name?: string;
 };
 
+/**
+ * Which jobs set aside an operator puts back in the queue at once (`JobQueue.resumeWaiting`): every `paused` job of these
+ * spaces, narrowed like a list of them is — what one group of `listJobGroups` holds, when set aside.
+ */
+export type JobsToResume = Omit<JobsToDrop, 'status'>;
+
+/** What `JobQueue.resumeWaiting` put back. */
+export type JobsResumed = {
+  resumed: number;
+  /** The jobs of the spaces' functions among them: the ones somebody may be watching, for whoever tells them. */
+  functionJobs: string[];
+};
+
 /** What `JobQueue.cancelWaiting` dropped. */
 export type JobsDropped = {
   cancelled: number;
@@ -366,4 +379,10 @@ export type JobQueue = {
    * holding it can stop it.
    */
   cancelWaiting: (query: JobsToDrop) => Promise<JobsDropped>;
+  /**
+   * Puts every job of these spaces set aside (`paused`) back in the queue at once, as `resume` puts one — each set aside
+   * after failing every attempt with every attempt again. What a group of a schedule's runs set aside asks of an
+   * operator once its cause is fixed, rather than a press a job.
+   */
+  resumeWaiting: (query: JobsToResume) => Promise<JobsResumed>;
 };

@@ -924,7 +924,8 @@ one, which is usually the run that set the next. `cancelWaiting({ spaceIds, stat
 operator's: every job of those spaces that has not started — `pending` or `paused`, or one of the two, of one kind or one
 name — is `cancelled` in one statement, and it answers how many and which of them were jobs of the functions, whose
 watchers `createJobControl` then tells. A queue a schedule filled with runs set aside is emptied with it; what runs is
-left to `cancel`, a job at a time. `listJobGroups` reads the queue as a person scans it: the jobs `listJobs` would list,
+left to `cancel`, a job at a time. `resumeWaiting({ spaceIds, kind?, name? })` is its other half, once what set them
+aside is fixed: every `paused` job of those spaces narrowed the same way goes back to the queue as `resume` sends one. `listJobGroups` reads the queue as a person scans it: the jobs `listJobs` would list,
 one group per space, work and status — its latest job, how many it holds, the earliest and latest due — paged and
 counted by groups, so a schedule with a thousand runs set aside is one row that says a thousand, and exactly what
 `cancelWaiting` narrowed to it drops.
