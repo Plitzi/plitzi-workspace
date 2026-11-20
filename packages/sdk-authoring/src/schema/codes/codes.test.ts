@@ -6,6 +6,7 @@ import { BINDING_CODES } from './bindings';
 import { COMPONENT_CODES } from './components';
 import { CSS_CODES } from './css';
 import { ELEMENT_CODES } from './elements';
+import { EXPERIMENT_CODES } from './experiments';
 import { FLAG_CODES } from './flags';
 import { FLOW_CODES } from './flows';
 import { AUTHORING_CODES } from './index';
@@ -26,6 +27,7 @@ const SUBJECTS = {
   BINDING_CODES,
   COMPONENT_CODES,
   FLAG_CODES,
+  EXPERIMENT_CODES,
   FLOW_CODES,
   SERVER_CODES,
   ACCESSIBILITY_CODES,

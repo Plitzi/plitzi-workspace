@@ -33,6 +33,7 @@ import type {
   OfflineDataRaw,
   SdkState
 } from '@plitzi/sdk-shared';
+import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 
 // Font Awesome's sheet where the build emits it beside the stylesheet (`iconsPlugin`) and development serves it — what a
 // page that says nothing else is told. A page server serving the SDK elsewhere says where (`sdkIconsStylePath`).
@@ -70,6 +71,8 @@ export type AppMainProps = {
   serverFlags?: Record<string, boolean>;
   /** The flags a tester forced, already settled against whether this page may debug. */
   forcedFlags?: Record<string, boolean>;
+  /** The variants the rendering server drew — see `PlitziSdkProps`. */
+  serverExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
@@ -115,6 +118,7 @@ const AppMain = ({
   flags,
   serverFlags,
   forcedFlags,
+  serverExperiments,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -168,6 +172,9 @@ const AppMain = ({
     ['flags.overrides.server', 'flags.overrides.sdk', 'flags.overrides.qa'],
     [useStableValue(serverFlags), useStableValue(flags), forcedFlags]
   );
+
+  // What the server drew the page with: `GlobalSources` draws only the experiments it does not name.
+  useSdkStoreSync(['experiments.server'], [useStableValue(serverExperiments)]);
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.

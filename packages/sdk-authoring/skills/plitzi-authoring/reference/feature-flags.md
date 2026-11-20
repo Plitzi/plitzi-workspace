@@ -76,3 +76,24 @@ and a self-hosted server keeps the last ones it fetched — so a published site 
 
 Remove the gate from what stays, delete what it replaced, and remove the flag. A declared flag nothing reads is a
 warning (`flag-unused`): it is a switch nobody can see the effect of.
+
+## A/B tests
+
+A flag shows the same side to everyone its rules match; an `abTest` splits the visitors at random and keeps each on
+their side. It holds two `abTestVariant`s — the first is A, the second B — and draws only the one a visitor is shown:
+
+```ts
+abTest({
+  experiment: 'heroTest', // what a visitor's side is kept under, and read as {{ experiments.heroTest }}
+  split: 30,              // the share of visitors, 0–100, who see B
+  builderVariant: 'b',    // the side the builder's canvas shows; visitors never see it decided this way
+  children: [abTestVariant([heading({ content: 'Build faster' })]), abTestVariant([heading({ content: 'Ship today' })])]
+});
+```
+
+The server draws the visitor's side and keeps it in a cookie, so a reload or a later visit shows the same; a visitor
+keeps their side when the split changes, until it is 0 or 100, which ends the experiment for everybody. Two tests with
+the same `experiment` show a visitor the same side (`experiment-split-differs` warns when their splits disagree).
+`{{ experiments.heroTest }}` is `'a'` or `'b'` — what a flow sends to your analytics with the conversion it measures.
+An `abTest` with no `experiment` runs nothing and shows A (`experiment-unnamed`).
+

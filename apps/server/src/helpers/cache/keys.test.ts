@@ -86,6 +86,13 @@ describe('buildHtmlCacheKey', () => {
     expect(html(painted({ toolPick: 'star' }))).not.toBe(html());
   });
 
+  /** The page draws only the side of each A/B test the visitor keeps: visitors shown the same sides share a page. */
+  it('separates visitors who keep different variants, and shares one page between those who keep the same', () => {
+    expect(html('plitzi_ab=heroTest%3Ab')).not.toBe(html('plitzi_ab=heroTest%3Aa'));
+    expect(html('plitzi_ab=heroTest%3Ab')).not.toBe(html());
+    expect(html('plitzi_ab=heroTest%3Ab; _ga=1')).toBe(html('_ga=2; plitzi_ab=heroTest%3Ab'));
+  });
+
   /** A flag turned in production changes the page while the revision stays — the deployment says what they are at. */
   it('separates two versions of the flags at one revision', () => {
     const at = (flagsVersion?: string) =>

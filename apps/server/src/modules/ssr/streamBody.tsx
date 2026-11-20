@@ -48,6 +48,10 @@ export const streamBody = async (
     offlineDataOverride,
     published
   );
+  // Before a byte of the page: the variants drawn for this visitor go with it.
+  if (prep.setCookie) {
+    res.setHeader('Set-Cookie', prep.setCookie);
+  }
 
   // Render the template with a sentinel in place of React HTML, then split it.
   // This lets us flush <head> + scripts to the browser before React renders.

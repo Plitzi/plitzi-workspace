@@ -8,6 +8,8 @@
  * a builder that has since moved on, and nothing renders it.
  */
 export const elementAttributeNames = {
+  abTest: ['builderVariant', 'experiment', 'split'],
+  abTestVariant: [],
   apiContainer: [
     'accessToken',
     'action',

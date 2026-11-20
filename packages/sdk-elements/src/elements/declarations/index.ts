@@ -49,8 +49,12 @@ import TabContainerDeclaration from '../structure/TabContainer/declaration';
 import TabContainerBodyDeclaration from '../structure/TabContainer/TabContainerBody/declaration';
 import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContainerHeader/declaration';
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
+import AbTestVariantDeclaration from '../testing/AbTest/AbTestVariant/declaration';
+import AbTestDeclaration from '../testing/AbTest/declaration';
 
 export const elementDeclarations = {
+  AbTest: AbTestDeclaration,
+  AbTestVariant: AbTestVariantDeclaration,
   ApiContainer: ApiContainerDeclaration,
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
@@ -99,6 +103,8 @@ export const elementDeclarations = {
 export type ElementDeclarationName = keyof typeof elementDeclarations;
 
 export {
+  AbTestDeclaration,
+  AbTestVariantDeclaration,
   ApiContainerDeclaration,
   BlockHtmlDeclaration,
   BlockJsxDeclaration,

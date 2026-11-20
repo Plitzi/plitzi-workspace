@@ -10,6 +10,7 @@ import type { RenderSettings } from '../types';
 export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   previewMode: true,
   debugMode: false,
+  builder: false,
   renderMode: 'raw',
   environment: 'main',
   isHydrating: false,
@@ -32,6 +33,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
     [
       previewMode,
       debugMode,
+      builder,
       renderMode,
       environment,
       isHydrating,
@@ -46,6 +48,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
   ] = useCommonStore([
     'render.previewMode',
     'render.debugMode',
+    'render.builder',
     'render.renderMode',
     'render.environment',
     'render.isHydrating',
@@ -62,6 +65,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
     () => ({
       previewMode: previewMode ?? DEFAULT_RENDER_SETTINGS.previewMode,
       debugMode: debugMode ?? DEFAULT_RENDER_SETTINGS.debugMode,
+      builder: builder ?? DEFAULT_RENDER_SETTINGS.builder,
       renderMode: renderMode ?? DEFAULT_RENDER_SETTINGS.renderMode,
       environment: environment ?? DEFAULT_RENDER_SETTINGS.environment,
       isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating,
@@ -76,6 +80,7 @@ const useRenderSettings = (): Required<RenderSettings> => {
     [
       previewMode,
       debugMode,
+      builder,
       renderMode,
       environment,
       isHydrating,

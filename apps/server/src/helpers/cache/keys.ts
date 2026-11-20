@@ -1,5 +1,6 @@
 import { requestAuthority } from '@plitzi/sdk-kernel/http';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { experimentsCookieName } from '@plitzi/sdk-shared/experiments';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
@@ -31,6 +32,7 @@ const HTML_KEY_FIELDS = [
   'theme',
   'scheme',
   'painted',
+  'experiments',
   'debugHidden',
   'forcedFlags',
   'hostname',
@@ -55,6 +57,11 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * So is the kept state the first paint depends on (`settings.paintedState`): `prepareRender` renders with that cookie's
  * values, so a page drawn with one visitor's toolbar must not be served to the next. Keyed by its raw value — this
  * key does not know which keys a space declares, and a space that declares none has no such cookie to split on.
+ *
+ * So are the variants of the space's A/B tests the visitor keeps: the page draws only the one each shows them. Keyed by
+ * the cookie's raw value, so visitors shown the same sides share a page. A visitor with none of a test kept is drawn
+ * one there and then, and that page is never kept (`prepareRender`'s `cacheable`): the next such visitor is drawn their
+ * own.
  *
  * So are the feature flags a tester forced from the dev tools, on a page that authorizes debugging: drawn with them,
  * the page is not everybody's, and a tester holding the cookie must never be handed a page drawn without it. Keyed
@@ -95,6 +102,7 @@ export const buildHtmlCacheKey = (
     // their machine says.
     scheme: [undefined, 'system'].includes(themeFromCookies(req.headers.cookie)) ? (visitorScheme(req) ?? '') : '',
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req))) ?? '',
+    experiments: readCookie(req.headers.cookie, experimentsCookieName(requestAuthority(req))) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
     hostname: req.hostname,

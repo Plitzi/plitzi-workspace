@@ -6,6 +6,7 @@ import { lintInstances } from './components';
 import { LintContext } from './context';
 import { lintDataPaths } from './dataPaths';
 import { lintElements } from './elements';
+import { lintExperiments } from './experiments';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
 import { lintKeptState } from './keptState';
@@ -52,6 +53,7 @@ export const lintSpace = (
   lintComputed(ctx);
   lintKeptState(ctx);
   lintFlags(ctx);
+  lintExperiments(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

@@ -226,6 +226,11 @@ export const renderSSR = async (
       metrics.log(`${req.method} ${req.path}`);
     }
 
+    // The variants drawn for this visitor go with the page — or with the redirect it answered.
+    if (rendered.setCookie) {
+      res.setHeader('Set-Cookie', rendered.setCookie);
+    }
+
     if (applySSRResult(res, rendered.result, renderParamsOf(req.query))) {
       return;
     }

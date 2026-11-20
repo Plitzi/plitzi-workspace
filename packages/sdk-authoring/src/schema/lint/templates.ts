@@ -2,6 +2,7 @@ import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/t
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 
 import { checkActionOutputReads } from './actionOutput';
+import { reportUnknownExperiment } from './experiments';
 import { checkShapedReads, globalFieldsRead, reportUnknownComputed, reportUnknownFlag } from './globalReads';
 import { GLOBAL_SOURCES } from '../bindings';
 import { didYouMean } from '../suggest';
@@ -79,13 +80,16 @@ const checkComputedReads = (ctx: LintContext, reads: GlobalRead[], where: string
 };
 
 /**
- * Every `flags.<name>` a template reads has to be a flag the space declares: one it does not resolves to nothing, so
- * the binding or the condition reading it is silently off.
+ * Every `flags.<name>` a template reads has to be a flag the space declares, and every `experiments.<name>` an
+ * experiment one of its A/B tests runs: one it does not resolves to nothing, so the binding or the condition reading it
+ * is silently off.
  */
-const checkFlagReads = (ctx: LintContext, reads: GlobalRead[], where: string, id?: string) => {
+const checkDeclaredReads = (ctx: LintContext, reads: GlobalRead[], where: string, id?: string) => {
   for (const [source, name] of reads) {
     if (source === 'flags' && !ctx.flags.includes(name)) {
       reportUnknownFlag(ctx, name, where, id);
+    } else if (source === 'experiments' && !ctx.experiments.includes(name)) {
+      reportUnknownExperiment(ctx, name, where, id);
     }
   }
 };
@@ -188,7 +192,7 @@ export const checkTemplate = (
 
   const reads = globalFieldsRead(template);
   checkComputedReads(ctx, reads, where, site, id);
-  checkFlagReads(ctx, reads, where, id);
+  checkDeclaredReads(ctx, reads, where, id);
   checkShapedReads(ctx, reads, where, id);
   // A root, not a field: `item.props.title` reads a record's own `props`.
   for (const [path] of template.matchAll(/(?<![\w.])props\.[A-Za-z_][A-Za-z0-9_]*/g)) {

@@ -251,7 +251,7 @@ You do not have to rewrite them.
   \`"!newCheckout"\`) — not a visibility: gated off it is not rendered at all. See **Feature flags**.
 - **A compound element is written with its parts**, as \`children\` of the same \`upsertElement\`: a \`carousel\` holds a
   \`carouselTrack\` (the slides go in it), a \`tabContainer\` a \`tabContainerHeader\` and a \`tabContainerBody\`, a
-  \`dropdown\` a \`dropdownPopup\`. Without its part it shows nothing (\`part-missing\`); a part anywhere else breaks the
+  \`dropdown\` a \`dropdownPopup\`, an \`abTest\` two \`abTestVariant\`s (A, then B). Without its part it shows nothing (\`part-missing\`); a part anywhere else breaks the
   page (\`outside-ancestor\`).
 - **A dropdown places its popup**: the popup's class is its look, never its place (\`popup-position-set\`) —
   \`popupPlacement\`, the offsets and \`popupWidth: "trigger"\` are the dropdown's; the \`openDropdown\`,

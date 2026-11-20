@@ -19,7 +19,8 @@ export const RENDER_GUIDE_URI = 'plitzi://render/guide';
 export const RENDER_TYPES_URI = 'plitzi://render/types';
 
 // Categories an offline widget can use: layout, content, media, forms and data providers (apiContainer fetches at
-// runtime). Excluded — 'internal' (page/loading, not authorable) and 'advanced' (raw HTML/JSX/plugin escape hatches).
+// runtime). Excluded — 'internal' (page/loading, not authorable), 'advanced' (raw HTML/JSX/plugin escape hatches) and
+// 'testing' (an A/B test splits a site's visitors; a widget has none to split).
 const RENDER_TYPE_CATEGORIES = new Set(['structure', 'basic', 'media', 'form', 'provider']);
 
 // The one 'advanced' type a widget is offered, and only for what it is good at here: an inline <svg>. Vector marks,

@@ -41,6 +41,8 @@ import List from './structure/List';
 import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
+// Testing
+import AbTest from './testing/AbTest';
 
 export * from './advanced/BlockHtml';
 export * from './advanced/BlockJsx';
@@ -77,6 +79,7 @@ export * from './structure/ModalContainer';
 export * from './structure/Pagination';
 export * from './structure/Carousel';
 export * from './structure/TabContainer';
+export * from './testing/AbTest';
 
 export {
   NodeHtml,
@@ -89,6 +92,7 @@ export {
   BlockJsx,
   Page,
   Container,
+  AbTest,
   FocusGroup,
   LayoutContainer,
   DialogContainer,

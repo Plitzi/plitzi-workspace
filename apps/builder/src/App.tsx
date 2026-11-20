@@ -360,14 +360,14 @@ const App = (props: AppProps) => {
     [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
-  // Same floor as the SDK, minus what the builder is not: an editor opens in edit mode, not preview, and the head of the
-  // document is the editor's, never the page's on its canvas. `AppMain` syncs the live values (its preview toggle,
+  // Same floor as the SDK, minus what the builder is not: an editor opens in edit mode, not preview, the head of the
+  // document is the editor's, never the page's on its canvas, and its canvas draws no visitor's variant of an A/B test. `AppMain` syncs the live values (its preview toggle,
   // debugMode, environment) over this.
   const storeValue = useMemo(
     () => ({
       styleSelector: 'base',
       collaboration: { collaborators: [] },
-      render: { ...DEFAULT_RENDER_SETTINGS, previewMode: false, ownsHead: false }
+      render: { ...DEFAULT_RENDER_SETTINGS, previewMode: false, ownsHead: false, builder: true }
     }),
     []
   );

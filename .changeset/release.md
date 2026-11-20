@@ -2,7 +2,23 @@
 '@plitzi/cli': patch
 ---
 
-A run's single-flight key never outlives its lifetime; a queue's jobs set aside are resumed at once.
+A/B tests: an element that shows each visitor one of two variants, and keeps it; a run's single-flight key never
+outlives its lifetime; a queue's jobs set aside are resumed at once.
+
+## Elements
+
+- **A/B tests.** `abTest` — in the builder's new **Testing** category — holds two `abTestVariant`s, A first, and draws
+  the one a visitor is shown: B for the share its `split` says (0–100), A for the rest. Its `experiment` names it: the
+  visitor's side is kept under it in a cookie (`plitzi_ab`), so a reload or a later visit shows the same, a visitor keeps
+  their side when the split changes, and 0 or 100 ends the experiment for everybody. Two tests with one name share it.
+  The page server draws the side and sends the cookie with the page; the browser hydrates with what it drew and draws
+  only what no server did (a space with no server, a static copy). The builder's canvas shows the side the test's
+  settings name (`builderVariant`). `{{ experiments.<name> }}` — a new global source — reads `'a'` or `'b'`, for a
+  flow to report with what it measures. Authoring writes `abTest()` / `abTestVariant()`, and the linter says
+  `experiment-unnamed`, `experiment-name`, `experiment-split`, `experiment-split-differs`, `experiment-variants` and
+  `experiment-unknown`.
+- **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
+  kept: the next visitor with none is drawn their own.
 
 ## Server actions
 
@@ -21,6 +37,10 @@ A run's single-flight key never outlives its lifetime; a queue's jobs set aside 
   a job of the functions that it is back.
 
 ## To do when you upgrade
+
+- A server or a proxy that caches pages of its own in front of `@plitzi/sdk-server` keys them by the `plitzi_ab`
+  cookie as well (`plitzi_ab_<port>` on a port), and never keeps a response that sets it — or every visitor behind the
+  first is shown the first one's side of an A/B test.
 
 - A key left without a lifetime by a version before this one is not freed by it: find the deployment's single-flight
   keys with no lifetime (`action:run:<space>:<action>:…`, in Redis `TTL` answers `-1`) and delete them.

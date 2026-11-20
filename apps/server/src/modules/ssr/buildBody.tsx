@@ -20,6 +20,8 @@ export type BuildBodyResult = {
   cacheable: boolean;
   /** The nonce the page's own scripts were rendered with — what its script policy names; empty without one. */
   nonce: string;
+  /** What the page is sent with for this visitor alone (`RenderPrep.setCookie`). */
+  setCookie?: string;
 };
 
 export const buildBody = async (
@@ -57,12 +59,18 @@ export const buildBody = async (
   withRefusal(result, prep.refused);
 
   if (result.redirect !== undefined) {
-    return { result, cacheable: prep.cacheable, nonce: '' };
+    return { result, cacheable: prep.cacheable, nonce: '', ...(prep.setCookie ? { setCookie: prep.setCookie } : {}) };
   }
 
   const templateStart = metrics ? performance.now() : 0;
   const body = renderFn({ ...prep.templateParams, html, ...(result.prePaint ? { prePaint: result.prePaint } : {}) });
   metrics?.record('template', Math.round(performance.now() - templateStart));
 
-  return { body, result, cacheable: prep.cacheable, nonce: prep.templateParams.nonce ?? '' };
+  return {
+    body,
+    result,
+    cacheable: prep.cacheable,
+    nonce: prep.templateParams.nonce ?? '',
+    ...(prep.setCookie ? { setCookie: prep.setCookie } : {})
+  };
 };

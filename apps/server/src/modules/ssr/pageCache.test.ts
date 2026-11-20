@@ -11,7 +11,7 @@ import type { SharedPage, SharedPageStore, SSRPageServerConfig } from '../../typ
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
 
-type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string };
+type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string; setCookie?: string };
 
 const buildBody = vi.fn<(req: SSRRequest) => Promise<Rendered>>();
 
@@ -118,6 +118,27 @@ describe('the page cache for the draft', () => {
     expect(same.headers['X-Cache']).toBe('HIT');
     expect(same.sent).toEqual(['<html>v1</html>']);
     expect(edited.sent).toEqual(['<html>v2</html>']);
+    expect(buildBody).toHaveBeenCalledTimes(2);
+  });
+});
+
+/**
+ * A page drawn for a visitor with none of an A/B test's variants kept draws them one: it goes with the cookie that keeps
+ * it, and is never handed to the next such visitor, who is drawn their own.
+ */
+describe('a page that drew a visitor their variants', () => {
+  it('is sent with the cookie that keeps them, and drawn again for the next visitor with none', async () => {
+    const drawn = { ...page('<html>B</html>'), cacheable: false, setCookie: 'plitzi_ab=heroTest%3Ab; Path=/' };
+    buildBody.mockResolvedValueOnce(drawn).mockResolvedValueOnce({ ...drawn, body: '<html>A</html>' });
+    const pages = caches();
+    const first = response();
+    await render(request(), first.res, pages);
+    const next = response();
+    await render(request(), next.res, pages);
+
+    expect(first.headers['Set-Cookie']).toBe('plitzi_ab=heroTest%3Ab; Path=/');
+    expect(next.headers['X-Cache']).toBe('MISS');
+    expect(next.sent).toEqual(['<html>A</html>']);
     expect(buildBody).toHaveBeenCalledTimes(2);
   });
 });

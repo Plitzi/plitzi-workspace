@@ -38,7 +38,7 @@ const publishedSource = (
   };
 
   render(
-    <StoreProvider value={{ schema: { settings: {}, variables: [] }, pageDefinitions: {}, navigation }}>
+    <StoreProvider value={{ schema: { flat: {}, settings: {}, variables: [] }, pageDefinitions: {}, navigation }}>
       <AuthContext value={{ ...authValue, provider }}>
         <GlobalSources>
           <Probe />
@@ -103,13 +103,14 @@ describe('GlobalSources — the computed source', () => {
    */
   it('keeps a value that came out the same, so what reads it does not render again', () => {
     type Page = {
-      schema: { settings: { computed: Record<string, string> }; variables: unknown[] };
+      schema: { flat: Record<string, never>; settings: { computed: Record<string, string> }; variables: unknown[] };
       pageDefinitions: Record<string, unknown>;
       navigation: typeof navigation;
       runtime: { state: { favourites: string[]; tool: string }; sources: Record<string, unknown> };
     };
     const store = createStore<Page>({
       schema: {
+        flat: {},
         settings: { computed: { picked: '{{ state.favourites|sort }}', tool: '{{ state.tool }}' } },
         variables: []
       },

@@ -23,6 +23,12 @@ import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
  * which is why their declarations had to be written before they could be authored at all.
  */
 
+/**
+ * An A/B test: `abTest({ experiment: 'heroTest', split: 50, children: [abTestVariant([a]), abTestVariant([b])] })` —
+ * each visitor sees one variant, B for `split`% of them, and keeps it when they come back.
+ */
+export const abTest = defineElement(elementDeclarations.AbTest);
+export const abTestVariant = defineElement(elementDeclarations.AbTestVariant);
 export const apiContainer = defineElement(elementDeclarations.ApiContainer);
 export const blockHtml = defineElement(elementDeclarations.BlockHtml);
 export const blockJsx = defineElement(elementDeclarations.BlockJsx);

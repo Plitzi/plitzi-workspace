@@ -1,4 +1,5 @@
 import { componentNamed, isInstance, parentChain, renderContext } from '@plitzi/sdk-schema';
+import { declaredExperiments } from '@plitzi/sdk-shared/experiments';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import type { RefusalCode, WarningCode } from '../codes';
@@ -74,6 +75,8 @@ export class LintContext {
   readonly computed: readonly string[];
   /** The feature flags the space declares, by name. */
   readonly flags: readonly string[];
+  /** The experiments the space's A/B tests run, by name — on its pages and in its components. */
+  readonly experiments: readonly string[];
 
   constructor(
     readonly schema: Schema,
@@ -99,6 +102,7 @@ export class LintContext {
     this.variables = new Set(schema.variables.map(variable => variable.name));
     this.computed = Object.keys(schema.settings.computed ?? {});
     this.flags = Object.keys(schema.flags ?? {});
+    this.experiments = Object.keys(declaredExperiments(schema));
   }
 
   error(code: RefusalCode, message: string, elementId?: string): void {

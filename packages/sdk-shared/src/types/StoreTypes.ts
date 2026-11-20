@@ -9,6 +9,7 @@ import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StylePseudo, StyleState } from './StyleTypes';
 import type { SignedInTestAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
+import type { ExperimentAssignments } from '../experiments/experiments';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
 /** Where a site's badge leads: who made it, and where to report one that abuses its address — the deployment's own. */
@@ -31,6 +32,8 @@ export type RuntimeSourceValues = {
   theme?: { mode: Theme; resolved: ColorScheme };
   // The space's feature flags as they resolved for this render, by name — what `{{ flags.<name> }}` reads.
   flags?: Record<string, boolean>;
+  // The variant each of the space's A/B tests shows this visitor, by experiment — what `{{ experiments.<name> }}` reads.
+  experiments?: ExperimentAssignments;
 };
 
 /**
@@ -50,6 +53,17 @@ export type FlagsState = {
   /** Each declared flag's answer and the layer that gave it — what the dev tools show. The values alone are the
    *  `flags` source. */
   resolved?: Record<string, FlagResolution>;
+};
+
+/**
+ * The A/B tests of this render. Top-level for the reason `flags` is: the server's answer is written at the root by
+ * whoever mounts the SDK, and an element scope owning `runtime` would keep a write from any depth to itself.
+ */
+export type ExperimentsState = {
+  /** The variants the server drew the page with — the browser hydrates with these, never a draw of its own. */
+  server?: ExperimentAssignments;
+  /** Every experiment's variant for this visitor: the server's, the ones they kept, and any drawn in the browser. */
+  assigned?: ExperimentAssignments;
 };
 
 export type CommonState = {
@@ -90,6 +104,7 @@ export type CommonState = {
   // root ever owns `rsc`, so every write from any depth lands where the whole tree reads it.
   rsc?: RscState;
   flags?: FlagsState;
+  experiments?: ExperimentsState;
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
@@ -154,6 +169,11 @@ export type CommonState = {
 export type RenderSettings = {
   previewMode?: boolean;
   debugMode?: boolean;
+  /**
+   * The space is drawn in the builder's canvas: what a visitor is assigned there is the author's to choose instead —
+   * an A/B test shows the variant its settings name (`builderVariant`), and nothing is drawn or kept for a visitor.
+   */
+  builder?: boolean;
   renderMode?: RenderMode;
   environment?: Environment;
   isHydrating?: boolean;

@@ -82,6 +82,7 @@ import type {
   RealtimeMessage
 } from '@plitzi/sdk-shared';
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
+import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
@@ -373,6 +374,11 @@ export type PlitziSdkProps = {
    * the cookie the dev tools write — so the page hydrates drawn the way the server drew it.
    */
   forcedFlags?: Record<string, boolean>;
+  /**
+   * Set by the server that rendered this page: the variant it drew each of the space's A/B tests with, by experiment —
+   * the page hydrates with them, and draws only what the server did not (`{{ experiments.<name> }}`).
+   */
+  serverExperiments?: ExperimentAssignments;
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says

@@ -41,6 +41,10 @@ export const SOURCE_DOCS: Record<GlobalSource, SourceDoc> = {
     summary: "The space's feature flags, on or off for this visitor",
     example: '{{ flags.newCheckout }}'
   },
+  experiments: {
+    summary: "The variant (`a` or `b`) each of the space's A/B tests shows this visitor, by the experiment's name",
+    example: "{{ experiments.heroTest == 'b' }}"
+  },
   computed: {
     summary: 'Values the space computes once over the others and every binding reads by name',
     example: '{{ computed.cartTotal }}'

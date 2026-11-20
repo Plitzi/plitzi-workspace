@@ -66,7 +66,7 @@ export const getInitialItems = (
 };
 
 /** The categories in the order the panel lists them: what a page is made of first, the escape hatches last. */
-const CATEGORY_ORDER = ['basic', 'structure', 'form', 'media', 'provider'];
+const CATEGORY_ORDER = ['basic', 'structure', 'form', 'media', 'provider', 'testing'];
 const LAST_CATEGORY = 'advanced';
 
 /** How each known category is shown: a name and an icon. A plugin's own category reads as it is written. */
@@ -76,6 +76,8 @@ const CATEGORY_DISPLAY: Readonly<Partial<Record<string, { label: string; icon: s
   form: { label: 'Form', icon: 'fa-solid fa-rectangle-list' },
   media: { label: 'Media', icon: 'fa-solid fa-photo-film' },
   provider: { label: 'Data', icon: 'fa-solid fa-plug' },
+  // What a page is measured with, never part of its content: the A/B tests.
+  testing: { label: 'Testing', icon: 'fa-solid fa-flask' },
   advanced: { label: 'Advanced', icon: 'fa-solid fa-code' }
 };
 

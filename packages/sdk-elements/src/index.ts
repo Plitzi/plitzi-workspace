@@ -16,6 +16,7 @@ export const defaultElements = {
   page: elements.Page,
   container: elements.Container,
   focusGroup: elements.FocusGroup,
+  abTest: elements.AbTest,
   layoutContainer: elements.LayoutContainer,
   dialogContainer: elements.DialogContainer,
   modalContainer: elements.ModalContainer,

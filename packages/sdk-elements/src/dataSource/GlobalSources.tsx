@@ -10,6 +10,7 @@ import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
+import useExperiments from './useExperiments';
 import useRegisterSource from './useRegisterSource';
 import useResolvedVariables from './useResolvedVariables';
 
@@ -159,6 +160,30 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     );
   }, [ignoredOverrides]);
 
+  /**
+   * --- experiments
+   *
+   * The variant (`a` or `b`) each of the space's A/B tests shows this visitor, by the experiment's name: what an `abTest`
+   * draws, and what `{{ experiments.heroTest }}` reads for a flow that reports it. Published before `computed`.
+   */
+  const experimentsValue = useExperiments();
+  const experimentsFields = useCallback(
+    () =>
+      Object.keys(experimentsValue).map((name): SourceField => ({
+        path: name,
+        name: `experiments.${name}`,
+        inputType: 'select',
+        values: [
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' }
+        ]
+      })),
+    [experimentsValue]
+  );
+  useRegisterSource({ id: 'global', source: 'experiments', name: 'Experiments', fields: experimentsFields });
+  useCommonStoreSync('runtime.sources.experiments', experimentsValue);
+  useCommonStoreSync('experiments.assigned', experimentsValue);
+
   // --- state (canonical runtime/application state) ---
   const [state] = useCommonStore('runtime.state');
   const stateFields = useCallback(
@@ -222,11 +247,12 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
           state: state ?? {},
           host: host ?? {},
           theme: themeValue,
-          flags: flagsValue
+          flags: flagsValue,
+          experiments: experimentsValue
         },
         previousComputed.current
       ),
-    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue, flagsValue]
+    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue, flagsValue, experimentsValue]
   );
   previousComputed.current = computedValue;
   const computedFields = useCallback(

@@ -64,7 +64,9 @@ const BUDGET = {
   // loaded 144 (measured on it, 2026-11-12).
   // 148: the client headers a server of the owner's own is told it is behind with (`clients`), and the 404 page of a
   // folder (`navigation/notFoundPages`) — pure, a part of the barrel the sitemap and the routes are read from.
-  '@plitzi/sdk-shared': 148,
+  // 151: the A/B tests (`experiments`): the variants a render draws for its visitor, and the cookie the HTML cache is
+  // keyed by — pure, no React.
+  '@plitzi/sdk-shared': 151,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

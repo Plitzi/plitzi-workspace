@@ -35,6 +35,7 @@ import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { pageSchemaOf, sentInParts } from '../../helpers/documentParts';
+import { requestExperiments } from '../../helpers/experiments';
 import { hydrationPayload, offlineDataWith, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { requestPaintedStateWithDefaults } from '../../helpers/paintedCookie';
@@ -98,6 +99,8 @@ export type RenderPrep = {
   cacheable: boolean;
   /** A server provider of the page said its address shows nothing (`notFound`): sent with status 404. */
   notFound: boolean;
+  /** Sent with the page: the variants of the space's A/B tests drawn for this visitor just now, kept in their cookie. */
+  setCookie?: string;
   /** The page asked for was withheld from this visitor (`access`): sent with 401 or 403, its refusal drawn. */
   refused?: PageWithheld;
 };
@@ -176,6 +179,16 @@ export const prepareRender = async (
   // forced flags. See `debugRendered` below for who may authorize it.
   const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
   const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
+  /**
+   * The variant of each of the space's A/B tests this visitor is shown: kept in their cookie, or drawn now and kept from
+   * this response on. The server draws only that variant, and the page hydrates with the same — never a draw of its own.
+   */
+  const experiments = requestExperiments(
+    req,
+    rawOfflineData?.schema,
+    !isPreviewRender && offlineDataOverride === undefined
+  );
+  const serverExperiments = Object.keys(experiments.assignments).length > 0 ? experiments.assignments : undefined;
   const flagOverrides = await requestFlagOverrides(
     config,
     { cookie: req.headers.cookie, authority: requestAuthority(req) },
@@ -443,7 +456,8 @@ export const prepareRender = async (
       ...(runStatus ? { runStatus } : {}),
       ...(inspector ? { inspector } : {}),
       ...(serverFlags ? { serverFlags } : {}),
-      ...(forcedFlags ? { forcedFlags } : {})
+      ...(forcedFlags ? { forcedFlags } : {}),
+      ...(serverExperiments ? { serverExperiments } : {})
     },
     { apart: spaceDocumentPath !== undefined, linkStyle }
   );
@@ -551,7 +565,8 @@ export const prepareRender = async (
       ...(scheme ? { scheme } : {}),
       ...(paintedState ? { state: paintedState } : {}),
       ...(serverFlags ? { serverFlags } : {}),
-      ...(forcedFlags ? { forcedFlags } : {})
+      ...(forcedFlags ? { forcedFlags } : {}),
+      ...(serverExperiments ? { serverExperiments } : {})
     },
     entries,
     templateParams: {
@@ -609,15 +624,18 @@ export const prepareRender = async (
       offlineData: offlineDataStr
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page;
-    // one read with the visitor's cookies is not even theirs a minute later.
+    // one read with the visitor's cookies is not even theirs a minute later; nor one drawing a visitor's variants, which
+    // the next visitor with no cookie must be drawn for themselves.
     // Nor is a draft's page drawn with what its server providers answered: the draft is being developed, and its data
     // is never kept (the RSC refresh of the draft is never cached either) — a page of it is kept only for its schema.
     cacheable:
       actionRuns === undefined &&
       forcedFlags === undefined &&
       req.ctx.readAsVisitor !== true &&
-      !(environment === 'main' && hasTargets),
+      !(environment === 'main' && hasTargets) &&
+      experiments.setCookie === undefined,
     notFound,
+    ...(experiments.setCookie ? { setCookie: experiments.setCookie } : {}),
     ...(refused ? { refused } : {})
   };
 };

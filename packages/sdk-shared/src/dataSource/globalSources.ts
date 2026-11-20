@@ -14,6 +14,7 @@ export const GLOBAL_SOURCES = [
   'host',
   'theme',
   'flags',
+  'experiments',
   'computed'
 ] as const;
 
@@ -31,8 +32,8 @@ export const COMPUTED_GLOBALS = GLOBAL_SOURCES.filter(
  * The fields of the globals whose shape the platform decides, as `GlobalSources` publishes them: a read of any other
  * — `auth.authenticated` for `auth.isAuthenticated` — resolves to nothing, and the authoring linter says so. An `open`
  * field holds whatever the page puts in it (the route's params, the signed-in account's details), so nothing below it
- * is a mistake. The rest of the globals are the space's own (`variables`, `flags`, `computed`, held to what it
- * declares) or anybody's (`state`, `host`).
+ * is a mistake. The rest of the globals are the space's own (`variables`, `flags`, `experiments`, `computed`, held to
+ * what it declares) or anybody's (`state`, `host`).
  */
 export const GLOBAL_SOURCE_FIELDS = {
   navigation: {

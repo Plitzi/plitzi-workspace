@@ -1,6 +1,7 @@
 import { GLOBAL_SOURCE_FIELDS } from '@plitzi/sdk-shared/dataSource';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { reportUnknownExperiment } from './experiments';
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
@@ -52,7 +53,7 @@ const checkShapedField = (
 
 /**
  * A path that starts at a global — a binding's `source`, a condition's `field` — held to what that global has: the
- * fields `navigation`, `auth` and `theme` publish, the flags and computed values the space declares. Any other global
+ * fields `navigation`, `auth` and `theme` publish, the flags, experiments and computed values the space declares. Any other global
  * (`state`, `host`, `variables`) and any element's source say nothing here.
  */
 export const checkGlobalRead = (ctx: LintContext, path: string, where: string, id?: string): void => {
@@ -61,6 +62,8 @@ export const checkGlobalRead = (ctx: LintContext, path: string, where: string, i
     checkShapedField(ctx, source, field, where, id);
   } else if (source === 'flags' && !ctx.flags.includes(field)) {
     reportUnknownFlag(ctx, field, where, id);
+  } else if (source === 'experiments' && !ctx.experiments.includes(field)) {
+    reportUnknownExperiment(ctx, field, where, id);
   } else if (source === 'computed' && !ctx.computed.includes(field)) {
     reportUnknownComputed(ctx, field, where, id);
   }

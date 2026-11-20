@@ -11,6 +11,7 @@ import type {
   Theme,
   ColorScheme
 } from '@plitzi/sdk-shared';
+import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 
 export type ComponentProps = {
   server: Partial<Server>;
@@ -39,6 +40,8 @@ export type ComponentProps = {
   serverFlags?: Record<string, boolean>;
   /** The flags a tester forced, for a page allowed to debug. See `prepareRender`. */
   forcedFlags?: Record<string, boolean>;
+  /** The variant each of the space's A/B tests is drawn with for this visitor. See `prepareRender`. */
+  serverExperiments?: ExperimentAssignments;
 };
 
 const Component = ({
@@ -59,7 +62,8 @@ const Component = ({
   scheme,
   state,
   serverFlags,
-  forcedFlags
+  forcedFlags,
+  serverExperiments
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -84,6 +88,7 @@ const Component = ({
       {...(state === undefined ? {} : { state })}
       {...(serverFlags === undefined ? {} : { serverFlags })}
       {...(forcedFlags === undefined ? {} : { forcedFlags })}
+      {...(serverExperiments === undefined ? {} : { serverExperiments })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

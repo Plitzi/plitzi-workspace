@@ -41,6 +41,8 @@ import TabContainer from './structure/TabContainer/Settings';
 import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
 import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Settings';
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
+import AbTestVariant from './testing/AbTest/AbTestVariant/Settings';
+import AbTest from './testing/AbTest/Settings';
 
 import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';
@@ -64,6 +66,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   notFound: NotFound,
   container: Container,
   focusGroup: FocusGroup,
+  abTest: AbTest,
+  abTestVariant: AbTestVariant,
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
   modalContainer: ModalContainer,

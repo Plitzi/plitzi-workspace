@@ -49,6 +49,7 @@ import type {
   Server,
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
+import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ReactNode } from 'react';
 
@@ -122,6 +123,8 @@ export type AppProps = {
    * the cookie the dev tools write — so the page hydrates drawn the way the server drew it.
    */
   forcedFlags?: Record<string, boolean>;
+  /** The variants the rendering server drew — see `PlitziSdkProps`. */
+  serverExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */

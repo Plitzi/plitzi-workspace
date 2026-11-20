@@ -202,6 +202,7 @@ describe('explain, of what a template reads and calls', () => {
     expect(explainList('source').map(entry => entry.name)).toEqual([
       'auth',
       'computed',
+      'experiments',
       'flags',
       'host',
       'navigation',

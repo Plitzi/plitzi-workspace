@@ -1,0 +1,14 @@
+@use 'placeholder';
+
+@mixin styles {
+  // A variant with nothing in it yet is marked in the canvas, as an empty tab is: otherwise the side being edited is
+  // a box of no height, and there is nowhere to drop the first element.
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__ab-test,
+    .plitzi-component__ab-test-variant {
+      &.container--empty {
+        @include placeholder.empty;
+      }
+    }
+  }
+}
