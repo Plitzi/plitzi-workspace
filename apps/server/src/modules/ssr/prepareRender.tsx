@@ -32,6 +32,7 @@ import { googleFontsUrlOf } from '../../core/http/stages/googleFonts';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { pageAssets, resolveSdkAssetsDir } from '../../core/sdkAssets';
 import { resolveRscEndpoint } from '../../core/services/resolve';
+import { requestVisitorFacts, spaceAudiences } from '../../helpers/audiences';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { offlineDataCacheKeyOf } from '../../helpers/cache';
 import { pageSchemaOf, sentInParts } from '../../helpers/documentParts';
@@ -206,6 +207,14 @@ export const prepareRender = async (
   req.ctx.rolloutBuckets = rollout.buckets;
   const serverRollout = Object.keys(rollout.buckets).length > 0 ? rollout.buckets : undefined;
   const setCookies = [experiments.setCookie, rollout.setCookie].filter(cookie => cookie !== undefined);
+  /**
+   * What the space's audiences read of the visitor — returning, language, device — from this request, handed to the
+   * browser so it hydrates the variant drawn. A page they drew is kept only under those facts (`ctx.audienceKey`, set
+   * when this server already held the space); asked before the space was held, it is kept for nobody.
+   */
+  const audiences = rawOfflineData ? spaceAudiences(rawOfflineData.schema) : { has: false, used: [] };
+  const serverVisitor = audiences.has ? requestVisitorFacts(req) : undefined;
+  const audienceUnkeyed = audiences.used.length > 0 && req.ctx.audienceKey === undefined;
   const flagOverrides = await requestFlagOverrides(
     config,
     { cookie: req.headers.cookie, authority: requestAuthority(req) },
@@ -477,7 +486,8 @@ export const prepareRender = async (
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
-      ...(serverRollout ? { serverRollout } : {})
+      ...(serverRollout ? { serverRollout } : {}),
+      ...(serverVisitor ? { serverVisitor } : {})
     },
     { apart: spaceDocumentPath !== undefined, linkStyle }
   );
@@ -588,7 +598,8 @@ export const prepareRender = async (
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
-      ...(serverRollout ? { serverRollout } : {})
+      ...(serverRollout ? { serverRollout } : {}),
+      ...(serverVisitor ? { serverVisitor } : {})
     },
     entries,
     templateParams: {
@@ -656,6 +667,7 @@ export const prepareRender = async (
       req.ctx.readAsVisitor !== true &&
       !(environment === 'main' && hasTargets) &&
       setCookies.length === 0 &&
+      !audienceUnkeyed &&
       forcedExperiments === undefined,
     notFound,
     ...(setCookies.length > 0 ? { setCookies } : {}),

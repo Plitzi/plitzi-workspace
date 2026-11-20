@@ -51,11 +51,15 @@ import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContaine
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
 import AbTestVariantDeclaration from '../testing/AbTest/AbTestVariant/declaration';
 import AbTestDeclaration from '../testing/AbTest/declaration';
+import AudienceVariantDeclaration from '../testing/Audience/AudienceVariant/declaration';
+import AudienceDeclaration from '../testing/Audience/declaration';
 
 export const elementDeclarations = {
   AbTest: AbTestDeclaration,
   AbTestVariant: AbTestVariantDeclaration,
   ApiContainer: ApiContainerDeclaration,
+  Audience: AudienceDeclaration,
+  AudienceVariant: AudienceVariantDeclaration,
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
   Button: ButtonDeclaration,
@@ -106,6 +110,8 @@ export {
   AbTestDeclaration,
   AbTestVariantDeclaration,
   ApiContainerDeclaration,
+  AudienceDeclaration,
+  AudienceVariantDeclaration,
   BlockHtmlDeclaration,
   BlockJsxDeclaration,
   ButtonDeclaration,

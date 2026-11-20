@@ -3,6 +3,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
+import { flagRuleFields } from '@plitzi/sdk-elements/builder';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { withForcedFlag } from '@plitzi/sdk-shared/flags';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -16,7 +17,6 @@ import PlanNotice from '@pmodules/Space/components/PlanNotice';
 import FlagForm from './components/FlagForm';
 import FlagItem from './components/FlagItem';
 import PublishFlagsForm from './components/PublishFlagsForm';
-import { flagRuleFields } from './helpers/flagRuleFields';
 
 import type { PublishFlagsValues } from './components/PublishFlagsForm';
 import type { SchemaFlag } from '@plitzi/sdk-shared';

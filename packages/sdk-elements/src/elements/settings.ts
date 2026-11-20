@@ -43,6 +43,8 @@ import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Sett
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
 import AbTestVariant from './testing/AbTest/AbTestVariant/Settings';
 import AbTest from './testing/AbTest/Settings';
+import AudienceVariant from './testing/Audience/AudienceVariant/Settings';
+import Audience from './testing/Audience/Settings';
 
 import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';
@@ -68,6 +70,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   focusGroup: FocusGroup,
   abTest: AbTest,
   abTestVariant: AbTestVariant,
+  audience: Audience,
+  audienceVariant: AudienceVariant,
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
   modalContainer: ModalContainer,

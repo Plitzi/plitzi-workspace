@@ -43,6 +43,7 @@ import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
 // Testing
 import AbTest from './testing/AbTest';
+import Audience from './testing/Audience';
 
 export * from './advanced/BlockHtml';
 export * from './advanced/BlockJsx';
@@ -80,6 +81,7 @@ export * from './structure/Pagination';
 export * from './structure/Carousel';
 export * from './structure/TabContainer';
 export * from './testing/AbTest';
+export * from './testing/Audience';
 
 export {
   NodeHtml,
@@ -93,6 +95,7 @@ export {
   Page,
   Container,
   AbTest,
+  Audience,
   FocusGroup,
   LayoutContainer,
   DialogContainer,

@@ -10,6 +10,7 @@
  */
 import { ACCESSIBILITY_CODES } from './accessibility';
 import { ANCHOR_CODES } from './anchors';
+import { AUDIENCE_CODES } from './audiences';
 import { BINDING_CODES } from './bindings';
 import { COMPONENT_CODES } from './components';
 import { CSS_CODES } from './css';
@@ -40,6 +41,7 @@ export const AUTHORING_CODES = {
   ...COMPONENT_CODES,
   ...FLAG_CODES,
   ...EXPERIMENT_CODES,
+  ...AUDIENCE_CODES,
   ...FLOW_CODES,
   ...SERVER_CODES,
   ...ACCESSIBILITY_CODES,

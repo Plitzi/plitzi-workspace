@@ -31,6 +31,13 @@ import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
 export const abTest = defineElement(elementDeclarations.AbTest);
 export const abTestVariant = defineElement(elementDeclarations.AbTestVariant);
 export const apiContainer = defineElement(elementDeclarations.ApiContainer);
+/**
+ * An audience: `audience({ children: [audienceVariant({ when: { combinator: 'and', rules: [{ field: 'visitor.device',
+ * operator: '=', value: 'mobile' }] }, children: [phones] }), audienceVariant([everyone])] })` — each visitor sees the
+ * first variant whose rule they match; one with no `when` is for everybody else.
+ */
+export const audience = defineElement(elementDeclarations.Audience);
+export const audienceVariant = defineElement(elementDeclarations.AudienceVariant);
 export const blockHtml = defineElement(elementDeclarations.BlockHtml);
 export const blockJsx = defineElement(elementDeclarations.BlockJsx);
 export const button = defineElement(elementDeclarations.Button);

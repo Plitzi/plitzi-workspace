@@ -38,6 +38,8 @@ The space is not written until these are fixed.
 | `as-without-from` | `as` with no `from` — `as` is how the source `from` names is shown | `from: 'products.item.price', as: 'price'` |
 | `attribute-kind` | text where a flag or a list is read | `disabled: true`, not `'true'`; `items: [ … ]` |
 | `attribute-value` | a value outside the attribute's list (`subType: 'h7'`) | one of the listed values |
+| `audience-rule` | an `audienceVariant`'s `when` that is not a rule group | `when: { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] }` |
+| `audience-variants` | an `audience` holding no `audienceVariant`, or something else beside them — never shown | `audience({ children: [audienceVariant({ when, children }), audienceVariant([…])] })` |
 | `binding-category` | a binding `category` that does not exist | one of the categories it lists |
 | `binding-shape` | a binding with no `to` or no `source` | `bind: { content: 'posts.item.title' }`, or `bindTemplate(to, source, template)` |
 | `binding-source-out-of-scope` | a source read by an element that is not inside the element publishing it | move the element inside it, or share the value through `state` |
@@ -213,6 +215,8 @@ The space renders, and renders something you probably did not mean. Fix every on
 | --- | --- | --- |
 | `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
 | `animation-name-unknown` | `animation-name` naming keyframes the space does not declare — nothing plays | declare them in the space's `keyframes`, or name one it has |
+| `audience-no-fallback` | an `audience` whose every variant has a rule: a visitor matching none is shown nothing | end it with an `audienceVariant` with no `when`, for everybody else |
+| `audience-unreachable` | an `audienceVariant` after one with no conditions, which takes everybody left — it is never shown | move the variant with no conditions last, or give it a rule |
 | `browser-state-without-keep-state` | `browserState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `browserState` |
 | `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it | the flow on a `button` (it holds children) or a `link` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |

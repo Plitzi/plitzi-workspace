@@ -14,7 +14,7 @@ type CacheKeyRequest = {
   hostname: string;
   path: string;
   search: string;
-  ctx?: { spaceDeployment?: { flagsVersion?: string; draftVersion?: string } };
+  ctx?: { spaceDeployment?: { flagsVersion?: string; draftVersion?: string }; audienceKey?: string };
 };
 
 const flagsVersionOf = (req: CacheKeyRequest): string => req.ctx?.spaceDeployment?.flagsVersion ?? '';
@@ -34,6 +34,7 @@ const HTML_KEY_FIELDS = [
   'painted',
   'experiments',
   'rollout',
+  'audience',
   'debugHidden',
   'forcedFlags',
   'forcedExperiments',
@@ -64,7 +65,8 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * the cookie's raw value, so visitors shown the same variants share a page. A visitor with none of a test kept is drawn
  * one there and then, and that page is never kept (`prepareRender`'s `cacheable`): the next such visitor is drawn their
  * own. The same for the visitor's places in the space's gradual rollouts (`plitzi_rollout`): the flags they answer are
- * drawn into the page.
+ * drawn into the page. And for what the space's audiences read of the visitor (`ctx.audienceKey`: their device, their
+ * language, whether they came before), only where its audiences read it.
  *
  * So are the feature flags and the A/B variants a tester forced from the dev tools, on a page that authorizes
  * debugging: drawn with them, the page is not everybody's, and a tester holding the cookie must never be handed a page
@@ -107,6 +109,7 @@ export const buildHtmlCacheKey = (
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req))) ?? '',
     experiments: readCookie(req.headers.cookie, experimentsCookieName(requestAuthority(req))) ?? '',
     rollout: readCookie(req.headers.cookie, rolloutCookieName(requestAuthority(req))) ?? '',
+    audience: req.ctx?.audienceKey ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
     forcedExperiments: readCookie(req.headers.cookie, forcedExperimentsCookieName(requestAuthority(req))) ?? '',

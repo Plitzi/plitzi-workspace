@@ -237,6 +237,12 @@ export type SSRContext = {
    */
   rolloutBuckets?: Record<string, number>;
   /**
+   * What this request's page is kept apart by in the HTML cache for the space's audiences: the visitor facts they read
+   * (`device=mobile;language=es`), `''` for a space whose audiences read none — set before the cache is asked, from the
+   * space this server already holds. Absent, the space was not held then: a page drawn by an audience is kept for nobody.
+   */
+  audienceKey?: string;
+  /**
    * What this request spent before the page was rendered — each middleware, the metering — in ms, kept only by a
    * development server: it goes out in the page's `Server-Timing` beside the render's own phases.
    */

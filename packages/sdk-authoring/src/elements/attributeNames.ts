@@ -37,6 +37,8 @@ export const elementAttributeNames = {
     'subType',
     'when'
   ],
+  audience: ['builderVariant'],
+  audienceVariant: ['when'],
   blockHtml: ['content'],
   blockJsx: ['allowEmptyRender', 'content', 'contentCache', 'props'],
   button: [

@@ -6,6 +6,7 @@ import { DevToolsContainer } from '@plitzi/sdk-dev-tools';
 import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
 import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useSimulatedVisitor from '@pmodules/StateManager/hooks/useSimulatedVisitor';
 
 import AppContainer from './AppContainer';
 import AppContext from './AppContext';
@@ -62,6 +63,7 @@ const AppMain = ({
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
   useBuilderStoreSync('displayMode', displayMode);
+  useSimulatedVisitor(displayMode);
   // The surface this render happens on, published for the whole tree — the shared providers (auth, navigation,
   // global sources, interactions) read it from here instead of taking it as props from each surface that mounts them.
   useBuilderStoreSync(

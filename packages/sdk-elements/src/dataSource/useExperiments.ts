@@ -22,8 +22,8 @@ const pageHost = (): string | undefined => (typeof window === 'undefined' ? unde
  * The server's first: it drew the page with them, and a page hydrated with any other would be thrown away. Then what
  * the visitor kept in their cookie, then a draw for an experiment none of those has — a space rendered with no server
  * in front, or a part of it the server never sent — kept from then on, in this render and in the cookie. Over them, what
- * a tester forced (the dev tools, `?ab=`), shown and never kept. In the builder the canvas shows the variant each
- * test's settings name, and nothing is drawn, kept or forced.
+ * a tester forced (the dev tools, `?ab=`), shown and never kept. In the builder nothing is drawn or kept: the canvas
+ * shows the variant each test's settings name, and in its preview what the Simulate visitor panel forces over them.
  */
 const useExperiments = (): ExperimentAssignments => {
   const [[flat, components, serverExperiments, qa]] = useCommonStore([
@@ -32,7 +32,9 @@ const useExperiments = (): ExperimentAssignments => {
     'experiments.server',
     'experiments.qa'
   ]);
-  const { builder } = useRenderSettings();
+  const { builder, previewMode } = useRenderSettings();
+  // Editing in the builder, each test shows its own `builderVariant` and nothing forces it.
+  const editing = builder && !previewMode;
   const declared = useMemo(() => declaredExperiments({ flat, components }), [flat, components]);
   // What this page drew before, so a later render — a part of the space arriving — never draws the same one again.
   const drawnBefore = useRef<ExperimentAssignments>({});
@@ -58,13 +60,10 @@ const useExperiments = (): ExperimentAssignments => {
     }
   }, [drawn, kept]);
 
-  const forced = useMemo(
-    () => (builder ? undefined : forcedExperimentsFor(declared, qa ?? {})),
-    [builder, declared, qa]
-  );
+  const forced = useMemo(() => forcedExperimentsFor(declared, editing ? {} : (qa ?? {})), [declared, editing, qa]);
   // A tester told what they forced and cannot be shown — an experiment this space does not run, a variant its test
   // has not — once per change in what is ignored.
-  const ignored = useStableValue(forced?.ignored ?? []);
+  const ignored = useStableValue(forced.ignored);
   useEffect(() => {
     ignored.forEach(({ name, variant, reason }) =>
       console.warn(
@@ -77,7 +76,7 @@ const useExperiments = (): ExperimentAssignments => {
 
   return useMemo(
     () =>
-      forced && Object.keys(forced.applied).length > 0
+      Object.keys(forced.applied).length > 0
         ? { ...assignment.assignments, ...forced.applied }
         : assignment.assignments,
     [assignment.assignments, forced]

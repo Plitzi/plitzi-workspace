@@ -15,7 +15,7 @@ Read one only when the task names its subject.
 | [data-and-visibility.md](data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
 | [kept-state.md](kept-state.md) | State that outlives a reload: `keepState`, transient and painted keys |
 | [auth.md](auth.md) | Signing people in: providers, `authLogin`, `auth.*`, visitor roles |
-| [feature-flags.md](feature-flags.md) | Switching a part of the space on or off — a beta, a rollout, the old version kept until the new one ships; an A/B test |
+| [feature-flags.md](feature-flags.md) | Switching a part of the space on or off — a beta, a rollout, the old version kept until the new one ships; an A/B test; an audience |
 | [lists.md](lists.md) | Rendering rows, filtering and sorting them, a detail page for one record, carousels |
 | [typed-sources.md](typed-sources.md) | Data typed by a sample of it: `source()`, typed rows, `twig` for templates |
 | [validation.md](validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |

@@ -1,6 +1,7 @@
 import { lintAccessibility } from './accessibility';
 import { lintActionOutputBindings } from './actionOutput';
 import { lintAnchors } from './anchors';
+import { lintAudiences } from './audiences';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
@@ -54,6 +55,7 @@ export const lintSpace = (
   lintKeptState(ctx);
   lintFlags(ctx);
   lintExperiments(ctx);
+  lintAudiences(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

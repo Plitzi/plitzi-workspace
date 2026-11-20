@@ -9,6 +9,7 @@ import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StylePseudo, StyleState } from './StyleTypes';
 import type { SignedInTestAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
+import type { VisitorFacts } from '../audiences/audiences';
 import type { ExperimentAssignments } from '../experiments/experiments';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 import type { RolloutBuckets } from '../flags/rollout';
@@ -113,6 +114,11 @@ export type CommonState = {
   rsc?: RscState;
   flags?: FlagsState;
   experiments?: ExperimentsState;
+  /**
+   * What the space's audiences know of the visitor — returning, language, device — as the server that drew the page read
+   * them from the request. Absent where no server drew it: the browser reads them itself (`browserVisitorFacts`).
+   */
+  visitor?: VisitorFacts;
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
@@ -370,6 +376,12 @@ export type BuilderState = CommonState & {
    * Editor-only and never published; a journey on the canvas decides its own visitor.
    */
   canvasGuest?: boolean;
+  /**
+   * What the canvas's visitor is, for the space's audiences, as chosen in the State Manager's Visitor tab — over what
+   * the builder says by itself: the device the canvas is sized as, the editor's language, a first visit. Editor-only and
+   * never published; the canvas's preview shows the variants this visitor matches.
+   */
+  visitorSimulation?: Partial<VisitorFacts>;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

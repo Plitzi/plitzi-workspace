@@ -10,7 +10,15 @@ import { draftSessionCookie, takeDraftOverride } from './preview';
 import { DEFAULT_RENDER_WAIT_MS, renderLimitFor } from './renderTurns';
 import { sendScriptPolicy } from './scriptPolicy';
 import { streamBody } from './streamBody';
-import { buildHtmlCacheKey, ignoredQueryParamsOf, keepsVersion, pageHtml, renderedQuery } from '../../helpers/cache';
+import { audienceKeyFor } from '../../helpers/audiences';
+import {
+  buildHtmlCacheKey,
+  ignoredQueryParamsOf,
+  keepsVersion,
+  offlineDataCacheKeyOf,
+  pageHtml,
+  renderedQuery
+} from '../../helpers/cache';
 import { escapeHtml } from '../../helpers/escapeHtml';
 import { RequestMetrics } from '../../helpers/metrics';
 import { SCHEME_HINT_HEADER } from '../../helpers/visitorScheme';
@@ -113,6 +121,9 @@ export const renderSSR = async (
   // Rendered as it is keyed: a page kept without the analytics parameters of a link must not have been drawn with them.
   if (htmlCache) {
     req.query = renderedQuery(req.query, ignored);
+    // What the space's audiences draw the page by, keyed with it — known only from the space this server holds already.
+    const held = caches.offlineData?.get(offlineDataCacheKeyOf(req.ctx.spaceDeployment) ?? '');
+    req.ctx.audienceKey = audienceKeyFor(req, held?.schema);
   }
 
   const compression = resolveCompression(config.compression);

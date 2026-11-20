@@ -93,6 +93,15 @@ describe('buildHtmlCacheKey', () => {
     expect(html('plitzi_ab=heroTest%3Ab; _ga=1')).toBe(html('_ga=2; plitzi_ab=heroTest%3Ab'));
   });
 
+  /** What the space's audiences read of the visitor (`ctx.audienceKey`) is drawn into the page. */
+  it('separates visitors by what the space’s audiences read of them', () => {
+    const keyed = (audienceKey?: string) =>
+      buildHtmlCacheKey(undefined, 1, 'production', 3, { ...req('/'), ctx: { audienceKey } }, []);
+
+    expect(keyed('device=mobile')).not.toBe(keyed('device=desktop'));
+    expect(keyed('')).toBe(keyed());
+  });
+
   /** A rolled-out flag is drawn into the page: visitors in different places do not share one. */
   it('separates visitors by their places in the gradual rollouts', () => {
     expect(html('plitzi_rollout=newCheckout%3A12')).not.toBe(html('plitzi_rollout=newCheckout%3A70'));

@@ -5,7 +5,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 
 import { AbTest } from './AbTest';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../tests/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { AbTestProps } from './AbTest';
 
@@ -18,15 +18,27 @@ vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
   usePlitzi: () => ({ settings: { previewMode: true } })
 }));
 
+/** The test's own entry: its variants are its items, A first, drawn as children keyed by them. */
+const hero = elementEntry('hero', {
+  plitziJsxSkipHOC: true,
+  definition: {
+    rootId: 'root',
+    label: 'A/B Test',
+    type: 'abTest',
+    styleSelectors: { base: '' },
+    items: ['heroA', 'heroB', 'heroC']
+  }
+});
+
 /** An A/B test drawn in a store holding what the surface and the visitor's sources say. */
 const drawn = (props: AbTestProps, store: Record<string, unknown> = {}) =>
   render(
     <StoreProvider value={store}>
-      <ElementContext value={skipHocEntry('hero')}>
+      <ElementContext value={hero}>
         <AbTest {...props}>
-          <p>Variant A</p>
-          <p>Variant B</p>
-          <p>Variant C</p>
+          <p key="heroA">Variant A</p>
+          <p key="heroB">Variant B</p>
+          <p key="heroC">Variant C</p>
         </AbTest>
       </ElementContext>
     </StoreProvider>
@@ -58,10 +70,10 @@ describe('AbTest', () => {
     expect(screen.getByText('Variant A')).toBeTruthy();
   });
 
-  it('draws in the builder the variant its settings name, whatever a visitor would be shown', () => {
+  it('draws while editing in the builder the variant its settings name, whatever a visitor would be shown', () => {
     drawn(
       { experiment: 'heroTest', builderVariant: 'b' },
-      { ...visitor({ heroTest: 'a' }), render: { builder: true } }
+      { ...visitor({ heroTest: 'a' }), render: { builder: true, previewMode: false } }
     );
 
     expect(screen.getByText('Variant B')).toBeTruthy();

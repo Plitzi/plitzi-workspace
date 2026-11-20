@@ -50,6 +50,7 @@ import type {
   Server,
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
+import type { VisitorFacts } from '@plitzi/sdk-shared/audiences';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
@@ -129,6 +130,8 @@ export type AppProps = {
   serverExperiments?: ExperimentAssignments;
   /** The visitor's places in the gradual rollouts the rendering server answered — see `PlitziSdkProps`. */
   serverRollout?: RolloutBuckets;
+  /** What the space's audiences read of the visitor, as the rendering server read it — see `PlitziSdkProps`. */
+  serverVisitor?: VisitorFacts;
   /** The variants a tester forced — see `PlitziSdkProps`. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */

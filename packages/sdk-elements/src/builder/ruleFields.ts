@@ -47,3 +47,21 @@ export const flagRuleFields = ({
 
   return Object.fromEntries(fields.map(field => [field.name, field]));
 };
+
+const DEVICES = ['mobile', 'tablet', 'desktop'];
+
+/**
+ * What an audience's rule may be written over: what a flag's may, and the visitor's facts — whether they came before,
+ * the language their browser asks for first, the kind of device.
+ */
+export const audienceRuleFields = (context: Parameters<typeof flagRuleFields>[0]): Record<string, Field> => ({
+  ...flagRuleFields(context),
+  'visitor.returning': { name: 'visitor.returning', label: 'Visitor came before', inputType: 'checkbox' },
+  'visitor.language': { name: 'visitor.language', label: 'Visitor language', placeholder: 'es, en, pt…' },
+  'visitor.device': {
+    name: 'visitor.device',
+    label: 'Visitor device',
+    inputType: 'select',
+    options: DEVICES.map(device => ({ value: device, label: device }))
+  }
+});

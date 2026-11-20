@@ -16,6 +16,7 @@ const DRAWN_ELSEWHERE = new Set([
   'carouselTrack',
   'dropdownPopup',
   'abTestVariant',
+  'audienceVariant',
   'plitziSdk'
 ]);
 

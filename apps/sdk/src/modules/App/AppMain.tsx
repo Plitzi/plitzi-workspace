@@ -33,6 +33,7 @@ import type {
   OfflineDataRaw,
   SdkState
 } from '@plitzi/sdk-shared';
+import type { VisitorFacts } from '@plitzi/sdk-shared/audiences';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 
@@ -76,6 +77,8 @@ export type AppMainProps = {
   serverExperiments?: ExperimentAssignments;
   /** The visitor's places in the gradual rollouts the rendering server answered — see `PlitziSdkProps`. */
   serverRollout?: RolloutBuckets;
+  /** What the space's audiences read of the visitor, as the rendering server read it — see `PlitziSdkProps`. */
+  serverVisitor?: VisitorFacts;
   /** The variants a tester forced, already settled against whether this page may debug. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
@@ -126,6 +129,7 @@ const AppMain = ({
   serverExperiments,
   forcedExperiments,
   serverRollout,
+  serverVisitor,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -183,6 +187,8 @@ const AppMain = ({
   // What the server drew the page with: `GlobalSources` draws only the experiments it does not name. What a tester
   // forced goes over it, and the dev tools' Experiments tab writes it while the page is open.
   useSdkStoreSync(['experiments.server', 'experiments.qa'], [useStableValue(serverExperiments), forcedExperiments]);
+  // What the space's audiences read of the visitor, as the server read it; absent, the page reads it itself.
+  useSdkStoreSync(['visitor'], [useStableValue(serverVisitor)]);
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.

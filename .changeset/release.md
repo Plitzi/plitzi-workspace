@@ -27,6 +27,16 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   the percent keeps everyone who was in. The page server, the browser (the `flags` source and the router), the server
   data and a server action all resolve with the same places; the builder's Feature Flags panel, `upsertFlag` and
   authoring write it, and `flag-rollout` refuses a malformed one.
+- **Audiences.** `audience` — in the Testing category — shows each visitor the first of its `audienceVariant`s whose
+  rule (`when`) they match: what a flag's rules see, `utm_*` query parameters included, and the visitor's facts —
+  `visitor.returning`, `visitor.language`, `visitor.device`. A variant with no rule is for everybody else. The page
+  server reads the facts off the request and the browser hydrates with them; a page an audience drew is cached apart by
+  the facts its rules read, only for a space whose audiences read any. Authoring writes `audience()` /
+  `audienceVariant()`; the linter says `audience-variants`, `audience-rule`, `audience-unreachable` and
+  `audience-no-fallback`.
+- **Trying them in the builder.** While editing, an A/B test and an audience show the variant their settings name; the
+  canvas's preview shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as
+  the canvas is sized), the language, returning or not, and the variant of each A/B test.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 

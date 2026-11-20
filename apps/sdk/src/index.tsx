@@ -81,6 +81,7 @@ import type {
   ColorScheme,
   RealtimeMessage
 } from '@plitzi/sdk-shared';
+import type { VisitorFacts } from '@plitzi/sdk-shared/audiences';
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
@@ -385,6 +386,11 @@ export type PlitziSdkProps = {
    * per flag), so the page hydrates with the flags it was drawn with.
    */
   serverRollout?: RolloutBuckets;
+  /**
+   * Set by the server that rendered this page: what the space's audiences read of the visitor — returning, language,
+   * device — as the request said them, so the page hydrates the variant it was drawn with.
+   */
+  serverVisitor?: VisitorFacts;
   /**
    * Set by the server that rendered this page for somebody allowed to debug it: the A/B variants a tester forced (the
    * dev tools' Experiments tab, `?ab=heroTest:b`), shown over the visitor's own and never kept as theirs.

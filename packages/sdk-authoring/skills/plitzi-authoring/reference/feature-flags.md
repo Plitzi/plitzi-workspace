@@ -108,3 +108,26 @@ warns when their weights disagree). `{{ experiments.heroTest }}` is `'a'`, `'b'`
 analytics with the conversion it measures. An `abTest` with no `experiment` runs nothing and shows A
 (`experiment-unnamed`). To see a variant you were not drawn, where debugging is authorized: the dev tools' **Experiments**
 tab, or `?ab=heroTest:b` in the address — kept for the visit, never as your variant.
+
+## Audiences
+
+An `audience` shows each visitor the first of its `audienceVariant`s whose `when` they match — a rule group over what a
+flag's rules see, `queryParams.utm_source` included, and the visitor: `visitor.returning`, `visitor.language` (`es`),
+`visitor.device` (`mobile`, `tablet`, `desktop`). End it with a variant with no `when`, for everybody else
+(`audience-no-fallback` warns otherwise):
+
+```ts
+audience({
+  children: [
+    audienceVariant({
+      when: { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] },
+      children: [text({ content: 'Get the app' })]
+    }),
+    audienceVariant([text({ content: 'Welcome' })])
+  ]
+});
+```
+
+In the builder, a test and an audience show the variant their settings name while editing; the preview shows the page to
+the visitor chosen in the State Manager's **Visitor** tab — its device, language, returning, and each A/B variant.
+

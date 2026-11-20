@@ -1,4 +1,4 @@
-# A/B tests
+# A/B tests and audiences
 
 An A/B test shows each visitor one of two versions of a part of a page, and keeps showing them the same one. This page
 is how it works across the stack: the element, who draws a visitor's variant, where it is kept, what the page server's
@@ -79,12 +79,37 @@ hydrates the same; `useExperiments` applies it over the visitor's variants. A fo
 or a variant its test has not, is ignored and said in the console. A page drawn with forced variants is never kept,
 and the HTML cache is keyed by that cookie, as by the flags a tester forces.
 
+## Audiences
+
+`audience` holds `audienceVariant`s and shows each visitor the first whose `when` — a rule group, as a flag's — they
+match; one with no conditions matches everybody, the "everyone else" an audience ends with. Its rules see what a flag's
+do (`environment`, `hostname`, `routeParams.*`, `queryParams.*` — `utm_source` and the like —, `user.*`) and the
+visitor's facts (`@plitzi/sdk-shared/audiences`): `visitor.returning` (first seen more than a visit — 30 minutes — ago,
+by the `plitzi_seen` cookie the SDK writes once), `visitor.language` (the primary subtag of the first language asked
+for) and `visitor.device` (`mobile`, `tablet`, `desktop`, by the `Sec-CH-UA-Mobile` hint or the user agent).
+
+The page server reads the facts off the request (`requestVisitorFacts`) and hands them to the browser
+(`serverVisitor`), which hydrates the variant drawn; with no server, the browser reads them itself, once per page
+(`browserVisitorFacts`). Only the variant shown is drawn, found by its item (`childOfItem`) — a variant a flag switched
+off is not among the children.
+
+**The page cache.** A page an audience drew is kept apart by the facts its rules read — and only those, only for a
+space whose audiences read any (`audienceFactsUsed`). They are known before the cache is asked only from the space the
+server holds already (the offline-data cache): the handler sets `ctx.audienceKey`, which the HTML key carries. Asked
+before the space was held, a page an audience drew is kept for nobody (`audienceUnkeyed` in `prepareRender`); every
+later request keys it. The address and the session are in the key already, so rules on `queryParams` or `user` need
+nothing more.
+
 ## In the builder
 
-The canvas seeds `render.builder: true` (`apps/builder/src/App.tsx`): the element shows `builderVariant`, the
-`experiments` source holds each test's `builderVariant`, and no cookie is read or written. The test's settings choose
-the variant to edit and its name, each variant's settings its weight; an empty variant is marked in the canvas as an
-empty tab is.
+The canvas seeds `render.builder: true` (`apps/builder/src/App.tsx`), and nothing is drawn, read off the visitor's
+cookies or written there. **While editing**, each A/B test shows its `builderVariant` and each audience the variant its
+`builderVariant` names (by place from 0), so every variant can be edited; an empty variant is marked in the canvas as an
+empty tab is. **In the preview**, the canvas shows the page to a simulated visitor, chosen in the State Manager's
+**Visitor** tab: the variant of each A/B test it forces (`experiments.qa`, each test's `builderVariant` until chosen) and
+the facts the audiences read (`visitorSimulation`, laid over the device the canvas is sized as, the editor's language
+and a first visit — `useSimulatedVisitor`, published as the page's `visitor`). A rolled-out flag answers its own value
+there; the Feature Flags panel forces it.
 
 ## Authoring and the linter
 
@@ -92,7 +117,10 @@ empty tab is.
 to a name (`experiment-unnamed`, `experiment-name`), two to five variants and nothing else (`experiment-variants`), a
 weight each and one at least above 0 (`experiment-weight`), a canvas variant it has (`experiment-builder-variant`),
 and tests that share a name to one set of weights (`experiment-weights-differ`); a template reading an
-experiment no test runs is `experiment-unknown`. The builder's Space Issues, the MCP and the publish gate say the same.
+experiment no test runs is `experiment-unknown`. `audience()` and `audienceVariant()` write an audience, and
+`lintAudiences` holds it to its variants and nothing else (`audience-variants`), each rule a rule group
+(`audience-rule`), no variant after one for everybody (`audience-unreachable`) and one such at the end
+(`audience-no-fallback`). The builder's Space Issues, the MCP and the publish gate say the same.
 
 ## Measuring it
 

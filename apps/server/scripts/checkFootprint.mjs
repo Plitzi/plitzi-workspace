@@ -67,7 +67,8 @@ const BUDGET = {
   // 152: the A/B tests (`experiments`): the variants a render draws for its visitor, the cookie the HTML cache is keyed
   // by, and the ones a tester forces (`forcedExperiments`) — pure, no React.
   // 153: a visitor's places in the gradual rollouts of the flags (`flags/rollout`), drawn and keyed the same way.
-  '@plitzi/sdk-shared': 153,
+  // 155: what the space's audiences read of a visitor (`audiences`), read off the request and keyed the same way.
+  '@plitzi/sdk-shared': 155,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,
