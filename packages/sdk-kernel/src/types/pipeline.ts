@@ -231,6 +231,12 @@ export type SSRContext = {
    */
   rscParams?: Record<string, string>;
   /**
+   * Where the visitor stands in the space's gradual rollouts — a place 0–99 per flag — as the page render answered them:
+   * their cookie's, and any drawn for them by this very request, which their cookie does not hold yet. What the server
+   * data read alongside the render resolves the flags with, so both answer alike.
+   */
+  rolloutBuckets?: Record<string, number>;
+  /**
    * What this request spent before the page was rendered — each middleware, the metering — in ms, kept only by a
    * development server: it goes out in the page's `Server-Timing` beside the render's own phases.
    */

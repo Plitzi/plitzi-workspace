@@ -11,6 +11,7 @@ import type { SignedInTestAccount } from './TestTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type { ExperimentAssignments } from '../experiments/experiments';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
+import type { RolloutBuckets } from '../flags/rollout';
 
 /** Where a site's badge leads: who made it, and where to report one that abuses its address — the deployment's own. */
 export type BadgeLinks = { madeWith: string; report: string };
@@ -50,6 +51,8 @@ export type NavigateHow = { external?: boolean; replace?: boolean };
 
 export type FlagsState = {
   overrides?: FlagOverrides;
+  /** Where the visitor stands in the space's gradual rollouts, as the server that drew the page answered them. */
+  rollout?: RolloutBuckets;
   /** Each declared flag's answer and the layer that gave it — what the dev tools show. The values alone are the
    *  `flags` source. */
   resolved?: Record<string, FlagResolution>;

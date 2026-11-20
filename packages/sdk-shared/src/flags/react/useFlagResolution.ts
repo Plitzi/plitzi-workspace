@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import useStableValue from '../../hooks/useStableValue';
 import { useCommonStore, useRenderSettings } from '../../store';
 import { flagUserFrom, resolveFlags } from '../resolveFlags';
+import useRolloutBuckets from './useRolloutBuckets';
 
 import type { AuthContextValue } from '../../types';
 import type { FlagResolution } from '../resolveFlags';
@@ -27,11 +28,13 @@ const useFlagResolution = (
   ]);
   const { authenticated, user } = auth;
   const flagUser = useMemo(() => flagUserFrom({ authenticated, user }), [authenticated, user]);
+  const rollout = useRolloutBuckets();
 
   return useStableValue(
     useMemo(
-      () => resolveFlags(declared, { environment, hostname, routeParams, queryParams, user: flagUser }, overrides),
-      [declared, environment, hostname, routeParams, queryParams, flagUser, overrides]
+      () =>
+        resolveFlags(declared, { environment, hostname, routeParams, queryParams, user: flagUser, rollout }, overrides),
+      [declared, environment, hostname, routeParams, queryParams, flagUser, rollout, overrides]
     )
   );
 };

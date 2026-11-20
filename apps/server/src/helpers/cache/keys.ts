@@ -1,7 +1,7 @@
 import { requestAuthority } from '@plitzi/sdk-kernel/http';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { experimentsCookieName, forcedExperimentsCookieName } from '@plitzi/sdk-shared/experiments';
-import { flagsCookieName } from '@plitzi/sdk-shared/flags';
+import { flagsCookieName, rolloutCookieName } from '@plitzi/sdk-shared/flags';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
 import { ssrPaintedCookieName } from '../paintedCookie';
@@ -33,6 +33,7 @@ const HTML_KEY_FIELDS = [
   'scheme',
   'painted',
   'experiments',
+  'rollout',
   'debugHidden',
   'forcedFlags',
   'forcedExperiments',
@@ -62,7 +63,8 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * So are the variants of the space's A/B tests the visitor keeps: the page draws only the one each shows them. Keyed by
  * the cookie's raw value, so visitors shown the same variants share a page. A visitor with none of a test kept is drawn
  * one there and then, and that page is never kept (`prepareRender`'s `cacheable`): the next such visitor is drawn their
- * own.
+ * own. The same for the visitor's places in the space's gradual rollouts (`plitzi_rollout`): the flags they answer are
+ * drawn into the page.
  *
  * So are the feature flags and the A/B variants a tester forced from the dev tools, on a page that authorizes
  * debugging: drawn with them, the page is not everybody's, and a tester holding the cookie must never be handed a page
@@ -104,6 +106,7 @@ export const buildHtmlCacheKey = (
     scheme: [undefined, 'system'].includes(themeFromCookies(req.headers.cookie)) ? (visitorScheme(req) ?? '') : '',
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req))) ?? '',
     experiments: readCookie(req.headers.cookie, experimentsCookieName(requestAuthority(req))) ?? '',
+    rollout: readCookie(req.headers.cookie, rolloutCookieName(requestAuthority(req))) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
     forcedExperiments: readCookie(req.headers.cookie, forcedExperimentsCookieName(requestAuthority(req))) ?? '',
@@ -199,6 +202,7 @@ const RSC_KEY_FIELDS = [
   'environment',
   'revision',
   'flags',
+  'rollout',
   'user',
   'ids',
   'hostname',
@@ -211,20 +215,22 @@ type RscCacheKeyFields = Record<(typeof RSC_KEY_FIELDS)[number], string>;
 // The request URL is part of the key because RSC slices are route-dependent: a connector compiles its filters
 // from routeParams/queryParams, so `/blog/a` and `/blog/b` resolve to different data under the same space,
 // environment and revision. Keying the full `search` over-fragments the cache on tracking params (utm_*, fbclid),
-// which costs hit rate — the alternative costs correctness, so the raw search stays in the key.
+// which costs hit rate — the alternative costs correctness, so the raw search stays in the key. The visitor's places in
+// the space's gradual rollouts are keyed too: a flag they answer decides which server elements are resolved.
 export const buildRscCacheKey = (
   spaceId: number,
   environment: string,
   revision: number,
   userId: string | number | undefined,
   idsParam: string | undefined,
-  req: CacheKeyRequest
+  req: CacheKeyRequest & { headers: { cookie?: string; host?: string; ':authority'?: string } }
 ): string => {
   const fields: RscCacheKeyFields = {
     spaceId: String(spaceId),
     environment,
     revision: String(revision),
     flags: flagsVersionOf(req),
+    rollout: readCookie(req.headers.cookie, rolloutCookieName(requestAuthority(req))) ?? '',
     user: userId === undefined ? 'anon' : String(userId),
     ids: idsParam ?? '',
     hostname: req.hostname,

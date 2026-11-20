@@ -439,6 +439,11 @@ export type ActionRunRequest = {
    * `flags` say: those are the browser's claim, and a flow does not take a claim as a fact.
    */
   forcedFlags?: Record<string, boolean>;
+  /**
+   * Where the visitor who started the run stands in the space's gradual rollouts — their places, from their cookie — so
+   * a flow sees a rolled-out flag as the page that called it was drawn with. None, a rollout's flag answers its own value.
+   */
+  rolloutBuckets?: Record<string, number>;
   emit?: (chunk: unknown) => void;
   /** Reports each step as it settles, for a caller watching the run happen. Absent for a plain request/response. */
   onNode?: (id: string, status: InteractionNodeStatus) => void;

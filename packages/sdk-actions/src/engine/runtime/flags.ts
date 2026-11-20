@@ -33,7 +33,10 @@ export const readsFlags = (document: object): boolean => {
  */
 export const flagsForRun = async (
   config: Pick<ActionsConfig, 'lookups' | 'flags'>,
-  request: Pick<ActionRunRequest, 'entry' | 'spaceId' | 'environment' | 'at' | 'user' | 'forcedFlags'>
+  request: Pick<
+    ActionRunRequest,
+    'entry' | 'spaceId' | 'environment' | 'at' | 'user' | 'forcedFlags' | 'rolloutBuckets'
+  >
 ): Promise<Record<string, boolean>> => {
   if (!readsFlags(request.entry.document)) {
     return {};
@@ -56,5 +59,7 @@ export const flagsForRun = async (
     serverLog.warn('Actions', `The server sets the flag "${name}", which space ${spaceId} does not declare.`)
   );
 
-  return flagValues(resolveFlags(declared, { environment, user: flagUserFromSSR(user) }, overrides));
+  return flagValues(
+    resolveFlags(declared, { environment, user: flagUserFromSSR(user), rollout: request.rolloutBuckets }, overrides)
+  );
 };

@@ -1,4 +1,4 @@
-import { hasConditions, isFlagName } from '@plitzi/sdk-shared/flags';
+import { hasConditions, isFlagName, isFlagRollout } from '@plitzi/sdk-shared/flags';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { didYouMean } from '../suggest';
@@ -43,6 +43,13 @@ const lintDeclaration = (ctx: LintContext, name: string, flag: unknown): void =>
     );
 
     return;
+  }
+
+  if (flag.rollout !== undefined && !isFlagRollout(flag.rollout)) {
+    ctx.error(
+      'flag-rollout',
+      `${where} rolls out ${JSON.stringify(flag.rollout)}. A rollout is { percent, value }: a whole share of the visitors from 0 to 100 who get \`value\` when no rule matches — \`rollout: { percent: 10, value: true }\`.`
+    );
   }
 
   flag.rules.forEach((rule: unknown, index: number) => {

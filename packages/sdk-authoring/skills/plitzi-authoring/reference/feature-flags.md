@@ -58,6 +58,13 @@ declare is an error (`flag-unknown`).
 Prefer a gate to `visible: 'flags.x'`: a visibility bound to a flag still renders the hidden half and ships it in the
 HTML. Reach for the source only for what a gate cannot say — a label that changes, a step that branches.
 
+## Rolling out gradually
+
+`rollout: { percent: 10, value: true }` on a flag turns it on for 10% of the visitors when none of its rules matches;
+the rest get its `value`. Each visitor keeps their place (a cookie), so raising the percent keeps everyone who was in —
+10, then 50, then 100, then remove the flag. Rules still come first: a rule for staff answers before the rollout. Not
+access control — a visitor's place is theirs to change. A malformed one is `flag-rollout`.
+
 ## Who decides
 
 The space's declaration answers first. Above it, in order, each may override a flag — only one the space declares:

@@ -34,6 +34,7 @@ import type {
   SdkState
 } from '@plitzi/sdk-shared';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
+import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 
 // Font Awesome's sheet where the build emits it beside the stylesheet (`iconsPlugin`) and development serves it — what a
 // page that says nothing else is told. A page server serving the SDK elsewhere says where (`sdkIconsStylePath`).
@@ -73,6 +74,8 @@ export type AppMainProps = {
   forcedFlags?: Record<string, boolean>;
   /** The variants the rendering server drew — see `PlitziSdkProps`. */
   serverExperiments?: ExperimentAssignments;
+  /** The visitor's places in the gradual rollouts the rendering server answered — see `PlitziSdkProps`. */
+  serverRollout?: RolloutBuckets;
   /** The variants a tester forced, already settled against whether this page may debug. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
@@ -122,6 +125,7 @@ const AppMain = ({
   forcedFlags,
   serverExperiments,
   forcedExperiments,
+  serverRollout,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -172,8 +176,8 @@ const AppMain = ({
    * because a host passing an inline object would otherwise re-resolve every flag on each of its renders.
    */
   useSdkStoreSync(
-    ['flags.overrides.server', 'flags.overrides.sdk', 'flags.overrides.qa'],
-    [useStableValue(serverFlags), useStableValue(flags), forcedFlags]
+    ['flags.overrides.server', 'flags.overrides.sdk', 'flags.overrides.qa', 'flags.rollout'],
+    [useStableValue(serverFlags), useStableValue(flags), forcedFlags, useStableValue(serverRollout)]
   );
 
   // What the server drew the page with: `GlobalSources` draws only the experiments it does not name. What a tester

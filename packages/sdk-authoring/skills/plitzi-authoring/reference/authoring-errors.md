@@ -82,6 +82,7 @@ The space is not written until these are fixed.
 | `experiment-weight` | an `abTestVariant`'s `weight` that is not a whole number from 0 to 100, or a test whose variants all weigh 0 | `weight: 50`; 0 shows a variant to nobody, and at least one has to show |
 | `flag-gate` | an element's or a page's `flag` that is not a flag name | `flag: 'newCheckout'`, or `flag: '!newCheckout'` for "only while off" |
 | `flag-name` | a flag whose name a template cannot read as `flags.x` | letters, digits and `_` |
+| `flag-rollout` | a flag's `rollout` that is not `{ percent, value }` — a whole share from 0 to 100 and the answer it gives | `rollout: { percent: 10, value: true }` |
 | `flag-rule-shape` | a flag rule that is not `{ when, value }`, or whose `value` is not `true` or `false` | `{ when: { … }, value: true }` |
 | `flag-shape` | a flag whose `value` is not `true` or `false` | `{ value: false, rules: [] }` |
 | `flag-undeclared` | a gate on a flag the space does not declare — it reads as off, so the element never (or always) renders | declare it in `flags`, or remove the gate |

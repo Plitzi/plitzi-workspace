@@ -12,6 +12,7 @@ import type {
   ColorScheme
 } from '@plitzi/sdk-shared';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
+import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 
 export type ComponentProps = {
   server: Partial<Server>;
@@ -44,6 +45,8 @@ export type ComponentProps = {
   serverExperiments?: ExperimentAssignments;
   /** The variants a tester forced, for a page allowed to debug. See `prepareRender`. */
   forcedExperiments?: ExperimentAssignments;
+  /** The visitor's places in the space's gradual rollouts. See `prepareRender`. */
+  serverRollout?: RolloutBuckets;
 };
 
 const Component = ({
@@ -66,7 +69,8 @@ const Component = ({
   serverFlags,
   forcedFlags,
   serverExperiments,
-  forcedExperiments
+  forcedExperiments,
+  serverRollout
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -93,6 +97,7 @@ const Component = ({
       {...(forcedFlags === undefined ? {} : { forcedFlags })}
       {...(serverExperiments === undefined ? {} : { serverExperiments })}
       {...(forcedExperiments === undefined ? {} : { forcedExperiments })}
+      {...(serverRollout === undefined ? {} : { serverRollout })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

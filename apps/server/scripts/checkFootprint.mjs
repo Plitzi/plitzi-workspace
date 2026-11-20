@@ -66,7 +66,8 @@ const BUDGET = {
   // folder (`navigation/notFoundPages`) — pure, a part of the barrel the sitemap and the routes are read from.
   // 152: the A/B tests (`experiments`): the variants a render draws for its visitor, the cookie the HTML cache is keyed
   // by, and the ones a tester forces (`forcedExperiments`) — pure, no React.
-  '@plitzi/sdk-shared': 152,
+  // 153: a visitor's places in the gradual rollouts of the flags (`flags/rollout`), drawn and keyed the same way.
+  '@plitzi/sdk-shared': 153,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

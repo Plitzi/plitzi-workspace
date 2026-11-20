@@ -1,10 +1,10 @@
-import { requestOrigin } from '@plitzi/sdk-kernel/http';
+import { requestAuthority, requestOrigin } from '@plitzi/sdk-kernel/http';
 import { onAbort } from '@plitzi/sdk-kernel/http';
 import { serverLog } from '@plitzi/sdk-kernel/log';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource/variables';
-import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
+import { flagUserFromSSR, flagValues, keptRollout, resolveFlags } from '@plitzi/sdk-shared/flags';
 import {
   collectServerElements,
   inputProviders,
@@ -146,7 +146,16 @@ export const resolveRscData = async ({
   const flags = flagValues(
     resolveFlags(
       schema.flags,
-      { environment, hostname: req.hostname, routeParams, queryParams: req.query, user: flagUserFromSSR(user) },
+      {
+        environment,
+        hostname: req.hostname,
+        routeParams,
+        queryParams: req.query,
+        user: flagUserFromSSR(user),
+        // As the page render answered them — places it drew just now are not in the cookie yet — or as the cookie keeps
+        // them, for a refresh of its own.
+        rollout: req.ctx.rolloutBuckets ?? keptRollout(req.headers.cookie, requestAuthority(req))
+      },
       flagOverrides
     )
   );

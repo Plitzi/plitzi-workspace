@@ -44,6 +44,26 @@ environment's flags come from, the first that answers deciding:
 The draft has no third step: its flags live in `space_flags` alone. A self-hosted server reading from Plitzi adds its
 own cache on top — the last flags it fetched — so it serves them with Plitzi unreachable.
 
+## Gradual rollouts
+
+`rollout: { percent, value }` on a flag is read when none of its rules matches: `percent` of the visitors get `value`,
+the rest the flag's own `value`. Each visitor has a place, 0–99 per flag, drawn once and kept in a cookie
+(`plitzi_rollout`, `@plitzi/sdk-shared/flags` `rollout.ts`): a rollout takes in the places below its percent, so raising
+it keeps everyone who was in and lowering it lets go of the last taken in. A rollout at 0 or 100 needs no place.
+
+The places are one more input of `resolveFlags` (`FlagScope.rollout`), given by everyone who resolves:
+
+- the page server draws the places the visitor has none of (`requestRollout`), answers the page with them, sends them
+  as a `Set-Cookie`, hands them to the browser (`serverRollout`) and to the server data read alongside
+  (`ctx.rolloutBuckets`), and keeps that page for nobody; the HTML and RSC caches are keyed by the cookie;
+- the browser resolves with the server's, then the cookie's, and draws once per page what neither has
+  (`useRolloutBuckets`, shared by the `flags` source and the router);
+- a server action reads the cookie of the visitor who started it (`ActionRunRequest.rolloutBuckets`); a job or a
+  schedule has no visitor, and a rollout's flag answers its own value there.
+
+In the builder there is no visitor: a rollout's flag answers its own value, and the Feature Flags panel forces the other.
+A rollout is not access control: a visitor's place is theirs to change, like everything else a flag hides.
+
 ## Who decides
 
 `resolveFlags(declared, scope, overrides)` (`packages/sdk-shared/src/flags`) answers every declared flag with its value
@@ -51,7 +71,7 @@ and the layer that decided it:
 
 | Layer | Set by | Where it comes from |
 |-------|--------|---------------------|
-| `space` | the space | its default, or the first rule that matched (`rule` says which) |
+| `space` | the space | its default, the first rule that matched (`rule` says which), or its rollout (`rollout`) |
 | `server` | the deployment rendering it | `createServer({ flags })` — a map, or a function of `{ spaceId, environment }` |
 | `sdk` | whoever embeds the SDK | the `flags` prop |
 | `qa` | a tester | the dev tools' **Flags** tab, kept in the `plitzi_flags[_port]` cookie |

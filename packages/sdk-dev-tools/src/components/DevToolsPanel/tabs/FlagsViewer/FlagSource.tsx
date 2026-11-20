@@ -11,14 +11,15 @@ const LAYER_LABELS: Record<FlagResolution['layer'], string> = {
   qa: 'forced'
 };
 
-/** Which layer decided the flag — and, when the space did with a rule, which rule. */
+/** Which layer decided the flag — and, when the space did with a rule or its gradual rollout, which. */
 const FlagSource = ({ resolution }: FlagSourceProps) => {
   if (!resolution) {
     return null;
   }
 
-  const { layer, rule } = resolution;
-  const label = layer === 'space' && rule !== undefined ? `rule ${rule + 1}` : LAYER_LABELS[layer];
+  const { layer, rule, rollout } = resolution;
+  const ofSpace = layer === 'space' && rollout ? 'rollout' : LAYER_LABELS[layer];
+  const label = layer === 'space' && rule !== undefined ? `rule ${rule + 1}` : ofSpace;
 
   return (
     <span

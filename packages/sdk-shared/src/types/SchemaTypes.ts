@@ -190,10 +190,18 @@ export type SchemaFlagRule = { when: RuleGroup; value: boolean };
  */
 export type SchemaFlag = {
   description?: string;
-  /** The answer when no rule matches. */
+  /** The answer when no rule matches — and no rollout takes the visitor in. */
   value: boolean;
   rules: SchemaFlagRule[];
+  /**
+   * A gradual rollout, read when no rule matches: `percent` of the visitors (0–100) get `value`, the rest the flag's own
+   * `value`. Each visitor is kept in their place by a cookie, so raising the percent keeps everyone who was in.
+   */
+  rollout?: SchemaFlagRollout;
 };
+
+/** A share of the visitors a flag answers `value` for, when none of its rules matched. */
+export type SchemaFlagRollout = { percent: number; value: boolean };
 
 export type PageFolder = { id: string; name: string; slug: string; parentId?: PageFolder['id'] };
 

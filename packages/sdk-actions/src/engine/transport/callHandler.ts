@@ -3,7 +3,7 @@ import { onAbort } from '@plitzi/sdk-kernel/http';
 import { resolveDebugAuthorization } from '@plitzi/sdk-kernel/identity';
 import { serverLog } from '@plitzi/sdk-kernel/log';
 import { triggerAccess } from '@plitzi/sdk-shared/actions';
-import { forcedFlagsFor } from '@plitzi/sdk-shared/flags';
+import { forcedFlagsFor, keptRollout } from '@plitzi/sdk-shared/flags';
 
 import { openStream, wantsStream } from './stream';
 import { keepCall } from '../jobs/calls';
@@ -342,6 +342,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       lineage,
       at: { environment, revision },
       ...(forcedFlags ? { forcedFlags } : {}),
+      rolloutBuckets: keptRollout(req.headers.cookie, requestAuthority(req)),
       signal: run.controller.signal,
       ...(stream
         ? {

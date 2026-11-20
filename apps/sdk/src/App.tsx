@@ -51,6 +51,7 @@ import type {
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
+import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
 import type { ReactNode } from 'react';
 
@@ -126,6 +127,8 @@ export type AppProps = {
   forcedFlags?: Record<string, boolean>;
   /** The variants the rendering server drew — see `PlitziSdkProps`. */
   serverExperiments?: ExperimentAssignments;
+  /** The visitor's places in the gradual rollouts the rendering server answered — see `PlitziSdkProps`. */
+  serverRollout?: RolloutBuckets;
   /** The variants a tester forced — see `PlitziSdkProps`. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */

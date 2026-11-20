@@ -8,6 +8,7 @@ import { useNavigation, getPaths, matchRoutePath, getRouteParams, notFoundPageFo
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { flagValues, passesFlagGate, resolveFlags, flagUserFrom } from '@plitzi/sdk-shared/flags';
+import { useRolloutBuckets } from '@plitzi/sdk-shared/flags/react';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
@@ -121,6 +122,8 @@ const NavigationCore = ({
   // The root store, for the prefetch below: `refreshRsc` writes what it fetched where every element reads it.
   const store = useStoreById<CommonState>();
   const { renderMode, previewMode, environment } = useRenderSettings();
+  // The visitor's places in the gradual rollouts, the same the `flags` source resolves with (`useRolloutBuckets`).
+  const rollout = useRolloutBuckets();
   const [[pageFolders, pageDefinitions, schemaVariables, schemaFlags, flagOverrides]] = useSdkStore([
     'schema.pageFolders',
     'pageDefinitions',
@@ -435,7 +438,8 @@ const NavigationCore = ({
             hostname,
             routeParams,
             queryParams: stableQueryParams,
-            user: flagUserFrom({ authenticated, user })
+            user: flagUserFrom({ authenticated, user }),
+            rollout
           },
           flagOverrides
         )

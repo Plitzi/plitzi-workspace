@@ -19,6 +19,9 @@ const flagFormSchema = z.object({
   }),
   description: z.string().max(300),
   value: z.boolean(),
+  rolloutOn: z.boolean(),
+  rolloutPercent: z.coerce.number().int('A whole number').min(0, 'From 0 to 100').max(100, 'From 0 to 100'),
+  rolloutValue: z.boolean(),
   rules: z.array(
     z.object({ value: z.boolean(), when: z.custom<RuleGroup>(isRuleGroup, { message: 'A rule needs its conditions' }) })
   )
@@ -47,7 +50,15 @@ const FlagForm = ({
   onClose
 }: FlagFormProps) => {
   const form = useForm({
-    defaultValues: { name, description: flag.description ?? '', value: flag.value, rules: flag.rules },
+    defaultValues: {
+      name,
+      description: flag.description ?? '',
+      value: flag.value,
+      rolloutOn: flag.rollout !== undefined,
+      rolloutPercent: flag.rollout?.percent ?? 10,
+      rolloutValue: flag.rollout?.value ?? !flag.value,
+      rules: flag.rules
+    },
     config: {
       schema: flagFormSchema.refine(values => !isNewRecord || !takenNames.includes(values.name), {
         message: 'A flag with this name already exists',
@@ -57,9 +68,24 @@ const FlagForm = ({
   });
   const { fields: rules, append, remove, move } = useFieldArray({ control: form.formMethods.control, name: 'rules' });
 
+  const rolloutOn = form.formMethods.watch('rolloutOn');
+
   const handleSubmit = useCallback(
-    ({ name: flagName, description, value, rules: flagRules }: FlagFormValues) =>
-      onSubmit(flagName, { ...(description ? { description } : {}), value, rules: flagRules }),
+    ({
+      name: flagName,
+      description,
+      value,
+      rules: flagRules,
+      rolloutOn: rolls,
+      rolloutPercent,
+      rolloutValue
+    }: FlagFormValues) =>
+      onSubmit(flagName, {
+        ...(description ? { description } : {}),
+        value,
+        rules: flagRules,
+        ...(rolls ? { rollout: { percent: rolloutPercent, value: rolloutValue } } : {})
+      }),
     [onSubmit]
   );
 
@@ -96,6 +122,17 @@ const FlagForm = ({
         <Button size="xs" onClick={handleAddRule}>
           + Rule
         </Button>
+        <Form.Switch name="rolloutOn" label="Gradual rollout, when no rule matches" size="xs" />
+        {rolloutOn && (
+          <div className="border-ui-line-strong flex min-w-0 flex-col gap-2 rounded-sm border p-2">
+            <Form.Input name="rolloutPercent" type="number" label="Visitors (%)" min={0} max={100} size="xs" />
+            <Form.Switch name="rolloutValue" label="Turns the flag on for them" size="xs" />
+            <Notice tone="info">
+              Each visitor keeps their place, so raising the percent keeps everyone who was in. The rest get the flag’s
+              own value.
+            </Notice>
+          </div>
+        )}
       </Form.Body>
       <Form.Footer justify="end">
         <Button onClick={onClose} size="xs">

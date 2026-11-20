@@ -11,7 +11,7 @@ import type { SharedPage, SharedPageStore, SSRPageServerConfig } from '../../typ
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-kernel/types';
 import type { SSRRenderResult, SSRUser } from '@plitzi/sdk-shared';
 
-type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string; setCookie?: string };
+type Rendered = { body?: string; result: SSRRenderResult; cacheable: boolean; nonce: string; setCookies?: string[] };
 
 const buildBody = vi.fn<(req: SSRRequest) => Promise<Rendered>>();
 
@@ -34,13 +34,13 @@ const request = (search = '', user?: SSRUser): SSRRequest =>
 
 const response = () => {
   const sent: string[] = [];
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string | string[]> = {};
 
   return {
     sent,
     headers,
     res: {
-      setHeader: (name: string, value: string) => {
+      setHeader: (name: string, value: string | string[]) => {
         headers[name] = value;
       },
       setStatus: () => undefined,
@@ -128,7 +128,7 @@ describe('the page cache for the draft', () => {
  */
 describe('a page that drew a visitor their variants', () => {
   it('is sent with the cookie that keeps them, and drawn again for the next visitor with none', async () => {
-    const drawn = { ...page('<html>B</html>'), cacheable: false, setCookie: 'plitzi_ab=heroTest%3Ab; Path=/' };
+    const drawn = { ...page('<html>B</html>'), cacheable: false, setCookies: ['plitzi_ab=heroTest%3Ab; Path=/'] };
     buildBody.mockResolvedValueOnce(drawn).mockResolvedValueOnce({ ...drawn, body: '<html>A</html>' });
     const pages = caches();
     const first = response();
@@ -136,7 +136,7 @@ describe('a page that drew a visitor their variants', () => {
     const next = response();
     await render(request(), next.res, pages);
 
-    expect(first.headers['Set-Cookie']).toBe('plitzi_ab=heroTest%3Ab; Path=/');
+    expect(first.headers['Set-Cookie']).toEqual(['plitzi_ab=heroTest%3Ab; Path=/']);
     expect(next.headers['X-Cache']).toBe('MISS');
     expect(next.sent).toEqual(['<html>A</html>']);
     expect(buildBody).toHaveBeenCalledTimes(2);

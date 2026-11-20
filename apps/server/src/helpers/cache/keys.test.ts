@@ -93,6 +93,11 @@ describe('buildHtmlCacheKey', () => {
     expect(html('plitzi_ab=heroTest%3Ab; _ga=1')).toBe(html('_ga=2; plitzi_ab=heroTest%3Ab'));
   });
 
+  /** A rolled-out flag is drawn into the page: visitors in different places do not share one. */
+  it('separates visitors by their places in the gradual rollouts', () => {
+    expect(html('plitzi_rollout=newCheckout%3A12')).not.toBe(html('plitzi_rollout=newCheckout%3A70'));
+  });
+
   /** A tester's forced variants are theirs: never served a page drawn without them, nor the others a page with them. */
   it('separates a tester who forced a variant', () => {
     expect(html('plitzi_ab_qa=heroTest%3Ab')).not.toBe(html());
@@ -144,6 +149,14 @@ describe('buildRscCacheKey', () => {
     const b = buildRscCacheKey(1, 'production', 3, undefined, undefined, req('/search', '?q=hats'));
 
     expect(a).not.toBe(b);
+  });
+
+  it('separates visitors by their places in the gradual rollouts: a flag they answer decides what is resolved', () => {
+    const at = (cookie?: string) =>
+      buildRscCacheKey(1, 'production', 3, undefined, undefined, req('/', '', 'site.example.com', cookie));
+
+    expect(at('plitzi_rollout=newCheckout%3A12')).not.toBe(at('plitzi_rollout=newCheckout%3A70'));
+    expect(at('_ga=1')).toBe(at());
   });
 
   it('separates the same path served on two domains', () => {

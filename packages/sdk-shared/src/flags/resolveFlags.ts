@@ -1,6 +1,7 @@
 import { evaluateRuleGroup } from '../conditions';
 
 import type { RuleGroup } from '../conditions';
+import type { RolloutBuckets } from './rollout';
 import type { VariableScope } from '../dataSource/variables';
 import type { AuthContextValue, Schema, SchemaFlag, SSRUser } from '../types';
 
@@ -37,14 +38,18 @@ export const flagUserFromSSR = (user: Pick<SSRUser, 'email' | 'username' | 'role
     ? { authenticated: true, email: user.email, username: user.username, roles: user.roles }
     : { authenticated: false };
 
-/** What a flag's rules are matched against: everything a variable's are, and who is visiting. */
-export type FlagScope = VariableScope & { user?: FlagUser };
+/**
+ * What a flag's rules are matched against: everything a variable's are, and who is visiting — with where the visitor
+ * stands in the space's gradual rollouts (`rollout`, their place 0–99 per flag; none, a rollout gives its flag's value).
+ */
+export type FlagScope = VariableScope & { user?: FlagUser; rollout?: RolloutBuckets };
 
 /**
  * One flag's answer, and where it came from: the layer that decided, and — when the space did — the index of the
- * rule that matched, absent when it was the flag's own default. What the dev tools show beside the value.
+ * rule that matched, or `rollout` when its gradual rollout took the visitor in or left them out; neither when it was
+ * the flag's own default. What the dev tools show beside the value.
  */
-export type FlagResolution = { value: boolean; layer: FlagLayer; rule?: number };
+export type FlagResolution = { value: boolean; layer: FlagLayer; rule?: number; rollout?: true };
 
 const OVERRIDE_LAYERS: readonly FlagOverrideLayer[] = ['server', 'sdk', 'qa'];
 
@@ -67,19 +72,29 @@ const ruleMatching = (flag: SchemaFlag, scope: FlagScope): number =>
     ? flag.rules.findIndex(rule => hasConditions(rule.when) && evaluateRuleGroup(rule.when, scope))
     : -1;
 
-const resolveDeclared = (flag: SchemaFlag, scope: FlagScope): FlagResolution => {
+const resolveDeclared = (name: string, flag: SchemaFlag, scope: FlagScope): FlagResolution => {
   const index = ruleMatching(flag, scope);
-  if (index === -1) {
-    return { value: flag.value, layer: 'space' };
+  if (index !== -1) {
+    return { value: flag.rules[index].value, layer: 'space', rule: index };
   }
 
-  return { value: flag.rules[index].value, layer: 'space', rule: index };
+  const place = scope.rollout && Object.hasOwn(scope.rollout, name) ? scope.rollout[name] : undefined;
+  if (flag.rollout && place !== undefined) {
+    return { value: place < flag.rollout.percent ? flag.rollout.value : flag.value, layer: 'space', rollout: true };
+  }
+
+  // A rollout at 100 takes in everybody, a place or none.
+  if (flag.rollout?.percent === 100) {
+    return { value: flag.rollout.value, layer: 'space', rollout: true };
+  }
+
+  return { value: flag.value, layer: 'space' };
 };
 
 /**
  * Every flag the space declares, resolved for this render: `{ newCheckout: { value: true, layer: 'space', rule: 0 } }`.
  *
- * The space answers first — the first of a flag's rules that matches, or its default — and each layer above it may
+ * The space answers first — the first of a flag's rules that matches, its rollout, or its default — and each layer above it may
  * replace that answer, in order. An override for a flag the space does not declare is not an answer to anything and
  * is dropped here; {@link undeclaredFlagOverrides} names those so whoever set one can be told.
  */
@@ -96,7 +111,7 @@ export const resolveFlags = (
 
           return typeof value === 'boolean' ? { value, layer } : current;
         },
-        resolveDeclared(flag, scope)
+        resolveDeclared(name, flag, scope)
       );
 
       return [name, resolution];

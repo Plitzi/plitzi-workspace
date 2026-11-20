@@ -232,6 +232,9 @@ still rendered; a flag decides whether it exists at all.
   \`environment\` (\`main\`, \`development\`, \`staging\`, \`production\`), \`hostname\`, \`routeParams.<name>\`,
   \`queryParams.<name>\` and the visitor: \`user.authenticated\`, \`user.email\`, \`user.username\`, \`user.roles\` (with
   \`contains\`). A group with no rules is skipped, never read as "always". \`deleteFlag { name }\` removes one.
+- **Roll out gradually** with \`rollout: { percent, value }\` on \`upsertFlag\`: when no rule matches, \`percent\` of the
+  visitors get \`value\`, the rest the flag's \`value\`. Each visitor keeps their place (a cookie), so raising the percent
+  keeps everyone who was in. Not access control: a visitor's place is theirs to change.
 - **Gate** an element with \`flag\` on \`upsertElement\` / \`patchElement\`: \`"newCheckout"\` exists only while the flag is
   on, \`"!newCheckout"\` only while it is off — put both side by side for a rollout. On \`upsertPage\` a gated-off page
   answers 404. \`null\` on a patch removes the gate. Gated off, it is not rendered and its server data is not

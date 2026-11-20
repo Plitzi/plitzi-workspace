@@ -83,6 +83,7 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
+import type { RolloutBuckets } from '@plitzi/sdk-shared/flags';
 import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ThemeScope } from '@plitzi/sdk-shared/theme/react';
@@ -379,6 +380,11 @@ export type PlitziSdkProps = {
    * the page hydrates with them, and draws only what the server did not (`{{ experiments.<name> }}`).
    */
   serverExperiments?: ExperimentAssignments;
+  /**
+   * Set by the server that rendered this page: where the visitor stands in the space's gradual rollouts (a place 0–99
+   * per flag), so the page hydrates with the flags it was drawn with.
+   */
+  serverRollout?: RolloutBuckets;
   /**
    * Set by the server that rendered this page for somebody allowed to debug it: the A/B variants a tester forced (the
    * dev tools' Experiments tab, `?ab=heroTest:b`), shown over the visitor's own and never kept as theirs.

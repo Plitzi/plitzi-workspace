@@ -191,6 +191,15 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('flag-rule-shape');
     });
 
+    it('flag-rollout', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { newCheckout: { value: false, rules: [], rollout: { percent: 150, value: true } } };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-rollout');
+    });
+
     it('flag-rule-empty', () => {
       const documents = withChange(({ schema }) => {
         declare(schema);

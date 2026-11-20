@@ -31,6 +31,7 @@ const space = (): OfflineDataRaw =>
       pages: ['home'],
       pageFolders: [],
       components: {},
+      flags: { newCheckout: { value: false, rules: [], rollout: { percent: 30, value: true } } },
       definition: { name: 'test', permanentUrl: 'test' },
       variables: [],
       settings: { customCss: '' }
@@ -74,20 +75,24 @@ const prepared = (cookie?: string, query: Record<string, string> = {}, config: R
 
 describe('prepareRender / A/B tests', () => {
   it('draws a first visitor their variant, keeps it in their cookie, and keeps the page for nobody else', async () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.8);
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.8).mockReturnValueOnce(0.4);
     const prep = await prepared();
 
     expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'b' });
     expect(prep.templateParams.offlineData).toContain('"serverExperiments":{"heroTest":"b"}');
-    expect(prep.setCookie).toBe('plitzi_ab=heroTest%3Ab; Path=/; Max-Age=15552000; SameSite=Lax; Secure');
+    expect(prep.setCookies).toEqual([
+      'plitzi_ab=heroTest%3Ab; Path=/; Max-Age=15552000; SameSite=Lax; Secure',
+      'plitzi_rollout=newCheckout%3A40; Path=/; Max-Age=15552000; SameSite=Lax; Secure'
+    ]);
+    expect(prep.componentProps.serverRollout).toEqual({ newCheckout: 40 });
     expect(prep.cacheable).toBe(false);
   });
 
   it('draws a returning visitor the variant they kept, and their page may be kept for whoever kept the same', async () => {
-    const prep = await prepared('plitzi_ab=heroTest%3Aa');
+    const prep = await prepared('plitzi_ab=heroTest%3Aa; plitzi_rollout=newCheckout%3A5');
 
     expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'a' });
-    expect(prep.setCookie).toBeUndefined();
+    expect(prep.setCookies).toBeUndefined();
     expect(prep.cacheable).toBe(true);
   });
 
@@ -95,7 +100,7 @@ describe('prepareRender / A/B tests', () => {
     const prep = await prepared(undefined, { __pt: 'token' });
 
     expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'a' });
-    expect(prep.setCookie).toBeUndefined();
+    expect(prep.setCookies).toBeUndefined();
   });
 
   it('shows a tester what they forced on a page allowed to debug, and keeps that page for nobody', async () => {
@@ -107,7 +112,9 @@ describe('prepareRender / A/B tests', () => {
   });
 
   it('ignores a forcing cookie on a page that does not authorize debugging', async () => {
-    const prep = await prepared('plitzi_ab=heroTest%3Aa; plitzi_ab_qa=heroTest%3Ab', { ab: 'heroTest:b' });
+    const prep = await prepared('plitzi_ab=heroTest%3Aa; plitzi_rollout=newCheckout%3A5; plitzi_ab_qa=heroTest%3Ab', {
+      ab: 'heroTest:b'
+    });
 
     expect(prep.componentProps.forcedExperiments).toBeUndefined();
     expect(prep.cacheable).toBe(true);

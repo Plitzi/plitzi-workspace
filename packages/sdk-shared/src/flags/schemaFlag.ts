@@ -1,6 +1,6 @@
 import { isRecord } from '../helpers/isRecord';
 
-import type { SchemaFlag } from '../types';
+import type { SchemaFlag, SchemaFlagRollout } from '../types';
 
 const FLAG_NAME = '[A-Za-z_][A-Za-z0-9_]*';
 
@@ -15,6 +15,15 @@ const RESERVED_FLAG_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
 
 export const isFlagName = (name: string): boolean => FLAG_NAME_PATTERN.test(name) && !RESERVED_FLAG_NAMES.has(name);
 
+/** A rollout as the resolver reads one: a whole share from 0 to 100, and the answer it gives. */
+export const isFlagRollout = (value: unknown): value is SchemaFlagRollout =>
+  isRecord(value) &&
+  typeof value.percent === 'number' &&
+  Number.isInteger(value.percent) &&
+  value.percent >= 0 &&
+  value.percent <= 100 &&
+  typeof value.value === 'boolean';
+
 /**
  * Whether a value is a flag as the resolver reads it — what every writer checks before storing one: a mutation, the
  * live channel, the linter. A rule's `when` has to be a group; whether it says anything is the linter's to warn about.
@@ -24,4 +33,5 @@ export const isSchemaFlag = (value: unknown): value is SchemaFlag =>
   typeof value.value === 'boolean' &&
   (value.description === undefined || typeof value.description === 'string') &&
   Array.isArray(value.rules) &&
-  value.rules.every((rule: unknown) => isRecord(rule) && typeof rule.value === 'boolean' && isRecord(rule.when));
+  value.rules.every((rule: unknown) => isRecord(rule) && typeof rule.value === 'boolean' && isRecord(rule.when)) &&
+  (value.rollout === undefined || isFlagRollout(value.rollout));

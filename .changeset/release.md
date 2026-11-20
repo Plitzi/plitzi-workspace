@@ -22,6 +22,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   `?ab=heroTest:b` in the address, kept for the visit in a session cookie of its own (`plitzi_ab_qa`) — shown over the
   visitor's variant, never kept as theirs. The server draws it (`forcedExperiments`), never keeps that page, and a
   forced experiment the space does not run is ignored and said in the console.
+- **Gradual rollouts.** A flag takes `rollout: { percent, value }`: when none of its rules matches, `percent` of the
+  visitors get `value`, the rest its own. Each visitor keeps their place (0–99, a `plitzi_rollout` cookie), so raising
+  the percent keeps everyone who was in. The page server, the browser (the `flags` source and the router), the server
+  data and a server action all resolve with the same places; the builder's Feature Flags panel, `upsertFlag` and
+  authoring write it, and `flag-rollout` refuses a malformed one.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 
@@ -43,9 +48,9 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
 
 ## To do when you upgrade
 
-- A server or a proxy that caches pages of its own in front of `@plitzi/sdk-server` keys them by the `plitzi_ab`
-  cookie as well (`plitzi_ab_<port>` on a port), and never keeps a response that sets it — or every visitor behind the
-  first is shown the first one's side of an A/B test.
+- A server or a proxy that caches pages of its own in front of `@plitzi/sdk-server` keys them by the `plitzi_ab` and
+  `plitzi_rollout` cookies as well (`…_<port>` on a port), and never keeps a response that sets one — or every visitor
+  behind the first is shown the first one's variant of an A/B test, or their place in a rollout.
 
 - A key left without a lifetime by a version before this one is not freed by it: find the deployment's single-flight
   keys with no lifetime (`action:run:<space>:<action>:…`, in Redis `TTL` answers `-1`) and delete them.

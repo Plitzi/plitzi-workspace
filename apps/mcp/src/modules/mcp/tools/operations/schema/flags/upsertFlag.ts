@@ -17,7 +17,9 @@ export const upsertFlagOp = z
     name: z.string(),
     description: z.string().optional(),
     value: z.boolean().describe('When no rule matches'),
-    rules: z.array(ruleInput).optional()
+    rules: z.array(ruleInput).optional(),
+    // The guide's Feature flags says what it does: the listing is held to its token budget.
+    rollout: z.object({ percent: z.number().int().min(0).max(100), value: z.boolean() }).optional()
   })
   .describe('Declare or replace a feature flag (guide: Feature flags).');
 
@@ -33,7 +35,12 @@ export const upsertFlag = (space: Space, env: Env, op: UpsertFlag): OpResult => 
     );
   }
 
-  const flag = { ...(op.description ? { description: op.description } : {}), value: op.value, rules: op.rules ?? [] };
+  const flag = {
+    ...(op.description ? { description: op.description } : {}),
+    value: op.value,
+    rules: op.rules ?? [],
+    ...(op.rollout ? { rollout: op.rollout } : {})
+  };
   if (!isSchemaFlag(flag)) {
     return fail(
       'bad-value',

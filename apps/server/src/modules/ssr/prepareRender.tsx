@@ -41,6 +41,7 @@ import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { requestPaintedStateWithDefaults } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
+import { requestRollout } from '../../helpers/rollout';
 import { visitorScheme } from '../../helpers/visitorScheme';
 import { iconGlyphsAt } from '../icons/glyphs';
 import { iconFacesCss, spaceIconsOf } from '../icons/spaceIcons';
@@ -99,8 +100,11 @@ export type RenderPrep = {
   cacheable: boolean;
   /** A server provider of the page said its address shows nothing (`notFound`): sent with status 404. */
   notFound: boolean;
-  /** Sent with the page: the variants of the space's A/B tests drawn for this visitor just now, kept in their cookie. */
-  setCookie?: string;
+  /**
+   * Sent with the page: what was drawn for this visitor just now and is kept in their cookies — the variants of the
+   * space's A/B tests, their places in its gradual rollouts.
+   */
+  setCookies?: string[];
   /** The page asked for was withheld from this visitor (`access`): sent with 401 or 403, its refusal drawn. */
   refused?: PageWithheld;
 };
@@ -190,6 +194,18 @@ export const prepareRender = async (
   });
   const serverExperiments = Object.keys(experiments.assignments).length > 0 ? experiments.assignments : undefined;
   const forcedExperiments = experiments.forced;
+  /**
+   * Where the visitor stands in the space's gradual rollouts: the places their cookie kept, or drawn now — kept from this
+   * response on, and told to the server data read alongside (`ctx.rolloutBuckets`), which their cookie cannot tell yet.
+   */
+  const rollout = requestRollout(
+    req,
+    rawOfflineData?.schema.flags,
+    !isPreviewRender && offlineDataOverride === undefined
+  );
+  req.ctx.rolloutBuckets = rollout.buckets;
+  const serverRollout = Object.keys(rollout.buckets).length > 0 ? rollout.buckets : undefined;
+  const setCookies = [experiments.setCookie, rollout.setCookie].filter(cookie => cookie !== undefined);
   const flagOverrides = await requestFlagOverrides(
     config,
     { cookie: req.headers.cookie, authority: requestAuthority(req) },
@@ -211,7 +227,8 @@ export const prepareRender = async (
               hostname: req.hostname,
               routeParams: pageMatch.routeParams,
               queryParams: req.query,
-              user: flagUserFromSSR(req.ctx.user)
+              user: flagUserFromSSR(req.ctx.user),
+              rollout: rollout.buckets
             },
             flagOverrides
           )
@@ -459,7 +476,8 @@ export const prepareRender = async (
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
-      ...(forcedExperiments ? { forcedExperiments } : {})
+      ...(forcedExperiments ? { forcedExperiments } : {}),
+      ...(serverRollout ? { serverRollout } : {})
     },
     { apart: spaceDocumentPath !== undefined, linkStyle }
   );
@@ -569,7 +587,8 @@ export const prepareRender = async (
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
-      ...(forcedExperiments ? { forcedExperiments } : {})
+      ...(forcedExperiments ? { forcedExperiments } : {}),
+      ...(serverRollout ? { serverRollout } : {})
     },
     entries,
     templateParams: {
@@ -636,10 +655,10 @@ export const prepareRender = async (
       forcedFlags === undefined &&
       req.ctx.readAsVisitor !== true &&
       !(environment === 'main' && hasTargets) &&
-      experiments.setCookie === undefined &&
+      setCookies.length === 0 &&
       forcedExperiments === undefined,
     notFound,
-    ...(experiments.setCookie ? { setCookie: experiments.setCookie } : {}),
+    ...(setCookies.length > 0 ? { setCookies } : {}),
     ...(refused ? { refused } : {})
   };
 };

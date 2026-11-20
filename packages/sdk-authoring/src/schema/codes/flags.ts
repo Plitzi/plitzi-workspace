@@ -32,6 +32,11 @@ export const FLAG_CODES = {
     means: 'a flag rule that is not `{ when, value }`, or whose `value` is not `true` or `false`',
     fix: '`{ when: { … }, value: true }`'
   },
+  'flag-rollout': {
+    kind: 'refused',
+    means: "a flag's `rollout` that is not `{ percent, value }` — a whole share from 0 to 100 and the answer it gives",
+    fix: '`rollout: { percent: 10, value: true }`'
+  },
   'flag-rule-empty': {
     kind: 'warned',
     means: 'a flag rule with no conditions — skipped, never read as "always"',

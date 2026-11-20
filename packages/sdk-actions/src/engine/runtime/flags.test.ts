@@ -65,6 +65,24 @@ describe('flagsForRun', () => {
     expect(layered).toEqual({ newCheckout: false, legacyNav: false });
   });
 
+  it('sees a rolled-out flag as the visitor who started the run is placed, and its own value with no place', async () => {
+    const rolled: Schema['flags'] = { newCheckout: { value: false, rules: [], rollout: { percent: 30, value: true } } };
+    const run = (rolloutBuckets?: Record<string, number>) =>
+      flagsForRun(
+        { lookups: { getAction: vi.fn(), getFlags: vi.fn().mockResolvedValue(rolled) } },
+        {
+          entry: entryReading('{{ flags.newCheckout }}'),
+          spaceId: 1,
+          environment: 'production',
+          ...(rolloutBuckets ? { rolloutBuckets } : {})
+        }
+      );
+
+    expect(await run({ newCheckout: 10 })).toEqual({ newCheckout: true });
+    expect(await run({ newCheckout: 80 })).toEqual({ newCheckout: false });
+    expect(await run()).toEqual({ newCheckout: false });
+  });
+
   it('sees no flags where the deployment cannot say which there are', async () => {
     expect(
       await flagsForRun(
