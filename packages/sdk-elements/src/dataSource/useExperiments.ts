@@ -10,7 +10,7 @@ import {
 } from '@plitzi/sdk-shared/experiments';
 import { documentCookies } from '@plitzi/sdk-shared/helpers';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
-import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useCommonStore, useCommonStoreGetter, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 
@@ -53,12 +53,17 @@ const useExperiments = (): ExperimentAssignments => {
   }
 
   const { drawn, kept } = assignment;
+  // Read when a draw happens, never followed: the draws are what move it.
+  const getReported = useCommonStoreGetter('experiments.drawn');
+  const [, setReported] = useCommonStore('experiments.drawn');
   useEffect(() => {
     if (drawn.length > 0) {
       // Over what the cookie holds already: a page sent in parts declares only the experiments of what it has.
       writeExperiments({ ...keptExperiments(documentCookies(), pageHost()), ...kept });
+      // Told to the page's analytics too, beside what the server drew: one visitor of each variant drawn.
+      setReported([...new Set([...(getReported() ?? []), ...drawn])]);
     }
-  }, [drawn, kept]);
+  }, [drawn, kept, getReported, setReported]);
 
   const forced = useMemo(() => forcedExperimentsFor(declared, editing ? {} : (qa ?? {})), [declared, editing, qa]);
   // A tester told what they forced and cannot be shown — an experiment this space does not run, a variant its test

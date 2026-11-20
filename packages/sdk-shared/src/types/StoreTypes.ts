@@ -73,6 +73,11 @@ export type ExperimentsState = {
   qa?: ExperimentAssignments;
   /** Every experiment's variant on this page: the forced ones, the server's, the visitor's kept and any drawn here. */
   assigned?: ExperimentAssignments;
+  /**
+   * The experiments drawn for this visitor on this page — by the server that drew it, or here: each reported once to
+   * the space's analytics as one visitor of the variant drawn.
+   */
+  drawn?: string[];
 };
 
 export type CommonState = {

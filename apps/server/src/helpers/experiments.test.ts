@@ -37,7 +37,9 @@ describe('requestExperiments', () => {
     expect(requestExperiments(request(), schema, drawing)).toEqual({
       assignments: { heroTest: 'b', pricing: 'b' },
       // An experiment with one variant left with a weight needs nothing kept: everybody sees B.
-      setCookie: 'plitzi_ab=heroTest%3Ab; Path=/; Max-Age=15552000; SameSite=Lax; Secure'
+      setCookie: 'plitzi_ab=heroTest%3Ab; Path=/; Max-Age=15552000; SameSite=Lax; Secure',
+      // What the page reports to the space's analytics, once: one visitor of the variant drawn.
+      drawn: ['heroTest']
     });
   });
 

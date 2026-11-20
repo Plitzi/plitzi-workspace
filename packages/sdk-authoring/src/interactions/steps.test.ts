@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BUILTIN_GLOBAL_CALLBACKS } from './globalCallbacks';
 import {
   addNotification,
+  reachGoal,
   authLogin,
   authLogout,
   authLogoutEverywhere,
@@ -33,6 +34,7 @@ const globalBuilders: Record<string, StepSpec> = {
   clearState: clearState(),
   navigate: navigate({ urlType: 'internal', url: '/' }),
   addNotification: addNotification({ content: 'hi' }),
+  reachGoal: reachGoal('signup'),
   authLogin: authLogin({ mode: 'normal', username: 'ada', password: 'secret' }),
   authLogout: authLogout(),
   authLogoutEverywhere: authLogoutEverywhere('all'),

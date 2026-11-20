@@ -104,8 +104,9 @@ A variant's `weight` (0–100, default 50) is its share against the others'. The
 keeps it in a cookie, so a reload or a later visit shows the same; a visitor keeps theirs when the weights change. A
 variant at 0 is shown to nobody, and its visitors are drawn again; one left with a weight ends the experiment —
 everybody sees it. Two tests with the same `experiment` show a visitor the same variant (`experiment-weights-differ`
-warns when their weights disagree). `{{ experiments.heroTest }}` is `'a'`, `'b'`… — what a flow sends to your
-analytics with the conversion it measures. An `abTest` with no `experiment` runs nothing and shows A
+warns when their weights disagree). Count a conversion with the `reachGoal('signup')` step: Plitzi's analytics shows
+each variant's visitors, conversions and rate against A's. `{{ experiments.heroTest }}` is `'a'`, `'b'`… for anything
+else a flow reports. An `abTest` with no `experiment` runs nothing and shows A
 (`experiment-unnamed`). To see a variant you were not drawn, where debugging is authorized: the dev tools' **Experiments**
 tab, or `?ab=heroTest:b` in the address — kept for the visit, never as your variant.
 

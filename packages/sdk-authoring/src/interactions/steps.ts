@@ -187,6 +187,12 @@ export const addNotification = (params: {
 }): StepSpec => globalStep('addNotification', params);
 
 /**
+ * A goal reached — `reachGoal('signup')` — counted in the space's analytics as a conversion of each A/B variant the
+ * visitor is shown. Letters, digits, `-` and `_`.
+ */
+export const reachGoal = (goal: string): StepSpec => globalStep('reachGoal', { goal });
+
+/**
  * Signs in through whatever provider the space declared — `auth.login`, with no provider in the name.
  *
  * The action is `login` and not `authLogin`: the module is already `auth`, and the runtime registers these three

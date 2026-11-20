@@ -8,9 +8,12 @@ import {
   readNotificationOptions,
   spaceCallbacks
 } from '@plitzi/sdk-shared/authoring';
+import { GOAL_EVENT, goalProps, isGoalName } from '@plitzi/sdk-shared/experimentEvents';
+import { useSdkStoreGetter } from '@plitzi/sdk-shared/store';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
 import { NotifyContext } from './useNotify';
+import { track } from '../Analytics/reporterRegistry';
 
 import type { Notify } from './useNotify';
 import type { ToastTypeOptions } from '@plitzi/plitzi-ui/Toast';
@@ -68,15 +71,42 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
     [notify]
   );
 
+  /**
+   * A goal reached, reported to the space's analytics with the visitor's variant of each of its A/B tests: one
+   * conversion of each. A name the console could not show is refused, and said, rather than counted under it.
+   */
+  const getAssigned = useSdkStoreGetter('experiments.assigned');
+
+  const handleReachGoal = useCallback(
+    (params: InteractionCallbackParamValues<Record<string, unknown>>) => {
+      const { goal } = params;
+      if (!isGoalName(goal)) {
+        console.warn(
+          `[plitzi] reachGoal was given ${JSON.stringify(goal)}, which is not a goal's name: nothing was counted. Name it with letters, digits, - and _ — signup, checkout-done.`
+        );
+
+        return;
+      }
+
+      track(GOAL_EVENT, goalProps(goal, getAssigned() ?? {}));
+    },
+    [getAssigned]
+  );
+
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
     () => ({
       addNotification: toInteractionCallback(
         'addNotification',
         spaceCallbacks.addNotification,
         handleAddNotification as InteractionCallback['callback']
+      ),
+      reachGoal: toInteractionCallback(
+        'reachGoal',
+        spaceCallbacks.reachGoal,
+        handleReachGoal as InteractionCallback['callback']
       )
     }),
-    [handleAddNotification]
+    [handleAddNotification, handleReachGoal]
   );
 
   useInteractions({ id: 'space', callbacks: interactionCallbacks });

@@ -46,6 +46,8 @@ export type ComponentProps = {
   serverExperiments?: ExperimentAssignments;
   /** The variants a tester forced, for a page allowed to debug. See `prepareRender`. */
   forcedExperiments?: ExperimentAssignments;
+  /** The experiments drawn for this visitor by this render. See `prepareRender`. */
+  drawnExperiments?: string[];
   /** The visitor's places in the space's gradual rollouts. See `prepareRender`. */
   serverRollout?: RolloutBuckets;
   /** What the space's audiences read of the visitor. See `prepareRender`. */
@@ -75,6 +77,7 @@ const Component = ({
   forcedFlags,
   serverExperiments,
   forcedExperiments,
+  drawnExperiments,
   serverRollout,
   serverVisitor,
   renderedAt
@@ -104,6 +107,7 @@ const Component = ({
       {...(forcedFlags === undefined ? {} : { forcedFlags })}
       {...(serverExperiments === undefined ? {} : { serverExperiments })}
       {...(forcedExperiments === undefined ? {} : { forcedExperiments })}
+      {...(drawnExperiments === undefined ? {} : { drawnExperiments })}
       {...(serverRollout === undefined ? {} : { serverRollout })}
       {...(serverVisitor === undefined ? {} : { serverVisitor })}
       {...(renderedAt === undefined ? {} : { renderedAt })}

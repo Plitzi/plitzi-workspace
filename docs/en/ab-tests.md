@@ -137,5 +137,17 @@ MCP and the publish gate say the same.
 
 ## Measuring it
 
-The platform does not record which variant a visitor saw: `{{ experiments.<name> }}` is there for a flow to send with
-the conversion it measures — a `webHook` to the space's analytics, a server action writing a row.
+Two analytics events, named and read in `@plitzi/sdk-shared/experimentEvents`, reserved with a `$` a space's
+own `plitzi.track` names never start with:
+
+- **`$experiment`** — one visitor of a variant: `{ experiment, variant }`. Reported once per visitor and experiment,
+  when the variant is drawn for them: the server says what it drew for the page (`drawnExperiments`, the store's
+  `experiments.drawn`), the browser adds what it draws (`useExperiments`), and `AnalyticsReporter` reports each once. A
+  reload finds the variant kept and draws nothing, so nothing is counted twice.
+- **`$goal`** — a conversion: the `reachGoal` step (`spaceCallbacks.reachGoal`, `reachGoal('signup')` in authoring)
+  reports `{ goal, 'ab.<experiment>': <variant>… }`, the visitor's variant of each experiment of the space. A name that
+  is not one (letters, digits, `-`, `_`) is refused and said in the console. In the builder nothing is counted: the step
+  says what a visitor's page would.
+
+A deployment's analytics reads them with `exposureOf` and `goalOf`; Plitzi's folds them into visitors and conversions
+per experiment, variant and goal, and shows them in the console with each variant's rate against A's.

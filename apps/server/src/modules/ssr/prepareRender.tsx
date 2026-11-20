@@ -196,6 +196,7 @@ export const prepareRender = async (
   });
   const serverExperiments = Object.keys(experiments.assignments).length > 0 ? experiments.assignments : undefined;
   const forcedExperiments = experiments.forced;
+  const drawnExperiments = experiments.drawn;
   /**
    * Where the visitor stands in the space's gradual rollouts: the places their cookie kept, or drawn now — kept from this
    * response on, and told to the server data read alongside (`ctx.rolloutBuckets`), which their cookie cannot tell yet.
@@ -489,6 +490,7 @@ export const prepareRender = async (
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
+      ...(drawnExperiments ? { drawnExperiments } : {}),
       ...(serverRollout ? { serverRollout } : {}),
       ...(serverVisitor ? { serverVisitor } : {}),
       ...(renderedAt === undefined ? {} : { renderedAt })
@@ -602,6 +604,7 @@ export const prepareRender = async (
       ...(forcedFlags ? { forcedFlags } : {}),
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
+      ...(drawnExperiments ? { drawnExperiments } : {}),
       ...(serverRollout ? { serverRollout } : {}),
       ...(serverVisitor ? { serverVisitor } : {}),
       ...(renderedAt === undefined ? {} : { renderedAt })

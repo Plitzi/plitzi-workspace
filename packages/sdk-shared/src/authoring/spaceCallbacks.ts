@@ -77,6 +77,20 @@ export const NOTIFICATION_DEFAULTS = {
  * `useInteractions` is how a catalog ends up being copied.
  */
 export const spaceCallbacks: Record<string, BuiltinGlobalCallback> = {
+  reachGoal: {
+    source: 'space',
+    title: 'Reach Goal',
+    strictParams: true,
+    params: {
+      goal: {
+        type: 'text',
+        description:
+          'The goal reached — `signup`, `checkout`: counted in the space’s analytics as a conversion of each A/B variant the visitor is shown. Letters, digits, - and _.',
+        default: 'signup',
+        canBind: false
+      }
+    }
+  },
   addNotification: {
     source: 'space',
     title: 'Add Notification',

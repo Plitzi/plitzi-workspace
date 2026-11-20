@@ -38,6 +38,10 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   either empty is no bound): drawn by the server at the instant it renders, which the browser hydrates at, then shown or
   hidden when the window opens or closes. Authoring writes `timeWindow()`; the linter says `time-window-bound` and
   `time-window-empty`.
+- **Measuring A/B tests.** Each visitor's variant is reported once to the space's analytics as `$experiment`, when it
+  is drawn (the server says what it drew, `drawnExperiments`); the new `reachGoal` step (`reachGoal('signup')` in
+  authoring) reports a conversion, `$goal`, with the visitor's variants. `exposureOf` and `goalOf` read them; in the
+  builder the step says what a visitor's page would count.
 - **Trying them in the builder.** While editing, an A/B test and an audience show the variant their settings name; the
   canvas's preview shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as
   the canvas is sized), the language, returning or not, the variant of each A/B test and the date time windows are read at.

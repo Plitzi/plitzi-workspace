@@ -401,6 +401,11 @@ export type PlitziSdkProps = {
    * dev tools' Experiments tab, `?ab=heroTest:b`), shown over the visitor's own and never kept as theirs.
    */
   forcedExperiments?: ExperimentAssignments;
+  /**
+   * Set by the server that rendered this page: the experiments it drew for this visitor just now — reported to the
+   * space's analytics once, as one visitor of the variant drawn.
+   */
+  drawnExperiments?: string[];
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says

@@ -44,6 +44,8 @@ export type RequestExperiments = {
   setCookie?: string;
   /** The variants a tester forced that this space can show: shown over `assignments`, never kept as the visitor's. */
   forced?: ExperimentAssignments;
+  /** The experiments drawn for this visitor just now — what the page reports to the space's analytics, once. */
+  drawn?: string[];
 };
 
 /**
@@ -84,6 +86,7 @@ export const requestExperiments = (
   return {
     assignments,
     setCookie: experimentsCookie(host, kept, { secure: req.protocol === 'https' }),
+    drawn,
     ...tested
   };
 };

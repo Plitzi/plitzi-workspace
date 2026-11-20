@@ -136,6 +136,8 @@ export type AppProps = {
   renderedAt?: number;
   /** The variants a tester forced — see `PlitziSdkProps`. */
   forcedExperiments?: ExperimentAssignments;
+  /** The experiments the rendering server drew for this visitor — see `PlitziSdkProps`. */
+  drawnExperiments?: string[];
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */

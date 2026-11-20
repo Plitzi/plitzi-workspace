@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { EXPERIMENT_EXPOSURE_EVENT, exposureProps } from '@plitzi/sdk-shared/experimentEvents';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
+
 import { createReporter } from './createReporter';
 import { getReporter, setReporter } from './reporterRegistry';
 
@@ -51,6 +54,27 @@ const AnalyticsReporter = ({ analytics }: AnalyticsReporterProps) => {
     // render pass that (re)created it still reports against the live one.
     getReporter()?.trackRender();
   }, [location.pathname, location.search]);
+
+  /**
+   * One visitor of each A/B variant drawn for them on this page — by the server that drew it or here — reported once:
+   * a reload finds the variant kept and draws nothing, so nothing is reported twice for the same visitor.
+   */
+  const [[drawn, assigned]] = useSdkStore(['experiments.drawn', 'experiments.assigned']);
+  const exposed = useRef(new Set<string>());
+  useEffect(() => {
+    const reporter = getReporter();
+    if (!reporter) {
+      return;
+    }
+
+    for (const name of drawn ?? []) {
+      const variant = assigned?.[name];
+      if (variant && !exposed.current.has(name)) {
+        exposed.current.add(name);
+        reporter.track(EXPERIMENT_EXPOSURE_EVENT, exposureProps(name, variant));
+      }
+    }
+  }, [drawn, assigned]);
 
   return null;
 };

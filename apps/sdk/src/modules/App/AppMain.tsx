@@ -83,6 +83,8 @@ export type AppMainProps = {
   renderedAt?: number;
   /** The variants a tester forced, already settled against whether this page may debug. */
   forcedExperiments?: ExperimentAssignments;
+  /** The experiments the rendering server drew for this visitor — see `PlitziSdkProps`. */
+  drawnExperiments?: string[];
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
@@ -130,6 +132,7 @@ const AppMain = ({
   forcedFlags,
   serverExperiments,
   forcedExperiments,
+  drawnExperiments,
   serverRollout,
   serverVisitor,
   renderedAt,
@@ -189,7 +192,10 @@ const AppMain = ({
 
   // What the server drew the page with: `GlobalSources` draws only the experiments it does not name. What a tester
   // forced goes over it, and the dev tools' Experiments tab writes it while the page is open.
-  useSdkStoreSync(['experiments.server', 'experiments.qa'], [useStableValue(serverExperiments), forcedExperiments]);
+  useSdkStoreSync(
+    ['experiments.server', 'experiments.qa', 'experiments.drawn'],
+    [useStableValue(serverExperiments), forcedExperiments, useStableValue(drawnExperiments)]
+  );
   // What the space's audiences read of the visitor, as the server read it; absent, the page reads it itself.
   useSdkStoreSync(['visitor'], [useStableValue(serverVisitor)]);
   // The instant the server drew the page at; absent, what shows by the time reads the browser's clock.

@@ -85,6 +85,7 @@ describe('prepareRender / A/B tests', () => {
       'plitzi_rollout=newCheckout%3A40; Path=/; Max-Age=15552000; SameSite=Lax; Secure'
     ]);
     expect(prep.componentProps.serverRollout).toEqual({ newCheckout: 40 });
+    expect(prep.componentProps.drawnExperiments).toEqual(['heroTest']);
     expect(prep.cacheable).toBe(false);
   });
 
