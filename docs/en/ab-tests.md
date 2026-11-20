@@ -65,6 +65,20 @@ kept (`RenderPrep.cacheable`): the next visitor with no cookie must be drawn the
 So the first page a visitor opens on a space with an A/B test is always rendered; the ones after it are served from
 the cache like any other. A cache or a proxy in front of the page server has to do the same — the changeset says so.
 
+## Forcing a variant
+
+A tester shows any variant without being drawn it, on the flags' terms: only where debugging is authorized
+(`authorizesDebugging`), the same rule the dev tools panel follows. The dev tools' **Experiments** tab lists each
+experiment, the variant the page shows and each variant's share, and forces one; an address forces them too —
+`?ab=heroTest:b,pricing:c` — and the SDK keeps what it forced for the rest of the visit. Both are kept in a session
+cookie of their own, `plitzi_ab_qa` (`forcedExperimentsCookieName`), never in the visitor's: what a tester forced is
+shown over their variant and never measured as theirs.
+
+The server reads it in `requestExperiments` and hands it to the browser apart (`forcedExperiments`), so the page
+hydrates the same; `useExperiments` applies it over the visitor's variants. A forced experiment the space does not run,
+or a variant its test has not, is ignored and said in the console. A page drawn with forced variants is never kept,
+and the HTML cache is keyed by that cookie, as by the flags a tester forces.
+
 ## In the builder
 
 The canvas seeds `render.builder: true` (`apps/builder/src/App.tsx`): the element shows `builderVariant`, the

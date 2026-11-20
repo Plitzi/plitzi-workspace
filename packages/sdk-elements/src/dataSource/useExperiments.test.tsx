@@ -74,6 +74,26 @@ describe('useExperiments', () => {
     expect(decodeURIComponent(document.cookie)).toContain(`${cookie()}=heroTest:b,pricing:a`);
   });
 
+  it('shows what a tester forced over the visitor’s variant, and never keeps it as theirs', () => {
+    const shown = assigned({ experiments: { server: { heroTest: 'a', pricing: 'a' }, qa: { heroTest: 'b' } } });
+
+    expect(shown).toEqual({ heroTest: 'b', pricing: 'a' });
+    expect(document.cookie).not.toContain(cookie());
+  });
+
+  it('says what a tester forced and cannot be shown, and shows the visitor’s', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const shown = assigned({
+      experiments: { server: { heroTest: 'a', pricing: 'a' }, qa: { heroTset: 'b', pricing: 'e' } }
+    });
+
+    expect(shown).toEqual({ heroTest: 'a', pricing: 'a' });
+    expect(warn.mock.calls.map(([message]) => String(message))).toEqual([
+      expect.stringContaining('"heroTset" is forced to B, but no A/B test of this space runs it'),
+      expect.stringContaining('"pricing" is forced to E, a variant its A/B test does not have')
+    ]);
+  });
+
   it('shows the builder the variant each test’s settings name, and keeps nothing', () => {
     expect(assigned({ render: { builder: true } })).toEqual({ heroTest: 'b', pricing: 'a' });
     expect(document.cookie).not.toContain(cookie());

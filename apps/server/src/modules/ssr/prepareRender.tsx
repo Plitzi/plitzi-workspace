@@ -181,14 +181,15 @@ export const prepareRender = async (
   const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
   /**
    * The variant of each of the space's A/B tests this visitor is shown: kept in their cookie, or drawn now and kept from
-   * this response on. The server draws only that variant, and the page hydrates with the same — never a draw of its own.
+   * this response on — and over them, on a page allowed to debug, what a tester forced. The server draws only that
+   * variant, and the page hydrates with the same — never a draw of its own.
    */
-  const experiments = requestExperiments(
-    req,
-    rawOfflineData?.schema,
-    !isPreviewRender && offlineDataOverride === undefined
-  );
+  const experiments = requestExperiments(req, rawOfflineData?.schema, {
+    draws: !isPreviewRender && offlineDataOverride === undefined,
+    debugAuthorized
+  });
   const serverExperiments = Object.keys(experiments.assignments).length > 0 ? experiments.assignments : undefined;
+  const forcedExperiments = experiments.forced;
   const flagOverrides = await requestFlagOverrides(
     config,
     { cookie: req.headers.cookie, authority: requestAuthority(req) },
@@ -457,7 +458,8 @@ export const prepareRender = async (
       ...(inspector ? { inspector } : {}),
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {}),
-      ...(serverExperiments ? { serverExperiments } : {})
+      ...(serverExperiments ? { serverExperiments } : {}),
+      ...(forcedExperiments ? { forcedExperiments } : {})
     },
     { apart: spaceDocumentPath !== undefined, linkStyle }
   );
@@ -566,7 +568,8 @@ export const prepareRender = async (
       ...(paintedState ? { state: paintedState } : {}),
       ...(serverFlags ? { serverFlags } : {}),
       ...(forcedFlags ? { forcedFlags } : {}),
-      ...(serverExperiments ? { serverExperiments } : {})
+      ...(serverExperiments ? { serverExperiments } : {}),
+      ...(forcedExperiments ? { forcedExperiments } : {})
     },
     entries,
     templateParams: {
@@ -625,7 +628,7 @@ export const prepareRender = async (
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page;
     // one read with the visitor's cookies is not even theirs a minute later; nor one drawing a visitor's variants, which
-    // the next visitor with no cookie must be drawn for themselves.
+    // the next visitor with no cookie must be drawn for themselves, nor one showing the variants a tester forced.
     // Nor is a draft's page drawn with what its server providers answered: the draft is being developed, and its data
     // is never kept (the RSC refresh of the draft is never cached either) — a page of it is kept only for its schema.
     cacheable:
@@ -633,7 +636,8 @@ export const prepareRender = async (
       forcedFlags === undefined &&
       req.ctx.readAsVisitor !== true &&
       !(environment === 'main' && hasTargets) &&
-      experiments.setCookie === undefined,
+      experiments.setCookie === undefined &&
+      forcedExperiments === undefined,
     notFound,
     ...(experiments.setCookie ? { setCookie: experiments.setCookie } : {}),
     ...(refused ? { refused } : {})

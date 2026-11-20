@@ -93,6 +93,11 @@ describe('buildHtmlCacheKey', () => {
     expect(html('plitzi_ab=heroTest%3Ab; _ga=1')).toBe(html('_ga=2; plitzi_ab=heroTest%3Ab'));
   });
 
+  /** A tester's forced variants are theirs: never served a page drawn without them, nor the others a page with them. */
+  it('separates a tester who forced a variant', () => {
+    expect(html('plitzi_ab_qa=heroTest%3Ab')).not.toBe(html());
+  });
+
   /** A flag turned in production changes the page while the revision stays — the deployment says what they are at. */
   it('separates two versions of the flags at one revision', () => {
     const at = (flagsVersion?: string) =>

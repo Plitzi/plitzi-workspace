@@ -73,6 +73,8 @@ export type AppMainProps = {
   forcedFlags?: Record<string, boolean>;
   /** The variants the rendering server drew — see `PlitziSdkProps`. */
   serverExperiments?: ExperimentAssignments;
+  /** The variants a tester forced, already settled against whether this page may debug. */
+  forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
@@ -119,6 +121,7 @@ const AppMain = ({
   serverFlags,
   forcedFlags,
   serverExperiments,
+  forcedExperiments,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -173,8 +176,9 @@ const AppMain = ({
     [useStableValue(serverFlags), useStableValue(flags), forcedFlags]
   );
 
-  // What the server drew the page with: `GlobalSources` draws only the experiments it does not name.
-  useSdkStoreSync(['experiments.server'], [useStableValue(serverExperiments)]);
+  // What the server drew the page with: `GlobalSources` draws only the experiments it does not name. What a tester
+  // forced goes over it, and the dev tools' Experiments tab writes it while the page is open.
+  useSdkStoreSync(['experiments.server', 'experiments.qa'], [useStableValue(serverExperiments), forcedExperiments]);
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.

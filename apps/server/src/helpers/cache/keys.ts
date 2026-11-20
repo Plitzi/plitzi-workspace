@@ -1,6 +1,6 @@
 import { requestAuthority } from '@plitzi/sdk-kernel/http';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
-import { experimentsCookieName } from '@plitzi/sdk-shared/experiments';
+import { experimentsCookieName, forcedExperimentsCookieName } from '@plitzi/sdk-shared/experiments';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
@@ -35,6 +35,7 @@ const HTML_KEY_FIELDS = [
   'experiments',
   'debugHidden',
   'forcedFlags',
+  'forcedExperiments',
   'hostname',
   'path',
   'search'
@@ -63,9 +64,9 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * one there and then, and that page is never kept (`prepareRender`'s `cacheable`): the next such visitor is drawn their
  * own.
  *
- * So are the feature flags a tester forced from the dev tools, on a page that authorizes debugging: drawn with them,
- * the page is not everybody's, and a tester holding the cookie must never be handed a page drawn without it. Keyed
- * by its raw value, like the kept state.
+ * So are the feature flags and the A/B variants a tester forced from the dev tools, on a page that authorizes
+ * debugging: drawn with them, the page is not everybody's, and a tester holding the cookie must never be handed a page
+ * drawn without it. Keyed by its raw value, like the kept state.
  *
  * So is what the space's flags are at (`flagsVersion` on the resolved deployment), for a deployment that changes them
  * apart from its revisions: a flag turned in production must reach the next visitor, while the revision is the same.
@@ -105,6 +106,7 @@ export const buildHtmlCacheKey = (
     experiments: readCookie(req.headers.cookie, experimentsCookieName(requestAuthority(req))) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
     forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
+    forcedExperiments: readCookie(req.headers.cookie, forcedExperimentsCookieName(requestAuthority(req))) ?? '',
     hostname: req.hostname,
     path: req.path,
     search: canonicalSearch(req.search, ignoredQueryParams)

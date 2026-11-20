@@ -379,6 +379,11 @@ export type PlitziSdkProps = {
    * the page hydrates with them, and draws only what the server did not (`{{ experiments.<name> }}`).
    */
   serverExperiments?: ExperimentAssignments;
+  /**
+   * Set by the server that rendered this page for somebody allowed to debug it: the A/B variants a tester forced (the
+   * dev tools' Experiments tab, `?ab=heroTest:b`), shown over the visitor's own and never kept as theirs.
+   */
+  forcedExperiments?: ExperimentAssignments;
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says

@@ -4,10 +4,12 @@ import {
   assignExperiments,
   builderExperiments,
   declaredExperiments,
+  forcedExperimentsFor,
   keptExperiments,
   writeExperiments
 } from '@plitzi/sdk-shared/experiments';
 import { documentCookies } from '@plitzi/sdk-shared/helpers';
+import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
@@ -19,14 +21,16 @@ const pageHost = (): string | undefined => (typeof window === 'undefined' ? unde
  *
  * The server's first: it drew the page with them, and a page hydrated with any other would be thrown away. Then what
  * the visitor kept in their cookie, then a draw for an experiment none of those has — a space rendered with no server
- * in front, or a part of it the server never sent — kept from then on, in this render and in the cookie. In the builder
- * the canvas shows the variant each test's settings name, and nothing is drawn or kept.
+ * in front, or a part of it the server never sent — kept from then on, in this render and in the cookie. Over them, what
+ * a tester forced (the dev tools, `?ab=`), shown and never kept. In the builder the canvas shows the variant each
+ * test's settings name, and nothing is drawn, kept or forced.
  */
 const useExperiments = (): ExperimentAssignments => {
-  const [[flat, components, serverExperiments]] = useCommonStore([
+  const [[flat, components, serverExperiments, qa]] = useCommonStore([
     'schema.flat',
     'schema.components',
-    'experiments.server'
+    'experiments.server',
+    'experiments.qa'
   ]);
   const { builder } = useRenderSettings();
   const declared = useMemo(() => declaredExperiments({ flat, components }), [flat, components]);
@@ -54,7 +58,30 @@ const useExperiments = (): ExperimentAssignments => {
     }
   }, [drawn, kept]);
 
-  return assignment.assignments;
+  const forced = useMemo(
+    () => (builder ? undefined : forcedExperimentsFor(declared, qa ?? {})),
+    [builder, declared, qa]
+  );
+  // A tester told what they forced and cannot be shown — an experiment this space does not run, a variant its test
+  // has not — once per change in what is ignored.
+  const ignored = useStableValue(forced?.ignored ?? []);
+  useEffect(() => {
+    ignored.forEach(({ name, variant, reason }) =>
+      console.warn(
+        reason === 'undeclared'
+          ? `[plitzi] "${name}" is forced to ${variant.toUpperCase()}, but no A/B test of this space runs it: ignored. Name an experiment one of its tests runs.`
+          : `[plitzi] "${name}" is forced to ${variant.toUpperCase()}, a variant its A/B test does not have: ignored. Force one it has.`
+      )
+    );
+  }, [ignored]);
+
+  return useMemo(
+    () =>
+      forced && Object.keys(forced.applied).length > 0
+        ? { ...assignment.assignments, ...forced.applied }
+        : assignment.assignments,
+    [assignment.assignments, forced]
+  );
 };
 
 export default useExperiments;

@@ -6,6 +6,7 @@ import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 import ActionsViewer from './tabs/ActionsViewer';
 import CacheViewer from './tabs/CacheViewer';
 import ElementsViewer from './tabs/ElementsViewer';
+import ExperimentsViewer from './tabs/ExperimentsViewer';
 import FlagsViewer from './tabs/FlagsViewer';
 import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
@@ -56,6 +57,7 @@ const DevToolsBody = ({
         {tabSelected === 'history' && <HistoryViewer />}
         {tabSelected === 'variables' && <VariablesViewer />}
         {tabSelected === 'flags' && <FlagsViewer />}
+        {tabSelected === 'experiments' && <ExperimentsViewer />}
         {tabSelected === 'elements' && (
           <ElementsViewer elementSelected={elementSelected} onSelectElement={onSelectElement} />
         )}

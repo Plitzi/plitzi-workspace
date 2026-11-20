@@ -18,6 +18,7 @@ const tab = vi.hoisted(() => (name: string) => ({ default: () => createElement('
 vi.mock('./tabs/ActionsViewer', () => tab('actions'));
 vi.mock('./tabs/CacheViewer', () => tab('cache'));
 vi.mock('./tabs/ElementsViewer', () => tab('elements'));
+vi.mock('./tabs/ExperimentsViewer', () => tab('experiments'));
 vi.mock('./tabs/FlagsViewer', () => tab('flags'));
 vi.mock('./tabs/HistoryViewer', () => tab('history'));
 vi.mock('./tabs/PluginsViewer/PluginsViewer', () => tab('plugins'));

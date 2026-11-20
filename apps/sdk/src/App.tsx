@@ -25,6 +25,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { type SdkState } from '@plitzi/sdk-shared';
 import { createStoreDevToolsLogger, debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { FORCED_EXPERIMENTS_PARAM, forcedExperimentsOf, writeForcedExperiments } from '@plitzi/sdk-shared/experiments';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 import { documentCookies, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { EnclosingSpaceContext } from '@plitzi/sdk-shared/react';
@@ -125,6 +126,8 @@ export type AppProps = {
   forcedFlags?: Record<string, boolean>;
   /** The variants the rendering server drew — see `PlitziSdkProps`. */
   serverExperiments?: ExperimentAssignments;
+  /** The variants a tester forced — see `PlitziSdkProps`. */
+  forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */
   runStatus?: boolean;
   /** The state bridge alone, for a test runner — see `PlitziSdkProps`. */
@@ -160,6 +163,7 @@ const App = ({
   scheme,
   state,
   forcedFlags,
+  forcedExperiments,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
@@ -217,6 +221,25 @@ const App = ({
 
     return forcedFlagsFromCookies(documentCookies(), window.location.host);
   });
+  /**
+   * The A/B variants a tester forced, on the flags' terms: only where debugging is authorized, handed by the server
+   * that drew the page or — a client-only render — read from the tester's cookie and the address's `?ab=`.
+   */
+  const [qaExperiments] = useState(() => {
+    if (forcedExperiments || !debugModeProp || typeof window === 'undefined') {
+      return forcedExperiments;
+    }
+
+    const asked = new URLSearchParams(window.location.search).get(FORCED_EXPERIMENTS_PARAM) ?? undefined;
+
+    return forcedExperimentsOf(documentCookies(), window.location.host, asked);
+  });
+  // An address that forced variants keeps them for the rest of the visit, as the dev tools' tab does.
+  useEffect(() => {
+    if (debugModeProp && qaExperiments && new URLSearchParams(window.location.search).has(FORCED_EXPERIMENTS_PARAM)) {
+      writeForcedExperiments(qaExperiments);
+    }
+  }, [debugModeProp, qaExperiments]);
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
 
   useEffect(() => {
@@ -381,6 +404,7 @@ const App = ({
                       debugMode={debugMode}
                       webId={webId}
                       forcedFlags={qaFlags}
+                      forcedExperiments={qaExperiments}
                       {...sdkProps}
                     />
                   </ComponentProvider>

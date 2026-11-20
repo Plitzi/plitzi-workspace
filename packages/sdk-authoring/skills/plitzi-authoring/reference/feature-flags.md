@@ -99,4 +99,5 @@ variant at 0 is shown to nobody, and its visitors are drawn again; one left with
 everybody sees it. Two tests with the same `experiment` show a visitor the same variant (`experiment-weights-differ`
 warns when their weights disagree). `{{ experiments.heroTest }}` is `'a'`, `'b'`… — what a flow sends to your
 analytics with the conversion it measures. An `abTest` with no `experiment` runs nothing and shows A
-(`experiment-unnamed`).
+(`experiment-unnamed`). To see a variant you were not drawn, where debugging is authorized: the dev tools' **Experiments**
+tab, or `?ab=heroTest:b` in the address — kept for the visit, never as your variant.

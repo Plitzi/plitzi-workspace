@@ -42,6 +42,8 @@ export type ComponentProps = {
   forcedFlags?: Record<string, boolean>;
   /** The variant each of the space's A/B tests is drawn with for this visitor. See `prepareRender`. */
   serverExperiments?: ExperimentAssignments;
+  /** The variants a tester forced, for a page allowed to debug. See `prepareRender`. */
+  forcedExperiments?: ExperimentAssignments;
 };
 
 const Component = ({
@@ -63,7 +65,8 @@ const Component = ({
   state,
   serverFlags,
   forcedFlags,
-  serverExperiments
+  serverExperiments,
+  forcedExperiments
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -89,6 +92,7 @@ const Component = ({
       {...(serverFlags === undefined ? {} : { serverFlags })}
       {...(forcedFlags === undefined ? {} : { forcedFlags })}
       {...(serverExperiments === undefined ? {} : { serverExperiments })}
+      {...(forcedExperiments === undefined ? {} : { forcedExperiments })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

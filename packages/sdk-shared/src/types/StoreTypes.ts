@@ -62,7 +62,12 @@ export type FlagsState = {
 export type ExperimentsState = {
   /** The variants the server drew the page with — the browser hydrates with these, never a draw of its own. */
   server?: ExperimentAssignments;
-  /** Every experiment's variant for this visitor: the server's, the ones they kept, and any drawn in the browser. */
+  /**
+   * The variants a tester forced (the dev tools' Experiments tab, an address's `?ab=`), only where debugging is
+   * authorized: shown over the visitor's, never kept as theirs.
+   */
+  qa?: ExperimentAssignments;
+  /** Every experiment's variant on this page: the forced ones, the server's, the visitor's kept and any drawn here. */
   assigned?: ExperimentAssignments;
 };
 

@@ -18,6 +18,10 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   flow to report with what it measures. Authoring writes `abTest()` / `abTestVariant()`, and the linter says
   `experiment-unnamed`, `experiment-name`, `experiment-weight`, `experiment-weights-differ`,
   `experiment-builder-variant`, `experiment-variants` and `experiment-unknown`.
+- **A tester forces a variant** where debugging is authorized: the dev tools' new **Experiments** tab, or
+  `?ab=heroTest:b` in the address, kept for the visit in a session cookie of its own (`plitzi_ab_qa`) — shown over the
+  visitor's variant, never kept as theirs. The server draws it (`forcedExperiments`), never keeps that page, and a
+  forced experiment the space does not run is ignored and said in the console.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 

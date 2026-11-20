@@ -39,7 +39,7 @@ const space = (): OfflineDataRaw =>
     style: { cache: '', variables: [], fonts: [] }
   }) as unknown as OfflineDataRaw; // A fixture of the fields a render reads, not a whole stored space.
 
-const prepared = (cookie?: string, query: Record<string, string> = {}) =>
+const prepared = (cookie?: string, query: Record<string, string> = {}, config: Record<string, unknown> = {}) =>
   prepareRender(
     {
       method: 'GET',
@@ -56,6 +56,7 @@ const prepared = (cookie?: string, query: Record<string, string> = {}) =>
       environment: 'production',
       assetVersion: '1',
       autoLoadSchemaPlugins: false,
+      ...config,
       adapters: {
         getOfflineData: vi.fn().mockResolvedValue(space()),
         getSpaceDeployment: () => Promise.resolve(undefined)
@@ -95,5 +96,20 @@ describe('prepareRender / A/B tests', () => {
 
     expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'a' });
     expect(prep.setCookie).toBeUndefined();
+  });
+
+  it('shows a tester what they forced on a page allowed to debug, and keeps that page for nobody', async () => {
+    const prep = await prepared('plitzi_ab=heroTest%3Aa; plitzi_ab_qa=heroTest%3Ab', {}, { debugMode: true });
+
+    expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'a' });
+    expect(prep.componentProps.forcedExperiments).toEqual({ heroTest: 'b' });
+    expect(prep.cacheable).toBe(false);
+  });
+
+  it('ignores a forcing cookie on a page that does not authorize debugging', async () => {
+    const prep = await prepared('plitzi_ab=heroTest%3Aa; plitzi_ab_qa=heroTest%3Ab', { ab: 'heroTest:b' });
+
+    expect(prep.componentProps.forcedExperiments).toBeUndefined();
+    expect(prep.cacheable).toBe(true);
   });
 });
