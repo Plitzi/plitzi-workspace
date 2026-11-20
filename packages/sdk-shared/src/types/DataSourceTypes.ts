@@ -53,7 +53,7 @@ export type SourceField = {
   path: string;
   name: string;
   inputType?: Field['inputType'];
-  values?: { value: RuleValue; label: 'string' }[];
+  values?: { value: RuleValue; label: string }[];
 };
 
 export type SourceMeta = {
