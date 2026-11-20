@@ -132,6 +132,8 @@ export type AppProps = {
   serverRollout?: RolloutBuckets;
   /** What the space's audiences read of the visitor, as the rendering server read it — see `PlitziSdkProps`. */
   serverVisitor?: VisitorFacts;
+  /** The instant the rendering server drew the page at — see `PlitziSdkProps`. */
+  renderedAt?: number;
   /** The variants a tester forced — see `PlitziSdkProps`. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents — see `PlitziSdkProps`. */

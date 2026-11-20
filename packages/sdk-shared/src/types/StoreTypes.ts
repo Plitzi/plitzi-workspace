@@ -119,6 +119,11 @@ export type CommonState = {
    * them from the request. Absent where no server drew it: the browser reads them itself (`browserVisitorFacts`).
    */
   visitor?: VisitorFacts;
+  /**
+   * The instant this page is drawn at, for what shows by the time (`timeWindow`): the server's, when it drew the page —
+   * the page hydrates at it, then follows its own clock — or the one the builder simulates (`simulated`), which it keeps.
+   */
+  clock?: { at: number; simulated?: boolean };
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
@@ -382,6 +387,8 @@ export type BuilderState = CommonState & {
    * never published; the canvas's preview shows the variants this visitor matches.
    */
   visitorSimulation?: Partial<VisitorFacts>;
+  /** The instant the canvas's preview is shown at, chosen in the Visitor tab — the editor's clock until then. */
+  simulatedAt?: number;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

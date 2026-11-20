@@ -455,5 +455,6 @@ export const elementAttributeNames = {
   tabContainerItem: ['hash'],
   text: ['content', 'decorative', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
+  timeWindow: ['endsAt', 'startsAt'],
   video: ['autoPlay', 'loop', 'muted', 'playsInline', 'src']
 } as const satisfies Readonly<Record<string, readonly string[] | null>>;

@@ -146,7 +146,8 @@ a \`navigate\` interaction.
 element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. An A/B test is an \`abTest\` (its \`experiment\`)
 holding 2–5 \`abTestVariant\`s, each with a \`weight\` (its share); each visitor keeps their variant, read as
 \`{{ experiments.<experiment> }}\` (\`'a'\`, \`'b'\`…). An \`audience\` shows the first \`audienceVariant\` whose \`when\`
-(a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`) matches; end it with one without \`when\`.
+(a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`) matches; end it with one without \`when\`. A \`timeWindow\` shows its children only between \`startsAt\` and \`endsAt\`
+(ISO 8601 with the offset).
 
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
 button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every

@@ -1,4 +1,4 @@
-# A/B tests and audiences
+# A/B tests, audiences and time windows
 
 An A/B test shows each visitor one of two versions of a part of a page, and keeps showing them the same one. This page
 is how it works across the stack: the element, who draws a visitor's variant, where it is kept, what the page server's
@@ -100,6 +100,16 @@ before the space was held, a page an audience drew is kept for nobody (`audience
 later request keys it. The address and the session are in the key already, so rules on `queryParams` or `user` need
 nothing more.
 
+## Time windows
+
+`timeWindow` (Structure) shows what it holds only between `startsAt` and `endsAt` — ISO 8601 with the offset, so the
+same instant for every visitor (`instantOf` reads nothing else; either empty is no bound). The page server draws it at
+the instant it renders and hands that instant to the browser (`renderedAt`, the store's `clock`) for a space that has
+one, so the page hydrates as drawn; then it follows the browser's clock and shows or hides it when the window opens or
+closes (`nextWindowChange`). A kept page is drawn at the instant it was rendered: within the cache's lifetime of a
+bound, the first paint may show the other side, which the page corrects as it starts. Not access control — what it
+holds is in the space's document.
+
 ## In the builder
 
 The canvas seeds `render.builder: true` (`apps/builder/src/App.tsx`), and nothing is drawn, read off the visitor's
@@ -108,8 +118,9 @@ cookies or written there. **While editing**, each A/B test shows its `builderVar
 empty tab is. **In the preview**, the canvas shows the page to a simulated visitor, chosen in the State Manager's
 **Visitor** tab: the variant of each A/B test it forces (`experiments.qa`, each test's `builderVariant` until chosen) and
 the facts the audiences read (`visitorSimulation`, laid over the device the canvas is sized as, the editor's language
-and a first visit — `useSimulatedVisitor`, published as the page's `visitor`). A rolled-out flag answers its own value
-there; the Feature Flags panel forces it.
+and a first visit — `useSimulatedVisitor`, published as the page's `visitor`) and the date the time windows are read
+at (`simulatedAt`, the page's `clock`; the editor's own until chosen). While editing a time window always shows what it
+holds. A rolled-out flag answers its own value there; the Feature Flags panel forces it.
 
 ## Authoring and the linter
 
@@ -120,7 +131,9 @@ and tests that share a name to one set of weights (`experiment-weights-differ`);
 experiment no test runs is `experiment-unknown`. `audience()` and `audienceVariant()` write an audience, and
 `lintAudiences` holds it to its variants and nothing else (`audience-variants`), each rule a rule group
 (`audience-rule`), no variant after one for everybody (`audience-unreachable`) and one such at the end
-(`audience-no-fallback`). The builder's Space Issues, the MCP and the publish gate say the same.
+(`audience-no-fallback`). `timeWindow()` writes a window, and `lintTimeWindows` holds its bounds to instants with
+their offset (`time-window-bound`) and its end after its start (`time-window-empty`). The builder's Space Issues, the
+MCP and the publish gate say the same.
 
 ## Measuring it
 

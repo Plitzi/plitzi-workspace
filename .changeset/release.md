@@ -34,9 +34,13 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   the facts its rules read, only for a space whose audiences read any. Authoring writes `audience()` /
   `audienceVariant()`; the linter says `audience-variants`, `audience-rule`, `audience-unreachable` and
   `audience-no-fallback`.
+- **Time windows.** `timeWindow` shows what it holds only between `startsAt` and `endsAt` (ISO 8601 with the offset;
+  either empty is no bound): drawn by the server at the instant it renders, which the browser hydrates at, then shown or
+  hidden when the window opens or closes. Authoring writes `timeWindow()`; the linter says `time-window-bound` and
+  `time-window-empty`.
 - **Trying them in the builder.** While editing, an A/B test and an audience show the variant their settings name; the
   canvas's preview shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as
-  the canvas is sized), the language, returning or not, and the variant of each A/B test.
+  the canvas is sized), the language, returning or not, the variant of each A/B test and the date time windows are read at.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 

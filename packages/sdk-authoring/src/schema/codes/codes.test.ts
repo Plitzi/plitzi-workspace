@@ -17,6 +17,7 @@ import { SERVER_CODES } from './server';
 import { SPACE_CODES } from './space';
 import { SUGGESTION_CODES } from './suggestions';
 import { TEST_CODES } from './tests';
+import { TIME_WINDOW_CODES } from './timeWindows';
 
 const SUBJECTS = {
   SPACE_CODES,
@@ -30,6 +31,7 @@ const SUBJECTS = {
   FLAG_CODES,
   EXPERIMENT_CODES,
   AUDIENCE_CODES,
+  TIME_WINDOW_CODES,
   FLOW_CODES,
   SERVER_CODES,
   ACCESSIBILITY_CODES,

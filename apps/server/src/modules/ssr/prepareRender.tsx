@@ -43,6 +43,7 @@ import { requestPaintedStateWithDefaults } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 import { requestRollout } from '../../helpers/rollout';
+import { spaceTimeWindows } from '../../helpers/timeWindows';
 import { visitorScheme } from '../../helpers/visitorScheme';
 import { iconGlyphsAt } from '../icons/glyphs';
 import { iconFacesCss, spaceIconsOf } from '../icons/spaceIcons';
@@ -215,6 +216,8 @@ export const prepareRender = async (
   const audiences = rawOfflineData ? spaceAudiences(rawOfflineData.schema) : { has: false, used: [] };
   const serverVisitor = audiences.has ? requestVisitorFacts(req) : undefined;
   const audienceUnkeyed = audiences.used.length > 0 && req.ctx.audienceKey === undefined;
+  // The instant the page is drawn at, for a space that shows things by the time: the browser hydrates at it.
+  const renderedAt = rawOfflineData && spaceTimeWindows(rawOfflineData.schema) ? Date.now() : undefined;
   const flagOverrides = await requestFlagOverrides(
     config,
     { cookie: req.headers.cookie, authority: requestAuthority(req) },
@@ -487,7 +490,8 @@ export const prepareRender = async (
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
       ...(serverRollout ? { serverRollout } : {}),
-      ...(serverVisitor ? { serverVisitor } : {})
+      ...(serverVisitor ? { serverVisitor } : {}),
+      ...(renderedAt === undefined ? {} : { renderedAt })
     },
     { apart: spaceDocumentPath !== undefined, linkStyle }
   );
@@ -599,7 +603,8 @@ export const prepareRender = async (
       ...(serverExperiments ? { serverExperiments } : {}),
       ...(forcedExperiments ? { forcedExperiments } : {}),
       ...(serverRollout ? { serverRollout } : {}),
-      ...(serverVisitor ? { serverVisitor } : {})
+      ...(serverVisitor ? { serverVisitor } : {}),
+      ...(renderedAt === undefined ? {} : { renderedAt })
     },
     entries,
     templateParams: {

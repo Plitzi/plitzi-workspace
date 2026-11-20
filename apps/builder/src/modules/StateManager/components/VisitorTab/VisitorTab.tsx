@@ -7,6 +7,7 @@ import Notice from '@pmodules/App/components/Notice';
 
 import AudienceFacts from './components/AudienceFacts';
 import ExperimentVariants from './components/ExperimentVariants';
+import SimulatedTime from './components/SimulatedTime';
 import useCanvasVisitor from '../../hooks/useCanvasVisitor';
 
 import type { CanvasVisitor } from '../../hooks/useCanvasVisitor';
@@ -100,11 +101,13 @@ const VisitorTab = () => {
         )}
       </div>
       <Notice tone="info">
-        The canvas’s preview shows the page to this visitor: the audience variant they match and the A/B variant chosen
-        below. While editing, each test and audience shows the variant its own settings name.
+        The canvas’s preview shows the page to this visitor: the audience variant they match, the A/B variant chosen
+        below and what shows at the date chosen. While editing, each test and audience shows the variant its own
+        settings name.
       </Notice>
       <AudienceFacts />
       <ExperimentVariants />
+      <SimulatedTime />
       <section className="border-ui-line flex flex-col gap-1 border-t pt-2">
         <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">
           What the page reads

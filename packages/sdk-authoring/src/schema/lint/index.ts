@@ -19,6 +19,7 @@ import { lintTypeSlots } from './slots';
 import { lintStyle } from './style';
 import { lintComputed } from './templates';
 import { lintTests } from './tests';
+import { lintTimeWindows } from './timeWindows';
 
 import type { LintCatalogs, LintIssue } from './context';
 import type { Schema, Style } from '@plitzi/sdk-shared';
@@ -56,6 +57,7 @@ export const lintSpace = (
   lintFlags(ctx);
   lintExperiments(ctx);
   lintAudiences(ctx);
+  lintTimeWindows(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

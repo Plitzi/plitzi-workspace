@@ -20,12 +20,13 @@ const element = (
 
 const byDevice = { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] };
 
-/** A home page holding an audience: one variant for phones, one for everybody else. */
+/** A home page holding an audience — one variant for phones, one for everybody else — and a time window. */
 const space = (): OfflineDataRaw =>
   ({
     schema: {
       flat: {
-        home: element('home', 'page', ['welcome'], { slug: '', folder: '', default: true }),
+        home: element('home', 'page', ['welcome', 'sale'], { slug: '', folder: '', default: true }),
+        sale: element('sale', 'timeWindow', [], { startsAt: '2026-12-01T09:00:00Z' }),
         welcome: element('welcome', 'audience', ['phones', 'rest']),
         phones: element('phones', 'audienceVariant', [], { when: byDevice }),
         rest: element('rest', 'audienceVariant')
@@ -78,13 +79,21 @@ const prepared = (audienceKey?: string) =>
     } as unknown as PluginManager // No plugins in this space.
   );
 
-describe('prepareRender / audiences', () => {
+describe('prepareRender / audiences and time windows', () => {
   it('hands the browser the visitor the page was drawn for', async () => {
     const prep = await prepared('device=mobile');
 
     expect(prep.componentProps.serverVisitor).toEqual({ returning: false, language: 'es', device: 'mobile' });
     expect(prep.templateParams.offlineData).toContain('"serverVisitor":');
     expect(prep.cacheable).toBe(true);
+  });
+
+  it('hands the browser the instant the page was drawn at, for what shows by the time', async () => {
+    const before = Date.now();
+    const { renderedAt } = (await prepared('device=mobile')).componentProps;
+
+    expect(renderedAt).toBeGreaterThanOrEqual(before);
+    expect(renderedAt).toBeLessThanOrEqual(Date.now());
   });
 
   it('keeps for nobody a page its audiences drew when it was not keyed by what they read', async () => {

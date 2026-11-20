@@ -131,3 +131,10 @@ audience({
 In the builder, a test and an audience show the variant their settings name while editing; the preview shows the page to
 the visitor chosen in the State Manager's **Visitor** tab — its device, language, returning, and each A/B variant.
 
+## Showing something for a while
+
+`timeWindow({ startsAt: '2026-12-01T09:00:00Z', endsAt: '2026-12-08T09:00:00Z', children })` shows what it holds only
+between the two instants — ISO 8601 with the offset, never a local time (`time-window-bound`); either empty is no
+bound. An open page shows or hides it when the window opens or closes. In the builder it always shows while editing;
+the preview reads it at the date chosen in the Visitor tab.
+

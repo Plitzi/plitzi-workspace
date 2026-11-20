@@ -187,6 +187,7 @@ The space is not written until these are fixed.
 | `template-text-into-value` | a template, which renders text, feeding an attribute that holds a list or an object | `bindTemplate('items', source, '{{ … }}', { returns: 'value' })` |
 | `template-unknown-name` | a name in a template that is not a source, a variable or a route param | the full source name (`list_rows.item`), `navigation.queryParams.x`, or `source` for the bound value |
 | `template-unreadable` | a template with an operator, a filter or a function that does not exist, or broken syntax | an operator, a filter or a function the interpreter has — the message names the one it could not read; `matches` never exists |
+| `time-window-bound` | a `timeWindow`'s `startsAt` or `endsAt` that is not an instant with its offset — never read, so no bound | `startsAt: '2026-12-01T09:00:00Z'` (or `+01:00`); empty for no bound |
 | `transformer-params` | a transformer param that does not exist, or a value outside its options | the params and values it lists |
 | `trigger-interval` | an `onInterval` that never ticks: not a whole number of milliseconds, or below 250 | `onInterval(5000)` |
 | `trigger-keys` | an `onKey` shortcut that cannot fire: two keys at once, only modifiers, or a name that is not a key | `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k, escape')` |
@@ -271,6 +272,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `template-or-value` | a template's `or` (or `and`) beside a text or a number — `sort or 'listeners'` — which answers true or false, never the value | a fallback value with `??`: `sort ?? 'listeners'`; a test with `or` between two conditions |
 | `test-account-role-gone` | a test account holds a visitor role the space does not declare in `settings.visitorRoles` — removed since, or never there: a journey plays it without that role, and one that needed what it gave fails | one of the space’s roles for the account — or the role declared again |
 | `test-unreadable` | a test of the space — an element check or a flow — that cannot be read as it is written: a page no page of the space answers, an element it no longer has, a relation that is none. A snapshot and a publish wait for it | the test as the message says — or the space back to what the test expects |
+| `time-window-empty` | a `timeWindow` that ends before it starts — it never shows what it holds | `endsAt` after `startsAt` |
 | `transient-state-without-keep-state` | `transientState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `transientState` |
 | `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's declaration goes in `authorSpace(space, { plugins: [declaration] })` |
 | `unknown-global-callback` | a global callback no built-in source declares — it runs only if something registers it | the built-in it suggests, or make sure a plugin or module of the space registers it |

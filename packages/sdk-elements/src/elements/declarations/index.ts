@@ -49,6 +49,7 @@ import TabContainerDeclaration from '../structure/TabContainer/declaration';
 import TabContainerBodyDeclaration from '../structure/TabContainer/TabContainerBody/declaration';
 import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContainerHeader/declaration';
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
+import TimeWindowDeclaration from '../structure/TimeWindow/declaration';
 import AbTestVariantDeclaration from '../testing/AbTest/AbTestVariant/declaration';
 import AbTestDeclaration from '../testing/AbTest/declaration';
 import AudienceVariantDeclaration from '../testing/Audience/AudienceVariant/declaration';
@@ -101,6 +102,7 @@ export const elementDeclarations = {
   TabContainerItem: TabContainerItemDeclaration,
   Text: TextDeclaration,
   ThemeToggle: ThemeToggleDeclaration,
+  TimeWindow: TimeWindowDeclaration,
   Video: VideoDeclaration
 } as const;
 
@@ -153,6 +155,7 @@ export {
   TabContainerItemDeclaration,
   TextDeclaration,
   ThemeToggleDeclaration,
+  TimeWindowDeclaration,
   VideoDeclaration
 };
 

@@ -41,6 +41,7 @@ import List from './structure/List';
 import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
+import TimeWindow from './structure/TimeWindow';
 // Testing
 import AbTest from './testing/AbTest';
 import Audience from './testing/Audience';
@@ -80,6 +81,7 @@ export * from './structure/ModalContainer';
 export * from './structure/Pagination';
 export * from './structure/Carousel';
 export * from './structure/TabContainer';
+export * from './structure/TimeWindow';
 export * from './testing/AbTest';
 export * from './testing/Audience';
 
@@ -101,6 +103,7 @@ export {
   DialogContainer,
   ModalContainer,
   TabContainer,
+  TimeWindow,
   Carousel,
   Heading,
   Image,

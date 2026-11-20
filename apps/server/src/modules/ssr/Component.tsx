@@ -50,6 +50,8 @@ export type ComponentProps = {
   serverRollout?: RolloutBuckets;
   /** What the space's audiences read of the visitor. See `prepareRender`. */
   serverVisitor?: VisitorFacts;
+  /** The instant the page is drawn at, for a space that shows things by the time. See `prepareRender`. */
+  renderedAt?: number;
 };
 
 const Component = ({
@@ -74,7 +76,8 @@ const Component = ({
   serverExperiments,
   forcedExperiments,
   serverRollout,
-  serverVisitor
+  serverVisitor,
+  renderedAt
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -103,6 +106,7 @@ const Component = ({
       {...(forcedExperiments === undefined ? {} : { forcedExperiments })}
       {...(serverRollout === undefined ? {} : { serverRollout })}
       {...(serverVisitor === undefined ? {} : { serverVisitor })}
+      {...(renderedAt === undefined ? {} : { renderedAt })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

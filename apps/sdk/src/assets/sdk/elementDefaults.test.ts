@@ -144,6 +144,7 @@ const STYLESHEET: Record<string, SlotRules> = {
   abTestVariant: root('.plitzi-component__ab-test-variant'),
   audience: root('.plitzi-component__audience'),
   audienceVariant: root('.plitzi-component__audience-variant'),
+  timeWindow: root('.plitzi-component__time-window'),
   focusGroup: root('.plitzi-component__focus-group'),
   fontAwesome: () => ({
     base: ['.plitzi-component__fontawesome', '.plitzi-component__fontawesome:not(.fa-2x):not(.fa-3x):not(.fa-4x)']

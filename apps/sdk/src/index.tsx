@@ -392,6 +392,11 @@ export type PlitziSdkProps = {
    */
   serverVisitor?: VisitorFacts;
   /**
+   * Set by the server that rendered this page, for a space that shows things by the time (`timeWindow`): the instant it
+   * drew the page at, in ms — the page hydrates at it, then follows its own clock.
+   */
+  renderedAt?: number;
+  /**
    * Set by the server that rendered this page for somebody allowed to debug it: the A/B variants a tester forced (the
    * dev tools' Experiments tab, `?ab=heroTest:b`), shown over the visitor's own and never kept as theirs.
    */

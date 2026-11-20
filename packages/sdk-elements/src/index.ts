@@ -22,6 +22,7 @@ export const defaultElements = {
   dialogContainer: elements.DialogContainer,
   modalContainer: elements.ModalContainer,
   tabContainer: elements.TabContainer,
+  timeWindow: elements.TimeWindow,
   carousel: elements.Carousel,
   heading: elements.Heading,
   image: elements.Image,

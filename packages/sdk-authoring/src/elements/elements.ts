@@ -122,5 +122,7 @@ export const tabContainerBody = defineElement(elementDeclarations.TabContainerBo
 export const tabContainerHeader = defineElement(elementDeclarations.TabContainerHeader);
 export const tabContainerItem = defineElement(elementDeclarations.TabContainerItem);
 export const text = defineElement(elementDeclarations.Text);
+/** What shows only between two instants: `timeWindow({ startsAt: '2026-12-01T09:00:00Z', endsAt: '…', children })`. */
+export const timeWindow = defineElement(elementDeclarations.TimeWindow);
 export const themeToggle = defineElement(elementDeclarations.ThemeToggle);
 export const video = defineElement(elementDeclarations.Video);

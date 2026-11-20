@@ -79,6 +79,8 @@ export type AppMainProps = {
   serverRollout?: RolloutBuckets;
   /** What the space's audiences read of the visitor, as the rendering server read it — see `PlitziSdkProps`. */
   serverVisitor?: VisitorFacts;
+  /** The instant the rendering server drew the page at — see `PlitziSdkProps`. */
+  renderedAt?: number;
   /** The variants a tester forced, already settled against whether this page may debug. */
   forcedExperiments?: ExperimentAssignments;
   /** The rendering server previews a run of agents: the dev tools' Run tab asks it for the run. */
@@ -130,6 +132,7 @@ const AppMain = ({
   forcedExperiments,
   serverRollout,
   serverVisitor,
+  renderedAt,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -189,6 +192,9 @@ const AppMain = ({
   useSdkStoreSync(['experiments.server', 'experiments.qa'], [useStableValue(serverExperiments), forcedExperiments]);
   // What the space's audiences read of the visitor, as the server read it; absent, the page reads it itself.
   useSdkStoreSync(['visitor'], [useStableValue(serverVisitor)]);
+  // The instant the server drew the page at; absent, what shows by the time reads the browser's clock.
+  const clock = useMemo(() => (renderedAt === undefined ? undefined : { at: renderedAt }), [renderedAt]);
+  useSdkStoreSync(['clock'], [clock]);
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.

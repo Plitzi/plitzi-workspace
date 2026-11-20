@@ -68,7 +68,8 @@ const BUDGET = {
   // by, and the ones a tester forces (`forcedExperiments`) — pure, no React.
   // 153: a visitor's places in the gradual rollouts of the flags (`flags/rollout`), drawn and keyed the same way.
   // 155: what the space's audiences read of a visitor (`audiences`), read off the request and keyed the same way.
-  '@plitzi/sdk-shared': 155,
+  // 157: whether a space shows things by the time (`timeWindows`), drawn at the instant the page renders.
+  '@plitzi/sdk-shared': 157,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

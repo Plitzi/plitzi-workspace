@@ -41,6 +41,7 @@ import TabContainer from './structure/TabContainer/Settings';
 import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
 import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Settings';
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
+import TimeWindow from './structure/TimeWindow/Settings';
 import AbTestVariant from './testing/AbTest/AbTestVariant/Settings';
 import AbTest from './testing/AbTest/Settings';
 import AudienceVariant from './testing/Audience/AudienceVariant/Settings';
@@ -81,6 +82,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   tabContainerBody: TabContainerBody,
   tabContainerHeader: TabContainerHeader,
   tabContainerItem: TabContainerItem,
+  timeWindow: TimeWindow,
   heading: Heading,
   image: Image,
   video: Video,
