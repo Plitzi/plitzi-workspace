@@ -80,20 +80,23 @@ warning (`flag-unused`): it is a switch nobody can see the effect of.
 ## A/B tests
 
 A flag shows the same side to everyone its rules match; an `abTest` splits the visitors at random and keeps each on
-their side. It holds two `abTestVariant`s — the first is A, the second B — and draws only the one a visitor is shown:
+their variant. It holds two to five `abTestVariant`s — A first, then B… — and draws only the one a visitor is shown:
 
 ```ts
 abTest({
-  experiment: 'heroTest', // what a visitor's side is kept under, and read as {{ experiments.heroTest }}
-  split: 30,              // the share of visitors, 0–100, who see B
-  builderVariant: 'b',    // the side the builder's canvas shows; visitors never see it decided this way
-  children: [abTestVariant([heading({ content: 'Build faster' })]), abTestVariant([heading({ content: 'Ship today' })])]
+  experiment: 'heroTest', // what a visitor's variant is kept under, and read as {{ experiments.heroTest }}
+  builderVariant: 'b',    // the variant the builder's canvas shows; visitors never see it decided this way
+  children: [
+    abTestVariant({ weight: 70, children: [heading({ content: 'Build faster' })] }), // A: 70% of the visitors
+    abTestVariant({ weight: 30, children: [heading({ content: 'Ship today' })] })    // B: 30%
+  ]
 });
 ```
 
-The server draws the visitor's side and keeps it in a cookie, so a reload or a later visit shows the same; a visitor
-keeps their side when the split changes, until it is 0 or 100, which ends the experiment for everybody. Two tests with
-the same `experiment` show a visitor the same side (`experiment-split-differs` warns when their splits disagree).
-`{{ experiments.heroTest }}` is `'a'` or `'b'` — what a flow sends to your analytics with the conversion it measures.
-An `abTest` with no `experiment` runs nothing and shows A (`experiment-unnamed`).
-
+A variant's `weight` (0–100, default 50) is its share against the others'. The server draws the visitor's variant and
+keeps it in a cookie, so a reload or a later visit shows the same; a visitor keeps theirs when the weights change. A
+variant at 0 is shown to nobody, and its visitors are drawn again; one left with a weight ends the experiment —
+everybody sees it. Two tests with the same `experiment` show a visitor the same variant (`experiment-weights-differ`
+warns when their weights disagree). `{{ experiments.heroTest }}` is `'a'`, `'b'`… — what a flow sends to your
+analytics with the conversion it measures. An `abTest` with no `experiment` runs nothing and shows A
+(`experiment-unnamed`).

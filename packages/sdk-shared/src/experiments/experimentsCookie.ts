@@ -4,7 +4,7 @@ import { cookieFromHeader } from '../helpers/cookies';
 import type { ExperimentAssignments } from './experiments';
 
 /**
- * The cookie a visitor's variants are kept in, so a reload — or the next visit — shows them the same side of every
+ * The cookie a visitor's variants are kept in, so a reload — or the next visit — shows them the same variant of every
  * experiment.
  *
  * A cookie and not web storage for the reason the theme is one: the server draws the variant, so it has to know it

@@ -24,8 +24,9 @@ import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
  */
 
 /**
- * An A/B test: `abTest({ experiment: 'heroTest', split: 50, children: [abTestVariant([a]), abTestVariant([b])] })` —
- * each visitor sees one variant, B for `split`% of them, and keeps it when they come back.
+ * An A/B test: `abTest({ experiment: 'heroTest', children: [abTestVariant({ weight: 70, children: [a] }),
+ * abTestVariant({ weight: 30, children: [b] })] })` — each visitor sees one variant, drawn by the weights, and keeps it
+ * when they come back.
  */
 export const abTest = defineElement(elementDeclarations.AbTest);
 export const abTestVariant = defineElement(elementDeclarations.AbTestVariant);

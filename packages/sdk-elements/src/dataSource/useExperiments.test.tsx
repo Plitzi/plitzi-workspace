@@ -11,13 +11,20 @@ import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 /** Named for the page's port, as the SDK names it. */
 const cookie = () => experimentsCookieName(window.location.host);
 
-const abTest = (id: string, experiment: string, split: number, builderVariant = 'a') => ({
+const node = (id: string, type: string, attributes: Record<string, unknown>, items: string[] = []) => ({
   id,
-  attributes: { experiment, split, builderVariant },
-  definition: { rootId: id, label: 'A/B Test', type: 'abTest', styleSelectors: { base: '' } }
+  attributes,
+  definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
 });
 
-const flat = { hero: abTest('hero', 'heroTest', 50, 'b'), price: abTest('price', 'pricing', 50) };
+/** An A/B test with two variants of equal weight. */
+const abTest = (id: string, experiment: string, builderVariant = 'a') => ({
+  [id]: node(id, 'abTest', { experiment, builderVariant }, [`${id}A`, `${id}B`]),
+  [`${id}A`]: node(`${id}A`, 'abTestVariant', { weight: 50 }),
+  [`${id}B`]: node(`${id}B`, 'abTestVariant', { weight: 50 })
+});
+
+const flat = { ...abTest('hero', 'heroTest', 'b'), ...abTest('price', 'pricing') };
 
 const clearCookie = () => {
   document.cookie = `${cookie()}=; Path=/; Max-Age=0`;
@@ -61,7 +68,7 @@ describe('useExperiments', () => {
 
   it('reads what the visitor kept, and draws and keeps only what they have not', () => {
     document.cookie = `${cookie()}=heroTest%3Ab; Path=/`;
-    vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
 
     expect(assigned()).toEqual({ heroTest: 'b', pricing: 'a' });
     expect(decodeURIComponent(document.cookie)).toContain(`${cookie()}=heroTest:b,pricing:a`);

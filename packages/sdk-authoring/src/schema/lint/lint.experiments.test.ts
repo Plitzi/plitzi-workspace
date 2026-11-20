@@ -10,13 +10,15 @@ type Documents = ReturnType<typeof authorSpace>;
 const spaceWith = (...body: ElementSpec[]): Documents =>
   authorSpace({ name: 'Experiments', permanentUrl: 'experiments', pages: [{ name: 'Home', slug: '', body }] });
 
-const hero = (attributes: Parameters<typeof abTest>[0] = {}) =>
+/** An A/B test whose variants weigh what is given, each holding a line of its own. */
+const hero = (id: string, weights: number[] = [70, 30], attributes: Parameters<typeof abTest>[0] = {}) =>
   abTest({
-    id: 'hero',
+    id,
     experiment: 'heroTest',
-    split: 30,
     ...attributes,
-    children: [abTestVariant([text({ content: 'Build faster' })]), abTestVariant([text({ content: 'Ship today' })])]
+    children: weights.map((weight, index) =>
+      abTestVariant({ weight, children: [text({ content: `Headline ${String(index)}` })] })
+    )
   });
 
 const codes = (documents: Documents) => {
@@ -25,64 +27,79 @@ const codes = (documents: Documents) => {
   return { errors: errors.map(issue => issue.code), warnings: warnings.map(issue => issue.code) };
 };
 
+/** The ids of the variants of a test, in order. */
+const variantsOf = (documents: Documents, id: string): string[] => documents.schema.flat[id].definition.items ?? [];
+
 describe('lintSpace — A/B tests', () => {
-  it('finds nothing in an A/B test with a name, a split and its two variants, read by a template', () => {
-    const documents = spaceWith(hero(), text({ content: '{{ experiments.heroTest }}' }));
+  it('finds nothing in a named A/B test of three weighted variants, read by a template', () => {
+    const documents = spaceWith(
+      hero('hero', [50, 30, 20], { builderVariant: 'c' }),
+      text({ content: '{{ experiments.heroTest }}' })
+    );
 
     expect(lintSpace(documents)).toEqual({ errors: [], warnings: [] });
   });
 
   it('experiment-unnamed', () => {
-    expect(codes(spaceWith(hero({ experiment: '' }))).warnings).toContain('experiment-unnamed');
+    expect(codes(spaceWith(hero('hero', [50, 50], { experiment: '' }))).warnings).toContain('experiment-unnamed');
   });
 
   it('experiment-name', () => {
-    const documents = spaceWith(hero());
+    const documents = spaceWith(hero('hero'));
     documents.schema.flat.hero.attributes.experiment = 'hero test';
 
     expect(codes(documents).errors).toContain('experiment-name');
   });
 
-  it('experiment-split', () => {
-    const documents = spaceWith(hero());
-    documents.schema.flat.hero.attributes.split = 120;
+  it('experiment-weight, for a weight that is not a share and for variants that all weigh 0', () => {
+    const unread = spaceWith(hero('hero'));
+    const [first = ''] = variantsOf(unread, 'hero');
+    unread.schema.flat[first].attributes.weight = 120;
+    const none = spaceWith(hero('hero'));
+    for (const id of variantsOf(none, 'hero')) {
+      none.schema.flat[id].attributes.weight = 0;
+    }
 
-    expect(codes(documents).errors).toContain('experiment-split');
+    expect(codes(unread).errors).toContain('experiment-weight');
+    expect(codes(none).errors).toContain('experiment-weight');
   });
 
-  it('experiment-split-differs', () => {
-    const documents = spaceWith(
-      hero(),
-      abTest({
-        id: 'cta',
-        experiment: 'heroTest',
-        split: 60,
-        children: [abTestVariant([text({ content: 'Start' })]), abTestVariant([text({ content: 'Try it' })])]
-      })
-    );
-
-    expect(codes(documents).warnings).toContain('experiment-split-differs');
+  it('reads one variant left with a weight as an experiment ended, not as a mistake', () => {
+    expect(lintSpace(spaceWith(hero('hero', [0, 100])))).toEqual({ errors: [], warnings: [] });
   });
 
-  it('experiment-variants, with a third variant, with one missing and with something else beside them', () => {
-    const changed = (items: (flat: Documents['schema']['flat']) => string[]) => {
-      const documents = spaceWith(hero());
+  it('experiment-weights-differ', () => {
+    expect(codes(spaceWith(hero('hero'), hero('cta', [60, 40]))).warnings).toContain('experiment-weights-differ');
+  });
+
+  it('experiment-builder-variant', () => {
+    const documents = spaceWith(hero('hero'));
+    documents.schema.flat.hero.attributes.builderVariant = 'd';
+
+    expect(codes(documents).warnings).toContain('experiment-builder-variant');
+  });
+
+  it('experiment-variants, with six variants, with one, and with something else beside them', () => {
+    const changed = (items: (flat: Documents['schema']['flat'], variants: string[]) => string[]) => {
+      const documents = spaceWith(hero('hero'));
       const { flat } = documents.schema;
-      flat.hero.definition.items = items(flat);
+      flat.hero.definition.items = items(flat, variantsOf(documents, 'hero'));
 
       return codes(documents).errors;
     };
-    const [a = '', b = ''] = spaceWith(hero()).schema.flat.hero.definition.items ?? [];
 
-    expect(changed(() => [a, b, a])).toContain('experiment-variants');
-    expect(changed(() => [a])).toContain('experiment-variants');
-    expect(changed(flat => [a, b, Object.keys(flat).find(id => flat[id].definition.type === 'text') ?? ''])).toContain(
-      'experiment-variants'
-    );
+    expect(changed((_, [a = '', b = '']) => [a, b, a, b, a, b])).toContain('experiment-variants');
+    expect(changed((_, [a = '']) => [a])).toContain('experiment-variants');
+    expect(
+      changed((flat, variants) => [
+        ...variants,
+        Object.keys(flat).find(id => flat[id].definition.type === 'text') ?? ''
+      ])
+    ).toContain('experiment-variants');
   });
 
   it('experiment-unknown, naming the experiment it was likely meant to be', () => {
-    const documents = spaceWith(hero(), text({ id: 'said', content: '{{ experiments.heroTest }}' }));
+    const documents = spaceWith(hero('hero'), text({ id: 'said', content: '{{ experiments.heroTest }}' }));
     documents.schema.flat.said.attributes.content = '{{ experiments.heroTset }}';
     const problem = lintSpace(documents).errors.at(0);
 

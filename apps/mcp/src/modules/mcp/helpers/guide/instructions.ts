@@ -143,9 +143,9 @@ element** (\`mode\` "page"/"internal"/"external"; its words are its \`content\`,
 a \`navigate\` interaction.
 
 **Feature flags:** what a person switches on (a beta, a rollout) is \`upsertFlag\` plus \`flag: "x"\` / \`"!x"\` on the
-element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. An A/B test is an \`abTest\` (\`experiment\`,
-\`split\` — the % who see B) holding two \`abTestVariant\`s; each visitor keeps their side, read as
-\`{{ experiments.<experiment> }}\` (\`'a'\`/\`'b'\`).
+element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. An A/B test is an \`abTest\` (its \`experiment\`)
+holding 2–5 \`abTestVariant\`s, each with a \`weight\` (its share); each visitor keeps their variant, read as
+\`{{ experiments.<experiment> }}\` (\`'a'\`, \`'b'\`…).
 
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
 button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every

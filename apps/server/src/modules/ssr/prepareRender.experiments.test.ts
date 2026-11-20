@@ -24,9 +24,9 @@ const space = (): OfflineDataRaw =>
     schema: {
       flat: {
         home: element('home', 'page', ['hero'], { slug: '', folder: '', default: true }),
-        hero: element('hero', 'abTest', ['heroA', 'heroB'], { experiment: 'heroTest', split: 50 }),
-        heroA: element('heroA', 'abTestVariant'),
-        heroB: element('heroB', 'abTestVariant')
+        hero: element('hero', 'abTest', ['heroA', 'heroB'], { experiment: 'heroTest' }),
+        heroA: element('heroA', 'abTestVariant', [], { weight: 50 }),
+        heroB: element('heroB', 'abTestVariant', [], { weight: 50 })
       },
       pages: ['home'],
       pageFolders: [],
@@ -73,7 +73,7 @@ const prepared = (cookie?: string, query: Record<string, string> = {}) =>
 
 describe('prepareRender / A/B tests', () => {
   it('draws a first visitor their variant, keeps it in their cookie, and keeps the page for nobody else', async () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.2);
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.8);
     const prep = await prepared();
 
     expect(prep.componentProps.serverExperiments).toEqual({ heroTest: 'b' });

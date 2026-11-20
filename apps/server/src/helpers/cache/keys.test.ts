@@ -86,7 +86,7 @@ describe('buildHtmlCacheKey', () => {
     expect(html(painted({ toolPick: 'star' }))).not.toBe(html());
   });
 
-  /** The page draws only the side of each A/B test the visitor keeps: visitors shown the same sides share a page. */
+  /** The page draws only the variant of each A/B test the visitor keeps: visitors shown the same ones share a page. */
   it('separates visitors who keep different variants, and shares one page between those who keep the same', () => {
     expect(html('plitzi_ab=heroTest%3Ab')).not.toBe(html('plitzi_ab=heroTest%3Aa'));
     expect(html('plitzi_ab=heroTest%3Ab')).not.toBe(html());

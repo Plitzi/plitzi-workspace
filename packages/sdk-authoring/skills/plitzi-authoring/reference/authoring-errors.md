@@ -77,9 +77,9 @@ The space is not written until these are fixed.
 | `element-shape` | an element that is not an object with a `type`, `attributes` and a list of `children` | build elements with their factories — `text(…)`, `container(…)` |
 | `element-slot-unknown` | a `slots` key the element type does not have — its class would dress nothing | one of the slots `plitzi explain <type>` lists; the element itself takes `class` |
 | `experiment-name` | an `abTest`'s `experiment` that a template cannot read as `experiments.x` | letters, digits and `_`, starting with a letter or `_` |
-| `experiment-split` | an `abTest`'s `split` that is not a whole number from 0 to 100 — the share of visitors who see B | `split: 50`; 0 or 100 ends the experiment, showing everybody one side |
 | `experiment-unknown` | a template, a binding or a `when` reading an experiment no `abTest` runs — it reads as nothing | the name it suggests, or an `abTest` with that `experiment` |
-| `experiment-variants` | an `abTest` that does not hold exactly two `abTestVariant`s — A first, then B — and nothing else | `abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })` |
+| `experiment-variants` | an `abTest` that does not hold two to five `abTestVariant`s — A first, then B… — and nothing else | `abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })` |
+| `experiment-weight` | an `abTestVariant`'s `weight` that is not a whole number from 0 to 100, or a test whose variants all weigh 0 | `weight: 50`; 0 shows a variant to nobody, and at least one has to show |
 | `flag-gate` | an element's or a page's `flag` that is not a flag name | `flag: 'newCheckout'`, or `flag: '!newCheckout'` for "only while off" |
 | `flag-name` | a flag whose name a template cannot read as `flags.x` | letters, digits and `_` |
 | `flag-rule-shape` | a flag rule that is not `{ when, value }`, or whose `value` is not `true` or `false` | `{ when: { … }, value: true }` |
@@ -222,8 +222,9 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `default-content-beside-children` | a button printing its default "Button" beside its children | `content: ''` |
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
-| `experiment-split-differs` | two `abTest`s naming the same experiment with different splits — they share it, so one split is ignored | the same `split` on both, or a name of its own for each |
+| `experiment-builder-variant` | an `abTest`'s `builderVariant` naming a variant it does not have — the builder shows A | a variant it has: `'a'` up to as many as its `abTestVariant`s |
 | `experiment-unnamed` | an `abTest` with no `experiment` — it runs nothing, and every visitor sees variant A | `experiment: 'heroTest'` |
+| `experiment-weights-differ` | two `abTest`s naming the same experiment with different weights — they share it, so one set is ignored | the same weights on both, or a name of its own for each |
 | `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `flag-unused` | a declared flag nothing gates on and no template reads | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
 | `focus-on-field-box` | a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown | `'focus-within'` on the same class, or the state on the `field` slot |

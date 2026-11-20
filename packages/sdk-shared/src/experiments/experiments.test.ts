@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assignExperiments, builderExperiments, declaredExperiments, experimentAssignmentsOf } from './experiments';
+import { assignExperiments, builderExperiments, declaredExperiments } from './experiments';
 import {
   experimentsCookie,
   experimentsCookieName,
@@ -9,70 +9,103 @@ import {
   serializeExperimentList
 } from './experimentsCookie';
 
+import type { DeclaredExperiment } from './experiments';
 import type { Element } from '../types';
 
-const element = (id: string, type: string, attributes: Record<string, unknown> = {}): Element => ({
+const element = (
+  id: string,
+  type: string,
+  attributes: Record<string, unknown> = {},
+  items: string[] = []
+): Element => ({
   id,
   attributes,
-  definition: { rootId: id, label: type, type, styleSelectors: { base: '' } }
+  definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
 });
 
+/** An A/B test and its variants, each with the weight given (`undefined`: none written). */
+const test = (id: string, attributes: Record<string, unknown>, weights: (number | string | undefined)[]) => {
+  const flat: Record<string, Element> = {};
+  const ids = weights.map((weight, index) => {
+    const variantId = `${id}-${String(index)}`;
+    flat[variantId] = element(variantId, 'abTestVariant', weight === undefined ? {} : { weight });
+
+    return variantId;
+  });
+  flat[id] = element(id, 'abTest', attributes, ids);
+
+  return flat;
+};
+
 describe('the experiments a space runs', () => {
-  it('are its abTest elements by name, on its pages and in its components, the first naming one giving the split', () => {
+  it('are its abTest elements by name, on its pages and in its components, the first naming one giving the weights', () => {
     const flat = {
-      hero: element('hero', 'abTest', { experiment: 'heroTest', split: 30, builderVariant: 'b' }),
-      again: element('again', 'abTest', { experiment: 'heroTest', split: 80 }),
-      plain: element('plain', 'container', { experiment: 'notOne' }),
-      unnamed: element('unnamed', 'abTest', { experiment: '' }),
-      badName: element('badName', 'abTest', { experiment: 'hero test' })
+      ...test('hero', { experiment: 'heroTest', builderVariant: 'b' }, [70, 30]),
+      ...test('again', { experiment: 'heroTest' }, [10, 90]),
+      ...test('unnamed', { experiment: '' }, [50, 50]),
+      ...test('badName', { experiment: 'hero test' }, [50, 50]),
+      plain: element('plain', 'container', { experiment: 'notOne' })
     };
     const components = {
       card: {
         id: 'card',
         rootId: 'price',
-        flat: { price: element('price', 'abTest', { experiment: 'pricing', split: 'many' }) }
+        flat: test('price', { experiment: 'pricing', builderVariant: 'e' }, [undefined, 'many', 20])
       }
     };
 
     expect(declaredExperiments({ flat, components })).toEqual({
-      heroTest: { split: 30, builderVariant: 'b' },
-      // An unreadable split is the default: half the visitors; the canvas shows A unless told otherwise.
-      pricing: { split: 50, builderVariant: 'a' }
+      heroTest: { weights: [70, 30], builderVariant: 'b' },
+      // An unreadable weight is the default, and the canvas cannot show a variant the test does not have.
+      pricing: { weights: [50, 50, 20], builderVariant: 'a' }
     });
   });
 });
 
 describe('assigning a visitor', () => {
-  const declared = {
-    heroTest: { split: 30, builderVariant: 'a' },
-    pricing: { split: 50, builderVariant: 'b' }
-  } as const;
+  const declared: Record<string, DeclaredExperiment> = {
+    heroTest: { weights: [70, 30], builderVariant: 'a' },
+    pricing: { weights: [20, 30, 50], builderVariant: 'c' }
+  };
+  const shares = (draw: number) => assignExperiments(declared, {}, () => draw).assignments;
 
-  it('draws a variant for each experiment the visitor has none of, B below the split', () => {
-    expect(assignExperiments(declared, {}, () => 0.29)).toEqual({
-      assignments: { heroTest: 'b', pricing: 'b' },
-      kept: { heroTest: 'b', pricing: 'b' },
-      drawn: ['heroTest', 'pricing']
-    });
-    expect(assignExperiments(declared, {}, () => 0.3).assignments).toEqual({ heroTest: 'a', pricing: 'b' });
+  it('draws a variant for each experiment the visitor has none of, in proportion to the weights', () => {
+    expect(shares(0)).toEqual({ heroTest: 'a', pricing: 'a' });
+    expect(shares(0.69)).toEqual({ heroTest: 'a', pricing: 'c' });
+    expect(shares(0.7)).toEqual({ heroTest: 'b', pricing: 'c' });
+    expect(shares(0.3)).toEqual({ heroTest: 'a', pricing: 'b' });
+    expect(assignExperiments(declared, {}, () => 0.5)).toMatchObject({ drawn: ['heroTest', 'pricing'] });
   });
 
-  it('keeps what the visitor was shown, whatever the split is now, and draws nothing for it', () => {
-    expect(assignExperiments(declared, { heroTest: 'b' }, () => 0.99)).toEqual({
-      assignments: { heroTest: 'b', pricing: 'a' },
-      kept: { heroTest: 'b', pricing: 'a' },
-      drawn: ['pricing']
+  it('keeps what the visitor was shown, whatever the weights are now, and draws nothing for it', () => {
+    expect(assignExperiments(declared, { heroTest: 'b', pricing: 'c' }, () => 0)).toEqual({
+      assignments: { heroTest: 'b', pricing: 'c' },
+      kept: { heroTest: 'b', pricing: 'c' },
+      drawn: []
     });
   });
 
-  it('shows everybody one side of an experiment ended at 0 or 100, and keeps nothing of it', () => {
-    const ended = {
-      heroTest: { split: 0, builderVariant: 'b' },
-      pricing: { split: 100, builderVariant: 'a' }
+  it('draws again a visitor whose variant was taken out (weight 0), or is not there any more', () => {
+    const narrowed: Record<string, DeclaredExperiment> = {
+      pricing: { weights: [50, 0, 50], builderVariant: 'a' }
     } as const;
 
-    expect(assignExperiments(ended, { heroTest: 'b', pricing: 'a' })).toEqual({
-      assignments: { heroTest: 'a', pricing: 'b' },
+    expect(assignExperiments(narrowed, { pricing: 'b' }, () => 0.9)).toEqual({
+      assignments: { pricing: 'c' },
+      kept: { pricing: 'c' },
+      drawn: ['pricing']
+    });
+    expect(assignExperiments(narrowed, { pricing: 'e' }, () => 0).drawn).toEqual(['pricing']);
+  });
+
+  it('shows everybody the one variant left with a weight, A when none has any, and keeps nothing of it', () => {
+    const ended: Record<string, DeclaredExperiment> = {
+      heroTest: { weights: [0, 100], builderVariant: 'a' },
+      pricing: { weights: [0, 0, 0], builderVariant: 'a' }
+    };
+
+    expect(assignExperiments(ended, { heroTest: 'a', pricing: 'b' })).toEqual({
+      assignments: { heroTest: 'b', pricing: 'a' },
       kept: {},
       drawn: []
     });
@@ -83,12 +116,7 @@ describe('assigning a visitor', () => {
   });
 
   it('shows the builder the variant each experiment’s settings name', () => {
-    expect(builderExperiments(declared)).toEqual({ heroTest: 'a', pricing: 'b' });
-  });
-
-  it('reads assignments handed in only where each is a name and a variant', () => {
-    expect(experimentAssignmentsOf({ heroTest: 'b', other: 'c', 'bad name': 'a' })).toEqual({ heroTest: 'b' });
-    expect(experimentAssignmentsOf('heroTest')).toEqual({});
+    expect(builderExperiments(declared)).toEqual({ heroTest: 'a', pricing: 'c' });
   });
 });
 
@@ -104,7 +132,7 @@ describe('the experiments cookie', () => {
   });
 
   it('keeps nothing that is not a name and a variant', () => {
-    expect(parseExperimentList('ok:b,bad name:a,also:c,__proto__:a,x')).toEqual({ ok: 'b' });
+    expect(parseExperimentList('ok:b,bad name:a,also:f,__proto__:a,x')).toEqual({ ok: 'b' });
     expect(parseExperimentList(undefined)).toEqual({});
   });
 

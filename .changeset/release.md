@@ -7,16 +7,17 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
 
 ## Elements
 
-- **A/B tests.** `abTest` — in the builder's new **Testing** category — holds two `abTestVariant`s, A first, and draws
-  the one a visitor is shown: B for the share its `split` says (0–100), A for the rest. Its `experiment` names it: the
-  visitor's side is kept under it in a cookie (`plitzi_ab`), so a reload or a later visit shows the same, a visitor keeps
-  their side when the split changes, and 0 or 100 ends the experiment for everybody. Two tests with one name share it.
+- **A/B tests.** `abTest` — in the builder's new **Testing** category — holds two to five `abTestVariant`s, A first,
+  and draws the one a visitor is shown, drawn by the variants' `weight`s (0–100 each, against the others'). Its
+  `experiment` names it: the visitor's variant is kept under it in a cookie (`plitzi_ab`), so a reload or a later visit
+  shows the same, and a visitor keeps theirs when the weights change. A variant at 0 is shown to nobody (its visitors
+  are drawn again); one left with a weight ends the experiment for everybody. Two tests with one name share it.
   The page server draws the side and sends the cookie with the page; the browser hydrates with what it drew and draws
   only what no server did (a space with no server, a static copy). The builder's canvas shows the side the test's
-  settings name (`builderVariant`). `{{ experiments.<name> }}` — a new global source — reads `'a'` or `'b'`, for a
+  settings name (`builderVariant`). `{{ experiments.<name> }}` — a new global source — reads `'a'`, `'b'`…, for a
   flow to report with what it measures. Authoring writes `abTest()` / `abTestVariant()`, and the linter says
-  `experiment-unnamed`, `experiment-name`, `experiment-split`, `experiment-split-differs`, `experiment-variants` and
-  `experiment-unknown`.
+  `experiment-unnamed`, `experiment-name`, `experiment-weight`, `experiment-weights-differ`,
+  `experiment-builder-variant`, `experiment-variants` and `experiment-unknown`.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 

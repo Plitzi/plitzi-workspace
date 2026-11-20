@@ -12,19 +12,25 @@ export const EXPERIMENT_CODES = {
     means: "an `abTest`'s `experiment` that a template cannot read as `experiments.x`",
     fix: 'letters, digits and `_`, starting with a letter or `_`'
   },
-  'experiment-split': {
+  'experiment-weight': {
     kind: 'refused',
-    means: "an `abTest`'s `split` that is not a whole number from 0 to 100 — the share of visitors who see B",
-    fix: '`split: 50`; 0 or 100 ends the experiment, showing everybody one side'
+    means:
+      "an `abTestVariant`'s `weight` that is not a whole number from 0 to 100, or a test whose variants all weigh 0",
+    fix: '`weight: 50`; 0 shows a variant to nobody, and at least one has to show'
   },
-  'experiment-split-differs': {
+  'experiment-weights-differ': {
     kind: 'warned',
-    means: 'two `abTest`s naming the same experiment with different splits — they share it, so one split is ignored',
-    fix: 'the same `split` on both, or a name of its own for each'
+    means: 'two `abTest`s naming the same experiment with different weights — they share it, so one set is ignored',
+    fix: 'the same weights on both, or a name of its own for each'
+  },
+  'experiment-builder-variant': {
+    kind: 'warned',
+    means: "an `abTest`'s `builderVariant` naming a variant it does not have — the builder shows A",
+    fix: "a variant it has: `'a'` up to as many as its `abTestVariant`s"
   },
   'experiment-variants': {
     kind: 'refused',
-    means: 'an `abTest` that does not hold exactly two `abTestVariant`s — A first, then B — and nothing else',
+    means: 'an `abTest` that does not hold two to five `abTestVariant`s — A first, then B… — and nothing else',
     fix: '`abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })`'
   },
   'experiment-unknown': {

@@ -4,10 +4,17 @@ import { requestExperiments } from './experiments';
 
 import type { Element } from '@plitzi/sdk-shared';
 
-const abTest = (id: string, experiment: string, split: number): Element => ({
+const node = (id: string, type: string, attributes: Record<string, unknown>, items: string[] = []): Element => ({
   id,
-  attributes: { experiment, split },
-  definition: { rootId: id, label: 'A/B Test', type: 'abTest', styleSelectors: { base: '' } }
+  attributes,
+  definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
+});
+
+/** An A/B test whose two variants weigh what is given. */
+const abTest = (id: string, experiment: string, [a, b]: [number, number]): Record<string, Element> => ({
+  [id]: node(id, 'abTest', { experiment }, [`${id}A`, `${id}B`]),
+  [`${id}A`]: node(`${id}A`, 'abTestVariant', { weight: a }),
+  [`${id}B`]: node(`${id}B`, 'abTestVariant', { weight: b })
 });
 
 const space = (flat: Record<string, Element>) => ({ flat, components: {} });
@@ -18,14 +25,14 @@ const request = (cookie?: string, protocol: 'http' | 'https' = 'https') => ({
 });
 
 describe('requestExperiments', () => {
-  const schema = space({ hero: abTest('hero', 'heroTest', 50), price: abTest('price', 'pricing', 100) });
+  const schema = space({ ...abTest('hero', 'heroTest', [50, 50]), ...abTest('price', 'pricing', [0, 100]) });
 
   it('draws the visitor’s variants and keeps them, secure on https', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.1);
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.9);
 
     expect(requestExperiments(request(), schema, true)).toEqual({
       assignments: { heroTest: 'b', pricing: 'b' },
-      // An experiment ended at 100 needs nothing kept: everybody sees B.
+      // An experiment with one variant left with a weight needs nothing kept: everybody sees B.
       setCookie: 'plitzi_ab=heroTest%3Ab; Path=/; Max-Age=15552000; SameSite=Lax; Secure'
     });
   });

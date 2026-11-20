@@ -26,6 +26,7 @@ const drawn = (props: AbTestProps, store: Record<string, unknown> = {}) =>
         <AbTest {...props}>
           <p>Variant A</p>
           <p>Variant B</p>
+          <p>Variant C</p>
         </AbTest>
       </ElementContext>
     </StoreProvider>
@@ -38,6 +39,13 @@ describe('AbTest', () => {
     drawn({ experiment: 'heroTest' }, visitor({ heroTest: 'b' }));
 
     expect(screen.getByText('Variant B')).toBeTruthy();
+    expect(screen.queryByText('Variant A')).toBeNull();
+  });
+
+  it('draws a third variant, by its place', () => {
+    drawn({ experiment: 'heroTest' }, visitor({ heroTest: 'c' }));
+
+    expect(screen.getByText('Variant C')).toBeTruthy();
     expect(screen.queryByText('Variant A')).toBeNull();
   });
 

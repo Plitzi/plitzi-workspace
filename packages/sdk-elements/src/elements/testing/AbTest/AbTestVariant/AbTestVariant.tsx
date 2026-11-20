@@ -9,6 +9,11 @@ export type AbTestVariantProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;
+  /**
+   * Its share of the visitors, against the other variants' weights: 0–100. 0 shows it to nobody, and the visitors who
+   * were shown it are drawn again. Read by the A/B test around it, which draws the variant.
+   */
+  weight?: number;
 };
 
 const AbTestVariant = ({ ref, className = '', children }: AbTestVariantProps) => (

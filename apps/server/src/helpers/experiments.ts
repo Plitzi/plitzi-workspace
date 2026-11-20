@@ -44,7 +44,7 @@ export type RequestExperiments = {
  * for what it does not.
  *
  * A render nobody visits — a preview for a picture, a draft's unsaved edits — draws nothing and keeps nothing: what
- * the visitor has not kept is shown as A, the control, the same in every picture.
+ * the visitor has not kept is shown as its first variant still shown (A, the control), the same in every picture.
  */
 export const requestExperiments = (
   req: Pick<SSRRequest, 'headers' | 'protocol'>,
@@ -60,8 +60,8 @@ export const requestExperiments = (
   const { assignments, kept, drawn } = assignExperiments(
     declared,
     keptExperiments(req.headers.cookie, host),
-    // Never below a split: every experiment not kept is A.
-    draws ? Math.random : () => 1
+    // The start of the range: every experiment not kept shows its first variant still shown — A, unless taken out.
+    draws ? Math.random : () => 0
   );
   if (!draws || drawn.length === 0) {
     return { assignments };

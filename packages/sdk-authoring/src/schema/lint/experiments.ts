@@ -1,9 +1,12 @@
 import {
   AB_TEST_TYPE,
   AB_TEST_VARIANT_TYPE,
-  DEFAULT_EXPERIMENT_SPLIT,
+  DEFAULT_VARIANT_WEIGHT,
+  EXPERIMENT_VARIANTS,
+  indexOfVariant,
   isExperimentName,
-  isExperimentSplit
+  isExperimentVariant,
+  isExperimentWeight
 } from '@plitzi/sdk-shared/experiments';
 
 import { didYouMean } from '../suggest';
@@ -54,55 +57,90 @@ const lintName = (ctx: LintContext, element: Element, experiment: unknown): stri
   return experiment;
 };
 
-/** Its two sides, A first: a third is never shown, and one missing shows nothing to the visitors drawn it. */
-const lintVariants = (ctx: LintContext, element: Element, flat: Schema['flat']): void => {
+/** Its variants, A first: two to five, and nothing else — what is not a variant is never shown. */
+const lintVariants = (ctx: LintContext, element: Element, flat: Schema['flat']): Element[] => {
   const items = element.definition.items ?? [];
   const variants = items.filter(id => Object.hasOwn(flat, id) && flat[id].definition.type === AB_TEST_VARIANT_TYPE);
-  if (variants.length === 2 && items.length === 2) {
+  const others = items.filter(id => !variants.includes(id));
+  if (variants.length < 2 || variants.length > EXPERIMENT_VARIANTS.length || others.length > 0) {
+    ctx.error(
+      'experiment-variants',
+      `A/B test "${element.id}" holds ${variants.length} abTestVariant${variants.length === 1 ? '' : 's'}${others.length > 0 ? ` and ${others.length} other element${others.length === 1 ? '' : 's'} (${others.join(', ')})` : ''}. It holds two to ${EXPERIMENT_VARIANTS.length} — the first is A, the second B… — and only the variant a visitor is drawn is shown, so anything else is never seen. Write \`abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })\`.`,
+      element.id
+    );
+  }
+
+  return variants.slice(0, EXPERIMENT_VARIANTS.length).map(id => flat[id]);
+};
+
+/** Each variant's weight a share, and at least one shown: all at 0 shows everybody A, whatever it says. */
+const lintWeights = (ctx: LintContext, element: Element, variants: Element[]): number[] | undefined => {
+  const weights = variants.map(variant => variant.attributes.weight ?? DEFAULT_VARIANT_WEIGHT);
+  const unread = variants.filter((_, index) => !isExperimentWeight(weights[index]));
+  for (const variant of unread) {
+    ctx.error(
+      'experiment-weight',
+      `Variant "${variant.id}" of A/B test "${element.id}" has \`weight: ${JSON.stringify(variant.attributes.weight)}\`. It is the variant's share of the visitors against the others': a whole number from 0 to 100 — two at 50 split them in half. 0 shows it to nobody.`,
+      variant.id
+    );
+  }
+
+  if (unread.length > 0 || !weights.every(isExperimentWeight)) {
+    return undefined;
+  }
+
+  if (weights.length > 0 && weights.every(weight => weight === 0)) {
+    ctx.error(
+      'experiment-weight',
+      `Every variant of A/B test "${element.id}" weighs 0, so none is shown by its weight and everybody sees A. Give the variants to show a weight above 0 — one alone ends the experiment, everybody sees it.`,
+      element.id
+    );
+  }
+
+  return weights;
+};
+
+/** The variant the builder's canvas shows, one the test has. */
+const lintBuilderVariant = (ctx: LintContext, element: Element, count: number): void => {
+  const { builderVariant = 'a' } = element.attributes;
+  if (isExperimentVariant(builderVariant) && indexOfVariant(builderVariant) < count) {
     return;
   }
 
-  const others = items.filter(id => !variants.includes(id));
-  ctx.error(
-    'experiment-variants',
-    `A/B test "${element.id}" holds ${variants.length} abTestVariant${variants.length === 1 ? '' : 's'}${others.length > 0 ? ` and ${others.length} other element${others.length === 1 ? '' : 's'} (${others.join(', ')})` : ''}. It holds exactly two — the first is A, the second B — and only the side a visitor is drawn is shown, so anything else is never seen. Write \`abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })\`.`,
+  const has = EXPERIMENT_VARIANTS.slice(0, count).map(variant => `'${variant}'`);
+  ctx.warn(
+    'experiment-builder-variant',
+    `A/B test "${element.id}" shows \`builderVariant: ${JSON.stringify(builderVariant)}\` in the builder, a variant it does not have, so the builder shows A. It has ${has.join(', ')}.`,
     element.id
   );
 };
 
 /**
- * The space's A/B tests: each named, its split a share of visitors, its two variants in place — and the tests that
- * share an experiment agreeing on its split, since only the first one met is read.
+ * The space's A/B tests: each named, its variants in place with a weight each, the builder shown one of them — and the
+ * tests that share an experiment agreeing on its weights, since only the first one met is read.
  */
 export const lintExperiments = (ctx: LintContext): void => {
-  const splits = new Map<string, { split: number; id: string }>();
+  const firsts = new Map<string, { weights: number[]; id: string }>();
   for (const { element, flat } of allElements(ctx.schema)) {
     if (element.definition.type !== AB_TEST_TYPE) {
       continue;
     }
 
-    lintVariants(ctx, element, flat);
-    const { experiment, split = DEFAULT_EXPERIMENT_SPLIT } = element.attributes;
-    if (!isExperimentSplit(split)) {
-      ctx.error(
-        'experiment-split',
-        `A/B test "${element.id}" has \`split: ${JSON.stringify(split)}\`. It is the share of visitors who see variant B: a whole number from 0 to 100 — \`split: 50\` for half. 0 or 100 ends the experiment, showing everybody one side.`,
-        element.id
-      );
-    }
-
-    const name = lintName(ctx, element, experiment);
-    if (name === undefined || !isExperimentSplit(split)) {
+    const variants = lintVariants(ctx, element, flat);
+    const weights = lintWeights(ctx, element, variants);
+    lintBuilderVariant(ctx, element, variants.length);
+    const name = lintName(ctx, element, element.attributes.experiment);
+    if (name === undefined || weights === undefined) {
       continue;
     }
 
-    const first = splits.get(name);
+    const first = firsts.get(name);
     if (!first) {
-      splits.set(name, { split, id: element.id });
-    } else if (first.split !== split) {
+      firsts.set(name, { weights, id: element.id });
+    } else if (first.weights.join() !== weights.join()) {
       ctx.warn(
-        'experiment-split-differs',
-        `A/B tests "${first.id}" and "${element.id}" both run the experiment "${name}" — a visitor sees the same side of both — but split it ${first.split}% and ${split}%. Only the first is read: give both \`split: ${first.split}\`, or "${element.id}" an experiment of its own.`,
+        'experiment-weights-differ',
+        `A/B tests "${first.id}" and "${element.id}" both run the experiment "${name}" — a visitor sees the same variant of both — but weigh their variants ${first.weights.join('/')} and ${weights.join('/')}. Only the first is read: give both the same weights, or "${element.id}" an experiment of its own.`,
         element.id
       );
     }

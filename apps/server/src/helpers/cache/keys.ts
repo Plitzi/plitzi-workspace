@@ -59,7 +59,7 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * key does not know which keys a space declares, and a space that declares none has no such cookie to split on.
  *
  * So are the variants of the space's A/B tests the visitor keeps: the page draws only the one each shows them. Keyed by
- * the cookie's raw value, so visitors shown the same sides share a page. A visitor with none of a test kept is drawn
+ * the cookie's raw value, so visitors shown the same variants share a page. A visitor with none of a test kept is drawn
  * one there and then, and that page is never kept (`prepareRender`'s `cacheable`): the next such visitor is drawn their
  * own.
  *

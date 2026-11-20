@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { Children, isValidElement } from 'react';
 
-import { isExperimentName, isExperimentVariant } from '@plitzi/sdk-shared/experiments';
+import { indexOfVariant, isExperimentName, isExperimentVariant } from '@plitzi/sdk-shared/experiments';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -15,13 +15,11 @@ export type AbTestProps = {
   className?: string;
   children?: ReactNode;
   /**
-   * The experiment's name — `heroTest`: what keeps a visitor on the same side when they come back, and what
-   * `{{ experiments.heroTest }}` reads. Every A/B test with the same name shows a visitor the same side. Until it has one
-   * the test runs nothing and shows variant A.
+   * The experiment's name — `heroTest`: what keeps a visitor on the same variant when they come back, and what
+   * `{{ experiments.heroTest }}` reads. Every A/B test with the same name shows a visitor the same variant. Until it has
+   * one the test runs nothing and shows variant A. Each variant's share of the visitors is its own `weight`.
    */
   experiment?: string;
-  /** The share of visitors, 0–100, who see variant B; the rest see A. 0 or 100 ends the experiment for everybody. */
-  split?: number;
   /** The variant the builder's canvas shows, so either can be edited. Visitors never see it decided this way. */
   builderVariant?: ExperimentVariant;
 };
@@ -31,9 +29,9 @@ const AbTest = ({ ref, className = '', children, experiment = '', builderVariant
   const [assigned] = useCommonStore('runtime.sources.experiments');
   const visitorVariant = isExperimentName(experiment) ? assigned?.[experiment] : undefined;
   const variant = builder ? builderVariant : isExperimentVariant(visitorVariant) ? visitorVariant : 'a';
-  // The first variant is A and the second B; the other is not drawn at all — not hidden, absent: its providers ask for
-  // nothing and its words are not in the page.
-  const shown = Children.toArray(children).filter(isValidElement)[variant === 'b' ? 1 : 0];
+  // The first variant is A, the second B and so on; the others are not drawn at all — not hidden, absent: their providers
+  // ask for nothing and their words are not in the page.
+  const shown = Children.toArray(children).filter(isValidElement)[indexOfVariant(variant)];
 
   return (
     <RootElement ref={ref} className={clsx('plitzi-component__ab-test', className)}>
