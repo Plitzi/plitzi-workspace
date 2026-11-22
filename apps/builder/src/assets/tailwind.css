@@ -17,6 +17,12 @@
 }
 
 @layer base {
+  /* Tailwind 4 gives a button the arrow: every control the builder draws says it can be pressed, as plitzi-ui's do. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   .dark {
     color-scheme: dark;
     color: theme(--color-zinc-200);

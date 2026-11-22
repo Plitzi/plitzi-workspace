@@ -97,6 +97,7 @@ export class PackError extends Error {}
 interface Declaration {
   type: string;
   contentAttributes?: string[];
+  ancestorType?: string;
   content: {
     attributes: Record<string, unknown>;
     definition: { label: string; description?: string } & Record<string, unknown>;
@@ -141,6 +142,14 @@ const checkDeclaration = (value: unknown, where: string): Declaration => {
           'one of its attributes. List the attributes a content editor may change — its words, a link, a picture.'
       );
     }
+  }
+
+  const { ancestorType } = value;
+  if (ancestorType !== undefined && (typeof ancestorType !== 'string' || !ancestorType)) {
+    throw new PackError(
+      `${where}: \`ancestorType\` is ${JSON.stringify(ancestorType)}. Name the type of the element this one only works ` +
+        "inside — `ancestorType: 'seatMap'` — or leave it out."
+    );
   }
 
   // Checked field by field just above; the cast only names the shape those checks established.
@@ -435,15 +444,20 @@ export const packPlugin = async ({
         ({
           type,
           contentAttributes,
+          ancestorType,
           content: { attributes, definition: elementDefinition, builder, defaultStyle }
-        }): [string, Omit<Declaration['content'], 'market'> & Pick<Declaration, 'contentAttributes'>] => [
+        }): [
+          string,
+          Omit<Declaration['content'], 'market'> & Pick<Declaration, 'contentAttributes' | 'ancestorType'>
+        ] => [
           type,
           {
             attributes,
             definition: elementDefinition,
             builder,
             defaultStyle,
-            ...(contentAttributes ? { contentAttributes } : {})
+            ...(contentAttributes ? { contentAttributes } : {}),
+            ...(ancestorType ? { ancestorType } : {})
           }
         ]
       )

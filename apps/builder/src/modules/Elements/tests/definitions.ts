@@ -31,7 +31,8 @@ export const definitionOf = (
     description,
     items,
     initialItems,
-    canDragDrop
+    canDragDrop,
+    ancestorType
   }: {
     label?: string;
     category?: string;
@@ -39,6 +40,7 @@ export const definitionOf = (
     items?: string[];
     initialItems?: string[];
     canDragDrop?: boolean;
+    ancestorType?: string;
   } = {}
 ): ComponentDefinition => ({
   type,
@@ -59,6 +61,7 @@ export const definitionOf = (
     ...(description ? { description } : {})
   },
   ...(initialItems ? { initialItems } : {}),
+  ...(ancestorType ? { ancestorType } : {}),
   assets: [],
   assetsSettings: [],
   manifest: MANIFEST,

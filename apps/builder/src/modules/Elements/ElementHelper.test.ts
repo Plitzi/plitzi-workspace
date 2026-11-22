@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { categoryDisplay, definitionsByCategory, getInitialItems, makeIdMinter, summaryOf } from './ElementHelper';
+import {
+  ancestorTypeFor,
+  categoryDisplay,
+  definitionsByCategory,
+  getInitialItems,
+  hoverTextOf,
+  makeIdMinter,
+  summaryOf
+} from './ElementHelper';
 import { definitionOf } from './tests/definitions';
 
 import type { Schema } from '@plitzi/sdk-shared';
@@ -72,16 +80,55 @@ describe('the elements panel’s catalog', () => {
     const listed = definitionsByCategory(definitions, '');
 
     expect(listed.map(([category]) => category)).toEqual(['basic', 'structure', 'Tickets', 'advanced']);
-    expect(listed[0][1].map(definition => definition.definition.label)).toEqual(['Button', 'Text']);
-    expect(listed.flatMap(([, list]) => list.map(definition => definition.type))).not.toContain('page');
+    expect(listed[0][1].map(({ definition }) => definition.definition.label)).toEqual(['Button', 'Text']);
+    expect(listed.flatMap(([, list]) => list.map(({ definition }) => definition.type))).not.toContain('page');
   });
 
   it('finds an element by its label or its type, whatever their case', () => {
-    expect(definitionsByCategory(definitions, '  SEAT ').flatMap(([, list]) => list.map(each => each.type))).toEqual([
-      'seats'
-    ]);
-    expect(definitionsByCategory(definitions, 'blockhtml')[0][1][0].type).toBe('blockHtml');
+    expect(
+      definitionsByCategory(definitions, '  SEAT ').flatMap(([, list]) => list.map(({ definition }) => definition.type))
+    ).toEqual(['seats']);
+    expect(definitionsByCategory(definitions, 'blockhtml')[0][1][0].definition.type).toBe('blockHtml');
     expect(definitionsByCategory(definitions, 'nothing like it')).toEqual([]);
+  });
+
+  it('lists each part right after the element it goes inside, saying which — the rest by their label', () => {
+    const testing = {
+      variant: definitionOf('variant', { label: 'A/B Variant', category: 'testing', ancestorType: 'abTest' }),
+      abTest: definitionOf('abTest', { label: 'A/B Test', category: 'testing' }),
+      audience: definitionOf('audience', { label: 'Audience', category: 'testing' }),
+      audienceVariant: definitionOf('audienceVariant', {
+        label: 'Audience Variant',
+        category: 'testing',
+        ancestorType: 'audience'
+      }),
+      wide: definitionOf('wide', { label: 'Banner', category: 'testing' })
+    };
+    const [[, listed]] = definitionsByCategory(testing, '');
+
+    expect(listed.map(({ definition, partOf }) => [definition.type, partOf])).toEqual([
+      ['abTest', undefined],
+      ['variant', 'A/B Test'],
+      ['audience', undefined],
+      ['audienceVariant', 'Audience'],
+      ['wide', undefined]
+    ]);
+    // Found alone, a part still says what it goes inside.
+    const [[, found]] = definitionsByCategory(testing, 'a/b variant');
+    expect(found).toEqual([{ definition: testing.variant, partOf: 'A/B Test' }]);
+  });
+
+  it('reads what a part goes inside off a plugin’s manifest, and off a built-in’s own declaration', () => {
+    expect(ancestorTypeFor('seat', definitionOf('seat', { ancestorType: 'seatMap' }))).toBe('seatMap');
+    expect(ancestorTypeFor('abTestVariant', undefined)).toBe('abTest');
+    expect(ancestorTypeFor('container', undefined)).toBeUndefined();
+  });
+
+  it('says on hover what an element is, and what a part goes inside', () => {
+    expect(hoverTextOf('A/B Variant', 'One variant.', 'A/B Test')).toBe(
+      'A/B Variant — goes inside A/B Test — One variant.'
+    );
+    expect(hoverTextOf('Text', '')).toBe('Text');
   });
 
   it('shows a known category by its name and icon, and a plugin’s by the name it gave', () => {

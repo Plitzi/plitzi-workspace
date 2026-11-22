@@ -29,7 +29,7 @@ const getComponentDefinition = (
     } = pluginManifest;
 
     const componentDefinitions = Object.values(get(pluginManifest, 'pluginSchema', {})).reduce((acum, component) => {
-      const { definition, builder, defaultStyle, attributes, contentAttributes } = component;
+      const { definition, builder, defaultStyle, attributes, contentAttributes, ancestorType } = component;
       let subPlugins: string[] = [];
       if (definition.type === type) {
         subPlugins = Object.keys(omit(pluginSchema, [type]));
@@ -42,6 +42,7 @@ const getComponentDefinition = (
           attributes,
           builder,
           ...(contentAttributes ? { contentAttributes } : {}),
+          ...(ancestorType ? { ancestorType } : {}),
           defaultStyle,
           definition,
           market: { owner, verified, license, website, backgroundColor, icon, category: name },

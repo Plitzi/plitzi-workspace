@@ -9,6 +9,11 @@ export type PluginSchema = {
   definition: Element['definition'];
   /** The attributes a role that edits the content and not the design may change; none, it may change none. */
   contentAttributes?: string[];
+  /**
+   * The element this one only works somewhere inside — a carousel's track, an A/B test's variant: the builder's
+   * catalogue lists it after that one, as a part of it.
+   */
+  ancestorType?: string;
   defaultStyle: {
     name: string;
     displayMode: DisplayMode;

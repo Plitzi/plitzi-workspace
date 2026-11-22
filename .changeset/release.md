@@ -45,6 +45,10 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
 - **Trying them in the builder.** While editing, an A/B test and an audience show the variant their settings name; the
   canvas's preview shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as
   the canvas is sized), the language, returning or not, the variant of each A/B test and the date time windows are read at.
+- **The builder's catalogue says which element is a part of another.** An element that only works inside another
+  (`ancestorType`: an A/B test's variant, an audience's, a carousel's track) is listed right after it, its icon drawn
+  as a piece and "in A/B Test" under its name. A plugin says it the same way — `ancestorType` in its declaration,
+  carried by `plitzi plugin pack` into its manifest. Every control the builder draws shows the pointer.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.
 

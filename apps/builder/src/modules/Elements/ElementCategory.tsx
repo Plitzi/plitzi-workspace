@@ -1,10 +1,10 @@
 import Element from './Element';
 import { categoryDisplay } from './ElementHelper';
 
-import type { ComponentDefinition } from '@plitzi/sdk-shared';
+import type { CatalogEntry } from './ElementHelper';
 
 export type ElementCategoryProps = {
-  components: ComponentDefinition[];
+  components: CatalogEntry[];
   category: string;
   /** Said above the grid — when a search lists several categories at once. */
   titled?: boolean;
@@ -22,8 +22,8 @@ const ElementCategory = ({ components, category, titled = false }: ElementCatego
         </span>
       )}
       <div className="grid grid-cols-3 gap-1">
-        {components.map(component => (
-          <Element key={component.definition.type} component={component} />
+        {components.map(({ definition, partOf }) => (
+          <Element key={definition.definition.type} component={definition} partOf={partOf} />
         ))}
       </div>
     </section>

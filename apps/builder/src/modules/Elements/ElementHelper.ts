@@ -1,5 +1,6 @@
 import { set, pick, cloneDeep, get } from '@plitzi/plitzi-ui/helpers';
 
+import { ancestorTypeOf } from '@plitzi/sdk-elements/elements/declarations';
 import { documentIds, randomElementId } from '@plitzi/sdk-schema';
 
 import type { ComponentDefinition, Element, Schema } from '@plitzi/sdk-shared';
@@ -105,14 +106,75 @@ export const summaryOf = (definition: ComponentDefinition): string => {
   return end === -1 ? description : description.slice(0, end + 1);
 };
 
+/** What the catalog says of an element on hover: its name, where it goes when it is a part, and what it is. */
+export const hoverTextOf = (label: string, summary: string, partOf?: string): string =>
+  [label, partOf ? `goes inside ${partOf}` : '', summary].filter(Boolean).join(' — ');
+
+/**
+ * The type an element only works somewhere inside — a carousel's track, an A/B test's variant — read where its
+ * declaration says it: a plugin's in its manifest, over a built-in type of the same name; a built-in's in its own.
+ */
+export const ancestorTypeFor = (type: string, registered: ComponentDefinition | undefined): string | undefined =>
+  registered && 'manifest' in registered ? registered.ancestorType : ancestorTypeOf(type);
+
+/** The type an element is placed as — a plugin's `type` is its package's, shared by every element it ships. */
+const typeOf = (definition: ComponentDefinition): string => definition.definition.type;
+
+/** One element of the catalog, and — when it is a part of another — that element's label: what it goes inside. */
+export type CatalogEntry = { definition: ComponentDefinition; partOf?: string };
+
+/**
+ * One category's elements by their label, each part right after the element it goes inside — A/B Test, then its
+ * variant — so the catalog shows which is the container. A part whose container is listed elsewhere keeps its place.
+ */
+const containersFirst = (
+  list: ComponentDefinition[],
+  definitions: Record<string, ComponentDefinition>
+): CatalogEntry[] => {
+  const sorted = [...list].sort((a, b) => a.definition.label.localeCompare(b.definition.label));
+  const listed = new Set(sorted.map(typeOf));
+  const partsOf = new Map<string, ComponentDefinition[]>();
+  const roots: ComponentDefinition[] = [];
+  for (const definition of sorted) {
+    const container = ancestorTypeFor(typeOf(definition), definition);
+    if (container && container !== typeOf(definition) && listed.has(container)) {
+      partsOf.set(container, [...(partsOf.get(container) ?? []), definition]);
+    } else {
+      roots.push(definition);
+    }
+  }
+
+  const entryOf = (definition: ComponentDefinition): CatalogEntry => {
+    const container = ancestorTypeFor(typeOf(definition), definition);
+    const label =
+      container && Object.hasOwn(definitions, container) ? definitions[container].definition.label : undefined;
+
+    return label ? { definition, partOf: label } : { definition };
+  };
+  const withParts = (definition: ComponentDefinition, seen: Set<string>): CatalogEntry[] => {
+    seen.add(typeOf(definition));
+
+    return [
+      entryOf(definition),
+      ...(partsOf.get(typeOf(definition)) ?? [])
+        .filter(part => !seen.has(typeOf(part)))
+        .flatMap(part => withParts(part, seen))
+    ];
+  };
+  const seen = new Set<string>();
+
+  return roots.flatMap(definition => withParts(definition, seen));
+};
+
 /**
  * The catalog as the elements panel lists it: every definition an author can drag in whose label or type matches
- * `filter`, grouped by category — the categories in the panel's order, the elements in each by their label.
+ * `filter`, grouped by category — the categories in the panel's order, the elements in each by their label, each part
+ * after its container.
  */
 export const definitionsByCategory = (
   definitions: Record<string, ComponentDefinition>,
   filter: string
-): [string, ComponentDefinition[]][] => {
+): [string, CatalogEntry[]][] => {
   const needle = filter.trim().toLowerCase();
   const byCategory = new Map<string, ComponentDefinition[]>();
   for (const definition of Object.values(definitions)) {
@@ -130,9 +192,6 @@ export const definitionsByCategory = (
   }
 
   return [...byCategory]
-    .map(([category, list]): [string, ComponentDefinition[]] => [
-      category,
-      [...list].sort((a, b) => a.definition.label.localeCompare(b.definition.label))
-    ])
+    .map(([category, list]): [string, CatalogEntry[]] => [category, containersFirst(list, definitions)])
     .sort(([a], [b]) => rankOf(a) - rankOf(b) || a.localeCompare(b));
 };

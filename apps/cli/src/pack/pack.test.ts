@@ -371,6 +371,29 @@ describe('what is refused, and why', () => {
     });
   });
 
+  it('a part’s container that is not a type — and carries the one that is into the manifest', async () => {
+    const seat = (ancestorType: unknown) => ({
+      'index.ts': 'export default {};\n',
+      'declaration.ts': `export default ${JSON.stringify({
+        type: 'seat',
+        ancestorType,
+        content: { attributes: {}, definition: { label: 'Seat' }, builder: {}, market: {}, defaultStyle: {} }
+      })};\n`
+    });
+
+    await inTemp(async dir => {
+      await writeFiles(path.join(dir, 'src/plugins/Seat'), seat(''));
+      await expect(pack(dir, [path.join(dir, 'src/plugins/Seat')])).rejects.toThrow('`ancestorType` is ""');
+
+      await writeFiles(path.join(dir, 'src/plugins/Seat'), seat('seatMap'));
+      await pack(dir, [path.join(dir, 'src/plugins/Seat')]);
+      const manifest = JSON.parse(await fs.readFile(path.join(dir, 'dist/out/plugin-manifest.json'), 'utf-8')) as {
+        pluginSchema: Record<string, { ancestorType?: string }>;
+      };
+      expect(manifest.pluginSchema.seat.ancestorType).toBe('seatMap');
+    });
+  });
+
   it('two elements of one type', async () => {
     await inTemp(async dir => {
       await element(dir, 'seat-picker', 'Seats');

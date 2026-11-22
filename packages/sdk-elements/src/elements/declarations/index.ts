@@ -182,6 +182,19 @@ export const contentAttributesByType: Readonly<Record<string, readonly string[]>
 /** The content attributes of `type`; none for a type no built-in element declares — it has nothing to edit there. */
 export const contentAttributesOf = (type: string): readonly string[] => contentAttributesByType[type] ?? [];
 
+/**
+ * Each part's container (`ancestorType`): the type a sub-element only works inside — the builder's catalogue lists it
+ * after that one, as its part.
+ */
+export const ancestorTypeByType: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.values(elementDeclarations).flatMap(declaration =>
+    'ancestorType' in declaration ? [[declaration.type, declaration.ancestorType]] : []
+  )
+);
+
+/** The type `type` only works inside, for a built-in element; none for one that goes anywhere. */
+export const ancestorTypeOf = (type: string): string | undefined => ancestorTypeByType[type];
+
 // What the declarations are checked with, from beside the elements that own them — as readable outside a browser.
 export { interactionBasicTriggers } from '../../Element/helpers/elementConstants';
 export { DOCUMENT_SCROLLS, isDocumentScroll } from '../internal/Page/declaration';
