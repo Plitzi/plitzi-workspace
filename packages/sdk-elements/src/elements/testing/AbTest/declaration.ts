@@ -22,8 +22,9 @@ const declaration = elementDeclaration<AbTestAttributes>()({
     definition: {
       label: 'A/B Test',
       description:
-        'An A/B test: two to five `abTestVariant`s (A first, then B…E), of which each visitor sees one — drawn in ' +
-        "proportion to the variants' `weight`s — and keeps seeing it when they reload or come back, through a cookie. " +
+        'Shows each visitor one of its variants, and the same one when they reload or come back. It holds two to ' +
+        "five `abTestVariant`s (A first, then B…E); a visitor's is drawn in proportion to the variants' `weight`s and " +
+        'kept in a cookie. ' +
         'The server draws only that variant. Its `experiment` names it: every A/B test with the same name shows a ' +
         "visitor the same variant, and `{{ experiments.<name> }}` reads it (`'a'`, `'b'`…) for a flow to report. A " +
         'variant at weight 0 is shown to nobody; one left with a weight ends the experiment, everybody sees it.',

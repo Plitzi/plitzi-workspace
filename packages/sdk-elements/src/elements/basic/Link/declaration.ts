@@ -33,7 +33,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
     definition: {
       label: 'Link',
       description:
-        'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
+        'Moves the user to another page of the site or to an external address (its `mode`/`href` decide which). Use ' +
         'this to go page-to-page rather than a button + interaction. Its words are its own `content` and an icon beside ' +
         'them its `icon` (Font Awesome classes) — no text or fontAwesome element inside it for them. It marks itself ' +
         'current on the page it leads to (`aria-current`, the `current` style state); its `current` set to `section` ' +

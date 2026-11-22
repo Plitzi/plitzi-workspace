@@ -96,14 +96,21 @@ const rankOf = (category: string): number => {
   return known === -1 ? CATEGORY_ORDER.length : known;
 };
 
-/** A definition's description, cut to its first sentence: what the panel says of it on hover. */
+/**
+ * A definition's description, cut to its first sentence — up to a full stop, or to a colon that a long one goes on
+ * after (said as a full stop): what the panel says of it on hover. A description begins with that sentence; a lead-in
+ * such as "An A/B test:" is no summary (`ElementHelper.test.ts` holds every built-in to it).
+ */
 export const summaryOf = (definition: ComponentDefinition): string => {
   // Declared with the element (what authoring and the MCP describe it by), though the schema's type does not name it.
   const declared = definition.definition;
   const description = 'description' in declared && typeof declared.description === 'string' ? declared.description : '';
   const end = description.search(/[.:](\s|$)/);
 
-  return end === -1 ? description : description.slice(0, end + 1);
+  const sentence = end === -1 ? description : `${description.slice(0, end)}.`;
+
+  // A tooltip is plain text: a name written as code (`abTestVariant`) reads as the name.
+  return sentence.replaceAll('`', '');
 };
 
 /** What the catalog says of an element on hover: its name, where it goes when it is a part, and what it is. */

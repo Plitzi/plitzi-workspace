@@ -16,8 +16,8 @@ const declaration = elementDeclaration<AudienceVariantAttributes>()({
     definition: {
       label: 'Audience Variant',
       description:
-        'One variant of an audience, for the visitors its `when` matches; with no conditions, for everybody the ' +
-        'variants before it did not take. Only the variant a visitor is shown is drawn.',
+        'One of an audience’s variants, shown to the visitors its rule matches — with no conditions, to everybody ' +
+        'the variants before it did not take. Its rule is `when`; only the variant a visitor is shown is drawn.',
       items: []
     },
     builder: {

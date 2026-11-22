@@ -15,7 +15,8 @@ const declaration = elementDeclaration<AudienceAttributes>()({
     definition: {
       label: 'Audience',
       description:
-        'Shows each visitor the first of its `audienceVariant`s whose rule (`when`) they match: a rule group over ' +
+        'Shows each visitor the first of its variants whose rule they match. Each `audienceVariant`’s `when` is a ' +
+        'rule group over ' +
         'what a flag sees — `environment`, `hostname`, `routeParams.<name>`, `queryParams.<name>` (`utm_source`…), ' +
         '`user.authenticated`, `user.roles`… — and the visitor: `visitor.returning`, `visitor.language` (`es`, ' +
         '`en`), `visitor.device` (`mobile`, `tablet`, `desktop`). A variant with no conditions matches everybody: ' +

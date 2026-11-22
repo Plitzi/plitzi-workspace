@@ -16,8 +16,8 @@ const declaration = elementDeclaration<AbTestVariantAttributes>()({
     definition: {
       label: 'A/B Variant',
       description:
-        'One variant of an abTest — A, B… by its place — shown to its `weight`’s share of the visitors (0–100, against ' +
-        'the others’). Only the variant a visitor is shown is drawn.',
+        'One of an A/B test’s variants — A, B… by its place — shown to its share of the visitors. Its share is its ' +
+        '`weight` (0–100, against the others’); only the variant a visitor is shown is drawn.',
       items: []
     },
     builder: {

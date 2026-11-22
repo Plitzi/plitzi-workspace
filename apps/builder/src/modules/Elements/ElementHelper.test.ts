@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
+
 import {
   ancestorTypeFor,
   categoryDisplay,
@@ -141,6 +143,24 @@ describe('the elements panel’s catalog', () => {
       'Rows of data.'
     );
     expect(summaryOf(definitionOf('map', { description: 'A map' }))).toBe('A map');
+    expect(summaryOf(definitionOf('track', { description: 'Where it shows its slides: one per item.' }))).toBe(
+      'Where it shows its slides.'
+    );
     expect(summaryOf(definitionOf('box'))).toBe('');
+    expect(summaryOf(definitionOf('row', { description: 'One of a `list`’s rows.' }))).toBe('One of a list’s rows.');
+  });
+
+  it('says every built-in element by a sentence of its own, never a lead-in such as “An A/B test:”', () => {
+    const lacking = Object.values(elementDeclarations).flatMap(({ type, content }) => {
+      const description = 'description' in content.definition ? content.definition.description : '';
+      const summary = summaryOf(definitionOf(type, { description }));
+      const words = summary.split(/\s+/).length;
+      // A colon closes a lead-in when what comes before it is a bare name: "A realtime channel:".
+      const leadIn = /^[^.]*:(\s|$)/.test(description) && words < 5;
+
+      return words < 3 || leadIn ? [[type, summary]] : [];
+    });
+
+    expect(lacking).toEqual([]);
   });
 });
