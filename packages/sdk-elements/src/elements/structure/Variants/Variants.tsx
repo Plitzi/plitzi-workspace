@@ -5,11 +5,11 @@ import { experimentNameOf, indexOfVariant, isExperimentVariant } from '@plitzi/s
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
+import { childOfItem } from './childOfItem';
 import useAudienceScope from '../../../dataSource/useAudienceScope';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
-import { childOfItem } from '../childOfItem';
 
 import type { ChooseBy } from '@plitzi/sdk-shared/variants';
 import type { ReactNode, RefObject } from 'react';

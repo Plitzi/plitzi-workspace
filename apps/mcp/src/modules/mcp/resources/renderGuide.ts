@@ -19,9 +19,12 @@ export const RENDER_GUIDE_URI = 'plitzi://render/guide';
 export const RENDER_TYPES_URI = 'plitzi://render/types';
 
 // Categories an offline widget can use: layout, content, media, forms and data providers (apiContainer fetches at
-// runtime). Excluded — 'internal' (page/loading, not authorable), 'advanced' (raw HTML/JSX/plugin escape hatches) and
-// 'testing' (an A/B test splits a site's visitors; a widget has none to split).
+// runtime). Excluded — 'internal' (page/loading, not authorable) and 'advanced' (raw HTML/JSX/plugin escape hatches).
 const RENDER_TYPE_CATEGORIES = new Set(['structure', 'basic', 'media', 'form', 'provider']);
+
+// Of those, what a widget has nothing to choose by: variants pick one per visitor — by chance, kept in the site's cookie,
+// or by what the visit says (its campaign, its language) — and a widget in a chat has no visit of a site.
+const RENDER_EXCLUDED_TYPES = new Set(['variants', 'variantItem']);
 
 // The one 'advanced' type a widget is offered, and only for what it is good at here: an inline <svg>. Vector marks,
 // sparklines and background shapes are what a widget cannot draw any other way, and every other route to one (a
@@ -44,7 +47,7 @@ type RenderTypeInfo = { label?: string; category?: string; description?: string 
 const renderTypes = (): { note: string; types: Record<string, RenderTypeInfo> } => {
   const types: Record<string, RenderTypeInfo> = {};
   for (const [name, info] of Object.entries(elementCatalog)) {
-    if (RENDER_TYPE_CATEGORIES.has(info.category)) {
+    if (RENDER_TYPE_CATEGORIES.has(info.category) && !RENDER_EXCLUDED_TYPES.has(name)) {
       types[name] = { label: info.label, category: info.category, description: info.description };
     }
   }

@@ -27,7 +27,7 @@ const declaration = elementDeclaration<VariantItemAttributes>()({
       itemsNotAllowed: [VARIANT_ITEM_TYPE]
     },
     market: {
-      category: 'testing',
+      category: 'structure',
       icon: 'fa-solid fa-code-branch'
     },
     defaultStyle: {

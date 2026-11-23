@@ -95,14 +95,14 @@ describe('the elements panel’s catalog', () => {
   });
 
   it('lists each part right after the element it goes inside, saying which — the rest by their label', () => {
-    const testing = {
-      variant: definitionOf('variantItem', { label: 'Variant', category: 'testing', ancestorType: 'variants' }),
-      variants: definitionOf('variants', { label: 'Variants', category: 'testing' }),
-      carousel: definitionOf('carousel', { label: 'Carousel', category: 'testing' }),
-      track: definitionOf('carouselTrack', { label: 'Carousel Track', category: 'testing', ancestorType: 'carousel' }),
-      wide: definitionOf('wide', { label: 'Banner', category: 'testing' })
+    const structure = {
+      variant: definitionOf('variantItem', { label: 'Variant', category: 'structure', ancestorType: 'variants' }),
+      variants: definitionOf('variants', { label: 'Variants', category: 'structure' }),
+      carousel: definitionOf('carousel', { label: 'Carousel', category: 'structure' }),
+      track: definitionOf('carouselTrack', { label: 'Carousel Track', category: 'structure', ancestorType: 'carousel' }),
+      wide: definitionOf('wide', { label: 'Banner', category: 'structure' })
     };
-    const [[, listed]] = definitionsByCategory(testing, '');
+    const [[, listed]] = definitionsByCategory(structure, '');
 
     expect(listed.map(({ definition, partOf }) => [definition.type, partOf])).toEqual([
       ['wide', undefined],
@@ -112,8 +112,8 @@ describe('the elements panel’s catalog', () => {
       ['variantItem', 'Variants']
     ]);
     // Found alone, a part still says what it goes inside.
-    const [[, found]] = definitionsByCategory(testing, 'variantItem');
-    expect(found).toEqual([{ definition: testing.variant, partOf: 'Variants' }]);
+    const [[, found]] = definitionsByCategory(structure, 'variantItem');
+    expect(found).toEqual([{ definition: structure.variant, partOf: 'Variants' }]);
   });
 
   it('reads what a part goes inside off a plugin’s manifest, and off a built-in’s own declaration', () => {

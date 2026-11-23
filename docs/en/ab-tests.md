@@ -4,7 +4,7 @@ A `variants` shows each visitor one of its variants — chosen **by chance** (an
 visitors, and a visitor kept on theirs) or **by rules** (an audience: the first variant whose rule they match). This
 page is how it works across the stack: the element, who draws a visitor's variant, where it is kept, what the page
 server's cache does with it, and what the builder shows. How to write one is the authoring skill's (`feature-flags.md` §
-Variants); the element's attributes are its declaration's (`packages/sdk-elements/src/elements/testing/Variants`).
+Variants); the element's attributes are its declaration's (`packages/sdk-elements/src/elements/structure/Variants`).
 
 ## The element
 
@@ -25,10 +25,11 @@ words are not in the page; a visitor no variant is for (by rules, with no "every
 takes no room. Two Variants elements with the same `experiment` share it: a visitor sees the same variant of both (a headline and
 the button under it), and the first one met gives the weights.
 
-Its category in the builder is **Testing** (`market.category: 'testing'`), the elements a page is measured with rather
-than made of. Its settings list its variants — by chance with each share and the percent it makes, by rules with each
+Its category in the builder is **Structure** (`market.category: 'structure'`), beside `timeWindow`: both show one part
+of a page or another by a condition, and by rules a `variants` is personalisation as much as a test. Its settings list its variants — by chance with each share and the percent it makes, by rules with each
 rule in words — with the one the canvas shows, and the way to add, select and remove one. `plitzi_render`'s offline
-widgets leave it out: a widget has no visitors to split.
+widgets leave it out (by type — the rest of Structure is theirs): a widget in a chat has no visit of a site to
+choose by.
 
 ## Who draws a visitor's variant
 

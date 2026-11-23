@@ -34,7 +34,7 @@ const declaration = elementDeclaration<VariantsAttributes>()({
       itemsAllowed: [VARIANT_ITEM_TYPE]
     },
     market: {
-      category: 'testing',
+      category: 'structure',
       icon: 'fa-solid fa-shuffle'
     },
     defaultStyle: {

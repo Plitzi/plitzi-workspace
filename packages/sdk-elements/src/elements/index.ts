@@ -42,7 +42,7 @@ import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
 import TimeWindow from './structure/TimeWindow';
-import Variants from './testing/Variants';
+import Variants from './structure/Variants';
 // Testing
 
 export * from './advanced/BlockHtml';
@@ -81,7 +81,7 @@ export * from './structure/Pagination';
 export * from './structure/Carousel';
 export * from './structure/TabContainer';
 export * from './structure/TimeWindow';
-export * from './testing/Variants';
+export * from './structure/Variants';
 
 export {
   NodeHtml,

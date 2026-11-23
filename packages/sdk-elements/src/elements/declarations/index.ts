@@ -50,8 +50,8 @@ import TabContainerBodyDeclaration from '../structure/TabContainer/TabContainerB
 import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContainerHeader/declaration';
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
 import TimeWindowDeclaration from '../structure/TimeWindow/declaration';
-import VariantsDeclaration from '../testing/Variants/declaration';
-import VariantItemDeclaration from '../testing/Variants/VariantItem/declaration';
+import VariantsDeclaration from '../structure/Variants/declaration';
+import VariantItemDeclaration from '../structure/Variants/VariantItem/declaration';
 
 export const elementDeclarations = {
   ApiContainer: ApiContainerDeclaration,

@@ -42,8 +42,8 @@ import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings
 import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Settings';
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
 import TimeWindow from './structure/TimeWindow/Settings';
-import Variants from './testing/Variants/Settings';
-import VariantItem from './testing/Variants/VariantItem/Settings';
+import Variants from './structure/Variants/Settings';
+import VariantItem from './structure/Variants/VariantItem/Settings';
 
 import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import {
   readRenderResource,
   RENDER_GUIDE_URI,
+  RENDER_TYPES_URI,
   renderGuideCore,
   renderGuideText,
   renderGuideTopics,
@@ -42,5 +45,14 @@ describe('the render guide, whole and in parts', () => {
     }
 
     expect(renderGuideCore.length).toBeLessThan(renderGuideText.length / 2);
+  });
+
+  it('offers a widget the layout types, but not the variants: a widget in a chat has no visitor to choose for', () => {
+    const catalog = readRenderResource(RENDER_TYPES_URI)?.data;
+    const types = isRecord(catalog) && isRecord(catalog.types) ? Object.keys(catalog.types) : [];
+
+    expect(types).toEqual(expect.arrayContaining(['container', 'timeWindow']));
+    expect(types).not.toContain('variants');
+    expect(types).not.toContain('variantItem');
   });
 });
