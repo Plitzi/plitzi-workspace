@@ -17,6 +17,7 @@ const declaration = elementDeclaration<ImageAttributes>()({
   content: {
     attributes: {
       src: '',
+      fallbackSrc: '',
       alt: '',
       decorative: false,
       fetchPriority: 'auto',
@@ -27,7 +28,9 @@ const declaration = elementDeclaration<ImageAttributes>()({
       description:
         'Displays an image from a URL. It starts 140px wide and as tall as the picture is for that width (`height: ' +
         'auto`, never wider than where it sits): a class that sets only a `width` or an `aspect-ratio` is obeyed, and ' +
-        '`object-fit` decides how the picture fills a box that sets both.'
+        '`object-fit` decides how the picture fills a box that sets both. `fallbackSrc` is shown when `src` is empty ' +
+        'or does not load (a product without a photo yet, a feed whose picture is gone), and the SDK’s placeholder when ' +
+        'that fails too; a failed `src` is said on the image (`data-plitzi-failed`).'
     },
     market: {
       category: 'media',

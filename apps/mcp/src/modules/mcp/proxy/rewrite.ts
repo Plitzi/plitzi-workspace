@@ -11,9 +11,9 @@ import type {
   StyleValue
 } from '@plitzi/sdk-shared';
 
-// Where a remote URL can sit in an authored widget. `src`/`poster` are the props the media elements read;
+// Where a remote URL can sit in an authored widget. `src`/`poster`/`fallbackSrc` are the props the media elements read;
 // `content`/`html` are the raw-markup elements (blockHtml, markdown), where a URL is embedded in text.
-const URL_ATTRIBUTES = ['src', 'poster'];
+const URL_ATTRIBUTES = ['src', 'poster', 'fallbackSrc'];
 const MARKUP_ATTRIBUTES = ['content', 'html'];
 
 // The element that fetches at runtime: its `query` prop is the URL, and the response feeds every binding hanging

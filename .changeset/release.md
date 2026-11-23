@@ -23,3 +23,5 @@ left.
   Drawn by the server at the instant it renders and counting on in the browser; at zero it runs `onCountdownEnd`
   (`onCountdownEnd()` in authoring). Its `unit`, `value` and `label` slots style it. The lint refuses a `to` without
   its offset (`countdown-to`) and warns of one with nothing to count to (`countdown-without-end`).
+- **`image` takes a `fallbackSrc`**: shown when `src` is empty or does not load, before the SDK's own placeholder; a
+  failed `src` is still said on the image (`data-plitzi-failed`).

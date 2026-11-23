@@ -90,6 +90,36 @@ describe('Image Tests', () => {
     expect(image.getAttribute('src')).toBe('https://cdn.test/found.png');
   });
 
+  it('draws its fallback for a source that is empty or failed, and its own placeholder once that fails too', () => {
+    const { container, rerender } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="https://cdn.test/missing.png" fallbackSrc="https://cdn.test/no-photo.png" />
+      </ElementContext>
+    );
+    const image = container.querySelector('img');
+    if (!image) {
+      throw new Error('no img rendered');
+    }
+
+    fireEvent.error(image);
+
+    expect(image.getAttribute('src')).toBe('https://cdn.test/no-photo.png');
+    expect(image.getAttribute('data-plitzi-failed')).toBe('https://cdn.test/missing.png');
+
+    fireEvent.error(image);
+
+    expect(image.getAttribute('src')).toMatch(/^data:image\/svg\+xml;base64,/);
+    expect(image.getAttribute('data-plitzi-failed')).toBe('https://cdn.test/missing.png');
+
+    rerender(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="" fallbackSrc="https://cdn.test/portrait.png" />
+      </ElementContext>
+    );
+
+    expect(image.getAttribute('src')).toBe('https://cdn.test/portrait.png');
+  });
+
   it('offers another site’s picture at the sizes the page server makes, when it makes them', () => {
     published.endpoint = '/_plitzi/img';
     const { container } = render(

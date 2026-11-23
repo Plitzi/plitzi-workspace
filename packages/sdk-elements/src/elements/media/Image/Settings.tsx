@@ -11,6 +11,7 @@ import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
   src?: string;
+  fallbackSrc?: string;
   alt?: string;
   decorative?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
@@ -24,6 +25,7 @@ type SettingsProps = {
 
 const Settings = ({
   src = '',
+  fallbackSrc = '',
   alt = '',
   decorative = false,
   variables,
@@ -62,6 +64,13 @@ const Settings = ({
           </div>
         )}
       </div>
+      <Input
+        value={fallbackSrc}
+        label="Fallback Url"
+        placeholder="Shown when the Url is empty or does not load"
+        onChange={update.text('fallbackSrc')}
+        size="xs"
+      />
       {!decorative && (
         <Input
           value={alt}

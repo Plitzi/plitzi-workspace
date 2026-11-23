@@ -17,6 +17,11 @@ export type ImageProps = {
   className?: string;
   src?: string;
   /**
+   * What is shown when `src` is empty or does not load — the brand's placeholder for a product, a generic portrait. When
+   * that fails too, or none is given, the SDK's own placeholder.
+   */
+  fallbackSrc?: string;
+  /**
    * What the picture shows, in words — read by screen readers and browser agents in its place, and shown when it
    * cannot load. Say what it is for on this page, not what file it is: "Maya presenting the roadmap", not "photo".
    */
@@ -62,6 +67,7 @@ const Image = ({
   ref,
   className = '',
   src: srcProp,
+  fallbackSrc = '',
   alt: altProp = '',
   decorative = false,
   fetchPriority = 'auto',
@@ -82,23 +88,24 @@ const Image = ({
    * ordinary state of any image fed from an API. The browser treats `src=""` as "the current document", so it
    * re-requests the whole page to put it in an image, and React warns about exactly that.
    */
-  const src = srcProp || fallback;
   const alt = decorative ? '' : altProp;
 
   /**
-   * The source that failed, so the fallback is drawn in its place — and SAID to be.
+   * The sources that failed, so the next is drawn in their place — the author's fallback, then the SDK's — and SAID to
+   * be.
    *
    * State rather than a write to the node: the fallback is a picture that loads, so to the browser a broken image and
    * a working one look the same, and `data-plitzi-failed` is the only thing on the page that tells them apart — for a
-   * test checking every image arrived, and for whoever is looking at a grey box wondering why. Keyed by the source, so
-   * a new `src` gets its own attempt and the marker goes with the old one.
+   * test checking every image arrived, and for whoever is looking at a grey box wondering why. Kept by source, so a new
+   * `src` gets its own attempt and the marker goes with the old one.
    */
-  const [failed, setFailed] = useState<string | undefined>(undefined);
-  const broken = failed === src;
-  const handleError = useCallback(() => setFailed(src), [src]);
-  const shown = broken ? fallback : src;
+  const [failed, setFailed] = useState<readonly string[]>([]);
+  const src = [srcProp, fallbackSrc].find(each => each && !failed.includes(each)) ?? fallback;
+  const broken = Boolean(srcProp) && failed.includes(srcProp ?? '');
+  const ownPlaceholder = src === fallback;
+  const handleError = useCallback(() => setFailed(was => (was.includes(src) ? was : [...was, src])), [src]);
   // Failed is said with its source; nothing given at all — a binding that read nothing — as empty (`emptyMark`).
-  const marker = broken ? { 'data-plitzi-failed': src } : emptyMark(previewMode === true && !srcProp);
+  const marker = broken ? { 'data-plitzi-failed': srcProp } : emptyMark(previewMode === true && !srcProp);
 
   // `auto` is the browser's own choice, which is what leaving the attribute out asks for.
   const loading = loadMode === 'auto' ? undefined : loadMode;
@@ -107,9 +114,9 @@ const Image = ({
   // server publish no endpoint, and keep the picture as it is.
   const [endpoint] = useCommonStore('images.endpoint');
   const resized =
-    previewMode && endpoint && resize && !broken && isResizableImage(src)
+    previewMode && endpoint && resize && !ownPlaceholder && isResizableImage(src)
       ? { src: imageUrl(endpoint, src, FALLBACK_WIDTH), srcSet: imageSrcSet(endpoint, src), sizes }
-      : { src: shown };
+      : { src };
   const dimensions = { ...(width ? { width } : {}), ...(height ? { height } : {}) };
 
   if (!previewMode) {
@@ -117,11 +124,11 @@ const Image = ({
       <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
         <img
           draggable={false}
-          src={shown}
+          src={src}
           alt={alt}
           loading={loading}
           fetchPriority={fetchPriority}
-          onError={broken ? undefined : handleError}
+          onError={ownPlaceholder ? undefined : handleError}
           {...marker}
         />
       </RootElement>
@@ -139,7 +146,7 @@ const Image = ({
       alt={alt}
       loading={loading}
       fetchPriority={fetchPriority}
-      onError={broken ? undefined : handleError}
+      onError={ownPlaceholder ? undefined : handleError}
       {...marker}
     />
   );
