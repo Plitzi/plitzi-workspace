@@ -394,6 +394,12 @@ export type BuilderState = CommonState & {
   visitorSimulation?: Partial<VisitorFacts>;
   /** The instant the canvas's preview is shown at, chosen in the Visitor tab — the editor's clock until then. */
   simulatedAt?: number;
+  /**
+   * The A/B tests the canvas's preview draws by chance, as a visitor's page would — by their shares, the variant laid
+   * in `experiments.qa` — kept across a reload as a visitor's cookie keeps it, drawn again for a new visitor.
+   * Editor-only and never published.
+   */
+  previewDrawn?: string[];
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

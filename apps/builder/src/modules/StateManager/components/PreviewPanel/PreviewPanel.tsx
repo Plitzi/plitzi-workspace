@@ -28,7 +28,7 @@ const countMark = (count: number): ReactNode =>
  */
 const PreviewPanel = () => {
   const [pane, setPane] = useState<Pane>('visitor');
-  const { reloadPage } = use(AppContext);
+  const { reloadPage, newVisitor } = use(AppContext);
   const { visitor } = useCanvasVisitor();
   const [[simulation, experimentsForced, flagsForced, simulatedAt, queryParams]] = useBuilderStore([
     'visitorSimulation',
@@ -45,12 +45,21 @@ const PreviewPanel = () => {
         <span className="text-ui-fg grow text-xs font-semibold">Try the preview as</span>
         <button
           type="button"
-          title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays"
+          title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays, and so do the variants drawn"
           className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px]"
           onClick={reloadPage}
         >
           <i className="fa-solid fa-rotate-right" />
           Reload
+        </button>
+        <button
+          type="button"
+          title="New visitor — a first visit: nothing kept, and the variants set to Draw drawn again by their shares"
+          className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px]"
+          onClick={newVisitor}
+        >
+          <i className="fa-solid fa-user-plus" />
+          New visitor
         </button>
       </div>
       {/* Scrolled rather than cut where the tabs are wider than the panel. */}

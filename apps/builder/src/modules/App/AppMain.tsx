@@ -5,9 +5,11 @@ import { useCallback, useState, useMemo } from 'react';
 import { DevToolsContainer } from '@plitzi/sdk-dev-tools';
 import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
 import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
+import { declaredExperiments } from '@plitzi/sdk-shared/experiments';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { keptOnReload } from '@pmodules/StateManager/helpers';
 import useSimulatedVisitor from '@pmodules/StateManager/hooks/useSimulatedVisitor';
+import { drawnAgain } from '@pmodules/StateManager/previewDraws';
 
 import AppContainer from './AppContainer';
 import AppContext from './AppContext';
@@ -61,12 +63,28 @@ const AppMain = ({
     setMotionReplays(count => count + 1);
   }, []);
   const [pageLoads, setPageLoads] = useState(0);
-  const [getRuntimeState, getSettings] = useBuilderStoreGetter(['runtime.state', 'schema.settings']);
+  const [getRuntimeState, getSettings, getSchema, getShown, getDrawn] = useBuilderStoreGetter([
+    'runtime.state',
+    'schema.settings',
+    'schema',
+    'experiments.qa',
+    'previewDrawn'
+  ]);
   const [, setRuntimeState] = useBuilderStore('runtime.state');
+  const [, setShown] = useBuilderStore('experiments.qa');
   const reloadPage = useCallback(() => {
     setRuntimeState(keptOnReload(getRuntimeState() ?? {}, getSettings()));
     setPageLoads(count => count + 1);
   }, [getRuntimeState, getSettings, setRuntimeState]);
+  const newVisitor = useCallback(() => {
+    const drawn = getDrawn() ?? [];
+    if (drawn.length > 0) {
+      setShown(drawnAgain(declaredExperiments(getSchema()), drawn, getShown() ?? {}));
+    }
+
+    setRuntimeState({});
+    setPageLoads(count => count + 1);
+  }, [getDrawn, getSchema, getShown, setRuntimeState, setShown]);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -94,6 +112,7 @@ const AppMain = ({
       replayMotion,
       pageLoads,
       reloadPage,
+      newVisitor,
       zoom,
       setZoom,
       displayMode,
@@ -117,6 +136,7 @@ const AppMain = ({
       replayMotion,
       pageLoads,
       reloadPage,
+      newVisitor,
       zoom,
       setZoom,
       displayMode,

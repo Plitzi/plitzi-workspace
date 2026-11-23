@@ -14,10 +14,14 @@ import {
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { chooseByOf, variantItemsOf, variantsElementsOf } from '@plitzi/sdk-shared/variants';
 
+import { drawnAgain } from '../../../previewDraws';
+
 import type { Element } from '@plitzi/sdk-shared';
 import type { ExperimentAssignments, ExperimentVariant } from '@plitzi/sdk-shared/experiments';
 
 const NONE: ExperimentAssignments = {};
+
+const NO_NAMES: string[] = [];
 
 type ChanceProps = { element: Element; variants: Element[]; forced: ExperimentAssignments };
 
@@ -27,20 +31,37 @@ type ChanceProps = { element: Element; variants: Element[]; forced: ExperimentAs
  */
 const ChanceCard = ({ element, variants, forced }: ChanceProps) => {
   const [, setForced] = useBuilderStore('experiments.qa');
+  const [drawnNames = NO_NAMES, setDrawnNames] = useBuilderStore('previewDrawn');
   const name = experimentNameOf(element);
   const counted = variants.slice(0, EXPERIMENT_VARIANTS.length);
   const weights = counted.map(weightOf);
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   const picked = name === undefined ? undefined : forced[name];
+  const drawn = name !== undefined && drawnNames.includes(name);
 
   const pick = useCallback(
     (variant: ExperimentVariant | undefined) => {
       if (name !== undefined) {
+        setDrawnNames(drawnNames.filter(each => each !== name));
         setForced(withForcedExperiment(forced, name, variant));
       }
     },
-    [forced, name, setForced]
+    [drawnNames, forced, name, setDrawnNames, setForced]
   );
+
+  // Drawn by its shares as a visitor's page draws it, and kept until a new visitor: a reload keeps it, as the cookie.
+  const handleDraw = useCallback(() => {
+    if (name !== undefined) {
+      setDrawnNames([...drawnNames.filter(each => each !== name), name]);
+      setForced(drawnAgain({ [name]: { weights, builderVariant: 'a' } }, [name], forced));
+    }
+  }, [drawnNames, forced, name, setDrawnNames, setForced, weights]);
+
+  const option = (active: boolean) =>
+    clsx('flex items-baseline gap-1 rounded-md border px-2 py-1 text-[11px]', {
+      'border-primary-400/60 bg-primary-400/10 text-primary-text': active,
+      'border-ui-line text-ui-fg-muted hover:bg-ui-hover': !active
+    });
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -52,15 +73,23 @@ const ChanceCard = ({ element, variants, forced }: ChanceProps) => {
         <button
           type="button"
           role="radio"
-          aria-checked={picked === undefined}
+          aria-checked={!drawn && picked === undefined}
           title="As the element's settings show it"
-          className={clsx('rounded-md border px-2 py-1 text-[11px]', {
-            'border-primary-400/60 bg-primary-400/10 text-primary-text': picked === undefined,
-            'border-ui-line text-ui-fg-muted hover:bg-ui-hover': picked !== undefined
-          })}
+          className={option(!drawn && picked === undefined)}
           onClick={() => pick(undefined)}
         >
           As its settings
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={drawn}
+          title="Drawn by the shares, as a visitor's page draws it: Reload keeps it, New visitor draws again"
+          className={option(drawn)}
+          onClick={handleDraw}
+        >
+          <i className="fa-solid fa-dice self-center text-[10px]" />
+          Draw
         </button>
         {counted.map((variant, index) => {
           const letter = variantAt(index);
@@ -69,17 +98,17 @@ const ChanceCard = ({ element, variants, forced }: ChanceProps) => {
           }
 
           const share = total > 0 ? Math.round((weights[index] / total) * 100) : 0;
+          const isDrawn = drawn && picked === letter;
 
           return (
             <button
               key={variant.id}
               type="button"
               role="radio"
-              aria-checked={picked === letter}
-              title={`${variant.id} — drawn for ${String(share)}% of the visitors`}
-              className={clsx('flex items-baseline gap-1 rounded-md border px-2 py-1 text-[11px]', {
-                'border-primary-400/60 bg-primary-400/10 text-primary-text': picked === letter,
-                'border-ui-line text-ui-fg hover:bg-ui-hover': picked !== letter
+              aria-checked={!drawn && picked === letter}
+              title={`${variant.id} — ${String(share)}% of the visitors${isDrawn ? ' — drawn for this visitor' : ''}`}
+              className={clsx(option(!drawn && picked === letter), {
+                'border-primary-400/60 text-ui-fg border-dashed': isDrawn
               })}
               onClick={() => pick(letter)}
             >
@@ -89,6 +118,12 @@ const ChanceCard = ({ element, variants, forced }: ChanceProps) => {
           );
         })}
       </div>
+      {drawn && picked !== undefined && (
+        <span className="text-ui-fg-subtle text-[11px]">
+          Drawn for this visitor: <b className="text-ui-fg">{picked.toUpperCase()}</b>. Reload keeps it, as their cookie
+          would; New visitor draws again by the shares.
+        </span>
+      )}
       {name === undefined && (
         <span className="text-[11px] text-red-600 dark:text-red-400">
           Its test name cannot be read: it runs nothing.

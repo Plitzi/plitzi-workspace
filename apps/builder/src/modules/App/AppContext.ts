@@ -26,6 +26,11 @@ export type AppContextValue = {
   pageLoads: number;
   /** Reloads the page the preview shows: its state for this visit alone emptied, what it keeps kept, drawn anew. */
   reloadPage: () => void;
+  /**
+   * Shows the preview's page to a new visitor: the tests it draws drawn again by their shares, nothing the page kept —
+   * a first visit's — drawn anew.
+   */
+  newVisitor: () => void;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;
   displayMode: DisplayMode;

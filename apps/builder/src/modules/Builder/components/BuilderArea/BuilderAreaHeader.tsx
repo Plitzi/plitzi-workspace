@@ -45,7 +45,7 @@ const BuilderAreaHeader = ({
     'setSelected'
   ]);
   const { existsPopup, addPopup } = usePopup();
-  const { reloadPage } = use(AppContext);
+  const { reloadPage, newVisitor } = use(AppContext);
   const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
     use(BuilderContext);
   const {
@@ -164,15 +164,26 @@ const BuilderAreaHeader = ({
         <Icon icon="fas fa-home" />
       </div>
       {previewMode && (
-        <button
-          type="button"
-          title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays, and it loads again"
-          aria-label="Reload the page"
-          className="text-ui-fg-subtle hover:text-ui-fg flex"
-          onClick={reloadPage}
-        >
-          <Icon icon="fa-solid fa-rotate-right" />
-        </button>
+        <>
+          <button
+            type="button"
+            title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays, and it loads again"
+            aria-label="Reload the page"
+            className="text-ui-fg-subtle hover:text-ui-fg flex"
+            onClick={reloadPage}
+          >
+            <Icon icon="fa-solid fa-rotate-right" />
+          </button>
+          <button
+            type="button"
+            title="New visitor — a first visit: nothing kept, and the variants set to Draw drawn again by their shares"
+            aria-label="Show the page to a new visitor"
+            className="text-ui-fg-subtle hover:text-ui-fg flex"
+            onClick={newVisitor}
+          >
+            <Icon icon="fa-solid fa-user-plus" />
+          </button>
+        </>
       )}
       <Flex
         items="center"
